@@ -228,3 +228,14 @@ pub fn render_java_script_scoped_binding_identifier(name: &str, preserve: bool) 
         format!("binding_{name}")
     }
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn accept_java_script_literal_binding(
+    kind: &str,
+    has_spread: bool,
+    all_children_admitted: bool,
+) -> bool {
+    ((((kind == "num") || (kind == "bool")) || (kind == "str")) || (kind == "none"))
+        || (((kind == "record") && !has_spread) && all_children_admitted)
+}

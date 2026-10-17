@@ -10,6 +10,7 @@ use super::{
     TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node,
     number_literal, prop_of, span, type_error, unsupported,
 };
+use crate::translation::scoped_binding_emission_rules::accept_java_script_literal_binding;
 
 impl JavaScriptParser {
     pub(super) fn statement(&mut self) -> Result<Stmt> {
@@ -562,6 +563,18 @@ impl JavaScriptParser {
         Ok(())
     }
 
+    fn is_literal_binding(value: &SExpr) -> bool {
+        let mut has_spread = false;
+        let all_children_admitted = match &value.node {
+            SNode::Record { entries, .. } => entries.iter().all(|entry| {
+                has_spread = entry.spread;
+                !has_spread && Self::is_literal_binding(&entry.value)
+            }),
+            _ => true,
+        };
+        accept_java_script_literal_binding(value.node.kind(), has_spread, all_children_admitted)
+    }
+
     pub(super) fn main_statement(&mut self) -> Result<Vec<SEffect>> {
         let token = self.peek();
         if self.cursor.is("const") {
@@ -595,6 +608,9 @@ impl JavaScriptParser {
             }
             let start = self.cursor.advance();
             let (name, value, span) = self.const_binding(&start, self.readonly_constants.module)?;
+            if Self::is_literal_binding(&value) {
+                self.literal_bindings.insert(name.clone(), value.clone());
+            }
             return Ok(vec![SEffect::Let {
                 name,
                 ty: None,

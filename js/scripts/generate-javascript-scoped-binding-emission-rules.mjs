@@ -1,5 +1,7 @@
 import {readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readProjectData} from './project-data.mjs';
 import {DecoratorSet} from '../src/decorators.js';
 
@@ -34,18 +36,30 @@ source += definition('acceptJavaScriptScopedBindingDefinedField', '@param {boole
 if (typeof policy.preservedScopeReserveDeclarations !== 'boolean') throw new Error('the owned scope reservation premise must be Boolean');
 source += definition('reserveJavaScriptScopedBindingDeclarationNames', '@param {boolean} preserve', 'boolean', policy.preservedScopeReserveDeclarations ? 'return true;' : 'return !preserve;');
 source += definition('renderJavaScriptScopedBindingIdentifier', `${strings(['name'])} @param {boolean} preserve`, 'string', `if (preserve) return name; return ${JSON.stringify(policy.prefix)} + name;`);
+assert.equal(Buffer.byteLength(source), 7380, 'the complete original scoped binding source remains unchanged');
+assert.equal(createHash('sha256').update(source).digest('hex'), 'acca54b95d562705f2b97d836da48905968b2ffc5a861308a70ae1979af791a1');
+source += definition('acceptJavaScriptLiteralBinding', `${strings(['kind'])} @param {boolean} hasSpread @param {boolean} allChildrenAdmitted`, 'boolean', 'return kind === "num" || kind === "bool" || kind === "str" || kind === "none" || kind === "record" && !hasSpread && allChildrenAdmitted;');
 if (check) {
   if (readFileSync(javascript, 'utf8') !== source) throw new Error('JavaScript scoped binding rules are stale');
 } else {
   writeFileSync(javascript, source);
 }
 if (!process.argv.includes('--javascript-only')) {
+  const {readPortableSourceParameterStyles, readPortableSourceLintStyles} = await import('./portable-source-library-style.mjs');
   const {parseJavaScript} = await import('../src/translation/javascript.js');
   const {checkProgram} = await import('../src/translation/check.js');
   const {emitRust} = await import('../src/translation/emit-rust.js');
-  const raw = emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+  const translated = emitRust(checkProgram(parseJavaScript(source)));
+  const raw = translated.definitions.join('\n\n');
+  const literal = translated.definitions.at(-1);
+  assert.match(literal, /^pub fn accept_java_script_literal_binding\(/u, 'the one new decision follows the entire historical declaration inventory');
+  const historicalRaw = translated.definitions.slice(0, -1).join('\n\n');
+  const document = readFileSync(style, 'utf8');
+  const historicalDocument = document.slice(0, 29492);
+  assert.equal(Buffer.byteLength(historicalDocument), 29492);
+  assert.equal(createHash('sha256').update(historicalDocument).digest('hex'), 'e9a8cf4c806779f104445b470d4c1e798bd313b9d90cb999052bdcb03f95d064', 'the complete historical scoped binding style row remains byte exact');
   {
-    const actions = []; let current = raw;
+    const actions = []; let current = historicalRaw;
     const replace = (from, to) => { if (current.includes(from)) { actions.push({op: 'replace', field: 'source', from, to}); current = current.split(from).join(to); } };
     for (const name of ['model', 'language', 'form', 'kind', 'element', 'absence', 'role', 'owner', 'name','field']) replace(`${name}: String`, `${name}: &str`);
     replace('kind == ""','kind.is_empty()');
@@ -64,9 +78,15 @@ if (!process.argv.includes('--javascript-only')) {
     const renderer = current.match(/pub fn render_java_script_scoped_binding_identifier[\s\S]*?\n\}/u)?.[0];
     if (renderer) replace(renderer, `pub fn render_java_script_scoped_binding_identifier(name: &str, preserve: bool) -> String {\n    if preserve { name.to_owned() } else { format!("${policy.prefix}{name}") }\n}`);
     const expectedStyle = new DecoratorSet([{id: 'javascript-scoped-binding-emission-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions}]).toLino();
-    if (process.argv.includes('--update-styles')) writeFileSync(style, expectedStyle);
-    else if (readFileSync(style, 'utf8') !== expectedStyle) throw new Error('scoped binding styles are stale; regenerate --update-styles from the current shared policy');
+    assert.equal(historicalDocument, expectedStyle, 'the old declarations still derive the exact historical styles');
   }
+  const literalBase = DecoratorSet.fromLino(historicalDocument).decorate('emitter', {format: 'Rust', source: literal}).source;
+  const literalStyled = readPortableSourceLintStyles(readPortableSourceParameterStyles(literalBase).source).source;
+  const additionalStyle = new DecoratorSet([{id: 'javascript-literal-binding-library-style', level: 'emitter', order: 10,
+    when: [['format', 'Rust']], actions: [{op: 'replace', field: 'source', from: literalBase, to: literalStyled}]}]).toLino();
+  const expectedDocument = historicalDocument + additionalStyle;
+  if (process.argv.includes('--update-styles')) writeFileSync(style, expectedDocument);
+  else assert.equal(document, expectedDocument, 'literal binding styles are stale; regenerate --update-styles without replacing historical rows');
   const decorated = DecoratorSet.fromLino(readFileSync(style, 'utf8')).decorate('emitter', {format: 'Rust', source: raw}).source;
   const formatted = spawnSync('rustfmt', ['--edition', '2024', '--emit', 'stdout'], {input: decorated, encoding: 'utf8'});
   if (formatted.error || formatted.status !== 0) throw formatted.error ?? new Error(formatted.stderr);

@@ -10,6 +10,8 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { readJavaScriptTemporalBindingRead } from '../src/translation/frontend-rules.js';
+import { isLiteralBinding } from '../src/translation/javascript-bindings.js';
+import { acceptJavaScriptLiteralBinding } from '../src/translation/javascript-scoped-binding-emission-rules.js';
 import { LinkNetwork } from '../src/network.js';
 import { decodeLinkNetworkBinary, encodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks } from '../src/typed-program-links.js';
@@ -187,6 +189,80 @@ test('actual lexical owners preserve initialized bindings, shadows and initializ
   ]) {
     assert.deepEqual(observed(emitJavaScript(program).text), observed(source));
     assert.equal(emitRust(program).text, rust, 'text and binary reload retain the actual initialized binding');
+  }
+});
+
+test('literal bindings share complete recursive admission without admitting spreads, effects or mutable module captures', () => {
+  const primitiveKinds = new Set(['num', 'bool', 'str', 'none']);
+  for (const kind of [...primitiveKinds, 'record', 'array', 'name', 'call', 'unit', 'unknown']) {
+    for (const hasSpread of [false, true]) for (const allChildrenAdmitted of [false, true]) {
+      assert.equal(acceptJavaScriptLiteralBinding(kind, hasSpread, allChildrenAdmitted),
+        primitiveKinds.has(kind) || kind === 'record' && !hasSpread && allChildrenAdmitted,
+        `${kind}:${hasSpread}:${allChildrenAdmitted}`);
+    }
+  }
+  for (const value of [
+    {k: 'num', value: '3'}, {k: 'num', value: '2', suffix: 'n'}, {k: 'bool', value: false},
+    {k: 'str', value: ''}, {k: 'none', absence: 'null'}, {k: 'none', absence: 'undefined'},
+    {k: 'record', entries: []},
+    {k: 'record', entries: [{name: 'nested', value: {k: 'record', entries: [
+      {name: 'leaf', value: {k: 'record', entries: [{name: 'value', value: {k: 'none', absence: 'null'}}]}},
+    ]}}]},
+  ]) assert.equal(isLiteralBinding(value), true);
+  for (const value of [
+    {k: 'array', items: [{value: {k: 'num', value: '3'}}]}, {k: 'name', path: ['value']},
+    {k: 'call', fn: 'create', args: []},
+    {k: 'record', entries: [{spread: true, value: {k: 'record', entries: []}}]},
+    {k: 'record', entries: [{name: 'nested', value: {k: 'record', entries: [{name: 'leaf', value: {k: 'call', fn: 'create', args: []}}]}}]},
+    {k: 'record', entries: [{spread: true, get value() { throw new Error('a spread must stop before its value'); }}]},
+    {k: 'record', entries: [{name: 'first', value: {k: 'call', fn: 'create', args: []}},
+      {get spread() { throw new Error('a rejected child must stop before the next entry'); }}]},
+  ]) assert.equal(isLiteralBinding(value), false);
+
+  const observed = (source) => {
+    const output = [];
+    runInNewContext(`'use strict';{${source}}`, {console: {log: (...values) => output.push(format(...values))}}, {timeout: 1000});
+    return output;
+  };
+  for (const [source, expected] of [
+    ['const NaN=3;function read(){return NaN;}console.log(read());', ['3']],
+    ['const NaN=null;function read(){return NaN===null;}console.log(read());', ['true']],
+    ['const missing=undefined;function read(){return missing===undefined;}console.log(read());', ['true']],
+    ['const Infinity=false;function read(){return Infinity;}console.log(read());', ['false']],
+    ['const NaN="word";function read(){return NaN;}console.log(read());', ['word']],
+    ['const NaN={value:3};function read(){return NaN.value;}console.log(read());', ['3']],
+    ['const NaN={outer:{inner:{value:7}}};function read(){return NaN.outer.inner.value;}console.log(read());', ['7']],
+    ['const NaN=3;function read(NaN){return NaN;}console.log(read(9));', ['9']],
+    ['function first(){const NaN=3;return NaN;}function second(){return NaN;}console.log(first(),Number.isNaN(second()));', ['3 true']],
+  ]) {
+    assert.deepEqual(observed(source), expected, 'the unchanged original source independently specifies the result');
+    const checked = checkProgram(parseJavaScript(source));
+    const archive = encodeTypedProgramLinks(checked);
+    const rust = emitRust(checked).text;
+    for (const program of [checked,
+      decodeTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()), archive.root),
+      decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(archive.network)), archive.root),
+    ]) {
+      assert.deepEqual(observed(emitJavaScript(program).text), expected, source);
+      assert.equal(emitRust(program).text, rust, 'both source-free archives preserve the admitted initializer');
+    }
+  }
+  for (const [source, expected, earlierConstruct] of [
+    ['const base={value:3};const NaN={...base};function read(){return NaN.value;}console.log(read());', ['3'], 'namespace after a top-level statement'],
+    ['const base={value:3};const NaN={nested:{...base}};function read(){return NaN.nested.value;}console.log(read());', ['3'], 'namespace after a top-level statement'],
+    ['const NaN={...{value:3}};function read(){return NaN.value;}console.log(read());', ['3']],
+    ['const NaN={nested:{...{value:3}}};function read(){return NaN.nested.value;}console.log(read());', ['3']],
+    ['function create(){console.log("init");return 3;}const NaN=create();function read(){return NaN;}console.log(read());', ['init', '3']],
+    ['const base=3;const NaN=base+1;function read(){return NaN;}console.log(read());', ['4']],
+    ['const NaN=[3];function read(){return NaN[0];}console.log(read());', ['3']],
+    ['let NaN=3;function read(){return NaN;}console.log(read());', ['3']],
+    ['let Infinity=4;function read(){return Infinity;}console.log(read());', ['4']],
+    ['let undefined=5;function read(){return undefined;}console.log(read());', ['5']],
+  ]) {
+    assert.deepEqual(observed(source), expected, 'refusal does not change the original module observations');
+    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported'
+      && (earlierConstruct ? error.details.construct === earlierConstruct
+        : /module binding|module-capture/u.test(error.reason)), source);
   }
 });
 

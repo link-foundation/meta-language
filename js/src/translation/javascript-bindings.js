@@ -9,6 +9,7 @@ import { constructCallableSurfaceParameters, readCallableClosureConflicts, readC
 import { planCallableTypeSyntax, readCallableClosureParameterError, readCallableClosurePrefixError, readCallableSurfaceConstructor, requireCallableAssignedCaptureField } from './callable-source-rules.js';
 import { acceptJavaScriptArrayBindingName, planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
+import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 
 export function readClosure(parser, method = false) {
   const c = parser.cursor;
@@ -199,6 +200,11 @@ export function readCompositeType(parser, name, range) {
 }
 
 export function isLiteralBinding(value) {
-  if (['num', 'bool', 'str', 'none'].includes(value.k)) return true;
-  return value.k === 'record' && value.entries.every((entry) => !entry.spread && isLiteralBinding(entry.value));
+  const entries = value.k === 'record' ? value.entries : [];
+  let hasSpread = false;
+  const allChildrenAdmitted = entries.every((entry) => {
+    hasSpread = Boolean(entry.spread);
+    return !hasSpread && isLiteralBinding(entry.value);
+  });
+  return acceptJavaScriptLiteralBinding(value.k, hasSpread, allChildrenAdmitted);
 }

@@ -33,3 +33,5 @@ export function acceptJavaScriptScopedBindingDefinedField(undefinedValue) { retu
 export function reserveJavaScriptScopedBindingDeclarationNames(preserve) { return !preserve; }
 /** @param {string} name @param {boolean} preserve @returns {string} */
 export function renderJavaScriptScopedBindingIdentifier(name, preserve) { if (preserve) return name; return "binding_" + name; }
+/** @param {string} kind @param {boolean} hasSpread @param {boolean} allChildrenAdmitted @returns {boolean} */
+export function acceptJavaScriptLiteralBinding(kind, hasSpread, allChildrenAdmitted) { return kind === "num" || kind === "bool" || kind === "str" || kind === "none" || kind === "record" && !hasSpread && allChildrenAdmitted; }

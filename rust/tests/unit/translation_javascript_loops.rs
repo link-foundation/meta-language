@@ -388,6 +388,156 @@ fn actual_lexical_owners_preserve_initialized_bindings_shadows_and_order_through
 }
 
 #[test]
+fn literal_bindings_share_recursive_admission_without_spreads_effects_or_mutable_module_captures() {
+    for (source, expected) in [
+        (
+            "const NaN=3;function read(){return NaN;}console.log(read());",
+            "3\n",
+        ),
+        (
+            "const NaN=null;function read(){return NaN===null;}console.log(read());",
+            "true\n",
+        ),
+        (
+            "const missing=undefined;function read(){return missing===undefined;}console.log(read());",
+            "true\n",
+        ),
+        (
+            "const Infinity=false;function read(){return Infinity;}console.log(read());",
+            "false\n",
+        ),
+        (
+            "const NaN=\"word\";function read(){return NaN;}console.log(read());",
+            "word\n",
+        ),
+        (
+            "const NaN={value:3};function read(){return NaN.value;}console.log(read());",
+            "3\n",
+        ),
+        (
+            "const NaN={outer:{inner:{value:7}}};function read(){return NaN.outer.inner.value;}console.log(read());",
+            "7\n",
+        ),
+        (
+            "const NaN=3;function read(NaN){return NaN;}console.log(read(9));",
+            "9\n",
+        ),
+        (
+            "function first(){const NaN=3;return NaN;}function second(){return NaN;}console.log(first(),Number.isNaN(second()));",
+            "3 true\n",
+        ),
+    ] {
+        assert_eq!(
+            lexical_binding_output(source),
+            expected.as_bytes(),
+            "the unchanged original source independently specifies the result"
+        );
+        let checked = check_program(&parse(source)).unwrap();
+        let archive = encode_typed_program_links(&checked).unwrap();
+        let rust = emit_rust(&checked).unwrap().text;
+        assert_eq!(
+            lexical_binding_output(&emit_javascript(&checked).unwrap().text),
+            expected.as_bytes(),
+            "{source}"
+        );
+        for network in [
+            LinkNetwork::from_lino(&archive.network.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&archive.network, BinaryLinksOptions::default())
+                    .unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            let restored = decode_typed_program_links(&network, archive.root).unwrap();
+            assert_eq!(
+                restored, checked,
+                "both source-free archives preserve the admitted initializer"
+            );
+            assert_eq!(
+                lexical_binding_output(&emit_javascript(&restored).unwrap().text),
+                expected.as_bytes(),
+                "{source}"
+            );
+            assert_eq!(emit_rust(&restored).unwrap().text, rust);
+        }
+    }
+    for (source, expected, earlier_construct) in [
+        (
+            "const base={value:3};const NaN={...base};function read(){return NaN.value;}console.log(read());",
+            "3\n",
+            Some("namespace after a top-level statement"),
+        ),
+        (
+            "const base={value:3};const NaN={nested:{...base}};function read(){return NaN.nested.value;}console.log(read());",
+            "3\n",
+            Some("namespace after a top-level statement"),
+        ),
+        (
+            "const NaN={...{value:3}};function read(){return NaN.value;}console.log(read());",
+            "3\n",
+            None,
+        ),
+        (
+            "const NaN={nested:{...{value:3}}};function read(){return NaN.nested.value;}console.log(read());",
+            "3\n",
+            None,
+        ),
+        (
+            "function create(){console.log(\"init\");return 3;}const NaN=create();function read(){return NaN;}console.log(read());",
+            "init\n3\n",
+            None,
+        ),
+        (
+            "const base=3;const NaN=base+1;function read(){return NaN;}console.log(read());",
+            "4\n",
+            None,
+        ),
+        (
+            "const NaN=[3];function read(){return NaN[0];}console.log(read());",
+            "3\n",
+            None,
+        ),
+        (
+            "let NaN=3;function read(){return NaN;}console.log(read());",
+            "3\n",
+            None,
+        ),
+        (
+            "let Infinity=4;function read(){return Infinity;}console.log(read());",
+            "4\n",
+            None,
+        ),
+        (
+            "let undefined=5;function read(){return undefined;}console.log(read());",
+            "5\n",
+            None,
+        ),
+    ] {
+        assert_eq!(
+            lexical_binding_output(source),
+            expected.as_bytes(),
+            "refusal does not change the original module observations"
+        );
+        let error = parse_javascript(source)
+            .expect_err("the initializer has no admitted literal ownership");
+        assert_eq!(error.kind, ErrorKind::Unsupported, "{source}: {error}");
+        if let Some(construct) = earlier_construct {
+            assert_eq!(
+                error.construct.as_deref(),
+                Some(construct),
+                "{source}: {error}"
+            );
+        } else {
+            assert!(
+                error.reason.contains("module binding") || error.reason.contains("module-capture"),
+                "{source}: {error}"
+            );
+        }
+    }
+}
+
+#[test]
 fn a_program_of_loops_is_a_semantic_translation_and_runs_lifted_loops_as_loops() {
     for target in ["Rust", "Lean", "Rocq"] {
         let translated =
