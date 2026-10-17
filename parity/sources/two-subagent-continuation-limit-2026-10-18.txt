@@ -1,0 +1,1 @@
+Allow all subagents to finish and continue work with not more than 2 subagents.

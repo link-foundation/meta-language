@@ -1120,7 +1120,7 @@ The instruction to gradually reduce agents remains a separate hashed source and
 critical obligation for that historical coordination phase. Contributors finished
 their existing work and the coordinator continued alone. The subsequent
 [instruction to expand delegation](../parity/sources/expanded-agent-delegation-2026-10-13.txt)
-authorizes the current phase: split useful independent work among additional
+authorized a later coordination phase: split useful independent work among additional
 agents, retain clear ownership and contributor commits, and preserve one push
 coordinator. This operational steering preserves every earlier project requirement.
 
@@ -2597,6 +2597,13 @@ identified correction, so the native runtime remains independent of the oracle.
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
+
+For the current task, the [latest continuation instruction](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt)
+allows active subagents to finish their work, then limits continued work to no
+more than two subagents. This task-specific authorization supersedes earlier
+agent-count instructions for this continuation; it does not establish a
+permanent project-wide cap. Existing ownership, bounded local checks and the
+restriction of native compilation and expensive workloads to CI remain intact.
 
 Each bulk grammar worker reads projection metadata from its selected actual
 generated grammar. The fixture generator uses the same reader, while unrelated
