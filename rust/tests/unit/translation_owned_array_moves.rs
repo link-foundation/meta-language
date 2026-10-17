@@ -15,12 +15,39 @@ use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
 #[test]
 fn generated_array_loops_consume_actual_final_bindings_without_repeated_vector_copies() {
-    let source = "/** @param {number} count @returns {number[]} */ function build(count) { const values=[]; for(let index=0;index<count;index+=1) { if(index%2===0) values.push(index,index+1); } return values; }\n/** @returns {number} */ function hygiene(){const ml_append_right=[1];const ml_append_left=2;ml_append_right.push(ml_append_left);return ml_append_right.length;}\n/** @returns {number} */function preserve(){const original=[1];const alias=original;const updated=[...original,2];return alias.length*10+updated.length;}\n/** @returns {number} */function readAfter(){const original=[1];const updated=[...original,2];return original.length*10+updated.length;}\nconst values=build(100001);console.log(values.length,values[0]??-1,values[100001]??-1);console.log(hygiene(),preserve(),readAfter());";
-    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let original = "/** @param {number} count @returns {number[]} */ function build(count) { const values=[]; for(let index=0;index<count;index+=1) { if(index%2===0) values.push(index,index+1); } return values; }\n/** @returns {number} */ function hygiene(){const ml_append_right=[1];const ml_append_left=2;ml_append_right.push(ml_append_left);return ml_append_right.length;}\n/** @returns {number} */function preserve(){const original=[1];const alias=original;const updated=[...original,2];return alias.length*10+updated.length;}\n/** @returns {number} */function readAfter(){const original=[1];const updated=[...original,2];return original.length*10+updated.length;}\nconst values=build(100001);console.log(values.length,values[0]??-1,values[100001]??-1);console.log(hygiene(),preserve(),readAfter());";
+    // Retain the complete original input under its existing prefix refusal.
+    let refused =
+        parse_javascript(original).expect_err("the original reserved source stays refused");
+    assert_eq!(
+        refused.reason,
+        "reserved identifier: ml_append_right uses the translator's reserved ml_ prefix"
+    );
+    assert_eq!(
+        refused.span,
+        Some(meta_language::translation::Span::new(243, 258))
+    );
+    // The legal source names become the same Rust temporary names, so the
+    // simultaneous initializer still has to preserve the actual collision.
+    let source = original
+        .replace("ml_append_right", "mlAppendRight")
+        .replace("ml_append_left", "mlAppendLeft");
+    let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
     let emitted =
         emit_rust_with_array_consumption(&program, RustEmissionOptions::default()).unwrap();
     let consume = Regex::new(r"let \(ml_append_right, ml_append_left\) = \(vec!\[[^\]]+\], [A-Za-z_][A-Za-z_0-9]*\); crate::ml_array::append").unwrap();
     assert!(consume.is_match(&emitted.text), "{}", emitted.text);
+    let hygiene = emitted
+        .definitions
+        .iter()
+        .find(|text| text.starts_with("pub fn hygiene("))
+        .unwrap();
+    assert!(hygiene.contains("let ml_append_right ="), "{hygiene}");
+    assert!(hygiene.contains("let ml_append_left ="), "{hygiene}");
+    assert!(
+        hygiene.contains("let (ml_append_right, ml_append_left)"),
+        "{hygiene}"
+    );
     let read_after = emitted
         .definitions
         .iter()

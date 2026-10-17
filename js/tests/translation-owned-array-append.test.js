@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -121,6 +122,44 @@ test('explicit array consumption preserves the historical copy profile and sourc
   readTranslationProvenance(publicTranslation.code, 'Rust');
   assert.equal(publicTranslation.code.slice(publicTranslation.code.indexOf('\n') + 1), consumed.text);
   assert.equal(emitTypedProgramLinks(archive.network, archive.root, 'Rust').code, consumed.text);
+});
+
+test('reserved append locals retain the exact refusal while legal source names exercise real Rust temporary collisions', () => {
+  const original = '/** @param {number} count @returns {number[]} */ function build(count) { const values=[]; for(let index=0;index<count;index+=1) { if(index%2===0) values.push(index,index+1); } return values; }\n/** @returns {number} */ function hygiene(){const ml_append_right=[1];const ml_append_left=2;ml_append_right.push(ml_append_left);return ml_append_right.length;}\n/** @returns {number} */function preserve(){const original=[1];const alias=original;const updated=[...original,2];return alias.length*10+updated.length;}\n/** @returns {number} */function readAfter(){const original=[1];const updated=[...original,2];return original.length*10+updated.length;}\nconst values=build(100001);console.log(values.length,values[0]??-1,values[100001]??-1);console.log(hygiene(),preserve(),readAfter());';
+  assert.equal(createHash('sha256').update(original).digest('hex'), '83e09c13448b22e6d48879c61bb462dfe2b9915081f302f91ff063f6588ad17b', 'the complete original native fixture remains an unchanged refusal input');
+  assert.throws(() => parseJavaScript(original), error => {
+    assert.deepEqual({kind:error.kind,reason:error.reason,span:error.span}, {
+      kind:'unsupported',reason:"reserved identifier: ml_append_right uses the translator's reserved ml_ prefix",span:{start:243,end:258},
+    });
+    return true;
+  });
+  // These admitted source spellings become the actual append temporary names
+  // under the existing Rust snake-case binder transform, preserving collision coverage.
+  const source = original.replaceAll('ml_append_right', 'mlAppendRight').replaceAll('ml_append_left', 'mlAppendLeft');
+  const observe = code => {
+    const lines = [];
+    vm.runInNewContext(code, {console:{log:(...values) => lines.push(values.map(String).join(' '))}}, {timeout:1000});
+    return lines.join('\n') + '\n';
+  };
+  assert.equal(observe(original), '100002 0 100001\n2 12 12\n', 'the independent original source retains every large-loop and alias observation');
+  const program = checkProgram(parseJavaScript(source));
+  recheckLinkedTypedProgram(program, {wholeProgram:true});
+  const emitted = emitRust(program, {arrayConsumption:true});
+  assert.match(emitted.text, /let \(ml_append_right, ml_append_left\) = \(vec!\[[^\]]+\], [A-Za-z_][A-Za-z_0-9]*\); crate::ml_array::append/u);
+  const hygiene = emitted.definitions.find(text => text.startsWith('pub fn hygiene('));
+  assert.ok(hygiene);
+  assert.ok(hygiene.includes('let ml_append_right ='), 'the legal source array name really collides with the append temporary spelling');
+  assert.ok(hygiene.includes('let ml_append_left ='), 'the legal source argument name really collides with the other append temporary spelling');
+  assert.ok(hygiene.includes('let (ml_append_right, ml_append_left)'), 'the simultaneous initializer retains both actual collision sites');
+  const readAfter = emitted.definitions.find(text => text.startsWith('pub fn read_after('));
+  assert.ok(readAfter.includes('original.clone()'));
+  assert.equal(readAfter.includes('let (ml_append_right, ml_append_left)'), false);
+  const javascript = emitJavaScript(program);
+  // The native CI test executes all 100001 iterations. Its immutable JavaScript
+  // append lowering is checked here with bounded inputs to avoid quadratic work.
+  const declarations = [...javascript.preludes, ...javascript.definitions].join('\n\n');
+  assert.equal(observe(declarations + '\nconst values=build(8);console.log(values.length,values[0]??-1,values[7]??-1);console.log(hygiene(),preserve(),readAfter());'), '8 0 7\n2 12 12\n');
+  assert.ok(javascript.text.includes('100001'), 'the complete emitted program retains the original large-loop input');
 });
 
 test('the complete five-decision source translates together with its actual required-column closure', () => {
