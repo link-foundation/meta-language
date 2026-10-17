@@ -56,6 +56,24 @@ test('family branch syntax preserves exact bodies and every Boolean branch obser
   assert.equal(mergeFamilyLibraryIdenticalBranches(merged), merged);
 });
 
+test('family else-if flattening handles more than one hundred independent branches', () => {
+  const names = Array.from({length: 128}, (_, index) => `decide_${index}`);
+  const before = names.map(name => `pub fn ${name}(first:bool,second:bool)->bool{if first{true}else{if second{true}else{false}}}`).join('\n');
+  const expected = names.map(name => `pub fn ${name}(first:bool,second:bool)->bool{if first{true}else if second{true}else{false}}`).join('\n');
+  const after = flattenFamilyLibraryElseIf(before);
+  assert.equal(after, expected, 'every independent complete nested branch is flattened');
+  assert.equal(flattenFamilyLibraryElseIf(after), after, 'the complete output is a fixed point');
+  const execute = source => {
+    const context = {};
+    vm.runInNewContext(emitJavaScript(checkProgram(parseRust(source + '\nfn main() {}'))).text, context, {timeout: 1000});
+    return context;
+  };
+  const original = execute(before), transformed = execute(after);
+  for (const name of names) for (const first of [false, true]) for (const second of [false, true]) {
+    assert.equal(transformed[name](first, second), original[name](first, second), `${name}(${first}, ${second})`);
+  }
+});
+
 test('family identical-body merge keeps callback evaluation and opaque syntax intact', () => {
   const before = 'pub fn decide(first:bool,second:bool)->bool{if observe_first(first){true}else if observe_second(second){true}else{false}}';
   const after = mergeFamilyLibraryIdenticalBranches(before);

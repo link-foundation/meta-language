@@ -427,7 +427,11 @@ export function liftFamilyLibraryTruthinessConditions(source) {
 
 /** Flatten only an else block containing one complete nested if expression. */
 export function flattenFamilyLibraryElseIf(source) {
-  for (let pass = 0; pass < 100; pass += 1) {
+  // Every edit removes a closing brace and replaces the opening brace with
+  // one space, so the source strictly shrinks. Allow a final unchanged pass
+  // after every possible removal instead of limiting the number of branches.
+  const maximumRemovals = source.length;
+  for (let pass = 0; pass <= maximumRemovals; pass += 1) {
     const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
     let selected;
     for (let index = 0; index < tokens.length; index += 1) {
@@ -437,8 +441,10 @@ export function flattenFamilyLibraryElseIf(source) {
       if (nested && nested.end === close - 1) { selected = {open, close}; break; }
     }
     if (!selected) return source;
+    const previousLength = source.length;
     source = source.slice(0, tokens[selected.close].start) + source.slice(tokens[selected.close].end);
     source = source.slice(0, tokens[selected.open].start) + ' ' + source.slice(tokens[selected.open].end);
+    assert.ok(source.length < previousLength, 'a library else-if removal strictly shrinks its source');
   }
   throw new Error('the finite library else-if syntax must converge');
 }
