@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
@@ -111,6 +111,11 @@ class JavaScriptParser {
     // Locals in scope, the ones `let` or a parameter makes assignable, and
     // names of the current block still in their temporal dead zone.
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
+    // Parser-local origins survive early builtin normalization and body
+    // lowering. They are validated before type inference, never emitted as IR.
+    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map() }];
+    this.lexicalScope = 0;
+    this.lexicalReads = [];
     // Enclosing loops and switches, for `break` and `continue`.
     this.jumps = { loops: 0, switches: 0 };
     // Whether a top-level statement is being read, where `return` is a syntax error.
@@ -146,6 +151,7 @@ class JavaScriptParser {
       c.eat(';');
     }
     this.scope = { locals: new Set(), tdz: this.blockDeclarations(c.index, () => c.atEnd()), mutable: new Set() };
+    for (const name of this.scope.tdz) this.lexicalBinding(name);
     this.asyncNames = this.asyncDeclarations(c.index);
     let depth = 0;
     for (let index = c.index; index < c.tokens.length; index += 1) {
@@ -230,6 +236,7 @@ class JavaScriptParser {
       effects.push(...(Array.isArray(effect) ? effect : [effect]));
     }
     flush();
+    this.validateLexicalBindings();
     if (this.unawaited.length) {
       const [call] = this.unawaited;
       throw unsupported(`call of async function ${call.name} without await`, 'the Promise it returns is outside the portable core; await it where it is called', call.span);
@@ -549,7 +556,7 @@ class JavaScriptParser {
         }
         const outer = this.scope;
         this.scope = { ...outer, tdz: new Set([...outer.tdz, ...names]) };
-        try { tokens.push({ ...param, defaultValue: this.expr() }); } finally { this.scope = outer; }
+        try { tokens.push({ ...param, defaultValue: this.withLexicalScope([], () => this.expr(), 2) }); } finally { this.scope = outer; }
       }
       else if (tokens.at(-1)?.defaultValue) throw unsupported(`parameter ${param.value} after a default`, 'a call fills in trailing defaults only; give it a default too', span(param, param));
       else tokens.push(param);
@@ -599,11 +606,11 @@ class JavaScriptParser {
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
     if (this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
       let loop;
-      try { loop = readJavaScriptScalarLoop(this, name, params, isAsync); }
+      try { loop = this.withLexicalScope(names, () => readJavaScriptScalarLoop(this, name, params, isAsync), 2); }
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
       return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
     }
-    const statements = statementsOf();
+    const statements = this.withLexicalScope(names, statementsOf, 2);
     validateClosureCaptures(statements, this.referenceSemantics);
     // An explicit or forced reference context keeps actual heap operations.
     // Only the inferred construction context may become immutable rebinding.
@@ -744,20 +751,65 @@ class JavaScriptParser {
     const c = this.cursor;
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
-    for (const name of this.blockDeclarations(c.index, () => c.is('}'))) tdz.add(name);
+    const names = this.blockDeclarations(c.index, () => c.is('}'));
+    for (const name of names) tdz.add(name);
     this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
-      return parse();
+      return this.withLexicalScope(names, parse);
     } finally {
       this.scope = outer;
     }
   }
 
   declareLocal(name, mutable = false) {
+    this.lexicalBinding(name);
     this.scope.locals.add(name);
     this.scope.tdz.delete(name);
     if (mutable) this.scope.mutable.add(name);
     else this.scope.mutable.delete(name);
+  }
+
+  withLexicalScope(names, parse, boundary = 0) {
+    const outer = this.lexicalScope;
+    this.lexicalScope = this.lexicalScopes.length;
+    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });
+    for (const name of names) this.lexicalBinding(name);
+    try { return parse(); } finally { this.lexicalScope = outer; }
+  }
+
+  lexicalBinding(name, initializedAt = -1) {
+    const bindings = this.lexicalScopes[this.lexicalScope].bindings;
+    if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);
+  }
+
+  lexicalRead(token, assignment = false, where = span(token, token)) {
+    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });
+  }
+
+  closure(method = false) {
+    return this.withLexicalScope([], () => {
+      const value = readClosure(this, method);
+      for (const parameter of value.params) this.lexicalBinding(parameter.name);
+      return value;
+    }, 1);
+  }
+
+  validateLexicalBindings() {
+    const bounds = [], names = [], ends = [];
+    for (const scope of this.lexicalScopes) {
+      bounds.push(names.length, scope.bindings.size, scope.boundary);
+      for (const [name, end] of scope.bindings) { names.push(name); ends.push(end); }
+    }
+    const plan = readJavaScriptTemporalBindingRead(this.lexicalScopes.map(scope => scope.parent), bounds, names, ends,
+      this.lexicalReads.map(read => read.scope), this.lexicalReads.map(read => read.name), this.lexicalReads.map(read => read.start));
+    if (!plan.length) return;
+    const read = this.lexicalReads[plan[0]];
+    if (plan[1] === 2) throw unsupported(`function reading ${read.name}`,
+      'a mutable module binding requires module-capture representation', read.span);
+    if (plan[1] === 1) throw unsupported(`closure reading ${read.name} before its declaration`,
+      'the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof', read.span);
+    if (read.assignment) throw unsupported(`assignment of ${read.name} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', read.span);
+    throw unsupported(readCallableReferenceConstruct(read.name, true), readCallableReferenceObligation(true, true), read.span);
   }
 
   blockStatements() {
@@ -903,6 +955,7 @@ class JavaScriptParser {
       this.scope.tdz.add(name.value);
       const value = c.eat('=') ? this.expr() : { k: 'none', absence: 'undefined', span: span(start, name) };
       this.declareLocal(name.value, true);
+      this.lexicalBinding(name.value, c.peek().start);
       statements.push({ s: 'let', name: name.value, value, span: span(start, c.peek()) });
     } while (c.eat(','));
     return statements;
@@ -971,6 +1024,7 @@ class JavaScriptParser {
     const target = c.identifier('assignment');
     const op = prefix ? prefix.value : c.next().value;
     const where = span(start, c.peek());
+    this.lexicalRead(target, true, where);
     if (this.scope.tdz.has(target.value)) {
       throw unsupported(`assignment of ${target.value} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', where);
     }
@@ -1031,6 +1085,10 @@ class JavaScriptParser {
 
   /** `for (let i = 0n; i < n; i++) …`: the variables of its head belong to the loop. */
   forStatement() {
+    return this.withLexicalScope([], () => this.forStatementInScope());
+  }
+
+  forStatementInScope() {
     const c = this.cursor;
     const start = c.next();
     if (c.is('await')) throw unsupported('for await', 'asynchronous iteration is outside the portable core', span(start, c.peek()));
@@ -1097,7 +1155,10 @@ class JavaScriptParser {
     this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
     let body;
     try {
-      for (const local of bindings ?? [{ name: name.value }]) this.declareLocal(local.name, binding === 'let');
+      for (const local of bindings ?? [{ name: name.value }]) {
+        this.declareLocal(local.name, binding === 'let');
+        this.lexicalBinding(local.name, c.peek().start);
+      }
       body = this.loopBody();
     } finally {
       this.scope = outer;
@@ -1144,6 +1205,7 @@ class JavaScriptParser {
     }
     if (!c.eat('new')) throw unsupported('throw of a non-error value', 'throw new Error(\'…\'), which aborts the program', span(start, c.peek()));
     const kind = c.identifier('throw');
+    this.lexicalRead(kind);
     if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));
     c.expect('(', 'throw');
     let message = '';
@@ -1312,6 +1374,7 @@ class JavaScriptParser {
   consoleStatement() {
     const c = this.cursor;
     const start = c.next();
+    this.lexicalRead(start);
     c.expect('.', 'console');
     const method = c.identifier('console');
     if (method.value !== 'log') {
@@ -1595,7 +1658,7 @@ class JavaScriptParser {
   expr() {
     const c = this.cursor;
     const start = c.peek();
-    if (this.startsFunction(c.index)) return readClosure(this);
+    if (this.startsFunction(c.index)) return this.closure();
     const cond = this.or();
     if (ASSIGNMENTS.has(c.peek().value) && c.peek().kind === 'punct') {
       throw unsupported('assignment', 'mutation is outside the portable core', span(start, c.peek()));
@@ -1851,7 +1914,7 @@ class JavaScriptParser {
   primary() {
     const c = this.cursor;
     const token = c.peek();
-    if (this.startsFunction(c.index)) return readClosure(this);
+    if (this.startsFunction(c.index)) return this.closure();
     switch (token.kind) {
       case 'number':
         c.next();
@@ -1988,7 +2051,7 @@ class JavaScriptParser {
       } else {
         if (Object.hasOwn(fields, key.value)) duplicate ??= key;
         const form = readJavaScriptObjectPropertyForm(key.value, c.is('('), c.is(':'), !computed && key.kind === 'identifier');
-        if (form === 'method') fields[key.value] = readClosure(this, true);
+        if (form === 'method') fields[key.value] = this.closure(true);
         else if (form === 'field') { c.next(); fields[key.value] = this.expr(); }
         else {
           if (form === 'missing-colon') throw this.fail('expected : after the object property name', key);
@@ -2030,6 +2093,7 @@ class JavaScriptParser {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
     }
+    this.lexicalRead(token);
     // These are global bindings rather than reserved literal keywords. A
     // parameter or local declaration takes precedence, including its TDZ.
     if (['NaN', 'Infinity', 'undefined'].includes(token.value) && (this.scope.locals.has(token.value) || this.scope.tdz.has(token.value))) {
@@ -2047,6 +2111,7 @@ class JavaScriptParser {
     if (token.value === 'new') {
       c.next();
       const constructor = c.identifier('constructor');
+      this.lexicalRead(constructor);
       const args = c.is('(') ? this.arguments(constructor.value) : [];
       const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
       if (collection !== '') {
@@ -2121,6 +2186,7 @@ class JavaScriptParser {
 
   /** A local variable; reading one before its declaration throws in JavaScript. */
   reference(token) {
+    this.lexicalRead(token);
     const temporal = this.scope.tdz.has(token.value);
     const obligation = readCallableReferenceObligation(temporal, this.scope.locals.has(token.value));
     if (obligation) throw unsupported(readCallableReferenceConstruct(token.value, temporal), obligation, span(token, token));

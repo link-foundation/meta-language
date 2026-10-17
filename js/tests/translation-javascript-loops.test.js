@@ -7,7 +7,12 @@ import { format } from 'node:util';
 import { translateProgram } from '../src/program-translation.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
+import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
+import { readJavaScriptTemporalBindingRead } from '../src/translation/frontend-rules.js';
+import { LinkNetwork } from '../src/network.js';
+import { decodeLinkNetworkBinary, encodeLinkNetworkBinary } from '../src/link-network-binary.js';
+import { decodeTypedProgramLinks, encodeTypedProgramLinks } from '../src/typed-program-links.js';
 
 const SUM = `function sum(n) {
   let total = 0n;
@@ -82,6 +87,106 @@ test('mutable bindings JavaScript could not run as translated are rejected', () 
       continue;
     }
     assert.throws(() => parseJavaScript(source), (error) => error.message === message, source);
+  }
+  for (const source of [
+    'function read(){let first=NaN,NaN=1;return first;}console.log(read());',
+    'function read(){let first=Infinity,Infinity=1;return first;}console.log(read());',
+    'function read(){const result=NaN;let first=0,NaN=1;return result;}console.log(read());',
+    'function read(){let first=undefined,undefined=1;return first;}console.log(read());',
+    'function read(){const result=NaN\nlet first=0,NaN=1;return result;}console.log(read());',
+    'function read(NaN){{const result=NaN;let first=0,NaN=1;return result;}}console.log(read(9));',
+    'function read(){for(let NaN of [NaN]){console.log(NaN);}return 1;}console.log(read());',
+    'function read(){for(const [NaN] of [[NaN]]){console.log(NaN);}return 1;}console.log(read());',
+    'function read(){for(let first=NaN,NaN=1;first<2;first++){}return 1;}console.log(read());',
+    'function read(NaN){{NaN=2;let first=0,NaN=1;return first;}}console.log(read(9));',
+  ]) {
+    assert.throws(() => runInNewContext(source), error => error.name === 'ReferenceError', source);
+    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported'
+      && /temporal dead zone/u.test(error.reason), source);
+  }
+  // Parsing a closure is not its execution. A later capture needs an actual
+  // invocation-order proof, even where this particular original invokes late.
+  const deferred = 'function read(){let first=()=>NaN,NaN=1;return first();}console.log(read());';
+  const output = [];
+  runInNewContext(deferred, { console: { log: value => output.push(value) } });
+  assert.deepEqual(output, [1]);
+  assert.throws(() => parseJavaScript(deferred), error => error.kind === 'unsupported'
+    && /invocation-order proof/u.test(error.reason));
+  const eager = 'function read(){const fn=()=>{let first=NaN,NaN=1;return first;};return fn();}console.log(read());';
+  assert.throws(() => runInNewContext(eager), error => error.name === 'ReferenceError');
+  assert.throws(() => parseJavaScript(eager), error => error.kind === 'unsupported'
+    && /temporal dead zone/u.test(error.reason) && !/invocation-order proof/u.test(error.reason));
+  for (const source of [
+    'function read(){return NaN;}let first=0,NaN=1;console.log(read());',
+    'let first=0,NaN=1;function read(){return NaN;}console.log(read());',
+    'function read(value=NaN){return value;}let first=0,NaN=1;console.log(read());',
+  ]) {
+    const original = [];
+    // A strict lexical block models the module's lexical binding environment;
+    // a Script's immutable global NaN property must not replace that oracle.
+    runInNewContext(`'use strict';{${source}}`, { console: { log: value => original.push(value) } });
+    assert.deepEqual(original, [1], source);
+    assert.throws(() => parseJavaScript(source), error => error.kind === 'unsupported'
+      && /mutable module binding requires module-capture representation/u.test(error.reason), source);
+  }
+  for (const source of [
+    'function read(){let first=0\nInfinity,NaN;return first;}',
+    'function read(){let first={let:2};first.let\nNaN,Infinity;return first.let;}',
+  ]) assert.throws(() => parseJavaScript(source), source);
+});
+
+test('actual lexical owners preserve initialized bindings, shadows and initializer order through Links', () => {
+  const observed = (source) => {
+    const output = [];
+    runInNewContext(source, { console: { log: (...values) => output.push(format(...values)) } }, { timeout: 1000 });
+    return output;
+  };
+  for (const [source, expected] of [
+    ['function read(){let NaN=1,first=NaN;return first;}console.log(read());', ['1']],
+    ['function read(){let first=1\nlet second=first+1;return second;}console.log(read());', ['2']],
+    ['function read(){let first=1\n+2,second=first+1;return second;}console.log(read());', ['4']],
+    ['function read(){let first={let:2},second=first.let;return second;}console.log(read());', ['2']],
+    ['function read(){let first=[1,2],second={x:3,y:4};return first.length+second.x;}console.log(read());', ['5']],
+    ['function read(){const [NaN,other]=[1,2];let first=NaN,Infinity=other;return first+Infinity;}console.log(read());', ['3']],
+    ['function read(){let total=0;{const NaN=3;total=NaN;}let first=0,NaN=1;return total+NaN;}console.log(read());', ['4']],
+    ['function read(){let reader=(NaN)=>NaN,NaN=1;return reader(3);}console.log(read());', ['3']],
+    ['function read(){let NaN=1,reader=()=>NaN;return reader();}console.log(read());', ['1']],
+    ['function read(){let total=0;for(let NaN=0;NaN<2;NaN++){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());', ['4']],
+    ['function read(){let total=0;for(const NaN of [1,2]){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());', ['6']],
+    ['function read(){let total=0;for(const [x] of [[1],[2]]){total+=x;}return total;}console.log(read());', ['3']],
+    ['function pair(a,b){console.log(a);return b;}function read(){let first=pair(1,2),second=pair(first,3);return second;}console.log(read());', ['1', '2', '3']],
+  ]) {
+    assert.deepEqual(observed(source), expected, 'the unchanged original source is the execution oracle');
+    assert.deepEqual(observed(emitJavaScript(checkProgram(parseJavaScript(source))).text), expected, source);
+  }
+  // Nearest non-let shadows stop lookup; otherwise the outer initializer end
+  // still constrains an actual earlier read in a child scope.
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 1, 0], ['NaN', 'NaN'], [30, -1], [1], ['NaN'], [10]), []);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 0], ['NaN'], [30], [1], ['NaN'], [10]), [0, 0]);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 0], ['NaN'], [30], [1], ['NaN'], [30]), []);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0, 1], [0, 0, 0, 0, 0, 1, 0, 1, 0], ['NaN'], [30], [2], ['NaN'], [10]), [0, 0]);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0, 1], [0, 1, 0, 1, 0, 1, 1, 0, 0], ['NaN'], [30], [2], ['NaN'], [10]), [0, 1]);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 2], ['NaN'], [30], [1], ['NaN'], [10]), [0, 2]);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 2], ['NaN'], [30], [1], ['NaN'], [40]), [0, 2]);
+  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 1, 2], ['NaN', 'NaN'], [30, -1], [1], ['NaN'], [40]), []);
+  for (const [source, expected] of [
+    ['function read(NaN){return NaN;}let first=0,NaN=1;console.log(read(2));', ['2']],
+    ['const NaN=3;function read(){return NaN;}console.log(read());', ['3']],
+  ]) {
+    assert.deepEqual(observed(`'use strict';{${source}}`), expected);
+    const emitted = emitJavaScript(checkProgram(parseJavaScript(source))).text;
+    assert.deepEqual(observed(`'use strict';{${emitted}}`), expected, 'nearest parameter and existing constant ownership remain unchanged');
+  }
+  const source = 'function read(){let NaN=1,first=NaN;return first;}console.log(read()===1);';
+  const checked = checkProgram(parseJavaScript(source));
+  const archive = encodeTypedProgramLinks(checked);
+  const rust = emitRust(checked).text;
+  for (const program of [checked,
+    decodeTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()), archive.root),
+    decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(archive.network)), archive.root),
+  ]) {
+    assert.deepEqual(observed(emitJavaScript(program).text), observed(source));
+    assert.equal(emitRust(program).text, rust, 'text and binary reload retain the actual initialized binding');
   }
 });
 

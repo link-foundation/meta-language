@@ -633,3 +633,42 @@ export function readLexicalWinnerIndex(ends, eligible) {
   }
   return best;
 }
+
+/**
+ * Actual parser scopes own their bindings before any initializer runs. A read
+ * resolves to the nearest binding, including a parameter or constant shadow.
+ * Only simple let bindings add this check; their initializer must finish before
+ * the read. A closure's original read remains conservative when no invocation-
+ * order proof exists. Named functions and defaults do not represent mutable
+ * module captures, in either textual order. No expression/ASI boundary is guessed.
+ * Scope bounds are ordered start/count/boundary triples (0 ordinary, 1 closure,
+ * 2 named function or default). A negative
+ * binding end denotes a shadow whose existing parser check owns initialization
+ * validation. A refusal is [read index, issue]: 0 local timing, 1 closure timing,
+ * 2 unrepresented mutable module capture; otherwise [].
+ * @param {number[]} parents @param {number[]} bounds
+ * @param {string[]} names @param {number[]} ends
+ * @param {number[]} readScopes @param {string[]} readNames @param {number[]} readStarts
+ * @returns {number[]}
+ */
+export function readJavaScriptTemporalBindingRead(parents, bounds, names, ends, readScopes, readNames, readStarts) {
+  for (let read = 0; read < readNames.length; read += 1) {
+    let scope = readScopes[read];
+    let bound = false;
+    let captured = false;
+    let moduleRead = false;
+    while (scope >= 0 && !bound) {
+      for (let at = bounds[scope * 3]; at < bounds[scope * 3] + bounds[scope * 3 + 1]; at += 1) {
+        if (names[at] === readNames[read]) {
+          if (ends[at] >= 0 && moduleRead) return [read, 2];
+          if (ends[at] >= 0 && readStarts[read] < ends[at]) return [read, captured ? 1 : 0];
+          bound = true;
+        }
+      }
+      if (!bound && bounds[scope * 3 + 2] === 1) captured = true;
+      if (!bound && bounds[scope * 3 + 2] === 2) moduleRead = true;
+      scope = parents[scope];
+    }
+  }
+  return [];
+}
