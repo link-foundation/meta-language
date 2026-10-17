@@ -2168,8 +2168,23 @@ template cooking preserves line continuations and normalizes line endings.
 The portable Rust tokenizer keeps unsuffixed character and byte character
 literals as opaque whole tokens, retaining their original text and absolute
 offsets. Shared source rules handle scalar and byte escape boundaries without
-consuming lifetimes or labels; typed character expressions and patterns still
-refuse explicitly. JavaScript constructor selection uses the actual receiver
+consuming lifetimes or labels. Within the Rust 2024 source profile, unsuffixed
+byte literal expressions have their fixed `u8` type, including simple escapes
+and hexadecimal byte values through 255, as specified by the
+[Rust Reference byte literal rules](https://doc.rust-lang.org/reference/expressions/literal-expr.html#byte-literal-expressions).
+Their original token spans are retained; a wider result context does not
+implicitly widen a byte. The shared negation decision rejects explicitly typed
+and contextually inferred unsigned fixed integers, including zero, before and
+after literal folding, following the
+[Rust Reference negation rules](https://doc.rust-lang.org/reference/expressions/operator-expr.html#negation-operators).
+An explicit signed cast before negation remains distinct from a cast after it.
+Signed minimum literals, signed integer zero and floating negative zero retain
+their existing behavior. Unicode character expressions and all character
+patterns still refuse explicitly. Bounded JavaScript checks cover complete
+programs and checked text/binary Links replay; native compilation and execution
+remain pending CI verification.
+
+JavaScript constructor selection uses the actual receiver
 datatype and nearest lexical binding to resolve repeated tag names, while
 unknown, optional or shadowed owners retain their existing refusals. Both rule
 families are translated from complete JavaScript source closures and shipped
