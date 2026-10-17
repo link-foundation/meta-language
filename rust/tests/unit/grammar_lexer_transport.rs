@@ -1,7 +1,7 @@
 //! Source-local lexer declaration transport; lexical decisions are generated
 //! from the shared JavaScript module and tested separately.
 
-use meta_language::grammar::import::import_antlr;
+use meta_language::grammar::import::{GrammarImportError, import_antlr};
 use meta_language::grammar::interchange::{
     deserialize_grammar, parse_grammar_links, parse_native_grammar, render_grammar_links,
     render_native_grammar, serialize_grammar,
@@ -21,7 +21,17 @@ rule LETTER = silent charRange(\"a\", \"z\")\n";
 
 #[test]
 fn lexical_declarations_preserve_all_fields_through_native_links_and_serialization() {
-    let grammar = parse_native_grammar(LISTING).expect("the authored lexical listing parses");
+    // The JSON kind is charRange; both native listing codecs spell it range.
+    // Retain every original authored byte as an exact syntax-refusal input.
+    let original_error =
+        parse_native_grammar(LISTING).expect_err("charRange is not native notation");
+    let GrammarImportError::Parse { message, .. } = original_error else {
+        panic!("the original listing must retain its syntax error");
+    };
+    assert_eq!(message, "line 2: unknown expression charRange");
+    let canonical_listing = LISTING.replace("charRange(", "range(");
+    let grammar =
+        parse_native_grammar(&canonical_listing).expect("the canonical lexical listing parses");
     assert_eq!(grammar.declarations().present(), vec!["lexers"]);
     assert_eq!(grammar.declarations().lexers[0].name, "Source");
     let normalized = serialize_grammar(&grammar);
@@ -33,6 +43,7 @@ fn lexical_declarations_preserve_all_fields_through_native_links_and_serializati
     assert_eq!(entries[4]["kind"], "lexicalRule");
     assert_eq!(entries[4]["disposition"], "emit");
     assert_eq!(entries[4]["item"]["item"]["name"], "LETTER");
+    assert_eq!(entries[5]["item"]["kind"], "charRange");
     assert_eq!(entries[8]["source"], "unknownGuard()");
     assert_eq!(value["rules"][0]["expression"]["owner"], "start");
     for restored in [
@@ -47,7 +58,9 @@ fn lexical_declarations_preserve_all_fields_through_native_links_and_serializati
 
 #[test]
 fn lexical_public_binding_renames_preserve_the_original_source_matcher_namespace() {
-    let grammar = parse_native_grammar(LISTING).expect("the authored lexical listing parses");
+    let canonical_listing = LISTING.replace("charRange(", "range(");
+    let grammar =
+        parse_native_grammar(&canonical_listing).expect("the canonical lexical listing parses");
     let renamed = rename_grammar_rule(&grammar, "ID", "word", None, &[])
         .expect("rename public token")
         .grammar;

@@ -90,6 +90,20 @@ fn scalar_loop_snapshot_annotations_refuse_malformed_and_non_scalar_types() {
     )
     .unwrap();
     let original = serde_json::to_value(surface).unwrap();
+    assert_eq!(original["items"][0]["body"]["then"]["k"], "let");
+    for annotation in [
+        Value::Null,
+        serde_json::json!({"kind":"float"}),
+        serde_json::json!({"kind":"bool"}),
+        serde_json::json!({"kind":"string"}),
+        serde_json::json!({"kind":"array","element":{"kind":"float"}}),
+    ] {
+        let decoded = serde_json::from_value::<
+            meta_language::translation::surface::SurfaceBindingTypeAnnotation,
+        >(annotation.clone())
+        .unwrap();
+        assert_eq!(serde_json::to_value(decoded).unwrap(), annotation);
+    }
     for annotation in [
         serde_json::json!(false),
         serde_json::json!(0),
@@ -100,11 +114,38 @@ fn scalar_loop_snapshot_annotations_refuse_malformed_and_non_scalar_types() {
         serde_json::json!({"kind":1}),
     ] {
         let mut value = original.clone();
-        value["items"][0]["body"]["then"]["type"] = annotation;
+        value["items"][0]["body"]["then"]["type"] = annotation.clone();
         assert!(
-            serde_json::from_value::<meta_language::translation::surface::SProgram>(value).is_err()
+            serde_json::from_value::<
+                meta_language::translation::surface::SurfaceBindingTypeAnnotation,
+            >(annotation.clone())
+            .is_err(),
+            "malformed binding annotation decoded directly: {annotation}"
+        );
+        let node = value["items"][0]["body"]["then"]["k"].clone();
+        let decoded =
+            serde_json::from_value::<meta_language::translation::surface::SProgram>(value);
+        assert!(
+            decoded.is_err(),
+            "malformed annotation {annotation} on node {node} decoded as {decoded:?}"
         );
     }
+    for annotation in [
+        r#"{"kind":"float","kind":"bool"}"#,
+        r#"{"kind":"fixed","bits":32,"bits":64,"signed":true}"#,
+        r#"{"kind":"array","element":{"kind":"fixed","bits":32,"bits":64,"signed":true}}"#,
+    ] {
+        assert!(
+            serde_json::from_str::<
+                meta_language::translation::surface::SurfaceBindingTypeAnnotation,
+            >(annotation)
+            .is_err(),
+            "duplicate type annotation fields decoded: {annotation}"
+        );
+    }
+    assert!(serde_json::from_str::<meta_language::translation::surface::SExpr>(
+        r#"{"k":"let","name":"saved","type":null,"type":{"kind":"float"},"value":{"k":"num","value":"1"},"body":{"k":"name","path":["saved"]}}"#,
+    ).is_err(), "duplicate binding type fields must still refuse");
     for annotation in [
         serde_json::json!({"kind":"string"}),
         serde_json::json!({"kind":"array","element":{"kind":"float"}}),
