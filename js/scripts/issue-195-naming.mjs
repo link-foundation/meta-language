@@ -54546,6 +54546,90 @@ const B63_CURRENT_INVENTORY_WITNESSES=[
     "inventoryName": "check native unsupported character suffix and semantics",
     "sourceText": "fn rust_character_suffixes_and_typed_semantics_remain_explicitly_unsupported() {\n    for literal in [\"'a'word\", \"b'a'u8\", \"'a'_suffix\", \"'a'λ\"] {\n        let source = format!(\"// 😀\\n{literal}\");\n        let error = tokenize(&source, Language::Rust).unwrap_err();\n        let suffix = &literal[literal.rfind('\\'').unwrap() + 1..];\n        let start = offset(&source, suffix);\n        assert_eq!(error.kind, ErrorKind::Unsupported);\n        assert_eq!(\n            error.reason,\n            \"Rust character literal suffix is outside the supported lexical profile\"\n        );\n        assert_eq!(error.span, Some(Span::new(start, start + 1)));\n    }\n    for literal in [\"'{'\", \"b'}'\", r\"'\\u{1F600}'\", r\"b'\\xFF'\"] {\n        let source = format!(\"fn value()->u32{{{literal}}}\");\n        let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();\n        if literal.starts_with('b') {\n            assert_eq!(error.kind, ErrorKind::Syntax);\n            assert_eq!(error.reason, \"a Rust program needs fn main\");\n            let end = source.encode_utf16().count();\n            assert_eq!(error.span, Some(Span::new(end, end)));\n        } else {\n            assert_eq!(error.kind, ErrorKind::Unsupported);\n            assert_eq!(\n                error.reason,\n                \"character literal: characters are outside the portable core\"\n            );\n            assert_eq!(\n                error.span,\n                Some(Span::new(\n                    offset(&source, literal),\n                    offset(&source, literal) + literal.encode_utf16().count()\n                ))\n            );\n        }\n        let source = format!(\"fn choose(x:u8)->u8{{match x{{{literal}=>1,_=>0}}}}\");\n        let error = meta_language::translation::rust::parse_rust(&source).unwrap_err();\n        assert_eq!(error.kind, ErrorKind::Unsupported);\n        assert_eq!(\n            error.reason,\n            \"character pattern: characters are outside the portable core\"\n        );\n    }\n    for literal in [\"''\", \"b'é'\", r\"b'\\u{41}'\", r\"'\\x80'\"] {\n        let error = tokenize(literal, Language::Rust).unwrap_err();\n        assert_eq!(error.kind, ErrorKind::Syntax);\n        let span = error.span.unwrap();\n        assert!(span.start <= span.end && span.end <= literal.encode_utf16().count());\n    }\n    let error = tokenize(r\"'\\u{D800}'\", Language::Rust).unwrap_err();\n    assert_eq!(error.kind, ErrorKind::Unsupported);\n    assert_eq!(\n        error.reason,\n        \"Rust character literal is not a Unicode scalar value\"\n    );\n}",
     "inventory": "B65 original character and tag context source names for rust/tests/unit/translation_rust_raw_string_literals.rs"
+  },
+  {
+    "id": "grammar.check-selection-mapped-tree",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "checkGrammarSelectionMappedTree",
+    "inventoryName": "check selection mapped tree",
+    "sourceText": "export function checkGrammarSelectionMappedTree(bundle, options = {}) {\n  if (Array.isArray(bundle) || Array.isArray(options)) fail('ordinary plain records are required');\n  const header = new Map(dataEntries(bundle)), originalTree = header.get('tree');\n  if (!originalTree || Array.isArray(originalTree)) fail('a complete physical root CST is required');\n  const rootHeader = new Map(dataEntries(originalTree)), end = rootHeader.get('end');\n  if (!Number.isSafeInteger(end) || end < 0 || end > 4294967295) fail('a complete physical root CST is required');\n  const settings = Object.create(null);\n  for (const [key, value] of dataEntries(options)) settings[key] = value;\n  for (const key of ['memoryLimit', 'stepLimit', 'maxDepth']) if (Object.hasOwn(settings, key)\n    && (!Number.isSafeInteger(settings[key]) || settings[key] < 0)) fail('invalid resource option');\n  if (Object.hasOwn(settings, 'errorRecovery') && typeof settings.errorRecovery !== 'boolean') fail('invalid resource option');\n  const memory = memoryBudget(settings), maximumDepth = settings.maxDepth ?? DEFAULT_MAX_DEPTH;\n  const control = { bytes: null, budget: stepBudget(settings, end, memory),\n    step: Executor.prototype.step, retain: Executor.prototype.retain };\n  const depth = level => {\n    control.step();\n    if (level > maximumDepth) throw new NestingTooDeep();\n  };\n  const active = new Set(), copies = new Map();\n  const snapshot = (value, level) => {\n    depth(level);\n    if (value === null || typeof value === 'string' || typeof value === 'boolean'\n        || typeof value === 'number' && Number.isFinite(value)) return value;\n    if (!value || typeof value !== 'object') fail('unsupported host data');\n    if (active.has(value)) fail('cyclic host data');\n    if (copies.has(value)) return copies.get(value);\n    const entries = dataEntries(value), copy = Array.isArray(value) ? [] : Object.create(null);\n    control.retain(entries.length + 1);\n    copies.set(value, copy);\n    active.add(value);\n    for (const [key, child] of entries) {\n      control.step();\n      if (Array.isArray(value) && key === 'length') continue;\n      Object.defineProperty(copy, key, { value: snapshot(child, level + 1), enumerable: true });\n    }\n    active.delete(value);\n    return copy;\n  };\n  const { tree, sourcePlanes } = snapshot(bundle, 0);\n  if (!Array.isArray(sourcePlanes) || sourcePlanes.length === 0) fail('the source-plane table is required');\n  const physical = (nodes, begin, end, level) => {\n    const bytes = [];\n    let cursor = begin;\n    const visit = (node, nesting) => {\n      depth(nesting);\n      control.retain(1);\n      if (!node || typeof node !== 'object') fail('invalid physical tree');\n      const begin = cursor;\n      const role = readGrammarSelectionTreeChildren(node.type, node.sourceChildren !== undefined);\n      if (role === 'leaf') {\n        let count;\n        if (typeof node.text === 'string') count = Buffer.byteLength(node.text, 'utf8');\n        else if (node.text === null && typeof node.hex === 'string' && /^(?:[0-9a-f]{2})*$/u.test(node.hex)) count = node.hex.length / 2;\n        else fail('invalid physical leaf bytes');\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, count, false)) fail('physical leaf span differs');\n        control.retain(count + 1);\n        const stored = typeof node.text === 'string' ? encodeText(node.text)\n          : Uint8Array.from(node.hex.match(/../gu) ?? [], word => Number.parseInt(word, 16));\n        if (typeof node.text === 'string' && textOf(stored, 0, stored.length) !== node.text) fail('non-scalar physical leaf text');\n        for (const byte of stored) { control.step(); bytes.push(byte); }\n        cursor = node.end;\n      } else if (role === 'missing') {\n        if (!acceptGrammarSelectionPhysicalSpan(node.start, node.end, cursor, 0, true)) fail('invalid missing span');\n      } else if (role === 'children') {\n        if (!Array.isArray(node.children)) fail('missing concrete children');\n        for (const child of node.children) visit(child, nesting + 1);\n      } else if (role === 'root' || role === 'sourceChildren') {\n        if (role === 'sourceChildren') {\n          if (!Array.isArray(node.sourceChildren)) fail('invalid physical source children');\n          for (const child of node.sourceChildren) visit(child, nesting + 1);\n        } else visit(node.root, nesting + 1);\n      } else fail('unknown concrete node kind');\n      if (role !== 'leaf' && role !== 'missing' && !acceptGrammarSelectionPhysicalSpan(node.start,\n        node.end, begin, cursor - begin, false)) fail('physical container span differs');\n    };\n    for (const node of nodes) visit(node, level);\n    if (cursor !== end) fail('incomplete physical source plane');\n    return Uint8Array.from(bytes);\n  };\n  // Parsing root invocations consume the entire source. Embedded roots have\n  // their own explicit plane; their byte offsets are never added to a parent.\n  const rootBytes = physical([tree], 0, tree?.end, 0);\n  for (let position = 0; position < rootBytes.length;) {\n    control.step();\n    const scalar = decodeAt(rootBytes, position);\n    if (scalar.codePoint < 0) fail('the root source plane is not UTF-8');\n    position += scalar.length;\n  }\n  const rangeColumns = ranges => {\n    if (!Array.isArray(ranges)) fail('invalid included source ranges');\n    control.retain(ranges.length * 2 + 1);\n    const columns = [];\n    for (const row of ranges) {\n      control.step();\n      if (!Array.isArray(row) || row.length !== 2\n          || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', row[0], row[1])) fail('invalid included source ranges');\n      columns.push(row[0], row[1]);\n    }\n    return columns;\n  };\n  const planes = [];\n  for (let identity = 0; identity < sourcePlanes.length; identity += 1) {\n    control.step();\n    control.retain(1);\n    const definition = sourcePlanes[identity];\n    if (!exactKeys(definition, readGrammarSelectionMappingFieldOrder('source').split('|'))) fail('invalid ordered source definition');\n    if (!acceptGrammarSelectionSourceRoot(identity, definition.derivation === null)) fail('invalid source derivation presence');\n    if (identity === 0) {\n      if (!acceptGrammarSelectionSourceDefinition(definition.kind, definition.identity,\n        identity, definition.encoding, definition.byteLength, rootBytes.length)) fail('invalid root source definition');\n      planes.push({ identity, bytes: rootBytes });\n      continue;\n    }\n    const origin = definition.derivation;\n    const included = acceptGrammarSelectionIncludedRangeMapping(origin?.operation ?? '');\n    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('derivation')\n      : readGrammarSelectionMappingFieldOrder('derivation');\n    if (!exactKeys(origin, fields.split('|'))) fail('unowned source derivation');\n    const parent = typeof origin.input === 'number' ? planes[origin.input] : null;\n    const acceptDerivation = included ? acceptGrammarSelectionIncludedRangeDerivation : acceptGrammarSelectionSourceDerivation;\n    if (!parent || !acceptDerivation(origin.operation, origin.input, identity,\n      origin.start, origin.end, parent.bytes.length)) fail('unowned source derivation');\n    if (included) rangeColumns(origin.ranges);\n    control.bytes = parent.bytes;\n    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, origin.start, origin.end, origin.ranges)\n      : mapGrammarSelectionSource(control, origin.start, origin.end);\n    if (derived.reason || derived.mapping.output !== identity || !acceptGrammarSelectionSourceDefinition(definition.kind,\n      definition.identity, identity, definition.encoding, definition.byteLength, derived.bytes.length)) fail('invalid source derivation');\n    planes.push({ identity, bytes: derived.bytes });\n  }\n  const walk = (node, plane, level) => {\n    depth(level);\n    if (node.type === 'node') {\n      for (const child of node.children) walk(child, plane, level + 1);\n      return;\n    }\n    if (node.type !== 'embed') return;\n    const included = acceptGrammarSelectionIncludedRangeMapping(node.selection?.mapping ?? '');\n    const mapped = node.selection?.mapping === 'json-string' || included;\n    const acceptProfile = included ? acceptGrammarSelectionIncludedRangeProfile : acceptGrammarSelectionMappingProfile;\n    if (!acceptProfile(node.selection?.mapping ?? 'identity',\n      node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');\n    if (!mapped) {\n      walk(node.root, plane, level + 1);\n      for (const alternative of node.selection?.alternatives ?? []) walk(alternative.root, plane, level + 1);\n      return;\n    }\n    const mapping = node.selection.sourceMapping;\n    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('mapping')\n      : readGrammarSelectionMappingFieldOrder('mapping');\n    const acceptDescriptor = included ? acceptGrammarSelectionIncludedRangeDescriptor : acceptGrammarSelectionMappingDescriptor;\n    if (!exactKeys(mapping, fields.split('|'))\n        || !acceptDescriptor(mapping.kind, mapping.operation)\n        || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output\n        || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,\n          node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');\n    if (!acceptGrammarSelectionMappingReference(mapping.input, plane.identity, mapping.output, planes.length)) fail('unowned source-plane reference');\n    const output = sourcePlanes[mapping.output], origin = output.derivation;\n    if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,\n      origin.end, node.end)) fail('mapping belongs to another source occurrence');\n    if (included && !acceptGrammarSelectionIncludedRangeAgreement(rangeColumns(mapping.ranges),\n      rangeColumns(origin.ranges))) fail('ordered included source ranges differ');\n    control.bytes = plane.bytes;\n    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, node.start, node.end, origin.ranges)\n      : mapGrammarSelectionSource(control, node.start, node.end);\n    if (derived.reason) fail(derived.reason);\n    if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length\n        || !mapping.intervals.every((row, index) => Array.isArray(row)\n          && acceptGrammarSelectionSourceInterval(row, derived.mapping.intervals[index]))) fail('ordered source intervals differ');\n    if (derived.mapping.output !== mapping.output) fail('source reference differs from its actual derivation');\n    const childPlane = planes[mapping.output];\n    for (const child of node.sourceChildren) walk(child, plane, level + 1);\n    for (const root of [node.root, ...node.selection.alternatives.map(alternative => alternative.root)]) {\n      const stored = physical([root], 0, derived.bytes.length, level + 1);\n      if (stored.length !== derived.bytes.length || stored.some((byte, index) => byte !== derived.bytes[index])) fail('decoded tree bytes differ');\n      walk(root, childPlane, level + 1);\n    }\n  };\n  walk(tree, planes[0], 0);\n  return bundle;\n}",
+    "inventory": "B63 actual source names for js/src/grammar-runtime/mapped-tree-validation.js"
+  },
+  {
+    "id": "grammar.check-mapped-tree-source-ownership",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "walk",
+    "inventoryName": "check mapped tree source ownership",
+    "sourceText": "const walk = (node, plane, level) => {\n    depth(level);\n    if (node.type === 'node') {\n      for (const child of node.children) walk(child, plane, level + 1);\n      return;\n    }\n    if (node.type !== 'embed') return;\n    const included = acceptGrammarSelectionIncludedRangeMapping(node.selection?.mapping ?? '');\n    const mapped = node.selection?.mapping === 'json-string' || included;\n    const acceptProfile = included ? acceptGrammarSelectionIncludedRangeProfile : acceptGrammarSelectionMappingProfile;\n    if (!acceptProfile(node.selection?.mapping ?? 'identity',\n      node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');\n    if (!mapped) {\n      walk(node.root, plane, level + 1);\n      for (const alternative of node.selection?.alternatives ?? []) walk(alternative.root, plane, level + 1);\n      return;\n    }\n    const mapping = node.selection.sourceMapping;\n    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('mapping')\n      : readGrammarSelectionMappingFieldOrder('mapping');\n    const acceptDescriptor = included ? acceptGrammarSelectionIncludedRangeDescriptor : acceptGrammarSelectionMappingDescriptor;\n    if (!exactKeys(mapping, fields.split('|'))\n        || !acceptDescriptor(mapping.kind, mapping.operation)\n        || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output\n        || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,\n          node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');\n    if (!acceptGrammarSelectionMappingReference(mapping.input, plane.identity, mapping.output, planes.length)) fail('unowned source-plane reference');\n    const output = sourcePlanes[mapping.output], origin = output.derivation;\n    if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,\n      origin.end, node.end)) fail('mapping belongs to another source occurrence');\n    if (included && !acceptGrammarSelectionIncludedRangeAgreement(rangeColumns(mapping.ranges),\n      rangeColumns(origin.ranges))) fail('ordered included source ranges differ');\n    control.bytes = plane.bytes;\n    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, node.start, node.end, origin.ranges)\n      : mapGrammarSelectionSource(control, node.start, node.end);\n    if (derived.reason) fail(derived.reason);\n    if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length\n        || !mapping.intervals.every((row, index) => Array.isArray(row)\n          && acceptGrammarSelectionSourceInterval(row, derived.mapping.intervals[index]))) fail('ordered source intervals differ');\n    if (derived.mapping.output !== mapping.output) fail('source reference differs from its actual derivation');\n    const childPlane = planes[mapping.output];\n    for (const child of node.sourceChildren) walk(child, plane, level + 1);\n    for (const root of [node.root, ...node.selection.alternatives.map(alternative => alternative.root)]) {\n      const stored = physical([root], 0, derived.bytes.length, level + 1);\n      if (stored.length !== derived.bytes.length || stored.some((byte, index) => byte !== derived.bytes[index])) fail('decoded tree bytes differ');\n      walk(root, childPlane, level + 1);\n    }\n  };",
+    "inventory": "B63 actual source names for js/src/grammar-runtime/mapped-tree-validation.js"
+  },
+  {
+    "id": "grammar.grammar-source-mapping-record",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRecord",
+    "inventoryName": "grammar source mapping record",
+    "sourceText": "struct SourceRecord {\n    definition: Value,\n    // Successful parent caches retain every derived buffer. Private buffer\n    // keys cannot be reused during this parse; no public identity uses them.\n    parent: Option<usize>,\n    mapping: Option<Value>,\n    mappings: HashMap<(usize, usize), Result<MappedSource, MappingFailure>>,\n    included_mappings: HashMap<IncludedRangeKey, Result<MappedSource, MappingFailure>>,\n}",
+    "inventory": "B63 actual source names for rust/src/grammar/feature_runtime/selection_source_mapping.rs"
+  },
+  {
+    "id": "grammar.retain-native-grammar-source-definition",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::source",
+    "inventoryName": "retain native grammar source definition",
+    "sourceText": "    fn source(\n        &mut self,\n        bytes: &[u8],\n        budget: &impl MappingBudget,\n    ) -> Run<Result<usize, MappingFailure>> {\n        let key = buffer_key(bytes);\n        if let Some(source) = self.by_buffer.get(&key) {\n            return Ok(Ok(*source));\n        }\n        if let Some(failed) = self.invalid.get(&key) {\n            return Ok(Err(failed.clone()));\n        }\n        budget.mapping_retain(1)?;\n        let mut position = 0;\n        while position < bytes.len() {\n            budget.mapping_step()?;\n            let (scalar, width) = decode_at(bytes, position, bytes.len());\n            if scalar.is_none() {\n                let failed = MappingFailure {\n                    reason: \"unsupportedEmbeddingMapping\",\n                    offset: position,\n                };\n                self.invalid.insert(key, failed.clone());\n                return Ok(Err(failed));\n            }\n            position += width;\n        }\n        let source = self.records.len();\n        self.records.push(SourceRecord {\n            definition: json!({\"kind\":\"grammar-source\",\"identity\":source,\n            \"encoding\":\"UTF-8\",\"byteLength\":bytes.len(),\"derivation\":null}),\n            parent: None,\n            mapping: None,\n            mappings: HashMap::new(),\n            included_mappings: HashMap::new(),\n        });\n        self.by_buffer.insert(key, source);\n        Ok(Ok(source))\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ],
+    "inventory": "B63 actual source names for rust/src/grammar/feature_runtime/selection_source_mapping.rs"
+  },
+  {
+    "id": "grammar.map-native-grammar-selection-source",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::map",
+    "inventoryName": "map native grammar selection source",
+    "sourceText": "    pub(super) fn map(\n        &mut self,\n        bytes: &[u8],\n        start: usize,\n        end: usize,\n        budget: &impl MappingBudget,\n    ) -> Run<Result<MappedSource, MappingFailure>> {\n        let input = match self.source(bytes, budget)? {\n            Ok(source) => source,\n            Err(failed) => return Ok(Err(failed)),\n        };\n        if let Some(cached) = self.records[input].mappings.get(&(start, end)) {\n            return Ok(cached.clone());\n        }\n        let failed = |offset| MappingFailure {\n            reason: \"invalidEmbeddingMapping\",\n            offset,\n        };\n        if start > end || end > bytes.len() {\n            return Ok(Err(failed(start.min(bytes.len()))));\n        }\n        let length = end - start;\n        let Some(cells) = number_index(read_grammar_selection_mapping_reservation(\n            numeric(length),\n            false,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        budget.mapping_retain(cells)?;\n        let Some(steps) = number_index(read_grammar_selection_mapping_reservation(\n            numeric(length),\n            true,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        for _ in 0..steps {\n            budget.mapping_step()?;\n        }\n        let mut codes = Vec::new();\n        let mut positions = Vec::new();\n        let mut position = start;\n        while position < end {\n            let (scalar, width) = decode_at(bytes, position, end);\n            let Some(scalar) = scalar else {\n                let failed = failed(position);\n                self.records[input]\n                    .mappings\n                    .insert((start, end), Err(failed.clone()));\n                return Ok(Err(failed));\n            };\n            positions.push(position);\n            codes.push(f64::from(scalar));\n            position += width;\n        }\n        positions.push(end);\n        let mut text = String::new();\n        let mut intervals = vec![json!([start, start + 1, 0, 0])];\n        let mut index = 1;\n        let mut output_end = 0;\n        loop {\n            let part = read_grammar_selection_json_string_part(&codes, numeric(index));\n            let opcode = part.first().copied().and_then(number_index);\n            if opcode == Some(3) {\n                break;\n            }\n            if opcode != Some(0) {\n                let at = part\n                    .get(1)\n                    .copied()\n                    .and_then(number_index)\n                    .and_then(|at| positions.get(at))\n                    .copied()\n                    .unwrap_or(start);\n                let failed = MappingFailure {\n                    reason: if opcode == Some(2) {\n                        \"unsupportedEmbeddingMapping\"\n                    } else {\n                        \"invalidEmbeddingMapping\"\n                    },\n                    offset: at,\n                };\n                self.records[input]\n                    .mappings\n                    .insert((start, end), Err(failed.clone()));\n                return Ok(Err(failed));\n            }\n            let Some(code) = part\n                .get(1)\n                .copied()\n                .and_then(number_index)\n                .and_then(|code| u32::try_from(code).ok())\n            else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(scalar) = char::from_u32(code) else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(next) = part.get(2).copied().and_then(number_index) else {\n                return Ok(Err(failed(start)));\n            };\n            let Some(width) = number_index(read_source_text_scalar_byte_width(f64::from(code)))\n            else {\n                return Ok(Err(failed(start)));\n            };\n            let (Some(&from), Some(&to)) = (positions.get(index), positions.get(next)) else {\n                return Ok(Err(failed(start)));\n            };\n            text.push(scalar);\n            intervals.push(json!([from, to, output_end, output_end + width]));\n            index = next;\n            output_end += width;\n        }\n        intervals.push(json!([end - 1, end, output_end, output_end]));\n        let bytes: Rc<[u8]> = Rc::from(text.into_bytes());\n        let source = self.records.len();\n        let mapping = json!({\"kind\":\"source-mapping\",\"operation\":\"json-string\",\"input\":input,\n            \"output\":source,\"intervals\":intervals});\n        let mapped = MappedSource {\n            bytes: bytes.clone(),\n            mapping: mapping.clone(),\n        };\n        self.records.push(SourceRecord { definition: json!({\"kind\":\"grammar-source\",\"identity\":source,\n            \"encoding\":\"UTF-8\",\"byteLength\":bytes.len(),\"derivation\":{\"operation\":\"json-string\",\"input\":input,\"start\":start,\"end\":end}}),\n            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new(),\n            included_mappings: HashMap::new() });\n        self.by_buffer.insert(buffer_key(&bytes), source);\n        self.records[input]\n            .mappings\n            .insert((start, end), Ok(mapped.clone()));\n        Ok(Ok(mapped))\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ],
+    "inventory": "B63 actual source names for rust/src/grammar/feature_runtime/selection_source_mapping.rs"
+  },
+  {
+    "id": "grammar.check-native-mapped-tree-ownership",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "Validator::walk",
+    "inventoryName": "check native mapped tree ownership",
+    "sourceText": "    fn walk(\n        &mut self,\n        node: &Value,\n        plane: usize,\n        depth: usize,\n    ) -> Result<(), GrammarRuntimeError> {\n        self.budget.depth(depth)?;\n        if node[\"type\"] == \"node\" {\n            let children = node[\"children\"]\n                .as_array()\n                .ok_or_else(|| invalid(\"missing concrete children\"))?;\n            for child in children {\n                self.walk(child, plane, depth + 1)?;\n            }\n            return Ok(());\n        }\n        if node[\"type\"] != \"embed\" {\n            return Ok(());\n        }\n        let selection = &node[\"selection\"];\n        let profile = match selection.get(\"mapping\") {\n            None | Some(Value::Null) => \"identity\",\n            Some(Value::String(profile)) => profile,\n            _ => return Err(invalid(\"unknown mapping profile\")),\n        };\n        let included = accept_grammar_selection_included_range_mapping(profile);\n        let accepted_profile = if included {\n            accept_grammar_selection_included_range_profile(\n                profile,\n                node.get(\"sourceChildren\").is_some(),\n                selection.get(\"sourceMapping\").is_some(),\n            )\n        } else {\n            accept_grammar_selection_mapping_profile(\n                profile,\n                node.get(\"sourceChildren\").is_some(),\n                selection.get(\"sourceMapping\").is_some(),\n            )\n        };\n        if !accepted_profile {\n            return Err(invalid(\"unknown mapping profile\"));\n        }\n        let alternatives = selection[\"alternatives\"].as_array();\n        if profile != \"json-string\" && !included {\n            self.walk(&node[\"root\"], plane, depth + 1)?;\n            if let Some(alternatives) = alternatives {\n                for alternative in alternatives {\n                    self.walk(&alternative[\"root\"], plane, depth + 1)?;\n                }\n            }\n            return Ok(());\n        }\n        let mapping = &selection[\"sourceMapping\"];\n        let (ordered_fields, descriptor) = if included {\n            (\n                accept_included_range_keys(mapping, \"mapping\"),\n                accept_grammar_selection_included_range_descriptor(\n                    mapping[\"kind\"].as_str().unwrap_or_default(),\n                    mapping[\"operation\"].as_str().unwrap_or_default(),\n                ),\n            )\n        } else {\n            (\n                exact_keys(mapping, \"mapping\"),\n                accept_grammar_selection_mapping_descriptor(\n                    mapping[\"kind\"].as_str().unwrap_or_default(),\n                    mapping[\"operation\"].as_str().unwrap_or_default(),\n                ),\n            )\n        };\n        if !ordered_fields\n            || !descriptor\n            || !node[\"sourceChildren\"].is_array()\n            || mapping[\"input\"] == mapping[\"output\"]\n            || !accept_grammar_selection_mapping_occurrence(\n                number(&mapping[\"input\"]),\n                numeric(plane),\n                number(&selection[\"start\"]),\n                number(&node[\"start\"]),\n                number(&selection[\"end\"]),\n                number(&node[\"end\"]),\n            )\n        {\n            return Err(invalid(\"invalid mapped boundary\"));\n        }\n        if !accept_grammar_selection_mapping_reference(\n            number(&mapping[\"input\"]),\n            numeric(plane),\n            number(&mapping[\"output\"]),\n            numeric(self.planes.len()),\n        ) {\n            return Err(invalid(\"unowned source-plane reference\"));\n        }\n        let output =\n            offset(&mapping[\"output\"]).ok_or_else(|| invalid(\"unowned source-plane reference\"))?;\n        let origin = &self.definitions[output][\"derivation\"];\n        if !accept_grammar_selection_mapping_occurrence(\n            number(&origin[\"input\"]),\n            number(&mapping[\"input\"]),\n            number(&origin[\"start\"]),\n            number(&node[\"start\"]),\n            number(&origin[\"end\"]),\n            number(&node[\"end\"]),\n        ) {\n            return Err(invalid(\"mapping belongs to another source occurrence\"));\n        }\n        let ranges = if included {\n            let actual = read_included_range_columns(&mapping[\"ranges\"], &self.budget)?;\n            let expected = read_included_range_columns(&origin[\"ranges\"], &self.budget)?;\n            if !accept_grammar_selection_included_range_agreement(&actual, &expected) {\n                return Err(invalid(\"ordered included source ranges differ\"));\n            }\n            Some(expected.as_chunks::<2>().0.to_vec())\n        } else {\n            None\n        };\n        let start = offset(&node[\"start\"]).ok_or_else(|| invalid(\"invalid mapped boundary\"))?;\n        let end = offset(&node[\"end\"]).ok_or_else(|| invalid(\"invalid mapped boundary\"))?;\n        let derived = if let Some(ranges) = &ranges {\n            self.registry\n                .map_included(&self.planes[plane], start, end, ranges, &self.budget)\n        } else {\n            self.registry\n                .map(&self.planes[plane], start, end, &self.budget)\n        }\n        .map_err(aborted)?\n        .map_err(|failed| invalid(failed.reason))?;\n        let actual = mapping[\"intervals\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"ordered source intervals differ\"))?;\n        let expected = derived.mapping[\"intervals\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"ordered source intervals differ\"))?;\n        if actual.len() != expected.len() {\n            return Err(invalid(\"ordered source intervals differ\"));\n        }\n        for (row, expected) in actual.iter().zip(expected) {\n            let Some(row) = row.as_array() else {\n                return Err(invalid(\"ordered source intervals differ\"));\n            };\n            let Some(expected) = expected.as_array() else {\n                return Err(invalid(\"ordered source intervals differ\"));\n            };\n            let row = row.iter().map(number).collect::<Vec<_>>();\n            let expected = expected.iter().map(number).collect::<Vec<_>>();\n            if !accept_grammar_selection_source_interval(&row, &expected) {\n                return Err(invalid(\"ordered source intervals differ\"));\n            }\n        }\n        if offset(&derived.mapping[\"output\"]) != offset(&mapping[\"output\"]) {\n            return Err(invalid(\n                \"source reference differs from its actual derivation\",\n            ));\n        }\n        for child in node[\"sourceChildren\"]\n            .as_array()\n            .ok_or_else(|| invalid(\"invalid physical source children\"))?\n        {\n            self.walk(child, plane, depth + 1)?;\n        }\n        let alternatives = alternatives.ok_or_else(|| invalid(\"invalid selection witnesses\"))?;\n        for root in std::iter::once(&node[\"root\"])\n            .chain(alternatives.iter().map(|alternative| &alternative[\"root\"]))\n        {\n            let stored = physical(\n                std::slice::from_ref(root),\n                0,\n                derived.bytes.len(),\n                depth + 1,\n                &self.budget,\n            )?;\n            if stored.as_slice() != &*derived.bytes {\n                return Err(invalid(\"decoded tree bytes differ\"));\n            }\n            self.walk(root, output, depth + 1)?;\n        }\n        Ok(())\n    }",
+    "ownerContexts": [
+      "impl Validator<'_> {"
+    ],
+    "inventory": "B63 actual source names for rust/src/grammar/feature_runtime/mapped_tree_validation.rs"
+  },
+  {
+    "id": "grammar.grammar-source-plane",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourcePlane",
+    "inventoryName": "grammar source plane",
+    "sourceText": "export interface GrammarSourcePlane {\n  kind: 'grammar-source';\n  identity: number;\n  encoding: 'UTF-8';\n  byteLength: number;\n  derivation: null | { operation: 'json-string'; input: number; start: number; end: number }\n    | { operation: 'included-ranges'; input: number; start: number; end: number; ranges: Array<[number, number]> };\n}",
+    "inventory": "B63 actual source names for js/src/index.d.ts"
+  },
+  {
+    "id": "grammar.grammar-selection-source-mapping",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSelection.sourceMapping",
+    "inventoryName": "grammar selection source mapping",
+    "sourceText": "sourceMapping?: GrammarSourceMapping | GrammarIncludedRangeSourceMapping;",
+    "ownerContexts": [
+      "export interface GrammarSelection {"
+    ],
+    "inventory": "B63 actual source names for js/src/index.d.ts"
+  },
+  {
+    "id": "grammar.check-selection-mapped-tree",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "check_grammar_selection_mapped_tree",
+    "inventoryName": "check selection mapped tree",
+    "sourceText": "pub fn check_grammar_selection_mapped_tree<'a>(\n    bundle: &'a Value,\n    options: &FeatureParseOptions,\n) -> Result<&'a Value, GrammarRuntimeError> {\n    let tree = bundle\n        .get(\"tree\")\n        .filter(|tree| tree.is_object())\n        .ok_or_else(|| invalid(\"a complete physical root CST is required\"))?;\n    let end = offset(&tree[\"end\"])\n        .filter(|end| u32::try_from(*end).is_ok())\n        .ok_or_else(|| invalid(\"a complete physical root CST is required\"))?;\n    let budget = ValidationBudget {\n        steps: Cell::new(0),\n        cells: Cell::new(0),\n        step_limit: options.step_limit.unwrap_or_else(|| {\n            (100_000 + 1000 * end)\n                * if options.error_recovery == Some(true) {\n                    2\n                } else {\n                    1\n                }\n        }),\n        memory_limit: options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT),\n        max_depth: options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH),\n    };\n    budget.plain(bundle, 0)?;\n    let definitions = bundle[\"sourcePlanes\"]\n        .as_array()\n        .filter(|rows| !rows.is_empty())\n        .ok_or_else(|| invalid(\"the source-plane table is required\"))?;\n    let bytes = physical(std::slice::from_ref(tree), 0, end, 0, &budget)?;\n    let mut position = 0;\n    while position < bytes.len() {\n        budget.step()?;\n        let (scalar, width) = super::text::decode_at(&bytes, position, bytes.len());\n        if scalar.is_none() {\n            return Err(invalid(\"the root source plane is not UTF-8\"));\n        }\n        position += width;\n    }\n    let mut validator = Validator {\n        definitions,\n        planes: Vec::new(),\n        registry: SourceRegistry::default(),\n        budget,\n    };\n    let root: Rc<[u8]> = Rc::from(bytes);\n    for (identity, definition) in definitions.iter().enumerate() {\n        validator.budget.step()?;\n        validator.budget.retain(1)?;\n        if !exact_keys(definition, \"source\") {\n            return Err(invalid(\"invalid ordered source definition\"));\n        }\n        if !accept_grammar_selection_source_root(\n            numeric(identity),\n            definition[\"derivation\"].is_null(),\n        ) {\n            return Err(invalid(\"invalid source derivation presence\"));\n        }\n        let bytes = if identity == 0 {\n            root.clone()\n        } else {\n            let origin = &definition[\"derivation\"];\n            let included = accept_grammar_selection_included_range_mapping(\n                origin[\"operation\"].as_str().unwrap_or_default(),\n            );\n            let ordered = if included {\n                accept_included_range_keys(origin, \"derivation\")\n            } else {\n                exact_keys(origin, \"derivation\")\n            };\n            if !ordered {\n                return Err(invalid(\"unowned source derivation\"));\n            }\n            let input = offset(&origin[\"input\"])\n                .and_then(|index| validator.planes.get(index))\n                .ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            let accepted = if included {\n                accept_grammar_selection_included_range_derivation(\n                    origin[\"operation\"].as_str().unwrap_or_default(),\n                    number(&origin[\"input\"]),\n                    numeric(identity),\n                    number(&origin[\"start\"]),\n                    number(&origin[\"end\"]),\n                    numeric(input.len()),\n                )\n            } else {\n                accept_grammar_selection_source_derivation(\n                    origin[\"operation\"].as_str().unwrap_or_default(),\n                    number(&origin[\"input\"]),\n                    numeric(identity),\n                    number(&origin[\"start\"]),\n                    number(&origin[\"end\"]),\n                    numeric(input.len()),\n                )\n            };\n            if !accepted {\n                return Err(invalid(\"unowned source derivation\"));\n            }\n            let start =\n                offset(&origin[\"start\"]).ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            let end = offset(&origin[\"end\"]).ok_or_else(|| invalid(\"unowned source derivation\"))?;\n            let derived = if included {\n                let ranges = read_included_range_columns(&origin[\"ranges\"], &validator.budget)?\n                    .as_chunks::<2>()\n                    .0\n                    .to_vec();\n                validator\n                    .registry\n                    .map_included(input, start, end, &ranges, &validator.budget)\n            } else {\n                validator.registry.map(input, start, end, &validator.budget)\n            }\n            .map_err(aborted)?\n            .map_err(|_| invalid(\"invalid source derivation\"))?;\n            if offset(&derived.mapping[\"output\"]) != Some(identity) {\n                return Err(invalid(\"invalid source derivation\"));\n            }\n            derived.bytes\n        };\n        if !accept_grammar_selection_source_definition(\n            definition[\"kind\"].as_str().unwrap_or_default(),\n            number(&definition[\"identity\"]),\n            numeric(identity),\n            definition[\"encoding\"].as_str().unwrap_or_default(),\n            number(&definition[\"byteLength\"]),\n            numeric(bytes.len()),\n        ) {\n            return Err(invalid(\"invalid source definition\"));\n        }\n        validator.planes.push(bytes);\n    }\n    validator.walk(tree, 0, 0)?;\n    Ok(bundle)\n}",
+    "inventory": "B63 actual source names for rust/src/grammar/feature_runtime/mapped_tree_validation.rs"
   }
 ];
 const reconcileCurrentWitnessInventory=entry=>{const rows=B63_CURRENT_INVENTORY_WITNESSES.filter(row=>entry.inventory===row.inventory&&entry.files.length===1&&entry.files[0]===row.source);if(rows.length===0)return entry;return{...entry,extract:(text,file)=>[...new Set([...entry.extract(text,file),...rows.filter(row=>{if(!text.includes(row.sourceText)||!(!row.sourceContext||text.includes(row.sourceContext))||!(row.ownerContexts??[]).every(context=>text.includes(context)))return false;if(!row.styleSource)return true;const style=inventoryText(repositoryRoot,row.styleSource),end=style.indexOf("\n"),first=end<0?"":style.slice(0,end+1);return Buffer.byteLength(first)===row.styleRowBytes&&createB57MovedSourceHash("sha256").update(first).digest("hex")===row.styleRowSha256&&first.startsWith("(decorator "+row.name+" ");}).map(row=>row.inventoryName)])],recordOf:name=>rows.find(row=>row.inventoryName===name)?.id??entry.recordOf(name)};};
@@ -58166,7 +58250,1188 @@ const B67_SOURCE_BINDINGS=[
 ];
 const B67_NAME_INVENTORIES=[...new Set(B67_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B67 Rust byte expression source names for "+source,files:[source],extract:text=>B67_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B67_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // END B67 Rust byte expression names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES, ...B63_SOURCE_BINDINGS_INVENTORIES, ...B63_CURRENT_WITNESS_BINDINGS_INVENTORIES, ...B64_RAW_EMISSION_NAME_INVENTORIES, ...B65_CHARACTER_TAG_NAME_INVENTORIES, ...B66_NAME_INVENTORIES, ...B67_NAME_INVENTORIES].map(reconcileCurrentWitnessInventory).map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B68 included source range names.
+const B68_SOURCE_BINDINGS=[
+  {
+    "id": "grammar.accept-grammar-selection-included-range-mapping",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeMapping",
+    "inventoryName": "accept grammar selection included range mapping",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeMapping(mapping) {\n  return mapping === 'included-ranges';\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-mapping",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_mapping",
+    "inventoryName": "accept grammar selection included range mapping",
+    "sourceText": "pub fn accept_grammar_selection_included_range_mapping(mapping: &str) -> bool {\n    mapping == \"included-ranges\"\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-context",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "readGrammarSelectionIncludedRangeContext",
+    "inventoryName": "read grammar selection included range context",
+    "sourceText": "export function readGrammarSelectionIncludedRangeContext(mappings, inToken) {\n  let found = false;\n  for (let index = 0; index < mappings.length; index += 1) {\n    if (acceptGrammarSelectionIncludedRangeMapping(mappings[index] ?? 'identity')) found = true;\n  }\n  if (!found) return 0;\n  if (inToken) return 2;\n  for (let index = 0; index < mappings.length; index += 1) {\n    if (!acceptGrammarSelectionIncludedRangeMapping(mappings[index] ?? 'identity')) return 2;\n  }\n  return 1;\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-context",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "read_grammar_selection_included_range_context",
+    "inventoryName": "read grammar selection included range context",
+    "sourceText": "pub fn read_grammar_selection_included_range_context(mappings: &[String], in_token: bool) -> f64 {\n    {\n        let found = false;\n        {\n            let index = 0f64;\n            {\n                let found_2 = self::ml_read_grammar_selection_included_range_context_loop1(\n                    mappings, found, index,\n                );\n                if found_2 {\n                    if in_token {\n                        2f64\n                    } else {\n                        {\n                            let index_2 = 0f64;\n                            {\n                                let ml_s1 =\n                                    self::ml_read_grammar_selection_included_range_context_loop2(\n                                        mappings, index_2,\n                                    );\n                                match ml_s1 {\n                                    self::MlReadGrammarSelectionIncludedRangeContextLoop2Result::MlReadGrammarSelectionIncludedRangeContextLoop2Done => {\n                                        1f64\n                                    }\n                                    self::MlReadGrammarSelectionIncludedRangeContextLoop2Result::MlReadGrammarSelectionIncludedRangeContextLoop2Return(ml_result2) => {\n                                        ml_result2\n                                    }\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    0f64\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-candidate",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeCandidate",
+    "inventoryName": "accept grammar selection included range candidate",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeCandidate(kind, mapping) {\n  return kind === 'grammar-range-candidate' && acceptGrammarSelectionIncludedRangeMapping(mapping);\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-candidate",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_candidate",
+    "inventoryName": "accept grammar selection included range candidate",
+    "sourceText": "pub fn accept_grammar_selection_included_range_candidate(kind: &str, mapping: &str) -> bool {\n    (kind == \"grammar-range-candidate\")\n        && self::accept_grammar_selection_included_range_mapping(mapping)\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-source-range",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeSourceRange",
+    "inventoryName": "accept grammar selection included range source range",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeSourceRange(kind, start, end) {\n  return kind === 'source-range' && Number.isInteger(start) && Number.isInteger(end)\n    && start >= 0 && start < end && end <= 4294967295;\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-source-range",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_source_range",
+    "inventoryName": "accept grammar selection included range source range",
+    "sourceText": "pub fn accept_grammar_selection_included_range_source_range(\n    kind: &str,\n    start: f64,\n    end: f64,\n) -> bool {\n    (((((kind == \"source-range\") && self::ml_math::is_integer(start))\n        && self::ml_math::is_integer(end))\n        && (start >= 0f64))\n        && (start < end))\n        && (end <= 4_294_967_295f64)\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-agreement",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeAgreement",
+    "inventoryName": "accept grammar selection included range agreement",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeAgreement(first, next) {\n  if (first.length !== next.length) return false;\n  for (let index = 0; index < first.length; index += 1) if (first[index] !== next[index]) return false;\n  return true;\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-agreement",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_agreement",
+    "inventoryName": "accept grammar selection included range agreement",
+    "sourceText": "pub fn accept_grammar_selection_included_range_agreement(first: &[f64], next: &[f64]) -> bool {\n    {\n        let ml_library_inequality_1 = (first.len() as f64) != (next.len() as f64);\n        if ml_library_inequality_1 {\n            false\n        } else {\n            {\n                let index = 0f64;\n                {\n                    let ml_s2 = self::ml_accept_grammar_selection_included_range_agreement_loop3(\n                        first, next, index,\n                    );\n                    match ml_s2 {\n                    self::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Done => {\n                        true\n                    }\n                    self::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Return(ml_result3) => {\n                        ml_result3\n                    }\n                }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-reservation",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "readGrammarSelectionIncludedRangeReservation",
+    "inventoryName": "read grammar selection included range reservation",
+    "sourceText": "export function readGrammarSelectionIncludedRangeReservation(bytes, cells, steps) {\n  if (!Number.isInteger(bytes) || bytes <= 0 || bytes > 4294967295\n      || !Number.isInteger(cells) || cells <= 0 || cells % 2 !== 0 || cells > 2 * bytes) return -1;\n  return (steps ? 64 : 32) * bytes + 64;\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-reservation",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "read_grammar_selection_included_range_reservation",
+    "inventoryName": "read grammar selection included range reservation",
+    "sourceText": "pub fn read_grammar_selection_included_range_reservation(\n    bytes: f64,\n    cells: f64,\n    steps: bool,\n) -> f64 {\n    if (((((!(self::ml_math::is_integer(bytes)) || (bytes <= 0f64))\n        || (bytes > 4_294_967_295f64))\n        || !(self::ml_math::is_integer(cells)))\n        || (cells <= 0f64))\n        || ((cells % 2f64) != 0f64))\n        || (cells > (2f64 * bytes))\n    {\n        -1f64\n    } else {\n        (if steps { 64f64 } else { 32f64 } * bytes) + 64f64\n    }\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-plan",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "readGrammarSelectionIncludedRangePlan",
+    "inventoryName": "read grammar selection included range plan",
+    "sourceText": "export function readGrammarSelectionIncludedRangePlan(ranges, length) {\n  if (readGrammarSelectionIncludedRangeReservation(length, ranges.length, false) < 0) return [];\n  const plan = [0, 0, 0, 0];\n  let cursor = 0, output = 0;\n  for (let index = 0; index < ranges.length; index += 2) {\n    const start = ranges[index] ?? -1;\n    const end = ranges[index + 1] ?? -1;\n    if (!acceptGrammarSelectionIncludedRangeSourceRange('source-range', start, end)\n        || start < cursor || end > length) return [];\n    if (cursor < start) plan.push(cursor, start, output, output);\n    plan.push(start, end, output, output + end - start);\n    output += end - start;\n    cursor = end;\n  }\n  if (output >= length) return [];\n  if (cursor < length) plan.push(cursor, length, output, output);\n  plan.push(length, length, output, output);\n  return plan;\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-plan",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "read_grammar_selection_included_range_plan",
+    "inventoryName": "read grammar selection included range plan",
+    "sourceText": "pub fn read_grammar_selection_included_range_plan(ranges: &[f64], length: f64) -> Vec<f64> {\n    if (self::read_grammar_selection_included_range_reservation(\n        length,\n        (ranges.len() as f64),\n        false,\n    )) < 0f64\n    {\n        Vec::<f64>::new()\n    } else {\n        {\n            let plan = vec![0f64, 0f64, 0f64, 0f64];\n            {\n                let cursor = 0f64;\n                {\n                    let output = 0f64;\n                    {\n                        let index = 0f64;\n                        {\n                            let ml_s3 = self::ml_read_grammar_selection_included_range_plan_loop4(\n                                ranges, length, plan, cursor, output, index,\n                            );\n                            match ml_s3 {\n                                self::MlReadGrammarSelectionIncludedRangePlanLoop4Result::MlReadGrammarSelectionIncludedRangePlanLoop4Done(plan_2, cursor_2, output_2) => {\n                                    if output_2 >= length {\n                                        Vec::<f64>::new()\n                                    } else {\n                                        {\n                                            let plan_4 = if cursor_2 < length {\n                                                {\n                                                    { let (ml_append_right, ml_append_left) = (vec![cursor_2, length, output_2, output_2], plan_2); self::ml_array::append(ml_append_left, ml_append_right) }\n                                                }\n                                            } else {\n                                                plan_2\n                                            };\n                                            {\n                                                { let (ml_append_right, ml_append_left) = (vec![length, length, output_2, output_2], plan_4); self::ml_array::append(ml_append_left, ml_append_right) }\n                                            }\n                                        }\n                                    }\n                                }\n                                self::MlReadGrammarSelectionIncludedRangePlanLoop4Result::MlReadGrammarSelectionIncludedRangePlanLoop4Return(ml_result4) => {\n                                    ml_result4\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-part",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "readGrammarSelectionIncludedRangePart",
+    "inventoryName": "read grammar selection included range part",
+    "sourceText": "export function readGrammarSelectionIncludedRangePart(plan, row, position, output, width) {\n  if (plan.length < 12 || plan.length % 4 !== 0 || !Number.isInteger(row)\n      || row < 0 || row % 4 !== 0 || row > plan.length) return [];\n  if (row === plan.length) return [1];\n  const start = plan[row] ?? -1;\n  const end = plan[row + 1] ?? -1;\n  const outputStart = plan[row + 2] ?? -1;\n  const outputEnd = plan[row + 3] ?? -1;\n  const following = row + 4;\n  const followingPosition = plan[following] ?? end;\n  if (outputStart === outputEnd) {\n    if (position !== start || output !== outputStart) return [];\n    return [0, following, followingPosition, output, start, end, output, output];\n  }\n  if (!Number.isInteger(position) || position < start || position >= end\n      || output !== outputStart + position - start || !Number.isInteger(width)\n      || width < 1 || width > 4 || position + width > end) return [];\n  const next = position + width;\n  const nextOutput = output + width;\n  return [0, next === end ? following : row, next === end ? followingPosition : next,\n    nextOutput, position, next, output, nextOutput];\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-part",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "read_grammar_selection_included_range_part",
+    "inventoryName": "read grammar selection included range part",
+    "sourceText": "pub fn read_grammar_selection_included_range_part(\n    plan: &[f64],\n    row: f64,\n    position: f64,\n    output: f64,\n    width: f64,\n) -> Vec<f64> {\n    if ((((((plan.len() as f64) < 12f64) || (((plan.len() as f64) % 4f64) != 0f64))\n        || !(self::ml_math::is_integer(row)))\n        || (row < 0f64))\n        || ((row % 4f64) != 0f64))\n        || (row > (plan.len() as f64))\n    {\n        Vec::<f64>::new()\n    } else if row == (plan.len() as f64) {\n        vec![1f64]\n    } else {\n        {\n            let start = (self::ml_array::optional_at(plan, self::ml_array::number_index(row)))\n                .unwrap_or_else(|| -1f64);\n            {\n                let end =\n                    (self::ml_array::optional_at(plan, self::ml_array::number_index(row + 1f64)))\n                        .unwrap_or_else(|| -1f64);\n                {\n                    let output_start = (self::ml_array::optional_at(\n                        plan,\n                        self::ml_array::number_index(row + 2f64),\n                    ))\n                    .unwrap_or_else(|| -1f64);\n                    {\n                        let output_end = (self::ml_array::optional_at(\n                            plan,\n                            self::ml_array::number_index(row + 3f64),\n                        ))\n                        .unwrap_or_else(|| -1f64);\n                        {\n                            let following = row + 4f64;\n                            {\n                                let following_position = (self::ml_array::optional_at(\n                                    plan,\n                                    self::ml_array::number_index(following),\n                                ))\n                                .unwrap_or_else(|| end);\n                                if output_start == output_end {\n                                    if (position != start) || (output != output_start) {\n                                        Vec::<f64>::new()\n                                    } else {\n                                        vec![\n                                            0f64,\n                                            following,\n                                            following_position,\n                                            output,\n                                            start,\n                                            end,\n                                            output,\n                                            output,\n                                        ]\n                                    }\n                                } else if ((((((!(self::ml_math::is_integer(position))\n                                    || (position < start))\n                                    || (position >= end))\n                                    || (output != ((output_start + position) - start)))\n                                    || !(self::ml_math::is_integer(width)))\n                                    || (width < 1f64))\n                                    || (width > 4f64))\n                                    || ((position + width) > end)\n                                {\n                                    Vec::<f64>::new()\n                                } else {\n                                    {\n                                        let next = position + width;\n                                        {\n                                            let next_output = output + width;\n                                            vec![\n                                                0f64,\n                                                if next == end { following } else { row },\n                                                if next == end {\n                                                    following_position\n                                                } else {\n                                                    next\n                                                },\n                                                next_output,\n                                                position,\n                                                next,\n                                                output,\n                                                next_output,\n                                            ]\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-byte-boundary",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeByteBoundary",
+    "inventoryName": "accept grammar selection included range byte boundary",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeByteBoundary(byte, atEnd) {\n  return atEnd || Number.isInteger(byte) && byte >= 0 && byte <= 255\n    && (byte < 128 || byte >= 192);\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-byte-boundary",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_byte_boundary",
+    "inventoryName": "accept grammar selection included range byte boundary",
+    "sourceText": "pub fn accept_grammar_selection_included_range_byte_boundary(byte: f64, at_end: bool) -> bool {\n    at_end\n        || (((self::ml_math::is_integer(byte) && (byte >= 0f64)) && (byte <= 255f64))\n            && ((byte < 128f64) || (byte >= 192f64)))\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-field-order",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "readGrammarSelectionIncludedRangeFieldOrder",
+    "inventoryName": "read grammar selection included range field order",
+    "sourceText": "export function readGrammarSelectionIncludedRangeFieldOrder(role) {\n  if (role === 'derivation') return 'operation|input|start|end|ranges';\n  if (role === 'mapping') return 'kind|operation|input|output|ranges|intervals';\n  if (role === 'candidate') return 'kind|name|mapping|ranges';\n  if (role === 'range') return 'kind|start|end';\n  return '';\n}"
+  },
+  {
+    "id": "grammar.read-grammar-selection-included-range-field-order",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "read_grammar_selection_included_range_field_order",
+    "inventoryName": "read grammar selection included range field order",
+    "sourceText": "pub fn read_grammar_selection_included_range_field_order(role: &str) -> String {\n    if role == \"derivation\" {\n        String::from(\"operation|input|start|end|ranges\")\n    } else if role == \"mapping\" {\n        String::from(\"kind|operation|input|output|ranges|intervals\")\n    } else if role == \"candidate\" {\n        String::from(\"kind|name|mapping|ranges\")\n    } else if role == \"range\" {\n        String::from(\"kind|start|end\")\n    } else {\n        String::new()\n    }\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-derivation",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeDerivation",
+    "inventoryName": "accept grammar selection included range derivation",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeDerivation(operation, input, output, start, end, inputLength) {\n  return acceptGrammarSelectionIncludedRangeMapping(operation) && Number.isInteger(input)\n    && input >= 0 && input < output && Number.isInteger(start) && Number.isInteger(end)\n    && start >= 0 && start < end && end <= inputLength;\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-derivation",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_derivation",
+    "inventoryName": "accept grammar selection included range derivation",
+    "sourceText": "pub fn accept_grammar_selection_included_range_derivation(\n    operation: &str,\n    input: f64,\n    output: f64,\n    start: f64,\n    end: f64,\n    input_length: f64,\n) -> bool {\n    (((((((self::accept_grammar_selection_included_range_mapping(operation)\n        && self::ml_math::is_integer(input))\n        && (input >= 0f64))\n        && (input < output))\n        && self::ml_math::is_integer(start))\n        && self::ml_math::is_integer(end))\n        && (start >= 0f64))\n        && (start < end))\n        && (end <= input_length)\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-profile",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeProfile",
+    "inventoryName": "accept grammar selection included range profile",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeProfile(mapping, physicalChildren, sourceMapping) {\n  return acceptGrammarSelectionIncludedRangeMapping(mapping) && physicalChildren && sourceMapping;\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-profile",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_profile",
+    "inventoryName": "accept grammar selection included range profile",
+    "sourceText": "pub fn accept_grammar_selection_included_range_profile(\n    mapping: &str,\n    physical_children: bool,\n    source_mapping: bool,\n) -> bool {\n    (self::accept_grammar_selection_included_range_mapping(mapping) && physical_children)\n        && source_mapping\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-descriptor",
+    "source": "js/src/translation/grammar-selection-included-range-rules.js",
+    "name": "acceptGrammarSelectionIncludedRangeDescriptor",
+    "inventoryName": "accept grammar selection included range descriptor",
+    "sourceText": "export function acceptGrammarSelectionIncludedRangeDescriptor(kind, operation) {\n  return kind === 'source-mapping' && acceptGrammarSelectionIncludedRangeMapping(operation);\n}"
+  },
+  {
+    "id": "grammar.accept-grammar-selection-included-range-descriptor",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "accept_grammar_selection_included_range_descriptor",
+    "inventoryName": "accept grammar selection included range descriptor",
+    "sourceText": "pub fn accept_grammar_selection_included_range_descriptor(kind: &str, operation: &str) -> bool {\n    (kind == \"source-mapping\") && self::accept_grammar_selection_included_range_mapping(operation)\n}"
+  },
+  {
+    "id": "repository.read-complete-included-range-source",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "readGrammarSelectionIncludedRangeSource",
+    "inventoryName": "read complete included range source",
+    "sourceText": "export function readGrammarSelectionIncludedRangeSource() {\n  const source = readFileSync(new URL(sourcePath, root), 'utf8');\n  assert.doesNotMatch(source, /^\\s*(?:import\\b|export\\s+(?:\\*|\\{))/mu,\n    'the included-range kernel is one complete module without unrecorded imports or reexports');\n  const tokens = tokenize(source, 'JavaScript').tokens;\n  assert.ok(!tokens.some((token, index) => token.kind === 'identifier' && (token.value === 'import'\n    || token.value === 'export' && ['*', '{'].includes(tokens[index + 1]?.value))),\n  'actual dependency tokens cannot be hidden by line layout');\n  assert.ok(Buffer.byteLength(source) > 0, 'the complete actual source is present');\n  const input = { path: sourcePath, source, bytes: Buffer.byteLength(source),\n    sourceSha256: digest(source), removedImports: [] };\n  return { source, bytes: input.bytes, sourceSha256: input.sourceSha256,\n    sourceClosure: { source, bytes: input.bytes, sourceSha256: input.sourceSha256, inputs: [input] } };\n}"
+  },
+  {
+    "id": "repository.read-included-range-source-policy",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "readGrammarSelectionIncludedRangePolicy",
+    "inventoryName": "read included range source policy",
+    "sourceText": "export function readGrammarSelectionIncludedRangePolicy(closed = readGrammarSelectionIncludedRangeSource()) {\n  return { schemaVersion: 1, model: 'proper ordered included range source views 1',\n    sourcePath, source: closed.source, sourceBytes: closed.bytes, sourceSha256: closed.sourceSha256,\n    sourceClosure: closed.sourceClosure,\n    parameters: 'Nonempty ordered disjoint integral relative UTF8 byte ranges bound to the actual syntactically matched source occurrence. Every range is nonempty and scalar aligned; the total selected width must be strictly smaller than the matched width.',\n    byteBoundary: 'The existing host source reader first validates the actual complete parent UTF8 plane. Shared boundary decisions then consume actual parent byte and end facts; this kernel does not decode or replace Unicode semantics.',\n    correspondence: 'The complete chunk plan retains zero-output excluded gaps and endpoint rows. Fixed-size part results use the unchanged plan and actual scalar widths from the existing decoder to retain each scalar correspondence without cloning the complete plan per part.',\n    sourcePlanes: 'Once-owned ordered source definitions and explicit positional input/output references retain each actual parent occurrence and every admitted primary or alternative CST. Equal bytes, names, hashes or host pointers do not establish source ownership.',\n    resources: 'Reservations and all mapping/child work use the original parse memory, step and remaining depth budgets. Proper byte contraction is this profile\\'s progress premise; empty and full-cover views are outside it.',\n    archiveBoundary: 'Generic Links decoding does not authenticate source mappings. The domain checker must replay these same generated plans against complete physical CST bytes and explicit source definitions. Language-CST validity still requires actual parsing.',\n    legacyBoundary: 'Existing identity and JSON-string decision modules, policies and native algorithms are separate unchanged inputs, not regenerated or broadened by this producer.',\n    boundary: 'This finite explicit-range profile does not discover ranges from Markdown/CST fields, implement full/no-op source-lineage views, discharge scanner context obligations, or establish complete Markdown or other priority-language support. Native compilation and execution remain CI observations.' };\n}"
+  },
+  {
+    "id": "repository.read-included-range-native-library-interface",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "readGrammarSelectionIncludedRangeLibraryInterface",
+    "inventoryName": "read included range native library interface",
+    "sourceText": "export function readGrammarSelectionIncludedRangeLibraryInterface(files, emitted, owners) {\n  const items = files.flatMap(file => readRustLibraryItems(file.source).items);\n  const mappings = ownerMappings(emitted, owners), interfaces = [];\n  for (const [index, owner] of owners.entries()) {\n    const target = mappings[index].target;\n    assert.match(target, /^[A-Za-z_][A-Za-z_0-9]*$/u, 'one actual flat library owner');\n    const declarations = items.filter(item => item.name === target\n      && (owner.kind === 'fn' ? item.kind === 'fn' : ['enum', 'struct'].includes(item.kind)));\n    assert.equal(declarations.length, 1, 'packaging retains every actual source/continuation owner ' + owner.fullName);\n    // A continuation's owned mutable output/state vector is distinct from an\n    // original decision's immutable input. Do not invent a loan for that state.\n    if (owner.generated || owner.kind !== 'fn') continue;\n    const block = declarations[0].source;\n    const raw = readSourceTextRustBlock(emitted.text, 'fn', target);\n    const header = /\\bfn \\w+\\(([^)]*)\\)\\s*->\\s*([^{}]+)\\{/u.exec(block);\n    const original = /\\bfn \\w+\\(([^)]*)\\)\\s*->\\s*([^{}]+)\\{/u.exec(raw);\n    assert.ok(header && original, 'both complete actual function signatures are present');\n    const before = nativeParameters(original[1]);\n    const expected = before.map(parameter => parameter.replace(/^(?:mut )?(\\w+):Vec<(f64|String|bool)>$/u, '$1:&[$2]')\n      .replace(/^(?:mut )?(\\w+):String$/u, '$1:&str'));\n    const parameters = nativeParameters(header[1]);\n    assert.deepEqual(parameters, expected, 'only the existing immutable parameter loans change the actual source ABI');\n    assert.equal(header[2].replace(/\\s+/gu, ''), original[2].replace(/\\s+/gu, ''), 'the complete return type is unchanged');\n    const vectors = new Set(before.flatMap(parameter => /^(?:mut )?(\\w+):Vec<(?:f64|String|bool)>$/u.exec(parameter)?.[1] ?? []));\n    rejectInputCopies(block, vectors);\n    interfaces.push({ source: owner.fullName, target, parameters,\n      result: header[2].trim(), signature: header[0].slice(0, -1).trim() });\n  }\n  const part = interfaces.find(item => item.source === 'readGrammarSelectionIncludedRangePart');\n  const plan = interfaces.find(item => item.source === 'readGrammarSelectionIncludedRangePlan');\n  assert.ok(part && plan, 'both actual whole-plan and streamed-part source interfaces survive');\n  assert.ok(part.parameters.includes('plan:&[f64]'), 'the streamed part borrows the complete original numeric plan');\n  assert.ok(plan.parameters.includes('ranges:&[f64]'), 'the whole planner borrows the original range column');\n  return { ownerMappings: mappings, interfaces, files: files.map(file => ({\n    path: file.path ?? libraryName + '.rs', bytes: Buffer.byteLength(file.source), sourceSha256: digest(file.source) })) };\n}"
+  },
+  {
+    "id": "repository.generate-included-range-source-rules",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "generateGrammarSelectionIncludedRangeRules",
+    "inventoryName": "generate included range source rules",
+    "sourceText": "export async function generateGrammarSelectionIncludedRangeRules({ check = false, native = false } = {}) {\n  const closed = readGrammarSelectionIncludedRangeSource();\n  const policy = readGrammarSelectionIncludedRangePolicy(closed);\n  for (const relative of ['js/src/translation/data/grammar-selection-included-range-rules.lino',\n    'rust/src/data/grammar-selection-included-range-rules.lino']) {\n    const file = new URL(relative, root);\n    if (check) checkProjectData(file, policy);\n    else writeProjectData(file, policy);\n  }\n  let artifact = null;\n  if (native) {\n    const { parseJavaScript } = await import('../src/translation/javascript.js');\n    const { checkProgram } = await import('../src/translation/check.js');\n    const { emitRust } = await import('../src/translation/emit-rust.js');\n    const { encodeTypedProgramLinks, decodeTypedProgramLinks } = await import('../src/typed-program-links.js');\n    const { recheckLinkedTypedProgram } = await import('../src/typed-program-checked-projection.js');\n    const { LinkNetwork } = await import('../src/network.js');\n    const { encodeLinkNetworkBinary, decodeLinkNetworkBinary } = await import('../src/link-network-binary.js');\n    const surface = parseJavaScript(closed.source, { referenceSemantics: false });\n    const inventory = surface.items.map((item, ordinal) => {\n      assert.ok(['fn', 'data'].includes(item.k) && typeof item.name === 'string' && item.name !== '',\n        'classify every actual declaration, including all generated continuations');\n      return { ordinal, kind: item.k, name: item.name, generated: item.generated === true, span: item.span };\n    });\n    const checked = checkProgram(surface), owners = checkedOwners(checked, inventory);\n    const emitted = emitRust(checked, { arrayConsumption: true });\n    ownerMappings(emitted, owners);\n    const packet = encodeTypedProgramLinks(checked), text = packet.network.toLino();\n    const binary = encodeLinkNetworkBinary(packet.network), replays = [];\n    for (const [format, network] of [\n      ['text', LinkNetwork.fromLino(text)], ['binary', decodeLinkNetworkBinary(binary)],\n    ]) {\n      const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), { wholeProgram: true });\n      const restoredOwners = checkedOwners(restored, inventory);\n      assert.deepEqual(restoredOwners, owners, 'every complete checked owner/order survives ' + format);\n      const replay = emitRust(restored, { arrayConsumption: true });\n      ownerMappings(replay, restoredOwners);\n      assert.equal(replay.text, emitted.text, 'complete native source survives whole-program ' + format + ' recheck');\n      for (const field of ['definitions', 'preludes', 'mappings', 'assumptions', 'encodings']) {\n        assert.deepEqual(replay[field], emitted[field], 'complete native ' + field + ' survives ' + format);\n      }\n      replays.push({ format, checkedNamedSourceInventory: restoredOwners,\n        emittedTextBytes: Buffer.byteLength(replay.text), emittedTextSha256: digest(replay.text) });\n    }\n    const files = writeRecordRuleLibrary(emitted, libraryName, { check });\n    const library = readGrammarSelectionIncludedRangeLibraryInterface(files, emitted, owners);\n    artifact = { schemaVersion: 1, model: policy.model, source: closed.source,\n      sourceSha256: closed.sourceSha256, sourceClosure: closed.sourceClosure,\n      inventory, checkedNamedSourceInventory: owners, replays,\n      archive: { root: packet.root.asU64(), textBytes: Buffer.byteLength(text), textSha256: digest(text),\n        binaryBytes: binary.byteLength, binarySha256: digest(binary) },\n      emitted: { ...emitted, definitions: emitted.definitions, preludes: emitted.preludes },\n      emittedTextBytes: Buffer.byteLength(emitted.text), emittedTextSha256: digest(emitted.text), library,\n      boundary: 'Actual complete source capture, whole-program archive rechecks, raw Rust emission and recorded library packaging. Native compilation/execution, parser-host parity and language-CST validity require their actual CI/runtime assertions.' };\n    const output = new URL('parity/self-translation/grammar-selection-included-range-rules-native.lino', root);\n    if (check) checkProjectData(output, artifact);\n    else writeProjectData(output, artifact);\n  }\n  return { policy, artifact };\n}"
+  },
+  {
+    "id": "repository.read-complete-included-range-checked-owners",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "checkedOwners",
+    "inventoryName": "read complete included range checked owners",
+    "sourceText": "function checkedOwners(program, inventory) {\n  const owners = inventory.map(item => {\n    const declaration = program.declarations.get(item.name);\n    assert.ok(declaration && declaration.k === item.kind && declaration.name === item.name,\n      'retain the actual complete checked owner ' + item.name);\n    return { sourceOrdinal: item.ordinal, kind: declaration.k, name: declaration.name,\n      fullName: declaration.fullName, modulePath: declaration.modulePath, generated: item.generated };\n  });\n  assert.equal(owners.length, program.declarations.size, 'no checked source or continuation owner is omitted');\n  assert.equal(new Set(owners.map(owner => owner.fullName)).size, owners.length, 'every actual owner has one identity');\n  return owners;\n}"
+  },
+  {
+    "id": "repository.read-complete-included-range-owner-mappings",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "ownerMappings",
+    "inventoryName": "read complete included range owner mappings",
+    "sourceText": "function ownerMappings(emitted, owners) {\n  return owners.map(owner => {\n    const mappings = emitted.mappings.filter(mapping => mapping.source === owner.fullName\n      && mapping.kind === (owner.kind === 'fn' ? 'function' : owner.kind));\n    assert.equal(mappings.length, 1, 'one complete actual emitted mapping for ' + owner.fullName);\n    return mappings[0];\n  });\n}"
+  },
+  {
+    "id": "repository.read-included-range-native-parameter-signatures",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "nativeParameters",
+    "inventoryName": "read included range native parameter signatures",
+    "sourceText": "function nativeParameters(value) {\n  const parts = value.split(',').map(part => part.trim());\n  if (parts.length === 1 && parts[0] === '') return [];\n  if (parts.at(-1) === '') parts.pop();\n  assert.ok(parts.every(part => part !== ''), 'only one optional trailing parameter comma is admitted');\n  return parts.map(part => {\n    const declaration = /^(mut\\s+)?([A-Za-z_][A-Za-z_0-9]*)\\s*:\\s*([\\s\\S]+)$/u.exec(part);\n    assert.ok(declaration, 'the actual primitive parameter retains its name and type');\n    return (declaration[1] ? 'mut ' : '') + declaration[2] + ':' + declaration[3].replace(/\\s+/gu, '');\n  });\n}"
+  },
+  {
+    "id": "repository.refuse-included-range-input-vector-copies",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "rejectInputCopies",
+    "inventoryName": "refuse included range input vector copies",
+    "sourceText": "function rejectInputCopies(block, names) {\n  const tokens = tokenize(block, 'Rust').tokens, matching = new Map(), stack = [];\n  for (let index = 0; index < tokens.length; index += 1) {\n    if (tokens[index].kind !== 'punct') continue;\n    const value = tokens[index].value;\n    if (['(', '[', '{'].includes(value)) stack.push(index);\n    else if ([')', ']', '}'].includes(value)) {\n      const opening = stack.pop();\n      assert.equal(tokens[opening]?.value, ({ ')': '(', ']': '[', '}': '{' })[value]);\n      matching.set(opening, index);\n    }\n  }\n  assert.equal(stack.length, 0, 'the complete actual function has balanced delimiters');\n  for (let index = 0; index < tokens.length; index += 1) {\n    if (tokens[index].kind !== 'identifier' || !names.has(tokens[index].value)) continue;\n    let left = index, right = index;\n    while (tokens[left - 1]?.value === '(' && matching.get(left - 1) === right + 1) { left -= 1; right += 1; }\n    assert.ok(!(tokens[right + 1]?.value === '.' && ['clone', 'to_vec', 'to_owned'].includes(tokens[right + 2]?.value)\n      && tokens[right + 3]?.value === '(' && tokens[right + 4]?.value === ')'),\n    'an immutable whole input vector is not copied at an actual generated call');\n  }\n}"
+  },
+  {
+    "id": "grammar.map-grammar-selection-included-range-source",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "mapGrammarSelectionIncludedRangeSource",
+    "inventoryName": "map grammar selection included range source",
+    "sourceText": "export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {\n  const input = sourceRecord(executor);\n  if (input.reason) return input;\n  const registry = sourceRegistry(executor);\n  const failure = offset => ({ reason: 'invalidEmbeddingMapping', offset });\n  if (!acceptGrammarSelectionIncludedRangeDerivation('included-ranges', input.source,\n    registry.records.length, start, end, executor.bytes.length) || !Array.isArray(ranges)) return failure(start);\n  const reservation = readGrammarSelectionIncludedRangeReservation(end - start, ranges.length * 2, false);\n  if (reservation < 0) return failure(start);\n  for (const range of ranges) {\n    executor.step();\n    if (!Array.isArray(range) || range.length !== 2\n        || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', range[0], range[1])) return failure(start);\n  }\n  const key = JSON.stringify(['included-ranges', start, end, ranges]);\n  if (input.mappings.has(key)) return input.mappings.get(key);\n  executor.retain(reservation);\n  const steps = readGrammarSelectionIncludedRangeReservation(end - start, ranges.length * 2, true);\n  for (let index = 0; index < steps; index += 1) executor.step();\n  const columns = ranges.flat();\n  const plan = readGrammarSelectionIncludedRangePlan(columns, end - start);\n  const refuse = offset => {\n    const result = failure(offset);\n    input.mappings.set(key, result);\n    return result;\n  };\n  if (plan.length === 0) return refuse(start);\n  for (const relative of [0, end - start, ...columns]) {\n    const position = start + relative;\n    if (!acceptGrammarSelectionIncludedRangeByteBoundary(executor.bytes[position] ?? -1,\n      position === executor.bytes.length)) return refuse(position);\n  }\n  const bytes = new Uint8Array(plan[plan.length - 1]);\n  const intervals = [];\n  let row = 0, position = 0, output = 0;\n  for (;;) {\n    const scalar = decodeAt(executor.bytes, start + position, end);\n    const part = readGrammarSelectionIncludedRangePart(plan, row, position, output, scalar.length);\n    if (part[0] === 1) break;\n    if (part.length !== 8 || part[0] !== 0) return refuse(start + position);\n    const [inputStart, inputEnd, outputStart, outputEnd] = part.slice(4);\n    intervals.push(Object.freeze([start + inputStart, start + inputEnd, outputStart, outputEnd]));\n    if (outputEnd > outputStart) bytes.set(executor.bytes.subarray(start + inputStart, start + inputEnd), outputStart);\n    [row, position, output] = part.slice(1, 4);\n  }\n  const source = registry.records.length;\n  const parameters = Object.freeze(ranges.map(range => Object.freeze([...range])));\n  const mapping = Object.freeze({ kind: 'source-mapping', operation: 'included-ranges', input: input.source,\n    output: source, ranges: parameters, intervals: Object.freeze(intervals) });\n  const record = { bytes, source, parent: input, mapping, mappings: new Map(),\n    definition: Object.freeze({ kind: 'grammar-source', identity: source, encoding: 'UTF-8', byteLength: bytes.length,\n      derivation: Object.freeze({ operation: 'included-ranges', input: input.source, start, end, ranges: parameters }) }) };\n  registry.records.push(record);\n  registry.byBytes.set(bytes, record);\n  const result = { bytes, mapping };\n  input.mappings.set(key, result);\n  return result;\n}"
+  },
+  {
+    "id": "grammar.map-grammar-selection-included-range-source",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::map_included",
+    "inventoryName": "map grammar selection included range source",
+    "sourceText": "    pub(super) fn map_included(\n        &mut self,\n        bytes: &[u8],\n        start: usize,\n        end: usize,\n        ranges: &[[f64; 2]],\n        budget: &impl MappingBudget,\n    ) -> Run<Result<MappedSource, MappingFailure>> {\n        let input = match self.source(bytes, budget)? {\n            Ok(source) => source,\n            Err(failed) => return Ok(Err(failed)),\n        };\n        let failed = |offset| MappingFailure {\n            reason: \"invalidEmbeddingMapping\",\n            offset,\n        };\n        if !accept_grammar_selection_included_range_derivation(\n            \"included-ranges\",\n            numeric(input),\n            numeric(self.records.len()),\n            numeric(start),\n            numeric(end),\n            numeric(bytes.len()),\n        ) {\n            return Ok(Err(failed(start)));\n        }\n        let Some(cells) = ranges.len().checked_mul(2) else {\n            return Ok(Err(failed(start)));\n        };\n        let length = end - start;\n        let cell_count = serde_json::Number::from(cells).as_f64().unwrap_or(f64::NAN);\n        let Some(reservation) = number_index(read_grammar_selection_included_range_reservation(\n            numeric(length),\n            cell_count,\n            false,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        let mut parameters = Vec::with_capacity(ranges.len());\n        for range in ranges {\n            budget.mapping_step()?;\n            if !accept_grammar_selection_included_range_source_range(\n                \"source-range\",\n                range[0],\n                range[1],\n            ) {\n                return Ok(Err(failed(start)));\n            }\n            let (Some(from), Some(to)) = (number_index(range[0]), number_index(range[1])) else {\n                return Ok(Err(failed(start)));\n            };\n            parameters.push([from, to]);\n        }\n        // JSON.stringify, used by the JavaScript cache, gives both signed\n        // zeros the same coordinate key. Parameters in the output keep the\n        // original finite Number values independently of this private key.\n        let key = (start, end, parameters);\n        if let Some(cached) = self.records[input].included_mappings.get(&key) {\n            return Ok(cached.clone());\n        }\n        budget.mapping_retain(reservation)?;\n        let Some(steps) = number_index(read_grammar_selection_included_range_reservation(\n            numeric(length),\n            cell_count,\n            true,\n        )) else {\n            return Ok(Err(failed(start)));\n        };\n        for _ in 0..steps {\n            budget.mapping_step()?;\n        }\n        let columns = ranges.iter().flatten().copied().collect::<Vec<_>>();\n        let plan = read_grammar_selection_included_range_plan(&columns, numeric(length));\n        let refuse = |registry: &mut Self, offset| {\n            let failure = failed(offset);\n            registry.records[input]\n                .included_mappings\n                .insert(key.clone(), Err(failure.clone()));\n            Ok(Err(failure))\n        };\n        if plan.is_empty() {\n            return refuse(self, start);\n        }\n        for relative in std::iter::once(0)\n            .chain(std::iter::once(length))\n            .chain(key.2.iter().flatten().copied())\n        {\n            let position = start + relative;\n            let byte = bytes.get(position).map_or(-1.0, |byte| f64::from(*byte));\n            if !accept_grammar_selection_included_range_byte_boundary(byte, position == bytes.len())\n            {\n                return refuse(self, position);\n            }\n        }\n        let Some(output_length) = plan.last().copied().and_then(number_index) else {\n            return refuse(self, start);\n        };\n        let mut output_bytes = vec![0; output_length];\n        let mut intervals = Vec::new();\n        let (mut row, mut position, mut output) = (0, 0, 0);\n        loop {\n            let at = start + position;\n            // decodeAt reports one invalid unit at EOF; the shared part plan\n            // ignores that width for a final point or excluded gap.\n            let width = if at < bytes.len() {\n                decode_at(bytes, at, end).1\n            } else {\n                1\n            };\n            let part = read_grammar_selection_included_range_part(\n                &plan,\n                numeric(row),\n                numeric(position),\n                numeric(output),\n                numeric(width),\n            );\n            let opcode = part.first().copied().and_then(number_index);\n            if opcode == Some(1) {\n                break;\n            }\n            if part.len() != 8 || opcode != Some(0) {\n                return refuse(self, at);\n            }\n            let mut cells = [0; 8];\n            for (cell, value) in cells.iter_mut().zip(part) {\n                let Some(value) = number_index(value) else {\n                    return refuse(self, at);\n                };\n                *cell = value;\n            }\n            let [\n                _,\n                next_row,\n                next_position,\n                next_output,\n                input_start,\n                input_end,\n                output_start,\n                output_end,\n            ] = cells;\n            intervals.push(json!([\n                start + input_start,\n                start + input_end,\n                output_start,\n                output_end\n            ]));\n            if output_end > output_start {\n                output_bytes[output_start..output_end]\n                    .copy_from_slice(&bytes[start + input_start..start + input_end]);\n            }\n            (row, position, output) = (next_row, next_position, next_output);\n        }\n        let bytes: Rc<[u8]> = Rc::from(output_bytes);\n        let source = self.records.len();\n        let parameters = ranges\n            .iter()\n            .map(|range| {\n                range\n                    .iter()\n                    .map(|coordinate| into_json_number(*coordinate).map(Value::Number))\n                    .collect::<Result<Vec<_>, _>>()\n                    .map(Value::Array)\n            })\n            .collect::<Result<Vec<_>, _>>();\n        let Ok(parameters) = parameters else {\n            return refuse(self, start);\n        };\n        let parameters = Value::Array(parameters);\n        let mapping = json!({\"kind\":\"source-mapping\",\"operation\":\"included-ranges\",\"input\":input,\n            \"output\":source,\"ranges\":parameters,\"intervals\":intervals});\n        let mapped = MappedSource {\n            bytes: bytes.clone(),\n            mapping: mapping.clone(),\n        };\n        self.records.push(SourceRecord {\n            definition: json!({\"kind\":\"grammar-source\",\"identity\":source,\"encoding\":\"UTF-8\",\"byteLength\":bytes.len(),\n                \"derivation\":{\"operation\":\"included-ranges\",\"input\":input,\"start\":start,\"end\":end,\"ranges\":parameters}}),\n            parent: Some(input), mapping: Some(mapping), mappings: HashMap::new(), included_mappings: HashMap::new(),\n        });\n        self.by_buffer.insert(buffer_key(&bytes), source);\n        self.records[input]\n            .included_mappings\n            .insert(key, Ok(mapped.clone()));\n        Ok(Ok(mapped))\n    }",
+    "ownerContexts": [
+      "impl SourceRegistry {"
+    ]
+  },
+  {
+    "id": "grammar.refuse-invalid-included-range-mapping",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "mapGrammarSelectionIncludedRangeSource::failure",
+    "inventoryName": "refuse invalid included range mapping",
+    "sourceText": "const failure = offset => ({ reason: 'invalidEmbeddingMapping', offset });",
+    "ownerContexts": [
+      "export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {"
+    ]
+  },
+  {
+    "id": "grammar.retain-invalid-included-range-mapping",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "mapGrammarSelectionIncludedRangeSource::refuse",
+    "inventoryName": "retain invalid included range mapping",
+    "sourceText": "const refuse = offset => {\n    const result = failure(offset);\n    input.mappings.set(key, result);\n    return result;\n  };",
+    "ownerContexts": [
+      "export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {"
+    ]
+  },
+  {
+    "id": "grammar.retain-invalid-included-range-mapping",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "SourceRegistry::map_included::refuse",
+    "inventoryName": "retain invalid included range mapping",
+    "sourceText": "        let refuse = |registry: &mut Self, offset| {\n            let failure = failed(offset);\n            registry.records[input]\n                .included_mappings\n                .insert(key.clone(), Err(failure.clone()));\n            Ok(Err(failure))\n        };",
+    "ownerContexts": [
+      "impl SourceRegistry {",
+      "    pub(super) fn map_included("
+    ]
+  },
+  {
+    "id": "grammar.read-included-source-range-columns",
+    "source": "js/src/grammar-runtime/mapped-tree-validation.js",
+    "name": "checkGrammarSelectionMappedTree::rangeColumns",
+    "inventoryName": "read included source range columns",
+    "sourceText": "const rangeColumns = ranges => {\n    if (!Array.isArray(ranges)) fail('invalid included source ranges');\n    control.retain(ranges.length * 2 + 1);\n    const columns = [];\n    for (const row of ranges) {\n      control.step();\n      if (!Array.isArray(row) || row.length !== 2\n          || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', row[0], row[1])) fail('invalid included source ranges');\n      columns.push(row[0], row[1]);\n    }\n    return columns;\n  };",
+    "ownerContexts": [
+      "export function checkGrammarSelectionMappedTree(bundle, options = {}) {"
+    ]
+  },
+  {
+    "id": "grammar.read-included-source-range-columns",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "read_included_range_columns",
+    "inventoryName": "read included source range columns",
+    "sourceText": "fn read_included_range_columns(\n    value: &Value,\n    budget: &ValidationBudget,\n) -> Result<Vec<f64>, GrammarRuntimeError> {\n    let ranges = value\n        .as_array()\n        .ok_or_else(|| invalid(\"invalid included source ranges\"))?;\n    let cells = ranges\n        .len()\n        .checked_mul(2)\n        .and_then(|count| count.checked_add(1))\n        .ok_or_else(|| aborted(Abort::MemoryBudget))?;\n    budget.retain(cells)?;\n    let mut columns = Vec::new();\n    for range in ranges {\n        budget.step()?;\n        let row = range\n            .as_array()\n            .filter(|row| row.len() == 2)\n            .ok_or_else(|| invalid(\"invalid included source ranges\"))?;\n        if !accept_grammar_selection_included_range_source_range(\n            \"source-range\",\n            number(&row[0]),\n            number(&row[1]),\n        ) {\n            return Err(invalid(\"invalid included source ranges\"));\n        }\n        columns.extend([number(&row[0]), number(&row[1])]);\n    }\n    Ok(columns)\n}"
+  },
+  {
+    "id": "grammar.accept-included-source-record-field-order",
+    "source": "rust/src/grammar/feature_runtime/mapped_tree_validation.rs",
+    "name": "accept_included_range_keys",
+    "inventoryName": "accept included source record field order",
+    "sourceText": "fn accept_included_range_keys(value: &Value, role: &str) -> bool {\n    let Some(fields) = value.as_object() else {\n        return false;\n    };\n    let plan = read_grammar_selection_included_range_field_order(role);\n    fields.keys().map(String::as_str).eq(plan.split('|'))\n}"
+  },
+  {
+    "id": "grammar.read-compiled-selection-source-ranges",
+    "source": "rust/src/grammar/feature_runtime/compile.rs",
+    "name": "Compiler::read_selection_ranges",
+    "inventoryName": "read compiled selection source ranges",
+    "sourceText": "    fn read_selection_ranges(candidate: &FeatureForm, owner: &str) -> LoadResult<Vec<[f64; 2]>> {\n        let fields = read_grammar_selection_included_range_field_order(\"candidate\");\n        if candidate.fields.len() != fields.split('|').count().saturating_sub(1)\n            || !matches!(candidate.field(\"ranges\"), Some(FieldValue::Expressions(items)) if !items.is_empty())\n        {\n            return refuse(\n                \"selection\",\n                format!(\n                    \"an included range candidate needs its complete ordered range definitions in {owner}\"\n                ),\n            );\n        }\n        let mut ranges = Vec::new();\n        let fields = read_grammar_selection_included_range_field_order(\"range\");\n        for expression in candidate.expressions(\"ranges\") {\n            let Some(range) = super::load::form_of(expression, \"source-range\") else {\n                return refuse(\n                    \"selection\",\n                    format!(\n                        \"an included source range needs its kind and nonempty integer byte bounds in {owner}\"\n                    ),\n                );\n            };\n            let coordinate = |key| {\n                range\n                    .integer(key)\n                    .and_then(|value| u32::try_from(value).ok())\n                    .map_or(f64::NAN, f64::from)\n            };\n            let start = coordinate(\"start\");\n            let end = coordinate(\"end\");\n            if range.fields.len() != fields.split('|').count().saturating_sub(1)\n                || !accept_grammar_selection_included_range_source_range(&range.head, start, end)\n            {\n                return refuse(\n                    \"selection\",\n                    format!(\n                        \"an included source range needs its kind and nonempty integer byte bounds in {owner}\"\n                    ),\n                );\n            }\n            ranges.push([start, end]);\n        }\n        Ok(ranges)\n    }",
+    "ownerContexts": [
+      "impl<'a> Compiler<'a> {"
+    ]
+  },
+  {
+    "id": "grammar.read-compiled-selection-range-coordinate",
+    "source": "rust/src/grammar/feature_runtime/compile.rs",
+    "name": "Compiler::read_selection_ranges::coordinate",
+    "inventoryName": "read compiled selection range coordinate",
+    "sourceText": "            let coordinate = |key| {\n                range\n                    .integer(key)\n                    .and_then(|value| u32::try_from(value).ok())\n                    .map_or(f64::NAN, f64::from)\n            };",
+    "ownerContexts": [
+      "impl<'a> Compiler<'a> {"
+    ]
+  },
+  {
+    "id": "repository.check-included-range-plans",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "included range plans retain every kept byte, excluded gap and final boundary without rewriting inputs",
+    "inventoryName": "check included range plans",
+    "sourceText": "test('included range plans retain every kept byte, excluded gap and final boundary without rewriting inputs', () => {\n  for (const [ranges, length, expected] of [\n    [[0, 4, 6, 9], 9, [0, 4, 0, 4, 4, 6, 4, 4, 6, 9, 4, 7, 9, 9, 7, 7]],\n    [[1, 3], 5, [0, 1, 0, 0, 1, 3, 0, 2, 3, 5, 2, 2, 5, 5, 2, 2]],\n    [[0, 1, 1, 3], 4, [0, 1, 0, 1, 1, 3, 1, 3, 3, 4, 3, 3, 4, 4, 3, 3]],\n  ]) {\n    const input = Object.freeze([...ranges]);\n    assert.deepEqual(readGrammarSelectionIncludedRangePlan(input, length), [0, 0, 0, 0, ...expected]);\n    assert.deepEqual(input, ranges);\n    assert.equal(acceptGrammarSelectionIncludedRangeAgreement(input, [...ranges]), true);\n  }\n  for (const [ranges, length] of [\n    [[], 5], [[0], 5], [[0, 0], 5], [[-1, 1], 5], [[1.5, 2], 5],\n    [[2, 1], 5], [[0, 6], 5], [[2, 3, 1, 2], 5], [[0, 3, 2, 4], 5],\n    [[0, 5], 5], [[0, 2, 2, 5], 5], [[0, 1], 0], [[0, 1], Infinity],\n    [[0, 1], NaN], [[0, 1], 4294967296], [[0, NaN], 5],\n  ]) assert.deepEqual(readGrammarSelectionIncludedRangePlan(ranges, length), [], 'invalid or non-contracting view');\n  assert.equal(acceptGrammarSelectionIncludedRangeAgreement([0, 4], [0, 3]), false);\n  assert.equal(acceptGrammarSelectionIncludedRangeAgreement([0, 4], [0, 4, 6, 9]), false);\n  assert.equal(readGrammarSelectionIncludedRangeReservation(9, 4, false), 352);\n  assert.equal(readGrammarSelectionIncludedRangeReservation(9, 4, true), 640);\n  for (const cells of [0, 1, 19, Infinity, NaN]) {\n    assert.equal(readGrammarSelectionIncludedRangeReservation(9, cells, false), -1);\n  }\n})"
+  },
+  {
+    "id": "repository.check-included-range-plans",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_plans_preserve_kept_bytes_gaps_boundaries_and_original_inputs",
+    "inventoryName": "check included range plans",
+    "sourceText": "fn included_range_plans_preserve_kept_bytes_gaps_boundaries_and_original_inputs() {\n    for (ranges, length, expected) in [\n        (\n            vec![0.0, 4.0, 6.0, 9.0],\n            9.0,\n            vec![\n                0.0, 4.0, 0.0, 4.0, 4.0, 6.0, 4.0, 4.0, 6.0, 9.0, 4.0, 7.0, 9.0, 9.0, 7.0, 7.0,\n            ],\n        ),\n        (\n            vec![1.0, 3.0],\n            5.0,\n            vec![\n                0.0, 1.0, 0.0, 0.0, 1.0, 3.0, 0.0, 2.0, 3.0, 5.0, 2.0, 2.0, 5.0, 5.0, 2.0, 2.0,\n            ],\n        ),\n        (\n            vec![0.0, 1.0, 1.0, 3.0],\n            4.0,\n            vec![\n                0.0, 1.0, 0.0, 1.0, 1.0, 3.0, 1.0, 3.0, 3.0, 4.0, 3.0, 3.0, 4.0, 4.0, 3.0, 3.0,\n            ],\n        ),\n    ] {\n        let original = ranges.clone();\n        let mut plan = vec![0.0; 4];\n        plan.extend(expected);\n        assert_eq!(\n            read_grammar_selection_included_range_plan(&ranges, length),\n            plan\n        );\n        assert_eq!(ranges, original);\n        assert!(accept_grammar_selection_included_range_agreement(\n            &ranges, &original\n        ));\n    }\n    for (ranges, length) in [\n        (vec![], 5.0),\n        (vec![0.0], 5.0),\n        (vec![0.0, 0.0], 5.0),\n        (vec![-1.0, 1.0], 5.0),\n        (vec![1.5, 2.0], 5.0),\n        (vec![2.0, 1.0], 5.0),\n        (vec![0.0, 6.0], 5.0),\n        (vec![2.0, 3.0, 1.0, 2.0], 5.0),\n        (vec![0.0, 3.0, 2.0, 4.0], 5.0),\n        (vec![0.0, 5.0], 5.0),\n        (vec![0.0, 2.0, 2.0, 5.0], 5.0),\n        (vec![0.0, 1.0], 0.0),\n        (vec![0.0, 1.0], f64::INFINITY),\n        (vec![0.0, 1.0], f64::NAN),\n        (vec![0.0, 1.0], 4_294_967_296.0),\n        (vec![0.0, f64::NAN], 5.0),\n    ] {\n        assert!(read_grammar_selection_included_range_plan(&ranges, length).is_empty());\n    }\n    assert!(!accept_grammar_selection_included_range_agreement(\n        &[0.0, 4.0],\n        &[0.0, 3.0]\n    ));\n    assert!(!accept_grammar_selection_included_range_agreement(\n        &[0.0, 4.0],\n        &[0.0, 4.0, 6.0, 9.0]\n    ));\n    assert_eq!(\n        read_grammar_selection_included_range_reservation(9.0, 4.0, false).to_bits(),\n        352.0_f64.to_bits()\n    );\n    assert_eq!(\n        read_grammar_selection_included_range_reservation(9.0, 4.0, true).to_bits(),\n        640.0_f64.to_bits()\n    );\n    for cells in [0.0, 1.0, 19.0, f64::INFINITY, f64::NAN] {\n        assert_eq!(\n            read_grammar_selection_included_range_reservation(9.0, cells, false).to_bits(),\n            (-1.0_f64).to_bits()\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.check-included-range-context-boundaries",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "included ranges require their closed candidate and one common syntactic mapping",
+    "inventoryName": "check included range context boundaries",
+    "sourceText": "test('included ranges require their closed candidate and one common syntactic mapping', () => {\n  assert.equal(acceptGrammarSelectionIncludedRangeMapping('included-ranges'), true);\n  assert.equal(acceptGrammarSelectionIncludedRangeMapping('json-string'), false);\n  assert.equal(acceptGrammarSelectionIncludedRangeCandidate('grammar-range-candidate', 'included-ranges'), true);\n  assert.equal(acceptGrammarSelectionIncludedRangeCandidate('grammar-candidate', 'included-ranges'), false);\n  assert.equal(acceptGrammarSelectionIncludedRangeCandidate('grammar-range-candidate', 'json-string'), false);\n  for (const [mappings, inToken, expected] of [\n    [['identity'], false, 0], [['json-string'], false, 0], [['future-view'], false, 0],\n    [['included-ranges'], false, 1], [['included-ranges', 'included-ranges'], false, 1],\n    [['included-ranges'], true, 2], [['included-ranges', 'identity'], false, 2],\n    [['json-string', 'included-ranges'], false, 2], [['included-ranges', 'future-view'], false, 2],\n  ]) assert.equal(readGrammarSelectionIncludedRangeContext(mappings, inToken), expected);\n  assert.equal(acceptGrammarSelectionIncludedRangeSourceRange('source-range', 0, 4), true);\n  for (const [kind, start, end] of [\n    ['range', 0, 4], ['source-range', 0, 0], ['source-range', -1, 4],\n    ['source-range', 0, 1.5], ['source-range', 0, 4294967296],\n  ]) assert.equal(acceptGrammarSelectionIncludedRangeSourceRange(kind, start, end), false);\n  assert.equal(readGrammarSelectionIncludedRangeFieldOrder('derivation'), 'operation|input|start|end|ranges');\n  assert.equal(readGrammarSelectionIncludedRangeFieldOrder('range'), 'kind|start|end');\n  assert.equal(readGrammarSelectionIncludedRangeFieldOrder('json-string'), '');\n})"
+  },
+  {
+    "id": "repository.check-included-range-context-boundaries",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_candidates_require_one_closed_syntactic_mapping",
+    "inventoryName": "check included range context boundaries",
+    "sourceText": "fn included_range_candidates_require_one_closed_syntactic_mapping() {\n    assert!(accept_grammar_selection_included_range_mapping(\n        \"included-ranges\"\n    ));\n    assert!(!accept_grammar_selection_included_range_mapping(\n        \"json-string\"\n    ));\n    assert!(accept_grammar_selection_included_range_candidate(\n        \"grammar-range-candidate\",\n        \"included-ranges\"\n    ));\n    assert!(!accept_grammar_selection_included_range_candidate(\n        \"grammar-candidate\",\n        \"included-ranges\"\n    ));\n    assert!(!accept_grammar_selection_included_range_candidate(\n        \"grammar-range-candidate\",\n        \"json-string\"\n    ));\n    for (mappings, in_token, expected) in [\n        (vec![\"identity\"], false, 0.0),\n        (vec![\"json-string\"], false, 0.0),\n        (vec![\"future-view\"], false, 0.0),\n        (vec![\"included-ranges\"], false, 1.0),\n        (vec![\"included-ranges\", \"included-ranges\"], false, 1.0),\n        (vec![\"included-ranges\"], true, 2.0),\n        (vec![\"included-ranges\", \"identity\"], false, 2.0),\n        (vec![\"json-string\", \"included-ranges\"], false, 2.0),\n        (vec![\"included-ranges\", \"future-view\"], false, 2.0),\n    ] {\n        let mappings = mappings.into_iter().map(str::to_owned).collect::<Vec<_>>();\n        assert_eq!(\n            read_grammar_selection_included_range_context(&mappings, in_token).to_bits(),\n            f64::to_bits(expected)\n        );\n    }\n    assert!(accept_grammar_selection_included_range_source_range(\n        \"source-range\",\n        0.0,\n        4.0\n    ));\n    for (kind, start, end) in [\n        (\"range\", 0.0, 4.0),\n        (\"source-range\", 0.0, 0.0),\n        (\"source-range\", -1.0, 4.0),\n        (\"source-range\", 0.0, 1.5),\n        (\"source-range\", 0.0, 4_294_967_296.0),\n    ] {\n        assert!(!accept_grammar_selection_included_range_source_range(\n            kind, start, end\n        ));\n    }\n    assert_eq!(\n        read_grammar_selection_included_range_field_order(\"derivation\"),\n        \"operation|input|start|end|ranges\"\n    );\n    assert_eq!(\n        read_grammar_selection_included_range_field_order(\"range\"),\n        \"kind|start|end\"\n    );\n    assert_eq!(\n        read_grammar_selection_included_range_field_order(\"json-string\"),\n        \"\"\n    );\n}"
+  },
+  {
+    "id": "repository.check-streamed-included-range-scalar-correspondence",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "streamed scalar correspondence preserves the original multibyte excluded-range example",
+    "inventoryName": "check streamed included range scalar correspondence",
+    "sourceText": "test('streamed scalar correspondence preserves the original multibyte excluded-range example', () => {\n  const source = '*é\\n> β*', bytes = new TextEncoder().encode(source), widths = new Map();\n  let cursor = 0;\n  for (const scalar of source) {\n    const width = new TextEncoder().encode(scalar).length;\n    widths.set(cursor, width);\n    cursor += width;\n  }\n  const plan = readGrammarSelectionIncludedRangePlan([0, 4, 6, 9], bytes.length);\n  const intervals = [], result = [];\n  let row = 0, position = 0, output = 0, done = false;\n  for (let step = 0; step < 20; step += 1) {\n    const part = readGrammarSelectionIncludedRangePart(plan, row, position, output, widths.get(position) ?? 0);\n    if (part[0] === 1) { done = true; break; }\n    assert.equal(part.length, 8);\n    assert.equal(part[0], 0);\n    const [inputStart, inputEnd, outputStart, outputEnd] = part.slice(4);\n    intervals.push([inputStart + 2, inputEnd + 2, outputStart, outputEnd]);\n    if (outputEnd > outputStart) result.push(...bytes.subarray(inputStart, inputEnd));\n    [row, position, output] = part.slice(1, 4);\n  }\n  assert.equal(done, true);\n  assert.deepEqual(intervals, [\n    [2, 2, 0, 0], [2, 3, 0, 1], [3, 5, 1, 3], [5, 6, 3, 4],\n    [6, 8, 4, 4], [8, 10, 4, 6], [10, 11, 6, 7], [11, 11, 7, 7],\n  ]);\n  assert.deepEqual(result, [42, 195, 169, 10, 206, 178, 42]);\n  assert.equal(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(result)), '*é\\nβ*');\n  assert.deepEqual(readGrammarSelectionIncludedRangePart(plan, 0, 0, 1, 1), []);\n})"
+  },
+  {
+    "id": "repository.check-streamed-included-range-scalar-correspondence",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_scalar_stream_preserves_the_original_multibyte_example",
+    "inventoryName": "check streamed included range scalar correspondence",
+    "sourceText": "fn included_range_scalar_stream_preserves_the_original_multibyte_example() {\n    let source = \"*é\\n> β*\";\n    let bytes = source.as_bytes();\n    let widths = source\n        .char_indices()\n        .map(|(index, scalar)| (index, scalar.len_utf8()))\n        .collect::<HashMap<_, _>>();\n    let plan = read_grammar_selection_included_range_plan(&[0.0, 4.0, 6.0, 9.0], 9.0);\n    let (mut row, mut position, mut output) = (0.0, 0.0, 0.0);\n    let (mut intervals, mut result, mut done) = (Vec::new(), Vec::new(), false);\n    for _ in 0..20 {\n        let index = included_range_rules::ml_array::number_index(position).unwrap();\n        let width = f64::from(u32::try_from(*widths.get(&index).unwrap_or(&0)).unwrap());\n        let part = read_grammar_selection_included_range_part(&plan, row, position, output, width);\n        if part.first().map(|value| value.to_bits()) == Some(1.0_f64.to_bits()) {\n            done = true;\n            break;\n        }\n        assert_eq!(part.len(), 8);\n        assert_eq!(part[0].to_bits(), 0.0_f64.to_bits());\n        intervals.push([part[4] + 2.0, part[5] + 2.0, part[6], part[7]]);\n        if part[7] > part[6] {\n            let start = included_range_rules::ml_array::number_index(part[4]).unwrap();\n            let end = included_range_rules::ml_array::number_index(part[5]).unwrap();\n            result.extend_from_slice(&bytes[start..end]);\n        }\n        (row, position, output) = (part[1], part[2], part[3]);\n    }\n    assert!(done);\n    assert_eq!(\n        intervals,\n        vec![\n            [2.0, 2.0, 0.0, 0.0],\n            [2.0, 3.0, 0.0, 1.0],\n            [3.0, 5.0, 1.0, 3.0],\n            [5.0, 6.0, 3.0, 4.0],\n            [6.0, 8.0, 4.0, 4.0],\n            [8.0, 10.0, 4.0, 6.0],\n            [10.0, 11.0, 6.0, 7.0],\n            [11.0, 11.0, 7.0, 7.0]\n        ]\n    );\n    assert_eq!(result, [42, 195, 169, 10, 206, 178, 42]);\n    assert_eq!(std::str::from_utf8(&result).unwrap(), \"*é\\nβ*\");\n    assert!(read_grammar_selection_included_range_part(&plan, 0.0, 0.0, 1.0, 1.0).is_empty());\n}"
+  },
+  {
+    "id": "repository.check-included-range-source-scalar-boundaries",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "actual valid UTF-8 source boundaries exclude every continuation byte",
+    "inventoryName": "check included range source scalar boundaries",
+    "sourceText": "test('actual valid UTF-8 source boundaries exclude every continuation byte', () => {\n  const source = '\\0A' + Array.from({ length: 64 }, (_, index) => String.fromCodePoint(128 + index)).join('') + '€😀\\uFEFF';\n  const bytes = new TextEncoder().encode(source);\n  const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });\n  for (let index = 0; index <= bytes.length; index += 1) {\n    let boundary = false;\n    try {\n      decoder.decode(bytes.subarray(0, index));\n      decoder.decode(bytes.subarray(index));\n      boundary = true;\n    } catch {}\n    assert.equal(acceptGrammarSelectionIncludedRangeByteBoundary(bytes[index] ?? -1, index === bytes.length), boundary);\n  }\n  for (const byte of [-1, 0.5, 256, NaN, Infinity]) {\n    assert.equal(acceptGrammarSelectionIncludedRangeByteBoundary(byte, false), false);\n  }\n  assert.equal(acceptGrammarSelectionIncludedRangeByteBoundary(-1, true), true);\n})"
+  },
+  {
+    "id": "repository.check-included-range-source-scalar-boundaries",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_utf8_boundaries_reject_every_continuation_byte",
+    "inventoryName": "check included range source scalar boundaries",
+    "sourceText": "fn included_range_utf8_boundaries_reject_every_continuation_byte() {\n    let source = format!(\n        \"\\0A{}€😀\\u{feff}\",\n        (128..192)\n            .map(|value| char::from_u32(value).unwrap())\n            .collect::<String>()\n    );\n    let bytes = source.as_bytes();\n    for index in 0..=bytes.len() {\n        let boundary = std::str::from_utf8(&bytes[..index]).is_ok()\n            && std::str::from_utf8(&bytes[index..]).is_ok();\n        let byte = bytes.get(index).map_or(-1.0, |byte| f64::from(*byte));\n        assert_eq!(\n            accept_grammar_selection_included_range_byte_boundary(byte, index == bytes.len()),\n            boundary\n        );\n    }\n    for byte in [-1.0, 0.5, 256.0, f64::NAN, f64::INFINITY] {\n        assert!(!accept_grammar_selection_included_range_byte_boundary(\n            byte, false\n        ));\n    }\n    assert!(accept_grammar_selection_included_range_byte_boundary(\n        -1.0, true\n    ));\n}"
+  },
+  {
+    "id": "repository.check-included-range-concrete-selection-witnesses",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "real any and all selections keep the complete physical CST and a separate scalar source view",
+    "inventoryName": "check included range concrete selection witnesses",
+    "sourceText": "test('real any and all selections keep the complete physical CST and a separate scalar source view', () => {\n  const region = '*é\\n> β*', decoded = '*é\\nβ*', ranges = [[0, 4], [6, 9]];\n  const child = includedRangeLiteralGrammar(decoded);\n  const direct = compileGrammar(child).parseTree(decoded);\n  assert.equal(direct.ok, true);\n  for (const mode of ['any-grammar', 'all-grammar']) for (const prefix of ['> ', '前\\n> ']) {\n    const grammar = includedRangeGrammar(region, ranges, ['Inline', 'InlineTwin'], mode, prefix);\n    const listing = renderGrammarLinks(grammar);\n    assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing);\n    assert.equal(renderGrammarLinks(parseNativeGrammar(renderNativeGrammar(grammar))), listing);\n    const source = prefix + region + '\\n';\n    const outcome = compileGrammar(grammar, { resolveGrammar: () => child }).parseTree(source);\n    assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n    const embedded = includedRangeEmbedding(outcome.tree);\n    assert.ok(embedded);\n    const start = Buffer.byteLength(prefix);\n    assert.deepEqual(includedRangePhysicalBytes(outcome.tree), [...Buffer.from(source)]);\n    assert.deepEqual(includedRangePhysicalBytes(embedded.root), [42, 195, 169, 10, 206, 178, 42]);\n    assert.deepEqual(embedded.root, direct.tree);\n    assert.equal(embedded.selection.alternatives.length, 1);\n    assert.deepEqual(embedded.selection.alternatives[0].root, direct.tree);\n    assert.deepEqual(embedded.selection.sourceMapping.ranges, ranges);\n    assert.deepEqual(embedded.selection.sourceMapping.intervals, [\n      [0, 0, 0, 0], [0, 1, 0, 1], [1, 3, 1, 3], [3, 4, 3, 4],\n      [4, 6, 4, 4], [6, 8, 4, 6], [8, 9, 6, 7], [9, 9, 7, 7],\n    ].map(([begin, end, outputStart, outputEnd]) => [start + begin, start + end, outputStart, outputEnd]));\n    assert.equal(outcome.sourcePlanes.length, 2);\n    assert.deepEqual(outcome.sourcePlanes[1].derivation,\n      { operation: 'included-ranges', input: 0, start, end: start + 9, ranges });\n    const bundle = { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes };\n    assert.equal(checkGrammarSelectionMappedTree(bundle), bundle);\n  }\n})"
+  },
+  {
+    "id": "repository.check-included-range-concrete-selection-witnesses",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_any_and_all_keep_physical_cst_and_complete_derived_witnesses",
+    "inventoryName": "check included range concrete selection witnesses",
+    "sourceText": "fn included_range_any_and_all_keep_physical_cst_and_complete_derived_witnesses() {\n    let child = included_range_literal(\"*é\\nβ*\");\n    let direct = included_range_parse(&child, &HashMap::new(), \"*é\\nβ*\");\n    assert!(direct.ok, \"{:?}\", direct.rejection);\n    for mode in [\"any-grammar\", \"all-grammar\"] {\n        for prefix in [\"> \", \"前\\n> \"] {\n            let grammar = included_range_grammar(\n                \"*é\\n> β*\",\n                &[[0, 4], [6, 9]],\n                &[\"Inline\", \"InlineTwin\"],\n                mode,\n                prefix,\n                \"\\n\",\n            );\n            let listing = render_grammar_links(&grammar);\n            assert_eq!(\n                render_grammar_links(&parse_grammar_links(&listing).unwrap()),\n                listing\n            );\n            assert_eq!(\n                render_grammar_links(\n                    &parse_native_grammar(&render_native_grammar(&grammar)).unwrap()\n                ),\n                listing\n            );\n            let source = format!(\"{prefix}*é\\n> β*\\n\");\n            let grammars = HashMap::from([\n                (\"Inline\".to_owned(), child.clone()),\n                (\"InlineTwin\".to_owned(), child.clone()),\n            ]);\n            let outcome = included_range_parse(&grammar, &grammars, &source);\n            assert!(outcome.ok, \"{:?}\", outcome.rejection);\n            let bundle = included_range_bundle(&outcome);\n            let embedded = included_range_embedding(&bundle[\"tree\"]);\n            assert_eq!(included_range_physical(&bundle[\"tree\"]), source.as_bytes());\n            assert_eq!(\n                included_range_physical(&embedded[\"root\"]),\n                [42, 195, 169, 10, 206, 178, 42]\n            );\n            assert_eq!(\n                embedded[\"root\"],\n                included_range_tree_data(direct.tree.as_ref().unwrap())\n            );\n            assert_eq!(\n                embedded[\"selection\"][\"alternatives\"]\n                    .as_array()\n                    .unwrap()\n                    .len(),\n                1\n            );\n            assert_eq!(\n                embedded[\"selection\"][\"alternatives\"][0][\"root\"],\n                embedded[\"root\"]\n            );\n            assert_eq!(\n                embedded[\"selection\"][\"sourceMapping\"][\"ranges\"],\n                json!([[0, 4], [6, 9]])\n            );\n            let start = prefix.len();\n            let intervals = [\n                [0, 0, 0, 0],\n                [0, 1, 0, 1],\n                [1, 3, 1, 3],\n                [3, 4, 3, 4],\n                [4, 6, 4, 4],\n                [6, 8, 4, 6],\n                [8, 9, 6, 7],\n                [9, 9, 7, 7],\n            ]\n            .map(|[begin, end, output_start, output_end]| {\n                [start + begin, start + end, output_start, output_end]\n            });\n            assert_eq!(\n                embedded[\"selection\"][\"sourceMapping\"][\"intervals\"],\n                json!(intervals)\n            );\n            assert_eq!(bundle[\"sourcePlanes\"].as_array().unwrap().len(), 2);\n            assert_eq!(\n                bundle[\"sourcePlanes\"][1][\"derivation\"],\n                json!({\"operation\":\"included-ranges\",\"input\":0,\n            \"start\":start,\"end\":start+9,\"ranges\":[[0,4],[6,9]]})\n            );\n            assert!(std::ptr::eq(\n                check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default())\n                    .unwrap(),\n                &bundle\n            ));\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-included-range-package-javascript-object-notation-selection",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "included source views run the shipped JSON grammar and retain its complete standalone CST",
+    "inventoryName": "check included range package javascript object notation selection",
+    "sourceText": "test('included source views run the shipped JSON grammar and retain its complete standalone CST', () => {\n  const source = '{\"a\":\\n> 1}', decoded = '{\"a\":\\n1}';\n  const json = parseGrammarLinks(nativeGrammarText('native-json'));\n  const direct = compileGrammar(json).parseTree(decoded);\n  assert.equal(direct.ok, true);\n  const host = includedRangeGrammar(source, [[0, 6], [8, 10]], ['JSON'], 'any-grammar', '', '');\n  const outcome = compileGrammar(host, { resolveGrammar: () => json }).parseTree(source);\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  const embedded = includedRangeEmbedding(outcome.tree);\n  assert.deepEqual(embedded.root, direct.tree);\n  assert.deepEqual(includedRangePhysicalBytes(outcome.tree), [...Buffer.from(source)]);\n  assert.deepEqual(includedRangePhysicalBytes(embedded.root), [...Buffer.from(decoded)]);\n  assert.deepEqual(JSON.parse(Buffer.from(includedRangePhysicalBytes(embedded.root)).toString()), { a: 1 });\n  assert.equal(checkGrammarSelectionMappedTree({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes }).tree, outcome.tree);\n})"
+  },
+  {
+    "id": "repository.check-included-range-package-javascript-object-notation-selection",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_views_execute_the_shipped_json_grammar_without_changing_its_cst",
+    "inventoryName": "check included range package javascript object notation selection",
+    "sourceText": "fn included_range_views_execute_the_shipped_json_grammar_without_changing_its_cst() {\n    let source = \"{\\\"a\\\":\\n> 1}\";\n    let decoded = \"{\\\"a\\\":\\n1}\";\n    let child =\n        parse_grammar_links(include_str!(\"../../src/data/native-grammars/json.lino\")).unwrap();\n    let direct = included_range_parse(&child, &HashMap::new(), decoded);\n    assert!(direct.ok, \"{:?}\", direct.rejection);\n    let host = included_range_grammar(source, &[[0, 6], [8, 10]], &[\"JSON\"], \"any-grammar\", \"\", \"\");\n    let outcome = included_range_parse(&host, &HashMap::from([(\"JSON\".to_owned(), child)]), source);\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let bundle = included_range_bundle(&outcome);\n    let embedded = included_range_embedding(&bundle[\"tree\"]);\n    assert_eq!(\n        embedded[\"root\"],\n        included_range_tree_data(direct.tree.as_ref().unwrap())\n    );\n    assert_eq!(included_range_physical(&bundle[\"tree\"]), source.as_bytes());\n    let physical = included_range_physical(&embedded[\"root\"]);\n    assert_eq!(physical, decoded.as_bytes());\n    assert_eq!(\n        serde_json::from_slice::<Value>(&physical).unwrap(),\n        json!({\"a\":1})\n    );\n    assert!(std::ptr::eq(\n        check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap(),\n        &bundle\n    ));\n}"
+  },
+  {
+    "id": "repository.check-nested-included-range-archives",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "nested JSON and included ranges preserve all source planes and replay from text and binary grammar archives",
+    "inventoryName": "check nested included range archives",
+    "sourceText": "test('nested JSON and included ranges preserve all source planes and replay from text and binary grammar archives', () => {\n  const physical = '> *é\\n> β*\\n', source = JSON.stringify(physical);\n  const child = includedRangeLiteralGrammar('*é\\nβ*');\n  const middle = includedRangeGrammar('*é\\n> β*', [[0, 4], [6, 9]]);\n  const outer = parseGrammarLinks(nativeGrammarText('native-json'));\n  const original = outer.startRule().name;\n  outer.rules.set('quoted_source', { name: 'quoted_source', kind: 'normal', expression: {\n    kind: 'any-grammar', item: { kind: 'ref', name: original },\n    items: [{ kind: 'grammar-candidate', name: 'Middle', mapping: 'json-string' }],\n  } });\n  outer.start = 'quoted_source';\n  const grammars = new Map([['Outer', outer], ['Middle', middle], ['Inline', child]]);\n  const outcome = compileGrammar(outer, { resolveGrammar: name => grammars.get(name) }).parseTree(source);\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  assert.deepEqual(outcome.sourcePlanes.map(plane => plane.byteLength), [Buffer.byteLength(source), 12, 7]);\n  assert.equal(outcome.sourcePlanes[1].derivation.operation, 'json-string');\n  assert.deepEqual(Object.keys(outcome.sourcePlanes[1].derivation), ['operation', 'input', 'start', 'end']);\n  assert.deepEqual(outcome.sourcePlanes[2].derivation,\n    { operation: 'included-ranges', input: 1, start: 2, end: 11, ranges: [[0, 4], [6, 9]] });\n  assert.deepEqual(includedRangePhysicalBytes(outcome.tree), [...Buffer.from(source)]);\n  assert.deepEqual(includedRangePhysicalBytes(includedRangeEmbedding(outcome.tree).root), [42, 195, 169, 10, 206, 178, 42]);\n  const bundle = { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes };\n  assert.equal(checkGrammarSelectionMappedTree(bundle), bundle);\n  const archive = { grammars: [...grammars].map(([name, grammar]) => ({ name, document: includedRangeGrammarDocument(grammar) })), bundle };\n  for (const decoded of includedRangeStoredVariants(archive)) {\n    assert.equal(checkGrammarSelectionMappedTree(decoded.bundle), decoded.bundle);\n    const restored = new Map(decoded.grammars.map(row => [row.name, row.document]));\n    const replay = compileGrammar(restored.get('Outer'), { resolveGrammar: name => restored.get(name) }).parseTree(source);\n    assert.equal(replay.ok, true, JSON.stringify(replay.rejection));\n    assert.deepEqual({ tree: replay.tree, sourcePlanes: replay.sourcePlanes }, decoded.bundle);\n  }\n})"
+  },
+  {
+    "id": "repository.check-nested-included-range-archives",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_nested_json_source_planes_replay_from_text_and_binary_grammar_archives",
+    "inventoryName": "check nested included range archives",
+    "sourceText": "fn included_range_nested_json_source_planes_replay_from_text_and_binary_grammar_archives() {\n    let physical = \"> *é\\n> β*\\n\";\n    let source = serde_json::to_string(physical).unwrap();\n    let child = included_range_literal(\"*é\\nβ*\");\n    let middle = included_range_grammar(\n        \"*é\\n> β*\",\n        &[[0, 4], [6, 9]],\n        &[\"Inline\"],\n        \"any-grammar\",\n        \"> \",\n        \"\\n\",\n    );\n    let mut outer =\n        parse_grammar_links(include_str!(\"../../src/data/native-grammars/json.lino\")).unwrap();\n    outer.add_rule(GrammarRule::new(\n        \"quoted_source\",\n        parse_links_expression(&format!(\n            \"(any-grammar (ref {}) (grammar-candidate Middle json-string))\",\n            outer.start().unwrap(),\n        ))\n        .unwrap(),\n    ));\n    outer.set_start(\"quoted_source\");\n    let grammars = HashMap::from([\n        (\"Outer\".to_owned(), outer.clone()),\n        (\"Middle\".to_owned(), middle),\n        (\"Inline\".to_owned(), child),\n    ]);\n    let outcome = included_range_parse(&outer, &grammars, &source);\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let bundle = included_range_bundle(&outcome);\n    assert_eq!(\n        bundle[\"sourcePlanes\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .map(|plane| plane[\"byteLength\"].clone())\n            .collect::<Vec<_>>(),\n        vec![json!(source.len()), json!(12), json!(7)]\n    );\n    assert_eq!(\n        bundle[\"sourcePlanes\"][1][\"derivation\"][\"operation\"],\n        \"json-string\"\n    );\n    assert_eq!(\n        bundle[\"sourcePlanes\"][1][\"derivation\"]\n            .as_object()\n            .unwrap()\n            .keys()\n            .map(String::as_str)\n            .collect::<Vec<_>>(),\n        [\"operation\", \"input\", \"start\", \"end\"]\n    );\n    assert_eq!(\n        bundle[\"sourcePlanes\"][2][\"derivation\"],\n        json!({\"operation\":\"included-ranges\",\"input\":1,\n        \"start\":2,\"end\":11,\"ranges\":[[0,4],[6,9]]})\n    );\n    assert_eq!(included_range_physical(&bundle[\"tree\"]), source.as_bytes());\n    assert_eq!(\n        included_range_physical(&included_range_embedding(&bundle[\"tree\"])[\"root\"]),\n        [42, 195, 169, 10, 206, 178, 42]\n    );\n    check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n    let mut documents = grammars.iter().map(|(name,grammar)| {\n        let syntax = parse_lino_to_links_with_config(&render_grammar_links(grammar),&ParserConfig::without_comments()).unwrap();\n        json!({\"name\":name,\"syntax\":syntax.iter().map(included_range_link_data).collect::<Vec<_>>()})\n    }).collect::<Vec<_>>();\n    documents.sort_by(|left, right| left[\"name\"].as_str().cmp(&right[\"name\"].as_str()));\n    let archive = json!({\"grammars\":documents,\"bundle\":bundle});\n    for decoded in included_range_stored(&archive) {\n        check_grammar_selection_mapped_tree(&decoded[\"bundle\"], &FeatureParseOptions::default())\n            .unwrap();\n        let restored = decoded[\"grammars\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .map(|row| {\n                let listing = row[\"syntax\"]\n                    .as_array()\n                    .unwrap()\n                    .iter()\n                    .map(included_range_link_text)\n                    .collect::<Vec<_>>()\n                    .join(\"\\n\");\n                let name = row[\"name\"].as_str().unwrap();\n                let grammar = parse_grammar_links(&listing).unwrap();\n                assert_eq!(\n                    render_grammar_links(&grammar),\n                    render_grammar_links(&grammars[name])\n                );\n                (name.to_owned(), grammar)\n            })\n            .collect::<HashMap<_, _>>();\n        let replay = included_range_parse(&restored[\"Outer\"], &restored, &source);\n        assert!(replay.ok, \"{:?}\", replay.rejection);\n        assert_eq!(included_range_bundle(&replay), decoded[\"bundle\"]);\n    }\n}"
+  },
+  {
+    "id": "repository.check-included-range-source-memo-ownership",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "different source views do not share a child memo and failed attempts keep their actual source definitions",
+    "inventoryName": "check included range source memo ownership",
+    "sourceText": "test('different source views do not share a child memo and failed attempts keep their actual source definitions', () => {\n  const host = includedRangeGrammar('xy!', [[0, 1]], ['Letter'], 'any-grammar', '', '');\n  const original = host.rules.get('document'), first = original.expression.items[1];\n  const second = structuredClone(first);\n  second.items[0].ranges = [{ kind: 'source-range', start: 1, end: 2 }];\n  host.rules.set('document', { ...original, expression: { kind: 'choice', ordered: true, items: [first, second] } });\n  const child = includedRangeLiteralGrammar('y');\n  const outcome = compileGrammar(host, { resolveGrammar: () => child }).parseTree('xy!');\n  assert.equal(outcome.ok, true, JSON.stringify(outcome.rejection));\n  assert.equal(outcome.sourcePlanes.length, 3);\n  assert.deepEqual(outcome.sourcePlanes.slice(1).map(plane => plane.derivation.ranges), [[[0, 1]], [[1, 2]]]);\n  assert.equal(includedRangeEmbedding(outcome.tree).selection.sourceMapping.output, 2);\n  assert.deepEqual(includedRangePhysicalBytes(includedRangeEmbedding(outcome.tree).root), [121]);\n  assert.equal(checkGrammarSelectionMappedTree({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes }).tree, outcome.tree);\n})"
+  },
+  {
+    "id": "repository.check-included-range-source-memo-ownership",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_views_isolate_child_memos_and_keep_failed_source_definitions",
+    "inventoryName": "check included range source memo ownership",
+    "sourceText": "fn included_range_views_isolate_child_memos_and_keep_failed_source_definitions() {\n    let host = parse_grammar_links(\"(grammar (start document))\\n(rule document normal (choice ordered (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 0 1))) (any-grammar (ref physical) (grammar-range-candidate Letter included-ranges (source-range 1 2)))))\\n(rule physical normal (literal xy!))\\n\").unwrap();\n    let outcome = included_range_parse(\n        &host,\n        &HashMap::from([(\"Letter\".to_owned(), included_range_literal(\"y\"))]),\n        \"xy!\",\n    );\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let bundle = included_range_bundle(&outcome);\n    assert_eq!(bundle[\"sourcePlanes\"].as_array().unwrap().len(), 3);\n    assert_eq!(\n        bundle[\"sourcePlanes\"].as_array().unwrap()[1..]\n            .iter()\n            .map(|plane| plane[\"derivation\"][\"ranges\"].clone())\n            .collect::<Vec<_>>(),\n        vec![json!([[0, 1]]), json!([[1, 2]])]\n    );\n    let embedded = included_range_embedding(&bundle[\"tree\"]);\n    assert_eq!(embedded[\"selection\"][\"sourceMapping\"][\"output\"], 2);\n    assert_eq!(included_range_physical(&embedded[\"root\"]), [121]);\n    check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n}"
+  },
+  {
+    "id": "repository.check-included-range-archive-forgeries",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "archived range forgeries fail source correspondence checks on the actual physical source",
+    "inventoryName": "check included range archive forgeries",
+    "sourceText": "test('archived range forgeries fail source correspondence checks on the actual physical source', () => {\n  const host = includedRangeGrammar('*é\\n> β*', [[0, 4], [6, 9]]);\n  const child = includedRangeLiteralGrammar('*é\\nβ*');\n  const outcome = compileGrammar(host, { resolveGrammar: () => child }).parseTree('> *é\\n> β*\\n');\n  assert.equal(outcome.ok, true);\n  const bundle = { tree: outcome.tree, sourcePlanes: outcome.sourcePlanes };\n  const mutations = [\n    stored => { includedRangeEmbedding(stored.tree).selection.sourceMapping.ranges = [[0, 3], [6, 9]]; },\n    stored => { stored.sourcePlanes[1].derivation.ranges.reverse(); },\n    stored => { stored.sourcePlanes[1].derivation.ranges[0][1] = 2; },\n    stored => { stored.sourcePlanes[1].derivation.ranges[0].push(1); },\n    stored => { includedRangeEmbedding(stored.tree).selection.sourceMapping.intervals[4][2] = 3; },\n    stored => { includedRangeEmbedding(stored.tree).selection.sourceMapping.input = 1; },\n    stored => { includedRangeEmbedding(stored.tree).selection.sourceMapping.hidden = 'extra'; },\n    stored => { includedRangeEmbedding(stored.tree).root.end = 6; },\n  ];\n  for (const mutate of mutations) {\n    const counterfeit = structuredClone(bundle);\n    mutate(counterfeit);\n    for (const decoded of includedRangeStoredVariants(counterfeit)) {\n      assert.throws(() => checkGrammarSelectionMappedTree(decoded), /mapped grammar CST:/u);\n    }\n  }\n  let reads = 0;\n  const accessor = structuredClone(bundle);\n  Object.defineProperty(accessor.sourcePlanes[1].derivation.ranges[0], '0', { enumerable: true, get() { reads += 1; return 0; } });\n  assert.throws(() => checkGrammarSelectionMappedTree(accessor), /non-data field/u);\n  assert.equal(reads, 0);\n})"
+  },
+  {
+    "id": "repository.check-included-range-archive-forgeries",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_archive_forgeries_fail_actual_source_correspondence",
+    "inventoryName": "check included range archive forgeries",
+    "sourceText": "fn included_range_archive_forgeries_fail_actual_source_correspondence() {\n    let host = included_range_grammar(\n        \"*é\\n> β*\",\n        &[[0, 4], [6, 9]],\n        &[\"Inline\"],\n        \"any-grammar\",\n        \"> \",\n        \"\\n\",\n    );\n    let outcome = included_range_parse(\n        &host,\n        &HashMap::from([(\"Inline\".to_owned(), included_range_literal(\"*é\\nβ*\"))]),\n        \"> *é\\n> β*\\n\",\n    );\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let bundle = included_range_bundle(&outcome);\n    let embedded = included_range_embedding_path(&bundle[\"tree\"], \"/tree\").unwrap();\n    let mutations = [\n        (\n            format!(\"{embedded}/selection/sourceMapping/ranges\"),\n            json!([[0, 3], [6, 9]]),\n        ),\n        (\n            \"/sourcePlanes/1/derivation/ranges\".to_owned(),\n            json!([[6, 9], [0, 4]]),\n        ),\n        (\"/sourcePlanes/1/derivation/ranges/0/1\".to_owned(), json!(2)),\n        (\n            \"/sourcePlanes/1/derivation/ranges/0\".to_owned(),\n            json!([0, 4, 1]),\n        ),\n        (\n            format!(\"{embedded}/selection/sourceMapping/intervals/4/2\"),\n            json!(3),\n        ),\n        (\n            format!(\"{embedded}/selection/sourceMapping/input\"),\n            json!(1),\n        ),\n        (format!(\"{embedded}/selection/sourceMapping\"), {\n            let mut mapping = bundle\n                .pointer(&format!(\"{embedded}/selection/sourceMapping\"))\n                .unwrap()\n                .clone();\n            mapping[\"hidden\"] = json!(\"extra\");\n            mapping\n        }),\n        (format!(\"{embedded}/root/end\"), json!(6)),\n    ];\n    for (path, value) in mutations {\n        let mut counterfeit = bundle.clone();\n        *counterfeit.pointer_mut(&path).unwrap() = value;\n        for decoded in included_range_stored(&counterfeit) {\n            let error =\n                check_grammar_selection_mapped_tree(&decoded, &FeatureParseOptions::default())\n                    .unwrap_err();\n            assert!(\n                error.to_string().contains(\"mapped grammar CST:\"),\n                \"{path}: {error}\"\n            );\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-included-range-progress-and-resource-refusals",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "range profiles reject scalar cuts, nonprogress and inconsistent candidate plans before executing child grammars",
+    "inventoryName": "check included range progress and resource refusals",
+    "sourceText": "test('range profiles reject scalar cuts, nonprogress and inconsistent candidate plans before executing child grammars', () => {\n  const region = '*é\\n> β*';\n  for (const ranges of [[[0, 2]], [[0, 10]], [[6, 9], [0, 4]], [[0, 5], [4, 9]], [[0, 9]], [[0, 4], [4, 9]]]) {\n    let calls = 0;\n    const parser = compileGrammar(includedRangeGrammar(region, ranges), {\n      resolveGrammar: () => { calls += 1; return includedRangeLiteralGrammar('*é\\nβ*'); },\n    });\n    const failure = parser.parseTree('> ' + region + '\\n');\n    assert.equal(failure.ok, false);\n    assert.equal(calls, 0);\n    assert.equal(failure.rejection.reason, 'invalidEmbeddingMapping');\n    assert.equal(failure.rejection.diagnostics[0].reason, 'invalidEmbeddingMapping');\n    assert.ok(failure.rejection.diagnostics.every(diagnostic => !Object.hasOwn(diagnostic, 'language')));\n  }\n  const host = includedRangeGrammar(region, [[0, 4], [6, 9]], ['Inline', 'Different'], 'all-grammar');\n  const declaration = host.rules.get('document'), expression = structuredClone(declaration.expression);\n  expression.items[1].items[1].ranges = [{ kind: 'source-range', start: 0, end: 1 }];\n  host.rules.set('document', { ...declaration, expression });\n  let calls = 0;\n  assert.equal(compileGrammar(host, { resolveGrammar: () => { calls += 1; return includedRangeLiteralGrammar('*'); } }).parseTree('> ' + region + '\\n').ok, false);\n  assert.equal(calls, 0);\n  const refusing = compileGrammar(includedRangeGrammar(region, [[0, 4], [6, 9]]), {\n    resolveGrammar: () => includedRangeLiteralGrammar('!'),\n  }).parseTree('> ' + region + '\\n');\n  assert.equal(refusing.ok, false);\n  assert.equal(refusing.rejection.reason, 'syntax');\n  assert.ok(refusing.rejection.diagnostics.some(diagnostic => diagnostic.reason === 'mappedSyntax' && diagnostic.language === 'Inline'));\n  const parser = compileGrammar(includedRangeGrammar(region, [[0, 4], [6, 9]]), { resolveGrammar: () => includedRangeLiteralGrammar('*é\\nβ*') });\n  for (const [options, reason] of [[{ stepLimit: 0 }, 'stepLimit'], [{ memoryLimit: 0 }, 'memoryBudget'], [{ maxDepth: 0 }, 'nestingDepth']]) {\n    const failure = parser.parseTree('> ' + region + '\\n', options);\n    assert.equal(failure.ok, false);\n    assert.equal(failure.rejection.reason, reason);\n  }\n})"
+  },
+  {
+    "id": "repository.check-included-range-progress-and-resource-refusals",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets",
+    "inventoryName": "check included range progress and resource refusals",
+    "sourceText": "fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets() {\n    for ranges in [\n        vec![[0, 2]],\n        vec![[0, 10]],\n        vec![[6, 9], [0, 4]],\n        vec![[0, 5], [4, 9]],\n        vec![[0, 9]],\n        vec![[0, 4], [4, 9]],\n    ] {\n        let calls = Cell::new(0);\n        let resolve = |_: &str| {\n            calls.set(calls.get() + 1);\n            Some(included_range_literal(\"*é\\nβ*\"))\n        };\n        let host =\n            included_range_grammar(\"*é\\n> β*\", &ranges, &[\"Inline\"], \"any-grammar\", \"> \", \"\\n\");\n        let parser =\n            compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default()).unwrap();\n        // The borrowed native resolver prepares each unique selected grammar\n        // during compile (load_selection.rs), unlike JavaScript's lazy loader.\n        // Parse-phase diagnostics independently distinguish mapping admission\n        // from an actual child attempt; a resolver counter alone cannot do so.\n        assert_eq!(calls.get(), 1, \"one unique candidate is prepared\");\n        calls.set(0);\n        let failure = parser\n            .parse_tree(\"> *é\\n> β*\\n\".as_bytes(), &FeatureParseOptions::default())\n            .unwrap();\n        assert!(!failure.ok);\n        assert_eq!(calls.get(), 0, \"{ranges:?}\");\n        let rejection = failure.rejection.unwrap();\n        assert_eq!(rejection.reason, \"invalidEmbeddingMapping\");\n        let diagnostics = rejection.diagnostics.unwrap();\n        assert!(!diagnostics.is_empty());\n        assert_eq!(diagnostics[0][\"reason\"], \"invalidEmbeddingMapping\");\n        assert!(\n            diagnostics\n                .iter()\n                .all(|diagnostic| diagnostic.get(\"language\").is_none()),\n            \"invalid mapping is refused before language-tagged child diagnostics: {diagnostics:?}\"\n        );\n    }\n    let host = parse_grammar_links(&format!(\"(grammar (start document))\\n(rule document normal (seq (literal %3E%20) (all-grammar (ref physical) (grammar-range-candidate Inline included-ranges (source-range 0 4) (source-range 6 9)) (grammar-range-candidate Different included-ranges (source-range 0 1))) (literal %0A)))\\n(rule physical normal (literal {}))\\n\",percent_encode_links_text(\"*é\\n> β*\"))).unwrap();\n    let calls = Cell::new(0);\n    let resolve = |_: &str| {\n        calls.set(calls.get() + 1);\n        Some(included_range_literal(\"*\"))\n    };\n    let parser =\n        compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default()).unwrap();\n    assert_eq!(calls.get(), 2, \"both unique candidates are prepared\");\n    calls.set(0);\n    let failure = parser\n        .parse_tree(\"> *é\\n> β*\\n\".as_bytes(), &FeatureParseOptions::default())\n        .unwrap();\n    assert!(!failure.ok);\n    assert_eq!(calls.get(), 0);\n    let rejection = failure.rejection.unwrap();\n    assert_eq!(rejection.reason, \"unsupportedEmbeddingMapping\");\n    let diagnostics = rejection.diagnostics.unwrap();\n    assert!(!diagnostics.is_empty());\n    assert_eq!(\n        diagnostics[0][\"detail\"],\n        \"included range candidates require one common ordered range plan\"\n    );\n    assert!(\n        diagnostics\n            .iter()\n            .all(|diagnostic| diagnostic.get(\"language\").is_none()),\n        \"inconsistent plans refuse before language-tagged child diagnostics: {diagnostics:?}\"\n    );\n    let valid = included_range_grammar(\n        \"*é\\n> β*\",\n        &[[0, 4], [6, 9]],\n        &[\"Inline\"],\n        \"any-grammar\",\n        \"> \",\n        \"\\n\",\n    );\n    let refusing_calls = Cell::new(0);\n    let refusing = |_: &str| {\n        refusing_calls.set(refusing_calls.get() + 1);\n        Some(included_range_literal(\"!\"))\n    };\n    let prepared =\n        compile_feature_grammar(&valid, Some(&refusing), FeatureParseOptions::default()).unwrap();\n    assert_eq!(refusing_calls.get(), 1);\n    refusing_calls.set(0);\n    let failure = prepared\n        .parse_tree(\"> *é\\n> β*\\n\".as_bytes(), &FeatureParseOptions::default())\n        .unwrap();\n    assert!(!failure.ok);\n    assert_eq!(refusing_calls.get(), 0);\n    let rejection = failure.rejection.unwrap();\n    assert_eq!(rejection.reason, \"syntax\");\n    assert!(\n        rejection\n            .diagnostics\n            .unwrap()\n            .iter()\n            .any(|diagnostic| diagnostic[\"reason\"] == \"mappedSyntax\"\n                && diagnostic[\"language\"] == \"Inline\"),\n        \"the admitted range really executes its refusing child and exposes its syntax diagnostic\"\n    );\n    let host = included_range_grammar(\n        \"*é\\n> β*\",\n        &[[0, 4], [6, 9]],\n        &[\"Inline\"],\n        \"any-grammar\",\n        \"> \",\n        \"\\n\",\n    );\n    let resolve = |_: &str| Some(included_range_literal(\"*é\\nβ*\"));\n    let parser =\n        compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default()).unwrap();\n    for (options, reason) in [\n        (\n            FeatureParseOptions {\n                step_limit: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"stepLimit\",\n        ),\n        (\n            FeatureParseOptions {\n                memory_limit: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"memoryBudget\",\n        ),\n        (\n            FeatureParseOptions {\n                max_depth: Some(0),\n                ..FeatureParseOptions::default()\n            },\n            \"nestingDepth\",\n        ),\n    ] {\n        let failure = parser\n            .parse_tree(\"> *é\\n> β*\\n\".as_bytes(), &options)\n            .unwrap();\n        assert!(!failure.ok);\n        assert_eq!(failure.rejection.unwrap().reason, reason);\n    }\n}"
+  },
+  {
+    "id": "repository.check-included-range-tree-comparison-boundaries",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "both CST comparisons preserve source range parameters, physical children and every derived witness",
+    "inventoryName": "check included range tree comparison boundaries",
+    "sourceText": "test('both CST comparisons preserve source range parameters, physical children and every derived witness', () => {\n  const host = includedRangeGrammar('*é\\n> β*', [[0, 4], [6, 9]], ['First', 'Second'], 'all-grammar');\n  const child = includedRangeLiteralGrammar('*é\\nβ*');\n  const outcome = compileGrammar(host, { resolveGrammar: () => child }).parseTree('> *é\\n> β*\\n');\n  assert.equal(outcome.ok, true);\n  const reference = outcome.tree;\n  assert.equal(sameGrammarTree(reference, structuredClone(reference)), true);\n  assert.equal(sameGrammarOutput([reference], [structuredClone(reference)]), true);\n  const edits = [\n    embedded => { embedded.selection.sourceMapping.ranges[0][1] = 3; },\n    embedded => { embedded.selection.sourceMapping.ranges.reverse(); },\n    embedded => { embedded.selection.sourceMapping.intervals[4][2] = 3; },\n    embedded => { embedded.selection.sourceMapping.output = 2; },\n    embedded => { delete embedded.sourceChildren; },\n    embedded => { embedded.sourceChildren[0].end -= 1; },\n    embedded => { embedded.root.end -= 1; },\n    embedded => { embedded.selection.alternatives[0].root.end -= 1; },\n  ];\n  for (const edit of edits) {\n    const candidate = structuredClone(reference);\n    edit(includedRangeEmbedding(candidate));\n    assert.equal(sameGrammarTree(reference, candidate), false, edit.toString());\n    assert.equal(sameGrammarOutput([reference], [candidate]), false, edit.toString());\n  }\n})"
+  },
+  {
+    "id": "repository.create-included-range-test-grammar",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangeGrammar",
+    "inventoryName": "create included range test grammar",
+    "sourceText": "function includedRangeGrammar(region, ranges, names = ['Inline'], mode = 'any-grammar', prefix = '> ', suffix = '\\n') {\n  const candidates = names.map(name => `(grammar-range-candidate ${name} included-ranges ${ranges.map(([start, end]) => `(source-range ${start} ${end})`).join(' ')})`);\n  return parseGrammarLinks(`(grammar (start document))\\n(rule document normal (seq (literal ${percentEncodeLinksText(prefix)}) (${mode} (ref physical) ${candidates.join(' ')}) (literal ${percentEncodeLinksText(suffix)})))\\n(rule physical normal (literal ${percentEncodeLinksText(region)}))\\n`);\n}"
+  },
+  {
+    "id": "repository.create-included-range-test-grammar",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_grammar",
+    "inventoryName": "create included range test grammar",
+    "sourceText": "fn included_range_grammar(\n    region: &str,\n    ranges: &[[i64; 2]],\n    names: &[&str],\n    mode: &str,\n    prefix: &str,\n    suffix: &str,\n) -> Grammar {\n    let ranges = ranges\n        .iter()\n        .map(|[start, end]| format!(\"(source-range {start} {end})\"))\n        .collect::<Vec<_>>()\n        .join(\" \");\n    let candidates = names\n        .iter()\n        .map(|name| {\n            format!(\n                \"(grammar-range-candidate {} included-ranges {ranges})\",\n                percent_encode_links_text(name),\n            )\n        })\n        .collect::<Vec<_>>()\n        .join(\" \");\n    parse_grammar_links(&format!(\n        \"(grammar (start document))\\n(rule document normal (seq (literal {}) ({mode} (ref physical) {candidates}) (literal {})))\\n(rule physical normal (literal {}))\\n\",\n        percent_encode_links_text(prefix), percent_encode_links_text(suffix), percent_encode_links_text(region),\n    )).unwrap()\n}"
+  },
+  {
+    "id": "repository.read-included-range-test-embedded-tree",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangeEmbedding",
+    "inventoryName": "read included range test embedded tree",
+    "sourceText": "function includedRangeEmbedding(tree) {\n  if (tree.type === 'embed' && tree.selection.mapping === 'included-ranges') return tree;\n  for (const child of [...(tree.children ?? []), ...(tree.sourceChildren ?? []), ...(tree.root ? [tree.root] : [])]) {\n    const found = includedRangeEmbedding(child);\n    if (found) return found;\n  }\n  return null;\n}"
+  },
+  {
+    "id": "repository.read-included-range-test-embedded-tree",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_embedding",
+    "inventoryName": "read included range test embedded tree",
+    "sourceText": "fn included_range_embedding(tree: &Value) -> &Value {\n    tree.pointer(&included_range_embedding_path(tree, \"\").unwrap())\n        .unwrap()\n}"
+  },
+  {
+    "id": "repository.read-included-range-archive-value-pair",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangeStoredVariants",
+    "inventoryName": "read included range archive value pair",
+    "sourceText": "function includedRangeStoredVariants(value) {\n  const encoded = encodeStructuredDataLinks(value), text = encoded.network.toLino();\n  const network = LinkNetwork.fromLino(text);\n  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(network));\n  assert.equal(binary.toLino(), network.toLino());\n  return [readStructuredDataLino(text), decodeStructuredDataLinks(binary, encoded.root)];\n}"
+  },
+  {
+    "id": "repository.read-included-range-archive-value-pair",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_stored",
+    "inventoryName": "read included range archive value pair",
+    "sourceText": "pub(super) fn included_range_stored(value: &Value) -> [Value; 2] {\n    let graph = encode_structured_data_links(value).unwrap();\n    let text = graph.network.to_lino();\n    let restored = LinkNetwork::from_lino(&text).unwrap();\n    let binary = encode_link_network_binary(&restored, BinaryLinksOptions::default()).unwrap();\n    let binary = decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap();\n    assert_eq!(\n        binary.to_lino(),\n        text,\n        \"exact link identities survive both archives\"\n    );\n    [\n        decode_structured_data_links(&restored, graph.root).unwrap(),\n        decode_structured_data_links(&binary, graph.root).unwrap(),\n    ]\n}"
+  },
+  {
+    "id": "grammar.included-source-range",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceRange",
+    "inventoryName": "included source range",
+    "sourceText": "export interface GrammarSourceRange {\n  kind: 'source-range';\n  start: number;\n  end: number;\n}"
+  },
+  {
+    "id": "grammar.included-range-selection-candidate",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarRangeSelectionCandidate",
+    "inventoryName": "included range selection candidate",
+    "sourceText": "export interface GrammarRangeSelectionCandidate {\n  kind: 'grammar-range-candidate';\n  name: string;\n  mapping: 'included-ranges';\n  ranges: GrammarSourceRange[];\n}"
+  },
+  {
+    "id": "grammar.included-range-source-mapping",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping",
+    "inventoryName": "included range source mapping",
+    "sourceText": "export interface GrammarIncludedRangeSourceMapping {\n  kind: 'source-mapping';\n  operation: 'included-ranges';\n  input: number;\n  output: number;\n  ranges: Array<[number, number]>;\n  /** Scalar copies, excluded gaps and boundary points in their original order. */\n  intervals: Array<[number, number, number, number]>;\n}"
+  },
+  {
+    "id": "repository.check-included-range-signed-zero-archives",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "grammar integer zero is canonical while archived source range Numbers retain their signed zero",
+    "inventoryName": "check included range signed zero archives",
+    "sourceText": "test('grammar integer zero is canonical while archived source range Numbers retain their signed zero', () => {\n  const host = includedRangeGrammar('xy!', [[0, 1]], ['Letter'], 'any-grammar', '', '');\n  host.rules.get('document').expression.items[1].items[0].ranges[0].start = -0;\n  const outcome = compileGrammar(host, { resolveGrammar: () => includedRangeLiteralGrammar('x') }).parseTree('xy!');\n  assert.equal(outcome.ok, true);\n  assert.equal(Object.is(includedRangeEmbedding(outcome.tree).selection.sourceMapping.ranges[0][0], 0), true);\n  const bundle = structuredClone({ tree: outcome.tree, sourcePlanes: outcome.sourcePlanes });\n  includedRangeEmbedding(bundle.tree).selection.sourceMapping.ranges[0][0] = -0;\n  bundle.sourcePlanes[1].derivation.ranges[0][0] = -0;\n  for (const stored of includedRangeStoredVariants(bundle)) {\n    assert.equal(Object.is(stored.sourcePlanes[1].derivation.ranges[0][0], -0), true);\n    assert.equal(Object.is(includedRangeEmbedding(stored.tree).selection.sourceMapping.ranges[0][0], -0), true);\n    assert.equal(checkGrammarSelectionMappedTree(stored), stored);\n  }\n})"
+  },
+  {
+    "id": "repository.check-included-range-signed-zero-archives",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_archived_parameters_retain_signed_zero_without_changing_grammar_integer_zero",
+    "inventoryName": "check included range signed zero archives",
+    "sourceText": "fn included_range_archived_parameters_retain_signed_zero_without_changing_grammar_integer_zero() {\n    let host = included_range_grammar(\"xy!\", &[[0, 1]], &[\"Letter\"], \"any-grammar\", \"\", \"\");\n    let listing = render_grammar_links(&host).replace(\"(source-range 0 1)\", \"(source-range -0 1)\");\n    assert!(listing.contains(\"(source-range -0 1)\"));\n    let host = parse_grammar_links(&listing).unwrap();\n    assert!(render_grammar_links(&host).contains(\"(source-range 0 1)\"));\n    let outcome = included_range_parse(\n        &host,\n        &HashMap::from([(\"Letter\".to_owned(), included_range_literal(\"x\"))]),\n        \"xy!\",\n    );\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let mut bundle = included_range_bundle(&outcome);\n    let embedded = included_range_embedding_path(&bundle[\"tree\"], \"/tree\").unwrap();\n    let origin = format!(\"{embedded}/selection/sourceMapping/ranges/0/0\");\n    assert_eq!(\n        bundle.pointer(&origin).unwrap().as_f64().unwrap().to_bits(),\n        0.0_f64.to_bits()\n    );\n    *bundle.pointer_mut(&origin).unwrap() = json!(-0.0);\n    bundle[\"sourcePlanes\"][1][\"derivation\"][\"ranges\"][0][0] = json!(-0.0);\n    check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();\n    for stored in included_range_stored(&bundle) {\n        assert_eq!(\n            stored.pointer(&origin).unwrap().as_f64().unwrap().to_bits(),\n            (-0.0_f64).to_bits()\n        );\n        assert_eq!(\n            stored[\"sourcePlanes\"][1][\"derivation\"][\"ranges\"][0][0]\n                .as_f64()\n                .unwrap()\n                .to_bits(),\n            (-0.0_f64).to_bits()\n        );\n        assert!(std::ptr::eq(\n            check_grammar_selection_mapped_tree(&stored, &FeatureParseOptions::default()).unwrap(),\n            &stored\n        ));\n    }\n}"
+  },
+  {
+    "id": "grammar.included-range-source-occurrence-key",
+    "source": "rust/src/grammar/feature_runtime/selection_source_mapping.rs",
+    "name": "IncludedRangeKey",
+    "inventoryName": "included range source occurrence key",
+    "sourceText": "type IncludedRangeKey = (usize, usize, Vec<[usize; 2]>);"
+  },
+  {
+    "id": "grammar.included-range-source-occurrence-key",
+    "source": "js/src/grammar-runtime/selection-source-mapping.js",
+    "name": "mapGrammarSelectionIncludedRangeSource::key",
+    "inventoryName": "included range source occurrence key",
+    "sourceText": "const key = JSON.stringify(['included-ranges', start, end, ranges]);",
+    "ownerContexts": [
+      "export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {"
+    ]
+  },
+  {
+    "id": "repository.count-included-range-forgery-accessor-reads",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "archivedRangeForgeries::get",
+    "inventoryName": "count included range forgery accessor reads",
+    "sourceText": "get() { reads += 1; return 0; }",
+    "ownerContexts": [
+      "test('archived range forgeries fail source correspondence checks on the actual physical source', () => {"
+    ]
+  },
+  {
+    "id": "grammar.included-source-derivation-ranges",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourcePlane.ranges",
+    "inventoryName": "included source derivation ranges",
+    "sourceText": "ranges: Array<[number, number]>",
+    "ownerContexts": [
+      "export interface GrammarSourcePlane {"
+    ]
+  },
+  {
+    "id": "repository.resolve-included-range-refusing-child",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "includedRangeProfiles::refusing",
+    "inventoryName": "resolve included range refusing child",
+    "sourceText": "    let refusing = |_: &str| {\n        refusing_calls.set(refusing_calls.get() + 1);\n        Some(included_range_literal(\"!\"))\n    };",
+    "ownerContexts": [
+      "fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets() {"
+    ]
+  },
+  {
+    "id": "repository.parse-included-range-test-grammar",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_parse",
+    "inventoryName": "parse included range test grammar",
+    "sourceText": "fn included_range_parse(\n    grammar: &Grammar,\n    grammars: &HashMap<String, Grammar>,\n    source: &str,\n) -> ParseOutcome {\n    let resolve = |name: &str| grammars.get(name).cloned();\n    compile_feature_grammar(grammar, Some(&resolve), FeatureParseOptions::default())\n        .unwrap()\n        .parse_tree(source.as_bytes(), &FeatureParseOptions::default())\n        .unwrap()\n}"
+  },
+  {
+    "id": "repository.project-included-range-test-attributes",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_attributes",
+    "inventoryName": "project included range test attributes",
+    "sourceText": "fn included_range_attributes(attributes: Option<&SyntaxAttributes>) -> Value {\n    attributes.map_or(Value::Null, |fields| {\n        Value::Object(\n            fields\n                .iter()\n                .map(|(key, value)| {\n                    let value = match value {\n                        OperationValue::Integer(value) => json!(value),\n                        OperationValue::Text(value) => json!(value),\n                    };\n                    (key.clone(), value)\n                })\n                .collect(),\n        )\n    })\n}"
+  },
+  {
+    "id": "repository.project-included-range-test-tree-data",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_tree_data",
+    "inventoryName": "project included range test tree data",
+    "sourceText": "pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {\n    let mut value = json!({\"start\":tree.start(),\"end\":tree.end()});\n    match tree {\n        SyntaxTree::Node {\n            kind,\n            field,\n            trivia,\n            children,\n            attributes,\n            ..\n        } => {\n            value[\"type\"] = json!(\"node\");\n            value[\"kind\"] = json!(kind);\n            value[\"field\"] = json!(field);\n            value[\"trivia\"] = json!(trivia);\n            value[\"attributes\"] = included_range_attributes(attributes.as_ref());\n            value[\"children\"] = json!(\n                children\n                    .iter()\n                    .map(included_range_tree_data)\n                    .collect::<Vec<_>>()\n            );\n        }\n        SyntaxTree::Token {\n            kind,\n            field,\n            trivia,\n            attributes,\n            lexical,\n            ..\n        } => {\n            value[\"type\"] = json!(\"token\");\n            value[\"kind\"] = json!(kind);\n            value[\"field\"] = json!(field);\n            value[\"trivia\"] = json!(trivia);\n            value[\"attributes\"] = included_range_attributes(attributes.as_ref());\n            value[\"lexical\"] = json!(lexical);\n        }\n        SyntaxTree::Error { reason, .. } => {\n            value[\"type\"] = json!(\"error\");\n            value[\"reason\"] = json!(reason);\n        }\n        SyntaxTree::Missing { kind, literal, .. } => {\n            value[\"type\"] = json!(\"missing\");\n            value[\"kind\"] = json!(kind);\n            value[\"literal\"] = json!(literal);\n        }\n        SyntaxTree::Embed {\n            language,\n            root,\n            source_children,\n            selection,\n            ..\n        } => {\n            value[\"type\"] = json!(\"embed\");\n            value[\"language\"] = json!(language);\n            value[\"root\"] = included_range_tree_data(root);\n            if let Some(children) = source_children {\n                value[\"sourceChildren\"] = json!(\n                    children\n                        .iter()\n                        .map(included_range_tree_data)\n                        .collect::<Vec<_>>()\n                );\n            }\n            value[\"selection\"] = selection.as_ref().map_or(Value::Null, |selected| {\n                let mut data = json!({\"mode\":selected.mode,\"mapping\":selected.mapping,\n                    \"start\":selected.start,\"end\":selected.end,\"candidates\":selected.candidates,\n                    \"provenance\":selected.provenance,\"ambiguous\":selected.ambiguous,\n                    \"alternatives\":selected.alternatives.iter().map(|item| json!({\n                        \"language\":item.language,\"root\":included_range_tree_data(&item.root),\"provenance\":item.provenance,\n                    })).collect::<Vec<_>>()});\n                if let Some(mapping) = &selected.source_mapping { data[\"sourceMapping\"].clone_from(mapping); }\n                data\n            });\n        }\n    }\n    if let SyntaxTree::Token { text, .. } | SyntaxTree::Error { text, .. } = tree {\n        match text {\n            LeafText::Text(text) => value[\"text\"] = json!(text),\n            LeafText::Hex(hex) => {\n                value[\"text\"] = Value::Null;\n                value[\"hex\"] = json!(hex);\n            }\n        }\n    }\n    value\n}"
+  },
+  {
+    "id": "repository.create-included-range-test-source-bundle",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_bundle",
+    "inventoryName": "create included range test source bundle",
+    "sourceText": "pub(super) fn included_range_bundle(outcome: &ParseOutcome) -> Value {\n    json!({\"tree\":outcome.tree.as_ref().map(included_range_tree_data),\"sourcePlanes\":outcome.source_planes})\n}"
+  },
+  {
+    "id": "repository.read-included-range-test-embedded-tree-path",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_embedding_path",
+    "inventoryName": "read included range test embedded tree path",
+    "sourceText": "fn included_range_embedding_path(tree: &Value, path: &str) -> Option<String> {\n    if tree[\"type\"] == \"embed\" && tree[\"selection\"][\"mapping\"] == \"included-ranges\" {\n        return Some(path.to_owned());\n    }\n    for field in [\"children\", \"sourceChildren\"] {\n        if let Some(children) = tree[field].as_array() {\n            for (index, child) in children.iter().enumerate() {\n                if let Some(found) =\n                    included_range_embedding_path(child, &format!(\"{path}/{field}/{index}\"))\n                {\n                    return Some(found);\n                }\n            }\n        }\n    }\n    tree.get(\"root\")\n        .and_then(|root| included_range_embedding_path(root, &format!(\"{path}/root\")))\n}"
+  },
+  {
+    "id": "repository.project-included-range-test-link-data",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_link_data",
+    "inventoryName": "project included range test link data",
+    "sourceText": "pub(super) fn included_range_link_data(node: &LiNo<String>) -> Value {\n    match node {\n        LiNo::Ref(word) => json!(word),\n        LiNo::Link { id, values } => {\n            json!({\"id\":id,\"values\":values.iter().map(included_range_link_data).collect::<Vec<_>>()})\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.render-included-range-test-link-data",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_link_text",
+    "inventoryName": "render included range test link data",
+    "sourceText": "pub(super) fn included_range_link_text(node: &Value) -> String {\n    node.as_str().map_or_else(\n        || {\n            let prefix = node[\"id\"]\n                .as_str()\n                .map_or(String::new(), |id| format!(\"{id}: \"));\n            format!(\n                \"({prefix}{})\",\n                node[\"values\"]\n                    .as_array()\n                    .unwrap()\n                    .iter()\n                    .map(included_range_link_text)\n                    .collect::<Vec<_>>()\n                    .join(\" \")\n            )\n        },\n        str::to_owned,\n    )\n}"
+  },
+  {
+    "id": "repository.shorten-included-range-test-tree-boundary",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_shorten",
+    "inventoryName": "shorten included range test tree boundary",
+    "sourceText": "fn included_range_shorten(tree: &mut SyntaxTree) {\n    let (SyntaxTree::Node { end, .. }\n    | SyntaxTree::Token { end, .. }\n    | SyntaxTree::Error { end, .. }\n    | SyntaxTree::Missing { end, .. }\n    | SyntaxTree::Embed { end, .. }) = tree;\n    *end -= 1;\n}"
+  },
+  {
+    "id": "repository.check-native-included-range-public-tree-equality",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_public_cst_equality_keeps_physical_and_derived_witness_fields",
+    "inventoryName": "check native included range public tree equality",
+    "sourceText": "fn included_range_public_cst_equality_keeps_physical_and_derived_witness_fields() {\n    let host = included_range_grammar(\n        \"*é\\n> β*\",\n        &[[0, 4], [6, 9]],\n        &[\"First\", \"Second\"],\n        \"all-grammar\",\n        \"> \",\n        \"\\n\",\n    );\n    let child = included_range_literal(\"*é\\nβ*\");\n    let outcome = included_range_parse(\n        &host,\n        &HashMap::from([\n            (\"First\".to_owned(), child.clone()),\n            (\"Second\".to_owned(), child),\n        ]),\n        \"> *é\\n> β*\\n\",\n    );\n    assert!(outcome.ok, \"{:?}\", outcome.rejection);\n    let tree = outcome.tree.unwrap();\n    assert_eq!(tree, tree.clone());\n    // The public tree's derived equality is distinct from the private executor\n    // comparison policy; this test makes no claim to execute private walk.rs.\n    for mutation in 0..8 {\n        let mut candidate = tree.clone();\n        let SyntaxTree::Node { children, .. } = &mut candidate else {\n            panic!(\"normal document node\");\n        };\n        let SyntaxTree::Embed {\n            selection,\n            source_children,\n            root,\n            ..\n        } = children\n            .iter_mut()\n            .find(|child| matches!(child, SyntaxTree::Embed { .. }))\n            .unwrap()\n        else {\n            unreachable!();\n        };\n        let selected = selection.as_mut().unwrap();\n        match mutation {\n            0 => selected.source_mapping.as_mut().unwrap()[\"ranges\"][0][1] = json!(3),\n            1 => selected.source_mapping.as_mut().unwrap()[\"ranges\"]\n                .as_array_mut()\n                .unwrap()\n                .reverse(),\n            2 => selected.source_mapping.as_mut().unwrap()[\"intervals\"][4][2] = json!(3),\n            3 => selected.source_mapping.as_mut().unwrap()[\"output\"] = json!(2),\n            4 => *source_children = None,\n            5 => included_range_shorten(&mut source_children.as_mut().unwrap()[0]),\n            6 => included_range_shorten(root),\n            7 => included_range_shorten(&mut selected.alternatives[0].root),\n            _ => unreachable!(),\n        }\n        assert_ne!(tree, candidate, \"mutation {mutation}\");\n        assert_ne!(\n            included_range_tree_data(&tree),\n            included_range_tree_data(&candidate)\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.resolve-included-range-test-grammar",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_parse::resolve",
+    "inventoryName": "resolve included range test grammar",
+    "sourceText": "    let resolve = |name: &str| grammars.get(name).cloned();",
+    "ownerContexts": [
+      "fn included_range_parse("
+    ]
+  },
+  {
+    "id": "repository.count-included-range-invalid-plan-resolutions",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets::resolve-1",
+    "inventoryName": "count included range invalid plan resolutions",
+    "sourceText": "        let resolve = |_: &str| {\n            calls.set(calls.get() + 1);\n            Some(included_range_literal(\"*é\\nβ*\"))\n        };",
+    "ownerContexts": [
+      "fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets() {"
+    ]
+  },
+  {
+    "id": "repository.count-included-range-inconsistent-view-resolutions",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets::resolve-2",
+    "inventoryName": "count included range inconsistent view resolutions",
+    "sourceText": "    let resolve = |_: &str| {\n        calls.set(calls.get() + 1);\n        Some(included_range_literal(\"*\"))\n    };",
+    "ownerContexts": [
+      "fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets() {"
+    ]
+  },
+  {
+    "id": "repository.resolve-included-range-budget-test-grammar",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets::resolve-3",
+    "inventoryName": "resolve included range budget test grammar",
+    "sourceText": "    let resolve = |_: &str| Some(included_range_literal(\"*é\\nβ*\"));",
+    "ownerContexts": [
+      "fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_and_keep_budgets() {"
+    ]
+  },
+  {
+    "id": "grammar.continue-grammar-selection-included-range-context-loop-one",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_read_grammar_selection_included_range_context_loop1",
+    "inventoryName": "continue grammar selection included range context loop one",
+    "sourceText": "pub fn ml_read_grammar_selection_included_range_context_loop1(\n    mappings: &[String],\n    mut found: bool,\n    mut index: f64,\n) -> bool {\n    loop {\n        if index < (mappings.len() as f64) {\n            if self::accept_grammar_selection_included_range_mapping(\n                &((self::ml_array::optional_at(mappings, self::ml_array::number_index(index)))\n                    .unwrap_or_else(|| String::from(\"identity\"))),\n            ) {\n                {\n                    let found_2 = true;\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            (found, index) = (found_2, index_2);\n                            continue;\n                        }\n                    }\n                }\n            }\n            {\n                {\n                    let index_3 = index + 1f64;\n                    {\n                        index = index_3;\n                        continue;\n                    }\n                }\n            }\n        }\n        return { found };\n    }\n}"
+  },
+  {
+    "id": "grammar.grammar-selection-included-range-context-loop-two-result",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "MlReadGrammarSelectionIncludedRangeContextLoop2Result",
+    "inventoryName": "grammar selection included range context loop two result",
+    "sourceText": "pub enum MlReadGrammarSelectionIncludedRangeContextLoop2Result {\n    MlReadGrammarSelectionIncludedRangeContextLoop2Done,\n    MlReadGrammarSelectionIncludedRangeContextLoop2Return(f64),\n}"
+  },
+  {
+    "id": "grammar.continue-grammar-selection-included-range-context-loop-two",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_read_grammar_selection_included_range_context_loop2",
+    "inventoryName": "continue grammar selection included range context loop two",
+    "sourceText": "pub fn ml_read_grammar_selection_included_range_context_loop2(\n    mappings: &[String],\n    mut index: f64,\n) -> self::MlReadGrammarSelectionIncludedRangeContextLoop2Result {\n    loop {\n        return if index < (mappings.len() as f64) {\n            if (self::accept_grammar_selection_included_range_mapping(\n                &((self::ml_array::optional_at(mappings, self::ml_array::number_index(index)))\n                    .unwrap_or_else(|| String::from(\"identity\"))),\n            )) {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n            {\n                self::MlReadGrammarSelectionIncludedRangeContextLoop2Result::MlReadGrammarSelectionIncludedRangeContextLoop2Return(2f64)\n            }\n        } else {\n            self::MlReadGrammarSelectionIncludedRangeContextLoop2Result::MlReadGrammarSelectionIncludedRangeContextLoop2Done\n        };\n    }\n}"
+  },
+  {
+    "id": "grammar.grammar-selection-included-range-agreement-loop-three-result",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result",
+    "inventoryName": "grammar selection included range agreement loop three result",
+    "sourceText": "pub enum MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result {\n    MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Done,\n    MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Return(bool),\n}"
+  },
+  {
+    "id": "grammar.continue-grammar-selection-included-range-agreement-loop-three",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_accept_grammar_selection_included_range_agreement_loop3",
+    "inventoryName": "continue grammar selection included range agreement loop three",
+    "sourceText": "pub fn ml_accept_grammar_selection_included_range_agreement_loop3(\n    first: &[f64],\n    next: &[f64],\n    mut index: f64,\n) -> self::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result {\n    loop {\n        return if index < (first.len() as f64) {\n            if (match (\n                self::ml_array::optional_at(first, self::ml_array::number_index(index)),\n                self::ml_array::optional_at(next, self::ml_array::number_index(index)),\n            ) {\n                (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n                (None, None) => true,\n                _ => false,\n            }) {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n            {\n                self::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Return(false)\n            }\n        } else {\n            self::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Result::MlAcceptGrammarSelectionIncludedRangeAgreementLoop3Done\n        };\n    }\n}"
+  },
+  {
+    "id": "grammar.grammar-selection-included-range-plan-loop-four-result",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "MlReadGrammarSelectionIncludedRangePlanLoop4Result",
+    "inventoryName": "grammar selection included range plan loop four result",
+    "sourceText": "pub enum MlReadGrammarSelectionIncludedRangePlanLoop4Result {\n    MlReadGrammarSelectionIncludedRangePlanLoop4Done(Vec<f64>, f64, f64),\n    MlReadGrammarSelectionIncludedRangePlanLoop4Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "grammar.continue-grammar-selection-included-range-plan-loop-four",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_read_grammar_selection_included_range_plan_loop4",
+    "inventoryName": "continue grammar selection included range plan loop four",
+    "sourceText": "pub fn ml_read_grammar_selection_included_range_plan_loop4(\n    ranges: &[f64],\n    mut length: f64,\n    mut plan: Vec<f64>,\n    mut cursor: f64,\n    mut output: f64,\n    mut index: f64,\n) -> self::MlReadGrammarSelectionIncludedRangePlanLoop4Result {\n    loop {\n        return if index < (ranges.len() as f64) {\n            {\n                let start =\n                    (self::ml_array::optional_at(ranges, self::ml_array::number_index(index)))\n                        .unwrap_or_else(|| -1f64);\n                {\n                    let end = (self::ml_array::optional_at(\n                        ranges,\n                        self::ml_array::number_index(index + 1f64),\n                    ))\n                    .unwrap_or_else(|| -1f64);\n                    if (!(self::accept_grammar_selection_included_range_source_range(\n                        \"source-range\",\n                        start,\n                        end,\n                    )) || (start < cursor))\n                        || (end > length)\n                    {\n                        self::MlReadGrammarSelectionIncludedRangePlanLoop4Result::MlReadGrammarSelectionIncludedRangePlanLoop4Return(Vec::<f64>::new())\n                    } else {\n                        {\n                            let plan_3 = if cursor < start {\n                                {\n                                    {\n                                        let (ml_append_right, ml_append_left) =\n                                            (vec![cursor, start, output, output], plan);\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    }\n                                }\n                            } else {\n                                plan\n                            };\n                            {\n                                let plan_4 = {\n                                    let (ml_append_right, ml_append_left) = (\n                                        vec![start, end, output, ((output + end) - start)],\n                                        plan_3,\n                                    );\n                                    self::ml_array::append(ml_append_left, ml_append_right)\n                                };\n                                {\n                                    let output_2 = output + (end - start);\n                                    {\n                                        let cursor_2 = end;\n                                        {\n                                            let index_2 = index + 2f64;\n                                            {\n                                                (plan, cursor, output, index) =\n                                                    (plan_4, cursor_2, output_2, index_2);\n                                                continue;\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarSelectionIncludedRangePlanLoop4Result::MlReadGrammarSelectionIncludedRangePlanLoop4Done(plan, cursor, output)\n        };\n    }\n}"
+  },
+  {
+    "id": "grammar.included-source-range-kind",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceRange.kind",
+    "inventoryName": "included source range kind",
+    "sourceText": "kind: 'source-range';",
+    "ownerContexts": [
+      "export interface GrammarSourceRange {"
+    ]
+  },
+  {
+    "id": "grammar.included-source-range-start",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceRange.start",
+    "inventoryName": "included source range start",
+    "sourceText": "start: number;",
+    "ownerContexts": [
+      "export interface GrammarSourceRange {"
+    ]
+  },
+  {
+    "id": "grammar.included-source-range-end",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarSourceRange.end",
+    "inventoryName": "included source range end",
+    "sourceText": "end: number;",
+    "ownerContexts": [
+      "export interface GrammarSourceRange {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-selection-candidate-kind",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarRangeSelectionCandidate.kind",
+    "inventoryName": "included range selection candidate kind",
+    "sourceText": "kind: 'grammar-range-candidate';",
+    "ownerContexts": [
+      "export interface GrammarRangeSelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-selection-candidate-name",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarRangeSelectionCandidate.name",
+    "inventoryName": "included range selection candidate name",
+    "sourceText": "name: string;",
+    "ownerContexts": [
+      "export interface GrammarRangeSelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-selection-candidate-mapping",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarRangeSelectionCandidate.mapping",
+    "inventoryName": "included range selection candidate mapping",
+    "sourceText": "mapping: 'included-ranges';",
+    "ownerContexts": [
+      "export interface GrammarRangeSelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-selection-candidate-ranges",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarRangeSelectionCandidate.ranges",
+    "inventoryName": "included range selection candidate ranges",
+    "sourceText": "ranges: GrammarSourceRange[];",
+    "ownerContexts": [
+      "export interface GrammarRangeSelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-kind",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.kind",
+    "inventoryName": "included range source mapping kind",
+    "sourceText": "kind: 'source-mapping';",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-operation",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.operation",
+    "inventoryName": "included range source mapping operation",
+    "sourceText": "operation: 'included-ranges';",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-input",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.input",
+    "inventoryName": "included range source mapping input",
+    "sourceText": "input: number;",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-output",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.output",
+    "inventoryName": "included range source mapping output",
+    "sourceText": "output: number;",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-ranges",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.ranges",
+    "inventoryName": "included range source mapping ranges",
+    "sourceText": "ranges: Array<[number, number]>;",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.included-range-source-mapping-intervals",
+    "source": "js/src/index.d.ts",
+    "name": "GrammarIncludedRangeSourceMapping.intervals",
+    "inventoryName": "included range source mapping intervals",
+    "sourceText": "intervals: Array<[number, number, number, number]>;",
+    "ownerContexts": [
+      "export interface GrammarIncludedRangeSourceMapping {"
+    ]
+  },
+  {
+    "id": "grammar.compiled-selection-candidate",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionCandidate",
+    "inventoryName": "compiled selection candidate",
+    "sourceText": "pub(super) struct SelectionCandidate {\n    pub(super) kind: Name,\n    pub(super) name: Name,\n    pub(super) mapping: Name,\n    pub(super) ranges: Vec<[f64; 2]>,\n}"
+  },
+  {
+    "id": "grammar.compiled-selection-candidate-kind",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionCandidate::kind",
+    "inventoryName": "compiled selection candidate kind",
+    "sourceText": "pub(super) kind: Name,",
+    "ownerContexts": [
+      "pub(super) struct SelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.compiled-selection-candidate-name",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionCandidate::name",
+    "inventoryName": "compiled selection candidate name",
+    "sourceText": "pub(super) name: Name,",
+    "ownerContexts": [
+      "pub(super) struct SelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.compiled-selection-candidate-mapping",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionCandidate::mapping",
+    "inventoryName": "compiled selection candidate mapping",
+    "sourceText": "pub(super) mapping: Name,",
+    "ownerContexts": [
+      "pub(super) struct SelectionCandidate {"
+    ]
+  },
+  {
+    "id": "grammar.compiled-selection-candidate-ranges",
+    "source": "rust/src/grammar/feature_runtime/program.rs",
+    "name": "SelectionCandidate::ranges",
+    "inventoryName": "compiled selection candidate ranges",
+    "sourceText": "pub(super) ranges: Vec<[f64; 2]>,",
+    "ownerContexts": [
+      "pub(super) struct SelectionCandidate {"
+    ]
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-grammar-selection-included-range-rules.mjs",
+    "name": "digest",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const digest = source => createHash('sha256').update(source).digest('hex');"
+  },
+  {
+    "id": "repository.create-mapped-literal-test-grammar",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangeLiteralGrammar",
+    "inventoryName": "create mapped literal test grammar",
+    "sourceText": "function includedRangeLiteralGrammar(source) {\n  return parseGrammarLinks(`(grammar (start decoded))\\n(rule decoded normal (literal ${percentEncodeLinksText(source)}))\\n`);\n}"
+  },
+  {
+    "id": "repository.read-mapped-test-physical-bytes",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangePhysicalBytes",
+    "inventoryName": "read mapped test physical bytes",
+    "sourceText": "function includedRangePhysicalBytes(tree) {\n  if (tree.type === 'missing') return [];\n  if (tree.type === 'token' || tree.type === 'error') return tree.text === null\n    ? [...Buffer.from(tree.hex, 'hex')] : [...new TextEncoder().encode(tree.text)];\n  return (tree.sourceChildren ?? tree.children ?? (tree.root ? [tree.root] : [])).flatMap(includedRangePhysicalBytes);\n}"
+  },
+  {
+    "id": "repository.create-mapped-test-grammar-document",
+    "source": "js/tests/grammar-included-range-selection.test.js",
+    "name": "includedRangeGrammarDocument",
+    "inventoryName": "create mapped test grammar document",
+    "sourceText": "function includedRangeGrammarDocument(grammar) {\n  return Object.fromEntries(Object.entries(grammar).map(([key, value]) =>\n    [key, key === 'rules' ? [...value.values()] : value]));\n}"
+  },
+  {
+    "id": "repository.create-mapped-literal-test-grammar",
+    "source": "rust/tests/unit/grammar_included_range_selection.rs",
+    "name": "included_range_literal",
+    "inventoryName": "create mapped literal test grammar",
+    "sourceText": "fn included_range_literal(source: &str) -> Grammar {\n    Grammar::new()\n        .with_start(\"decoded\")\n        .with_rule(GrammarRule::new(\n            \"decoded\",\n            GrammarExpr::Terminal(source.to_owned()),\n        ))\n}"
+  },
+  {
+    "id": "repository.read-mapped-test-physical-bytes",
+    "source": "rust/tests/unit/grammar_included_range_transport.rs",
+    "name": "included_range_physical",
+    "inventoryName": "read mapped test physical bytes",
+    "sourceText": "pub(super) fn included_range_physical(tree: &Value) -> Vec<u8> {\n    match tree[\"type\"].as_str().unwrap() {\n        \"missing\" => Vec::new(),\n        \"token\" | \"error\" => tree[\"text\"].as_str().map_or_else(\n            || {\n                tree[\"hex\"]\n                    .as_str()\n                    .unwrap()\n                    .as_bytes()\n                    .as_chunks::<2>()\n                    .0\n                    .iter()\n                    .map(|word| u8::from_str_radix(std::str::from_utf8(word).unwrap(), 16).unwrap())\n                    .collect()\n            },\n            |text| text.as_bytes().to_vec(),\n        ),\n        _ => tree\n            .get(\"sourceChildren\")\n            .or_else(|| tree.get(\"children\"))\n            .map_or_else(\n                || included_range_physical(&tree[\"root\"]),\n                |children| {\n                    children\n                        .as_array()\n                        .unwrap()\n                        .iter()\n                        .flat_map(included_range_physical)\n                        .collect()\n                },\n            ),\n    }\n}"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-mathematics",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "callable source native meta language mathematics",
+    "sourceText": "pub mod ml_math {\n    /// Math.round: the nearest integer, the one towards +Infinity on a tie,\n    /// with the sign of a zero result from the argument.\n    #[must_use]\n    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }\n\n    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.\n    #[must_use]\n    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }\n\n    /// Math.max of two Numbers: NaN when either is, and 0 above -0.\n    #[must_use]\n    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }\n\n    /// Math.min of two Numbers: NaN when either is, and -0 below 0.\n    #[must_use]\n    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }\n\n    #[must_use]\n    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }\n\n    #[must_use]\n    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }\n\n    #[must_use]\n    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }\n\n    #[must_use]\n    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }\n}"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "execute callable source native meta language mathematics round",
+    "sourceText": "    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "execute callable source native meta language mathematics sign",
+    "sourceText": "    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "execute callable source native meta language mathematics maximum",
+    "sourceText": "    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "execute callable source native meta language mathematics minimum",
+    "sourceText": "    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "execute callable source native meta language mathematics maximum of",
+    "sourceText": "    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "execute callable source native meta language mathematics minimum of",
+    "sourceText": "    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "execute callable source native meta language mathematics is integer",
+    "sourceText": "    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "execute callable source native meta language mathematics is safe integer",
+    "sourceText": "    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-array",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "callable source native meta language array",
+    "sourceText": "pub mod ml_array {\n    #[must_use]\n    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }\n    /// The element at an index; a read outside the array, undefined in\n    /// JavaScript, aborts.\n    #[must_use]\n    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }\n\n    /// The index a Number names: a non-negative integer, -0 included.\n    #[must_use]\n    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }\n\n    #[must_use]\n    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }\n    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }\n    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }\n    #[must_use]\n    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }\n    #[must_use]\n    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }\n    #[must_use]\n    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }\n    #[must_use]\n    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }\n    #[must_use]\n    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }\n}"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "execute callable source native meta language array optional at",
+    "sourceText": "    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-at",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "execute callable source native meta language array at",
+    "sourceText": "    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-number-index",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "execute callable source native meta language array number index",
+    "sourceText": "    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-append",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "execute callable source native meta language array append",
+    "sourceText": "    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-integer",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "execute callable source native meta language array integer",
+    "sourceText": "    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-relative",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "execute callable source native meta language array relative",
+    "sourceText": "    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-slice",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "execute callable source native meta language array slice",
+    "sourceText": "    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-index-of",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "execute callable source native meta language array index of",
+    "sourceText": "    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-includes",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "execute callable source native meta language array includes",
+    "sourceText": "    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-set",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "execute callable source native meta language array set",
+    "sourceText": "    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-map",
+    "source": "rust/src/translation/grammar_selection_included_range_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "execute callable source native meta language array map",
+    "sourceText": "    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  }
+];
+const B68_NAME_INVENTORIES=[...new Set(B68_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B68 included source range names for "+source,files:[source],extract:text=>B68_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B68_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B68 included source range names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES, ...B63_SOURCE_BINDINGS_INVENTORIES, ...B63_CURRENT_WITNESS_BINDINGS_INVENTORIES, ...B64_RAW_EMISSION_NAME_INVENTORIES, ...B65_CHARACTER_TAG_NAME_INVENTORIES, ...B66_NAME_INVENTORIES, ...B67_NAME_INVENTORIES, ...B68_NAME_INVENTORIES].map(reconcileCurrentWitnessInventory).map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
