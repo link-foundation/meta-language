@@ -93,7 +93,11 @@ fn value_case_syntax_and_incompatible_types_keep_their_distinct_boundaries() {
             error.reason,
             "case test: the cases of a value switch are BigInt or boolean literals"
         );
-        assert_eq!(error.span, Some(Span::new(start, start + expression.len())));
+        // The shared frontend marks the refused minus token, ending at the
+        // following value's start. The frozen negative-bool pipeline case in
+        // parity/fixtures/translation-stages.lino likewise records 86..87.
+        assert_eq!(error.span, Some(Span::new(start, start + 1)));
+        assert_eq!(&source[start..start + 1], "-");
     }
     let source = "/** @param {bigint} value @returns {bigint} */function choose(value){switch(value){case \"one\":return 1n;default:return 0n;}}";
     let surface =

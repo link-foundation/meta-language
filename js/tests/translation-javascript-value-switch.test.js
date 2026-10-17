@@ -92,7 +92,16 @@ console.log(numberWeight(0),numberWeight(2.5),numberWeight(NaN),word('true'),wor
   equivalent(`function signed(value){let result='none';switch(value){case -1n:result='negative';break;case value:result='same';break;}return result;}
 console.log(\`\${signed(-1n)} \${signed(2n)}\`);`, ['negative same']);
   for (const expression of ['-true', '-name']) {
-    assert.throws(() => parseJavaScript('function choose(value){switch(value){case ' + expression + ':return 1;default:return 0;}}'), error => error.kind === 'unsupported' && error.details.construct === 'case test');
+    const source = 'function choose(value){switch(value){case ' + expression + ':return 1;default:return 0;}}';
+    const start = source.indexOf(expression);
+    assert.throws(() => parseJavaScript(source), error => {
+      assert.equal(error.kind, 'unsupported');
+      assert.equal(error.details.construct, 'case test');
+      assert.equal(error.reason, 'case test: the cases of a value switch are BigInt or boolean literals');
+      assert.deepEqual(error.span, { start, end: start + 1 });
+      assert.equal(source.slice(error.span.start, error.span.end), '-');
+      return true;
+    });
   }
   const mixed = '/** @param {bigint} value @returns {bigint} */function choose(value){switch(value){case "one":return 1n;default:return 0n;}}';
   assert.throws(() => checkProgram(parseJavaScript(mixed)), error => error.kind === 'type');
