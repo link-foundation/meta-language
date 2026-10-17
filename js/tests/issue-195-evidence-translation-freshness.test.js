@@ -50,10 +50,13 @@ test('bulk translation freshness includes every new native family without repeat
     { script: 'js/scripts/generate-javascript-tag-context-rules.mjs', arguments: ['--native', '--check'] },
     { script: 'js/scripts/generate-rust-character-literal-fixtures.mjs', arguments: ['--check'] },
   ], 'character and constructor-context checks append after the complete retained twenty-three-command prefix');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(26), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(26, 27), [
     { script: 'js/scripts/generate-rust-diagnostic-attribute-rules.mjs', arguments: ['--native', '--check'] },
   ], 'whole diagnostic attribute translation appends after every retained twenty-six-command scope');
-  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 27, 'the complete source freshness gate retains exactly its reviewed scope');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(27), [
+    { script: 'js/scripts/generate-grammar-selection-included-range-rules.mjs', arguments: ['--native', '--check'] },
+  ], 'included range source views append after the complete retained twenty-seven-command scope');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 28, 'the complete source freshness gate retains exactly its reviewed scope');
   for (const family of defaultNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--check']);
   for (const family of explicitNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--native', '--check']);
   for (const name of ['generate-grammar-selection-fixtures.mjs', 'generate-private-output-test-model.mjs', 'extend-typed-program-schema-second-stage.mjs']) {
@@ -70,7 +73,8 @@ test('bulk translation freshness includes every new native family without repeat
   for (const check of BULK_TRANSLATION_RULE_CHECKS) {
     const source = readFileSync(path.join(repository, check.script), 'utf8');
     assert.equal(source.includes('--check'), true, `${check.script} actually implements check mode`);
-    if (['js/scripts/generate-javascript-tag-context-rules.mjs', 'js/scripts/generate-rust-diagnostic-attribute-rules.mjs'].includes(check.script)) {
+    if (['js/scripts/generate-javascript-tag-context-rules.mjs', 'js/scripts/generate-rust-diagnostic-attribute-rules.mjs',
+      'js/scripts/generate-grammar-selection-included-range-rules.mjs'].includes(check.script)) {
       assert.equal(source.includes('const args = process.argv.slice(2);'), true, check.script);
       assert.equal(source.includes("check: args.includes('--check'), native: args.includes('--native')"), true, check.script);
     } else if (check.arguments.includes('--native')) assert.equal(source.includes("process.argv.includes('--native')"), true, check.script);
