@@ -375,6 +375,8 @@ test('qualified String return proofs require the declared local module namespace
   const reviewed = readPortableSourceLintStyles(loaned, {modulePath});
   const present = readSourceTextRustBlock(reviewed.source, 'fn', 'present');
   assert.ok(present.includes('.is_empty()'));
+  assert.ok(present.includes('!(' + modulePath + '::read_required_text_fact('));
+  assert.equal(present.includes('!((' + modulePath + '::read_required_text_fact('), false, 'the actual qualified fact read does not reproduce the Clippy double_parens receiver');
   assert.equal((present.match(/::read_required_text_fact\(/gu) ?? []).length, 1, 'the effectful call and its arithmetic argument remain single evaluations');
   assert.ok(present.includes('size + node'));
   const unrelated = loaned.replaceAll(modulePath + '::read_required_text_fact', 'crate::unrelated::read_required_text_fact');
@@ -384,4 +386,17 @@ test('qualified String return proofs require the declared local module namespace
   const styles = new DecoratorSet([{id: 'qualified-string-return-control', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: reviewed.actions}]);
   assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);
+  const call = modulePath + '::value()';
+  for (const receiver of [call, '(' + call + ')']) for (const comparison of ['==', '!=']) {
+    const candidate = 'pub fn value() -> String { String::from("text") }\npub fn present() -> bool { ' + receiver + ' ' + comparison + ' "" }';
+    const styled = readPortableSourceLintStyles(candidate, {modulePath});
+    const body = readSourceTextRustBlock(styled.source, 'fn', 'present');
+    assert.ok(body.includes((comparison === '!=' ? '!' : '') + '(' + call + ').is_empty()'), 'both grouped and ungrouped receivers keep one complete method-receiver group');
+    assert.equal(body.includes('((' + call + '))'), false);
+    assert.equal((body.match(/::value\(/gu) ?? []).length, 1, 'String comparison styling preserves one receiver evaluation');
+    assert.equal(readPortableSourceLintStyles(styled.source, {modulePath}).source, styled.source, 'receiver grouping is idempotent');
+    const receiverStyles = new DecoratorSet([{id: 'grouped-empty-string-control', level: 'emitter', order: 0,
+      when: [['format', 'Rust']], actions: styled.actions}]);
+    assert.equal(receiverStyles.decorate('emitter', {format: 'Rust', source: candidate}).source, styled.source);
+  }
 });

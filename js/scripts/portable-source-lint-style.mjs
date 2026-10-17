@@ -197,7 +197,9 @@ function simplifyPortableEmptyStringComparisons(source, stringFunctions, moduleP
     const expression = source.slice(tokens[start].start, tokens[index].start).trim();
     if (!known(expression)) continue;
     if (comments.some(comment => comment.start >= tokens[start].start && comment.end <= tokens[index + 1].end)) continue;
-    edits.push([tokens[start].start, tokens[index + 1].end, (tokens[index].value === '!=' ? '!' : '') + '(' + expression + ').is_empty()']);
+    const receiver = tokens[start].kind === 'punct' && tokens[start].value === '(' && matching.get(start) === index - 1
+      ? expression : '(' + expression + ')';
+    edits.push([tokens[start].start, tokens[index + 1].end, (tokens[index].value === '!=' ? '!' : '') + receiver + '.is_empty()']);
     index += 1;
   }
   for (const [start, end, text] of edits.reverse()) source = source.slice(0, start) + text + source.slice(end);
