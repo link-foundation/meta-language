@@ -516,6 +516,19 @@ impl RocqEmitter<'_> {
                 );
                 format!("(list {})", self.ty(element)?)
             }
+            Type::Set { element, .. } => {
+                let element = self.ty(element)?;
+                super::collection_construction_rules::render_collection_construction_type(
+                    "Rocq", "set", &element, "",
+                )
+            }
+            Type::Map { key, value, .. } => {
+                let key = self.ty(key)?;
+                let value = self.ty(value)?;
+                super::collection_construction_rules::render_collection_construction_type(
+                    "Rocq", "map", &key, &value,
+                )
+            }
             Type::Tuple { elements } => {
                 let mut parts = Vec::new();
                 for element in elements {

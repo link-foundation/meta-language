@@ -46,6 +46,15 @@ impl LeanEmitter<'_> {
                 );
                 format!("(Array {})", self.ty(element)?)
             }
+            Type::Set { element, .. } => {
+                let element = self.ty(element)?;
+                crate::translation::collection_construction_rules::render_collection_construction_type("Lean", "set", &element, "")
+            }
+            Type::Map { key, value, .. } => {
+                let key = self.ty(key)?;
+                let value = self.ty(value)?;
+                crate::translation::collection_construction_rules::render_collection_construction_type("Lean", "map", &key, &value)
+            }
             Type::Tuple { elements } => {
                 let mut parts = Vec::new();
                 for element in elements {

@@ -723,6 +723,8 @@ impl LeanEmitter<'_> {
             } => self.cast(arg, from, to, *flavor, depth)?,
             Node::Abort { .. } => unthreaded("an abort"),
             Node::Array { .. }
+            | Node::Set { .. }
+            | Node::Map { .. }
             | Node::Append { .. }
             | Node::Index { .. }
             | Node::Length { .. }

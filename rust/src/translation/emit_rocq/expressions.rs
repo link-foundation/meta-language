@@ -227,7 +227,7 @@ impl RocqEmitter<'_> {
                 ..
             } => self.cast(arg, from, to, *flavor),
             Node::Abort { .. } => unthreaded("an abort"),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } | Node::OptionalIndex { .. } | Node::StringPoints { .. } | Node::CollectionItems { .. } => {
+            Node::Array { .. } | Node::Set { .. } | Node::Map { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } | Node::OptionalIndex { .. } | Node::StringPoints { .. } | Node::CollectionItems { .. } => {
                 self.array_expr(e)
             }
             Node::Math { .. } => self.math(e),

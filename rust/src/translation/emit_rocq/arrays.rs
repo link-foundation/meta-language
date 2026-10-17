@@ -33,6 +33,27 @@ impl RocqEmitter<'_> {
                 parts.push(format!("@nil {}", self.ty(element)?));
                 Ok(format!("({})", parts.join(" :: ")))
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                let (kind, key) = match &e.ty {
+                    super::Type::Set { element, .. } => ("set", element.as_ref()),
+                    super::Type::Map { key, .. } => ("map", key.as_ref()),
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                let value = crate::translation::collection_construction_rules::read_collection_construction_binding("Rocq", kind, "value");
+                let previous = crate::translation::collection_construction_rules::read_collection_construction_binding("Rocq", kind, "previous");
+                let equal = self.comparison(super::BinaryOp::Eq, key, &previous, &value)?;
+                let values = self.expr(items)?;
+                let element = match &e.ty {
+                    super::Type::Set { element, .. } => self.ty(element)?,
+                    super::Type::Map { key, value, .. } => {
+                        format!("({} * {})%type", self.ty(key)?, self.ty(value)?)
+                    }
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                Ok(crate::translation::collection_construction_rules::render_collection_construction(
+                    "Rocq", kind, key.kind(), &values, "", &element, &equal,
+                ))
+            }
             Node::Append { left, right } => Ok(format!(
                 "(List.app {} {})",
                 self.expr(left)?,

@@ -366,6 +366,8 @@ impl RustEmitter<'_> {
             Node::Cast { .. } => self.cast(expr),
             Node::Abort { message } => Ok(format!("panic!(\"{{}}\", {})", rust_string(message))),
             Node::Array { .. }
+            | Node::Set { .. }
+            | Node::Map { .. }
             | Node::Append { .. }
             | Node::Index { .. }
             | Node::Length { .. }

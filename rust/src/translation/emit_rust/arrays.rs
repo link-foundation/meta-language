@@ -29,6 +29,19 @@ impl RustEmitter<'_> {
                 }
                 Ok(format!("vec![{}]", texts.join(", ")))
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                self.preludes.insert(Prelude::Array);
+                self.standard_array = true;
+                let (kind, key) = match &e.ty {
+                    super::Type::Set { element, .. } => ("set", element.as_ref()),
+                    super::Type::Map { key, .. } => ("map", key.as_ref()),
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                let values = self.expr(items)?;
+                Ok(crate::translation::collection_construction_rules::render_collection_construction(
+                    "Rust", kind, key.kind(), &values, "", "", "",
+                ))
+            }
             Node::Append { left, right } => {
                 self.preludes.insert(Prelude::Array);
                 if self

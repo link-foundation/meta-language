@@ -253,6 +253,8 @@ impl JavaScriptEmitter<'_> {
                 Ok(format!("ml_abort({})", json_string(message)))
             }
             Node::Array { .. }
+            | Node::Set { .. }
+            | Node::Map { .. }
             | Node::Append { .. }
             | Node::Index { .. }
             | Node::Length { .. }

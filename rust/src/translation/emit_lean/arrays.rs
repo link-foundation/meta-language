@@ -36,6 +36,24 @@ impl LeanEmitter<'_> {
                 }
                 format!("(#[{}] : {})", texts.join(", "), self.ty(&e.ty)?)
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                let (kind, key) = match &e.ty {
+                    Type::Set { element, .. } => ("set", element.as_ref()),
+                    Type::Map { key, .. } => ("map", key.as_ref()),
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                let values = self.expr(items, depth)?;
+                let collection = self.ty(&e.ty)?;
+                crate::translation::collection_construction_rules::render_collection_construction(
+                    "Lean",
+                    kind,
+                    key.kind(),
+                    &values,
+                    &collection,
+                    "",
+                    "",
+                )
+            }
             Node::Append { left, right } => {
                 format!(
                     "({} ++ {})",

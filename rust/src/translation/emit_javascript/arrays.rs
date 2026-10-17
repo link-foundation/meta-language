@@ -10,6 +10,17 @@ impl JavaScriptEmitter<'_> {
                 self.arrays();
                 Ok(format!("[{}]", self.exprs(items)?.join(", ")))
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                let kind = if matches!(&e.node, Node::Set { .. }) {
+                    "set"
+                } else {
+                    "map"
+                };
+                let values = self.expr(items)?;
+                Ok(crate::translation::collection_construction_rules::render_collection_construction(
+                    "JavaScript", kind, "", &values, "", "", "",
+                ))
+            }
             Node::Append { left, right } => Ok(format!(
                 "[...{}, ...{}]",
                 self.expr(left)?,
