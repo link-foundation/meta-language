@@ -14,7 +14,7 @@ use serde_json::{Value, json};
 use std::sync::LazyLock;
 
 /// The exact policy also consumed by the JavaScript facet adapter.
-pub(crate) fn policy() -> &'static Value {
+pub fn policy() -> &'static Value {
     static POLICY: LazyLock<Value> = LazyLock::new(|| {
         crate::read_structured_data_lino(include_str!("../data/rust-diagnostic-attributes.lino"))
             .expect("the shared diagnostic attribute policy is valid")
@@ -27,14 +27,14 @@ fn fail(detail: &str) -> TranslationError {
 }
 
 /// Preserve a present null so the source proof validator can reject it.
-pub(crate) fn read_present_facet<'de, D: Deserializer<'de>>(
+pub fn read_present_facet<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> std::result::Result<Option<Value>, D::Error> {
     Value::deserialize(deserializer).map(Some)
 }
 
 /// Surface transport retains omission independently of a present JSON value.
-pub(crate) fn read_present_surface_facet<'de, D: Deserializer<'de>>(
+pub fn read_present_surface_facet<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> std::result::Result<Option<Box<Value>>, D::Error> {
     Value::deserialize(deserializer).map(|value| Some(Box::new(value)))
@@ -82,7 +82,7 @@ fn interval(value: &Value) -> Result<(usize, usize)> {
 }
 
 /// Actual lexer spellings, independent of the portable admission decision.
-pub(crate) const fn token_kind(token: &Token) -> &'static str {
+pub const fn token_kind(token: &Token) -> &'static str {
     match token.kind {
         TokenKind::Number => "number",
         TokenKind::Identifier => "identifier",
@@ -215,7 +215,7 @@ fn validate_facet(facet: &Value, entry: &Value, module_path: &[Value]) -> Result
 }
 
 /// Bind a prefix to the actual source slice and already parsed const function.
-pub(crate) fn create_facet(
+pub fn create_facet(
     source: &str,
     tokens: &[Token],
     first_attribute: usize,
@@ -298,7 +298,7 @@ fn marker_owners(value: &Value) -> Result<Vec<&Value>> {
 }
 
 /// Validate actual raw archive records before serde can erase unknown fields.
-pub(crate) fn validate_records(value: &Value) -> Result<()> {
+pub fn validate_records(value: &Value) -> Result<()> {
     let owners = marker_owners(value)?;
     if owners.is_empty() {
         return Ok(());
@@ -347,7 +347,7 @@ pub(crate) fn validate_records(value: &Value) -> Result<()> {
 
 /// Check represented Surface fields before lowering; external raw Surface serde
 /// remains its existing host boundary, separate from the guarded archive codec.
-pub(crate) fn validate_surface(surface: &SProgram) -> Result<()> {
+pub fn validate_surface(surface: &SProgram) -> Result<()> {
     let mut pending = surface
         .items
         .iter()
@@ -357,7 +357,7 @@ pub(crate) fn validate_surface(surface: &SProgram) -> Result<()> {
     while let Some((item, path)) = pending.pop() {
         match item {
             SItem::Fn(function) if function.source_diagnostic_attributes.is_some() => {
-                functions.push((function, path))
+                functions.push((function, path));
             }
             SItem::Module(module) => {
                 let mut path = path;
@@ -391,7 +391,7 @@ pub(crate) fn validate_surface(surface: &SProgram) -> Result<()> {
 }
 
 /// Materialize only a validated prefix, with both spellings from shared data.
-pub(crate) fn render_prefix(function: &FnDecl, source: String) -> Result<String> {
+pub fn render_prefix(function: &FnDecl, source: String) -> Result<String> {
     let Some(facet) = function.source_diagnostic_attributes.as_ref() else {
         return Ok(source);
     };

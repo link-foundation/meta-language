@@ -71,8 +71,8 @@ impl RustParser {
             self.const_function_visibility_guard()?;
             self.visibility()?;
             self.const_function_item_guard(path, &start)?;
-            if !diagnostic_attributes.is_empty()
-                && !(self.cursor.is("const") && self.cursor.is_at("fn", 1))
+            if !(diagnostic_attributes.is_empty()
+                || self.cursor.is("const") && self.cursor.is_at("fn", 1))
             {
                 return Err(unsupported(
                     "Rust const diagnostic attribute attachment",
