@@ -792,6 +792,16 @@ coalescing premise. Unknown profiles and additional source changes refuse.
 The oracle records the selected profile and both source hashes while retaining
 every fixture, format and expected bit. The historical profile stays selectable;
 one selected run does not establish native execution of both profiles.
+A separate consuming profile emits the same complete checked program with the
+existing final-use policy. It preserves all 106 owner interfaces, mappings,
+assumptions and encodings through complete text and binary typed-program
+reloads. Its Links artifact records actual emitted clone and append token sites
+and pins the decision sources; these observations do not claim an internal
+proof-node inventory or native performance. Native planning requires the exact
+checked current plan and reuses its entire carrier, premises, observations and
+consumer by identity and hash. Historical and current copy artifacts remain
+unchanged. The consuming oracle retains every fixture and the existing process,
+heap, source and output bounds; successful execution remains CI evidence.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
@@ -2178,6 +2188,21 @@ test runs are cheap. Only a feature that is complete and green in JavaScript is
 ported to Rust, in one batch, and the Rust version must then behave exactly the
 same. A fix is not mirrored into Rust commit by commit.
 
+Lexical declaration lists retain one block scope, left-to-right initialization,
+single evaluation of destructuring sources, and each binding's temporal dead
+zone. Partially returning nested branches retain their enclosing continuation.
+Declaration discovery reads actual cursor tokens through shared scalar decisions;
+it does not allocate whole-file token columns for every block. Both Links
+transports retain the checked program and its complete target emission.
+
+Discarded, zero-argument array removals may become immutable slice rebinding
+only after the existing fresh-allocation and escape proof succeeds. Observed
+results, argument effects, captures and aliases retain their own obligations.
+This copying representation establishes no linear-time target guarantee.
+Indexed writes still require faithful bounds, sparse-property and evaluation
+semantics; a planner using them must pass automatic translation before native
+integration or performance is claimed.
+
 The port is done by meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or
@@ -2389,6 +2414,10 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+Windows grammar deadlines select the logical suite even when the physical
+matrix cell is named `physical`. A fresh-merge native phase retains its active
+build-output lease across tests, doctests and examples, then cleans once the
+whole phase exits. Every original command, assertion and deadline remains.
 Registered native experiment inputs and shared Links data also activate the
 Cargo lockfile, check and test prerequisite chain on pull requests. This
 selection derives from the same native path filter and passes an explicit
@@ -2803,6 +2832,16 @@ then derives fresh declaration styles for the changed operation. Both old
 generation checks and the new generation check remain mandatory. Tiny byte,
 refusal, precedence and string-work controls cannot establish whole-source
 resource fit; the existing CI time, heap, record and byte bounds still apply.
+A separate buffered successor accumulates ordered field fragments and joins
+them after validation, with an exact running code-unit length at every original
+bound checkpoint. Record-local metadata patching and all error offsets remain.
+Validated integer identities use an owned numeric sequence with the same
+increasing-identity shortcut and duplicate/cache membership decisions. The
+complete eight-function source closure, every generated continuation and both
+typed-program archive replays produce the native library automatically, using
+the existing checked final-use policy for buffer moves. Historical sources and
+compiler/style receipts remain separate mandatory checks. Full-grammar native
+round trips and resource fit still require CI observations.
 JavaScript bulk concept-record seeding derives semantic-pair lookup from the
 actual links once per synchronous scope. Exact reference identities, term and
 language keys preserve the original link query order and duplicate reuse; new
