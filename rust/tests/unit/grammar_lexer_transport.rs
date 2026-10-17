@@ -890,7 +890,8 @@ fn parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligat
 
 #[test]
 fn parser_token_exclusion_emission_reimports_the_same_tokens_eof_and_following_wildcard() {
-    use meta_language::{FeatureExpr, FieldValue, GrammarEmitError, GrammarExpr, GrammarFormat};
+    use meta_language::grammar::{FeatureExpr, FieldValue};
+    use meta_language::{GrammarEmitError, GrammarExpr, GrammarFormat};
     token_negation_reference();
     for excluded in ["~(STOP | ALT)", "~('stop' | 'a')", "~(EOF | STOP | ALT)"] {
         let grammar = import_antlr(&token_negation_declaration(excluded)).unwrap();

@@ -269,7 +269,8 @@ fn source_free_condition_and_branch_edits_change_results_without_replaying_sourc
 }
 
 fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
-    let label = meta_language::typed_program_links::label_of(label);
+    let schema = meta_language::typed_program_links_schema();
+    let label = schema["fields"][label].as_str().unwrap_or(label);
     network
         .links()
         .find_map(|link| match link.references() {
@@ -278,7 +279,7 @@ fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
                     && network
                         .link(*field)
                         .and_then(|field| field.metadata().term())
-                        == Some(label.as_str()) =>
+                        == Some(label) =>
             {
                 Some([*owner, *field, *child])
             }
@@ -342,7 +343,7 @@ fn raw_unknown_models_kinds_domains_and_unrepresented_branches_refuse_both_emitt
                 replace(
                     &mut archive.network,
                     interpretation,
-                    "inputDomain",
+                    "input domain",
                     "string value",
                     "primitive Boolean and binary64 values",
                 );
