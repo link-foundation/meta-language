@@ -216,9 +216,11 @@ export function readJson(file) {
 /** Own leaf code and the standard ESM package interface, without npm installs. */
 export function copyBootstrapDataModules(root) {
   mkdirSync(path.join(root, 'js/src'), { recursive: true });
+  mkdirSync(path.join(root, 'js/src/translation'), { recursive: true });
   copyFileSync(path.join(REPOSITORY_ROOT, 'js/package.json'), path.join(root, 'js/package.json'));
   for (const name of ['primitives.js', 'lino-serialization-write.js', 'structured-data-encode.js', 'structured-data-graph.js',
-    'structured-data-model.js', 'structured-data-record-model.js', 'structured-data-records-write.js', 'structured-data-link-rules.js']) {
+    'structured-data-model.js', 'structured-data-record-model.js', 'structured-data-records-write.js', 'structured-data-link-rules.js',
+    'translation/embedded-region-rules.js']) {
     copyFileSync(path.join(REPOSITORY_ROOT, 'js/src', name), path.join(root, 'js/src', name));
   }
 }
