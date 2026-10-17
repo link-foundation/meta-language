@@ -15,7 +15,10 @@ use crate::global_concept_space::{
     GlobalConceptOptions, GlobalConceptSource, create_global_concept_space,
 };
 use crate::grammar::{GrammarFormat, GrammarKind, GrammarSourceName, serialize_grammar};
-use crate::structured_data_links::{decode_structured_data_links, encode_structured_data_links};
+use crate::structured_data_links::{
+    StructuredDataValue, decode_structured_data_links, encode_structured_data_links,
+    encode_structured_data_links_ordered_with_container_aliases, from_json,
+};
 use crate::translation::grammar_selection_rules::read_grammar_source_default_matching;
 use crate::{Link, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType};
 
@@ -265,6 +268,44 @@ fn encode_data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, Strin
     Ok(copy_network(network, &data.network)?[&data.root])
 }
 
+fn structured_member<'a>(
+    value: &'a StructuredDataValue,
+    name: &str,
+) -> Result<&'a StructuredDataValue, String> {
+    let StructuredDataValue::Object(entries) = value else {
+        return Err(fail("invalid discovery container ownership"));
+    };
+    entries
+        .iter()
+        .find(|(key, _)| key.iter().copied().eq(name.encode_utf16()))
+        .map(|(_, value)| value)
+        .ok_or_else(|| fail("missing discovery container owner"))
+}
+
+fn encode_discovery_data(network: &mut LinkNetwork, value: &Value) -> Result<LinkId, String> {
+    let ordered = from_json(value, 1)?;
+    let space = structured_member(&ordered, "space")?;
+    let StructuredDataValue::Array(concepts) = structured_member(space, "concepts")? else {
+        return Err(fail("invalid discovered concept inventory"));
+    };
+    let mut aliases = Vec::with_capacity(concepts.len());
+    for concept in concepts {
+        let primary = structured_member(concept, "definition")?;
+        let StructuredDataValue::Array(definitions) = structured_member(concept, "definitions")?
+        else {
+            return Err(fail("invalid discovered definition inventory"));
+        };
+        let first = definitions
+            .first()
+            .ok_or_else(|| fail("missing discovered primary definition"))?;
+        // createGlobalConceptSpace assigns this exact first definition object
+        // to both owned fields. No other equal container implies an identity.
+        aliases.push((structured_member(first, "definition")?, primary));
+    }
+    let data = encode_structured_data_links_ordered_with_container_aliases(&ordered, &aliases)?;
+    Ok(copy_network(network, &data.network)?[&data.root])
+}
+
 fn dependencies(expression: &Value, source: &str, space: &Value) -> Result<Vec<String>, String> {
     let mut result = Vec::new();
     let mut pending = vec![expression];
@@ -449,7 +490,7 @@ pub fn create_discovered_concept_links(
         .unwrap_or(Value::Null);
     let value = json!({"schemaVersion": 1, "sources": sources.iter().map(source_data).collect::<Result<Vec<_>, _>>()?, "records": records, "equivalences": options.equivalences, "previous": previous, "space": bare_space(&space)?});
     let mut network = LinkNetwork::new();
-    let data_root = encode_data(&mut network, &value)?;
+    let data_root = encode_discovery_data(&mut network, &value)?;
     let mut definition_ids = BTreeMap::new();
     // Preserve the caller's declaration order, including unsupported meanings.
     for (alias, definition) in &definitions {

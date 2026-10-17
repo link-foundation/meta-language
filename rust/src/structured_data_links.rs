@@ -158,6 +158,10 @@ struct Encoder {
     limits: StructuredDataLinksLimits,
     bytes: usize,
     scalars: HashMap<(String, Option<String>), LinkId>,
+    container_aliases: HashMap<*const StructuredDataValue, *const StructuredDataValue>,
+    containers: HashMap<*const StructuredDataValue, LinkId>,
+    consumed_aliases: HashSet<*const StructuredDataValue>,
+    heights: HashMap<LinkId, usize>,
 }
 
 impl Encoder {
@@ -177,7 +181,31 @@ impl Encoder {
         }
         let id = self.network.insert_link([], metadata(term, definition));
         self.network.set_references(id, references);
+        if !self.container_aliases.is_empty() {
+            self.heights.insert(id, self.reference_height(references));
+        }
         Ok(id)
+    }
+
+    fn reference_height(&self, references: &[LinkId]) -> usize {
+        references
+            .iter()
+            .filter_map(|reference| self.heights.get(reference))
+            .max()
+            .map_or(0, |height| height + 1)
+    }
+
+    fn complete_container(
+        &mut self,
+        value: &StructuredDataValue,
+        id: LinkId,
+        references: &[LinkId],
+    ) {
+        self.network.set_references(id, references);
+        if !self.container_aliases.is_empty() {
+            self.containers.insert(std::ptr::from_ref(value), id);
+            self.heights.insert(id, self.reference_height(references));
+        }
     }
 
     fn scalar(
@@ -231,6 +259,17 @@ impl Encoder {
         if depth > self.limits.depth_limit {
             return Err(fail("the value exceeds its structural resource limit"));
         }
+        let address = std::ptr::from_ref(value);
+        if let Some(target) = self.container_aliases.get(&address) {
+            let id = *self.containers.get(target).ok_or_else(|| {
+                fail("a container alias must reference an earlier completed owned container")
+            })?;
+            if depth.saturating_add(self.heights[&id]) > self.limits.depth_limit {
+                return Err(fail("the value exceeds its structural resource limit"));
+            }
+            self.consumed_aliases.insert(address);
+            return Ok(id);
+        }
         match value {
             StructuredDataValue::Null => self.scalar("null value", None, depth),
             StructuredDataValue::Boolean(value) => self.scalar(
@@ -248,7 +287,7 @@ impl Encoder {
                     .iter()
                     .map(|value| self.value(value, depth + 1))
                     .collect::<Result<Vec<_>, _>>()?;
-                self.network.set_references(id, &children);
+                self.complete_container(value, id, &children);
                 Ok(id)
             }
             StructuredDataValue::Object(entries) => {
@@ -263,7 +302,7 @@ impl Encoder {
                     let value = self.value(value, depth + 2)?;
                     children.push(self.node("key value pair", None, &[key, value], depth + 1)?);
                 }
-                self.network.set_references(id, &children);
+                self.complete_container(value, id, &children);
                 Ok(id)
             }
         }
@@ -274,13 +313,56 @@ impl Encoder {
 pub fn encode_structured_data_links_ordered(
     value: &StructuredDataValue,
 ) -> Result<StructuredDataLinks, String> {
+    encode_structured_data_links_ordered_with_container_aliases(value, &[])
+}
+
+/// Preserve explicitly owned container identities supplied by a host adapter.
+/// Equal independent containers remain independent without a declared alias.
+pub(crate) fn encode_structured_data_links_ordered_with_container_aliases(
+    value: &StructuredDataValue,
+    aliases: &[(&StructuredDataValue, &StructuredDataValue)],
+) -> Result<StructuredDataLinks, String> {
+    let mut container_aliases = HashMap::new();
+    for (alias, target) in aliases {
+        if !matches!(
+            alias,
+            StructuredDataValue::Array(_) | StructuredDataValue::Object(_)
+        ) || !matches!(
+            target,
+            StructuredDataValue::Array(_) | StructuredDataValue::Object(_)
+        ) || std::ptr::eq(*alias, *target)
+            || container_aliases
+                .insert(std::ptr::from_ref(*alias), std::ptr::from_ref(*target))
+                .is_some()
+        {
+            return Err(fail("invalid or duplicate container alias"));
+        }
+        // Canonical encoding authenticates ordered keys, UTF-16 units, finite
+        // Numbers and negative zero. Equality never nominates an alias.
+        if encode_structured_data_links_ordered(alias)?
+            .network
+            .to_lino()
+            != encode_structured_data_links_ordered(target)?
+                .network
+                .to_lino()
+        {
+            return Err(fail("a container alias differs from its declared target"));
+        }
+    }
     let mut encoder = Encoder {
         network: LinkNetwork::new(),
         limits: StructuredDataLinksLimits::default(),
         bytes: 0,
         scalars: HashMap::new(),
+        container_aliases,
+        containers: HashMap::new(),
+        consumed_aliases: HashSet::new(),
+        heights: HashMap::new(),
     };
     let body = encoder.value(value, 1)?;
+    if encoder.consumed_aliases.len() != aliases.len() {
+        return Err(fail("a container alias is outside the encoded value"));
+    }
     let root = encoder.node("structured data", Some("1"), &[body], 0)?;
     Ok(StructuredDataLinks {
         network: encoder.network,
@@ -473,7 +555,7 @@ pub fn decode_structured_data_links_ordered_with_limits(
     Ok(value)
 }
 
-fn from_json(value: &Value, depth: usize) -> Result<StructuredDataValue, String> {
+pub(crate) fn from_json(value: &Value, depth: usize) -> Result<StructuredDataValue, String> {
     if depth > StructuredDataLinksLimits::default().depth_limit {
         return Err(fail("the value exceeds its structural resource limit"));
     }
@@ -713,4 +795,158 @@ pub fn read_structured_data_lino_with_limits(
     limits: StructuredDataLinksLimits,
 ) -> Result<Value, String> {
     into_json(read_structured_data_lino_ordered_with_limits(text, limits)?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        StructuredDataValue, encode_structured_data_links_ordered,
+        encode_structured_data_links_ordered_with_container_aliases,
+    };
+
+    #[test]
+    fn explicit_container_aliases_preserve_owned_sharing_without_merging_equal_values() {
+        let container = StructuredDataValue::Object(vec![
+            (
+                "value".encode_utf16().collect(),
+                StructuredDataValue::Number(-0.0),
+            ),
+            (
+                "units".encode_utf16().collect(),
+                StructuredDataValue::String(vec![0xd800]),
+            ),
+        ]);
+        let value =
+            StructuredDataValue::Array(vec![container.clone(), container.clone(), container]);
+        let StructuredDataValue::Array(children) = &value else {
+            unreachable!();
+        };
+        let independent = encode_structured_data_links_ordered(&value).unwrap();
+        let unchanged =
+            encode_structured_data_links_ordered_with_container_aliases(&value, &[]).unwrap();
+        assert_eq!(independent.network.to_lino(), unchanged.network.to_lino());
+        let body = independent
+            .network
+            .link(independent.root)
+            .unwrap()
+            .references()[0];
+        let references = independent.network.link(body).unwrap().references();
+        assert_ne!(references[0], references[1]);
+        assert_ne!(references[0], references[2]);
+        let shared = encode_structured_data_links_ordered_with_container_aliases(
+            &value,
+            &[(&children[1], &children[0])],
+        )
+        .unwrap();
+        let body = shared.network.link(shared.root).unwrap().references()[0];
+        let references = shared.network.link(body).unwrap().references();
+        assert_eq!(references[0], references[1]);
+        assert_ne!(references[0], references[2]);
+        assert_eq!(shared.network.len() + 3, independent.network.len());
+
+        let arrays = StructuredDataValue::Array(vec![
+            StructuredDataValue::Array(vec![]),
+            StructuredDataValue::Array(vec![]),
+            StructuredDataValue::Array(vec![]),
+        ]);
+        let StructuredDataValue::Array(children) = &arrays else {
+            unreachable!();
+        };
+        let shared = encode_structured_data_links_ordered_with_container_aliases(
+            &arrays,
+            &[(&children[1], &children[0])],
+        )
+        .unwrap();
+        let body = shared.network.link(shared.root).unwrap().references()[0];
+        let references = shared.network.link(body).unwrap().references();
+        assert_eq!(references[0], references[1]);
+        assert_ne!(references[0], references[2]);
+    }
+
+    #[test]
+    fn container_aliases_refuse_unowned_changed_or_incomplete_targets() {
+        let value = StructuredDataValue::Array(vec![
+            StructuredDataValue::Array(vec![]),
+            StructuredDataValue::Array(vec![]),
+            StructuredDataValue::Array(vec![]),
+        ]);
+        let StructuredDataValue::Array(children) = &value else {
+            unreachable!();
+        };
+        let foreign = StructuredDataValue::Array(vec![]);
+        let scalar = StructuredDataValue::Null;
+        for aliases in [
+            vec![(&foreign, &children[0])],
+            vec![(&children[1], &foreign)],
+            vec![(&children[0], &children[1])],
+            vec![(&children[1], &children[0]), (&children[1], &children[2])],
+            vec![(&children[0], &children[0])],
+            vec![(&children[1], &scalar)],
+            vec![(&scalar, &children[0])],
+        ] {
+            assert!(
+                encode_structured_data_links_ordered_with_container_aliases(&value, &aliases)
+                    .is_err()
+            );
+        }
+
+        let negative_zero = StructuredDataValue::Array(vec![StructuredDataValue::Number(-0.0)]);
+        let positive_zero = StructuredDataValue::Array(vec![StructuredDataValue::Number(0.0)]);
+        let first_order = StructuredDataValue::Object(vec![
+            (vec![97], StructuredDataValue::Null),
+            (vec![98], StructuredDataValue::Null),
+        ]);
+        let second_order = StructuredDataValue::Object(vec![
+            (vec![98], StructuredDataValue::Null),
+            (vec![97], StructuredDataValue::Null),
+        ]);
+        let first_units =
+            StructuredDataValue::Array(vec![StructuredDataValue::String(vec![0xd800])]);
+        let second_units =
+            StructuredDataValue::Array(vec![StructuredDataValue::String(vec![0xd801])]);
+        let infinite = StructuredDataValue::Array(vec![StructuredDataValue::Number(f64::INFINITY)]);
+        for (target, alias) in [
+            (negative_zero, positive_zero),
+            (first_order, second_order),
+            (first_units, second_units),
+            (infinite.clone(), infinite),
+        ] {
+            let value = StructuredDataValue::Array(vec![target, alias]);
+            let StructuredDataValue::Array(children) = &value else {
+                unreachable!();
+            };
+            assert!(
+                encode_structured_data_links_ordered_with_container_aliases(
+                    &value,
+                    &[(&children[1], &children[0])],
+                )
+                .is_err()
+            );
+        }
+
+        let target = StructuredDataValue::Array(vec![StructuredDataValue::Null]);
+        let mut nested = target.clone();
+        for _ in 0..254 {
+            nested = StructuredDataValue::Array(vec![nested]);
+        }
+        let value = StructuredDataValue::Array(vec![target, nested]);
+        let StructuredDataValue::Array(children) = &value else {
+            unreachable!();
+        };
+        let mut alias = &children[1];
+        for _ in 0..254 {
+            let StructuredDataValue::Array(children) = alias else {
+                unreachable!();
+            };
+            alias = &children[0];
+        }
+        assert!(encode_structured_data_links_ordered(&value).is_err());
+        assert!(
+            encode_structured_data_links_ordered_with_container_aliases(
+                &value,
+                &[(alias, &children[0])],
+            )
+            .is_err()
+        );
+    }
 }
