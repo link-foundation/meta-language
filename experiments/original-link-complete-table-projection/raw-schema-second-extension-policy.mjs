@@ -24,6 +24,9 @@ export const ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSIONS = {
     method: {construct: 'method', fields: [['object', 'expression', 'object'], ['op', 'copy', 'op'], ['args', 'nullable-expressions', 'args']]},
     'index:provenInBounds': {construct: 'index', fields: [['object', 'expression', 'array'], ['index', 'expression', 'index'], ['provenInBounds', 'copy', 'provenInBounds']]},
     nullishNumber: {construct: 'numberValue', fields: [['arg', 'expression', 'arg']]},
+    optionalText: {variant: ['console']},
+    'optionalText:false': {construct: 'toString', fields: [['arg', 'expression', 'arg']]},
+    'optionalText:true': {construct: 'show', fields: [['arg', 'expression', 'arg'], ['style', 'constant', 'js-console']]},
   },
   expressionProjectionAlternatives: {
     index: [{path: ['provenInBounds'], value: true, projection: 'index:provenInBounds'}],
