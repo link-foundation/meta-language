@@ -120,6 +120,8 @@ per-parse options cannot replace them. Default output retains the qualified
 concrete tree and embedded provenance. Existing any/all selection, cycle
 diagnostics and shared parser budgets remain in force. The `records` option
 configures archive validation only.
+Explicit custom records do not materialize the shipped default record values;
+the default values are parsed only when no custom records are supplied.
 
 Archives retain the original grammar format and raw declaration presence.
 The effective matching context includes the format's default: implicit PEG
@@ -160,6 +162,10 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
+Owned function calls project through the actual declaration's rooted path,
+including root functions, while rechecking its name, qualified identity and
+module path. Caller-local bindings cannot capture a callee's default initializer
+through a shortened projected name.
 These source-free semantic graphs emit canonical target syntax; byte-identical
 unchanged-source preservation remains the separate lossless CST contract.
 Integral metadata uses the value of its linked Number. The fixed type bit-width
@@ -186,6 +192,17 @@ the existing source-free checker and wire observations; a default value cannot
 replace a presence distinction. Assertion propositions use the same shared
 operand and binding plans during encoding, reload and complete rechecking,
 including each quantified binding's actual lexical identity.
+Optional JSDoc parameter markers retain their declared value type and explicit
+undefined absence through surface, checked and linked representations.
+Documentation defaults do not supply runtime initializers. Provided arguments
+evaluate once in source order before applicable lazy defaults, which retain
+their callee scope and initializer order through source-free rechecking.
+Inferred element annotations are written back for both empty and nonempty
+arrays. Native `semanticRet` metadata retains the source's semantic return
+alongside its original annotation and checked result. Nested JSDoc Map and Set
+arguments reuse the existing recursive type-separator rules. Unsupported union
+target encodings produce typed diagnostics with their existing message and
+failure ordering; the historical diagnostic receipt remains separate.
 Owned occurrence paths likewise compare the numeric value of an actual Number
 position, checking the actual array bounds through the shared tuple-index rule.
 Equivalent integral spellings retain their stored scalar, including negative
@@ -1469,6 +1486,11 @@ unimplemented constructs retain precise diagnostics. These finite supported
 cases do not establish complete source-format coverage, a Rust importer or the
 union of the pinned official Ruby, Perl, Bash and OCaml grammars.
 
+Grammar Links retain ordered lexer declarations, modes, owners, fragments and
+bindings alongside productions. Source-free reload preserves their complete
+declaration expressions, including unresolved action and predicate obligations;
+serialization alone does not discharge those executable meanings.
+
 - Every feature of every inventoried format has an explicit native
   representation, an operational meaning and executable tests. Imports follow
   included grammars, supporting lexer and scanner definitions, and action code;
@@ -2202,6 +2224,17 @@ production interfaces. This source extraction preserves the original algorithm
 and assertions; it does not establish semantic self-translation or native test
 execution before CI runs.
 
+Expression-dispatch frame extraction records byte-exact original match arms
+and parent reconstruction in
+[`arm-preservation.lino`](../experiments/native-expression-dispatch-extraction/data/arm-preservation.lino).
+Subsequent diagnostic source edits have a separate
+[`following-diagnostic-source-change.lino`](../experiments/native-expression-dispatch-extraction/data/following-diagnostic-source-change.lino)
+receipt. Their provenance does not establish native stack resolution, which
+remains unverified. Original const and lexer refusal fixtures retain their exact
+inputs and boundaries. The owned-array reserved-prefix source likewise remains
+an exact negative; separate legal identifiers exercise the same actual emitted
+temporary-name collisions.
+
 The five native logical suites retain their original filters and Cargo commands.
 Grammar, translation and remaining tests each use four physical partitions on
 every original platform; inference and generative suites each keep one. Fresh
@@ -2214,6 +2247,12 @@ every admitted physical cell and the complete target and test union. Existing
 oracle, doctest and example steps retain their original single owners. These
 partitions preserve deadlines and acceptance scope; synthetic scheduling checks
 do not establish native platform behavior or deadline fit.
+
+CI keeps expected-panic display annotations separate from actual test identities
+and validates the native Windows linker after shell setup. Grammar-tool
+operation failures retain their source errors and causes instead of becoming
+syntax rejections. These diagnostic checks do not establish native success or
+resolve an unexplained process failure.
 
 Original-source subprocess observations retain their existing execution,
 compiler and output limits. Explicit compiler profiles are shared Links data:
