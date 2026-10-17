@@ -41,6 +41,7 @@ include = [
     "src/data/grammar-lexer-rules.lino",
     "src/data/grammar-selection-rules.lino",
     "src/data/optional-rules.lino",
+    "src/data/parameter-default-rules.lino",
     "src/data/record-emission.lino",
     "src/data/record-values.lino",
     "src/data/surface-raw-metadata.lino",

@@ -549,6 +549,10 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-global-concept-rules.mjs --check
 
+      - name: Check generated parameter default rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        run: node js/scripts/generate-parameter-default-rules.mjs --native --check
+
       - name: Check the generated discovery integration rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-discovered-concept-rules.mjs --check
