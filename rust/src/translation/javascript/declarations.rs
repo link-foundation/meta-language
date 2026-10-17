@@ -598,22 +598,30 @@ impl JavaScriptParser {
             .iter()
             .map(|param| param.name.clone())
             .collect::<Vec<_>>();
-        let statements = self.with_lexical_scope(&names, 2, |parser| match body {
-            Body::Arrow if !parser.cursor.is("{") => {
-                let token = parser.peek();
-                let expr = if is_async {
-                    parser.awaited(Self::expr)
-                } else {
-                    parser.expr()
-                };
-                expr.map(|expr| {
-                    vec![Stmt::Return {
-                        expr,
-                        span: parser.to_here(&token),
-                    }]
-                })
+        let statements = self.with_lexical_scope(&names, 2, |parser| {
+            for parameter in &params {
+                parser.lexical.tag_binding(
+                    &parameter.name,
+                    super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
+                );
             }
-            _ => parser.block_statements(),
+            match body {
+                Body::Arrow if !parser.cursor.is("{") => {
+                    let token = parser.peek();
+                    let expr = if is_async {
+                        parser.awaited(Self::expr)
+                    } else {
+                        parser.expr()
+                    };
+                    expr.map(|expr| {
+                        vec![Stmt::Return {
+                            expr,
+                            span: parser.to_here(&token),
+                        }]
+                    })
+                }
+                _ => parser.block_statements(),
+            }
         });
         self.scope = outer;
         self.in_async = outer_async;

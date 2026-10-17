@@ -185,7 +185,11 @@ impl JavaScriptParser {
             ));
         }
         self.cursor.eat(";");
+        let receiver_fact = self.read_tag_receiver_fact(&value);
         self.declare_local(&name.value, false);
+        if let Some(fact) = receiver_fact {
+            self.lexical.tag_binding(&name.value, fact);
+        }
         Ok((name.value, value, self.to_here(start)))
     }
 

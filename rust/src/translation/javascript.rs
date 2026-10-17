@@ -50,6 +50,7 @@ mod reference_analysis;
 mod scalar_loops;
 mod statements;
 mod surface_rules;
+mod tag_context;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};
@@ -372,6 +373,7 @@ struct JavaScriptParser {
     type_aliases: HashMap<String, String>,
     scope: Scope,
     lexical: lexical_bindings::Trace,
+    tag_function_results: HashMap<String, Option<tag_context::TagReceiverFact>>,
     literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
     /// Async functions run sequentially: each call of one is awaited where it
@@ -419,6 +421,7 @@ impl JavaScriptParser {
             type_aliases: HashMap::new(),
             scope: Scope::default(),
             lexical: lexical_bindings::Trace::default(),
+            tag_function_results: HashMap::new(),
             literal_bindings: HashMap::new(),
             assertion: None,
             async_names: HashSet::new(),

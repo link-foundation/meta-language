@@ -194,21 +194,32 @@ impl JavaScriptParser {
             .iter()
             .filter(|data| has_ctor(data, &tag))
             .collect();
-        let data = match candidates.as_slice() {
-            [data] => (*data).clone(),
-            [] => {
-                return Err(type_error(
-                    format!("no @typedef has tag {tag}"),
-                    Some(place),
-                ));
-            }
-            _ => {
-                return Err(type_error(
-                    format!("tag {tag} is ambiguous between data types"),
-                    Some(place),
-                ));
-            }
+        let receiver = if candidates.len() > 1 {
+            self.read_tag_receiver_owner(&object)
+        } else {
+            String::new()
         };
+        let owners = candidates
+            .iter()
+            .map(|data| data.name.clone())
+            .collect::<Vec<_>>();
+        let selected =
+            crate::translation::javascript_tag_context_rules::read_java_script_tag_owner_position(
+                &owners, &receiver,
+            );
+        let Some(data) = crate::translation::frontend_rules::ml_array::number_index(selected)
+            .and_then(|index| candidates.get(index))
+        else {
+            return Err(type_error(
+                if candidates.is_empty() {
+                    format!("no @typedef has tag {tag}")
+                } else {
+                    format!("tag {tag} is ambiguous between data types")
+                },
+                Some(place),
+            ));
+        };
+        let data = (*data).clone();
         let arity = data
             .ctors
             .iter()

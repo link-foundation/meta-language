@@ -319,3 +319,323 @@ fn terminal_tag_guard_sequences_retain_all_exclusions_scopes_effects_and_source_
         "separate source bindings cannot share exclusions"
     );
 }
+
+const TAG_CONTEXT_INPUT: &str = "/** @typedef {{ $: 'malformed' } | { $: 'unsupported', end: number, escapeLength: number } | { $: 'scalar', code: number, end: number }} Input */\n";
+const TAG_CONTEXT_OUTPUT: &str = "/** @typedef {{ $: 'malformed', at: number, end: number } | { $: 'nonScalar', at: number, end: number } | { $: 'value', code: number }} Output */\n";
+const TAG_CONTEXT_MAKE: &str = "/** @param {number} n @returns {Input} */function readInput(n){if(n===0)return {$:'malformed'};if(n===1)return {$:'unsupported',end:7,escapeLength:6};return {$:'scalar',code:65,end:8};}\n";
+const TAG_CONTEXT_CONVERT: &str = "/** @param {number} n @returns {Output} */function convert(n){const state=readInput(n);if(state.$==='malformed')return {$:'malformed',at:1,end:2};if(state.$==='unsupported')return {$:'nonScalar',at:3,end:state.end};return {$:'value',code:state.code};}\n";
+
+fn tag_receiver_contract(source: &str, javascript: &str, expression: &str) -> Value {
+    let script = r#"
+import vm from 'node:vm';
+import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitJavaScript} from './js/src/translation/emit-javascript.js';
+import {emitRust} from './js/src/translation/emit-rust.js';
+import {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-program-links.js';
+import {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';
+import {LinkNetwork} from './js/src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';
+function observe(source){const lines=[];const result=vm.runInNewContext(source+'\nJSON.stringify('+process.argv[3]+');',{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{timeout:1000});return {lines,result};}
+const surface=parseJavaScript(process.argv[1],{referenceSemantics:false}),checked=checkProgram(surface);
+const javascript=emitJavaScript(checked).text,rust=emitRust(checked).text;
+const packet=encodeTypedProgramLinks(checked),archives=[];
+for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+ const replayed=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});
+ archives.push({javascript:emitJavaScript(replayed).text,rust:emitRust(replayed).text,output:observe(emitJavaScript(replayed).text)});
+}
+console.log(JSON.stringify({surface,javascript,rust,archives,observations:[observe(process.argv[1]),observe(process.argv[2]),observe(javascript)]}));
+"#;
+    let output = run(Command::new("node")
+        .current_dir(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap(),
+        )
+        .args([
+            "--input-type=module",
+            "-e",
+            script,
+            source,
+            javascript,
+            expression,
+        ]));
+    assert!(output.ok, "{}", output.stderr);
+    serde_json::from_str(&output.stdout).unwrap()
+}
+
+fn assert_tag_receiver_contract(source: &str, expression: &str, expected: &Value) {
+    use meta_language::translation::emit_rust::emit_rust;
+    use meta_language::{
+        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+        encode_link_network_binary, encode_typed_program_links,
+    };
+    let surface = parse_javascript(source).unwrap();
+    let program = check_program(&surface).unwrap();
+    let javascript = emit_javascript(&program).unwrap().text;
+    let rust = emit_rust(&program).unwrap().text;
+    let oracle = tag_receiver_contract(source, &javascript, expression);
+    assert_eq!(
+        serde_json::to_value(&surface).unwrap(),
+        oracle["surface"],
+        "actual complete source surface"
+    );
+    assert_eq!(javascript, oracle["javascript"].as_str().unwrap());
+    assert_eq!(rust, oracle["rust"].as_str().unwrap());
+    for observation in oracle["observations"].as_array().unwrap() {
+        assert_eq!(
+            observation, expected,
+            "original and both checked JavaScript outputs"
+        );
+    }
+    for archive in oracle["archives"].as_array().unwrap() {
+        assert_eq!(archive["javascript"].as_str().unwrap(), javascript);
+        assert_eq!(archive["rust"].as_str().unwrap(), rust);
+        assert_eq!(&archive["output"], expected);
+    }
+    let packet = encode_typed_program_links(&program).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let replayed = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(replayed, program, "complete source-free checked program");
+        assert_eq!(emit_javascript(&replayed).unwrap().text, javascript);
+        assert_eq!(emit_rust(&replayed).unwrap().text, rust);
+    }
+}
+
+fn tag_receiver_refusal(source: &str) -> Value {
+    let failure = parse_javascript(source).unwrap_err();
+    let actual = serde_json::json!({"kind":failure.kind.as_str(),"reason":failure.reason,"span":failure.span});
+    let script = r#"
+import {parseJavaScript} from './js/src/translation/javascript.js';
+let caught;try{parseJavaScript(process.argv[1]);}catch(error){caught=error;}
+if(!caught)throw new Error('the complete unchanged source must refuse');
+console.log(JSON.stringify({kind:caught.kind,reason:caught.reason,span:caught.span}));
+"#;
+    let output = run(Command::new("node")
+        .current_dir(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .parent()
+                .unwrap(),
+        )
+        .args(["--input-type=module", "-e", script, source]));
+    assert!(output.ok, "{}", output.stderr);
+    let oracle: Value = serde_json::from_str(&output.stdout).unwrap();
+    assert_eq!(actual, oracle, "actual original JavaScript refusal");
+    actual
+}
+
+#[test]
+fn tag_receiver_owners_retain_distinct_input_and_returned_payloads_in_both_archives() {
+    let makers = [
+        TAG_CONTEXT_MAKE.to_owned(),
+        TAG_CONTEXT_MAKE.replace(
+            "function readInput(n){",
+            "const readInput = function readInput(n){",
+        ),
+        TAG_CONTEXT_MAKE.replace("function readInput(n){", "const readInput = (n)=>{"),
+    ];
+    let expected = serde_json::json!({"lines":[],"result":"[{\"$\":\"malformed\",\"at\":1,\"end\":2},{\"$\":\"nonScalar\",\"at\":3,\"end\":7},{\"$\":\"value\",\"code\":65}]"});
+    for declarations in [
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}"),
+        format!("{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_INPUT}"),
+    ] {
+        for maker in &makers {
+            for bodies in [
+                format!("{maker}{TAG_CONTEXT_CONVERT}"),
+                format!("{TAG_CONTEXT_CONVERT}{maker}"),
+            ] {
+                let source = format!("{declarations}{bodies}");
+                assert_tag_receiver_contract(
+                    &source,
+                    "[convert(0),convert(1),convert(2)]",
+                    &expected,
+                );
+                let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
+                let graph = serde_json::to_value(program).unwrap();
+                let declarations = graph["declarations"].as_array().unwrap();
+                let input = declarations
+                    .iter()
+                    .find(|item| item["name"] == "Input")
+                    .unwrap();
+                let output = declarations
+                    .iter()
+                    .find(|item| item["name"] == "Output")
+                    .unwrap();
+                assert_eq!(
+                    input["ctors"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .find(|ctor| ctor["name"] == "malformed")
+                        .unwrap()["fields"],
+                    serde_json::json!([])
+                );
+                let fields = output["ctors"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|ctor| ctor["name"] == "malformed")
+                    .unwrap()["fields"]
+                    .as_array()
+                    .unwrap();
+                assert_eq!(
+                    fields
+                        .iter()
+                        .map(|field| field["name"].as_str().unwrap())
+                        .collect::<Vec<_>>(),
+                    ["at", "end"]
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn tag_receiver_parameters_aliases_effects_and_zero_argument_forward_results_keep_their_owners() {
+    let source = format!(
+        "{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}/** @param {{Input}} input @returns {{Output}} */function convertInput(input){{const state=input;if(state.$==='malformed'){{console.log('first');return {{$:'malformed',at:4,end:5}};}}if(state.$==='unsupported'){{console.log('second');return {{$:'nonScalar',at:6,end:state.end}};}}console.log('last');return {{$:'value',code:state.code}};}}\n/** @param {{number}} n @returns {{Output}} */function convert(n){{console.log('argument',n);return convertInput(readInput(n));}}\n"
+    );
+    assert_tag_receiver_contract(
+        &source,
+        "[convert(0),convert(1),convert(2)]",
+        &serde_json::json!({"lines":["argument 0","first","argument 1","second","argument 2","last"],"result":"[{\"$\":\"malformed\",\"at\":4,\"end\":5},{\"$\":\"nonScalar\",\"at\":6,\"end\":7},{\"$\":\"value\",\"code\":65}]"}),
+    );
+    let types = "/** @typedef {{ $: 'shared', input: number } | { $: 'first', input: number }} First */\n/** @typedef {{ $: 'shared', output: boolean } | { $: 'second', output: boolean }} Second */\n";
+    let maker = "/** @returns {First} */function make(){return {$:'shared',input:3};}\n";
+    let inspect = "/** @returns {number} */function inspect(){const one=make();const two=one;const three=two;if(three.$==='shared')return three.input;return three.input;}\n";
+    for declaration in [
+        maker.to_owned(),
+        maker.replace("function make(){", "const make=()=>{"),
+    ] {
+        for functions in [
+            format!("{declaration}{inspect}"),
+            format!("{inspect}{declaration}"),
+        ] {
+            assert_tag_receiver_contract(
+                &format!("{types}{functions}"),
+                "inspect()",
+                &serde_json::json!({"lines":[],"result":"3"}),
+            );
+        }
+    }
+}
+
+#[test]
+fn tag_receiver_unknown_optional_async_mutable_shadowed_namespace_and_captured_owners_refuse_exactly()
+ {
+    let sources = [
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @returns {{Output}} */function read(state){{if(state.$==='malformed')return {{$:'malformed',at:1,end:2}};return {{$:'value',code:0}};}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @param {{Input}} state @returns {{Output}} */function outer(state){{const read=(state)=>{{if(state.$==='malformed')return {{$:'malformed',at:1,end:2}};return {{$:'value',code:0}};}};return read(state);}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}/** @param {{Input}} state @returns {{Output}} */function read(state){{{{let state=readInput(0);if(state.$==='malformed')return {{$:'malformed',at:1,end:2}};return {{$:'value',code:0}};}}}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @param {{Input|undefined}} state @returns {{Output}} */function read(state){{if(state.$==='malformed')return {{$:'malformed',at:1,end:2}};return {{$:'value',code:0}};}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{}{TAG_CONTEXT_CONVERT}",TAG_CONTEXT_MAKE.replace("@returns {Input}","@returns {Input|undefined}")),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @returns {{Promise<Input>}} */async function readInput(){{return {{$:'malformed'}};}}\n/** @returns {{Promise<number>}} */async function read(){{const state=await readInput();if(state.$==='malformed')return 0;return 1;}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}{}{TAG_CONTEXT_CONVERT}",TAG_CONTEXT_MAKE.replace("@returns {Input}","@returns {Output}").replace("if(n===0)return {$:'malformed'};if(n===1)return {$:'unsupported',end:7,escapeLength:6};return {$:'scalar',code:65,end:8};","return {$:'malformed',at:1,end:2};")),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}/** @returns {{number}} */function read(readInput){{const state=readInput();if(state.$==='malformed')return 0;return 1;}}"),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}const api={{readInput(){{return {{$:'malformed',at:1,end:2}};}}}};\n{}",TAG_CONTEXT_CONVERT.replace("readInput(n)","api.readInput(n)")),
+        format!("{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @param {{Input}} state @returns {{number}} */function read(state){{const captured=()=>{{if(state.$==='malformed')return 0;return 1;}};return captured();}}"),
+    ];
+    for source in &sources {
+        let diagnostic = tag_receiver_refusal(source);
+        let start = source.find("state.$==='malformed'").unwrap();
+        assert_eq!(
+            diagnostic,
+            serde_json::json!({"kind":"type","reason":"tag malformed is ambiguous between data types","span":{"start":start,"end":start+"state.$==='malformed'".len()}})
+        );
+    }
+    let optional = format!(
+        "{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}/** @param {{boolean}} present @returns {{Input}} */function readInput(present){{if(present)return {{$:'malformed'}};}}\n/** @param {{boolean}} present @returns {{number}} */function read(present){{const state=readInput(present);if(state.$==='malformed')return 0;return 1;}}console.log(read(false));"
+    );
+    let failure = parse_javascript(&optional)
+        .and_then(|surface| check_program(&surface))
+        .unwrap_err();
+    assert!(
+        matches!(failure.kind.as_str(), "type" | "unsupported"),
+        "an annotation cannot erase actual semantic absence"
+    );
+    let output = run(Command::new("node").args(["--input-type=module", "-e", &optional]));
+    assert!(
+        !output.ok,
+        "the unchanged original source reads the tag of undefined"
+    );
+    assert!(output.stderr.contains("TypeError"));
+}
+
+#[test]
+fn tag_receiver_context_retains_payload_obligations_unique_owners_and_unknown_tag_spans() {
+    let ambiguous = "/** @param {Input} state */function unknownResult(state){if(state.$==='malformed')return {$:'malformed',at:1,end:2};return {$:'malformed',at:3,end:4};}";
+    let mut sources = vec![format!(
+        "{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{ambiguous}"
+    )];
+    for convert in [
+        TAG_CONTEXT_CONVERT.replace("{$:'malformed',at:1,end:2}", "{$:'malformed'}"),
+        TAG_CONTEXT_CONVERT.replace(
+            "{$:'malformed',at:1,end:2}",
+            "{$:'malformed',at:true,end:2}",
+        ),
+        TAG_CONTEXT_CONVERT.replace("end:state.end", "end:state.escapeLength+state.code"),
+    ] {
+        sources.push(format!(
+            "{TAG_CONTEXT_INPUT}{TAG_CONTEXT_OUTPUT}{TAG_CONTEXT_MAKE}{convert}"
+        ));
+    }
+    for source in sources {
+        let failure = parse_javascript(&source)
+            .and_then(|surface| check_program(&surface))
+            .unwrap_err();
+        assert!(matches!(failure.kind.as_str(), "type" | "unsupported"));
+    }
+    let unique = format!(
+        "{TAG_CONTEXT_INPUT}{TAG_CONTEXT_MAKE}/** @param {{Input}} state @returns {{number}} */function read(state){{if(state.$==='malformed')return -1;if(state.$==='unsupported')return -2;return state.code+state.end;}}\n"
+    );
+    assert_tag_receiver_contract(
+        &unique,
+        "[read(readInput(0)),read(readInput(1)),read(readInput(2))]",
+        &serde_json::json!({"lines":[],"result":"[-1,-2,73]"}),
+    );
+    let unknown = format!(
+        "{TAG_CONTEXT_INPUT}/** @param {{Input}} state @returns {{boolean}} */function read(state){{return state.$==='absent';}}"
+    );
+    let start = unknown.find("state.$==='absent'").unwrap();
+    assert_eq!(
+        tag_receiver_refusal(&unknown),
+        serde_json::json!({"kind":"type","reason":"no @typedef has tag absent","span":{"start":start,"end":start+"state.$==='absent'".len()}})
+    );
+}
+
+#[test]
+fn speculative_tag_headers_preserve_ambiguity_and_ordinary_declaration_error_precedence() {
+    let types = "/** @typedef {{ $: 'shared', input: number } | { $: 'first', input: number }} First */\n/** @typedef {{ $: 'shared', output: boolean } | { $: 'second', output: boolean }} Second */\n";
+    let caller = "function inspect(){const state=make();return state.$==='shared';}\n";
+    for (maker, kind, reason) in [
+        (
+            "/** @param {number} @returns {First} */function make(n){return {$:'shared',input:3};}\n",
+            "syntax",
+            "@param needs a type and a name",
+        ),
+        (
+            "/** @returns {unknown} */function make(){return {$:'shared',input:3};}\n",
+            "unsupported",
+            "JSDoc type {unknown}: portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types",
+        ),
+    ] {
+        let source = format!("{types}{caller}{maker}");
+        let start = source.find("state.$==='shared'").unwrap();
+        assert_eq!(
+            tag_receiver_refusal(&source),
+            serde_json::json!({"kind":"type","reason":"tag shared is ambiguous between data types","span":{"start":start,"end":start+"state.$==='shared'".len()}})
+        );
+        let source = format!("{types}{maker}{caller}");
+        assert_eq!(
+            tag_receiver_refusal(&source),
+            serde_json::json!({"kind":kind,"reason":reason,"span":{"start":types.len(),"end":types.len()+maker.find("*/").unwrap()+2}})
+        );
+    }
+}

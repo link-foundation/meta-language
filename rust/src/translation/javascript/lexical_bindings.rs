@@ -1,14 +1,17 @@
 //! Actual parser origins transported to the shared temporal-binding decision.
 
 use super::callables::{number, position};
+use super::tag_context::TagReceiverFact;
 use super::{JavaScriptParser, Result, Span, Token, unsupported};
 use crate::translation::{callable_source_rules, frontend_rules};
+use std::collections::HashMap;
 
 #[derive(Default)]
 struct Frame {
     parent: Option<usize>,
     boundary: u8,
     bindings: Vec<(String, Option<usize>)>,
+    tag_bindings: HashMap<String, TagReceiverFact>,
 }
 
 struct Read {
@@ -36,6 +39,30 @@ impl Default for Trace {
 }
 
 impl Trace {
+    pub(super) fn tag_binding(&mut self, name: &str, fact: TagReceiverFact) {
+        self.frames[self.current]
+            .tag_bindings
+            .insert(name.to_owned(), fact);
+    }
+
+    pub(super) fn tag_fact(&self, name: &str) -> Option<TagReceiverFact> {
+        let mut current = Some(self.current);
+        while let Some(index) = current {
+            let frame = &self.frames[index];
+            let step =
+                crate::translation::javascript_tag_context_rules::read_java_script_tag_binding_step(
+                    frame.bindings.iter().any(|(bound, _)| bound == name),
+                    f64::from(frame.boundary),
+                );
+            match frontend_rules::ml_array::number_index(step) {
+                Some(1) => return frame.tag_bindings.get(name).cloned(),
+                Some(2) => return None,
+                _ => current = frame.parent,
+            }
+        }
+        None
+    }
+
     pub(super) fn binding(&mut self, name: &str, initialized_at: Option<usize>) {
         let bindings = &mut self.frames[self.current].bindings;
         if let Some((_, end)) = bindings.iter_mut().find(|(bound, _)| bound == name) {
@@ -143,6 +170,7 @@ impl JavaScriptParser {
             parent: Some(outer),
             boundary,
             bindings: Vec::new(),
+            tag_bindings: HashMap::new(),
         });
         for name in names {
             self.lexical.binding(name, None);
