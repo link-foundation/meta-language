@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 161 | 160 | 1 | 0 |
+| Generators | 163 | 162 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 20 | 20 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 73 | 0 | 0 | 73 |
+| Published artifact contents | 75 | 0 | 0 | 75 |
 
 ## JavaScript engines
 
@@ -613,6 +613,7 @@ they are.
 | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-optional-rules.mjs` | `js/scripts/generate-optional-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-owned-array-append-rules.mjs` | `js/scripts/generate-owned-array-append-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-parameter-default-rules.mjs` | `js/scripts/generate-parameter-default-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-partial-callable-rules.mjs` | `js/scripts/generate-partial-callable-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-pdf-grammar-cases.mjs` | `js/scripts/generate-pdf-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-primitive-method-rules.mjs` | `js/scripts/generate-primitive-method-rules.mjs` | `script` |  | derived | current |  |
@@ -691,6 +692,7 @@ they are.
 | `js/scripts/generate-source-text-byte-fixtures.mjs` | `js/scripts/generate-source-text-byte-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-text-byte-rules.mjs` | `js/scripts/generate-source-text-byte-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-code-unit-template.mjs` | `js/scripts/generate-string-code-unit-template.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
@@ -803,6 +805,7 @@ they are.
 | `src/data/nullable-type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/optional-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/owned-array-append.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/parameter-default-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/partial-callable-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/program-number-projection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/program-numeric-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -836,6 +839,7 @@ they are.
 | `src/data/semantic-lexicon.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-code-unit-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/surface-raw-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/surface-reference-analysis.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
