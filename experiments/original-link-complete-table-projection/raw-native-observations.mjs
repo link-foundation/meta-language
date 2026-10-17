@@ -11,6 +11,8 @@ import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
+import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
+import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
@@ -388,16 +390,27 @@ print!("{output}");}
 
 // Only immutable texts, their interface, and declaration identities escape this
 // scope. The checked surface/IR and duplicate artifact definitions are temporary.
-function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}) {
-  const artifact = readProjectData(new URL('./data/raw-native-definitions.lino', import.meta.url)), source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const program = checkProgram(parseJavaScript(source, {referenceSemantics: false})), rust = emitRust(program);
+function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}, profile) {
+  const prepared = prepareCurrentOriginalLinkRawEmission({readProjectData, parseJavaScript, checkProgram, emitRust});
+  const {historicalArtifact: artifact, program, rust} = prepared;
   assert.equal(artifact.version, 1); assert.equal(artifact.model, frozenNative.model); assert.equal(rust.definitions.length, frozenNative.definitionCount);
-  assert.equal(artifact.sourceSha256, sha256(source)); assert.deepEqual(artifact.declarationNames, program.items.map(row => row.fullName)); assert.deepEqual(artifact.declarations, rust.definitions); assert.equal(artifact.completeRust, rust.text);
-  assert.equal(textBytes(rust.text).length, frozenNative.sourceBytes); assert.equal(sha256(rust.text), frozenNative.sourceSha256);
-  const header = nativeInterface(rust.text, tokenize), emitted = emitJavaScript(program);
+  assert.equal(textBytes(artifact.completeRust).length, frozenNative.sourceBytes); assert.equal(sha256(artifact.completeRust), frozenNative.sourceSha256);
+  const {source, ...emissionProfile} = readOriginalLinkRawEmissionProfile(profile, prepared);
+  const header = nativeInterface(source, tokenize), emitted = emitJavaScript(program);
   const target = emitted.mappings.find(row => row.kind === 'function' && row.source === 'checkOriginalLinkRawShape')?.target;
-  return freeze({model: artifact.model, source: rust.text, javascript: emitted.text, target, header,
-    declarationNames: artifact.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
+  return freeze({model: artifact.model, source, javascript: emitted.text, target, header, emissionProfile,
+    declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
+}
+
+function readOriginalLinkRawSelectedEmissionProfile(profile) {
+  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
+  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
+  const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
+  const selected = readOriginalLinkRawEmissionProfile(profile, {historicalArtifact, currentArtifact, source,
+    producerSources: readOriginalLinkRawEmissionProducerSources()});
+  const {source: selectedSource, ...descriptor} = selected;
+  assert.equal(sha256(selectedSource), descriptor.sourceSha256);
+  return descriptor;
 }
 
 /** Complete source replay before allocating any observation-matrix state. */
@@ -493,12 +506,13 @@ function buildOriginalLinkRawPlan(prepared, originalReceipt, modelSources, trans
   const sizes = {sourceBytes: textBytes(prepared.source).length, consumerBytes: packet.consumerBytes, consumerSourceBytes: packet.consumerSourceBytes, consumerDataBytes: packet.consumerDataBytes, protocolBytes: Buffer.byteLength(stream), originalInputCells: observations.reduce((sum, row) => sum + row.inputBits[2].reduce((sum, cells) => sum + cells.length, 0), 0), uniqueWords: carrier.words.length, uniqueBlocks: carrier.blocks.length, uniqueBlockCells: carrier.blocks.reduce((sum, block) => sum + block.length, 0), vectors: carrier.vectors.length};
   process.stdout.write('Raw native oracle planned sizes: ' + JSON.stringify(sizes) + '\n');
   assert.ok(sizes.consumerBytes <= maximumConsumerBytes, 'complete consumer exceeds unchanged budget'); assert.ok(sizes.protocolBytes <= maximumProtocolBytes, 'complete result protocol exceeds unchanged budget');
-  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/data/raw-native-definitions.lino', source: prepared.source, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(prepared.source), replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: prepared.declarationNames, definitionCount: prepared.definitionCount, preludeCount: prepared.preludeCount, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), additionalSources: packet.additionalSources, javaScriptSha256: sha256(prepared.javascript), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
-  const plan = freeze({model: prepared.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, transportSources, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
+  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/' + prepared.emissionProfile.sourceArtifact, source: prepared.source, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(prepared.source), emissionProfile: prepared.emissionProfile, replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: prepared.declarationNames, definitionCount: prepared.definitionCount, preludeCount: prepared.preludeCount, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), additionalSources: packet.additionalSources, javaScriptSha256: sha256(prepared.javascript), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
+  const plan = freeze({model: prepared.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, transportSources, emissionProfile: prepared.emissionProfile, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
 }
 
-export async function planOriginalLinkRawNative(environment = process.env) {
+export async function planOriginalLinkRawNative(environment = process.env, {emissionProfile = 'current'} = {}) {
   requireOriginalLinkRawPlanning(environment);
+  assert.ok(emissionProfile === 'current' || emissionProfile === 'historical', 'unknown raw emission profile');
   const modelSources = verifyOriginalLinkRawNativeModel();
   const transportSources = freeze([readCanonicalArchiveTransportSource()]);
   // Nothing above this point loads grammars, creates fixtures or reconstructs a CST.
@@ -506,7 +520,7 @@ export async function planOriginalLinkRawNative(environment = process.env) {
     import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
   ]);
   return runOriginalLinkRawPlanningPhases({
-    prepareSource: () => prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}),
+    prepareSource: () => prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkProgram, emitRust, emitJavaScript, tokenize}, emissionProfile),
     replaySource: source => archiveCompleteRustSource(source, LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary),
     buildMatrix: (prepared, receipt) => buildOriginalLinkRawPlan(prepared, receipt, modelSources, transportSources, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection}),
   });
@@ -522,16 +536,18 @@ function parseObservations(output, expected, carrier) {
     return {id: expected[index].id, kind: expected[index].kind, inputSha256: sha256(JSON.stringify(expected[index].inputBits)), rootBits: expected[index].inputBits.slice(0, 2), resultBits: bits, premiseIndices: expected[index].premiseIndices};
   });
 }
-const runChecked = createSourceNativeObservationRunner({compilerProfile:'checkedOptimized',nativeMode: originalLinkRawNativeMode, checkedPlan: plan => checkedPlans.has(plan), textBytes, parseObservations: (output, expected) => { const carrier = expectedCarriers.get(expected); assert.ok(carrier); return parseObservations(output, expected, carrier); }, entryReceipt: entry => ({parameterOrder: entry.parameterOrder, parameterModes: entry.parameterModes, resultMode: entry.resultMode, interfaceSha256: entry.interfaceSha256, declarationNames: entry.declarationNames, definitionCount: entry.definitionCount, preludeCount: entry.preludeCount, fixtureInventory: entry.fixtureInventory, inventoryCounts: entry.inventoryCounts, independentJavaScriptControls: entry.independentJavaScriptControls, carrierSha256: entry.carrierSha256, sizes: entry.sizes, genuineFormatPremiseCount: entry.genuineFormatPremiseCount, serializationRefusals: entry.serializationRefusals, premises: entry.premises, hostChecks: entry.hostChecks, observationScope: entry.observationScope}), temporaryPrefix: 'original-raw-native-', failureLabel: 'Complete original raw component observations failed'});
+const runChecked = createSourceNativeObservationRunner({compilerProfile:'checkedOptimized',nativeMode: originalLinkRawNativeMode, checkedPlan: plan => checkedPlans.has(plan), textBytes, parseObservations: (output, expected) => { const carrier = expectedCarriers.get(expected); assert.ok(carrier); return parseObservations(output, expected, carrier); }, entryReceipt: entry => ({parameterOrder: entry.parameterOrder, parameterModes: entry.parameterModes, resultMode: entry.resultMode, interfaceSha256: entry.interfaceSha256, declarationNames: entry.declarationNames, definitionCount: entry.definitionCount, preludeCount: entry.preludeCount, emissionProfile: entry.emissionProfile, fixtureInventory: entry.fixtureInventory, inventoryCounts: entry.inventoryCounts, independentJavaScriptControls: entry.independentJavaScriptControls, carrierSha256: entry.carrierSha256, sizes: entry.sizes, genuineFormatPremiseCount: entry.genuineFormatPremiseCount, serializationRefusals: entry.serializationRefusals, premises: entry.premises, hostChecks: entry.hostChecks, observationScope: entry.observationScope}), temporaryPrefix: 'original-raw-native-', failureLabel: 'Complete original raw component observations failed'});
 const expectedCarriers = new WeakMap();
 export function runOriginalLinkRawNative(plan, options) {
   requireOriginalLinkRawPlanning(options?.environment ?? process.env);
   assert.ok(checkedPlans.has(plan), 'only the exact checked raw plan may execute');
+  assert.deepEqual(plan.emissionProfile, readOriginalLinkRawSelectedEmissionProfile(plan.emissionProfile.profile), 'the selected emission profile changed before execution');
   assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed before execution');
   for (const entry of plan.entries) expectedCarriers.set(entry.observations, entry.carrier);
   // An immutable environment keeps both CI authorizations true for every runner phase.
   const environment = Object.freeze({...options?.environment ?? process.env});
   const receipt = runChecked(plan, {...options, environment});
+  assert.deepEqual(plan.emissionProfile, readOriginalLinkRawSelectedEmissionProfile(plan.emissionProfile.profile), 'the selected emission profile changed during execution');
   assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed during execution');
-  return {...receipt, transportSources: plan.transportSources};
+  return {...receipt, transportSources: plan.transportSources, emissionProfile: plan.emissionProfile};
 }

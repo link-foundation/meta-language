@@ -1156,7 +1156,7 @@ jobs:
       - name: Check complete original link raw projection native generation
         if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
         working-directory: js
-        run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw.mjs --native --check
+        run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw-current-emission.mjs --native --check
 
       - name: Run complete original link raw projection checks
         if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}

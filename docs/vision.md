@@ -774,6 +774,15 @@ under the unchanged consumer, stdout and process limits. Additional lexical,
 inventory, field-role and resource controls remain in the independently required
 fifty-five-group JavaScript suite; this oracle does not native-observe them.
 Actual native results, runtime fit and saved observations remain CI evidence.
+Historical raw emission artifacts and their forty-seven source bindings remain
+immutable. A separate current profile checks fresh whole-program emission,
+all 106 declaration identities and the public interface, with an exact five-line
+inverse for the concrete facet capture and 103 unchanged definitions. Its
+applicability retains the deferred-equality inference contract and original
+coalescing premise. Unknown profiles and additional source changes refuse.
+The oracle records the selected profile and both source hashes while retaining
+every fixture, format and expected bit. The historical profile stays selectable;
+one selected run does not establish native execution of both profiles.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.

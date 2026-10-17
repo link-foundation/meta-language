@@ -11,6 +11,8 @@ import {parseLinoStatements} from '../../js/src/lino-serialization.js';
 import {formatLinoReadings} from '../../js/src/lino-semantics.js';
 import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_EMISSION_BASELINE} from './raw-emission-profiles.mjs';
+import './raw-emission-profiles.test.mjs';
 
 const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt,
   readStructuredDataLino(readFileSync(new URL('./data/raw-schema-extension-closure.lino', import.meta.url), 'utf8')), bytes, historicalSources,
@@ -240,6 +242,11 @@ if (process.env.CI === 'true') {
     assert.ok(entry.premises.some(row => row.kind === 'accepted')); assert.ok(entry.premises.some(row => row.kind === 'refused')); assert.ok(entry.premises.some(row => row.kind === 'unselected'));
     for (const row of entry.observations) assert.equal(row.inputBits[2].length, 16);
     assert.equal(entry.hostChecks.length, 32);
+    assert.equal(plan.emissionProfile.profile, 'current');
+    assert.deepEqual(entry.emissionProfile, plan.emissionProfile);
+    assert.equal(entry.sourceSha256, ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
+    assert.equal(entry.emissionProfile.historicalSourceSha256, ORIGINAL_LINK_RAW_EMISSION_BASELINE.historicalSha256);
+    assert.equal(entry.emissionProfile.currentSourceSha256, ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
     for (const check of entry.hostChecks) assert.match(check.scope, /JavaScript host check only/u);
     assert.ok(entry.sizes.consumerBytes <= 4 * 1024 * 1024); assert.ok(entry.sizes.protocolBytes <= 1024 * 1024);
     assert.equal(entry.sizes.consumerBytes, entry.sizes.consumerSourceBytes + entry.sizes.consumerDataBytes);
@@ -273,6 +280,8 @@ if (process.env.CI === 'true') {
     assert.deepEqual(receipt.observations[0].inventoryCounts, entry.inventoryCounts);
     assert.deepEqual(receipt.observations[0].fixtureInventory, entry.fixtureInventory);
     assert.deepEqual(receipt.observations[0].independentJavaScriptControls, entry.independentJavaScriptControls);
+    assert.deepEqual(receipt.emissionProfile, plan.emissionProfile);
+    assert.deepEqual(receipt.observations[0].emissionProfile, entry.emissionProfile);
   });
   test('omitted, reordered, extra, noncanonical or corrupt output blocks refuse', () => {
     const lines = stream.trimEnd().split('\n');
@@ -294,8 +303,13 @@ if (process.env.CI === 'true') {
   test('a detached plan cannot launch even injected processes', () => {
     const fake = fakeProcess(); assert.throws(() => runOriginalLinkRawNative({...plan}, {environment, spawn: fake.spawn}), /exact checked raw plan/u); assert.equal(fake.calls.length, 0);
   });
-  if (originalLinkRawNativeMode(process.env)) test('CI executes the unchanged complete raw artifact and persists only real observations', async () => {
+  // Historical title: 'CI executes the unchanged complete raw artifact and persists only real observations'.
+  // That byte expectation belongs to the historical producer profile; the same
+  // complete fixture/format assertions now execute the authenticated current profile.
+  if (originalLinkRawNativeMode(process.env)) test('CI executes the selected complete raw emission profile and persists only real observations', async () => {
     const receipt = runOriginalLinkRawNative(plan); assert.equal(receipt.processMode, 'native subprocesses');
+    assert.equal(receipt.emissionProfile.profile, 'current');
+    assert.equal(receipt.emissionProfile.sourceSha256, ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
     const [{writeProjectData}, {fileURLToPath}] = await Promise.all([import('../../js/scripts/project-data.mjs'), import('node:url')]);
     const file = fileURLToPath(new URL('../../issue-195-artifacts/original-link-raw-native-observations.lino', import.meta.url)); mkdirSync(dirname(file), {recursive: true}); writeProjectData(file, receipt);
   });

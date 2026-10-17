@@ -1085,6 +1085,39 @@ const RAW_SOURCE_PACKAGE_STEPS = [
     'f72da9d6daccf08f26d1349d3fdd6e9133b024dee6a6ff7dd2ae4e1b9ef69cef', 'source-model-raw'],
 ];
 
+// The original generator and its artifact stay immutable. Only this exact
+// current-compiler freshness provider replaces the obsolete byte comparison.
+const RAW_EMISSION_FRESHNESS_REVISION = Object.freeze({
+  name: RAW_SOURCE_PACKAGE_STEPS[0][0],
+  previous: RAW_SOURCE_PACKAGE_STEPS[0][1],
+  current: RAW_SOURCE_PACKAGE_STEPS[0][1].replace('generate-raw.mjs', 'generate-raw-current-emission.mjs'),
+});
+
+function readRawEmissionFreshnessPredecessor(step) {
+  const revision = RAW_EMISSION_FRESHNESS_REVISION;
+  assert.equal(step.name, revision.name);
+  assert.equal(step.run.trim(), revision.current, 'the exact current raw freshness driver is required');
+  assert.equal(step.text.split(revision.current).length, 2, 'only one complete command may be revised');
+  assert.equal(step.text.split(revision.previous).length, 1, 'the obsolete generator cannot remain as an extra command');
+  const previous = {...step, run: step.run.replace(revision.current, revision.previous),
+    text: step.text.replace(revision.current, revision.previous)};
+  assert.equal(previous.text.replace(revision.previous, revision.current), step.text, 'the whole workflow step has an exact one-command inverse');
+  return previous;
+}
+
+test('raw emission freshness retains the exact historical gate around one authenticated current provider', () => {
+  const step = jobs('js.yml').get('package-checks').steps.find(row => row.name === RAW_EMISSION_FRESHNESS_REVISION.name);
+  const previous = readRawEmissionFreshnessPredecessor(step);
+  assert.equal(previous.run.trim(), RAW_SOURCE_PACKAGE_STEPS[0][1]);
+  assert.equal(packageStepSignature(previous, true), RAW_SOURCE_PACKAGE_STEPS[0][2]);
+  for (const replacement of [RAW_EMISSION_FRESHNESS_REVISION.previous,
+    RAW_EMISSION_FRESHNESS_REVISION.current.replace('--check', '--record-attempt'),
+    RAW_EMISSION_FRESHNESS_REVISION.current + '\nnode bypass.mjs']) {
+    assert.throws(() => readRawEmissionFreshnessPredecessor({...step, run: replacement,
+      text: step.text.replace(RAW_EMISSION_FRESHNESS_REVISION.current, replacement)}), assert.AssertionError);
+  }
+});
+
 const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check shared self translation representation artifacts',
     'node scripts/generate-self-translation-representation.mjs --native --check',
@@ -2229,8 +2262,9 @@ function checkPackageStepConservation(parsed) {
       const owner = id === 'test' ? 'package' : group ?? 'all';
       assert.equal(owner, baseline.owner === 'all' ? (id === 'test' ? 'package' : 'all') : baseline.owner,
         `package step owner changed: ${step.name}`);
-      if (baseline.addition) assert.equal(step.run.trim(), baseline.command, `additive gate command changed: ${step.name}`);
-      assert.equal(packageStepSignature(step, baseline.addition), baseline.hash, `package step semantics changed: ${step.name}`);
+      const preservedStep = step.name === RAW_EMISSION_FRESHNESS_REVISION.name ? readRawEmissionFreshnessPredecessor(step) : step;
+      if (baseline.addition) assert.equal(preservedStep.run.trim(), baseline.command, `additive gate command changed: ${step.name}`);
+      assert.equal(packageStepSignature(preservedStep, baseline.addition), baseline.hash, `package step semantics changed: ${step.name}`);
       if (id === 'package-checks') {
         assert.equal((step.text.match(/matrix\.group/gu) ?? []).length, baseline.owner === 'all' ? 0 : 1,
           `package step has an ambiguous group selector: ${step.name}`);
