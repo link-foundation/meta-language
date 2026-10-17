@@ -54506,6 +54506,22 @@ const B63_CURRENT_INVENTORY_WITNESSES=[
     "inventoryName": "search grammar selection cover start",
     "sourceText": "pub fn ml_read_grammar_selection_mapped_cover_loop12(\n    intervals: &[Vec<f64>],\n    mut start: f64,\n    mut low: f64,\n    mut high: f64,\n) -> self::MlReadGrammarSelectionMappedCoverLoop12Result {\n    loop {\n        if low < high {\n            {\n                let ml_mapping_sum = low + high;\n                let middle = (ml_mapping_sum / 2f64).floor();\n                {\n                    let row = (self::ml_array::optional_at(\n                        intervals,\n                        self::ml_array::number_index(middle),\n                    ))\n                    .unwrap_or_else(Vec::<f64>::new);\n                    if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))\n                        .unwrap_or_else(|| -1f64))\n                        <= start\n                    {\n                        {\n                            let low_2 = middle + 1f64;\n                            {\n                                low = low_2;\n                                continue;\n                            }\n                        }\n                    }\n                    {\n                        {\n                            let high_2 = middle;\n                            {\n                                high = high_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        return {\n            self::MlReadGrammarSelectionMappedCoverLoop12Result::MlReadGrammarSelectionMappedCoverLoop12Done(low, high)\n        };\n    }\n}",
     "inventory": "B63 actual source names for rust/src/translation/grammar_selection_mapping_rules/part_2.rs"
+  },
+  {
+    "id": "repository.read-third-schema-source-control",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "read third schema source control",
+    "sourceText": "function fixture() {\n  const read = file => readFileSync(new URL(file, import.meta.url));\n  const receiptBytes = read('./data/raw-schema-source-closure.lino');\n  const firstBytes = read('./data/raw-schema-extension-closure.lino');\n  const secondBytes = read('./data/raw-schema-second-extension-closure.lino');\n  const thirdBytes = read('./data/raw-schema-third-extension-closure.lino');\n  const fourthFile = new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url);\n  let bytes = read('../../js/src/data/typed-program-links-schema.lino');\n  if (existsSync(fourthFile)) {\n    const fourth = readStructuredDataLino(readFileSync(fourthFile, 'utf8'));\n    const sources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, read('../../' + file)]));\n    verifyOriginalLinkRawSchemaFourthExtensionClosure(readOriginalLinkRawSchemaFourthContext(), bytes, fourth, sources);\n    bytes = Buffer.from(fourth.previous.source, 'utf8');\n  }\n  return {receiptBytes, firstBytes, secondBytes, thirdBytes,\n    receipt: readStructuredDataLino(receiptBytes.toString('utf8')),\n    first: readStructuredDataLino(firstBytes.toString('utf8')),\n    second: readStructuredDataLino(secondBytes.toString('utf8')),\n    third: readStructuredDataLino(thirdBytes.toString('utf8')),\n    bytes,\n    sources: readOriginalLinkRawHistoricalSources(read('./raw-native-observations.mjs').toString('utf8')),\n    authoredSources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, read('../../' + file)]))};\n}",
+    "inventory": "B63 actual source names for experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs"
+  },
+  {
+    "id": "repository.check-third-schema-immutable-check-command",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs",
+    "name": "the actual immutable third-stage check leaves every schema receipt and producer byte unchanged",
+    "inventoryName": "check third schema immutable check command",
+    "sourceText": "test('the actual immutable third-stage check leaves every schema receipt and producer byte unchanged', () => {\n  const files = ['../../js/src/data/typed-program-links-schema.lino', './data/raw-schema-source-closure.lino',\n    './data/raw-schema-extension-closure.lino', './data/raw-schema-second-extension-closure.lino',\n    './data/raw-schema-third-extension-closure.lino', './data/raw-schema-second-extension-provenance.lino',\n    './data/raw-schema-second-extension-provenance-0112b8e3.lino', './raw-native-observations.mjs'];\n  const before = files.map(file => readFileSync(new URL(file, import.meta.url)));\n  let result;\n  if (existsSync(new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url))) {\n    assert.throws(() => extendTypedProgramSchemaThirdStage({check: true}), assert.AssertionError,\n      'the frozen strict third writer refuses the live fourth profile');\n    result = checkTypedProgramSchemaThirdArchive();\n  } else result = extendTypedProgramSchemaThirdStage({check: true});\n  assert.equal(result.check, true); assert.equal(result.sourceClosureOnly, true);\n  assert.equal(result.appendedProjectionKeys, 3); assert.equal(result.appendedAlternativeKeys, 1);\n  assert.equal(result.preservedProducerBindings, 47);\n  files.forEach((file, index) => assert.deepEqual(readFileSync(new URL(file, import.meta.url)), before[index]));\n})",
+    "inventory": "B63 actual source names for experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.test.mjs"
   }
 ];
 const reconcileCurrentWitnessInventory=entry=>{const rows=B63_CURRENT_INVENTORY_WITNESSES.filter(row=>entry.inventory===row.inventory&&entry.files.length===1&&entry.files[0]===row.source);if(rows.length===0)return entry;return{...entry,extract:(text,file)=>[...new Set([...entry.extract(text,file),...rows.filter(row=>{if(!text.includes(row.sourceText)||!(!row.sourceContext||text.includes(row.sourceContext))||!(row.ownerContexts??[]).every(context=>text.includes(context)))return false;if(!row.styleSource)return true;const style=inventoryText(repositoryRoot,row.styleSource),end=style.indexOf("\n"),first=end<0?"":style.slice(0,end+1);return Buffer.byteLength(first)===row.styleRowBytes&&createB57MovedSourceHash("sha256").update(first).digest("hex")===row.styleRowSha256&&first.startsWith("(decorator "+row.name+" ");}).map(row=>row.inventoryName)])],recordOf:name=>rows.find(row=>row.inventoryName===name)?.id??entry.recordOf(name)};};
@@ -56753,7 +56769,1256 @@ const B65_CHARACTER_TAG_SOURCE_BINDINGS=[
 ];
 const B65_CHARACTER_TAG_NAME_INVENTORIES=[...new Set(B65_CHARACTER_TAG_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B65 original character and tag context source names for "+source,files:[source],extract:text=>B65_CHARACTER_TAG_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B65_CHARACTER_TAG_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // END B65 original character and tag context source names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES, ...B63_SOURCE_BINDINGS_INVENTORIES, ...B63_CURRENT_WITNESS_BINDINGS_INVENTORIES, ...B64_RAW_EMISSION_NAME_INVENTORIES, ...B65_CHARACTER_TAG_NAME_INVENTORIES].map(reconcileCurrentWitnessInventory).map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B66 diagnostic source, schema and compiler cache names.
+const B66_SOURCE_BINDINGS=[
+  {
+    "id": "translation.accept-rust-diagnostic-attribute-offset",
+    "source": "js/src/translation/rust-diagnostic-attribute-rules.js",
+    "name": "acceptRustDiagnosticAttributeOffset",
+    "inventoryName": "accept rust diagnostic attribute offset",
+    "sourceText": "export function acceptRustDiagnosticAttributeOffset(value) {\n  return Number.isInteger(value) && value >= 0 && value <= 9007199254740991;\n}"
+  },
+  {
+    "id": "translation.accept-rust-diagnostic-attribute-offset",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "accept_rust_diagnostic_attribute_offset",
+    "inventoryName": "accept rust diagnostic attribute offset",
+    "sourceText": "pub fn accept_rust_diagnostic_attribute_offset(value: f64) -> bool {\n    (self::ml_math::is_integer(value) && (value >= 0f64)) && (value <= 9_007_199_254_740_991f64)\n}"
+  },
+  {
+    "id": "translation.plan-rust-diagnostic-attribute",
+    "source": "js/src/translation/rust-diagnostic-attribute-rules.js",
+    "name": "planRustDiagnosticAttribute",
+    "inventoryName": "plan rust diagnostic attribute",
+    "sourceText": "export function planRustDiagnosticAttribute(kinds, values, start) {\n  if (kinds.length !== values.length || !acceptRustDiagnosticAttributeOffset(start) || kinds.length - start < 13) return [-1];\n  if ((kinds[start] ?? \"\") !== \"punct\" || (values[start] ?? \"\") !== \"#\") return [-1];\n  if ((kinds[start + 1] ?? \"\") !== \"punct\" || (values[start + 1] ?? \"\") !== \"[\") return [-1];\n  if ((kinds[start + 2] ?? \"\") !== \"identifier\" || (values[start + 2] ?? \"\") !== \"expect\") return [-1];\n  if ((kinds[start + 3] ?? \"\") !== \"punct\" || (values[start + 3] ?? \"\") !== \"(\") return [-1];\n  if ((kinds[start + 4] ?? \"\") !== \"identifier\" || (values[start + 4] ?? \"\") !== \"clippy\") return [-1];\n  if ((kinds[start + 5] ?? \"\") !== \"punct\" || (values[start + 5] ?? \"\") !== \"::\") return [-1];\n  if ((kinds[start + 6] ?? \"\") !== \"identifier\" || (values[start + 6] ?? \"\") !== \"fn_params_excessive_bools\") return [-1];\n  if ((kinds[start + 7] ?? \"\") !== \"punct\" || (values[start + 7] ?? \"\") !== \",\") return [-1];\n  if ((kinds[start + 8] ?? \"\") !== \"identifier\" || (values[start + 8] ?? \"\") !== \"reason\") return [-1];\n  if ((kinds[start + 9] ?? \"\") !== \"punct\" || (values[start + 9] ?? \"\") !== \"=\") return [-1];\n  if ((kinds[start + 10] ?? \"\") !== \"string\" || typeof values[start + 10] !== \"string\") return [-1];\n  let close = start + 11;\n  if ((kinds[close] ?? \"\") === \"punct\" && (values[close] ?? \"\") === \",\") close += 1;\n  if (kinds.length - close < 2) return [-1];\n  if ((kinds[close] ?? \"\") !== \"punct\" || (values[close] ?? \"\") !== \")\") return [-1];\n  if ((kinds[close + 1] ?? \"\") !== \"punct\" || (values[close + 1] ?? \"\") !== \"]\") return [-1];\n  return [close + 2, start + 2, start + 4, start + 6, start + 8, start + 10];\n}"
+  },
+  {
+    "id": "translation.plan-rust-diagnostic-attribute",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "plan_rust_diagnostic_attribute",
+    "inventoryName": "plan rust diagnostic attribute",
+    "sourceText": "pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start: f64) -> Vec<f64> {\n    if (((kinds.len() as f64) != (values.len() as f64))\n        || !(self::accept_rust_diagnostic_attribute_offset(start)))\n        || (((kinds.len() as f64) - start) < 13f64)\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start)))\n            .unwrap_or_default())\n            != \"#\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 1f64)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 1f64)))\n            .unwrap_or_default())\n            != \"[\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 2f64)))\n        .unwrap_or_default())\n        != \"identifier\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 2f64)))\n            .unwrap_or_default())\n            != \"expect\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 3f64)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 3f64)))\n            .unwrap_or_default())\n            != \"(\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 4f64)))\n        .unwrap_or_default())\n        != \"identifier\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 4f64)))\n            .unwrap_or_default())\n            != \"clippy\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 5f64)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 5f64)))\n            .unwrap_or_default())\n            != \"::\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 6f64)))\n        .unwrap_or_default())\n        != \"identifier\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 6f64)))\n            .unwrap_or_default())\n            != \"fn_params_excessive_bools\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 7f64)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 7f64)))\n            .unwrap_or_default())\n            != \",\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 8f64)))\n        .unwrap_or_default())\n        != \"identifier\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 8f64)))\n            .unwrap_or_default())\n            != \"reason\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 9f64)))\n        .unwrap_or_default())\n        != \"punct\")\n        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 9f64)))\n            .unwrap_or_default())\n            != \"=\")\n    {\n        vec![-1f64]\n    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 10f64)))\n        .unwrap_or_default())\n        != \"string\")\n        || ((match self::ml_array::optional_at(values, self::ml_array::number_index(start + 10f64))\n        {\n            Some(ml_present) => {\n                let _ = ml_present;\n                String::from(\"string\")\n            }\n            None => String::from(\"undefined\"),\n        }) != \"string\")\n    {\n        vec![-1f64]\n    } else {\n        {\n            let close = start + 11f64;\n            {\n                let close_3 =\n                    if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(close)))\n                        .unwrap_or_default())\n                        == \"punct\")\n                        && (((self::ml_array::optional_at(\n                            values,\n                            self::ml_array::number_index(close),\n                        ))\n                        .unwrap_or_default())\n                            == \",\")\n                    {\n                        { close + 1f64 }\n                    } else {\n                        close\n                    };\n                if ((kinds.len() as f64) - close_3) < 2f64 {\n                    vec![-1f64]\n                } else if (((self::ml_array::optional_at(\n                    kinds,\n                    self::ml_array::number_index(close_3),\n                ))\n                .unwrap_or_default())\n                    != \"punct\")\n                    || (((self::ml_array::optional_at(\n                        values,\n                        self::ml_array::number_index(close_3),\n                    ))\n                    .unwrap_or_default())\n                        != \")\")\n                {\n                    vec![-1f64]\n                } else if (((self::ml_array::optional_at(\n                    kinds,\n                    self::ml_array::number_index(close_3 + 1f64),\n                ))\n                .unwrap_or_default())\n                    != \"punct\")\n                    || (((self::ml_array::optional_at(\n                        values,\n                        self::ml_array::number_index(close_3 + 1f64),\n                    ))\n                    .unwrap_or_default())\n                        != \"]\")\n                {\n                    vec![-1f64]\n                } else {\n                    vec![\n                        (close_3 + 2f64),\n                        (start + 2f64),\n                        (start + 4f64),\n                        (start + 6f64),\n                        (start + 8f64),\n                        (start + 10f64),\n                    ]\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.read-rust-required-result-attribute-end",
+    "source": "js/src/translation/rust-diagnostic-attribute-rules.js",
+    "name": "readRustMustUseAttributeEnd",
+    "inventoryName": "read rust required result attribute end",
+    "sourceText": "export function readRustMustUseAttributeEnd(kinds, values, start) {\n  if (kinds.length !== values.length || !acceptRustDiagnosticAttributeOffset(start) || kinds.length - start < 4) return -1;\n  if ((kinds[start] ?? \"\") !== \"punct\" || (values[start] ?? \"\") !== \"#\") return -1;\n  if ((kinds[start + 1] ?? \"\") !== \"punct\" || (values[start + 1] ?? \"\") !== \"[\") return -1;\n  if ((kinds[start + 2] ?? \"\") !== \"identifier\" || (values[start + 2] ?? \"\") !== \"must_use\") return -1;\n  if ((kinds[start + 3] ?? \"\") !== \"punct\" || (values[start + 3] ?? \"\") !== \"]\") return -1;\n  return start + 4;\n}"
+  },
+  {
+    "id": "translation.read-rust-required-result-attribute-end",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "read_rust_must_use_attribute_end",
+    "inventoryName": "read rust required result attribute end",
+    "sourceText": "pub fn read_rust_must_use_attribute_end(kinds: &[String], values: &[String], start: f64) -> f64 {\n    if (((((((kinds.len() as f64) != (values.len() as f64))\n        || !(self::accept_rust_diagnostic_attribute_offset(start)))\n        || (((kinds.len() as f64) - start) < 4f64))\n        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))\n            .unwrap_or_default())\n            != \"punct\")\n            || (((self::ml_array::optional_at(values, self::ml_array::number_index(start)))\n                .unwrap_or_default())\n                != \"#\")))\n        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 1f64)))\n            .unwrap_or_default())\n            != \"punct\")\n            || (((self::ml_array::optional_at(\n                values,\n                self::ml_array::number_index(start + 1f64),\n            ))\n            .unwrap_or_default())\n                != \"[\")))\n        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 2f64)))\n            .unwrap_or_default())\n            != \"identifier\")\n            || (((self::ml_array::optional_at(\n                values,\n                self::ml_array::number_index(start + 2f64),\n            ))\n            .unwrap_or_default())\n                != \"must_use\")))\n        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 3f64)))\n            .unwrap_or_default())\n            != \"punct\")\n            || (((self::ml_array::optional_at(\n                values,\n                self::ml_array::number_index(start + 3f64),\n            ))\n            .unwrap_or_default())\n                != \"]\"))\n    {\n        -1f64\n    } else {\n        start + 4f64\n    }\n}"
+  },
+  {
+    "id": "translation.plan-rust-diagnostic-attribute-prefix",
+    "source": "js/src/translation/rust-diagnostic-attribute-rules.js",
+    "name": "planRustDiagnosticAttributePrefix",
+    "inventoryName": "plan rust diagnostic attribute prefix",
+    "sourceText": "export function planRustDiagnosticAttributePrefix(kinds, values) {\n  if (kinds.length !== values.length) return [-1];\n  let index = 0;\n  let attributes = 0;\n  let diagnostics = 0;\n  while (index < kinds.length) {\n    if (index === kinds.length - 1 && (kinds[index] ?? \"\") === \"identifier\" && (values[index] ?? \"\") === \"pub\") {\n      return diagnostics > 0 ? [kinds.length, attributes, diagnostics, index] : [-1];\n    }\n    const legacyEnd = readRustMustUseAttributeEnd(kinds, values, index);\n    if (legacyEnd >= 0) {\n      index = legacyEnd;\n    } else {\n      const plan = planRustDiagnosticAttribute(kinds, values, index);\n      const next = plan[0] ?? -1;\n      if (next <= index) return [-1];\n      index = next;\n      diagnostics += 1;\n    }\n    attributes += 1;\n  }\n  return diagnostics > 0 ? [index, attributes, diagnostics, -1] : [-1];\n}"
+  },
+  {
+    "id": "translation.plan-rust-diagnostic-attribute-prefix",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "plan_rust_diagnostic_attribute_prefix",
+    "inventoryName": "plan rust diagnostic attribute prefix",
+    "sourceText": "pub fn plan_rust_diagnostic_attribute_prefix(kinds: &[String], values: &[String]) -> Vec<f64> {\n    {\n        let ml_library_inequality_1 = (kinds.len() as f64) != (values.len() as f64);\n        if ml_library_inequality_1 {\n            vec![-1f64]\n        } else {\n            {\n                let index = 0f64;\n                {\n                    let attributes = 0f64;\n                    {\n                        let diagnostics = 0f64;\n                        {\n                            let ml_s1 = self::ml_plan_rust_diagnostic_attribute_prefix_loop1(\n                                kinds,\n                                values,\n                                index,\n                                attributes,\n                                diagnostics,\n                            );\n                            match ml_s1 {\n                            self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Done(index_2, attributes_2, diagnostics_2) => {\n                                if diagnostics_2 > 0f64 {\n                                    vec![index_2, attributes_2, diagnostics_2, -1f64]\n                                } else {\n                                    vec![-1f64]\n                                }\n                            }\n                            self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Return(ml_result1) => {\n                                ml_result1\n                            }\n                        }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.continue-rust-diagnostic-attribute-prefix-scan",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_plan_rust_diagnostic_attribute_prefix_loop1",
+    "inventoryName": "continue rust diagnostic attribute prefix scan",
+    "sourceText": "pub fn ml_plan_rust_diagnostic_attribute_prefix_loop1(\n    kinds: &[String],\n    values: &[String],\n    mut index: f64,\n    mut attributes: f64,\n    mut diagnostics: f64,\n) -> self::MlPlanRustDiagnosticAttributePrefixLoop1Result {\n    loop {\n        return if index < (kinds.len() as f64) {\n            if ((index == ((kinds.len() as f64) - 1f64))\n                && (((self::ml_array::optional_at(kinds, self::ml_array::number_index(index)))\n                    .unwrap_or_default())\n                    == \"identifier\"))\n                && (((self::ml_array::optional_at(values, self::ml_array::number_index(index)))\n                    .unwrap_or_default())\n                    == \"pub\")\n            {\n                self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Return(if diagnostics > 0f64 {\n                    vec![(kinds.len() as f64), attributes, diagnostics, index]\n                } else {\n                    vec![-1f64]\n                })\n            } else {\n                {\n                    let legacy_end = self::read_rust_must_use_attribute_end(kinds, values, index);\n                    {\n                        let ml_s2 = if legacy_end >= 0f64 {\n                            {\n                                let index_2 = legacy_end;\n                                self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Next(index_2, diagnostics)\n                            }\n                        } else {\n                            {\n                                let plan =\n                                    self::plan_rust_diagnostic_attribute(kinds, values, index);\n                                {\n                                    let next = (self::ml_array::optional_at(\n                                        &plan,\n                                        self::ml_array::number_index(0f64),\n                                    ))\n                                    .unwrap_or(-1f64);\n                                    if next <= index {\n                                        self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Return(vec![-1f64])\n                                    } else {\n                                        {\n                                            let index_3 = next;\n                                            {\n                                                let diagnostics_2 = diagnostics + 1f64;\n                                                self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Next(index_3, diagnostics_2)\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        };\n                        match ml_s2 {\n                            self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Next(index_4, diagnostics_3) => {\n                                {\n                                    let attributes_2 = attributes + 1f64;\n                                    {\n                                        (index, attributes, diagnostics) = (index_4, attributes_2, diagnostics_3);\n                                        continue;\n                                    }\n                                }\n                            }\n                            self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Return(ml_result2) => {\n                                self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Return(ml_result2)\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Done(index, attributes, diagnostics)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.rust-diagnostic-attribute-prefix-scan-result",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "MlPlanRustDiagnosticAttributePrefixLoop1Result",
+    "inventoryName": "rust diagnostic attribute prefix scan result",
+    "sourceText": "pub enum MlPlanRustDiagnosticAttributePrefixLoop1Result {\n    MlPlanRustDiagnosticAttributePrefixLoop1Done(f64, f64, f64),\n    MlPlanRustDiagnosticAttributePrefixLoop1Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.rust-diagnostic-attribute-prefix-branch-result",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "MlPlanRustDiagnosticAttributePrefixJoin2",
+    "inventoryName": "rust diagnostic attribute prefix branch result",
+    "sourceText": "pub enum MlPlanRustDiagnosticAttributePrefixJoin2 {\n    MlPlanRustDiagnosticAttributePrefixJoin2Next(f64, f64),\n    MlPlanRustDiagnosticAttributePrefixJoin2Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.rust-diagnostic-attribute-token-policy",
+    "source": "js/scripts/rust-diagnostic-attribute-policy.mjs",
+    "name": "RUST_DIAGNOSTIC_ATTRIBUTE_POLICY",
+    "inventoryName": "rust diagnostic attribute token policy",
+    "sourceText": "export const RUST_DIAGNOSTIC_ATTRIBUTE_POLICY = {\n  schemaVersion: 1,\n  model: 'outer Rust diagnostic attribute token plan 1',\n  language: 'Rust',\n  facet: {model: 'Rust const diagnostic attributes 1', language: 'Rust', edition: '2024'},\n  constKeyword: {kind: 'identifier', value: 'const'},\n  emission: {canonicalPublicPrefix: 'pub const fn ', visibilityPrefix: 'pub '},\n  normalization: {\n    id: 'rust-diagnostic-attribute-normalization',\n    statement: 'Rust diagnostic attributes remain typed source facts; this JavaScript output preserves selected runtime predicate observations and does not reproduce Rust compilation diagnostics',\n  },\n  fields: {\n    facet: ['model', 'language', 'edition', 'span', 'raw', 'tokens', 'attachment'],\n    token: ['kind', 'value', 'raw', 'span'],\n    attachment: ['sourceName', 'modulePath', 'constKeywordSpan', 'functionKeywordSpan'],\n    span: ['start', 'end'],\n  },\n  prefix: [\n    {kind: 'punct', value: '#'}, {kind: 'punct', value: '['},\n    {kind: 'identifier', value: 'expect'}, {kind: 'punct', value: '('},\n    {kind: 'identifier', value: 'clippy'}, {kind: 'punct', value: '::'},\n    {kind: 'identifier', value: 'fn_params_excessive_bools'}, {kind: 'punct', value: ','},\n    {kind: 'identifier', value: 'reason'}, {kind: 'punct', value: '='},\n    {kind: 'string', value: null},\n  ],\n  optionalFinalComma: {kind: 'punct', value: ','},\n  suffix: [{kind: 'punct', value: ')'}, {kind: 'punct', value: ']'}],\n  legacyMustUse: [{kind: 'punct', value: '#'}, {kind: 'punct', value: '['}, {kind: 'identifier', value: 'must_use'}, {kind: 'punct', value: ']'}],\n  finalVisibility: {kind: 'identifier', value: 'pub'},\n  positions: {attributeName: 2, lintNamespace: 4, lintName: 6, reasonKey: 8, reasonLiteral: 10},\n  result: ['exclusive token end', 'attribute name token', 'lint namespace token', 'lint name token', 'reason key token', 'reason literal token'],\n  refusal: [-1],\n  prefixResult: ['exclusive token end', 'attribute count', 'diagnostic attribute count', 'final visibility token or minus one'],\n  prefixBoundary: 'The complete pre-const token inventory excludes EOF, starts at the first attribute, and contains ordered legacy must_use or exact expect occurrences followed by at most one final simple pub. At least one expect occurrence is required; must_use-only syntax remains on its unchanged old path.',\n  indexDomain: 'Nonnegative safe integral Number; negative zero denotes token zero.',\n  columns: 'Equal-length actual Rust tokenizer kind/value columns. Rust token values are primitive Strings. Selected holes and foreign reason payloads refuse. Unselected stream contents do not become an attribute proof.',\n  interpretation: 'One exact outer expect attribute, one exact Clippy lint, one mandatory single actual String reason token, and at most one final comma. Comment/trivia and decoded String contents are opaque to structural admission.',\n  excludedObservations: ['compiler success', 'compile-time diagnostics', 'lint fulfillment', 'compiler or Clippy identity', 'edition applicability', 'attribute attachment', 'source token authentication', 'source-free owner/span authentication'],\n  remainingAuthorities: ['unchanged must_use and old const-profile refusals', 'actual compiler/Clippy/configuration and explicit edition assertion selection', 'actual following const function and owned header', 'strict facet shape and raw token/UTF16 span provenance', 'whole source and original const proof validation'],\n};"
+  },
+  {
+    "id": "repository.read-rust-diagnostic-attribute-rule-source",
+    "source": "js/scripts/rust-diagnostic-attribute-policy.mjs",
+    "name": "readRustDiagnosticAttributeRuleSource",
+    "inventoryName": "read rust diagnostic attribute rule source",
+    "sourceText": "export function readRustDiagnosticAttributeRuleSource(policy = RUST_DIAGNOSTIC_ATTRIBUTE_POLICY) {\n  assert.equal(policy.schemaVersion, 1);\n  assert.equal(policy.prefix.filter(token => token.value === null).length, 1);\n  assert.equal(policy.prefix[policy.positions.reasonLiteral].kind, 'string');\n  assert.equal(policy.prefix[policy.positions.reasonLiteral].value, null);\n  const literal = value => JSON.stringify(value);\n  const position = offset => offset === 0 ? 'start' : 'start + ' + offset;\n  const cells = (token, offset) => {\n    const at = position(offset);\n    return '(kinds[' + at + '] ?? \"\") !== ' + literal(token.kind) + ' || '\n      + (token.value === null ? 'typeof values[' + at + '] !== \"string\"' : '(values[' + at + '] ?? \"\") !== ' + literal(token.value));\n  };\n  return [\n    '// Generated from the shared diagnostic attribute token policy. Do not edit.',\n    '/** @param {number} value @returns {boolean} */',\n    'export function acceptRustDiagnosticAttributeOffset(value) {',\n    '  return Number.isInteger(value) && value >= 0 && value <= 9007199254740991;',\n    '}',\n    '',\n    '/** Actual token start includes #. Result is the six policy-defined token positions; [-1] refuses.',\n    ' * @param {string[]} kinds @param {string[]} values @param {number} start @returns {number[]} */',\n    'export function planRustDiagnosticAttribute(kinds, values, start) {',\n    '  if (kinds.length !== values.length || !acceptRustDiagnosticAttributeOffset(start) || kinds.length - start < ' + (policy.prefix.length + policy.suffix.length) + ') return [-1];',\n    ...policy.prefix.map((token, offset) => '  if (' + cells(token, offset) + ') return [-1];'),\n    '  let close = start + ' + policy.prefix.length + ';',\n    '  if ((kinds[close] ?? \"\") === ' + literal(policy.optionalFinalComma.kind) + ' && (values[close] ?? \"\") === ' + literal(policy.optionalFinalComma.value) + ') close += 1;',\n    '  if (kinds.length - close < ' + policy.suffix.length + ') return [-1];',\n    ...policy.suffix.map((token, offset) => '  if (' + cells(token, offset).replaceAll('start', 'close') + ') return [-1];'),\n    '  return [close + ' + policy.suffix.length + ', ' + Object.values(policy.positions).map(position).join(', ') + '];',\n    '}',\n    '',\n    '/** Metadata-only recognition of the unchanged four-token legacy spelling.',\n    ' * @param {string[]} kinds @param {string[]} values @param {number} start @returns {number} */',\n    'export function readRustMustUseAttributeEnd(kinds, values, start) {',\n    '  if (kinds.length !== values.length || !acceptRustDiagnosticAttributeOffset(start) || kinds.length - start < ' + policy.legacyMustUse.length + ') return -1;',\n    ...policy.legacyMustUse.map((token, offset) => '  if (' + cells(token, offset) + ') return -1;'),\n    '  return start + ' + policy.legacyMustUse.length + ';',\n    '}',\n    '',\n    '/** Complete pre-const token inventory, excluding EOF. The result has four policy-defined cells.',\n    ' * @param {string[]} kinds @param {string[]} values @returns {number[]} */',\n    'export function planRustDiagnosticAttributePrefix(kinds, values) {',\n    '  if (kinds.length !== values.length) return [-1];',\n    '  let index = 0;',\n    '  let attributes = 0;',\n    '  let diagnostics = 0;',\n    '  while (index < kinds.length) {',\n    '    if (index === kinds.length - 1 && (kinds[index] ?? \"\") === ' + literal(policy.finalVisibility.kind) + ' && (values[index] ?? \"\") === ' + literal(policy.finalVisibility.value) + ') {',\n    '      return diagnostics > 0 ? [kinds.length, attributes, diagnostics, index] : [-1];',\n    '    }',\n    '    const legacyEnd = readRustMustUseAttributeEnd(kinds, values, index);',\n    '    if (legacyEnd >= 0) {',\n    '      index = legacyEnd;',\n    '    } else {',\n    '      const plan = planRustDiagnosticAttribute(kinds, values, index);',\n    '      const next = plan[0] ?? -1;',\n    '      if (next <= index) return [-1];',\n    '      index = next;',\n    '      diagnostics += 1;',\n    '    }',\n    '    attributes += 1;',\n    '  }',\n    '  return diagnostics > 0 ? [index, attributes, diagnostics, -1] : [-1];',\n    '}',\n    '',\n  ].join('\\n');\n}"
+  },
+  {
+    "id": "repository.quote-diagnostic-policy-literal",
+    "source": "js/scripts/rust-diagnostic-attribute-policy.mjs",
+    "name": "readRustDiagnosticAttributeRuleSource::literal",
+    "inventoryName": "quote diagnostic policy literal",
+    "sourceText": "const literal = value => JSON.stringify(value);",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeRuleSource(policy = RUST_DIAGNOSTIC_ATTRIBUTE_POLICY) {"
+    ]
+  },
+  {
+    "id": "repository.read-diagnostic-policy-relative-position",
+    "source": "js/scripts/rust-diagnostic-attribute-policy.mjs",
+    "name": "readRustDiagnosticAttributeRuleSource::position",
+    "inventoryName": "read diagnostic policy relative position",
+    "sourceText": "const position = offset => offset === 0 ? 'start' : 'start + ' + offset;",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeRuleSource(policy = RUST_DIAGNOSTIC_ATTRIBUTE_POLICY) {"
+    ]
+  },
+  {
+    "id": "repository.render-diagnostic-policy-token-comparison",
+    "source": "js/scripts/rust-diagnostic-attribute-policy.mjs",
+    "name": "readRustDiagnosticAttributeRuleSource::cells",
+    "inventoryName": "render diagnostic policy token comparison",
+    "sourceText": "const cells = (token, offset) => {\n    const at = position(offset);\n    return '(kinds[' + at + '] ?? \"\") !== ' + literal(token.kind) + ' || '\n      + (token.value === null ? 'typeof values[' + at + '] !== \"string\"' : '(values[' + at + '] ?? \"\") !== ' + literal(token.value));\n  };",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeRuleSource(policy = RUST_DIAGNOSTIC_ATTRIBUTE_POLICY) {"
+    ]
+  },
+  {
+    "id": "repository.read-checked-diagnostic-declaration-inventory",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "declarationInventory",
+    "inventoryName": "read checked diagnostic declaration inventory",
+    "sourceText": "function declarationInventory(program) {\n  return [...program.declarations.values()].map((entry, ordinal) => ({ordinal, kind: entry.k,\n    name: entry.name, fullName: entry.fullName, modulePath: entry.modulePath}));\n}"
+  },
+  {
+    "id": "repository.read-diagnostic-output-owner-mappings",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "ownerMappings",
+    "inventoryName": "read diagnostic output owner mappings",
+    "sourceText": "function ownerMappings(emission, owners) {\n  return owners.map(owner => {\n    const found = emission.mappings.filter(mapping => mapping.source === owner.fullName\n      && mapping.kind === (owner.kind === 'fn' ? 'function' : owner.kind));\n    assert.equal(found.length, 1, 'one actual complete emitted owner for ' + owner.fullName);\n    return found[0];\n  });\n}"
+  },
+  {
+    "id": "repository.read-complete-diagnostic-output-data",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeEmissionData",
+    "inventoryName": "read complete diagnostic output data",
+    "sourceText": "export function readRustDiagnosticAttributeEmissionData(emission) {\n  return {...emission, definitions: emission.definitions, preludes: emission.preludes};\n}"
+  },
+  {
+    "id": "repository.prepare-complete-rust-diagnostic-attribute-translation",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "prepareRustDiagnosticAttributeTranslation",
+    "inventoryName": "prepare complete rust diagnostic attribute translation",
+    "sourceText": "export async function prepareRustDiagnosticAttributeTranslation(source = readFileSync(new URL(sourcePath, root), 'utf8')) {\n  assert.equal(source, readRustDiagnosticAttributeRuleSource(), 'the entire actual module follows the shared token policy');\n  assert.deepEqual([...source.matchAll(/^export function (\\w+)\\(/gmu)].map(match => match[1]), decisions);\n  const {parseJavaScript} = await import('../src/translation/javascript.js');\n  const {checkProgram} = await import('../src/translation/check.js');\n  const {emitRust} = await import('../src/translation/emit-rust.js');\n  const {emitJavaScript} = await import('../src/translation/emit-javascript.js');\n  const {encodeTypedProgramLinks, decodeTypedProgramLinks} = await import('../src/typed-program-links.js');\n  const {recheckLinkedTypedProgram} = await import('../src/typed-program-checked-projection.js');\n  const {LinkNetwork} = await import('../src/network.js');\n  const {encodeLinkNetworkBinary, decodeLinkNetworkBinary} = await import('../src/link-network-binary.js');\n  const surface = parseJavaScript(source, {referenceSemantics: false}), checked = checkProgram(surface);\n  const parsedInventory = surface.items.map((item, ordinal) => {\n    assert.ok(['fn', 'data'].includes(item.k), 'classify every actual source and lowering declaration');\n    return {ordinal, kind: item.k, name: item.name, span: item.span};\n  });\n  const owners = declarationInventory(checked), sourceOwners = decisions.map(name => {\n    const selected = owners.filter(owner => owner.kind === 'fn' && owner.fullName === name && owner.name === name);\n    assert.equal(selected.length, 1, 'retain the complete actual flat source root ' + name);\n    assert.deepEqual(selected[0].modulePath, []);\n    return selected[0];\n  });\n  const rust = emitRust(checked, {arrayConsumption: true}), javascript = emitJavaScript(checked);\n  const packet = encodeTypedProgramLinks(checked), text = packet.network.toLino(), binary = encodeLinkNetworkBinary(packet.network);\n  const programs = [{format: 'original', javascript}], replays = [];\n  for (const [format, network] of [['text', LinkNetwork.fromLino(text)], ['binary', decodeLinkNetworkBinary(binary)]]) {\n    const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), {wholeProgram: true});\n    assert.deepEqual(declarationInventory(restored), owners, 'every actual owner and order survives ' + format);\n    const replayRust = emitRust(restored, {arrayConsumption: true}), replayJavaScript = emitJavaScript(restored);\n    assert.deepEqual(replayRust, rust, 'the complete actual Rust emission survives ' + format);\n    assert.deepEqual(replayJavaScript, javascript, 'the complete actual JavaScript emission survives ' + format);\n    programs.push({format, javascript: replayJavaScript});\n    replays.push({format, owners: declarationInventory(restored), rustBytes: Buffer.byteLength(replayRust.text),\n      rustSha256: digest(replayRust.text), javascriptBytes: Buffer.byteLength(replayJavaScript.text), javascriptSha256: digest(replayJavaScript.text)});\n  }\n  for (const emitted of [rust, ...programs.map(program => program.javascript)]) ownerMappings(emitted, owners);\n  return {policy: RUST_DIAGNOSTIC_ATTRIBUTE_POLICY, source, sourceBytes: Buffer.byteLength(source), sourceSha256: digest(source),\n    roots: [...decisions], owners, parsedInventory, sourceOwners, rust, programs, replays,\n    archive: {root: packet.root.asU64(), textBytes: Buffer.byteLength(text), textSha256: digest(text),\n      binaryBytes: binary.byteLength, binarySha256: digest(binary)}};\n}"
+  },
+  {
+    "id": "repository.read-rust-diagnostic-attribute-library-interfaces",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryInterfaces",
+    "inventoryName": "read rust diagnostic attribute library interfaces",
+    "sourceText": "export async function readRustDiagnosticAttributeLibraryInterfaces(files, prepared) {\n  const {readSourceTextRustBlock} = await import('./source-text-byte-library-style.mjs');\n  const source = files.map(file => file.source).join('\\n\\n');\n  const mappings = ownerMappings(prepared.rust, prepared.owners);\n  for (const [at, owner] of prepared.owners.entries()) {\n    const target = mappings[at].target;\n    assert.match(target, /^[A-Za-z_][A-Za-z_0-9]*$/u);\n    const form = owner.kind === 'fn' ? '(?:const )?fn' : '(?:enum|struct)';\n    assert.equal([...source.matchAll(new RegExp('^pub ' + form + ' ' + target + '\\\\b', 'gmu'))].length, 1,\n      'whole-item packaging retains ' + owner.fullName);\n  }\n  const parameters = value => {\n    const entries = value.split(',').map(part => part.trim());\n    if (entries.length === 1 && entries[0] === '') return [];\n    if (entries.at(-1) === '') entries.pop();\n    assert.ok(entries.every(part => part !== ''), 'one optional final parameter comma never hides an interior empty cell');\n    return entries.map(part => part.replace(/\\s+/gu, ''));\n  };\n  const interfaces = ownerMappings(prepared.rust, prepared.sourceOwners).map((mapping, at) => {\n    const original = readSourceTextRustBlock(prepared.rust.text, 'fn', mapping.target);\n    const packaged = readSourceTextRustBlock(source, 'fn', mapping.target);\n    const header = /\\bfn \\w+\\(([^)]*)\\)\\s*->\\s*([^\\n{]+)\\s*\\{/u.exec(packaged);\n    const before = /\\bfn \\w+\\(([^)]*)\\)\\s*->\\s*([^\\n{]+)\\s*\\{/u.exec(original);\n    assert.ok(before && header, 'every actual public decision has a complete primitive header');\n    assert.deepEqual(parameters(header[1]), parameters(before[1]).map(parameter =>\n      parameter.replace(/:Vec<String>$/u, ':&[String]').replace(/:String$/u, ':&str')),\n    'only the existing immutable primitive loans change the source root ABI');\n    assert.equal(header[2].replace(/\\s+/gu, ''), before[2].replace(/\\s+/gu, ''));\n    return {source: prepared.sourceOwners[at].fullName, target: mapping.target,\n      signature: header[0].slice(0, -1).trim(), parameters: parameters(header[1]), result: header[2].trim()};\n  });\n  return {interfaces, files: files.map(file => ({path: file.path ?? 'rust_diagnostic_attribute_rules.rs',\n    source: file.source, bytes: Buffer.byteLength(file.source), sourceSha256: digest(file.source)}))};\n}"
+  },
+  {
+    "id": "repository.generate-complete-rust-diagnostic-attribute-rules",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "generateRustDiagnosticAttributeRules",
+    "inventoryName": "generate complete rust diagnostic attribute rules",
+    "sourceText": "export async function generateRustDiagnosticAttributeRules({check = false, native = false} = {}) {\n  const source = readRustDiagnosticAttributeRuleSource(), file = new URL(sourcePath, root);\n  if (check) assert.equal(readFileSync(file, 'utf8'), source, 'the complete generated JavaScript module is fresh');\n  else writeFileSync(file, source);\n  const policy = {...RUST_DIAGNOSTIC_ATTRIBUTE_POLICY, sourcePath, source, sourceSha256: digest(source), decisions: [...decisions]};\n  for (const relative of ['js/src/translation/data/rust-diagnostic-attributes.lino', 'rust/src/data/rust-diagnostic-attributes.lino']) {\n    if (check) checkProjectData(new URL(relative, root), policy);\n    else writeProjectData(new URL(relative, root), policy);\n  }\n  let artifact = null;\n  if (native) {\n    const prepared = await prepareRustDiagnosticAttributeTranslation(source);\n    const {writeRecordRuleLibrary} = await import('./record-rule-library.mjs');\n    const {tokenize} = await import('../src/translation/lexer.js');\n    const files = writeRecordRuleLibrary(prepared.rust, 'rust_diagnostic_attribute_rules', {check,\n      sourceStyles: source => readRustDiagnosticAttributeLibraryStyles(source, tokenize)});\n    const library = await readRustDiagnosticAttributeLibraryInterfaces(files, prepared);\n    artifact = {schemaVersion: 1, model: policy.model, sourcePath, source, sourceBytes: prepared.sourceBytes,\n      sourceSha256: prepared.sourceSha256, parsedInventory: prepared.parsedInventory, checkedInventory: prepared.owners,\n      sourceOwners: prepared.sourceOwners, sourceOwnerMappings: ownerMappings(prepared.rust, prepared.sourceOwners),\n      emitted: readRustDiagnosticAttributeEmissionData(prepared.rust), emittedBytes: Buffer.byteLength(prepared.rust.text), emittedSha256: digest(prepared.rust.text),\n      javascript: readRustDiagnosticAttributeEmissionData(prepared.programs[0].javascript), archive: prepared.archive, replays: prepared.replays, library,\n      boundary: 'Complete automatically translated source and whole-program text/binary replay. Source-profile, compiler/edition, attachment, native compilation and native runtime observations remain separate obligations.'};\n    const output = new URL('parity/self-translation/rust-diagnostic-attribute-rules-native.lino', root);\n    if (check) checkProjectData(output, artifact);\n    else writeProjectData(output, artifact);\n  }\n  return {policy, artifact};\n}"
+  },
+  {
+    "id": "repository.read-diagnostic-library-parameter-slots",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryInterfaces::parameters",
+    "inventoryName": "read diagnostic library parameter slots",
+    "sourceText": "const parameters = value => {\n    const entries = value.split(',').map(part => part.trim());\n    if (entries.length === 1 && entries[0] === '') return [];\n    if (entries.at(-1) === '') entries.pop();\n    assert.ok(entries.every(part => part !== ''), 'one optional final parameter comma never hides an interior empty cell');\n    return entries.map(part => part.replace(/\\s+/gu, ''));\n  };",
+    "ownerContexts": [
+      "export async function readRustDiagnosticAttributeLibraryInterfaces(files, prepared) {"
+    ]
+  },
+  {
+    "id": "translation.read-rust-diagnostic-attribute-normalization",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "readRustDiagnosticAttributeNormalization",
+    "inventoryName": "read rust diagnostic attribute normalization",
+    "sourceText": "export function readRustDiagnosticAttributeNormalization() {\n  return { ...policy.normalization };\n}"
+  },
+  {
+    "id": "translation.check-diagnostic-attribute-record-shape",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "diagnosticRecord",
+    "inventoryName": "check diagnostic attribute record shape",
+    "sourceText": "function diagnosticRecord(value, fields) {\n  if (!value || typeof value !== 'object' || Array.isArray(value)\n    || Object.keys(value).length !== fields.length || fields.some(field => !owns(value, field))) {\n    fail('an owned descriptor has missing or unrepresented fields');\n  }\n}"
+  },
+  {
+    "id": "translation.check-diagnostic-attribute-source-span",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "diagnosticSpan",
+    "inventoryName": "check diagnostic attribute source span",
+    "sourceText": "function diagnosticSpan(value, nonempty = true) {\n  diagnosticRecord(value, policy.fields.span);\n  if (typeof value.start !== 'number' || typeof value.end !== 'number'\n    || !acceptRustConstFunctionOffset(value.start, Object.is(value.start, -0))\n    || !acceptRustConstFunctionOffset(value.end, Object.is(value.end, -0))\n    || !acceptRustConstFunctionInterval(value.start, value.end, nonempty)) {\n    fail('a source span needs integral absolute UTF16 offsets');\n  }\n}"
+  },
+  {
+    "id": "translation.compare-diagnostic-attribute-source-spans",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "sameDiagnosticSpan",
+    "inventoryName": "compare diagnostic attribute source spans",
+    "sourceText": "function sameDiagnosticSpan(left, right) {\n  diagnosticSpan(left);\n  diagnosticSpan(right);\n  return left.start === right.start && left.end === right.end;\n}"
+  },
+  {
+    "id": "translation.read-diagnostic-attribute-marker-owners",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "diagnosticMarkerOwners",
+    "inventoryName": "read diagnostic attribute marker owners",
+    "sourceText": "function diagnosticMarkerOwners(root) {\n  const owners = new Set(), visited = new WeakSet(), active = new WeakSet();\n  let cyclic = false;\n  function visit(value) {\n    if (!value || typeof value !== 'object') return;\n    if (active.has(value)) { cyclic = true; return; }\n    if (visited.has(value)) return;\n    visited.add(value); active.add(value);\n    if (owns(value, 'sourceDiagnosticAttributes')) owners.add(value);\n    if (value instanceof Map) {\n      for (const [key, child] of Map.prototype.entries.call(value)) { visit(key); visit(child); }\n    } else {\n      for (const child of Object.values(value)) visit(child);\n    }\n    active.delete(value);\n  }\n  visit(root);\n  if (owners.size && cyclic) fail('a source descriptor contains a structural cycle');\n  return owners;\n}"
+  },
+  {
+    "id": "translation.check-rust-diagnostic-attribute-containers",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "checkRustDiagnosticAttributeContainers",
+    "inventoryName": "check rust diagnostic attribute containers",
+    "sourceText": "export function checkRustDiagnosticAttributeContainers(program) {\n  const selected = checkOwnedProgramContainers(program, {\n    selectedFields: ['sourceDiagnosticAttributes'],\n    acceptContainer: acceptRustConstFunctionContainer, fail,\n  });\n  return selected ? checkRustDiagnosticAttributePlacement(program) : false;\n}"
+  },
+  {
+    "id": "translation.check-rust-diagnostic-attribute-placement",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "checkRustDiagnosticAttributePlacement",
+    "inventoryName": "check rust diagnostic attribute placement",
+    "sourceText": "export function checkRustDiagnosticAttributePlacement(program) {\n  const owners = diagnosticMarkerOwners(program);\n  if (!owners.size) return false;\n  if (!Array.isArray(program.items)) fail('the source facet requires actual ordered items');\n  const declarations = new Set(), pending = [...program.items], seen = new Set();\n  while (pending.length) {\n    const entry = pending.pop();\n    if (!entry || typeof entry !== 'object' || seen.has(entry)) continue;\n    seen.add(entry);\n    if (entry.k === 'fn') declarations.add(entry);\n    else if (entry.k === 'module') {\n      if (!Array.isArray(entry.items)) fail('an actual module needs ordered items');\n      pending.push(...entry.items);\n    }\n  }\n  for (const owner of owners) {\n    if (!declarations.has(owner)) fail('a source facet is not attached to an actual function item');\n  }\n  return true;\n}"
+  },
+  {
+    "id": "translation.validate-rust-diagnostic-attribute-facet",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "validateDiagnosticFacet",
+    "inventoryName": "validate rust diagnostic attribute facet",
+    "sourceText": "function validateDiagnosticFacet(facet, entry, modulePath) {\n  diagnosticRecord(facet, policy.fields.facet);\n  if (facet.model !== policy.facet.model || facet.language !== policy.facet.language\n    || facet.edition !== policy.facet.edition) fail('the registered source model or Rust edition changed');\n  if (entry.k !== 'fn' || !owns(entry, 'sourceConstFunction')\n    || !entry.sourceConstFunction || typeof entry.sourceConstFunction !== 'object'\n    || Array.isArray(entry.sourceConstFunction)) fail('an actual const function proof is required');\n  diagnosticRecord(facet.attachment, policy.fields.attachment);\n  if (typeof facet.attachment.sourceName !== 'string' || facet.attachment.sourceName !== entry.name\n    || !Array.isArray(facet.attachment.modulePath) || !Array.isArray(modulePath)\n    || facet.attachment.modulePath.length !== modulePath.length\n    || facet.attachment.modulePath.some((name, at) => typeof name !== 'string' || name !== modulePath[at])) {\n    fail('the attribute prefix belongs to a different function owner');\n  }\n  const proof = entry.sourceConstFunction;\n  if (!sameDiagnosticSpan(facet.attachment.constKeywordSpan, proof.keywordSpan)\n    || !sameDiagnosticSpan(facet.attachment.functionKeywordSpan, proof.functionKeywordSpan)) {\n    fail('the attribute attachment differs from the actual const header');\n  }\n  diagnosticSpan(facet.span);\n  if (typeof facet.raw !== 'string' || facet.raw.length !== facet.span.end - facet.span.start\n    || facet.span.end !== proof.keywordSpan.start || !Array.isArray(facet.tokens)) {\n    fail('the complete raw prefix must end at the actual const keyword');\n  }\n  // Authenticate the boundary too: a trailing identifier or line comment\n  // cannot absorb the next actual const keyword after source-free edits.\n  const constKeyword = policy.constKeyword;\n  const actual = tokenize(facet.raw + constKeyword.value, policy.facet.language).tokens.filter(token => token.kind !== 'eof');\n  const following = actual.pop();\n  if (!following || following.kind !== constKeyword.kind || following.value !== constKeyword.value\n    || following.raw !== constKeyword.value || following.start !== facet.raw.length\n    || following.end !== facet.raw.length + constKeyword.value.length) {\n    fail('the retained prefix absorbs or changes the actual following const token');\n  }\n  if (actual.length !== facet.tokens.length || !actual.length || actual[0].start !== 0) {\n    fail('the facet must retain every actual token from its first outer attribute');\n  }\n  for (let at = 0; at < actual.length; at += 1) {\n    const token = facet.tokens[at], original = actual[at];\n    diagnosticRecord(token, policy.fields.token);\n    diagnosticSpan(token.span);\n    if (typeof token.kind !== 'string' || typeof token.value !== 'string' || typeof token.raw !== 'string'\n      || token.kind !== original.kind || token.value !== original.value || token.raw !== original.raw\n      || token.span.start !== facet.span.start + original.start\n      || token.span.end !== facet.span.start + original.end\n      || token.raw !== facet.raw.slice(original.start, original.end)) {\n      fail('stored token kind value spelling or absolute UTF16 span differs from the actual prefix');\n    }\n  }\n  const plan = planRustDiagnosticAttributePrefix(actual.map(token => token.kind), actual.map(token => token.value));\n  if (plan.length !== 4 || plan[0] !== actual.length || plan[2] < 1) {\n    fail('the complete prefix has no admitted diagnostic attribute interpretation');\n  }\n  return plan;\n}"
+  },
+  {
+    "id": "translation.create-rust-diagnostic-attribute-facet",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "createRustDiagnosticAttributeFacet",
+    "inventoryName": "create rust diagnostic attribute facet",
+    "sourceText": "export function createRustDiagnosticAttributeFacet(source, tokens, firstAttributeIndex, constKeywordIndex, entry, modulePath) {\n  if (typeof source !== 'string' || !Array.isArray(tokens)\n    || !Number.isSafeInteger(firstAttributeIndex) || firstAttributeIndex < 0\n    || !Number.isSafeInteger(constKeywordIndex) || constKeywordIndex <= firstAttributeIndex\n    || constKeywordIndex >= tokens.length) fail('actual complete source and token positions are required');\n  checkOwnedProgramContainers(entry, { selectedFields: ['sourceConstFunction'], acceptContainer: acceptRustConstFunctionContainer, fail });\n  const proof = entry.sourceConstFunction;\n  const first = tokens[firstAttributeIndex], keyword = tokens[constKeywordIndex];\n  if (!proof || keyword.kind !== policy.constKeyword.kind || keyword.value !== policy.constKeyword.value\n    || keyword.start !== proof.keywordSpan.start || keyword.end !== proof.keywordSpan.end) {\n    fail('the prefix must be attached to the original actual const token');\n  }\n  const facet = {\n    model: policy.facet.model, language: policy.facet.language, edition: policy.facet.edition,\n    span: { start: first.start, end: keyword.start },\n    raw: source.slice(first.start, keyword.start),\n    tokens: tokens.slice(firstAttributeIndex, constKeywordIndex).map(token => ({\n      kind: token.kind, value: token.value, raw: token.raw,\n      span: { start: token.start, end: token.end },\n    })),\n    attachment: { sourceName: entry.name, modulePath: [...modulePath],\n      constKeywordSpan: { ...proof.keywordSpan }, functionKeywordSpan: { ...proof.functionKeywordSpan } },\n  };\n  validateDiagnosticFacet(facet, entry, modulePath);\n  return facet;\n}"
+  },
+  {
+    "id": "translation.check-rust-diagnostic-attributes",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "checkRustDiagnosticAttributes",
+    "inventoryName": "check rust diagnostic attributes",
+    "sourceText": "export function checkRustDiagnosticAttributes(program) {\n  if (!checkRustDiagnosticAttributeContainers(program)) return false;\n  if (program.sourceLanguage !== 'Rust' || !(program.declarations instanceof Map)) {\n    fail('the source facet requires actual checked Rust declarations');\n  }\n  const owners = diagnosticMarkerOwners(program), verified = new Set();\n  for (const [name, entry] of Map.prototype.entries.call(program.declarations)) {\n    if (!owns(entry, 'sourceDiagnosticAttributes')) continue;\n    if (!Array.isArray(entry.modulePath) || typeof entry.name !== 'string'\n      || entry.fullName !== name || [...entry.modulePath, entry.name].join('.') !== name) {\n      fail('the facet does not target its actual declaration binding');\n    }\n    validateDiagnosticFacet(entry.sourceDiagnosticAttributes, entry, entry.modulePath);\n    verified.add(entry);\n  }\n  if (owners.size !== verified.size || [...owners].some(owner => !verified.has(owner))) {\n    fail('the source facet escaped its actual checked function');\n  }\n  return true;\n}"
+  },
+  {
+    "id": "translation.render-rust-diagnostic-attribute-prefix",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "renderRustDiagnosticAttributePrefix",
+    "inventoryName": "render rust diagnostic attribute prefix",
+    "sourceText": "export function renderRustDiagnosticAttributePrefix(entry, source) {\n  if (!owns(entry, 'sourceDiagnosticAttributes')) return source;\n  const facet = entry.sourceDiagnosticAttributes;\n  const plan = validateDiagnosticFacet(facet, entry, entry.modulePath);\n  if (plan[3] < 0) return facet.raw + source;\n  // Only the canonical emitter prefix changes; the original raw prefix, its\n  // comments and actual visibility token are retained without text searching.\n  if (!source.startsWith(policy.emission.canonicalPublicPrefix)) fail('the canonical const emitter header changed');\n  return facet.raw + source.slice(policy.emission.visibilityPrefix.length);\n}"
+  },
+  {
+    "id": "translation.raise-diagnostic-source-attribute-error",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "fail",
+    "inventoryName": "raise diagnostic source attribute error",
+    "sourceText": "const fail = reason => { throw typeError('Rust diagnostic source attributes: ' + reason); };"
+  },
+  {
+    "id": "translation.read-own-diagnostic-descriptor-field",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "owns",
+    "inventoryName": "read own diagnostic descriptor field",
+    "sourceText": "const owns = (value, name) => Object.hasOwn(value, name);"
+  },
+  {
+    "id": "translation.visit-diagnostic-marker-ownership",
+    "source": "js/src/translation/rust-diagnostic-attributes.js",
+    "name": "diagnosticMarkerOwners::visit",
+    "inventoryName": "visit diagnostic marker ownership",
+    "sourceText": "function visit(value) {\n    if (!value || typeof value !== 'object') return;\n    if (active.has(value)) { cyclic = true; return; }\n    if (visited.has(value)) return;\n    visited.add(value); active.add(value);\n    if (owns(value, 'sourceDiagnosticAttributes')) owners.add(value);\n    if (value instanceof Map) {\n      for (const [key, child] of Map.prototype.entries.call(value)) { visit(key); visit(child); }\n    } else {\n      for (const child of Object.values(value)) visit(child);\n    }\n    active.delete(value);\n  }",
+    "ownerContexts": [
+      "function diagnosticMarkerOwners(root) {"
+    ]
+  },
+  {
+    "id": "translation.read-native-diagnostic-attribute-policy",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "policy",
+    "inventoryName": "read native diagnostic attribute policy",
+    "sourceText": "pub(crate) fn policy() -> &'static Value {\n    static POLICY: LazyLock<Value> = LazyLock::new(|| {\n        crate::read_structured_data_lino(include_str!(\"../data/rust-diagnostic-attributes.lino\"))\n            .expect(\"the shared diagnostic attribute policy is valid\")\n    });\n    &POLICY\n}"
+  },
+  {
+    "id": "translation.create-native-diagnostic-source-error",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "fail",
+    "inventoryName": "create native diagnostic source error",
+    "sourceText": "fn fail(detail: &str) -> TranslationError {\n    type_error(format!(\"Rust diagnostic source attributes: {detail}\"), None)\n}"
+  },
+  {
+    "id": "translation.decode-present-checked-diagnostic-facet",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "read_present_facet",
+    "inventoryName": "decode present checked diagnostic facet",
+    "sourceText": "pub(crate) fn read_present_facet<'de, D: Deserializer<'de>>(\n    deserializer: D,\n) -> std::result::Result<Option<Value>, D::Error> {\n    Value::deserialize(deserializer).map(Some)\n}"
+  },
+  {
+    "id": "translation.decode-present-surface-diagnostic-facet",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "read_present_surface_facet",
+    "inventoryName": "decode present surface diagnostic facet",
+    "sourceText": "pub(crate) fn read_present_surface_facet<'de, D: Deserializer<'de>>(\n    deserializer: D,\n) -> std::result::Result<Option<Box<Value>>, D::Error> {\n    Value::deserialize(deserializer).map(|value| Some(Box::new(value)))\n}"
+  },
+  {
+    "id": "translation.check-native-diagnostic-record-fields",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "fields",
+    "inventoryName": "check native diagnostic record fields",
+    "sourceText": "fn fields(value: &Value, name: &str) -> Result<()> {\n    let represented = value.as_object().is_some_and(|record| {\n        policy()[\"fields\"][name].as_array().is_some_and(|allowed| {\n            record.len() == allowed.len()\n                && record\n                    .keys()\n                    .all(|key| allowed.contains(&Value::String(key.clone())))\n        })\n    });\n    if !accept_rust_const_function_container(\"record\", true, !represented) {\n        return Err(fail(\n            \"an owned descriptor has missing or unrepresented fields\",\n        ));\n    }\n    Ok(())\n}"
+  },
+  {
+    "id": "translation.read-native-diagnostic-source-offset",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "offset",
+    "inventoryName": "read native diagnostic source offset",
+    "sourceText": "fn offset(value: &Value) -> Result<(usize, f64)> {\n    let number = value\n        .as_f64()\n        .filter(|number| {\n            accept_rust_const_function_offset(*number, *number == 0.0 && number.is_sign_negative())\n        })\n        .ok_or_else(|| fail(\"a source span needs integral absolute UTF16 offsets\"))?;\n    let integer = number\n        .to_string()\n        .parse()\n        .map_err(|_| fail(\"a source span needs integral absolute UTF16 offsets\"))?;\n    Ok((integer, number))\n}"
+  },
+  {
+    "id": "translation.read-native-diagnostic-source-interval",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "interval",
+    "inventoryName": "read native diagnostic source interval",
+    "sourceText": "fn interval(value: &Value) -> Result<(usize, usize)> {\n    fields(value, \"span\")?;\n    let (start, start_number) = offset(&value[\"start\"])?;\n    let (end, end_number) = offset(&value[\"end\"])?;\n    if !accept_rust_const_function_interval(start_number, end_number, true) {\n        return Err(fail(\"a source span needs integral absolute UTF16 offsets\"));\n    }\n    Ok((start, end))\n}"
+  },
+  {
+    "id": "translation.read-native-diagnostic-token-kind",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "token_kind",
+    "inventoryName": "read native diagnostic token kind",
+    "sourceText": "pub(crate) const fn token_kind(token: &Token) -> &'static str {\n    match token.kind {\n        TokenKind::Number => \"number\",\n        TokenKind::Identifier => \"identifier\",\n        TokenKind::Macro => \"macro\",\n        TokenKind::Punct => \"punct\",\n        TokenKind::RegularExpression => \"regularExpression\",\n        TokenKind::String => \"string\",\n        TokenKind::Character => \"char\",\n        TokenKind::ByteCharacter => \"byteChar\",\n        TokenKind::Interpolation => \"interpolation\",\n        TokenKind::Template => \"template\",\n        TokenKind::Eof => \"eof\",\n    }\n}"
+  },
+  {
+    "id": "translation.construct-native-diagnostic-function-premise",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "parent_record",
+    "inventoryName": "construct native diagnostic function premise",
+    "sourceText": "fn parent_record(name: &str, proof: Option<&Value>) -> Value {\n    json!({\"k\":\"fn\",\"name\":name,\"sourceConstFunction\":proof})\n}"
+  },
+  {
+    "id": "translation.construct-native-diagnostic-token-fact",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "token_fact",
+    "inventoryName": "construct native diagnostic token fact",
+    "sourceText": "fn token_fact(token: &Token) -> Value {\n    json!({\"kind\":token_kind(token),\"value\":token.value,\"raw\":token.raw,\n        \"span\":{\"start\":token.start,\"end\":token.end}})\n}"
+  },
+  {
+    "id": "translation.validate-native-rust-diagnostic-facet",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "validate_facet",
+    "inventoryName": "validate native rust diagnostic facet",
+    "sourceText": "fn validate_facet(facet: &Value, entry: &Value, module_path: &[Value]) -> Result<Vec<f64>> {\n    fields(facet, \"facet\")?;\n    if [\"model\", \"language\", \"edition\"]\n        .iter()\n        .any(|name| facet[*name] != policy()[\"facet\"][*name])\n    {\n        return Err(fail(\"the registered source model or Rust edition changed\"));\n    }\n    let proof = &entry[\"sourceConstFunction\"];\n    if entry[\"k\"] != \"fn\" || !proof.is_object() {\n        return Err(fail(\"an actual const function proof is required\"));\n    }\n    let attachment = &facet[\"attachment\"];\n    fields(attachment, \"attachment\")?;\n    if !attachment[\"sourceName\"].is_string()\n        || attachment[\"sourceName\"] != entry[\"name\"]\n        || attachment[\"modulePath\"].as_array().is_none_or(|path| {\n            path.as_slice() != module_path || path.iter().any(|name| !name.is_string())\n        })\n    {\n        return Err(fail(\n            \"the attribute prefix belongs to a different function owner\",\n        ));\n    }\n    if interval(&attachment[\"constKeywordSpan\"])? != interval(&proof[\"keywordSpan\"])?\n        || interval(&attachment[\"functionKeywordSpan\"])? != interval(&proof[\"functionKeywordSpan\"])?\n    {\n        return Err(fail(\n            \"the attribute attachment differs from the actual const header\",\n        ));\n    }\n    let (start, end) = interval(&facet[\"span\"])?;\n    let raw = facet[\"raw\"]\n        .as_str()\n        .ok_or_else(|| fail(\"the complete raw prefix must end at the actual const keyword\"))?;\n    let stored = facet[\"tokens\"]\n        .as_array()\n        .ok_or_else(|| fail(\"the complete raw prefix must end at the actual const keyword\"))?;\n    let width = raw.encode_utf16().count();\n    if width != end - start || end != interval(&proof[\"keywordSpan\"])?.0 {\n        return Err(fail(\n            \"the complete raw prefix must end at the actual const keyword\",\n        ));\n    }\n    let const_kind = policy()[\"constKeyword\"][\"kind\"]\n        .as_str()\n        .expect(\"a shared token kind\");\n    let const_value = policy()[\"constKeyword\"][\"value\"]\n        .as_str()\n        .expect(\"a shared const spelling\");\n    let text = format!(\"{raw}{const_value}\");\n    let mut actual = tokenize(&text, Language::Rust)?.tokens;\n    actual.retain(|token| token.kind != TokenKind::Eof);\n    let following = actual.pop();\n    if following.as_ref().is_none_or(|token| {\n        token_kind(token) != const_kind\n            || token.value != const_value\n            || token.raw != const_value\n            || token.start != width\n            || token.end != width + const_value.encode_utf16().count()\n    }) {\n        return Err(fail(\n            \"the retained prefix absorbs or changes the actual following const token\",\n        ));\n    }\n    if actual.len() != stored.len() || actual.first().is_none_or(|token| token.start != 0) {\n        return Err(fail(\n            \"the facet must retain every actual token from its first outer attribute\",\n        ));\n    }\n    let raw_source = Source::new(raw);\n    for (original, token) in actual.iter().zip(stored) {\n        fields(token, \"token\")?;\n        let (token_start, token_end) = interval(&token[\"span\"])?;\n        if token[\"kind\"].as_str() != Some(token_kind(original))\n            || token[\"value\"].as_str() != Some(original.value.as_str())\n            || token[\"raw\"].as_str() != Some(original.raw.as_str())\n            || token_start != start + original.start\n            || token_end != start + original.end\n            || token[\"raw\"].as_str()\n                != Some(raw_source.slice(original.start, original.end).as_str())\n        {\n            return Err(fail(\n                \"stored token kind value spelling or absolute UTF16 span differs from the actual prefix\",\n            ));\n        }\n    }\n    let kinds = actual\n        .iter()\n        .map(|token| token_kind(token).to_owned())\n        .collect::<Vec<_>>();\n    let values = actual\n        .iter()\n        .map(|token| token.value.clone())\n        .collect::<Vec<_>>();\n    let plan = plan_rust_diagnostic_attribute_prefix(&kinds, &values);\n    let length = serde_json::Number::from(actual.len())\n        .as_f64()\n        .expect(\"a token length is numeric\");\n    if plan.len() != 4 || plan[0].to_bits() != length.to_bits() || plan[2] < 1.0 {\n        return Err(fail(\n            \"the complete prefix has no admitted diagnostic attribute interpretation\",\n        ));\n    }\n    Ok(plan)\n}"
+  },
+  {
+    "id": "translation.create-native-rust-diagnostic-facet",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "create_facet",
+    "inventoryName": "create native rust diagnostic facet",
+    "sourceText": "pub(crate) fn create_facet(\n    source: &str,\n    tokens: &[Token],\n    first_attribute: usize,\n    const_keyword: usize,\n    function: &SFn,\n    module_path: &[String],\n) -> Result<Value> {\n    if first_attribute >= const_keyword || const_keyword >= tokens.len() {\n        return Err(fail(\n            \"actual complete source and token positions are required\",\n        ));\n    }\n    let first = &tokens[first_attribute];\n    let keyword = &tokens[const_keyword];\n    let proof = function\n        .source_const_function\n        .as_deref()\n        .ok_or_else(|| fail(\"the prefix must be attached to the original actual const token\"))?;\n    if token_kind(keyword)\n        != policy()[\"constKeyword\"][\"kind\"]\n            .as_str()\n            .expect(\"a shared token kind\")\n        || keyword.value\n            != policy()[\"constKeyword\"][\"value\"]\n                .as_str()\n                .expect(\"a shared const spelling\")\n        || (keyword.start, keyword.end) != interval(&proof[\"keywordSpan\"])?\n    {\n        return Err(fail(\n            \"the prefix must be attached to the original actual const token\",\n        ));\n    }\n    let source = Source::new(source);\n    let facet = json!({\n        \"model\":policy()[\"facet\"][\"model\"],\"language\":policy()[\"facet\"][\"language\"],\"edition\":policy()[\"facet\"][\"edition\"],\n        \"span\":{\"start\":first.start,\"end\":keyword.start},\n        \"raw\":source.slice(first.start,keyword.start),\n        \"tokens\":tokens[first_attribute..const_keyword].iter().map(token_fact).collect::<Vec<_>>(),\n        \"attachment\":{\"sourceName\":function.name,\"modulePath\":module_path,\n            \"constKeywordSpan\":proof[\"keywordSpan\"],\"functionKeywordSpan\":proof[\"functionKeywordSpan\"]}\n    });\n    let entry = parent_record(&function.name, function.source_const_function.as_deref());\n    let module_path = module_path\n        .iter()\n        .map(|name| Value::String(name.clone()))\n        .collect::<Vec<_>>();\n    validate_facet(&facet, &entry, &module_path)?;\n    Ok(facet)\n}"
+  },
+  {
+    "id": "translation.read-native-diagnostic-marker-owners",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "marker_owners",
+    "inventoryName": "read native diagnostic marker owners",
+    "sourceText": "fn marker_owners(value: &Value) -> Result<Vec<&Value>> {\n    let mut pending = vec![(value, 0)];\n    let mut owners = Vec::new();\n    let mut visits = 0;\n    let mut limited = false;\n    while let Some((value, depth)) = pending.pop() {\n        if !value.is_object() && !value.is_array() {\n            continue;\n        }\n        visits += 1;\n        if depth > 256 || visits > 100_000 {\n            limited = true;\n            continue;\n        }\n        if let Some(record) = value.as_object() {\n            if record.contains_key(\"sourceDiagnosticAttributes\") {\n                owners.push(value);\n            }\n            pending.extend(record.values().map(|child| (child, depth + 1)));\n        } else if let Some(items) = value.as_array() {\n            pending.extend(items.iter().map(|child| (child, depth + 1)));\n        }\n    }\n    if !owners.is_empty() && limited {\n        return Err(fail(\n            \"the source descriptor exceeds its semantic traversal limit\",\n        ));\n    }\n    Ok(owners)\n}"
+  },
+  {
+    "id": "translation.validate-native-checked-diagnostic-records",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "validate_records",
+    "inventoryName": "validate native checked diagnostic records",
+    "sourceText": "pub(crate) fn validate_records(value: &Value) -> Result<()> {\n    let owners = marker_owners(value)?;\n    if owners.is_empty() {\n        return Ok(());\n    }\n    let entries = value[\"declarations\"]\n        .as_array()\n        .ok_or_else(|| fail(\"the source facet requires actual checked Rust declarations\"))?;\n    for owner in &owners {\n        if !entries\n            .iter()\n            .any(|entry| std::ptr::eq(*owner, entry) && entry[\"k\"] == \"fn\")\n        {\n            return Err(fail(\n                \"a source facet is not attached to an actual function item\",\n            ));\n        }\n    }\n    if value[\"sourceLanguage\"] != policy()[\"facet\"][\"language\"] {\n        return Err(fail(\n            \"the source facet requires actual checked Rust declarations\",\n        ));\n    }\n    for entry in owners {\n        let path = entry[\"modulePath\"]\n            .as_array()\n            .filter(|path| path.iter().all(Value::is_string))\n            .ok_or_else(|| fail(\"the facet does not target its actual declaration binding\"))?;\n        let name = entry[\"name\"]\n            .as_str()\n            .ok_or_else(|| fail(\"the facet does not target its actual declaration binding\"))?;\n        let full_name = path\n            .iter()\n            .filter_map(Value::as_str)\n            .chain(std::iter::once(name))\n            .collect::<Vec<_>>()\n            .join(\".\");\n        if entry[\"fullName\"].as_str() != Some(full_name.as_str()) {\n            return Err(fail(\n                \"the facet does not target its actual declaration binding\",\n            ));\n        }\n        validate_facet(&entry[\"sourceDiagnosticAttributes\"], entry, path)?;\n    }\n    Ok(())\n}"
+  },
+  {
+    "id": "translation.validate-native-surface-diagnostic-fields",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "validate_surface",
+    "inventoryName": "validate native surface diagnostic fields",
+    "sourceText": "pub(crate) fn validate_surface(surface: &SProgram) -> Result<()> {\n    let mut pending = surface\n        .items\n        .iter()\n        .map(|item| (item, Vec::<String>::new()))\n        .collect::<Vec<_>>();\n    let mut functions = Vec::new();\n    while let Some((item, path)) = pending.pop() {\n        match item {\n            SItem::Fn(function) if function.source_diagnostic_attributes.is_some() => {\n                functions.push((function, path))\n            }\n            SItem::Module(module) => {\n                let mut path = path;\n                path.push(module.name.clone());\n                pending.extend(module.items.iter().map(|item| (item, path.clone())));\n            }\n            _ => {}\n        }\n    }\n    if functions.is_empty() {\n        return Ok(());\n    }\n    if surface.language != Language::Rust {\n        return Err(fail(\n            \"the source facet requires actual checked Rust declarations\",\n        ));\n    }\n    for (function, path) in functions {\n        let entry = parent_record(&function.name, function.source_const_function.as_deref());\n        let path = path.into_iter().map(Value::String).collect::<Vec<_>>();\n        validate_facet(\n            function\n                .source_diagnostic_attributes\n                .as_deref()\n                .expect(\"a selected facet\"),\n            &entry,\n            &path,\n        )?;\n    }\n    Ok(())\n}"
+  },
+  {
+    "id": "translation.render-native-diagnostic-source-prefix",
+    "source": "rust/src/translation/source_diagnostic_attributes.rs",
+    "name": "render_prefix",
+    "inventoryName": "render native diagnostic source prefix",
+    "sourceText": "pub(crate) fn render_prefix(function: &FnDecl, source: String) -> Result<String> {\n    let Some(facet) = function.source_diagnostic_attributes.as_ref() else {\n        return Ok(source);\n    };\n    let entry = parent_record(&function.name, function.source_const_function.as_ref());\n    let path = function\n        .module_path\n        .iter()\n        .map(|name| Value::String(name.clone()))\n        .collect::<Vec<_>>();\n    let plan = validate_facet(facet, &entry, &path)?;\n    let raw = facet[\"raw\"].as_str().expect(\"a validated source prefix\");\n    if plan[3] < 0.0 {\n        return Ok(format!(\"{raw}{source}\"));\n    }\n    let prefix = policy()[\"emission\"][\"canonicalPublicPrefix\"]\n        .as_str()\n        .expect(\"a shared canonical public prefix\");\n    let visibility = policy()[\"emission\"][\"visibilityPrefix\"]\n        .as_str()\n        .expect(\"a shared visibility prefix\");\n    if !source.starts_with(prefix) {\n        return Err(fail(\"the canonical const emitter header changed\"));\n    }\n    Ok(format!(\"{raw}{}\", &source[visibility.len()..]))\n}"
+  },
+  {
+    "id": "translation.diagnostic-attribute-token-column-pair",
+    "source": "rust/src/translation/rust/diagnostic_attributes.rs",
+    "name": "DiagnosticAttributeColumns",
+    "inventoryName": "diagnostic attribute token column pair",
+    "sourceText": "pub(super) struct DiagnosticAttributeColumns {\n    kinds: Vec<String>,\n    values: Vec<String>,\n}"
+  },
+  {
+    "id": "translation.read-native-diagnostic-token-columns",
+    "source": "rust/src/translation/rust/diagnostic_attributes.rs",
+    "name": "DiagnosticAttributeColumns::new",
+    "inventoryName": "read native diagnostic token columns",
+    "sourceText": "    fn new(tokens: &[Token]) -> Self {\n        Self {\n            kinds: tokens\n                .iter()\n                .map(|token| token_kind(token).to_owned())\n                .collect(),\n            values: tokens.iter().map(|token| token.value.clone()).collect(),\n        }\n    }",
+    "ownerContexts": [
+      "impl DiagnosticAttributeColumns {"
+    ]
+  },
+  {
+    "id": "translation.consume-native-diagnostic-attribute-tokens",
+    "source": "rust/src/translation/rust/diagnostic_attributes.rs",
+    "name": "read_diagnostic_attribute",
+    "inventoryName": "consume native diagnostic attribute tokens",
+    "sourceText": "    pub(super) fn read_diagnostic_attribute(&mut self) -> bool {\n        let Some(start) = self.cursor.index.checked_sub(1) else {\n            return false;\n        };\n        let tokens = &self.cursor.tokens;\n        let columns = self\n            .diagnostic_attribute_columns\n            .get_or_insert_with(|| DiagnosticAttributeColumns::new(tokens));\n        let position = serde_json::Number::from(start)\n            .as_f64()\n            .expect(\"a native token position has a finite binary64 representation\");\n        let plan =\n            crate::translation::rust_diagnostic_attribute_rules::plan_rust_diagnostic_attribute(\n                &columns.kinds,\n                &columns.values,\n                position,\n            );\n        let Some(end) = plan.first().copied().and_then(number_index) else {\n            return false;\n        };\n        self.cursor.index = end;\n        true\n    }",
+    "ownerContexts": [
+      "impl RustParser {"
+    ]
+  },
+  {
+    "id": "translation.capture-native-parser-diagnostic-attribute-facet",
+    "source": "rust/src/translation/rust/diagnostic_attributes.rs",
+    "name": "create_diagnostic_attribute_facet",
+    "inventoryName": "capture native parser diagnostic attribute facet",
+    "sourceText": "    pub(super) fn create_diagnostic_attribute_facet(\n        &self,\n        first_attribute: usize,\n        const_keyword: usize,\n        function: &SFn,\n        module_path: &[String],\n    ) -> Result<Value> {\n        let source = self.original_source.as_deref().ok_or_else(|| type_error(\n            \"Rust diagnostic source attributes: actual complete source and token positions are required\",\n            None,\n        ))?;\n        create_facet(\n            source,\n            &self.cursor.tokens,\n            first_attribute,\n            const_keyword,\n            function,\n            module_path,\n        )\n    }",
+    "ownerContexts": [
+      "impl RustParser {"
+    ]
+  },
+  {
+    "id": "translation.original-rust-parser-source",
+    "source": "js/src/translation/rust.js",
+    "name": "RustParser.source",
+    "inventoryName": "original rust parser source",
+    "sourceText": "this.source=source;"
+  },
+  {
+    "id": "translation.original-rust-parser-source",
+    "source": "rust/src/translation/rust.rs",
+    "name": "RustParser::original_source",
+    "inventoryName": "original rust parser source",
+    "sourceText": "original_source: Option<Arc<str>>,",
+    "ownerContexts": [
+      "struct RustParser {"
+    ]
+  },
+  {
+    "id": "translation.rust-parser-diagnostic-token-column-cache",
+    "source": "js/src/translation/rust.js",
+    "name": "RustParser.diagnosticAttributeColumns",
+    "inventoryName": "rust parser diagnostic token column cache",
+    "sourceText": "this.diagnosticAttributeColumns=null;"
+  },
+  {
+    "id": "translation.rust-parser-diagnostic-token-column-cache",
+    "source": "rust/src/translation/rust.rs",
+    "name": "RustParser::diagnostic_attribute_columns",
+    "inventoryName": "rust parser diagnostic token column cache",
+    "sourceText": "diagnostic_attribute_columns: Option<diagnostic_attributes::DiagnosticAttributeColumns>,",
+    "ownerContexts": [
+      "struct RustParser {"
+    ]
+  },
+  {
+    "id": "translation.function-source-diagnostic-attribute-facet",
+    "source": "js/src/translation/rust.js",
+    "name": "RustParser.items::sourceDiagnosticAttributes",
+    "inventoryName": "function source diagnostic attribute facet",
+    "sourceText": "items(root, items, path, done) {\n    const c = this.cursor;\n    while (!done()) {\n      const firstAttributeIndex=c.index;\n      const diagnosticAttributes=[];\n      const derivations=this.attributes(diagnosticAttributes);\n      const start = c.peek();\n      this.modulePath = path;\n      readRustPureUnitItemContext(this,path,start);\n      if(this.constFunctionModel&&c.is('pub')&&c.is('(',1))throw unsupported('Rust const function visibility','restricted visibility requires an independent module proof');\n      this.visibility();\n      if(this.typeNamespaceModel&&derivations.some(attribute=>attribute.traits.includes('Clone'))&&!c.is('enum'))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to an actual datatype',span(start,c.peek()));\n      if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));\n      if(this.constFunctionModel&&!(c.is('const')&&c.is('fn',1)||!path.length&&c.is('fn')&&c.is('main',1)))throw unsupported('Rust const function context','only actual const predicate declarations and the ordinary main are admitted',span(start,c.peek()));\n      if(diagnosticAttributes.length&&!(c.is('const')&&c.is('fn',1)))throw unsupported('Rust const diagnostic attribute attachment','the supported diagnostic prefix must belong to an actual const function',span(c.tokens[firstAttributeIndex],c.peek()));\n      if(this.constFunctionModel&&c.is('const')&&c.is('fn',1)){\n        const constKeywordIndex=c.index;\n        const keyword=c.next();\n        const declaration=this.fn(path,keyword);\n        if(diagnosticAttributes.length)declaration.sourceDiagnosticAttributes=createRustDiagnosticAttributeFacet(this.source,c.tokens,firstAttributeIndex,constKeywordIndex,declaration,path);\n        items.push(declaration);\n        continue;\n      }\n      if (c.is('mod')) {\n        c.next();\n        const name = c.identifier('mod').value;\n        if (c.is(';')) throw unsupported('out-of-line module', 'the program must be a single file', span(start, c.peek()));\n        c.expect('{', 'mod');\n        const module = { k: 'module', name, items: [], span: span(start, c.peek()) };\n        this.origins.declaration(name, path, { k: 'module' });\n        items.push(module);\n        this.items(root, module.items, [...path, name], () => c.is('}'));\n        c.expect('}', 'mod');\n        continue;\n      }\n      if (path.length === 0 && c.is('extern') && c.is('crate', 1) && c.is('alloc', 2) && c.is(';', 3)) {\n        if(this.typeNamespaceModel)throw unsupported('Rust type namespace imports','external crate declarations require a separate source binding proof',span(start,start));\n        if(this.localValueStateModel)throw unsupported('Rust owned local state','external crate declarations require a separate namespace interpretation');\n        const key = [...path, 'alloc'].join('.');\n        if (this.crateDeclarations.has(key)) throw unsupported('extern crate alloc', 'each source crate declaration must be unique in its module', span(start, start));\n        this.crateDeclarations.add(key);\n        for (let index = 0; index < 4; index += 1) c.next();\n        this.origins.declaration('alloc', path, { k: 'externalCrate' });\n        continue;\n      }\n      if (c.is('use')) {\n        this.use(path);\n        continue;\n      }\n      if (c.is('enum')) {\n        items.push(this.enumItem(path,derivations));\n        continue;\n      }\n      if (c.is('fn') || c.is('const')) {\n        if (c.is('fn') && c.is('main', 1) && path.length === 0) {\n          if(this.pureUnitCallModel&&this.emptyOptionMainSeen)throw unsupported('Rust pure Unit-call source','the complete source must have one owned main declaration',span(start,c.peek()));\n          if(this.constFunctionModel&&this.emptyOptionMainSeen)throw unsupported('Rust const function source','the complete source must have one ordinary main declaration',span(start,c.peek()));\n          if(this.emptyOptionSourceModel && this.emptyOptionMainSeen) throw unsupported('Rust empty option source', 'the complete source must have one owned main declaration', span(start,c.peek()));\n          this.emptyOptionMainSeen=true;\n          root.main = this.main();\n          continue;\n        }\n        items.push(c.is('fn') ? this.fn(path) : this.constItem(path));\n        continue;\n      }\n      if (start.kind === 'identifier' && RESERVED_ITEMS.has(start.value)) {\n        throw unsupported(`Rust ${start.value} item`, `${start.value} items are outside the portable core`, span(start, start));\n      }\n      if (c.atEnd()) throw new TranslationError('syntax', `module ${path.at(-1)} is not closed`, start);\n      throw this.fail('expected a Rust item');\n    }\n  }",
+    "ownerContexts": [
+      "class RustParser {"
+    ]
+  },
+  {
+    "id": "translation.function-source-diagnostic-attribute-facet",
+    "source": "rust/src/translation/surface.rs",
+    "name": "SFn::source_diagnostic_attributes",
+    "inventoryName": "function source diagnostic attribute facet",
+    "sourceText": "pub source_diagnostic_attributes: Option<Box<serde_json::Value>>,",
+    "ownerContexts": [
+      "pub struct SFn {"
+    ]
+  },
+  {
+    "id": "translation.function-source-diagnostic-attribute-facet",
+    "source": "rust/src/translation/ir/declarations.rs",
+    "name": "FnDecl::source_diagnostic_attributes",
+    "inventoryName": "function source diagnostic attribute facet",
+    "sourceText": "pub source_diagnostic_attributes: Option<serde_json::Value>,",
+    "ownerContexts": [
+      "pub struct FnDecl {"
+    ]
+  },
+  {
+    "id": "repository.fourth-typed-schema-projection-extension",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS",
+    "inventoryName": "fourth typed schema projection extension",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS = {\n  expressionProjections: {\n    optionalTypeOf: {construct: 'typeOf', fields: [['arg', 'expression', 'arg']]},\n  },\n};"
+  },
+  {
+    "id": "repository.fourth-typed-schema-extension-scope",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-policy.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSION_SCOPE",
+    "inventoryName": "fourth typed schema extension scope",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSION_SCOPE = 'Fourth append-only optional type query projection source closure only; no native execution, raw producer replacement or whole-language coverage claim.';"
+  },
+  {
+    "id": "repository.third-typed-schema-predecessor-receipt-digest",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT",
+    "inventoryName": "third typed schema predecessor receipt digest",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT = '7ec40c9f63e4ea4bd266387a624dd4d5315a41f8a544428eae17e8e2eb97cde9';"
+  },
+  {
+    "id": "repository.fourth-typed-schema-author-source-inventory",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES",
+    "inventoryName": "fourth typed schema author source inventory",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES = Object.freeze([\n  'experiments/original-link-complete-table-projection/raw-schema-fourth-extension-policy.mjs',\n  'experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs',\n  'js/scripts/extend-typed-program-schema-fourth-stage.mjs',\n]);"
+  },
+  {
+    "id": "repository.fourth-typed-schema-author-command",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "ORIGINAL_LINK_RAW_SCHEMA_FOURTH_COMMAND",
+    "inventoryName": "fourth typed schema author command",
+    "sourceText": "export const ORIGINAL_LINK_RAW_SCHEMA_FOURTH_COMMAND = 'node js/scripts/extend-typed-program-schema-fourth-stage.mjs';"
+  },
+  {
+    "id": "repository.read-fourth-typed-schema-source-context",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "readOriginalLinkRawSchemaFourthContext",
+    "inventoryName": "read fourth typed schema source context",
+    "sourceText": "export function readOriginalLinkRawSchemaFourthContext(read = readFileSync) {\n  const files = {receipt: 'raw-schema-source-closure', first: 'raw-schema-extension-closure',\n    second: 'raw-schema-second-extension-closure', third: 'raw-schema-third-extension-closure'};\n  const bytes = Object.fromEntries(Object.entries(files).map(([key, name]) => [key, read(new URL('./data/' + name + '.lino', import.meta.url))]));\n  return {\n    ...Object.fromEntries(Object.entries(bytes).map(([key, value]) => [key, readStructuredDataLino(value.toString('utf8'))])),\n    thirdBytes: bytes.third,\n    historicalSources: readOriginalLinkRawHistoricalSources(read(new URL('./raw-native-observations.mjs', import.meta.url)).toString('utf8')),\n    thirdSources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, read(new URL(file, root))])),\n  };\n}"
+  },
+  {
+    "id": "repository.verify-fourth-typed-schema-source-closure",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "verifyOriginalLinkRawSchemaFourthExtensionClosure",
+    "inventoryName": "verify fourth typed schema source closure",
+    "sourceText": "export function verifyOriginalLinkRawSchemaFourthExtensionClosure(input, currentBytes, fourth, authoredSources) {\n  const {receipt, first, second, third, thirdBytes, historicalSources, thirdSources} = input;\n  assert.deepEqual(Object.keys(fourth), ['version', 'predecessorReceiptSha256', 'previous', 'current',\n    'consumedSchemaProperties', 'appendedSchemaEntries', 'authoring', 'scope']);\n  assert.equal(fourth.version, 1);\n  assert.equal(fourth.predecessorReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT);\n  assert.ok(Buffer.isBuffer(thirdBytes));\n  assert.equal(sha256(thirdBytes), ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT);\n  assert.deepEqual(readStructuredDataLino(thirdBytes.toString('utf8')), third);\n  assert.deepEqual(Object.keys(fourth.previous), ['file', 'bytes', 'sha256', 'source']);\n  assert.equal(typeof fourth.previous.source, 'string');\n  assert.ok(fourth.previous.source.isWellFormed());\n  const before = Buffer.from(fourth.previous.source, 'utf8');\n  assert.equal(fourth.previous.file, third.current.file);\n  assert.equal(fourth.previous.bytes, third.current.bytes);\n  assert.equal(fourth.previous.bytes, before.length);\n  assert.equal(fourth.previous.sha256, third.current.sha256);\n  assert.equal(fourth.previous.sha256, sha256(before));\n  const previous = verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, first, before,\n    historicalSources, second, third, thirdSources);\n  assert.deepEqual(fourth.appendedSchemaEntries, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS);\n  assert.deepEqual(fourth.consumedSchemaProperties, [...ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES]);\n  assert.deepEqual(Object.keys(fourth.current), ['file', 'bytes', 'sha256']);\n  assert.equal(fourth.current.file, third.current.file);\n  assert.ok(Buffer.isBuffer(currentBytes));\n  assert.equal(fourth.current.bytes, currentBytes.length);\n  assert.equal(fourth.current.sha256, sha256(currentBytes));\n  const beforeSchema = readStructuredDataLino(fourth.previous.source), afterSchema = readStructuredDataLino(currentBytes.toString('utf8'));\n  compareOriginalLinkRawSchemaExtension(beforeSchema, afterSchema, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS);\n  for (const property of ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES) assert.deepEqual(afterSchema[property], beforeSchema[property]);\n  assert.deepEqual(Object.keys(fourth.authoring), ['command', 'sourceFiles']);\n  assert.equal(fourth.authoring.command, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_COMMAND);\n  assert.deepEqual(Object.keys(authoredSources), [...ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES]);\n  assert.deepEqual(fourth.authoring.sourceFiles.map(row => row.file), [...ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES]);\n  for (const row of fourth.authoring.sourceFiles) {\n    assert.deepEqual(Object.keys(row), ['file', 'bytes', 'sha256']);\n    const bytes = authoredSources[row.file];\n    assert.ok(Buffer.isBuffer(bytes));\n    assert.equal(row.bytes, bytes.length);\n    assert.equal(row.sha256, sha256(bytes));\n  }\n  assert.equal(fourth.scope, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSION_SCOPE);\n  return {...previous, sha256: fourth.current.sha256, fourthPredecessorSha256: fourth.previous.sha256,\n    thirdExtensionReceiptSha256: fourth.predecessorReceiptSha256,\n    appendedFourthSchemaEntries: fourth.appendedSchemaEntries};\n}"
+  },
+  {
+    "id": "repository.extend-fourth-typed-schema-source-stage",
+    "source": "js/scripts/extend-typed-program-schema-fourth-stage.mjs",
+    "name": "extendTypedProgramSchemaFourthStage",
+    "inventoryName": "extend fourth typed schema source stage",
+    "sourceText": "export function extendTypedProgramSchemaFourthStage({check = false} = {}) {\n  const input = readOriginalLinkRawSchemaFourthContext();\n  const retainedFiles = ['raw-schema-source-closure', 'raw-schema-extension-closure', 'raw-schema-second-extension-closure',\n    'raw-schema-third-extension-closure', 'raw-schema-second-extension-provenance', 'raw-schema-second-extension-provenance-0112b8e3']\n    .map(name => new URL('data/' + name + '.lino', base));\n  const retainedBytes = retainedFiles.map(file => readFileSync(file));\n  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));\n  const oracle = readFileSync(oracleFile, 'utf8'), actualBytes = readFileSync(schemaFile);\n  let fourth, fourthBytes, currentBytes = actualBytes;\n  if (existsSync(fourthFile)) {\n    fourthBytes = readFileSync(fourthFile); fourth = readStructuredDataLino(fourthBytes.toString('utf8'));\n    verifyOriginalLinkRawSchemaFourthExtensionClosure(input, actualBytes, fourth, authoredSources);\n    checkProjectData(fourthFile, fourth);\n  } else {\n    assert.equal(check, false, 'the fourth schema successor has not been authored');\n    assert.equal(sha256(input.thirdBytes), ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT);\n    verifyOriginalLinkRawSchemaThirdExtensionClosure(input.receipt, input.first, actualBytes,\n      input.historicalSources, input.second, input.third, input.thirdSources);\n    const before = readStructuredDataLino(actualBytes.toString('utf8')), after = readStructuredDataLino(actualBytes.toString('utf8'));\n    for (const [map, entries] of Object.entries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS)) {\n      assert.ok(Object.hasOwn(after, map), 'the declared append uses an existing map');\n      for (const [key, entry] of Object.entries(entries)) {\n        assert.equal(Object.hasOwn(after[map], key), false, 'the immutable successor cannot redefine an existing key');\n        after[map][key] = entry;\n      }\n    }\n    compareOriginalLinkRawSchemaExtension(before, after, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS);\n    currentBytes = Buffer.from(serializeProjectData(after, schemaFile));\n    fourth = {version: 1, predecessorReceiptSha256: ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT,\n      previous: {...input.third.current, source: actualBytes.toString('utf8')},\n      current: {file: ORIGINAL_LINK_RAW_SCHEMA_FILE, bytes: currentBytes.length, sha256: sha256(currentBytes)},\n      consumedSchemaProperties: [...ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES], appendedSchemaEntries: ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS,\n      authoring: {command: ORIGINAL_LINK_RAW_SCHEMA_FOURTH_COMMAND, sourceFiles: ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES\n        .map(file => ({file, bytes: authoredSources[file].length, sha256: sha256(authoredSources[file])}))},\n      scope: ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSION_SCOPE};\n    verifyOriginalLinkRawSchemaFourthExtensionClosure(input, currentBytes, fourth, authoredSources);\n    fourthBytes = Buffer.from(serializeProjectData(fourth, fourthFile));\n  }\n  const pattern = /^const schemaFourthExtensionReceiptSha256 = '(?:PENDING|[0-9a-f]{64})';$/mu;\n  assert.equal([...oracle.matchAll(new RegExp(pattern.source, 'gmu'))].length, 1, 'one separate fourth-receipt pin is required');\n  const previousPin = oracle.match(pattern)[0], pin = \"const schemaFourthExtensionReceiptSha256 = '\" + sha256(fourthBytes) + \"';\";\n  if (check || existsSync(fourthFile)) assert.equal(previousPin, pin, 'the immutable whole fourth receipt pin remains exact');\n  else {\n    const changedOracle = oracle.replace(pattern, pin);\n    assert.equal(changedOracle.replace(pin, previousPin), oracle, 'only the separate fourth receipt pin may change');\n    let created = false;\n    try {\n      writeFileSync(fourthFile, fourthBytes, {flag: 'wx'}); created = true;\n      writeFileSync(schemaFile, currentBytes); writeFileSync(oracleFile, changedOracle);\n    } catch (error) {\n      if (created) {writeFileSync(schemaFile, actualBytes); writeFileSync(oracleFile, oracle); unlinkSync(fourthFile);}\n      throw error;\n    }\n  }\n  retainedFiles.forEach((file, index) => assert.deepEqual(readFileSync(file), retainedBytes[index]));\n  return {schemaSha256: fourth.current.sha256, predecessorSchemaSha256: fourth.previous.sha256,\n    predecessorReceiptSha256: fourth.predecessorReceiptSha256, appendedProjectionKeys: 1,\n    preservedProducerBindings: Object.keys(input.historicalSources).length, sourceClosureOnly: true, check};\n}"
+  },
+  {
+    "id": "repository.check-archived-third-typed-schema-stage",
+    "source": "js/scripts/extend-typed-program-schema-fourth-stage.mjs",
+    "name": "checkTypedProgramSchemaThirdArchive",
+    "inventoryName": "check archived third typed schema stage",
+    "sourceText": "export function checkTypedProgramSchemaThirdArchive() {\n  extendTypedProgramSchemaFourthStage({check: true});\n  const input = readOriginalLinkRawSchemaFourthContext();\n  const fourth = readStructuredDataLino(readFileSync(fourthFile, 'utf8'));\n  verifyOriginalLinkRawSchemaThirdExtensionClosure(input.receipt, input.first, Buffer.from(fourth.previous.source, 'utf8'),\n    input.historicalSources, input.second, input.third, input.thirdSources);\n  return {schemaSha256: input.third.current.sha256, predecessorSchemaSha256: input.third.previous.sha256,\n    predecessorReceiptSha256: input.third.predecessorReceiptSha256,\n    appendedProjectionKeys: Object.keys(input.third.appendedSchemaEntries.expressionProjections).length,\n    appendedAlternativeKeys: Object.keys(input.third.appendedSchemaEntries.expressionProjectionAlternatives).length,\n    preservedProducerBindings: Object.keys(input.historicalSources).length, sourceClosureOnly: true, check: true};\n}"
+  },
+  {
+    "id": "repository.read-proof-assistant-compiler-cache-identity",
+    "source": "scripts/ci-rocq-toolchain-cache.mjs",
+    "name": "readRocqToolchainCache",
+    "inventoryName": "read proof assistant compiler cache identity",
+    "sourceText": "export function readRocqToolchainCache({env = process.env, platform = process.platform,\n  architecture = process.arch, run = spawnSync, files = filesystem} = {}) {\n  assert.equal(env.CI, 'true', 'Rocq toolchain caching requires CI');\n  assert.equal(env.GITHUB_ACTIONS, 'true', 'Rocq toolchain caching requires GitHub Actions');\n  assert.equal(platform, 'linux', 'the current Rocq cache layout belongs to Linux jobs');\n  assert.ok(env.GITHUB_WORKSPACE && !/[\\r\\n\\0]/u.test(env.GITHUB_WORKSPACE), 'a cache has one workspace path');\n  const workspace = files.realpathSync(env.GITHUB_WORKSPACE), expected = path.join(workspace, '_opam');\n  const execute = (command, args) => {\n    const result = run(command, args, {env, encoding: 'utf8', timeout: 10000, maxBuffer: 128 * 1024});\n    if (result.error) throw result.error;\n    assert.equal(result.status, 0, command + ' ' + args.join(' ') + ': ' + (result.stderr ?? ''));\n    const output = (result.stdout ?? '').trim();\n    assert.ok(output && !output.includes('\\0'), 'a toolchain identity query returns actual text');\n    return output;\n  };\n  const prefix = execute('opam', ['var', 'prefix']);\n  assert.equal(prefix, expected, 'only the workspace local _opam switch may be cached');\n  const stat = files.lstatSync(prefix);\n  assert.ok(stat.isDirectory() && !stat.isSymbolicLink(), 'a cached switch is an owned directory');\n  assert.equal(files.realpathSync(prefix), expected, 'a cached switch cannot escape through a symlink');\n  const opamVersion = execute('opam', ['--version']);\n  const compilerVersion = execute('opam', ['exec', '--', 'ocamlc', '-version']);\n  assert.match(compilerVersion, /^5\\.4\\.[0-9]+(?:\\+[^\\s]+)?$/u, 'the resolved compiler belongs to the requested 5.4 series');\n  const compilerConfiguration = execute('opam', ['exec', '--', 'ocamlc', '-config']);\n  const cCompiler = execute('opam', ['exec', '--', 'ocamlc', '-config-var', 'c_compiler']);\n  assert.match(cCompiler, /^[A-Za-z0-9_./+-]+$/u, 'the current layout reports one directly executable C compiler');\n  const cCompilerVersion = execute('opam', ['exec', '--', cCompiler, '--version']);\n  const operatingSystem = files.readFileSync('/etc/os-release', 'utf8');\n  assert.ok(operatingSystem.trim(), 'the actual operating system identity is present');\n  const identity = ['rocq-local-switch-v1', platform, architecture, operatingSystem, workspace, prefix,\n    opamVersion, compilerVersion, compilerConfiguration, cCompiler, cCompilerVersion, selectedPackages];\n  const key = 'rocq-local-switch-v1-' + createHash('sha256').update(JSON.stringify(identity)).digest('hex');\n  return {key, path: prefix, execute};\n}"
+  },
+  {
+    "id": "repository.verify-proof-assistant-compiler-cache-identity",
+    "source": "scripts/ci-rocq-toolchain-cache.mjs",
+    "name": "verifyRocqToolchainCache",
+    "inventoryName": "verify proof assistant compiler cache identity",
+    "sourceText": "export function verifyRocqToolchainCache(expectedKey, options) {\n  assert.match(expectedKey ?? '', /^rocq-local-switch-v1-[0-9a-f]{64}$/u, 'the pre-restore toolchain key is required');\n  const current = readRocqToolchainCache(options);\n  assert.equal(current.key, expectedKey, 'a restored toolchain must retain the exact compiler and platform identity');\n  const installedPackages = selectedPackages.map(([name, version]) =>\n    [name, version, current.execute('opam', ['var', name + ':version'])]);\n  for (const [name, expected, actual] of installedPackages) {\n    assert.equal(actual, expected, 'the installed ' + name + ' version is exact');\n  }\n  const version = current.execute('opam', ['exec', '--', 'rocq', '--version']);\n  assert.ok(version.split(/\\r?\\n/u).some(line => line.includes('Rocq') && /(?:^|[^0-9])9\\.3\\.0(?:[^0-9.]|$)/u.test(line)),\n    'the selected Rocq executable reports version 9.3.0');\n  return {key: current.key, path: current.path};\n}"
+  },
+  {
+    "id": "repository.select-proof-assistant-compiler-cache",
+    "source": "scripts/ci-rocq-toolchain-cache.mjs",
+    "name": "selectRocqToolchainCache",
+    "inventoryName": "select proof assistant compiler cache",
+    "sourceText": "export function selectRocqToolchainCache({mode = 'key', enabled = true, cacheHit = false, expectedKey, ...options} = {}) {\n  if (!enabled && !cacheHit) return {enabled: false};\n  try {\n    const current = mode === 'verify' ? verifyRocqToolchainCache(expectedKey, options) : readRocqToolchainCache(options);\n    return {enabled: true, key: current.key, path: current.path};\n  } catch (error) {\n    if (mode === 'verify' && cacheHit) throw error;\n    return {enabled: false, reason: error.message};\n  }\n}"
+  },
+  {
+    "id": "repository.execute-proof-assistant-compiler-identity-query",
+    "source": "scripts/ci-rocq-toolchain-cache.mjs",
+    "name": "readRocqToolchainCache::execute",
+    "inventoryName": "execute proof assistant compiler identity query",
+    "sourceText": "const execute = (command, args) => {\n    const result = run(command, args, {env, encoding: 'utf8', timeout: 10000, maxBuffer: 128 * 1024});\n    if (result.error) throw result.error;\n    assert.equal(result.status, 0, command + ' ' + args.join(' ') + ': ' + (result.stderr ?? ''));\n    const output = (result.stdout ?? '').trim();\n    assert.ok(output && !output.includes('\\0'), 'a toolchain identity query returns actual text');\n    return output;\n  };",
+    "ownerContexts": [
+      "export function readRocqToolchainCache({env = process.env, platform = process.platform,"
+    ]
+  },
+  {
+    "id": "repository.read-proof-assistant-compiler-cache-fixture",
+    "source": "js/tests/ci-rocq-toolchain-cache.test.js",
+    "name": "toolchainFixture",
+    "inventoryName": "read proof assistant compiler cache fixture",
+    "sourceText": "function toolchainFixture() {\n  const calls = [], identities = new Map([\n    ['var prefix', '/workspace/_opam'], ['--version', '2.5.1'], ['exec -- ocamlc -version', '5.4.0'],\n    ['exec -- ocamlc -config', 'version: 5.4.0\\nc_compiler: gcc\\narchitecture: amd64'],\n    ['exec -- ocamlc -config-var c_compiler', 'gcc'], ['exec -- gcc --version', 'gcc (Ubuntu) 14.2.0'],\n    ['var rocq-core:version', '9.3.0'], ['var rocq-stdlib:version', '9.2.0'], ['var rocq-prover:version', 'meta.1'],\n    ['exec -- rocq --version', 'The Rocq Prover, version 9.3.0\\ncompiled with OCaml 5.4.0'],\n  ]);\n  const options = {env: {CI: 'true', GITHUB_ACTIONS: 'true', GITHUB_WORKSPACE: '/workspace'},\n    platform: 'linux', architecture: 'x64', files: {\n      realpathSync: value => value, lstatSync: () => ({isDirectory: () => true, isSymbolicLink: () => false}),\n      readFileSync: filename => {assert.equal(filename, '/etc/os-release'); return 'ID=ubuntu\\nVERSION_ID=\"24.04\"\\n';},\n    }, run: (command, args, limits) => {\n      assert.equal(command, 'opam'); assert.equal(limits.timeout, 10000); assert.equal(limits.maxBuffer, 128 * 1024);\n      calls.push(args.join(' ')); assert.ok(identities.has(args.join(' ')), 'only bounded identity queries execute');\n      return {status: 0, stdout: identities.get(args.join(' ')) + '\\n'};\n    }};\n  return {options, identities, calls};\n}"
+  },
+  {
+    "id": "repository.read-diagnostic-token-fixture-columns",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "columns",
+    "inventoryName": "read diagnostic token fixture columns",
+    "sourceText": "const columns = source => {\n  const {tokens, comments} = tokenize(source, 'Rust');\n  return {tokens, comments, kinds: tokens.map(token => token.kind), values: tokens.map(token => token.value)};\n};"
+  },
+  {
+    "id": "repository.read-complete-diagnostic-prefix-fixture-columns",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private complete diagnostic prefix consumes every ordered legacy attribute and final simple visibility token::compact",
+    "inventoryName": "read complete diagnostic prefix fixture columns",
+    "sourceText": "const compact = source => {\n    const input = columns(source), tokens = input.tokens.filter(token => token.kind !== 'eof');\n    return {kinds: tokens.map(token => token.kind), values: tokens.map(token => token.value)};\n  };",
+    "ownerContexts": [
+      "test('private complete diagnostic prefix consumes every ordered legacy attribute and final simple visibility token', () => {"
+    ]
+  },
+  {
+    "id": "repository.invoke-original-diagnostic-attribute-output",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private complete diagnostic module retains every owner and decision through both checked Links archives::invoke",
+    "inventoryName": "invoke original diagnostic attribute output",
+    "sourceText": "const invoke = input => Array.from(context[mappings[0].target](input.kinds, input.values, input.start));",
+    "ownerContexts": [
+      "test('private complete diagnostic module retains every owner and decision through both checked Links archives', async () => {"
+    ]
+  },
+  {
+    "id": "repository.observe-original-diagnostic-predicate",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "observe",
+    "inventoryName": "observe original diagnostic predicate",
+    "sourceText": "const observe=(source,name,args)=>runInNewContext(source+'\\n'+name+'(...'+JSON.stringify(args)+');',{}, {timeout:1000});"
+  },
+  {
+    "id": "repository.recheck-complete-diagnostic-predicate-archives",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "archiveReplays",
+    "inventoryName": "recheck complete diagnostic predicate archives",
+    "sourceText": "function archiveReplays(program){\n  const packet=encodeTypedProgramLinks(program);\n  return [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]\n    .map(network=>recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true}));\n}"
+  },
+  {
+    "id": "repository.check-original-rust-attribute-refusal",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "expectOriginalAttributeRefusal",
+    "inventoryName": "check original rust attribute refusal",
+    "sourceText": "function expectOriginalAttributeRefusal(source,model){\n  assert.throws(()=>parseRust(source,{constFunctionModel:model}),error=>{\n    assert.equal(error.kind,'unsupported');\n    assert.equal(error.reason,'Rust const function attribute: only the actual zero-argument must_use function attribute is admitted');\n    assert.equal(error.span,null);return true;\n  });\n}"
+  },
+  {
+    "id": "repository.read-fourth-typed-schema-source-fixture",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "fixture",
+    "inventoryName": "read fourth typed schema source fixture",
+    "sourceText": "function fixture() {\n  return {input: readOriginalLinkRawSchemaFourthContext(),\n    bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),\n    fourth: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url), 'utf8')),\n    sources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]))};\n}"
+  },
+  {
+    "id": "repository.verify-fourth-typed-schema-fixture",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "verify",
+    "inventoryName": "verify fourth typed schema fixture",
+    "sourceText": "const verify = value => verifyOriginalLinkRawSchemaFourthExtensionClosure(value.input, value.bytes, value.fourth, value.sources);"
+  },
+  {
+    "id": "repository.verify-retained-third-schema-fixture",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "the fourth schema successor authenticates exact third bytes all predecessors and the sole optional query plan::verifyThird",
+    "inventoryName": "verify retained third schema fixture",
+    "sourceText": "const verifyThird = bytes => verifyOriginalLinkRawSchemaThirdExtensionClosure(value.input.receipt, value.input.first,\n    bytes, value.input.historicalSources, value.input.second, value.input.third, value.input.thirdSources);",
+    "ownerContexts": [
+      "test('the fourth schema successor authenticates exact third bytes all predecessors and the sole optional query plan', () => {"
+    ]
+  },
+  {
+    "id": "repository.save-optional-type-query-archive-forms",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "forms",
+    "inventoryName": "save optional type query archive forms",
+    "sourceText": "const forms = packet => [['text', LinkNetwork.fromLino(packet.network.toLino())],\n  ['binary', decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]];"
+  },
+  {
+    "id": "repository.observe-optional-type-query-program",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "observe",
+    "inventoryName": "observe optional type query program",
+    "sourceText": "function observe(source) {\n  const output = [], context = {console: {log: (...values) => output.push(values.map(String).join(' '))}};\n  let failure = null;\n  try { vm.runInNewContext(source, context, {timeout: 1000}); }\n  catch (error) { failure = {name: error.name, message: error.message}; }\n  return {output, failure};\n}"
+  },
+  {
+    "id": "repository.recheck-saved-optional-type-query-programs",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "savedPrograms",
+    "inventoryName": "recheck saved optional type query programs",
+    "sourceText": "function savedPrograms(source) {\n  const checked = checkProgram(parseJavaScript(source, {referenceSemantics: false}));\n  const packet = encodeTypedProgramLinks(checked);\n  return [checked, ...forms(packet).map(([format, network]) => {\n    const restored = decodeTypedProgramLinks(network, packet.root);\n    const before = structuredClone(restored);\n    const rechecked = recheckLinkedTypedProgram(restored, {wholeProgram: true});\n    assert.deepEqual(restored, before, format + ': rechecking does not normalize input data');\n    return rechecked;\n  })];\n}"
+  },
+  {
+    "id": "repository.observe-javascript-diagnostic-source-contract",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_oracle",
+    "inventoryName": "observe javascript diagnostic source contract",
+    "sourceText": "fn diagnostic_oracle(source: &str, model: &str, name: &str, inputs: &Value) -> Value {\n    let script = r#\"\nimport vm from 'node:vm';\nimport {parseRust,parseRustTokenStream} from './js/src/translation/rust.js';\nimport {tokenize} from './js/src/translation/lexer.js';\nimport {checkProgram} from './js/src/translation/check.js';\nimport {emitJavaScript} from './js/src/translation/emit-javascript.js';\nimport {emitRust} from './js/src/translation/emit-rust.js';\nimport {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-program-links.js';\nimport {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';\nimport {LinkNetwork} from './js/src/network.js';\nimport {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';\nconst source=process.argv[1],options={constFunctionModel:process.argv[2]},surface=parseRust(source,options),program=checkProgram(surface);\nconst name=process.argv[3],inputs=JSON.parse(process.argv[4]);\nconst observe=program=>{const context={};vm.runInNewContext(emitJavaScript(program).text,context,{timeout:1000});return inputs.map(args=>context[name](...args));};\nconst emission=emitRust(program),packet=encodeTypedProgramLinks(program),archives=[];\nfor(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){\n const replay=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});\n archives.push({rust:emitRust(replay).text,javascript:emitJavaScript(replay).text,values:observe(replay)});\n}\nlet tokenOnly;\ntry{tokenOnly={surface:parseRustTokenStream(tokenize(source,'Rust').tokens,options)};}catch(error){tokenOnly={kind:error.kind,reason:error.reason};}\nconsole.log(JSON.stringify({surface,rust:emission.text,definitions:emission.definitions,javascript:emitJavaScript(program).text,values:observe(program),archives,tokenOnly}));\n\"#;\n    let output = run(Command::new(\"node\")\n        .current_dir(\n            std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n                .parent()\n                .unwrap(),\n        )\n        .args([\n            \"--input-type=module\",\n            \"-e\",\n            script,\n            source,\n            model,\n            name,\n            &inputs.to_string(),\n        ]));\n    assert!(output.ok, \"{}\", output.stderr);\n    serde_json::from_str(&output.stdout).unwrap()\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-source-program",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_program",
+    "inventoryName": "check native diagnostic source program",
+    "sourceText": "fn diagnostic_program(\n    source: &str,\n    model: &str,\n    name: &str,\n    inputs: &Value,\n    values: &Value,\n) -> (Program, Value) {\n    let surface = parse_rust_with_const_function_model(source, model, \"\").unwrap();\n    let program = check_program(&surface).unwrap();\n    let oracle = diagnostic_oracle(source, model, name, inputs);\n    assert_eq!(serde_json::to_value(&surface).unwrap(), oracle[\"surface\"]);\n    let rust = emit_rust(&program).unwrap();\n    let javascript = emit_javascript(&program).unwrap().text;\n    assert_eq!(rust.text, oracle[\"rust\"].as_str().unwrap());\n    assert_eq!(\n        serde_json::to_value(&rust.definitions).unwrap(),\n        oracle[\"definitions\"]\n    );\n    assert_eq!(javascript, oracle[\"javascript\"].as_str().unwrap());\n    assert_eq!(&oracle[\"values\"], values);\n    for replay in oracle[\"archives\"].as_array().unwrap() {\n        assert_eq!(replay[\"rust\"].as_str().unwrap(), rust.text);\n        assert_eq!(replay[\"javascript\"].as_str().unwrap(), javascript);\n        assert_eq!(&replay[\"values\"], values);\n    }\n    let packet = encode_typed_program_links(&program).unwrap();\n    for network in archives(&packet) {\n        let replay = decode_typed_program_links(&network, packet.root).unwrap();\n        assert_eq!(\n            replay, program,\n            \"every source owner and facet survives both codecs\"\n        );\n        assert_eq!(emit_rust(&replay).unwrap().text, rust.text);\n        assert_eq!(emit_javascript(&replay).unwrap().text, javascript);\n    }\n    (program, oracle)\n}"
+  },
+  {
+    "id": "repository.read-native-diagnostic-source-refusal",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_refusal",
+    "inventoryName": "read native diagnostic source refusal",
+    "sourceText": "fn diagnostic_refusal(source: &str, model: &str, checked: bool) -> Value {\n    let parsed = parse_rust_with_const_function_model(source, model, \"\");\n    let error = if checked {\n        parsed\n            .and_then(|surface| check_program(&surface).map(|_| ()))\n            .unwrap_err()\n    } else {\n        parsed.map(|_| ()).unwrap_err()\n    };\n    let actual = json!({\"kind\":error.kind.as_str(),\"reason\":error.reason,\"span\":error.span});\n    let script = r#\"\nimport {parseRust} from './js/src/translation/rust.js';\nimport {checkProgram} from './js/src/translation/check.js';\nlet error;try{const surface=parseRust(process.argv[1],{constFunctionModel:process.argv[2]});if(process.argv[3]==='checked')checkProgram(surface);}catch(caught){error=caught;}\nif(!error)throw new Error('the complete unchanged source must refuse');\nconsole.log(JSON.stringify({kind:error.kind,reason:error.reason,span:error.span??null}));\n\"#;\n    let output = run(Command::new(\"node\")\n        .current_dir(\n            std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n                .parent()\n                .unwrap(),\n        )\n        .args([\n            \"--input-type=module\",\n            \"-e\",\n            script,\n            source,\n            model,\n            if checked { \"checked\" } else { \"parsed\" },\n        ]));\n    assert!(output.ok, \"{}\", output.stderr);\n    let oracle: Value = serde_json::from_str(&output.stdout).unwrap();\n    assert_eq!(actual, oracle);\n    actual\n}"
+  },
+  {
+    "id": "repository.check-diagnostic-token-occurrence-positions",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private diagnostic token plan consumes actual outer occurrences with exact absolute token positions",
+    "inventoryName": "check diagnostic token occurrence positions",
+    "sourceText": "test('private diagnostic token plan consumes actual outer occurrences with exact absolute token positions', () => {\n  for (const [source, start, expected] of positive) {\n    const input = columns(source), before = structuredClone(input);\n    assert.deepEqual(planRustDiagnosticAttribute(input.kinds, input.values, start), expected);\n    assert.equal(input.tokens[expected[5]].kind, 'string');\n    assert.equal(source.slice(input.tokens[start].start, input.tokens[expected[0] - 1].end).at(-1), ']');\n    assert.deepEqual(input, before);\n  }\n  const input = columns(positive[2][0]);\n  assert.equal(input.tokens[0].start, 9, 'the non-BMP comment contributes two UTF16 code units');\n  assert.equal(input.tokens[0].start, positive[2][0].indexOf('#'), 'actual UTF16 source offsets remain lexer-owned');\n  assert.equal(input.comments.length, 2);\n  const unicode = columns(positive[4][0]);\n  assert.equal(unicode.tokens[10].value, '😀 é');\n  assert.equal(unicode.tokens[10].value.length, 4);\n  assert.equal(unicode.tokens[10].raw, '\"\\\\u{1F600} é\"');\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-token-unknown-and-malformed-forms",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private diagnostic token plan refuses unknown duplicate semantic macro and malformed forms",
+    "inventoryName": "check diagnostic token unknown and malformed forms",
+    "sourceText": "test('private diagnostic token plan refuses unknown duplicate semantic macro and malformed forms', () => {\n  for (const source of negative) {\n    const input = columns(source);\n    assert.deepEqual(planRustDiagnosticAttribute(input.kinds, input.values, 0), [-1], source);\n  }\n  // Token recognition does not grant the pending attribute to a following\n  // item; the later parser/facet authority must reject these attachments.\n  for (const following of ['fn main(){}', 'mod nested{}', 'enum Other{One}', 'const X:bool=true;']) {\n    const input = columns(basic + following);\n    assert.deepEqual(planRustDiagnosticAttribute(input.kinds, input.values, 0), [13, 2, 4, 6, 8, 10]);\n  }\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-token-selected-column-mutations",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private diagnostic token plan fails closed on selected kind value hole and index mutations",
+    "inventoryName": "check diagnostic token selected column mutations",
+    "sourceText": "test('private diagnostic token plan fails closed on selected kind value hole and index mutations', () => {\n  const input = columns(basic), kinds = input.kinds, values = input.values;\n  for (let at = 0; at < 13; at += 1) {\n    const changedKinds = [...kinds]; changedKinds[at] = kinds[at] === 'punct' ? 'identifier' : 'punct';\n    assert.deepEqual(planRustDiagnosticAttribute(changedKinds, values, 0), [-1]);\n    const holeKinds = [...kinds]; delete holeKinds[at];\n    assert.deepEqual(planRustDiagnosticAttribute(holeKinds, values, 0), [-1]);\n    const holeValues = [...values]; delete holeValues[at];\n    assert.deepEqual(planRustDiagnosticAttribute(kinds, holeValues, 0), [-1]);\n    if (at !== 10) {\n      const changedValues = [...values]; changedValues[at] = 'different';\n      assert.deepEqual(planRustDiagnosticAttribute(kinds, changedValues, 0), [-1]);\n    }\n  }\n  for (const payload of [undefined, null, 0, true, {}, new String('why')]) {\n    const changed = [...values]; changed[10] = payload;\n    assert.deepEqual(planRustDiagnosticAttribute(kinds, changed, 0), [-1]);\n  }\n  for (const start of [-1, 0.5, NaN, Infinity, -Infinity, 9007199254740992, kinds.length, true, '0']) {\n    assert.deepEqual(planRustDiagnosticAttribute(kinds, values, start), [-1]);\n  }\n  assert.deepEqual(planRustDiagnosticAttribute(kinds, values, -0), [13, 2, 4, 6, 8, 10]);\n  for (let length = 0; length < 13; length += 1) assert.deepEqual(planRustDiagnosticAttribute(kinds.slice(0, length), values.slice(0, length), 0), [-1]);\n  assert.deepEqual(planRustDiagnosticAttribute(kinds.slice(1), values, 0), [-1]);\n  assert.deepEqual(planRustDiagnosticAttribute(kinds, values.slice(1), 0), [-1]);\n  assert.equal(readFileSync(new URL('../src/translation/rust-diagnostic-attribute-rules.js', import.meta.url), 'utf8'), readRustDiagnosticAttributeRuleSource());\n  for (const value of [0, -0, 1, 9007199254740991]) assert.equal(acceptRustDiagnosticAttributeOffset(value), true);\n  for (const value of [-1, 0.5, NaN, Infinity, -Infinity, 9007199254740992, null, true, '0']) assert.equal(acceptRustDiagnosticAttributeOffset(value), false);\n})"
+  },
+  {
+    "id": "repository.check-complete-ordered-diagnostic-prefix",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private complete diagnostic prefix consumes every ordered legacy attribute and final simple visibility token",
+    "inventoryName": "check complete ordered diagnostic prefix",
+    "sourceText": "test('private complete diagnostic prefix consumes every ordered legacy attribute and final simple visibility token', () => {\n  const compact = source => {\n    const input = columns(source), tokens = input.tokens.filter(token => token.kind !== 'eof');\n    return {kinds: tokens.map(token => token.kind), values: tokens.map(token => token.value)};\n  };\n  for (const [source, expected] of [\n    [basic, [13, 1, 1, -1]], [basic + ' pub', [14, 1, 1, 13]],\n    ['#[must_use]' + basic, [17, 2, 1, -1]],\n    [basic + '#[must_use] pub', [18, 2, 1, 17]],\n    ['#[must_use]' + basic + '#[must_use] pub', [22, 3, 1, 21]],\n    [basic + basic, [26, 2, 2, -1]],\n    ['/* 😀 prefix */#[must_use]\\n' + basic + ' /* é comment */ pub', [18, 2, 1, 17]],\n  ]) {\n    const input = compact(source);\n    assert.deepEqual(planRustDiagnosticAttributePrefix(input.kinds, input.values), expected);\n  }\n  const legacy = compact('#[must_use]');\n  assert.equal(readRustMustUseAttributeEnd(legacy.kinds, legacy.values, 0), 4);\n  assert.deepEqual(planRustDiagnosticAttributePrefix(legacy.kinds, legacy.values), [-1], 'must_use-only source keeps its old path');\n  for (const source of ['', 'pub', '#[must_use] pub', 'pub ' + basic, basic + ' pub(crate)',\n    basic + ' pub pub', basic + ' fn wrong(){}', basic + ' const X:bool=true;', basic + '#[must_use()]',\n    basic + '#[cfg(anything)]', '#![must_use]' + basic, '#[must_use(reason=\"x\")]' + basic]) {\n    const input = compact(source);\n    assert.deepEqual(planRustDiagnosticAttributePrefix(input.kinds, input.values), [-1], source);\n  }\n  const eof = columns(basic);\n  assert.deepEqual(planRustDiagnosticAttributePrefix(eof.kinds, eof.values), [-1], 'EOF is not silently discarded from a facet token inventory');\n})"
+  },
+  {
+    "id": "repository.check-complete-diagnostic-rule-archive-translation",
+    "source": "js/tests/translation-rust-diagnostic-attributes.test.js",
+    "name": "private complete diagnostic module retains every owner and decision through both checked Links archives",
+    "inventoryName": "check complete diagnostic rule archive translation",
+    "sourceText": "test('private complete diagnostic module retains every owner and decision through both checked Links archives', async () => {\n  const prepared = await prepareRustDiagnosticAttributeTranslation();\n  assert.deepEqual(prepared.roots, ['acceptRustDiagnosticAttributeOffset', 'planRustDiagnosticAttribute',\n    'readRustMustUseAttributeEnd', 'planRustDiagnosticAttributePrefix']);\n  assert.deepEqual(prepared.programs.map(program => program.format), ['original', 'text', 'binary']);\n  for (const emission of [prepared.rust, ...prepared.programs.map(program => program.javascript)]) {\n    const before = Object.getOwnPropertyDescriptors(emission);\n    assert.equal(before.definitions.enumerable, false);\n    assert.equal(before.preludes.enumerable, false);\n    const data = readRustDiagnosticAttributeEmissionData(emission);\n    assert.deepEqual(Object.keys(data), [...Object.keys(emission), 'definitions', 'preludes']);\n    assert.strictEqual(data.definitions, emission.definitions);\n    assert.strictEqual(data.preludes, emission.preludes);\n    assert.deepEqual(readStructuredDataLino(structuredDataToLino(data)), data,\n      'source artifacts retain every actual emission field and complete non-enumerable part');\n    assert.deepEqual(Object.getOwnPropertyDescriptors(emission), before, 'artifact projection leaves the emitter contract intact');\n  }\n  const {DecoratorSet} = await import('../src/decorators.js');\n  const {readPortableSourceParameterStyles, readPortableSourceLintStyles} = await import('../scripts/portable-source-library-style.mjs');\n  const header = prepared.rust.text.split('\\n').find(line => line.startsWith('#![allow('));\n  assert.ok(header);\n  const raw = [header, ...prepared.rust.preludes, ...prepared.rust.definitions].join('\\n\\n');\n  const declarations = [...new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) (\\w+)\\b/gmu)].map(match => match[1]))];\n  const relocation = declarations.filter(name => raw.includes('crate::' + name))\n    .map(name => ({op: 'replace', field: 'source', from: 'crate::' + name, to: 'self::' + name}));\n  const relocated = new DecoratorSet([{id: 'diagnostic-owner-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: relocation}]).decorate('emitter', {format: 'Rust', source: raw}).source;\n  const publicNames = [...relocated.matchAll(/^pub fn (\\w+)\\(/gmu)].map(match => match[1]);\n  const reviewed = readPortableSourceLintStyles(readPortableSourceParameterStyles(relocated, {publicNames}).source).source;\n  const styled = readRustDiagnosticAttributeLibraryStyles(reviewed, tokenize);\n  assert.equal(styled.actions.length, 3, 'only the three complete typed array-read owners change');\n  const strings = /\\.unwrap_or_else\\(\\|\\| String::new\\(\\)\\)/gu, number = /\\.unwrap_or_else\\(\\|\\| -1f64\\)/gu;\n  assert.equal([...reviewed.matchAll(strings)].length, 37);\n  assert.equal([...reviewed.matchAll(number)].length, 1);\n  assert.equal(styled.source, reviewed.replace(strings, '.unwrap_or_default()').replace(number, '.unwrap_or(-1f64)'),\n    'all and only the actual String defaults and side-effect-free numeric constant fallbacks change');\n  const recorded = new DecoratorSet([{id: 'diagnostic-fallback-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: styled.actions}]);\n  assert.equal(recorded.decorate('emitter', {format: 'Rust', source: reviewed}).source, styled.source);\n  assert.deepEqual(readRustDiagnosticAttributeLibraryStyles(styled.source, tokenize), {source: styled.source, actions: []});\n  let inverse = styled.source;\n  for (const action of [...styled.actions].reverse()) {\n    assert.equal(inverse.split(action.to).length, 2);\n    inverse = inverse.replace(action.to, action.from);\n  }\n  assert.equal(inverse, reviewed, 'the full inverse retains every owner, runtime, declaration, token and ordering');\n  const opaque = '\\nconst NOTE:&str=r#\".unwrap_or_else(|| String::new()) .unwrap_or_else(|| -1f64)\"#;\\n';\n  const withOpaque = reviewed + opaque;\n  assert.equal(readRustDiagnosticAttributeLibraryStyles(withOpaque, tokenize).source, styled.source + opaque,\n    'raw literal contents do not become fallback syntax');\n  for (const counterfeit of [\n    'type String=Custom;\\n' + reviewed, 'type Option<T>=Custom<T>;\\n' + reviewed,\n    'use foreign::*;\\n' + reviewed, 'custom!{' + reviewed + '}',\n    '#[custom(' + reviewed + ')]\\npub fn untouched(){}',\n    reviewed + '\\n' + styled.actions[0].from,\n    reviewed.replace('kinds: &[String]', 'kinds: &[Other]'),\n    reviewed.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_else(|| /* preserve */ String::new())'),\n  ]) {\n    assert.notEqual(counterfeit, reviewed);\n    assert.deepEqual(readRustDiagnosticAttributeLibraryStyles(counterfeit, tokenize), {source: counterfeit, actions: []},\n      'unknown types, owners, macros, attributes and comment-bearing candidates do not inherit the generated source proof');\n  }\n  for (const [from, to] of [\n    ['.unwrap_or_else(|| String::new())', '.unwrap_or_else(|| { observe(); String::new() })'],\n    ['.unwrap_or_else(|| -1f64)', '.unwrap_or_else(|| -2f64)'],\n  ]) {\n    const changed = reviewed.replace(from, to);\n    assert.notEqual(changed, reviewed);\n    assert.ok(readRustDiagnosticAttributeLibraryStyles(changed, tokenize).source.includes(to),\n      'an effectful or different fallback is never replaced by the bounded spelling');\n  }\n  for (const {format, javascript} of prepared.programs) {\n    const context = {};\n    vm.runInNewContext(javascript.text, context, {timeout: 1000});\n    const mappings = javascript.mappings.filter(mapping => mapping.source === 'planRustDiagnosticAttribute' && mapping.kind === 'function');\n    assert.equal(mappings.length, 1);\n    const invoke = input => Array.from(context[mappings[0].target](input.kinds, input.values, input.start));\n    for (const [source, start, expected] of positive) assert.deepEqual(invoke({...columns(source), start}), expected, format);\n    for (const source of negative) assert.deepEqual(invoke({...columns(source), start: 0}), [-1], format);\n    const prefixMapping = javascript.mappings.filter(mapping => mapping.source === 'planRustDiagnosticAttributePrefix' && mapping.kind === 'function');\n    assert.equal(prefixMapping.length, 1);\n    for (const [source, expected] of [[basic, [13, 1, 1, -1]], ['#[must_use]' + basic + ' pub', [18, 2, 1, 17]],\n      [basic + basic, [26, 2, 2, -1]], ['#[must_use]', [-1]], [basic + ' fn wrong(){}', [-1]]]) {\n      const tokens = columns(source).tokens.filter(token => token.kind !== 'eof');\n      assert.deepEqual(Array.from(context[prefixMapping[0].target](tokens.map(token => token.kind), tokens.map(token => token.value))), expected, format);\n    }\n    const offsetMapping = javascript.mappings.filter(mapping => mapping.source === 'acceptRustDiagnosticAttributeOffset' && mapping.kind === 'function');\n    assert.equal(offsetMapping.length, 1);\n    for (const [value, expected] of [[0, true], [-0, true], [9007199254740991, true], [-1, false], [0.5, false], [NaN, false], [Infinity, false]]) {\n      assert.equal(context[offsetMapping[0].target](value), expected, format);\n    }\n    const legacyMapping = javascript.mappings.filter(mapping => mapping.source === 'readRustMustUseAttributeEnd' && mapping.kind === 'function');\n    assert.equal(legacyMapping.length, 1);\n    for (const [source, expected] of [['#[must_use]', 4], ['#[must_use()]', -1], [basic, -1]]) {\n      const input = columns(source);\n      assert.equal(context[legacyMapping[0].target](input.kinds, input.values, 0), expected, format);\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-constant-source-owner-archives",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "complete generated diagnostic const function keeps every Boolean row and source-free attribute owner",
+    "inventoryName": "check diagnostic constant source owner archives",
+    "sourceText": "test('complete generated diagnostic const function keeps every Boolean row and source-free attribute owner',()=>{\n  const provider=readFileSync(new URL('../../'+actualCapture.path,import.meta.url),'utf8');\n  assert.equal(sha(provider),actualCapture.providerSha256);\n  assert.equal(provider.slice(actualCapture.start,actualCapture.end),actualCapture.definition);\n  assert.equal(sha(actualCapture.definition),actualCapture.definitionSha256);\n  assert.equal(Buffer.byteLength(actualCapture.definition),actualCapture.definitionBytes);\n  const source=actualCapture.definition+'\\nfn main(){}';\n  for(const model of models){\n    const program=checkProgram(parseRust(source,{constFunctionModel:model})),fn=program.items[0];\n    const proof=structuredClone(fn.sourceConstFunction),facet=structuredClone(fn.sourceDiagnosticAttributes);\n    assert.equal(facet.model,diagnosticModel);assert.equal(facet.language,'Rust');assert.equal(facet.edition,'2024');\n    assert.deepEqual(facet.attachment,{sourceName:fn.name,modulePath:[],constKeywordSpan:proof.keywordSpan,functionKeywordSpan:proof.functionKeywordSpan});\n    assert.equal(facet.raw,source.slice(facet.span.start,facet.span.end));\n    assert.equal(facet.span.end,proof.keywordSpan.start);\n    assert.deepEqual(Object.keys(proof),['model','language','sourceName','keyword','keywordSpan','functionKeywordSpan','headerSpan','bodySpan','interpretation']);\n    const rust=emitRust(program).definitions[0];\n    assert.ok(rust.startsWith(facet.raw),'the complete validated prefix keeps original order and spelling');\n    assert.match(rust,/pub const fn accept_java_script_terminal_tag_guard\\(/u);\n    for(const replay of [program,...archiveReplays(program)]){\n      assert.deepEqual(replay.items[0].sourceConstFunction,proof);\n      assert.deepEqual(replay.items[0].sourceDiagnosticAttributes,facet);\n      assert.equal(emitRust(replay).definitions[0],rust);\n      const javascript=emitJavaScript(replay).text;\n      for(let bits=0;bits<32;bits++){\n        const [positive,alternate,terminal,sameBinding,duplicate]=Array.from({length:5},(_,at)=>Boolean(bits&(1<<at)));\n        const expected=positive&&!alternate&&terminal&&sameBinding&&!duplicate;\n        assert.equal(acceptJavaScriptTerminalTagGuard(positive,alternate,terminal,sameBinding,duplicate),expected);\n        assert.equal(observe(javascript,fn.name,[positive,alternate,terminal,sameBinding,duplicate]),expected);\n      }\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-raw-source-prefix-ownership",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "actual ordered diagnostic prefixes retain UTF16 comments raw reasons visibility and separate following owners",
+    "inventoryName": "check diagnostic raw source prefix ownership",
+    "sourceText": "test('actual ordered diagnostic prefixes retain UTF16 comments raw reasons visibility and separate following owners',()=>{\n  const prefix='#[must_use]\\n#[expect(clippy /* owner é */ :: fn_params_excessive_bools, reason=r###\"😀 ] custom!(x)\"###,)]\\n'\n    +'/* between 😀 */#[must_use]\\n'+attribute+'\\n/* before visibility */pub ';\n  const source='// before 😀\\n'+prefix+leaf+'\\n#[must_use]const fn other(value:bool)->bool{!value}\\nfn main(){}';\n  const tokens=tokenize(source,'Rust').tokens;\n  for(const model of models){\n    const surface=parseRust(source,{constFunctionModel:model}),first=surface.items[0],second=surface.items[1];\n    const facet=first.sourceDiagnosticAttributes,proof=first.sourceConstFunction;\n    assert.equal(facet.span.start,source.indexOf('#'));assert.equal(facet.span.end,source.indexOf('const fn'));\n    assert.equal(facet.raw,prefix);assert.ok(Buffer.byteLength(source.slice(0,facet.span.start))>facet.span.start);\n    assert.deepEqual(facet.tokens,tokens.filter(token=>token.start>=facet.span.start&&token.end<=facet.span.end&&token.kind!=='eof')\n      .map(token=>({kind:token.kind,value:token.value,raw:token.raw,span:{start:token.start,end:token.end}})));\n    assert.deepEqual(facet.tokens.filter(token=>token.kind==='string').map(token=>token.value),['😀 ] custom!(x)','why']);\n    assert.equal(source.slice(proof.keywordSpan.start,proof.keywordSpan.end),'const');\n    assert.equal(source.slice(proof.functionKeywordSpan.start,proof.functionKeywordSpan.end),'fn');\n    assert.equal(Object.hasOwn(second,'sourceDiagnosticAttributes'),false,'a pending prefix cannot drift to the following const function');\n    const program=checkProgram(surface);\n    for(const replay of [program,...archiveReplays(program)]){\n      assert.deepEqual(replay.items[0].sourceDiagnosticAttributes,facet);\n      assert.equal(Object.hasOwn(replay.items[1],'sourceDiagnosticAttributes'),false);\n      const javascript=emitJavaScript(replay).text;\n      for(const value of [false,true]){assert.equal(observe(javascript,'keep',[value]),value);assert.equal(observe(javascript,'other',[value]),!value);}\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-token-entry-original-source-boundary",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "token-only const parsing retains old paths and refuses new diagnostic source without original text",
+    "inventoryName": "check diagnostic token entry original source boundary",
+    "sourceText": "test('token-only const parsing retains old paths and refuses new diagnostic source without original text',()=>{\n  const old='#[must_use]pub '+leaf+'fn main(){}',source=attribute+leaf+'fn main(){}';\n  for(const model of models){\n    const options={constFunctionModel:model};\n    assert.deepEqual(parseRustTokenStream(tokenize(old,'Rust').tokens,options),parseRust(old,options));\n    assert.equal(Object.hasOwn(parseRust(old,options).items[0],'sourceDiagnosticAttributes'),false);\n    assert.throws(()=>parseRustTokenStream(tokenize(source,'Rust').tokens,options),/diagnostic.*source|original.*source|source.*diagnostic|prefix/iu);\n    assert.deepEqual(parseRustTokenStream(tokenize(source,'Rust').tokens,options,source),parseRust(source,options));\n    assert.throws(()=>parseRustTokenStream(tokenize(source,'Rust').tokens,options,' '.repeat(source.length)),/diagnostic|source|prefix|token/iu);\n  }\n})"
+  },
+  {
+    "id": "repository.check-original-diagnostic-attribute-refusals",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "diagnostic admission keeps all original const refusals and rejects unknown payloads and wrong attachments",
+    "inventoryName": "check original diagnostic attribute refusals",
+    "sourceText": "test('diagnostic admission keeps all original const refusals and rejects unknown payloads and wrong attachments',()=>{\n  const fixture=readProjectData(new URL('../../experiments/rust-const-function-fixture.lino',import.meta.url));\n  assert.equal(fixture.invalid.length,27);\n  for(const entry of fixture.invalid)assert.throws(()=>checkProgram(parseRust(entry.source,{constFunctionModel:fixture.model})),error=>{\n    assert.equal(error.kind,entry.kind,entry.name);assert.equal(error.reason,entry.reason,entry.name);assert.deepEqual(error.span??null,entry.span,entry.name);return true;\n  });\n  const rejected=[attribute.replace('clippy::','other::'),attribute.replace('fn_params_excessive_bools','unknown'),\n    attribute.replace('\"why\"','1'),attribute.replace('\"why\"','concat!(\"why\")'),attribute.replace('\"why\"','\"why\", reason=\"again\"'),\n    '#[cfg(any())]','#[derive(Clone)]','#[inline]','#[no_mangle]','#[custom::expect(\"why\")]'];\n  for(const model of models){\n    for(const prefix of rejected)expectOriginalAttributeRefusal(prefix+leaf+'fn main(){}',model);\n    for(const item of ['mod nested{}','enum Other{One}','fn ordinary(value:bool)->bool{value}'])assert.throws(()=>parseRust(attribute+item+'fn main(){}',{constFunctionModel:model}),error=>{\n      assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust const function context: only actual const predicate declarations and the ordinary main are admitted');return true;\n    });\n    const mainSource=attribute+'\\nfn main(){}';\n    const functionKeyword=tokenize(mainSource,'Rust').tokens.find(token=>token.kind==='identifier'&&token.value==='fn');\n    assert.ok(functionKeyword);\n    assert.throws(()=>parseRust(mainSource,{constFunctionModel:model}),error=>{\n      assert.equal(error.kind,'unsupported');assert.equal(error.reason,'Rust const diagnostic attribute attachment: the supported diagnostic prefix must belong to an actual const function');\n      assert.deepEqual(error.span,{start:0,end:functionKeyword.start});return true;\n    });\n    assert.throws(()=>checkProgram(parseRust(attribute+'const fn bad(value:bool)->f64{1.0}fn main(){}',{constFunctionModel:model})),/const|Boolean|primitive/u);\n    assert.throws(()=>parseRust('#![expect(clippy::fn_params_excessive_bools,reason=\"why\")]'+leaf+'fn main(){}',{constFunctionModel:model}),error=>{\n      assert.equal(error.reason,'Rust const function context: crate attributes require an independent compilation interpretation');assert.equal(error.span,null);return true;\n    });\n  }\n})"
+  },
+  {
+    "id": "repository.check-diagnostic-facet-placement-and-constant-function-attachment",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "diagnostic facets reject misplaced Surface owners before lowering and coherent source-free const boundary forgeries",
+    "inventoryName": "check diagnostic facet placement and constant function attachment",
+    "sourceText": "test('diagnostic facets reject misplaced Surface owners before lowering and coherent source-free const boundary forgeries',()=>{\n  const placementReason='Rust diagnostic source attributes: a source facet is not attached to an actual function item';\n  const boundaryReason='Rust diagnostic source attributes: the retained prefix absorbs or changes the actual following const token';\n  for(const model of models){\n    const source=attribute+' pub    '+leaf+'fn main(){}';\n    const surface=parseRust(source,{constFunctionModel:model});\n    for(const position of ['main','body','parameter','non-function item']){\n      const changed=structuredClone(surface),fn=changed.items[0],facet=fn.sourceDiagnosticAttributes;\n      delete fn.sourceDiagnosticAttributes;\n      if(position==='main')changed.main.sourceDiagnosticAttributes=facet;\n      else if(position==='body')fn.body.sourceDiagnosticAttributes=facet;\n      else if(position==='parameter')fn.params[0].sourceDiagnosticAttributes=facet;\n      else{\n        const datatype=parseRust('enum Other{One}fn main(){}').items[0];\n        datatype.sourceDiagnosticAttributes=facet;changed.items.push(datatype);\n      }\n      assert.throws(()=>checkProgram(changed),error=>{\n        assert.equal(error.kind,'type',position);assert.equal(error.reason,placementReason,position);return true;\n      });\n    }\n    const missingProof=structuredClone(surface);delete missingProof.items[0].sourceConstFunction;\n    assert.throws(()=>checkProgram(missingProof),error=>{\n      assert.equal(error.kind,'type');assert.equal(error.reason,'Rust diagnostic source attributes: an actual const function proof is required');return true;\n    });\n    const checked=checkProgram(surface);\n    for(const original of [checked,...archiveReplays(checked)])for(const raw of [attribute+'     pub',attribute+' pub // ']){\n      const changed=structuredClone(original),facet=changed.items[0].sourceDiagnosticAttributes;\n      assert.equal(raw.length,facet.raw.length,'only whitespace ownership changes; every original const/header/body span is retained');\n      facet.raw=raw;\n      facet.tokens=tokenize(raw,'Rust').tokens.filter(token=>token.kind!=='eof').map(token=>({\n        kind:token.kind,value:token.value,raw:token.raw,span:{start:facet.span.start+token.start,end:facet.span.start+token.end},\n      }));\n      // Each forged prefix is internally coherent when lexed alone. It is\n      // invalid only at the independently owned next actual const boundary.\n      assert.equal(facet.tokens.at(-1).value,'pub');\n      assert.equal(facet.span.end,changed.items[0].sourceConstFunction.keywordSpan.start);\n      for(const action of [()=>emitRust(changed),()=>encodeTypedProgramLinks(changed),()=>recheckLinkedTypedProgram(changed,{wholeProgram:true})])assert.throws(action,error=>{\n        assert.equal(error.kind,'type');assert.equal(error.reason,boundaryReason);return true;\n      });\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-fourth-schema-exact-predecessor-authority",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "the fourth schema successor authenticates exact third bytes all predecessors and the sole optional query plan",
+    "inventoryName": "check fourth schema exact predecessor authority",
+    "sourceText": "test('the fourth schema successor authenticates exact third bytes all predecessors and the sole optional query plan', () => {\n  const value = fixture(), proof = verify(value), before = readStructuredDataLino(value.fourth.previous.source);\n  const after = readStructuredDataLino(value.bytes.toString('utf8'));\n  assert.equal(sha256(value.input.thirdBytes), ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT);\n  assert.equal(value.fourth.previous.bytes, 141198);\n  assert.equal(value.fourth.previous.sha256, '9308bcaf5635c128e7d899a512b535555231063ea495c4ab2504626da9580e18');\n  assert.equal(sha256(value.bytes), '6f8a9f0223f620a3a85ba88f4bf093963f67b69236504afcf006f376783ac30d');\n  assert.equal(Object.keys(value.input.historicalSources).length, 47);\n  assert.equal(value.input.receipt.generation.definitionCount, 106);\n  assert.equal(value.input.receipt.generation.completeRustBytes, 351746);\n  for (const property of ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES) assert.deepEqual(after[property], before[property]);\n  assert.deepEqual(Object.keys(after.expressionProjections), [...Object.keys(before.expressionProjections), 'optionalTypeOf']);\n  assert.deepEqual(after.expressionProjections.optionalTypeOf, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS.expressionProjections.optionalTypeOf);\n  assert.equal(proof.sha256, sha256(value.bytes));\n  assert.equal(proof.thirdExtensionReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT);\n  const verifyThird = bytes => verifyOriginalLinkRawSchemaThirdExtensionClosure(value.input.receipt, value.input.first,\n    bytes, value.input.historicalSources, value.input.second, value.input.third, value.input.thirdSources);\n  assert.doesNotThrow(() => verifyThird(Buffer.from(value.fourth.previous.source, 'utf8')));\n  assert.throws(() => verifyThird(value.bytes), assert.AssertionError, 'the old strict profile is never widened');\n})"
+  },
+  {
+    "id": "repository.check-fourth-schema-projection-forgery-refusal",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "coherent fourth-stage hashes cannot rewrite old plans or the derived optional type query projection",
+    "inventoryName": "check fourth schema projection forgery refusal",
+    "sourceText": "test('coherent fourth-stage hashes cannot rewrite old plans or the derived optional type query projection', () => {\n  const original = fixture();\n  for (const mutate of [\n    schema => {schema.fields.k = 'counterfeit';},\n    schema => {schema.expressionOperands.optionalTypeOf = ['value'];},\n    schema => {delete schema.expressionProjections.lambda;},\n    schema => {schema.expressionProjections.optionalTypeOf.construct = 'toString';},\n    schema => {schema.expressionProjections.optionalTypeOf.fields[0][2] = 'present';},\n    schema => {schema.expressionProjections.optionalTypeOf.fields.push(['present', 'copy', 'present']);},\n    schema => {schema.expressionProjections = Object.fromEntries(Object.entries(schema.expressionProjections).reverse());},\n    schema => {schema.expressionProjections.extra = {};},\n    schema => {schema.unexpected = {};},\n  ]) {\n    const value = {...original, fourth: structuredClone(original.fourth)};\n    const schema = readStructuredDataLino(original.bytes.toString('utf8')); mutate(schema);\n    value.bytes = Buffer.from(structuredDataToLino(schema));\n    value.fourth.current.bytes = value.bytes.length; value.fourth.current.sha256 = sha256(value.bytes);\n    assert.throws(() => verify(value), assert.AssertionError);\n  }\n})"
+  },
+  {
+    "id": "repository.check-fourth-schema-complete-author-source-closure",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "fourth-stage receipts retain predecessor bytes every source binding actual author sources and scope",
+    "inventoryName": "check fourth schema complete author source closure",
+    "sourceText": "test('fourth-stage receipts retain predecessor bytes every source binding actual author sources and scope', () => {\n  const original = fixture();\n  for (const mutate of [\n    value => {value.input.receipt.generation.definitionCount--;},\n    value => {value.input.historicalSources['policy.mjs'] = '0'.repeat(64);},\n    value => {value.input.third.current.bytes--;},\n    value => {value.input.thirdBytes = Buffer.concat([value.input.thirdBytes, Buffer.from('\\n')]);},\n    value => {value.fourth.previous.source += '\\n';},\n    value => {value.fourth.previous.bytes--;},\n    value => {value.fourth.previous.sha256 = '0'.repeat(64);},\n    value => {value.fourth.predecessorReceiptSha256 = '0'.repeat(64);},\n    value => {value.fourth.consumedSchemaProperties.reverse();},\n    value => {delete value.fourth.appendedSchemaEntries.expressionProjections.optionalTypeOf;},\n    value => {value.fourth.authoring.command += ' --repair';},\n    value => {value.fourth.authoring.sourceFiles.reverse();},\n    value => {value.fourth.authoring.sourceFiles[0].sha256 = '0'.repeat(64);},\n    value => {value.fourth.scope = 'native execution';},\n    value => {const file = Object.keys(value.input.thirdSources)[0]; value.input.thirdSources[file] = Buffer.concat([value.input.thirdSources[file], Buffer.from('\\n')]);},\n    value => {const file = ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES[0]; value.sources[file] = Buffer.concat([value.sources[file], Buffer.from('\\n')]);},\n  ]) {\n    const value = {input: {...original.input, receipt: structuredClone(original.input.receipt),\n      first: structuredClone(original.input.first), second: structuredClone(original.input.second), third: structuredClone(original.input.third),\n      historicalSources: {...original.input.historicalSources}, thirdSources: {...original.input.thirdSources}, thirdBytes: Buffer.from(original.input.thirdBytes)},\n      bytes: original.bytes, fourth: structuredClone(original.fourth), sources: {...original.sources}};\n    mutate(value); assert.throws(() => verify(value), assert.AssertionError);\n  }\n})"
+  },
+  {
+    "id": "repository.check-fourth-and-archived-third-schema-freshness",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "the live fourth freshness check and archived third check leave every protected input unchanged",
+    "inventoryName": "check fourth and archived third schema freshness",
+    "sourceText": "test('the live fourth freshness check and archived third check leave every protected input unchanged', () => {\n  const files = ['js/src/data/typed-program-links-schema.lino',\n    ...['raw-schema-source-closure', 'raw-schema-extension-closure', 'raw-schema-second-extension-closure',\n      'raw-schema-third-extension-closure', 'raw-schema-fourth-extension-closure', 'raw-schema-second-extension-provenance',\n      'raw-schema-second-extension-provenance-0112b8e3'].map(name => 'experiments/original-link-complete-table-projection/data/' + name + '.lino'),\n    'experiments/original-link-complete-table-projection/raw-native-observations.mjs',\n    'experiments/original-link-complete-table-projection/raw-schema-third-extension-policy.mjs',\n    'experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs',\n    'js/scripts/extend-typed-program-schema-third-stage.mjs'];\n  const before = files.map(file => readFileSync(new URL(file, root)));\n  const result = extendTypedProgramSchemaFourthStage({check: true});\n  assert.equal(result.check, true); assert.equal(result.sourceClosureOnly, true);\n  assert.equal(result.appendedProjectionKeys, 1); assert.equal(result.preservedProducerBindings, 47);\n  const third = checkTypedProgramSchemaThirdArchive();\n  assert.equal(third.schemaSha256, '9308bcaf5635c128e7d899a512b535555231063ea495c4ab2504626da9580e18');\n  assert.equal(third.appendedProjectionKeys, 3); assert.equal(third.appendedAlternativeKeys, 1);\n  files.forEach((file, index) => assert.deepEqual(readFileSync(new URL(file, root)), before[index]));\n})"
+  },
+  {
+    "id": "repository.check-optional-type-query-operand-projection",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "optional type query rederives present from its real operand through both complete archives",
+    "inventoryName": "check optional type query operand projection",
+    "sourceText": "test('optional type query rederives present from its real operand through both complete archives', () => {\n  const expected = {output: ['string', 'undefined'], failure: null};\n  assert.deepEqual(observe(source.replace('export ', '')), expected);\n  const programs = savedPrograms(source), originalRust = emitRust(programs[0]);\n  for (const program of programs) {\n    const query = program.declarations.get('query').body;\n    assert.equal(query.k, 'optionalTypeOf'); assert.equal(query.present, 'string');\n    assert.deepEqual(query.type, {kind: 'string'});\n    assert.equal(query.arg.k, 'optionalIndex');\n    const projected = projectLinkedProgramExpression(query, program.declarations);\n    assert.equal(projected.k, 'typeOf'); assert.equal(projected.arg.k, 'index');\n    assert.equal(projected.arg.optional, true);\n    assert.equal(Object.hasOwn(projected, 'present'), false, 'derived tag is not trusted/copied');\n    assert.deepEqual(observe(emitJavaScript(program).text), expected);\n    assert.deepEqual(emitRust(program), originalRust);\n    query.arg.index.right.value = '11';\n    const before = structuredClone(program);\n    const rechecked = recheckLinkedTypedProgram(program, {wholeProgram: true});\n    assert.deepEqual(program, before, 'the coherent edit is not normalized by rechecking');\n    const edited = encodeTypedProgramLinks(rechecked);\n    for (const [, network] of forms(edited)) {\n      const restored = decodeTypedProgramLinks(network, edited.root), before = structuredClone(restored);\n      const rechecked = recheckLinkedTypedProgram(restored, {wholeProgram: true});\n      assert.deepEqual(restored, before, 'the restored coherent edit is not normalized by rechecking');\n      assert.deepEqual(observe(emitJavaScript(rechecked).text), {output: ['undefined', 'undefined'], failure: null});\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-optional-type-query-archive-forgery-refusal",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "whole-program rechecking refuses forged optional query tags types arguments and extra ownership meaning",
+    "inventoryName": "check optional type query archive forgery refusal",
+    "sourceText": "test('whole-program rechecking refuses forged optional query tags types arguments and extra ownership meaning', () => {\n  const baseline = savedPrograms(source)[0], packet = encodeTypedProgramLinks(baseline);\n  for (const [format, network] of forms(packet)) for (const change of [\n    query => { query.present = 'number'; },\n    query => { query.present = null; },\n    query => { delete query.present; },\n    query => { query.type = {kind: 'bool'}; },\n    query => { query.arg = {k: 'lit', type: {kind: 'string'}, value: 'why'}; },\n    query => { query.arg.array.type = {kind: 'array', element: {kind: 'bool'}}; },\n    query => { query.opaqueBinding = true; },\n  ]) {\n    const program = decodeTypedProgramLinks(network, packet.root), query = program.declarations.get('query').body;\n    change(query); const before = structuredClone(program);\n    assert.throws(() => recheckLinkedTypedProgram(program, {wholeProgram: true}), Error, format);\n    assert.deepEqual(program, before, 'a failed whole check does not silently repair the editable graph');\n  }\n})"
+  },
+  {
+    "id": "repository.check-optional-type-query-ordered-source-replay",
+    "source": "js/tests/typed-program-optional-typeof-projection.test.js",
+    "name": "optional query source-free replay retains ordered once-only reads absence and throws",
+    "inventoryName": "check optional type query ordered source replay",
+    "sourceText": "test('optional query source-free replay retains ordered once-only reads absence and throws', () => {\n  for (const [array, index, abort, expected] of [\n    ['[\"why\"]', '0', false, {output: ['values', 'index', 'string'], failure: null}],\n    ['[]', '0', false, {output: ['values', 'index', 'undefined'], failure: null}],\n    ['[\"why\"]', '-1', false, {output: ['values', 'index', 'undefined'], failure: null}],\n    ['[\"why\"]', '0.5', false, {output: ['values', 'index', 'undefined'], failure: null}],\n    ['[\"why\"]', 'NaN', false, {output: ['values', 'index', 'undefined'], failure: null}],\n    ['[\"why\"]', '0', true, {output: ['values', 'index'], failure: {name: 'Error', message: 'stopped'}}],\n  ]) {\n    const source = '/** @returns {string[]} */ function values(){console.log(\"values\");return ' + array + ';}'\n      + '/** @param {number} value @returns {number} */ function index(value){console.log(\"index\");'\n      + (abort ? 'if(value<0)throw new Error(\"stopped\");' : '') + 'return value;}'\n      + '/** @returns {string} */ function probe(){return typeof values()[index('\n      + (abort ? '-1' : index) + ')];}console.log(probe());';\n    assert.deepEqual(observe(source), expected);\n    const programs = savedPrograms(source), rust = emitRust(programs[0]);\n    for (const program of programs) {\n      assert.deepEqual(observe(emitJavaScript(program).text), expected);\n      assert.deepEqual(emitRust(program), rust, 'full Rust emission is retained; native execution remains CI-only');\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.check-proof-assistant-compiler-cache-installed-identity",
+    "source": "js/tests/ci-rocq-toolchain-cache.test.js",
+    "name": "Rocq cache identity binds actual compiler platform and owned switch while every package proof executes",
+    "inventoryName": "check proof assistant compiler cache installed identity",
+    "sourceText": "test('Rocq cache identity binds actual compiler platform and owned switch while every package proof executes', () => {\n  const fixture = toolchainFixture(), original = readRocqToolchainCache(fixture.options);\n  assert.deepEqual(verifyRocqToolchainCache(original.key, fixture.options), {key: original.key, path: '/workspace/_opam'});\n  for (const name of ['rocq-core', 'rocq-stdlib', 'rocq-prover']) assert.ok(fixture.calls.includes('var ' + name + ':version'));\n  assert.ok(fixture.calls.includes('exec -- rocq --version'));\n  for (const name of ['--version', 'exec -- ocamlc -config', 'exec -- gcc --version']) {\n    const changed = toolchainFixture(); changed.identities.set(name, changed.identities.get(name) + ' changed');\n    assert.notEqual(readRocqToolchainCache(changed.options).key, original.key);\n    assert.throws(() => verifyRocqToolchainCache(original.key, changed.options), /exact compiler and platform/u);\n  }\n  const version = toolchainFixture(); version.identities.set('exec -- ocamlc -version', '5.4.1');\n  assert.notEqual(readRocqToolchainCache(version.options).key, original.key);\n  const changed = toolchainFixture(); changed.options.architecture = 'arm64';\n  assert.notEqual(readRocqToolchainCache(changed.options).key, original.key);\n  const operatingSystem = toolchainFixture(); operatingSystem.options.files.readFileSync = () => 'ID=ubuntu\\nVERSION_ID=\"26.04\"\\n';\n  assert.notEqual(readRocqToolchainCache(operatingSystem.options).key, original.key);\n})"
+  },
+  {
+    "id": "repository.check-proof-assistant-compiler-cache-ownership-refusals",
+    "source": "js/tests/ci-rocq-toolchain-cache.test.js",
+    "name": "Rocq cache refuses outside paths symlinks stale package versions and failed identity commands",
+    "inventoryName": "check proof assistant compiler cache ownership refusals",
+    "sourceText": "test('Rocq cache refuses outside paths symlinks stale package versions and failed identity commands', () => {\n  const key = readRocqToolchainCache(toolchainFixture().options).key;\n  for (const name of ['rocq-core', 'rocq-stdlib', 'rocq-prover']) {\n    const changed = toolchainFixture(); changed.identities.set('var ' + name + ':version', 'old');\n    assert.throws(() => verifyRocqToolchainCache(key, changed.options), /version is exact/u);\n    for (const selected of ['rocq-core', 'rocq-stdlib', 'rocq-prover']) assert.ok(changed.calls.includes('var ' + selected + ':version'));\n  }\n  const outside = toolchainFixture(); outside.identities.set('var prefix', '/outside/_opam');\n  assert.throws(() => readRocqToolchainCache(outside.options), /only the workspace local/u);\n  const linked = toolchainFixture(); linked.options.files.lstatSync = () => ({isDirectory: () => true, isSymbolicLink: () => true});\n  assert.throws(() => readRocqToolchainCache(linked.options), /owned directory/u);\n  const escaped = toolchainFixture(); escaped.options.files.realpathSync = value => value.endsWith('_opam') ? '/outside/_opam' : value;\n  assert.throws(() => readRocqToolchainCache(escaped.options), /escape through a symlink/u);\n  const local = toolchainFixture(); local.options.env.CI = 'false';\n  assert.throws(() => readRocqToolchainCache(local.options), /requires CI/u);\n  const compiler = toolchainFixture(); compiler.identities.set('exec -- ocamlc -config-var c_compiler', 'ccache gcc');\n  assert.throws(() => readRocqToolchainCache(compiler.options), /directly executable/u);\n  const binary = toolchainFixture(); binary.identities.set('exec -- rocq --version', 'The Rocq Prover, version 9.2.0');\n  assert.throws(() => verifyRocqToolchainCache(key, binary.options), /reports version/u);\n  const failed = toolchainFixture(); failed.options.run = () => ({status: 1, stderr: 'identity failed'});\n  assert.throws(() => readRocqToolchainCache(failed.options), /identity failed/u);\n  assert.throws(() => verifyRocqToolchainCache('', toolchainFixture().options), /pre-restore/u);\n})"
+  },
+  {
+    "id": "repository.check-proof-assistant-compiler-cache-fallback-boundary",
+    "source": "js/tests/ci-rocq-toolchain-cache.test.js",
+    "name": "unsupported Rocq cache contexts disable only the optimization while actual restored mismatches refuse",
+    "inventoryName": "check proof assistant compiler cache fallback boundary",
+    "sourceText": "test('unsupported Rocq cache contexts disable only the optimization while actual restored mismatches refuse', () => {\n  const original = toolchainFixture(), key = readRocqToolchainCache(original.options).key;\n  for (const prepare of [\n    fixture => fixture.identities.set('var prefix', '/outside/_opam'),\n    fixture => fixture.identities.set('exec -- ocamlc -config-var c_compiler', 'ccache gcc -O2'),\n    fixture => {fixture.options.run = () => ({error: new Error('identity unavailable')});},\n  ]) {\n    const fixture = toolchainFixture(); prepare(fixture);\n    const disabled = selectRocqToolchainCache(fixture.options);\n    assert.equal(disabled.enabled, false); assert.equal(Object.hasOwn(disabled, 'path'), false);\n    assert.equal(Object.hasOwn(disabled, 'key'), false);\n  }\n  const disabled = toolchainFixture();\n  assert.deepEqual(selectRocqToolchainCache({...disabled.options, mode: 'verify', enabled: false}), {enabled: false});\n  assert.equal(disabled.calls.length, 0, 'an unsupported context adds no later proof failure to the original install path');\n  for (const fault of ['exec -- ocamlc -config', 'var rocq-stdlib:version']) {\n    const changed = toolchainFixture(); changed.identities.set(fault, 'different');\n    assert.equal(selectRocqToolchainCache({...changed.options, mode: 'verify', expectedKey: key}).enabled, false);\n    assert.throws(() => selectRocqToolchainCache({...changed.options, mode: 'verify', expectedKey: key, cacheHit: true}),\n      /exact compiler and platform|version is exact/u);\n  }\n  assert.equal(selectRocqToolchainCache({...original.options, mode: 'verify', expectedKey: key, cacheHit: true}).enabled, true);\n  const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-rocq-cache-'));\n  try {\n    const output = path.join(directory, 'outputs'), script = fileURLToPath(new URL('../../scripts/ci-rocq-toolchain-cache.mjs', import.meta.url));\n    const env = {...process.env, CI: 'false', GITHUB_ACTIONS: 'true', GITHUB_OUTPUT: output,\n      ROCQ_TOOLCHAIN_CACHE_ENABLED: 'false', ROCQ_TOOLCHAIN_CACHE_HIT: 'false', ROCQ_TOOLCHAIN_CACHE_KEY: key};\n    for (const mode of ['--key', '--verify']) {\n      writeFileSync(output, '');\n      const result = spawnSync(process.execPath, [script, mode], {env, encoding: 'utf8', timeout: 10000});\n      assert.equal(result.status, 0, result.stderr);\n      assert.equal(readFileSync(output, 'utf8'), 'enabled=false\\n', 'unsupported contexts expose no restorable path or key');\n    }\n    const refused = spawnSync(process.execPath, [script, '--verify'], {encoding: 'utf8', timeout: 10000,\n      env: {...env, ROCQ_TOOLCHAIN_CACHE_ENABLED: 'true', ROCQ_TOOLCHAIN_CACHE_HIT: 'true'}});\n    assert.equal(refused.status, 1, 'a reported cache hit cannot turn identity refusal into an uncached success');\n  } finally {rmSync(directory, {recursive: true, force: true});}\n})"
+  },
+  {
+    "id": "repository.check-proof-assistant-compiler-cache-workflow-proof-order",
+    "source": "js/tests/ci-rocq-toolchain-cache.test.js",
+    "name": "Rocq cache workflow keeps every install and proof before an exact local-switch save",
+    "inventoryName": "check proof assistant compiler cache workflow proof order",
+    "sourceText": "test('Rocq cache workflow keeps every install and proof before an exact local-switch save', () => {\n  const workflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');\n  const blocks = workflow.split('      - name: Identify the installed Rocq compiler cache').slice(1);\n  assert.equal(blocks.length, 4);\n  for (const block of blocks) {\n    const selected = block.slice(0, block.indexOf('      - name: Install JavaScript dependencies'));\n    assert.match(selected, /uses: actions\\/cache\\/restore@v6/u);\n    assert.match(selected, /if: \\$\\{\\{ (?:matrix\\.target == 'rocq' && )?steps\\.rocq-toolchain-cache\\.outputs\\.enabled == 'true' \\}\\}/u);\n    assert.match(selected, /opam repository add rocq-released https:\\/\\/rocq-prover.org\\/opam\\/released\\n          opam install --yes 'rocq-core=9\\.3\\.0' 'rocq-stdlib=9\\.2\\.0' 'rocq-prover=meta\\.1'\\n          opam var bin >> \"\\$GITHUB_PATH\"\\n          opam exec -- rocq --version\\n          node scripts\\/ci-rocq-toolchain-cache\\.mjs --verify/u);\n    assert.match(selected, /steps\\.rocq-toolchain-install\\.outcome == 'success'/u);\n    assert.match(selected, /steps\\.rocq-toolchain-install\\.outputs\\.enabled == 'true'/u);\n    assert.ok(selected.indexOf('--verify') < selected.indexOf('uses: actions/cache/save@v6'));\n    assert.doesNotMatch(selected, /restore-keys:|continue-on-error:|issue-195-results|issue-195-artifacts/u);\n    assert.equal((selected.match(/path: \\$\\{\\{ steps\\.rocq-toolchain-cache\\.outputs\\.path \\}\\}/gu) ?? []).length, 2);\n    assert.equal((selected.match(/key: \\$\\{\\{ steps\\.rocq-toolchain-cache\\.outputs\\.key \\}\\}/gu) ?? []).length, 2);\n  }\n})"
+  },
+  {
+    "id": "repository.check-native-diagnostic-complete-constant-capture",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "complete_diagnostic_const_capture_retains_all_thirty_two_rows_and_both_source_free_archives",
+    "inventoryName": "check native diagnostic complete constant capture",
+    "sourceText": "fn complete_diagnostic_const_capture_retains_all_thirty_two_rows_and_both_source_free_archives() {\n    let provider = include_str!(\"../../../src/translation/javascript/surface_rules.rs\");\n    assert_eq!(\n        diagnostic_digest(provider),\n        \"d957b63185208b2f2ccc9b6641c2b69b7d6febe3c109abe577a7216b311c0ae7\"\n    );\n    assert_eq!(Source::new(provider).slice(9570, 9971), DIAGNOSTIC_CAPTURE);\n    assert_eq!(DIAGNOSTIC_CAPTURE.len(), 401);\n    assert_eq!(\n        diagnostic_digest(DIAGNOSTIC_CAPTURE),\n        \"df595bebe7953c30b2cc5ddad6f1a176050f38cd9184fecb9829bb706f6a16dd\"\n    );\n    let inputs = (0..32)\n        .map(|bits| {\n            (0..5)\n                .map(|at| Value::Bool(bits & (1 << at) != 0))\n                .collect::<Vec<_>>()\n        })\n        .collect::<Vec<_>>();\n    let values = inputs\n        .iter()\n        .map(|row| {\n            Value::Bool(\n                row[0].as_bool().unwrap()\n                    && !row[1].as_bool().unwrap()\n                    && row[2].as_bool().unwrap()\n                    && row[3].as_bool().unwrap()\n                    && !row[4].as_bool().unwrap(),\n            )\n        })\n        .collect::<Vec<_>>();\n    let source = format!(\"{DIAGNOSTIC_CAPTURE}\\nfn main(){{}}\");\n    for (index, model) in DIAGNOSTIC_MODELS.into_iter().enumerate() {\n        let (program, oracle) = diagnostic_program(\n            &source,\n            model,\n            \"accept_java_script_terminal_tag_guard\",\n            &json!(inputs),\n            &json!(values),\n        );\n        let Decl::Fn(function) = &program.declarations[0] else {\n            panic!(\"the actual source declares a function\")\n        };\n        let facet = function.source_diagnostic_attributes.as_ref().unwrap();\n        assert_eq!(facet[\"model\"], \"Rust const diagnostic attributes 1\");\n        assert_eq!(facet[\"language\"], \"Rust\");\n        assert_eq!(facet[\"edition\"], \"2024\");\n        let proof = function.source_const_function.as_ref().unwrap();\n        assert_eq!(\n            facet[\"attachment\"],\n            json!({\"sourceName\":function.name,\"modulePath\":[],\"constKeywordSpan\":proof[\"keywordSpan\"],\"functionKeywordSpan\":proof[\"functionKeywordSpan\"]})\n        );\n        assert_eq!(facet[\"span\"][\"end\"], proof[\"keywordSpan\"][\"start\"]);\n        assert!(\n            oracle[\"definitions\"][0]\n                .as_str()\n                .unwrap()\n                .starts_with(facet[\"raw\"].as_str().unwrap())\n        );\n        assert_eq!(\n            proof\n                .as_object()\n                .unwrap()\n                .keys()\n                .cloned()\n                .collect::<std::collections::BTreeSet<_>>(),\n            [\n                \"model\",\n                \"language\",\n                \"sourceName\",\n                \"keyword\",\n                \"keywordSpan\",\n                \"functionKeywordSpan\",\n                \"headerSpan\",\n                \"bodySpan\",\n                \"interpretation\"\n            ]\n            .into_iter()\n            .map(str::to_owned)\n            .collect::<std::collections::BTreeSet<_>>()\n        );\n        let directory = TemporaryDirectory::new(&format!(\"diagnostic-const-{index}\"));\n        let original = directory.0.join(\"original.rs\");\n        let translated = directory.0.join(\"translated.rs\");\n        fs::write(&original, &source).unwrap();\n        fs::write(&translated, emit_rust(&program).unwrap().text).unwrap();\n        let driver = directory.0.join(\"main.rs\");\n        fs::write(&driver, \"#[path=\\\"original.rs\\\"]mod original;#[path=\\\"translated.rs\\\"]mod translated;fn main(){for bits in 0..32{let [positive,alternate,terminal,same_binding,duplicate]=std::array::from_fn(|at|bits&(1<<at)!=0);let expected=positive&&!alternate&&terminal&&same_binding&&!duplicate;assert_eq!(original::accept_java_script_terminal_tag_guard(positive,alternate,terminal,same_binding,duplicate),expected);assert_eq!(translated::accept_java_script_terminal_tag_guard(positive,alternate,terminal,same_binding,duplicate),expected);}}\").unwrap();\n        let executable = directory\n            .0\n            .join(format!(\"program{}\", std::env::consts::EXE_SUFFIX));\n        let compiled = run(Command::new(\"rustc\")\n            .arg(\"--edition=2024\")\n            .arg(&driver)\n            .arg(\"-o\")\n            .arg(&executable));\n        assert!(\n            compiled.ok,\n            \"CI compilation of the complete original and emitted artifacts: {}\",\n            compiled.stderr\n        );\n        let actual = run(&mut Command::new(&executable));\n        assert!(actual.ok, \"{}\", actual.stderr);\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-ordered-source-prefix",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "ordered_diagnostic_prefixes_keep_utf16_raw_reasons_visibility_and_following_owners",
+    "inventoryName": "check native diagnostic ordered source prefix",
+    "sourceText": "fn ordered_diagnostic_prefixes_keep_utf16_raw_reasons_visibility_and_following_owners() {\n    let prefix = format!(\n        \"#[must_use]\\n#[expect(clippy /* owner é */ :: fn_params_excessive_bools, reason=r###\\\"😀 ] custom!(x)\\\"###,)]\\n/* between 😀 */#[must_use]\\n{DIAGNOSTIC_ATTRIBUTE}\\n/* before visibility */pub \"\n    );\n    let source = format!(\n        \"// before 😀\\n{prefix}{DIAGNOSTIC_LEAF}\\n#[must_use]const fn other(value:bool)->bool{{!value}}\\nfn main(){{}}\"\n    );\n    for model in DIAGNOSTIC_MODELS {\n        let (program, _) = diagnostic_program(\n            &source,\n            model,\n            \"keep\",\n            &json!([[false], [true]]),\n            &json!([false, true]),\n        );\n        let Decl::Fn(first) = &program.declarations[0] else {\n            unreachable!()\n        };\n        let Decl::Fn(second) = &program.declarations[1] else {\n            unreachable!()\n        };\n        let facet = first.source_diagnostic_attributes.as_ref().unwrap();\n        assert_eq!(facet[\"raw\"], prefix);\n        let start = \"// before 😀\\n\".encode_utf16().count();\n        assert_eq!(facet[\"span\"][\"start\"], start);\n        assert!(\"// before 😀\\n\".len() > start);\n        assert_eq!(facet[\"span\"][\"end\"], start + prefix.encode_utf16().count());\n        assert_eq!(\n            facet[\"tokens\"]\n                .as_array()\n                .unwrap()\n                .iter()\n                .filter(|token| token[\"kind\"] == \"string\")\n                .map(|token| token[\"value\"].as_str().unwrap())\n                .collect::<Vec<_>>(),\n            [\"😀 ] custom!(x)\", \"why\"]\n        );\n        assert!(\n            second.source_diagnostic_attributes.is_none(),\n            \"a prefix cannot drift to the next function\"\n        );\n        let proof = first.source_const_function.as_ref().unwrap();\n        let text = Source::new(&source);\n        for (field, expected) in [(\"keywordSpan\", \"const\"), (\"functionKeywordSpan\", \"fn\")] {\n            let span = &proof[field];\n            let start = usize::try_from(span[\"start\"].as_u64().unwrap()).unwrap();\n            let end = usize::try_from(span[\"end\"].as_u64().unwrap()).unwrap();\n            assert_eq!(text.slice(start, end), expected);\n        }\n        diagnostic_program(\n            &source,\n            model,\n            \"other\",\n            &json!([[false], [true]]),\n            &json!([true, false]),\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-original-token-entry-boundary",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "legacy_must_use_and_source_free_token_entry_keep_their_original_contract",
+    "inventoryName": "check native diagnostic original token entry boundary",
+    "sourceText": "fn legacy_must_use_and_source_free_token_entry_keep_their_original_contract() {\n    let legacy = format!(\"#[must_use]pub {DIAGNOSTIC_LEAF}fn main(){{}}\");\n    let diagnostic = format!(\"{DIAGNOSTIC_ATTRIBUTE}{DIAGNOSTIC_LEAF}fn main(){{}}\");\n    for model in DIAGNOSTIC_MODELS {\n        let (legacy_program, legacy_oracle) = diagnostic_program(\n            &legacy,\n            model,\n            \"keep\",\n            &json!([[false], [true]]),\n            &json!([false, true]),\n        );\n        assert_eq!(\n            legacy_oracle[\"tokenOnly\"][\"surface\"],\n            legacy_oracle[\"surface\"]\n        );\n        assert!(legacy_program.declarations.iter().all(|item| matches!(item, Decl::Fn(function) if function.source_diagnostic_attributes.is_none())));\n        let (_, diagnostic_oracle) = diagnostic_program(\n            &diagnostic,\n            model,\n            \"keep\",\n            &json!([[false], [true]]),\n            &json!([false, true]),\n        );\n        assert_eq!(diagnostic_oracle[\"tokenOnly\"][\"kind\"], \"type\");\n        assert_eq!(\n            diagnostic_oracle[\"tokenOnly\"][\"reason\"],\n            \"Rust diagnostic source attributes: actual complete source and token positions are required\"\n        );\n        // Rust's public API accepts source text, so it always retains the real\n        // source. Its private missing-source guard adds no public token API.\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-original-attribute-refusals",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_admission_keeps_all_twenty_seven_old_refusals_and_exact_unknown_attribute_errors",
+    "inventoryName": "check native diagnostic original attribute refusals",
+    "sourceText": "fn diagnostic_admission_keeps_all_twenty_seven_old_refusals_and_exact_unknown_attribute_errors() {\n    let old = read_structured_data_lino(include_str!(\n        \"../../../../experiments/rust-const-function-fixture.lino\"\n    ))\n    .unwrap();\n    let invalid = old[\"invalid\"].as_array().unwrap();\n    assert_eq!(invalid.len(), 27);\n    for entry in invalid {\n        let actual = diagnostic_refusal(\n            entry[\"source\"].as_str().unwrap(),\n            old[\"model\"].as_str().unwrap(),\n            true,\n        );\n        assert_eq!(\n            actual,\n            json!({\"kind\":entry[\"kind\"],\"reason\":entry[\"reason\"],\"span\":entry[\"span\"]}),\n            \"{}\",\n            entry[\"name\"]\n        );\n    }\n    let rejected = [\n        DIAGNOSTIC_ATTRIBUTE.replace(\"clippy::\", \"other::\"),\n        DIAGNOSTIC_ATTRIBUTE.replace(\"fn_params_excessive_bools\", \"unknown\"),\n        DIAGNOSTIC_ATTRIBUTE.replace(\"\\\"why\\\"\", \"1\"),\n        DIAGNOSTIC_ATTRIBUTE.replace(\"\\\"why\\\"\", \"concat!(\\\"why\\\")\"),\n        DIAGNOSTIC_ATTRIBUTE.replace(\"\\\"why\\\"\", \"\\\"why\\\", reason=\\\"again\\\"\"),\n        \"#[cfg(any())]\".to_owned(),\n        \"#[derive(Clone)]\".to_owned(),\n        \"#[inline]\".to_owned(),\n        \"#[no_mangle]\".to_owned(),\n        \"#[custom::expect(\\\"why\\\")]\".to_owned(),\n    ];\n    for model in DIAGNOSTIC_MODELS {\n        for prefix in &rejected {\n            let actual = diagnostic_refusal(\n                &format!(\"{prefix}{DIAGNOSTIC_LEAF}fn main(){{}}\"),\n                model,\n                false,\n            );\n            assert_eq!(\n                actual,\n                json!({\"kind\":\"unsupported\",\"reason\":\"Rust const function attribute: only the actual zero-argument must_use function attribute is admitted\",\"span\":null})\n            );\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-constant-function-attachment-order",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_prefixes_retain_actual_const_attachment_and_interface_validation_order",
+    "inventoryName": "check native diagnostic constant function attachment order",
+    "sourceText": "fn diagnostic_prefixes_retain_actual_const_attachment_and_interface_validation_order() {\n    for model in DIAGNOSTIC_MODELS {\n        for item in [\n            \"mod nested{}\",\n            \"enum Other{One}\",\n            \"fn ordinary(value:bool)->bool{value}\",\n        ] {\n            let actual = diagnostic_refusal(\n                &format!(\"{DIAGNOSTIC_ATTRIBUTE}{item}fn main(){{}}\"),\n                model,\n                false,\n            );\n            assert_eq!(actual[\"kind\"], \"unsupported\");\n            assert_eq!(\n                actual[\"reason\"],\n                \"Rust const function context: only actual const predicate declarations and the ordinary main are admitted\"\n            );\n        }\n        let main = format!(\"{DIAGNOSTIC_ATTRIBUTE}\\nfn main(){{}}\");\n        assert_eq!(\n            diagnostic_refusal(&main, model, false),\n            json!({\"kind\":\"unsupported\",\"reason\":\"Rust const diagnostic attribute attachment: the supported diagnostic prefix must belong to an actual const function\",\"span\":{\"start\":0,\"end\":DIAGNOSTIC_ATTRIBUTE.len()+1}})\n        );\n        let bad =\n            format!(\"{DIAGNOSTIC_ATTRIBUTE}const fn bad(value:bool)->f64{{1.0}}fn main(){{}}\");\n        diagnostic_refusal(&bad, model, true);\n        let inner = format!(\n            \"#![expect(clippy::fn_params_excessive_bools,reason=\\\"why\\\")]{DIAGNOSTIC_LEAF}fn main(){{}}\"\n        );\n        assert_eq!(\n            diagnostic_refusal(&inner, model, false),\n            json!({\"kind\":\"unsupported\",\"reason\":\"Rust const function context: crate attributes require an independent compilation interpretation\",\"span\":null})\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.diagnostic-constant-source-model-inventory",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "models",
+    "inventoryName": "diagnostic constant source model inventory",
+    "sourceText": "const models=['closed pure Rust const predicates 1','closed Boolean Rust const decision trees 1'];"
+  },
+  {
+    "id": "repository.diagnostic-constant-source-model-inventory",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "DIAGNOSTIC_MODELS",
+    "inventoryName": "diagnostic constant source model inventory",
+    "sourceText": "const DIAGNOSTIC_MODELS: [&str; 2] = [\n    \"closed pure Rust const predicates 1\",\n    \"closed Boolean Rust const decision trees 1\",\n];"
+  },
+  {
+    "id": "repository.diagnostic-constant-source-model-identifier",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "diagnosticModel",
+    "inventoryName": "diagnostic constant source model identifier",
+    "sourceText": "const diagnosticModel='Rust const diagnostic attributes 1';"
+  },
+  {
+    "id": "repository.diagnostic-attribute-original-source-fixture",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "attribute",
+    "inventoryName": "diagnostic attribute original source fixture",
+    "sourceText": "const attribute='#[expect(clippy::fn_params_excessive_bools, reason = \"why\")]';"
+  },
+  {
+    "id": "repository.diagnostic-attribute-original-source-fixture",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "DIAGNOSTIC_ATTRIBUTE",
+    "inventoryName": "diagnostic attribute original source fixture",
+    "sourceText": "const DIAGNOSTIC_ATTRIBUTE: &str = \"#[expect(clippy::fn_params_excessive_bools, reason = \\\"why\\\")]\";"
+  },
+  {
+    "id": "repository.diagnostic-constant-predicate-leaf-fixture",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "leaf",
+    "inventoryName": "diagnostic constant predicate leaf fixture",
+    "sourceText": "const leaf='const fn keep(value:bool)->bool{value}';"
+  },
+  {
+    "id": "repository.diagnostic-constant-predicate-leaf-fixture",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "DIAGNOSTIC_LEAF",
+    "inventoryName": "diagnostic constant predicate leaf fixture",
+    "sourceText": "const DIAGNOSTIC_LEAF: &str = \"const fn keep(value:bool)->bool{value}\";"
+  },
+  {
+    "id": "repository.diagnostic-complete-generated-source-capture",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "actualCapture",
+    "inventoryName": "diagnostic complete generated source capture",
+    "sourceText": "const actualCapture={\n  \"path\": \"rust/src/translation/javascript/surface_rules.rs\",\n  \"providerSha256\": \"d957b63185208b2f2ccc9b6641c2b69b7d6febe3c109abe577a7216b311c0ae7\",\n  \"start\": 9570,\n  \"end\": 9971,\n  \"definitionSha256\": \"df595bebe7953c30b2cc5ddad6f1a176050f38cd9184fecb9829bb706f6a16dd\",\n  \"definitionBytes\": 401,\n  \"definition\": \"#[must_use]\\n#[expect(\\n    clippy::fn_params_excessive_bools,\\n    reason = \\\"the checked source interface retains five independent ordered Boolean facts\\\"\\n)]\\npub const fn accept_java_script_terminal_tag_guard(\\n    positive: bool,\\n    alternate: bool,\\n    terminal: bool,\\n    same_binding: bool,\\n    duplicate: bool,\\n) -> bool {\\n    (((positive && !alternate) && terminal) && same_binding) && !duplicate\\n}\"\n};"
+  },
+  {
+    "id": "repository.native-diagnostic-complete-source-capture",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "DIAGNOSTIC_CAPTURE",
+    "inventoryName": "native diagnostic complete source capture",
+    "sourceText": "const DIAGNOSTIC_CAPTURE: &str = r#\"#[must_use]\n#[expect(\n    clippy::fn_params_excessive_bools,\n    reason = \"the checked source interface retains five independent ordered Boolean facts\"\n)]\npub const fn accept_java_script_terminal_tag_guard(\n    positive: bool,\n    alternate: bool,\n    terminal: bool,\n    same_binding: bool,\n    duplicate: bool,\n) -> bool {\n    (((positive && !alternate) && terminal) && same_binding) && !duplicate\n}\"#;"
+  },
+  {
+    "id": "repository.read-rust-diagnostic-attribute-library-styles",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryStyles",
+    "inventoryName": "read rust diagnostic attribute library styles",
+    "sourceText": "export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {\n  const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];\n  const unchanged = () => ({source, actions: []});\n  const key = items => JSON.stringify(items.map(token => [token.kind, token.raw]));\n  const signature = text => key(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof'));\n  for (let at = 0; at < tokens.length; at += 1) {\n    const token = tokens[at];\n    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return unchanged();\n    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {\n      const next = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;\n      if (['String', 'Vec', 'Option', 'f64', 'std', 'core'].includes(tokens[next]?.value)) return unchanged();\n    }\n    if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return unchanged();\n    if (token.kind !== 'punct') continue;\n    if (['(', '[', '{'].includes(token.value)) stack.push(at);\n    else if ([')', ']', '}'].includes(token.value)) {\n      const open = stack.pop();\n      if (tokens[open]?.value !== {')': '(', ']': '[', '}': '{'}[token.value]) return unchanged();\n      matching.set(open, at); matching.set(at, open);\n    }\n  }\n  if (stack.length !== 0) return unchanged();\n  const optional = tokens.flatMap((token, at) => token.value === 'fn' && tokens[at + 1]?.value === 'optional_at' ? [at] : []);\n  if (optional.length !== 1) return unchanged();\n  let optionalBody = optional[0] + 2;\n  while (optionalBody < tokens.length && tokens[optionalBody].value !== '{') optionalBody += 1;\n  if (key(tokens.slice(optional[0], optionalBody)) !== signature('fn optional_at<T:Clone>(values:&[T],index:Option<usize>)->Option<T>')) return unchanged();\n  const headers = new Map([\n    ['plan_rust_diagnostic_attribute', 'pub fn plan_rust_diagnostic_attribute(kinds:&[String],values:&[String],start:f64)->Vec<f64>'],\n    ['read_rust_must_use_attribute_end', 'pub fn read_rust_must_use_attribute_end(kinds:&[String],values:&[String],start:f64)->f64'],\n    ['ml_plan_rust_diagnostic_attribute_prefix_loop1', 'pub fn ml_plan_rust_diagnostic_attribute_prefix_loop1(kinds:&[String],values:&[String],mut index:f64,mut attributes:f64,mut diagnostics:f64)->self::MlPlanRustDiagnosticAttributePrefixLoop1Result'],\n  ]);\n  const functions = [];\n  for (let at = 0; at < tokens.length; at += 1) {\n    if (tokens[at].kind === 'punct' && tokens[at].value === '#') {\n      const open = tokens[at + 1]?.value === '!' ? at + 2 : at + 1;\n      if (!['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return unchanged();\n      at = matching.get(open); continue;\n    }\n    if (tokens[at].value === 'pub' && tokens[at + 1]?.value === 'fn' && headers.has(tokens[at + 2]?.value)) {\n      let body = matching.get(at + 3) + 1;\n      while (body < tokens.length && !['{', ';'].includes(tokens[body].value)) body += 1;\n      const end = matching.get(body), header = tokens.slice(at, body);\n      if (end === undefined) return unchanged();\n      const parameterEnd = matching.get(at + 3) - at;\n      if (header[parameterEnd - 1]?.value === ',') header.splice(parameterEnd - 1, 1);\n      if (key(header) !== signature(headers.get(tokens[at + 2].value))) return unchanged();\n      functions.push({at, body, end, name: tokens[at + 2].value}); at = end; continue;\n    }\n    if (tokens[at].kind === 'punct' && ['(', '[', '{'].includes(tokens[at].value)) at = matching.get(at);\n  }\n  if ([...headers.keys()].some(name => functions.filter(fn => fn.name === name).length !== 1)) return unchanged();\n  let adapted = source;\n  const actions = [];\n  for (const fn of functions) {\n    const from = source.slice(tokens[fn.at].start, tokens[fn.end].end), edits = [];\n    if (source.split(from).length !== 2) return unchanged();\n    for (let at = fn.body + 1; at < fn.end; at += 1) {\n      if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'unwrap_or_else' || tokens[at + 2]?.value !== '(') continue;\n      const end = matching.get(at + 2), receiverEnd = at - 1;\n      if (tokens[receiverEnd]?.value !== ')') continue;\n      let first = matching.get(receiverEnd) + 1, last = receiverEnd - 1;\n      while (tokens[first]?.value === '(' && matching.get(first) === last) { first += 1; last -= 1; }\n      if (tokens.slice(first, first + 6).map(token => token.value).join(' ') !== 'self :: ml_array :: optional_at (' || matching.get(first + 5) !== last) continue;\n      const argument = tokens[first + 6]?.value, numeric = argument === '&' && tokens[first + 7]?.value === 'plan';\n      if (!['kinds', 'values'].includes(argument) && !(numeric && fn.name === 'ml_plan_rust_diagnostic_attribute_prefix_loop1')) continue;\n      const fallback = key(tokens.slice(at, end + 1));\n      const expected = numeric ? '.unwrap_or_else(|| -1f64)' : '.unwrap_or_else(|| String::new())';\n      if (fallback !== signature(expected)) continue;\n      if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) return unchanged();\n      edits.push({start: tokens[at].start, end: tokens[end].end, to: numeric ? '.unwrap_or(-1f64)' : '.unwrap_or_default()'});\n    }\n    let to = from;\n    for (const edit of edits.reverse()) to = to.slice(0, edit.start - tokens[fn.at].start) + edit.to + to.slice(edit.end - tokens[fn.at].start);\n    if (from !== to) { actions.push({op: 'replace', field: 'source', from, to}); adapted = adapted.replace(from, to); }\n  }\n  return {source: adapted, actions};\n}"
+  },
+  {
+    "id": "repository.retain-unchanged-diagnostic-library-source",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryStyles::unchanged",
+    "inventoryName": "retain unchanged diagnostic library source",
+    "sourceText": "const unchanged = () => ({source, actions: []});",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {"
+    ]
+  },
+  {
+    "id": "repository.read-diagnostic-library-token-identity",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryStyles::key",
+    "inventoryName": "read diagnostic library token identity",
+    "sourceText": "const key = items => JSON.stringify(items.map(token => [token.kind, token.raw]));",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {"
+    ]
+  },
+  {
+    "id": "repository.read-diagnostic-library-signature-identity",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "readRustDiagnosticAttributeLibraryStyles::signature",
+    "inventoryName": "read diagnostic library signature identity",
+    "sourceText": "const signature = text => key(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof'));",
+    "ownerContexts": [
+      "export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {"
+    ]
+  },
+  {
+    "id": "repository.check-native-diagnostic-facet-presence-and-ownership",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "diagnostic_facet_present_null_and_owned_metadata_forgeries_refuse_before_emission",
+    "inventoryName": "check native diagnostic facet presence and ownership",
+    "sourceText": "fn diagnostic_facet_present_null_and_owned_metadata_forgeries_refuse_before_emission() {\n    let source = \"#[expect(clippy::fn_params_excessive_bools, reason = \\\"why\\\")] pub    const fn keep(value:bool)->bool{value}fn main(){}\";\n    for selected_model in [\n        \"closed pure Rust const predicates 1\",\n        \"closed Boolean Rust const decision trees 1\",\n    ] {\n        let surface = parse_rust_with_const_function_model(source, selected_model, \"\").unwrap();\n        let mut surface_value = serde_json::to_value(&surface).unwrap();\n        surface_value[\"items\"][0][\"sourceDiagnosticAttributes\"] = Value::Null;\n        let surface: meta_language::translation::surface::SProgram =\n            serde_json::from_value(surface_value).unwrap();\n        let meta_language::translation::surface::SItem::Fn(function) = &surface.items[0] else {\n            unreachable!()\n        };\n        assert_eq!(\n            function.source_diagnostic_attributes.as_deref(),\n            Some(&Value::Null),\n            \"present null must survive serde for rejection\"\n        );\n        let failure = check_program(&surface).unwrap_err();\n        assert_eq!(\n            failure.reason,\n            \"Rust diagnostic source attributes: an owned descriptor has missing or unrepresented fields\"\n        );\n\n        let original = check_program(\n            &parse_rust_with_const_function_model(source, selected_model, \"\").unwrap(),\n        )\n        .unwrap();\n        for edit in 0..9 {\n            let mut value = serde_json::to_value(&original).unwrap();\n            let function = &mut value[\"declarations\"][0];\n            match edit {\n                0 => function[\"sourceDiagnosticAttributes\"] = Value::Null,\n                1 => function[\"sourceDiagnosticAttributes\"][\"model\"] = json!(\"unknown\"),\n                2 => function[\"sourceDiagnosticAttributes\"][\"edition\"] = json!(2024),\n                3 => {\n                    function[\"sourceDiagnosticAttributes\"][\"attachment\"][\"sourceName\"] =\n                        json!(\"foreign\")\n                }\n                4 => {\n                    function[\"sourceDiagnosticAttributes\"][\"attachment\"][\"modulePath\"] =\n                        json!([\"foreign\"])\n                }\n                5 => {\n                    function[\"sourceDiagnosticAttributes\"][\"tokens\"][0][\"kind\"] =\n                        json!(\"identifier\")\n                }\n                6 => function[\"sourceDiagnosticAttributes\"][\"tokens\"][0][\"raw\"] = json!(\"@\"),\n                7 => {\n                    function[\"sourceDiagnosticAttributes\"][\"tokens\"][0][\"span\"][\"start\"] = json!(1)\n                }\n                _ => {\n                    function\n                        .as_object_mut()\n                        .unwrap()\n                        .remove(\"sourceConstFunction\");\n                }\n            }\n            let changed: Program = serde_json::from_value(value).unwrap();\n            if edit == 0 {\n                let Decl::Fn(function) = &changed.declarations[0] else {\n                    unreachable!()\n                };\n                assert_eq!(\n                    function.source_diagnostic_attributes.as_ref(),\n                    Some(&Value::Null)\n                );\n            }\n            for failure in [\n                emit_rust(&changed).unwrap_err(),\n                emit_javascript(&changed).unwrap_err(),\n            ] {\n                assert!(\n                    failure\n                        .reason\n                        .starts_with(\"Rust diagnostic source attributes:\"),\n                    \"{selected_model}/{edit}: {}\",\n                    failure.reason\n                );\n            }\n            assert!(\n                encode_typed_program_links(&changed).is_err(),\n                \"{selected_model}/{edit}\"\n            );\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-diagnostic-raw-archive-forgeries",
+    "source": "rust/tests/unit/rust_const_branch_functions.rs",
+    "name": "diagnostic_raw_archive_null_misplacement_and_const_boundary_forgeries_refuse",
+    "inventoryName": "check native diagnostic raw archive forgeries",
+    "sourceText": "fn diagnostic_raw_archive_null_misplacement_and_const_boundary_forgeries_refuse() {\n    let attribute = \"#[expect(clippy::fn_params_excessive_bools, reason = \\\"why\\\")]\";\n    let source =\n        format!(\"{attribute} pub    const fn keep(value:bool)->bool{{value}}fn main(){{}}\");\n    for selected_model in [\n        \"closed pure Rust const predicates 1\",\n        \"closed Boolean Rust const decision trees 1\",\n    ] {\n        let original = check_program(\n            &parse_rust_with_const_function_model(&source, selected_model, \"\").unwrap(),\n        )\n        .unwrap();\n        let original = encode_typed_program_links(&original).unwrap();\n        for edit in 0..7 {\n            let mut packet = original.clone();\n            let body = packet.network.link(packet.root).unwrap().references()[0];\n            let directory = relation(&packet.network, body, \"declarations\")[2];\n            let pair = packet.network.link(directory).unwrap().references()[0];\n            let function = packet.network.link(pair).unwrap().references()[1];\n            let field = relation(&packet.network, function, \"sourceDiagnosticAttributes\");\n            let facet = field[2];\n            let expected = if edit >= 5 {\n                let raw = if edit == 5 {\n                    format!(\"{attribute}     pub\")\n                } else {\n                    format!(\"{attribute} pub // \")\n                };\n                let old_raw = relation(&packet.network, facet, \"raw\")[2];\n                assert_eq!(\n                    packet\n                        .network\n                        .link(old_raw)\n                        .unwrap()\n                        .metadata()\n                        .definition()\n                        .unwrap()\n                        .encode_utf16()\n                        .count(),\n                    raw.encode_utf16().count()\n                );\n                replace(&mut packet.network, facet, \"raw\", \"string value\", &raw);\n                let list = relation(&packet.network, facet, \"tokens\")[2];\n                let ids = packet.network.link(list).unwrap().references().to_vec();\n                let actual = meta_language::translation::lexer::tokenize(\n                    &raw,\n                    meta_language::translation::Language::Rust,\n                )\n                .unwrap()\n                .tokens;\n                let actual = actual\n                    .iter()\n                    .filter(|token| token.kind != meta_language::translation::lexer::TokenKind::Eof)\n                    .collect::<Vec<_>>();\n                assert_eq!(ids.len(), actual.len());\n                assert_eq!(actual.last().unwrap().value, \"pub\");\n                for (id, token) in ids.iter().zip(actual) {\n                    let span = relation(&packet.network, *id, \"span\")[2];\n                    for (name, position) in [(\"start\", token.start), (\"end\", token.end)] {\n                        let old = relation(&packet.network, span, name)[2];\n                        let scalar = packet.network.link(old).unwrap().metadata();\n                        let term = scalar.term().unwrap().to_owned();\n                        let definition = position.to_string();\n                        if scalar.definition() != Some(definition.as_str()) {\n                            replace(&mut packet.network, span, name, &term, &definition);\n                        }\n                    }\n                }\n                \"Rust diagnostic source attributes: the retained prefix absorbs or changes the actual following const token\"\n            } else if edit == 0 {\n                let schema = meta_language::typed_program_links_schema();\n                let null = packet.network.insert_link(\n                    [],\n                    LinkMetadata::new()\n                        .with_link_type(LinkType::Semantic)\n                        .with_named(true)\n                        .with_language(schema[\"language\"].as_str().unwrap())\n                        .with_term(schema[\"scalars\"][\"null\"].as_str().unwrap()),\n                );\n                assert_eq!(\n                    packet\n                        .network\n                        .apply_substitution(&SubstitutionRule::new(\n                            field,\n                            [field[0], field[1], null]\n                        ))\n                        .updated()\n                        .len(),\n                    1\n                );\n                \"Rust diagnostic source attributes: an owned descriptor has missing or unrepresented fields\"\n            } else {\n                let target = match edit {\n                    1 => relation(&packet.network, body, \"main\")[2],\n                    2 => relation(&packet.network, function, \"body\")[2],\n                    3 => {\n                        let parameters = relation(&packet.network, function, \"params\")[2];\n                        packet.network.link(parameters).unwrap().references()[0]\n                    }\n                    _ => body,\n                };\n                let label = packet\n                    .network\n                    .link(field[1])\n                    .unwrap()\n                    .metadata()\n                    .term()\n                    .unwrap()\n                    .to_owned();\n                assert_eq!(\n                    packet\n                        .network\n                        .apply_substitution(&SubstitutionRule::delete(field))\n                        .deleted()\n                        .len(),\n                    1\n                );\n                packet.network.insert_field(target, &label, facet);\n                \"Rust diagnostic source attributes: a source facet is not attached to an actual function item\"\n            };\n            for network in archives(&packet) {\n                let failure = decode_typed_program_links(&network, packet.root).unwrap_err();\n                assert!(\n                    failure.to_string().contains(expected),\n                    \"{selected_model}/{edit}: {failure}\"\n                );\n                for target in [\"Rust\", \"JavaScript\"] {\n                    let failure =\n                        emit_typed_program_links(&network, packet.root, target).unwrap_err();\n                    assert!(\n                        failure.to_string().contains(expected),\n                        \"{selected_model}/{edit}/{target}: {failure}\"\n                    );\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/generate-rust-diagnostic-attribute-rules.mjs",
+    "name": "digest",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const digest = source => createHash('sha256').update(source).digest('hex');"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/tests/translation-rust-diagnostic-attribute-parser.test.js",
+    "name": "sha",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const sha=source=>createHash('sha256').update(source).digest('hex');"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs",
+    "name": "sha256",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "js/scripts/extend-typed-program-schema-fourth-stage.mjs",
+    "name": "sha256",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.test.mjs",
+    "name": "sha256",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "const sha256 = value => createHash('sha256').update(value).digest('hex');"
+  },
+  {
+    "id": "repository.hash-rust-text-native-oracle-content",
+    "source": "rust/tests/unit/rust_const_branch_functions/diagnostic_attributes.rs",
+    "name": "diagnostic_digest",
+    "inventoryName": "hash rust text native oracle content",
+    "sourceText": "fn diagnostic_digest(source: &str) -> String {\n    Sha256::digest(source.as_bytes())\n        .iter()\n        .fold(String::new(), |mut text, byte| {\n            write!(text, \"{byte:02x}\").expect(\"writing into a String succeeds\");\n            text\n        })\n}"
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-optional-at",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::optional_at",
+    "inventoryName": "execute callable source native meta language array optional at",
+    "sourceText": "    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-at",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::at",
+    "inventoryName": "execute callable source native meta language array at",
+    "sourceText": "    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-number-index",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::number_index",
+    "inventoryName": "execute callable source native meta language array number index",
+    "sourceText": "    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-append",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::append",
+    "inventoryName": "execute callable source native meta language array append",
+    "sourceText": "    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-integer",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::integer",
+    "inventoryName": "execute callable source native meta language array integer",
+    "sourceText": "    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-relative",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::relative",
+    "inventoryName": "execute callable source native meta language array relative",
+    "sourceText": "    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-slice",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::slice",
+    "inventoryName": "execute callable source native meta language array slice",
+    "sourceText": "    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-index-of",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::index_of",
+    "inventoryName": "execute callable source native meta language array index of",
+    "sourceText": "    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-includes",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::includes",
+    "inventoryName": "execute callable source native meta language array includes",
+    "sourceText": "    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-set",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::set",
+    "inventoryName": "execute callable source native meta language array set",
+    "sourceText": "    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-array-map",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array::map",
+    "inventoryName": "execute callable source native meta language array map",
+    "sourceText": "    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }",
+    "ownerContexts": [
+      "pub mod ml_array {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-round",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::round",
+    "inventoryName": "execute callable source native meta language mathematics round",
+    "sourceText": "    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-sign",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::sign",
+    "inventoryName": "execute callable source native meta language mathematics sign",
+    "sourceText": "    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::max",
+    "inventoryName": "execute callable source native meta language mathematics maximum",
+    "sourceText": "    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::min",
+    "inventoryName": "execute callable source native meta language mathematics minimum",
+    "sourceText": "    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-maximum-of",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::max_of",
+    "inventoryName": "execute callable source native meta language mathematics maximum of",
+    "sourceText": "    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-minimum-of",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::min_of",
+    "inventoryName": "execute callable source native meta language mathematics minimum of",
+    "sourceText": "    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-integer",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::is_integer",
+    "inventoryName": "execute callable source native meta language mathematics is integer",
+    "sourceText": "    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.execute-callable-source-native-meta-language-mathematics-is-safe-integer",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math::is_safe_integer",
+    "inventoryName": "execute callable source native meta language mathematics is safe integer",
+    "sourceText": "    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }",
+    "ownerContexts": [
+      "pub mod ml_math {"
+    ]
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-array",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_array",
+    "inventoryName": "callable source native meta language array",
+    "sourceText": "pub mod ml_array {\n    #[must_use]\n    pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> {\n        index.and_then(|index| values.get(index)).cloned()\n    }\n    /// The element at an index; a read outside the array, undefined in\n    /// JavaScript, aborts.\n    #[must_use]\n    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {\n        index\n            .and_then(|index| values.get(index))\n            .map_or_else(|| panic!(\"array index out of range\"), Clone::clone)\n    }\n\n    /// The index a Number names: a non-negative integer, -0 included.\n    #[must_use]\n    pub fn number_index(index: f64) -> Option<usize> {\n        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {\n            Some(index as usize)\n        } else {\n            None\n        }\n    }\n\n    #[must_use]\n    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {\n        left.extend(right);\n        left\n    }\n    const fn integer(value: f64) -> f64 {\n        if value.is_nan() { 0.0 } else { value.trunc() }\n    }\n    fn relative(value: f64, length: usize) -> usize {\n        let value = integer(value);\n        if value < 0.0 {\n            (length as f64 + value).max(0.0) as usize\n        } else {\n            value.min(length as f64) as usize\n        }\n    }\n    #[must_use]\n    pub fn slice<T: Clone>(values: &[T], start: f64, end: f64) -> Vec<T> {\n        let start = relative(start, values.len());\n        let end = relative(end, values.len());\n        values[start..end.max(start)].to_vec()\n    }\n    #[must_use]\n    pub fn index_of<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> f64 {\n        if values.is_empty() {\n            return -1.0;\n        }\n        let from = integer(from);\n        if reverse {\n            if from < -(values.len() as f64) {\n                return -1.0;\n            }\n            let start = if from < 0.0 {\n                (values.len() as f64 + from) as usize\n            } else {\n                from.min((values.len() - 1) as f64) as usize\n            };\n            (0..=start)\n                .rev()\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        } else {\n            let start = if from < 0.0 {\n                (values.len() as f64 + from).max(0.0) as usize\n            } else {\n                from.min(values.len() as f64) as usize\n            };\n            (start..values.len())\n                .find(|&index| equal(&values[index], search))\n                .map_or(-1.0, |index| index as f64)\n        }\n    }\n    #[must_use]\n    pub fn includes<T, F: Fn(&T, &T) -> bool>(\n        values: &[T],\n        search: &T,\n        from: f64,\n        reverse: bool,\n        equal: F,\n    ) -> bool {\n        index_of(values, search, from, reverse, equal) >= 0.0\n    }\n    #[must_use]\n    pub fn set<T, F: Fn(&T, &T) -> bool>(values: Vec<T>, equal: F) -> Vec<T> {\n        let mut out = Vec::new();\n        for value in values {\n            if !out.iter().any(|previous| equal(previous, &value)) {\n                out.push(value);\n            }\n        }\n        out\n    }\n    #[must_use]\n    pub fn map<K, V, F: Fn(&K, &K) -> bool>(values: Vec<(K, V)>, equal: F) -> Vec<(K, V)> {\n        let mut out: Vec<(K, V)> = Vec::new();\n        for (key, value) in values {\n            if let Some(index) = out.iter().position(|(previous, _)| equal(previous, &key)) {\n                out[index].1 = value;\n            } else {\n                out.push((key, value));\n            }\n        }\n        out\n    }\n}"
+  },
+  {
+    "id": "translation.callable-source-native-meta-language-mathematics",
+    "source": "rust/src/translation/rust_diagnostic_attribute_rules/part_1.rs",
+    "name": "ml_math",
+    "inventoryName": "callable source native meta language mathematics",
+    "sourceText": "pub mod ml_math {\n    /// Math.round: the nearest integer, the one towards +Infinity on a tie,\n    /// with the sign of a zero result from the argument.\n    #[must_use]\n    pub fn round(x: f64) -> f64 {\n        if !x.is_finite() || x == 0.0 {\n            return x;\n        }\n        if x > 0.0 && x < 0.5 {\n            return 0.0;\n        }\n        if (-0.5..0.0).contains(&x) {\n            return -0.0;\n        }\n        let floor = x.floor();\n        if x - floor >= 0.5 { floor + 1.0 } else { floor }\n    }\n\n    /// Math.sign, which keeps -0, 0 and NaN, where `f64::signum` does not.\n    #[must_use]\n    pub fn sign(x: f64) -> f64 {\n        if x > 0.0 {\n            1.0\n        } else if x < 0.0 {\n            -1.0\n        } else {\n            x\n        }\n    }\n\n    /// Math.max of two Numbers: NaN when either is, and 0 above -0.\n    #[must_use]\n    pub fn max(a: f64, b: f64) -> f64 {\n        if a > b {\n            a\n        } else if b > a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { b } else { a }\n        } else {\n            f64::NAN\n        }\n    }\n\n    /// Math.min of two Numbers: NaN when either is, and -0 below 0.\n    #[must_use]\n    pub fn min(a: f64, b: f64) -> f64 {\n        if a < b {\n            a\n        } else if b < a {\n            b\n        } else if a == b {\n            if a.is_sign_negative() { a } else { b }\n        } else {\n            f64::NAN\n        }\n    }\n\n    #[must_use]\n    pub fn max_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::NEG_INFINITY, |a, &b| max(a, b))\n    }\n\n    #[must_use]\n    pub fn min_of(values: &[f64]) -> f64 {\n        values.iter().fold(f64::INFINITY, |a, &b| min(a, b))\n    }\n\n    #[must_use]\n    pub fn is_integer(x: f64) -> bool {\n        x.is_finite() && x.trunc() == x\n    }\n\n    #[must_use]\n    pub fn is_safe_integer(x: f64) -> bool {\n        is_integer(x) && x.abs() <= 9_007_199_254_740_991.0\n    }\n}"
+  }
+];
+const B66_NAME_INVENTORIES=[...new Set(B66_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B66 diagnostic, schema and compiler cache source names for "+source,files:[source],extract:text=>B66_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B66_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B66 diagnostic source, schema and compiler cache names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES, ...SAVED_PROJECTION_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_STYLE_CONTROL_NAME_INVENTORIES, ...EMPTY_STRING_COMPILER_CURRENT_TYPE_QUERY_WITNESS_INVENTORIES, ...B63_SOURCE_BINDINGS_INVENTORIES, ...B63_CURRENT_WITNESS_BINDINGS_INVENTORIES, ...B64_RAW_EMISSION_NAME_INVENTORIES, ...B65_CHARACTER_TAG_NAME_INVENTORIES, ...B66_NAME_INVENTORIES].map(reconcileCurrentWitnessInventory).map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
