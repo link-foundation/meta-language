@@ -39,6 +39,7 @@ include = [
     "src/data/callable-source-rules.lino",
     "src/data/callable-emission-rules.lino",
     "src/data/grammar-lexer-rules.lino",
+    "src/data/grammar-rule-composition-rules.lino",
     "src/data/grammar-selection-rules.lino",
     "src/data/grammar-selection-included-range-rules.lino",
     "src/data/grammar-selection-field-range-rules.lino",

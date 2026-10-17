@@ -59,18 +59,25 @@ test('bulk translation freshness includes every new native family without repeat
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(28, 29), [
     { script: 'js/scripts/generate-grammar-selection-field-range-rules.mjs', arguments: ['--native', '--check'] },
   ], 'physical field range selection appends after the complete retained twenty-eight-command prefix');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(29), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(29, 30), [
     { script: 'js/scripts/generate-collection-construction-rules.mjs', arguments: ['--native', '--check'] },
   ], 'collection construction appends after the complete retained twenty-nine-command prefix');
-  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 30, 'the complete source freshness gate retains exactly its reviewed scope');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(30), [
+    { script: 'js/scripts/generate-grammar-rule-composition-rules.mjs', arguments: ['--native', '--check'] },
+  ], 'grammar rule composition appends after the complete retained thirty-command prefix');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 31, 'the complete source freshness gate retains exactly its reviewed scope');
   const nativePackage = readFileSync(path.join(repository, 'rust/Cargo.toml'), 'utf8');
   const includedFiles = /^include = \[([\s\S]*?)^\]/mu.exec(nativePackage)?.[1];
   assert.ok(includedFiles, 'the native package retains its explicit source inventory');
   assert.equal([...includedFiles.matchAll(/^\s*"src\/data\/collection-construction-rules\.lino",$/gmu)].length, 1,
     'the collection construction policy ships exactly once in the native package');
+  assert.equal([...includedFiles.matchAll(/^\s*"src\/data\/grammar-rule-composition-rules\.lino",$/gmu)].length, 1,
+    'the grammar rule composition policy ships exactly once in the native package');
   const nativeModules = readFileSync(path.join(repository, 'rust/src/translation/mod.rs'), 'utf8');
   assert.equal([...nativeModules.matchAll(/^pub\(crate\) mod collection_construction_rules;$/gmu)].length, 1,
     'the generated collection construction library has one native module registration');
+  assert.equal([...nativeModules.matchAll(/^pub\(crate\) mod grammar_rule_composition_rules;$/gmu)].length, 1,
+    'the generated grammar rule composition library has one native module registration');
   for (const family of defaultNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--check']);
   for (const family of explicitNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--native', '--check']);
   for (const name of ['generate-grammar-selection-fixtures.mjs', 'generate-private-output-test-model.mjs', 'extend-typed-program-schema-second-stage.mjs']) {
@@ -90,7 +97,8 @@ test('bulk translation freshness includes every new native family without repeat
     if (['js/scripts/generate-javascript-tag-context-rules.mjs', 'js/scripts/generate-rust-diagnostic-attribute-rules.mjs',
       'js/scripts/generate-grammar-selection-included-range-rules.mjs',
       'js/scripts/generate-grammar-selection-field-range-rules.mjs',
-      'js/scripts/generate-collection-construction-rules.mjs'].includes(check.script)) {
+      'js/scripts/generate-collection-construction-rules.mjs',
+      'js/scripts/generate-grammar-rule-composition-rules.mjs'].includes(check.script)) {
       assert.equal(source.includes('const args = process.argv.slice(2);'), true, check.script);
       assert.equal(source.includes("check: args.includes('--check'), native: args.includes('--native')"), true, check.script);
     } else if (check.arguments.includes('--native')) assert.equal(source.includes("process.argv.includes('--native')"), true, check.script);

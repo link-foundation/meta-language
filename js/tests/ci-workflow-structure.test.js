@@ -1176,6 +1176,9 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check generated collection construction rules against JavaScript',
     'node js/scripts/generate-collection-construction-rules.mjs --native --check',
     'cd57bc07523d3acd98c4e19b52f9cb1550f585ac9a154848dadf1b68a63db906', 'generated'],
+  ['Check generated grammar rule composition rules against JavaScript',
+    'node js/scripts/generate-grammar-rule-composition-rules.mjs --native --check',
+    '94f4fce8863c6b1b31c4737c2d3d483f1b8e1eb7ba23fc9d7b218bf7702b1085', 'generated'],
 ];
 
 // Parameter-default generation adds one exact gate without changing an earlier freeze.
