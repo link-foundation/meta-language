@@ -47012,7 +47012,578 @@ const reconcileB57MovedSourceInventory=entry=>{if(entry.inventory!=="B51 archive
 const STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES=[...new Set(STRING_CODE_UNIT_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B57 portable string code unit and reviewed repair names for "+source,files:[source],extract:raw=>STRING_CODE_UNIT_SOURCE_BINDINGS.filter(row=>{if(row.source!==source)return false;const data=row.dataField||row.sourceField?readStructuredDataLino(raw):null;const text=row.sourceField?data[row.sourceField]:raw;return row.dataField?Object.hasOwn(data,row.dataField):typeof text==="string"&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext));}).map(row=>row.inventoryName),recordOf:name=>STRING_CODE_UNIT_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 const STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES=STRING_CODE_UNIT_CURRENT_WITNESSES.map(row=>({inventory:row.inventory,files:[row.source],extract:text=>text.includes(row.sourceText)?[row.inventoryName]:[],recordOf:()=>row.id}));
 // END B57 portable string code-unit and reviewed repair source names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B59 lazy child chain operation and control names.
+const CHILD_CHAIN_SOURCE_BINDINGS=[
+  {
+    "id": "grammar.walk-child-parts",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "walkChildParts",
+    "inventoryName": "walk child parts",
+    "sourceText": "function* walkChildParts(children, backward = false) {\n  const pending = [children];\n  while (pending.length > 0) {\n    const part = pending.pop();\n    if (Array.isArray(part)) {\n      if (backward) for (let index = part.length - 1; index >= 0; index -= 1) yield part[index];\n      else yield* part;\n    } else if (part.left != null && part.right != null) {\n      if (backward) pending.push(part.left, part.right);\n      else pending.push(part.right, part.left);\n    } else if (part.flat) pending.push(part.flat);\n  }\n}"
+  },
+  {
+    "id": "grammar.read-first-meaningful-child",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "firstMeaningfulChild",
+    "inventoryName": "read first meaningful child",
+    "sourceText": "function firstMeaningfulChild(children) {\n  for (const child of walkChildParts(children)) if (!isTrivia(child)) return child;\n  return undefined;\n}"
+  },
+  {
+    "id": "grammar.read-active-child-chain",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "readActiveChildChain",
+    "inventoryName": "read active child chain",
+    "sourceText": "function readActiveChildChain(result) {\n  const chain = result[CHAIN];\n  if (!chain) return null;\n  const descriptor = Object.getOwnPropertyDescriptor(result, 'children');\n  // A spread may copy the symbol while replacing its materialized children.\n  // Only the actual lazy owner (or its symbol-only carrier) owns this chain.\n  return descriptor ? (descriptor.get === readChainChildren ? chain : null)\n    : ('children' in result ? null : chain);\n}"
+  },
+  {
+    "id": "grammar.open-token-comparison-child-part",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "preferredTokens::openPart",
+    "inventoryName": "open token comparison child part",
+    "sourceText": "const openPart = (stack) => {\n    const { part } = stack.pop();\n    if (!Array.isArray(part) && part.left !== null && part.left !== undefined) {\n      stack.push({ part: part.right }, { part: part.left });\n      return;\n    }\n    const children = Array.isArray(part) ? part : part.flat;\n    for (let index = children.length - 1; index >= 0; index -= 1) stack.push({ item: children[index] });\n  };",
+    "ownerContexts": [
+      "function preferredTokens(result, existing, tokens) {"
+    ]
+  },
+  {
+    "id": "repository.read-child-traversal-source-operations",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "readChildWalkOperations",
+    "inventoryName": "read child traversal source operations",
+    "sourceText": "function readChildWalkOperations(source){\n  const chainStart=source.indexOf(\"const CHAIN = Symbol('children chain');\");\n  const chainEnd=source.indexOf('// A result whose MISSING leaf',chainStart);\n  const walkStart=source.indexOf('function widthless('),walkEnd=source.indexOf('// Whether two subtrees hold the same tokens',walkStart);\n  const firstStart=source.indexOf('function firstLeafStart('),firstEnd=source.indexOf('// The children of a joined result',firstStart);\n  assert.ok(chainStart>=0&&chainEnd>chainStart&&walkStart>=0&&walkEnd>walkStart&&firstStart>=0&&firstEnd>firstStart);\n  const scalar=['scannedToken','isTrivia','isSeparator'].map(name=>{\n    const start=source.indexOf('function '+name+'('),end=source.indexOf('\\n}',start)+2;\n    assert.ok(start>=0&&end>start);return source.slice(start,end);\n  }).join('\\n');\n  return new Function('acceptScannerPreemptionBoundary','readScannerContinuationAction','NO_CHILDREN',\n    scalar+'\\n'+source.slice(chainStart,chainEnd)+'\\n'+source.slice(walkStart,walkEnd)+'\\n'+source.slice(firstStart,firstEnd)\n    +'\\nreturn {CHAIN,partOf,childCount,shareChildren,flattenChain,leavesBackward,lastRepaired,startsWidthless,lexedPast,preempted,firstLeafStart};')(\n      acceptScannerPreemptionBoundary,readScannerContinuationAction,Object.freeze([]));\n}"
+  },
+  {
+    "id": "repository.create-child-traversal-control-owner",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "createChildWalkOwner",
+    "inventoryName": "create child traversal control owner",
+    "sourceText": "function createChildWalkOwner(operations,children,form,chains=[],header={}){\n  const values=children.map(child=>child.type==='node'\n    ? createChildWalkOwner(operations,child.children,form,chains,child) : {...child});\n  let part=[];\n  if(form==='flat')part=values;\n  else for(let index=0;index<values.length;index++){\n    const right=[values[index]];\n    part={left:part,right,length:index+1,flat:null};chains.push(part);\n    if(form==='mixed'&&index%2===1)operations.flattenChain(part);\n  }\n  const source=Array.isArray(part)?{children:part}:{[operations.CHAIN]:part};\n  const {children:unused,...fields}=header;\n  return operations.shareChildren({type:'node',kind:'container',start:-12,end:40,cost:0,...fields},source);\n}"
+  },
+  {
+    "id": "repository.prepare-child-traversal-baseline-module",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "childWalkBaselineModule",
+    "inventoryName": "prepare child traversal baseline module",
+    "sourceText": "function childWalkBaselineModule(row,overrides=new Map()){\n  const base=new URL('../../'+row.path,import.meta.url);\n  const source=row.source.replace(/\\bfrom (['\"])(\\.[^'\"\\n]+)\\1/gu,(_,quote,path)=>\n    'from '+quote+(overrides.get(new URL(path,base).href)??new URL(path,base).href)+quote)\n    .replaceAll('import.meta.url',JSON.stringify(base.href));\n  return 'data:text/javascript;base64,'+Buffer.from(source).toString('base64');\n}"
+  },
+  {
+    "id": "repository.prepare-token-comparison-source-module",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "readTokenComparisonModule",
+    "inventoryName": "prepare token comparison source module",
+    "sourceText": "function readTokenComparisonModule(source,path,overrides=new Map(),expose=false) {\n  const base=new URL('../../'+path,import.meta.url);\n  const linked=source.replace(/\\bfrom (['\"])(\\.[^'\"\\n]+)\\1/gu,(_,quote,address)=>{\n    const resolved=new URL(address,base).href;\n    return 'from '+quote+(overrides.get(resolved)??resolved)+quote;\n  }).replaceAll('import.meta.url',JSON.stringify(base.href));\n  return 'data:text/javascript;base64,'+Buffer.from(linked+(expose?'\\nexport {preferredTokens,CHAIN,shareChildren};':'')).toString('base64');\n}"
+  },
+  {
+    "id": "repository.read-frozen-token-comparison-baseline",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "readTokenComparisonBaseline",
+    "inventoryName": "read frozen token comparison baseline",
+    "sourceText": "async function readTokenComparisonBaseline() {\n  assert.equal(controls.baseline.revision,'ae76b70abaa60d2ec051088da08dcd55fb3f73f4');\n  assert.deepEqual(controls.baseline.modules.map(row=>row.path),Object.keys(pins));\n  for(const row of controls.baseline.modules){\n    assert.equal(row.sha256,pins[row.path]);\n    assert.equal(createHash('sha256').update(row.source).digest('hex'),pins[row.path]);\n    assert.equal(Buffer.byteLength(row.source),row.bytes);\n  }\n  const [executor,driver]=controls.baseline.modules;\n  const originalAddress=readTokenComparisonModule(executor.source,executor.path,new Map(),true);\n  const currentSource=readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8');\n  const currentAddress=readTokenComparisonModule(currentSource,executorPath,new Map(),true);\n  const overrides=new Map([[new URL('../../'+executor.path,import.meta.url).href,originalAddress]]);\n  const [original,current,baseline]=await Promise.all([\n    import(originalAddress),import(currentAddress),import(readTokenComparisonModule(driver.source,driver.path,overrides)),\n  ]);\n  return {original,current,baseline};\n}"
+  },
+  {
+    "id": "repository.create-token-comparison-control-leaf",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "leaf",
+    "inventoryName": "create token comparison control leaf",
+    "sourceText": "const leaf=(kind,start,end,fields={})=>({type:'token',kind,start,end,...fields});"
+  },
+  {
+    "id": "repository.create-token-comparison-control-leaf",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "token",
+    "inventoryName": "create token comparison control leaf",
+    "sourceText": "const token=(kind,start,end,fields={})=>({type:'token',kind,start,end,...fields});"
+  },
+  {
+    "id": "repository.create-token-comparison-control-node",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "node",
+    "inventoryName": "create token comparison control node",
+    "sourceText": "const node=(kind,children)=>({type:'node',kind,start:children[0]?.start??0,end:children.at(-1)?.end??0,children});"
+  },
+  {
+    "id": "repository.check-lazy-child-traversal-boundaries",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "lazy first and backward child walks preserve every frozen trivia and boundary observation",
+    "inventoryName": "check lazy child traversal boundaries",
+    "sourceText": "test('lazy first and backward child walks preserve every frozen trivia and boundary observation',()=>{\n  const token={type:'token',kind:'word',start:-4,end:-2,lexed:'source-word'};\n  const boundary={type:'token',kind:'renamed-boundary',start:3,end:3,scanned:true};\n  const separator={type:'token',kind:null,start:4,end:5,trivia:true};\n  const namedTrivia={type:'node',kind:'comment',start:-8,end:-5,trivia:true,children:[token]};\n  let deep={type:'node',kind:'empty',start:-0,end:0,children:[]};\n  for(let index=0;index<32;index++)deep={type:'node',kind:'nested',start:-index,end:10,children:[namedTrivia,deep,boundary]};\n  const cases=[[],[separator],[namedTrivia],[token],[boundary],[deep],\n    [token,boundary,separator],[separator,namedTrivia,token,boundary],\n    [{type:'node',kind:'empty',start:-7,end:9,children:[]},token],\n    [{type:'missing',kind:'inserted',start:2,end:2},boundary],\n    [{type:'embed',kind:'embedded',start:0,end:3},boundary],\n    [{type:'node',kind:'group',start:-4,end:3,children:[token,boundary]},separator],\n  ];\n  for(const children of cases)for(const form of ['flat','joined','mixed']){\n    const previous=createChildWalkOwner(original,children,'flat'),chains=[];\n    const actual=createChildWalkOwner(current,children,form,chains);\n    const expected={leaves:[...original.leavesBackward(previous.children)],last:original.lastRepaired(previous.children),\n      widthless:original.startsWidthless(previous),start:original.firstLeafStart(previous)};\n    const observed={leaves:[...current.leavesBackward(current.partOf(actual))],last:current.lastRepaired(current.partOf(actual)),\n      widthless:current.startsWidthless(actual),start:current.firstLeafStart(actual)};\n    if(form==='joined')assert.ok(chains.every(chain=>chain.flat===null),'edge queries never flatten a joined prefix');\n    // Materialize semantic values only after checking lazy storage; the sole\n    // internal CHAIN symbol and getter descriptors are representation details.\n    assert.deepEqual(structuredClone(observed),structuredClone(expected));\n    if(Object.is(expected.start,-0))assert.equal(Object.is(observed.start,-0),true);\n  }\n})"
+  },
+  {
+    "id": "repository.check-lazy-scanner-preemption-observations",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "lazy backward walks preserve frozen scanner preemption across aliases states and repair costs",
+    "inventoryName": "check lazy scanner preemption observations",
+    "sourceText": "test('lazy backward walks preserve frozen scanner preemption across aliases states and repair costs',()=>{\n  for(const aliases of [false,true])for(const shifted of [false,true])for(const sameState of [false,true])for(const cost of [0,1]){\n    const run=operations=>{\n      const first={type:'token',kind:'original',lexed:'same-source',start:0,end:1};\n      const otherFirst={...first,kind:aliases?'alias':'different',lexed:aliases?'same-source':'other-source'};\n      const boundary={type:'token',kind:'boundary',start:1,end:1,scanned:true};\n      const next={type:'token',kind:'next',start:2,end:3};\n      const left=createChildWalkOwner(operations,[first],'joined',[],{end:1,state:{key:'same'},cost});\n      const other=createChildWalkOwner(operations,[otherFirst,...(shifted?[boundary]:[]),next],'joined',[],{end:3,state:{key:sameState?'same':'different'},cost:0});\n      const right=createChildWalkOwner(operations,[boundary],'joined');\n      const continued=[[left,[right]],[other,[]]],pruned=operations.preempted(continued);\n      return {pruned:continued.map(([result])=>pruned?.has(result)??false),past:operations.lexedPast(other,first,cost)};\n    };\n    assert.deepEqual(run(current),run(original));\n  }\n})"
+  },
+  {
+    "id": "repository.check-retained-child-parts-and-replacement-ownership",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "materialized child arrays retain original parts while replacement children own their exact observations",
+    "inventoryName": "check retained child parts and replacement ownership",
+    "sourceText": "test('materialized child arrays retain original parts while replacement children own their exact observations',()=>{\n  const first={type:'token',kind:'first',start:0,end:1},second={type:'token',kind:'second',start:1,end:2};\n  const left=[first],right=[second],chain={left,right,length:2,flat:null};\n  const owner=current.shareChildren({kind:'owner'},{[current.CHAIN]:chain});\n  assert.deepEqual(owner.children,[first,second]);assert.equal(owner.children,chain.flat);\n  assert.equal(chain.left,left);assert.equal(chain.right,right);\n  const replacement={type:'missing',kind:'replacement',start:-0,end:-0};\n  const spread={...owner,children:[replacement]},copy=current.shareChildren({kind:'copy'},spread);\n  assert.equal(current.partOf(spread),spread.children);assert.equal(current.childCount(spread),1);\n  assert.equal(copy.children,spread.children);assert.equal(Object.hasOwn(copy,current.CHAIN),false);\n  assert.deepEqual([...current.leavesBackward(current.partOf(spread))],[replacement]);\n  const inherited=Object.create({children:[replacement]});inherited[current.CHAIN]=chain;\n  assert.equal(current.partOf(inherited),inherited.children);assert.equal(current.childCount(inherited),1);\n  let reads=0;\n  const getter={[current.CHAIN]:chain,get children(){reads++;return [replacement];}};\n  assert.deepEqual(current.partOf(getter),[replacement]);assert.equal(reads,1);\n  assert.equal(current.childCount(getter),1);assert.equal(reads,2);\n  assert.deepEqual(current.shareChildren({},getter).children,[replacement]);assert.equal(reads,3);\n  const historical={left:null,right:null,length:1,flat:[replacement]};\n  const oldOwner=current.shareChildren({type:'node',start:4},{[current.CHAIN]:historical});\n  assert.equal(current.firstLeafStart(oldOwner),-0);\n  assert.deepEqual([...current.leavesBackward(current.partOf(oldOwner))],[replacement]);\n})"
+  },
+  {
+    "id": "repository.check-complete-lazy-child-parser-outcomes",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "lazy child traversal retains complete frozen parser outcomes for scanner boundaries and repairs",
+    "inventoryName": "check complete lazy child parser outcomes",
+    "sourceText": "test('lazy child traversal retains complete frozen parser outcomes for scanner boundaries and repairs',async()=>{\n  const executor=controls.baseline.modules[0],driver=controls.baseline.modules[1];\n  const overrides=new Map([[new URL('../../'+executor.path,import.meta.url).href,childWalkBaselineModule(executor)]]);\n  const baseline=await import(childWalkBaselineModule(driver,overrides));\n  const grammar=parseGrammarLinks(`\n    (grammar (start document) (matching longest))\n    (extra (class plain (char %20) (char %0A)))\n    (scanner layout (tokens boundary) (operations (if (not (valid boundary)) (then fail)) (if (next (literal %0A)) (then (emit boundary))) fail))\n    (rule document normal (seq (choice unordered (ref single) (ref continued)) (optional (immediateToken (ref boundary)))))\n    (rule single normal (literal a))\n    (rule continued normal (seq (ref single) (literal b)))\n  `);\n  const actual=createGrammarParser(grammar),previous=baseline.createGrammarParser(grammar);\n  for(const source of ['a','a\\n','a b','a\\nb','a c',''])for(const options of [{},{errorRecovery:true,recovery:'accept'}]){\n    assert.deepEqual(actual.parseTree(source,options),previous.parseTree(source,options),JSON.stringify({source,options}));\n  }\n})"
+  },
+  {
+    "id": "repository.check-shared-token-prefix-leaf-avoidance",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison skips actual shared child segments without flattening or visiting their leaves",
+    "inventoryName": "check shared token prefix leaf avoidance",
+    "sourceText": "test('token comparison skips actual shared child segments without flattening or visiting their leaves',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=operations=>{\n    let reads=0;\n    const leaves=Array.from({length:128},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix={left:[leaves[0]],right:[],length:1,flat:null};\n    for(const item of leaves.slice(1))prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const left={left:prefix,right:[leaf('high',128,129)],length:129,flat:null};\n    const right={left:prefix,right:[leaf('low',128,129)],length:129,flat:null};\n    const owner=chain=>operations.shareChildren({},{[operations.CHAIN]:chain});\n    const result=operations.preferredTokens(owner(left),owner(right),tokens);\n    return {result,reads,prefix,left,right};\n  };\n  const expected=compare(original),actual=compare(current);\n  assert.equal(expected.result,1);\n  assert.equal(actual.result,expected.result);\n  assert.ok(expected.reads>0,'the original comparator visits the shared token prefix');\n  assert.equal(actual.reads,0,'the linked prefix contains no unresolved lookahead or new token conflict');\n  for(const chain of[actual.prefix,actual.left,actual.right])assert.equal(chain.flat,null);\n})"
+  },
+  {
+    "id": "repository.check-pending-token-comparison-segment-opening",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison opens a shared segment while a reduction still awaits its lookahead",
+    "inventoryName": "check pending token comparison segment opening",
+    "sourceText": "test('token comparison opens a shared segment while a reduction still awaits its lookahead',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=operations=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true});\n    const wrapper=node('wrapper',[first]);\n    const lookahead={type:'token',kind:'identifier',get start(){reads++;return 1;},end:2};\n    const shared={left:[lookahead],right:[],length:1,flat:null};\n    const build=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:{left:[head],right:shared,length:2,flat:null},right:[tail],length:3,flat:null,\n    }});\n    return {result:operations.preferredTokens(build(wrapper,leaf('high',3,4)),build(first,leaf('low',3,4)),tokens),reads};\n  };\n  const expected=compare(original),actual=compare(current);\n  assert.equal(expected.result,0,'a later lexical difference is past the actual lookahead');\n  assert.equal(actual.result,expected.result);\n  assert.ok(actual.reads>0,'pending lookahead prevents an otherwise shared-segment shortcut');\n})"
+  },
+  {
+    "id": "repository.check-token-comparison-alias-and-prefix-decisions",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison retains aliases trivia scanner endings and complete prefix decisions",
+    "inventoryName": "check token comparison alias and prefix decisions",
+    "sourceText": "test('token comparison retains aliases trivia scanner endings and complete prefix decisions',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const first=leaf('identifier',0,1);\n  const wrapped=node('item',[first]);\n  const virtual=leaf('layout',1,1,{scanned:true});\n  const trivia=leaf(null,0,1,{trivia:true});\n  const cases=[\n    [[],[]],[[first],[first]],[[wrapped],[wrapped,virtual]],[[first],[first,virtual]],\n    [[leaf('first_alias',0,1,{lexed:'identifier'})],[leaf('second_alias',0,1,{lexed:'identifier'})]],\n    [[trivia,leaf('identifier',1,2)],[leaf('identifier',0,2)]],\n    [[leaf('high',0,1)],[leaf('low',0,1)]],\n    [[node('outer',[wrapped])],[wrapped]],\n    [[node('outer',[wrapped]),leaf('high',3,4)],[wrapped,leaf('low',3,4)]],\n    [[wrapped,virtual,leaf('identifier',1,2)],[wrapped,leaf('identifier',1,2)]],\n  ];\n  for(const [left,right]of cases){\n    const expected=original.preferredTokens({children:left},{children:right},tokens);\n    const actual=current.preferredTokens({children:left},{children:right},tokens);\n    assert.equal(actual,expected);\n    assert.equal(current.preferredTokens({children:right},{children:left},tokens),original.preferredTokens({children:right},{children:left},tokens));\n  }\n  assert.equal(current.preferredTokens({children:[wrapped]},{children:[wrapped,virtual]},tokens),-1);\n  assert.equal(current.preferredTokens({children:[first]},{children:[first,virtual]},tokens),0);\n})"
+  },
+  {
+    "id": "repository.check-frozen-linked-token-comparison-outcomes",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "linked token comparison preserves complete frozen grammar outcomes and unchanged resource refusals",
+    "inventoryName": "check frozen linked token comparison outcomes",
+    "sourceText": "test('linked token comparison preserves complete frozen grammar outcomes and unchanged resource refusals',async()=>{\n  const {baseline}=await readTokenComparisonBaseline();\n  const samples=[\n    ['native-rust',controls.sources],\n    ['native-python',[\n      'def first(value):\\n    \"\"\"First.\"\"\"\\n    return value\\n\\ndef second(value):\\n    return value + 1\\n',\n      'def item(value):\\n    if value > 0:\\n        return value\\n    return 0\\n',\n    ]],\n  ];\n  for(const [language,sources]of samples){\n    const grammar=parseGrammarLinks(nativeGrammarText(language));\n    const current=createGrammarParser(grammar),previous=baseline.createGrammarParser(grammar);\n    for(const source of sources)for(const options of[{}, {errorRecovery:true,recovery:'accept'}, {memoryLimit:0}, {stepLimit:0}, {maxDepth:0}]){\n      assert.deepEqual(current.parseTree(source,options),previous.parseTree(source,options),language+': '+source);\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.observe-scanner-child-traversal-control",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "lazy backward walks preserve frozen scanner preemption across aliases states and repair costs::run",
+    "inventoryName": "observe scanner child traversal control",
+    "sourceText": "const run=operations=>{\n      const first={type:'token',kind:'original',lexed:'same-source',start:0,end:1};\n      const otherFirst={...first,kind:aliases?'alias':'different',lexed:aliases?'same-source':'other-source'};\n      const boundary={type:'token',kind:'boundary',start:1,end:1,scanned:true};\n      const next={type:'token',kind:'next',start:2,end:3};\n      const left=createChildWalkOwner(operations,[first],'joined',[],{end:1,state:{key:'same'},cost});\n      const other=createChildWalkOwner(operations,[otherFirst,...(shifted?[boundary]:[]),next],'joined',[],{end:3,state:{key:sameState?'same':'different'},cost:0});\n      const right=createChildWalkOwner(operations,[boundary],'joined');\n      const continued=[[left,[right]],[other,[]]],pruned=operations.preempted(continued);\n      return {pruned:continued.map(([result])=>pruned?.has(result)??false),past:operations.lexedPast(other,first,cost)};\n    };",
+    "ownerContexts": [
+      "test('lazy backward walks preserve frozen scanner preemption across aliases states and repair costs',()=>{"
+    ]
+  },
+  {
+    "id": "repository.observe-shared-token-prefix-control",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison skips actual shared child segments without flattening or visiting their leaves::compare",
+    "inventoryName": "observe shared token prefix control",
+    "sourceText": "const compare=operations=>{\n    let reads=0;\n    const leaves=Array.from({length:128},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix={left:[leaves[0]],right:[],length:1,flat:null};\n    for(const item of leaves.slice(1))prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const left={left:prefix,right:[leaf('high',128,129)],length:129,flat:null};\n    const right={left:prefix,right:[leaf('low',128,129)],length:129,flat:null};\n    const owner=chain=>operations.shareChildren({},{[operations.CHAIN]:chain});\n    const result=operations.preferredTokens(owner(left),owner(right),tokens);\n    return {result,reads,prefix,left,right};\n  };",
+    "ownerContexts": [
+      "test('token comparison skips actual shared child segments without flattening or visiting their leaves',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.create-shared-token-prefix-control-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison skips actual shared child segments without flattening or visiting their leaves::compare::owner",
+    "inventoryName": "create shared token prefix control owner",
+    "sourceText": "const owner=chain=>operations.shareChildren({},{[operations.CHAIN]:chain});",
+    "ownerContexts": [
+      "test('token comparison skips actual shared child segments without flattening or visiting their leaves',async()=>{",
+      "const compare=operations=>{"
+    ]
+  },
+  {
+    "id": "repository.create-shared-token-prefix-control-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison aligns unequal shared segments before visiting their common leaves::compare::owner",
+    "inventoryName": "create shared token prefix control owner",
+    "sourceText": "const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});",
+    "ownerContexts": [
+      "test('token comparison aligns unequal shared segments before visiting their common leaves',async()=>{",
+      "const compare=(operations,reverse,materialized)=>{"
+    ]
+  },
+  {
+    "id": "repository.create-shared-token-prefix-control-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison recognizes a retained chain and its exact captured child array::compare::owner",
+    "inventoryName": "create shared token prefix control owner",
+    "sourceText": "const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});",
+    "ownerContexts": [
+      "test('token comparison recognizes a retained chain and its exact captured child array',async()=>{",
+      "const compare=(operations,suffix,reverse)=>{"
+    ]
+  },
+  {
+    "id": "repository.create-shared-token-prefix-control-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "captured child arrays cannot hide a pending reduction lookahead::compare::owner",
+    "inventoryName": "create shared token prefix control owner",
+    "sourceText": "const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});",
+    "ownerContexts": [
+      "test('captured child arrays cannot hide a pending reduction lookahead',async()=>{",
+      "const compare=(operations,triviaOnly,reverse)=>{"
+    ]
+  },
+  {
+    "id": "repository.observe-pending-token-boundary-control",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison opens a shared segment while a reduction still awaits its lookahead::compare",
+    "inventoryName": "observe pending token boundary control",
+    "sourceText": "const compare=operations=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true});\n    const wrapper=node('wrapper',[first]);\n    const lookahead={type:'token',kind:'identifier',get start(){reads++;return 1;},end:2};\n    const shared={left:[lookahead],right:[],length:1,flat:null};\n    const build=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:{left:[head],right:shared,length:2,flat:null},right:[tail],length:3,flat:null,\n    }});\n    return {result:operations.preferredTokens(build(wrapper,leaf('high',3,4)),build(first,leaf('low',3,4)),tokens),reads};\n  };",
+    "ownerContexts": [
+      "test('token comparison opens a shared segment while a reduction still awaits its lookahead',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.create-pending-token-boundary-control-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison opens a shared segment while a reduction still awaits its lookahead::compare::build",
+    "inventoryName": "create pending token boundary control owner",
+    "sourceText": "const build=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:{left:[head],right:shared,length:2,flat:null},right:[tail],length:3,flat:null,\n    }});",
+    "ownerContexts": [
+      "test('token comparison opens a shared segment while a reduction still awaits its lookahead',async()=>{",
+      "const compare=operations=>{"
+    ]
+  },
+  {
+    "id": "repository.observe-replacement-child-property-reads",
+    "source": "js/tests/grammar-child-chain-walks.test.js",
+    "name": "materialized child arrays retain original parts while replacement children own their exact observations::getter::children",
+    "inventoryName": "observe replacement child property reads",
+    "sourceText": "get children(){reads++;return [replacement];}",
+    "ownerContexts": [
+      "test('materialized child arrays retain original parts while replacement children own their exact observations',()=>{",
+      "const getter={[current.CHAIN]:chain,get children(){reads++;return [replacement];}}"
+    ]
+  },
+  {
+    "id": "repository.check-native-sibling-translation-status-and-source-restoration",
+    "source": "rust/tests/unit/self_translation_siblings.rs",
+    "name": "a_sibling_that_does_not_translate_leaves_its_callers_carried",
+    "inventoryName": "check native sibling translation status and source restoration",
+    "sourceText": "fn a_sibling_that_does_not_translate_leaves_its_callers_carried() {"
+  },
+  {
+    "id": "grammar.read-scanner-preemption-leaf-index",
+    "source": "js/src/grammar-runtime/executor.js",
+    "name": "readScannerPreemptionLeafIndex",
+    "inventoryName": "read scanner preemption leaf index",
+    "sourceText": "function readScannerPreemptionLeafIndex(index, state, leaf, create) {\n  let current = index;\n  for (const key of [state, leaf.type, leaf.start]) {\n    let next = current.get(key);\n    if (next === undefined) {\n      if (!create) return null;\n      current.set(key, next = new Map());\n    }\n    current = next;\n  }\n  let slot = current.get(leaf.end);\n  if (slot === undefined && create) current.set(leaf.end, slot = { kinds: new Map(), origins: new Map() });\n  return slot ?? null;\n}"
+  },
+  {
+    "id": "repository.read-scanner-preemption-source-operations",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "readScannerPreemptionOperations",
+    "inventoryName": "read scanner preemption source operations",
+    "sourceText": "function readScannerPreemptionOperations(source) {\n  const chainStart=source.indexOf(\"const CHAIN = Symbol('children chain');\");\n  const chainEnd=source.indexOf('// A result whose MISSING leaf',chainStart);\n  const walkStart=source.indexOf('function widthless(');\n  const walkEnd=source.indexOf('// Whether two subtrees hold the same tokens',walkStart);\n  assert.ok(chainStart>=0&&chainEnd>chainStart&&walkStart>=0&&walkEnd>walkStart);\n  const scalars=['scannedToken','isTrivia','isSeparator'].map(name=>{\n    const start=source.indexOf('function '+name+'('),end=source.indexOf('\\n}',start)+2;\n    assert.ok(start>=0&&end>start);return source.slice(start,end);\n  }).join('\\n');\n  return new Function('acceptScannerPreemptionBoundary','readScannerContinuationAction','NO_CHILDREN',\n    scalars+'\\n'+source.slice(chainStart,chainEnd)+'\\n'+source.slice(walkStart,walkEnd)\n    +'\\nreturn {preempted,lexedPast};')(\n      acceptScannerPreemptionBoundary,readScannerContinuationAction,Object.freeze([]));\n}"
+  },
+  {
+    "id": "repository.create-scanner-preemption-control-result",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "result",
+    "inventoryName": "create scanner preemption control result",
+    "sourceText": "const result=(name,children,end,cost=0,state='same')=>({name,children,end,cost,state:{key:state}});"
+  },
+  {
+    "id": "repository.create-scanner-preemption-control-boundary",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "boundary",
+    "inventoryName": "create scanner preemption control boundary",
+    "sourceText": "const boundary=offset=>result('boundary',[token('boundary',offset,offset,{scanned:true})],offset);"
+  },
+  {
+    "id": "repository.read-scanner-preemption-control-result-names",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "names",
+    "inventoryName": "read scanner preemption control result names",
+    "sourceText": "const names=values=>values===null?null:[...values].map(value=>value.name);"
+  },
+  {
+    "id": "repository.check-complete-scanner-preemption-index-decisions",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption index preserves complete frozen state cost alias and span decisions",
+    "inventoryName": "check complete scanner preemption index decisions",
+    "sourceText": "test('scanner preemption index preserves complete frozen state cost alias and span decisions',()=>{\n  for(const identity of ['kind','origin','different','undefined-origin','type','span'])\n    for(const state of ['same','different'])for(const leftCost of [0,1])for(const otherCost of [0,1])\n      for(const shifted of [false,true])for(const suffix of ['after','empty','overlap','reverse','virtual']){\n        const run=operations=>{\n          const last=token('source',0,1,{lexed:'source-rule'});\n          const matched={...last};\n          if(identity==='origin')matched.kind='renamed';\n          if(identity==='different'){matched.kind='other';matched.lexed='other-rule';}\n          if(identity==='undefined-origin'){matched.kind='other';delete matched.lexed;delete last.lexed;}\n          if(identity==='type')matched.type='missing';\n          if(identity==='span')matched.start=-1;\n          const next=suffix==='after'?[token('next',2,3)]:suffix==='empty'?[]:\n            suffix==='overlap'?[token('overlap',0,3)]:suffix==='reverse'?[token('next',2,3),token('backward',0,0)]:\n              [token('virtual',2,2,{scanned:true})];\n          const left=result('left',[last],1,leftCost);\n          const other=result('other',[matched,...(shifted?[token('shifted',1,1,{scanned:true})]:[]),...next],3,otherCost,state);\n          const continued=[[left,[boundary(1)]],[other,[]]];\n          return {pruned:names(operations.preempted(continued)),past:operations.lexedPast(other,last,leftCost)};\n        };\n        assert.deepEqual(run(current),run(original),JSON.stringify({identity,state,leftCost,otherCost,shifted,suffix}));\n      }\n})"
+  },
+  {
+    "id": "repository.observe-scanner-preemption-decision-control",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption index preserves complete frozen state cost alias and span decisions::run",
+    "inventoryName": "observe scanner preemption decision control",
+    "sourceText": "const run=operations=>{\n          const last=token('source',0,1,{lexed:'source-rule'});\n          const matched={...last};\n          if(identity==='origin')matched.kind='renamed';\n          if(identity==='different'){matched.kind='other';matched.lexed='other-rule';}\n          if(identity==='undefined-origin'){matched.kind='other';delete matched.lexed;delete last.lexed;}\n          if(identity==='type')matched.type='missing';\n          if(identity==='span')matched.start=-1;\n          const next=suffix==='after'?[token('next',2,3)]:suffix==='empty'?[]:\n            suffix==='overlap'?[token('overlap',0,3)]:suffix==='reverse'?[token('next',2,3),token('backward',0,0)]:\n              [token('virtual',2,2,{scanned:true})];\n          const left=result('left',[last],1,leftCost);\n          const other=result('other',[matched,...(shifted?[token('shifted',1,1,{scanned:true})]:[]),...next],3,otherCost,state);\n          const continued=[[left,[boundary(1)]],[other,[]]];\n          return {pruned:names(operations.preempted(continued)),past:operations.lexedPast(other,last,leftCost)};\n        };",
+    "ownerContexts": [
+      "test('scanner preemption index preserves complete frozen state cost alias and span decisions',()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-scanner-preemption-left-order-and-pruned-candidates",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption retains left major identity order and uses already pruned candidates",
+    "inventoryName": "check scanner preemption left order and pruned candidates",
+    "sourceText": "test('scanner preemption retains left major identity order and uses already pruned candidates',()=>{\n  const run=operations=>{\n    const first=token('first',0,1),second=token('second',4,5);\n    const left=result('left',[second],5),later=result('later',[first],1);\n    const earlyOther=result('early other',[first,token('next',2,3)],3);\n    const lateOther=result('late other',[second,token('next',6,7)],7);\n    const order=names(operations.preempted([[left,[boundary(5)]],[later,[boundary(1)]],[earlyOther,[]],[lateOther,[]],[lateOther,[]]]));\n    const a=result('a',[first],1);\n    const b=result('b',[first,token('middle',2,3)],3);\n    const c=result('c',[first,token('shifted',1,1,{scanned:true}),token('middle',2,3),token('end',4,5)],5);\n    const pruned=names(operations.preempted([[a,[boundary(1)]],[b,[boundary(3)]],[c,[]]]));\n    return {order,pruned};\n  };\n  assert.deepEqual(run(current),run(original));\n  assert.deepEqual(run(current),{order:['late other','early other'],pruned:['b','c']});\n})"
+  },
+  {
+    "id": "repository.observe-scanner-preemption-identity-order-control",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption retains left major identity order and uses already pruned candidates::run",
+    "inventoryName": "observe scanner preemption identity order control",
+    "sourceText": "const run=operations=>{\n    const first=token('first',0,1),second=token('second',4,5);\n    const left=result('left',[second],5),later=result('later',[first],1);\n    const earlyOther=result('early other',[first,token('next',2,3)],3);\n    const lateOther=result('late other',[second,token('next',6,7)],7);\n    const order=names(operations.preempted([[left,[boundary(5)]],[later,[boundary(1)]],[earlyOther,[]],[lateOther,[]],[lateOther,[]]]));\n    const a=result('a',[first],1);\n    const b=result('b',[first,token('middle',2,3)],3);\n    const c=result('c',[first,token('shifted',1,1,{scanned:true}),token('middle',2,3),token('end',4,5)],5);\n    const pruned=names(operations.preempted([[a,[boundary(1)]],[b,[boundary(3)]],[c,[]]]));\n    return {order,pruned};\n  };",
+    "ownerContexts": [
+      "test('scanner preemption retains left major identity order and uses already pruned candidates',()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-scanner-preemption-boundaries-and-strict-identities",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption index preserves arbitrary leaf boundaries and strict token identities",
+    "inventoryName": "check scanner preemption boundaries and strict identities",
+    "sourceText": "test('scanner preemption index preserves arbitrary leaf boundaries and strict token identities',()=>{\n  for(const start of [-1,-0,0,NaN,Infinity])for(const end of [-0,1,NaN,Infinity])for(const kind of [undefined,null,'token',NaN]){\n    const run=operations=>{\n      const last=token(kind,start,end),left=result('left',[last],0);\n      const other=result('other',[{...last},token('next',Infinity,Infinity)],Infinity);\n      return names(operations.preempted([[left,[boundary(0)]],[other,[]]]));\n    };\n    assert.deepEqual(run(current),run(original));\n  }\n  assert.equal(current.preempted([]),null);\n  assert.equal(current.preempted([[result('empty',[],0),[boundary(0)]]]),null);\n})"
+  },
+  {
+    "id": "repository.observe-scanner-preemption-strict-boundary-control",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption index preserves arbitrary leaf boundaries and strict token identities::run",
+    "inventoryName": "observe scanner preemption strict boundary control",
+    "sourceText": "const run=operations=>{\n      const last=token(kind,start,end),left=result('left',[last],0);\n      const other=result('other',[{...last},token('next',Infinity,Infinity)],Infinity);\n      return names(operations.preempted([[left,[boundary(0)]],[other,[]]]));\n    };",
+    "ownerContexts": [
+      "test('scanner preemption index preserves arbitrary leaf boundaries and strict token identities',()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-scanner-preemption-trace-effects-and-failures",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption keeps exact trace callback mutations and failures in original order",
+    "inventoryName": "check scanner preemption trace effects and failures",
+    "sourceText": "test('scanner preemption keeps exact trace callback mutations and failures in original order',()=>{\n  const saved=Object.getOwnPropertyDescriptor(globalThis,'__preemptTrace');\n  const run=operations=>{\n    const first=token('first',0,1);\n    const a=result('a',[first],1),b=result('b',[first,token('middle',2,3)],3);\n    const c=result('c',[first,token('shifted',1,1,{scanned:true}),token('middle',2,3),token('last',4,5)],5);\n    const events=[];\n    globalThis.__preemptTrace=(left,other)=>{events.push([left.name,other.name]);if(other===b)c.cost=-1;};\n    const pruned=names(operations.preempted([[a,[boundary(1)]],[b,[boundary(3)]],[c,[]]]));\n    globalThis.__preemptTrace=true;\n    assert.throws(()=>operations.preempted([[a,[boundary(1)]],[b,[]]]),TypeError);\n    return {pruned,events};\n  };\n  try{\n    assert.deepEqual(run(current),run(original));\n    assert.deepEqual(run(current),{pruned:['b'],events:[['a','b']]});\n  }finally{\n    if(saved)Object.defineProperty(globalThis,'__preemptTrace',saved);\n    else delete globalThis.__preemptTrace;\n  }\n})"
+  },
+  {
+    "id": "repository.observe-scanner-preemption-trace-control",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption keeps exact trace callback mutations and failures in original order::run",
+    "inventoryName": "observe scanner preemption trace control",
+    "sourceText": "const run=operations=>{\n    const first=token('first',0,1);\n    const a=result('a',[first],1),b=result('b',[first,token('middle',2,3)],3);\n    const c=result('c',[first,token('shifted',1,1,{scanned:true}),token('middle',2,3),token('last',4,5)],5);\n    const events=[];\n    globalThis.__preemptTrace=(left,other)=>{events.push([left.name,other.name]);if(other===b)c.cost=-1;};\n    const pruned=names(operations.preempted([[a,[boundary(1)]],[b,[boundary(3)]],[c,[]]]));\n    globalThis.__preemptTrace=true;\n    assert.throws(()=>operations.preempted([[a,[boundary(1)]],[b,[]]]),TypeError);\n    return {pruned,events};\n  };",
+    "ownerContexts": [
+      "test('scanner preemption keeps exact trace callback mutations and failures in original order',()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-scanner-preemption-prefix-walk-scaling",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption indexes virtual boundaries without repeating a leaf walk for every prefix pair",
+    "inventoryName": "check scanner preemption prefix walk scaling",
+    "sourceText": "test('scanner preemption indexes virtual boundaries without repeating a leaf walk for every prefix pair',()=>{\n  const run=operations=>{\n    let reads=0;\n    const leaves=[];\n    for(let index=0;index<48;index++){\n      leaves.push({type:'token',kind:'word',get start(){reads++;return index*2;},get end(){reads++;return index*2+1;}});\n      leaves.push({type:'token',kind:'shifted',scanned:true,get start(){reads++;return index*2+1;},get end(){reads++;return index*2+1;}});\n    }\n    const continued=Array.from({length:48},(_,index)=>{\n      const end=index*2+1;\n      return [result('prefix '+index,leaves.slice(0,(index+1)*2),end),[boundary(end)]];\n    });\n    return {pruned:names(operations.preempted(continued)),reads};\n  };\n  const expected=run(original),actual=run(current);\n  assert.equal(expected.pruned,null,'each prefix already shifted the same-cost virtual boundary');\n  assert.deepEqual(actual.pruned,expected.pruned);\n  assert.ok(actual.reads*3<expected.reads,JSON.stringify({previous:expected.reads,current:actual.reads}));\n})"
+  },
+  {
+    "id": "repository.observe-scanner-preemption-prefix-access-counts",
+    "source": "js/tests/grammar-scanner-preemption-index.test.js",
+    "name": "scanner preemption indexes virtual boundaries without repeating a leaf walk for every prefix pair::run",
+    "inventoryName": "observe scanner preemption prefix access counts",
+    "sourceText": "const run=operations=>{\n    let reads=0;\n    const leaves=[];\n    for(let index=0;index<48;index++){\n      leaves.push({type:'token',kind:'word',get start(){reads++;return index*2;},get end(){reads++;return index*2+1;}});\n      leaves.push({type:'token',kind:'shifted',scanned:true,get start(){reads++;return index*2+1;},get end(){reads++;return index*2+1;}});\n    }\n    const continued=Array.from({length:48},(_,index)=>{\n      const end=index*2+1;\n      return [result('prefix '+index,leaves.slice(0,(index+1)*2),end),[boundary(end)]];\n    });\n    return {pruned:names(operations.preempted(continued)),reads};\n  };",
+    "ownerContexts": [
+      "test('scanner preemption indexes virtual boundaries without repeating a leaf walk for every prefix pair',()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-unequal-shared-token-segment-alignment",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison aligns unequal shared segments before visiting their common leaves",
+    "inventoryName": "check unequal shared token segment alignment",
+    "sourceText": "test('token comparison aligns unequal shared segments before visiting their common leaves',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=(operations,reverse,materialized)=>{\n    let reads=0;\n    const leaves=Array.from({length:64},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix={left:[],right:[leaves[0]],length:1,flat:null};\n    for(const item of leaves.slice(1))prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    const short=owner(prefix),long=owner({left:prefix,right:[leaf('identifier',64,65)],length:65,flat:null});\n    if(materialized){void short.children;void long.children;reads=0;}\n    return {result:operations.preferredTokens(reverse?long:short,reverse?short:long,tokens),reads};\n  };\n  for(const reverse of[false,true])for(const materialized of[false,true]){\n    const expected=compare(original,reverse,materialized),actual=compare(current,reverse,materialized);\n    assert.equal(actual.result,expected.result);\n    assert.equal(expected.result,0);\n    assert.ok(expected.reads>0);\n    assert.equal(actual.reads,0,'opening the longer part first exposes the exact common prefix');\n  }\n})"
+  },
+  {
+    "id": "repository.observe-unequal-token-segment-alignment",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison aligns unequal shared segments before visiting their common leaves::compare",
+    "inventoryName": "observe unequal token segment alignment",
+    "sourceText": "const compare=(operations,reverse,materialized)=>{\n    let reads=0;\n    const leaves=Array.from({length:64},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix={left:[],right:[leaves[0]],length:1,flat:null};\n    for(const item of leaves.slice(1))prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    const short=owner(prefix),long=owner({left:prefix,right:[leaf('identifier',64,65)],length:65,flat:null});\n    if(materialized){void short.children;void long.children;reads=0;}\n    return {result:operations.preferredTokens(reverse?long:short,reverse?short:long,tokens),reads};\n  };",
+    "ownerContexts": [
+      "test('token comparison aligns unequal shared segments before visiting their common leaves',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-unequal-token-segment-pending-boundaries",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "unequal shared segments retain pending lookahead and later conflict boundaries",
+    "inventoryName": "check unequal token segment pending boundaries",
+    "sourceText": "test('unequal shared segments retain pending lookahead and later conflict boundaries',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=(operations,triviaOnly,reverse)=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true}),wrapper=node('wrapper',[first]);\n    const sharedLeaves=Array.from({length:16},(_,index)=>({\n      type:'token',kind:triviaOnly?null:'identifier',trivia:triviaOnly,\n      get start(){reads++;return index+1;},end:index+2,\n    }));\n    let shared=[];\n    for(const item of sharedLeaves)shared={left:shared,right:[item],length:(shared.length??0)+1,flat:null};\n    const owner=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:[head],right:{left:shared,right:tail,length:16+tail.length,flat:null},length:17+tail.length,flat:null,\n    }});\n    const left=owner(wrapper,[leaf('high',40,41),leaf('identifier',42,43)]);\n    const right=owner(first,[leaf('low',40,41)]);\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };\n  for(const triviaOnly of[false,true])for(const reverse of[false,true]){\n    const expected=compare(original,triviaOnly,reverse),actual=compare(current,triviaOnly,reverse);\n    assert.equal(actual.result,expected.result);\n    assert.equal(actual.result,triviaOnly?(reverse?-1:1):0);\n    if(!triviaOnly)assert.ok(actual.reads>0,'the first shared real token must resolve the pending lookahead');\n  }\n})"
+  },
+  {
+    "id": "repository.observe-unequal-token-segment-pending-boundaries",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "unequal shared segments retain pending lookahead and later conflict boundaries::compare",
+    "inventoryName": "observe unequal token segment pending boundaries",
+    "sourceText": "const compare=(operations,triviaOnly,reverse)=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true}),wrapper=node('wrapper',[first]);\n    const sharedLeaves=Array.from({length:16},(_,index)=>({\n      type:'token',kind:triviaOnly?null:'identifier',trivia:triviaOnly,\n      get start(){reads++;return index+1;},end:index+2,\n    }));\n    let shared=[];\n    for(const item of sharedLeaves)shared={left:shared,right:[item],length:(shared.length??0)+1,flat:null};\n    const owner=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:[head],right:{left:shared,right:tail,length:16+tail.length,flat:null},length:17+tail.length,flat:null,\n    }});\n    const left=owner(wrapper,[leaf('high',40,41),leaf('identifier',42,43)]);\n    const right=owner(first,[leaf('low',40,41)]);\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };",
+    "ownerContexts": [
+      "test('unequal shared segments retain pending lookahead and later conflict boundaries',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-retained-token-chain-captured-array-identity",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison recognizes a retained chain and its exact captured child array",
+    "inventoryName": "check retained token chain captured array identity",
+    "sourceText": "test('token comparison recognizes a retained chain and its exact captured child array',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=(operations,suffix,reverse)=>{\n    let reads=0;\n    const leaves=Array.from({length:64},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix=[];\n    for(const item of leaves)prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    let left=owner(prefix);\n    let right={...left,field:'captured'};\n    assert.equal(right.children,prefix.flat);\n    if(suffix){\n      left=owner({left:prefix,right:[leaf('high',64,65)],length:65,flat:null});\n      right=owner({left:right.children,right:[leaf('low',64,65)],length:65,flat:null});\n    }\n    reads=0;\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };\n  for(const suffix of[false,true])for(const reverse of[false,true]){\n    const expected=compare(original,suffix,reverse),actual=compare(current,suffix,reverse);\n    assert.equal(actual.result,expected.result);\n    assert.equal(actual.result,suffix?(reverse?-1:1):0);\n    assert.ok(expected.reads>0);\n    assert.equal(actual.reads,0,'only the identical cached array can stand for its owning chain');\n  }\n  const left=[leaf('high',0,1)],right=[leaf('low',0,1)];\n  assert.equal(left.flat,right.flat,'different arrays share the Array prototype method');\n  assert.notEqual(left,right);\n  assert.equal(current.preferredTokens({children:left},{children:right},tokens),1);\n})"
+  },
+  {
+    "id": "repository.observe-retained-token-chain-captured-arrays",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "token comparison recognizes a retained chain and its exact captured child array::compare",
+    "inventoryName": "observe retained token chain captured arrays",
+    "sourceText": "const compare=(operations,suffix,reverse)=>{\n    let reads=0;\n    const leaves=Array.from({length:64},(_,index)=>({\n      type:'token',kind:'identifier',get start(){reads++;return index;},get end(){reads++;return index+1;},\n    }));\n    let prefix=[];\n    for(const item of leaves)prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    let left=owner(prefix);\n    let right={...left,field:'captured'};\n    assert.equal(right.children,prefix.flat);\n    if(suffix){\n      left=owner({left:prefix,right:[leaf('high',64,65)],length:65,flat:null});\n      right=owner({left:right.children,right:[leaf('low',64,65)],length:65,flat:null});\n    }\n    reads=0;\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };",
+    "ownerContexts": [
+      "test('token comparison recognizes a retained chain and its exact captured child array',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.check-captured-child-array-pending-boundaries",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "captured child arrays cannot hide a pending reduction lookahead",
+    "inventoryName": "check captured child array pending boundaries",
+    "sourceText": "test('captured child arrays cannot hide a pending reduction lookahead',async()=>{\n  const {original,current}=await readTokenComparisonBaseline();\n  const compare=(operations,triviaOnly,reverse)=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true}),wrapper=node('wrapper',[first]);\n    const values=Array.from({length:16},(_,index)=>({\n      type:'token',kind:triviaOnly?null:'identifier',trivia:triviaOnly,\n      get start(){reads++;return index+1;},end:index+2,\n    }));\n    let prefix=[];\n    for(const item of values)prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    const capture={...owner(prefix),field:'captured'};\n    const left=owner({left:[wrapper],right:{left:prefix,right:[leaf('high',40,41)],length:17,flat:null},length:18,flat:null});\n    const right=owner({left:[first],right:{left:capture.children,right:[leaf('low',40,41)],length:17,flat:null},length:18,flat:null});\n    reads=0;\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };\n  for(const triviaOnly of[false,true])for(const reverse of[false,true]){\n    const expected=compare(original,triviaOnly,reverse),actual=compare(current,triviaOnly,reverse);\n    assert.equal(actual.result,expected.result);\n    assert.equal(actual.result,triviaOnly?(reverse?-1:1):0);\n    if(!triviaOnly)assert.ok(actual.reads>0,'cached-array identity is insufficient until the lookahead is known');\n  }\n})"
+  },
+  {
+    "id": "repository.observe-captured-array-pending-boundaries",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "captured child arrays cannot hide a pending reduction lookahead::compare",
+    "inventoryName": "observe captured array pending boundaries",
+    "sourceText": "const compare=(operations,triviaOnly,reverse)=>{\n    let reads=0;\n    const first=leaf('identifier',0,1,{alone:true}),wrapper=node('wrapper',[first]);\n    const values=Array.from({length:16},(_,index)=>({\n      type:'token',kind:triviaOnly?null:'identifier',trivia:triviaOnly,\n      get start(){reads++;return index+1;},end:index+2,\n    }));\n    let prefix=[];\n    for(const item of values)prefix={left:prefix,right:[item],length:prefix.length+1,flat:null};\n    const owner=part=>operations.shareChildren({},{[operations.CHAIN]:part});\n    const capture={...owner(prefix),field:'captured'};\n    const left=owner({left:[wrapper],right:{left:prefix,right:[leaf('high',40,41)],length:17,flat:null},length:18,flat:null});\n    const right=owner({left:[first],right:{left:capture.children,right:[leaf('low',40,41)],length:17,flat:null},length:18,flat:null});\n    reads=0;\n    return {result:operations.preferredTokens(reverse?right:left,reverse?left:right,tokens),reads};\n  };",
+    "ownerContexts": [
+      "test('captured child arrays cannot hide a pending reduction lookahead',async()=>{"
+    ]
+  },
+  {
+    "id": "repository.create-unequal-pending-token-boundary-owner",
+    "source": "js/tests/grammar-token-comparison-chains.test.js",
+    "name": "unequal shared segments retain pending lookahead and later conflict boundaries::compare::owner",
+    "inventoryName": "create unequal pending token boundary owner",
+    "sourceText": "const owner=(head,tail)=>operations.shareChildren({},{[operations.CHAIN]:{\n      left:[head],right:{left:shared,right:tail,length:16+tail.length,flat:null},length:17+tail.length,flat:null,\n    }});",
+    "ownerContexts": [
+      "test('unequal shared segments retain pending lookahead and later conflict boundaries',async()=>{",
+      "const compare=(operations,triviaOnly,reverse)=>{"
+    ]
+  },
+  {
+    "id": "repository.create-original-python-scaling-unit",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "pythonUnit",
+    "inventoryName": "create original python scaling unit",
+    "sourceText": "function pythonUnit(index) {\n  return `def item_${index}(value):\\n    \"\"\"Item ${index}.\"\"\"\\n    total = value + ${index}\\n    if total > ${index}:\\n        return total\\n    return ${index}\\n\\n`;\n}"
+  },
+  {
+    "id": "repository.reconstruct-valid-python-concrete-source",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "reconstructPythonSource",
+    "inventoryName": "reconstruct valid python concrete source",
+    "sourceText": "function reconstructPythonSource(tree) {\n  if (tree.type === 'node') return tree.children.map(reconstructPythonSource).join('');\n  assert.equal(tree.type, 'token', 'valid source contains neither ERROR nor MISSING leaves');\n  return tree.text;\n}"
+  },
+  {
+    "id": "repository.check-python-function-and-block-ownership",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "assertPythonStatementBoundaries",
+    "inventoryName": "check python function and block ownership",
+    "sourceText": "function assertPythonStatementBoundaries(rows, source, expected) {\n  const functions = rows.filter(row => row[2] === 'function_definition');\n  assert.equal(functions.length, expected.length, 'each authored function remains a distinct root statement');\n  const scope = [];\n  const actual = new Map();\n  let previousEnd = 0;\n  for (const row of rows) {\n    scope.length = row[0];\n    if (row[2] === 'function_definition') {\n      assert.equal(row[0], 1, 'a later top-level function is never swallowed by an earlier block');\n      const name = source.slice(row[4]).match(/^def ([A-Za-z_][A-Za-z_0-9]*)\\(/u)?.[1];\n      const next = expected[actual.size];\n      assert.equal(name, next.name);\n      assert.equal(row[4], source.indexOf(`def ${name}(`));\n      assert.ok(row[4] >= previousEnd, 'top-level function spans are ordered and disjoint');\n      previousEnd = row[5];\n      actual.set(name, { blocks: 0, conditionals: 0 });\n    }\n    if (row[2] === 'block' || row[2] === 'if_statement') {\n      const owner = scope.findLast(parent => parent[2] === 'function_definition');\n      assert.ok(owner, 'every authored block and conditional belongs to its own function');\n      assert.ok(row[4] >= owner[4] && row[5] <= owner[5], 'nested spans stay within their function');\n      const enclosingBlock = scope.findLast(parent => parent[2] === 'block');\n      if (enclosingBlock) assert.ok(row[4] >= enclosingBlock[4] && row[5] <= enclosingBlock[5],\n        'an inner block closes before its enclosing block');\n      const name = source.slice(owner[4]).match(/^def ([A-Za-z_][A-Za-z_0-9]*)\\(/u)[1];\n      actual.get(name)[row[2] === 'block' ? 'blocks' : 'conditionals']++;\n    }\n    scope[row[0]] = row;\n  }\n  assert.deepEqual([...actual].map(([name, counts]) => ({ name, ...counts })), expected,\n    'the complete authored nested block and conditional structure remains explicit');\n}"
+  },
+  {
+    "id": "repository.python-statement-boundary-controls",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "pythonStatementCases",
+    "inventoryName": "python statement boundary controls",
+    "sourceText": "const pythonStatementCases = [\n  { name: 'two original nested function units', source: pythonUnit(0) + pythonUnit(1),\n    functions: [{ name: 'item_0', blocks: 2, conditionals: 1 }, { name: 'item_1', blocks: 2, conditionals: 1 }] },\n  { name: 'two nested blocks then a top-level function',\n    source: 'def outer(value):\\n    if value:\\n        if value > 1:\\n            return value\\n        return 1\\n    return 0\\n\\ndef after(value):\\n    return value\\n',\n    functions: [{ name: 'outer', blocks: 3, conditionals: 2 }, { name: 'after', blocks: 1, conditionals: 0 }] },\n  { name: 'comments at nested function and module indentation',\n    source: 'def first(value):\\n    if value:\\n        return value\\n        # nested tail\\n    # function body\\n    return 0\\n    # function tail\\n\\n# module boundary\\ndef second(value):\\n    return value\\n',\n    functions: [{ name: 'first', blocks: 2, conditionals: 1 }, { name: 'second', blocks: 1, conditionals: 0 }] },\n  { name: 'blank lines and two dedents at EOF without a final newline',\n    source: 'def first():\\n    if True:\\n        return 1\\n\\n    return 2',\n    functions: [{ name: 'first', blocks: 2, conditionals: 1 }] },\n  { name: 'parenthesized continuation keeps its internal indentation',\n    source: 'def first():\\n    return (\\n      1 +\\n      2\\n    )\\ndef second():\\n    return 3\\n',\n    functions: [{ name: 'first', blocks: 1, conditionals: 0 }, { name: 'second', blocks: 1, conditionals: 0 }] },\n  { name: 'triple-quoted content may contain dedented physical lines',\n    source: 'def first():\\n    \"\"\"first\\nunindented content\\n    final\"\"\"\\n    return 1\\ndef second():\\n    return 2\\n',\n    functions: [{ name: 'first', blocks: 1, conditionals: 0 }, { name: 'second', blocks: 1, conditionals: 0 }] },\n];"
+  },
+  {
+    "id": "repository.check-python-original-unit-statement-boundaries",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve two original nested function units",
+    "inventoryName": "check python original unit statement boundaries",
+    "sourceText": "{ name: 'two original nested function units', source: pythonUnit(0) + pythonUnit(1),\n    functions: [{ name: 'item_0', blocks: 2, conditionals: 1 }, { name: 'item_1', blocks: 2, conditionals: 1 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-nested-block-and-module-function-boundaries",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve two nested blocks then a top-level function",
+    "inventoryName": "check python nested block and module function boundaries",
+    "sourceText": "{ name: 'two nested blocks then a top-level function',\n    source: 'def outer(value):\\n    if value:\\n        if value > 1:\\n            return value\\n        return 1\\n    return 0\\n\\ndef after(value):\\n    return value\\n',\n    functions: [{ name: 'outer', blocks: 3, conditionals: 2 }, { name: 'after', blocks: 1, conditionals: 0 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-comment-indentation-boundaries",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve comments at nested function and module indentation",
+    "inventoryName": "check python comment indentation boundaries",
+    "sourceText": "{ name: 'comments at nested function and module indentation',\n    source: 'def first(value):\\n    if value:\\n        return value\\n        # nested tail\\n    # function body\\n    return 0\\n    # function tail\\n\\n# module boundary\\ndef second(value):\\n    return value\\n',\n    functions: [{ name: 'first', blocks: 2, conditionals: 1 }, { name: 'second', blocks: 1, conditionals: 0 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-final-block-closure-without-line-ending",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve blank lines and two dedents at EOF without a final newline",
+    "inventoryName": "check python final block closure without line ending",
+    "sourceText": "{ name: 'blank lines and two dedents at EOF without a final newline',\n    source: 'def first():\\n    if True:\\n        return 1\\n\\n    return 2',\n    functions: [{ name: 'first', blocks: 2, conditionals: 1 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-parenthesized-continuation-boundaries",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve parenthesized continuation keeps its internal indentation",
+    "inventoryName": "check python parenthesized continuation boundaries",
+    "sourceText": "{ name: 'parenthesized continuation keeps its internal indentation',\n    source: 'def first():\\n    return (\\n      1 +\\n      2\\n    )\\ndef second():\\n    return 3\\n',\n    functions: [{ name: 'first', blocks: 1, conditionals: 0 }, { name: 'second', blocks: 1, conditionals: 0 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-quoted-text-physical-line-boundaries",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement boundaries preserve triple-quoted content may contain dedented physical lines",
+    "inventoryName": "check python quoted text physical line boundaries",
+    "sourceText": "{ name: 'triple-quoted content may contain dedented physical lines',\n    source: 'def first():\\n    \"\"\"first\\nunindented content\\n    final\"\"\"\\n    return 1\\ndef second():\\n    return 2\\n',\n    functions: [{ name: 'first', blocks: 1, conditionals: 0 }, { name: 'second', blocks: 1, conditionals: 0 }] }",
+    "ownerContexts": [
+      "test(`Python statement boundaries preserve ${name}`, () => {\n  const oracle = oracleSnapshot(source, 'Python');\n  assert.equal(oracle.recovers, false, 'the pinned independent oracle accepts without recovery');\n  const outcome = parser.parseTree(source, options);\n  assert.equal(outcome.ok, true);\n  assert.equal(outcome.rejection, null);\n  assert.deepEqual(outcome.ambiguities, []);\n  assert.equal(reconstructPythonSource(outcome.tree), source);\n  const rows = nativeRows(outcome.tree, source, projection);\n  assert.deepEqual(rows, oracle.rows, 'every concrete row, flag, field and byte span matches the independent oracle');\n  assertPythonStatementBoundaries(rows, source, functions);\n})",
+      "for (const { name, source, functions } of pythonStatementCases) "
+    ]
+  },
+  {
+    "id": "repository.check-python-statement-candidate-and-work-scaling",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units",
+    "inventoryName": "check python statement candidate and work scaling",
+    "sourceText": "test('Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units', () => {\n  const originalBody = Executor.prototype.ruleBody;\n  const originalRun = Executor.prototype.run;\n  const measured = new Set(['function_definition', 'suite', 'block']);\n  const samples = [];\n  let current = null;\n  try {\n    Executor.prototype.ruleBody = function(rule, position, ...args) {\n      const results = originalBody.call(this, rule, position, ...args);\n      if (current && measured.has(rule.name)) {\n        const entry = current.rules[rule.name] ??= { calls: 0, maxResults: 0, maxSpan: 0 };\n        entry.calls++;\n        entry.maxResults = Math.max(entry.maxResults, results.length);\n        for (const result of results) entry.maxSpan = Math.max(entry.maxSpan, result.end - position);\n      }\n      return results;\n    };\n    Executor.prototype.run = function(...args) {\n      try { return originalRun.apply(this, args); }\n      finally {\n        if (current) current.rounds.push({ steps: this.budget.steps, limit: this.budget.limit,\n          repairPoints: this.repairPoints?.size ?? null });\n      }\n    };\n    for (const units of [16, 32]) {\n      const pieces = Array.from({ length: units }, (_, index) => pythonUnit(index));\n      const source = pieces.join('');\n      assert.equal(Buffer.byteLength(source), units === 16 ? 1822 : 3694, 'the original synthetic input is unchanged');\n      current = { units, rules: {}, rounds: [] };\n      const outcome = parser.parseTree(source, options);\n      assert.equal(outcome.ok, true);\n      assert.equal(outcome.rejection, null);\n      assert.deepEqual(outcome.ambiguities, []);\n      assert.equal(reconstructPythonSource(outcome.tree), source);\n      const oracle = oracleSnapshot(source, 'Python');\n      assert.equal(oracle.recovers, false);\n      const rows = nativeRows(outcome.tree, source, projection);\n      assert.deepEqual(rows, oracle.rows);\n      assertPythonStatementBoundaries(rows, source, pieces.map((_, index) => ({ name: `item_${index}`, blocks: 2, conditionals: 1 })));\n      assert.ok(current.rounds.length > 0, 'the actual native grammar executor ran');\n      for (const round of current.rounds) {\n        assert.equal(round.limit, stepBudget(options, Buffer.byteLength(source)).limit, 'the original step budget is unchanged');\n        assert.equal(round.repairPoints, 0, 'valid input never enters a repair round');\n        assert.ok(round.steps > 0 && round.steps <= round.limit);\n      }\n      for (const name of measured) {\n        const entry = current.rules[name];\n        assert.ok(entry?.calls > 0, `${name}: actual rule executions are observed`);\n        assert.equal(entry.maxResults, 1, `${name}: a block boundary produces one candidate, not every following function suffix`);\n        assert.ok(entry.maxSpan <= Math.max(...pieces.map(piece => Buffer.byteLength(piece))),\n          `${name}: no candidate spans a later function`);\n      }\n      samples.push({ ...current, steps: current.rounds.reduce((sum, round) => sum + round.steps, 0) });\n      current = null;\n    }\n  } finally {\n    Executor.prototype.ruleBody = originalBody;\n    Executor.prototype.run = originalRun;\n  }\n  const [small, large] = samples;\n  assert.ok(large.steps <= small.steps * 2.5, 'doubling original units preserves proportional charged work instead of quadratic suffix exploration');\n  for (const name of measured) assert.ok(large.rules[name].calls <= small.rules[name].calls * 2 + 1,\n    `${name}: doubling units retains proportional rule-body executions`);\n})"
+  },
+  {
+    "id": "repository.observe-python-rule-body-candidate-counts",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units::Executor.prototype.ruleBody",
+    "inventoryName": "observe python rule body candidate counts",
+    "sourceText": "Executor.prototype.ruleBody = function(rule, position, ...args) {\n      const results = originalBody.call(this, rule, position, ...args);\n      if (current && measured.has(rule.name)) {\n        const entry = current.rules[rule.name] ??= { calls: 0, maxResults: 0, maxSpan: 0 };\n        entry.calls++;\n        entry.maxResults = Math.max(entry.maxResults, results.length);\n        for (const result of results) entry.maxSpan = Math.max(entry.maxSpan, result.end - position);\n      }\n      return results;\n    }",
+    "ownerContexts": [
+      "test('Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units', () => {"
+    ]
+  },
+  {
+    "id": "repository.observe-python-executor-round-resources",
+    "source": "js/tests/grammar-native-python-statement-boundaries.test.js",
+    "name": "Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units::Executor.prototype.run",
+    "inventoryName": "observe python executor round resources",
+    "sourceText": "Executor.prototype.run = function(...args) {\n      try { return originalRun.apply(this, args); }\n      finally {\n        if (current) current.rounds.push({ steps: this.budget.steps, limit: this.budget.limit,\n          repairPoints: this.repairPoints?.size ?? null });\n      }\n    }",
+    "ownerContexts": [
+      "test('Python statement repetition retains bounded candidates and proportional work for sixteen and thirty-two original units', () => {"
+    ]
+  }
+];
+const CHILD_CHAIN_NAME_INVENTORIES=[...new Set(CHILD_CHAIN_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B59 lazy child-chain source names for "+source,files:[source],extract:text=>CHILD_CHAIN_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>CHILD_CHAIN_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+// END B59 lazy child chain operation and control names.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
