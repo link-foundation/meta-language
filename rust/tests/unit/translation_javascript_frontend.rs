@@ -1,10 +1,20 @@
+use meta_language::translation::check::check_program;
 use meta_language::translation::diagnostics::ErrorKind;
+use meta_language::translation::emit_javascript::emit_javascript;
+use meta_language::translation::emit_rust::emit_rust;
+use meta_language::translation::ir::{Decl, Node};
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{
-    SEffect, SExpr, SItem, SNode, SPatternNode, SProgram, SPropNode,
+    SEffect, SExpr, SItem, SNode, SPatternNode, SProgram, SPropNode, UnaryOp,
 };
 use meta_language::translation::types::{BOOL, FLOAT, INT, NAT, STRING, Type};
 use meta_language::translation::{Language, Span};
+use serde_json::Value;
+use std::fs;
+use std::path::Path;
+use std::process::Command;
+
+use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 
 const TREE: &str = "/**\n * @typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint, right: Tree }} Tree\n */\n";
 
@@ -160,6 +170,67 @@ fn signature(program: &SProgram, name: &str) -> (Vec<Option<Type>>, Option<Type>
     find(&program.items, name).unwrap_or_else(|| panic!("no function {name}"))
 }
 
+// Native compilation and process observations run only when this suite runs in CI.
+pub(super) fn preserves_javascript_translation_behavior(source: &str, expected: &str) {
+    let original = run(Command::new("node").args(["--input-type=module", "-e", source]));
+    assert!(original.ok, "{}", original.stderr);
+    assert_eq!(original.stdout, expected);
+    let script = r#"
+import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitJavaScript} from './js/src/translation/emit-javascript.js';
+import {emitRust} from './js/src/translation/emit-rust.js';
+const surface=parseJavaScript(process.argv[1]);
+const program=checkProgram(surface);
+console.log(JSON.stringify({surface,javascript:emitJavaScript(program).text,rust:emitRust(program).text}));
+"#;
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let observed = run(Command::new("node").current_dir(root).args([
+        "--input-type=module",
+        "-e",
+        script,
+        source,
+    ]));
+    assert!(observed.ok, "{}", observed.stderr);
+    let javascript: Value = serde_json::from_str(&observed.stdout).unwrap();
+    let surface = parse(source);
+    assert_eq!(
+        serde_json::to_value(&surface).unwrap(),
+        javascript["surface"]
+    );
+    let checked = check_program(&surface).unwrap();
+    let emitted_javascript = emit_javascript(&checked).unwrap().text;
+    assert_eq!(
+        emitted_javascript,
+        javascript["javascript"].as_str().unwrap()
+    );
+    let translated =
+        run(Command::new("node").args(["--input-type=module", "-e", &emitted_javascript]));
+    assert!(translated.ok, "{}", translated.stderr);
+    assert_eq!(translated.stdout, original.stdout);
+    assert_eq!(translated.stderr, original.stderr);
+    let emitted_rust = emit_rust(&checked).unwrap().text;
+    assert_eq!(emitted_rust, javascript["rust"].as_str().unwrap());
+    let directory = TemporaryDirectory::new("inferred-javascript-behavior");
+    let input = directory.0.join("program.rs");
+    let binary = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    fs::write(&input, emitted_rust).unwrap();
+    let mut compiler = Command::new("rustc");
+    compiler.args(["--edition", "2024"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        compiler.arg("-C").arg(format!("linker={linker}"));
+    }
+    let compiled = run(compiler.arg(input).arg("-o").arg(&binary));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let translated = run(&mut Command::new(binary));
+    assert!(translated.ok, "{}", translated.stderr);
+    assert_eq!(translated.stdout, original.stdout);
+    assert_eq!(translated.stderr, original.stderr);
+}
+
 #[test]
 fn types_jsdoc_leaves_out_are_inferred_from_the_uses() {
     let program = parse(&format!(
@@ -208,10 +279,6 @@ fn uses_that_need_different_types_are_type_errors() {
             "function f(x) { return x + 1n; }\nconsole.log(f(1));",
             "a BigInt is used as a number; JavaScript does not mix BigInt with other types at 23..29",
         ),
-        (
-            "function f(x) { return !x; }\nconsole.log(f(1));",
-            "one value is used as a number and as a boolean; declare the types of the function with JSDoc at 43..44",
-        ),
     ];
     for (source, message) in cases {
         assert_eq!(
@@ -220,6 +287,39 @@ fn uses_that_need_different_types_are_type_errors() {
             "{source}"
         );
     }
+    // translation-javascript-infer.test.js retains this exact original input:
+    // JavaScript Number truthiness accepts !x without equating Number and Bool.
+    let original = "function f(x) { return !x; }\nconsole.log(f(1));";
+    let surface = parse(original);
+    assert_eq!(signature(&surface, "f"), (vec![Some(FLOAT)], Some(BOOL)));
+    let checked = check_program(&surface).unwrap();
+    let Some(Decl::Fn(function)) = checked.declaration("f") else {
+        panic!("the original inferred function remains present")
+    };
+    assert_eq!(function.params[0].ty, FLOAT);
+    assert_eq!(function.ret, BOOL);
+    let Node::Unary {
+        op: UnaryOp::Not,
+        arg,
+        ..
+    } = &function.body.node
+    else {
+        panic!("the original logical negation remains present")
+    };
+    assert_eq!(arg.ty, BOOL);
+    let Node::Truthy { arg } = &arg.node else {
+        panic!("logical negation checks the actual Number truthiness conversion")
+    };
+    assert_eq!(arg.ty, FLOAT);
+    preserves_javascript_translation_behavior(original, "false\n");
+    let extended = format!(
+        "{original}\nconsole.log(f(0));\nconsole.log(f(-0));\nconsole.log(f(NaN));\nconsole.log(f(Infinity));\nconsole.log(f(-1));\n"
+    );
+    assert_eq!(
+        signature(&parse(&extended), "f"),
+        (vec![Some(FLOAT)], Some(BOOL))
+    );
+    preserves_javascript_translation_behavior(&extended, "false\ntrue\ntrue\ntrue\nfalse\nfalse\n");
 }
 
 #[test]

@@ -2,8 +2,14 @@
 //! returns undefined, the unit value, and a statement that discards a call's
 //! value still runs it.
 
+use meta_language::translation::check::check_program;
+use meta_language::translation::ir::Decl;
 use meta_language::translation::javascript::parse_javascript;
+use meta_language::translation::surface::SItem;
+use meta_language::translation::types::{INT, Type};
 use meta_language::{TranslationSupport, translate_program};
+
+use super::translation_javascript_frontend::preserves_javascript_translation_behavior;
 
 const VOID: &str = "function hello(name) {
   console.log(`hello ${name}`);
@@ -79,9 +85,38 @@ fn a_call_whose_value_a_statement_discards_still_runs() {
 
 #[test]
 fn a_function_that_returns_a_value_on_one_path_and_nothing_on_another_is_refused() {
-    let error = parse_javascript("function f(n) { if (n > 0n) return n; }").expect_err("refused");
+    // translation-void-functions.test.js retains this original source and
+    // observes an actual BigInt or undefined, rather than rejecting its join.
+    let original = "function f(n) { if (n > 0n) return n; }";
+    let surface = parse_javascript(original).unwrap();
+    let SItem::Fn(function) = &surface.items[0] else {
+        panic!("the original partially returning function remains present")
+    };
+    let optional = Type::Option {
+        element: Box::new(INT),
+        absence: "undefined".to_owned(),
+    };
+    assert_eq!(function.params[0].ty, Some(INT));
+    assert_eq!(function.ret, Some(optional.clone()));
+    let checked = check_program(&surface).unwrap();
+    let Some(Decl::Fn(function)) = checked.declaration("f") else {
+        panic!("the original checked function remains present")
+    };
+    assert_eq!(function.params[0].ty, INT);
+    assert_eq!(function.ret, optional);
     assert_eq!(
-        error.message(),
-        "the function returns a bigint on one path and finishes without a return value, returning undefined, on another; return a value on every path at 16..38"
+        function.body.ty,
+        Type::Option {
+            element: Box::new(INT),
+            absence: "undefined".to_owned()
+        }
+    );
+    preserves_javascript_translation_behavior(
+        &format!("{original}\nconsole.log(f(1n));\nconsole.log(f(0n));\nconsole.log(f(-1n));\n"),
+        "1n\nundefined\nundefined\n",
+    );
+    preserves_javascript_translation_behavior(
+        "function trace() { console.log('trace'); }\nfunction f(n) { if (n > 0n) return n; return trace(); }\nconsole.log(f(1n));\nconsole.log(f(0n));\n",
+        "1n\ntrace\nundefined\n",
     );
 }
