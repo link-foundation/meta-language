@@ -45,6 +45,10 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             out.extend(args);
         }
         SNode::ArrayBindingRest { object, .. }
+        | SNode::Set { items: object, .. }
+        | SNode::Map {
+            entries: object, ..
+        }
         | SNode::CopySlice { object }
         | SNode::Some { value: object, .. }
         | SNode::FlattenOption { value: object }
@@ -175,6 +179,10 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             out.extend(args);
         }
         SNode::ArrayBindingRest { object, .. }
+        | SNode::Set { items: object, .. }
+        | SNode::Map {
+            entries: object, ..
+        }
         | SNode::CopySlice { object }
         | SNode::Some { value: object, .. }
         | SNode::FlattenOption { value: object }

@@ -267,11 +267,37 @@ impl JavaScriptParser {
                     Some(self.to_here(&token)),
                 ));
             }
-            return Err(unsupported(
-                "new expression",
-                "outside the portable core",
-                here,
-            ));
+            let place = self.to_here(&token);
+            let items = arguments.into_iter().next().unwrap_or_else(|| {
+                node(
+                    SNode::Array {
+                        items: Vec::new(),
+                        element: None,
+                    },
+                    place,
+                )
+            });
+            return match collection.as_str() {
+                "set" => Ok(node(
+                    SNode::Set {
+                        items: Box::new(items),
+                        ty: None,
+                    },
+                    place,
+                )),
+                "map" => Ok(node(
+                    SNode::Map {
+                        entries: Box::new(items),
+                        ty: None,
+                    },
+                    place,
+                )),
+                _ => Err(unsupported(
+                    "new expression",
+                    "outside the portable core",
+                    here,
+                )),
+            };
         }
         if token.value == "function" {
             return self.read_closure(false);

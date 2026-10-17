@@ -215,6 +215,16 @@ pub enum SNode {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         element: Option<Type>,
     },
+    Set {
+        items: Box<SExpr>,
+        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
+        ty: Option<Type>,
+    },
+    Map {
+        entries: Box<SExpr>,
+        #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
+        ty: Option<Type>,
+    },
     /// An explicitly admitted positional product. The flag retains its value ABI.
     Tuple {
         items: Vec<SExpr>,
@@ -347,6 +357,8 @@ impl SNode {
             Self::Print { .. } => "print",
             Self::CtorObject { .. } => "ctorObject",
             Self::Array { .. } => "array",
+            Self::Set { .. } => "set",
+            Self::Map { .. } => "map",
             Self::Tuple { .. } => "tuple",
             Self::TupleIndex { .. } => "tupleIndex",
             Self::Index { .. } => "index",

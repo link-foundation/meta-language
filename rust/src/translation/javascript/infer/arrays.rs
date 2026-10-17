@@ -60,6 +60,8 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                 }
                 (
                     SNode::ForOfIterable { ty: retained, .. }
+                    | SNode::Set { ty: retained, .. }
+                    | SNode::Map { ty: retained, .. }
                     | SNode::ArrayFrom { ty: retained, .. }
                     | SNode::Record { ty: retained, .. }
                     | SNode::CellAllocate { ty: retained, .. },
@@ -126,6 +128,10 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
                 walk(body, arrays);
             }
             SNode::ArrayBindingRest { object, .. }
+            | SNode::Set { items: object, .. }
+            | SNode::Map {
+                entries: object, ..
+            }
             | SNode::CopySlice { object }
             | SNode::Field { object, .. }
             | SNode::CellAllocate { value: object, .. }

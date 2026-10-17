@@ -105,6 +105,10 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             .collect(),
         SNode::CellWrite { cell, value, body } => vec![cell, value, body],
         SNode::ArrayBindingRest { object, .. }
+        | SNode::Set { items: object, .. }
+        | SNode::Map {
+            entries: object, ..
+        }
         | SNode::CopySlice { object }
         | SNode::Field { object, .. }
         | SNode::Some { value: object, .. }
@@ -766,6 +770,10 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 }
             }
             SNode::ArrayBindingRest { object, .. }
+            | SNode::Set { items: object, .. }
+            | SNode::Map {
+                entries: object, ..
+            }
             | SNode::CopySlice { object }
             | SNode::Field { object, .. }
             | SNode::Some { value: object, .. }
