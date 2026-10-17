@@ -201,6 +201,7 @@ test('lazy child owners share one accessor while chains and frozen output identi
     const first={kind:'first'},second={kind:'second'},third={kind:'third'};
     const chain={left:[first],right:[second],length:2};
     const independent={left:[third],right:[],length:1};
+    const parts=[chain.left,chain.right,independent.left,independent.right];
     const owner=operations.shareChildren({kind:'owner'},{[operations.CHAIN]:chain});
     const copy=operations.copyNode(owner,{kind:'copy'});
     const other=operations.shareChildren({kind:'other'},{[operations.CHAIN]:independent});
@@ -212,8 +213,13 @@ test('lazy child owners share one accessor while chains and frozen output identi
     assert.equal(copy.children,owner.children);assert.deepEqual(owner.children,[first,second]);
     assert.equal(independent.flat,undefined,'reading one chain does not flatten another');
     assert.deepEqual(other.children,[third]);assert.notEqual(other.children,owner.children);
-    assert.equal(chain.left,null);assert.equal(chain.right,null);
-    assert.equal(independent.left,null);assert.equal(independent.right,null);
+    if(operations===original){
+      assert.equal(chain.left,null);assert.equal(chain.right,null);
+      assert.equal(independent.left,null);assert.equal(independent.right,null);
+    }else{
+      assert.equal(chain.left,parts[0]);assert.equal(chain.right,parts[1]);
+      assert.equal(independent.left,parts[2]);assert.equal(independent.right,parts[3]);
+    }
     return {descriptors,owners:structuredClone([owner,copy,other])};
   };
   const expected=build(original),actual=build(current);
