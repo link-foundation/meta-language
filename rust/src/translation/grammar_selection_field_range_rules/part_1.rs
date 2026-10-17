@@ -601,7 +601,8 @@ pub fn ml_read_grammar_selection_field_range_plan_loop3(
                                             }
                                         }
                                     }
-                                } else {
+                                }
+                                {
                                     {
                                         let index_4 = index + 2f64;
                                         {

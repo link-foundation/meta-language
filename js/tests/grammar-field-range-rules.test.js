@@ -82,6 +82,70 @@ test('field range selectors require their closed kind, exact label, finite occur
     'changed ABI, comparison, count, scope, macros, comments and opaque declarations never inherit a type guard proof');
 });
 
+test('field range continuation styles retain complete scopes and refuse unproved transfers', () => {
+  const enumeration = 'MlReadGrammarSelectionFieldRangePlanJoin5';
+  const variant = enumeration + 'Next';
+  const branch = `if (occurrence >= first) && (occurrence < following) {
+      let selected = if cursor < start {
+        { self::${enumeration}::${variant}(ranges, width) }
+      } else { self::${enumeration}::${variant}(ranges, width) };
+      match selected {
+        self::${enumeration}::${variant}(selected_ranges, selected_width) => {
+          { (ranges, width, index) = (selected_ranges, selected_width, index + 2f64); continue; }
+        }
+      }
+    } else { { index = index + 2f64; continue; } }`;
+  const prefix = `pub enum ${enumeration} { ${variant}(Vec<f64>, f64), }
+/// Keep this complete source owner and its leading documentation.
+pub fn ml_read_grammar_selection_field_range_plan_loop3(
+  spans: &[f64], mut start: f64, mut end: f64, mut first: f64, mode: &str,
+  mut following: f64, mut ranges: Vec<f64>, mut previous: f64, mut cursor: f64, mut width: f64, mut index: f64,
+) -> self::MlReadGrammarSelectionFieldRangePlanLoop3Result {
+  loop { let occurrence = index / 2f64;
+    `;
+  const source = prefix + branch + '\n  }\n}';
+  const offset = source.lastIndexOf('else');
+  const expected = source.slice(0, offset) + '    ' + source.slice(offset + 4);
+  const styled = readGrammarSelectionFieldRangeLibraryStyles(source);
+  assert.equal(styled.actions.length, 1, 'one complete actual continuation owner supplies the proof');
+  assert.equal(styled.source, expected, 'only the redundant keyword becomes equal-width whitespace');
+  assert.equal(styled.source.length, source.length, 'all body offsets, blocks and original bytes remain fixed');
+  assert.ok(styled.actions[0].from.includes('pub fn ml_read_grammar_selection_field_range_plan_loop3('));
+  assert.equal(styled.actions[0].from.length, styled.actions[0].to.length);
+  const replay = new DecoratorSet([{ id: 'field-continuation-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: styled.actions }]);
+  assert.equal(DecoratorSet.fromLino(replay.toLino()).decorate('emitter', { format: 'Rust', source }).source, expected);
+  assert.deepEqual(readGrammarSelectionFieldRangeLibraryStyles(expected), { source: expected, actions: [] },
+    'the scoped recorded correction is idempotent');
+  for (const refused of [
+    source.replace('ml_read_grammar_selection_field_range_plan_loop3(', 'unreviewed_continuation('),
+    source.replace('mut first: f64', 'mut first: Custom'),
+    source.replace(`${variant}(Vec<f64>, f64),`, `${variant}(Vec<f64>, f64), Other,`),
+    source.replace('pub enum', '#[derive(Custom)]\npub enum'),
+    source.replace(`${variant}(Vec<f64>, f64),`, `${variant}(/* retain */ Vec<f64>, f64),`),
+    source.replace(`${variant}(ranges, width)`, 'Other(ranges, width)'),
+    source.replace('let selected = if', 'let other = if'),
+    source.replace('let selected = if', `let selected = self::${enumeration}::${variant}(ranges, width); let selected = if`),
+    source.replace('selected_width) => {', 'selected_width) if first > 0f64 => {'),
+    source.replace('        }\n      }', '        }, _ => { continue; }\n      }'),
+    source.replace('continue;', 'width = 1f64;'),
+    source.replace('continue;', 'continue; observe();'),
+    source.replace('let selected = if', '/* retain */ let selected = if'),
+    source.replace('let selected = if', 'unknown!(); let selected = if'),
+    prefix + 'let value = ' + branch + ';\n  }\n}',
+    prefix + 'return ' + branch + ';\n  }\n}',
+    prefix + 'consume(' + branch + ');\n  }\n}',
+    prefix + 'let value = { ' + branch + ' };\n  }\n}',
+    prefix + 'let value = vec![{ ' + branch + ' }];\n  }\n}',
+    source.replace('continue;', "continue 'outer;"),
+    source.replace('continue;', 'loop { continue; }'),
+    'type f64 = Custom;\n' + source,
+    'struct Vec<T>(T);\n' + source,
+    source + '\n' + source,
+  ]) assert.deepEqual(readGrammarSelectionFieldRangeLibraryStyles(refused), { source: refused, actions: [] },
+    'changed owners, constructors, arms, control transfers, comments, macros and value contexts retain every byte');
+});
+
 test('field ranges retain exact operation-specific field orders and match only non-trivia capture labels', () => {
   for (const [role, expected] of [
     ['candidate', 'kind|name|mapping|selector'], ['selector', 'kind|label|mode|first|count'],

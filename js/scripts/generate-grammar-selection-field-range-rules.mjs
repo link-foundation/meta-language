@@ -83,6 +83,155 @@ function nativeParameters(value) {
   });
 }
 
+/** One actual continuation may discard an else only after both paths continue. */
+function readGrammarSelectionFieldRangeContinuationStyles(source) {
+  const unchanged = { source, actions: [] }, items = readRustLibraryItems(source).items;
+  const name = 'ml_read_grammar_selection_field_range_plan_loop3';
+  const enumeration = 'MlReadGrammarSelectionFieldRangePlanJoin5';
+  const variant = enumeration + 'Next';
+  const owners = items.filter(item => item.kind === 'fn' && item.name === name);
+  const declarations = items.filter(item => item.name === enumeration);
+  if (owners.length !== 1 || declarations.length !== 1 || declarations[0].kind !== 'enum') return unchanged;
+  const words = tokens => tokens.filter(token => token.kind !== 'eof')
+    .map(token => token.kind === 'number' ? token.raw : token.value).join('');
+  const { tokens: enumTokens, comments: enumComments } = tokenize(declarations[0].source, 'Rust');
+  const enumStart = enumTokens.findIndex(token => token.kind === 'identifier' && token.value === 'enum');
+  if (!['pub', '#[derive(Clone,Debug,PartialEq)]pub'].includes(words(enumTokens.slice(0, enumStart)))
+    || words(enumTokens.slice(enumStart)) !== `enum${enumeration}{${variant}(Vec<f64>,f64),}`
+    || enumComments.some(comment => comment.start >= enumTokens[enumStart].start)) return unchanged;
+  const complete = tokenize(source, 'Rust').tokens;
+  if (complete.some((token, at) => token.kind === 'identifier'
+    && ['type', 'struct', 'enum', 'union', 'mod', 'trait'].includes(token.value)
+    && complete[at + 1]?.value === 'Vec')) return unchanged;
+  const from = owners[0].source;
+  const header = /\bfn \w+\(([^()]*)\)\s*->\s*self::MlReadGrammarSelectionFieldRangePlanLoop3Result\s*\{/u.exec(from);
+  if (!header || JSON.stringify(nativeParameters(header[1])) !== JSON.stringify([
+    'spans:&[f64]', 'mut start:f64', 'mut end:f64', 'mut first:f64', 'mode:&str',
+    'mut following:f64', 'mut ranges:Vec<f64>', 'mut previous:f64', 'mut cursor:f64', 'mut width:f64', 'mut index:f64',
+  ])) return unchanged;
+  const { tokens, comments } = tokenize(from, 'Rust'), matching = new Map(), stack = [];
+  for (let at = 0; at < tokens.length; at += 1) {
+    if (tokens[at].kind !== 'punct') continue;
+    if (['(', '[', '{'].includes(tokens[at].value)) stack.push(at);
+    else if ([')', ']', '}'].includes(tokens[at].value)) {
+      const open = stack.pop();
+      assert.equal(tokens[open]?.value, { ')': '(', ']': '[', '}': '{' }[tokens[at].value]);
+      matching.set(open, at); matching.set(at, open);
+    }
+  }
+  assert.equal(stack.length, 0, 'the continuing-branch proof retains the complete actual owner');
+  const body = tokens.findIndex(token => token.kind === 'punct' && token.value === '{');
+  const end = matching.get(body);
+  if (body < 0 || end === undefined || comments.some(comment => comment.start >= tokens[body].start
+    && comment.end <= tokens[end].end)) return unchanged;
+  if (tokens.slice(body + 1, end).some(token => token.kind === 'macro' && token.value !== 'vec'
+    || token.kind === 'identifier' && ['fn', 'impl', 'unsafe', 'async', 'move', 'mod', 'enum', 'struct', 'type', 'trait', 'use', 'extern'].includes(token.value)
+    || token.kind === 'punct' && token.value === '|')) return unchanged;
+  const spelling = (first, last) => words(tokens.slice(first, last));
+  const conditional = (start, finish) => {
+    let open = start + 1;
+    while (open < finish && tokens[open].value !== '{') {
+      if (tokens[open].kind === 'macro' || ['let', 'match', ';', '}', '=>'].includes(tokens[open].value)) return undefined;
+      if (['(', '['].includes(tokens[open].value)) open = matching.get(open) + 1;
+      else open += 1;
+    }
+    const close = matching.get(open);
+    if (close === undefined || close >= finish) return undefined;
+    let alternate, end = close + 1;
+    if (tokens[end]?.value === 'else') {
+      const next = end + 1;
+      if (tokens[next]?.value !== '{') return undefined;
+      const last = matching.get(next);
+      if (last === undefined || last >= finish) return undefined;
+      alternate = { open: next, close: last }; end = last + 1;
+    }
+    return { kind: 'if', start, open, close, alternate, end };
+  };
+  const statements = (first, finish) => {
+    const result = [];
+    for (let at = first; at < finish;) {
+      if (tokens[at].value === ';') { at += 1; continue; }
+      let node;
+      if (tokens[at].value === '{') {
+        const close = matching.get(at);
+        if (close === undefined || close >= finish) return undefined;
+        node = { kind: 'block', open: at, close, end: close + 1 };
+      } else if (tokens[at].value === 'if') node = conditional(at, finish);
+      else if (tokens[at].value === 'match' && tokens[at + 1]?.kind === 'identifier' && tokens[at + 2]?.value === '{') {
+        const close = matching.get(at + 2);
+        if (close === undefined || close >= finish) return undefined;
+        node = { kind: 'match', name: tokens[at + 1].value, open: at + 2, close, end: close + 1 };
+      } else if (tokens[at].value === 'continue' && tokens[at + 1]?.value === ';') {
+        node = { kind: 'continue', end: at + 2 };
+      } else if (spelling(at, at + 6) === `self::${enumeration}::${variant}(`) {
+        const close = matching.get(at + 5);
+        if (close === undefined || close >= finish) return undefined;
+        node = { kind: 'constructor', open: at + 5, close, end: close + 1 };
+      } else {
+        let last = at;
+        for (; last < finish && tokens[last].value !== ';'; last += 1) {
+          if (['(', '[', '{'].includes(tokens[last].value)) last = matching.get(last);
+        }
+        if (last >= finish) return undefined;
+        node = tokens[at].value === 'let' && tokens[at + 1]?.kind === 'identifier' && tokens[at + 2]?.value === '='
+          ? { kind: 'let', name: tokens[at + 1].value, first: at + 3, last, end: last + 1 }
+          : { kind: 'other', end: last + 1 };
+      }
+      if (!node || node.end <= at || node.end > finish) return undefined;
+      result.push(node); at = node.end;
+    }
+    return result;
+  };
+  const pair = (open, close) => tokens[open + 1]?.kind === 'identifier' && tokens[open + 2]?.value === ','
+    && tokens[open + 3]?.kind === 'identifier' && tokens[open + 4]?.value === ')'
+    && open + 4 === close && tokens[open + 1].value !== tokens[open + 3].value;
+  const constructs = (first, finish) => {
+    const last = statements(first, finish)?.at(-1);
+    if (last?.kind === 'constructor') return pair(last.open, last.close);
+    if (last?.kind === 'block') return constructs(last.open + 1, last.close);
+    return last?.kind === 'if' && Boolean(last.alternate) && constructs(last.open + 1, last.close)
+      && constructs(last.alternate.open + 1, last.alternate.close);
+  };
+  const continues = (open, close) => {
+    const sequence = statements(open + 1, close), last = sequence?.at(-1);
+    if (last?.kind === 'continue') return true;
+    if (last?.kind === 'block') return continues(last.open, last.close);
+    if (last?.kind === 'if') return Boolean(last.alternate) && continues(last.open, last.close)
+      && continues(last.alternate.open, last.alternate.close);
+    if (last?.kind !== 'match') return false;
+    const first = last.open + 1, patternEnd = matching.get(first + 5);
+    if (spelling(first, first + 6) !== `self::${enumeration}::${variant}(` || patternEnd === undefined
+      || !pair(first + 5, patternEnd) || tokens[patternEnd + 1]?.value !== '=>'
+      || tokens[patternEnd + 2]?.value !== '{') return false;
+    const arm = patternEnd + 2, armEnd = matching.get(arm);
+    if (armEnd === undefined || !(armEnd + 1 === last.close
+      || tokens[armEnd + 1]?.value === ',' && armEnd + 2 === last.close)) return false;
+    const bindings = sequence.slice(0, -1).filter(node => node.kind === 'let' && node.name === last.name);
+    return bindings.length === 1 && sequence.at(-2) === bindings[0]
+      && constructs(bindings[0].first, bindings[0].last) && continues(arm, armEnd);
+  };
+  const occurrenceBindings = tokens.filter((token, at) => token.value === 'let' && tokens[at + 1]?.value === 'occurrence');
+  if (occurrenceBindings.length !== 1 || !tokens.some((token, at) => token.value === 'let'
+    && spelling(at, at + 7) === 'letoccurrence=index/2f64;')) return unchanged;
+  const edits = [];
+  for (let at = body + 1; at < end; at += 1) {
+    if (tokens[at].value !== 'if' || !['{', ';'].includes(tokens[at - 1]?.value)) continue;
+    const branch = conditional(at, end);
+    if (!branch?.alternate || spelling(at + 1, branch.open) !== '(occurrence>=first)&&(occurrence<following)'
+      || !['}', ';'].includes(tokens[branch.end]?.value)) continue;
+    // A bare block used as a let/return/call/match value is not a statement boundary.
+    if ([...matching].some(([open, close]) => open < at && close > at && tokens[open].value === '{'
+      && ['=', 'return', 'break', '(', '[', ',', '=>'].includes(tokens[open - 1]?.value))) continue;
+    if (continues(branch.open, branch.close) && continues(branch.alternate.open, branch.alternate.close)) {
+      edits.push(tokens[branch.close + 1]);
+    }
+  }
+  if (edits.length !== 1) return unchanged;
+  const token = edits[0], to = from.slice(0, token.start) + ' '.repeat(token.end - token.start) + from.slice(token.end);
+  assert.equal(source.split(from).length, 2, 'one complete continuing branch owner is recorded');
+  return { source: source.replace(from, () => to), actions: [{ op: 'replace', field: 'source', from, to }] };
+}
+
 /** Remove only pure literal type guards already fixed by the actual borrowed ABI. */
 export function readGrammarSelectionFieldRangeLibraryStyles(source) {
   const numeric = readGrammarSelectionRangeLibraryStyles(source);
@@ -101,6 +250,9 @@ export function readGrammarSelectionFieldRangeLibraryStyles(source) {
       if (tokens[open]?.value !== '[' || !['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return numeric;
     }
   }
+  const continuing = readGrammarSelectionFieldRangeContinuationStyles(numeric.source);
+  numeric.source = continuing.source;
+  numeric.actions.push(...continuing.actions);
   const items = readRustLibraryItems(numeric.source).items;
   const owners = [
     ['accept_grammar_selection_field_range_selector', ['kind:&str', 'label:&str', 'mode:&str', 'first:f64', 'count:f64'], 1],
