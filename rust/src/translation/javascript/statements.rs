@@ -269,6 +269,7 @@ impl JavaScriptParser {
             ));
         }
         let kind = self.cursor.identifier(Some("throw"))?;
+        self.lexical.read(&kind, false, kind.span());
         if !ERRORS.contains(&kind.value.as_str()) {
             return Err(unsupported(
                 &format!("throw new {}", kind.value),
@@ -642,6 +643,7 @@ impl JavaScriptParser {
     /// `console.log(expr);`: the printed expression and the statement's span.
     fn console_call(&mut self) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
+        self.lexical.read(&start, false, start.span());
         self.cursor.expect(".", Some("console"))?;
         let method = self.cursor.identifier(Some("console"))?;
         if method.value != "log" {

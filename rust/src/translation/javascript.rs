@@ -38,6 +38,7 @@ mod flow;
 mod imperative;
 mod imports;
 mod infer;
+mod lexical_bindings;
 mod loops;
 mod lowering;
 mod math;
@@ -370,6 +371,7 @@ struct JavaScriptParser {
     data_types: Vec<SData>,
     type_aliases: HashMap<String, String>,
     scope: Scope,
+    lexical: lexical_bindings::Trace,
     literal_bindings: HashMap<String, SExpr>,
     assertion: Option<Assertion>,
     /// Async functions run sequentially: each call of one is awaited where it
@@ -416,6 +418,7 @@ impl JavaScriptParser {
             data_types: Vec::new(),
             type_aliases: HashMap::new(),
             scope: Scope::default(),
+            lexical: lexical_bindings::Trace::default(),
             literal_bindings: HashMap::new(),
             assertion: None,
             async_names: HashSet::new(),

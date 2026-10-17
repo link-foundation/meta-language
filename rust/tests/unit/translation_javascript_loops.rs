@@ -4,9 +4,15 @@
 use std::process::Command;
 
 use meta_language::translation::check::check_program;
+use meta_language::translation::diagnostics::ErrorKind;
 use meta_language::translation::emit_javascript::emit_javascript;
+use meta_language::translation::emit_rust::emit_rust;
 use meta_language::translation::javascript::parse_javascript;
 use meta_language::translation::surface::{SItem, SProgram};
+use meta_language::{
+    BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+    encode_link_network_binary, encode_typed_program_links,
+};
 use meta_language::{TranslationSupport, translate_program};
 
 const SUM: &str = "function sum(n) {
@@ -196,6 +202,188 @@ fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
         }
         let error = parse_javascript(source).expect_err(source);
         assert_eq!(error.message(), message, "{source}");
+    }
+    for source in [
+        "function read(){let first=NaN,NaN=1;return first;}console.log(read());",
+        "function read(){let first=Infinity,Infinity=1;return first;}console.log(read());",
+        "function read(){const result=NaN;let first=0,NaN=1;return result;}console.log(read());",
+        "function read(){let first=undefined,undefined=1;return first;}console.log(read());",
+        "function read(){const result=NaN\nlet first=0,NaN=1;return result;}console.log(read());",
+        "function read(NaN){{const result=NaN;let first=0,NaN=1;return result;}}console.log(read(9));",
+        "function read(){for(let NaN of [NaN]){console.log(NaN);}return 1;}console.log(read());",
+        "function read(){for(const [NaN] of [[NaN]]){console.log(NaN);}return 1;}console.log(read());",
+        "function read(){for(let first=NaN,NaN=1;first<2;first++){}return 1;}console.log(read());",
+        "function read(NaN){{NaN=2;let first=0,NaN=1;return first;}}console.log(read(9));",
+    ] {
+        let original = Command::new("node")
+            .args(["--input-type=module", "-e", source])
+            .output()
+            .unwrap();
+        assert!(!original.status.success(), "{source}");
+        assert!(
+            String::from_utf8_lossy(&original.stderr).contains("ReferenceError"),
+            "{source}"
+        );
+        let error = parse_javascript(source).expect_err(source);
+        assert_eq!(error.kind, ErrorKind::Unsupported, "{source}");
+        assert!(
+            error.reason.contains("temporal dead zone"),
+            "{error}: {source}"
+        );
+    }
+    let deferred = "function read(){let first=()=>NaN,NaN=1;return first();}console.log(read());";
+    assert_eq!(lexical_binding_output(deferred), b"1\n");
+    let error =
+        parse_javascript(deferred).expect_err("the capture needs an invocation-order proof");
+    assert_eq!(error.kind, ErrorKind::Unsupported);
+    assert!(error.reason.contains("invocation-order proof"), "{error}");
+    let eager = "function read(){const fn=()=>{let first=NaN,NaN=1;return first;};return fn();}console.log(read());";
+    let original = Command::new("node")
+        .args(["--input-type=module", "-e", eager])
+        .output()
+        .unwrap();
+    assert!(!original.status.success());
+    assert!(String::from_utf8_lossy(&original.stderr).contains("ReferenceError"));
+    let error = parse_javascript(eager).expect_err("the closure body's own let is uninitialized");
+    assert_eq!(error.kind, ErrorKind::Unsupported);
+    assert!(error.reason.contains("temporal dead zone"), "{error}");
+    assert!(!error.reason.contains("invocation-order proof"), "{error}");
+    for source in [
+        "function read(){return NaN;}let first=0,NaN=1;console.log(read());",
+        "let first=0,NaN=1;function read(){return NaN;}console.log(read());",
+        "function read(value=NaN){return value;}let first=0,NaN=1;console.log(read());",
+    ] {
+        assert_eq!(
+            lexical_binding_output(source),
+            b"1\n",
+            "the actual module source is the oracle"
+        );
+        let error =
+            parse_javascript(source).expect_err("mutable module captures are not represented");
+        assert_eq!(error.kind, ErrorKind::Unsupported);
+        assert!(
+            error
+                .reason
+                .contains("mutable module binding requires module-capture representation"),
+            "{error}: {source}"
+        );
+    }
+    for source in [
+        "function read(){let first=0\nInfinity,NaN;return first;}",
+        "function read(){let first={let:2};first.let\nNaN,Infinity;return first.let;}",
+    ] {
+        assert!(parse_javascript(source).is_err(), "{source}");
+    }
+}
+
+fn lexical_binding_output(source: &str) -> Vec<u8> {
+    let result = Command::new("node")
+        .args(["--input-type=module", "-e", source])
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    result.stdout
+}
+
+#[test]
+fn actual_lexical_owners_preserve_initialized_bindings_shadows_and_order_through_links() {
+    for (source, expected) in [
+        (
+            "function read(){let NaN=1,first=NaN;return first;}console.log(read());",
+            "1\n",
+        ),
+        (
+            "function read(){let first=1\nlet second=first+1;return second;}console.log(read());",
+            "2\n",
+        ),
+        (
+            "function read(){let first=1\n+2,second=first+1;return second;}console.log(read());",
+            "4\n",
+        ),
+        (
+            "function read(){let first={let:2},second=first.let;return second;}console.log(read());",
+            "2\n",
+        ),
+        (
+            "function read(){let first=[1,2],second={x:3,y:4};return first.length+second.x;}console.log(read());",
+            "5\n",
+        ),
+        (
+            "function read(){const [NaN,other]=[1,2];let first=NaN,Infinity=other;return first+Infinity;}console.log(read());",
+            "3\n",
+        ),
+        (
+            "function read(){let total=0;{const NaN=3;total=NaN;}let first=0,NaN=1;return total+NaN;}console.log(read());",
+            "4\n",
+        ),
+        (
+            "function read(){let reader=(NaN)=>NaN,NaN=1;return reader(3);}console.log(read());",
+            "3\n",
+        ),
+        (
+            "function read(){let NaN=1,reader=()=>NaN;return reader();}console.log(read());",
+            "1\n",
+        ),
+        (
+            "function read(){let total=0;for(let NaN=0;NaN<2;NaN++){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());",
+            "4\n",
+        ),
+        (
+            "function read(){let total=0;for(const NaN of [1,2]){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());",
+            "6\n",
+        ),
+        (
+            "function read(){let total=0;for(const [x] of [[1],[2]]){total+=x;}return total;}console.log(read());",
+            "3\n",
+        ),
+        (
+            "function pair(a,b){console.log(a);return b;}function read(){let first=pair(1,2),second=pair(first,3);return second;}console.log(read());",
+            "1\n2\n3\n",
+        ),
+        (
+            "function read(NaN){return NaN;}let first=0,NaN=1;console.log(read(2));",
+            "2\n",
+        ),
+        (
+            "const NaN=3;function read(){return NaN;}console.log(read());",
+            "3\n",
+        ),
+    ] {
+        assert_eq!(
+            lexical_binding_output(source),
+            expected.as_bytes(),
+            "the original source is the oracle"
+        );
+        let checked = check_program(&parse(source)).unwrap();
+        assert_eq!(
+            lexical_binding_output(&emit_javascript(&checked).unwrap().text),
+            expected.as_bytes(),
+            "{source}"
+        );
+    }
+    let source = "function read(){let NaN=1,first=NaN;return first;}console.log(read()===1);";
+    let program = check_program(&parse(source)).unwrap();
+    let archive = encode_typed_program_links(&program).unwrap();
+    let rust = emit_rust(&program).unwrap().text;
+    for network in [
+        LinkNetwork::from_lino(&archive.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&archive.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, archive.root).unwrap();
+        assert_eq!(restored, program);
+        assert_eq!(
+            lexical_binding_output(&emit_javascript(&restored).unwrap().text),
+            lexical_binding_output(source)
+        );
+        assert_eq!(emit_rust(&restored).unwrap().text, rust);
     }
 }
 

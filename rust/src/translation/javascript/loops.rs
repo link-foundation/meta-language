@@ -38,6 +38,8 @@ impl JavaScriptParser {
                 )
             };
             self.declare_local(&name.value, true);
+            self.lexical
+                .binding(&name.value, Some(self.cursor.peek().start));
             statements.push(Stmt::Let {
                 name: name.value,
                 value,
@@ -76,6 +78,7 @@ impl JavaScriptParser {
             None => self.cursor.advance().value,
         };
         let place = self.to_here(&start);
+        self.lexical.read(&target, true, place);
         if self.scope.tdz.contains(&target.value) {
             return Err(unsupported(
                 &format!("assignment of {} before its declaration", target.value),
@@ -189,6 +192,10 @@ impl JavaScriptParser {
 
     /// `for (let i = 0n; i < n; i++) …`: the variables of its head belong to the loop.
     pub(super) fn for_statement(&mut self) -> Result<Stmt> {
+        self.with_lexical_scope(&[], 0, Self::for_statement_in_scope)
+    }
+
+    fn for_statement_in_scope(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         if self.cursor.is("await") {
             return Err(unsupported(
@@ -198,6 +205,16 @@ impl JavaScriptParser {
             ));
         }
         self.cursor.expect("(", Some("for"))?;
+        if (self.cursor.is("const") || self.cursor.is("let"))
+            && self.cursor.is_at("[", 1)
+            && self
+                .cursor
+                .tokens
+                .get(self.matching(self.cursor.index + 1) + 1)
+                .is_some_and(|token| token.value == "of")
+        {
+            return self.for_of(&start);
+        }
         let declared =
             usize::from(self.cursor.is("let") || self.cursor.is("const") || self.cursor.is("var"));
         if self.cursor.is_kind_at(TokenKind::Identifier, declared)
@@ -320,9 +337,13 @@ impl JavaScriptParser {
         if let Some(bindings) = &bindings {
             for binding in bindings {
                 self.declare_local(&binding.name, mutable);
+                self.lexical
+                    .binding(&binding.name, Some(self.cursor.peek().start));
             }
         } else if let Some(name) = &name {
             self.declare_local(&name.value, mutable);
+            self.lexical
+                .binding(&name.value, Some(self.cursor.peek().start));
         }
         let body = self.loop_body();
         self.scope = outer;

@@ -20,6 +20,9 @@ impl JavaScriptParser {
             mutable: HashSet::new(),
         };
         self.global_binding_names.clone_from(&self.scope.tdz);
+        for name in &self.scope.tdz {
+            self.lexical.binding(name, None);
+        }
         self.prescan_product_bindings();
         self.async_names = self.async_declarations(self.cursor.index);
         // Top-level statements that declare or assign variables, lowered together before the next statement that prints, binds a constant or asserts.
@@ -134,6 +137,7 @@ impl JavaScriptParser {
             effects.extend(self.main_statement()?);
         }
         self.flush(&mut pending, &mut effects)?;
+        self.lexical.validate()?;
         if let Some((name, place)) = self.unawaited.first() {
             return Err(unsupported(
                 &format!("call of async function {name} without await"),

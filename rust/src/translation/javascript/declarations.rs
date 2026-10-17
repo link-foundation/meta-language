@@ -448,7 +448,7 @@ impl JavaScriptParser {
                 }
                 let outer_tdz = self.scope.tdz.clone();
                 self.scope.tdz.extend(binding_names.iter().cloned());
-                let value = self.expr();
+                let value = self.with_lexical_scope(&[], 2, Self::expr);
                 self.scope.tdz = outer_tdz;
                 Some(value?)
             } else if tokens
@@ -564,7 +564,13 @@ impl JavaScriptParser {
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top_level = std::mem::replace(&mut self.top_level, false);
         if !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
-            let read = self.read_scalar_loop(&name, &params, is_async);
+            let names = params
+                .iter()
+                .map(|param| param.name.clone())
+                .collect::<Vec<_>>();
+            let read = self.with_lexical_scope(&names, 2, |parser| {
+                parser.read_scalar_loop(&name, &params, is_async)
+            });
             self.scope = outer;
             self.in_async = outer_async;
             self.jumps = outer_jumps;
@@ -588,23 +594,27 @@ impl JavaScriptParser {
                 source_pure_unit: None,
             });
         }
-        let statements = match body {
-            Body::Arrow if !self.cursor.is("{") => {
-                let token = self.peek();
+        let names = params
+            .iter()
+            .map(|param| param.name.clone())
+            .collect::<Vec<_>>();
+        let statements = self.with_lexical_scope(&names, 2, |parser| match body {
+            Body::Arrow if !parser.cursor.is("{") => {
+                let token = parser.peek();
                 let expr = if is_async {
-                    self.awaited(Self::expr)
+                    parser.awaited(Self::expr)
                 } else {
-                    self.expr()
+                    parser.expr()
                 };
                 expr.map(|expr| {
                     vec![Stmt::Return {
                         expr,
-                        span: self.to_here(&token),
+                        span: parser.to_here(&token),
                     }]
                 })
             }
-            _ => self.block_statements(),
-        };
+            _ => parser.block_statements(),
+        });
         self.scope = outer;
         self.in_async = outer_async;
         self.jumps = outer_jumps;
@@ -815,6 +825,7 @@ impl JavaScriptParser {
     }
 
     pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
+        self.lexical.binding(name, None);
         self.scope.locals.insert(name.to_owned());
         self.scope.tdz.remove(name);
         if mutable {
@@ -827,14 +838,18 @@ impl JavaScriptParser {
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
         self.cursor.expect("{", Some("block"))?;
         let mut tdz = self.scope.tdz.clone();
-        tdz.extend(self.block_declarations(self.cursor.index, ScanEnd::Brace));
+        let names = self
+            .block_declarations(self.cursor.index, ScanEnd::Brace)
+            .into_iter()
+            .collect::<Vec<_>>();
+        tdz.extend(names.iter().cloned());
         let inner = Scope {
             locals: self.scope.locals.clone(),
             tdz,
             mutable: self.scope.mutable.clone(),
         };
         let outer = std::mem::replace(&mut self.scope, inner);
-        let statements = self.block_body();
+        let statements = self.with_lexical_scope(&names, 0, Self::block_body);
         self.scope = outer;
         statements
     }

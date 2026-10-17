@@ -201,6 +201,10 @@ pub(super) fn validate_closure_captures(statements: &[Stmt], references: bool) -
 
 impl JavaScriptParser {
     pub(super) fn read_closure(&mut self, method: bool) -> Result<SExpr> {
+        self.with_lexical_scope(&[], 1, |parser| parser.read_closure_in_scope(method))
+    }
+
+    fn read_closure_in_scope(&mut self, method: bool) -> Result<SExpr> {
         let start = self.peek();
         let expression = method || self.cursor.eat("function").is_some();
         let token = self.peek();
@@ -326,6 +330,9 @@ impl JavaScriptParser {
                 rocq_type: None,
             })
             .collect::<Vec<_>>();
+        for parameter in &params {
+            self.lexical.binding(&parameter.name, None);
+        }
         let outer = std::mem::replace(&mut self.scope, scope);
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top = std::mem::replace(&mut self.top_level, false);

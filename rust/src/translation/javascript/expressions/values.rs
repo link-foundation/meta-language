@@ -194,6 +194,7 @@ impl JavaScriptParser {
                 span(&token, &token),
             ));
         }
+        self.lexical.read(&token, false, token.span());
         if ["NaN", "Infinity", "undefined"].contains(&token.value.as_str())
             && (self.scope.locals.contains(&token.value) || self.scope.tdz.contains(&token.value))
         {
@@ -249,6 +250,7 @@ impl JavaScriptParser {
         if token.value == "new" {
             self.cursor.advance();
             let constructor = self.cursor.identifier(Some("constructor"))?;
+            self.lexical.read(&constructor, false, constructor.span());
             let arguments = if self.cursor.is("(") {
                 self.arguments(&constructor.value)?
             } else {
@@ -384,8 +386,9 @@ impl JavaScriptParser {
     }
 
     /// A local variable; reading one before its declaration throws in JavaScript.
-    pub(in super::super) fn reference(&self, token: &Token) -> Result<SExpr> {
+    pub(in super::super) fn reference(&mut self, token: &Token) -> Result<SExpr> {
         let here = span(token, token);
+        self.lexical.read(token, false, here);
         let temporal = self.scope.tdz.contains(&token.value);
         let reason = crate::translation::callable_source_rules::read_callable_reference_obligation(
             temporal,
