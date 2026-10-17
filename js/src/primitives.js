@@ -1,3 +1,5 @@
+import { acceptEmbeddedRegionLimit, readEmbeddedRegionDefaultLimit } from './translation/embedded-region-rules.js';
+
 export const LinkType = Object.freeze({
   Concept: 'Concept',
   Document: 'Document',
@@ -282,10 +284,19 @@ export class ParseConfiguration {
     triviaAttachmentPolicy = TriviaAttachmentPolicy.Combined,
     regionDetectionPolicy = 'Both',
     accessMode = 'mutable',
+    embeddedRegionDepthLimit = readEmbeddedRegionDefaultLimit('depth'),
+    embeddedRegionCountLimit = readEmbeddedRegionDefaultLimit('count'),
+    embeddedRegionByteLimit = readEmbeddedRegionDefaultLimit('bytes'),
   } = {}) {
+    for (const value of [embeddedRegionDepthLimit, embeddedRegionCountLimit, embeddedRegionByteLimit]) {
+      if (typeof value !== 'number' || !acceptEmbeddedRegionLimit(value)) throw new RangeError('embedded region limits must be nonnegative safe integers');
+    }
     this.triviaAttachmentPolicy = triviaAttachmentPolicy;
     this.regionDetectionPolicy = regionDetectionPolicy;
     this.accessMode = accessMode;
+    this.embeddedRegionDepthLimit = embeddedRegionDepthLimit;
+    this.embeddedRegionCountLimit = embeddedRegionCountLimit;
+    this.embeddedRegionByteLimit = embeddedRegionByteLimit;
   }
 
   static default() {
@@ -306,5 +317,18 @@ export class ParseConfiguration {
 
   withAccessMode(accessMode) {
     return new ParseConfiguration({ ...this, accessMode });
+  }
+
+  /** Bounds default-CST attachment, independently of parser evaluation budgets. */
+  withEmbeddedRegionLimits({
+    depthLimit = this.embeddedRegionDepthLimit,
+    countLimit = this.embeddedRegionCountLimit,
+    byteLimit = this.embeddedRegionByteLimit,
+  } = {}) {
+    return new ParseConfiguration({ ...this,
+      embeddedRegionDepthLimit: depthLimit,
+      embeddedRegionCountLimit: countLimit,
+      embeddedRegionByteLimit: byteLimit,
+    });
   }
 }

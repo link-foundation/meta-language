@@ -1210,15 +1210,34 @@ export class Link {
   metadata(): LinkMetadata;
 }
 
+export interface EmbeddedRegionLimits {
+  depthLimit?: number;
+  countLimit?: number;
+  byteLimit?: number;
+}
+
 export class ParseConfiguration {
+  constructor(options?: {
+    triviaAttachmentPolicy?: string;
+    regionDetectionPolicy?: RegionDetectionPolicyValue;
+    accessMode?: string;
+    embeddedRegionDepthLimit?: number;
+    embeddedRegionCountLimit?: number;
+    embeddedRegionByteLimit?: number;
+  });
   readonly triviaAttachmentPolicy: string;
   readonly regionDetectionPolicy: RegionDetectionPolicyValue;
   readonly accessMode: string;
+  /** Adapter traversal bounds, independent of each grammar parser's budgets. */
+  readonly embeddedRegionDepthLimit: number;
+  readonly embeddedRegionCountLimit: number;
+  readonly embeddedRegionByteLimit: number;
   static default(): ParseConfiguration;
   withTriviaAttachmentPolicy(policy: string): ParseConfiguration;
   withRegionDetectionPolicy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   with_region_detection_policy(policy: RegionDetectionPolicyValue): ParseConfiguration;
   withAccessMode(mode: string): ParseConfiguration;
+  withEmbeddedRegionLimits(limits?: EmbeddedRegionLimits): ParseConfiguration;
 }
 
 export class LinkQuery {
