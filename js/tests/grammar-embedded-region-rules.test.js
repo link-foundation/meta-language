@@ -32,7 +32,7 @@ test('default embedded region limits remain shared constant data and preserve im
     '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\n'
     + 'pub const DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT: usize = 128;\n'
     + 'pub const DEFAULT_EMBEDDED_REGION_COUNT_LIMIT: usize = 4096;\n'
-    + 'pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16777216;\n');
+    + 'pub const DEFAULT_EMBEDDED_REGION_BYTE_LIMIT: usize = 16_777_216;\n');
 });
 
 test('embedded region configuration refuses fractional negative nonnumeric and unbounded limits', () => {

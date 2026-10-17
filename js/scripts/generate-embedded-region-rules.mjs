@@ -43,7 +43,11 @@ export function renderEmbeddedRegionNativeDefaults(defaults) {
     if (!acceptEmbeddedRegionLimit(defaults[field])) throw new TypeError('native adapter defaults require nonnegative safe integers');
   }
   return '// Generated DATA from the shared embedded-region-rules.js defaults. Do not edit.\n'
-    + fields.map(([name, field]) => `pub const DEFAULT_EMBEDDED_REGION_${name}_LIMIT: usize = ${defaults[field]};`).join('\n') + '\n';
+    + fields.map(([name, field]) => {
+      const literal = String(defaults[field]).replace(/^[0-9]{5,}$/u,
+        digits => digits.replace(/\B(?=(?:[0-9]{3})+$)/gu, '_'));
+      return `pub const DEFAULT_EMBEDDED_REGION_${name}_LIMIT: usize = ${literal};`;
+    }).join('\n') + '\n';
 }
 
 export async function generateEmbeddedRegionRules({ check = false, native = false } = {}) {
