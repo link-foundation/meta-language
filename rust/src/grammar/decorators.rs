@@ -4,16 +4,21 @@ use super::feature_runtime::{LeafText, SyntaxTree};
 use super::merge::rename_grammar_rule;
 use super::{Grammar, GrammarFormat, RuleKind};
 use crate::decorators::{
-    DecoratorError, DecoratorLevel, DecoratorRecord, DecoratorSet, decorator_record, record_field,
+    DecoratorAction, DecoratorError, DecoratorLevel, DecoratorRecord, DecoratorSet,
+    decorator_record, record_field,
 };
+
+mod composition;
 
 /// The grammar the `importer` or `grammar-rule` decorators of `decorators`
 /// make of `grammar`.
 ///
-/// Each rule is shown as `{ name, kind, concept }`, with
+/// Each rule is shown as `{ name, kind, concept, composition }`, with
 /// `format` (the grammar's source format) added at the `importer` level.
 /// Setting `name` renames the rule and every reference to it, setting `kind`
-/// or `concept` changes the rule, and `drop` removes it. The rules are
+/// or `concept` changes the rule, and `drop` removes it. A nonempty composition
+/// is one closed any/all Links template with an empty insertion slot for the
+/// original expression. The rules are
 /// decorated in grammar order; a grammar without decorators of the level is
 /// returned unchanged.
 ///
@@ -31,7 +36,20 @@ pub fn decorate_grammar(
     }
     let mut renames = Vec::new();
     let mut rules = Vec::new();
+    let composition = decorators.for_level(level).any(|decorator| {
+        decorator.actions().iter().any(|action| match action {
+            DecoratorAction::Set { field, .. } | DecoratorAction::Replace { field, .. } => {
+                field == "composition"
+            }
+            DecoratorAction::Drop => false,
+        })
+    });
+    let tree_decorators =
+        decorators.has(DecoratorLevel::Executor) || decorators.has(DecoratorLevel::Recovery);
     for rule in grammar.rules() {
+        if composition {
+            composition::check_grammar_composition_rule_data(rule)?;
+        }
         let mut record = DecoratorRecord::new();
         record.insert("name".to_owned(), rule.name.clone());
         record.insert("kind".to_owned(), rule.kind.as_str().to_owned());
@@ -39,6 +57,7 @@ pub fn decorate_grammar(
             "concept".to_owned(),
             rule.concept.clone().unwrap_or_default(),
         );
+        record.insert("composition".to_owned(), String::new());
         if level == DecoratorLevel::Importer {
             let format = grammar.source_format().map_or("", GrammarFormat::as_str);
             record.insert("format".to_owned(), format.to_owned());
@@ -53,6 +72,11 @@ pub fn decorate_grammar(
         })?;
         let concept = record_field(&decorated, "concept");
         rule.concept = (!concept.is_empty()).then(|| concept.to_owned());
+        let source = record_field(&decorated, "composition");
+        if !source.is_empty() {
+            rule.expr =
+                composition::compose_grammar_rule_expression(&rule, source, kind, tree_decorators)?;
+        }
         let name = record_field(&decorated, "name");
         if name != rule.name {
             renames.push((rule.name.clone(), name.to_owned()));

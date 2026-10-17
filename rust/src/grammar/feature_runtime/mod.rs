@@ -702,6 +702,15 @@ fn parse_program(
     } else {
         root
     };
+    let source_planes = selection_sources.borrow().definitions();
+    let publication_issue = crate::translation::grammar_rule_composition_rules::read_grammar_composition_publication_issue(
+        source_planes.is_some(),
+        options.decorators.has(DecoratorLevel::Executor)
+            || options.decorators.has(DecoratorLevel::Recovery),
+    );
+    if !publication_issue.is_empty() {
+        return Err(decorator_error(DecoratorError::new(publication_issue)));
+    }
     let tree = tree::public_tree(&root, bytes);
     let mut ambiguities = Vec::new();
     tree::collect_ambiguities(&root, compiled, compiled.main, &mut ambiguities);
@@ -733,6 +742,6 @@ fn parse_program(
         tree: Some(tree),
         ambiguities,
         rejection,
-        source_planes: selection_sources.borrow().definitions(),
+        source_planes,
     })
 }
