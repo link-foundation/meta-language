@@ -396,6 +396,22 @@ fn actual_owner_generated_and_linked_context_premises_cannot_be_erased() {
             );
         }
     }
+    let mut optional = program.clone();
+    let Decl::Fn(function) = &mut optional.declarations[0] else {
+        panic!("the function exists")
+    };
+    function.params[0].optional = true;
+    assert!(
+        emit_rust_with_options(&optional, selected)
+            .unwrap_err()
+            .reason
+            .contains("unrepresented fields need a separate interface proof")
+    );
+    assert_eq!(
+        emit_rust(&optional).unwrap().text,
+        emit_rust(&program).unwrap().text,
+        "unselected emission remains unchanged"
+    );
 }
 
 #[test]

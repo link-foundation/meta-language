@@ -178,14 +178,22 @@ pub fn read_rust_primitive_source_headers(
             }
         }
         value_type(&function.ret)?;
-        for parameter in &function.params {
+        for (index, parameter) in function.params.iter().enumerate() {
             value_type(&parameter.ty)?;
-            // Param has an exhaustive field set; strict linked decoding rejects
-            // unrepresented parameter facets before constructing this program.
+            let parameter_fields = fields["params"][index]
+                .as_object()
+                .ok_or_else(|| fail("the parameter needs its actual checked field inventory"))?;
+            let unrepresented = parameter_fields.keys().any(|field| {
+                !policy()["parameterFields"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|allowed| allowed.as_str() == Some(field.as_str()))
+            });
             if !accept_rust_source_header_emission_parameter(
                 parameter.guard.is_some(),
                 parameter.default_value.is_some(),
-                false,
+                unrepresented,
             ) {
                 return Err(fail(
                     "parameter defaults, guards and unrepresented fields need a separate interface proof",
