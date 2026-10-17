@@ -43,7 +43,7 @@ import {
   settlingProblem,
 } from './grammar-feature-forms.js';
 import { ruleDoc } from './grammar-emitters/structural.js';
-import { GrammarImportError } from './grammar-importers.js';
+import { GrammarImportError } from './grammar-importers/common.js';
 
 const RULE_KINDS = new Set(['normal', 'atomic', 'silent', 'token']);
 const SOURCE_FORMATS = new Set(['meta-language', 'bnf', 'ebnf', 'abnf', 'peg', 'antlr', 'lark', 'gbnf', 'tree-sitter', 'inferred']);

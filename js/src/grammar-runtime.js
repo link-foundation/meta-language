@@ -8,10 +8,12 @@
 import { Executor, Expectations, KeywordLexing, MemoryBudgetReached, memoryBudget, NestingTooDeep, StepLimitReached, stepBudget } from './grammar-runtime/executor.js';
 import { GrammarRuntimeError, loadProgram } from './grammar-runtime/load.js';
 import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
+import { DecoratorError, decoratorSet } from './decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
 import { qualifyGrammarRoot } from './grammar-runtime/grammar-selection.js';
 import { withGrammarSelectionSources } from './grammar-runtime/selection-source-mapping.js';
+import { readGrammarCompositionPublicationIssue } from './translation/grammar-rule-composition-rules.js';
 
 export { GrammarRuntimeError, renderSyntaxTree };
 export { checkGrammarSelectionMappedTree } from './grammar-runtime/mapped-tree-validation.js';
@@ -147,7 +149,14 @@ function parseProgram(program, source, options) {
     }
     return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) }, memory);
   }
-  const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), options.decorators);
+  // A materialized grammar, resolved child or per-parse override can reach
+  // mapped execution without an authoring policy in this decorator set.
+  // Tree changes have no proof for the retained physical source witnesses.
+  const decorators = decoratorSet(options.decorators);
+  const publicationIssue = readGrammarCompositionPublicationIssue(Boolean(memory.selectionSources?.records.length),
+    decorators.has('executor') || decorators.has('recovery'));
+  if (publicationIssue) throw new DecoratorError(publicationIssue);
+  const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), decorators);
   const ambiguities = collectAmbiguities(outcome.root, program);
   let rejection = null;
   const diagnostics = memory.selectionDiagnostics;
