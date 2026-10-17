@@ -62,17 +62,17 @@ pub fn ml_accept_precedence_operand_context_loop28(
             && (index < (child_contexts.len() as f64)))
         {
             if ({
-                let ml_logical22 = crate::translation::frontend_rules::ml_array::optional_at(
+                let ml_logical23 = crate::translation::frontend_rules::ml_array::optional_at(
                     &owner_contexts,
                     crate::translation::frontend_rules::ml_array::number_index(index),
                 );
-                if ml_logical22.unwrap_or_default() {
+                if ml_logical23.unwrap_or_default() {
                     crate::translation::frontend_rules::ml_array::optional_at(
                         &child_contexts,
                         crate::translation::frontend_rules::ml_array::number_index(index),
                     )
                 } else {
-                    ml_logical22
+                    ml_logical23
                 }
             })
             .unwrap_or_default()
@@ -137,6 +137,269 @@ pub fn ml_read_lexical_winner_index_loop29(
             }
         }
         return { best };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadJavaScriptTemporalBindingReadLoop30Result {
+    MlReadJavaScriptTemporalBindingReadLoop30Done,
+    MlReadJavaScriptTemporalBindingReadLoop30Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadJavaScriptTemporalBindingReadLoop31Result {
+    MlReadJavaScriptTemporalBindingReadLoop31Done,
+    MlReadJavaScriptTemporalBindingReadLoop31Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadJavaScriptTemporalBindingReadLoop32Result {
+    MlReadJavaScriptTemporalBindingReadLoop32Done(bool),
+    MlReadJavaScriptTemporalBindingReadLoop32Return(Vec<f64>),
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_read_java_script_temporal_binding_read_loop32(
+    bounds: &[f64],
+    names: &[String],
+    ends: &[f64],
+    read_names: &[String],
+    read_starts: &[f64],
+    mut read: f64,
+    mut scope: Option<f64>,
+    mut bound: bool,
+    mut captured: bool,
+    mut module_read: bool,
+    mut at: Option<f64>,
+) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result {
+    loop {
+        return if ((at).unwrap_or(f64::NAN))
+            < ((crate::translation::frontend_rules::ml_array::optional_at(
+                bounds,
+                crate::translation::frontend_rules::ml_array::number_index(
+                    ((scope).unwrap_or(f64::NAN) * 3f64),
+                ),
+            ))
+            .unwrap_or(f64::NAN)
+                + (crate::translation::frontend_rules::ml_array::optional_at(
+                    bounds,
+                    crate::translation::frontend_rules::ml_array::number_index(
+                        (((scope).unwrap_or(f64::NAN) * 3f64) + 1f64),
+                    ),
+                ))
+                .unwrap_or(f64::NAN))
+        {
+            if match (
+                crate::translation::frontend_rules::ml_array::optional_at(
+                    names,
+                    crate::translation::frontend_rules::ml_array::number_index(
+                        (at).unwrap_or(f64::NAN),
+                    ),
+                ),
+                crate::translation::frontend_rules::ml_array::optional_at(
+                    read_names,
+                    crate::translation::frontend_rules::ml_array::number_index(read),
+                ),
+            ) {
+                (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                (None, None) => true,
+                _ => false,
+            } {
+                if (((crate::translation::frontend_rules::ml_array::optional_at(
+                    ends,
+                    crate::translation::frontend_rules::ml_array::number_index(
+                        (at).unwrap_or(f64::NAN),
+                    ),
+                ))
+                .unwrap_or(f64::NAN))
+                    >= 0f64)
+                    && module_read
+                {
+                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(vec![read, 2f64])
+                } else if (((crate::translation::frontend_rules::ml_array::optional_at(
+                    ends,
+                    crate::translation::frontend_rules::ml_array::number_index(
+                        (at).unwrap_or(f64::NAN),
+                    ),
+                ))
+                .unwrap_or(f64::NAN))
+                    >= 0f64)
+                    && (((crate::translation::frontend_rules::ml_array::optional_at(
+                        read_starts,
+                        crate::translation::frontend_rules::ml_array::number_index(read),
+                    ))
+                    .unwrap_or(f64::NAN))
+                        < ((crate::translation::frontend_rules::ml_array::optional_at(
+                            ends,
+                            crate::translation::frontend_rules::ml_array::number_index(
+                                (at).unwrap_or(f64::NAN),
+                            ),
+                        ))
+                        .unwrap_or(f64::NAN)))
+                {
+                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(vec![read, if captured {
+                            1f64
+                        } else {
+                            0f64
+                        }])
+                } else {
+                    {
+                        let bound_2 = true;
+                        {
+                            let at_2 = (at).unwrap_or(f64::NAN) + 1f64;
+                            {
+                                (bound, at) = (bound_2, Some(at_2));
+                                continue;
+                            }
+                        }
+                    }
+                }
+            } else {
+                {
+                    let at_3 = (at).unwrap_or(f64::NAN) + 1f64;
+                    {
+                        at = Some(at_3);
+                        continue;
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done(bound)
+        };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_read_java_script_temporal_binding_read_loop31(
+    parents: &[f64],
+    bounds: &[f64],
+    names: &[String],
+    ends: &[f64],
+    read_names: &[String],
+    read_starts: &[f64],
+    mut read: f64,
+    mut scope: Option<f64>,
+    mut bound: bool,
+    mut captured: bool,
+    mut module_read: bool,
+) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result {
+    loop {
+        return if (((scope).unwrap_or(f64::NAN)) >= 0f64) && !bound {
+            {
+                let at = crate::translation::frontend_rules::ml_array::optional_at(
+                    bounds,
+                    crate::translation::frontend_rules::ml_array::number_index(
+                        ((scope).unwrap_or(f64::NAN) * 3f64),
+                    ),
+                );
+                {
+                    let ml_s24 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop32(bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read, at);
+                    match ml_s24 {
+                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done(bound_2) => {
+                            {
+                                let captured_3 = if !bound_2 && match (crate::translation::frontend_rules::ml_array::optional_at(bounds, crate::translation::frontend_rules::ml_array::number_index(((scope).unwrap_or(f64::NAN) * 3f64) + 2f64)), 1f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
+                                    {
+                                        true
+                                    }
+                                } else {
+                                    captured
+                                };
+                                {
+                                    let module_read_3 = if !bound_2 && match (crate::translation::frontend_rules::ml_array::optional_at(bounds, crate::translation::frontend_rules::ml_array::number_index(((scope).unwrap_or(f64::NAN) * 3f64) + 2f64)), 2f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
+                                        {
+                                            true
+                                        }
+                                    } else {
+                                        module_read
+                                    };
+                                    {
+                                        let scope_2 = crate::translation::frontend_rules::ml_array::optional_at(parents, crate::translation::frontend_rules::ml_array::number_index((scope).unwrap_or(f64::NAN)));
+                                        {
+                                            (scope, bound, captured, module_read) = (scope_2, bound_2, captured_3, module_read_3);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(ml_result32) => {
+                            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Return(ml_result32)
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done
+        };
+    }
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn ml_read_java_script_temporal_binding_read_loop30(
+    parents: &[f64],
+    bounds: &[f64],
+    names: &[String],
+    ends: &[f64],
+    read_scopes: &[f64],
+    read_names: &[String],
+    read_starts: &[f64],
+    mut read: f64,
+) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result {
+    loop {
+        return if read < (read_names.len() as f64) {
+            {
+                let scope = crate::translation::frontend_rules::ml_array::optional_at(
+                    read_scopes,
+                    crate::translation::frontend_rules::ml_array::number_index(read),
+                );
+                {
+                    let bound = false;
+                    {
+                        let captured = false;
+                        {
+                            let module_read = false;
+                            {
+                                let ml_s25 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop31(parents, bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read);
+                                match ml_s25 {
+                                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done => {
+                                        {
+                                            let read_2 = read + 1f64;
+                                            {
+                                                read = read_2;
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Return(ml_result31) => {
+                                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return(ml_result31)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done
+        };
     }
 }
 

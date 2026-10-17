@@ -6,13 +6,17 @@ import {DecoratorSet} from '../src/decorators.js';
 import {decorateEmitted} from '../src/grammar-emitters/common.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitRust} from '../src/translation/emit-rust.js';
-import {readLexicalWinnerIndex,readUnitAlternativeExpressionForm} from '../src/translation/frontend-rules.js';
+import {readJavaScriptTemporalBindingRead,readLexicalWinnerIndex,readUnitAlternativeExpressionForm} from '../src/translation/frontend-rules.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {tokenize} from '../src/translation/lexer.js';
 import {frontendRuleNativeStyleId,readFrontendRuleStyleCorrections,
-  frontendTypeQueryNativeStyleId,readFrontendTypeQueryStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
+  frontendTypeQueryNativeStyleId,readFrontendTypeQueryStyleCorrections,
+  frontendCurrentBooleanNativeStyleId,readFrontendCurrentBooleanStyleCorrections,
+  frontendTemporalBindingNativeStyleId,readFrontendTemporalBindingStyleCorrections} from '../scripts/frontend-rule-style-corrections.mjs';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
 import {simplifyRustOptionIdentityMatches} from '../scripts/reviewed-rust-branch-styles.mjs';
+import {readRustLibraryItems} from '../scripts/rust-library-packaging.mjs';
+import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 
 test('reviewed frontend styles repair all fifteen CI diagnostics in their three complete source owners',()=>{
   const producer=readFileSync(new URL('../scripts/product-rule-style-corrections.mjs',import.meta.url));
@@ -124,4 +128,135 @@ test('current frontend type-query styles append two source-derived owners while 
   const recorded=decorators.decorators.find(definition=>definition.id===frontendTypeQueryNativeStyleId);
   assert.ok(recorded,'the dedicated updater records the additive styles separately from every historical row');
   assert.deepEqual(recorded.actions,actions);
+});
+
+test('temporal-binding styles borrow the complete actual column family and preserve every historical owner',()=>{
+  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
+  const emitted=emitRust(checkProgram(parseJavaScript(input)));
+  const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));
+  const historical=decorators.decorators.filter(definition=>definition.id!==frontendTemporalBindingNativeStyleId);
+  assert.equal(historical.find(definition=>definition.id===frontendRuleNativeStyleId).actions.length,3);
+  assert.equal(historical.find(definition=>definition.id===frontendTypeQueryNativeStyleId).actions.length,2);
+  const base=new DecoratorSet(historical);
+  let raw=formatProductRuleSource(decorateEmitted('Rust',{source:emitted.text},base).source);
+  for(let round=0;round<10;round++){
+    const next=formatProductRuleSource(base.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source);
+    if(next===raw)break;
+    raw=next;
+    assert.ok(round<9,'historical frontend styles retain their complete fixed point');
+  }
+  const actions=readFrontendTemporalBindingStyleCorrections(raw);
+  assert.equal(actions.length,4,'one entry and three actual continuations own every new style');
+  const originals=readRustLibraryItems(raw).items;
+  const family=originals.filter(item=>item.kind==='fn'&&/^(?:ml_)?read_java_script_temporal_binding_read(?:_loop[0-9]+)?$/u.test(item.name));
+  assert.equal(family.length,4);
+  const columns={parents:'f64',bounds:'f64',names:'String',ends:'f64',read_scopes:'f64',read_names:'String',read_starts:'f64'};
+  const literals=source=>{
+    const body=source.slice(source.indexOf('{'));
+    return tokenize(body,'Rust').tokens.filter(token=>['string','number'].includes(token.kind))
+      .map(token=>[token.kind,token.kind==='number'?String(token.value).replaceAll('_',''):token.value]);
+  };
+  for(const action of actions){
+    const before=readRustLibraryItems(action.from).items.find(item=>item.kind==='fn');
+    const after=readSourceTextRustBlock(action.to,'fn',before.name);
+    const header=after.slice(0,after.indexOf('{'));
+    const signature=/^pub fn \w+\(([^)]*)\)/u.exec(after);
+    assert.doesNotMatch(signature[1],/Vec</u,'all immutable column interfaces borrow their actual source values');
+    for(const[column,type]of Object.entries(columns))if(new RegExp('\\b'+column+':','u').test(header)){
+      assert.match(header,new RegExp('\\b'+column+': &\\['+type+'\\]','u'));
+      assert.doesNotMatch(after,new RegExp('\\b'+column+'\\.(?:clone|to_vec)\\(','u'));
+    }
+    assert.doesNotMatch(after,/\b(?:scope|at|scope_2|ml_s[0-9]+|ml_result[0-9]+)\.clone\(\)/u,
+      'primitive Copy values and proved final continuation payloads retain no redundant copies');
+    assert.doesNotMatch(after,/Some\(ml_present\)\s*=>\s*ml_present/u);
+    assert.deepEqual(literals(after),literals(before.source),'every original ordered literal operand retains its value');
+    assert.doesNotMatch(action.to,/#\[allow\(/u);
+    const arity=signature[1].split(',').filter(part=>part.trim()).length;
+    assert.equal((action.to.match(/clippy::too_many_arguments/gu)??[]).length,arity>7?1:0,
+      'only the actual generated continuation arity selects the existing conditional expectation');
+    if(arity>7)assert.match(action.to,/checked source arguments and captured continuation state retain their original order/u);
+  }
+  const styled=new DecoratorSet([{id:frontendTemporalBindingNativeStyleId,level:'emitter',order:3200,
+    when:[['format','Rust'],['scope','formatted-module']],actions}]);
+  const replay=styled.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;
+  assert.deepEqual(readFrontendTemporalBindingStyleCorrections(replay),[],'the complete new style is idempotent before formatting');
+  const targets=new Map(readRustLibraryItems(replay).items.map(item=>[item.name,item]));
+  for(const item of originals)if(!family.includes(item))assert.equal(targets.get(item.name).source,item.source,
+    'every older function, runtime and result enum retains its exact source bytes');
+  const recorded=decorators.decorators.find(definition=>definition.id===frontendTemporalBindingNativeStyleId);
+  assert.ok(recorded,'the dedicated updater records the complete new style separately');
+  assert.deepEqual(recorded.actions,actions);
+  const copyOwner=family.find(item=>/\bscope\.clone\(\)/u.test(item.source));
+  assert.ok(copyOwner,'the source-derived control retains a real optional-number copy site');
+  for(const extra of[
+    'fn nested(scope:String)->String{scope.clone()} ',
+    'opaque!(); ',
+  ]){
+    const changed=copyOwner.source.replace('{','{'+extra);
+    const conservative=readFrontendTemporalBindingStyleCorrections(raw.replace(copyOwner.source,changed));
+    const kept=conservative.find(action=>action.from===changed)?.to??changed;
+    assert.match(kept,/\bscope\.clone\(\)/u,'nested declarations and unknown macros cannot borrow a primitive parameter proof');
+    assert.ok(kept.includes(extra.trim()),'an unproved body retains its exact opaque source');
+  }
+  assert.throws(()=>readFrontendTemporalBindingStyleCorrections('type Option=Other;\n'+raw),/primitive type ownership/u);
+  assert.throws(()=>readFrontendTemporalBindingStyleCorrections('use custom::Vec;\n'+raw),/primitive type ownership/u);
+});
+
+test('temporal-binding column decisions retain local closure and module-capture refusals without changing inputs',()=>{
+  const cases=[
+    [[-1],[0,1,0],['value'],[10],[0],['value'],[9],[0,0]],
+    [[-1],[0,1,0],['value'],[10],[0],['value'],[10],[]],
+    [[-1,0],[0,1,0,1,0,1],['value'],[10],[1],['value'],[9],[0,1]],
+    [[-1,0],[0,1,0,1,0,1],['value'],[10],[1],['value'],[11],[]],
+    [[-1,0],[0,1,0,1,0,2],['value'],[10],[1],['value'],[9],[0,2]],
+    [[-1,0],[0,1,0,1,0,2],['value'],[10],[1],['value'],[11],[0,2]],
+    [[-1,0],[0,1,0,1,1,2],['value','value'],[10,-1],[1],['value'],[9],[]],
+    [[-1],[0,1,0],['value'],[-1],[0],['value'],[0],[]],
+    [[-1],[0,1,0],['value'],[10],[],[],[],[]],
+    [[-1],[0,1,0],['value'],[10],[0],['other'],[0],[]],
+    [[-1],[0,1,0],['value'],[NaN],[0],['value'],[-Infinity],[]],
+    [[-1],[0,1,0],['value'],[Infinity],[0],['value'],[0],[0,0]],
+  ];
+  for(const row of cases){
+    const args=row.slice(0,-1),before=args.map(column=>column.slice());
+    assert.deepEqual(readJavaScriptTemporalBindingRead(...args),row.at(-1));
+    assert.deepEqual(args,before,'the source decision observes its immutable columns without mutation');
+  }
+});
+
+test('current Boolean styles transport only the historical uniquely bound temporary and preserve every original record byte',()=>{
+  const data=readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8');
+  assert.equal(createHash('sha256').update(data.slice(0,778522)).digest('hex'),
+    '3078e31556afef9341fa3bdae9ab1b45be924e84039165b773229ee7006fef25',
+    'the complete historical decorator file remains an exact byte prefix');
+  const decorators=DecoratorSet.fromLino(data);
+  const historical=decorators.decorators.find(definition=>definition.id==='reviewed-boolean-helper-styles');
+  const recorded=decorators.decorators.find(definition=>definition.id===frontendCurrentBooleanNativeStyleId);
+  assert.ok(historical);assert.ok(recorded);
+  assert.equal(recorded.actions.length,1);
+  const [action]=recorded.actions;
+  assert.deepEqual(readFrontendCurrentBooleanStyleCorrections(action.from,historical),recorded.actions,
+    'the current complete action is derived from the unchanged historical proof');
+  assert.deepEqual(readFrontendCurrentBooleanStyleCorrections(action.to,historical),[],'the mapped target is idempotent');
+  const temporary=tokenize(action.from,'Rust').tokens.find((token,index,array)=>/^ml_logical[0-9]+$/u.test(token.value)
+    &&array[index-1]?.value==='let'&&array[index+1]?.value==='=')?.value;
+  assert.ok(temporary);
+  assert.doesNotMatch(action.to,new RegExp(temporary+'\\.clone\\(','u'));
+  assert.equal((action.to.match(/\.unwrap_or_default\(\)/gu)??[]).length,2,'both original nullable Boolean false defaults remain');
+  const renamed=source=>{
+    const tokens=tokenize(source,'Rust').tokens.filter(token=>token.kind==='identifier'&&token.value===temporary);
+    for(const token of tokens.reverse())source=source.slice(0,token.start)+'ml_logical999'+source.slice(token.end);
+    return source;
+  };
+  assert.equal(readFrontendCurrentBooleanStyleCorrections(renamed(action.from),historical)[0].to,renamed(action.to),
+    'only the same bijective local spelling is transported across future temporary numbers');
+  for(const changed of[
+    action.from.replace('None => false','None => true'),
+    action.from.replace('let '+temporary+' =','let '+temporary+' = 1f64; let '+temporary+' ='),
+    action.from.replace('let '+temporary+' =','let '+temporary+' = /* new source comment */'),
+    action.from.replace('let '+temporary+' =','opaque!(); let '+temporary+' ='),
+    'pub fn foreign_scope(){'+action.from+'}',
+    action.from+'\n'+action.from,
+  ])assert.throws(()=>readFrontendCurrentBooleanStyleCorrections(changed,historical),/complete function|top-level source function/u,
+    'changed meaning, shadowing, comments, macros, nested functions and duplicate owners refuse historical proof reuse');
 });

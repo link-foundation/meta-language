@@ -365,3 +365,30 @@ pub fn read_lexical_winner_index(ends: &[f64], eligible: &[bool]) -> f64 {
         }
     }
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn read_java_script_temporal_binding_read(
+    parents: &[f64],
+    bounds: &[f64],
+    names: &[String],
+    ends: &[f64],
+    read_scopes: &[f64],
+    read_names: &[String],
+    read_starts: &[f64],
+) -> Vec<f64> {
+    {
+        let read = 0f64;
+        {
+            let ml_s18 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop30(parents, bounds, names, ends, read_scopes, read_names, read_starts, read);
+            match ml_s18 {
+                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done => {
+                    Vec::<f64>::new()
+                }
+                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return(ml_result30) => {
+                    ml_result30
+                }
+            }
+        }
+    }
+}

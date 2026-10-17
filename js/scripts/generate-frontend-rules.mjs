@@ -11,7 +11,9 @@ import { emitRust } from '../src/translation/emit-rust.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { frontendRuleNativeStyleId, readFrontendRuleStyleCorrections,
-  frontendTypeQueryNativeStyleId, readFrontendTypeQueryStyleCorrections } from './frontend-rule-style-corrections.mjs';
+  frontendTypeQueryNativeStyleId, readFrontendTypeQueryStyleCorrections,
+  frontendCurrentBooleanNativeStyleId, readFrontendCurrentBooleanStyleCorrections,
+  frontendTemporalBindingNativeStyleId, readFrontendTemporalBindingStyleCorrections } from './frontend-rule-style-corrections.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 
 const sourcePath = new URL('../src/translation/frontend-rules.js', import.meta.url);
@@ -22,10 +24,12 @@ const resultStyleId = 'reviewed-public-array-helper-results';
 const updateArrayResults = process.argv.includes('--update-array-result-styles');
 const updateNativeStyles = process.argv.includes('--update-reviewed-native-styles');
 const updateTypeQueryStyles = process.argv.includes('--update-type-query-styles');
+const updateTemporalBindingStyles = process.argv.includes('--update-temporal-binding-styles');
 let decorators = DecoratorSet.fromLino(readFileSync(decoratorsPath, 'utf8'));
 if (updateArrayResults) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== resultStyleId));
 if (updateNativeStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendRuleNativeStyleId));
 if (updateTypeQueryStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => id !== frontendTypeQueryNativeStyleId));
+if (updateTemporalBindingStyles) decorators = new DecoratorSet(decorators.decorators.filter(({ id }) => ![frontendTemporalBindingNativeStyleId, frontendCurrentBooleanNativeStyleId].includes(id)));
 const emitted = emitRust(checkProgram(parseJavaScript(source)));
 const decorated = decorateEmitted('Rust', { source: emitted.text }, decorators).source;
 const formatted = { stdout: formatProductRuleSource(decorated) };
@@ -68,6 +72,24 @@ if (updateTypeQueryStyles) {
   final = { stdout: formatProductRuleSource(styled) };
   if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
     throw new Error('current frontend type-query styles do not converge');
+  }
+}
+if (updateTemporalBindingStyles) {
+  const historicalBoolean = decorators.decorators.find(({ id }) => id === 'reviewed-boolean-helper-styles');
+  if (!historicalBoolean) throw new Error('the original reviewed Boolean helper styles are missing');
+  const currentBooleanStyles = { id: frontendCurrentBooleanNativeStyleId, level: 'emitter', order: 3190,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']],
+    actions: readFrontendCurrentBooleanStyleCorrections(final.stdout, historicalBoolean) };
+  const actions = readFrontendTemporalBindingStyleCorrections(final.stdout);
+  const temporalStyles = { id: frontendTemporalBindingNativeStyleId, level: 'emitter', order: 3200,
+    when: [['format', 'Rust'], ['scope', 'formatted-module']], actions };
+  decorators = new DecoratorSet([...decorators.decorators, currentBooleanStyles, temporalStyles]);
+  const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
+    .filter(line => ![frontendTemporalBindingNativeStyleId, frontendCurrentBooleanNativeStyleId].some(id => line.startsWith('(decorator ' + id + ' '))).join('\n');
+  writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([currentBooleanStyles, temporalStyles]).toLino());
+  final = { stdout: formatProductRuleSource(decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source) };
+  if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
+    throw new Error('frontend temporal-binding styles do not converge');
   }
 }
 if (updateArrayResults) {
