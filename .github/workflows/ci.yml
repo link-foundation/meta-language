@@ -582,14 +582,18 @@ jobs:
         shell: bash
         run: node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-rml-workloads/rml-target"
 
-  formal-ai-workloads:
-    name: Formal AI Workloads
+  formal-ai-workload-parts:
+    name: Formal AI Workloads (${{ matrix.partition }})
     needs: candidates
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [corpus-ratchet, remaining]
     # Every candidate runs fresh consumers; the optional target cache reuses build outputs only.
     timeout-minutes: 120
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      group: issue-195-formal-ai-workloads-${{ github.ref }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -644,7 +648,7 @@ jobs:
         id: formal-ai-cache-key
         shell: bash
         env:
-          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs') }}
+          CACHE_CONTEXT: formal-ai-target-v1-${{ runner.os }}-${{ runner.arch }}-rust1.99.0-opt3-debug0-incremental0-${{ hashFiles('parity/fixtures/formal-ai-workloads.lino', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/issue-195-formal-ai-rust-probe.mjs', 'js/scripts/formal-ai-workload-partitions.mjs', 'js/scripts/formal-ai-partition-bundles.mjs') }}
         run: |
           set -euo pipefail
           candidate_crates=(.issue-195-work/candidates/*.crate)
@@ -678,10 +682,116 @@ jobs:
           --crate "$(ls .issue-195-work/candidates/*.crate)"
           --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
           --cargo-target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
-          --out issue-195-artifacts/formal-ai-workloads/report.lino
+          --partition "${{ matrix.partition }}"
+          --out ".issue-195-work/formal-ai-partitions/${{ matrix.partition }}/partition.lino"
 
       # The report is uploaded even when a workload fails: the aggregate validates it and
       # records nothing for the assertions it does not support.
+      - name: Upload the workload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-partition-${{ matrix.partition }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/${{ matrix.partition }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload workload logs and runtime outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: issue-195-formal-ai-workload-logs-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.partition }}
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/formal-ai-inputs.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/rust-probe/*.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/self-ast-*.lino
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/post-update-Cargo.lock
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # Save before teardown can prune build products. Every workload above
+      # still executes on a hit; neither consumers nor results enter this cache.
+      - name: Save Formal AI build outputs
+        if: ${{ !cancelled() && matrix.partition == 'remaining' && steps.formal-ai-cache-key.outcome == 'success' && steps.formal-ai-target-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
+            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
+          key: ${{ steps.formal-ai-cache-key.outputs.key }}
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target" --target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
+
+  # Preserve the canonical full-report producer identity. Only independently
+  # verified partials enter its unchanged complete report/acceptance contract.
+  formal-ai-workloads:
+    name: Formal AI Workloads
+    needs: [candidates, formal-ai-workload-parts]
+    if: ${{ !cancelled() && needs.candidates.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the linked report reader dependencies
+        run: npm ci --ignore-scripts
+        working-directory: js
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: issue-195-candidates-${{ github.sha }}
+          path: .issue-195-work/candidates
+
+      - name: Download the exact corpus-ratchet partial
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-partition-corpus-ratchet-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/corpus-ratchet
+
+      - name: Download the exact remaining partial
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          name: issue-195-formal-ai-partition-remaining-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .issue-195-work/formal-ai-partitions/remaining
+
+      - name: Download both complete producer diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/download-artifact@v8
+        with:
+          pattern: issue-195-formal-ai-workload-logs-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: .issue-195-work/formal-ai-partition-logs
+
+      - name: Merge the independently validated Formal AI workloads
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: >-
+          node js/scripts/run-formal-ai-workloads.mjs
+          --merge-partitions .issue-195-work/formal-ai-partitions/corpus-ratchet,.issue-195-work/formal-ai-partitions/remaining
+          --producer-result "${{ needs.formal-ai-workload-parts.result }}"
+          --npm-tarball "$(ls .issue-195-work/candidates/*.tgz)"
+          --crate "$(ls .issue-195-work/candidates/*.crate)"
+          --work-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
+          --out issue-195-artifacts/formal-ai-workloads/report.lino
+
       - name: Upload the workload report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -697,29 +807,19 @@ jobs:
         with:
           name: issue-195-formal-ai-workload-logs-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/issue-195-formal-ai-workloads/*.log
+            .issue-195-work/formal-ai-partitions/
+            .issue-195-work/formal-ai-partition-logs/
             ${{ runner.temp }}/issue-195-formal-ai-workloads/*-outputs.lino
             ${{ runner.temp }}/issue-195-formal-ai-workloads/formal-ai-inputs.lino
-          if-no-files-found: ignore
+            ${{ runner.temp }}/issue-195-formal-ai-workloads/partition-provenance.lino
+          if-no-files-found: warn
           retention-days: 30
-
-      # Save before teardown can prune build products. Every workload above
-      # still executes on a hit; neither consumers nor results enter this cache.
-      - name: Save Formal AI build outputs
-        if: ${{ !cancelled() && steps.formal-ai-cache-key.outcome == 'success' && steps.formal-ai-target-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v6
-        with:
-          path: |
-            ${{ runner.temp }}/issue-195-formal-ai-build/target/debug
-            ${{ runner.temp }}/issue-195-formal-ai-build/target/.rustc_info.json
-            ${{ runner.temp }}/issue-195-formal-ai-build/target/CACHEDIR.TAG
-          key: ${{ steps.formal-ai-cache-key.outputs.key }}
 
       - name: Clean regenerable caches
         if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
         working-directory: ${{ github.workspace }}
         shell: bash
-        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads/formal-ai-target" --target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"
+        run: env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown --target-dir "$RUNNER_TEMP/issue-195-formal-ai-workloads"
 
   # The checkpoint evidence runs as separate stage jobs (js/scripts/issue-195-evidence-stages.mjs),
   # each on its own runner with only the toolchains it uses, and each uploading

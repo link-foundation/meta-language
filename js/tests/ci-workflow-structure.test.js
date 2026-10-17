@@ -272,7 +272,7 @@ test('every cargo test command in the workflows and the scripts they call uses -
     }
   }
   // Scripts that spawn cargo with an argument list: every 'test' argument is followed by --no-fail-fast.
-  for (const file of ['js/scripts/run-issue-195-evidence.mjs', 'js/scripts/run-rml-pr184-workloads.mjs', 'js/scripts/run-formal-ai-workloads.mjs']) {
+  for (const file of ['js/scripts/run-issue-195-evidence.mjs', 'js/scripts/run-rml-pr184-workloads.mjs', 'js/scripts/run-formal-ai-workloads.mjs', 'js/scripts/formal-ai-partition-bundles.mjs']) {
     const text = read(file);
     for (const match of text.matchAll(/'cargo',\s*\[([^\]]*?)'test'(,\s*'[^']*')?/gu)) {
       seen += 1;
@@ -495,7 +495,7 @@ function ancestors(parsed, id, seen = new Set()) {
 }
 
 const ACCEPTANCE_JOBS = [
-  'candidates', 'consumers', 'rml-workloads', 'formal-ai-workloads', 'runtime-parity', 'native-javascript', 'native-rust',
+  'candidates', 'consumers', 'rml-workloads', 'formal-ai-workload-parts', 'formal-ai-workloads', 'runtime-parity', 'native-javascript', 'native-rust',
   'native-translations', 'javascript-suite-independent', 'javascript-suite', 'rust-suite', 'delivery', 'post-merge', 'acceptance',
 ];
 

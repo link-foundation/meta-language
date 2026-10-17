@@ -229,3 +229,24 @@ export function validateFormalAiWorkloadReport(report, fixture, runtime) {
     observed: FORMAL_AI_WORKLOAD_ASSERTIONS.filter((assertion) => problems[assertion].length === 0),
   };
 }
+
+// A partition is deliberately not a complete report. Reuse the original
+// installed-artifact/probe checks without pretending its partial test list
+// covers every inventoried workload file. The partition validator separately
+// proves exact target-qualified execution against the complete native --list.
+export function formalAiWorkloadPartitionGroundingProblems(report, fixture) {
+  const problems = [];
+  const javascript = validateFormalAiWorkloadReport(report, fixture, 'javascript');
+  for (const [assertion, entries] of Object.entries(javascript.problems)) {
+    problems.push(...entries.map((entry) => `javascript ${assertion}: ${entry}`));
+  }
+  if (report?.schemaVersion !== FORMAL_AI_WORKLOAD_SCHEMA_VERSION || !report?.crate || report.crate.skipped) {
+    problems.push('a native partition requires the original report schema and a real crate run');
+    return problems;
+  }
+  problems.push(...checkoutProblems(report, fixture), ...artifactProblems('rust', report.crate));
+  for (const assertion of FORMAL_AI_PROBE_ASSERTIONS) {
+    problems.push(...probeProblems('rust', report.crate, assertion));
+  }
+  return problems;
+}

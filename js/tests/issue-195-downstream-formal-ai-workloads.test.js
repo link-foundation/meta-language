@@ -362,7 +362,7 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.match(runner, /resolution\.manifestPath\?\.startsWith\(resolution\.unpackedDirectory\)/u);
 
   const job = parseWorkflow(readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))
-    .find(entry => entry.id === 'formal-ai-workloads');
+    .find(entry => entry.id === 'formal-ai-workload-parts');
   const names = job.steps.map(step => step.name);
   const identify = job.steps.find(step => step.name === 'Identify the exact Formal AI build cache');
   const restore = job.steps.find(step => step.name === 'Restore Formal AI build outputs');

@@ -89,6 +89,14 @@ import {
   workloadFiles,
 } from './issue-195-formal-ai-workloads.mjs';
 import { satisfies } from './semver-range.mjs';
+import {
+  formalAiPartitionExpectations,
+  mergeFormalAiPartitionBundles,
+  readFormalAiPartitionBundle,
+  runFormalAiNativePartition,
+  writeFormalAiPartitionBundle,
+} from './formal-ai-partition-bundles.mjs';
+import { formalAiRustProfileEnvironment, validateFormalAiWorkloadPartition } from './formal-ai-workload-partitions.mjs';
 
 // Cargo settings that keep formal-ai's build within a standard runner; see the header.
 const RUST_BUILD_DEFAULTS = Object.freeze({
@@ -107,11 +115,12 @@ const HEARTBEAT_MS = 60_000;
 const MEMORY_FLOOR_BYTES = 1.5 * 2 ** 30;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const mergePartitions = option('--merge-partitions', null);
+const partition = option('--partition', null);
 const skipRust = process.argv.includes('--skip-rust');
 const tarball = path.resolve(required('--npm-tarball'));
 const crate = skipRust ? null : path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
-const cargoTargetDirectory = formalAiCargoTargetDirectory(workDirectory, option('--cargo-target-dir', null));
 const output = path.resolve(required('--out'));
 const inputsWirePath = path.join(workDirectory, 'formal-ai-inputs.wire.json');
 const formalAiCheckout = option('--formal-ai-checkout', null);
@@ -121,6 +130,10 @@ const RUST_TARGETS = Object.freeze({ 'rust/tests/unit/mod.rs': 'unit', 'rust/tes
 const PROBE_FILE = `rust/tests/${RUST_PROBE_TARGET}.rs`;
 
 const logs = [];
+const partitionState = {};
+if (partition && (!['corpus-ratchet', 'remaining'].includes(partition) || skipRust || mergePartitions)) {
+  throw new Error('--partition requires exactly one real native producer, without --skip-rust or --merge-partitions');
+}
 
 async function main() {
   await rm(workDirectory, { recursive: true, force: true });
@@ -176,13 +189,30 @@ async function main() {
   }
   report.logs = logs;
   await mkdir(path.dirname(output), { recursive: true });
-  writeProjectData(output, report);
+  let partialProblems = [];
+  if (partition) {
+    const expected = await formalAiPartitionExpectations({ root, tarball, crate, fixture });
+    await writeFormalAiPartitionBundle({ partition, expected, report, state: partitionState, workDirectory, output });
+    const bundle = await readFormalAiPartitionBundle(path.dirname(output));
+    partialProblems = validateFormalAiWorkloadPartition(bundle.envelope, fixture, expected, bundle.files).problems;
+    for (const problem of partialProblems) console.error(`${partition}: ${problem}`);
+  } else writeProjectData(output, report);
   console.log(`formal-ai workloads: wrote ${output}`);
 
-  let failed = mismatched.length > 0;
+  let failed = mismatched.length > 0 || partialProblems.length > 0;
   for (const runtime of ['javascript', 'rust']) {
     if (runtime === 'rust' && skipRust) {
       console.log('rust: not run (--skip-rust)');
+      continue;
+    }
+    // A partial is never accepted by the full native validator. The source-only
+    // merger will prove its actual selected identities and the complete union.
+    if (partition && runtime === 'rust') {
+      const part = report.crate;
+      failed ||= Boolean(part.error) || part.skipped || part.exit !== 0 ||
+        part.tests?.some(({ outcome }) => outcome !== 'passed') ||
+        part.probeTests?.length !== 2 || part.probeTests?.some(({ outcome }) => outcome !== 'passed') ||
+        FORMAL_AI_PROBE_ASSERTIONS.some((assertion) => part.probe?.[assertion]?.holds !== true);
       continue;
     }
     const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, runtime);
@@ -320,6 +350,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
     env: environment,
     allowFailure: true,
   });
+  if (partition) partitionState.javascriptProbeExit = probeRun.code;
   const probe = existsSync(probePath)
     ? await consumeWorkloadWireData(probePath, path.join(workDirectory, 'javascript-probe.lino')) : {};
   outputs.javascript = probe.outputs;
@@ -339,6 +370,7 @@ async function javascriptWorkloads(formalAiDirectory, inputsPath, outputs) {
 }
 
 async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
+  const cargoTargetDirectory = formalAiCargoTargetDirectory(workDirectory, option('--cargo-target-dir', null));
   const directory = path.join(formalAiDirectory, 'rust');
   const extracted = path.join(workDirectory, 'crate-source');
   const target = cargoTargetDirectory;
@@ -384,6 +416,18 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     [RUST_PROBE_ENVIRONMENT.inputs]: inputsPath,
     [RUST_PROBE_ENVIRONMENT.directory]: probeDirectory,
   };
+  if (partition) {
+    partitionState.profileEnvironment = formalAiRustProfileEnvironment(environment);
+    partitionState.profile = Object.fromEntries([
+      ...Object.keys(RUST_BUILD_DEFAULTS).filter((name) => name !== 'RUST_TEST_THREADS').map((name) => [name, environment[name]]),
+      ['RUST_TEST_THREADS', '1'], ['patchedCrateOptLevel', PATCHED_CRATE_OPT_LEVEL],
+    ]);
+    partitionState.compiler = (await run('rust-compiler-identity', 'rustc', ['-vV'], { cwd: directory, env: environment })).stdout;
+    await writeFile(path.join(workDirectory, 'rust-compiler-identity.txt'), partitionState.compiler);
+    writeProjectData(path.join(workDirectory, 'compiler-profile.lino'), {
+      profile: partitionState.profile, environment: partitionState.profileEnvironment, configuration,
+    }, { format: 'lino' });
+  }
 
   // formal-ai's Cargo.lock pins the dependencies of the published meta-language; the candidate
   // may need newer ones (for instance tree-sitter-language ^0.1.8 where the lock holds 0.1.7), so
@@ -397,6 +441,7 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
     exit: lockRefreshRun.code,
     lockChanged: (await readFile(lockPath, 'utf8')) !== lockBefore,
   };
+  const refreshedLock = partition ? await readFile(lockPath) : null;
   const metadata = JSON.parse((await run('rust-metadata', 'cargo', [
     ...configuration, 'metadata', '--format-version', '1',
   ], { cwd: directory, env: environment })).stdout);
@@ -408,18 +453,25 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
   // part of the requested inventory and must execute with the other tests.
   const filters = ['--include-ignored', ...new Set([...workloads.map(({ filter }) => filter), 'issue_195_probe_'])];
   // formal-ai's own test groups, filtered to the inventoried modules, and the probe, in one patched build.
-  const testRun = await run('rust-workloads', 'cargo', [
+  const testRun = partition ? await runFormalAiNativePartition({
+    partition, fixture, configuration, directory, environment, run, workDirectory, state: partitionState,
+  }) : await run('rust-workloads', 'cargo', [
     ...configuration, 'test', '--no-fail-fast',
     ...[...new Set(workloads.map((entry) => entry.target)), RUST_PROBE_TARGET].flatMap((name) => ['--test', name]),
     // One test at a time, so each test's line names its peak (see `testTrace`).
     '--', '--test-threads=1', ...filters,
   ], { cwd: directory, env: { ...environment, RUST_TEST_THREADS: '1' }, allowFailure: true, traceTests: true });
-  const executed = libtestOutcomes(testRun.combined).map((entry) => {
+  const executed = partition && testRun.outcomes ? testRun.outcomes.map(({ file, name, outcome }) => ({ file, name, outcome }))
+    : libtestOutcomes(testRun.combined).map((entry) => {
     const targetName = RUST_TARGETS[entry.file];
     const workload = workloads.find((candidate) => candidate.target === targetName && entry.name.startsWith(candidate.filter));
     return workload ? { ...entry, file: workload.file } : entry;
   });
   const lock = await readFile(lockPath, 'utf8');
+  if (partition) {
+    if (sha256(refreshedLock) !== sha256(Buffer.from(lock))) throw new Error('Cargo.lock changed after the candidate-only dependency refresh');
+    await writeFile(path.join(workDirectory, 'post-update-Cargo.lock'), lock);
+  }
   const lockEntry = /\[\[package\]\]\nname = "meta-language"\nversion = "([^"]+)"\n(?:source = "([^"]+)"\n)?/u.exec(lock);
   const resolution = {
     declaredRequirement,
@@ -514,10 +566,15 @@ async function rustWorkloads(formalAiDirectory, inputsPath, outputs) {
 async function refreshSelfAstCensus(formalAiDirectory, directory, configuration, environment) {
   const censusDirectory = path.join(formalAiDirectory, SELF_AST_CENSUS_DIRECTORY);
   const before = await readCensus(censusDirectory);
+  if (partition) writeProjectData(path.join(workDirectory, 'self-ast-before.lino'),
+    [...before].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0), { format: 'lino' });
   const refresh = await run('rust-self-ast-census-refresh', 'cargo', [
     ...configuration, 'run', '--quiet', '--example', SELF_AST_CENSUS_EXAMPLE,
   ], { cwd: directory, env: environment, allowFailure: true });
-  const comparison = compareSelfAstCensus(before, await readCensus(censusDirectory));
+  const after = await readCensus(censusDirectory);
+  if (partition) writeProjectData(path.join(workDirectory, 'self-ast-after.lino'),
+    [...after].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0), { format: 'lino' });
+  const comparison = compareSelfAstCensus(before, after);
   return {
     command: ['cargo', 'run', '--example', SELF_AST_CENSUS_EXAMPLE].join(' '),
     exit: refresh.code,
@@ -796,7 +853,15 @@ function required(name) {
 }
 
 try {
-  await main();
+  if (mergePartitions) {
+    if (skipRust || option('--cargo-target-dir', null)) throw new Error('merge mode cannot skip native evidence or initialize a Cargo target');
+    const result = await mergeFormalAiPartitionBundles({
+      directories: mergePartitions.split(','), root, tarball, crate, fixture, workDirectory, output,
+      producerResult: required('--producer-result'),
+    });
+    for (const problem of result.problems) console.error(problem);
+    if (result.problems.length) process.exitCode = 1;
+  } else await main();
 } finally {
   await rm(inputsWirePath, { force: true });
 }
