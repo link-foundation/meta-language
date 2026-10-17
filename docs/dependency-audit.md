@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 164 | 163 | 1 | 0 |
+| Generators | 166 | 165 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -579,6 +579,7 @@ they are.
 | `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-rules.mjs` | `js/scripts/generate-discovered-concept-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-embedded-region-rules.mjs` | `js/scripts/generate-embedded-region-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-export-parity.mjs` | `js/scripts/generate-export-parity.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-concept-fixtures.mjs` | `js/scripts/generate-formal-concept-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-formal-function-fixtures.mjs` | `js/scripts/generate-formal-function-fixtures.mjs` | `script` |  | derived | current |  |
@@ -594,6 +595,8 @@ they are.
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-fixtures.mjs` | `js/scripts/generate-grammar-selection-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-rules.mjs` | `js/scripts/generate-grammar-selection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
@@ -710,7 +713,6 @@ they are.
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
-| `js/scripts/generate-embedded-region-rules.mjs` | `js/scripts/generate-embedded-region-rules.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -739,6 +741,8 @@ they are.
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `actions/cache` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/restore` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/save` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 | `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
@@ -758,8 +762,6 @@ they are.
 | `peter-evans/create-pull-request` | `.github/workflows/rust.yml` | `v8` | v8.1.1 (GitHub release, peter-evans/create-pull-request) | major | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `cargo-llvm-cov` |  | floating | current |  |
 | `taiki-e/install-action` | `.github/workflows/rust.yml` | `v2` | v2.87.25 (GitHub release, taiki-e/install-action) | major | current |  |
-| `actions/cache/restore` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
-| `actions/cache/save` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 
 ## Build images
 

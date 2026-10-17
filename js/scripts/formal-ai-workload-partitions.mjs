@@ -1,4 +1,4 @@
-// PRIVATE REVIEW DRAFT. No caller/workflow is switched to this module yet.
+// Validate CI workload partitions and merge them into one complete report.
 // Only the bundle I/O adapter may populate `files`, from bounded regular files
 // rooted in one producer's own directory. No partial is a public report.
 import { createHash } from 'node:crypto';

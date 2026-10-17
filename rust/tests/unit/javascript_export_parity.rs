@@ -266,6 +266,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "checkGrammarSelectionMappedTree",
+        "check_grammar_selection_mapped_tree",
+        "function",
+    ),
+    (
         "checkNativeGrammarConcepts",
         "check_native_grammar_concepts",
         "function",

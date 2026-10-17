@@ -142,6 +142,7 @@ use meta_language::check_concept_distinctions as _;
 use meta_language::check_grammar_lowering as _;
 use meta_language::check_grammar_reverse_conversion as _;
 use meta_language::check_grammar_round_trip as _;
+use meta_language::check_grammar_selection_mapped_tree as _;
 use meta_language::check_native_grammar_concepts as _;
 use meta_language::choice as _;
 use meta_language::compile_feature_grammar as _;
