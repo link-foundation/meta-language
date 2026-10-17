@@ -11,6 +11,7 @@ import {
 import { parseError, unsupportedError } from './common.js';
 import { decorateGrammar } from '../grammar-decorators.js';
 import { antlrLexerDeclarations, completeAntlrLexerBindings } from './antlr-lexer-plan.js';
+import { acceptGrammarParserTokenNegation } from '../translation/grammar-lexer-rules.js';
 
 const SEQUENCE_END = new Set(['pipe', 'semicolon', 'arrow', 'rparen', 'hash']);
 const SUFFIXES = {
@@ -49,6 +50,7 @@ class AntlrParser {
     // the current rule, which may override it.
     this.caseInsensitive = false;
     this.ruleCaseInsensitive = false;
+    this.parserProduction = false;
     this.sections = [];
     this.section = null;
     this.mode = 'default';
@@ -147,6 +149,7 @@ class AntlrParser {
     this.pendingComments = [];
     const fragment = this.tryConsumeKeyword('fragment');
     const name = this.expectIdent('rule name');
+    this.parserProduction = !fragment && !/^[A-Z]/.test(name);
     // A comment between the name and its ':' documents the rule too.
     this.collectComments();
     comments.push(...this.pendingComments);
@@ -273,9 +276,17 @@ class AntlrParser {
 
   parsePrefixed(notes) {
     this.skipInlineComments();
-    const expression = this.tryConsume('tilde')
-      ? negateExpression(this.parseAtom(notes))
-      : this.parseAtom(notes);
+    const negated = this.tryConsume('tilde');
+    const atom = this.parseAtom(notes);
+    const operands = atom.kind === 'choice' ? atom.items : [atom];
+    // In a parser, ~ consumes a whole elected token, just like its wildcard.
+    // Lexer complements retain their historical character-set lowering.
+    const tokenNegation = negated && acceptGrammarParserTokenNegation(this.parserProduction,
+      operands.map(({ kind }) => kind), operands.map((item) => item.name ?? item.value
+        ?? (item.kind === 'not' ? item.item?.kind : '') ?? ''));
+    const expression = !negated ? atom : tokenNegation
+      ? GrammarBuilder.seq(GrammarBuilder.not(atom), GrammarBuilder.any())
+      : negateExpression(atom);
     return this.parseSuffixes(expression);
   }
 

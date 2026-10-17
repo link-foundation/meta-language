@@ -82,7 +82,7 @@ test('lowers covering ANTLR constructs', () => {
   });
   assert.deepEqual(grammar.rule('item').expression, {
     kind: 'choice',
-    items: [G.any(), G.charClass([character(';')], true), G.charClass([character('x')], true)],
+    items: [G.any(), G.charClass([character(';')], true), G.seq(G.not(G.literal('x')), G.any())],
     ordered: false,
   });
 });
@@ -155,6 +155,7 @@ test('covering ANTLR Links round trip retains every ordered lexer clause without
   assert.deepEqual(restored.declarations.lexers[0].expression.items.map(({kind}) => kind), [
     'lexicalType', 'lexicalType', 'lexicalMode',
     'lexicalOwner', 'lexicalOwner', 'lexicalOwner', 'lexicalObligation',
+    'lexicalLiteral', 'lexicalRule',
     'lexicalRule', 'lexicalFragment', 'lexicalRule',
     'lexicalObligation', 'lexicalObligation', 'lexicalRule',
     'lexicalBinding', 'lexicalBinding', 'lexicalBinding', 'lexicalBinding',
@@ -169,7 +170,7 @@ test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
   const grammar = importAntlr(fixture('covering.g4'));
   assert.deepEqual(grammar.ruleNames().map((name) => renderGrammarRule(grammar.rule(name))), [
     'normal seq(capture("name", ref(ID)), capture("values", capture("non_greedy", repeat0(ref(item)))), ref(literalRange), ref(item))',
-    'normal choice(any, notClass(char(";")), notClass(char("x")))',
+    'normal choice(any, notClass(char(";")), seq(not(literal("x")), any))',
     'normal range("a", "z")',
     'token class(range("a", "z"), range("0", "9"), char("_"))',
     'silent class(range("0", "9"))',
