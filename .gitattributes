@@ -31,5 +31,14 @@ js/src/** text=auto eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
 parity/decorators/** text=auto eol=lf
+# The mapped-selection fixture pins these authored source files by exact bytes
+# and SHA-256. Keep their checkout bytes fixed without normalizing raw fixtures.
+js/tests/grammar-selection-json-string.test.js text eol=lf
+js/tests/support/grammar-selection-mapping-cases.js text eol=lf
+js/scripts/generate-grammar-selection-mapping-fixtures.mjs text eol=lf
+rust/tests/unit/grammar_recursive_selection.rs text eol=lf
+rust/tests/unit/grammar_recursive_selection_mapping.rs text eol=lf
+# The lexer-complement control matches its complete original source snapshot.
+rust/tests/fixtures/grammar/antlr/set-complement.g4 text eol=lf
 # Rust embeds a copy of the foundation register and compares it to this file byte for byte.
 parity/foundation-models.json text eol=lf
