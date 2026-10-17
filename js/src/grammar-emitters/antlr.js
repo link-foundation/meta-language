@@ -375,6 +375,7 @@ function sourceFreeLexerEmission(grammar, rules, names) {
     for (const entry of lexer.expression.items) {
       if (entry.kind !== 'lexicalRule' && entry.kind !== 'lexicalFragment') continue;
       const rule = grammar.rule(entry.name);
+      if (rule !== undefined && !entry.item) refuse('invalid lexical declaration descriptors');
       if (rule !== undefined && renderLinksExpression(rule.expression) !== renderLinksExpression(entry.item)) needsSourceBody = true;
       if (entry.kind !== 'lexicalRule') continue;
       if (rule !== undefined && planDoc(ruleDoc(grammar, rule), true).command !== null) continue;

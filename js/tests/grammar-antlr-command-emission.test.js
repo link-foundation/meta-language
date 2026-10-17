@@ -62,10 +62,15 @@ test('source-free ANTLR commands refuse ambiguous owners, unresolved meanings an
     grammar => grammar.declarations.lexers[0].expression.items.push(grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule')),
     grammar => { grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalBinding' && entry.name === 'STOP').item.name = 'WORD'; },
     grammar => grammar.rules.delete('WS'),
+    grammar => { delete grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule').item; },
   ];
   for (const mutate of refusals) {
     const grammar = fresh(); mutate(grammar);
     assert.throws(() => emitAntlr(grammar), error => error.name === 'GrammarEmitError'
       && /source-free lexical commands:/u.test(error.message));
   }
+  const documented = importAntlr(source);
+  delete documented.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule').item;
+  assert.throws(() => emitAntlr(documented), error => error.name === 'GrammarEmitError'
+    && /invalid lexical declaration descriptors/u.test(error.message));
 });

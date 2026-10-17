@@ -339,7 +339,8 @@ export function readGrammarLexerCommandEmission(name, type, channel, disposition
     }
   } else return [];
   if (channel !== 'default') {
-    if (!acceptGrammarLexerIdentifier(channel) && !acceptGrammarLexerDecimal(channel)) return [];
+    const validChannel = acceptGrammarLexerIdentifier(channel) || acceptGrammarLexerDecimal(channel);
+    if (!validChannel) return [];
     pieces.push('channel(' + channel + ')');
   }
   const expected = [type, channel, disposition];
