@@ -212,87 +212,87 @@ pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "#")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 1f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 1f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "[")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 2f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "identifier")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 2f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "expect")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 3f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 3f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "(")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 4f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "identifier")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 4f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "clippy")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 5f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 5f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "::")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 6f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "identifier")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 6f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "fn_params_excessive_bools")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 7f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 7f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != ",")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 8f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "identifier")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 8f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "reason")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 9f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "punct")
         || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 9f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "=")
     {
         vec![-1f64]
     } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 10f64)))
-        .unwrap_or_else(|| String::new()))
+        .unwrap_or_default())
         != "string")
         || ((match self::ml_array::optional_at(values, self::ml_array::number_index(start + 10f64))
         {
@@ -310,13 +310,13 @@ pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start
             {
                 let close_3 =
                     if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(close)))
-                        .unwrap_or_else(|| String::new()))
+                        .unwrap_or_default())
                         == "punct")
                         && (((self::ml_array::optional_at(
                             values,
                             self::ml_array::number_index(close),
                         ))
-                        .unwrap_or_else(|| String::new()))
+                        .unwrap_or_default())
                             == ",")
                     {
                         { close + 1f64 }
@@ -329,13 +329,13 @@ pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start
                     kinds,
                     self::ml_array::number_index(close_3),
                 ))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                     != "punct")
                     || (((self::ml_array::optional_at(
                         values,
                         self::ml_array::number_index(close_3),
                     ))
-                    .unwrap_or_else(|| String::new()))
+                    .unwrap_or_default())
                         != ")")
                 {
                     vec![-1f64]
@@ -343,13 +343,13 @@ pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start
                     kinds,
                     self::ml_array::number_index(close_3 + 1f64),
                 ))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                     != "punct")
                     || (((self::ml_array::optional_at(
                         values,
                         self::ml_array::number_index(close_3 + 1f64),
                     ))
-                    .unwrap_or_else(|| String::new()))
+                    .unwrap_or_default())
                         != "]")
                 {
                     vec![-1f64]
@@ -375,37 +375,37 @@ pub fn read_rust_must_use_attribute_end(kinds: &[String], values: &[String], sta
         || !(self::accept_rust_diagnostic_attribute_offset(start)))
         || (((kinds.len() as f64) - start) < 4f64))
         || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "punct")
             || (((self::ml_array::optional_at(values, self::ml_array::number_index(start)))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                 != "#")))
         || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 1f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "punct")
             || (((self::ml_array::optional_at(
                 values,
                 self::ml_array::number_index(start + 1f64),
             ))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
                 != "[")))
         || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 2f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "identifier")
             || (((self::ml_array::optional_at(
                 values,
                 self::ml_array::number_index(start + 2f64),
             ))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
                 != "must_use")))
         || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 3f64)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             != "punct")
             || (((self::ml_array::optional_at(
                 values,
                 self::ml_array::number_index(start + 3f64),
             ))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
                 != "]"))
     {
         -1f64
@@ -481,10 +481,10 @@ pub fn ml_plan_rust_diagnostic_attribute_prefix_loop1(
         return if index < (kinds.len() as f64) {
             if ((index == ((kinds.len() as f64) - 1f64))
                 && (((self::ml_array::optional_at(kinds, self::ml_array::number_index(index)))
-                    .unwrap_or_else(|| String::new()))
+                    .unwrap_or_default())
                     == "identifier"))
                 && (((self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-                    .unwrap_or_else(|| String::new()))
+                    .unwrap_or_default())
                     == "pub")
             {
                 self::MlPlanRustDiagnosticAttributePrefixLoop1Result::MlPlanRustDiagnosticAttributePrefixLoop1Return(if diagnostics > 0f64 {
@@ -510,7 +510,7 @@ pub fn ml_plan_rust_diagnostic_attribute_prefix_loop1(
                                         &plan,
                                         self::ml_array::number_index(0f64),
                                     ))
-                                    .unwrap_or_else(|| -1f64);
+                                    .unwrap_or(-1f64);
                                     if next <= index {
                                         self::MlPlanRustDiagnosticAttributePrefixJoin2::MlPlanRustDiagnosticAttributePrefixJoin2Return(vec![-1f64])
                                     } else {

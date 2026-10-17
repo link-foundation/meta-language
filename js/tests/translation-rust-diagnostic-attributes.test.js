@@ -6,7 +6,8 @@ import vm from 'node:vm';
 import {acceptRustDiagnosticAttributeOffset, planRustDiagnosticAttribute, readRustMustUseAttributeEnd,
   planRustDiagnosticAttributePrefix} from '../src/translation/rust-diagnostic-attribute-rules.js';
 import {readRustDiagnosticAttributeRuleSource} from '../scripts/rust-diagnostic-attribute-policy.mjs';
-import {prepareRustDiagnosticAttributeTranslation, readRustDiagnosticAttributeEmissionData} from '../scripts/generate-rust-diagnostic-attribute-rules.mjs';
+import {prepareRustDiagnosticAttributeTranslation, readRustDiagnosticAttributeEmissionData,
+  readRustDiagnosticAttributeLibraryStyles} from '../scripts/generate-rust-diagnostic-attribute-rules.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../src/structured-data-links.js';
 
 import {tokenize} from '../src/translation/lexer.js';
@@ -151,6 +152,60 @@ test('private complete diagnostic module retains every owner and decision throug
     assert.deepEqual(readStructuredDataLino(structuredDataToLino(data)), data,
       'source artifacts retain every actual emission field and complete non-enumerable part');
     assert.deepEqual(Object.getOwnPropertyDescriptors(emission), before, 'artifact projection leaves the emitter contract intact');
+  }
+  const {DecoratorSet} = await import('../src/decorators.js');
+  const {readPortableSourceParameterStyles, readPortableSourceLintStyles} = await import('../scripts/portable-source-library-style.mjs');
+  const header = prepared.rust.text.split('\n').find(line => line.startsWith('#![allow('));
+  assert.ok(header);
+  const raw = [header, ...prepared.rust.preludes, ...prepared.rust.definitions].join('\n\n');
+  const declarations = [...new Set([...raw.matchAll(/^pub (?:fn|enum|struct|mod) (\w+)\b/gmu)].map(match => match[1]))];
+  const relocation = declarations.filter(name => raw.includes('crate::' + name))
+    .map(name => ({op: 'replace', field: 'source', from: 'crate::' + name, to: 'self::' + name}));
+  const relocated = new DecoratorSet([{id: 'diagnostic-owner-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: relocation}]).decorate('emitter', {format: 'Rust', source: raw}).source;
+  const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
+  const reviewed = readPortableSourceLintStyles(readPortableSourceParameterStyles(relocated, {publicNames}).source).source;
+  const styled = readRustDiagnosticAttributeLibraryStyles(reviewed, tokenize);
+  assert.equal(styled.actions.length, 3, 'only the three complete typed array-read owners change');
+  const strings = /\.unwrap_or_else\(\|\| String::new\(\)\)/gu, number = /\.unwrap_or_else\(\|\| -1f64\)/gu;
+  assert.equal([...reviewed.matchAll(strings)].length, 37);
+  assert.equal([...reviewed.matchAll(number)].length, 1);
+  assert.equal(styled.source, reviewed.replace(strings, '.unwrap_or_default()').replace(number, '.unwrap_or(-1f64)'),
+    'all and only the actual String defaults and side-effect-free numeric constant fallbacks change');
+  const recorded = new DecoratorSet([{id: 'diagnostic-fallback-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: styled.actions}]);
+  assert.equal(recorded.decorate('emitter', {format: 'Rust', source: reviewed}).source, styled.source);
+  assert.deepEqual(readRustDiagnosticAttributeLibraryStyles(styled.source, tokenize), {source: styled.source, actions: []});
+  let inverse = styled.source;
+  for (const action of [...styled.actions].reverse()) {
+    assert.equal(inverse.split(action.to).length, 2);
+    inverse = inverse.replace(action.to, action.from);
+  }
+  assert.equal(inverse, reviewed, 'the full inverse retains every owner, runtime, declaration, token and ordering');
+  const opaque = '\nconst NOTE:&str=r#".unwrap_or_else(|| String::new()) .unwrap_or_else(|| -1f64)"#;\n';
+  const withOpaque = reviewed + opaque;
+  assert.equal(readRustDiagnosticAttributeLibraryStyles(withOpaque, tokenize).source, styled.source + opaque,
+    'raw literal contents do not become fallback syntax');
+  for (const counterfeit of [
+    'type String=Custom;\n' + reviewed, 'type Option<T>=Custom<T>;\n' + reviewed,
+    'use foreign::*;\n' + reviewed, 'custom!{' + reviewed + '}',
+    '#[custom(' + reviewed + ')]\npub fn untouched(){}',
+    reviewed + '\n' + styled.actions[0].from,
+    reviewed.replace('kinds: &[String]', 'kinds: &[Other]'),
+    reviewed.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_else(|| /* preserve */ String::new())'),
+  ]) {
+    assert.notEqual(counterfeit, reviewed);
+    assert.deepEqual(readRustDiagnosticAttributeLibraryStyles(counterfeit, tokenize), {source: counterfeit, actions: []},
+      'unknown types, owners, macros, attributes and comment-bearing candidates do not inherit the generated source proof');
+  }
+  for (const [from, to] of [
+    ['.unwrap_or_else(|| String::new())', '.unwrap_or_else(|| { observe(); String::new() })'],
+    ['.unwrap_or_else(|| -1f64)', '.unwrap_or_else(|| -2f64)'],
+  ]) {
+    const changed = reviewed.replace(from, to);
+    assert.notEqual(changed, reviewed);
+    assert.ok(readRustDiagnosticAttributeLibraryStyles(changed, tokenize).source.includes(to),
+      'an effectful or different fallback is never replaced by the bounded spelling');
   }
   for (const {format, javascript} of prepared.programs) {
     const context = {};

@@ -33,6 +33,87 @@ export function readRustDiagnosticAttributeEmissionData(emission) {
   return {...emission, definitions: emission.definitions, preludes: emission.preludes};
 }
 
+/** Only this generated family's typed optional array reads receive these
+ * fallback spellings. The actual tokenizer keeps literal contents opaque. */
+export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {
+  const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];
+  const unchanged = () => ({source, actions: []});
+  const key = items => JSON.stringify(items.map(token => [token.kind, token.raw]));
+  const signature = text => key(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof'));
+  for (let at = 0; at < tokens.length; at += 1) {
+    const token = tokens[at];
+    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return unchanged();
+    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {
+      const next = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;
+      if (['String', 'Vec', 'Option', 'f64', 'std', 'core'].includes(tokens[next]?.value)) return unchanged();
+    }
+    if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return unchanged();
+    if (token.kind !== 'punct') continue;
+    if (['(', '[', '{'].includes(token.value)) stack.push(at);
+    else if ([')', ']', '}'].includes(token.value)) {
+      const open = stack.pop();
+      if (tokens[open]?.value !== {')': '(', ']': '[', '}': '{'}[token.value]) return unchanged();
+      matching.set(open, at); matching.set(at, open);
+    }
+  }
+  if (stack.length !== 0) return unchanged();
+  const optional = tokens.flatMap((token, at) => token.value === 'fn' && tokens[at + 1]?.value === 'optional_at' ? [at] : []);
+  if (optional.length !== 1) return unchanged();
+  let optionalBody = optional[0] + 2;
+  while (optionalBody < tokens.length && tokens[optionalBody].value !== '{') optionalBody += 1;
+  if (key(tokens.slice(optional[0], optionalBody)) !== signature('fn optional_at<T:Clone>(values:&[T],index:Option<usize>)->Option<T>')) return unchanged();
+  const headers = new Map([
+    ['plan_rust_diagnostic_attribute', 'pub fn plan_rust_diagnostic_attribute(kinds:&[String],values:&[String],start:f64)->Vec<f64>'],
+    ['read_rust_must_use_attribute_end', 'pub fn read_rust_must_use_attribute_end(kinds:&[String],values:&[String],start:f64)->f64'],
+    ['ml_plan_rust_diagnostic_attribute_prefix_loop1', 'pub fn ml_plan_rust_diagnostic_attribute_prefix_loop1(kinds:&[String],values:&[String],mut index:f64,mut attributes:f64,mut diagnostics:f64)->self::MlPlanRustDiagnosticAttributePrefixLoop1Result'],
+  ]);
+  const functions = [];
+  for (let at = 0; at < tokens.length; at += 1) {
+    if (tokens[at].kind === 'punct' && tokens[at].value === '#') {
+      const open = tokens[at + 1]?.value === '!' ? at + 2 : at + 1;
+      if (!['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return unchanged();
+      at = matching.get(open); continue;
+    }
+    if (tokens[at].value === 'pub' && tokens[at + 1]?.value === 'fn' && headers.has(tokens[at + 2]?.value)) {
+      let body = matching.get(at + 3) + 1;
+      while (body < tokens.length && !['{', ';'].includes(tokens[body].value)) body += 1;
+      const end = matching.get(body), header = tokens.slice(at, body);
+      if (end === undefined) return unchanged();
+      const parameterEnd = matching.get(at + 3) - at;
+      if (header[parameterEnd - 1]?.value === ',') header.splice(parameterEnd - 1, 1);
+      if (key(header) !== signature(headers.get(tokens[at + 2].value))) return unchanged();
+      functions.push({at, body, end, name: tokens[at + 2].value}); at = end; continue;
+    }
+    if (tokens[at].kind === 'punct' && ['(', '[', '{'].includes(tokens[at].value)) at = matching.get(at);
+  }
+  if ([...headers.keys()].some(name => functions.filter(fn => fn.name === name).length !== 1)) return unchanged();
+  let adapted = source;
+  const actions = [];
+  for (const fn of functions) {
+    const from = source.slice(tokens[fn.at].start, tokens[fn.end].end), edits = [];
+    if (source.split(from).length !== 2) return unchanged();
+    for (let at = fn.body + 1; at < fn.end; at += 1) {
+      if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'unwrap_or_else' || tokens[at + 2]?.value !== '(') continue;
+      const end = matching.get(at + 2), receiverEnd = at - 1;
+      if (tokens[receiverEnd]?.value !== ')') continue;
+      let first = matching.get(receiverEnd) + 1, last = receiverEnd - 1;
+      while (tokens[first]?.value === '(' && matching.get(first) === last) { first += 1; last -= 1; }
+      if (tokens.slice(first, first + 6).map(token => token.value).join(' ') !== 'self :: ml_array :: optional_at (' || matching.get(first + 5) !== last) continue;
+      const argument = tokens[first + 6]?.value, numeric = argument === '&' && tokens[first + 7]?.value === 'plan';
+      if (!['kinds', 'values'].includes(argument) && !(numeric && fn.name === 'ml_plan_rust_diagnostic_attribute_prefix_loop1')) continue;
+      const fallback = key(tokens.slice(at, end + 1));
+      const expected = numeric ? '.unwrap_or_else(|| -1f64)' : '.unwrap_or_else(|| String::new())';
+      if (fallback !== signature(expected)) continue;
+      if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) return unchanged();
+      edits.push({start: tokens[at].start, end: tokens[end].end, to: numeric ? '.unwrap_or(-1f64)' : '.unwrap_or_default()'});
+    }
+    let to = from;
+    for (const edit of edits.reverse()) to = to.slice(0, edit.start - tokens[fn.at].start) + edit.to + to.slice(edit.end - tokens[fn.at].start);
+    if (from !== to) { actions.push({op: 'replace', field: 'source', from, to}); adapted = adapted.replace(from, to); }
+  }
+  return {source: adapted, actions};
+}
+
 /** No writes, formatter or compiler. Both returned whole-program rechecks feed
  * emission; neither decoded predecessor is used as a checked result. */
 export async function prepareRustDiagnosticAttributeTranslation(source = readFileSync(new URL(sourcePath, root), 'utf8')) {
@@ -129,7 +210,9 @@ export async function generateRustDiagnosticAttributeRules({check = false, nativ
   if (native) {
     const prepared = await prepareRustDiagnosticAttributeTranslation(source);
     const {writeRecordRuleLibrary} = await import('./record-rule-library.mjs');
-    const files = writeRecordRuleLibrary(prepared.rust, 'rust_diagnostic_attribute_rules', {check});
+    const {tokenize} = await import('../src/translation/lexer.js');
+    const files = writeRecordRuleLibrary(prepared.rust, 'rust_diagnostic_attribute_rules', {check,
+      sourceStyles: source => readRustDiagnosticAttributeLibraryStyles(source, tokenize)});
     const library = await readRustDiagnosticAttributeLibraryInterfaces(files, prepared);
     artifact = {schemaVersion: 1, model: policy.model, sourcePath, source, sourceBytes: prepared.sourceBytes,
       sourceSha256: prepared.sourceSha256, parsedInventory: prepared.parsedInventory, checkedInventory: prepared.owners,
