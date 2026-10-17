@@ -3,12 +3,15 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
+const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
 export const ORIGINAL_LINK_RAW_MODEL_COMMIT = '9123dd5d19fc26c95a9d31eff47dd9655c33da53';
@@ -65,7 +68,7 @@ const sourceDigests = {
 // the original schema bytes while authenticating only an additive host schema.
 const schemaClosureReceiptSha256 = '4279200cc6d7f1aa36aa7090461b3d2f09d3e711c42cee6c86d29e8bf8873375';
 const schemaExtensionReceiptSha256 = '80c27d9bdef086925f24ac06de026cce376e44fdf02239e6b6d5cfecdaf2e811';
-const schemaSecondExtensionReceiptSha256 = 'e8312a7334e1a8642386e7e0bc370689879c789a33064076090e1b4872472c2b';
+const schemaSecondExtensionReceiptSha256 = 'c42beef3515ce9f2e2a030c07879630a1ef55acbfde0684f6ff25ea5d394c21f';
 const runnerClosureReceiptSha256='a3518fa93fe200a1e61d4cb28b9418eb06212ddf71c197e0e03bcf8057e556d0';
 // Ordered inventory derived from the frozen fixture/corpus sources, without constructing graphs.
 const frozenFixtureIds = [
@@ -268,32 +271,112 @@ function nativeInterface(source, tokenize) {
   return {functionName: frozenNative.functionName, parameterOrder: ['root_high', 'root_low', 'columns'], parameterModes: frozenNative.parameterModes, resultMode: frozenNative.resultMode, interfaceSha256: sha256(observedInterface.join('\0'))};
 }
 
-function consumerSource(observations, carrier, header) {
-  const vector = values => 'vec![' + values.join(',') + ']';
-  const blocks = vector(carrier.blocks.map(vector)), vectors = vector(carrier.vectors.map(vector));
-  const calls = observations.map((row, index) => {
-    const invocation = carrier.invocations[index];
-    return `{
-let column_ids:Vec<usize>=${vector(invocation.columns)};
-let columns:Vec<Vec<f64>>=column_ids.iter().map(|index| vector_bits(&words,&blocks,&vectors,*index).into_iter().map(f64::from_bits).collect()).collect();
-for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"complete carrier input differs");}
-let root_high=f64::from_bits(0x${row.inputBits[0]}u64);let root_low=f64::from_bits(0x${row.inputBits[1]}u64);
-let result=oracle_source::${header.functionName}(root_high,root_low,columns.clone());
-let observed:Vec<u64>=result.iter().map(|value|value.to_bits()).collect();
-assert_eq!(observed,vector_bits(&words,&blocks,&vectors,${invocation.result}),"complete raw decision differs");
-assert_eq!(root_high.to_bits(),0x${row.inputBits[0]}u64);assert_eq!(root_low.to_bits(),0x${row.inputBits[1]}u64);
-for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"caller input changed");}
-write!(&mut output,"${index}:{}",observed.len()).expect("invocation length");
-for chunk in observed.chunks(${blockWidth}) {let block=blocks.iter().position(|block|block.len()==chunk.len()&&block.iter().zip(chunk).all(|(word,actual)|words[*word]==*actual)).expect("actual output block");write!(&mut output,":{block:x}").expect("output block");}
-output.push('\\n');
-}`;
+/** Parse compact Links groups into the exact original external harness carrier. */
+export function decodeOriginalLinkRawCarrierData(source) {
+  assert.ok(typeof source === 'string' && source.isWellFormed(), 'carrier data must be primitive scalar text');
+  assert.ok(Buffer.byteLength(source) <= maximumConsumerBytes, 'carrier data exceeds the unchanged consumer budget');
+  const scalar = link => { assert.equal(link.values.length, 0, 'carrier scalar references cannot contain groups'); assert.equal(typeof link.id, 'string'); return link.id; };
+  const fields = (link, name) => { assert.equal(link.id, name, 'carrier Links groups retain their exact identities and order'); return link.values; };
+  const count = field => {
+    assert.match(field, /^(?:0|[1-9][0-9]*)$/u, 'carrier indices use canonical decimal text');
+    const value = Number(field); assert.ok(Number.isSafeInteger(value) && value <= source.length, 'carrier counts and indices are bounded exact integers'); return value;
+  };
+  const word = value => { assert.match(value, /^[0-9a-f]{16}$/u, 'carrier words retain every u64 bit'); return value; };
+  const counted = (link, name) => { const values = fields(link, name).map(scalar); assert.ok(values.length > 0, 'carrier groups declare their complete count'); const length = count(values[0]); assert.equal(values.length, length + 1, 'carrier group count differs'); return values.slice(1); };
+  const group = (link, name, prefix) => { const values = counted(link, name); values.forEach((value, index) => assert.equal(value, `${prefix}-${index}`, 'carrier groups retain every declared row identity')); return values.length; };
+  let words = [], blockCount = 0, vectorCount = 0, invocationCount = 0, position = 0;
+  const blocks = [], vectors = [], invocations = [];
+  const parser = new CarrierLinksParser({comments: false, collect: false, maxInputSize: maximumConsumerBytes, maxBufferSize: maximumConsumerBytes, maxDepth: 4});
+  parser.on('error', error => assert.fail('invalid carrier Links Notation: ' + error.message));
+  parser.on('link', link => {
+    if (position === 0) {
+      const root = fields(link, 'carrier'); assert.equal(root.length, 5, 'one carrier root declares all four groups and its schema');
+      assert.deepEqual(fields(root[0], 'schema').map(scalar), ['original-link-raw-carrier', '1']);
+      assert.deepEqual(root.slice(1).map(scalar), ['words', 'blocks', 'vectors', 'invocations']);
+    } else if (position === 1) words = counted(link, 'words').map(word);
+    else if (position === 2) blockCount = group(link, 'blocks', 'block');
+    else if (position < 3 + blockCount) blocks.push(counted(link, `block-${position - 3}`).map(count));
+    else if (position === 3 + blockCount) vectorCount = group(link, 'vectors', 'vector');
+    else if (position < 4 + blockCount + vectorCount) vectors.push(counted(link, `vector-${position - 4 - blockCount}`).map(count));
+    else if (position === 4 + blockCount + vectorCount) invocationCount = group(link, 'invocations', 'invocation');
+    else if (position < 5 + blockCount + vectorCount + invocationCount) {
+      const values = fields(link, `invocation-${position - 5 - blockCount - vectorCount}`); assert.equal(values.length, 3);
+      const roots = fields(values[0], 'roots').map(scalar).map(word), result = fields(values[1], 'result').map(scalar); assert.equal(roots.length, 2); assert.equal(result.length, 1);
+      invocations.push({rootBits: roots, result: count(result[0]), columns: counted(values[2], 'columns').map(count)});
+    } else assert.fail('carrier data cannot contain extra Links groups');
+    position += 1;
   });
+  for (let offset = 0; offset < source.length; offset += 65536) parser.write(source.slice(offset, offset + 65536));
+  parser.end();
+  assert.equal(position, 5 + blockCount + vectorCount + invocationCount, 'carrier data is incomplete');
+  assert.ok(blocks.every(row => row.every(index => index < words.length)), 'carrier block word indices must exist');
+  assert.ok(vectors.every(row => row.every(index => index < blocks.length)), 'carrier vector block indices must exist');
+  assert.ok(invocations.every(row => row.result < vectors.length && row.columns.every(index => index < vectors.length)), 'carrier invocation vectors must exist');
+  return {words, blocks, vectors, invocations};
+}
+
+function writeOriginalLinkRawCarrierData(carrier, invocations) {
+  const scalar = value => new CarrierLink(String(value));
+  const link = (name, values) => new CarrierLink(name, values);
+  const counted = (name, values) => link(name, [scalar(values.length), ...values.map(scalar)]);
+  const declarations = [link('carrier', [link('schema', [scalar('original-link-raw-carrier'), scalar(1)]), ...['words', 'blocks', 'vectors', 'invocations'].map(scalar)]).format(false),
+    counted('words', carrier.words).format(false)];
+  for (const [name, prefix, rows] of [['blocks', 'block', carrier.blocks], ['vectors', 'vector', carrier.vectors]]) {
+    declarations.push(counted(name, rows.map((_, index) => `${prefix}-${index}`)).format(false));
+    rows.forEach((row, index) => declarations.push(counted(`${prefix}-${index}`, row).format(false)));
+  }
+  declarations.push(counted('invocations', invocations.map((_, index) => `invocation-${index}`)).format(false));
+  invocations.forEach((row, index) => declarations.push(link(`invocation-${index}`, [link('roots', row.rootBits.map(scalar)), link('result', [scalar(row.result)]), counted('columns', row.columns)]).format(false)));
+  return declarations.join('\n') + '\n';
+}
+
+/** Move complete carrier data out of Rust expressions without changing a cell. */
+export function createOriginalLinkRawConsumerPacket(observations, carrier, header) {
+  assert.equal(observations.length, carrier.invocations.length, 'every observation has one complete carrier invocation');
+  assert.match(header.functionName, /^[A-Za-z_][A-Za-z_0-9]*$/u, 'the consumer uses the inspected native function name');
+  const invocations = carrier.invocations.map((invocation, index) => ({rootBits: observations[index].inputBits.slice(0, 2), result: invocation.result, columns: invocation.columns}));
+  const data = writeOriginalLinkRawCarrierData(carrier, invocations);
+  assert.deepEqual(decodeOriginalLinkRawCarrierData(data), {words: carrier.words, blocks: carrier.blocks, vectors: carrier.vectors, invocations},
+    'the data inverse restores every old carrier word, block, vector and invocation in order');
+  const consumer = consumerSource(header), consumerSourceBytes = textBytes(consumer).length, consumerDataBytes = textBytes(data).length;
+  assert.ok(consumerSourceBytes + consumerDataBytes <= maximumConsumerBytes, 'complete consumer and data exceed the unchanged budget');
+  return {consumerSource: consumer, consumerSourceBytes, consumerDataBytes, consumerBytes: consumerSourceBytes + consumerDataBytes,
+    additionalSources: [{relativePath: 'carrier.lino', source: data, sourceBytes: consumerDataBytes, sourceSha256: sha256(textBytes(data))}]};
+}
+
+function consumerSource(header) {
   return `extern crate oracle_source;
 use std::fmt::Write as _;
-// Reconstruct the authenticated exact-bit carrier, independently of the decision algorithm.
+// Strict canonical Links fixture transport only; every decision calls the original library.
+struct Fields<'a>{remaining:&'a str}
+impl<'a> Fields<'a>{fn next(&mut self)->Option<&'a str>{self.remaining=self.remaining.trim_start_matches(|c:char|c.is_ascii_whitespace());if self.remaining.is_empty(){return None;}let length=if matches!(self.remaining.as_bytes()[0],b'('|b')'|b':'){1}else{self.remaining.bytes().position(|c|c.is_ascii_whitespace()||matches!(c,b'('|b')'|b':')).unwrap_or(self.remaining.len())};let field=&self.remaining[..length];self.remaining=&self.remaining[length..];Some(field)}}
+fn expect(fields:&mut Fields<'_>,expected:&str){assert_eq!(fields.next(),Some(expected),"canonical carrier Links group differs");}
+fn begin(fields:&mut Fields<'_>,name:&str){expect(fields,"(");expect(fields,name);expect(fields,":");}
+fn read_index(fields:&mut Fields<'_>)->usize{let field=fields.next().expect("carrier index");assert!(field=="0"||!field.starts_with('0')&&!field.is_empty()&&field.bytes().all(|c|c.is_ascii_digit()),"canonical carrier index");field.parse().expect("exact carrier index")}
+fn read_word(fields:&mut Fields<'_>)->u64{let field=fields.next().expect("carrier word");assert!(field.len()==16&&field.bytes().all(|c|c.is_ascii_digit()||(b'a'..=b'f').contains(&c)),"exact carrier word syntax");u64::from_str_radix(field,16).expect("exact carrier word")}
+fn read_list(fields:&mut Fields<'_>)->Vec<usize>{(0..read_index(fields)).map(|_|read_index(fields)).collect()}
+fn read_group(fields:&mut Fields<'_>,name:&str,prefix:&str)->usize{begin(fields,name);let count=read_index(fields);for index in 0..count{expect(fields,&format!("{prefix}-{index}"));}expect(fields,")");count}
+fn read_rows(fields:&mut Fields<'_>,name:&str,prefix:&str)->Vec<Vec<usize>>{let count=read_group(fields,name,prefix);(0..count).map(|index|{begin(fields,&format!("{prefix}-{index}"));let row=read_list(fields);expect(fields,")");row}).collect()}
 fn vector_bits(words:&[u64],blocks:&[Vec<usize>],vectors:&[Vec<usize>],index:usize)->Vec<u64>{let mut result=Vec::new();for block in &vectors[index]{for word in &blocks[*block]{result.push(words[*word]);}}result}
-fn main(){let words:Vec<u64>=${vector(carrier.words.map(word => '0x' + word + 'u64'))};let blocks:Vec<Vec<usize>>=${blocks};let vectors:Vec<Vec<usize>>=${vectors};let mut output=String::new();
-${calls.join('\n')}
+fn main(){
+let data=std::fs::read_to_string("carrier.lino").expect("authenticated complete carrier Links");let mut fields=Fields{remaining:&data};
+begin(&mut fields,"carrier");begin(&mut fields,"schema");expect(&mut fields,"original-link-raw-carrier");expect(&mut fields,"1");expect(&mut fields,")");for name in ["words","blocks","vectors","invocations"]{expect(&mut fields,name);}expect(&mut fields,")");
+begin(&mut fields,"words");let words:Vec<u64>=(0..read_index(&mut fields)).map(|_|read_word(&mut fields)).collect();expect(&mut fields,")");let blocks=read_rows(&mut fields,"blocks","block");let vectors=read_rows(&mut fields,"vectors","vector");let mut output=String::new();
+let invocation_count=read_group(&mut fields,"invocations","invocation");for index in 0..invocation_count{
+begin(&mut fields,&format!("invocation-{index}"));begin(&mut fields,"roots");let root_high_bits=read_word(&mut fields);let root_low_bits=read_word(&mut fields);expect(&mut fields,")");begin(&mut fields,"result");let expected_result=read_index(&mut fields);expect(&mut fields,")");begin(&mut fields,"columns");let column_ids=read_list(&mut fields);expect(&mut fields,")");expect(&mut fields,")");
+let columns:Vec<Vec<f64>>=column_ids.iter().map(|index| vector_bits(&words,&blocks,&vectors,*index).into_iter().map(f64::from_bits).collect()).collect();
+for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"complete carrier input differs");}
+let root_high=f64::from_bits(root_high_bits);let root_low=f64::from_bits(root_low_bits);
+let result=oracle_source::${header.functionName}(root_high,root_low,columns.clone());
+let observed:Vec<u64>=result.iter().map(|value|value.to_bits()).collect();
+assert_eq!(observed,vector_bits(&words,&blocks,&vectors,expected_result),"complete raw decision differs");
+assert_eq!(root_high.to_bits(),root_high_bits);assert_eq!(root_low.to_bits(),root_low_bits);
+for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"caller input changed");}
+write!(&mut output,"{index}:{}",observed.len()).expect("invocation length");
+for chunk in observed.chunks(${blockWidth}) {let block=blocks.iter().position(|block|block.len()==chunk.len()&&block.iter().zip(chunk).all(|(word,actual)|words[*word]==*actual)).expect("actual output block");write!(&mut output,":{block:x}").expect("output block");}
+output.push('\\n');
+}
+assert!(fields.next().is_none(),"complete carrier has trailing fields");
 print!("{output}");}
 `;
 }
@@ -401,11 +484,11 @@ function buildOriginalLinkRawPlan(prepared, originalReceipt, modelSources, trans
     add('numeric metadata-tag corruption ' + column + ' ' + numberBits(value), [authentic[0], authentic[1], columns], {scope: 'synthetic numeric primitive transport; no actual graph capture', column, payloadBits: numberBits(value)}, 'refused');
   }
   for (const value of [NaN, -1, 0.5, 4294967296]) add('numeric root-word corruption ' + numberBits(value), [value, authentic[1], authentic[2].map(row => [...row])], {scope: 'synthetic numeric root-word transport only', payloadBits: numberBits(value)}, 'refused');
-  const carrier = createCarrier(observations), consumer = consumerSource(observations, carrier, header), stream = protocol(observations, carrier);
-  const sizes = {sourceBytes: textBytes(prepared.source).length, consumerBytes: textBytes(consumer).length, protocolBytes: Buffer.byteLength(stream), originalInputCells: observations.reduce((sum, row) => sum + row.inputBits[2].reduce((sum, cells) => sum + cells.length, 0), 0), uniqueWords: carrier.words.length, uniqueBlocks: carrier.blocks.length, uniqueBlockCells: carrier.blocks.reduce((sum, block) => sum + block.length, 0), vectors: carrier.vectors.length};
+  const carrier = createCarrier(observations), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header), consumer = packet.consumerSource, stream = protocol(observations, carrier);
+  const sizes = {sourceBytes: textBytes(prepared.source).length, consumerBytes: packet.consumerBytes, consumerSourceBytes: packet.consumerSourceBytes, consumerDataBytes: packet.consumerDataBytes, protocolBytes: Buffer.byteLength(stream), originalInputCells: observations.reduce((sum, row) => sum + row.inputBits[2].reduce((sum, cells) => sum + cells.length, 0), 0), uniqueWords: carrier.words.length, uniqueBlocks: carrier.blocks.length, uniqueBlockCells: carrier.blocks.reduce((sum, block) => sum + block.length, 0), vectors: carrier.vectors.length};
   process.stdout.write('Raw native oracle planned sizes: ' + JSON.stringify(sizes) + '\n');
   assert.ok(sizes.consumerBytes <= maximumConsumerBytes, 'complete consumer exceeds unchanged budget'); assert.ok(sizes.protocolBytes <= maximumProtocolBytes, 'complete result protocol exceeds unchanged budget');
-  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/data/raw-native-definitions.lino', source: prepared.source, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(prepared.source), replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: prepared.declarationNames, definitionCount: prepared.definitionCount, preludeCount: prepared.preludeCount, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), javaScriptSha256: sha256(prepared.javascript), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
+  const entry = {id: 'complete original raw graph component', kind: 'whole automatically emitted raw component', fixtureId: 'experiments/original-link-complete-table-projection/data/raw-native-definitions.lino', source: prepared.source, sourceBytes: sizes.sourceBytes, sourceSha256: sha256(prepared.source), replaySha256: originalReceipt.binaryReplaySha256, ...header, declarationNames: prepared.declarationNames, definitionCount: prepared.definitionCount, preludeCount: prepared.preludeCount, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, independentJavaScriptControls, originalReceipt, consumerSource: consumer, consumerSha256: sha256(consumer), additionalSources: packet.additionalSources, javaScriptSha256: sha256(prepared.javascript), carrier, carrierSha256: sha256(JSON.stringify(carrier)), sizes, genuineFormatPremiseCount, serializationRefusals, premises, hostChecks, observations, observationScope: 'Bounded complete primitive decisions over actual JavaScript direct/archive transports and separately labeled synthetic u64 word controls. Failed serialization is separately observed, never converted into a native vector. Old decoders/projectors remain independently observed. No native LinkNetwork capture, public selector, source signature proof, whole-crate parity, completion or performance claim.'};
   const plan = freeze({model: prepared.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, transportSources, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
 }
 

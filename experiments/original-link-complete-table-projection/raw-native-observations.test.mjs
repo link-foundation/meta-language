@@ -4,8 +4,11 @@ import {createHash} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import test from 'node:test';
-import {requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
+import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
+import {createOriginalLinkRawConsumerPacket, decodeOriginalLinkRawCarrierData, requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
+import {parseLinoStatements} from '../../js/src/lino-serialization.js';
+import {formatLinoReadings} from '../../js/src/lino-semantics.js';
 import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
 import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
 
@@ -17,6 +20,82 @@ const schemaClosureFixture = () => ({
   receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),
   bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),
   historicalSources: readOriginalLinkRawHistoricalSources(readFileSync(new URL('./raw-native-observations.mjs', import.meta.url), 'utf8')),
+});
+
+function rawConsumerDataFixture() {
+  const carrier = {words: ['0000000000000000', '8000000000000000', '7ff0000000000000', 'fff0000000000000', '7ff8000000000001', 'ffffffffffffffff'],
+    blocks: [[0, 1, 4], [2, 3, 5], []], vectors: [[0, 1], [2], [1, 0]], invocations: [{columns: [0, 1], result: 2}, {columns: [2, 0], result: 1}]};
+  const vectorBits = index => carrier.vectors[index].flatMap(block => carrier.blocks[block].map(word => carrier.words[word]));
+  const roots = [['0000000000000000', '8000000000000000'], ['7ff8000000000001', '7ff0000000000000']];
+  const observations = carrier.invocations.map((row, index) => ({inputBits: [...roots[index], row.columns.map(vectorBits)], resultBits: vectorBits(row.result)}));
+  return {carrier, observations, header: {functionName: 'check_original_link_raw_shape'}};
+}
+
+test('raw consumer data restores every exact original carrier cell and keeps compiled source independent of data size', () => {
+  const {carrier, observations, header} = rawConsumerDataFixture(), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header);
+  const data = packet.additionalSources[0], restored = decodeOriginalLinkRawCarrierData(data.source);
+  assert.deepEqual(restored, {...carrier, invocations: carrier.invocations.map((row, index) => ({rootBits: observations[index].inputBits.slice(0, 2), ...row}))});
+  assert.equal(data.relativePath, 'carrier.lino');assert.equal(data.sourceBytes, Buffer.byteLength(data.source));
+  assert.equal(data.sourceSha256, createHash('sha256').update(data.source).digest('hex'));
+  const statements = parseLinoStatements(data.source);
+  assert.equal(statements[0].id, 'carrier');assert.equal(statements[0].values[0].id, 'schema');
+  assert.deepEqual(statements[0].values.slice(1).map(row => row.id), ['words', 'blocks', 'vectors', 'invocations']);
+  const reading = row => row.values.length ? [row.id, ...row.values.map(reading)] : row.id;
+  assert.equal(formatLinoReadings(statements.map(reading)), data.source, 'the actual Links parser and existing Links writer restore the complete packet text');
+  assert.equal(packet.consumerBytes, Buffer.byteLength(packet.consumerSource) + data.sourceBytes);
+  assert.ok(packet.consumerBytes <= 4 * 1024 * 1024);assert.ok(packet.consumerSourceBytes < 8192);
+  assert.match(packet.consumerSource, /std::fs::read_to_string\("carrier\.lino"\)/u);
+  assert.match(packet.consumerSource, /for index in 0\.\.invocation_count/u);
+  assert.match(packet.consumerSource, /oracle_source::check_original_link_raw_shape\(root_high,root_low,columns\.clone\(\)\)/u);
+  assert.doesNotMatch(packet.consumerSource, /vec!\[/u);
+  const larger = structuredClone(carrier);larger.blocks.push(Array.from({length: 4096}, (_, index) => index % carrier.words.length));
+  const expanded = createOriginalLinkRawConsumerPacket(observations, larger, header);
+  assert.equal(expanded.consumerSource, packet.consumerSource, 'complete data growth cannot duplicate compiled Rust expressions');
+  assert.ok(expanded.consumerDataBytes > packet.consumerDataBytes);
+  assert.deepEqual(decodeOriginalLinkRawCarrierData(expanded.additionalSources[0].source).blocks, larger.blocks);
+  for (const invalid of [
+    '', data.source.trimEnd().slice(0, -1), data.source + '(extra: 0)\n',
+    data.source.replace('(words: 6 ', '(words: 06 '), data.source.replace('(words: 6 ', '(words: 9007199254740992 '),
+    data.source.replace('7ff8000000000001', '7ff800000000000x'),
+    data.source.replace('(schema: original-link-raw-carrier 1)', '(schema: original-link-raw-carrier 2)'),
+    data.source.replace('block-1', 'block-0'), data.source.replace('(vectors:', '(foreign:'),
+  ]) assert.throws(() => decodeOriginalLinkRawCarrierData(invalid), assert.AssertionError);
+  const foreign = structuredClone(carrier);foreign.blocks[0][0] = 99;
+  assert.throws(() => createOriginalLinkRawConsumerPacket(observations, foreign, header), /word indices must exist/u);
+});
+
+test('raw consumer data uses the existing complete packet preflight and detects edits around every injected phase', () => {
+  const {carrier, observations, header} = rawConsumerDataFixture(), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header);
+  const source = 'pub fn check_original_link_raw_shape()->Vec<f64>{Vec::new()}\n', sha256 = value => createHash('sha256').update(value).digest('hex');
+  for (const mutation of ['none', 'preflight', 'library', 'consumer', 'execute']) {
+    const entry = {id: 'injected raw carrier transport only', kind: 'injected transport contract', source, sourceBytes: Buffer.byteLength(source), sourceSha256: sha256(source),
+      consumerSource: packet.consumerSource, consumerSha256: sha256(packet.consumerSource), additionalSources: structuredClone(packet.additionalSources), observations: []};
+    if (mutation === 'preflight') entry.additionalSources[0].source += 'changed';
+    const plan = {entries: [entry]}, calls = [], environment = {CI: 'true', ORIGINAL_LINK_RAW_NATIVE: '1'};
+    const run = createSourceNativeObservationRunner({nativeMode: env => env === environment, checkedPlan: candidate => candidate === plan,
+      textBytes: value => Buffer.from(value), parseObservations: output => {assert.equal(output, 'injected transport only\n');return [];}, entryReceipt: () => ({}),
+      temporaryPrefix: 'raw-data-contract-', failureLabel: 'injected raw data contract', compilerProfile: 'checkedOptimized'});
+    const execute = () => run(plan, {environment, spawn(command, args, options) {
+      const phase = args.includes('--crate-type=rlib') ? 'library' : args.includes('--extern') ? 'consumer' : 'execute';calls.push({phase, options});
+      const file = join(options.cwd, 'carrier.lino');assert.equal(readFileSync(file, 'utf8'), packet.additionalSources[0].source);
+      assert.equal(options.timeout, phase === 'execute' ? 10000 : 30000);assert.equal(options.maxBuffer, 1024 * 1024);
+      if (phase !== 'execute') {
+        assert.deepEqual(args.slice(1, 5), ['--error-format=short', '-Copt-level=2', '-Cdebug-assertions=on', '-Coverflow-checks=on']);
+        writeFileSync(args[args.indexOf('-o') + 1], 'injected artifact only');
+      }
+      if (phase === mutation) writeFileSync(file, 'changed during injected phase');
+      return {status: 0, signal: null, stdout: phase === 'execute' ? 'injected transport only\n' : '', stderr: ''};
+    }});
+    if (mutation === 'none') {
+      const receipt = execute();assert.equal(receipt.processMode, 'injected process contract');
+      assert.deepEqual(receipt.processCounts, {libraryCompilations: 1, consumerCompilations: 1, executions: 1});
+      assert.deepEqual(receipt.observations[0].additionalSources, packet.additionalSources.map(({relativePath, sourceBytes, sourceSha256}) => ({relativePath, sourceBytes, sourceSha256})));
+    } else {
+      assert.throws(execute, error => {assert.ok(error instanceof AggregateError);assert.match(error.message, /byte count differs|additional source bytes changed/u);return true;});
+      assert.equal(calls.length, mutation === 'preflight' ? 0 : ['library', 'consumer', 'execute'].indexOf(mutation) + 1);
+    }
+    assert.ok(calls.every(call => !existsSync(call.options.cwd)), 'all injected packet scratch is removed');
+  }
 });
 
 test('raw planning phases finish exact source replay before allocating the observation matrix', () => {
@@ -161,6 +240,10 @@ if (process.env.CI === 'true') {
     assert.equal(entry.hostChecks.length, 32);
     for (const check of entry.hostChecks) assert.match(check.scope, /JavaScript host check only/u);
     assert.ok(entry.sizes.consumerBytes <= 4 * 1024 * 1024); assert.ok(entry.sizes.protocolBytes <= 1024 * 1024);
+    assert.equal(entry.sizes.consumerBytes, entry.sizes.consumerSourceBytes + entry.sizes.consumerDataBytes);
+    assert.equal(entry.additionalSources.length, 1);assert.equal(entry.additionalSources[0].relativePath, 'carrier.lino');
+    const restored = decodeOriginalLinkRawCarrierData(entry.additionalSources[0].source);
+    assert.deepEqual(restored, {...entry.carrier, invocations: entry.carrier.invocations.map((row, index) => ({rootBits: entry.observations[index].inputBits.slice(0, 2), result: row.result, columns: row.columns}))});
     assert.match(entry.observationScope, /No native LinkNetwork capture/u);
     assert.equal(entry.independentJavaScriptControls.testFile, 'experiments/original-link-complete-table-projection/raw-projection.test.mjs');
     assert.equal(entry.independentJavaScriptControls.controls.length, 7);
@@ -202,7 +285,7 @@ if (process.env.CI === 'true') {
     for (const phase of ['library', 'consumer']) { const fake = fakeProcess(call => call.phase === phase ? {status: 0, signal: null, stdout: '', stderr: ''} : null); fails(() => run(fake), /compiler did not create/u); }
   });
   test('source and consumer bytes remain authenticated around injected processes', () => {
-    for (const name of ['original.rs', 'consumer.rs']) for (const phase of ['library', 'consumer', 'execute']) {
+    for (const name of ['original.rs', 'consumer.rs', 'carrier.lino']) for (const phase of ['library', 'consumer', 'execute']) {
       const fake = fakeProcess(call => { if (call.phase === phase) { const file = join(call.options.cwd, name); writeFileSync(file, readFileSync(file, 'utf8') + '\n// changed\n'); } }); fails(() => run(fake), /bytes changed|consumer changed/u);
     }
   });
