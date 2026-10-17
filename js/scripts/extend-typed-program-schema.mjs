@@ -13,6 +13,7 @@ import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from '../../experimen
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs';
 
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fifth-extension-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
 const schemaFile = new URL('../src/data/typed-program-links-schema.lino', import.meta.url);
@@ -27,6 +28,15 @@ assert.equal(sha256(receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT,
 const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
 const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
 let actualBytes = readFileSync(schemaFile);
+const fifthFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-fifth-extension-closure.lino', import.meta.url);
+if (existsSync(fifthFile)) {
+  const fifthBytes = readFileSync(fifthFile), fifth = readStructuredDataLino(fifthBytes.toString('utf8'));
+  assert.equal(sha256(fifthBytes), /^const schemaFifthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+  verifyOriginalLinkRawSchemaFifthExtensionClosure(readOriginalLinkRawSchemaFifthContext(), actualBytes, fifth, authoredSources);
+  checkProjectData(fifthFile, fifth);
+  actualBytes = Buffer.from(fifth.previous.source, 'utf8');
+}
 const fourthFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-fourth-extension-closure.lino', import.meta.url);
 if (existsSync(fourthFile)) {
   const fourthBytes = readFileSync(fourthFile), fourth = readStructuredDataLino(fourthBytes.toString('utf8'));

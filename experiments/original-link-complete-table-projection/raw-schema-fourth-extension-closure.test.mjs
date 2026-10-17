@@ -1,21 +1,31 @@
 // Bounded source provenance controls; no native planner or compilation.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
-import {extendTypedProgramSchemaFourthStage, checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-fourth-stage.mjs';
+import {extendTypedProgramSchemaFourthStage} from '../../js/scripts/extend-typed-program-schema-fourth-stage.mjs';
+import {checkTypedProgramSchemaFourthArchive, checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-fifth-stage.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES} from './raw-schema-source-closure.mjs';
 import {verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_EXTENSION_RECEIPT, ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES,
   readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_EXTENSIONS} from './raw-schema-fourth-extension-policy.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const root = new URL('../../', import.meta.url);
 function fixture() {
+  let bytes = readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url));
+  const fifthFile = new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url);
+  if (existsSync(fifthFile)) {
+    const fifth = readStructuredDataLino(readFileSync(fifthFile, 'utf8'));
+    const sources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+    verifyOriginalLinkRawSchemaFifthExtensionClosure(readOriginalLinkRawSchemaFifthContext(), bytes, fifth, sources);
+    bytes = Buffer.from(fifth.previous.source, 'utf8');
+  }
   return {input: readOriginalLinkRawSchemaFourthContext(),
-    bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),
+    bytes,
     fourth: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url), 'utf8')),
     sources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]))};
 }
@@ -101,7 +111,12 @@ test('the live fourth freshness check and archived third check leave every prote
     'experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs',
     'js/scripts/extend-typed-program-schema-third-stage.mjs'];
   const before = files.map(file => readFileSync(new URL(file, root)));
-  const result = extendTypedProgramSchemaFourthStage({check: true});
+  let result;
+  if (existsSync(new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url))) {
+    assert.throws(() => extendTypedProgramSchemaFourthStage({check: true}), assert.AssertionError,
+      'the frozen strict fourth writer refuses the live fifth profile');
+    result = checkTypedProgramSchemaFourthArchive();
+  } else result = extendTypedProgramSchemaFourthStage({check: true});
   assert.equal(result.check, true); assert.equal(result.sourceClosureOnly, true);
   assert.equal(result.appendedProjectionKeys, 1); assert.equal(result.preservedProducerBindings, 47);
   const third = checkTypedProgramSchemaThirdArchive();

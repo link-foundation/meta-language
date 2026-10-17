@@ -14,6 +14,7 @@ import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchema
 import {verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
 
 const root = new URL('../../', import.meta.url), receiptFile = new URL('./data/raw-schema-source-closure.lino', import.meta.url);
 const oracleFile = new URL('./raw-native-observations.mjs', import.meta.url);
@@ -30,6 +31,15 @@ export function generateOriginalLinkRawSchemaSourceClosure({check = false, schem
   const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
   if (check) {
     const receipt = readProjectData(receiptFile);
+    const fifthFile = new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url);
+    if (existsSync(fifthFile)) {
+      const fifthBytes = readFileSync(fifthFile), fifth = readProjectData(fifthFile);
+      assert.equal(sha256(fifthBytes), /^const schemaFifthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+      const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+      verifyOriginalLinkRawSchemaFifthExtensionClosure(readOriginalLinkRawSchemaFifthContext(), actualBytes, fifth, authoredSources);
+      checkProjectData(fifthFile, fifth);
+      actualBytes = Buffer.from(fifth.previous.source, 'utf8');
+    }
     const fourthFile = new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url);
     if (existsSync(fourthFile)) {
       const fourthBytes = readFileSync(fourthFile), fourth = readProjectData(fourthFile);
