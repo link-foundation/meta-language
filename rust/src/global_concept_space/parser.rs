@@ -115,11 +115,19 @@ impl GlobalConceptSpaceParser {
         let outcome = self
             .parse_tree(source, options)
             .map_err(ParseWithGrammarError::Runtime)?;
+        if outcome.ok && outcome.source_planes.is_some() {
+            return Err(ParseWithGrammarError::Runtime(GrammarRuntimeError {
+                reason: "selection",
+                message: "a mapped grammar result needs parseTree to retain its sourcePlanes"
+                    .to_owned(),
+            }));
+        }
         match (outcome.rejection, outcome.tree) {
             (None, Some(tree)) => Ok(tree),
             (rejection, _) => Err(ParseWithGrammarError::Parse(GrammarParseError {
                 rejection: Box::new(rejection.unwrap_or(ParseRejection {
                     diagnostics: None,
+                    offset_semantics: None,
                     reason: "syntax",
                     offset: Some(0),
                     line: Some(1),

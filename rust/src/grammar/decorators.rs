@@ -1,6 +1,6 @@
 //! The grammar and syntax tree levels of [`DecoratorSet`].
 
-use super::feature_runtime::SyntaxTree;
+use super::feature_runtime::{LeafText, SyntaxTree};
 use super::merge::rename_grammar_rule;
 use super::{Grammar, GrammarFormat, RuleKind};
 use crate::decorators::{
@@ -97,7 +97,7 @@ pub fn decorate_syntax_tree(
     if !decorators.has(DecoratorLevel::Executor) && !decorators.has(DecoratorLevel::Recovery) {
         return Ok(tree.clone());
     }
-    let mut roots = visit(tree, decorators, source)?;
+    let mut roots = visit(tree, decorators, source, false)?;
     if roots.len() != 1 {
         return Err(DecoratorError::new(
             "a decorator dropped the root of the syntax tree",
@@ -110,9 +110,17 @@ fn visit(
     tree: &SyntaxTree,
     decorators: &DecoratorSet,
     source: &[u8],
+    decoded_text: bool,
 ) -> Result<Vec<SyntaxTree>, DecoratorError> {
-    let text_of = |start: usize, end: usize| {
-        String::from_utf8_lossy(source.get(start..end).unwrap_or_default()).into_owned()
+    let text_of = |text: &LeafText, start: usize, end: usize| {
+        if decoded_text {
+            match text {
+                LeafText::Text(text) => text.clone(),
+                LeafText::Hex(_) => String::new(),
+            }
+        } else {
+            String::from_utf8_lossy(source.get(start..end).unwrap_or_default()).into_owned()
+        }
     };
     let mut copy = tree.clone();
     match &mut copy {
@@ -129,7 +137,7 @@ fn visit(
             let decorated = decorators.decorate(DecoratorLevel::Executor, &record);
             let mut visited = Vec::new();
             for child in children.iter() {
-                visited.extend(visit(child, decorators, source)?);
+                visited.extend(visit(child, decorators, source, decoded_text)?);
             }
             let Some(decorated) = decorated else {
                 return Ok(visited);
@@ -143,13 +151,14 @@ fn visit(
             field,
             start,
             end,
+            text,
             ..
         } => {
             let mut record = DecoratorRecord::new();
             record.insert("type".to_owned(), "token".to_owned());
             record.insert("kind".to_owned(), kind.clone().unwrap_or_default());
             record.insert("field".to_owned(), field.clone().unwrap_or_default());
-            record.insert("text".to_owned(), text_of(*start, *end));
+            record.insert("text".to_owned(), text_of(text, *start, *end));
             let Some(decorated) = decorators.decorate(DecoratorLevel::Executor, &record) else {
                 return Err(DecoratorError::new(format!(
                     "a decorator dropped the token {}; the executor level keeps every token",
@@ -160,12 +169,16 @@ fn visit(
             *field = optional(record_field(&decorated, "field"));
         }
         SyntaxTree::Error {
-            start, end, reason, ..
+            start,
+            end,
+            reason,
+            text,
+            ..
         } => {
             let mut record = DecoratorRecord::new();
             record.insert("type".to_owned(), "error".to_owned());
             record.insert("reason".to_owned(), reason.clone().unwrap_or_default());
-            record.insert("text".to_owned(), text_of(*start, *end));
+            record.insert("text".to_owned(), text_of(text, *start, *end));
             let Some(decorated) = decorators.decorate(DecoratorLevel::Recovery, &record) else {
                 return Err(DecoratorError::new(
                     "a decorator dropped an ERROR node; only a MISSING node can be dropped",
@@ -182,14 +195,40 @@ fn visit(
             };
             *kind = optional(record_field(&decorated, "kind"));
         }
-        SyntaxTree::Embed { root, .. } => {
-            let mut roots = visit(root, decorators, source)?;
+        SyntaxTree::Embed {
+            root,
+            source_children,
+            selection,
+            ..
+        } => {
+            let mapped = source_children.is_some();
+            let mut roots = visit(root, decorators, source, decoded_text || mapped)?;
             if roots.len() != 1 {
-                return Err(DecoratorError::new(
-                    "a decorator dropped the root of an embedded tree",
-                ));
+                return Err(DecoratorError::new(if mapped {
+                    "a mapped grammar keeps one complete decoded CST root"
+                } else {
+                    "a decorator dropped the root of an embedded tree"
+                }));
             }
             **root = roots.remove(0);
+            if let Some(children) = source_children {
+                let mut physical = Vec::new();
+                for child in &*children {
+                    physical.extend(visit(child, decorators, source, decoded_text)?);
+                }
+                *children = physical;
+                if let Some(selection) = selection {
+                    for alternative in &mut selection.alternatives {
+                        let mut roots = visit(&alternative.root, decorators, source, true)?;
+                        if roots.len() != 1 {
+                            return Err(DecoratorError::new(
+                                "a mapped grammar witness keeps one complete decoded CST root",
+                            ));
+                        }
+                        alternative.root = Box::new(roots.remove(0));
+                    }
+                }
+            }
         }
     }
     Ok(vec![copy])

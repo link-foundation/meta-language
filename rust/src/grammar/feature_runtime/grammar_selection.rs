@@ -2,16 +2,23 @@
 //! matching itself stays in the existing executor; the generated JavaScript
 //! policies choose admitted mappings, witness counts and language ambiguity.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use serde_json::{Value, json};
 
 use super::executor::{Executor, Run};
 use super::program::{Expr, Name, SelectionDescriptor};
-use super::results::{Outcome, Res, Tree, TreeType, no_children, with_leaf};
+use super::results::{
+    Expectations, KeywordLexing, Outcome, Res, Shared, TokenOrder, Tree, TreeType, no_children,
+    with_leaf,
+};
+use super::selection_source_mapping::mapped_cover;
 use super::tree::{SyntaxTree, public_tree};
 use crate::grammar::interchange::serialize_grammar;
 use crate::grammar::{Grammar, default_settling};
+use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_mapping_rules::read_grammar_selection_mapping_context;
 use crate::translation::grammar_selection_rules::{
     accept_grammar_selection_count, accept_grammar_selection_mapping,
     read_grammar_source_default_matching, report_grammar_selection_ambiguity,
@@ -33,7 +40,7 @@ pub struct GrammarSelectionAlternative {
 pub struct GrammarSelection {
     /// Explicit any/all policy, or the qualified root invocation.
     pub mode: String,
-    /// The declared source mapping; currently only identity is executable.
+    /// The explicit source-mapping profile selected by the grammar.
     pub mapping: String,
     /// First original source byte.
     pub start: usize,
@@ -47,6 +54,8 @@ pub struct GrammarSelection {
     pub alternatives: Vec<GrammarSelectionAlternative>,
     /// Whether the explicit any policy admitted more than one grammar.
     pub ambiguous: bool,
+    /// Actual source mapping and ordered interval references, only on mapped selections.
+    pub source_mapping: Option<Value>,
 }
 
 #[derive(Clone, Debug)]
@@ -67,6 +76,8 @@ pub(super) struct SelectionMetadata {
     pub(super) provenance: Value,
     pub(super) alternatives: Vec<AcceptedSelection>,
     pub(super) ambiguous: bool,
+    pub(super) source_mapping: Option<Value>,
+    pub(super) source_bytes: Option<Rc<[u8]>>,
 }
 
 /// Snapshot the actual grammar input, including metadata the ordinary JSON
@@ -93,6 +104,7 @@ pub(super) fn selection_source_definition(grammar: &Grammar) -> Value {
 }
 
 pub(super) fn public_selection(selection: &SelectionMetadata, bytes: &[u8]) -> GrammarSelection {
+    let bytes = selection.source_bytes.as_deref().unwrap_or(bytes);
     GrammarSelection {
         mode: selection.mode.to_string(),
         mapping: selection.mapping.to_string(),
@@ -110,6 +122,7 @@ pub(super) fn public_selection(selection: &SelectionMetadata, bytes: &[u8]) -> G
             })
             .collect(),
         ambiguous: selection.ambiguous,
+        source_mapping: selection.source_mapping.clone(),
     }
 }
 
@@ -134,15 +147,41 @@ pub(super) fn selection_rejection(
     Some(rejection)
 }
 
+pub(super) fn mapping_rejection(
+    diagnostics: &[Value],
+    bytes: &[u8],
+) -> Option<super::ParseRejection> {
+    let primary = diagnostics
+        .iter()
+        .max_by_key(|diagnostic| diagnostic["start"].as_u64().unwrap_or_default())?;
+    let reason = match primary["reason"].as_str()? {
+        "mappedSyntax" => "syntax",
+        "invalidEmbeddingMapping" => "invalidEmbeddingMapping",
+        _ => "unsupportedEmbeddingMapping",
+    };
+    let offset = primary["start"]
+        .as_u64()
+        .and_then(|value| usize::try_from(value).ok())?;
+    let mut rejection = super::ParseRejection::positioned(reason, bytes, offset);
+    rejection.diagnostics = Some(diagnostics.to_vec());
+    rejection.offset_semantics = Some("covering-source-spelling".to_owned());
+    Some(rejection)
+}
+
 impl Executor<'_> {
     pub(super) fn report_selection_diagnostic(&self, diagnostic: Value) -> Run<()> {
+        let diagnostic = self
+            .shared
+            .selection_sources
+            .borrow()
+            .qualify(self.bytes, diagnostic);
         let duplicate = self
             .shared
             .selection_diagnostics
             .borrow()
             .iter()
             .any(|item| {
-                ["reason", "language", "start", "end"]
+                ["reason", "language", "start", "end", "source"]
                     .iter()
                     .all(|key| item[key] == diagnostic[key])
             });
@@ -156,7 +195,7 @@ impl Executor<'_> {
         Ok(())
     }
 
-    /// The same completed program and bounds cannot be entered while active.
+    /// The same actual source/program/bounds cannot be entered while active.
     pub(super) fn run_embedded_grammar(
         &self,
         program: usize,
@@ -164,7 +203,18 @@ impl Executor<'_> {
         end: usize,
         language: &Name,
     ) -> Run<Option<Rc<Outcome>>> {
-        let key = (program, start, end);
+        self.run_embedded_source(program, (start, end), language, self.bytes)
+    }
+
+    fn run_embedded_source(
+        &self,
+        program: usize,
+        range: (usize, usize),
+        language: &Name,
+        bytes: &[u8],
+    ) -> Run<Option<Rc<Outcome>>> {
+        let (start, end) = range;
+        let key = (program, bytes.as_ptr().addr(), start, end);
         if !self.shared.active_embedded.borrow_mut().insert(key) {
             self.report_selection_diagnostic(json!({"reason":"nonConsumingEmbeddingCycle","language":&**language,"start":start,"end":end}))?;
             return Ok(None);
@@ -176,18 +226,95 @@ impl Executor<'_> {
             .and_then(|name| nested_program.rule_index.get(name))
             .copied()
             .unwrap_or_default();
-        let mut nested = Self::new(
-            self.compiled,
-            program,
-            self.bytes,
-            start,
-            end,
-            self.shared,
-            self.max_depth.saturating_sub(self.depth),
-        );
-        let outcome = nested.run(start_rule);
+        let result = (|| {
+            if std::ptr::eq(bytes, self.bytes) {
+                let mut nested = Executor::new(
+                    self.compiled,
+                    program,
+                    bytes,
+                    start,
+                    end,
+                    self.shared,
+                    self.max_depth.saturating_sub(self.depth),
+                );
+                return nested.run(start_rule);
+            }
+            // Only scanner offset context is local to this new source plane.
+            // Step/frame/memory counters and active source guards stay shared.
+            let local = Shared {
+                runtime_error: self.shared.runtime_error.clone(),
+                global_concept_space: self.shared.global_concept_space.clone(),
+                selection_diagnostics: self.shared.selection_diagnostics.clone(),
+                active_embedded: self.shared.active_embedded.clone(),
+                selection_sources: self.shared.selection_sources.clone(),
+                selection_mapping_failures: self.shared.selection_mapping_failures.clone(),
+                steps: self.shared.steps.clone(),
+                limit: self.shared.limit,
+                frames: self.shared.frames.clone(),
+                memo_limit: self.shared.memo_limit,
+                cells: self.shared.cells.clone(),
+                lexical_caches: self.shared.lexical_caches.clone(),
+                memory_limit: self.shared.memory_limit,
+                expectations: RefCell::new(Expectations::default()),
+            };
+            let tokens = nested_program
+                .token_ranks
+                .as_ref()
+                .filter(|_| {
+                    nested_program
+                        .settling
+                        .has(super::program::SettlingStep::Tokens)
+                })
+                .map(|ranks| TokenOrder {
+                    ranks,
+                    bytes,
+                    orders: &nested_program.precedence_orders,
+                    grammar: &nested_program.grammar,
+                    trivia: &nested_program.trivia,
+                });
+            let keywords = tokens.map(|_| RefCell::new(KeywordLexing::default()));
+            loop {
+                local.expectations.borrow_mut().restart();
+                let mut nested = Executor::new(
+                    self.compiled,
+                    program,
+                    bytes,
+                    start,
+                    end,
+                    &local,
+                    self.max_depth.saturating_sub(self.depth),
+                );
+                nested.keywords = keywords.as_ref();
+                let outcome = nested.run(start_rule)?;
+                if local.expectations.borrow().stale {
+                    continue;
+                }
+                if let (Outcome::Parsed(root), Some(keywords), Some(tokens)) =
+                    (&outcome, &keywords, tokens)
+                    && keywords
+                        .borrow_mut()
+                        .conflicts(root, tokens, &nested_program.rules)
+                {
+                    continue;
+                }
+                return Ok(outcome);
+            }
+        })();
         self.shared.active_embedded.borrow_mut().remove(&key);
-        outcome.map(|outcome| Some(Rc::new(outcome)))
+        result.map(|outcome| Some(Rc::new(outcome)))
+    }
+
+    fn remember_mapping_failure(&self, diagnostic: Value) -> Run<()> {
+        let diagnostic = self
+            .shared
+            .selection_sources
+            .borrow_mut()
+            .remember(self.bytes, diagnostic, self)?;
+        self.shared
+            .selection_mapping_failures
+            .borrow_mut()
+            .push(diagnostic);
+        Ok(())
     }
 
     fn charge_selection_value(&self, value: &Value) -> Run<()> {
@@ -330,9 +457,41 @@ impl Executor<'_> {
     ) -> Run<Vec<Res>> {
         let skipped = self.terminal_start(position, state, in_token)?;
         let start = skipped.end;
-        let regions = self.evaluate(item, start, &skipped.state, true)?;
+        let mappings = descriptor
+            .candidates
+            .iter()
+            .map(|(_, mapping)| mapping.to_string())
+            .collect::<Vec<_>>();
+        let context = number_index(read_grammar_selection_mapping_context(&mappings, in_token));
+        if context == Some(2) {
+            self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
+                "mapping":"json-string","detail":"mapped selection requires syntactic context and one common source mapping"}))?;
+            return Ok(Vec::new());
+        }
+        let mapped = context == Some(1);
+        let regions = self.evaluate(item, start, &skipped.state, !mapped)?;
         let mut results = Vec::new();
         for region in regions {
+            let derived = if mapped {
+                let result = self
+                    .shared
+                    .selection_sources
+                    .borrow_mut()
+                    .map(self.bytes, start, region.end, self)?;
+                match result {
+                    Ok(derived) => Some(derived),
+                    Err(failed) => {
+                        self.remember_mapping_failure(json!({"reason":failed.reason,"start":failed.offset,"end":failed.offset,"mapping":"json-string"}))?;
+                        self.fail(
+                            failed.offset,
+                            &Name::from("a Unicode scalar JSON string source"),
+                        );
+                        continue;
+                    }
+                }
+            } else {
+                None
+            };
             let mut accepted = Vec::new();
             let mut candidates = Vec::new();
             for (language, mapping) in &descriptor.candidates {
@@ -349,15 +508,26 @@ impl Executor<'_> {
                     continue;
                 };
                 let key = (
-                    Name::from(format!("selection|{language}")),
+                    Name::from(
+                        json!(["selection", &**mapping, &**language, start, region.end])
+                            .to_string(),
+                    ),
                     start,
                     region.end,
                 );
                 let outcome = if let Some(outcome) = self.embed_memo.get(&key) {
                     Some(outcome.clone())
                 } else {
-                    let outcome =
-                        self.run_embedded_grammar(program, start, region.end, language)?;
+                    let outcome = if let Some(derived) = &derived {
+                        self.run_embedded_source(
+                            program,
+                            (0, derived.bytes.len()),
+                            language,
+                            &derived.bytes,
+                        )?
+                    } else {
+                        self.run_embedded_grammar(program, start, region.end, language)?
+                    };
                     if let Some(outcome) = &outcome {
                         self.embed_memo.insert(key, outcome.clone());
                     }
@@ -371,9 +541,24 @@ impl Executor<'_> {
                     Outcome::Failed {
                         farthest, expected, ..
                     } => {
-                        candidates.push(json!({"language":&**language,"relation":"rejected","offset":farthest,"expected":expected}));
+                        let offset = if let Some(derived) = &derived {
+                            let Some(cover) = mapped_cover(&derived.mapping, *farthest, *farthest)
+                            else {
+                                self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":region.end,"mapping":"json-string"}))?;
+                                continue;
+                            };
+                            candidates.push(json!({"language":&**language,"relation":"rejected","offset":cover[0],"expected":expected,
+                                "source":derived.mapping["output"],"sourceOffset":farthest,"physicalRange":[cover[1],cover[2]],"offsetSemantics":"covering-source-spelling"}));
+                            self.remember_mapping_failure(json!({"reason":"mappedSyntax","language":&**language,"start":cover[1],"end":cover[2],
+                                "source":derived.mapping["output"],"sourceStart":farthest,"sourceEnd":farthest,"expected":expected,"offsetSemantics":"covering-source-spelling",
+                                "sourceRoute":[{"output":derived.mapping["output"],"outputStart":farthest,"outputEnd":farthest,"input":derived.mapping["input"],"inputStart":cover[1],"inputEnd":cover[2],"displayAnchor":cover[0]}]}))?;
+                            cover[0]
+                        } else {
+                            candidates.push(json!({"language":&**language,"relation":"rejected","offset":farthest,"expected":expected}));
+                            *farthest
+                        };
                         for expectation in expected {
-                            self.fail(*farthest, &Name::from(expectation.as_str()));
+                            self.fail(offset, &Name::from(expectation.as_str()));
                         }
                     }
                     Outcome::Parsed(root) => {
@@ -402,21 +587,26 @@ impl Executor<'_> {
             child.program = primary.program;
             child.selection = Some(Rc::new(SelectionMetadata {
                 mode: descriptor.mode.clone(),
-                mapping: Name::from("identity"),
+                mapping: Name::from(if mapped { "json-string" } else { "identity" }),
                 start,
                 end: region.end,
                 candidates,
                 provenance: primary.provenance,
                 alternatives: accepted,
                 ambiguous,
+                source_mapping: derived.as_ref().map(|source| source.mapping.clone()),
+                source_bytes: derived.as_ref().map(|source| source.bytes.clone()),
             }));
+            if mapped {
+                child.source_children = Some(region.children.clone());
+            }
             let children = if in_token {
                 no_children()
             } else {
                 with_leaf(&skipped.leaves, child)
             };
             let mut result = Res::new(region.end, region.state, children, region.dynamic);
-            result.ambiguous = ambiguous;
+            result.ambiguous = ambiguous || mapped && region.ambiguous;
             result.cost = region.cost;
             results.push(result);
         }
@@ -439,6 +629,8 @@ impl Executor<'_> {
             provenance,
             alternatives: Vec::new(),
             ambiguous: false,
+            source_mapping: None,
+            source_bytes: None,
         }));
         Ok(Rc::new(child))
     }

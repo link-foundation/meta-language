@@ -180,6 +180,7 @@ pub(super) struct Tree {
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
     pub(super) selection: Option<Rc<super::grammar_selection::SelectionMetadata>>,
+    pub(super) source_children: Option<Children>,
 }
 
 impl Tree {
@@ -217,6 +218,7 @@ impl Tree {
             root: None,
             program: 0,
             selection: None,
+            source_children: None,
         }
     }
 
@@ -543,10 +545,12 @@ pub(super) struct Shared {
     pub(super) runtime_error: Rc<RefCell<Option<super::load::GrammarRuntimeError>>>,
     pub(super) global_concept_space: Option<Rc<serde_json::Value>>,
     pub(super) selection_diagnostics: Rc<RefCell<Vec<serde_json::Value>>>,
-    pub(super) active_embedded: RefCell<HashSet<(usize, usize, usize)>>,
-    pub(super) steps: Cell<usize>,
+    pub(super) active_embedded: Rc<RefCell<HashSet<(usize, usize, usize, usize)>>>,
+    pub(super) selection_sources: Rc<RefCell<super::selection_source_mapping::SourceRegistry>>,
+    pub(super) selection_mapping_failures: Rc<RefCell<Vec<serde_json::Value>>>,
+    pub(super) steps: Rc<Cell<usize>>,
     pub(super) limit: usize,
-    pub(super) frames: Cell<usize>,
+    pub(super) frames: Rc<Cell<usize>>,
     pub(super) memo_limit: usize,
     pub(super) cells: Rc<Cell<usize>>,
     pub(super) lexical_caches: LexicalCaches,

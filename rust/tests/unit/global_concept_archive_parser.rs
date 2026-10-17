@@ -196,6 +196,7 @@ fn tree_data(tree: &SyntaxTree) -> Value {
             end,
             root,
             selection,
+            ..
         } => {
             let selection = selection.as_ref().map(|selected| {
                 json!({"mode":selected.mode,"mapping":selected.mapping,"start":selected.start,

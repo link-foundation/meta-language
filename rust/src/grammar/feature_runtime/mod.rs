@@ -23,6 +23,7 @@ pub(crate) mod lexical_kernel;
 mod lexical_plan;
 mod lexing;
 mod load;
+mod mapped_tree_validation;
 mod operations;
 mod ordering;
 mod parting;
@@ -34,6 +35,7 @@ mod repetition;
 mod results;
 mod roots;
 mod rules;
+mod selection_source_mapping;
 mod separators;
 mod text;
 mod token_conflicts;
@@ -48,6 +50,7 @@ use std::rc::Rc;
 
 pub use grammar_selection::{GrammarSelection, GrammarSelectionAlternative};
 pub use load::GrammarRuntimeError;
+pub use mapped_tree_validation::check_grammar_selection_mapped_tree;
 pub use operations::OperationValue;
 pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
 
@@ -144,6 +147,8 @@ impl FeatureParseOptions {
 pub struct ParseRejection {
     /// Precise unknown, unsupported mapping, origin or embedding-cycle records.
     pub diagnostics: Option<Vec<serde_json::Value>>,
+    /// Mapped diagnostics cover source spellings rather than exact interior bytes.
+    pub offset_semantics: Option<String>,
     /// `syntax`, `nestingDepth`, `stepLimit`, `memoryBudget`, `recovered` or
     /// `ambiguity`.
     pub reason: &'static str,
@@ -163,6 +168,7 @@ impl ParseRejection {
     const fn limited(reason: &'static str, limit: usize) -> Self {
         Self {
             diagnostics: None,
+            offset_semantics: None,
             reason,
             offset: None,
             line: None,
@@ -176,6 +182,7 @@ impl ParseRejection {
         let (line, column) = text::line_and_column(bytes, offset);
         Self {
             diagnostics: None,
+            offset_semantics: None,
             reason,
             offset: Some(offset),
             line: Some(line),
@@ -206,6 +213,10 @@ impl fmt::Display for ParseRejection {
             "nestingDepth" => write!(formatter, "the input nests deeper than {limit} rules"),
             "stepLimit" => write!(formatter, "the parse needed more than {limit} steps"),
             "memoryBudget" => write!(formatter, "the parse needed more than {limit} memo cells"),
+            "selection" => write!(
+                formatter,
+                "a mapped grammar result needs parseTree to retain its sourcePlanes"
+            ),
             "recovered" => write!(formatter, "the input needed error recovery{place}"),
             "ambiguity" => write!(formatter, "the input is ambiguous{place}"),
             reason => write!(formatter, "the input is rejected ({reason})"),
@@ -225,6 +236,8 @@ pub struct ParseOutcome {
     pub ambiguities: Vec<Ambiguity>,
     /// Why the input is rejected.
     pub rejection: Option<ParseRejection>,
+    /// Ordered source-plane definitions for an explicitly mapped parse.
+    pub source_planes: Option<Vec<serde_json::Value>>,
 }
 
 /// A source the grammar rejects.
@@ -340,6 +353,16 @@ impl FeatureGrammarParser {
             .map_err(|_| GrammarParseError {
                 rejection: Box::new(ParseRejection::positioned("syntax", source, 0)),
             })?;
+        if outcome.ok && outcome.source_planes.is_some() {
+            let mut rejection = ParseRejection::positioned("selection", source, 0);
+            rejection.diagnostics = Some(vec![
+                serde_json::json!({"reason":"selection","start":0,"end":source.len(),
+                "detail":"a mapped grammar result needs parseTree to retain its sourcePlanes"}),
+            ]);
+            return Err(GrammarParseError {
+                rejection: Box::new(rejection),
+            });
+        }
         match (outcome.rejection, outcome.tree) {
             (None, Some(tree)) => Ok(tree),
             (rejection, _) => Err(GrammarParseError {
@@ -387,7 +410,16 @@ pub fn parse_with_grammar(
     compile_feature_grammar(grammar, None, options.clone())
         .map_err(ParseWithGrammarError::Runtime)?
         .parse(source, options)
-        .map_err(ParseWithGrammarError::Parse)
+        .map_err(|error| {
+            if error.rejection.reason == "selection" {
+                ParseWithGrammarError::Runtime(GrammarRuntimeError {
+                    reason: "selection",
+                    message: error.to_string(),
+                })
+            } else {
+                ParseWithGrammarError::Parse(error)
+            }
+        })
 }
 
 fn decorator_error(error: DecoratorError) -> GrammarRuntimeError {
@@ -458,12 +490,17 @@ fn parse_program(
                 1
             }
     });
+    let selection_sources = Rc::new(RefCell::new(
+        selection_source_mapping::SourceRegistry::default(),
+    ));
+    let selection_mapping_failures = Rc::new(RefCell::new(Vec::new()));
     let refused = |rejection, tree| {
         Ok(ParseOutcome {
             ok: false,
             tree,
             ambiguities: Vec::new(),
             rejection: Some(rejection),
+            source_planes: selection_sources.borrow().definitions(),
         })
     };
     // Under `(matching longest)` the input is parsed again while the tree
@@ -504,10 +541,12 @@ fn parse_program(
             runtime_error: Rc::clone(&runtime_error),
             global_concept_space: global_concept_space.clone(),
             selection_diagnostics: Rc::clone(&selection_diagnostics),
-            active_embedded: RefCell::new(HashSet::new()),
-            steps: Cell::new(0),
+            active_embedded: Rc::new(RefCell::new(HashSet::new())),
+            selection_sources: Rc::clone(&selection_sources),
+            selection_mapping_failures: Rc::clone(&selection_mapping_failures),
+            steps: Rc::new(Cell::new(0)),
             limit,
-            frames: Cell::new(0),
+            frames: Rc::new(Cell::new(0)),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
             cells: Rc::clone(&cells),
             lexical_caches: Rc::clone(&lexical_caches),
@@ -589,6 +628,12 @@ fn parse_program(
             {
                 return refused(rejection, None);
             }
+            if let Some(mut rejection) =
+                grammar_selection::mapping_rejection(&selection_mapping_failures.borrow(), bytes)
+            {
+                rejection.expected = Some(expected);
+                return refused(rejection, None);
+            }
             let mut rejection = ParseRejection::positioned("syntax", bytes, farthest);
             rejection.expected = Some(expected);
             return refused(rejection, None);
@@ -606,10 +651,12 @@ fn parse_program(
             runtime_error: Rc::clone(&runtime_error),
             global_concept_space,
             selection_diagnostics: Rc::clone(&selection_diagnostics),
-            active_embedded: RefCell::new(HashSet::new()),
-            steps: Cell::new(last_steps.get()),
+            active_embedded: Rc::new(RefCell::new(HashSet::new())),
+            selection_sources: Rc::clone(&selection_sources),
+            selection_mapping_failures: Rc::clone(&selection_mapping_failures),
+            steps: Rc::new(Cell::new(last_steps.get())),
             limit,
-            frames: Cell::new(0),
+            frames: Rc::new(Cell::new(0)),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
             cells: Rc::clone(&cells),
             lexical_caches: Rc::clone(&lexical_caches),
@@ -658,9 +705,20 @@ fn parse_program(
     let mut ambiguities = Vec::new();
     tree::collect_ambiguities(&root, compiled, compiled.main, &mut ambiguities);
     let recovered = tree
-        .first_recovery()
+        .recovery_diagnostic()?
         .filter(|_| options.accept_recovery != Some(true))
-        .map(|recovery| ParseRejection::positioned("recovered", bytes, recovery.start()));
+        .map(|recovery| {
+            let offset = recovery["start"]
+                .as_u64()
+                .and_then(|offset| usize::try_from(offset).ok())
+                .unwrap_or_default();
+            let mut rejection = ParseRejection::positioned("recovered", bytes, offset);
+            if recovery.get("source").is_some() {
+                rejection.offset_semantics = Some("covering-source-spelling".to_owned());
+                rejection.diagnostics = Some(vec![recovery]);
+            }
+            rejection
+        });
     let rejection = grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
         .or(recovered)
         .or_else(|| {
@@ -674,5 +732,6 @@ fn parse_program(
         tree: Some(tree),
         ambiguities,
         rejection,
+        source_planes: selection_sources.borrow().definitions(),
     })
 }

@@ -112,6 +112,8 @@ pub enum SyntaxTree {
         root: Box<Self>,
         /// Optional inspectable selection policy, origin metadata and witnesses.
         selection: Option<Box<super::grammar_selection::GrammarSelection>>,
+        /// Full original host CST children for an explicitly mapped source.
+        source_children: Option<Vec<Self>>,
     },
 }
 
@@ -146,9 +148,128 @@ impl SyntaxTree {
         match self {
             Self::Error { .. } | Self::Missing { .. } => Some(self),
             Self::Node { children, .. } => children.iter().find_map(Self::first_recovery),
-            Self::Embed { root, .. } => root.first_recovery(),
+            Self::Embed {
+                root,
+                source_children,
+                ..
+            } => source_children
+                .as_ref()
+                .and_then(|children| children.iter().find_map(Self::first_recovery))
+                .or_else(|| root.first_recovery()),
             Self::Token { .. } => None,
         }
+    }
+
+    pub(super) fn recovery_diagnostic(
+        &self,
+    ) -> Result<Option<serde_json::Value>, super::GrammarRuntimeError> {
+        use serde_json::json;
+        let data = match self {
+            Self::Error {
+                start,
+                end,
+                text,
+                reason,
+            } => {
+                let mut value = json!({"type":"error","start":start,"end":end});
+                match text {
+                    LeafText::Text(text) => value["text"] = json!(text),
+                    LeafText::Hex(hex) => {
+                        value["text"] = serde_json::Value::Null;
+                        value["hex"] = json!(hex);
+                    }
+                }
+                if let Some(reason) = reason {
+                    value["reason"] = json!(reason);
+                }
+                return Ok(Some(value));
+            }
+            Self::Missing {
+                start,
+                end,
+                kind,
+                literal,
+            } => {
+                let mut value = json!({"type":"missing","kind":kind,"start":start,"end":end});
+                if *literal {
+                    value["literal"] = json!(true);
+                }
+                return Ok(Some(value));
+            }
+            Self::Node { children, .. } => {
+                for child in children {
+                    if let Some(recovery) = child.recovery_diagnostic()? {
+                        return Ok(Some(recovery));
+                    }
+                }
+                return Ok(None);
+            }
+            Self::Token { .. } => return Ok(None),
+            Self::Embed {
+                root,
+                source_children,
+                selection,
+                ..
+            } => {
+                if let Some(children) = source_children {
+                    for child in children {
+                        if let Some(recovery) = child.recovery_diagnostic()? {
+                            return Ok(Some(recovery));
+                        }
+                    }
+                }
+                let Some(recovery) = root.recovery_diagnostic()? else {
+                    return Ok(None);
+                };
+                if source_children.is_none() {
+                    return Ok(Some(recovery));
+                }
+                let mapping = selection
+                    .as_ref()
+                    .and_then(|selection| selection.source_mapping.as_ref())
+                    .ok_or_else(|| super::GrammarRuntimeError {
+                        reason: "selection",
+                        message: "a mapped grammar has no source correspondence".to_owned(),
+                    })?;
+                (recovery, mapping)
+            }
+        };
+        let (mut recovery, mapping) = data;
+        let start = recovery["start"]
+            .as_u64()
+            .and_then(|value| usize::try_from(value).ok());
+        let end = recovery["end"]
+            .as_u64()
+            .and_then(|value| usize::try_from(value).ok());
+        let cover = start
+            .zip(end)
+            .and_then(|(start, end)| {
+                super::selection_source_mapping::mapped_cover(mapping, start, end)
+            })
+            .ok_or_else(|| super::GrammarRuntimeError {
+                reason: "selection",
+                message: "a grammar mapping has no source cover for this decoded range".to_owned(),
+            })?;
+        if recovery.get("source").is_none() {
+            recovery["source"] = mapping["output"].clone();
+        }
+        if recovery.get("sourceStart").is_none() {
+            recovery["sourceStart"] = recovery["start"].clone();
+        }
+        if recovery.get("sourceEnd").is_none() {
+            recovery["sourceEnd"] = recovery["end"].clone();
+        }
+        let mut route = recovery["sourceRoute"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        route.push(json!({"output":mapping["output"],"outputStart":start,"outputEnd":end,
+            "input":mapping["input"],"inputStart":cover[1],"inputEnd":cover[2],"displayAnchor":cover[0]}));
+        recovery["start"] = json!(cover[1]);
+        recovery["end"] = json!(cover[2]);
+        recovery["sourceRoute"] = json!(route);
+        recovery["offsetSemantics"] = json!("covering-source-spelling");
+        Ok(Some(recovery))
     }
 
     /// The compact text rendering: `(kind {attributes} child ...)` for a
@@ -243,10 +364,32 @@ impl SyntaxTree {
                 start,
                 end,
                 root,
-                ..
+                selection,
+                source_children,
             } => {
                 let _ = write!(out, "(EMBED {}@{start}..{end} ", render_name(language));
-                root.render_into(out);
+                if let Some(children) = source_children {
+                    out.push_str("(SOURCE ");
+                    for (index, child) in children.iter().enumerate() {
+                        if index > 0 {
+                            out.push(' ');
+                        }
+                        child.render_into(out);
+                    }
+                    let output = selection
+                        .as_ref()
+                        .and_then(|selection| selection.source_mapping.as_ref())
+                        .and_then(|mapping| mapping["output"].as_u64());
+                    if let Some(output) = output {
+                        let _ = write!(out, ") (DECODED {output} ");
+                        root.render_into(out);
+                        out.push(')');
+                    } else {
+                        out.push_str(") (INVALID-SOURCE-MAPPING)");
+                    }
+                } else {
+                    root.render_into(out);
+                }
                 out.push(')');
             }
         }
@@ -337,8 +480,22 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
             end: node.end,
             root: Box::new(node.root.as_ref().map_or_else(
                 || error_tree(bytes, node.start, node.end, None),
-                |root| public_tree(root, bytes),
+                |root| {
+                    public_tree(
+                        root,
+                        node.selection
+                            .as_ref()
+                            .and_then(|selection| selection.source_bytes.as_deref())
+                            .unwrap_or(bytes),
+                    )
+                },
             )),
+            source_children: node.source_children.as_ref().map(|children| {
+                children
+                    .iter()
+                    .map(|child| public_tree(child, bytes))
+                    .collect()
+            }),
             selection: node.selection.as_deref().map(|selection| {
                 Box::new(super::grammar_selection::public_selection(selection, bytes))
             }),
@@ -371,6 +528,12 @@ pub struct Ambiguity {
     pub end: usize,
     /// Explicit accepted grammar alternatives for a language selection.
     pub languages: Option<Vec<String>>,
+    /// Original decoded source coordinates and covering physical route.
+    pub source: Option<usize>,
+    pub source_start: Option<usize>,
+    pub source_end: Option<usize>,
+    pub source_route: Option<Vec<serde_json::Value>>,
+    pub offset_semantics: Option<String>,
 }
 
 /// The ambiguous nodes of an executor tree, in preorder, outside the declared conflicts.
@@ -399,6 +562,11 @@ pub(super) fn collect_ambiguities(
                     start: node.start,
                     end: node.end,
                     languages: None,
+                    source: None,
+                    source_start: None,
+                    source_end: None,
+                    source_route: None,
+                    offset_semantics: None,
                 });
             }
             for child in node.children.iter() {
@@ -423,14 +591,60 @@ pub(super) fn collect_ambiguities(
                             })
                             .collect(),
                     ),
+                    source: None,
+                    source_start: None,
+                    source_end: None,
+                    source_route: None,
+                    offset_semantics: None,
                 });
             }
+            if let Some(children) = &node.source_children {
+                for child in children.iter() {
+                    collect_ambiguities(child, compiled, program, found);
+                }
+            }
+            let mut decoded = Vec::new();
+            let interpreted = if node.source_children.is_some() {
+                &mut decoded
+            } else {
+                &mut *found
+            };
             if let Some(root) = &node.root {
-                collect_ambiguities(root, compiled, node.program, found);
+                collect_ambiguities(root, compiled, node.program, interpreted);
             }
             if let Some(selection) = &node.selection {
                 for alternative in &selection.alternatives {
-                    collect_ambiguities(&alternative.root, compiled, alternative.program, found);
+                    collect_ambiguities(
+                        &alternative.root,
+                        compiled,
+                        alternative.program,
+                        interpreted,
+                    );
+                }
+                if let Some(mapping) = &selection.source_mapping {
+                    for mut ambiguity in decoded {
+                        if let Some(cover) = super::selection_source_mapping::mapped_cover(
+                            mapping,
+                            ambiguity.start,
+                            ambiguity.end,
+                        ) {
+                            ambiguity.source.get_or_insert_with(|| {
+                                mapping["output"]
+                                    .as_u64()
+                                    .and_then(|source| usize::try_from(source).ok())
+                                    .unwrap_or_default()
+                            });
+                            ambiguity.source_start.get_or_insert(ambiguity.start);
+                            ambiguity.source_end.get_or_insert(ambiguity.end);
+                            ambiguity.source_route.get_or_insert_with(Vec::new).push(serde_json::json!({"output":mapping["output"],"outputStart":ambiguity.start,"outputEnd":ambiguity.end,
+                                "input":mapping["input"],"inputStart":cover[1],"inputEnd":cover[2],"displayAnchor":cover[0]}));
+                            ambiguity.start = cover[1];
+                            ambiguity.end = cover[2];
+                            ambiguity.offset_semantics =
+                                Some("covering-source-spelling".to_owned());
+                        }
+                        found.push(ambiguity);
+                    }
                 }
             }
         }

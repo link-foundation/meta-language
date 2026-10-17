@@ -145,7 +145,7 @@ pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
     GrammarRuntimeError, GrammarSelection, GrammarSelectionAlternative, LeafText, OperationValue,
     ParseOutcome, ParseRejection, ParseWithGrammarError, SyntaxAttributes, SyntaxTree,
-    compile_feature_grammar, parse_with_grammar,
+    check_grammar_selection_mapped_tree, compile_feature_grammar, parse_with_grammar,
 };
 pub use grammar::interchange::{
     GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,

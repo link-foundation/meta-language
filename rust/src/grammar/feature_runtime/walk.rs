@@ -281,6 +281,14 @@ fn same_output_tree(a: &Rc<Tree>, b: &Rc<Tree>, memo: &TreeMemo) -> bool {
 }
 
 fn same_embedding(a: &Tree, b: &Tree, memo: &TreeMemo) -> bool {
+    let physical = match (&a.source_children, &b.source_children) {
+        (None, None) => true,
+        (Some(a), Some(b)) => same_output_with(a, b, memo),
+        _ => false,
+    };
+    if !physical {
+        return false;
+    }
     let roots = match (&a.root, &b.root) {
         (None, None) => true,
         (Some(a), Some(b)) => same_output_tree(a, b, memo),
@@ -295,24 +303,30 @@ fn same_embedding(a: &Tree, b: &Tree, memo: &TreeMemo) -> bool {
 }
 
 fn same_selection(a: &SelectionMetadata, b: &SelectionMetadata, memo: &TreeMemo) -> bool {
-    grammar_selection_equality_fields(false)
-        .iter()
-        .all(|field| match field.as_str() {
-            "mode" => a.mode == b.mode,
-            "mapping" => a.mapping == b.mapping,
-            "start" => a.start == b.start,
-            "end" => a.end == b.end,
-            "candidates" => {
-                a.candidates.len() == b.candidates.len()
-                    && a.candidates
-                        .iter()
-                        .zip(&b.candidates)
-                        .all(|(a, b)| same_tree_metadata(a, b))
-            }
-            "provenance" => same_tree_metadata(&a.provenance, &b.provenance),
-            "ambiguous" => a.ambiguous == b.ambiguous,
-            _ => false,
-        })
+    let source_mapping = match (&a.source_mapping, &b.source_mapping) {
+        (None, None) => true,
+        (Some(a), Some(b)) => same_tree_metadata(a, b),
+        _ => false,
+    };
+    source_mapping
+        && grammar_selection_equality_fields(false)
+            .iter()
+            .all(|field| match field.as_str() {
+                "mode" => a.mode == b.mode,
+                "mapping" => a.mapping == b.mapping,
+                "start" => a.start == b.start,
+                "end" => a.end == b.end,
+                "candidates" => {
+                    a.candidates.len() == b.candidates.len()
+                        && a.candidates
+                            .iter()
+                            .zip(&b.candidates)
+                            .all(|(a, b)| same_tree_metadata(a, b))
+                }
+                "provenance" => same_tree_metadata(&a.provenance, &b.provenance),
+                "ambiguous" => a.ambiguous == b.ambiguous,
+                _ => false,
+            })
         && a.alternatives.len() == b.alternatives.len()
         && a.alternatives
             .iter()

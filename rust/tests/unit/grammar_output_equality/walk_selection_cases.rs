@@ -43,6 +43,8 @@ fn selection_equality_embedding() -> Tree {
             .to_vec(),
         provenance: provenance("first"),
         ambiguous: false,
+        source_mapping: None,
+        source_bytes: None,
         alternatives: ["second", "third"]
             .map(|language| AcceptedSelection {
                 language: language.into(),
