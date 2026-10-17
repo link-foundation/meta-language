@@ -376,15 +376,15 @@ fn create_global_concept_space_in(
     sources: &[Value],
     options: &GlobalConceptOptions,
 ) -> Result<(Value, Graph, BTreeMap<String, usize>), String> {
-    let default_records: Value = crate::structured_data_links::read_structured_data_lino(
-        include_str!("data/concept-records.lino"),
-    )?;
-    let records = array(
-        options
-            .records
-            .as_ref()
-            .unwrap_or_else(|| &default_records["concepts"]),
-    )?;
+    let default_records;
+    let records = array(if let Some(records) = options.records.as_ref() {
+        records
+    } else {
+        default_records = crate::structured_data_links::read_structured_data_lino(include_str!(
+            "data/concept-records.lino"
+        ))?;
+        &default_records["concepts"]
+    })?;
     let catalog: Value = crate::structured_data_links::read_structured_data_lino(include_str!(
         "data/language-catalog.lino"
     ))?;
