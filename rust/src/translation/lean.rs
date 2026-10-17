@@ -803,6 +803,7 @@ fn bind_or_ctor(head: PatternHead, token: &Token) -> SPattern {
 const fn param(name: String, ty: Type) -> SParam {
     SParam {
         name,
+        optional: false,
         default_value: None,
         ty: Some(ty),
         span: None,

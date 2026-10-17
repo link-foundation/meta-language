@@ -526,6 +526,9 @@ pub struct Guard {
 #[serde(rename_all = "camelCase")]
 pub struct SParam {
     pub name: String,
+    /// An omitted documented parameter passes its actual undefined default.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub optional: bool,
     #[serde(default, rename = "default", skip_serializing_if = "Option::is_none")]
     pub default_value: Option<SExpr>,
     #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]

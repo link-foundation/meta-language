@@ -192,6 +192,7 @@ impl Checker {
             for param in &item.params {
                 params.push(Param {
                     name: param.name.clone(),
+                    optional: param.optional,
                     ty: self.resolve_type(param.ty.as_ref(), path, item.span)?,
                     guard: param.guard.clone(),
                     default_value: param.default_value.clone(),

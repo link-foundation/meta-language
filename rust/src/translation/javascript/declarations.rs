@@ -210,6 +210,7 @@ impl JavaScriptParser {
         };
         let range = Span::new(doc.start, doc.end);
         let mut params: Vec<(String, String)> = Vec::new();
+        let mut optional_params = HashSet::new();
         let mut returns = None;
         for tag in jsdoc_tags(doc)? {
             if tag.tag == "param" {
@@ -222,6 +223,9 @@ impl JavaScriptParser {
                 if params.iter().any(|(param, _)| *param == name) {
                     return Err(type_error(format!("duplicate @param {name}"), Some(range)));
                 }
+                if tag.optional {
+                    optional_params.insert(name.clone());
+                }
                 params.push((name, ty));
             } else if tag.tag == "returns" || tag.tag == "return" {
                 returns = tag.ty;
@@ -229,6 +233,7 @@ impl JavaScriptParser {
         }
         Ok(Some(JsDoc {
             params,
+            optional_params,
             returns,
             range,
         }))
@@ -487,18 +492,42 @@ impl JavaScriptParser {
         let mut params = Vec::new();
         for (token, default_value) in tokens {
             reserved(token)?;
+            let optional = default_value.is_none()
+                && doc
+                    .as_ref()
+                    .is_some_and(|doc| doc.optional_params.contains(&token.value));
             let text = doc.as_ref().and_then(|doc| {
                 doc.params
                     .iter()
                     .find(|(param, _)| *param == token.value)
                     .map(|(_, text)| (text.clone(), doc.range))
             });
+            let declared = text
+                .map(|(text, range)| self.ty(&text, range))
+                .transpose()?;
             params.push(SParam {
                 name: token.value.clone(),
-                default_value: default_value.clone(),
-                ty: text
-                    .map(|(text, range)| self.ty(&text, range))
-                    .transpose()?,
+                optional,
+                default_value: default_value.clone().or_else(|| {
+                    optional.then(|| {
+                        SExpr::new(
+                            super::SNode::None {
+                                absence: "undefined".to_owned(),
+                            },
+                            Some(span(token, token)),
+                        )
+                    })
+                }),
+                ty: declared.map(|declared| {
+                    if optional {
+                        Type::Option {
+                            element: Box::new(declared),
+                            absence: "undefined".to_owned(),
+                        }
+                    } else {
+                        declared
+                    }
+                }),
                 span: Some(span(token, token)),
                 guard: None,
                 rocq_type: None,

@@ -194,6 +194,7 @@ mod translation_javascript_callables;
 mod translation_javascript_frontend;
 mod translation_javascript_line_terminators;
 mod translation_javascript_loops;
+mod translation_javascript_optional_parameters;
 mod translation_javascript_products;
 mod translation_javascript_scoped_binding_emission;
 mod translation_javascript_value_switch;

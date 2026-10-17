@@ -211,6 +211,7 @@ impl Threader<'_> {
                     let mut params = function.params.clone();
                     params.push(Param {
                         name: out.to_owned(),
+                        optional: false,
                         ty: Type::Output,
                         guard: None,
                         default_value: None,

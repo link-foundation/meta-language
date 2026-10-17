@@ -98,6 +98,7 @@ impl RustParser {
             source_params.push(self.origins.current_type.clone());
             params.push(SParam {
                 name: param_name,
+                optional: false,
                 default_value: None,
                 ty: Some(ty),
                 span: span(&param_token, self.cursor.peek()),

@@ -17,6 +17,7 @@ pub(super) fn project_function(function: &FnDecl, program: &Program) -> Result<S
             .map(|parameter| -> Result<SParam> {
                 Ok(SParam {
                     name: parameter.name.clone(),
+                    optional: parameter.optional,
                     ty: Some(project_type(&parameter.ty, program)?),
                     default_value: parameter.default_value.clone(),
                     guard: parameter.guard.clone(),

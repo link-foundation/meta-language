@@ -212,6 +212,7 @@ struct Assertion {
 /// A `JSDoc` block's `@param` types, in order, and its `@returns` type.
 struct JsDoc {
     params: Vec<(String, String)>,
+    optional_params: HashSet<String>,
     returns: Option<String>,
     range: Span,
 }
@@ -221,6 +222,7 @@ struct JsDocTag {
     tag: String,
     ty: Option<String>,
     name: Option<String>,
+    optional: bool,
 }
 
 /// Function-body statements before lowering to one expression.
@@ -528,6 +530,10 @@ fn jsdoc_tags(comment: &Comment) -> Result<Vec<JsDocTag>> {
             tag,
             ty,
             name: jsdoc_name(&text[index.min(text.len())..]),
+            optional: text[index.min(text.len())..]
+                .iter()
+                .find(|&&ch| !u16::try_from(u32::from(ch)).is_ok_and(is_js_space))
+                == Some(&'['),
         });
         at = index;
     }

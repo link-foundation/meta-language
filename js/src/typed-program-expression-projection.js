@@ -57,12 +57,16 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     else if (mode === 'declaration-path') result[target] = projectLinkedProgramDeclarationPath(child, declarations, rootedNamespace);
     else if (mode === 'function-path') {
       const declaration=declarations.get(child);
-      const qualifiedFunction=declaration?.k==='fn'&&Array.isArray(declaration.modulePath)&&declaration.modulePath.length>0;
-      let path=rootedNamespace||qualifiedFunction ? projectLinkedProgramDeclarationPath(child, declarations, rootedNamespace) : [child];
+      let path=[child];
       if(declaration?.sourceLoop?.continuation!==undefined){
         if(declaration.k!=='fn'||declaration.fullName!==child)throw new TypeError('a projected continuation must target its actual declaration identity');
         const proof=checkRustScalarLoopProof(declaration,declaration.sourceLoop.language,child);
         path=[proof.continuation.root,...proof.continuation.path];
+      }else if(declaration?.k==='fn'){
+        if(declaration.fullName!==child)throw new TypeError('a projected function must target its actual declaration identity');
+        path=projectLinkedProgramDeclarationPath(child,declarations,true);
+      }else if(rootedNamespace){
+        path=projectLinkedProgramDeclarationPath(child,declarations,true);
       }
       result[target]={k:'name',path};
     }

@@ -302,6 +302,7 @@ impl JavaScriptParser {
             .0
             .iter()
             .map(|entry| SParam {
+                optional: false,
                 name: facts
                     .value(entry[0])
                     .and_then(Value::as_str)

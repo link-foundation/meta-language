@@ -18,6 +18,9 @@ pub struct Ctor {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Param {
     pub name: String,
+    /// Retained presence metadata for an optional JavaScript parameter.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub optional: bool,
     #[serde(rename = "type")]
     pub ty: Type,
     /// A JavaScript parameter guarded to the naturals.

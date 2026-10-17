@@ -160,11 +160,25 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     std::iter::once(Value::String(continuation.root.clone()))
                         .chain(continuation.path.iter().cloned().map(Value::String))
                         .collect()
-                } else if owns_type_namespace(program)
-                    || child.as_str().and_then(|name| program.declaration(name)).is_some_and(
-                        |declaration| matches!(declaration, Decl::Fn(function) if !function.module_path.is_empty()),
-                    )
+                } else if let Some(Decl::Fn(function)) =
+                    child.as_str().and_then(|name| program.declaration(name))
                 {
+                    let name = child.as_str().unwrap();
+                    let actual = function
+                        .module_path
+                        .iter()
+                        .cloned()
+                        .chain(std::iter::once(function.name.clone()))
+                        .collect::<Vec<_>>();
+                    if function.full_name != name || actual.join(".") != name {
+                        return Err(error(
+                            "a projected function must target its actual declaration identity",
+                        ));
+                    }
+                    std::iter::once(Value::String("crate".to_owned()))
+                        .chain(actual.into_iter().map(Value::String))
+                        .collect()
+                } else if owns_type_namespace(program) {
                     project_declaration_path(child.as_str().unwrap_or_default(), program)?
                         .into_iter()
                         .map(Value::String)
