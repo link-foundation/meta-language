@@ -166,21 +166,68 @@ fn standalone_wrappers_and_counterfeit_result_or_child_types_cannot_pass_full_re
             }
         });
         assert_eq!(edits, 1);
-        let failure = encode_typed_program_links(&program)
-            .unwrap_err()
-            .to_string();
         if mode == 0 {
-            // The original edit removes the Let that owns values, so this
-            // source-scope failure remains a negative after projection grows.
-            assert!(failure.contains("unknown name values"), "{failure}");
-        } else {
-            assert!(
-                failure.contains("derived number operand")
-                    || failure.contains("no surface projection"),
-                "{failure}"
-            );
+            // The original recursive edit preserves the Let that owns values.
+            // Whole-program rechecking therefore retains this valid operand;
+            // only the removed addition changes the observed result to five.
+            let Some(Decl::Fn(function)) = program.declaration("probe") else {
+                panic!("the original fixture retains its actual probe function")
+            };
+            assert!(matches!(&function.body.node, Node::Let { name, body, .. }
+                if name == "values" && matches!(&body.node, Node::NullishNumber { .. })));
+            let edited = encode_typed_program_links(&program).unwrap();
+            for saved in archives(&edited) {
+                assert_eq!(
+                    decode_typed_program_links(&saved, edited.root).unwrap(),
+                    program
+                );
+                assert_eq!(
+                    observe(
+                        &emit_typed_program_links(&saved, edited.root, "JavaScript")
+                            .unwrap()
+                            .code
+                    ),
+                    vec!["5".to_owned()]
+                );
+                assert!(emit_typed_program_links(&saved, edited.root, "Rust").is_ok());
+            }
+            continue;
         }
+        let failure = encode_typed_program_links(&program)
+            .err()
+            .unwrap_or_else(|| panic!("counterfeit numeric operand mode {mode} was accepted"))
+            .to_string();
+        assert!(
+            failure.contains("derived number operand") || failure.contains("no surface projection"),
+            "{failure}"
+        );
     }
+    // Match the existing JavaScript whole-body edit: removing the owning Let
+    // really does orphan values, and must preserve its source-scope refusal.
+    let mut orphan = decode_typed_program_links(&original.network, original.root).unwrap();
+    let mut replacement = None;
+    let mut edits = 0;
+    edit_program(&mut orphan, &mut |operation| {
+        let Node::Binary { left, .. } = &operation.node else {
+            unreachable!()
+        };
+        replacement = Some((**left).clone());
+        edits += 1;
+    });
+    assert_eq!(edits, 1);
+    let Some(Decl::Fn(function)) = orphan
+        .declarations
+        .iter_mut()
+        .find(|declaration| declaration.full_name() == "probe")
+    else {
+        panic!("the original fixture retains its actual probe function")
+    };
+    function.body = replacement.unwrap();
+    let failure = encode_typed_program_links(&orphan)
+        .err()
+        .unwrap_or_else(|| panic!("a whole-body numeric operand with orphaned values was accepted"))
+        .to_string();
+    assert!(failure.contains("unknown name values"), "{failure}");
     let bound = meta_language::create_typed_program_links(
         "/** @param {number[]} values @returns {number} */ function probe(values){return values[0]+2;}console.log(probe([5]));",
         "JavaScript",
