@@ -675,6 +675,10 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-embedded-region-rules.mjs --native --check
 
+      - name: Check generated grammar selection field range rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        run: node js/scripts/generate-grammar-selection-field-range-rules.mjs --native --check
+
       - name: Check the generated Rust source indirection rules against JavaScript
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-rust-indirection-rules.mjs --check

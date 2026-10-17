@@ -1170,6 +1170,9 @@ const NATIVE_ADAPTER_REPAIR_PACKAGE_STEPS = [
   ['Check generated embedded region rules against JavaScript',
     'node js/scripts/generate-embedded-region-rules.mjs --native --check',
     '10ee7b85b60d89b5ab2977e6a84f8dbe04ebff0208e66e10da6e364f9f1def8e', 'generated'],
+  ['Check generated grammar selection field range rules against JavaScript',
+    'node js/scripts/generate-grammar-selection-field-range-rules.mjs --native --check',
+    'ab1060c3befeaf68317967286471424987545c1929c96605665b572cbaa5b412', 'generated'],
 ];
 
 // Parameter-default generation adds one exact gate without changing an earlier freeze.
