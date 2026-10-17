@@ -198,8 +198,8 @@ function sameOutput(a, b) {
 // has the preferred token, -1 when `existing` has, 0 when neither (a pair
 // without ranks that ends alike but differs in kind, or every leaf alike).
 function preferredTokens(result, existing, tokens) {
-  const left = [[result.children, 0]];
-  const right = [[existing.children, 0]];
+  const left = [{ part: partOf(result) }];
+  const right = [{ part: partOf(existing) }];
   // The trivia each side skipped since the last leaf both share.
   let skipped = [[], []];
   // Where one parse has a leaf alone and the other a node that begins with
@@ -223,22 +223,54 @@ function preferredTokens(result, existing, tokens) {
   // comment of a lower precedence).
   const covers = (leaf, trivia) => trivia.some((item) => item.start === leaf.start
     && ((item.kind === null || item.kind === leaf.kind) ? leaf.end >= item.end : (tokens !== null && item.type === 'token' && tokenConflict(leaf, item, tokens) > 0)));
+  const openPart = (stack) => {
+    const { part } = stack.pop();
+    if (!Array.isArray(part) && part.left !== null && part.left !== undefined) {
+      stack.push({ part: part.right }, { part: part.left });
+      return;
+    }
+    const children = Array.isArray(part) ? part : part.flat;
+    for (let index = children.length - 1; index >= 0; index -= 1) stack.push({ item: children[index] });
+  };
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
-      if (top[1] < top[0].length) return top[0][top[1]];
-      stack.pop();
+      if (top.item !== undefined) return top.item;
+      openPart(stack);
     }
     return null;
   };
-  const skip = (stack) => { stack[stack.length - 1][1] += 1; };
+  const skip = (stack) => { stack.pop(); };
   const enter = (stack, node) => {
     skip(stack);
-    stack.push([node.children, 0]);
+    stack.push({ part: partOf(node) });
   };
   for (;;) {
-    const a = peek(left);
-    const b = peek(right);
+    const leftPart = left[left.length - 1]?.part;
+    const rightPart = right[right.length - 1]?.part;
+    // Shared prefixes contain no new conflict. A pending lookahead must
+    // still visit their leaves until its first token decides the boundary.
+    if (leftPart !== undefined && rightPart !== undefined && (pending === Infinity || decided !== Infinity)) {
+      let shared = leftPart === rightPart;
+      if (!shared) {
+        const leftArray = Array.isArray(leftPart) ? leftPart : leftPart.flat;
+        const rightArray = Array.isArray(rightPart) ? rightPart : rightPart.flat;
+        shared = Array.isArray(leftArray) && leftArray === rightArray;
+      }
+      if (shared) {
+        if (leftPart.length > 0) skipped = [[], []];
+        left.pop();
+        right.pop();
+        continue;
+      }
+    }
+    if (leftPart !== undefined || rightPart !== undefined) {
+      if (leftPart !== undefined && (rightPart === undefined || !(rightPart.length > leftPart.length))) openPart(left);
+      if (rightPart !== undefined && (leftPart === undefined || !(leftPart.length > rightPart.length))) openPart(right);
+      continue;
+    }
+    const a = left[left.length - 1]?.item ?? null;
+    const b = right[right.length - 1]?.item ?? null;
     if (a === null || b === null) {
       // One parse ends where the other goes on with a token of the external
       // scanner, which then scans it, of no width, in the state both share
@@ -1597,12 +1629,32 @@ function oneLeaf(leaf, other) {
     && (leaf.kind === other.kind || (leaf.lexed !== undefined && leaf.lexed === other.lexed));
 }
 
-// The leaves under `children` that are not white space, last first.
+// Direct children in their exact order, without materializing joined prefixes.
+// Retained links still expose shared parts after an owner has read its array.
+function* walkChildParts(children, backward = false) {
+  const pending = [children];
+  while (pending.length > 0) {
+    const part = pending.pop();
+    if (Array.isArray(part)) {
+      if (backward) for (let index = part.length - 1; index >= 0; index -= 1) yield part[index];
+      else yield* part;
+    } else if (part.left != null && part.right != null) {
+      if (backward) pending.push(part.left, part.right);
+      else pending.push(part.right, part.left);
+    } else if (part.flat) pending.push(part.flat);
+  }
+}
+
+function firstMeaningfulChild(children) {
+  for (const child of walkChildParts(children)) if (!isTrivia(child)) return child;
+  return undefined;
+}
+
+// The leaves under a child part that are not white space, last first.
 function* leavesBackward(children) {
-  for (let index = children.length - 1; index >= 0; index -= 1) {
-    const child = children[index];
+  for (const child of walkChildParts(children, true)) {
     if (isTrivia(child)) continue;
-    if (child.type === 'node') yield* leavesBackward(child.children);
+    if (child.type === 'node') yield* leavesBackward(partOf(child));
     else yield child;
   }
 }
@@ -1614,17 +1666,22 @@ function* leavesBackward(children) {
 function lastRepaired(children) {
   let skipped = false;
   for (const leaf of leavesBackward(children)) {
-    if (!widthless(leaf)) return skipped ? leaf : children.findLast((child) => !isSeparator(child));
+    if (!widthless(leaf)) {
+      if (skipped) return leaf;
+      for (const child of walkChildParts(children, true)) if (!isSeparator(child)) return child;
+      return undefined;
+    }
     skipped = true;
   }
-  return skipped ? undefined : children.findLast((child) => !isSeparator(child));
+  if (!skipped) for (const child of walkChildParts(children, true)) if (!isSeparator(child)) return child;
+  return undefined;
 }
 
 // Whether the first leaf of `result` that is not white space is a token the
 // external scanner scanned of no width.
 function startsWidthless(result) {
-  let first = result.children.find((child) => !isTrivia(child));
-  while (first?.type === 'node') first = first.children.find((child) => !isTrivia(child));
+  let first = firstMeaningfulChild(partOf(result));
+  while (first?.type === 'node') first = firstMeaningfulChild(partOf(first));
   return first !== undefined && widthless(first);
 }
 
@@ -1632,7 +1689,7 @@ function startsWidthless(result) {
 // its lexer lexed, not one the external scanner scanned of no width.
 function lexedPast(result, last, baseCost) {
   let after = null;
-  for (const leaf of leavesBackward(result.children)) {
+  for (const leaf of leavesBackward(partOf(result))) {
     if (!acceptScannerPreemptionBoundary(widthless(leaf) && result.cost === baseCost, leaf.start === last.end)) return false;
     const action = readScannerContinuationAction(widthless(leaf), leaf.start >= last.end, leaf.end > last.end);
     if (action === 1) after = leaf;
@@ -1658,25 +1715,111 @@ function lexedPast(result, last, baseCost) {
 // Null when none is; `globalThis.__preemptTrace`, when set, is called with
 // each pair.
 function preempted(continued) {
-  let pruned = null;
-  for (const [left, rights] of continued) {
+  // A trace may mutate a later candidate. Keep its original call order and
+  // read-after-write behavior instead of indexing a changing input.
+  if ('__preemptTrace' in globalThis) {
+    let pruned = null;
+    for (const [left, rights] of continued) {
+      if (!rights.some(startsWidthless)) continue;
+      let last;
+      for (const leaf of leavesBackward(partOf(left))) {
+        if (!widthless(leaf)) {
+          last = leaf;
+          break;
+        }
+      }
+      if (last === undefined) continue;
+      for (const [other] of continued) {
+        if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last, left.cost)) {
+          (pruned ??= new Set()).add(other);
+          globalThis.__preemptTrace?.(left, other);
+        }
+      }
+    }
+    return pruned;
+  }
+  const index = new Map();
+  let candidates = 0;
+  for (let order = 0; order < continued.length; order += 1) {
+    const [left, rights] = continued[order];
     if (!rights.some(startsWidthless)) continue;
     let last;
-    for (const leaf of leavesBackward(left.children)) {
+    for (const leaf of leavesBackward(partOf(left))) {
       if (!widthless(leaf)) {
         last = leaf;
         break;
       }
     }
     if (last === undefined) continue;
-    for (const [other] of continued) {
-      if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last, left.cost)) {
-        (pruned ??= new Set()).add(other);
-        globalThis.__preemptTrace?.(left, other);
-      }
+    const slot = readScannerPreemptionLeafIndex(index, left.state.key, last, true);
+    const candidate = { left, last, order };
+    const identities = [[slot.kinds, last.kind]];
+    if (last.lexed !== undefined) identities.push([slot.origins, last.lexed]);
+    for (const [table, identity] of identities) {
+      let rows = table.get(identity);
+      if (!rows) table.set(identity, rows = []);
+      rows.push(candidate);
     }
+    candidates += 1;
   }
-  return pruned;
+  if (candidates === 0) return null;
+  const matches = new Map();
+  for (let otherOrder = 0; otherOrder < continued.length; otherOrder += 1) {
+    const [other] = continued[otherOrder];
+    if (matches.has(other)) continue;
+    if (!index.has(other.state.key)) continue;
+    let chosen = null;
+    let hasFollowing = false;
+    let firstFollowing = Infinity;
+    let endFollowing = Infinity;
+    const virtualStarts = new Set();
+    for (const leaf of leavesBackward(partOf(other))) {
+      if (widthless(leaf)) {
+        virtualStarts.add(leaf.start);
+        continue;
+      }
+      // Every real leaf after the matching token must be a continuation,
+      // including in user grammars whose leaf spans overlap or run backwards.
+      if (hasFollowing && firstFollowing >= leaf.end && endFollowing > leaf.end) {
+        const slot = readScannerPreemptionLeafIndex(index, other.state.key, leaf, false);
+        if (slot) for (const rows of [slot.kinds.get(leaf.kind), leaf.lexed === undefined ? undefined : slot.origins.get(leaf.lexed)]) {
+          if (!rows) continue;
+          for (const candidate of rows) {
+            const { left, last, order } = candidate;
+            if ((chosen === null || order < chosen.order)
+              && other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost
+              && oneLeaf(leaf, last)
+              && acceptScannerPreemptionBoundary(other.cost === left.cost, virtualStarts.has(last.end))) {
+              chosen = candidate;
+            }
+          }
+        }
+      }
+      hasFollowing = true;
+      firstFollowing = Math.min(firstFollowing, leaf.start);
+      endFollowing = Math.min(endFollowing, leaf.end);
+      if (chosen?.order === 0) break;
+    }
+    if (chosen !== null) matches.set(other, { order: chosen.order, otherOrder, other });
+  }
+  if (matches.size === 0) return null;
+  // Preserve the original left-major insertion order of the identity set.
+  return new Set([...matches.values()].sort((a, b) => a.order - b.order || a.otherOrder - b.otherOrder).map(row => row.other));
+}
+
+function readScannerPreemptionLeafIndex(index, state, leaf, create) {
+  let current = index;
+  for (const key of [state, leaf.type, leaf.start]) {
+    let next = current.get(key);
+    if (next === undefined) {
+      if (!create) return null;
+      current.set(key, next = new Map());
+    }
+    current = next;
+  }
+  let slot = current.get(leaf.end);
+  if (slot === undefined && create) current.set(leaf.end, slot = { kinds: new Map(), origins: new Map() });
+  return slot ?? null;
 }
 
 // Whether two subtrees hold the same tokens: leaves of one span each, of one
@@ -1959,7 +2102,7 @@ function reducedBefore(short, progress, grammar) {
 function firstLeafStart(node) {
   let current = node;
   while (current.type === 'node') {
-    const first = current.children.find((child) => !isTrivia(child));
+    const first = firstMeaningfulChild(partOf(current));
     if (!first) return current.start;
     current = first;
   }
@@ -1972,17 +2115,27 @@ function firstLeafStart(node) {
 // n items cost O(n²) time and memory, as each iteration (and every prefix the
 // generalized repetition keeps) copied all the children before it. A join
 // instead links its two parts with their child count, and the children are
-// flattened, once, when they are first read; the links are then dropped. A
-// node built from a result shares its chain, so the nodes of the prefixes of
-// a repetition are not flattened either.
+// flattened, once, when they are first read. Retaining the links lets partial
+// walks still skip shared prefixes after an array was needed. A node built
+// from a result shares its chain, so repetition prefixes stay shared too.
 const CHAIN = Symbol('children chain');
 
+function readActiveChildChain(result) {
+  const chain = result[CHAIN];
+  if (!chain) return null;
+  const descriptor = Object.getOwnPropertyDescriptor(result, 'children');
+  // A spread may copy the symbol while replacing its materialized children.
+  // Only the actual lazy owner (or its symbol-only carrier) owns this chain.
+  return descriptor ? (descriptor.get === readChainChildren ? chain : null)
+    : ('children' in result ? null : chain);
+}
+
 function partOf(result) {
-  return result[CHAIN] ?? result.children;
+  return readActiveChildChain(result) ?? result.children;
 }
 
 function childCount(result) {
-  return result[CHAIN]?.length ?? result.children.length;
+  return readActiveChildChain(result)?.length ?? result.children.length;
 }
 
 function flattenChain(chain) {
@@ -1996,8 +2149,6 @@ function flattenChain(chain) {
     else pending.push(part.right, part.left);
   }
   chain.flat = flat;
-  chain.left = null;
-  chain.right = null;
   return flat;
 }
 
@@ -2009,7 +2160,7 @@ function readChainChildren() {
 
 // Gives `target` the children of `source`, shared and still unflattened.
 function shareChildren(target, source) {
-  const chain = source[CHAIN];
+  const chain = readActiveChildChain(source);
   if (!chain) {
     target.children = source.children;
     return target;
@@ -3020,7 +3171,7 @@ export class Executor {
   // another at the offset, up to the scanner's deepest indentation.
   continuation(item, left, inToken) {
     if (!this.repairPoints?.has(left.end)) return this.evaluate(item, left.end, left.state, inToken);
-    const last = lastRepaired(left.children);
+    const last = lastRepaired(partOf(left));
     if (last?.type !== 'missing') return this.evaluate(item, left.end, left.state, inToken);
     if (this.chained.has(left.end)) return this.quietly(() => this.evaluate(item, left.end, left.state, inToken));
     this.chained.add(left.end);
