@@ -18,7 +18,7 @@ pub fn accept_grammar_selection_mode(mode: &str) -> bool {
 /// Execute the complete checked source algorithm.
 #[must_use]
 pub fn accept_grammar_selection_mapping(mapping: &str) -> bool {
-    mapping == "identity"
+    (mapping == "identity") || (mapping == "json-string")
 }
 
 /// Execute the complete checked source algorithm.

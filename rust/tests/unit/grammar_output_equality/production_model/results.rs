@@ -166,6 +166,7 @@ pub(super) struct Tree {
     pub(super) root: Option<Rc<Self>>,
     pub(super) program: usize,
     pub(super) selection: Option<Rc<super::grammar_selection::SelectionMetadata>>,
+    pub(super) source_children: Option<Children>,
 }
 
 impl Tree {
@@ -203,6 +204,7 @@ impl Tree {
             root: None,
             program: 0,
             selection: None,
+            source_children: None,
         }
     }
 
@@ -270,6 +272,7 @@ const _: fn() = || {
             &value.root,
             &value.program,
             &value.selection,
+            &value.source_children,
         );
     };
     let _ = self::Tree::new;

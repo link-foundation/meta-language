@@ -21,6 +21,8 @@ pub(super) struct SelectionMetadata {
     pub(super) provenance: Value,
     pub(super) alternatives: Vec<AcceptedSelection>,
     pub(super) ambiguous: bool,
+    pub(super) source_mapping: Option<Value>,
+    pub(super) source_bytes: Option<Rc<[u8]>>,
 }
 // Bind every copied declaration without relaxing native lints.
 const _: fn() = || {
@@ -42,6 +44,8 @@ const _: fn() = || {
             &value.provenance,
             &value.alternatives,
             &value.ambiguous,
+            &value.source_mapping,
+            &value.source_bytes,
         );
     };
 };
