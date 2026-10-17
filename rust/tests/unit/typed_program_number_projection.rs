@@ -169,10 +169,50 @@ fn standalone_wrappers_and_counterfeit_result_or_child_types_cannot_pass_full_re
         let failure = encode_typed_program_links(&program)
             .unwrap_err()
             .to_string();
-        assert!(
-            failure.contains("derived number operand") || failure.contains("no surface projection"),
-            "{failure}"
-        );
+        if mode == 0 {
+            // The original edit removes the Let that owns values, so this
+            // source-scope failure remains a negative after projection grows.
+            assert!(failure.contains("unknown name values"), "{failure}");
+        } else {
+            assert!(
+                failure.contains("derived number operand")
+                    || failure.contains("no surface projection"),
+                "{failure}"
+            );
+        }
+    }
+    let bound = meta_language::create_typed_program_links(
+        "/** @param {number[]} values @returns {number} */ function probe(values){return values[0]+2;}console.log(probe([5]));",
+        "JavaScript",
+    )
+    .unwrap();
+    for network in archives(&bound) {
+        let mut program = decode_typed_program_links(&network, bound.root).unwrap();
+        let mut edits = 0;
+        edit_program(&mut program, &mut |operation| {
+            let Node::Binary { left, .. } = &operation.node else {
+                unreachable!()
+            };
+            *operation = (**left).clone();
+            edits += 1;
+        });
+        assert_eq!(edits, 1);
+        let edited = encode_typed_program_links(&program).unwrap();
+        for saved in archives(&edited) {
+            assert_eq!(
+                decode_typed_program_links(&saved, edited.root).unwrap(),
+                program
+            );
+            assert_eq!(
+                observe(
+                    &emit_typed_program_links(&saved, edited.root, "JavaScript")
+                        .unwrap()
+                        .code
+                ),
+                vec!["5".to_owned()]
+            );
+            assert!(emit_typed_program_links(&saved, edited.root, "Rust").is_ok());
+        }
     }
 }
 

@@ -18,18 +18,19 @@ pub(super) fn read_linked_program_number_operand<'a>(
     if value["k"].as_str() != Some("nullishNumber") {
         return Ok(value);
     }
+    if !accept_program_derived_number_operand(
+        parent["k"].as_str().unwrap_or_default(),
+        parent["op"].as_str().unwrap_or_default(),
+        field,
+    ) {
+        return Ok(value);
+    }
     let failure = || {
         error(
             "a linked derived number operand has inconsistent fields, types or arithmetic context",
         )
     };
-    if !accept_program_derived_number_operand(
-        parent["k"].as_str().unwrap_or_default(),
-        parent["op"].as_str().unwrap_or_default(),
-        field,
-    ) || !float_type(&parent["type"])
-        || !float_type(&parent["domain"])
-    {
+    if !float_type(&parent["type"]) || !float_type(&parent["domain"]) {
         return Err(failure());
     }
     let fields = value.as_object().ok_or_else(failure)?;
