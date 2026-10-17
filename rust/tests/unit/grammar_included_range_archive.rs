@@ -82,6 +82,55 @@ fn source_free_global_archives_execute_original_included_range_cst() {
                 .parse_tree(b"a+b", &options)
                 .unwrap();
         assert!(expected.ok);
+        let document: Value =
+            serde_json::from_str(&serialize_grammar(&sources[0].grammar)).unwrap();
+        assert!(sources[0].grammar.declarations().settling.is_none());
+        assert!(
+            space["sources"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|source| source["context"]["settling"].is_null())
+        );
+        let default_steps = json!(meta_language::grammar::default_settling("generalized"));
+        for settling in [None, Some(Value::Null), Some(default_steps)] {
+            let expected_settling = settling.clone().unwrap_or(Value::Null);
+            let mut changed = document.clone();
+            let declarations = changed
+                .as_object_mut()
+                .unwrap()
+                .entry("declarations")
+                .or_insert_with(|| json!({}))
+                .as_object_mut()
+                .unwrap();
+            if let Some(settling) = settling {
+                declarations.insert("settling".to_owned(), settling);
+            } else {
+                declarations.remove("settling");
+            }
+            let restored = deserialize_grammar(&changed.to_string()).unwrap();
+            assert_eq!(json!(restored.declarations().settling), expected_settling);
+            let actual = compile_feature_grammar(&restored, Some(&resolve), options.clone())
+                .unwrap()
+                .parse_tree(b"a+b", &options)
+                .unwrap();
+            assert!(actual.ok);
+            assert_eq!(
+                included_range_bundle(&actual),
+                included_range_bundle(&expected)
+            );
+        }
+        let mut empty = document;
+        empty
+            .as_object_mut()
+            .unwrap()
+            .entry("declarations")
+            .or_insert_with(|| json!({}))["settling"] = json!([]);
+        let empty = deserialize_grammar(&empty.to_string()).unwrap();
+        assert_eq!(empty.declarations().settling, Some(Vec::new()));
+        let error = compile_feature_grammar(&empty, Some(&resolve), options.clone()).unwrap_err();
+        assert_eq!(error.reason, "declaration");
+        assert_eq!(error.message, "the settling names no step");
         let archive = global_concept_space_to_links(&space).unwrap();
         sources.clear();
         for stored in included_range_stored(&json!({"archive":archive})) {

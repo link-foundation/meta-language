@@ -660,6 +660,7 @@ fn read_declarations(value: &Value) -> Result<GrammarDeclarations, GrammarImport
         matching: optional_string(value, "matching", what)?,
         settling: value
             .get("settling")
+            .filter(|steps| !steps.is_null())
             .map(|steps| strings(Some(steps), what))
             .transpose()?,
         imports: strings(value.get("imports"), what)?,
