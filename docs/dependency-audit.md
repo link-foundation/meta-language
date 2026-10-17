@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 175 | 174 | 1 | 0 |
+| Generators | 176 | 175 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 83 | 0 | 0 | 83 |
+| Published artifact contents | 85 | 0 | 0 | 85 |
 
 ## JavaScript engines
 
@@ -602,6 +602,7 @@ they are.
 | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `js/scripts/generate-grammar-selection-mapping-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-rules.mjs` | `js/scripts/generate-grammar-selection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-guarded-private-array-write-rules.mjs` | `js/scripts/generate-guarded-private-array-write-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-conformance.mjs` | `js/scripts/generate-issue-195-conformance.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-issue-195-generative.mjs` | `js/scripts/generate-issue-195-generative.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `js/scripts/generate-javascript-line-terminator-rules.mjs` | `script` |  | derived | current |  |
@@ -811,6 +812,8 @@ they are.
 | `src/data/grammar-selection-field-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/guarded-private-array-write-program.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/guarded-private-array-write-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-scoped-binding-emission.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-tag-context-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
