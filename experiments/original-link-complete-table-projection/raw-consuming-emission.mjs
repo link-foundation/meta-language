@@ -10,11 +10,26 @@ import {tokenize} from '../../js/src/translation/lexer.js';
 import {readRustLibraryItems} from '../../js/scripts/rust-library-packaging.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
+import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
 
-export const ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT = new URL('./data/raw-consuming-native-definitions.lino',import.meta.url);
+export const ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT = new URL('./data/raw-consuming-native-definitions.lino',import.meta.url);
+export const ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT = new URL('./data/raw-consuming-current-native-definitions.lino',import.meta.url);
+export const ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR = Object.freeze({
+  version:1,
+  original:Object.freeze({
+    file:'experiments/original-link-complete-table-projection/data/raw-consuming-native-definitions.lino',
+    revision:'410f51f086010fcfa895001f4f12b61700fbcfad',bytes:1801946,
+    sha256:'3c1793f7ce672a846e2fc480f20596e985b9528644748a8078cd170ef5ac81c8',
+  }),
+  currentArtifact:'data/raw-consuming-current-native-definitions.lino',
+  receiptRefresh:ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH,
+  // No archive difference has been observed. Only reviewed exact before/after
+  // textSha256 or binarySha256 rows may be added; every other field stays exact.
+  archiveChanges:Object.freeze([]),
+});
 const root = new URL('../../',import.meta.url);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
-const sourceArtifact = 'data/raw-consuming-native-definitions.lino';
+const sourceArtifact = ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR.currentArtifact;
 const maximumRecords = 1_000_000, maximumArchiveBytes = 64 * 1024 * 1024;
 const decisionFiles = Object.freeze([
   'experiments/original-link-complete-table-projection/raw-consuming-emission.mjs',
@@ -69,6 +84,52 @@ const totals = owners => ({cloneCalls:owners.reduce((sum,owner)=>sum+owner.clone
   appendCalls:owners.reduce((sum,owner)=>sum+owner.appendSites.length,0),
   consumingAppendBindings:owners.reduce((sum,owner)=>sum+owner.consumingAppendBindingSites.length,0)});
 
+/** Restore only the recorded provenance changes and authenticate the entire original artifact. */
+export function verifyOriginalLinkRawConsumingConservation(artifact,read=readFileSync) {
+  const successor=ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR, originalBytes=read(ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT);
+  assert.equal(originalBytes.length,successor.original.bytes,'the original consuming artifact byte count is immutable');
+  assert.equal(sha256(originalBytes),successor.original.sha256,'the complete original consuming artifact is immutable');
+  const original=readStructuredDataLino(originalBytes.toString('utf8'));
+  assert.deepEqual(artifact.predecessorConservation,successor,'the explicit consuming successor provenance is exact');
+  assert.deepEqual(artifact.decisionSources,decisionSources(read),'actual final-use decision sources changed');
+  assert.deepEqual(original.decisionSources.map(row=>row.file),decisionFiles,'the original decision-source inventory stays complete');
+  assert.equal(Object.hasOwn(original,'predecessorConservation'),false);
+  const inverse=structuredClone(artifact);
+  delete inverse.predecessorConservation;
+  inverse.decisionSources=structuredClone(original.decisionSources);
+  const refresh=successor.receiptRefresh, applicability=inverse.predecessor.proof.producerApplicability;
+  const originalApplicability=original.predecessor.proof.producerApplicability;
+  assert.equal(Object.hasOwn(originalApplicability,'receiptRefresh'),false);
+  assert.deepEqual(applicability.receiptRefresh,refresh,'the exact predecessor receipt refresh remains reachable');
+  delete applicability.receiptRefresh;
+  const positions=applicability.sources.flatMap((row,index)=>row.file===refresh.current.file?[index]:[]);
+  const originalPositions=originalApplicability.sources.flatMap((row,index)=>row.file===refresh.previous.file?[index]:[]);
+  assert.equal(positions.length,1,'only one exact predecessor artifact descriptor is replaced');
+  assert.deepEqual(positions,originalPositions,'the predecessor artifact descriptor retains its original position');
+  assert.deepEqual(applicability.sources[positions[0]],refresh.current);
+  assert.deepEqual(originalApplicability.sources[positions[0]],refresh.previous);
+  applicability.sources[positions[0]]=structuredClone(refresh.previous);
+  const fields=new Set();
+  for(const change of successor.archiveChanges) {
+    assert.ok(['textSha256','binarySha256'].includes(change.field)&&!fields.has(change.field),
+      'only distinct reviewed complete archive digest changes are admitted');
+    fields.add(change.field);
+    assert.match(change.before,/^[a-f0-9]{64}$/u);assert.match(change.after,/^[a-f0-9]{64}$/u);
+    assert.notEqual(change.before,change.after);
+    assert.equal(original.archive[change.field],change.before);
+    assert.equal(inverse.archive[change.field],change.after);
+    inverse.archive[change.field]=change.before;
+  }
+  assert.deepEqual(inverse.archive,original.archive,'unreviewed archive differences require exact recorded digest changes');
+  const inverseBytes=Buffer.from(structuredDataToLino(inverse));
+  assert.equal(inverseBytes.length,successor.original.bytes,'the complete inverse byte count remains exact');
+  assert.equal(sha256(inverseBytes),successor.original.sha256,'only the recorded consuming provenance changes are permitted');
+  assert.deepEqual(inverse,original,'every original consuming artifact field and owner remains exact');
+  assert.deepEqual(inverseBytes,originalBytes,
+    'the complete canonical original artifact bytes are restored, including every owner and archive field');
+  return successor;
+}
+
 /** Revalidate stored bytes and actual decision sources around an already checked plan. */
 export function readOriginalLinkRawConsumingProfile(currentProfile,read=readFileSync) {
   assert.equal(currentProfile.profile,'current','the consuming successor retains the actual current predecessor');
@@ -111,10 +172,11 @@ export function readOriginalLinkRawConsumingProfile(currentProfile,read=readFile
     assert.equal(replay.ownerCount,106);assert.equal(replay.emittedSha256,artifact.sourceSha256);
     assert.equal(replay.emittedBytes,artifact.sourceBytes);
   }
+  const predecessorConservation=verifyOriginalLinkRawConsumingConservation(artifact,read);
   return {profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
     historicalSourceSha256:currentProfile.historicalSourceSha256,currentSourceSha256:currentProfile.currentSourceSha256,
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
-    proof:{artifactSha256:sha256(bytes),predecessor:currentProfile,
+    proof:{artifactSha256:sha256(bytes),predecessor:currentProfile,predecessorConservation,
       decisionSources:artifact.decisionSources,options:artifact.options,archive:artifact.archive,replays:artifact.replays,
       tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}};
@@ -179,12 +241,15 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
       textBytes:Buffer.byteLength(text),textSha256:sha256(text),binaryBytes:binary.byteLength,binarySha256:sha256(binary)},
     replays,sourceBytes:Buffer.byteLength(emitted.text),sourceSha256:sha256(emitted.text),completeRust:emitted.text,
     nativeCompilation:false,nativeExecution:false,
-    boundary:'Whole checked source, all106owners and both complete source-free typed archives. Tokenized clone/append sites observe emitted syntax only; the existing emitter performs its actual checked final-use decisions. No internal proof-node inventory, native timing or completion claim.'};
+    boundary:'Whole checked source, all106owners and both complete source-free typed archives. Tokenized clone/append sites observe emitted syntax only; the existing emitter performs its actual checked final-use decisions. No internal proof-node inventory, native timing or completion claim.',
+    predecessorConservation:structuredClone(ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR)};
+  verifyOriginalLinkRawConsumingConservation(artifact);
   if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,artifact);
   return {artifact,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
     historicalSourceSha256:predecessor.historicalSourceSha256,currentSourceSha256:predecessor.currentSourceSha256,
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
-    proof:{artifactSha256:sha256(structuredDataToLino(artifact)),predecessor,decisionSources:artifact.decisionSources,
+    proof:{artifactSha256:sha256(structuredDataToLino(artifact)),predecessor,
+      predecessorConservation:artifact.predecessorConservation,decisionSources:artifact.decisionSources,
       options:artifact.options,archive:artifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}}};
 }
