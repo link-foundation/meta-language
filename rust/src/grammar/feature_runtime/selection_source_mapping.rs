@@ -506,7 +506,7 @@ impl SourceRegistry {
         self.records[input].field_mappings.insert(
             key,
             Ok(MappedSource {
-                bytes: bytes.clone(),
+                bytes,
                 mapping: cached_mapping,
             }),
         );

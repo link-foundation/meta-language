@@ -151,7 +151,7 @@ pub(super) fn compose_grammar_rule_expression(
     {
         let (existing, _, items) = read_selection_fields(&rule.expr)?;
         if let Some(key) = read_candidate_facts(items, false)? {
-            actual_mode = existing.head.clone();
+            actual_mode.clone_from(&existing.head);
             actual_candidates = key;
         }
     }

@@ -17,7 +17,6 @@ use crate::translation::rust_character_rules::read_rust_character_expression_typ
 use crate::translation::source_diagnostic_attributes::token_kind;
 
 impl RustParser {
-    /// Expressions, by Rust precedence.
     pub(super) fn expr(&mut self, path: &[String], options: Options) -> Result<SExpr> {
         self.or(path, options)
     }

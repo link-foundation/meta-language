@@ -250,12 +250,11 @@ impl<B: MappingBudget> View<'_, B> {
                     .mapping_retain(self.path.len().checked_add(2).ok_or(Abort::MemoryBudget)?)?;
                 let mut path = Vec::with_capacity(self.path.len());
                 for component in &self.path {
-                    path.push(match component {
-                        Value::String(role) => Value::String(copy_string(role, self.budget)?),
-                        _ => {
-                            self.budget.mapping_retain(1)?;
-                            component.clone()
-                        }
+                    path.push(if let Value::String(role) = component {
+                        Value::String(copy_string(role, self.budget)?)
+                    } else {
+                        self.budget.mapping_retain(1)?;
+                        component.clone()
                     });
                 }
                 self.paths.push(Value::Array(path));
