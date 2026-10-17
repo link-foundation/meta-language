@@ -2295,6 +2295,39 @@ CST → AST, transformations, emitters and translation rules. Decorators compose
 in a defined order and are stored as links data that both packages share.
 They also make translated output match the existing hand-written source.
 
+The existing `importer` and `grammar-rule` hooks expose an opt-in `composition`
+string. A nonempty value is one closed `any-grammar` or `all-grammar` Links
+expression with `empty` as its insertion slot. Materialization replaces that
+slot with the original owned rule expression, preserving the complete physical
+grammar and its metadata. This bounded authoring form admits final normal rules
+and nonempty, uniquely named candidates using one common `field-ranges` or
+`json-string` profile; field candidates also require the same complete selector.
+Malformed or unsupported data refuse rather than silently leave composition
+unapplied. The empty field keeps the existing grammar path unchanged.
+
+Decorators retain their existing order by `order` and then identifier. Applying
+the same composition again retains an outer selection only when its mode and
+complete validated candidate data, including candidate order and selectors,
+agree. A different selection remains the original item of the new wrapper.
+Removing or replacing a policy starts from the original grammar. Each source
+grammar receives its own source-qualified policy before resolver or global
+archive construction; a root option does not implicitly decorate its resolved
+children or equate same-spelled rule names with source identities.
+
+Composition uses the existing selection executor, mapped-tree checker and
+shared parse budgets. Each source retains its complete physical CST; recursive
+execution retains the derived CSTs and their shared ordered `sourcePlanes`
+table. Text and binary archives must preserve both trees and derivation
+witnesses. Authoring refuses composition with executor or recovery decorator
+levels. Before publishing a tree with retained mapped source planes, the runtime
+also refuses effective levels because their changes do not yet establish valid
+mapped witnesses. This includes fallback success retaining attempted mappings,
+materialized archives, resolved child grammars and parse-time overrides;
+identity-only results retain their existing behavior. Native compilation and
+runtime parity require CI verification.
+This opt-in hook does not establish complete Markdown or other priority-language
+coverage, and does not resolve scanner or imported semantic obligations.
+
 Grammar work runs in bulk through the automated pipeline: import, merging and
 transformation of every catalog language in one batch, adjustments recorded as
 data-driven rules, never hand edits of generated grammars. Tree-sitter is only
