@@ -1480,10 +1480,29 @@ accessors and custom serialization cannot replace those definitions during
 validation or export. Valid source-free archives retain the same concrete trees
 and source mappings as their original grammars.
 Mapping work uses existing shared parse budgets. Ranges are explicit grammar
-data: dynamic discovery from CST fields and complete Markdown block/inline
-scanning remain gaps. The native compiler prepares its owned grammar closure
+data. The native compiler prepares its owned grammar closure
 before input is available; range admission precedes execution of child parsers.
 Native compilation and runtime parity remain subject to CI verification.
+
+The finite `field-ranges` profile derives ranges from actual physical capture
+fields. A `grammar-field-candidate` supplies a grammar name and a
+`source-field-selector`: an exact label, `include` or `exclude`, zero-based
+`first` and positive `count`. The whole occurrence window must exist; zero never
+means all. Discovery follows topmost non-trivia matches in physical child order
+and suppresses matching descendants. Identity embeddings are opaque to
+selection; mapped embeddings expose only their physical `sourceChildren`.
+The existing scalar-aligned contraction kernel consumes the resulting ranges
+unchanged. Each completed source-plane derivation retains its immutable full
+physical witness, selector and occurrences, including when its child parse
+later refuses. Cache ownership follows actual parent children, rediscovering
+current witness facts before reuse; distinct profiles retain independent
+planes. After text/binary Links reload, the checker replays discovery without
+original source files and checks correspondence, not grammar validity. Existing
+shared budgets still apply. This finite discovery does not establish complete
+Markdown or other priority grammars; scanner context and complete scanning
+remain gaps. Public interfaces expose the selector, occurrences and physical
+witness as distinct types. Native compilation and runtime parity require CI
+verification.
 
 The default CST adapter follows supported discovered child regions through a
 FIFO queue, retaining direct-region order, actual parent Region links and
