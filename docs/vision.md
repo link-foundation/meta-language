@@ -122,6 +122,10 @@ diagnostics and shared parser budgets remain in force. The `records` option
 configures archive validation only.
 Explicit custom records do not materialize the shipped default record values;
 the default values are parsed only when no custom records are supplied.
+Discovery serialization retains the producer's explicit container aliases
+between primary and first owned definitions. Equal independent containers
+remain distinct. The native adapter preserves the default encoder, key order
+and signed zero; native execution still requires CI verification.
 
 Archives retain the original grammar format and raw declaration presence.
 The effective matching context includes the format's default: implicit PEG
