@@ -182,6 +182,14 @@ pub enum Node {
     Array {
         items: Vec<Expr>,
     },
+    /// A set constructed from its single evaluated iterable operand.
+    Set {
+        items: Box<Expr>,
+    },
+    /// A map constructed from its single evaluated entry iterable.
+    Map {
+        entries: Box<Expr>,
+    },
     Record {
         entries: Vec<RecordEntry>,
     },
@@ -307,6 +315,8 @@ impl Node {
             Self::Abort { .. } => "abort",
             Self::Print { .. } => "print",
             Self::Array { .. } => "array",
+            Self::Set { .. } => "set",
+            Self::Map { .. } => "map",
             Self::Record { .. } => "record",
             Self::RecordField { .. } => "recordField",
             Self::Tuple { .. } => "tuple",

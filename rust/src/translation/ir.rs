@@ -140,6 +140,8 @@ impl Expr {
             }
             Node::Lambda { body, .. } => vec![body],
             Node::Unary { arg, .. }
+            | Node::Set { items: arg }
+            | Node::Map { entries: arg }
             | Node::Some { value: arg }
             | Node::FlattenOption { value: arg }
             | Node::OptionalField { object: arg, .. }
@@ -225,6 +227,12 @@ impl Expr {
             }
             Node::Array { items } => Node::Array {
                 items: items.iter().map(&mut *visit).collect(),
+            },
+            Node::Set { items } => Node::Set {
+                items: Box::new(visit(items)),
+            },
+            Node::Map { entries } => Node::Map {
+                entries: Box::new(visit(entries)),
             },
             Node::Record { entries } => Node::Record {
                 entries: entries
