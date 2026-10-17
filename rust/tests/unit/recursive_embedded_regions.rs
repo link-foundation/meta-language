@@ -1,10 +1,18 @@
 use std::collections::{BTreeMap, HashMap};
 
 use meta_language::{
-    AccessMode, ByteRange, Link, LinkId, LinkNetwork, LinkType, ParseConfiguration, Point,
-    RegionDetectionPolicy, SourceSpan, TriviaAttachmentPolicy, detect_embedded_regions,
+    AccessMode, ByteRange, Link, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType,
+    ParseConfiguration, Point, RegionDetectionPolicy, SourceSpan, TriviaAttachmentPolicy,
+    detect_embedded_regions,
 };
 use serde_json::{Value, json};
+
+#[path = "../../src/embedded_region_parser/diagnostics.rs"]
+mod embedded_region_diagnostics;
+#[path = "../../src/translation/embedded_region_rules.rs"]
+mod rules;
+
+use embedded_region_diagnostics::{EmbeddedRegionDiagnostic, insert_embedded_region_diagnostic};
 
 fn recursive_default_region_fixture() -> Value {
     super::project_data::read_project_data(include_str!(
@@ -580,4 +588,156 @@ fn recursive_default_root_aliases_retain_one_boundary_and_the_existing_direct_cs
             network.to_lino()
         );
     }
+}
+
+#[test]
+fn synthetic_embedding_cycles_keep_the_actual_ancestor_and_error_after_reload() {
+    let mut network = LinkNetwork::new();
+    let span = SourceSpan::new(ByteRange::new(0, 2), Point::new(0, 0), Point::new(0, 2));
+    let outer = network.insert_link(
+        [],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Region)
+            .with_language("Markdown")
+            .with_span(span),
+    );
+    let inner = network.insert_link(
+        [outer],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Region)
+            .with_language("HTML")
+            .with_span(span),
+    );
+    let rejected = network.insert_link(
+        [inner],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Region)
+            .with_language("Markdown")
+            .with_span(span),
+    );
+    let ancestor = rules::read_embedded_region_ancestor(
+        &[-1.0, 0.0],
+        &[0.0, 1.0],
+        &[0.0, 0.0],
+        &[2.0, 2.0],
+        1.0,
+        0.0,
+        0.0,
+        2.0,
+    );
+    assert_eq!(rules::ml_array::number_index(ancestor), Some(0));
+    let reason = rules::read_embedded_region_disposition(
+        0.0,
+        2.0,
+        1.0,
+        0.0,
+        0.0,
+        2.0,
+        ancestor,
+        2.0,
+        1.0,
+        2.0,
+        128.0,
+        4096.0,
+        16_777_216.0,
+        true,
+    );
+    assert_eq!(reason, "nonConsumingEmbeddingCycle");
+    let diagnostic = insert_embedded_region_diagnostic(
+        &mut network,
+        rejected,
+        "Markdown",
+        span,
+        &EmbeddedRegionDiagnostic {
+            reason: &reason,
+            depth: 2.0,
+            count: 1.0,
+            bytes: 2.0,
+            observed: -1.0,
+            limit: -1.0,
+            ancestor: Some(outer),
+        },
+    );
+    network.insert_link(
+        [],
+        LinkMetadata::new()
+            .with_link_type(LinkType::Token)
+            .with_term("π")
+            .with_language("Markdown")
+            .with_span(span),
+    );
+    let restored = LinkNetwork::from_lino(&network.to_lino()).unwrap();
+    for current in [&network, &restored] {
+        assert!(!current.verify_full_match(None).is_clean());
+        assert_eq!(
+            current.link(diagnostic).unwrap().metadata().definition(),
+            Some(reason.as_str())
+        );
+        let mut fields = current
+            .links()
+            .filter(|link| link.metadata().link_type() == Some(LinkType::Field))
+            .filter(|link| link.references().first() == Some(&diagnostic));
+        assert!(fields.any(|field| {
+            let references = field.references();
+            current.link(references[1]).unwrap().metadata().term() == Some("ancestor")
+                && references[2] == outer
+        }));
+        assert!(
+            !current
+                .links()
+                .filter(|link| link.metadata().link_type() == Some(LinkType::Field))
+                .filter(|link| link.references().first() == Some(&diagnostic))
+                .any(|field| current
+                    .link(field.references()[1])
+                    .unwrap()
+                    .metadata()
+                    .term()
+                    == Some("observed"))
+        );
+        assert_eq!(current.reconstruct_text(), "π");
+    }
+}
+
+#[test]
+fn generated_region_policy_keeps_malformed_ancestry_zero_width_and_current_host_reuse_distinct() {
+    assert!(rules::accept_embedded_region_bounds(10.0, 20.0, 20.0, 20.0));
+    assert!(!rules::accept_embedded_region_bounds(10.0, 20.0, 9.0, 20.0));
+    assert!(!rules::accept_embedded_region_limit(f64::NAN));
+    assert!(!rules::accept_embedded_region_limit(f64::INFINITY));
+    assert!(!rules::accept_embedded_region_limit(-1.0));
+    assert!(!rules::accept_embedded_region_limit(0.5));
+    let invalid =
+        rules::read_embedded_region_ancestor(&[0.0], &[0.0], &[0.0], &[2.0], 0.0, 0.0, 0.0, 2.0);
+    assert_eq!(invalid.to_bits(), (-2.0_f64).to_bits());
+    assert_eq!(
+        rules::read_embedded_region_disposition(
+            0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, true
+        ),
+        "reuseAttached"
+    );
+    assert_eq!(
+        rules::read_embedded_region_disposition(
+            0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, true
+        ),
+        "reuse"
+    );
+    assert_eq!(
+        rules::read_embedded_region_disposition(
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            128.0,
+            4096.0,
+            16_777_216.0,
+            false
+        ),
+        "parse"
+    );
 }
