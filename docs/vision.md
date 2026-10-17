@@ -2075,6 +2075,22 @@ module context and constants emission. Selected signatures that still need
 checked Text lowering retain an explicit obligation; emitting a String prelude
 alone does not prove UTF-16 value semantics in Rust.
 
+`charCodeAt` lowers the complete portable `readStringCodeUnit` function through
+parsing, checking and shared Links data into a closed lambda using existing
+callable, binding, Math, UTF-16 slice and code-point operations. It adds no
+checked-method enumeration or target runtime helper and keeps the historical
+UTF-16 runtime unchanged. The checked application evaluates receiver and index
+once, in source order. Represented Number indices truncate toward zero;
+omitted, null, undefined and NaN indices select zero, while out-of-bounds
+positions and infinities return NaN. Runtime string parameters retain isolated
+surrogates and each half of a surrogate pair. Boolean, String and object index
+conversion, escaped lone-surrogate source literals and standalone Absence
+annotations remain explicit interpretation gaps. Lean and Rocq retain their
+UTF-16 operational-encoding refusals. Generic native callable ownership may
+clone the complete Text argument; this gives no constant-time or allocation-free
+guarantee. Full emitted-Rust runtime reimport and bidirectional execution remain
+separate obligations; native execution requires CI verification.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose
