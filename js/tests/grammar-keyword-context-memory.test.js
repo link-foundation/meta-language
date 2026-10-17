@@ -193,10 +193,11 @@ test('lazy child owners share one accessor while chains and frozen output identi
     const start=source.indexOf("const CHAIN = Symbol('children chain');");
     const end=source.indexOf('// A copy of a result with',start);
     assert.ok(start>=0&&end>start);
-    return new Function(source.slice(start,end)+'\nreturn {CHAIN,shareChildren,copyNode,partOf,childCount};')();
+    const moduleSource=source.slice(start,end)+'\nexport {CHAIN,shareChildren,copyNode,partOf,childCount};';
+    return import('data:text/javascript;base64,'+Buffer.from(moduleSource).toString('base64'));
   };
-  const original=readOperations(controls.baseline.modules[0].source);
-  const current=readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+  const original=await readOperations(controls.baseline.modules[0].source);
+  const current=await readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
   const build=operations=>{
     const first={kind:'first'},second={kind:'second'},third={kind:'third'};
     const chain={left:[first],right:[second],length:2};
@@ -235,10 +236,12 @@ test('silent reductions preserve every frozen tag without flattening plural chil
     const chainEnd=source.indexOf('function joinResults(',chainStart);
     const start=source.indexOf('function reducedAlone('),end=source.indexOf('// Which of two results an LR parser keeps',start);
     assert.ok(chainStart>=0&&chainEnd>chainStart&&start>=0&&end>start);
-    return new Function('isTrivia',source.slice(chainStart,chainEnd)+'\n'+source.slice(start,end)+'\nreturn {CHAIN,shareChildren,reducedAlone};')(child=>child.trivia===true);
+    const moduleSource='const isTrivia=child=>child.trivia===true;\n'
+      +source.slice(chainStart,chainEnd)+'\n'+source.slice(start,end)+'\nexport {CHAIN,shareChildren,reducedAlone};';
+    return import('data:text/javascript;base64,'+Buffer.from(moduleSource).toString('base64'));
   };
-  const original=readOperations(controls.baseline.modules[0].source);
-  const current=readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+  const original=await readOperations(controls.baseline.modules[0].source);
+  const current=await readOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
   const cases=[[],[{type:'token',trivia:true}],[{type:'token'}],[{type:'node'}],
     [{type:'token',alone:true,reducedTo:['control'],forkedTo:['control']}],
     [{type:'token',trivia:true},{type:'node'},{type:'token',trivia:true}],

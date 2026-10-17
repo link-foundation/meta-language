@@ -3,7 +3,6 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {acceptScannerPreemptionBoundary,readScannerContinuationAction} from '../src/translation/frontend-rules.js';
 
 const controls=readProjectData(new URL('../../parity/fixtures/keyword-parse-context-controls.lino',import.meta.url));
 const baseline=controls.baseline.modules.find(row=>row.path==='js/src/grammar-runtime/executor.js');
@@ -23,14 +22,16 @@ function readScannerPreemptionOperations(source) {
     const start=source.indexOf('function '+name+'('),end=source.indexOf('\n}',start)+2;
     assert.ok(start>=0&&end>start);return source.slice(start,end);
   }).join('\n');
-  return new Function('acceptScannerPreemptionBoundary','readScannerContinuationAction','NO_CHILDREN',
-    scalars+'\n'+source.slice(chainStart,chainEnd)+'\n'+source.slice(walkStart,walkEnd)
-    +'\nreturn {preempted,lexedPast};')(
-      acceptScannerPreemptionBoundary,readScannerContinuationAction,Object.freeze([]));
+  const rules=new URL('../src/translation/frontend-rules.js',import.meta.url);
+  const moduleSource='import {acceptScannerPreemptionBoundary,readScannerContinuationAction} from '+JSON.stringify(rules.href)+';\n'
+    +'const NO_CHILDREN=Object.freeze([]);\n'
+    +scalars+'\n'+source.slice(chainStart,chainEnd)+'\n'+source.slice(walkStart,walkEnd)
+    +'\nexport {preempted,lexedPast};';
+  return import('data:text/javascript;base64,'+Buffer.from(moduleSource).toString('base64'));
 }
 
-const original=readScannerPreemptionOperations(baseline.source);
-const current=readScannerPreemptionOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
+const original=await readScannerPreemptionOperations(baseline.source);
+const current=await readScannerPreemptionOperations(readFileSync(new URL('../src/grammar-runtime/executor.js',import.meta.url),'utf8'));
 const token=(kind,start,end,fields={})=>({type:'token',kind,start,end,...fields});
 const result=(name,children,end,cost=0,state='same')=>({name,children,end,cost,state:{key:state}});
 const boundary=offset=>result('boundary',[token('boundary',offset,offset,{scanned:true})],offset);
