@@ -65,7 +65,7 @@ const sourceDigests = {
 // the original schema bytes while authenticating only an additive host schema.
 const schemaClosureReceiptSha256 = '4279200cc6d7f1aa36aa7090461b3d2f09d3e711c42cee6c86d29e8bf8873375';
 const schemaExtensionReceiptSha256 = '80c27d9bdef086925f24ac06de026cce376e44fdf02239e6b6d5cfecdaf2e811';
-const schemaSecondExtensionReceiptSha256 = '6dd312d713ae528d364ea2cd3e1e4118e70e1c9cc628e3d46fe3c78c4dc25deb';
+const schemaSecondExtensionReceiptSha256 = 'e8312a7334e1a8642386e7e0bc370689879c789a33064076090e1b4872472c2b';
 const runnerClosureReceiptSha256='a3518fa93fe200a1e61d4cb28b9418eb06212ddf71c197e0e03bcf8057e556d0';
 // Ordered inventory derived from the frozen fixture/corpus sources, without constructing graphs.
 const frozenFixtureIds = [

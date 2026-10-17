@@ -248,7 +248,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
     } else if field == "span"
-        && ((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
+        && (((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
             || context == "declaration:module")
             || context == "effect:print")
             || context == "expression:lit")
@@ -295,6 +295,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || context == "expression:stringPoints")
             || context == "expression:collectionItems")
             || context == "expression:method")
+            || (context == "expression:nullishNumber"))
     {
         String::from("null")
     } else {
@@ -454,6 +455,8 @@ pub fn read_program_expression_projection(term: &str) -> String {
         String::from("method")
     } else if term == "index:provenInBounds" {
         String::from("index:provenInBounds")
+    } else if term == "nullishNumber" {
+        String::from("nullishNumber")
     } else {
         String::new()
     }

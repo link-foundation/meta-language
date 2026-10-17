@@ -1,7 +1,7 @@
 // Generated from the shared self-translation representation policy. Do not edit.
 /** @param {string} name @returns {boolean} */
 export function acceptSelfTranslationUtf16Member(name) {
-  return name === "split" || name === "slice" || name === "indexOf" || name === "lastIndexOf" || name === "replace" || name === "replaceAll" || name === "codePointAt" || name === "repeat" || name === "padStart" || name === "padEnd";
+  return name === "split" || name === "slice" || name === "indexOf" || name === "lastIndexOf" || name === "replace" || name === "replaceAll" || name === "codePointAt" || name === "repeat" || name === "padStart" || name === "padEnd" || name === "charCodeAt";
 }
 
 /** @param {boolean} explicit @param {string} family @param {boolean} member @returns {boolean} */

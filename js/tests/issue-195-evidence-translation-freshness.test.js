@@ -32,9 +32,12 @@ test('bulk translation freshness includes every new native family without repeat
     { script: 'js/scripts/generate-owned-array-append-rules.mjs', arguments: ['--native', '--check'] },
     { script: 'js/scripts/generate-nullable-type-syntax-rules.mjs', arguments: ['--native', '--check'] },
   ], 'additional source packets append without replacing an existing freshness scope');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(18), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(18, 19), [
     { script: 'js/scripts/generate-callable-emission-rules.mjs', arguments: ['--native', '--check'] },
   ], 'callable emission appends after every retained eighteen-command scope');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(19), [
+    { script: 'js/scripts/generate-string-code-unit-template.mjs', arguments: ['--check'] },
+  ], 'the complete code-unit template appends after every retained nineteen-command scope');
   for (const family of defaultNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--check']);
   for (const family of explicitNative) assert.deepEqual(checks.get(`generate-${family}-rules.mjs`), ['--native', '--check']);
   for (const name of ['generate-grammar-selection-fixtures.mjs', 'generate-private-output-test-model.mjs', 'extend-typed-program-schema-second-stage.mjs']) {

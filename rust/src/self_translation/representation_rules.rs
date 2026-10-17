@@ -10,6 +10,7 @@ pub fn accept_self_translation_utf16_member(name: &str) -> bool {
         || (name == "repeat"))
         || (name == "padStart"))
         || (name == "padEnd")
+        || (name == "charCodeAt")
 }
 
 /// Apply the retained shared UTF16 representation decision.

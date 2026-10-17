@@ -8,6 +8,7 @@ import { createTypedProgramLinks, decodeTypedProgramLinks, encodeTypedProgramLin
 import { projectLinkedProgramExpression } from '../src/typed-program-expression-projection.js';
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 import { acceptProgramDerivedNumberOperand } from '../src/typed-program-number-projection-rules.js';
+import { readLinkedProgramNumberOperand } from '../src/typed-program-number-projection.js';
 import { readProgramNumberProjectionSourceModule, PROGRAM_NUMBER_PROJECTION_SOURCE } from '../scripts/generate-program-number-projection-rules.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -63,26 +64,57 @@ test('whole checked arithmetic rederives its actual optional-number operand afte
 
 test('a derived numeric wrapper cannot become a root or hide changed operands, types or ownership fields', () => {
   const packet = createTypedProgramLinks(source, 'JavaScript');
-  for (const change of [
+  for (const [index, change] of [
     (program, operation) => { program.declarations.get('probe').body = operation.left; },
     (_program, operation) => { operation.left.type = { kind: 'bool' }; },
     (_program, operation) => { operation.left.borrowEscape = true; },
     (_program, operation) => { operation.left.arg = { k: 'lit', type: { kind: 'float' }, value: '5' }; },
     (_program, operation) => { operation.left.arg.type = { kind: 'option', element: { kind: 'string' }, absence: 'undefined' }; },
     (_program, operation) => { operation.op = 'concat'; },
-  ]) {
+  ].entries()) {
     const program = decodeTypedProgramLinks(LinkNetwork.fromLino(packet.network.toLino()), packet.root);
     const operation = arithmetic(program);
     change(program, operation);
+    // The shared numberValue projection can reconstruct the wrapper, but this
+    // original root edit removes the Let that binds values. Preserve that
+    // source-scope refusal rather than treating every root wrapper as valid.
+    if (index === 0) {
+      assert.throws(() => recheckLinkedTypedProgram(program, { wholeProgram: true }), /^TranslationError: unknown name values at 106\.\.112$/u);
+      continue;
+    }
+    if (index === 5) {
+      assert.throws(() => recheckLinkedTypedProgram(program, { wholeProgram: true }), /^TranslationError: expected string but found float at 106\.\.117$/u);
+      continue;
+    }
     assert.throws(() => recheckLinkedTypedProgram(program, { wholeProgram: true }), /derived number operand|no surface projection|inconsistent types, bindings or operation semantics/u);
   }
   const program = decodeTypedProgramLinks(packet.network, packet.root);
-  assert.throws(() => projectLinkedProgramExpression(arithmetic(program).left), /nullishNumber has no surface projection/u);
+  const wrapper = arithmetic(program).left;
+  const projected = projectLinkedProgramExpression(wrapper);
+  assert.equal(projected.k, 'numberValue');
+  assert.equal(projected.arg.k, 'index');
+  assert.equal(projected.arg.optional, true);
   for (const operation of ['add', 'sub', 'mul', 'div', 'rem']) for (const field of ['left', 'right']) {
     assert.equal(acceptProgramDerivedNumberOperand('binary', operation, field), true);
   }
   for (const [kind, operation, field] of [['binary', 'concat', 'left'], ['binary', 'add', 'arg'], ['unary', 'neg', 'arg'], ['nullishNumber', '', 'arg']]) {
     assert.equal(acceptProgramDerivedNumberOperand(kind, operation, field), false);
+    assert.strictEqual(readLinkedProgramNumberOperand({ k: kind, op: operation }, field, wrapper), wrapper);
+  }
+  const bound = createTypedProgramLinks('/** @param {number[]} values @returns {number} */ function probe(values){return values[0]+2;}console.log(probe([5]));', 'JavaScript');
+  for (const network of forms(bound)) {
+    const program = decodeTypedProgramLinks(network, bound.root);
+    assert.equal(program.declarations.get('probe').params[0].name, 'values');
+    program.declarations.get('probe').body = arithmetic(program).left;
+    assert.strictEqual(recheckLinkedTypedProgram(program, { wholeProgram: true }), program);
+    assert.deepEqual(observe(emitJavaScript(program).text), ['5']);
+    const edited = encodeTypedProgramLinks(program);
+    for (const saved of forms(edited)) {
+      const restored = decodeTypedProgramLinks(saved, edited.root);
+      assert.deepEqual(restored, program);
+      assert.strictEqual(recheckLinkedTypedProgram(restored, { wholeProgram: true }), restored);
+      assert.deepEqual(observe(emitTypedProgramLinks(saved, edited.root, 'JavaScript').code), ['5']);
+    }
   }
 });
 

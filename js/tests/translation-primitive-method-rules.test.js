@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { DecoratorSet } from '../src/decorators.js';
+import { applyRecordedFamilyLibraryStyles } from '../scripts/recorded-family-library-style.mjs';
+import { formatProductRuleSource } from '../scripts/product-rule-style-corrections.mjs';
 
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -57,8 +59,13 @@ test('the complete primitive method checking and rendering module self translate
   assert.ok(header);
   const raw = header + '\n\n' + emitted.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
   const names = [...raw.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]);
-  const styles = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/primitive-method-rules-decorators.lino', import.meta.url), 'utf8'));
-  const relocated = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+  const document = readFileSync(new URL('../../parity/self-translation/primitive-method-rules-decorators.lino', import.meta.url), 'utf8');
+  const styles = DecoratorSet.fromLino(document);
+  const base = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+  const relocated = applyRecordedFamilyLibraryStyles(document, formatProductRuleSource(base), {
+    family: 'primitive-method', format: formatProductRuleSource, parameterLoans: true,
+    baseRecordHashes: ['1d9aa8f1081ca8778572c8c33a29eb58d8c121125d6bf7dcab1a11f04dac168a'],
+  }).source;
   assert.deepEqual([...relocated.matchAll(/^pub fn ([A-Za-z_][A-Za-z_0-9]*)\b/gmu)].map(match => match[1]), names);
   assert.ok(names.every(name => !relocated.includes('crate::' + name)), 'every actual same-module call resolves without replacing a semantic body');
   assert.match(relocated, /pub fn read_primitive_copy_slice_form\(kind: &str\)/u);

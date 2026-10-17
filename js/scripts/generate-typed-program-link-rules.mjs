@@ -1,11 +1,13 @@
 // Generate both classifier adapters from the one linked-program schema; the
 // Rust decisions are translated by the same checked JavaScript pipeline.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 import { applyCompleteExpressionParenthesisStyles, replaceRecordedLibraryBaseStyle } from './complete-expression-parenthesis-styles.mjs';
+import { flattenFamilyLibraryElseIf } from './portable-conditional-source-style.mjs';
 
 if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
@@ -192,7 +194,33 @@ const format = (input) => {
   if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
   return result.stdout;
 };
-let formatted = format(styles.decorate('emitter', { format: 'Rust', source: raw }).source);
+// A changed classifier no longer matches an older whole-module replacement.
+// Flatten its actual complete else-if blocks before rustfmt sees nested tails;
+// retain the exact reviewed input/output as an additional Links style record.
+const base = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+const scope = 'typed-program-pre-format';
+const flattened = flattenFamilyLibraryElseIf(base);
+const preFormatStyles = new DecoratorSet(styles.decorators.filter(({ when }) =>
+  when.some(([field, value]) => field === 'scope' && value === scope)));
+let preFormatted = preFormatStyles.decorate('emitter', { format: 'Rust', scope, source: base }).source;
+if (preFormatted !== flattened) {
+  if (!process.argv.includes('--update-complete-expression-styles') && !process.argv.includes('--update-styles')) {
+    throw new Error('typed program pre-format styles are stale; run --update-complete-expression-styles');
+  }
+  const id = 'typed-program-pre-format-' + createHash('sha256').update(base).digest('hex').slice(0, 16);
+  if (styles.decorators.some(entry => entry.id === id)) throw new Error('the recorded pre-format style must remain applicable');
+  const document = readFileSync(styleFile, 'utf8');
+  const addition = new DecoratorSet([{ id, level: 'emitter', order: 3000,
+    when: [['format', 'Rust'], ['scope', scope]],
+    actions: [{ op: 'replace', field: 'source', from: base, to: flattened }] }]).toLino();
+  writeFileSync(styleFile, document + (document.endsWith('\n') ? '' : '\n') + addition);
+  styles = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8'));
+  preFormatted = new DecoratorSet(styles.decorators.filter(({ when }) =>
+    when.some(([field, value]) => field === 'scope' && value === scope)))
+    .decorate('emitter', { format: 'Rust', scope, source: base }).source;
+}
+if (preFormatted !== flattened) throw new Error('the recorded pre-format style must replay the complete derived module');
+let formatted = format(preFormatted);
 if (process.argv.includes('--update-parenthesis-styles')) {
   // Reviewed response to CI 38346650821, rather than invented machine-applicable
   // diagnostics. Remove only groups enclosing a complete condition or the sole

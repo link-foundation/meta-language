@@ -23,6 +23,7 @@ export const ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSIONS = {
     collectionItems: {construct: 'method', fields: [['object', 'expression', 'object'], ['op', 'copy', 'op'], ['args', 'constant', []]]},
     method: {construct: 'method', fields: [['object', 'expression', 'object'], ['op', 'copy', 'op'], ['args', 'nullable-expressions', 'args']]},
     'index:provenInBounds': {construct: 'index', fields: [['object', 'expression', 'array'], ['index', 'expression', 'index'], ['provenInBounds', 'copy', 'provenInBounds']]},
+    nullishNumber: {construct: 'numberValue', fields: [['arg', 'expression', 'arg']]},
   },
   expressionProjectionAlternatives: {
     index: [{path: ['provenInBounds'], value: true, projection: 'index:provenInBounds'}],

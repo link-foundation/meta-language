@@ -150,7 +150,7 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
     {
         1f64
     } else if receiver == "string" {
-        if (operation == "split") || (operation == "slice") {
+        if ((operation == "split") || (operation == "slice")) || (operation == "charCodeAt") {
             0f64
         } else if (((((operation == "indexOf") || (operation == "lastIndexOf"))
             || (operation == "repeat"))
@@ -178,7 +178,8 @@ pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) 
     {
         2f64
     } else if receiver == "string" {
-        if (operation == "repeat") || (operation == "codePointAt") {
+        if ((operation == "repeat") || (operation == "codePointAt")) || (operation == "charCodeAt")
+        {
             1f64
         } else if (((((((operation == "split") || (operation == "slice"))
             || (operation == "indexOf"))
@@ -199,7 +200,7 @@ pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_argument_count(receiver: &str, operation: &str) -> f64 {
-    self::read_primitive_method_maximum_arguments(receiver, operation)
+    self::read_primitive_method_maximum_arguments(&(receiver), &(operation))
 }
 
 #[must_use]
@@ -219,7 +220,9 @@ pub fn read_primitive_method_checked_argument_kind(
             String::from("float")
         }
     } else if receiver == "string" {
-        if (((operation == "replace") || (operation == "replaceAll"))
+        if operation == "charCodeAt" {
+            String::from("number-value")
+        } else if (((operation == "replace") || (operation == "replaceAll"))
             || ((index == 0f64)
                 && (((operation == "split") || (operation == "indexOf"))
                     || (operation == "lastIndexOf"))))
@@ -244,7 +247,8 @@ pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index
         String::from("float")
     } else if ((receiver == "string") && (operation == "split")) && (index == 0f64) {
         String::from("absent")
-    } else if ((((receiver == "string") && (operation == "split")) && (index == 1f64))
+    } else if (((((receiver == "string") && (operation == "split")) && (index == 1f64))
+        || (((receiver == "string") && (operation == "charCodeAt")) && (index == 0f64)))
         || (((receiver == "string") || (receiver == "array")) && (operation == "slice")))
         || (((receiver == "string") && ((operation == "indexOf") || (operation == "lastIndexOf")))
             && (index == 1f64))
@@ -269,6 +273,8 @@ pub fn read_primitive_method_default_value(receiver: &str, operation: &str, inde
         String::from("Infinity")
     } else if ((receiver == "string") && (operation == "split")) && (index == 1f64) {
         String::from("4294967295")
+    } else if ((receiver == "string") && (operation == "charCodeAt")) && (index == 0f64) {
+        String::from("0")
     } else if ((receiver == "string") || (receiver == "array")) && (operation == "slice") {
         if index == 0f64 {
             String::from("0")
@@ -299,7 +305,9 @@ pub fn read_primitive_method_checked_result_form(receiver: &str, operation: &str
     } else if receiver == "string" {
         if operation == "split" {
             String::from("array-string")
-        } else if (operation == "indexOf") || (operation == "lastIndexOf") {
+        } else if ((operation == "indexOf") || (operation == "lastIndexOf"))
+            || (operation == "charCodeAt")
+        {
             String::from("float")
         } else if operation == "codePointAt" {
             String::from("optional-float")
@@ -521,4 +529,13 @@ pub fn render_primitive_method_expression(
 #[must_use]
 pub fn require_primitive_method_utf16(expression: &str, receiver: &str) -> bool {
     (expression == "method") && (receiver == "string")
+}
+
+#[must_use]
+pub fn read_primitive_method_lowering_form(receiver: &str, operation: &str) -> String {
+    if (receiver == "string") && (operation == "charCodeAt") {
+        String::from("code-unit-template")
+    } else {
+        String::from("method")
+    }
 }

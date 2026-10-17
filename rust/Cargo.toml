@@ -50,6 +50,7 @@ include = [
     "src/data/nullable-type-syntax.lino",
     "src/data/owned-array-append.lino",
     "src/data/self-translation-representation.lino",
+    "src/data/string-code-unit-template.lino",
     "src/data/rust-cast-syntax.lino",
     "src/data/formal-concept-models.lino",
     "src/data/resource-description-schema.lino",

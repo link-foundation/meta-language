@@ -270,11 +270,12 @@ pub fn read_java_script_method_argument_kind(
             String::new()
         }
     } else if receiver == "string" {
-        if (index == 0f64)
-            && ((((((((operation == "slice") || (operation == "substring"))
+        if (operation == "charCodeAt") && (index == 0f64) {
+            String::from("number-value")
+        } else if (index == 0f64)
+            && (((((((operation == "slice") || (operation == "substring"))
                 || (operation == "repeat"))
                 || (operation == "charAt"))
-                || (operation == "charCodeAt"))
                 || (operation == "codePointAt"))
                 || (operation == "padStart"))
                 || (operation == "padEnd"))

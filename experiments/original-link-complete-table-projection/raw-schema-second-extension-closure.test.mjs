@@ -32,6 +32,27 @@ test('stage two authenticates both immutable predecessor receipts and every orig
   assert.equal(Object.keys(value.sources).length, 47);
   assert.equal(value.receipt.generation.definitionCount, 106);
   assert.match(value.second.scope, /source closure only; no native execution/u);
+  const historical = readStructuredDataLino(readFileSync(new URL('./data/raw-schema-second-extension-provenance.lino', import.meta.url), 'utf8'));
+  assert.equal(historical.version, 1);
+  assert.equal(historical.publishedCommit, '0e120757b5ee6cc677a22be97007bd5d4c0eabc7');
+  assert.equal(historical.originalReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT);
+  assert.equal(historical.firstExtensionReceiptSha256, ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT);
+  const historicalSchemaBytes = Buffer.from(historical.schema.source, 'utf8');
+  const historicalReceiptBytes = Buffer.from(historical.receipt.source, 'utf8');
+  assert.equal(historical.schema.file, 'js/src/data/typed-program-links-schema.lino');
+  assert.equal(historical.receipt.file, 'experiments/original-link-complete-table-projection/data/raw-schema-second-extension-closure.lino');
+  assert.equal(historicalSchemaBytes.length, 134305);
+  assert.equal(historicalReceiptBytes.length, 215894);
+  assert.equal(historical.schema.bytes, historicalSchemaBytes.length);
+  assert.equal(historical.receipt.bytes, historicalReceiptBytes.length);
+  assert.equal(sha256(historicalSchemaBytes), '7705e8e0da784d2ac77c75c7eb328597de08972adff93621d3bcc9ed28671d4f');
+  assert.equal(sha256(historicalReceiptBytes), '6dd312d713ae528d364ea2cd3e1e4118e70e1c9cc628e3d46fe3c78c4dc25deb');
+  assert.equal(historical.schema.sha256, sha256(historicalSchemaBytes));
+  assert.equal(historical.receipt.sha256, sha256(historicalReceiptBytes));
+  const historicalSecond = readStructuredDataLino(historical.receipt.source);
+  assert.equal(historicalSecond.current.sha256, historical.schema.sha256);
+  assert.equal(historicalSecond.current.bytes, historical.schema.bytes);
+  assert.doesNotThrow(() => verifyOriginalLinkRawSchemaSecondDraftPredecessor(value.receipt, value.first, historicalSchemaBytes, value.sources, historicalSecond));
 });
 
 test('coherent second-stage hashes cannot modify old plans roles key order or new declared decisions', () => {

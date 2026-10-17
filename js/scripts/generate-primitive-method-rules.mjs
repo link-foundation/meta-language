@@ -21,7 +21,7 @@ if (process.argv.includes('--check') && process.argv.includes('--update-library-
 const document = readFileSync(styleFile, 'utf8');
 const base = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
 const correction = applyRecordedFamilyLibraryStyles(document, formatProductRuleSource(base), {
-  family: 'primitive-method', update: process.argv.includes('--update-library-lint-styles'), format: formatProductRuleSource,
+  family: 'primitive-method', update: process.argv.includes('--update-library-lint-styles'), format: formatProductRuleSource, parameterLoans: true,
   baseRecordHashes: ['1d9aa8f1081ca8778572c8c33a29eb58d8c121125d6bf7dcab1a11f04dac168a'],
 });
 if (correction.document !== document) writeFileSync(styleFile, correction.document);

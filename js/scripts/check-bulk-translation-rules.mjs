@@ -27,6 +27,7 @@ export const BULK_TRANSLATION_RULE_CHECKS = Object.freeze([
   ['generate-owned-array-append-rules.mjs', '--native'],
   ['generate-nullable-type-syntax-rules.mjs', '--native'],
   ['generate-callable-emission-rules.mjs', '--native'],
+  ['generate-string-code-unit-template.mjs'],
 ].map(([name, ...arguments_]) => Object.freeze({ script: `js/scripts/${name}`, arguments: Object.freeze([...arguments_, '--check']) })));
 
 function invokeTranslationRuleCheck(command, arguments_, options) {
