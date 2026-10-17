@@ -24,6 +24,7 @@ import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from '.
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
+import {checkRustDiagnosticAttributePlacement} from './rust-diagnostic-attributes.js';
 import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
 import { readParameterDefaultValueStep, requireParameterDefaultArgumentBindings } from './parameter-default-rules.js';
 import { normaliseProof } from './proof.js';
@@ -92,7 +93,8 @@ function immutableProductValue(value, bindings = new Map()) {
 }
 
 export function checkProgram(surface) {
-  checkRustConstFunctionContainers(surface);
+  const sourceProofSelected=checkRustConstFunctionContainers(surface);
+  if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
   checkRustRuntimeShellContainers(surface);
   checkRustTypeNamespaceRecordShapes(surface);
   checkRustOwnedLocalStateContainers(surface);

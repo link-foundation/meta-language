@@ -45,6 +45,8 @@ import {acceptRustOwnedTupleCallModel} from './rust-owned-tuple-call-rules.js';
 import {RUST_OWNED_LOCAL_STATE_POLICY} from './rust-owned-local-state.js';
 import {acceptRustConstFunctionModel} from './rust-const-function-rules.js';
 import {createRustConstFunctionProof} from './rust-const-functions.js';
+import {planRustDiagnosticAttribute} from './rust-diagnostic-attribute-rules.js';
+import {createRustDiagnosticAttributeFacet} from './rust-diagnostic-attributes.js';
 import { acceptRustCastFollowingToken, readRustCastSyntaxMessage } from './rust-cast-syntax-rules.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -72,15 +74,15 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
   const { tokens } = tokenize(source, 'Rust');
-  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel });
+  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel }, source);
 }
 
 // Internal complete-token entry; public source parsing validates options and lexes first.
-export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '' } = {}) {
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
+export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '' } = {}, source = null) {
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -90,13 +92,13 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
     if (!(error instanceof TranslationError)) throw error;
     return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='') {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null) {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
@@ -106,6 +108,8 @@ class RustParser {
     this.localValueStateModel=localValueStateModel;
     this.ownedTupleCallDiscovery=Boolean(acceptRustOwnedTupleCallModel(localValueStateModel)&&catalog===null);
     this.constFunctionModel=constFunctionModel;
+    this.source=source;
+    this.diagnosticAttributeColumns=null;
     this.completionModel = completionModel;
     this.sourceSignatureModel = sourceSignatureModel || (typeNamespaceModel||constFunctionModel ? 'Rust source function signature 1' : '');
     this.typeNamespaceModel = typeNamespaceModel;
@@ -155,22 +159,27 @@ class RustParser {
     }
   }
 
-  attributes() {
+  attributes(diagnosticAttributes=null) {
     const c = this.cursor;
     const derivations=[];
     if(this.pureUnitCallModel&&c.is('#'))throw unsupported('Rust pure Unit-call source','attributes require a separate compilation context proof',span(c.peek(),c.peek()));
     if (this.emptyOptionSourceModel && c.is('#')) throw unsupported('Rust empty option source', 'attributes require a separate compilation context proof', span(c.peek(),c.peek()));
     while (c.is('#') && c.is('[', 1)) {
       const start = c.next();
-      const derivation=this.attributeBody(start);
+      const derivation=this.attributeBody(start,diagnosticAttributes);
       if(derivation)derivations.push(derivation);
     }
     return derivations;
   }
 
   /** `#[derive(Clone, …)]` and lint attributes do not change behaviour. */
-  attributeBody(start) {
+  attributeBody(start,diagnosticAttributes=null) {
     const c = this.cursor;
+    if(this.constFunctionModel&&diagnosticAttributes!==null){
+      this.diagnosticAttributeColumns??={kinds:c.tokens.map(token=>token.kind),values:c.tokens.map(token=>token.value)};
+      const plan=planRustDiagnosticAttribute(this.diagnosticAttributeColumns.kinds,this.diagnosticAttributeColumns.values,c.index-1);
+      if(plan[0]>=0){c.index=plan[0];diagnosticAttributes.push(start);return null;}
+    }
     c.expect('[', 'attribute');
     const name = c.identifier('attribute').value;
     if(this.constFunctionModel&&(name!=='must_use'||!c.is(']')))throw unsupported('Rust const function attribute','only the actual zero-argument must_use function attribute is admitted');
@@ -201,7 +210,9 @@ class RustParser {
   items(root, items, path, done) {
     const c = this.cursor;
     while (!done()) {
-      const derivations=this.attributes();
+      const firstAttributeIndex=c.index;
+      const diagnosticAttributes=[];
+      const derivations=this.attributes(diagnosticAttributes);
       const start = c.peek();
       this.modulePath = path;
       readRustPureUnitItemContext(this,path,start);
@@ -210,7 +221,15 @@ class RustParser {
       if(this.typeNamespaceModel&&derivations.some(attribute=>attribute.traits.includes('Clone'))&&!c.is('enum'))throw unsupported('Rust unit Clone derivation','a Clone derive must be attached to an actual datatype',span(start,c.peek()));
       if (this.emptyOptionSourceModel && (path.length || !c.is('fn'))) throw unsupported('Rust empty option source', 'only flat zero-argument empty leaf functions and an empty main are admitted', span(start,c.peek()));
       if(this.constFunctionModel&&!(c.is('const')&&c.is('fn',1)||!path.length&&c.is('fn')&&c.is('main',1)))throw unsupported('Rust const function context','only actual const predicate declarations and the ordinary main are admitted',span(start,c.peek()));
-      if(this.constFunctionModel&&c.is('const')&&c.is('fn',1)){const keyword=c.next();items.push(this.fn(path,keyword));continue;}
+      if(diagnosticAttributes.length&&!(c.is('const')&&c.is('fn',1)))throw unsupported('Rust const diagnostic attribute attachment','the supported diagnostic prefix must belong to an actual const function',span(c.tokens[firstAttributeIndex],c.peek()));
+      if(this.constFunctionModel&&c.is('const')&&c.is('fn',1)){
+        const constKeywordIndex=c.index;
+        const keyword=c.next();
+        const declaration=this.fn(path,keyword);
+        if(diagnosticAttributes.length)declaration.sourceDiagnosticAttributes=createRustDiagnosticAttributeFacet(this.source,c.tokens,firstAttributeIndex,constKeywordIndex,declaration,path);
+        items.push(declaration);
+        continue;
+      }
       if (c.is('mod')) {
         c.next();
         const name = c.identifier('mod').value;

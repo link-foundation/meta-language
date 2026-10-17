@@ -4,6 +4,7 @@ import {DecoratorSet} from '../decorators.js';
 import {typeError} from './diagnostics.js';
 import {checkRustSourceSignature} from './rust-source-signatures.js';
 import {checkOwnedProgramContainers} from './owned-program-containers.js';
+import {checkRustDiagnosticAttributes,renderRustDiagnosticAttributePrefix} from './rust-diagnostic-attributes.js';
 import {acceptRustConstFunctionModel,acceptRustConstFunctionType,acceptRustConstFunctionBinary,acceptRustConstFunctionContainer,acceptRustConstFunctionOffset,acceptRustConstFunctionInterval,acceptRustConstFunctionNameCharacter,acceptRustConstFunctionName,acceptRustConstFunctionFiniteLiteral} from './rust-const-function-rules.js';
 import {acceptRustConstBranchModel,acceptRustConstBranchType,acceptRustConstBranchKind,acceptRustConstBranchOperation,acceptRustConstBranchConditional} from './rust-const-branch-rules.js';
 export const RUST_CONST_FUNCTION_POLICY=readRuntimeProjectData(new URL('./data/rust-const-functions.lino',import.meta.url));
@@ -20,7 +21,7 @@ const interval=(value,nonempty=false)=>{
  if(typeof value.start!=='number'||typeof value.end!=='number'||!acceptRustConstFunctionOffset(value.start,Object.is(value.start,-0))||!acceptRustConstFunctionOffset(value.end,Object.is(value.end,-0))||!acceptRustConstFunctionInterval(value.start,value.end,nonempty))fail('a source interval has an invalid shape or offset');
 };
 export function checkRustConstFunctionContainers(program){
- return checkOwnedProgramContainers(program,{selectedFields:['sourceConstFunction'],acceptContainer:acceptRustConstFunctionContainer,fail});
+ return checkOwnedProgramContainers(program,{selectedFields:['sourceConstFunction','sourceDiagnosticAttributes'],acceptContainer:acceptRustConstFunctionContainer,fail});
 }
 export function createRustConstFunctionProof(name,keyword,functionKeyword,headerEnd,bodyEnd,model=policy.model){
  const selected=acceptRustConstBranchModel(model)?branchPolicy:policy;
@@ -29,6 +30,7 @@ export function createRustConstFunctionProof(name,keyword,functionKeyword,header
 }
 export function checkRustConstFunctionProof(program){
  if(!checkRustConstFunctionContainers(program))return false;
+ checkRustDiagnosticAttributes(program);
  fields(program,policy.fields.program);
  if(program.sourceLanguage!=='Rust'||!(program.declarations instanceof Map)||!Array.isArray(program.items)||!program.items.length||program.main==null||(!Array.isArray(program.main.effects)||program.main.effects.length)||['imports','externals'].some(field=>Object.hasOwn(program,field)&&(!Array.isArray(program[field])||program[field].length)))fail('the model requires a complete flat Rust predicate program and an empty main');
  for(const field of ['referenceSemantics','utf16Strings','outputThreaded','abortsThreaded'])if(Object.hasOwn(program,field)&&program[field]!==false)fail('another runtime interpretation needs an independent composition proof');
@@ -37,7 +39,7 @@ export function checkRustConstFunctionProof(program){
  const entries=[...program.declarations.values()];
  if(program.items.length!==entries.length||program.items.some((entry,index)=>entry!==entries[index]))fail('the actual ordered declarations differ from the program items');
  for(const entry of entries){
-  fields(entry,policy.fields.declaration);fields(entry.sourceConstFunction,policy.fields.proof,true);
+  fields(entry,entry.sourceDiagnosticAttributes===undefined?policy.fields.declaration:[...policy.fields.declaration,'sourceDiagnosticAttributes']);fields(entry.sourceConstFunction,policy.fields.proof,true);
   if(entry.k!=='fn'||!nameAccepted(entry.name)||(!Array.isArray(entry.modulePath)||entry.modulePath.length)||entry.recursive!==false||entry.decreasing!=null||['generated','mutual'].some(field=>Object.hasOwn(entry,field)&&entry[field]!==false)||policy.reservedOwners.includes(entry.name)||entry.fullName!==entry.name)fail('the qualification needs an original closed flat predicate declaration');
   const proof=entry.sourceConstFunction;
   const branching=acceptRustConstBranchModel(proof.model),selected=branching?branchPolicy:policy;
@@ -80,4 +82,7 @@ export function checkRustConstFunctionProof(program){
  return true;
 }
 const emission=new DecoratorSet([{id:'preserve-owned-rust-const-function-keyword',level:'emitter',order:0,when:[['format','Rust']],actions:[{op:'replace',field:'source',from:policy.emission.from,to:policy.emission.to}]}]);
-export function renderRustConstFunctionHeader(entry,source){return entry.sourceConstFunction===undefined?source:emission.decorate('emitter',{format:'Rust',source}).source;}
+export function renderRustConstFunctionHeader(entry,source){
+ const qualified=entry.sourceConstFunction===undefined?source:emission.decorate('emitter',{format:'Rust',source}).source;
+ return renderRustDiagnosticAttributePrefix(entry,qualified);
+}
