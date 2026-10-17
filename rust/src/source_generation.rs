@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::configuration::embedded_region_number;
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
+use crate::source::SourceSpan;
 use crate::translation::embedded_region_rules::accept_embedded_region_source_coverage;
 
 impl LinkNetwork {
@@ -102,7 +103,7 @@ impl LinkNetwork {
         let mut rendered = String::new();
         let mut covered_until = 0;
         for token in tokens {
-            let range = token.metadata().span().map(|span| span.byte_range());
+            let range = token.metadata().span().map(SourceSpan::byte_range);
             if let Some(range) = range
                 && !accept_embedded_region_source_coverage(
                     embedded_region_number(range.start()),

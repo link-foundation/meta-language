@@ -416,7 +416,7 @@ fn assert_projection_replay(
     }
     let before = network.to_lino();
     let concrete_ids = network
-        .projected_links(NetworkProjection::default())
+        .projected_links(NetworkProjection::ConcreteSyntax)
         .map(|link| link.id())
         .collect::<Vec<_>>();
     assert_eq!(
@@ -429,7 +429,7 @@ fn assert_projection_replay(
     for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {
         assert!(
             network
-                .projected_links(NetworkProjection::default())
+                .projected_links(NetworkProjection::ConcreteSyntax)
                 .any(|link| link.metadata().link_type() == Some(role)),
             "{label}: default concrete role {role:?}"
         );
@@ -473,7 +473,7 @@ fn assert_projection_replay(
         );
         assert_eq!(
             restored
-                .projected_links(NetworkProjection::default())
+                .projected_links(NetworkProjection::ConcreteSyntax)
                 .map(|link| link.id())
                 .collect::<Vec<_>>(),
             concrete_ids
