@@ -95,11 +95,24 @@ test('Rust jobs preserve all prior deadlines and the exact published matrix exce
 test('the cancellation investigation joins tooling without changing any prior file assignment', () => {
   const addition = '|ci-cancellation-investigation$', source = TEST_GROUPS.tooling.source;
   assert.equal(source.split(addition).length, 2);
+  const rocqStem = 'ci-rocq-toolchain-cache', rocqAddition = `|${rocqStem}$`;
+  assert.equal(source.split(rocqAddition).length, 2, 'B67 adds exactly one literal Rocq cache alternative');
+  const priorRocqSource = source.replace(rocqAddition, '');
+  // Complete classifier pins derived from the immutable f7 and B67 Git source objects.
+  for (const [revision, actual, expected] of [
+    ['f7d4befd9a0569e50a4be904bff1ca5b752d357b', priorRocqSource,
+      '8060de05e180631e6234aaaded7a603bf0c886cacee6a814df01675f0f4a80c2'],
+    ['e58af945508f0694d89089e23327021f684b9f78', source,
+      '970823e432915eaf5a5143c87d901b2be7b73c3e2f61bc23786bf2f8992f497e'],
+  ]) {
+    assert.equal(createHash('sha256').update(actual).digest('hex'), expected,
+      `${revision} authenticates the exact classifier before or after the single Rocq addition`);
+  }
   // The version selector and Rust evidence union add exactly two tooling files.
   // Remove only their literal alternatives when checking the unchanged earlier
   // classifier hash; every historical assignment is still compared below.
   const laterAdditions = ['assertion-version-ranges', 'issue-195-rust-suite-partitions'];
-  let retainedSource = source;
+  let retainedSource = priorRocqSource;
   for (const stem of laterAdditions) {
     const token = `|${stem}$`;
     assert.equal(retainedSource.split(token).length, 2, `${stem} has exactly one literal tooling alternative`);
@@ -111,11 +124,14 @@ test('the cancellation investigation joins tooling without changing any prior fi
   const files = testFiles(), partition = partitionTests(files);
   assert.deepEqual(partition.unassigned, []);assert.deepEqual(partition.ambiguous, []);
   assert.equal(Object.values(partition.groups).flat().length, files.length);
+  assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');
+  assert.deepEqual(partitionTests([`${rocqStem}.test.js`]).groups.tooling, [`${rocqStem}.test.js`],
+    'the exact new Rocq file is uniquely assigned to tooling');
   for (const file of files) {
     const before = Object.entries(TEST_GROUPS).filter(([name, pattern]) =>
       (name === 'tooling' ? originalTooling : pattern).test(file.replace(/\.test\.js$/u, ''))).map(([name]) => name);
     const after = Object.entries(partition.groups).filter(([, members]) => members.includes(file)).map(([name]) => name);
-    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions].some(stem => file === `${stem}.test.js`) ? ['tooling'] : before, file);
+    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : before, file);
   }
   assert.deepEqual(partitionTests(['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']).unassigned,
     ['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']);
@@ -123,6 +139,8 @@ test('the cancellation investigation joins tooling without changing any prior fi
     const neighbors = [`${stem}-extra.test.js`, `${stem}x.test.js`];
     assert.deepEqual(partitionTests(neighbors).unassigned, neighbors, `${stem} admits only its exact file`);
   }
+  const rocqNeighbors = [`${rocqStem}-extra.test.js`, `${rocqStem}x.test.js`];
+  assert.deepEqual(partitionTests(rocqNeighbors).unassigned, rocqNeighbors, 'the Rocq addition admits only its exact file');
 });
 
 function selectNativeTestInputs(paths, { base = 'base', valid = true } = {}) {
