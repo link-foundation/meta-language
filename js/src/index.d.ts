@@ -1371,10 +1371,12 @@ export type GrammarExpression =
   | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
   | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
   | { kind: 'embed'; language: string; item: GrammarExpression }
-  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: Array<GrammarSelectionCandidate | GrammarRangeSelectionCandidate> }
+  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: Array<GrammarSelectionCandidate | GrammarRangeSelectionCandidate | GrammarFieldSelectionCandidate> }
   | GrammarSelectionCandidate
   | GrammarRangeSelectionCandidate
   | GrammarSourceRange
+  | GrammarFieldSelectionCandidate
+  | GrammarSourceFieldSelector
   | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
 
 export interface GrammarSelectionCandidate {
@@ -1399,6 +1401,25 @@ export interface GrammarRangeSelectionCandidate {
   name: string;
   mapping: 'included-ranges';
   ranges: GrammarSourceRange[];
+}
+
+/** A finite window of topmost physical, non-trivia capture fields. Occurrence
+ * indices are unsigned 32-bit integers; first is zero-based and count is positive.
+ */
+export interface GrammarSourceFieldSelector {
+  kind: 'source-field-selector';
+  label: string;
+  mode: 'include' | 'exclude';
+  first: number;
+  count: number;
+}
+
+/** Every candidate in one selection must use the same physical field selector. */
+export interface GrammarFieldSelectionCandidate {
+  kind: 'grammar-field-candidate';
+  name: string;
+  mapping: 'field-ranges';
+  selector: GrammarSourceFieldSelector;
 }
 
 /**
@@ -1557,6 +1578,49 @@ export type SyntaxTreeNode =
       /** Full physical host children for an explicitly mapped selection. */
       sourceChildren?: SyntaxTreeNode[]; selection?: GrammarSelection };
 
+/** Physical spelling only. Mapped embeds retain their source children and omit
+ * decoded roots and selection metadata. Identity embed roots remain opaque to
+ * field selection while their physical spelling is retained in the witness.
+ */
+export type GrammarPhysicalWitnessTree =
+  | (Omit<Extract<SyntaxTreeNode, { type: 'node' }>, 'children'> & { children: GrammarPhysicalWitnessTree[] })
+  | Extract<SyntaxTreeNode, { type: 'token' | 'error' | 'missing' }>
+  | { type: 'embed'; language: string; start: number; end: number;
+      sourceChildren: GrammarPhysicalWitnessTree[]; root?: never; selection?: never }
+  | { type: 'embed'; language: string; start: number; end: number;
+      root: GrammarPhysicalWitnessTree; sourceChildren?: never; selection?: never };
+
+export interface GrammarFieldRangeWitness {
+  start: number;
+  end: number;
+  children: GrammarPhysicalWitnessTree[];
+}
+
+export interface GrammarFieldRangeOccurrence {
+  /** Alternating child-role strings and zero-based child indices, beginning
+   * with 'children'. Identity embed roots are never traversed for occurrences.
+   */
+  path: Array<'children' | 'sourceChildren' | number>;
+  start: number;
+  end: number;
+}
+
+export interface GrammarFieldRangeSourceDerivation {
+  operation: 'field-ranges';
+  input: number;
+  start: number;
+  end: number;
+  selector: GrammarSourceFieldSelector;
+  occurrences: GrammarFieldRangeOccurrence[];
+  ranges: Array<[number, number]>;
+  witness: GrammarFieldRangeWitness;
+}
+
+export type GrammarSourcePlaneDerivation =
+  | { operation: 'json-string'; input: number; start: number; end: number }
+  | { operation: 'included-ranges'; input: number; start: number; end: number; ranges: Array<[number, number]> }
+  | GrammarFieldRangeSourceDerivation;
+
 /** An ordered once-owned source definition. identity equals its zero-based
  * table position; these local references are not LinkNetwork identifiers.
  */
@@ -1565,8 +1629,7 @@ export interface GrammarSourcePlane {
   identity: number;
   encoding: 'UTF-8';
   byteLength: number;
-  derivation: null | { operation: 'json-string'; input: number; start: number; end: number }
-    | { operation: 'included-ranges'; input: number; start: number; end: number; ranges: Array<[number, number]> };
+  derivation: null | GrammarSourcePlaneDerivation;
 }
 
 export interface GrammarSourceMapping {
@@ -1587,6 +1650,23 @@ export interface GrammarIncludedRangeSourceMapping {
   /** Scalar copies, excluded gaps and boundary points in their original order. */
   intervals: Array<[number, number, number, number]>;
 }
+
+export interface GrammarFieldRangeSourceMapping {
+  kind: 'source-mapping';
+  operation: 'field-ranges';
+  input: number;
+  output: number;
+  selector: GrammarSourceFieldSelector;
+  occurrences: GrammarFieldRangeOccurrence[];
+  ranges: Array<[number, number]>;
+  /** Scalar copies, excluded gaps and boundary points in physical source order. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+export type GrammarSelectionSourceMapping =
+  | GrammarSourceMapping
+  | GrammarIncludedRangeSourceMapping
+  | GrammarFieldRangeSourceMapping;
 
 /** A covering source spelling, not an exact byte correspondence inside a scalar. */
 export interface GrammarSourceRoute {
@@ -1629,7 +1709,7 @@ export interface GrammarSelection {
     source?: number; sourceOffset?: number; physicalRange?: [number, number];
     offsetSemantics?: 'covering-source-spelling' }>;
   /** Present only when the explicit mapping owns a separately decoded source. */
-  sourceMapping?: GrammarSourceMapping | GrammarIncludedRangeSourceMapping;
+  sourceMapping?: GrammarSelectionSourceMapping;
   provenance: GrammarSelectionProvenance;
   alternatives: GrammarSelectionAlternative[];
   ambiguous: boolean;

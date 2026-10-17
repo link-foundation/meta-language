@@ -7,7 +7,9 @@ import { DEFAULT_SETTLING, checkGrammarSelectionIncludedRangeForm } from '../gra
 import { readGrammarSelectionMappingContext } from '../translation/grammar-selection-mapping-rules.js';
 import { acceptGrammarSelectionIncludedRangeCandidate,
   acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeContext } from '../translation/grammar-selection-included-range-rules.js';
-import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource, projectGrammarSelectionSpan,
+import { acceptGrammarSelectionFieldRangeCandidate,
+  readGrammarSelectionFieldRangeContext } from '../translation/grammar-selection-field-range-rules.js';
+import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource, mapGrammarSelectionFieldRangeSource, projectGrammarSelectionSpan,
   projectGrammarSelectionDiagnostic, rememberGrammarSelectionMappingFailure } from './selection-source-mapping.js';
 import { KeywordLexing } from './executor.js';
 
@@ -115,12 +117,37 @@ function readSelectionProvenance(executor, program, language, start, end) {
 export function evaluateGrammarSelection(executor, expression, position, state, inToken, Executor) {
   const { end: start, leaves, state: afterTrivia } = executor.terminalStart(position, state, inToken);
   const mappings = expression.items.map(candidate => candidate.mapping);
-  const rangeContext = readGrammarSelectionIncludedRangeContext(mappings, inToken);
-  const context = rangeContext === 0 ? readGrammarSelectionMappingContext(mappings, inToken) : rangeContext;
+  const fieldContext = readGrammarSelectionFieldRangeContext(mappings, inToken);
+  const rangeContext = fieldContext === 0 ? readGrammarSelectionIncludedRangeContext(mappings, inToken) : 0;
+  const context = fieldContext !== 0 ? fieldContext
+    : rangeContext === 0 ? readGrammarSelectionMappingContext(mappings, inToken) : rangeContext;
   if (context === 2) {
     reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
-      mapping: rangeContext === 2 ? 'included-ranges' : 'json-string', detail: 'mapped selection requires syntactic context and one common source mapping' });
+      mapping: fieldContext === 2 ? 'field-ranges' : rangeContext === 2 ? 'included-ranges' : 'json-string', detail: 'mapped selection requires syntactic context and one common source mapping' });
     return [];
+  }
+  const fielded = fieldContext === 1;
+  let selector = null;
+  if (fielded) {
+    for (const candidate of expression.items) {
+      if (!acceptGrammarSelectionFieldRangeCandidate(candidate.kind, candidate.mapping)) {
+        reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
+          mapping: 'field-ranges', detail: 'field ranges require an explicit grammar-field-candidate' });
+        return [];
+      }
+      executor.step();
+      executor.retain(5);
+      const current = candidate.selector;
+      const parameters = { kind: current.kind, label: current.label, mode: current.mode,
+        first: current.first === 0 ? 0 : current.first, count: current.count };
+      if (selector && (selector.kind !== parameters.kind || selector.label !== parameters.label
+          || selector.mode !== parameters.mode || selector.first !== parameters.first || selector.count !== parameters.count)) {
+        reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
+          mapping: 'field-ranges', detail: 'field range candidates require one common selector' });
+        return [];
+      }
+      selector ??= parameters;
+    }
   }
   const ranged = rangeContext === 1;
   let ranges = null;
@@ -151,19 +178,21 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
   for (const region of regions) {
     const accepted = [];
     const candidates = [];
-    const derived = ranged ? mapGrammarSelectionIncludedRangeSource(executor, start, region.end, ranges)
+    const derived = fielded ? mapGrammarSelectionFieldRangeSource(executor, start, region.end, selector, region.children)
+      : ranged ? mapGrammarSelectionIncludedRangeSource(executor, start, region.end, ranges)
       : mapped ? mapGrammarSelectionSource(executor, start, region.end) : null;
     if (derived?.reason) {
       rememberGrammarSelectionMappingFailure(executor, { reason: derived.reason, start: derived.offset, end: derived.offset,
-        mapping: ranged ? 'included-ranges' : 'json-string' });
-      executor.fail(derived.offset, ranged ? 'an ordered scalar-aligned source range view' : 'a Unicode scalar JSON string source');
+        mapping: fielded ? 'field-ranges' : ranged ? 'included-ranges' : 'json-string' });
+      executor.fail(derived.offset, fielded ? 'a scalar-aligned field-selected source range view'
+        : ranged ? 'an ordered scalar-aligned source range view' : 'a Unicode scalar JSON string source');
       continue;
     }
     for (const candidate of expression.items) {
       executor.step();
       executor.retain(1);
       const diagnostic = { language: candidate.name, start, end: region.end };
-      if (!ranged && !acceptGrammarSelectionMapping(candidate.mapping)) {
+      if (!fielded && !ranged && !acceptGrammarSelectionMapping(candidate.mapping)) {
         const reason = 'unsupportedEmbeddingMapping';
         reportSelectionDiagnostic(executor, { ...diagnostic, reason, mapping: candidate.mapping });
         candidates.push({ language: candidate.name, relation: 'unknown', reason, mapping: candidate.mapping });
@@ -176,9 +205,8 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
         candidates.push({ language: candidate.name, relation: 'unknown', reason });
         continue;
       }
-      const key = JSON.stringify(ranged
-        ? ['selection', candidate.mapping, candidate.name, start, region.end, ranges]
-        : ['selection', candidate.mapping, candidate.name, start, region.end]);
+      const key = JSON.stringify(['selection', candidate.mapping, candidate.name, start, region.end,
+        ...(fielded ? [selector] : ranged ? [ranges] : []), ...(derived ? [derived.mapping.output] : [])]);
       let outcome = executor.embedMemo.get(key);
       if (!outcome) {
         outcome = derived ? runEmbeddedGrammar(executor, program, 0, derived.bytes.length, candidate.name, Executor, derived.bytes)

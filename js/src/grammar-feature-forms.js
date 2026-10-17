@@ -9,6 +9,8 @@ import { GRAMMAR_LEXER_FORMS } from './grammar-lexer-forms.js';
 import { GRAMMAR_SELECTION_FORMS } from './grammar-selection-forms.js';
 import { acceptGrammarSelectionIncludedRangeCandidate, acceptGrammarSelectionIncludedRangeSourceRange,
   readGrammarSelectionIncludedRangeFieldOrder } from './translation/grammar-selection-included-range-rules.js';
+import { acceptGrammarSelectionFieldRangeCandidate, acceptGrammarSelectionFieldRangeSelector,
+  readGrammarSelectionFieldRangeFieldOrder } from './translation/grammar-selection-field-range-rules.js';
 
 /** The expression kinds the feature union adds, with their fields in listing order. */
 export const FEATURE_EXPRESSION_FORMS = Object.freeze({
@@ -156,19 +158,33 @@ export function compactDeclarations(declarations) {
   return compact;
 }
 
-function includedRangeDataFields(value, role, fail) {
-  const fields = readGrammarSelectionIncludedRangeFieldOrder(role).split('|');
+function selectionSourceDataFields(value, fields, fail, description) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-      || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) fail('an included source view needs ordinary data records');
+      || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) fail(description + ' needs ordinary data records');
   const keys = Reflect.ownKeys(value);
-  if (keys.length !== fields.length || keys.some(key => !fields.includes(key))) fail('an included source view needs exactly its declared fields');
+  if (keys.length !== fields.length || keys.some(key => !fields.includes(key))) fail(description + ' needs exactly its declared fields');
   const data = Object.create(null);
   for (const key of fields) {
     const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (!descriptor || !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable) fail('an included source view needs enumerable own data fields');
+    if (!descriptor || !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable) fail(description + ' needs enumerable own data fields');
     data[key] = descriptor.value;
   }
   return data;
+}
+
+function includedRangeDataFields(value, role, fail) {
+  return selectionSourceDataFields(value, readGrammarSelectionIncludedRangeFieldOrder(role).split('|'), fail, 'an included source view');
+}
+
+function fieldRangeDataFields(value, role, fail) {
+  return selectionSourceDataFields(value, readGrammarSelectionFieldRangeFieldOrder(role).split('|'), fail, 'a field source view');
+}
+
+function checkFieldRangeSelector(value, fail) {
+  const data = fieldRangeDataFields(value, 'selector', fail);
+  if (!acceptGrammarSelectionFieldRangeSelector(data.kind, data.label, data.mode, data.first, data.count)) {
+    fail('a field selector needs its exact kind, label, mode and finite nonempty occurrence window');
+  }
 }
 
 function includedRangeDataItems(value, fail) {
@@ -183,16 +199,27 @@ function includedRangeDataItems(value, fail) {
   return value;
 }
 
-/** Validate the two closed included-range forms before a codec can omit fields
- * or coerce coordinates. Other expression forms retain their existing reader.
+/** Validate every closed source-view form before a codec can omit fields or
+ * coerce coordinates. Other expression forms retain their existing reader.
  */
-export function checkGrammarSelectionIncludedRangeForm(expression, fail = message => { throw new TypeError(message); }) {
+export function checkGrammarSelectionSourceViewForm(expression, fail = message => { throw new TypeError(message); }) {
   if (!expression || typeof expression !== 'object') return false;
   let owner = expression, descriptor;
   while (owner !== null && !(descriptor = Object.getOwnPropertyDescriptor(owner, 'kind'))) owner = Object.getPrototypeOf(owner);
   if (!descriptor) return false;
   if (!Object.hasOwn(descriptor, 'value')) fail('a grammar expression kind needs a data field');
   const kind = descriptor.value;
+  if (kind === 'source-field-selector') {
+    checkFieldRangeSelector(expression, fail);
+    return true;
+  }
+  if (kind === 'grammar-field-candidate') {
+    const data = fieldRangeDataFields(expression, 'candidate', fail);
+    if (typeof data.name !== 'string' || data.name === '' || typeof data.mapping !== 'string'
+        || !acceptGrammarSelectionFieldRangeCandidate(data.kind, data.mapping)) fail('a field candidate needs its name and explicit field-ranges mapping');
+    checkFieldRangeSelector(data.selector, fail);
+    return true;
+  }
   if (kind !== 'grammar-range-candidate' && kind !== 'source-range') return false;
   const data = includedRangeDataFields(expression, kind === 'source-range' ? 'range' : 'candidate', fail);
   if (kind === 'source-range') {
@@ -206,6 +233,11 @@ export function checkGrammarSelectionIncludedRangeForm(expression, fail = messag
     }
   }
   return true;
+}
+
+/** Compatibility entry point for the complete closed source-view union. */
+export function checkGrammarSelectionIncludedRangeForm(expression, fail = message => { throw new TypeError(message); }) {
+  return checkGrammarSelectionSourceViewForm(expression, fail);
 }
 
 /** Inspect original grammar data before expansion or archive copying can hide

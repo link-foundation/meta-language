@@ -6,4 +6,6 @@ export const GRAMMAR_SELECTION_FORMS = Object.freeze({
   'grammar-candidate': [['name', 'name'], ['mapping', 'name']],
   'grammar-range-candidate': [['name', 'name'], ['mapping', 'name'], ['ranges', 'expressions']],
   'source-range': [['start', 'integer'], ['end', 'integer']],
+  'grammar-field-candidate': [['name', 'name'], ['mapping', 'name'], ['selector', 'expression']],
+  'source-field-selector': [['label', 'name'], ['mode', ['include', 'exclude']], ['first', 'integer'], ['count', 'integer']],
 });
