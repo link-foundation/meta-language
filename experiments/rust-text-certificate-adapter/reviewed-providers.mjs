@@ -58,6 +58,15 @@ export const reviewedOverlayProviderPolicy = {
         { module: 'translation/emit-javascript.js', sourceSha256: '5e630d46409f11624bc1def8025beb9870cd2f8e51059e83a7cda8ad9deda351' },
         { module: 'translation/emit-rust.js', sourceSha256: 'c43c340c38769be58bc25b7c5ff806cab041a08600eef34bcf2154c1a9fdd7fe' },
       ] },
+    { sourceCommit: 'b51d48140220bf2ac071334d79d28aa77273c00e',
+      review: 'Reviewed the complete B70 provider diff against b87d3499746d56e8f303464343c8edfecef84a8a: only the two target emitters changed, importing the shared collection constructor renderer and delegating their existing complete Set/Map branches. Removing exactly those two imports and restoring the retained original constructor branches recovers all five preceding whole provider sources byte for byte. The complete collection source closure, all four frozen target templates and three original native failure inputs remain covered by their existing JavaScript source/archive controls; this revision makes no new native execution claim. The other three providers, every original exact overlay hook, historical receipt and certificate/raw-owner/descriptor/saved-LinkId requirement remain unchanged.',
+      providers: [
+        { module: 'typed-program-links.js', sourceSha256: 'a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458' },
+        { module: 'typed-program-links-validation.js', sourceSha256: '0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3' },
+        { module: 'typed-program-checked-projection.js', sourceSha256: '14523d23866117a0a39157430ed84d64ad525f07214c0b44810280db526d69a1' },
+        { module: 'translation/emit-javascript.js', sourceSha256: '9b0ed7afe95aacf71364e3444fa0571d3856a32967a7cffceef17e38625b1018' },
+        { module: 'translation/emit-rust.js', sourceSha256: '67fde3f36f800ab6667ae8b43171f32291440342b029f4abff6d0b7292d9eff2' },
+      ] },
   ],
 };
 
