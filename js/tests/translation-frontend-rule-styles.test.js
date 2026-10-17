@@ -31,14 +31,18 @@ test('scalar declaration styles borrow actual token strings and preserve all oth
     raw=next;assert.ok(round<9);
   }
   const actions=readFrontendLexicalDeclarationStyleCorrections(raw);
-  assert.equal(actions.length,2);
+  const names=['read_java_script_lexical_declaration_step','require_java_script_branch_continuation',
+    'read_java_script_field_substitution_plan'];
+  assert.equal(actions.length,3);
+  assert.deepEqual(actions.map(action=>readRustLibraryItems(action.from).items[0].name),names,
+    'the original two owners and the constructor field alias decision each retain one complete action');
   const recorded=decorators.decorators.find(definition=>definition.id===frontendLexicalDeclarationNativeStyleId);
   assert.deepEqual(recorded.actions,actions);
   const replay=new DecoratorSet([recorded]).decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;
   const before=readRustLibraryItems(raw).items,after=new Map(readRustLibraryItems(replay).items.map(item=>[item.name,item]));
   for(const item of before){
     const updated=after.get(item.name);assert.equal(updated.kind,item.kind);
-    if(!['read_java_script_lexical_declaration_step','require_java_script_branch_continuation'].includes(item.name)) {
+    if(!names.includes(item.name)) {
       assert.equal(updated.source,item.source);continue;
     }
     const literals=(source,kind)=>tokenize(source,'Rust').tokens.filter(token=>token.kind===kind).map(token=>token.value);
@@ -50,6 +54,14 @@ test('scalar declaration styles borrow actual token strings and preserve all oth
     if(item.name==='read_java_script_lexical_declaration_step') {
       assert.match(updated.source,/kind: &str/u);assert.match(updated.source,/value: &str/u);
       assert.doesNotMatch(updated.source,/\b(?:kind|value)\.(?:clone|to_owned|to_vec)\(/u);
+    }
+    if(item.name==='read_java_script_field_substitution_plan') {
+      for(const name of ['binding_name','subject','value_kind','value_name']) {
+        assert.ok(updated.source.includes(name+': &str'),name+' retains its actual borrowed scalar interface');
+        assert.ok(!updated.source.includes(name+'.clone()'),name+' needs no owned string copy');
+      }
+      assert.match(updated.source,/path_length: f64/u);
+      assert.match(updated.source,/\) -> f64/u);
     }
   }
   assert.deepEqual(readFrontendLexicalDeclarationStyleCorrections(replay),[]);
