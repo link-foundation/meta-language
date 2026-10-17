@@ -272,7 +272,12 @@ pub fn read_embedded_region_disposition(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_embedded_region_charge(current: f64, start: f64, end: f64, byte_charge: bool) -> f64 {
+pub const fn read_embedded_region_charge(
+    current: f64,
+    start: f64,
+    end: f64,
+    byte_charge: bool,
+) -> f64 {
     current + if byte_charge { end - start } else { 1f64 }
 }
 
@@ -332,7 +337,7 @@ pub fn read_embedded_region_diagnostic_limit(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_embedded_region_source_coverage(start: f64, covered_until: f64) -> bool {
+pub const fn accept_embedded_region_source_coverage(start: f64, covered_until: f64) -> bool {
     start >= covered_until
 }
 
@@ -371,25 +376,25 @@ pub fn ml_read_embedded_region_ancestor_loop1(
                         parents,
                         self::ml_array::number_index(position),
                     ))
-                    .unwrap_or_else(|| f64::NAN);
+                    .unwrap_or(f64::NAN);
                     {
                         let selected_language = (self::ml_array::optional_at(
                             languages,
                             self::ml_array::number_index(position),
                         ))
-                        .unwrap_or_else(|| f64::NAN);
+                        .unwrap_or(f64::NAN);
                         {
                             let selected_start = (self::ml_array::optional_at(
                                 starts,
                                 self::ml_array::number_index(position),
                             ))
-                            .unwrap_or_else(|| f64::NAN);
+                            .unwrap_or(f64::NAN);
                             {
                                 let selected_end = (self::ml_array::optional_at(
                                     ends,
                                     self::ml_array::number_index(position),
                                 ))
-                                .unwrap_or_else(|| f64::NAN);
+                                .unwrap_or(f64::NAN);
                                 if ((previous != -1f64)
                                     && (!(self::accept_embedded_region_limit(previous))
                                         || (previous >= position)))

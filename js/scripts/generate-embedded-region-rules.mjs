@@ -6,6 +6,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { acceptEmbeddedRegionLimit, readEmbeddedRegionDefaultLimit } from '../src/translation/embedded-region-rules.js';
 import { readProjectData, writeProjectData } from './project-data.mjs';
 import { writeRecordRuleLibrary } from './record-rule-library.mjs';
+import { readEmbeddedRegionNativeStyles } from './embedded-region-native-styles.mjs';
 import { recursiveEmbeddedRegionCases } from '../tests/support/recursive-embedded-region-cases.js';
 
 const sourceFile = new URL('../src/translation/embedded-region-rules.js', import.meta.url);
@@ -65,7 +66,7 @@ export async function generateEmbeddedRegionRules({ check = false, native = fals
     const { checkProgram } = await import('../src/translation/check.js');
     const { emitRust } = await import('../src/translation/emit-rust.js');
     const emitted = emitRust(checkProgram(parseJavaScript(policy.source, { referenceSemantics: false })), { arrayConsumption: true });
-    const nativeFiles = writeRecordRuleLibrary(emitted, 'embedded_region_rules', { check });
+    const nativeFiles = writeRecordRuleLibrary(emitted, 'embedded_region_rules', { check, sourceStyles: readEmbeddedRegionNativeStyles });
     const artifact = { schemaVersion: 1, model: policy.model, sourceSha256: policy.sourceSha256,
       assumptions: emitted.assumptions, encodings: emitted.encodings,
       emittedSource: emitted.text, emittedSourceSha256: digest(emitted.text),

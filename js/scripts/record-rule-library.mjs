@@ -7,7 +7,7 @@ import { DecoratorSet } from '../src/decorators.js';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { partitionPortableRustLibrary, readPortableSourceLintStyles, readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
 
-export function writeRecordRuleLibrary(emitted, name, { check = false } = {}) {
+export function writeRecordRuleLibrary(emitted, name, { check = false, sourceStyles = null } = {}) {
   assert.match(name, /^[a-z][a-z_0-9]*$/u);
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   assert.ok(header, 'the complete checked output retains its existing generated module header');
@@ -20,13 +20,15 @@ export function writeRecordRuleLibrary(emitted, name, { check = false } = {}) {
   const publicNames = [...relocated.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const loans = readPortableSourceParameterStyles(relocated, { publicNames });
   const reviewed = readPortableSourceLintStyles(loans.source);
-  const actions = [...relocation, ...loans.actions, ...reviewed.actions];
+  assert.ok(sourceStyles === null || typeof sourceStyles === 'function', 'an optional family style is an actual source proof producer');
+  const additional = sourceStyles === null ? {source: reviewed.source, actions: []} : sourceStyles(reviewed.source);
+  const actions = [...relocation, ...loans.actions, ...reviewed.actions, ...additional.actions];
   const styles = new DecoratorSet(actions.length ? [{ id: name + '-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }] : []);
   const styleFile = new URL('../../parity/self-translation/' + name.replaceAll('_', '-') + '-decorators.lino', import.meta.url);
   if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'record family library styles retain every actual declaration');
   else writeFileSync(styleFile, styles.toLino());
   const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
-  assert.equal(decorated, reviewed.source, 'the recorded ownership, loan and lint styles replay exactly');
+  assert.equal(decorated, additional.source, 'the recorded ownership, loan and lint styles replay exactly');
   const formatted = formatProductRuleSource(decorated);
   const files = partitionPortableRustLibrary(formatted, {
     notice: '// Generated from the complete checked JavaScript source and recorded dependencies.\n// Do not edit by hand.\n',
