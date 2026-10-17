@@ -11,6 +11,7 @@
 //! Mirrors `js/src/translation/rust.js`.
 
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use super::aborts::rust_macro_message;
 use super::diagnostics::{Result, TranslationError, type_error, unsupported};
@@ -28,6 +29,7 @@ mod cast_syntax_rules;
 mod completion_rules;
 pub(crate) mod const_function_rules;
 pub(crate) mod const_functions;
+mod diagnostic_attributes;
 pub(crate) mod empty_option_rules;
 mod empty_options;
 mod expressions;
@@ -319,11 +321,13 @@ fn parse_rust_with_selected_profiles(
         ));
     }
     let tokens = tokenize(source, Language::Rust)?.tokens;
+    let original_source = (!const_function_model.is_empty()).then(|| Arc::<str>::from(source));
     let mut declarations = RustParser::new(
         tokens.clone(),
         SourceOrigins::new(None, array_result_model),
         profiles,
         true,
+        original_source.clone(),
     );
     declarations.file()?;
     let mut origins = std::mem::replace(
@@ -334,7 +338,13 @@ fn parse_rust_with_selected_profiles(
     let mut source_origins = SourceOrigins::new(Some(origins.catalog), array_result_model);
     source_origins.collecting = true;
     source_origins.unit_clone_facts = origins.unit_clone_facts;
-    let mut syntax = RustParser::new(tokens.clone(), source_origins, profiles, false);
+    let mut syntax = RustParser::new(
+        tokens.clone(),
+        source_origins,
+        profiles,
+        false,
+        original_source.clone(),
+    );
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     let surface = syntax.file()?;
@@ -348,6 +358,7 @@ fn parse_rust_with_selected_profiles(
         SourceOrigins::new(Some(syntax.origins.catalog), array_result_model),
         profiles,
         false,
+        original_source,
     );
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.aliases = syntax.aliases;
@@ -410,6 +421,8 @@ impl ProductBindingPattern {
 struct RustParser {
     const_function_model: String,
     const_function_keyword: Option<Token>,
+    original_source: Option<Arc<str>>,
+    diagnostic_attribute_columns: Option<diagnostic_attributes::DiagnosticAttributeColumns>,
     cursor: TokenCursor,
     /// `use` aliases, per module path.
     aliases: HashMap<String, HashMap<String, Vec<String>>>,
@@ -452,6 +465,7 @@ impl RustParser {
         mut origins: SourceOrigins,
         profiles: SourceProfiles<'_>,
         initial_discovery: bool,
+        original_source: Option<Arc<str>>,
     ) -> Self {
         let reserved_binding_names = tokens
             .iter()
@@ -462,6 +476,8 @@ impl RustParser {
         Self {
             const_function_model: profiles.const_function.to_owned(),
             const_function_keyword: None,
+            original_source,
+            diagnostic_attribute_columns: None,
             cursor: TokenCursor::new(tokens, Language::Rust),
             aliases: HashMap::new(),
             module_path: Vec::new(),

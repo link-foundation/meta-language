@@ -62,19 +62,44 @@ impl RustParser {
             if done {
                 return Ok(items);
             }
-            let derivations = self.attributes()?;
+            let first_attribute_index = self.cursor.index;
+            let mut diagnostic_attributes = Vec::new();
+            let derivations = self.attributes(Some(&mut diagnostic_attributes))?;
             let start = self.peek();
             self.module_path = path.to_vec();
             self.pure_unit_item_context(path, &start)?;
             self.const_function_visibility_guard()?;
             self.visibility()?;
             self.const_function_item_guard(path, &start)?;
+            if !diagnostic_attributes.is_empty()
+                && !(self.cursor.is("const") && self.cursor.is_at("fn", 1))
+            {
+                return Err(unsupported(
+                    "Rust const diagnostic attribute attachment",
+                    "the supported diagnostic prefix must belong to an actual const function",
+                    span(
+                        &self.cursor.tokens[first_attribute_index],
+                        self.cursor.peek(),
+                    ),
+                ));
+            }
             if !self.const_function_model.is_empty()
                 && self.cursor.is("const")
                 && self.cursor.is_at("fn", 1)
             {
+                let const_keyword_index = self.cursor.index;
                 self.const_function_keyword = Some(self.cursor.advance());
-                items.push(SItem::Fn(self.function(path)?));
+                let mut function = self.function(path)?;
+                if !diagnostic_attributes.is_empty() {
+                    function.source_diagnostic_attributes =
+                        Some(Box::new(self.create_diagnostic_attribute_facet(
+                            first_attribute_index,
+                            const_keyword_index,
+                            &function,
+                            path,
+                        )?));
+                }
+                items.push(SItem::Fn(function));
                 continue;
             }
             self.empty_option_item_guard(path, &start)?;
@@ -363,7 +388,7 @@ impl RustParser {
         self.origins
             .declaration(&name, path, SourceDeclaration::Data)?;
         while !self.cursor.is("}") {
-            let attributes = self.attributes()?;
+            let attributes = self.attributes(None)?;
             self.require_unit_clone_attached_variant(&attributes)?;
             let variant = self.cursor.identifier(Some("variant"))?;
             let mut fields = Vec::new();

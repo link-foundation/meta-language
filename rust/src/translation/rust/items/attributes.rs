@@ -20,18 +20,23 @@ impl RustParser {
         while self.cursor.is("#") && self.cursor.is_at("!", 1) {
             let start = self.cursor.advance();
             self.cursor.advance();
-            let _ = self.attribute_body(&start)?;
+            let _ = self.attribute_body(&start, None)?;
         }
         Ok(())
     }
 
-    pub(in super::super) fn attributes(&mut self) -> Result<Vec<Value>> {
+    pub(in super::super) fn attributes(
+        &mut self,
+        mut diagnostic_attributes: Option<&mut Vec<Token>>,
+    ) -> Result<Vec<Value>> {
         self.pure_unit_attribute_guard()?;
         let mut derivations = Vec::new();
         self.empty_option_attribute_guard()?;
         while self.cursor.is("#") && self.cursor.is_at("[", 1) {
             let start = self.cursor.advance();
-            if let Some(derivation) = self.attribute_body(&start)? {
+            if let Some(derivation) =
+                self.attribute_body(&start, diagnostic_attributes.as_deref_mut())?
+            {
                 derivations.push(derivation);
             }
         }
@@ -39,7 +44,18 @@ impl RustParser {
     }
 
     /// `#[derive(Clone, …)]` and lint attributes do not change behaviour.
-    pub(in super::super) fn attribute_body(&mut self, start: &Token) -> Result<Option<Value>> {
+    pub(in super::super) fn attribute_body(
+        &mut self,
+        start: &Token,
+        diagnostic_attributes: Option<&mut Vec<Token>>,
+    ) -> Result<Option<Value>> {
+        if !self.const_function_model.is_empty()
+            && let Some(attributes) = diagnostic_attributes
+            && self.read_diagnostic_attribute()
+        {
+            attributes.push(start.clone());
+            return Ok(None);
+        }
         let c = &mut self.cursor;
         c.expect("[", Some("attribute"))?;
         let name = c.identifier(Some("attribute"))?.value;
