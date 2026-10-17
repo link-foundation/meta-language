@@ -105,6 +105,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/version-bounded-assertions-2026-10-16.txt',
   grammarInferenceIssue:
     'https://github.com/link-foundation/meta-language/issues/224',
+  localResourceReminderRequest:
+    'parity/sources/local-resource-reminder-2026-10-17.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.
