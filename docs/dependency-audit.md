@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 169 | 168 | 1 | 0 |
+| Generators | 170 | 169 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 78 | 0 | 0 | 78 |
+| Published artifact contents | 79 | 0 | 0 | 79 |
 
 ## JavaScript engines
 
@@ -654,6 +654,7 @@ they are.
 | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `js/scripts/generate-rust-completion-panic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-completion-rules.mjs` | `js/scripts/generate-rust-completion-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-cooked-string-rules.mjs` | `js/scripts/generate-rust-cooked-string-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-diagnostic-attribute-rules.mjs` | `js/scripts/generate-rust-diagnostic-attribute-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `js/scripts/generate-rust-empty-option-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-empty-option-rules.mjs` | `js/scripts/generate-rust-empty-option-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-evidence-partition-policy.mjs` | `js/scripts/generate-rust-evidence-partition-policy.mjs` | `script` |  | derived | current |  |
@@ -831,6 +832,7 @@ they are.
 | `src/data/rust-const-branches.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-const-functions.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-cooked-string-escapes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/rust-diagnostic-attributes.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-empty-options.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-number-literals.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/rust-owned-local-state.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
