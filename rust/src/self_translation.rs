@@ -64,7 +64,7 @@ pub struct SelfTranslationOptions {
     /// The signatures [`self_translation_signatures`] gives for each module
     /// the module imports, by import specifier, which bind the imported names.
     pub imports: BTreeMap<String, Vec<SelfTranslationSignature>>,
-    /// Select the shared UTF16 prelude; actual Text lowering remains a carried obligation.
+    /// Select the shared UTF16 prelude and paired Text lowering; unsupported emissions are carried.
     pub utf16_strings: bool,
 }
 

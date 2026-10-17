@@ -1,9 +1,13 @@
 //! Regression checks for combined declaration scopes and source preservation.
+use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::{
     SelfTranslationItem, SelfTranslationOptions, self_translate, self_translate_with,
     self_translation_signatures,
 };
 use std::collections::BTreeMap;
+use std::fs;
+use std::path::Path;
+use std::process::Command;
 
 #[test]
 fn resource_limited_executor_preserves_source_and_restores_exactly() {
@@ -108,23 +112,89 @@ fn selected_utf16_prelude_retains_scalar_source_and_carries_unproved_text_values
             .code,
         source
     );
-    for source in [
-        "/** @param {string} value @returns {string} */\nexport function keep(value) { return value; }\n",
-        "/** @param {string[]} values @returns {string[]} */\nexport function keep(values) { return values; }\n",
-    ] {
-        let carried = self_translate_with(source, "JavaScript", "Rust", &options).unwrap();
-        assert!(carried.items.iter().any(|item| {
-            item.status == "carried"
-                && item.reason.as_deref().is_some_and(|reason| {
-                    reason.contains("Text lowering")
-                        && reason.contains("independently paired rendering support")
-                })
-        }));
+    // Keep the historical inputs and test identity, but require the Text
+    // lowering now proved by the paired JavaScript emitter and native execution.
+    let directory = TemporaryDirectory::new("selected-utf16-text");
+    fs::write(
+        directory.0.join("text.mjs"),
+        "export function readLabel(){return String.fromCharCode(65,55357,56832,66,55296,57343);}\n",
+    )
+    .unwrap();
+    let observe = |source: &str,
+                   options: &SelfTranslationOptions,
+                   name: &str,
+                   javascript_observer: &str,
+                   rust_observer: &str,
+                   expected: &str| {
+        let translated = self_translate_with(source, "JavaScript", "Rust", options).unwrap();
+        assert!(translated.items.iter().all(|item| item.status != "carried"));
+        assert_eq!(translated.code.matches("pub mod ml_string {").count(), 1);
         assert_eq!(
-            self_translate(&carried.code, "Rust", "JavaScript")
+            self_translate(&translated.code, "Rust", "JavaScript")
                 .unwrap()
                 .code,
             source
+        );
+        let script = "import{selfTranslate}from'./js/src/self-translation.js';process.stdout.write(selfTranslate(process.argv[1],'JavaScript','Rust',JSON.parse(process.argv[2])).code);";
+        let javascript_options = serde_json::json!({
+            "utf16Strings": options.utf16_strings,
+            "imports": &options.imports,
+        });
+        let paired = run(Command::new("node")
+            .current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+            .args([
+                "--input-type=module",
+                "-e",
+                script,
+                source,
+                &javascript_options.to_string(),
+            ]));
+        assert!(paired.ok, "{name}: {}", paired.stderr);
+        assert_eq!(translated.code, paired.stdout, "{name}: paired emission");
+
+        let javascript_file = directory.0.join(format!("{name}.mjs"));
+        fs::write(&javascript_file, format!("{source}\n{javascript_observer}")).unwrap();
+        let original = run(Command::new("node").arg(&javascript_file));
+        assert!(original.ok, "{name}: {}", original.stderr);
+        assert_eq!(original.stdout, expected, "{name}: original JavaScript");
+
+        let rust_file = directory.0.join(format!("{name}.rs"));
+        let executable = directory
+            .0
+            .join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+        fs::write(&rust_file, format!("{}\n{rust_observer}", translated.code)).unwrap();
+        let compiled = run(Command::new("rustc")
+            .arg("--edition=2024")
+            .arg(&rust_file)
+            .arg("-o")
+            .arg(&executable));
+        assert!(compiled.ok, "{name}: {}", compiled.stderr);
+        let native = run(&mut Command::new(&executable));
+        assert!(native.ok, "{name}: {}", native.stderr);
+        assert_eq!(native.stdout, expected, "{name}: emitted Rust");
+        assert_eq!(native.stdout, original.stdout, "{name}: execution parity");
+    };
+    for (name, source, javascript_observer, rust_observer) in [
+        (
+            "string_identity",
+            "/** @param {string} value @returns {string} */\nexport function keep(value) { return value; }\n",
+            "for(const units of [[65,55357,56832,66],[55296,65,57343],[]]){const value=keep(String.fromCharCode(...units));console.log(Array.from({length:value.length},(_,index)=>value.charCodeAt(index)).join(','));}",
+            r#"fn main(){for units in [vec![65_u16,55357,56832,66],vec![55296,65,57343],vec![]]{let value=keep(crate::ml_string::Text::from_units(units));println!("{}",value.0.iter().map(u16::to_string).collect::<Vec<_>>().join(","));}}"#,
+        ),
+        (
+            "string_array_identity",
+            "/** @param {string[]} values @returns {string[]} */\nexport function keep(values) { return values; }\n",
+            "const values=[[65,55357,56832,66],[55296,65,57343],[]].map(units=>String.fromCharCode(...units));for(const value of keep(values)){console.log(Array.from({length:value.length},(_,index)=>value.charCodeAt(index)).join(','));}",
+            r#"fn main(){let values=vec![crate::ml_string::Text::from_units(vec![65,55357,56832,66]),crate::ml_string::Text::from_units(vec![55296,65,57343]),crate::ml_string::Text::from_units(vec![])];for value in keep(values){println!("{}",value.0.iter().map(u16::to_string).collect::<Vec<_>>().join(","));}}"#,
+        ),
+    ] {
+        observe(
+            source,
+            &options,
+            name,
+            javascript_observer,
+            rust_observer,
+            "65,55357,56832,66\n55296,65,57343\n\n",
         );
     }
     let external = SelfTranslationOptions {
@@ -140,18 +210,12 @@ fn selected_utf16_prelude_retains_scalar_source_and_carries_unproved_text_values
         ..SelfTranslationOptions::default()
     };
     let source = "import { readLabel } from './text.mjs';\n/** @returns {number} */\nexport function count() { return readLabel().length; }\n";
-    let carried = self_translate_with(source, "JavaScript", "Rust", &external).unwrap();
-    assert!(carried.items.iter().any(|item| {
-        item.status == "carried"
-            && item.reason.as_deref().is_some_and(|reason| {
-                reason.contains("Text lowering")
-                    && reason.contains("independently paired rendering support")
-            })
-    }));
-    assert_eq!(
-        self_translate(&carried.code, "Rust", "JavaScript")
-            .unwrap()
-            .code,
-        source
+    observe(
+        source,
+        &external,
+        "imported_string_length",
+        "console.log(count());",
+        r#"mod text{pub fn read_label()->crate::ml_string::Text{crate::ml_string::Text::from_units(vec![65,55357,56832,66,55296,57343])}}fn main(){println!("{}",count());}"#,
+        "6\n",
     );
 }
