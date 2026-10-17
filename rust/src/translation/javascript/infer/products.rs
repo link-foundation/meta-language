@@ -4,7 +4,9 @@ use super::{
     Env, HashMap, HashSet, Inference, ROOT, Result, SExpr, SItem, SNode, SProgram, Span, Term,
     Type, collect_functions, fill_arrays, fill_fields, fill_functions, type_error,
 };
-use crate::translation::frontend_rules::accept_argument_count;
+use crate::translation::frontend_rules::{
+    accept_argument_count, accept_java_script_optional_tuple_context,
+};
 use crate::translation::javascript::product_source_rules::accept_java_script_array_tuple_context;
 
 type ExpressionTypes = HashMap<*const SExpr, Type>;
@@ -146,9 +148,25 @@ impl Inference {
         expected: Option<&Term>,
     ) -> Result<Term> {
         let expected = expected.map(|term| self.resolve(term));
-        let Some(expected) = expected else {
+        let Some(mut expected) = expected else {
             return self.expr(node, env);
         };
+        if let (SNode::Array { .. }, Term::Option { element, .. }) = (&node.node, &expected) {
+            let present = self.resolve(element);
+            let present_kind = match &present {
+                Term::Tuple(_) => "tuple",
+                Term::Known(ty) => ty.kind(),
+                _ => "",
+            };
+            if accept_java_script_optional_tuple_context(
+                "JavaScript",
+                node.node.kind(),
+                "option",
+                present_kind,
+            ) {
+                expected = present;
+            }
+        }
         let term = match (&node.node, &expected) {
             (SNode::ArrayBindingDefault { .. }, _) => {
                 self.array_binding_expr(node, env, Some(&expected))?

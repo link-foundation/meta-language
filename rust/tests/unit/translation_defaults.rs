@@ -438,6 +438,46 @@ fn type_queries_preserve_bound_value_names_without_discarding_evaluation() {
             "{target}: the exact original function reference type query"
         );
     }
+    let structural = "/** @param {{item:number}} value @returns {string} */\nfunction recordType(value) { return typeof value; }\n/** @param {[number,string]} value @returns {string} */\nfunction tupleType(value) { return typeof value; }\n/** @param {Map<string,number>} value @returns {string} */\nfunction mapType(value) { return typeof value; }\n/** @param {Set<number>} value @returns {string} */\nfunction setType(value) { return typeof value; }\nconsole.log('%s', recordType({item:2}), tupleType([2,'kept']), mapType(new Map([['kept',2]])), setType(new Set([2])));";
+    let expected = "object object object object\n";
+    let program = check_program(&parse_javascript(structural).unwrap()).unwrap();
+    assert_eq!(javascript_output(structural), expected);
+    for (name, kind) in [
+        ("recordType", "record"),
+        ("tupleType", "tuple"),
+        ("mapType", "map"),
+        ("setType", "set"),
+    ] {
+        let Some(meta_language::translation::ir::Decl::Fn(function)) = program.declaration(name)
+        else {
+            panic!("the actual structural function remains declared")
+        };
+        assert_eq!(function.params[0].ty.kind(), kind);
+        assert!(
+            matches!(&function.body.node, meta_language::translation::ir::Node::Lit {
+            value: meta_language::translation::ir::LitValue::Text(value)
+        } if value == "object")
+        );
+    }
+    for emitted in [
+        emit_javascript(&program).unwrap(),
+        emit_rust(&program).unwrap(),
+        emit_lean(&program).unwrap(),
+        emit_rocq(&program).unwrap(),
+    ] {
+        let mut names = emitted
+            .mappings
+            .iter()
+            .filter(|mapping| mapping.kind == "function")
+            .map(|mapping| mapping.source.as_str())
+            .collect::<Vec<_>>();
+        names.sort_unstable();
+        assert_eq!(names, ["mapType", "recordType", "setType", "tupleType"]);
+        assert!(emitted.text.contains("object"));
+        if emitted.language == meta_language::translation::Language::JavaScript {
+            assert_eq!(javascript_output(&emitted.text), expected);
+        }
+    }
 }
 
 fn parameter_default_contract(source: &str, native_javascript: &str) -> serde_json::Value {

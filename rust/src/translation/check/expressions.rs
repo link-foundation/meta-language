@@ -8,6 +8,7 @@ use super::{
     binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
     text_lit, type_error, unsupported,
 };
+use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
 use crate::translation::surface::SurfaceBindingTypeAnnotation;
 use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
 
@@ -377,7 +378,20 @@ impl Checker {
             }
             SNode::Length { object, integer } => self.length(object, *integer, span, env, path),
             SNode::Array { items, element } => {
-                self.array_literal(items, element.as_ref(), span, env, path, expected)
+                let context = match expected {
+                    Some(ty @ Type::Option { element, .. })
+                        if accept_java_script_optional_tuple_context(
+                            self.language.as_str(),
+                            node.node.kind(),
+                            ty.kind(),
+                            element.kind(),
+                        ) =>
+                    {
+                        Some(element.as_ref())
+                    }
+                    _ => expected,
+                };
+                self.array_literal(items, element.as_ref(), span, env, path, context)
             }
             SNode::Record {
                 entries,

@@ -23,6 +23,13 @@ impl Checker {
             } else {
                 read_type_query_result(element.kind())
             };
+            if present.is_empty() {
+                return Err(unsupported(
+                    &format!("typeof {}", arg.ty.key()),
+                    "type queries require a known JavaScript value type",
+                    span,
+                ));
+            }
             return Ok(Expr::new(
                 Node::OptionalTypeOf {
                     arg: Box::new(arg),
