@@ -269,9 +269,7 @@ fn source_free_condition_and_branch_edits_change_results_without_replaying_sourc
 }
 
 fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
-    let label = meta_language::typed_program_links_schema()["fields"][label]
-        .as_str()
-        .unwrap_or(label);
+    let label = meta_language::typed_program_links::label_of(label);
     network
         .links()
         .find_map(|link| match link.references() {
@@ -280,13 +278,13 @@ fn relation(network: &LinkNetwork, parent: LinkId, label: &str) -> [LinkId; 3] {
                     && network
                         .link(*field)
                         .and_then(|field| field.metadata().term())
-                        == Some(label) =>
+                        == Some(label.as_str()) =>
             {
                 Some([*owner, *field, *child])
             }
             _ => None,
         })
-        .unwrap()
+        .unwrap_or_else(|| panic!("missing {label} relation for {parent:?}"))
 }
 
 fn replace(network: &mut LinkNetwork, parent: LinkId, label: &str, term: &str, value: &str) {

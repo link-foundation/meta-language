@@ -591,7 +591,7 @@ pub(super) fn read_validated_global_concept_archive(
                 .position(|name| *name == rule["name"])
                 .unwrap_or(order.len())
         });
-        imported.push(json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"grammar":{"start":source["start"],"sourceFormat":source["sourceFormat"],"rules":rules,"declarations":context}}));
+        imported.push(json!({"id":source["id"],"language":source["language"],"edition":source["edition"],"grammar":{"schemaVersion":serialized["schemaVersion"],"start":source["start"],"sourceFormat":source["sourceFormat"],"rules":rules,"declarations":context}}));
     }
     let mut required = Vec::new();
     for failure in array(&space["failures"])? {
