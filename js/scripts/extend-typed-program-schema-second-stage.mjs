@@ -11,6 +11,8 @@ import {ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSIONS, ORIGINAL_LINK_RAW_SCHEMA_SEC
 import {ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT, verifyOriginalLinkRawSchemaSecondDraftPredecessor, verifyOriginalLinkRawSchemaSecondExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs';
 
+import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs';
+
 const schemaFile = new URL('../src/data/typed-program-links-schema.lino', import.meta.url);
 const base = new URL('../../experiments/original-link-complete-table-projection/', import.meta.url);
 const receiptFile = new URL('data/raw-schema-source-closure.lino', base);
@@ -26,6 +28,15 @@ const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
 const first = readStructuredDataLino(firstBytes.toString('utf8'));
 const sources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
 let actualBytes = readFileSync(schemaFile);
+const fourthFile = new URL('data/raw-schema-fourth-extension-closure.lino', base);
+if (existsSync(fourthFile)) {
+  const fourthBytes = readFileSync(fourthFile), fourth = readStructuredDataLino(fourthBytes.toString('utf8'));
+  assert.equal(sha256(fourthBytes), /^const schemaFourthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL('../../' + file, import.meta.url))]));
+  verifyOriginalLinkRawSchemaFourthExtensionClosure(readOriginalLinkRawSchemaFourthContext(), actualBytes, fourth, authoredSources);
+  checkProjectData(fourthFile, fourth);
+  actualBytes = Buffer.from(fourth.previous.source, 'utf8');
+}
 const args = process.argv.slice(2);
 const check = args.length === 1 && args[0] === '--check';
 const refresh = args.length === 2 && args[0] === '--refresh-draft';

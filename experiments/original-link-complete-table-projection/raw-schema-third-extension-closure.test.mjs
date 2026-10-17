@@ -1,10 +1,12 @@
 // Bounded source provenance and schema controls; no native execution or planning.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {extendTypedProgramSchemaThirdStage} from '../../js/scripts/extend-typed-program-schema-third-stage.mjs';
+import {checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-fourth-stage.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES, readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT} from './raw-schema-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT, verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
@@ -18,12 +20,20 @@ function fixture() {
   const firstBytes = read('./data/raw-schema-extension-closure.lino');
   const secondBytes = read('./data/raw-schema-second-extension-closure.lino');
   const thirdBytes = read('./data/raw-schema-third-extension-closure.lino');
+  const fourthFile = new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url);
+  let bytes = read('../../js/src/data/typed-program-links-schema.lino');
+  if (existsSync(fourthFile)) {
+    const fourth = readStructuredDataLino(readFileSync(fourthFile, 'utf8'));
+    const sources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, read('../../' + file)]));
+    verifyOriginalLinkRawSchemaFourthExtensionClosure(readOriginalLinkRawSchemaFourthContext(), bytes, fourth, sources);
+    bytes = Buffer.from(fourth.previous.source, 'utf8');
+  }
   return {receiptBytes, firstBytes, secondBytes, thirdBytes,
     receipt: readStructuredDataLino(receiptBytes.toString('utf8')),
     first: readStructuredDataLino(firstBytes.toString('utf8')),
     second: readStructuredDataLino(secondBytes.toString('utf8')),
     third: readStructuredDataLino(thirdBytes.toString('utf8')),
-    bytes: read('../../js/src/data/typed-program-links-schema.lino'),
+    bytes,
     sources: readOriginalLinkRawHistoricalSources(read('./raw-native-observations.mjs').toString('utf8')),
     authoredSources: Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, read('../../' + file)]))};
 }
@@ -111,7 +121,12 @@ test('the actual immutable third-stage check leaves every schema receipt and pro
     './data/raw-schema-third-extension-closure.lino', './data/raw-schema-second-extension-provenance.lino',
     './data/raw-schema-second-extension-provenance-0112b8e3.lino', './raw-native-observations.mjs'];
   const before = files.map(file => readFileSync(new URL(file, import.meta.url)));
-  const result = extendTypedProgramSchemaThirdStage({check: true});
+  let result;
+  if (existsSync(new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url))) {
+    assert.throws(() => extendTypedProgramSchemaThirdStage({check: true}), assert.AssertionError,
+      'the frozen strict third writer refuses the live fourth profile');
+    result = checkTypedProgramSchemaThirdArchive();
+  } else result = extendTypedProgramSchemaThirdStage({check: true});
   assert.equal(result.check, true); assert.equal(result.sourceClosureOnly, true);
   assert.equal(result.appendedProjectionKeys, 3); assert.equal(result.appendedAlternativeKeys, 1);
   assert.equal(result.preservedProducerBindings, 47);

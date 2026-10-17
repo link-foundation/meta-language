@@ -13,6 +13,8 @@ import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-se
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
 import {verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 
+import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
+
 const root = new URL('../../', import.meta.url), receiptFile = new URL('./data/raw-schema-source-closure.lino', import.meta.url);
 const oracleFile = new URL('./raw-native-observations.mjs', import.meta.url);
 const extensionFile = new URL('./data/raw-schema-extension-closure.lino', import.meta.url);
@@ -24,10 +26,19 @@ const gitSource = (commit, file) => execFileSync('git', ['show', commit + ':' + 
 
 /** Keep the complete producer closure and independently checked schema transition. */
 export function generateOriginalLinkRawSchemaSourceClosure({check = false, schemaCommit} = {}) {
-  const actualBytes = readFileSync(new URL('../../' + ORIGINAL_LINK_RAW_SCHEMA_FILE, import.meta.url));
+  let actualBytes = readFileSync(new URL('../../' + ORIGINAL_LINK_RAW_SCHEMA_FILE, import.meta.url));
   const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
   if (check) {
     const receipt = readProjectData(receiptFile);
+    const fourthFile = new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url);
+    if (existsSync(fourthFile)) {
+      const fourthBytes = readFileSync(fourthFile), fourth = readProjectData(fourthFile);
+      assert.equal(sha256(fourthBytes), /^const schemaFourthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+      const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+      verifyOriginalLinkRawSchemaFourthExtensionClosure(readOriginalLinkRawSchemaFourthContext(), actualBytes, fourth, authoredSources);
+      checkProjectData(fourthFile, fourth);
+      actualBytes = Buffer.from(fourth.previous.source, 'utf8');
+    }
     if (existsSync(thirdExtensionFile)) {
       const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
       verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, readProjectData(extensionFile), actualBytes, historicalSources,

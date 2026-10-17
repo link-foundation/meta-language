@@ -8,7 +8,8 @@ import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
-import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES} from './raw-schema-third-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
@@ -72,6 +73,7 @@ const schemaClosureReceiptSha256 = '4279200cc6d7f1aa36aa7090461b3d2f09d3e711c42c
 const schemaExtensionReceiptSha256 = '80c27d9bdef086925f24ac06de026cce376e44fdf02239e6b6d5cfecdaf2e811';
 const schemaSecondExtensionReceiptSha256 = 'c42beef3515ce9f2e2a030c07879630a1ef55acbfde0684f6ff25ea5d394c21f';
 const schemaThirdExtensionReceiptSha256 = '7ec40c9f63e4ea4bd266387a624dd4d5315a41f8a544428eae17e8e2eb97cde9';
+const schemaFourthExtensionReceiptSha256 = '8a25266db3397c7b012d1d8ca9c79e43996819f967695644df306669f71f6fa8';
 const runnerClosureReceiptSha256='a3518fa93fe200a1e61d4cb28b9418eb06212ddf71c197e0e03bcf8057e556d0';
 // Ordered inventory derived from the frozen fixture/corpus sources, without constructing graphs.
 const frozenFixtureIds = [
@@ -216,9 +218,13 @@ export function verifyOriginalLinkRawNativeModel(read = readFileSync) {
       const thirdBytes = read(new URL('./data/raw-schema-third-extension-closure.lino', import.meta.url));
       assert.equal(sha256(thirdBytes), schemaThirdExtensionReceiptSha256, 'the separate third schema extension receipt changed');
       const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, read(new URL('../../' + file, import.meta.url))]));
-      const closure = verifyOriginalLinkRawSchemaThirdExtensionClosure(readStructuredDataLino(receiptBytes.toString('utf8')),
-        readStructuredDataLino(extensionBytes.toString('utf8')), bytes, sourceDigests, readStructuredDataLino(secondBytes.toString('utf8')),
-        readStructuredDataLino(thirdBytes.toString('utf8')), authoredSources);
+      const fourthBytes = read(new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url));
+      assert.equal(sha256(fourthBytes), schemaFourthExtensionReceiptSha256, 'the separate fourth schema extension receipt changed');
+      const context = readOriginalLinkRawSchemaFourthContext(read);
+      assert.deepEqual(context.historicalSources, sourceDigests, 'every original producer binding remains exact');
+      const fourthSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, read(new URL('../../' + file, import.meta.url))]));
+      const closure = verifyOriginalLinkRawSchemaFourthExtensionClosure({...context, thirdSources: authoredSources}, bytes,
+        readStructuredDataLino(fourthBytes.toString('utf8')), fourthSources);
       assert.equal(closure.baselineSha256, expected);
       return {file, sha256: actual, producerSha256: expected, schemaSourceClosure: closure, sourceClosureReceiptSha256: schemaClosureReceiptSha256};
     }

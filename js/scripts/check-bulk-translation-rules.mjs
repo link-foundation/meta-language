@@ -28,7 +28,9 @@ export const BULK_TRANSLATION_RULE_CHECKS = Object.freeze([
   ['generate-nullable-type-syntax-rules.mjs', '--native'],
   ['generate-callable-emission-rules.mjs', '--native'],
   ['generate-string-code-unit-template.mjs'],
-  ['extend-typed-program-schema-third-stage.mjs'],
+  // The live fourth gate authenticates every immutable third/predecessor byte.
+  // The frozen third CLI's strict boundary remains tested against its archive.
+  ['extend-typed-program-schema-fourth-stage.mjs'],
   ['generate-grammar-selection-mapping-rules.mjs', '--native'],
   ['generate-grammar-selection-mapping-fixtures.mjs'],
   ['generate-rust-character-rules.mjs', '--native'],

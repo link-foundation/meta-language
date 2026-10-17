@@ -39,8 +39,8 @@ test('bulk translation freshness includes every new native family without repeat
     { script: 'js/scripts/generate-string-code-unit-template.mjs', arguments: ['--check'] },
   ], 'the complete code-unit template appends after every retained nineteen-command scope');
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(20, 21), [
-    { script: 'js/scripts/extend-typed-program-schema-third-stage.mjs', arguments: ['--check'] },
-  ], 'the strict equality schema successor appends after every retained twenty-command scope');
+    { script: 'js/scripts/extend-typed-program-schema-fourth-stage.mjs', arguments: ['--check'] },
+  ], 'the current schema successor authenticates strict equality and every retained predecessor scope');
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(21, 23), [
     { script: 'js/scripts/generate-grammar-selection-mapping-rules.mjs', arguments: ['--native', '--check'] },
     { script: 'js/scripts/generate-grammar-selection-mapping-fixtures.mjs', arguments: ['--check'] },

@@ -12,6 +12,8 @@ import {ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT, compareOriginalLinkRawSche
 import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs';
 
+import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs';
+
 const root = new URL('../../', import.meta.url);
 const schemaFile = new URL('../src/data/typed-program-links-schema.lino', import.meta.url);
 const receiptFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-source-closure.lino', import.meta.url);
@@ -24,7 +26,16 @@ const receiptBytes = readFileSync(receiptFile);
 assert.equal(sha256(receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT, 'the original B43 receipt bytes remain unchanged');
 const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
 const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
-const actualBytes = readFileSync(schemaFile);
+let actualBytes = readFileSync(schemaFile);
+const fourthFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-fourth-extension-closure.lino', import.meta.url);
+if (existsSync(fourthFile)) {
+  const fourthBytes = readFileSync(fourthFile), fourth = readStructuredDataLino(fourthBytes.toString('utf8'));
+  assert.equal(sha256(fourthBytes), /^const schemaFourthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+  verifyOriginalLinkRawSchemaFourthExtensionClosure(readOriginalLinkRawSchemaFourthContext(), actualBytes, fourth, authoredSources);
+  checkProjectData(fourthFile, fourth);
+  actualBytes = Buffer.from(fourth.previous.source, 'utf8');
+}
 const check = process.argv.includes('--check');
 assert.ok(process.argv.slice(2).every(argument => argument === '--check'), 'use no arguments or --check');
 if (existsSync(secondFile)) {
