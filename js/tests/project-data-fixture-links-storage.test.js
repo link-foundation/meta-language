@@ -8,6 +8,8 @@ import { readProjectData, resolveProjectDataPath } from '../scripts/project-data
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
+import { retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
+import { structuredDataToLino } from '../src/structured-data-links.js';
 
 const root = new URL('../../', import.meta.url);
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -86,4 +88,61 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
   assert.throws(() => normalizeMigrationTranslationStages(historical, current,
     receipt.refreshes.filter(entry => entry.program !== selectedName)),
   /protected translation source and stage fields/u);
+
+  const historyPath = 'parity/fixtures/translation-stage-refresh-history.lino';
+  const history = readProjectData(new URL(historyPath, root));
+  const archivedBlob = (revision, path) => {
+    const options = { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 };
+    return execFileSync('git', ['ls-tree', revision, '--', path], options).length
+      ? execFileSync('git', ['show', `${revision}:${path}`], options) : null;
+  };
+  const priorReceipts = validateTranslationStageRefreshHistory(history, archivedBlob, receipt.refreshRevision);
+  assert.equal(priorReceipts[0].refreshRevision, '62ff1b8b05ab049c51736b06780bab8274ab45cf',
+    'the original immutable refresh receipt remains inspectable and authenticated');
+  for (const prior of priorReceipts) {
+    assert.equal(prior.originalRevision, receipt.originalRevision);
+    assert.equal(prior.originalPath, receipt.originalPath);
+    assert.equal(prior.originalSha256, receipt.originalSha256);
+    for (const { program, stages } of prior.refreshes) {
+      const retained = receipt.refreshes.find(entry => entry.program === program);
+      assert.ok(retained, `${program}: a historical refresh cannot disappear`);
+      for (const stage of stages) assert.ok(retained.stages.includes(stage), `${program}: historical ${stage} scope remains`);
+    }
+  }
+  assert.deepEqual(retainTranslationStageRefreshScopes(priorReceipts, []),
+    retainTranslationStageRefreshScopes(priorReceipts, priorReceipts.flatMap(prior => prior.refreshes)),
+    'historical scopes remain even when a later snapshot no longer differs in that stage');
+
+  const wrongReceiptHash = structuredClone(history);
+  wrongReceiptHash.receipts[0].sourceSha256 = '0'.repeat(64);
+  assert.throws(() => validateTranslationStageRefreshHistory(wrongReceiptHash), /immutable Git bytes/u);
+  const wrongReceiptContent = structuredClone(history);
+  wrongReceiptContent.receipts[0].receipt.refreshSha256 = '0'.repeat(64);
+  assert.throws(() => validateTranslationStageRefreshHistory(wrongReceiptContent), /immutable Git bytes/u);
+  assert.throws(() => validateTranslationStageRefreshHistory({ schemaVersion: 1, receipts: [] }), /nonempty ordered receipt archive/u);
+  assert.throws(() => validateTranslationStageRefreshHistory({ ...history, receipts: [...history.receipts, history.receipts[0]] }),
+    /duplicate source identity/u);
+
+  const first = history.receipts[0];
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === first.sourceCommit && path === historyPath) {
+      return Buffer.from(structuredDataToLino(history));
+    }
+    return execFileSync('git', ['show', `${revision}:${path}`], { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
+  }), /complete preceding archive/u);
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === first.sourceCommit && path === historyPath) return null;
+    if (revision === first.receipt.refreshRevision && path === first.receipt.refreshPath) return Buffer.from('changed snapshot bytes');
+    return execFileSync('git', ['show', `${revision}:${path}`], { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
+  }), /snapshot differs from its immutable Git bytes/u);
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === first.sourcePath) return Buffer.from('changed prior receipt bytes');
+    return archivedBlob(revision, path);
+  }, receipt.refreshRevision), /latest prior receipt/u);
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === historyPath) return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
+    return archivedBlob(revision, path);
+  }, receipt.refreshRevision), /committed archive/u);
+  assert.throws(() => validateTranslationStageRefreshHistory({ schemaVersion: 1, receipts: history.receipts.slice(0, -1) },
+    archivedBlob, receipt.refreshRevision), /receipt archive|latest prior receipt/u);
 });
