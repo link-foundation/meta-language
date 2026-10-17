@@ -47583,7 +47583,1632 @@ const CHILD_CHAIN_SOURCE_BINDINGS=[
 ];
 const CHILD_CHAIN_NAME_INVENTORIES=[...new Set(CHILD_CHAIN_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B59 lazy child-chain source names for "+source,files:[source],extract:text=>CHILD_CHAIN_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>CHILD_CHAIN_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
 // END B59 lazy child chain operation and control names.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B59 parser token exclusion source names.
+const PARSER_TOKEN_EXCLUSION_SOURCE_BINDINGS=[
+  {
+    "id": "grammar.accept-parser-token-negation",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "acceptGrammarParserTokenNegation",
+    "inventoryName": "accept parser token negation",
+    "sourceText": "export function acceptGrammarParserTokenNegation(parserProduction, kinds, values) {\n  if (!parserProduction || kinds.length === 0 || kinds.length !== values.length) return false;\n  for (let index = 0; index < kinds.length; index += 1) {\n    const kind = readRequiredTextFact(kinds, index);\n    const value = readRequiredTextFact(values, index);\n    if (kind === 'literal' && value.length > 0) continue;\n    if (kind === 'ref' && value.length > 0 && 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(value.slice(0, 1))) continue;\n    if (kind === 'not' && value === 'any') continue;\n    return false;\n  }\n  return true;\n}"
+  },
+  {
+    "id": "grammar.accept-parser-token-negation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "accept_grammar_parser_token_negation",
+    "inventoryName": "accept parser token negation",
+    "sourceText": "pub fn accept_grammar_parser_token_negation(\n    parser_production: bool,\n    kinds: &[self::ml_string::Text],\n    values: &[self::ml_string::Text],\n) -> bool {\n    if (!parser_production || ((kinds.len() as f64) == 0f64))\n        || ((kinds.len() as f64) != (values.len() as f64))\n    {\n        false\n    } else {\n        {\n            let index = 0f64;\n            {\n                let ml_s28 =\n                    self::ml_accept_grammar_parser_token_negation_loop56(kinds, values, index);\n                match ml_s28 {\n                    self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Done => {\n                        true\n                    }\n                    self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Return(ml_result56) => {\n                        ml_result56\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.accept-parser-token-negation",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "parser_token_negation",
+    "inventoryName": "accept parser token negation",
+    "sourceText": "pub fn parser_token_negation(parser_production: bool, kinds: &[String], values: &[String]) -> bool {\n    rules::accept_grammar_parser_token_negation(parser_production, &texts(kinds), &texts(values))\n}"
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "js/src/grammar-importers/antlr.js",
+    "name": "AntlrParser::parserProduction",
+    "inventoryName": "current parser production flag",
+    "sourceText": "    this.parserProduction = false;",
+    "ownerContexts": [
+      "class AntlrParser {"
+    ]
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "js/src/grammar-emitters/antlr.js",
+    "name": "AntlrEmitter::parserProduction",
+    "inventoryName": "current parser production flag",
+    "sourceText": "    this.parserProduction = false;",
+    "ownerContexts": [
+      "class AntlrEmitter {"
+    ]
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "rust/src/grammar/import/antlr.rs",
+    "name": "Parser::parser_production",
+    "inventoryName": "current parser production flag",
+    "sourceText": "    parser_production: bool,",
+    "ownerContexts": [
+      "struct Parser {"
+    ]
+  },
+  {
+    "id": "grammar.current-parser-production-flag",
+    "source": "rust/src/grammar/emit/antlr.rs",
+    "name": "AntlrEmitter::parser_production",
+    "inventoryName": "current parser production flag",
+    "sourceText": "    parser_production: bool,",
+    "ownerContexts": [
+      "struct AntlrEmitter<'grammar> {"
+    ]
+  },
+  {
+    "id": "repository.read-original-token-exclusion-control-grammar",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "readTokenNegationBaseline",
+    "inventoryName": "read original token exclusion control grammar",
+    "sourceText": "function readTokenNegationBaseline(source) {\n  const digest = createHash('sha256').update(source).digest('hex');\n  const entry = controls.cases.find(row => row.sha256 === digest);\n  assert.ok(entry, 'the unchanged authored input must have an original importer snapshot');\n  assert.equal(entry.source, source);\n  assert.equal(entry.bytes, Buffer.byteLength(source));\n  const grammar = importOriginalAntlr(source);\n  assert.deepEqual(grammar.normalized(), entry.normalized);\n  return grammar;\n}"
+  },
+  {
+    "id": "repository.create-token-exclusion-control-grammar",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "declaration",
+    "inventoryName": "create token exclusion control grammar",
+    "sourceText": "const declaration = body => `grammar Exclusion; start: (${body})+ EOF;\n  STOP: 'stop'; ALT: 'a'; LONG: 'alpha'; RETYPE: 'x' -> type(STOP);\n  WORD: [a-z]+; TEXT: [é]+; WS: [ ]+ -> channel(HIDDEN);`;"
+  },
+  {
+    "id": "repository.create-token-exclusion-control-grammar",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_declaration",
+    "inventoryName": "create token exclusion control grammar",
+    "sourceText": "fn token_negation_declaration(body: &str) -> String {\n    format!(\n        \"grammar Exclusion; start: ({body})+ EOF;\\n  STOP: 'stop'; ALT: 'a'; LONG: 'alpha'; RETYPE: 'x' -> type(STOP);\\n  WORD: [a-z]+; TEXT: [é]+; WS: [ ]+ -> channel(HIDDEN);\"\n    )\n}"
+  },
+  {
+    "id": "repository.read-authored-token-exclusion-control-outcome",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "fixtureOracle",
+    "inventoryName": "read authored token exclusion control outcome",
+    "sourceText": "function fixtureOracle(source) {\n  const tokens = [];\n  let byte = 0;\n  for (const match of source.matchAll(/[a-z]+|é+|[ ]+|./gu)) {\n    const text = match[0];\n    const end = byte + Buffer.byteLength(text);\n    const kind = /^ +$/u.test(text) ? 'WS' : text === 'stop' || text === 'x' ? 'STOP'\n      : text === 'a' ? 'ALT' : text === 'alpha' ? 'LONG' : /^é+$/u.test(text) ? 'TEXT'\n      : /^[a-z]+$/u.test(text) ? 'WORD' : null;\n    if (!kind || kind === 'STOP' || kind === 'ALT') return null;\n    tokens.push([kind, text, byte, end, kind === 'WS']);\n    byte = end;\n  }\n  return tokens.some(row => !row[4]) ? tokens : null;\n}"
+  },
+  {
+    "id": "repository.replay-token-exclusion-control-grammar",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "replays",
+    "inventoryName": "replay token exclusion control grammar",
+    "sourceText": "function replays(grammar) {\n  const text = parseGrammarLinks(renderGrammarLinks(grammar));\n  const packet = encodeStructuredDataLinks(grammar.normalized());\n  const physical = LinkNetwork.fromLino(packet.network.toLino());\n  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(physical));\n  const restored = deserializeGrammar(decodeStructuredDataLinks(binary, packet.root));\n  assert.deepEqual(restored.normalized(), grammar.normalized());\n  return [grammar, text, restored];\n}"
+  },
+  {
+    "id": "repository.read-token-exclusion-control-foreign-obligations",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "negation lookahead cannot apply mode commands twice or remove foreign obligations::obligations",
+    "inventoryName": "read token exclusion control foreign obligations",
+    "sourceText": "const obligations = grammar => grammar.declarations.lexers.flatMap(lexer=>lexer.expression.items.filter(entry=>entry.kind==='lexicalObligation'));",
+    "ownerContexts": [
+      "test('negation lookahead cannot apply mode commands twice or remove foreign obligations', () => {"
+    ]
+  },
+  {
+    "id": "repository.check-parser-token-negation-admission-and-lexical-complements",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "parser negation policy selects complete token sets without changing lexer complements",
+    "inventoryName": "check parser token negation admission and lexical complements",
+    "sourceText": "test('parser negation policy selects complete token sets without changing lexer complements', () => {\n  assert.equal(acceptGrammarParserTokenNegation(true, ['ref'], ['STOP']), true);\n  assert.equal(acceptGrammarParserTokenNegation(true, ['literal','ref'], ['stop','ALT']), true);\n  assert.equal(acceptGrammarParserTokenNegation(true, ['not','ref'], ['any','ALT']), true);\n  for (const args of [\n    [false,['ref'],['STOP']], [true,[],[]], [true,['ref'],[]],\n    [true,['ref'],['parserRule']], [true,['literal'],['']],\n    [true,['any'],['']], [true,['not'],['']], [true,['charClass'],['']],\n  ]) assert.equal(acceptGrammarParserTokenNegation(...args), false);\n  const fixture = new URL('../../rust/tests/fixtures/grammar/antlr/set-complement.g4', import.meta.url);\n  const original = readTokenNegationBaseline(readFileSync(fixture,'utf8'));\n  const draft = importAntlr(readFileSync(fixture,'utf8'));\n  assert.deepEqual(draft.normalized(), original.normalized(), 'all original lexer complement fields remain exact');\n})"
+  },
+  {
+    "id": "repository.check-complete-token-exclusion-values-trivia-and-byte-spans",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "parser negated reference and literal sets consume elected tokens including complete trivia and UTF-8 spans",
+    "inventoryName": "check complete token exclusion values trivia and byte spans",
+    "sourceText": "test('parser negated reference and literal sets consume elected tokens including complete trivia and UTF-8 spans', () => {\n  const source = ' alpha beta é ';\n  const expected = [\n    ['WS',' ',0,1,true], ['LONG','alpha',1,6,false], ['WS',' ',6,7,true],\n    ['WORD','beta',7,11,false], ['WS',' ',11,12,true], ['TEXT','é',12,14,false], ['WS',' ',14,15,true],\n  ];\n  assert.deepEqual(fixtureOracle(source), expected);\n  for (const excluded of ['~(STOP | ALT)', \"~('stop' | 'a')\"]) {\n    const grammar = importAntlr(declaration(excluded));\n    for (const replay of replays(grammar)) {\n      const parser = compileGrammar(replay);\n      for (const input of [source, 'alpha', 'stopper', 'beta', 'éé', '', ' ', 'a', 'stop', 'x', 'alpha stop', '@']) {\n        const oracle = fixtureOracle(input);\n        const result = parser.parseTree(input);\n        assert.equal(result.ok, oracle !== null, `${excluded}: ${JSON.stringify(input)}`);\n        if (oracle) {\n          assert.deepEqual(leaves(result.tree).map(node => [node.kind,node.text,node.start,node.end,node.trivia === true]), oracle);\n          assert.equal(leaves(result.tree).map(node => node.text).join(''), input);\n          assert.equal(result.tree.end, Buffer.byteLength(input));\n        }\n      }\n    }\n  }\n  const single = compileGrammar(importAntlr(\"grammar One; start: ~'a' EOF; A:'a'; LONG:'alpha';\"));\n  assert.equal(single.parseTree('alpha').ok,true, 'excluding one token never excludes a longer token by its character prefix');\n  assert.equal(single.parseTree('a').ok,false);\n  assert.equal(single.parseTree('').ok,false, 'negation never consumes EOF');\n})"
+  },
+  {
+    "id": "repository.check-end-of-input-exclusions-and-insensitive-literal-refusals",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "parser EOF exclusions consume a complete non-EOF token and keep insensitive literals unsupported",
+    "inventoryName": "check end of input exclusions and insensitive literal refusals",
+    "sourceText": "test('parser EOF exclusions consume a complete non-EOF token and keep insensitive literals unsupported', () => {\n  const source = \"grammar End; start: ~EOF A EOF; A:'a';\";\n  const original = compileGrammar(importOriginalAntlr(source));\n  assert.equal(original.parseTree('a').ok, true, 'the original zero-width EOF complement accepted only one token');\n  for (const grammar of replays(importAntlr(source))) {\n    const parser = compileGrammar(grammar);\n    for (const input of ['', 'a', 'aa', 'aaa']) {\n      const result = parser.parseTree(input);\n      assert.equal(result.ok, input === 'aa', input);\n      if (result.ok) assert.deepEqual(leaves(result.tree).map(node => [node.kind,node.text,node.start,node.end]),\n        [['A','a',0,1],['A','a',1,2]]);\n    }\n  }\n  for (const grammar of replays(importAntlr(declaration('~(EOF | STOP | ALT)')))) {\n    const parser = compileGrammar(grammar);\n    for (const input of ['alpha', ' alpha beta é ', '', ' ', 'stop', 'x', 'a']) {\n      const expected = fixtureOracle(input);\n      const result = parser.parseTree(input);\n      assert.equal(result.ok, expected !== null, input);\n      if (expected) assert.deepEqual(leaves(result.tree).map(node => [node.kind,node.text,node.start,node.end,node.trivia === true]), expected);\n    }\n  }\n  const insensitive = \"grammar Case; options {caseInsensitive=true;} start: ~'a' EOF; A:'a'; WORD:[a-z]+;\";\n  for (const grammar of [importOriginalAntlr(insensitive), importAntlr(insensitive)]) {\n    assert.throws(() => compileGrammar(grammar).parseTree('b'), /unsupported parser terminal literalInsensitive/u);\n  }\n})"
+  },
+  {
+    "id": "repository.check-token-exclusion-mode-actions-and-foreign-obligations",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "negation lookahead cannot apply mode commands twice or remove foreign obligations",
+    "inventoryName": "check token exclusion mode actions and foreign obligations",
+    "sourceText": "test('negation lookahead cannot apply mode commands twice or remove foreign obligations', () => {\n  const mode = `parser grammar Parser; options {tokenVocab=Mode;} start: ~BLOCK TEXT CLOSE EOF;\n    lexer grammar Mode; OPEN:'<' -> pushMode(INNER); BLOCK:'x';\n    mode INNER; TEXT:[a-z]+; CLOSE:'>' -> popMode;`;\n  for (const grammar of replays(importAntlr(mode))) {\n    const result = compileGrammar(grammar).parseTree('<word>');\n    assert.equal(result.ok,true);\n    assert.deepEqual(leaves(result.tree).map(node=>[node.kind,node.text]), [['OPEN','<'],['TEXT','word'],['CLOSE','>']]);\n  }\n  // The final token is valid only in the original mode. A duplicated push\n  // would leave INNER active after CLOSE and prevent TAIL from being elected.\n  const following = `parser grammar Parser; options {tokenVocab=Mode;} start: ~BLOCK TEXT CLOSE TAIL EOF;\n    lexer grammar Mode; OPEN:'<' -> pushMode(INNER); BLOCK:'x'; TAIL:'!';\n    mode INNER; TEXT:[a-z]+; CLOSE:'>' -> popMode;`;\n  for (const grammar of replays(importAntlr(following))) {\n    const result = compileGrammar(grammar).parseTree('<word>!');\n    assert.equal(result.ok, true);\n    assert.deepEqual(leaves(result.tree).map(node => [node.kind,node.text]), [['OPEN','<'],['TEXT','word'],['CLOSE','>'],['TAIL','!']]);\n  }\n  for (const source of [\n    \"grammar Foreign; options {superClass=Missing;} start: ~BLOCK EOF; BLOCK:'x'; WORD:[a-z]+;\",\n    \"grammar Foreign; start: {allow()}? ~BLOCK EOF; BLOCK:'x'; WORD:[a-z]+;\",\n  ]) {\n    const before = readTokenNegationBaseline(source);\n    const after = importAntlr(source);\n    const obligations = grammar => grammar.declarations.lexers.flatMap(lexer=>lexer.expression.items.filter(entry=>entry.kind==='lexicalObligation'));\n    assert.deepEqual(obligations(after),obligations(before));\n    assert.throws(()=>compileGrammar(after).parseTree('word'), /unresolved (option|predicate)/u);\n  }\n  const covering = new URL('../../rust/tests/fixtures/grammar/antlr/covering.g4', import.meta.url);\n  const before = readTokenNegationBaseline(readFileSync(covering,'utf8'));\n  const after = importAntlr(readFileSync(covering,'utf8'));\n  for (const name of before.ruleNames()) {\n    if (name !== 'item') assert.deepEqual(after.rule(name),before.rule(name),name);\n  }\n  assert.deepEqual(after.rule('item').expression.items.slice(0,2), before.rule('item').expression.items.slice(0,2));\n  assert.deepEqual(after.rule('item').expression.items[2],G.seq(G.not(G.literal('x')),G.any()));\n})"
+  },
+  {
+    "id": "repository.check-token-exclusion-emission-and-following-tokens",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "ANTLR emission and reimport preserve whole-token exclusions, EOF and a separate following wildcard",
+    "inventoryName": "check token exclusion emission and following tokens",
+    "sourceText": "test('ANTLR emission and reimport preserve whole-token exclusions, EOF and a separate following wildcard', () => {\n  for (const excluded of ['~(STOP | ALT)', \"~('stop' | 'a')\", '~(EOF | STOP | ALT)']) {\n    for (const grammar of replays(importAntlr(declaration(excluded)))) {\n      const emitted = emitAntlr(grammar);\n      const parser = compileGrammar(importAntlr(emitted.source));\n      for (const input of ['alpha', ' alpha beta é ', '', ' ', 'stop', 'x', 'a', 'stopper', '@']) {\n        const expected = fixtureOracle(input);\n        const result = parser.parseTree(input);\n        assert.equal(result.ok, expected !== null, `${excluded}: ${JSON.stringify(input)}`);\n        if (expected) assert.deepEqual(leaves(result.tree).map(node => [node.kind,node.text,node.start,node.end,node.trivia === true]), expected);\n      }\n    }\n  }\n  for (const [source, accepted, refused] of [\n    [\"grammar End; start: ~EOF A EOF; A:'a';\", ['aa'], ['', 'a', 'aaa']],\n    [\"grammar Pair; start: ~BLOCK . EOF; BLOCK:'x'; A:'a';\", ['aa', 'ax'], ['', 'a', 'xa', 'aaa']],\n  ]) {\n    for (const grammar of replays(importAntlr(source))) {\n      const emitted = emitAntlr(grammar);\n      const parser = compileGrammar(importAntlr(emitted.source));\n      for (const input of accepted) {\n        const result = parser.parseTree(input);\n        assert.equal(result.ok, true, input);\n        assert.equal(leaves(result.tree).map(node => node.text).join(''), input);\n        assert.equal(leaves(result.tree).length, 2, 'the exclusion and following terminal each consume once');\n      }\n      for (const input of refused) assert.equal(parser.parseTree(input).ok, false, input);\n    }\n  }\n})"
+  },
+  {
+    "id": "repository.parameter-default-generation-package-steps",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "PARAMETER_DEFAULT_PACKAGE_STEPS",
+    "inventoryName": "parameter default generation package steps",
+    "sourceText": "const PARAMETER_DEFAULT_PACKAGE_STEPS = [\n  ['Check generated parameter default rules against JavaScript',\n    'node js/scripts/generate-parameter-default-rules.mjs --native --check',\n    '47ab944e92bf99e95fe3333a9dfd8bd5a2201fa28706f4a33944f24cd3dbf33e', 'generated'],\n];"
+  },
+  {
+    "id": "translation.parser-token-negation-operand-loop-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlAcceptGrammarParserTokenNegationLoop56Result",
+    "inventoryName": "parser token negation operand loop result",
+    "sourceText": "pub enum MlAcceptGrammarParserTokenNegationLoop56Result {\n    MlAcceptGrammarParserTokenNegationLoop56Done,\n    MlAcceptGrammarParserTokenNegationLoop56Return(bool),\n}"
+  },
+  {
+    "id": "translation.complete-parser-token-negation-operand-loop",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Done",
+    "inventoryName": "complete parser token negation operand loop",
+    "sourceText": "    MlAcceptGrammarParserTokenNegationLoop56Done,",
+    "ownerContexts": [
+      "pub enum MlAcceptGrammarParserTokenNegationLoop56Result {"
+    ]
+  },
+  {
+    "id": "translation.return-parser-token-negation-operand-decision",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Return",
+    "inventoryName": "return parser token negation operand decision",
+    "sourceText": "    MlAcceptGrammarParserTokenNegationLoop56Return(bool),",
+    "ownerContexts": [
+      "pub enum MlAcceptGrammarParserTokenNegationLoop56Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-parser-token-negation-operand-loop",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_accept_grammar_parser_token_negation_loop56",
+    "inventoryName": "execute parser token negation operand loop",
+    "sourceText": "pub fn ml_accept_grammar_parser_token_negation_loop56(\n    kinds: &[self::ml_string::Text],\n    values: &[self::ml_string::Text],\n    mut index: f64,\n) -> self::MlAcceptGrammarParserTokenNegationLoop56Result {\n    loop {\n        return if index < (kinds.len() as f64) {\n            {\n                let kind = self::read_required_text_fact(kinds, index);\n                {\n                    let value = self::read_required_text_fact(values, index);\n                    if (kind\n                        == (self::ml_string::Text::from_units(vec![\n                            108, 105, 116, 101, 114, 97, 108,\n                        ])))\n                        && ((value.length()) > 0f64)\n                    {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                index = index_2;\n                                continue;\n                            }\n                        }\n                    }\n                    {\n                        if ((kind == (self::ml_string::Text::from_units(vec![114, 101, 102])))\n                            && ((value.length()) > 0f64))\n                            && (self::ml_string::Text::from_units(vec![\n                                65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81,\n                                82, 83, 84, 85, 86, 87, 88, 89, 90,\n                            ]))\n                            .contains(&value.slice(0f64, 1f64))\n                        {\n                            {\n                                let index_3 = index + 1f64;\n                                {\n                                    index = index_3;\n                                    continue;\n                                }\n                            }\n                        }\n                        {\n                            if (kind == (self::ml_string::Text::from_units(vec![110, 111, 116])))\n                                && (value\n                                    == (self::ml_string::Text::from_units(vec![97, 110, 121])))\n                            {\n                                {\n                                    let index_4 = index + 1f64;\n                                    {\n                                        index = index_4;\n                                        continue;\n                                    }\n                                }\n                            }\n                            {\n                                self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Return(false)\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlAcceptGrammarParserTokenNegationLoop56Result::MlAcceptGrammarParserTokenNegationLoop56Done\n        };\n    }\n}"
+  },
+  {
+    "id": "grammar.read-lexical-command-emission",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerCommandEmission",
+    "inventoryName": "read lexical command emission",
+    "sourceText": "export function readGrammarLexerCommandEmission(name, type, channel, disposition, operations, modes) {\n  if (operations.length !== modes.length) return [];\n  const pieces = [];\n  if (disposition === 'skip') {\n    if (type !== 'SKIP') return [];\n    pieces.push('skip');\n  } else if (disposition === 'emit') {\n    if (type !== name) {\n      if (!acceptGrammarLexerIdentifier(type) && !acceptGrammarLexerDecimal(type)) return [];\n      pieces.push('type(' + type + ')');\n    }\n  } else return [];\n  if (channel !== 'default') {\n    const validChannel = acceptGrammarLexerIdentifier(channel) || acceptGrammarLexerDecimal(channel);\n    if (!validChannel) return [];\n    pieces.push('channel(' + channel + ')');\n  }\n  const expected = [type, channel, disposition];\n  let index = 0;\n  while (index < operations.length) {\n    const operation = readRequiredTextFact(operations, index);\n    const mode = readRequiredTextFact(modes, index);\n    if (operation === 'popMode') {\n      if (mode !== '') return [];\n      pieces.push('popMode');\n    } else if (operation === 'pushMode' || operation === 'setMode') {\n      if (!acceptGrammarLexerIdentifier(mode)) return [];\n      const argument = mode === 'default' ? 'DEFAULT_MODE' : mode;\n      pieces.push((operation === 'setMode' ? 'mode' : 'pushMode') + '(' + argument + ')');\n    } else return [];\n    expected.push(operation, mode);\n    index += 1;\n  }\n  const command = pieces.length === 0 ? '' : '-> ' + pieces.join(', ');\n  const replayed = readGrammarLexerCommandPlan(command, name);\n  if (replayed.length !== expected.length) return [];\n  index = 0;\n  while (index < expected.length) {\n    if (readRequiredTextFact(replayed, index) !== readRequiredTextFact(expected, index)) return [];\n    index += 1;\n  }\n  return [command];\n}"
+  },
+  {
+    "id": "grammar.read-lexical-command-emission",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_command_emission",
+    "inventoryName": "read lexical command emission",
+    "sourceText": "pub fn read_grammar_lexer_command_emission(\n    name: &self::ml_string::Text,\n    type_: &self::ml_string::Text,\n    channel: &self::ml_string::Text,\n    disposition: &self::ml_string::Text,\n    operations: &[self::ml_string::Text],\n    modes: &[self::ml_string::Text],\n) -> Vec<self::ml_string::Text> {\n    {\n        let ml_library_inequality_5 = (operations.len() as f64) != (modes.len() as f64);\n        if ml_library_inequality_5 {\n            Vec::<self::ml_string::Text>::new()\n        } else {\n            {\n                let pieces = Vec::<self::ml_string::Text>::new();\n                {\n                    let ml_s16 = if (*disposition)\n                        == (self::ml_string::Text::from_units(vec![115, 107, 105, 112]))\n                    {\n                        {\n                            let ml_library_inequality_4 = (*type_)\n                                != (self::ml_string::Text::from_units(vec![83, 75, 73, 80]));\n                            if ml_library_inequality_4 {\n                                self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())\n                            } else {\n                                {\n                                    let pieces_2 = {\n                                        let (ml_append_right, ml_append_left) = (\n                                            vec![self::ml_string::Text::from_units(vec![\n                                                115, 107, 105, 112,\n                                            ])],\n                                            pieces,\n                                        );\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    };\n                                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_2)\n                                }\n                            }\n                        }\n                    } else if (*disposition)\n                        == (self::ml_string::Text::from_units(vec![101, 109, 105, 116]))\n                    {\n                        {\n                            let ml_library_inequality_3 = (*type_) != (*name);\n                            if ml_library_inequality_3 {\n                                if ((self::accept_grammar_lexer_identifier(type_))\n                                    || (self::accept_grammar_lexer_decimal(type_)))\n                                {\n                                    {\n                                        let pieces_3 = {\n                                            let (ml_append_right, ml_append_left) = (\n                                                vec![\n                                                    ((self::ml_string::Text::from_units(vec![\n                                                        116, 121, 112, 101, 40,\n                                                    ]))\n                                                    .concat(type_))\n                                                    .concat(&self::ml_string::Text::from_units(\n                                                        vec![41],\n                                                    )),\n                                                ],\n                                                pieces,\n                                            );\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        };\n                                        self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_3)\n                                    }\n                                } else {\n                                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())\n                                }\n                            } else {\n                                self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces)\n                            }\n                        }\n                    } else {\n                        self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(Vec::<self::ml_string::Text>::new())\n                    };\n                    match ml_s16 {\n                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next(pieces_4) => {\n                        {\n                            let ml_s17 = {\nlet ml_library_inequality_2 = (*channel) != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])) ;\nif ml_library_inequality_2 {\n                                {\n                                    let valid_channel = self::accept_grammar_lexer_identifier(channel) || self::accept_grammar_lexer_decimal(channel);\n                                    if valid_channel {\n                                        {\n                                            let pieces_5 = { let (ml_append_right, ml_append_left) = (vec![((self::ml_string::Text::from_units(vec![99, 104, 97, 110, 110, 101, 108, 40])).concat(channel)).concat(&self::ml_string::Text::from_units(vec![41]))], pieces_4); self::ml_array::append(ml_append_left, ml_append_right) };\n                                            self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_5)\n                                        }\n                                    } else {\n                                        self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Return(Vec::<self::ml_string::Text>::new())\n                                    }\n                                }\n                            } else {\n                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_4)\n                            }\n};\n                            match ml_s17 {\n                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next(pieces_6) => {\n                                    {\n                                        let expected = vec![type_.clone(), channel.clone(), disposition.clone()];\n                                        {\n                                            let index = 0f64;\n                                            {\n                                                let ml_s18 = self::ml_read_grammar_lexer_command_emission_loop30(operations, modes, pieces_6, expected, index);\n                                                match ml_s18 {\n                                                    self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Done(pieces_7, expected_2, index_2) => {\n                                                        {\n                                                            let command = if (pieces_7.len() as f64) == 0f64 {\n                                                                self::ml_string::Text::from_units(vec![])\n                                                            } else {\n                                                                (self::ml_string::Text::from_units(vec![45, 62, 32])).concat(&self::ml_string::join(&pieces_7, &self::ml_string::Text::from_units(vec![44, 32])))\n                                                            };\n                                                            {\n                                                                let replayed = self::read_grammar_lexer_command_plan(&(command), name);\n                                                                {\nlet ml_library_inequality_1 = (replayed.len() as f64) != (expected_2.len() as f64) ;\nif ml_library_inequality_1 {\n                                                                    Vec::<self::ml_string::Text>::new()\n                                                                } else {\n                                                                    {\n                                                                        let index_3 = 0f64;\n                                                                        {\n                                                                            let ml_s19 = self::ml_read_grammar_lexer_command_emission_loop31(&(expected_2), index_3, &(replayed));\n                                                                            match ml_s19 {\n                                                                                self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Done => {\n                                                                                    vec![command]\n                                                                                }\n                                                                                self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Return(ml_result31) => {\n                                                                                    ml_result31\n                                                                                }\n                                                                            }\n                                                                        }\n                                                                    }\n                                                                }\n}\n                                                            }\n                                                        }\n                                                    }\n                                                    self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Return(ml_result31_2) => {\n                                                        ml_result31_2\n                                                    }\n                                                }\n                                            }\n                                        }\n                                    }\n                                }\n                                self::MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Return(ml_result32) => {\n                                    ml_result32\n                                }\n                            }\n                        }\n                    }\n                    self::MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return(ml_result32_2) => {\n                        ml_result32_2\n                    }\n                }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.read-lexical-command-emission",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "command_emission",
+    "inventoryName": "read lexical command emission",
+    "sourceText": "pub fn command_emission(\n    name: &str,\n    token_type: &str,\n    channel: &str,\n    disposition: &str,\n    operations: &[String],\n    modes: &[String],\n) -> Vec<String> {\n    rules::read_grammar_lexer_command_emission(\n        &text(name),\n        &text(token_type),\n        &text(channel),\n        &text(disposition),\n        &texts(operations),\n        &texts(modes),\n    )\n    .iter()\n    .map(ToString::to_string)\n    .collect()\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-issue",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerEmissionIssue",
+    "inventoryName": "read lexical emission issue",
+    "sourceText": "export function readGrammarLexerEmissionIssue(families, obligations, modes, channels, types, kinds, names, entryModes, targets, publicKinds, publicNames, ruleNames, ruleKinds, references) {\n  if (families !== 1) return 'one uniquely owned lexer family is required';\n  if (obligations !== 0) return 'unresolved lexical obligations remain';\n  if (types !== 0) return 'token declaration sections are not supported';\n  const count = kinds.length;\n  if (names.length !== count || entryModes.length !== count || targets.length !== count\n    || publicKinds.length !== count || publicNames.length !== count || ruleNames.length !== ruleKinds.length) return 'invalid lexical emission fact columns';\n  let index = 0;\n  while (index < modes.length) {\n    if (readRequiredTextFact(modes, index) !== 'default') return 'only the default lexer mode is supported';\n    index += 1;\n  }\n  index = 0;\n  while (index < channels.length) {\n    const channel = readRequiredTextFact(channels, index);\n    if (channel !== 'default' && channel !== 'HIDDEN') return 'custom channel sections are not supported';\n    index += 1;\n  }\n  const locals = [];\n  const owners = [];\n  index = 0;\n  while (index < count) {\n    const kind = readRequiredTextFact(kinds, index);\n    const name = readRequiredTextFact(names, index);\n    const actual = readRequiredTextFact(publicKinds, index);\n    if (kind === 'lexicalOwner' || kind === 'lexicalBinding') {\n      if (readRequiredTextFact(targets, index) !== name || actual === '') return 'public lexical bindings must retain their unique source names';\n      if (kind === 'lexicalOwner') owners.push(name);\n    }\n    if (kind === 'lexicalRule' || kind === 'lexicalFragment') {\n      if (containsGrammarLexerText(locals, name) || readRequiredTextFact(publicNames, index) !== name\n        || kind === 'lexicalRule' && actual !== 'token' || kind === 'lexicalFragment' && actual !== 'silent') return 'each lexical declaration needs one unchanged public token or fragment';\n      if (kind === 'lexicalRule' && readRequiredTextFact(entryModes, index) !== 'default') return 'only default-mode lexical rules are supported';\n      locals.push(name);\n    }\n    index += 1;\n  }\n  index = 0;\n  while (index < ruleNames.length) {\n    const name = readRequiredTextFact(ruleNames, index);\n    const kind = readRequiredTextFact(ruleKinds, index);\n    if (kind !== 'normal' && !containsGrammarLexerText(locals, name)) return 'implicit or declared-only tokens need an unsupported lexer section';\n    if (kind === 'normal' && !containsGrammarLexerText(owners, name)) return 'every parser rule needs the same unique lexer owner';\n    index += 1;\n  }\n  index = 0;\n  while (index < references.length) {\n    if (!containsGrammarLexerText(locals, readRequiredTextFact(references, index))) return 'an unresolved source-local lexical reference remains';\n    index += 1;\n  }\n  return '';\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-issue",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_emission_issue",
+    "inventoryName": "read lexical emission issue",
+    "sourceText": "pub fn read_grammar_lexer_emission_issue(\n    families: f64,\n    obligations: f64,\n    modes: &[self::ml_string::Text],\n    channels: &[self::ml_string::Text],\n    types: f64,\n    kinds: &[self::ml_string::Text],\n    names: &[self::ml_string::Text],\n    entry_modes: &[self::ml_string::Text],\n    targets: &[self::ml_string::Text],\n    public_kinds: &[self::ml_string::Text],\n    public_names: &[self::ml_string::Text],\n    rule_names: &[self::ml_string::Text],\n    rule_kinds: &[self::ml_string::Text],\n    references: &[self::ml_string::Text],\n) -> self::ml_string::Text {\n    {\n        let ml_library_inequality_3 = families != 1f64;\n        if ml_library_inequality_3 {\n            self::ml_string::Text::from_units(vec![\n                111, 110, 101, 32, 117, 110, 105, 113, 117, 101, 108, 121, 32, 111, 119, 110, 101,\n                100, 32, 108, 101, 120, 101, 114, 32, 102, 97, 109, 105, 108, 121, 32, 105, 115,\n                32, 114, 101, 113, 117, 105, 114, 101, 100,\n            ])\n        } else {\n            let ml_library_inequality_2 = obligations != 0f64;\n            if ml_library_inequality_2 {\n                self::ml_string::Text::from_units(vec![\n                    117, 110, 114, 101, 115, 111, 108, 118, 101, 100, 32, 108, 101, 120, 105, 99,\n                    97, 108, 32, 111, 98, 108, 105, 103, 97, 116, 105, 111, 110, 115, 32, 114, 101,\n                    109, 97, 105, 110,\n                ])\n            } else {\n                let ml_library_inequality_1 = types != 0f64;\n                if ml_library_inequality_1 {\n                    self::ml_string::Text::from_units(vec![\n                        116, 111, 107, 101, 110, 32, 100, 101, 99, 108, 97, 114, 97, 116, 105, 111,\n                        110, 32, 115, 101, 99, 116, 105, 111, 110, 115, 32, 97, 114, 101, 32, 110,\n                        111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100,\n                    ])\n                } else {\n                    {\n                        let count = kinds.len() as f64;\n                        if ((((((names.len() as f64) != count)\n                            || ((entry_modes.len() as f64) != count))\n                            || ((targets.len() as f64) != count))\n                            || ((public_kinds.len() as f64) != count))\n                            || ((public_names.len() as f64) != count))\n                            || ((rule_names.len() as f64) != (rule_kinds.len() as f64))\n                        {\n                            self::ml_string::Text::from_units(vec![\n                                105, 110, 118, 97, 108, 105, 100, 32, 108, 101, 120, 105, 99, 97,\n                                108, 32, 101, 109, 105, 115, 115, 105, 111, 110, 32, 102, 97, 99,\n                                116, 32, 99, 111, 108, 117, 109, 110, 115,\n                            ])\n                        } else {\n                            {\n                                let index = 0f64;\n                                {\n                                    let ml_s20 = self::ml_read_grammar_lexer_emission_issue_loop33(\n                                        modes, index,\n                                    );\n                                    match ml_s20 {\n                                    self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Done(index_2) => {\n                                        {\n                                            let index_3 = 0f64;\n                                            {\n                                                let ml_s21 = self::ml_read_grammar_lexer_emission_issue_loop34(channels, index_3);\n                                                match ml_s21 {\n                                                    self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Done(index_4) => {\n                                                        {\n                                                            let locals = Vec::<self::ml_string::Text>::new();\n                                                            {\n                                                                let owners = Vec::<self::ml_string::Text>::new();\n                                                                {\n                                                                    let index_5 = 0f64;\n                                                                    {\n                                                                        let ml_s22 = self::ml_read_grammar_lexer_emission_issue_loop35(kinds, names, entry_modes, targets, public_kinds, public_names, count, index_5, locals, owners);\n                                                                        match ml_s22 {\n                                                                            self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Done(index_6, locals_2, owners_2) => {\n                                                                                {\n                                                                                    let index_7 = 0f64;\n                                                                                    {\n                                                                                        let ml_s23 = self::ml_read_grammar_lexer_emission_issue_loop36(rule_names, rule_kinds, index_7, &(locals_2), &(owners_2));\n                                                                                        match ml_s23 {\n                                                                                            self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Done(index_8) => {\n                                                                                                {\n                                                                                                    let index_9 = 0f64;\n                                                                                                    {\n                                                                                                        let ml_s24 = self::ml_read_grammar_lexer_emission_issue_loop37(references, index_9, &(locals_2));\n                                                                                                        match ml_s24 {\n                                                                                                            self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Done => {\n                                                                                                                self::ml_string::Text::from_units(vec![])\n                                                                                                            }\n                                                                                                            self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Return(ml_result37) => {\n                                                                                                                ml_result37\n                                                                                                            }\n                                                                                                        }\n                                                                                                    }\n                                                                                                }\n                                                                                            }\n                                                                                            self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Return(ml_result37_2) => {\n                                                                                                ml_result37_2\n                                                                                            }\n                                                                                        }\n                                                                                    }\n                                                                                }\n                                                                            }\n                                                                            self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Return(ml_result37_3) => {\n                                                                                ml_result37_3\n                                                                            }\n                                                                        }\n                                                                    }\n                                                                }\n                                                            }\n                                                        }\n                                                    }\n                                                    self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Return(ml_result39) => {\n                                                        ml_result39\n                                                    }\n                                                }\n                                            }\n                                        }\n                                    }\n                                    self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Return(ml_result39_2) => {\n                                        ml_result39_2\n                                    }\n                                }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-issue",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "emission_issue",
+    "inventoryName": "read lexical emission issue",
+    "sourceText": "pub fn emission_issue(\n    families: usize,\n    obligations: usize,\n    modes: &[String],\n    channels: &[String],\n    types: usize,\n    columns: &[Vec<String>; 9],\n) -> String {\n    rules::read_grammar_lexer_emission_issue(\n        number(families),\n        number(obligations),\n        &texts(modes),\n        &texts(channels),\n        number(types),\n        &texts(&columns[0]),\n        &texts(&columns[1]),\n        &texts(&columns[2]),\n        &texts(&columns[3]),\n        &texts(&columns[4]),\n        &texts(&columns[5]),\n        &texts(&columns[6]),\n        &texts(&columns[7]),\n        &texts(&columns[8]),\n    )\n    .to_string()\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-disposition",
+    "source": "js/src/translation/grammar-lexer-rules.js",
+    "name": "readGrammarLexerEmissionDisposition",
+    "inventoryName": "read lexical emission disposition",
+    "sourceText": "export function readGrammarLexerEmissionDisposition(commandRecovery, issue) {\n  if (issue === '') return 1;\n  return commandRecovery ? 2 : 0;\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-disposition",
+    "source": "rust/src/translation/grammar_lexer_rules/part_2.rs",
+    "name": "read_grammar_lexer_emission_disposition",
+    "inventoryName": "read lexical emission disposition",
+    "sourceText": "pub fn read_grammar_lexer_emission_disposition(\n    command_recovery: bool,\n    issue: &self::ml_string::Text,\n) -> f64 {\n    if (*issue) == (self::ml_string::Text::from_units(vec![])) {\n        1f64\n    } else if command_recovery {\n        2f64\n    } else {\n        0f64\n    }\n}"
+  },
+  {
+    "id": "grammar.read-lexical-emission-disposition",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "emission_disposition",
+    "inventoryName": "read lexical emission disposition",
+    "sourceText": "pub fn emission_disposition(command_recovery: bool, issue: &str) -> usize {\n    position(rules::read_grammar_lexer_emission_disposition(\n        command_recovery,\n        &text(issue),\n    ))\n}"
+  },
+  {
+    "id": "grammar.prepare-source-free-lexical-emission",
+    "source": "js/src/grammar-emitters/antlr.js",
+    "name": "sourceFreeLexerEmission",
+    "inventoryName": "prepare source free lexical emission",
+    "sourceText": "function sourceFreeLexerEmission(grammar, rules, names) {\n  if (grammar.sourceFormat !== FORMAT) return null;\n  const lexers = grammar.declarations.lexers ?? [];\n  const refuse = (reason) => { throw unsupportedError(FORMAT, `source-free lexical commands: ${reason}`); };\n  const commandOf = (entry) => {\n    const result = readGrammarLexerCommandEmission(entry.name, entry.type, entry.channel, entry.disposition,\n      (entry.action ?? []).map(({ operation }) => operation), (entry.action ?? []).map(({ mode }) => mode ?? ''));\n    if (result.length !== 1) refuse(`cannot replay the declaration of ${rustDebugString(entry.name)}`);\n    return result[0];\n  };\n  let needsCommandRecovery = false;\n  let needsSourceBody = false;\n  for (const lexer of lexers) {\n    if (lexer.expression?.kind !== 'seq') refuse('a lexer needs an ordered declaration list');\n    for (const entry of lexer.expression.items) {\n      if (entry.kind !== 'lexicalRule' && entry.kind !== 'lexicalFragment') continue;\n      const rule = grammar.rule(entry.name);\n      if (rule !== undefined && !entry.item) refuse('invalid lexical declaration descriptors');\n      if (rule !== undefined && renderLinksExpression(rule.expression) !== renderLinksExpression(entry.item)) needsSourceBody = true;\n      if (entry.kind !== 'lexicalRule') continue;\n      if (rule !== undefined && planDoc(ruleDoc(grammar, rule), true).command !== null) continue;\n      if (commandOf(entry) !== '') needsCommandRecovery = true;\n    }\n  }\n  if (!needsCommandRecovery && !needsSourceBody) return null;\n  let plans;\n  try {\n    plans = lexers.map((declaration) => readLexerDeclaration(declaration, refuse));\n  } catch (error) {\n    // Only descriptor validation is caught. Unsupported raw-doc grammars keep\n    // their previous explicitly lossy path; missing commands never do.\n    if (readGrammarLexerEmissionDisposition(needsCommandRecovery, 'invalid lexical declaration descriptors') === 0) return null;\n    if (error instanceof GrammarEmitError) throw error;\n    refuse('invalid lexical declaration descriptors');\n  }\n  const entries = lexers.flatMap((declaration) => declaration.expression.items);\n  const indices = new Map(rules.map((rule, index) => [rule.name, index]));\n  const locals = entries.filter((entry) => entry.kind === 'lexicalRule' || entry.kind === 'lexicalFragment');\n  const issue = readGrammarLexerEmissionIssue(lexers.length, plans.reduce((sum, plan) => sum + plan.obligations.length, 0),\n    plans.flatMap((plan) => [...plan.modes]), plans.flatMap((plan) => [...plan.channels]), plans.reduce((sum, plan) => sum + plan.types.size, 0),\n    entries.map(({ kind }) => kind), entries.map(({ name }) => name ?? ''), entries.map(({ mode }) => mode ?? ''),\n    entries.map(({ item }) => item?.kind === 'ref' ? item.name : ''),\n    entries.map(({ name }) => indices.has(name) ? ruleKind(rules[indices.get(name)]) : ''),\n    entries.map(({ name }) => indices.has(name) ? names.ruleName(indices.get(name)) : ''),\n    rules.map(({ name }) => name), rules.map(ruleKind), locals.flatMap(({ item }) => collectReferences(item)));\n  const disposition = readGrammarLexerEmissionDisposition(needsCommandRecovery, issue);\n  if (disposition === 0) return null;\n  if (disposition === 2) refuse(issue);\n  const selected = new Map();\n  const order = [];\n  for (const entry of locals) {\n    const index = indices.get(entry.name);\n    const command = entry.kind === 'lexicalRule' ? commandOf(entry) : '';\n    const original = planDoc(ruleDoc(grammar, rules[index]), true).command;\n    if (original !== null && JSON.stringify(readGrammarLexerCommandPlan(original, entry.name))\n      !== JSON.stringify(readGrammarLexerCommandPlan(command, entry.name))) refuse('rule documentation disagrees with its actual lexical declaration');\n    selected.set(entry.name, { expression: entry.item, command });\n    order.push(index);\n  }\n  return { rules: selected, order };\n}"
+  },
+  {
+    "id": "grammar.prepare-source-free-lexical-emission",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "source_free_lexer_emission",
+    "inventoryName": "prepare source free lexical emission",
+    "sourceText": "pub(super) fn source_free_lexer_emission(\n    grammar: &Grammar,\n    names: &NamePlan,\n) -> Result<Option<LexicalEmission>, GrammarEmitError> {\n    if grammar.source_format() != Some(FORMAT) {\n        return Ok(None);\n    }\n    let lexers = &grammar.declarations().lexers;\n    let mut needs_command_recovery = false;\n    let mut needs_source_body = false;\n    for lexer in lexers {\n        let GrammarExpr::Sequence(entries) = &lexer.expression else {\n            return Err(refuse(\"a lexer needs an ordered declaration list\"));\n        };\n        for entry in entries.iter().filter_map(form_of) {\n            if entry.head != \"lexicalRule\" && entry.head != \"lexicalFragment\" {\n                continue;\n            }\n            let rule = grammar.rule(entry.text(\"name\").unwrap_or_default());\n            if let Some(rule) = rule {\n                let Some(item) = entry.expression(\"item\") else {\n                    return Err(refuse(\"invalid lexical declaration descriptors\"));\n                };\n                if render_links_expression(rule.expr()) != render_links_expression(item) {\n                    needs_source_body = true;\n                }\n            }\n            if entry.head != \"lexicalRule\" {\n                continue;\n            }\n            if rule.is_some_and(|rule| plan_doc(rule.doc(), true).command.is_some()) {\n                continue;\n            }\n            if !command_of(entry)?.is_empty() {\n                needs_command_recovery = true;\n            }\n        }\n    }\n    if !needs_command_recovery && !needs_source_body {\n        return Ok(None);\n    }\n\n    // Reuse only the native declaration validator/lowering projection. Its\n    // matcher programs and compiled lexer state never leave the runtime.\n    let plans = lexers\n        .iter()\n        .map(kernel::declaration_emission_facts)\n        .collect::<Result<Vec<_>, _>>();\n    let plans = match plans {\n        Ok(plans) => plans,\n        Err(error) => {\n            if kernel::emission_disposition(\n                needs_command_recovery,\n                \"invalid lexical declaration descriptors\",\n            ) == 0\n            {\n                return Ok(None);\n            }\n            return Err(refuse(error));\n        }\n    };\n    let entries = lexers\n        .iter()\n        .flat_map(|lexer| {\n            let GrammarExpr::Sequence(entries) = &lexer.expression else {\n                unreachable!(\"the ordered source was inspected before validation\")\n            };\n            entries.iter().map(|entry| {\n                form_of(entry).expect(\"the actual declaration validator checked each feature form\")\n            })\n        })\n        .collect::<Vec<_>>();\n    let rules = grammar.rules();\n    let indices = rules\n        .iter()\n        .enumerate()\n        .map(|(index, rule)| (rule.name.as_str(), index))\n        .collect::<HashMap<_, _>>();\n    let locals = entries\n        .iter()\n        .copied()\n        .filter(|entry| entry.head == \"lexicalRule\" || entry.head == \"lexicalFragment\")\n        .collect::<Vec<_>>();\n    let obligations = plans.iter().map(|plan| plan.obligations).sum();\n    let modes = plans\n        .iter()\n        .flat_map(|plan| plan.modes.iter().cloned())\n        .collect::<Vec<_>>();\n    let channels = plans\n        .iter()\n        .flat_map(|plan| plan.channels.iter().cloned())\n        .collect::<Vec<_>>();\n    let types = plans.iter().map(|plan| plan.types).sum();\n    let mut columns: [Vec<String>; 9] = std::array::from_fn(|_| Vec::new());\n    for entry in &entries {\n        let name = entry.text(\"name\").unwrap_or_default();\n        columns[0].push(entry.head.clone());\n        columns[1].push(name.to_owned());\n        columns[2].push(entry.text(\"mode\").unwrap_or_default().to_owned());\n        columns[3].push(match entry.expression(\"item\") {\n            Some(GrammarExpr::NonTerminal(target)) => target.clone(),\n            _ => String::new(),\n        });\n        let index = indices.get(name).copied();\n        columns[4].push(\n            index\n                .map_or(\"\", |index| rules[index].kind.as_str())\n                .to_owned(),\n        );\n        columns[5].push(index.map_or(\"\", |index| names.rule_name(index)).to_owned());\n    }\n    for rule in rules {\n        columns[6].push(rule.name.clone());\n        columns[7].push(rule.kind.as_str().to_owned());\n    }\n    for entry in &locals {\n        let mut references = Vec::new();\n        super::super::structural::collect_references(\n            entry.expression(\"item\").expect(\"validated lexical item\"),\n            &mut references,\n        );\n        columns[8].extend(references.into_iter().map(str::to_owned));\n    }\n    let issue = kernel::emission_issue(\n        lexers.len(),\n        obligations,\n        &modes,\n        &channels,\n        types,\n        &columns,\n    );\n    match kernel::emission_disposition(needs_command_recovery, &issue) {\n        0 => return Ok(None),\n        2 => return Err(refuse(issue)),\n        _ => {}\n    }\n    let mut selected = HashMap::new();\n    let mut order = Vec::new();\n    for entry in locals {\n        let name = entry\n            .text(\"name\")\n            .expect(\"the shared declaration validator checked its source name\");\n        let index = indices[name];\n        let command = if entry.head == \"lexicalRule\" {\n            command_of(entry)?\n        } else {\n            String::new()\n        };\n        if let Some(original) = plan_doc(rules[index].doc(), true).command\n            && kernel::command_plan(&original, name) != kernel::command_plan(&command, name)\n        {\n            return Err(refuse(\n                \"rule documentation disagrees with its actual lexical declaration\",\n            ));\n        }\n        selected.insert(\n            name.to_owned(),\n            RuleEmission {\n                expression: entry\n                    .expression(\"item\")\n                    .expect(\"validated lexical item\")\n                    .clone(),\n                command,\n            },\n        );\n        order.push(index);\n    }\n    Ok(Some(LexicalEmission {\n        rules: selected,\n        order,\n    }))\n}"
+  },
+  {
+    "id": "grammar.raise-source-free-lexical-command-error",
+    "source": "js/src/grammar-emitters/antlr.js",
+    "name": "sourceFreeLexerEmission::refuse",
+    "inventoryName": "raise source free lexical command error",
+    "sourceText": "const refuse = (reason) => { throw unsupportedError(FORMAT, `source-free lexical commands: ${reason}`); };",
+    "ownerContexts": [
+      "function sourceFreeLexerEmission(grammar, rules, names) {"
+    ]
+  },
+  {
+    "id": "grammar.read-source-free-lexical-declaration-command",
+    "source": "js/src/grammar-emitters/antlr.js",
+    "name": "sourceFreeLexerEmission::commandOf",
+    "inventoryName": "read source free lexical declaration command",
+    "sourceText": "const commandOf = (entry) => {\n    const result = readGrammarLexerCommandEmission(entry.name, entry.type, entry.channel, entry.disposition,\n      (entry.action ?? []).map(({ operation }) => operation), (entry.action ?? []).map(({ mode }) => mode ?? ''));\n    if (result.length !== 1) refuse(`cannot replay the declaration of ${rustDebugString(entry.name)}`);\n    return result[0];\n  };",
+    "ownerContexts": [
+      "function sourceFreeLexerEmission(grammar, rules, names) {"
+    ]
+  },
+  {
+    "id": "repository.read-source-free-command-control-token-observations",
+    "source": "js/tests/grammar-antlr-command-emission.test.js",
+    "name": "observations",
+    "inventoryName": "read source free command control token observations",
+    "sourceText": "const observations = result => result.ok ? leaves(result.tree).map(node => [node.kind, node.text,\n  node.start, node.end, node.trivia === true, node.lexical.rule, node.lexical.type,\n  node.lexical.channel, node.lexical.disposition]) : null;"
+  },
+  {
+    "id": "repository.create-source-free-command-refusal-control-grammar",
+    "source": "js/tests/grammar-antlr-command-emission.test.js",
+    "name": "source-free ANTLR commands refuse ambiguous owners, unresolved meanings and unsupported sections::fresh",
+    "inventoryName": "create source free command refusal control grammar",
+    "sourceText": "const fresh = () => deserializeGrammar(importAntlr(source).normalized());",
+    "ownerContexts": [
+      "test('source-free ANTLR commands refuse ambiguous owners, unresolved meanings and unsupported sections', () => {"
+    ]
+  },
+  {
+    "id": "repository.check-complete-lexical-command-emission-fields-and-actions",
+    "source": "js/tests/grammar-lexer-rules.test.js",
+    "name": "portable lexer command emission replays complete final fields and ordered actions",
+    "inventoryName": "check complete lexical command emission fields and actions",
+    "sourceText": "test('portable lexer command emission replays complete final fields and ordered actions', () => {\n  for (const source of ['', '-> type(WORD), channel(HIDDEN)', '-> skip, channel(HIDDEN)',\n    '-> skip, type(WORD)', '-> type(WORD), skip',\n    '-> pushMode(STRING), type(TEXT), type(WORD), channel(0), popMode, mode(DEFAULT_MODE)']) {\n    const plan = readGrammarLexerCommandPlan(source, 'RAW');\n    const operations = [], modes = [];\n    for (let index = 3; index < plan.length; index += 2) {\n      operations.push(plan[index]); modes.push(plan[index + 1]);\n    }\n    const command = readGrammarLexerCommandEmission('RAW', ...plan.slice(0, 3), operations, modes);\n    assert.equal(command.length, 1, source);\n    assert.deepEqual(readGrammarLexerCommandPlan(command[0], 'RAW'), plan);\n  }\n  assert.deepEqual(readGrammarLexerCommandEmission('RAW', 'RAW', 'default', 'emit', [], []), ['']);\n  assert.deepEqual(readGrammarLexerCommandEmission('RAW', 'WORD', 'HIDDEN', 'emit', ['pushMode','popMode','setMode'], ['STRING','','default']),\n    ['-> type(WORD), channel(HIDDEN), pushMode(STRING), popMode, mode(DEFAULT_MODE)']);\n  for (const fields of [\n    ['RAW','default','skip',[],[]], ['RAW','default','more',[],[]],\n    ['WORD)','default','emit',[],[]], ['RAW','DEFAULT_TOKEN_CHANNEL','emit',[],[]],\n    ['RAW','default','emit',['more'],['']], ['RAW','default','emit',['popMode'],['OTHER']],\n    ['RAW','default','emit',['pushMode'],[]], ['RAW','default','emit',['setMode'],['DEFAULT_MODE']],\n  ]) assert.deepEqual(readGrammarLexerCommandEmission('RAW', ...fields), [], JSON.stringify(fields));\n  const facts = [1, 0, ['default'], ['default','HIDDEN'], 0,\n    ['lexicalOwner','lexicalRule','lexicalBinding'], ['start','RAW','RAW'], ['','default',''], ['start','','RAW'],\n    ['normal','token','token'], ['start','RAW','RAW'], ['start','RAW'], ['normal','token'], []];\n  assert.equal(readGrammarLexerEmissionIssue(...facts), '');\n  for (const [at, value] of [[0,2], [1,1], [2,['default','OTHER']], [3,['CUSTOM']], [4,1],\n    [7,['other','','RAW']], [9,['start','RENAMED','RAW']], [8,['normal','silent','token']], [13,['missing']]]) {\n    const changed = structuredClone(facts); changed[at] = value;\n    assert.notEqual(readGrammarLexerEmissionIssue(...changed), '', String(at));\n  }\n  assert.equal(readGrammarLexerEmissionDisposition(false, ''), 1);\n  assert.equal(readGrammarLexerEmissionDisposition(true, ''), 1);\n  assert.equal(readGrammarLexerEmissionDisposition(false, 'unsupported scope'), 0);\n  assert.equal(readGrammarLexerEmissionDisposition(true, 'unsupported scope'), 2);\n})"
+  },
+  {
+    "id": "repository.check-source-free-command-emission-order-and-token-plans",
+    "source": "js/tests/grammar-antlr-command-emission.test.js",
+    "name": "source-free ANTLR command emission uses ordered actual lexer bodies and complete token plans",
+    "inventoryName": "check source free command emission order and token plans",
+    "sourceText": "test('source-free ANTLR command emission uses ordered actual lexer bodies and complete token plans', () => {\n  const original = importAntlr(source);\n  const packet = encodeStructuredDataLinks(original.normalized());\n  const binary = decodeLinkNetworkBinary(encodeLinkNetworkBinary(LinkNetwork.fromLino(packet.network.toLino())));\n  const restored = deserializeGrammar(decodeStructuredDataLinks(binary, packet.root));\n  const parser = compileGrammar(original);\n  // Public STOP contains the structural retype alias. Actual lexical STOP\n  // still matches only '!'; emission must not elect RETYPE as STOP itself.\n  const raw = emitAntlr(original);\n  assert.equal(original.rule('STOP').expression.kind, 'choice');\n  assert.match(raw.source, /STOP : '!' ;/u);\n  for (const replay of [parseGrammarLinks(renderGrammarLinks(original)), restored]) {\n    const emitted = emitAntlr(replay);\n    assert.match(emitted.source, /RETYPE : 'x' -> type\\(STOP\\) ;/u);\n    assert.match(emitted.source, /WS : \\[ \\]\\+ -> channel\\(HIDDEN\\) ;/u);\n    assert.match(emitted.source, /DROP : '#' -> skip ;/u);\n    if (replay.rule('WS').doc === undefined) assert.match(emitted.source, /STOP : '!' ;/u);\n    const order = ['FIRST','RETYPE','WORD','STOP','WS','DROP'].map(name => emitted.source.indexOf('\\n' + name + ' :'));\n    assert.ok(order.every((position, index) => position >= 0 && (index === 0 || order[index - 1] < position)));\n    const reimported = compileGrammar(importAntlr(emitted.source));\n    for (const input of ['if x word !', '#if# x ', 'x', 'if', 'word', '', ' ', '@']) {\n      assert.deepEqual(observations(reimported.parseTree(input)), observations(parser.parseTree(input)), input);\n    }\n  }\n  const prose = deserializeGrammar(original.normalized());\n  prose.rules.set('WS', { ...prose.rule('WS'), doc: 'retained whitespace documentation' });\n  const emitted = emitAntlr(prose);\n  assert.match(emitted.source, /\\/\\/ retained whitespace documentation\\nWS : \\[ \\]\\+ -> channel\\(HIDDEN\\) ;/u);\n  assert.deepEqual(observations(compileGrammar(importAntlr(emitted.source)).parseTree('if x')),\n    observations(parser.parseTree('if x')));\n})"
+  },
+  {
+    "id": "repository.check-source-free-command-ambiguous-and-unresolved-refusals",
+    "source": "js/tests/grammar-antlr-command-emission.test.js",
+    "name": "source-free ANTLR commands refuse ambiguous owners, unresolved meanings and unsupported sections",
+    "inventoryName": "check source free command ambiguous and unresolved refusals",
+    "sourceText": "test('source-free ANTLR commands refuse ambiguous owners, unresolved meanings and unsupported sections', () => {\n  const fresh = () => deserializeGrammar(importAntlr(source).normalized());\n  const refusals = [\n    grammar => grammar.declarations.lexers.push({ ...grammar.declarations.lexers[0], name: 'Other' }),\n    grammar => grammar.declarations.lexers[0].expression.items.push({ kind: 'lexicalMode', name: 'OTHER' }),\n    grammar => grammar.declarations.lexers[0].expression.items.push({ kind: 'lexicalChannel', name: 'CUSTOM' }),\n    grammar => grammar.declarations.lexers[0].expression.items.push({ kind: 'lexicalType', name: 'DECLARED' }),\n    grammar => grammar.declarations.lexers[0].expression.items.push({ kind: 'lexicalObligation', name: '', category: 'option', source: 'unresolved' }),\n    grammar => grammar.declarations.lexers[0].expression.items.push(grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule')),\n    grammar => { grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalBinding' && entry.name === 'STOP').item.name = 'WORD'; },\n    grammar => grammar.rules.delete('WS'),\n    grammar => { delete grammar.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule').item; },\n  ];\n  for (const mutate of refusals) {\n    const grammar = fresh(); mutate(grammar);\n    assert.throws(() => emitAntlr(grammar), error => error.name === 'GrammarEmitError'\n      && /source-free lexical commands:/u.test(error.message));\n  }\n  const documented = importAntlr(source);\n  delete documented.declarations.lexers[0].expression.items.find(entry => entry.kind === 'lexicalRule').item;\n  assert.throws(() => emitAntlr(documented), error => error.name === 'GrammarEmitError'\n    && /invalid lexical declaration descriptors/u.test(error.message));\n})"
+  },
+  {
+    "id": "grammar.source-local-rule-emission",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "RuleEmission",
+    "inventoryName": "source local rule emission",
+    "sourceText": "pub(super) struct RuleEmission {\n    pub(super) expression: GrammarExpr,\n    pub(super) command: String,\n}"
+  },
+  {
+    "id": "grammar.source-local-lexical-emission",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "LexicalEmission",
+    "inventoryName": "source local lexical emission",
+    "sourceText": "pub(super) struct LexicalEmission {\n    pub(super) rules: HashMap<String, RuleEmission>,\n    pub(super) order: Vec<usize>,\n}"
+  },
+  {
+    "id": "grammar.lexical-declaration-emission-facts",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "DeclarationEmissionFacts",
+    "inventoryName": "lexical declaration emission facts",
+    "sourceText": "pub struct DeclarationEmissionFacts {\n    pub obligations: usize,\n    pub modes: Vec<String>,\n    pub channels: Vec<String>,\n    pub types: usize,\n}"
+  },
+  {
+    "id": "grammar.construct-native-lexical-command-error-value",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "refuse",
+    "inventoryName": "construct native lexical command error value",
+    "sourceText": "fn refuse(reason: impl std::fmt::Display) -> GrammarEmitError {\n    unsupported_error(FORMAT, format!(\"source-free lexical commands: {reason}\"))\n}"
+  },
+  {
+    "id": "grammar.read-native-source-free-lexical-declaration-command",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "command_of",
+    "inventoryName": "read native source free lexical declaration command",
+    "sourceText": "fn command_of(entry: &FeatureForm) -> Result<String, GrammarEmitError> {\n    let actions = entry.operations(\"action\").unwrap_or_default();\n    let operations = actions\n        .iter()\n        .map(|action| action.head.clone())\n        .collect::<Vec<_>>();\n    let modes = actions\n        .iter()\n        .map(|action| action.text(\"mode\").unwrap_or_default().to_owned())\n        .collect::<Vec<_>>();\n    let result = kernel::command_emission(\n        entry.text(\"name\").unwrap_or_default(),\n        entry.text(\"type\").unwrap_or_default(),\n        entry.text(\"channel\").unwrap_or_default(),\n        entry.text(\"disposition\").unwrap_or_default(),\n        &operations,\n        &modes,\n    );\n    let [command] = result.as_slice() else {\n        return Err(refuse(format!(\n            \"cannot replay the declaration of {:?}\",\n            entry.text(\"name\").unwrap_or_default()\n        )));\n    };\n    Ok(command.clone())\n}"
+  },
+  {
+    "id": "grammar.read-lexical-declaration-emission-facts",
+    "source": "rust/src/grammar/feature_runtime/lexical_kernel.rs",
+    "name": "declaration_emission_facts",
+    "inventoryName": "read lexical declaration emission facts",
+    "sourceText": "pub fn declaration_emission_facts(\n    declaration: &crate::grammar::GrammarLexer,\n) -> Result<DeclarationEmissionFacts, String> {\n    let forms =\n        super::lexical_plan::read_declaration_forms(declaration).map_err(|error| error.message)?;\n    let mut obligations = Vec::new();\n    let mut modes = vec![\"default\".to_owned()];\n    let mut channels = vec![\"default\".to_owned(), \"HIDDEN\".to_owned()];\n    let mut types = Vec::new();\n    for entry in forms {\n        let name = entry.text(\"name\").unwrap_or_default();\n        match entry_form(&entry.head) {\n            4 => {\n                if !modes.iter().any(|mode| mode == name) {\n                    modes.push(name.to_owned());\n                }\n            }\n            5 => {\n                if !channels.iter().any(|channel| channel == name) {\n                    channels.push(name.to_owned());\n                }\n            }\n            6 => obligations.push(super::lexical_plan::LexicalObligation {\n                name: name.to_owned(),\n                category: entry.text(\"category\").unwrap_or_default().to_owned(),\n                source: entry.text(\"source\").unwrap_or_default().to_owned(),\n            }),\n            7 | 8 => {\n                let item = entry\n                    .expression(\"item\")\n                    .ok_or_else(|| \"invalid lexical declaration descriptors\".to_owned())?;\n                super::lexical_plan::lower_expression(item, name, &mut obligations)\n                    .map_err(|error| error.message)?;\n            }\n            9 => {\n                if !types.iter().any(|token_type| token_type == name) {\n                    types.push(name.to_owned());\n                }\n            }\n            _ => {}\n        }\n    }\n    Ok(DeclarationEmissionFacts {\n        obligations: obligations.len(),\n        modes,\n        channels,\n        types: types.len(),\n    })\n}"
+  },
+  {
+    "id": "grammar.read-validated-lexical-declaration-forms",
+    "source": "rust/src/grammar/feature_runtime/lexical_plan.rs",
+    "name": "read_declaration_forms",
+    "inventoryName": "read validated lexical declaration forms",
+    "sourceText": "pub(super) fn read_declaration_forms(declaration: &GrammarLexer) -> LoadResult<Vec<FeatureForm>> {\n    let GrammarExpr::Sequence(entries) = &declaration.expression else {\n        return refuse(\n            \"declaration\",\n            format!(\n                \"lexer {} needs an ordered declaration list\",\n                declaration.name\n            ),\n        );\n    };\n    let forms = entries\n        .iter()\n        .map(|entry| form(entry).cloned())\n        .collect::<Option<Vec<_>>>()\n        .ok_or_else(|| super::load::GrammarRuntimeError {\n            reason: \"declaration\",\n            message: \"a lexical declaration entry needs a shared feature form\".to_owned(),\n        })?;\n    let mut columns: [Vec<String>; 7] = std::array::from_fn(|_| Vec::new());\n    let (mut action_owners, mut actions, mut action_modes) = (Vec::new(), Vec::new(), Vec::new());\n    for (index, entry) in forms.iter().enumerate() {\n        columns[0].push(entry.head.clone());\n        columns[1].push(entry.text(\"name\").unwrap_or_default().to_owned());\n        columns[2].push(entry.expression(\"item\").map_or(\"\", kind).to_owned());\n        for (column, field) in [\n            (3, \"value\"),\n            (4, \"mode\"),\n            (5, \"channel\"),\n            (6, \"disposition\"),\n        ] {\n            columns[column].push(entry.text(field).unwrap_or_default().to_owned());\n        }\n        for action in entry.operations(\"action\").unwrap_or_default() {\n            action_owners.push(kernel::number(index));\n            actions.push(action.head.clone());\n            action_modes.push(action.text(\"mode\").unwrap_or_default().to_owned());\n        }\n    }\n    let issue = kernel::declaration_issue(&columns, &action_owners, &actions, &action_modes);\n    if issue.first() != Some(&0.0) {\n        return refuse(\n            \"declaration\",\n            format!(\n                \"invalid lexical declaration in lexer {} (issue {}, entry {}, action {})\",\n                declaration.name, issue[0], issue[1], issue[2]\n            ),\n        );\n    }\n    Ok(forms)\n}"
+  },
+  {
+    "id": "repository.require-native-token-exclusion-reference-version",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_reference",
+    "inventoryName": "require native token exclusion reference version",
+    "sourceText": "fn token_negation_reference() {\n    static REFERENCE: std::sync::OnceLock<Value> = std::sync::OnceLock::new();\n    let reference = REFERENCE.get_or_init(|| {\n        let output = std::process::Command::new(\"node\")\n            .current_dir(std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"..\"))\n            .args([\n                \"--input-type=module\",\n                \"--eval\",\n                \"import {selectAntlrReferenceAssertion} from './js/scripts/antlr-version-assertions.mjs'; process.stdout.write(JSON.stringify(selectAntlrReferenceAssertion()));\",\n            ])\n            .output()\n            .expect(\"the declared reference selector runs in native CI\");\n        assert!(output.status.success(), \"{}\", String::from_utf8_lossy(&output.stderr));\n        serde_json::from_slice(&output.stdout).expect(\"the actual selector returns its selected policy\")\n    });\n    assert_eq!(reference[\"activeVersion\"], \"4.13.2\");\n    assert_eq!(reference[\"sourceVersion\"], \"ANTLR 4.13.2\");\n}"
+  },
+  {
+    "id": "repository.read-retained-native-token-exclusion-baseline",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_baseline",
+    "inventoryName": "read retained native token exclusion baseline",
+    "sourceText": "fn token_negation_baseline(source: &str) -> Value {\n    use sha2::{Digest, Sha256};\n    let fixture: Value = super::project_data::read_project_data(include_str!(\n        \"../../../parity/fixtures/grammar-parser-token-negation-controls.lino\"\n    ))\n    .expect(\"the original importer snapshot is registered linked data\");\n    assert_eq!(\n        fixture[\"baseline\"][\"revision\"],\n        \"63e37589e9d7f37c5f1099651c1cbc702b7403d3\"\n    );\n    let importer = &fixture[\"baseline\"][\"importer\"];\n    let original = importer[\"source\"]\n        .as_str()\n        .expect(\"the exact original source is retained\");\n    assert_eq!(\n        importer[\"bytes\"].as_u64(),\n        Some(u64::try_from(original.len()).unwrap())\n    );\n    assert_eq!(\n        Sha256::digest(original.as_bytes()).iter().fold(\n            String::with_capacity(64),\n            |mut hexadecimal, byte| {\n                use std::fmt::Write as _;\n                write!(hexadecimal, \"{byte:02x}\").expect(\"writing into a String succeeds\");\n                hexadecimal\n            }\n        ),\n        importer[\"sha256\"].as_str().unwrap()\n    );\n    assert_eq!(\n        importer[\"sha256\"],\n        \"52b58caf89799535192131987e018aed71654cff19942290c965d2482e19eb29\"\n    );\n    let cases = fixture[\"cases\"]\n        .as_array()\n        .expect(\"all original input rows remain\");\n    assert_eq!(cases.len(), 4);\n    let row = cases\n        .iter()\n        .find(|row| row[\"source\"].as_str() == Some(source))\n        .expect(\"the unchanged authored input has an exact original snapshot\");\n    assert_eq!(\n        row[\"bytes\"].as_u64(),\n        Some(u64::try_from(source.len()).unwrap())\n    );\n    assert_eq!(\n        Sha256::digest(source.as_bytes()).iter().fold(\n            String::with_capacity(64),\n            |mut hexadecimal, byte| {\n                use std::fmt::Write as _;\n                write!(hexadecimal, \"{byte:02x}\").expect(\"writing into a String succeeds\");\n                hexadecimal\n            }\n        ),\n        row[\"sha256\"].as_str().unwrap()\n    );\n    row[\"normalized\"].clone()\n}"
+  },
+  {
+    "id": "repository.replay-native-token-exclusion-control-grammar",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_replays",
+    "inventoryName": "replay native token exclusion control grammar",
+    "sourceText": "fn token_negation_replays(grammar: &meta_language::Grammar) -> Vec<meta_language::Grammar> {\n    use meta_language::{\n        BinaryLinksOptions, FromLinks, Grammar, LinkNetwork, LinksDecoder, LinksEncoder, ToLinks,\n        decode_link_network_binary, encode_link_network_binary,\n    };\n    // The normalized wire intentionally has no legacy rule documentation.\n    // Its actual lexical declarations must suffice after source-free reload.\n    let normalized = serialize_grammar(grammar);\n    let without_docs = deserialize_grammar(&normalized).expect(\"all normalized fields reload\");\n    let mut encoder = LinksEncoder::new();\n    let root = without_docs.to_links(&mut encoder);\n    let network = encoder.into_network();\n    let text = LinkNetwork::from_lino(&network.to_lino()).expect(\"full graph text reload\");\n    let bytes = encode_link_network_binary(&text, BinaryLinksOptions::default())\n        .expect(\"the complete grammar graph encodes\");\n    let binary = decode_link_network_binary(&bytes, BinaryLinksOptions::default())\n        .expect(\"the complete grammar graph reloads\");\n    let restored = Grammar::from_links(&mut LinksDecoder::new(&binary), root)\n        .expect(\"the source-free graph decodes with the same root\");\n    let candidates = vec![\n        grammar.clone(),\n        parse_grammar_links(&render_grammar_links(grammar)).expect(\"grammar Links reload\"),\n        restored,\n    ];\n    for candidate in &candidates {\n        assert_eq!(serialize_grammar(candidate), normalized);\n    }\n    candidates\n}"
+  },
+  {
+    "id": "repository.read-native-token-exclusion-control-rows",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_rows",
+    "inventoryName": "read native token exclusion control rows",
+    "sourceText": "fn token_negation_rows(tree: &SyntaxTree) -> Vec<(String, String, usize, usize, bool)> {\n    match tree {\n        SyntaxTree::Node { children, .. } => {\n            children.iter().flat_map(token_negation_rows).collect()\n        }\n        SyntaxTree::Token {\n            kind,\n            text: LeafText::Text(text),\n            start,\n            end,\n            trivia,\n            lexical,\n            ..\n        } => {\n            assert!(\n                lexical.is_some(),\n                \"every elected token retains its source-local metadata\"\n            );\n            vec![(\n                kind.clone().unwrap_or_default(),\n                text.clone(),\n                *start,\n                *end,\n                *trivia,\n            )]\n        }\n        _ => Vec::new(),\n    }\n}"
+  },
+  {
+    "id": "repository.read-native-authored-token-exclusion-outcome",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_oracle",
+    "inventoryName": "read native authored token exclusion outcome",
+    "sourceText": "fn token_negation_oracle(input: &str) -> Option<Vec<(String, String, usize, usize, bool)>> {\n    let mut rows = Vec::new();\n    let mut start = 0;\n    while start < input.len() {\n        let first = input[start..]\n            .chars()\n            .next()\n            .expect(\"a complete UTF-8 character\");\n        if first != ' ' && first != 'é' && !first.is_ascii_lowercase() {\n            return None;\n        }\n        let mut end = start;\n        for character in input[start..].chars() {\n            if !(if first == ' ' {\n                character == ' '\n            } else if first == 'é' {\n                character == 'é'\n            } else {\n                character.is_ascii_lowercase()\n            }) {\n                break;\n            }\n            end += character.len_utf8();\n        }\n        let text = &input[start..end];\n        let kind = match text {\n            \"stop\" | \"x\" | \"a\" => return None,\n            \"alpha\" => \"LONG\",\n            _ if first == ' ' => \"WS\",\n            _ if first == 'é' => \"TEXT\",\n            _ => \"WORD\",\n        };\n        rows.push((kind.to_owned(), text.to_owned(), start, end, kind == \"WS\"));\n        start = end;\n    }\n    rows.iter().any(|row| !row.4).then_some(rows)\n}"
+  },
+  {
+    "id": "repository.check-native-token-exclusion-control-inputs",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "token_negation_assert_inputs",
+    "inventoryName": "check native token exclusion control inputs",
+    "sourceText": "fn token_negation_assert_inputs(grammar: &meta_language::Grammar, inputs: &[&str]) {\n    let parser = compile_feature_grammar(grammar, None, FeatureParseOptions::default())\n        .expect(\"all retained lexical declarations compile\");\n    for input in inputs {\n        let expected = token_negation_oracle(input);\n        let result = parser\n            .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n            .expect(\"all authored operations are resolved\");\n        assert_eq!(result.ok, expected.is_some(), \"{input:?}\");\n        if let Some(expected) = expected {\n            let tree = result\n                .tree\n                .expect(\"the accepted parse has its concrete tree\");\n            assert_eq!(token_negation_rows(&tree), expected, \"{input:?}\");\n            assert_eq!(source_text(&tree), *input);\n            assert_eq!(tree.end(), input.len());\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-original-lexical-complement-fields",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_token_negation_keeps_the_original_lexer_complement_fields_exact",
+    "inventoryName": "check native original lexical complement fields",
+    "sourceText": "fn parser_token_negation_keeps_the_original_lexer_complement_fields_exact() {\n    token_negation_reference();\n    let source = include_str!(\"../fixtures/grammar/antlr/set-complement.g4\");\n    let grammar = import_antlr(source).expect(\"the original lexer complement still imports\");\n    let normalized: Value = serde_json::from_str(&serialize_grammar(&grammar)).unwrap();\n    assert_eq!(normalized, token_negation_baseline(source));\n}"
+  },
+  {
+    "id": "repository.check-native-complete-token-exclusion-spans-and-token-aliases",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_token_negation_consumes_complete_words_utf8_spans_hidden_trivia_and_retypes",
+    "inventoryName": "check native complete token exclusion spans and token aliases",
+    "sourceText": "fn parser_token_negation_consumes_complete_words_utf8_spans_hidden_trivia_and_retypes() {\n    token_negation_reference();\n    let expected = vec![\n        (\"WS\".to_owned(), \" \".to_owned(), 0, 1, true),\n        (\"LONG\".to_owned(), \"alpha\".to_owned(), 1, 6, false),\n        (\"WS\".to_owned(), \" \".to_owned(), 6, 7, true),\n        (\"WORD\".to_owned(), \"beta\".to_owned(), 7, 11, false),\n        (\"WS\".to_owned(), \" \".to_owned(), 11, 12, true),\n        (\"TEXT\".to_owned(), \"é\".to_owned(), 12, 14, false),\n        (\"WS\".to_owned(), \" \".to_owned(), 14, 15, true),\n    ];\n    assert_eq!(token_negation_oracle(\" alpha beta é \"), Some(expected));\n    for excluded in [\"~(STOP | ALT)\", \"~('stop' | 'a')\"] {\n        let grammar =\n            import_antlr(&token_negation_declaration(excluded)).expect(\"authored source imports\");\n        for candidate in token_negation_replays(&grammar) {\n            token_negation_assert_inputs(\n                &candidate,\n                &[\n                    \" alpha beta é \",\n                    \"alpha\",\n                    \"stopper\",\n                    \"beta\",\n                    \"éé\",\n                    \"\",\n                    \" \",\n                    \"a\",\n                    \"stop\",\n                    \"x\",\n                    \"alpha stop\",\n                    \"@\",\n                ],\n            );\n        }\n    }\n    let parser = imported(\"grammar One; start: ~'a' EOF; A:'a'; LONG:'alpha';\");\n    for (input, accepted) in [(\"alpha\", true), (\"a\", false), (\"\", false)] {\n        assert_eq!(\n            parser\n                .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                .expect(\"one complete token\")\n                .ok,\n            accepted\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-end-of-input-exclusion-and-insensitive-refusal",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_eof_exclusions_consume_once_and_keep_insensitive_literals_unsupported",
+    "inventoryName": "check native end of input exclusion and insensitive refusal",
+    "sourceText": "fn parser_eof_exclusions_consume_once_and_keep_insensitive_literals_unsupported() {\n    token_negation_reference();\n    let grammar =\n        import_antlr(\"grammar End; start: ~EOF A EOF; A:'a';\").expect(\"authored EOF exclusion\");\n    for candidate in token_negation_replays(&grammar) {\n        let parser =\n            compile_feature_grammar(&candidate, None, FeatureParseOptions::default()).unwrap();\n        for input in [\"\", \"a\", \"aa\", \"aaa\"] {\n            let result = parser\n                .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                .unwrap();\n            assert_eq!(result.ok, input == \"aa\", \"{input}\");\n            if result.ok {\n                assert_eq!(\n                    token_negation_rows(&result.tree.unwrap()),\n                    vec![\n                        (\"A\".to_owned(), \"a\".to_owned(), 0, 1, false),\n                        (\"A\".to_owned(), \"a\".to_owned(), 1, 2, false),\n                    ]\n                );\n            }\n        }\n    }\n    let grammar = import_antlr(&token_negation_declaration(\"~(EOF | STOP | ALT)\")).unwrap();\n    for candidate in token_negation_replays(&grammar) {\n        token_negation_assert_inputs(\n            &candidate,\n            &[\"alpha\", \" alpha beta é \", \"\", \" \", \"stop\", \"x\", \"a\"],\n        );\n    }\n    let error = imported(\n        \"grammar Case; options {caseInsensitive=true;} start: ~'a' EOF; A:'a'; WORD:[a-z]+;\",\n    )\n    .parse_tree(b\"b\", &FeatureParseOptions::default())\n    .expect_err(\"insensitive parser literals still require a lexical binding proof\");\n    assert!(\n        error\n            .message\n            .contains(\"unsupported parser terminal in lexer\")\n    );\n}"
+  },
+  {
+    "id": "repository.check-native-token-exclusion-actions-and-retained-obligations",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligations",
+    "inventoryName": "check native token exclusion actions and retained obligations",
+    "sourceText": "fn parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligations() {\n    token_negation_reference();\n    for (source, input, expected) in [\n        (\n            \"parser grammar Parser; options {tokenVocab=Mode;} start: ~BLOCK TEXT CLOSE EOF;\\n    lexer grammar Mode; OPEN:'<' -> pushMode(INNER); BLOCK:'x';\\n    mode INNER; TEXT:[a-z]+; CLOSE:'>' -> popMode;\",\n            \"<word>\",\n            vec![(\"OPEN\", \"<\"), (\"TEXT\", \"word\"), (\"CLOSE\", \">\")],\n        ),\n        (\n            \"parser grammar Parser; options {tokenVocab=Mode;} start: ~BLOCK TEXT CLOSE TAIL EOF;\\n    lexer grammar Mode; OPEN:'<' -> pushMode(INNER); BLOCK:'x'; TAIL:'!';\\n    mode INNER; TEXT:[a-z]+; CLOSE:'>' -> popMode;\",\n            \"<word>!\",\n            vec![\n                (\"OPEN\", \"<\"),\n                (\"TEXT\", \"word\"),\n                (\"CLOSE\", \">\"),\n                (\"TAIL\", \"!\"),\n            ],\n        ),\n    ] {\n        let grammar = import_antlr(source).unwrap();\n        for candidate in token_negation_replays(&grammar) {\n            let parser =\n                compile_feature_grammar(&candidate, None, FeatureParseOptions::default()).unwrap();\n            let result = parser\n                .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                .unwrap();\n            assert!(result.ok);\n            let tree = result.tree.unwrap();\n            let leaves = lexical_leaves(&tree);\n            assert_eq!(\n                leaves\n                    .iter()\n                    .map(|(kind, text, _, _)| (kind.as_str(), text.as_str()))\n                    .collect::<Vec<_>>(),\n                expected\n            );\n            assert_eq!(source_text(&tree), input);\n        }\n    }\n    for source in [\n        \"grammar Foreign; options {superClass=Missing;} start: ~BLOCK EOF; BLOCK:'x'; WORD:[a-z]+;\",\n        \"grammar Foreign; start: {allow()}? ~BLOCK EOF; BLOCK:'x'; WORD:[a-z]+;\",\n    ] {\n        let before = token_negation_baseline(source);\n        let grammar = import_antlr(source).unwrap();\n        let after: Value = serde_json::from_str(&serialize_grammar(&grammar)).unwrap();\n        let obligations = |normalized: &Value| {\n            normalized[\"declarations\"][\"lexers\"]\n                .as_array()\n                .unwrap()\n                .iter()\n                .flat_map(|lexer| lexer[\"expression\"][\"items\"].as_array().unwrap())\n                .filter(|entry| entry[\"kind\"] == \"lexicalObligation\")\n                .cloned()\n                .collect::<Vec<_>>()\n        };\n        assert_eq!(obligations(&after), obligations(&before));\n        for candidate in token_negation_replays(&grammar) {\n            let error = compile_feature_grammar(&candidate, None, FeatureParseOptions::default())\n                .and_then(|parser| parser.parse_tree(b\"word\", &FeatureParseOptions::default()))\n                .expect_err(\"an unresolved foreign operation never gains support\");\n            assert!(\n                error.message.contains(\"unresolved option\")\n                    || error.message.contains(\"unresolved predicate\")\n            );\n        }\n    }\n    let source = include_str!(\"../fixtures/grammar/antlr/covering.g4\");\n    let before = token_negation_baseline(source);\n    let after: Value =\n        serde_json::from_str(&serialize_grammar(&import_antlr(source).unwrap())).unwrap();\n    for old in before[\"rules\"].as_array().unwrap() {\n        let name = old[\"name\"].as_str().unwrap();\n        let new = after[\"rules\"]\n            .as_array()\n            .unwrap()\n            .iter()\n            .find(|rule| rule[\"name\"] == name)\n            .unwrap();\n        if name != \"item\" {\n            assert_eq!(new, old, \"{name}\");\n        } else {\n            assert_eq!(\n                &new[\"expression\"][\"items\"].as_array().unwrap()[..2],\n                &old[\"expression\"][\"items\"].as_array().unwrap()[..2]\n            );\n            assert_eq!(\n                new[\"expression\"][\"items\"][2],\n                serde_json::json!({\"kind\":\"seq\",\"items\":[{\"kind\":\"not\",\"item\":{\"kind\":\"literal\",\"value\":\"x\"}},{\"kind\":\"any\"}]})\n            );\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.check-native-token-exclusion-emission-and-wildcard-boundaries",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_token_exclusion_emission_reimports_the_same_tokens_eof_and_following_wildcard",
+    "inventoryName": "check native token exclusion emission and wildcard boundaries",
+    "sourceText": "fn parser_token_exclusion_emission_reimports_the_same_tokens_eof_and_following_wildcard() {\n    use meta_language::{FeatureExpr, FieldValue, GrammarEmitError, GrammarExpr, GrammarFormat};\n    token_negation_reference();\n    for excluded in [\"~(STOP | ALT)\", \"~('stop' | 'a')\", \"~(EOF | STOP | ALT)\"] {\n        let grammar = import_antlr(&token_negation_declaration(excluded)).unwrap();\n        for candidate in token_negation_replays(&grammar) {\n            let (source, _) =\n                meta_language::emit_antlr(&candidate).expect(\"the exact supported exclusion emits\");\n            let reimported = import_antlr(&source).expect(\"emitted ANTLR reimports\");\n            token_negation_assert_inputs(\n                &reimported,\n                &[\n                    \"alpha\",\n                    \" alpha beta é \",\n                    \"\",\n                    \" \",\n                    \"stop\",\n                    \"x\",\n                    \"a\",\n                    \"stopper\",\n                    \"@\",\n                ],\n            );\n        }\n    }\n    for (source, accepted, refused) in [\n        (\n            \"grammar End; start: ~EOF A EOF; A:'a';\",\n            vec![\"aa\"],\n            vec![\"\", \"a\", \"aaa\"],\n        ),\n        (\n            \"grammar Pair; start: ~BLOCK . EOF; BLOCK:'x'; A:'a';\",\n            vec![\"aa\", \"ax\"],\n            vec![\"\", \"a\", \"xa\", \"aaa\"],\n        ),\n    ] {\n        let grammar = import_antlr(source).unwrap();\n        for candidate in token_negation_replays(&grammar) {\n            let (source, _) = meta_language::emit_antlr(&candidate).unwrap();\n            let parser = imported(&source);\n            for input in &accepted {\n                let result = parser\n                    .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                    .unwrap();\n                assert!(result.ok, \"{input}\");\n                let tree = result.tree.unwrap();\n                assert_eq!(source_text(&tree), *input);\n                assert_eq!(\n                    lexical_leaves(&tree).len(),\n                    2,\n                    \"the extra wildcard remains a separate terminal\"\n                );\n            }\n            for input in &refused {\n                assert!(\n                    !parser\n                        .parse_tree(input.as_bytes(), &FeatureParseOptions::default())\n                        .unwrap()\n                        .ok,\n                    \"{input}\"\n                );\n            }\n        }\n    }\n    let raw = import_antlr(&token_negation_declaration(\"~(STOP | ALT)\")).unwrap();\n    let normalized = deserialize_grammar(&serialize_grammar(&raw)).unwrap();\n    for mut grammar in [raw, normalized] {\n        let mut declarations = grammar.declarations().clone();\n        let GrammarExpr::Sequence(entries) = &mut declarations.lexers[0].expression else {\n            panic!(\"the authored lexer has its actual ordered declaration list\")\n        };\n        let first = entries\n            .iter_mut()\n            .find_map(|entry| match entry {\n                GrammarExpr::Feature(feature) => match feature.as_mut() {\n                    FeatureExpr::Form(form) if form.head == \"lexicalRule\" => Some(form),\n                    _ => None,\n                },\n                _ => None,\n            })\n            .expect(\"the authored first token has a real feature form\");\n        let item = first\n            .spec()\n            .iter()\n            .position(|(name, _)| *name == \"item\")\n            .unwrap();\n        first.fields[item] = FieldValue::Text(\"not an expression\".to_owned());\n        assert!(first.expression(\"item\").is_none());\n        grammar.set_declarations(declarations);\n        assert_eq!(\n            meta_language::emit_antlr(&grammar).unwrap_err(),\n            GrammarEmitError::Unsupported {\n                format: GrammarFormat::Antlr,\n                construct: \"source-free lexical commands: invalid lexical declaration descriptors\"\n                    .to_owned(),\n            }\n        );\n    }\n}"
+  },
+  {
+    "id": "repository.read-native-normalized-token-exclusion-obligations",
+    "source": "rust/tests/unit/grammar_lexer_transport.rs",
+    "name": "parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligations::obligations",
+    "inventoryName": "read native normalized token exclusion obligations",
+    "sourceText": "        let obligations = |normalized: &Value| {",
+    "ownerContexts": [
+      "fn parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligations() {"
+    ]
+  },
+  {
+    "id": "translation.lexical-command-replay-comparison-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop31Result",
+    "inventoryName": "lexical command replay comparison result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandEmissionLoop31Result {\n    MlReadGrammarLexerCommandEmissionLoop31Done,\n    MlReadGrammarLexerCommandEmissionLoop31Return(Vec<self::ml_string::Text>),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-command-replay-comparison-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Done",
+    "inventoryName": "construct lexical command replay comparison completion",
+    "sourceText": "MlReadGrammarLexerCommandEmissionLoop31Done,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionLoop31Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-command-replay-comparison-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Return",
+    "inventoryName": "construct lexical command replay comparison refusal",
+    "sourceText": "MlReadGrammarLexerCommandEmissionLoop31Return(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionLoop31Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-command-replay-comparison",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_command_emission_loop31",
+    "inventoryName": "execute lexical command replay comparison",
+    "sourceText": "pub fn ml_read_grammar_lexer_command_emission_loop31(\n    expected: &[self::ml_string::Text],\n    mut index: f64,\n    replayed: &[self::ml_string::Text],\n) -> self::MlReadGrammarLexerCommandEmissionLoop31Result {\n    loop {\n        return if index < (expected.len() as f64) {\n            if (self::read_required_text_fact(replayed, index))\n                == (self::read_required_text_fact(expected, index))\n            {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n            {\n                self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Return(Vec::<self::ml_string::Text>::new())\n            }\n        } else {\n            self::MlReadGrammarLexerCommandEmissionLoop31Result::MlReadGrammarLexerCommandEmissionLoop31Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-command-action-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop30Result",
+    "inventoryName": "lexical command action scan result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandEmissionLoop30Result {\n    MlReadGrammarLexerCommandEmissionLoop30Done(\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n        f64,\n    ),\n    MlReadGrammarLexerCommandEmissionLoop30Return(Vec<self::ml_string::Text>),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-command-action-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Done",
+    "inventoryName": "construct lexical command action scan completion",
+    "sourceText": "MlReadGrammarLexerCommandEmissionLoop30Done(\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n        f64,\n    ),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionLoop30Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-command-action-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Return",
+    "inventoryName": "construct lexical command action scan refusal",
+    "sourceText": "MlReadGrammarLexerCommandEmissionLoop30Return(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionLoop30Result {"
+    ]
+  },
+  {
+    "id": "translation.lexical-command-mode-action-continuation-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin32",
+    "inventoryName": "lexical command mode action continuation result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandEmissionJoin32 {\n    MlReadGrammarLexerCommandEmissionJoin32Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerCommandEmissionJoin32Return(Vec<self::ml_string::Text>),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-command-mode-action-continuation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Next",
+    "inventoryName": "construct lexical command mode action continuation",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin32Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin32 {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-command-mode-action-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Return",
+    "inventoryName": "construct lexical command mode action refusal",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin32Return(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin32 {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-command-action-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_command_emission_loop30",
+    "inventoryName": "execute lexical command action scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_command_emission_loop30(\n    operations: &[self::ml_string::Text],\n    modes: &[self::ml_string::Text],\n    mut pieces: Vec<self::ml_string::Text>,\n    mut expected: Vec<self::ml_string::Text>,\n    mut index: f64,\n) -> self::MlReadGrammarLexerCommandEmissionLoop30Result {\n    loop {\n        return if index < (operations.len() as f64) {\n            {\n                let operation = self::read_required_text_fact(operations, index);\n                {\n                    let mode = self::read_required_text_fact(modes, index);\n                    {\n                        let ml_s38 = if operation\n                            == (self::ml_string::Text::from_units(vec![\n                                112, 111, 112, 77, 111, 100, 101,\n                            ])) {\n                            {\n                                let ml_library_inequality_1 =\n                                    mode != (self::ml_string::Text::from_units(vec![]));\n                                if ml_library_inequality_1 {\n                                    self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Return(Vec::<self::ml_string::Text>::new())\n                                } else {\n                                    {\n                                        let pieces_2 = {\n                                            let (ml_append_right, ml_append_left) = (\n                                                vec![self::ml_string::Text::from_units(vec![\n                                                    112, 111, 112, 77, 111, 100, 101,\n                                                ])],\n                                                pieces,\n                                            );\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        };\n                                        self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Next(pieces_2)\n                                    }\n                                }\n                            }\n                        } else if (operation\n                            == (self::ml_string::Text::from_units(vec![\n                                112, 117, 115, 104, 77, 111, 100, 101,\n                            ])))\n                            || (operation\n                                == (self::ml_string::Text::from_units(vec![\n                                    115, 101, 116, 77, 111, 100, 101,\n                                ])))\n                        {\n                            if (self::accept_grammar_lexer_identifier(&(mode))) {\n                                {\n                                    let argument = if mode\n                                        == (self::ml_string::Text::from_units(vec![\n                                            100, 101, 102, 97, 117, 108, 116,\n                                        ])) {\n                                        self::ml_string::Text::from_units(vec![\n                                            68, 69, 70, 65, 85, 76, 84, 95, 77, 79, 68, 69,\n                                        ])\n                                    } else {\n                                        mode.clone()\n                                    };\n                                    {\n                                        let pieces_3 = {\n                                            let (ml_append_right, ml_append_left) = (\n                                                vec![\n                                                    (((if operation\n                                                        == (self::ml_string::Text::from_units(\n                                                            vec![115, 101, 116, 77, 111, 100, 101],\n                                                        ))\n                                                    {\n                                                        self::ml_string::Text::from_units(vec![\n                                                            109, 111, 100, 101,\n                                                        ])\n                                                    } else {\n                                                        self::ml_string::Text::from_units(vec![\n                                                            112, 117, 115, 104, 77, 111, 100, 101,\n                                                        ])\n                                                    })\n                                                    .concat(&self::ml_string::Text::from_units(\n                                                        vec![40],\n                                                    )))\n                                                    .concat(&argument))\n                                                    .concat(&self::ml_string::Text::from_units(\n                                                        vec![41],\n                                                    )),\n                                                ],\n                                                pieces,\n                                            );\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        };\n                                        self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Next(pieces_3)\n                                    }\n                                }\n                            } else {\n                                self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Return(Vec::<self::ml_string::Text>::new())\n                            }\n                        } else {\n                            self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Return(Vec::<self::ml_string::Text>::new())\n                        };\n                        match ml_s38 {\n                            self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Next(pieces_4) => {\n                                {\n                                    let expected_2 = { let (ml_append_right, ml_append_left) = (vec![operation, mode], expected); self::ml_array::append(ml_append_left, ml_append_right) };\n                                    {\n                                        let index_2 = index + 1f64;\n                                        {\n                                            (pieces, expected, index) = (pieces_4, expected_2, index_2);\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                            self::MlReadGrammarLexerCommandEmissionJoin32::MlReadGrammarLexerCommandEmissionJoin32Return(ml_result32) => {\n                                self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Return(ml_result32)\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerCommandEmissionLoop30Result::MlReadGrammarLexerCommandEmissionLoop30Done(pieces, expected, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-command-channel-continuation-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin29",
+    "inventoryName": "lexical command channel continuation result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandEmissionJoin29 {\n    MlReadGrammarLexerCommandEmissionJoin29Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerCommandEmissionJoin29Return(Vec<self::ml_string::Text>),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-command-channel-continuation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Next",
+    "inventoryName": "construct lexical command channel continuation",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin29Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin29 {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-command-channel-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin29::MlReadGrammarLexerCommandEmissionJoin29Return",
+    "inventoryName": "construct lexical command channel refusal",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin29Return(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin29 {"
+    ]
+  },
+  {
+    "id": "translation.lexical-command-disposition-continuation-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin28",
+    "inventoryName": "lexical command disposition continuation result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandEmissionJoin28 {\n    MlReadGrammarLexerCommandEmissionJoin28Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerCommandEmissionJoin28Return(Vec<self::ml_string::Text>),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-command-disposition-continuation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Next",
+    "inventoryName": "construct lexical command disposition continuation",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin28Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin28 {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-command-disposition-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandEmissionJoin28::MlReadGrammarLexerCommandEmissionJoin28Return",
+    "inventoryName": "construct lexical command disposition refusal",
+    "sourceText": "MlReadGrammarLexerCommandEmissionJoin28Return(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandEmissionJoin28 {"
+    ]
+  },
+  {
+    "id": "translation.lexical-emission-reference-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop37Result",
+    "inventoryName": "lexical emission reference scan result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueLoop37Result {\n    MlReadGrammarLexerEmissionIssueLoop37Done,\n    MlReadGrammarLexerEmissionIssueLoop37Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-reference-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Done",
+    "inventoryName": "construct lexical emission reference scan completion",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop37Done,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop37Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-reference-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Return",
+    "inventoryName": "construct lexical emission reference scan refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop37Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop37Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-emission-reference-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_emission_issue_loop37",
+    "inventoryName": "execute lexical emission reference scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_emission_issue_loop37(\n    references: &[self::ml_string::Text],\n    mut index: f64,\n    locals: &[self::ml_string::Text],\n) -> self::MlReadGrammarLexerEmissionIssueLoop37Result {\n    loop {\n        return if index < (references.len() as f64) {\n            if (self::contains_grammar_lexer_text(\n                locals,\n                &(self::read_required_text_fact(references, index)),\n            )) {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n            {\n                self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Return(self::ml_string::Text::from_units(vec![97, 110, 32, 117, 110, 114, 101, 115, 111, 108, 118, 101, 100, 32, 115, 111, 117, 114, 99, 101, 45, 108, 111, 99, 97, 108, 32, 108, 101, 120, 105, 99, 97, 108, 32, 114, 101, 102, 101, 114, 101, 110, 99, 101, 32, 114, 101, 109, 97, 105, 110, 115]))\n            }\n        } else {\n            self::MlReadGrammarLexerEmissionIssueLoop37Result::MlReadGrammarLexerEmissionIssueLoop37Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-emission-public-rule-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop36Result",
+    "inventoryName": "lexical emission public rule scan result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueLoop36Result {\n    MlReadGrammarLexerEmissionIssueLoop36Done(f64),\n    MlReadGrammarLexerEmissionIssueLoop36Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-public-rule-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Done",
+    "inventoryName": "construct lexical emission public rule scan completion",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop36Done(f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop36Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-public-rule-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Return",
+    "inventoryName": "construct lexical emission public rule scan refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop36Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop36Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-emission-public-rule-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_emission_issue_loop36",
+    "inventoryName": "execute lexical emission public rule scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_emission_issue_loop36(\n    rule_names: &[self::ml_string::Text],\n    rule_kinds: &[self::ml_string::Text],\n    mut index: f64,\n    locals: &[self::ml_string::Text],\n    owners: &[self::ml_string::Text],\n) -> self::MlReadGrammarLexerEmissionIssueLoop36Result {\n    loop {\n        return if index < (rule_names.len() as f64) {\n            {\n                let name = self::read_required_text_fact(rule_names, index);\n                {\n                    let kind = self::read_required_text_fact(rule_kinds, index);\n                    if (kind\n                        != (self::ml_string::Text::from_units(vec![110, 111, 114, 109, 97, 108])))\n                        && !(self::contains_grammar_lexer_text(locals, &(name)))\n                    {\n                        self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Return(self::ml_string::Text::from_units(vec![105, 109, 112, 108, 105, 99, 105, 116, 32, 111, 114, 32, 100, 101, 99, 108, 97, 114, 101, 100, 45, 111, 110, 108, 121, 32, 116, 111, 107, 101, 110, 115, 32, 110, 101, 101, 100, 32, 97, 110, 32, 117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100, 32, 108, 101, 120, 101, 114, 32, 115, 101, 99, 116, 105, 111, 110]))\n                    } else if (kind\n                        == (self::ml_string::Text::from_units(vec![110, 111, 114, 109, 97, 108])))\n                        && !(self::contains_grammar_lexer_text(owners, &(name)))\n                    {\n                        self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Return(self::ml_string::Text::from_units(vec![101, 118, 101, 114, 121, 32, 112, 97, 114, 115, 101, 114, 32, 114, 117, 108, 101, 32, 110, 101, 101, 100, 115, 32, 116, 104, 101, 32, 115, 97, 109, 101, 32, 117, 110, 105, 113, 117, 101, 32, 108, 101, 120, 101, 114, 32, 111, 119, 110, 101, 114]))\n                    } else {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                index = index_2;\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerEmissionIssueLoop36Result::MlReadGrammarLexerEmissionIssueLoop36Done(index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-emission-declaration-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop35Result",
+    "inventoryName": "lexical emission declaration scan result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueLoop35Result {\n    MlReadGrammarLexerEmissionIssueLoop35Done(\n        f64,\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n    ),\n    MlReadGrammarLexerEmissionIssueLoop35Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-declaration-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Done",
+    "inventoryName": "construct lexical emission declaration scan completion",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop35Done(\n        f64,\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n    ),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop35Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-declaration-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Return",
+    "inventoryName": "construct lexical emission declaration scan refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop35Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop35Result {"
+    ]
+  },
+  {
+    "id": "translation.lexical-emission-local-rule-continuation-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin39",
+    "inventoryName": "lexical emission local rule continuation result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueJoin39 {\n    MlReadGrammarLexerEmissionIssueJoin39Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerEmissionIssueJoin39Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-local-rule-continuation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Next",
+    "inventoryName": "construct lexical emission local rule continuation",
+    "sourceText": "MlReadGrammarLexerEmissionIssueJoin39Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueJoin39 {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-local-rule-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Return",
+    "inventoryName": "construct lexical emission local rule refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueJoin39Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueJoin39 {"
+    ]
+  },
+  {
+    "id": "translation.lexical-emission-owner-continuation-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin38",
+    "inventoryName": "lexical emission owner continuation result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueJoin38 {\n    MlReadGrammarLexerEmissionIssueJoin38Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerEmissionIssueJoin38Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-owner-continuation",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Next",
+    "inventoryName": "construct lexical emission owner continuation",
+    "sourceText": "MlReadGrammarLexerEmissionIssueJoin38Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueJoin38 {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-owner-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Return",
+    "inventoryName": "construct lexical emission owner refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueJoin38Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueJoin38 {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-emission-declaration-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_emission_issue_loop35",
+    "inventoryName": "execute lexical emission declaration scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_emission_issue_loop35(\n    kinds: &[self::ml_string::Text],\n    names: &[self::ml_string::Text],\n    entry_modes: &[self::ml_string::Text],\n    targets: &[self::ml_string::Text],\n    public_kinds: &[self::ml_string::Text],\n    public_names: &[self::ml_string::Text],\n    mut count: f64,\n    mut index: f64,\n    mut locals: Vec<self::ml_string::Text>,\n    mut owners: Vec<self::ml_string::Text>,\n) -> self::MlReadGrammarLexerEmissionIssueLoop35Result {\n    loop {\n        return if index < count {\n            {\n                let kind = self::read_required_text_fact(kinds, index);\n                {\n                    let name = self::read_required_text_fact(names, index);\n                    {\n                        let actual = self::read_required_text_fact(public_kinds, index);\n                        {\n                            let ml_s39 = if (kind\n                                == (self::ml_string::Text::from_units(vec![\n                                    108, 101, 120, 105, 99, 97, 108, 79, 119, 110, 101, 114,\n                                ])))\n                                || (kind\n                                    == (self::ml_string::Text::from_units(vec![\n                                        108, 101, 120, 105, 99, 97, 108, 66, 105, 110, 100, 105,\n                                        110, 103,\n                                    ]))) {\n                                if ((self::read_required_text_fact(targets, index)) != name)\n                                    || (actual == (self::ml_string::Text::from_units(vec![])))\n                                {\n                                    self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Return(self::ml_string::Text::from_units(vec![112, 117, 98, 108, 105, 99, 32, 108, 101, 120, 105, 99, 97, 108, 32, 98, 105, 110, 100, 105, 110, 103, 115, 32, 109, 117, 115, 116, 32, 114, 101, 116, 97, 105, 110, 32, 116, 104, 101, 105, 114, 32, 117, 110, 105, 113, 117, 101, 32, 115, 111, 117, 114, 99, 101, 32, 110, 97, 109, 101, 115]))\n                                } else if kind\n                                    == (self::ml_string::Text::from_units(vec![\n                                        108, 101, 120, 105, 99, 97, 108, 79, 119, 110, 101, 114,\n                                    ]))\n                                {\n                                    {\n                                        let owners_2 = {\n                                            let (ml_append_right, ml_append_left) =\n                                                (vec![name.clone()], owners);\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        };\n                                        self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Next(owners_2)\n                                    }\n                                } else {\n                                    self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Next(owners)\n                                }\n                            } else {\n                                self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Next(owners)\n                            };\n                            match ml_s39 {\n                                self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Next(owners_3) => {\n                                    {\n                                        let ml_s40 = if (kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 105, 99, 97, 108, 82, 117, 108, 101]))) || (kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 105, 99, 97, 108, 70, 114, 97, 103, 109, 101, 110, 116]))) {\n                                            if ((self::contains_grammar_lexer_text(&(locals), &(name)) || ((self::read_required_text_fact(public_names, index)) != name)) || ((kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 105, 99, 97, 108, 82, 117, 108, 101]))) && (actual != (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110]))))) || ((kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 105, 99, 97, 108, 70, 114, 97, 103, 109, 101, 110, 116]))) && (actual != (self::ml_string::Text::from_units(vec![115, 105, 108, 101, 110, 116])))) {\n                                                self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Return(self::ml_string::Text::from_units(vec![101, 97, 99, 104, 32, 108, 101, 120, 105, 99, 97, 108, 32, 100, 101, 99, 108, 97, 114, 97, 116, 105, 111, 110, 32, 110, 101, 101, 100, 115, 32, 111, 110, 101, 32, 117, 110, 99, 104, 97, 110, 103, 101, 100, 32, 112, 117, 98, 108, 105, 99, 32, 116, 111, 107, 101, 110, 32, 111, 114, 32, 102, 114, 97, 103, 109, 101, 110, 116]))\n                                            } else if (kind == (self::ml_string::Text::from_units(vec![108, 101, 120, 105, 99, 97, 108, 82, 117, 108, 101]))) && ((self::read_required_text_fact(entry_modes, index)) != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116]))) {\n                                                    self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Return(self::ml_string::Text::from_units(vec![111, 110, 108, 121, 32, 100, 101, 102, 97, 117, 108, 116, 45, 109, 111, 100, 101, 32, 108, 101, 120, 105, 99, 97, 108, 32, 114, 117, 108, 101, 115, 32, 97, 114, 101, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100]))\n                                                } else {\n                                                    {\n                                                        let locals_2 = { let (ml_append_right, ml_append_left) = (vec![name.clone()], locals); self::ml_array::append(ml_append_left, ml_append_right) };\n                                                        self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Next(locals_2)\n                                                    }\n                                                }\n                                        } else {\n                                            self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Next(locals)\n                                        };\n                                        match ml_s40 {\n                                            self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Next(locals_3) => {\n                                                {\n                                                    let index_2 = index + 1f64;\n                                                    {\n                                                        (index, locals, owners) = (index_2, locals_3, owners_3);\n                                                        continue;\n                                                    }\n                                                }\n                                            }\n                                            self::MlReadGrammarLexerEmissionIssueJoin39::MlReadGrammarLexerEmissionIssueJoin39Return(ml_result39) => {\n                                                self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Return(ml_result39)\n                                            }\n                                        }\n                                    }\n                                }\n                                self::MlReadGrammarLexerEmissionIssueJoin38::MlReadGrammarLexerEmissionIssueJoin38Return(ml_result39_2) => {\n                                    self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Return(ml_result39_2)\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerEmissionIssueLoop35Result::MlReadGrammarLexerEmissionIssueLoop35Done(index, locals, owners)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-emission-channel-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop34Result",
+    "inventoryName": "lexical emission channel scan result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueLoop34Result {\n    MlReadGrammarLexerEmissionIssueLoop34Done(f64),\n    MlReadGrammarLexerEmissionIssueLoop34Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-channel-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Done",
+    "inventoryName": "construct lexical emission channel scan completion",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop34Done(f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop34Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-channel-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Return",
+    "inventoryName": "construct lexical emission channel scan refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop34Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop34Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-emission-channel-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_emission_issue_loop34",
+    "inventoryName": "execute lexical emission channel scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_emission_issue_loop34(\n    channels: &[self::ml_string::Text],\n    mut index: f64,\n) -> self::MlReadGrammarLexerEmissionIssueLoop34Result {\n    loop {\n        return if index < (channels.len() as f64) {\n            {\n                let channel = self::read_required_text_fact(channels, index);\n                if (channel\n                    != (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116])))\n                    && (channel\n                        != (self::ml_string::Text::from_units(vec![72, 73, 68, 68, 69, 78])))\n                {\n                    self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Return(self::ml_string::Text::from_units(vec![99, 117, 115, 116, 111, 109, 32, 99, 104, 97, 110, 110, 101, 108, 32, 115, 101, 99, 116, 105, 111, 110, 115, 32, 97, 114, 101, 32, 110, 111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100]))\n                } else {\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            index = index_2;\n                            continue;\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerEmissionIssueLoop34Result::MlReadGrammarLexerEmissionIssueLoop34Done(index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-emission-mode-scan-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop33Result",
+    "inventoryName": "lexical emission mode scan result",
+    "sourceText": "pub enum MlReadGrammarLexerEmissionIssueLoop33Result {\n    MlReadGrammarLexerEmissionIssueLoop33Done(f64),\n    MlReadGrammarLexerEmissionIssueLoop33Return(self::ml_string::Text),\n}"
+  },
+  {
+    "id": "translation.construct-lexical-emission-mode-scan-completion",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Done",
+    "inventoryName": "construct lexical emission mode scan completion",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop33Done(f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop33Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-lexical-emission-mode-scan-refusal",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Return",
+    "inventoryName": "construct lexical emission mode scan refusal",
+    "sourceText": "MlReadGrammarLexerEmissionIssueLoop33Return(self::ml_string::Text),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerEmissionIssueLoop33Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-emission-mode-scan",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_emission_issue_loop33",
+    "inventoryName": "execute lexical emission mode scan",
+    "sourceText": "pub fn ml_read_grammar_lexer_emission_issue_loop33(\n    modes: &[self::ml_string::Text],\n    mut index: f64,\n) -> self::MlReadGrammarLexerEmissionIssueLoop33Result {\n    loop {\n        return if index < (modes.len() as f64) {\n            if (self::read_required_text_fact(modes, index))\n                == (self::ml_string::Text::from_units(vec![100, 101, 102, 97, 117, 108, 116]))\n            {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n            {\n                self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Return(self::ml_string::Text::from_units(vec![111, 110, 108, 121, 32, 116, 104, 101, 32, 100, 101, 102, 97, 117, 108, 116, 32, 108, 101, 120, 101, 114, 32, 109, 111, 100, 101, 32, 105, 115, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100]))\n            }\n        } else {\n            self::MlReadGrammarLexerEmissionIssueLoop33Result::MlReadGrammarLexerEmissionIssueLoop33Done(index)\n        };\n    }\n}"
+  },
+  {
+    "id": "repository.accept-completed-portable-call-borrow",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "acceptCompletedPortableCallBorrow",
+    "inventoryName": "accept completed portable call borrow",
+    "sourceText": "function acceptCompletedPortableCallBorrow(fn, borrow, before, name, type, declarations) {\n  const {tokens, matching} = fn;\n  const valueType = type => ['bool', 'f64', 'u16', 'usize', 'i64', 'u64', '()'].includes(type)\n    || ownedType(type, Boolean(declarations.textMethods));\n  const parameterType = type => valueType(type) || type === '&str'\n    || type.startsWith('&') && (valueType(type.slice(1))\n      || type.startsWith('&[') && type.endsWith(']') && valueType(type.slice(2, -1)));\n  for (let open = fn.body + 1; open < borrow; open += 1) {\n    const close = matching.get(open);\n    if (tokens[open].value !== '(' || !(close > borrow && close < before)\n      || tokens[open - 1]?.kind !== 'identifier' || tokens[open - 2]?.value !== '::'\n      || !['self', 'crate'].includes(tokens[open - 3]?.value) || tokens[open - 4]?.value === '::') continue;\n    const called = declarations.functions.filter(candidate => candidate.name === tokens[open - 1].value);\n    if (called.length !== 1 || !valueType(declarations.returns.get(called[0].name))\n      || !acceptFunction(called[0], new Map())) continue;\n    const target = called[0], parameters = [];\n    let valid = true;\n    for (const [from, to] of splitTypes(target.tokens, target.matching, target.parameterOpen + 1, target.parameterClose)) {\n      const at = target.tokens[from]?.value === 'mut' ? from + 1 : from;\n      if (target.tokens[at]?.kind !== 'identifier' || target.tokens[at + 1]?.value !== ':') { valid = false; break; }\n      const parameter = normalizeType(target.block.slice(target.tokens[at + 2].start, target.tokens[to - 1].end));\n      if (!parameterType(parameter)) { valid = false; break; }\n      parameters.push(parameter);\n    }\n    const arguments_ = splitTypes(tokens, matching, open + 1, close);\n    if (!valid || arguments_.length !== parameters.length) continue;\n    for (const [[start, finish], index] of arguments_.map((range, index) => [range, index])) {\n      let from = start, to = finish;\n      while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }\n      if (from !== borrow || tokens[from].value !== '&') continue;\n      from += 1;\n      while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }\n      if (to !== from + 1 || tokens[from]?.kind !== 'identifier' || tokens[from].value !== name) continue;\n      const parameter = parameters[index];\n      if (parameter === '&' + type || type === 'String' && parameter === '&str'\n        || textType(type) && parameter.startsWith('&') && textType(parameter.slice(1))) return true;\n    }\n  }\n  return false;\n}"
+  },
+  {
+    "id": "repository.accept-completed-call-owned-value-domain",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "acceptCompletedPortableCallBorrow::valueType",
+    "inventoryName": "accept completed call owned value domain",
+    "sourceText": "const valueType = type => ['bool', 'f64', 'u16', 'usize', 'i64', 'u64', '()'].includes(type)\n    || ownedType(type, Boolean(declarations.textMethods));",
+    "ownerContexts": [
+      "function acceptCompletedPortableCallBorrow(fn, borrow, before, name, type, declarations) {"
+    ]
+  },
+  {
+    "id": "repository.accept-completed-call-immutable-parameter-domain",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "acceptCompletedPortableCallBorrow::parameterType",
+    "inventoryName": "accept completed call immutable parameter domain",
+    "sourceText": "const parameterType = type => valueType(type) || type === '&str'\n    || type.startsWith('&') && (valueType(type.slice(1))\n      || type.startsWith('&[') && type.endsWith(']') && valueType(type.slice(2, -1)));",
+    "ownerContexts": [
+      "function acceptCompletedPortableCallBorrow(fn, borrow, before, name, type, declarations) {"
+    ]
+  },
+  {
+    "id": "repository.check-explicit-completed-call-owned-transfers",
+    "source": "js/tests/translation-portable-owned-source-style.test.js",
+    "name": "explicitly selected owned functions transfer final copies only after authenticated immutable calls finish",
+    "inventoryName": "check explicit completed call owned transfers",
+    "sourceText": "test('explicitly selected owned functions transfer final copies only after authenticated immutable calls finish', () => {\n  const options = {scopedCallBorrows: true, functionNames: ['selected']};\n  const string = 'pub fn inspected(value: &String) -> bool { value.is_empty() }\\n'\n    + 'pub fn selected(value: String) -> Vec<String> { let empty = self::inspected(&(value)); if empty { Vec::<String>::new() } else { vec![value.clone()] } }';\n  assert.equal(review(string), string, 'the historical default still refuses every explicit borrow');\n  assert.equal(review(string, {scopedCallBorrows: true}), string, 'an explicit exact function-name selection is also required');\n  assert.equal(review(string, {...options, functionNames: ['other']}), string);\n  assert.equal(copies(review(string, options)), 0, 'a completed inspected immutable call cannot retain a String reference');\n  const text = 'pub fn inspected(value: &self::ml_string::Text) -> bool { value.is_empty() }\\n'\n    + 'pub fn planned(value: &self::ml_string::Text, name: &self::ml_string::Text) -> Vec<self::ml_string::Text> { vec![value.clone(), name.clone()] }\\n'\n    + 'pub fn selected(name: &self::ml_string::Text, flag: bool) -> Vec<self::ml_string::Text> { '\n    + 'let command = if flag { self::ml_string::Text::from_units(vec![97]) } else { self::ml_string::Text::from_units(vec![98]) }; '\n    + 'let replayed = self::planned(&(command), name); if replayed.len() == 0f64 { Vec::<self::ml_string::Text>::new() } else { vec![command.clone()] } }\\n'\n    + 'pub fn selected_loop(mode: self::ml_string::Text) -> Vec<self::ml_string::Text> { '\n    + 'let accepted = self::inspected(&(mode)); let argument = if accepted { mode.clone() } else { self::ml_string::Text::from_units(vec![]) }; '\n    + 'let displayed = argument.length(); self::observe(displayed); vec![mode.clone()] }';\n  const actual = STRING_PRELUDE + '\\n' + text;\n  const selected = {...options, functionNames: ['selected', 'selected_loop']};\n  const styled = review(actual, selected);\n  assert.ok(styled.includes('else { vec![command] }'), 'the replayed command call finishes before the final command transfer');\n  assert.ok(styled.includes('if accepted { mode.clone() }'), 'the earlier mode copy stays because the final vector still needs mode');\n  assert.ok(styled.includes('self::observe(displayed); vec![mode]'), 'the final mode copy becomes a transfer after the completed predicate call');\n  assert.ok(styled.includes('vec![value.clone(), name.clone()]'), 'borrowed callee parameters retain their actual owned copies');\n  const composed = readPortableSourceLintStyles(actual, selected).source;\n  assert.ok(composed.includes('vec![command]'));\n  assert.ok(composed.includes('vec![mode]'), 'the complete recorded composer carries the same narrow proof option');\n  const constructed = 'pub fn planned(value: &self::ml_string::Text, name: &self::ml_string::Text) -> Vec<self::ml_string::Text> { vec![value.clone(), name.clone()] }\\n'\n    + 'pub fn selected(name: &self::ml_string::Text, pieces: &[self::ml_string::Text]) -> Vec<self::ml_string::Text> { '\n    + 'let command = if (pieces.len() as f64) == 0f64 { self::ml_string::Text::from_units(vec![]) } else { '\n    + '(self::ml_string::Text::from_units(vec![45, 62, 32])).concat(&self::ml_string::join(pieces, &self::ml_string::Text::from_units(vec![44, 32]))) }; '\n    + 'let replayed = self::planned(&(command), name); if replayed.len() == 0f64 { Vec::<self::ml_string::Text>::new() } else { vec![command.clone()] } }';\n  const constructedSource = STRING_PRELUDE + '\\n' + constructed;\n  assert.equal(review(constructedSource), constructedSource, 'constructor-method branch inference remains disabled by default');\n  assert.ok(review(constructedSource, options).includes('else { vec![command] }'),\n    'the actual emitted constructor-concat-join branch yields owned Text before replay and the final transfer');\n  assert.ok(readPortableSourceLintStyles(constructedSource, options).source.includes('vec![command]'),\n    'the exact emitted command constructor shape survives complete recorded style composition');\n  const unknownMethod = STRING_PRELUDE + '\\n' + constructed.replace(')).concat(', ')).unknown(');\n  assert.equal(review(unknownMethod, options), unknownMethod, 'only authenticated provider method signatures determine branch ownership');\n  const mismatched = constructedSource.replace('if (pieces.len() as f64) == 0f64 { self::ml_string::Text::from_units(vec![]) }',\n    'if (pieces.len() as f64) == 0f64 { name }');\n  assert.equal(review(mismatched, options), mismatched, 'a borrowed branch cannot join an owned temporary method result');\n  assert.equal(review(text, selected), text, 'a Text spelling without its complete authenticated provider proves no ownership');\n  const counterfeit = actual.replace('derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)', 'derive(Debug, PartialEq, Eq, PartialOrd, Ord)');\n  assert.equal(review(counterfeit, selected), counterfeit, 'an altered Text clone provider remains refused');\n  const refused = [\n    'pub fn selected(value: String) -> String { self::unknown(&value); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> String { external::inspected(&value); value.clone() }',\n    'pub fn inspected(value: &String) -> &String { value }\\npub fn selected(value: String) -> String { let alias = self::inspected(&value); let copied = value.clone(); self::observe(alias); copied }',\n    'pub fn inspected(value: &String) -> Custom { custom(value) }\\npub fn selected(value: String) -> String { let alias = self::inspected(&value); value.clone() }',\n    'pub fn inspected(value: &mut String) -> bool { value.is_empty() }\\npub fn selected(mut value: String) -> String { self::inspected(&mut value); value.clone() }',\n    'pub fn inspected(value: &String, target: &mut Vec<String>) -> bool { value.is_empty() }\\npub fn selected(value: String, target: &mut Vec<String>) -> String { self::inspected(&value, target); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> String { let alias = &value; self::inspected(alias); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> String { self::inspected(&{ value }); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> String { self::inspected(&value); let copied = value.clone(); self::observe(value); copied }',\n    'pub fn inspected(value: &String, next: String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> bool { self::inspected(&value, value.clone()) }',\n    'pub fn inspected(value: &String) -> bool { unknown!(value) }\\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { unsafe { custom(value) } }\\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn inspected(value: &String) -> bool { false }\\npub fn selected(value: String) -> String { self::inspected(&value); value.clone() }',\n    'pub fn inspected(value: &String) -> bool { value.is_empty() }\\npub fn selected(value: String) -> String { let copied = value.clone(); self::inspected(&value); copied }',\n  ];\n  for (const source of refused) assert.equal(review(source, options), source);\n})"
+  },
+  {
+    "id": "repository.read-another-tool-for-language-recognition-election-control-leaves",
+    "source": "js/tests/grammar-antlr-token-negation.test.js",
+    "name": "leaves",
+    "inventoryName": "read another tool for language recognition election control leaves",
+    "sourceText": "const leaves = node => node.type === 'token' ? [node] : (node.children ?? []).flatMap(leaves);"
+  },
+  {
+    "id": "repository.read-another-tool-for-language-recognition-election-control-leaves",
+    "source": "js/tests/grammar-antlr-command-emission.test.js",
+    "name": "leaves",
+    "inventoryName": "read another tool for language recognition election control leaves",
+    "sourceText": "const leaves = node => node.type === 'token' ? [node] : (node.children ?? []).flatMap(leaves);"
+  },
+  {
+    "id": "repository.read-native-lexical-feature-form",
+    "source": "rust/src/grammar/emit/antlr/lexical.rs",
+    "name": "form_of",
+    "inventoryName": "read native lexical feature form",
+    "sourceText": "fn form_of(expr: &GrammarExpr) -> Option<&FeatureForm> {\n    match expr {\n        GrammarExpr::Feature(feature) => match &**feature {\n            FeatureExpr::Form(form) => Some(form),\n            _ => None,\n        },\n        _ => None,\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-identifier-loop-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_accept_grammar_lexer_identifier_loop1",
+    "inventoryName": "execute grammar lexical analyser native meta language accept grammar lexical analyser identifier loop one",
+    "sourceText": "pub fn ml_accept_grammar_lexer_identifier_loop1(\n    text: &self::ml_string::Text,\n    mut index: f64,\n) -> self::MlAcceptGrammarLexerIdentifierLoop1Result {\n    loop {\n        return if index < (text.length()) {\n            {\n                let character = text.slice(index, (index + 1f64));\n                {\n                    let letter = (self::ml_string::Text::from_units(vec![\n                        65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,\n                        84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106,\n                        107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,\n                        122, 95,\n                    ]))\n                    .contains(&character);\n                    if ((letter)\n                        || ((index > 0f64)\n                            && (self::ml_string::Text::from_units(vec![\n                                48, 49, 50, 51, 52, 53, 54, 55, 56, 57,\n                            ]))\n                            .contains(&character)))\n                    {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                index = index_2;\n                                continue;\n                            }\n                        }\n                    }\n                    {\n                        self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Return(false)\n                    }\n                }\n            }\n        } else {\n            self::MlAcceptGrammarLexerIdentifierLoop1Result::MlAcceptGrammarLexerIdentifierLoop1Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result",
+    "inventoryName": "grammar lexical analyser native meta language accept grammar lexical analyser decimal loop two result",
+    "sourceText": "pub enum MlAcceptGrammarLexerDecimalLoop2Result {\n    MlAcceptGrammarLexerDecimalLoop2Done,\n    MlAcceptGrammarLexerDecimalLoop2Return(bool),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done",
+    "inventoryName": "grammar lexical analyser native meta language accept grammar lexical analyser decimal loop two result meta language accept grammar lexical analyser decimal loop two done constructor",
+    "sourceText": "MlAcceptGrammarLexerDecimalLoop2Done,",
+    "ownerContexts": [
+      "pub enum MlAcceptGrammarLexerDecimalLoop2Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-result-meta-language-accept-grammar-lexical-analyser-decimal-loop-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return",
+    "inventoryName": "grammar lexical analyser native meta language accept grammar lexical analyser decimal loop two result meta language accept grammar lexical analyser decimal loop two return constructor",
+    "sourceText": "MlAcceptGrammarLexerDecimalLoop2Return(bool),",
+    "ownerContexts": [
+      "pub enum MlAcceptGrammarLexerDecimalLoop2Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-accept-grammar-lexical-analyser-decimal-loop-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_accept_grammar_lexer_decimal_loop2",
+    "inventoryName": "execute grammar lexical analyser native meta language accept grammar lexical analyser decimal loop two",
+    "sourceText": "pub fn ml_accept_grammar_lexer_decimal_loop2(\n    text: &self::ml_string::Text,\n    mut index: f64,\n) -> self::MlAcceptGrammarLexerDecimalLoop2Result {\n    loop {\n        return if index < (text.length()) {\n            {\n                let character = text.slice(index, (index + 1f64));\n                if ((self::ml_string::Text::from_units(vec![\n                    48, 49, 50, 51, 52, 53, 54, 55, 56, 57,\n                ]))\n                .contains(&character))\n                {\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            index = index_2;\n                            continue;\n                        }\n                    }\n                }\n                {\n                    self::MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Return(false)\n                }\n            }\n        } else {\n            self::MlAcceptGrammarLexerDecimalLoop2Result::MlAcceptGrammarLexerDecimalLoop2Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser text loop three result",
+    "sourceText": "pub enum MlContainsGrammarLexerTextLoop3Result {\n    MlContainsGrammarLexerTextLoop3Done,\n    MlContainsGrammarLexerTextLoop3Return(bool),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser text loop three result meta language contains grammar lexical analyser text loop three done constructor",
+    "sourceText": "MlContainsGrammarLexerTextLoop3Done,",
+    "ownerContexts": [
+      "pub enum MlContainsGrammarLexerTextLoop3Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three-result-meta-language-contains-grammar-lexical-analyser-text-loop-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser text loop three result meta language contains grammar lexical analyser text loop three return constructor",
+    "sourceText": "MlContainsGrammarLexerTextLoop3Return(bool),",
+    "ownerContexts": [
+      "pub enum MlContainsGrammarLexerTextLoop3Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-text-loop-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_contains_grammar_lexer_text_loop3",
+    "inventoryName": "execute grammar lexical analyser native meta language contains grammar lexical analyser text loop three",
+    "sourceText": "pub fn ml_contains_grammar_lexer_text_loop3(\n    values: &[self::ml_string::Text],\n    value: &self::ml_string::Text,\n    mut index: f64,\n) -> self::MlContainsGrammarLexerTextLoop3Result {\n    loop {\n        return if index < (values.len() as f64) {\n            if (self::read_required_text_fact(values, index)) == (*value) {\n                self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Return(\n                    true,\n                )\n            } else {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n        } else {\n            self::MlContainsGrammarLexerTextLoop3Result::MlContainsGrammarLexerTextLoop3Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser position loop four result",
+    "sourceText": "pub enum MlContainsGrammarLexerPositionLoop4Result {\n    MlContainsGrammarLexerPositionLoop4Done,\n    MlContainsGrammarLexerPositionLoop4Return(bool),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser position loop four result meta language contains grammar lexical analyser position loop four done constructor",
+    "sourceText": "MlContainsGrammarLexerPositionLoop4Done,",
+    "ownerContexts": [
+      "pub enum MlContainsGrammarLexerPositionLoop4Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four-result-meta-language-contains-grammar-lexical-analyser-position-loop-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return",
+    "inventoryName": "grammar lexical analyser native meta language contains grammar lexical analyser position loop four result meta language contains grammar lexical analyser position loop four return constructor",
+    "sourceText": "MlContainsGrammarLexerPositionLoop4Return(bool),",
+    "ownerContexts": [
+      "pub enum MlContainsGrammarLexerPositionLoop4Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-contains-grammar-lexical-analyser-position-loop-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_contains_grammar_lexer_position_loop4",
+    "inventoryName": "execute grammar lexical analyser native meta language contains grammar lexical analyser position loop four",
+    "sourceText": "pub fn ml_contains_grammar_lexer_position_loop4(\n    values: &[f64],\n    mut value: f64,\n    mut index: f64,\n) -> self::MlContainsGrammarLexerPositionLoop4Result {\n    loop {\n        return if index < (values.len() as f64) {\n            if (self::read_required_number_fact(values, index)) == value {\n                self::MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Return(true)\n            } else {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n        } else {\n            self::MlContainsGrammarLexerPositionLoop4Result::MlContainsGrammarLexerPositionLoop4Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop6",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser section rule positions loop six",
+    "sourceText": "pub fn ml_read_grammar_lexer_section_rule_positions_loop6(\n    mut section: f64,\n    section_kinds: &[self::ml_string::Text],\n    section_names: &[self::ml_string::Text],\n    token_vocabularies: &[self::ml_string::Text],\n    rule_sections: &[f64],\n    rule_kinds: &[self::ml_string::Text],\n    mut selected: Vec<f64>,\n    mut index: f64,\n) -> Vec<f64> {\n    loop {\n        if index < (rule_sections.len() as f64) {\n            {\n                let owner_section = self::read_required_number_fact(rule_sections, index);\n                {\n                    let selected_3 = if ((self::read_required_text_fact(rule_kinds, index))\n                        == (self::ml_string::Text::from_units(vec![110, 111, 114, 109, 97, 108])))\n                        && (((owner_section).partial_cmp(&(section))\n                            == Some(std::cmp::Ordering::Equal))\n                            || (((owner_section >= 0f64)\n                                && ((self::read_required_text_fact(\n                                    section_kinds,\n                                    owner_section,\n                                )) == (self::ml_string::Text::from_units(vec![\n                                    112, 97, 114, 115, 101, 114,\n                                ]))))\n                                && ((self::read_required_text_fact(\n                                    token_vocabularies,\n                                    owner_section,\n                                )) == (self::read_required_text_fact(section_names, section)))))\n                    {\n                        {\n                            {\n                                let (ml_append_right, ml_append_left) = (vec![index], selected);\n                                self::ml_array::append(ml_append_left, ml_append_right)\n                            }\n                        }\n                    } else {\n                        selected\n                    };\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            (selected, index) = (selected_3, index_2);\n                            continue;\n                        }\n                    }\n                }\n            }\n        }\n        return { selected };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser section rule positions loop five result",
+    "sourceText": "pub enum MlReadGrammarLexerSectionRulePositionsLoop5Result {\n    MlReadGrammarLexerSectionRulePositionsLoop5Done(Vec<f64>, f64),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-result-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser section rule positions loop five result meta language read grammar lexical analyser section rule positions loop five done constructor",
+    "sourceText": "MlReadGrammarLexerSectionRulePositionsLoop5Done(Vec<f64>, f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerSectionRulePositionsLoop5Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-section-rule-positions-loop-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_section_rule_positions_loop5",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser section rule positions loop five",
+    "sourceText": "pub fn ml_read_grammar_lexer_section_rule_positions_loop5(\n    mut section: f64,\n    rule_sections: &[f64],\n    rule_kinds: &[self::ml_string::Text],\n    mut selected: Vec<f64>,\n    mut index: f64,\n) -> self::MlReadGrammarLexerSectionRulePositionsLoop5Result {\n    loop {\n        if index < (rule_sections.len() as f64) {\n            {\n                let kind = self::read_required_text_fact(rule_kinds, index);\n                {\n                    let selected_3 = if ((self::read_required_number_fact(rule_sections, index))\n                        == section)\n                        && ((kind\n                            == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))\n                            || (kind\n                                == (self::ml_string::Text::from_units(vec![\n                                    115, 105, 108, 101, 110, 116,\n                                ])))) {\n                        {\n                            {\n                                let (ml_append_right, ml_append_left) = (vec![index], selected);\n                                self::ml_array::append(ml_append_left, ml_append_right)\n                            }\n                        }\n                    } else {\n                        selected\n                    };\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            (selected, index) = (selected_3, index_2);\n                            continue;\n                        }\n                    }\n                }\n            }\n        }\n        return {\n            self::MlReadGrammarLexerSectionRulePositionsLoop5Result::MlReadGrammarLexerSectionRulePositionsLoop5Done(selected, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser literal rule position loop seven result",
+    "sourceText": "pub enum MlReadGrammarLexerLiteralRulePositionLoop7Result {\n    MlReadGrammarLexerLiteralRulePositionLoop7Done(f64, f64),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-result-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser literal rule position loop seven result meta language read grammar lexical analyser literal rule position loop seven done constructor",
+    "sourceText": "MlReadGrammarLexerLiteralRulePositionLoop7Done(f64, f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerLiteralRulePositionLoop7Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser literal rule position join eight",
+    "sourceText": "pub enum MlReadGrammarLexerLiteralRulePositionJoin8 {\n    MlReadGrammarLexerLiteralRulePositionJoin8Next(f64, f64),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-meta-language-read-grammar-lexical-analyser-literal-rule-position-join-eight-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser literal rule position join eight meta language read grammar lexical analyser literal rule position join eight next constructor",
+    "sourceText": "MlReadGrammarLexerLiteralRulePositionJoin8Next(f64, f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerLiteralRulePositionJoin8 {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-literal-rule-position-loop-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_literal_rule_position_loop7",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser literal rule position loop seven",
+    "sourceText": "pub fn ml_read_grammar_lexer_literal_rule_position_loop7(\n    value: &self::ml_string::Text,\n    kinds: &[self::ml_string::Text],\n    values: &[self::ml_string::Text],\n    literals: &[bool],\n    mut selected: f64,\n    mut count: f64,\n    mut index: f64,\n) -> self::MlReadGrammarLexerLiteralRulePositionLoop7Result {\n    loop {\n        return if index < (kinds.len() as f64) {\n            {\n                let ml_s29 = if (((self::read_required_text_fact(kinds, index))\n                    == (self::ml_string::Text::from_units(vec![116, 111, 107, 101, 110])))\n                    && self::read_required_boolean_fact(literals, index))\n                    && ((self::read_required_text_fact(values, index)) == (*value))\n                {\n                    {\n                        let selected_2 = index;\n                        {\n                            let count_2 = count + 1f64;\n                            self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected_2, count_2)\n                        }\n                    }\n                } else {\n                    self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected, count)\n                };\n                match ml_s29 {\n                    self::MlReadGrammarLexerLiteralRulePositionJoin8::MlReadGrammarLexerLiteralRulePositionJoin8Next(selected_3, count_3) => {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                (selected, count, index) = (selected_3, count_3, index_2);\n                                continue;\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerLiteralRulePositionLoop7Result::MlReadGrammarLexerLiteralRulePositionLoop7Done(selected, count)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result",
+    "inventoryName": "lexical literal and owner native meta language read grammar lexical analyser text position loop nine result",
+    "sourceText": "pub enum MlReadGrammarLexerTextPositionLoop9Result {\n    MlReadGrammarLexerTextPositionLoop9Done,\n    MlReadGrammarLexerTextPositionLoop9Return(f64),\n}"
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done",
+    "inventoryName": "lexical literal and owner native meta language read grammar lexical analyser text position loop nine result meta language read grammar lexical analyser text position loop nine done constructor",
+    "sourceText": "MlReadGrammarLexerTextPositionLoop9Done,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerTextPositionLoop9Result {"
+    ]
+  },
+  {
+    "id": "translation.lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-result-meta-language-read-grammar-lexical-analyser-text-position-loop-nine-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return",
+    "inventoryName": "lexical literal and owner native meta language read grammar lexical analyser text position loop nine result meta language read grammar lexical analyser text position loop nine return constructor",
+    "sourceText": "MlReadGrammarLexerTextPositionLoop9Return(f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerTextPositionLoop9Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-text-position-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_3.rs",
+    "name": "ml_read_grammar_lexer_text_position_loop9",
+    "inventoryName": "execute lexical literal and owner native meta language read grammar lexical analyser text position loop nine",
+    "sourceText": "pub fn ml_read_grammar_lexer_text_position_loop9(\n    values: &[self::ml_string::Text],\n    value: &self::ml_string::Text,\n    mut index: f64,\n) -> self::MlReadGrammarLexerTextPositionLoop9Result {\n    loop {\n        return if index < (values.len() as f64) {\n            if (self::read_required_text_fact(values, index)) == (*value) {\n                self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Return(index)\n            } else {\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        index = index_2;\n                        continue;\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerTextPositionLoop9Result::MlReadGrammarLexerTextPositionLoop9Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-lexical-literal-and-owner-native-meta-language-read-grammar-lexical-analyser-owner-comparison-loop-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_owner_comparison_loop19",
+    "inventoryName": "execute lexical literal and owner native meta language read grammar lexical analyser owner comparison loop nineteen",
+    "sourceText": "pub fn ml_read_grammar_lexer_owner_comparison_loop19(\n    kinds: &[self::ml_string::Text],\n    names: &[self::ml_string::Text],\n    targets: &[self::ml_string::Text],\n    mut originals: Vec<self::ml_string::Text>,\n    mut publics: Vec<self::ml_string::Text>,\n    mut positions: Vec<f64>,\n    mut result: Vec<f64>,\n    mut index: f64,\n) -> self::MlReadGrammarLexerOwnerComparisonLoop19Result {\n    loop {\n        return if index < (kinds.len() as f64) {\n            {\n                let ml_s35 = if (self::read_grammar_lexer_entry_form(\n                    &(self::read_required_text_fact(kinds, index)),\n                )) == 1f64\n                {\n                    {\n                        let original = self::read_required_text_fact(names, index);\n                        {\n                            let target = self::read_required_text_fact(targets, index);\n                            if (((original == (self::ml_string::Text::from_units(vec![])))\n                                || (target == (self::ml_string::Text::from_units(vec![]))))\n                                || self::contains_grammar_lexer_text(&(originals), &(original)))\n                                || self::contains_grammar_lexer_text(&(publics), &(target))\n                            {\n                                self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Return(vec![-1f64])\n                            } else {\n                                {\n                                    let originals_2 = {\n                                        let (ml_append_right, ml_append_left) =\n                                            (vec![original.clone()], originals);\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    };\n                                    {\n                                        let publics_2 = {\n                                            let (ml_append_right, ml_append_left) =\n                                                (vec![target.clone()], publics);\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        };\n                                        {\n                                            let positions_2 = {\n                                                let (ml_append_right, ml_append_left) =\n                                                    (vec![index], positions);\n                                                self::ml_array::append(\n                                                    ml_append_left,\n                                                    ml_append_right,\n                                                )\n                                            };\n                                            {\n                                                let result_2 = {\n                                                    let (ml_append_right, ml_append_left) =\n                                                        (vec![index, index], result);\n                                                    self::ml_array::append(\n                                                        ml_append_left,\n                                                        ml_append_right,\n                                                    )\n                                                };\n                                                self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Next(originals_2, publics_2, positions_2, result_2)\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Next(originals, publics, positions, result)\n                };\n                match ml_s35 {\n                    self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Next(originals_3, publics_3, positions_3, result_3) => {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                (originals, publics, positions, result, index) = (originals_3, publics_3, positions_3, result_3, index_2);\n                                continue;\n                            }\n                        }\n                    }\n                    self::MlReadGrammarLexerOwnerComparisonJoin21::MlReadGrammarLexerOwnerComparisonJoin21Return(ml_result21) => {\n                        self::MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Return(ml_result21)\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerOwnerComparisonLoop19Result::MlReadGrammarLexerOwnerComparisonLoop19Done(originals, positions, result, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-ten",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop23",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser binding names loop ten",
+    "sourceText": "pub fn ml_read_grammar_lexer_binding_names_loop23(\n    names: &[self::ml_string::Text],\n    legacy_types: &[self::ml_string::Text],\n    emitted_types: &[self::ml_string::Text],\n    dispositions: &[self::ml_string::Text],\n    mut bindings: Vec<self::ml_string::Text>,\n    mut index: f64,\n) -> Vec<self::ml_string::Text> {\n    loop {\n        if index < (names.len() as f64) {\n            {\n                let name = self::read_required_text_fact(names, index);\n                {\n                    let legacy = self::read_required_text_fact(legacy_types, index);\n                    {\n                        let emitted = self::read_required_text_fact(emitted_types, index);\n                        {\n                            let bindings_3 =\n                                if (self::contains_grammar_lexer_text(&(bindings), &(name))) {\n                                    bindings\n                                } else {\n                                    {\n                                        {\n                                            let (ml_append_right, ml_append_left) =\n                                                (vec![name.clone()], bindings);\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        }\n                                    }\n                                };\n                            {\n                                let bindings_5 = if (legacy\n                                    != (self::ml_string::Text::from_units(vec![])))\n                                    && !(self::contains_grammar_lexer_text(\n                                        &(bindings_3),\n                                        &(legacy),\n                                    )) {\n                                    {\n                                        {\n                                            let (ml_append_right, ml_append_left) =\n                                                (vec![legacy.clone()], bindings_3);\n                                            self::ml_array::append(ml_append_left, ml_append_right)\n                                        }\n                                    }\n                                } else {\n                                    bindings_3\n                                };\n                                {\n                                    let bindings_7 =\n                                        if ((self::read_required_text_fact(dispositions, index))\n                                            == (self::ml_string::Text::from_units(vec![\n                                                101, 109, 105, 116,\n                                            ])))\n                                            && !(self::contains_grammar_lexer_text(\n                                                &(bindings_5),\n                                                &(emitted),\n                                            ))\n                                        {\n                                            {\n                                                {\n                                                    let (ml_append_right, ml_append_left) =\n                                                        (vec![emitted.clone()], bindings_5);\n                                                    self::ml_array::append(\n                                                        ml_append_left,\n                                                        ml_append_right,\n                                                    )\n                                                }\n                                            }\n                                        } else {\n                                            bindings_5\n                                        };\n                                    {\n                                        let index_2 = index + 1f64;\n                                        {\n                                            (bindings, index) = (bindings_7, index_2);\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        }\n        return { bindings };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser binding names loop nine result",
+    "sourceText": "pub enum MlReadGrammarLexerBindingNamesLoop22Result {\n    MlReadGrammarLexerBindingNamesLoop22Done(Vec<self::ml_string::Text>, f64),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-result-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerBindingNamesLoop22Result::MlReadGrammarLexerBindingNamesLoop22Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser binding names loop nine result meta language read grammar lexical analyser binding names loop nine done constructor",
+    "sourceText": "MlReadGrammarLexerBindingNamesLoop22Done(Vec<self::ml_string::Text>, f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerBindingNamesLoop22Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-binding-names-loop-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_binding_names_loop22",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser binding names loop nine",
+    "sourceText": "pub fn ml_read_grammar_lexer_binding_names_loop22(\n    declared: &[self::ml_string::Text],\n    references: &[self::ml_string::Text],\n    mut bindings: Vec<self::ml_string::Text>,\n    mut index: f64,\n) -> self::MlReadGrammarLexerBindingNamesLoop22Result {\n    loop {\n        if index < (declared.len() as f64) {\n            {\n                let name = self::read_required_text_fact(declared, index);\n                {\n                    let bindings_3 = if self::contains_grammar_lexer_text(references, &(name))\n                        && !(self::contains_grammar_lexer_text(&(bindings), &(name)))\n                    {\n                        {\n                            {\n                                let (ml_append_right, ml_append_left) =\n                                    (vec![name.clone()], bindings);\n                                self::ml_array::append(ml_append_left, ml_append_right)\n                            }\n                        }\n                    } else {\n                        bindings\n                    };\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            (bindings, index) = (bindings_3, index_2);\n                            continue;\n                        }\n                    }\n                }\n            }\n        }\n        return {\n            self::MlReadGrammarLexerBindingNamesLoop22Result::MlReadGrammarLexerBindingNamesLoop22Done(bindings, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan loop eleven result",
+    "sourceText": "pub enum MlReadGrammarLexerCommandPlanLoop24Result {\n    MlReadGrammarLexerCommandPlanLoop24Done(\n        self::ml_string::Text,\n        self::ml_string::Text,\n        self::ml_string::Text,\n        Vec<self::ml_string::Text>,\n    ),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-result-meta-language-read-grammar-lexical-analyser-command-plan-loop-eleven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanLoop24Result::MlReadGrammarLexerCommandPlanLoop24Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan loop eleven result meta language read grammar lexical analyser command plan loop eleven done constructor",
+    "sourceText": "MlReadGrammarLexerCommandPlanLoop24Done(\n        self::ml_string::Text,\n        self::ml_string::Text,\n        self::ml_string::Text,\n        Vec<self::ml_string::Text>,\n    ),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandPlanLoop24Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan join thirteen",
+    "sourceText": "pub enum MlReadGrammarLexerCommandPlanJoin26 {\n    MlReadGrammarLexerCommandPlanJoin26Next(\n        self::ml_string::Text,\n        self::ml_string::Text,\n        self::ml_string::Text,\n        Vec<self::ml_string::Text>,\n    ),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-meta-language-read-grammar-lexical-analyser-command-plan-join-thirteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin26::MlReadGrammarLexerCommandPlanJoin26Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan join thirteen meta language read grammar lexical analyser command plan join thirteen next constructor",
+    "sourceText": "MlReadGrammarLexerCommandPlanJoin26Next(\n        self::ml_string::Text,\n        self::ml_string::Text,\n        self::ml_string::Text,\n        Vec<self::ml_string::Text>,\n    ),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandPlanJoin26 {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-loop-fourteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "ml_read_grammar_lexer_command_plan_loop27",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser command plan loop fourteen",
+    "sourceText": "pub fn ml_read_grammar_lexer_command_plan_loop27(\n    argument: &self::ml_string::Text,\n    mut zero: bool,\n    mut offset: f64,\n) -> bool {\n    loop {\n        if offset < (argument.length()) {\n            {\n                let zero_3 = if (argument.slice(offset, (offset + 1f64)))\n                    == (self::ml_string::Text::from_units(vec![48]))\n                {\n                    zero\n                } else {\n                    { false }\n                };\n                {\n                    let offset_2 = offset + 1f64;\n                    {\n                        (zero, offset) = (zero_3, offset_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { zero };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan join twelve",
+    "sourceText": "pub enum MlReadGrammarLexerCommandPlanJoin25 {\n    MlReadGrammarLexerCommandPlanJoin25Next(self::ml_string::Text, self::ml_string::Text, bool),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-meta-language-read-grammar-lexical-analyser-command-plan-join-twelve-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_4.rs",
+    "name": "MlReadGrammarLexerCommandPlanJoin25::MlReadGrammarLexerCommandPlanJoin25Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser command plan join twelve meta language read grammar lexical analyser command plan join twelve next constructor",
+    "sourceText": "MlReadGrammarLexerCommandPlanJoin25Next(self::ml_string::Text, self::ml_string::Text, bool),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerCommandPlanJoin25 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop41Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop sixteen result",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueLoop41Result {\n    MlReadGrammarLexerDeclarationIssueLoop41Done,\n    MlReadGrammarLexerDeclarationIssueLoop41Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop sixteen result meta language read grammar lexical analyser declaration issue loop sixteen done constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop41Done,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop41Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop sixteen result meta language read grammar lexical analyser declaration issue loop sixteen return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop41Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop41Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin42",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join seventeen",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin42 {\n    MlReadGrammarLexerDeclarationIssueJoin42Next,\n    MlReadGrammarLexerDeclarationIssueJoin42Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join seventeen meta language read grammar lexical analyser declaration issue join seventeen next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin42Next,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin42 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-seventeen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join seventeen meta language read grammar lexical analyser declaration issue join seventeen return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin42Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin42 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop43Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop eighteen result",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueLoop43Result {\n    MlReadGrammarLexerDeclarationIssueLoop43Done,\n    MlReadGrammarLexerDeclarationIssueLoop43Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop eighteen result meta language read grammar lexical analyser declaration issue loop eighteen done constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop43Done,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop43Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop eighteen result meta language read grammar lexical analyser declaration issue loop eighteen return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop43Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop43Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin44",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join nineteen",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin44 {\n    MlReadGrammarLexerDeclarationIssueJoin44Next,\n    MlReadGrammarLexerDeclarationIssueJoin44Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join nineteen meta language read grammar lexical analyser declaration issue join nineteen next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin44Next,",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin44 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-meta-language-read-grammar-lexical-analyser-declaration-issue-join-nineteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join nineteen meta language read grammar lexical analyser declaration issue join nineteen return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin44Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin44 {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-eighteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop43",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop eighteen",
+    "sourceText": "pub fn ml_read_grammar_lexer_declaration_issue_loop43(\n    action_owners: &[f64],\n    actions: &[self::ml_string::Text],\n    action_modes: &[self::ml_string::Text],\n    declared_modes: &[self::ml_string::Text],\n    mut index: f64,\n    mut action: f64,\n) -> self::MlReadGrammarLexerDeclarationIssueLoop43Result {\n    loop {\n        return if action < (actions.len() as f64) {\n            {\n                let ml_s41 = if (self::read_required_number_fact(action_owners, action)) == index {\n                    {\n                        let operation = self::read_required_text_fact(actions, action);\n                        if ((operation\n                            != (self::ml_string::Text::from_units(vec![\n                                112, 117, 115, 104, 77, 111, 100, 101,\n                            ])))\n                            && (operation\n                                != (self::ml_string::Text::from_units(vec![\n                                    115, 101, 116, 77, 111, 100, 101,\n                                ]))))\n                            && (operation\n                                != (self::ml_string::Text::from_units(vec![\n                                    112, 111, 112, 77, 111, 100, 101,\n                                ])))\n                        {\n                            self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Return(vec![9f64, index, action])\n                        } else if (operation\n                            != (self::ml_string::Text::from_units(vec![\n                                112, 111, 112, 77, 111, 100, 101,\n                            ])))\n                            && !(self::contains_grammar_lexer_text(\n                                declared_modes,\n                                &(self::read_required_text_fact(action_modes, action)),\n                            ))\n                        {\n                            self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Return(vec![10f64, index, action])\n                        } else {\n                            self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Next\n                        }\n                    }\n                } else {\n                    self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Next\n                };\n                match ml_s41 {\n                    self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Next => {\n                        {\n                            let action_2 = action + 1f64;\n                            {\n                                action = action_2;\n                                continue;\n                            }\n                        }\n                    }\n                    self::MlReadGrammarLexerDeclarationIssueJoin44::MlReadGrammarLexerDeclarationIssueJoin44Return(ml_result44) => {\n                        self::MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Return(ml_result44)\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-sixteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop41",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop sixteen",
+    "sourceText": "pub fn ml_read_grammar_lexer_declaration_issue_loop41(\n    kinds: &[self::ml_string::Text],\n    modes: &[self::ml_string::Text],\n    channels: &[self::ml_string::Text],\n    dispositions: &[self::ml_string::Text],\n    action_owners: &[f64],\n    actions: &[self::ml_string::Text],\n    action_modes: &[self::ml_string::Text],\n    mut count: f64,\n    declared_modes: &[self::ml_string::Text],\n    declared_channels: &[self::ml_string::Text],\n    mut index: f64,\n) -> self::MlReadGrammarLexerDeclarationIssueLoop41Result {\n    loop {\n        return if index < count {\n            {\n                let ml_s43 = if (self::read_grammar_lexer_entry_form(\n                    &(self::read_required_text_fact(kinds, index)),\n                )) == 7f64\n                {\n                    if (self::contains_grammar_lexer_text(\n                        declared_modes,\n                        &(self::read_required_text_fact(modes, index)),\n                    )) {\n                        if ((self::contains_grammar_lexer_text(\n                            declared_channels,\n                            &(self::read_required_text_fact(channels, index)),\n                        )) || (self::accept_grammar_lexer_decimal(\n                            &(self::read_required_text_fact(channels, index)),\n                        ))) {\n                            {\n                                let disposition =\n                                    self::read_required_text_fact(dispositions, index);\n                                if (disposition\n                                    != (self::ml_string::Text::from_units(vec![\n                                        101, 109, 105, 116,\n                                    ])))\n                                    && (disposition\n                                        != (self::ml_string::Text::from_units(vec![\n                                            115, 107, 105, 112,\n                                        ])))\n                                {\n                                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return(vec![11f64, index, -1f64])\n                                } else {\n                                    {\n                                        let action = 0f64;\n                                        {\n                                            let ml_s44 = self::ml_read_grammar_lexer_declaration_issue_loop43(action_owners, actions, action_modes, declared_modes, index, action);\n                                            match ml_s44 {\n                                                self::MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Done => {\n                                                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Next\n                                                }\n                                                self::MlReadGrammarLexerDeclarationIssueLoop43Result::MlReadGrammarLexerDeclarationIssueLoop43Return(ml_result43) => {\n                                                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return(ml_result43)\n                                                }\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        } else {\n                            self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return(vec![8f64, index, -1f64])\n                        }\n                    } else {\n                        self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return(vec![7f64, index, -1f64])\n                    }\n                } else {\n                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Next\n                };\n                match ml_s43 {\n                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Next => {\n                        {\n                            let index_2 = index + 1f64;\n                            {\n                                index = index_2;\n                                continue;\n                            }\n                        }\n                    }\n                    self::MlReadGrammarLexerDeclarationIssueJoin42::MlReadGrammarLexerDeclarationIssueJoin42Return(ml_result42) => {\n                        self::MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Return(ml_result42)\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerDeclarationIssueLoop41Result::MlReadGrammarLexerDeclarationIssueLoop41Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop40Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop fifteen result",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueLoop40Result {\n    MlReadGrammarLexerDeclarationIssueLoop40Done(\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n        f64,\n    ),\n    MlReadGrammarLexerDeclarationIssueLoop40Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop fifteen result meta language read grammar lexical analyser declaration issue loop fifteen done constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop40Done(\n        Vec<self::ml_string::Text>,\n        Vec<self::ml_string::Text>,\n        f64,\n    ),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop40Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-result-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop fifteen result meta language read grammar lexical analyser declaration issue loop fifteen return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueLoop40Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueLoop40Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin48",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty three",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin48 {\n    MlReadGrammarLexerDeclarationIssueJoin48Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerDeclarationIssueJoin48Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty three meta language read grammar lexical analyser declaration issue join twenty three next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin48Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin48 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-three-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty three meta language read grammar lexical analyser declaration issue join twenty three return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin48Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin48 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin47",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty two",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin47 {\n    MlReadGrammarLexerDeclarationIssueJoin47Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerDeclarationIssueJoin47Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty two meta language read grammar lexical analyser declaration issue join twenty two next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin47Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin47 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-two-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty two meta language read grammar lexical analyser declaration issue join twenty two return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin47Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin47 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin46",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty one",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin46 {\n    MlReadGrammarLexerDeclarationIssueJoin46Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerDeclarationIssueJoin46Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty one meta language read grammar lexical analyser declaration issue join twenty one next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin46Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin46 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-one-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty one meta language read grammar lexical analyser declaration issue join twenty one return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin46Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin46 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin45",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty",
+    "sourceText": "pub enum MlReadGrammarLexerDeclarationIssueJoin45 {\n    MlReadGrammarLexerDeclarationIssueJoin45Next(Vec<self::ml_string::Text>),\n    MlReadGrammarLexerDeclarationIssueJoin45Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty meta language read grammar lexical analyser declaration issue join twenty next constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin45Next(Vec<self::ml_string::Text>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin45 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-meta-language-read-grammar-lexical-analyser-declaration-issue-join-twenty-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser declaration issue join twenty meta language read grammar lexical analyser declaration issue join twenty return constructor",
+    "sourceText": "MlReadGrammarLexerDeclarationIssueJoin45Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerDeclarationIssueJoin45 {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-declaration-issue-loop-fifteen",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_declaration_issue_loop40",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser declaration issue loop fifteen",
+    "sourceText": "pub fn ml_read_grammar_lexer_declaration_issue_loop40(\n    kinds: &[self::ml_string::Text],\n    names: &[self::ml_string::Text],\n    items: &[self::ml_string::Text],\n    values: &[self::ml_string::Text],\n    mut count: f64,\n    mut binding_names: Vec<self::ml_string::Text>,\n    mut owner_names: Vec<self::ml_string::Text>,\n    mut literal_values: Vec<self::ml_string::Text>,\n    mut local_names: Vec<self::ml_string::Text>,\n    mut declared_modes: Vec<self::ml_string::Text>,\n    mut declared_channels: Vec<self::ml_string::Text>,\n    mut index: f64,\n) -> self::MlReadGrammarLexerDeclarationIssueLoop40Result {\n    loop {\n        return if index < count {\n            {\n                let form = self::read_grammar_lexer_entry_form(\n                    &(self::read_required_text_fact(kinds, index)),\n                );\n                if form == 0f64 {\n                    self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(vec![2f64, index, -1f64])\n                } else {\n                    {\n                        let ml_s45 = if form == 1f64 {\n                            if ((self::read_required_text_fact(items, index))\n                                != (self::ml_string::Text::from_units(vec![114, 101, 102])))\n                                || self::contains_grammar_lexer_text(\n                                    &(owner_names),\n                                    &(self::read_required_text_fact(names, index)),\n                                )\n                            {\n                                self::MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Return(vec![3f64, index, -1f64])\n                            } else {\n                                {\n                                    let owner_names_2 = {\n                                        let (ml_append_right, ml_append_left) = (\n                                            vec![self::read_required_text_fact(names, index)],\n                                            owner_names,\n                                        );\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    };\n                                    self::MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Next(owner_names_2)\n                                }\n                            }\n                        } else {\n                            self::MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Next(owner_names)\n                        };\n                        match ml_s45 {\n                            self::MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Next(owner_names_3) => {\n                                {\n                                    let ml_s46 = if form == 2f64 {\n                                        if ((self::read_required_text_fact(items, index)) != (self::ml_string::Text::from_units(vec![114, 101, 102]))) || self::contains_grammar_lexer_text(&(binding_names), &(self::read_required_text_fact(names, index))) {\n                                            self::MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Return(vec![4f64, index, -1f64])\n                                        } else {\n                                            {\n                                                let binding_names_2 = { let (ml_append_right, ml_append_left) = (vec![self::read_required_text_fact(names, index)], binding_names); self::ml_array::append(ml_append_left, ml_append_right) };\n                                                self::MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Next(binding_names_2)\n                                            }\n                                        }\n                                    } else {\n                                        self::MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Next(binding_names)\n                                    };\n                                    match ml_s46 {\n                                        self::MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Next(binding_names_3) => {\n                                            {\n                                                let ml_s47 = if form == 3f64 {\n                                                    if self::contains_grammar_lexer_text(&(literal_values), &(self::read_required_text_fact(values, index))) {\n                                                        self::MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Return(vec![5f64, index, -1f64])\n                                                    } else {\n                                                        {\n                                                            let literal_values_2 = { let (ml_append_right, ml_append_left) = (vec![self::read_required_text_fact(values, index)], literal_values); self::ml_array::append(ml_append_left, ml_append_right) };\n                                                            self::MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Next(literal_values_2)\n                                                        }\n                                                    }\n                                                } else {\n                                                    self::MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Next(literal_values)\n                                                };\n                                                match ml_s47 {\n                                                    self::MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Next(literal_values_3) => {\n                                                        {\n                                                            let declared_modes_3 = if form == 4f64 {\n                                                                {\n                                                                    { let (ml_append_right, ml_append_left) = (vec![self::read_required_text_fact(names, index)], declared_modes); self::ml_array::append(ml_append_left, ml_append_right) }\n                                                                }\n                                                            } else {\n                                                                declared_modes\n                                                            };\n                                                            {\n                                                                let declared_channels_3 = if form == 5f64 {\n                                                                    {\n                                                                        { let (ml_append_right, ml_append_left) = (vec![self::read_required_text_fact(names, index)], declared_channels); self::ml_array::append(ml_append_left, ml_append_right) }\n                                                                    }\n                                                                } else {\n                                                                    declared_channels\n                                                                };\n                                                                {\n                                                                    let ml_s48 = if (form == 7f64) || (form == 8f64) {\n                                                                        if self::contains_grammar_lexer_text(&(local_names), &(self::read_required_text_fact(names, index))) {\n                                                                            self::MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Return(vec![6f64, index, -1f64])\n                                                                        } else {\n                                                                            {\n                                                                                let local_names_2 = { let (ml_append_right, ml_append_left) = (vec![self::read_required_text_fact(names, index)], local_names); self::ml_array::append(ml_append_left, ml_append_right) };\n                                                                                self::MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Next(local_names_2)\n                                                                            }\n                                                                        }\n                                                                    } else {\n                                                                        self::MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Next(local_names)\n                                                                    };\n                                                                    match ml_s48 {\n                                                                        self::MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Next(local_names_3) => {\n                                                                            {\n                                                                                let index_2 = index + 1f64;\n                                                                                {\n                                                                                    (binding_names, owner_names, literal_values, local_names, declared_modes, declared_channels, index) = (binding_names_3, owner_names_3, literal_values_3, local_names_3, declared_modes_3, declared_channels_3, index_2);\n                                                                                    continue;\n                                                                                }\n                                                                            }\n                                                                        }\n                                                                        self::MlReadGrammarLexerDeclarationIssueJoin48::MlReadGrammarLexerDeclarationIssueJoin48Return(ml_result48) => {\n                                                                            self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(ml_result48)\n                                                                        }\n                                                                    }\n                                                                }\n                                                            }\n                                                        }\n                                                    }\n                                                    self::MlReadGrammarLexerDeclarationIssueJoin47::MlReadGrammarLexerDeclarationIssueJoin47Return(ml_result48_2) => {\n                                                        self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(ml_result48_2)\n                                                    }\n                                                }\n                                            }\n                                        }\n                                        self::MlReadGrammarLexerDeclarationIssueJoin46::MlReadGrammarLexerDeclarationIssueJoin46Return(ml_result48_3) => {\n                                            self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(ml_result48_3)\n                                        }\n                                    }\n                                }\n                            }\n                            self::MlReadGrammarLexerDeclarationIssueJoin45::MlReadGrammarLexerDeclarationIssueJoin45Return(ml_result48_4) => {\n                                self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Return(ml_result48_4)\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerDeclarationIssueLoop40Result::MlReadGrammarLexerDeclarationIssueLoop40Done(declared_modes, declared_channels, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-five",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop50",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty five",
+    "sourceText": "pub fn ml_read_grammar_lexer_obligation_positions_loop50(\n    mut count: f64,\n    mut root: f64,\n    owners: &[f64],\n    categories: &[self::ml_string::Text],\n    reached: &[f64],\n    mut index: f64,\n    mut selected: Vec<f64>,\n) -> Vec<f64> {\n    loop {\n        if index < (owners.len() as f64) {\n            {\n                let owner = self::read_required_number_fact(owners, index);\n                {\n                    let selected_3 = if (((self::ml_math::is_safe_integer(owner)\n                        && (owner >= 0f64))\n                        && (owner < count))\n                        && self::contains_grammar_lexer_position(reached, owner))\n                        && (((owner).partial_cmp(&(root)) == Some(std::cmp::Ordering::Equal))\n                            || (((self::read_required_text_fact(categories, index))\n                                != (self::ml_string::Text::from_units(vec![\n                                    97, 99, 116, 105, 111, 110,\n                                ])))\n                                && ((self::read_required_text_fact(categories, index))\n                                    != (self::ml_string::Text::from_units(vec![\n                                        99, 111, 109, 109, 97, 110, 100,\n                                    ]))))) {\n                        {\n                            {\n                                let (ml_append_right, ml_append_left) = (vec![index], selected);\n                                self::ml_array::append(ml_append_left, ml_append_right)\n                            }\n                        }\n                    } else {\n                        selected\n                    };\n                    {\n                        let index_2 = index + 1f64;\n                        {\n                            (index, selected) = (index_2, selected_3);\n                            continue;\n                        }\n                    }\n                }\n            }\n        }\n        return { selected };\n    }\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop49Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty four result",
+    "sourceText": "pub enum MlReadGrammarLexerObligationPositionsLoop49Result {\n    MlReadGrammarLexerObligationPositionsLoop49Done(Vec<f64>, f64),\n    MlReadGrammarLexerObligationPositionsLoop49Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty four result meta language read grammar lexical analyser obligation positions loop twenty four done constructor",
+    "sourceText": "MlReadGrammarLexerObligationPositionsLoop49Done(Vec<f64>, f64),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerObligationPositionsLoop49Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four-return-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Return",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty four result meta language read grammar lexical analyser obligation positions loop twenty four return constructor",
+    "sourceText": "MlReadGrammarLexerObligationPositionsLoop49Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerObligationPositionsLoop49Result {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin51",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions join twenty six",
+    "sourceText": "pub enum MlReadGrammarLexerObligationPositionsJoin51 {\n    MlReadGrammarLexerObligationPositionsJoin51Next(Vec<f64>, f64, Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-meta-language-read-grammar-lexical-analyser-obligation-positions-join-twenty-six-next-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsJoin51::MlReadGrammarLexerObligationPositionsJoin51Next",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions join twenty six meta language read grammar lexical analyser obligation positions join twenty six next constructor",
+    "sourceText": "MlReadGrammarLexerObligationPositionsJoin51Next(Vec<f64>, f64, Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerObligationPositionsJoin51 {"
+    ]
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop52Result",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty seven result",
+    "sourceText": "pub enum MlReadGrammarLexerObligationPositionsLoop52Result {\n    MlReadGrammarLexerObligationPositionsLoop52Done(f64, Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-result-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven-done-constructor",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "MlReadGrammarLexerObligationPositionsLoop52Result::MlReadGrammarLexerObligationPositionsLoop52Done",
+    "inventoryName": "grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty seven result meta language read grammar lexical analyser obligation positions loop twenty seven done constructor",
+    "sourceText": "MlReadGrammarLexerObligationPositionsLoop52Done(f64, Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadGrammarLexerObligationPositionsLoop52Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-seven",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop52",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty seven",
+    "sourceText": "pub fn ml_read_grammar_lexer_obligation_positions_loop52(\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut index: f64,\n    mut pending: Vec<f64>,\n    mut current: f64,\n) -> self::MlReadGrammarLexerObligationPositionsLoop52Result {\n    loop {\n        if index < (edge_sources.len() as f64) {\n            {\n                let pending_3 = if (self::read_required_number_fact(edge_sources, index)) == current\n                {\n                    {\n                        {\n                            let (ml_append_right, ml_append_left) = (\n                                vec![self::read_required_number_fact(edge_targets, index)],\n                                pending,\n                            );\n                            self::ml_array::append(ml_append_left, ml_append_right)\n                        }\n                    }\n                } else {\n                    pending\n                };\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        (index, pending) = (index_2, pending_3);\n                        continue;\n                    }\n                }\n            }\n        }\n        return {\n            self::MlReadGrammarLexerObligationPositionsLoop52Result::MlReadGrammarLexerObligationPositionsLoop52Done(index, pending)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-obligation-positions-loop-twenty-four",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_obligation_positions_loop49",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser obligation positions loop twenty four",
+    "sourceText": "pub fn ml_read_grammar_lexer_obligation_positions_loop49(\n    mut count: f64,\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut reached: Vec<f64>,\n    mut index: f64,\n    mut pending: Vec<f64>,\n    mut cursor: f64,\n) -> self::MlReadGrammarLexerObligationPositionsLoop49Result {\n    loop {\n        return if cursor < (pending.len() as f64) {\n            {\n                let current = self::read_required_number_fact(&(pending), cursor);\n                if (!(self::ml_math::is_safe_integer(current)) || (current < 0f64))\n                    || (current >= count)\n                {\n                    self::MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Return(vec![-1f64])\n                } else {\n                    {\n                        let ml_s50 = if (self::contains_grammar_lexer_position(&(reached), current))\n                        {\n                            self::MlReadGrammarLexerObligationPositionsJoin51::MlReadGrammarLexerObligationPositionsJoin51Next(reached, index, pending)\n                        } else {\n                            {\n                                let reached_2 = {\n                                    let (ml_append_right, ml_append_left) =\n                                        (vec![current], reached);\n                                    self::ml_array::append(ml_append_left, ml_append_right)\n                                };\n                                {\n                                    let index_2 = 0f64;\n                                    {\n                                        let ml_s51 =\n                                            self::ml_read_grammar_lexer_obligation_positions_loop52(\n                                                edge_sources,\n                                                edge_targets,\n                                                index_2,\n                                                pending,\n                                                current,\n                                            );\n                                        match ml_s51 {\n                                            self::MlReadGrammarLexerObligationPositionsLoop52Result::MlReadGrammarLexerObligationPositionsLoop52Done(index_3, pending_2) => {\n                                                self::MlReadGrammarLexerObligationPositionsJoin51::MlReadGrammarLexerObligationPositionsJoin51Next(reached_2, index_3, pending_2)\n                                            }\n                                        }\n                                    }\n                                }\n                            }\n                        };\n                        match ml_s50 {\n                            self::MlReadGrammarLexerObligationPositionsJoin51::MlReadGrammarLexerObligationPositionsJoin51Next(reached_3, index_4, pending_3) => {\n                                {\n                                    let cursor_2 = cursor + 1f64;\n                                    {\n                                        (reached, index, pending, cursor) = (reached_3, index_4, pending_3, cursor_2);\n                                        continue;\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            self::MlReadGrammarLexerObligationPositionsLoop49Result::MlReadGrammarLexerObligationPositionsLoop49Done(reached, index)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-thirty",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop55",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser lazy normalization loop thirty",
+    "sourceText": "pub fn ml_read_grammar_lexer_lazy_normalization_loop55(\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut owner: f64,\n    mut children: Vec<f64>,\n    mut edge: f64,\n) -> Vec<f64> {\n    loop {\n        if edge < (edge_sources.len() as f64) {\n            {\n                let children_3 = if (self::read_required_number_fact(edge_sources, edge)) == owner {\n                    {\n                        {\n                            let (ml_append_right, ml_append_left) = (\n                                vec![self::read_required_number_fact(edge_targets, edge)],\n                                children,\n                            );\n                            self::ml_array::append(ml_append_left, ml_append_right)\n                        }\n                    }\n                } else {\n                    children\n                };\n                {\n                    let edge_2 = edge + 1f64;\n                    {\n                        (children, edge) = (children_3, edge_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { children };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-nine",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop54",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser lazy normalization loop twenty nine",
+    "sourceText": "pub fn ml_read_grammar_lexer_lazy_normalization_loop54(\n    kinds: &[self::ml_string::Text],\n    texts: &[self::ml_string::Text],\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut count: f64,\n    mut index: f64,\n    mut delimiter: f64,\n    mut owner: f64,\n) -> f64 {\n    loop {\n        if owner < count {\n            {\n                let delimiter_3 = if (self::read_required_text_fact(kinds, owner))\n                    == (self::ml_string::Text::from_units(vec![115, 101, 113]))\n                {\n                    {\n                        let children = Vec::<f64>::new();\n                        {\n                            let edge = 0f64;\n                            {\n                                let children_2 =\n                                    self::ml_read_grammar_lexer_lazy_normalization_loop55(\n                                        edge_sources,\n                                        edge_targets,\n                                        owner,\n                                        children,\n                                        edge,\n                                    );\n                                if ((children_2.len() as f64) >= 2f64)\n                                    && ((self::read_required_number_fact(\n                                        &(children_2),\n                                        ((children_2.len() as f64) - 2f64),\n                                    )) == index)\n                                {\n                                    {\n                                        let last = self::read_required_number_fact(\n                                            &(children_2),\n                                            ((children_2.len() as f64) - 1f64),\n                                        );\n                                        if (((last >= 0f64) && (last < count))\n                                            && ((self::read_required_text_fact(kinds, last))\n                                                == (self::ml_string::Text::from_units(vec![\n                                                    108, 105, 116, 101, 114, 97, 108,\n                                                ]))))\n                                            && ((self::read_required_text_fact(texts, last))\n                                                != (self::ml_string::Text::from_units(vec![])))\n                                        {\n                                            { last }\n                                        } else {\n                                            delimiter\n                                        }\n                                    }\n                                } else {\n                                    delimiter\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    delimiter\n                };\n                {\n                    let owner_2 = owner + 1f64;\n                    {\n                        (delimiter, owner) = (delimiter_3, owner_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { delimiter };\n    }\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop53",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser lazy normalization loop twenty eight",
+    "sourceText": "pub fn ml_read_grammar_lexer_lazy_normalization_loop53(\n    kinds: &[self::ml_string::Text],\n    labels: &[self::ml_string::Text],\n    texts: &[self::ml_string::Text],\n    inner: &[f64],\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut count: f64,\n    mut captures: Vec<f64>,\n    mut index: f64,\n) -> Vec<f64> {\n    loop {\n        if index < count {\n            {\n                let captures_3 = if ((self::read_required_text_fact(kinds, index))\n                    == (self::ml_string::Text::from_units(vec![99, 97, 112, 116, 117, 114, 101])))\n                    && ((self::read_required_text_fact(labels, index))\n                        == (self::ml_string::Text::from_units(vec![\n                            110, 111, 110, 95, 103, 114, 101, 101, 100, 121,\n                        ]))) {\n                    {\n                        let delimiter = -1f64;\n                        {\n                            let repeat = self::read_required_number_fact(inner, index);\n                            {\n                                let delimiter_3 = if ((repeat >= 0f64) && (repeat < count))\n                                    && ((self::read_required_text_fact(kinds, repeat))\n                                        == (self::ml_string::Text::from_units(vec![\n                                            114, 101, 112, 101, 97, 116, 48,\n                                        ]))) {\n                                    {\n                                        let atom = self::read_required_number_fact(inner, repeat);\n                                        if ((atom >= 0f64) && (atom < count))\n                                            && ((self::read_required_text_fact(kinds, atom))\n                                                == (self::ml_string::Text::from_units(vec![\n                                                    97, 110, 121,\n                                                ])))\n                                        {\n                                            {\n                                                let owner = 0f64;\n                                                {\n                                                    self::ml_read_grammar_lexer_lazy_normalization_loop54(kinds, texts, edge_sources, edge_targets, count, index, delimiter, owner)\n                                                }\n                                            }\n                                        } else {\n                                            delimiter\n                                        }\n                                    }\n                                } else {\n                                    delimiter\n                                };\n                                {\n                                    {\n                                        let (ml_append_right, ml_append_left) =\n                                            (vec![index, delimiter_3], captures);\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    }\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    captures\n                };\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        (captures, index) = (captures_3, index_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { captures };\n    }\n}"
+  }
+];
+const PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES=[...new Set(PARSER_TOKEN_EXCLUSION_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B59 parser token exclusion source names for "+source,files:[source],extract:text=>PARSER_TOKEN_EXCLUSION_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>PARSER_TOKEN_EXCLUSION_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_BINDINGS=[
+  {
+    "id": "repository.read-generated-local-ownership-binding-types",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "readBindingTypes",
+    "inventoryName": "read-binding-types",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/portable-owned-source-style.mjs",
+    "sourceText": "function readBindingTypes(fn, flow, declarations, expressionMethods = false) {\n  const {block, tokens, matching, parameterOpen, parameterClose, body, end} = fn;\n  const bindings = new Map(), counts = new Map(), initializers = [], patterns = [];\n  const definitions = new Map(), declarationTokens = new Set(), writeTokens = new Set();\n  const refused = () => ({bindings: new Map(), definitions: new Map(), declarationTokens: new Set(), writeTokens: new Set()});\n  const add = (name, type, position) => {\n    counts.set(name, (counts.get(name) ?? 0) + 1);\n    if (type) bindings.set(name, type);\n    if (position !== undefined) declarationTokens.add(position);\n  };\n  const define = (position, name) => {\n    if (!definitions.has(position)) definitions.set(position, new Set());\n    definitions.get(position).add(name);\n  };\n  const text = (from, to) => from < to ? block.slice(tokens[from].start, tokens[to - 1].end) : '';\n  for (const [from, to] of splitTypes(tokens, matching, parameterOpen + 1, parameterClose)) {\n    const at = tokens[from]?.value === 'mut' ? from + 1 : from;\n    if (tokens[at]?.kind !== 'identifier' || tokens[at + 1]?.value !== ':') return refused();\n    add(tokens[at].value, normalizeType(text(at + 2, to)));\n  }\n  for (let at = body + 1; at < end; at += 1) {\n    if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'let') continue;\n    let name = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;\n    if (tokens[name]?.value === '(') {\n      const close = matching.get(name);\n      for (const [from, to] of splitTypes(tokens, matching, name + 1, close)) {\n        if (to !== from + 1 || tokens[from].kind !== 'identifier') return refused();\n        add(tokens[from].value, undefined, from);\n      }\n      continue;\n    }\n    if (tokens[name]?.kind !== 'identifier') return refused();\n    let equal = name + 1, type;\n    if (tokens[equal]?.value === ':') {\n      equal += 1;\n      while (equal < end && !['=', ';'].includes(tokens[equal].value)) equal += 1;\n      type = normalizeType(text(name + 2, equal));\n    }\n    add(tokens[name].value, type, name);\n    if (tokens[equal]?.value !== '=') continue;\n    let finish = equal + 1;\n    while (finish < end && tokens[finish].value !== ';') finish = matching.get(finish) > finish ? matching.get(finish) + 1 : finish + 1;\n    initializers.push({name: tokens[name].value, from: equal + 1, to: finish});\n    if (finish < end) define(finish, tokens[name].value);\n  }\n  for (const pattern of flow.patterns) {\n    const {from, to} = pattern;\n    let open = from;\n    while (open < to && tokens[open].value !== '(') open += 1;\n    if (open === to) {\n      const pattern = normalizeType(text(from, to));\n      if (pattern !== '_' && declarations.variants.get(pattern)?.length !== 0) return refused();\n      continue;\n    }\n    const path = normalizeType(text(from, open)), types = declarations.variants.get(path);\n    if (!types || matching.get(open) !== to - 1) return refused();\n    const slots = [];\n    const fields = splitTypes(tokens, matching, open + 1, to - 1);\n    if (fields.length !== types.length) return refused();\n    for (const [[start, finish], index] of fields.map((part, index) => [part, index])) {\n      if (finish !== start + 1 || tokens[start].kind !== 'identifier') return refused();\n      if (tokens[start].value !== '_') {\n        add(tokens[start].value, undefined, start); define(start, tokens[start].value);\n        slots.push({name: tokens[start].value, type: types[index]});\n      }\n    }\n    patterns.push({...pattern, path, slots, verified: false});\n  }\n  const divergent = Symbol('a branch cannot finish its initializer');\n  const commonType = types => {\n    const returning = types.filter(type => type !== divergent);\n    if (!returning.length) return divergent;\n    return returning[0] && returning.every(type => type === returning[0]) ? returning[0] : undefined;\n  };\n  const infer = (from, to) => {\n    while (tokens[from]?.value === '(' && matching.get(from) === to - 1) { from += 1; to -= 1; }\n    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'return') return divergent;\n    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'continue'\n      && (to === from + 1 || to === from + 2 && tokens[from + 1].value === ';')) return divergent;\n    if (tokens[from]?.value === '{' && matching.get(from) === to - 1) {\n      let tail = from + 1;\n      for (let at = tail; at < to - 1; at += 1) {\n        // Only an actual statement start can prove this block cannot finish.\n        // A return hidden in a short-circuit operand supplies no such proof.\n        if (at === tail && tokens[at].kind === 'identifier' && tokens[at].value === 'return') return divergent;\n        if (at === tail && tokens[at].kind === 'identifier' && tokens[at].value === 'continue'\n          && (at + 1 === to - 1 || tokens[at + 1]?.value === ';')) return divergent;\n        if (matching.get(at) > at) at = matching.get(at);\n        else if (tokens[at].value === ';') tail = at + 1;\n      }\n      return infer(tail, to - 1);\n    }\n    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'if') {\n      const node = flow.readIf(from, to);\n      if (node.next !== to || !node.alternate) return undefined;\n      const first = infer(node.open, node.close + 1);\n      const second = infer(node.alternate.start, node.alternate.next ?? node.alternate.end + 1);\n      return commonType([first, second]);\n    }\n    if (tokens[from]?.kind === 'identifier' && tokens[from].value === 'match') {\n      const node = flow.matches.get(from);\n      if (!node || node.next !== to) return undefined;\n      return commonType(node.arms.map(arm => infer(arm.from, arm.to)));\n    }\n    const expression = normalizeType(text(from, to));\n    if (to === from + 1 && counts.get(tokens[from]?.value) === 1) return bindings.get(tokens[from].value);\n    if (tokens[from]?.kind === 'macro' && tokens[from].value === 'format' && matching.get(from + 1) === to - 1) return 'String';\n    if (/^String::(?:from|new)\\(/u.test(expression) && matching.get(from + 3) === to - 1) return 'String';\n    const vector = /^Vec::<(.+)>::new\\(\\)$/u.exec(expression);\n    if (vector && ownedType('Vec<' + vector[1] + '>', Boolean(declarations.textMethods))) return 'Vec<' + vector[1] + '>';\n    if (declarations.textMethods && /^(?:self::|crate::)?ml_string::Text::from_(?:text|units)\\(/u.test(expression)) {\n      let open = from;\n      while (open < to && tokens[open].value !== '(') open += 1;\n      if (matching.get(open) === to - 1) return 'self::ml_string::Text';\n    }\n    const copied = /^([A-Za-z_][A-Za-z_0-9]*)\\.(clone|to_owned|to_vec)\\(\\)$/u.exec(expression);\n    if (copied && counts.get(copied[1]) === 1) {\n      const type = bindings.get(copied[1]);\n      if (copied[2] === 'clone' && ownedType(type, Boolean(declarations.textMethods))) return type;\n      if (copied[2] === 'clone' && type === '&String') return 'String';\n      if (copied[2] === 'clone' && declarations.textMethods && type?.startsWith('&') && textType(type.slice(1))) return type.slice(1);\n      if (copied[2] === 'to_owned' && ['String', '&str', '&String'].includes(type)) return 'String';\n      if (copied[2] === 'to_vec' && type?.startsWith('&[') && type.endsWith(']')) return 'Vec<' + type.slice(2, -1) + '>';\n    }\n    const method = /^([A-Za-z_][A-Za-z_0-9]*)\\.([A-Za-z_][A-Za-z_0-9]*)\\(/u.exec(expression);\n    if (method && counts.get(method[1]) === 1 && declarations.textMethods && matching.get(from + 3) === to - 1) {\n      const type = bindings.get(method[1]);\n      if (textType(type) || type?.startsWith('&') && textType(type.slice(1))) return declarations.textMethods.get(method[2]);\n    }\n    if (expressionMethods && declarations.textMethods) {\n      for (let at = from; at + 3 < to; at += 1) {\n        if (matching.get(at) > at) { at = matching.get(at); continue; }\n        if (tokens[at].value !== '.' || tokens[at + 1]?.kind !== 'identifier'\n          || tokens[at + 2]?.value !== '(' || matching.get(at + 2) !== to - 1) continue;\n        const receiver = infer(from, at);\n        // The complete authenticated provider fixes the method's return type,\n        // including a temporary Text receiver inside a conditional branch.\n        if (textType(receiver) || receiver?.startsWith('&') && textType(receiver.slice(1))) {\n          return declarations.textMethods.get(tokens[at + 1].value);\n        }\n      }\n    }\n    const call = /^(?:self|crate)::([A-Za-z_][A-Za-z_0-9]*)\\(/u.exec(expression);\n    if (call && matching.get(from + 3) === to - 1) return declarations.returns.get(call[1]);\n    let open = from;\n    while (open < to && tokens[open].value !== '(') open += 1;\n    const constructor = normalizeType(text(from, open));\n    const fields = declarations.variants.get(constructor);\n    if (fields && (open === to && fields.length === 0 || matching.get(open) === to - 1)) {\n      return constructor.slice(0, constructor.lastIndexOf('::'));\n    }\n    return undefined;\n  };\n  for (let pass = 0; pass <= initializers.length + patterns.length; pass += 1) {\n    let changed = false;\n    for (const initializer of initializers) if (counts.get(initializer.name) === 1 && !bindings.has(initializer.name)) {\n      const type = infer(initializer.from, initializer.to);\n      if (typeof type === 'string' && type) { bindings.set(initializer.name, type); changed = true; }\n    }\n    for (const pattern of patterns) if (!pattern.verified) {\n      const actual = infer(pattern.owner + 1, pattern.open);\n      const expected = pattern.path.slice(0, pattern.path.lastIndexOf('::')).replace(/^(?:self|crate)::/u, '');\n      if (actual !== 'self::' + expected && actual !== 'crate::' + expected) continue;\n      pattern.verified = true; changed = true;\n      for (const slot of pattern.slots) if (counts.get(slot.name) === 1 && slot.type) bindings.set(slot.name, slot.type);\n    }\n    if (!changed) break;\n  }\n  if (patterns.some(pattern => !pattern.verified)) return refused();\n  for (const [name, type] of bindings) if (counts.get(name) !== 1 || !ownedType(type, Boolean(declarations.textMethods))) bindings.delete(name);\n  const startsStatement = start => {\n    for (let at = start; at > body;) {\n      if (['{', ';'].includes(tokens[at - 1]?.value)) return true;\n      const previous = flow.controlEnds.get(at);\n      if (previous === undefined || previous >= at) return false;\n      at = previous;\n    }\n    return false;\n  };\n  for (let equal = body + 1; equal < end; equal += 1) {\n    if (tokens[equal].kind !== 'punct' || tokens[equal].value !== '=') continue;\n    let start = equal - 1, targets;\n    if (tokens[start]?.kind === 'identifier') targets = [start];\n    else if (tokens[start]?.value === ')' && matching.get(start) < start) {\n      const close = start; start = matching.get(start);\n      const fields = splitTypes(tokens, matching, start + 1, close);\n      if (!fields.length || fields.some(([from, to]) => to !== from + 1 || tokens[from].kind !== 'identifier')) continue;\n      targets = fields.map(([from]) => from);\n    } else continue;\n    // Only complete bare-place statements have side-effect-free left sides.\n    // Fields, dereferences, indexing, declarations and compound stores retain\n    // their original reads and cannot provide an ownership kill.\n    if (!startsStatement(start)\n      || new Set(targets.map(at => tokens[at].value)).size !== targets.length\n      || targets.some(at => counts.get(tokens[at].value) !== 1)) continue;\n    let finish = equal + 1;\n    while (finish < end && tokens[finish].value !== ';') {\n      if (matching.get(finish) > finish) finish = matching.get(finish) + 1;\n      else if ([')', ']', '}'].includes(tokens[finish].value)) break;\n      else finish += 1;\n    }\n    if (tokens[finish]?.value !== ';') continue;\n    for (const at of targets) if (bindings.has(tokens[at].value)) {\n      writeTokens.add(at);\n      // Every RHS operand, including all tuple elements, is evaluated before\n      // any old target value dies. A continue or return bypasses this node.\n      define(finish, tokens[at].value);\n    }\n  }\n  for (const names of definitions.values()) for (const name of names) if (!bindings.has(name)) names.delete(name);\n  return {bindings, definitions, declarationTokens, writeTokens};\n}"
+  },
+  {
+    "id": "repository.accept-generated-binding-context-without-competing-loans",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "acceptUnborrowedBinding",
+    "inventoryName": "accept-without-borrow-binding",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/portable-owned-source-style.mjs",
+    "sourceText": "function acceptUnborrowedBinding(fn, name, type, declarations, before) {\n  const {tokens, matching, body, end} = fn;\n  for (let at = body + 1; at < end; at += 1) {\n    if (tokens[at].kind === 'punct' && tokens[at].value === '&') {\n      let finish = at + 1;\n      while (finish < end && ![';', ',', ')', ']', '}'].includes(tokens[finish].value)) {\n        finish = matching.get(finish) > finish ? matching.get(finish) + 1 : finish + 1;\n      }\n      if (tokens.slice(at + 1, finish).some(token => token.kind === 'identifier' && token.value === name)\n        && !(before !== undefined && acceptCompletedPortableCallBorrow(fn, at, before, name, type, declarations))) return false;\n    }\n    if (tokens[at].kind === 'identifier' && tokens[at].value === name && tokens[at + 1]?.value === '.') {\n      const method = tokens[at + 2]?.value;\n      if (!['clone', 'len', 'is_empty', 'contains', 'starts_with', 'ends_with'].includes(method)\n        && !(textType(type) && declarations.textMethods?.has(method))) return false;\n    }\n  }\n  return true;\n}"
+  },
+  {
+    "id": "repository.read-recorded-final-source-ownership-corrections",
+    "source": "js/scripts/portable-owned-source-style.mjs",
+    "name": "readPortableOwnedSourceStyles",
+    "inventoryName": "read-portable-owned-source-styles",
+    "inventory": "B50 reviewed library and source oracle contracts for js/scripts/portable-owned-source-style.mjs",
+    "sourceText": "export function readPortableOwnedSourceStyles(source, {scopedCallBorrows = false, functionNames = []} = {}) {\n  const declarations = readDeclarations(source), actions = [];\n  const scopedFunctions = new Set(scopedCallBorrows ? functionNames : []);\n  let adapted = source;\n  for (const fn of declarations.functions) {\n    const implicitReads = new Map();\n    if (!acceptFunction(fn, implicitReads) || declarations.returns.get(fn.name) === undefined || source.split(fn.block).length !== 2) continue;\n    let flow;\n    try { flow = readFlow(fn); } catch (error) {\n      if (error.message === 'unsupported owned source flow') continue;\n      throw error;\n    }\n    const {bindings, definitions, declarationTokens, writeTokens} = readBindingTypes(fn, flow, declarations,\n      scopedFunctions.has(fn.name)), edits = [], safe = new Map();\n    const {tokens, comments} = fn;\n    for (let at = fn.body + 1; at + 4 < fn.end; at += 1) {\n      const token = tokens[at];\n      if (token.kind !== 'identifier' || !bindings.has(token.value)\n        || ['.', '::'].includes(tokens[at - 1]?.value)\n        || tokens[at + 1]?.value !== '.' || tokens[at + 2]?.value !== 'clone'\n        || tokens[at + 3]?.value !== '(' || tokens[at + 4]?.value !== ')') continue;\n      // A scoped permission is per clone: its borrow's whole call must finish\n      // before this transfer, including every later argument evaluation.\n      const key = scopedFunctions.has(fn.name) ? at : token.value;\n      if (!safe.has(key)) safe.set(key, acceptUnborrowedBinding(fn, token.value, bindings.get(token.value), declarations,\n        scopedFunctions.has(fn.name) ? at : undefined));\n      if (!safe.get(key) || !flow.edges.has(at + 4)\n        || comments.some(comment => comment.start >= tokens[at + 1].start && comment.end <= tokens[at + 4].end)) continue;\n      const pending = [...flow.edges.get(at + 4)], seen = new Set();\n      let live = false;\n      while (pending.length && !live) {\n        const next = pending.pop();\n        if (seen.has(next)) continue;\n        seen.add(next);\n        if (definitions.get(next)?.has(token.value)) continue;\n        if (implicitReads.get(next)?.has(token.value) || !declarationTokens.has(next) && !writeTokens.has(next)\n          && tokens[next].kind === 'identifier' && tokens[next].value === token.value) live = true;\n        else pending.push(...(flow.edges.get(next) ?? []));\n      }\n      if (!live) edits.push([tokens[at + 1].start, tokens[at + 4].end]);\n    }\n    let styled = fn.block;\n    for (const [start, end] of edits.reverse()) styled = styled.slice(0, start) + styled.slice(end);\n    if (styled !== fn.block) {\n      actions.push({op: 'replace', field: 'source', from: fn.block, to: styled});\n      adapted = adapted.split(fn.block).join(styled);\n    }\n  }\n  return {source: adapted, actions};\n}"
+  },
+  {
+    "id": "repository.replay-owned-source-test-actions",
+    "source": "js/tests/translation-portable-owned-source-style.test.js",
+    "name": "review",
+    "inventoryName": "review",
+    "inventory": "B50 reviewed library and source oracle contracts for js/tests/translation-portable-owned-source-style.test.js",
+    "sourceText": "function review(source, options) {\n  const result = readPortableOwnedSourceStyles(source, options);\n  const styles = new DecoratorSet(result.actions.length ? [{id: 'owned-source-control', level: 'emitter', order: 0,\n    when: [['format', 'Rust']], actions: result.actions}] : []);\n  assert.equal(styles.decorate('emitter', {format: 'Rust', source}).source, result.source);\n  assert.deepEqual(readPortableOwnedSourceStyles(result.source, options), {source: result.source, actions: []});\n  return result.source;\n}"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop53",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser lazy normalization loop twenty eight",
+    "sourceText": "pub fn ml_read_grammar_lexer_lazy_normalization_loop53(\n    kinds: &[self::ml_string::Text],\n    labels: &[self::ml_string::Text],\n    texts: &[self::ml_string::Text],\n    inner: &[f64],\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut count: f64,\n    mut captures: Vec<f64>,\n    mut index: f64,\n) -> Vec<f64> {\n    loop {\n        if index < count {\n            {\n                let captures_3 = if ((self::read_required_text_fact(kinds, index))\n                    == (self::ml_string::Text::from_units(vec![99, 97, 112, 116, 117, 114, 101])))\n                    && ((self::read_required_text_fact(labels, index))\n                        == (self::ml_string::Text::from_units(vec![\n                            110, 111, 110, 95, 103, 114, 101, 101, 100, 121,\n                        ]))) {\n                    {\n                        let delimiter = -1f64;\n                        {\n                            let repeat = self::read_required_number_fact(inner, index);\n                            {\n                                let delimiter_3 = if ((repeat >= 0f64) && (repeat < count))\n                                    && ((self::read_required_text_fact(kinds, repeat))\n                                        == (self::ml_string::Text::from_units(vec![\n                                            114, 101, 112, 101, 97, 116, 48,\n                                        ]))) {\n                                    {\n                                        let atom = self::read_required_number_fact(inner, repeat);\n                                        if ((atom >= 0f64) && (atom < count))\n                                            && ((self::read_required_text_fact(kinds, atom))\n                                                == (self::ml_string::Text::from_units(vec![\n                                                    97, 110, 121,\n                                                ])))\n                                        {\n                                            {\n                                                let owner = 0f64;\n                                                {\n                                                    self::ml_read_grammar_lexer_lazy_normalization_loop54(kinds, texts, edge_sources, edge_targets, count, index, delimiter, owner)\n                                                }\n                                            }\n                                        } else {\n                                            delimiter\n                                        }\n                                    }\n                                } else {\n                                    delimiter\n                                };\n                                {\n                                    {\n                                        let (ml_append_right, ml_append_left) =\n                                            (vec![index, delimiter_3], captures);\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    }\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    captures\n                };\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        (captures, index) = (captures_3, index_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { captures };\n    }\n}",
+    "inventory": "B45 exact source controls for rust/src/translation/grammar_lexer_rules/part_5.rs"
+  },
+  {
+    "id": "translation.execute-grammar-lexical-analyser-native-meta-language-read-grammar-lexical-analyser-lazy-normalization-loop-twenty-eight",
+    "source": "rust/src/translation/grammar_lexer_rules/part_5.rs",
+    "name": "ml_read_grammar_lexer_lazy_normalization_loop53",
+    "inventoryName": "execute grammar lexical analyser native meta language read grammar lexical analyser lazy normalization loop twenty eight",
+    "sourceText": "pub fn ml_read_grammar_lexer_lazy_normalization_loop53(\n    kinds: &[self::ml_string::Text],\n    labels: &[self::ml_string::Text],\n    texts: &[self::ml_string::Text],\n    inner: &[f64],\n    edge_sources: &[f64],\n    edge_targets: &[f64],\n    mut count: f64,\n    mut captures: Vec<f64>,\n    mut index: f64,\n) -> Vec<f64> {\n    loop {\n        if index < count {\n            {\n                let captures_3 = if ((self::read_required_text_fact(kinds, index))\n                    == (self::ml_string::Text::from_units(vec![99, 97, 112, 116, 117, 114, 101])))\n                    && ((self::read_required_text_fact(labels, index))\n                        == (self::ml_string::Text::from_units(vec![\n                            110, 111, 110, 95, 103, 114, 101, 101, 100, 121,\n                        ]))) {\n                    {\n                        let delimiter = -1f64;\n                        {\n                            let repeat = self::read_required_number_fact(inner, index);\n                            {\n                                let delimiter_3 = if ((repeat >= 0f64) && (repeat < count))\n                                    && ((self::read_required_text_fact(kinds, repeat))\n                                        == (self::ml_string::Text::from_units(vec![\n                                            114, 101, 112, 101, 97, 116, 48,\n                                        ]))) {\n                                    {\n                                        let atom = self::read_required_number_fact(inner, repeat);\n                                        if ((atom >= 0f64) && (atom < count))\n                                            && ((self::read_required_text_fact(kinds, atom))\n                                                == (self::ml_string::Text::from_units(vec![\n                                                    97, 110, 121,\n                                                ])))\n                                        {\n                                            {\n                                                let owner = 0f64;\n                                                {\n                                                    self::ml_read_grammar_lexer_lazy_normalization_loop54(kinds, texts, edge_sources, edge_targets, count, index, delimiter, owner)\n                                                }\n                                            }\n                                        } else {\n                                            delimiter\n                                        }\n                                    }\n                                } else {\n                                    delimiter\n                                };\n                                {\n                                    {\n                                        let (ml_append_right, ml_append_left) =\n                                            (vec![index, delimiter_3], captures);\n                                        self::ml_array::append(ml_append_left, ml_append_right)\n                                    }\n                                }\n                            }\n                        }\n                    }\n                } else {\n                    captures\n                };\n                {\n                    let index_2 = index + 1f64;\n                    {\n                        (captures, index) = (captures_3, index_2);\n                        continue;\n                    }\n                }\n            }\n        }\n        return { captures };\n    }\n}",
+    "inventory": "B46 checked source controls for rust/src/translation/grammar_lexer_rules/part_5.rs"
+  }
+];
+const PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES=PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_BINDINGS.map(row=>({inventory:row.inventory,files:[row.source],extract:text=>text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))?[row.inventoryName]:[],recordOf:()=>row.id}));
+// END B59 parser token exclusion source names.
+// BEGIN B59 current covering grammar replay witness.
+const PARSER_TOKEN_COVERING_CURRENT_WITNESS={
+  "id": "repository.check-covering-grammar-lexical-source-free-replay",
+  "source": "js/tests/grammar-antlr.test.js",
+  "name": "covering ANTLR Links round trip retains every ordered lexer clause without its source",
+  "inventoryName": "check covering grammar lexical source free replay",
+  "sourceText": "test('covering ANTLR Links round trip retains every ordered lexer clause without its source', () => {\n  const grammar = importAntlr(fixture('covering.g4'));\n  const links = renderGrammarLinks(grammar);\n  const restored = parseGrammarLinks(links);\n  assert.deepEqual(JSON.parse(serializeGrammar(restored)), JSON.parse(serializeGrammar(grammar)));\n  assert.deepEqual(restored.ruleNames(), grammar.ruleNames());\n  assert.deepEqual(restored.declarations.lexers, grammar.declarations.lexers);\n  assert.equal(restored.declarations.lexers.length, 1);\n  assert.equal(restored.declarations.lexers[0].name, 'Covering');\n  assert.deepEqual(restored.declarations.lexers[0].expression.items.map(({kind}) => kind), [\n    'lexicalType', 'lexicalType', 'lexicalMode',\n    'lexicalOwner', 'lexicalOwner', 'lexicalOwner', 'lexicalObligation',\n    'lexicalLiteral', 'lexicalRule',\n    'lexicalRule', 'lexicalFragment', 'lexicalRule',\n    'lexicalObligation', 'lexicalObligation', 'lexicalRule',\n    'lexicalBinding', 'lexicalBinding', 'lexicalBinding', 'lexicalBinding',\n  ]);\n  assert.equal(renderGrammarLinks(restored), links);\n  assert.equal(renderGrammarLinks(parseGrammarLinks(renderGrammarLinks(restored))), links);\n})"
+};
+const PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES=[{inventory:"B57 portable string code unit and reviewed repair names for js/tests/grammar-antlr.test.js",files:["js/tests/grammar-antlr.test.js"],extract:text=>text.includes(PARSER_TOKEN_COVERING_CURRENT_WITNESS.sourceText)?[PARSER_TOKEN_COVERING_CURRENT_WITNESS.inventoryName]:[],recordOf:()=>PARSER_TOKEN_COVERING_CURRENT_WITNESS.id}];
+// END B59 current covering grammar replay witness.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
