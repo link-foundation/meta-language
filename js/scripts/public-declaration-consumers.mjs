@@ -970,5 +970,29 @@ export function createInvalidParser(archive:string) {
 }
 `,
     })),
+    {
+      name: 'valid-mapped-grammar-source-planes', expectedDiagnostics: [],
+      source: `import {parseGrammarLinks,percentEncodeLinksText,compileGrammar,
+  checkGrammarSelectionMappedTree,type GrammarSourcePlane,type GrammarSourceMapping,
+  type GrammarMappedTreeBundle} from ${module};
+const raw = JSON.stringify('π');
+const child = parseGrammarLinks('(grammar (start decoded))\\n(rule decoded normal (literal '
+  + percentEncodeLinksText('π') + '))\\n');
+const host = parseGrammarLinks('(grammar (start document))\\n(rule document normal (any-grammar (literal '
+  + percentEncodeLinksText(raw) + ') (grammar-candidate Child json-string)))\\n');
+const parser = compileGrammar(host,{resolveGrammar:name=>name==='Child'?child:undefined});
+const outcome = parser.parseTree(raw);
+if(!outcome.ok || !outcome.tree || !outcome.sourcePlanes) throw new Error('mapped result is absent');
+const unknownBundle:unknown = {tree:outcome.tree,sourcePlanes:outcome.sourcePlanes};
+const checked:GrammarMappedTreeBundle = checkGrammarSelectionMappedTree(unknownBundle);
+const sources:GrammarSourcePlane[] = checked.sourcePlanes;
+if(checked.tree.type!=='node' || checked.tree.children[0]?.type!=='embed') throw new Error('embed is absent');
+const embedded = checked.tree.children[0];
+const mapping:GrammarSourceMapping|undefined = embedded.selection?.sourceMapping;
+if(!mapping || !embedded.sourceChildren) throw new Error('mapped source roles are absent');
+export const contractEvidence = {sourceCount:sources.length,physicalChildren:embedded.sourceChildren.length,
+  input:mapping.input,output:mapping.output,firstInterval:mapping.intervals[0],rootEncoding:sources[0].encoding};
+`,
+    },
   ];
 }

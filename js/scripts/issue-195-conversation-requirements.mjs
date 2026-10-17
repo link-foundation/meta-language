@@ -1,3 +1,5 @@
+import { grammarSelectionMappingObservationSections } from '../tests/support/grammar-selection-mapping-cases.js';
+
 // Critical conversation obligations. Captures are requirements, not behavioral
 // fixtures or successful execution evidence. Missing implementations stay null.
 const capture = (name) => `parity/sources/${name}-2026-10-12.txt`;
@@ -121,6 +123,15 @@ const sourceToolingVerificationCells = {
     }],
     assertions: ['abstractSyntaxRequiresExplicitSelection', 'concreteSyntaxRemainsDefault', 'abstractProjectionRetainsConcreteProvenance'],
   }],
+  // Supplemental finite profile cells; every original full-scope cell remains.
+  ...Object.fromEntries(Object.entries(grammarSelectionMappingObservationSections()).map(([section, cell]) =>
+    [cell.requirementId, ['javascript', 'rust'].map(runtime => ({
+      runtime, suffix: cell.suffix,
+      fixtures: [{ id: cell.fixtureIds[runtime], path: 'parity/fixtures/grammar-selection-json-string.lino',
+        selector: `Only the ${section} section of the Unicode-scalar json-string profile and this runtime's original source-qualified test cases: the listed JSON/Python inputs, independent concrete rows, exact byte intervals, two mapped derivations and recorded refusals. Excludes arbitrary mappings, full language coverage and global concept equivalence.`,
+      }], assertions: cell.assertions,
+    }))])),
+
 };
 
 // Entry points identify executable implementations. Their presence is not an

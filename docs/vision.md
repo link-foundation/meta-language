@@ -1426,6 +1426,23 @@ the same hierarchy. Non-consuming cycles and resource limits report diagnostics
 instead of silently truncating embedded trees. Existing Markdown and HTML
 region discovery alone does not establish this generic recursive behavior.
 
+The bounded `json-string` selection profile maps one complete quoted JSON
+string to Unicode scalar text. It retains the full physical host CST and the
+full accepted child and alternative CSTs on their decoded source plane. A
+mapped `parseTree` result carries one ordered `sourcePlanes` table; zero-based
+local references identify actual derivations, independently of Links graph
+identifiers or equal source text. Mapping intervals retain quote ownership,
+escapes and covering physical spellings for decoded diagnostics. The existing
+shared parse budgets and cycle checks apply across these planes. Identity-only
+results keep their existing shape, while tree-only `parse` refuses mapped
+success rather than discard its table. After generic Links decode, the mapped
+CST checker rederives the actual bytes and validates source references, ordered
+intervals and physical coverage. It does not prove language-grammar membership;
+that requires the real grammar parse. Lone-surrogate decoded text and unknown
+profiles refuse explicitly. Failed child parses may retain attempted source
+derivations, but a result without a complete physical root cannot establish
+mapped-CST ownership.
+
 The default CST adapter follows supported discovered child regions through a
 FIFO queue, retaining direct-region order, actual parent Region links and
 once-composed absolute UTF-8 spans. `ParseConfiguration` bounds child depth,
@@ -2286,6 +2303,21 @@ consumers, verifies the candidate checksum and installed crate path, and runs
 every workload and probe. Consumers, reports and probe outputs never enter this
 cache. Build products are saved before task-owned cleanup; inherited Cargo target
 variables do not expand that cleanup's scope. Warm-run timings remain CI evidence.
+
+One logical Formal AI run uses two execution runners and a source-only canonical
+merger. The corpus ratchet and remaining native workloads form disjoint exact
+assignments from actual target-qualified `--list` inventories under all original
+filters, including ignored tests. Both runners retain fresh consumers, run the
+full JavaScript consumer before native work, execute both probes and preserve
+the original resource limits. Both may restore the build cache above; only the
+remaining-workload runner saves it. Partial linked reports bind the same commit,
+run and attempt under distinct producer artifacts. The merger checks actual listed
+and executed identities, compiler/platform/profile and final dependency-lock
+equality, and candidate/source/input/output/probe/census evidence before applying
+the unchanged full-report validators. Repeated JavaScript and probe executions
+count once in the original full report. Missing, duplicate, foreign, tampered or
+failed parts provide no complete evidence. The canonical job, report, artifact
+and downstream barriers retain their identities, with full diagnostics retained.
 
 Native tests belong under `rust/tests/`. Private output-comparison tests use an
 isolated fixture extracted automatically from the actual owned Rust concrete

@@ -4,6 +4,10 @@ import { acceptGrammarSelectionCount, acceptGrammarSelectionMapping,
   acceptGrammarSelectionMode, reportGrammarSelectionAmbiguity,
   readGrammarSourceDefaultMatching } from '../translation/grammar-selection-rules.js';
 import { DEFAULT_SETTLING } from '../grammar-feature-forms.js';
+import { readGrammarSelectionMappingContext } from '../translation/grammar-selection-mapping-rules.js';
+import { mapGrammarSelectionSource, projectGrammarSelectionSpan,
+  projectGrammarSelectionDiagnostic, rememberGrammarSelectionMappingFailure } from './selection-source-mapping.js';
+import { KeywordLexing } from './executor.js';
 
 /** Validate the inspectable candidates without resolving unknown grammars. */
 export function checkGrammarSelection(expression, fail) {
@@ -18,31 +22,49 @@ export function checkGrammarSelection(expression, fail) {
 }
 
 function reportSelectionDiagnostic(executor, diagnostic) {
+  diagnostic = projectGrammarSelectionDiagnostic(executor, diagnostic);
   const diagnostics = executor.budget.memory.selectionDiagnostics ??= [];
-  if (!diagnostics.some(item => item.reason === diagnostic.reason && item.language === diagnostic.language && item.start === diagnostic.start && item.end === diagnostic.end)) {
+  if (!diagnostics.some(item => item.reason === diagnostic.reason && item.language === diagnostic.language && item.start === diagnostic.start && item.end === diagnostic.end && item.source === diagnostic.source)) {
     executor.retain(1);
     diagnostics.push(diagnostic);
   }
 }
 
 /** Run an existing program with shared budgets and a same-region cycle guard. */
-export function runEmbeddedGrammar(executor, program, start, end, language, Executor) {
+export function runEmbeddedGrammar(executor, program, start, end, language, Executor, bytes = executor.bytes) {
   const active = executor.budget.activeEmbeddedGrammars ??= new Map();
-  const ranges = active.get(program) ?? new Set();
+  const sources = active.get(program) ?? new Map();
+  const ranges = sources.get(bytes) ?? new Set();
   const range = `${start}|${end}`;
   if (ranges.has(range)) {
     reportSelectionDiagnostic(executor, { reason: 'nonConsumingEmbeddingCycle', language, start, end });
     return null;
   }
-  active.set(program, ranges);
+  active.set(program, sources);
+  sources.set(bytes, ranges);
   ranges.add(range);
   try {
-    const nested = new Executor(program, executor.bytes, start, end, executor.options, executor.budget, executor.maxDepth - executor.depth);
-    nested.expectations = executor.expectations;
-    return nested.run(program.start);
+    let expectations = null;
+    const keywords = bytes !== executor.bytes && program.tokenRanks && program.settling?.tokens !== false
+      ? new KeywordLexing({ ...program.tokenRanks, bytes }, program) : null;
+    for (;;) {
+      const nested = new Executor(program, bytes, start, end, executor.options, executor.budget, executor.maxDepth - executor.depth);
+      if (bytes === executor.bytes) nested.expectations = executor.expectations;
+      else if (expectations) nested.expectations = expectations.restart();
+      else expectations = nested.expectations;
+      if (bytes !== executor.bytes) nested.keywords = keywords;
+      const outcome = nested.run(program.start);
+      // Separate sources cannot share scanner offset requests. Their own
+      // fixed point still uses the original parse's step/memory/depth budget.
+      if (bytes === executor.bytes) return outcome;
+      if (expectations.stale) continue;
+      if (keywords && outcome.ok && keywords.conflicts(outcome.root)) continue;
+      return outcome;
+    }
   } finally {
     ranges.delete(range);
-    if (ranges.size === 0) active.delete(program);
+    if (ranges.size === 0) sources.delete(bytes);
+    if (sources.size === 0) active.delete(program);
   }
 }
 
@@ -89,11 +111,27 @@ function readSelectionProvenance(executor, program, language, start, end) {
  */
 export function evaluateGrammarSelection(executor, expression, position, state, inToken, Executor) {
   const { end: start, leaves, state: afterTrivia } = executor.terminalStart(position, state, inToken);
-  const regions = executor.evaluate(expression.item, start, afterTrivia, true);
+  const context = readGrammarSelectionMappingContext(expression.items.map(candidate => candidate.mapping), inToken);
+  if (context === 2) {
+    reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
+      mapping: 'json-string', detail: 'mapped selection requires syntactic context and one common source mapping' });
+    return [];
+  }
+  const mapped = context === 1;
+  // Identity keeps its exact historic token-context behavior. The NEW mapping
+  // matches syntactically so sourceChildren are the actual host CST.
+  const regions = executor.evaluate(expression.item, start, afterTrivia, !mapped);
   const results = [];
   for (const region of regions) {
     const accepted = [];
     const candidates = [];
+    const derived = mapped ? mapGrammarSelectionSource(executor, start, region.end) : null;
+    if (derived?.reason) {
+      rememberGrammarSelectionMappingFailure(executor, { reason: derived.reason, start: derived.offset, end: derived.offset,
+        mapping: 'json-string' });
+      executor.fail(derived.offset, 'a Unicode scalar JSON string source');
+      continue;
+    }
     for (const candidate of expression.items) {
       executor.step();
       executor.retain(1);
@@ -111,10 +149,11 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
         candidates.push({ language: candidate.name, relation: 'unknown', reason });
         continue;
       }
-      const key = `selection|${candidate.name}|${start}|${region.end}`;
+      const key = JSON.stringify(['selection', candidate.mapping, candidate.name, start, region.end]);
       let outcome = executor.embedMemo.get(key);
       if (!outcome) {
-        outcome = runEmbeddedGrammar(executor, program, start, region.end, candidate.name, Executor);
+        outcome = derived ? runEmbeddedGrammar(executor, program, 0, derived.bytes.length, candidate.name, Executor, derived.bytes)
+          : runEmbeddedGrammar(executor, program, start, region.end, candidate.name, Executor);
         if (outcome) executor.embedMemo.set(key, outcome);
       }
       if (!outcome) {
@@ -122,8 +161,17 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
         continue;
       }
       if (!outcome.ok) {
-        candidates.push({ language: candidate.name, relation: 'rejected', offset: outcome.farthest, expected: [...outcome.expected] });
-        for (const expectation of outcome.expected) executor.fail(outcome.farthest, expectation);
+        const cover = derived ? projectGrammarSelectionSpan(derived.mapping, outcome.farthest, outcome.farthest) : null;
+        const offset = cover ? cover.displayAnchor : outcome.farthest;
+        candidates.push({ language: candidate.name, relation: 'rejected', offset, expected: [...outcome.expected],
+          ...(derived ? { source: derived.mapping.output, sourceOffset: outcome.farthest,
+            physicalRange: [cover.start, cover.end], offsetSemantics: 'covering-source-spelling' } : {}) });
+        if (derived) rememberGrammarSelectionMappingFailure(executor, { reason: 'mappedSyntax', language: candidate.name,
+          start: cover.start, end: cover.end, source: derived.mapping.output, sourceStart: outcome.farthest,
+          sourceEnd: outcome.farthest, expected: [...outcome.expected], offsetSemantics: 'covering-source-spelling',
+          sourceRoute: [{ output: derived.mapping.output, outputStart: outcome.farthest, outputEnd: outcome.farthest,
+            input: derived.mapping.input, inputStart: cover.start, inputEnd: cover.end, displayAnchor: offset }] });
+        for (const expectation of outcome.expected) executor.fail(offset, expectation);
         continue;
       }
       const provenance = readSelectionProvenance(executor, program, candidate.name, start, region.end);
@@ -132,24 +180,30 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
     }
     if (!acceptGrammarSelectionCount(expression.kind, accepted.length, expression.items.length)) continue;
     const primary = accepted[0];
-    const selection = { mode: expression.kind, mapping: 'identity', start, end: region.end,
+    const selection = { mode: expression.kind, mapping: mapped ? 'json-string' : 'identity', start, end: region.end,
       candidates, provenance: primary.provenance, alternatives: accepted.slice(1) };
+    if (derived) {
+      selection.sourceMapping = derived.mapping;
+      selection.sourceBytes = derived.bytes;
+    }
     const child = { type: 'embed', language: primary.language, start, end: region.end,
       root: primary.root, program: primary.program, selection };
+    if (derived) child.sourceChildren = region.children;
     const ambiguous = reportGrammarSelectionAmbiguity(expression.kind, accepted.length);
     child.selection.ambiguous = ambiguous;
     results.push({ end: region.end, state: region.state, children: inToken ? [] : [...leaves, child],
-      dynamic: region.dynamic, precedence: null, tail: null, ambiguous, cost: region.cost });
+      dynamic: region.dynamic, precedence: null, tail: null, ambiguous: ambiguous || (mapped && region.ambiguous), cost: region.cost });
   }
   return results;
 }
 
 /** Copy only public metadata; executable programs never enter a stored CST. */
 export function publicGrammarSelection(selection, bytes, copyTree) {
-  return { ...selection,
+  const { sourceBytes, ...metadata } = selection;
+  return { ...metadata,
     candidates: selection.candidates.map(item => ({ ...item, ...(item.expected ? { expected: [...item.expected] } : {}) })),
     provenance: { ...selection.provenance, rules: selection.provenance.rules.map(item => ({ ...item, sourceNames: item.sourceNames.map(alias => ({ ...alias })) })) },
-    alternatives: selection.alternatives.map(({ language, root, provenance }) => ({ language, root: copyTree(root, bytes), provenance })),
+    alternatives: selection.alternatives.map(({ language, root, provenance }) => ({ language, root: copyTree(root, sourceBytes ?? bytes), provenance })),
   };
 }
 

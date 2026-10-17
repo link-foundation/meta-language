@@ -42,7 +42,7 @@ export class StepLimitReached extends Error {}
 /** Thrown when a parse runs out of its memory budget (see `memoryBudget`). */
 export class MemoryBudgetReached extends Error {}
 
-const DEFAULT_MAX_DEPTH = 1000;
+export const DEFAULT_MAX_DEPTH = 1000;
 const DEFAULT_MEMO_LIMIT = 1_000_000;
 const DEFAULT_MEMORY_LIMIT = 2_000_000;
 const NO_CHILDREN = Object.freeze([]);

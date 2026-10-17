@@ -90,8 +90,20 @@ export function decorateSyntaxTree(tree, decorators) {
         return decorated === null ? [] : [{ ...node, kind: decorated.kind }];
       }
       case 'embed': {
-        const [root] = visit(node.root);
-        return [{ ...node, root }];
+        const roots = visit(node.root);
+        if (node.sourceChildren && roots.length !== 1) throw new DecoratorError('a mapped grammar keeps one complete decoded CST root');
+        const [root] = roots;
+        const copy = { ...node, root };
+        if (node.sourceChildren) {
+          copy.sourceChildren = node.sourceChildren.flatMap(visit);
+          copy.selection = { ...node.selection, alternatives: node.selection.alternatives.map(alternative => {
+            const alternativeRoots = visit(alternative.root);
+            if (alternativeRoots.length !== 1) throw new DecoratorError('a mapped grammar witness keeps one complete decoded CST root');
+            const [alternativeRoot] = alternativeRoots;
+            return { ...alternative, root: alternativeRoot };
+          }) };
+        }
+        return [copy];
       }
       default: return [node];
     }

@@ -1534,7 +1534,48 @@ export type SyntaxTreeNode =
     }
   | { type: 'error'; start: number; end: number; text: string | null; hex?: string; reason?: string }
   | { type: 'missing'; kind: string | null; start: number; end: number; literal?: true }
-  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode; selection?: GrammarSelection };
+  | { type: 'embed'; language: string; start: number; end: number; root: SyntaxTreeNode;
+      /** Full physical host children for an explicitly mapped selection. */
+      sourceChildren?: SyntaxTreeNode[]; selection?: GrammarSelection };
+
+/** An ordered once-owned source definition. identity equals its zero-based
+ * table position; these local references are not LinkNetwork identifiers.
+ */
+export interface GrammarSourcePlane {
+  kind: 'grammar-source';
+  identity: number;
+  encoding: 'UTF-8';
+  byteLength: number;
+  derivation: null | { operation: 'json-string'; input: number; start: number; end: number };
+}
+
+export interface GrammarSourceMapping {
+  kind: 'source-mapping';
+  operation: 'json-string';
+  input: number;
+  output: number;
+  /** Ordered [physicalStart, physicalEnd, decodedStart, decodedEnd] byte intervals. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+/** A covering source spelling, not an exact byte correspondence inside a scalar. */
+export interface GrammarSourceRoute {
+  output: number;
+  outputStart: number;
+  outputEnd: number;
+  input: number;
+  inputStart: number;
+  inputEnd: number;
+  displayAnchor: number;
+}
+
+/** Complete physical root plus the actual source definitions needed to resolve
+ * mapped child references. A failed result with tree:null is not this bundle.
+ */
+export interface GrammarMappedTreeBundle {
+  tree: SyntaxTreeNode;
+  sourcePlanes: GrammarSourcePlane[];
+}
 
 export interface GrammarSelectionProvenance {
   source: string;
@@ -1554,7 +1595,11 @@ export interface GrammarSelection {
   start: number;
   end: number;
   candidates: Array<{ language: string; relation: 'accepted' | 'rejected' | 'unknown';
-    reason?: string; mapping?: string; offset?: number; expected?: string[] }>;
+    reason?: string; mapping?: string; offset?: number; expected?: string[];
+    source?: number; sourceOffset?: number; physicalRange?: [number, number];
+    offsetSemantics?: 'covering-source-spelling' }>;
+  /** Present only when the explicit mapping owns a separately decoded source. */
+  sourceMapping?: GrammarSourceMapping;
   provenance: GrammarSelectionProvenance;
   alternatives: GrammarSelectionAlternative[];
   ambiguous: boolean;
@@ -1562,23 +1607,35 @@ export interface GrammarSelection {
 
 export interface GrammarRejection {
   reason: 'syntax' | 'stepLimit' | 'memoryBudget' | 'nestingDepth' | 'recovered' | 'ambiguity'
-    | 'unknownGrammar' | 'unsupportedEmbeddingMapping' | 'nonConsumingEmbeddingCycle' | 'unprovedGrammarOrigin';
+    | 'unknownGrammar' | 'unsupportedEmbeddingMapping' | 'invalidEmbeddingMapping'
+    | 'nonConsumingEmbeddingCycle' | 'unprovedGrammarOrigin';
   offset?: number;
   line?: number;
   column?: number;
   expected?: string[];
   limit?: number;
-  diagnostics?: Array<{ reason: string; language: string; start: number; end: number; mapping?: string; rule?: string }>;
+  offsetSemantics?: 'covering-source-spelling';
+  diagnostics?: Array<{ reason: string; language?: string; start: number; end: number;
+    mapping?: string; rule?: string; expected?: string[]; source?: number;
+    sourceStart?: number; sourceEnd?: number; sourceRoute?: GrammarSourceRoute[];
+    offsetSemantics?: 'covering-source-spelling' }>;
 }
 
 export interface GrammarParseOutcome {
   ok: boolean;
   tree: SyntaxTreeNode | null;
-  ambiguities: Array<{ rule: string; start: number; end: number; languages?: string[] }>;
+  ambiguities: Array<{ rule: string; start: number; end: number; languages?: string[];
+    source?: number; sourceStart?: number; sourceEnd?: number; sourceRoute?: GrammarSourceRoute[];
+    offsetSemantics?: 'covering-source-spelling' }>;
   rejection: GrammarRejection | null;
+  /** Present only after entering an explicit mapped-source profile. Rows may
+   * retain validated transforms attempted by a child grammar that rejected.
+   */
+  sourcePlanes?: GrammarSourcePlane[];
 }
 
 export interface GrammarParser {
+  /** A mapped success requires parseTree so its source-plane registry is retained. */
   parse(source: string | Uint8Array, options?: GrammarParserOptions): SyntaxTreeNode;
   parseTree(source: string | Uint8Array, options?: GrammarParserOptions): GrammarParseOutcome;
 }
@@ -1602,6 +1659,13 @@ export function createGrammarParser(
   options?: GrammarParserOptions,
 ): GrammarParser;
 export function renderSyntaxTree(node: SyntaxTreeNode): string;
+/** Validate mapping correspondence in ordinary plain data after generic Links
+ * decode. Returns the same bundle. This does not prove grammar membership;
+ * complete CSTs still require parsing with their actual grammar definitions.
+ */
+export function checkGrammarSelectionMappedTree<T>(bundle: T,
+  options?: Pick<GrammarParserOptions, 'memoryLimit' | 'stepLimit' | 'maxDepth' | 'errorRecovery'>,
+): T & GrammarMappedTreeBundle;
 export function compileGrammar(
   grammar: Grammar | NormalizedGrammar,
   options?: GrammarParserOptions,

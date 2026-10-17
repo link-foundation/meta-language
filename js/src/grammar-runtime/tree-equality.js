@@ -40,13 +40,18 @@ function sameGrammarSelectionMetadata(first, second, fields, recursive) {
   for (const field of fields) {
     if (Object.hasOwn(first, field) !== Object.hasOwn(second, field) || !sameGrammarMetadata(first[field], second[field])) return false;
   }
-  const extra = value => Object.keys(value).filter(key => !fields.includes(key) && !['program', 'root', 'alternatives'].includes(key));
+  const extra = value => Object.keys(value).filter(key => !fields.includes(key) && !['program', 'root', 'alternatives', 'sourceBytes'].includes(key));
   const own = extra(first), other = extra(second);
   if (own.length !== other.length || own.some((key, index) => key !== other[index] || !sameGrammarMetadata(first[key], second[key]))) return false;
   return recursive(first, second);
 }
 
 function sameGrammarEmbedding(first, second, fullMemo) {
+  if (Object.hasOwn(first, 'sourceChildren') !== Object.hasOwn(second, 'sourceChildren')) return false;
+  if (first.sourceChildren) {
+    if (first.sourceChildren.length !== second.sourceChildren.length
+        || !first.sourceChildren.every((child, index) => sameGrammarTreeWith(child, second.sourceChildren[index], true, fullMemo, fullMemo))) return false;
+  }
   if (!sameGrammarTreeWith(first.root, second.root, true, fullMemo, fullMemo)) return false;
   if (Object.hasOwn(first, 'selection') !== Object.hasOwn(second, 'selection')) return false;
   return sameGrammarSelectionMetadata(first.selection, second.selection, selectionFields, (own, other) => {

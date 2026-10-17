@@ -7,7 +7,7 @@ export function acceptGrammarSelectionMode(mode) {
 
 /** @param {string} mapping @returns {boolean} */
 export function acceptGrammarSelectionMapping(mapping) {
-  return mapping === 'identity';
+  return mapping === 'identity' || mapping === 'json-string';
 }
 
 /** All explicitly means conjunction over the same delimited source region.

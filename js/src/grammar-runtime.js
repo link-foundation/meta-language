@@ -11,8 +11,10 @@ import { decorateGrammar, decorateSyntaxTree } from './grammar-decorators.js';
 import { collectAmbiguities, firstRecovery, publicTree, renderSyntaxTree } from './grammar-runtime/syntax-tree.js';
 import { inputBytes, lineAndColumn } from './grammar-runtime/text.js';
 import { qualifyGrammarRoot } from './grammar-runtime/grammar-selection.js';
+import { withGrammarSelectionSources } from './grammar-runtime/selection-source-mapping.js';
 
 export { GrammarRuntimeError, renderSyntaxTree };
+export { checkGrammarSelectionMappedTree } from './grammar-runtime/mapped-tree-validation.js';
 
 /** A source the grammar rejects; `rejection` holds the reason and position. */
 export class GrammarParseError extends Error {
@@ -121,21 +123,29 @@ function parseProgram(program, source, options) {
     if (outcome.ok && options.grammarName && options.globalConceptSpace) outcome.root = qualifyGrammarRoot(outcome.executor, outcome.root, options.grammarName);
   } catch (error) {
     if (error instanceof StepLimitReached) {
-      return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } };
+      return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: { reason: 'stepLimit', limit: budget.limit } }, memory);
     }
     if (error instanceof MemoryBudgetReached) {
-      return { ok: false, tree: null, ambiguities: [], rejection: { reason: 'memoryBudget', limit: memory.limit } };
+      return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: { reason: 'memoryBudget', limit: memory.limit } }, memory);
     }
     if (error instanceof NestingTooDeep || (error instanceof RangeError && /call stack/u.test(error.message))) {
       const tree = publicTree({ type: 'error', start: 0, end: bytes.length, reason: 'nestingDepth' }, bytes);
-      return { ok: false, tree, ambiguities: [], rejection: { reason: 'nestingDepth', limit: maxDepth } };
+      return withGrammarSelectionSources({ ok: false, tree, ambiguities: [], rejection: { reason: 'nestingDepth', limit: maxDepth } }, memory);
     }
     throw error;
   }
   if (!outcome.ok) {
     const diagnostics = budget.memory.selectionDiagnostics;
-    if (diagnostics?.length) return { ok: false, tree: null, ambiguities: [], rejection: positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics }) };
-    return { ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) };
+    if (diagnostics?.length) return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics }) }, memory);
+    const mappingDiagnostics = memory.selectionMappingFailures;
+    if (mappingDiagnostics?.length) {
+      const primary = mappingDiagnostics.reduce((left, right) => right.start >= left.start ? right : left);
+      const reason = primary.reason === 'mappedSyntax' ? 'syntax' : primary.reason;
+      return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: positioned(reason, bytes,
+        primary.start, { expected: outcome.expected, diagnostics: mappingDiagnostics,
+          offsetSemantics: 'covering-source-spelling' }) }, memory);
+    }
+    return withGrammarSelectionSources({ ok: false, tree: null, ambiguities: [], rejection: positioned('syntax', bytes, outcome.farthest, { expected: outcome.expected }) }, memory);
   }
   const tree = decorateSyntaxTree(publicTree(outcome.root, bytes), options.decorators);
   const ambiguities = collectAmbiguities(outcome.root, program);
@@ -143,9 +153,10 @@ function parseProgram(program, source, options) {
   const diagnostics = memory.selectionDiagnostics;
   const recovery = firstRecovery(tree);
   if (diagnostics?.length) rejection = positioned(diagnostics[0].reason, bytes, diagnostics[0].start, { diagnostics });
-  else if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start);
+  else if (recovery && options.recovery !== 'accept') rejection = positioned('recovered', bytes, recovery.start,
+    recovery.source === undefined ? {} : { diagnostics: [recovery], offsetSemantics: 'covering-source-spelling' });
   else if (ambiguities.length > 0 && options.ambiguity === 'reject') rejection = positioned('ambiguity', bytes, ambiguities[0].start);
-  return { ok: rejection === null, tree, ambiguities, rejection };
+  return withGrammarSelectionSources({ ok: rejection === null, tree, ambiguities, rejection }, memory);
 }
 
 /**
@@ -161,7 +172,9 @@ function parseProgram(program, source, options) {
  * Linked `any-grammar` and `all-grammar` expressions retain candidate CSTs.
  * Supplying both `grammarName` and an existing `globalConceptSpace` also
  * stores the root invocation's qualified provenance in an embed boundary;
- * other parses keep their existing root shape. Only identity mappings run.
+ * other parses keep their existing root shape. The explicit json-string
+ * mapping retains the original syntactic region and decodes only Unicode
+ * scalar JSON strings; its child offsets belong to a separate source plane.
  * `options.decorators` (a DecoratorSet) decorates the grammar's rules at the
  * `grammar-rule` level before it is loaded and every tree at the `executor`
  * and `recovery` levels (see `decorateSyntaxTree`).
@@ -175,6 +188,7 @@ export function createGrammarParser(grammar, options = {}) {
     parse(source, parseOptions = {}) {
       const outcome = parseTree(source, parseOptions);
       if (!outcome.ok) throw new GrammarParseError(outcome.rejection);
+      if (outcome.sourcePlanes) throw new GrammarRuntimeError('a mapped grammar result needs parseTree to retain its sourcePlanes', 'selection');
       return outcome.tree;
     },
   };
