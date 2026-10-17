@@ -390,4 +390,303 @@ fn mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes(
             "{raw}"
         );
     }
+    record_mapped_lexical_inputs();
+}
+
+fn mapped_profile_fixture() -> Value {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write as _;
+    let fixture = mapped_fixture("fixtures/grammar-selection-json-string.lino");
+    assert_eq!(fixture["schemaVersion"], 1);
+    assert_eq!(fixture["id"], "grammar-selection-json-string");
+    let expected_captures = [
+        ("inventory", "parity/language-grammar-inventory.lino"),
+        (
+            "originalConcreteOracle",
+            "parity/fixtures/default-cst-expected.lino",
+        ),
+        (
+            "nativeConcreteOracle",
+            "parity/fixtures/native-default-cst-expected.lino",
+        ),
+        (
+            "javascriptJsonGrammar",
+            "js/src/data/native-grammars/json.lino",
+        ),
+        (
+            "javascriptPythonGrammar",
+            "js/src/data/native-grammars/python.lino",
+        ),
+        ("rustJsonGrammar", "rust/src/data/native-grammars/json.lino"),
+        (
+            "rustPythonGrammar",
+            "rust/src/data/native-grammars/python.lino",
+        ),
+        (
+            "javascriptTests",
+            "js/tests/grammar-selection-json-string.test.js",
+        ),
+        (
+            "rustTests",
+            "rust/tests/unit/grammar_recursive_selection.rs",
+        ),
+        (
+            "rustTestTransport",
+            "rust/tests/unit/grammar_recursive_selection_mapping.rs",
+        ),
+        (
+            "fixtureAuthor",
+            "js/tests/support/grammar-selection-mapping-cases.js",
+        ),
+        (
+            "fixtureGenerator",
+            "js/scripts/generate-grammar-selection-mapping-fixtures.mjs",
+        ),
+    ];
+    let captures = fixture["captures"].as_array().unwrap();
+    assert_eq!(captures.len(), expected_captures.len());
+    for (capture, (id, relative)) in captures.iter().zip(expected_captures) {
+        assert_eq!(capture["id"], id);
+        assert_eq!(capture["path"], relative);
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join(relative);
+        let bytes =
+            std::fs::read(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+        assert_eq!(json!(bytes.len()), capture["bytes"], "{}", path.display());
+        let digest =
+            Sha256::digest(bytes)
+                .iter()
+                .fold(String::with_capacity(64), |mut text, byte| {
+                    write!(text, "{byte:02x}").unwrap();
+                    text
+                });
+        assert_eq!(
+            digest,
+            capture["sha256"].as_str().unwrap(),
+            "{}",
+            path.display()
+        );
+    }
+    fixture
+}
+
+fn record_mapped_profile(
+    fixture: &Value,
+    section: &str,
+    requirement: &str,
+    fixture_id: &str,
+    assertions: &[&str],
+    test_name: &str,
+) {
+    let declared = &fixture["observations"][section];
+    assert_eq!(declared["requirementId"], requirement);
+    assert_eq!(declared["suffix"], "json-string-profile");
+    assert_eq!(declared["fixtureIds"]["rust"], fixture_id);
+    for assertion in assertions {
+        assert_eq!(
+            declared["assertions"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter(|candidate| candidate.as_str() == Some(*assertion))
+                .count(),
+            1
+        );
+    }
+    super::super::issue_195_observations::record(
+        &super::super::issue_195_observations::Observation {
+            requirement_id: requirement,
+            suffix: "json-string-profile",
+            fixture_id,
+            fixture_file: "parity/fixtures/grammar-selection-json-string.lino",
+            assertions,
+            test_name,
+        },
+    );
+}
+
+pub fn record_mapped_primary(source: &str, raw: &str, decoded: &str, intervals: &[[usize; 4]]) {
+    let fixture = mapped_profile_fixture();
+    assert_eq!(fixture["inputs"]["python"]["source"], source);
+    let native = mapped_fixture("fixtures/native-default-cst-expected.lino");
+    let original = mapped_fixture("fixtures/default-cst-expected.lino");
+    let expected = native["languages"]
+        .get("Python")
+        .unwrap_or_else(|| &original["languages"]["Python"]);
+    assert_eq!(
+        fixture["inputs"]["python"]["positiveRows"],
+        expected["positive"]
+    );
+    let escape = &fixture["inputs"]["escape"];
+    assert_eq!(escape["raw"], raw);
+    assert_eq!(escape["decoded"], decoded);
+    assert_eq!(escape["physicalBytes"], json!(raw.as_bytes()));
+    assert_eq!(escape["decodedBytes"], json!(decoded.as_bytes()));
+    assert_eq!(escape["prefixes"], json!(["", "λ<"]));
+    assert_eq!(escape["intervals"], json!(intervals));
+    record_mapped_profile(
+        &fixture,
+        "boundaries",
+        "I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS",
+        "grammar-selection-json-string-boundaries-rust",
+        &[
+            "shippedJsonPythonConcreteTreesRemainExact",
+            "jsonStringUtf8IntervalsAndQuoteOwnershipExact",
+        ],
+        "mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_intervals",
+    );
+}
+
+pub fn record_mapped_archives(source: &str, inner: &str, physical: &str) {
+    let fixture = mapped_profile_fixture();
+    assert_eq!(fixture["inputs"]["python"]["source"], source);
+    assert_eq!(serde_json::to_string(source).unwrap(), inner);
+    assert_eq!(serde_json::to_string(inner).unwrap(), physical);
+    let test_name =
+        "nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_links";
+    record_mapped_profile(
+        &fixture,
+        "boundaries",
+        "I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS",
+        "grammar-selection-json-string-boundaries-rust",
+        &["mappedSourceRegistryAndGrammarReplayTextAndBinary"],
+        test_name,
+    );
+    record_mapped_profile(
+        &fixture,
+        "recursion",
+        "I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES",
+        "grammar-selection-json-string-recursion-rust",
+        &["nestedMappedSourcesRetainActualDerivationOrder"],
+        test_name,
+    );
+}
+
+pub fn record_mapped_forgeries(replacements: &[Value], absent: &Value) {
+    let fixture = mapped_profile_fixture();
+    let cases = &fixture["runtimeCases"]["rust"]["serializableForgeries"];
+    assert_eq!(cases["replacements"], json!(replacements));
+    assert_eq!(
+        cases["extraFields"],
+        json!([
+            "/sourcePlanes/0",
+            "/sourcePlanes/1/derivation",
+            "/tree/children/0/selection/sourceMapping",
+        ])
+    );
+    assert_eq!(cases["missingRegistry"], true);
+    for restored in mapped_stored_variants(absent) {
+        assert_eq!(&restored, absent);
+        assert_eq!(
+            meta_language::check_grammar_selection_mapped_tree(
+                &restored,
+                &FeatureParseOptions::default()
+            )
+            .unwrap_err()
+            .reason,
+            "selection"
+        );
+    }
+    record_mapped_profile(
+        &fixture,
+        "boundaries",
+        "I195-CST-RECURSIVE-BOUNDARIES-LOSSLESS",
+        "grammar-selection-json-string-boundaries-rust",
+        &["serializableMappingForgeriesRefusedAfterReload"],
+        "mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_checker",
+    );
+}
+
+pub fn record_mapped_profiles(recovery_source: &str) {
+    let fixture = mapped_profile_fixture();
+    assert_eq!(
+        fixture["inputs"]["python"]["recoverySource"],
+        recovery_source
+    );
+    assert_eq!(
+        fixture["inputs"]["selection"]["modes"],
+        json!(["any-grammar", "all-grammar"])
+    );
+    let refusals = &fixture["inputs"]["refusals"];
+    assert_eq!(
+        refusals["loneSurrogateEscapes"],
+        json!([r#""\uD800""#, r#""\uDC00""#])
+    );
+    assert_eq!(refusals["unsupportedMapping"], "quoted-escape");
+    assert_eq!(
+        refusals["mixedMappings"],
+        json!(["json-string", "identity"])
+    );
+    assert_eq!(
+        refusals["limitOptions"],
+        json!([
+            {"options":{"stepLimit":0},"reason":"stepLimit"},
+            {"options":{"memoryLimit":0},"reason":"memoryBudget"},
+            {"options":{"maxDepth":0},"reason":"nestingDepth"},
+        ])
+    );
+    let test_name =
+        "mapped_profiles_keep_witnesses_and_existing_limits_while_failed_derivations_are_not_csts";
+    record_mapped_profile(
+        &fixture,
+        "selection",
+        "I195-CST-ANY-GRAMMAR-RECURSIVE-RULE",
+        "grammar-selection-json-string-selection-rust",
+        &[
+            "jsonStringAnyAllCandidateWitnessesPreserved",
+            "jsonStringUnsupportedAndNonScalarProfilesRefused",
+        ],
+        test_name,
+    );
+    record_mapped_profile(
+        &fixture,
+        "recursion",
+        "I195-CST-DEEPLY-RECURSIVE-MIXED-LANGUAGES",
+        "grammar-selection-json-string-recursion-rust",
+        &[
+            "mappedParsersRetainExistingLimitRefusals",
+            "mappedCycleAndSyntaxFailuresRetainSourceRoutes",
+            "failedMappedParseCannotAuthenticateMissingRoot",
+        ],
+        test_name,
+    );
+}
+
+pub fn record_mapped_memo() {
+    let fixture = mapped_profile_fixture();
+    let memo = &fixture["inputs"]["memo"];
+    assert_eq!(memo["decoded"], "x");
+    assert_eq!(memo["identityName"], "json-string|decoded");
+    assert_eq!(memo["warmMappings"], json!(["identity", "json-string"]));
+    record_mapped_profile(
+        &fixture,
+        "selection",
+        "I195-CST-ANY-GRAMMAR-RECURSIVE-RULE",
+        "grammar-selection-json-string-selection-rust",
+        &["mappedProfileMemoKeysKeepExactGrammarNames"],
+        "mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profiles",
+    );
+}
+
+fn record_mapped_lexical_inputs() {
+    let fixture = mapped_profile_fixture();
+    let refusals = &fixture["inputs"]["refusals"];
+    assert_eq!(refusals["invalidBytes"], json!([255, 34, 120, 34]));
+    assert_eq!(
+        refusals["invalidEscapes"],
+        json!([r#""\q""#, r#""\u{41}""#, r#""\u12""#, "\"line\nbreak\"",])
+    );
+    assert_eq!(fixture["inputs"]["nesting"]["oneLevel"], "\"x\"");
+    record_mapped_profile(
+        &fixture,
+        "selection",
+        "I195-CST-ANY-GRAMMAR-RECURSIVE-RULE",
+        "grammar-selection-json-string-selection-rust",
+        &[
+            "jsonStringLexicalAndMalformedInputsRefused",
+            "invalidUtf8RootCannotClaimUtf8SourcePlane",
+        ],
+        "mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes",
+    );
 }

@@ -535,6 +535,7 @@ fn mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_
         );
         check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();
     }
+    mapping_transport::record_mapped_primary(source, raw, decoded, &expected);
 }
 
 #[test]
@@ -639,6 +640,7 @@ fn nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_link
         );
         assert_eq!(mapped_bundle(&replay), stored["bundle"]);
     }
+    mapping_transport::record_mapped_archives(source, &inner_source, &physical);
 }
 
 #[test]
@@ -664,6 +666,7 @@ fn mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_
         decoded
     );
     check_grammar_selection_mapped_tree(&genuine, &FeatureParseOptions::default()).unwrap();
+    let mut replacements = Vec::new();
     for (path, replacement) in [
         ("/tree/start", json!(1)),
         ("/tree/end", json!(22)),
@@ -716,6 +719,7 @@ fn mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_
         ),
         ("/tree/children/0/root/children/0/text", json!("b\nπ😀")),
     ] {
+        replacements.push(json!({"path":path,"value":replacement.clone()}));
         let mut forged = genuine.clone();
         *forged
             .pointer_mut(path)
@@ -760,6 +764,7 @@ fn mapped_source_forgeries_survive_generic_archives_but_fail_the_correspondence_
             .reason,
         "selection"
     );
+    mapping_transport::record_mapped_forgeries(&replacements, &absent);
 }
 
 #[test]
@@ -940,6 +945,7 @@ fn mapped_profiles_keep_witnesses_and_existing_limits_while_failed_derivations_a
         .message
         .contains("complete physical root CST")
     );
+    mapping_transport::record_mapped_profiles(invalid);
 }
 
 #[test]
@@ -988,4 +994,5 @@ fn mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profile
         assert_eq!(mapped_physical(&bundle["tree"]), source.as_bytes());
         check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap();
     }
+    mapping_transport::record_mapped_memo();
 }
