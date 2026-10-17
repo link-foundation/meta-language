@@ -2221,6 +2221,15 @@ CI obligation; sparse writes and loop-carried mutation remain required gaps.
 Reference selection discards only the indexed plain-assignment token inside its
 proved removed-source interval. Other writes, nested argument mutations,
 captured state and identity observations retain their existing triggers.
+A separate joint profile admits an initially empty private array when every
+append has discarded results and primitive literal arguments, including inside
+builder loops, and every indexed update is a direct guarded write. It selects
+all actual append and write occurrences before either existing pass rewrites
+them. The same complete shared module generates both decisions; source hosts
+transport the selected nodes through immutable concatenation and guarded map
+rebinding. Aliases, captures, unknown arguments, observed append results,
+rebinding and nested indexed writes retain their obligations. These copying
+representations make no linear-time claim; native behavior requires CI.
 
 The port is done by meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into

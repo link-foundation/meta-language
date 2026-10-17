@@ -108,3 +108,205 @@ fn unproved_guard_alias_capture_call_and_loop_profiles_remain_translation_gaps()
         assert!(result.is_err(),"an unproved original write stays refused: {source}");
     }
 }
+
+fn constructed_private_array_observations(source: &str, values: &str) -> Value {
+    let mut script = source.to_owned();
+    script.push_str("\nconst ml_probe_values=");
+    script.push_str(values);
+    script.push_str(r#";
+const ml_probe_number=new DataView(new ArrayBuffer(8));
+const ml_probe_encode=value=>{
+  if(typeof value==='number'){
+    ml_probe_number.setFloat64(0,value,false);
+    return ['number',ml_probe_number.getUint32(0,false),ml_probe_number.getUint32(4,false)];
+  }
+  if(typeof value==='boolean')return ['boolean',value];
+  if(typeof value==='string')return ['string',Array.from({length:value.length},(_,index)=>value.charCodeAt(index))];
+  throw new TypeError('the original probe admits only primitive Number, Boolean and UTF16 string values');
+};
+const ml_probe_rows=[];
+for(const count of [-2,0,0.5,1,3,5])for(const position of [-Infinity,-1,-0,0,0.5,1,2,3,5,NaN,Infinity])for(const value of ml_probe_values){
+  const result=updated(value,position,count);
+  if(!Array.isArray(result))throw new TypeError('the original constructor returns an array');
+  for(let index=0;index<result.length;index++)if(!Object.hasOwn(result,index))throw new TypeError('the original constructor returns a dense array');
+  ml_probe_rows.push({count:ml_probe_encode(count),position:ml_probe_encode(position),value:ml_probe_encode(value),result:result.map(ml_probe_encode)});
+}
+console.log(JSON.stringify(ml_probe_rows));
+"#);
+    serde_json::from_str(&observe(&script)).unwrap()
+}
+
+fn constructed_private_array_javascript_contract(source: &str) -> Value {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let script = r#"import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitRust} from './js/src/translation/emit-rust.js';
+import {emitJavaScript} from './js/src/translation/emit-javascript.js';
+try{
+  const surface=parseJavaScript(process.argv[1]),program=checkProgram(surface);
+  process.stdout.write(JSON.stringify({accepted:true,surface,rust:emitRust(program).text,javascript:emitJavaScript(program).text}));
+}catch(error){process.stdout.write(JSON.stringify({accepted:false,kind:error.kind,reason:error.reason}));}
+"#;
+    let output = Command::new("node")
+        .current_dir(root)
+        .args(["--input-type=module", "-e", script, source])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    serde_json::from_slice(&output.stdout).unwrap()
+}
+
+#[test]
+fn constructed_private_arrays_and_guarded_updates_preserve_complete_observations_and_archives() {
+    let guard = "Number.isInteger(position)&&position>=0&&position<data.length";
+    for (body, element, values, value_count) in [
+        (
+            format!(
+                "const data=[];for(let index=0;index<count;index+=1){{data.push(0);}}if({guard}){{data[position]=value;}}return data;"
+            ),
+            "number",
+            "[-0,0,7,NaN,Infinity]",
+            5,
+        ),
+        (
+            format!(
+                "const data=[];data.push(0);if({guard}){{data[position]=value;}}data.push(1);if({guard}){{data[position]=value+data.length;}}return data;"
+            ),
+            "number",
+            "[-0,0,7,NaN]",
+            4,
+        ),
+        (
+            format!(
+                "const data=[];for(let index=0;index<count;index+=1){{data.push(false);}}if({guard}){{data[position]=value;}}return data;"
+            ),
+            "boolean",
+            "[false,true]",
+            2,
+        ),
+        (
+            format!(
+                "const data=[];for(let index=0;index<count;index+=1){{data.push('');}}if({guard}){{data[position]=value;}}return data;"
+            ),
+            "string",
+            r#"['','前😀','\ud800']"#,
+            3,
+        ),
+    ] {
+        let source = format!(
+            "/** @param {{{element}}} value @param {{number}} position @param {{number}} count @returns {{{element}[]}} */ export function updated(value,position,count){{{body}}}"
+        );
+        let expected = constructed_private_array_observations(&source, values);
+        assert_eq!(
+            expected.as_array().unwrap().len(),
+            6 * 11 * value_count,
+            "every original input combination is observed"
+        );
+        let javascript = constructed_private_array_javascript_contract(&source);
+        assert_eq!(
+            javascript["accepted"],
+            Value::Bool(true),
+            "{source}: {javascript}"
+        );
+        assert_eq!(
+            constructed_private_array_observations(
+                javascript["javascript"].as_str().unwrap(),
+                values
+            ),
+            expected,
+            "the original source independently checks the JavaScript frontend"
+        );
+        let surface = parse_javascript(&source).unwrap();
+        assert_eq!(
+            serde_json::to_value(&surface).unwrap(),
+            javascript["surface"],
+            "the complete actual frontend surfaces agree: {source}"
+        );
+        let program = check_program(&surface).unwrap();
+        let rust = emit_rust(&program).unwrap();
+        let emitted = emit_javascript(&program).unwrap();
+        assert_eq!(rust.text, javascript["rust"].as_str().unwrap());
+        assert_eq!(
+            constructed_private_array_observations(&emitted.text, values),
+            expected,
+            "the native frontend preserves original Number bits and UTF16 units"
+        );
+        let packet = encode_typed_program_links(&program).unwrap();
+        for network in [
+            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())
+                    .unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            let restored = decode_typed_program_links(&network, packet.root).unwrap();
+            assert_eq!(
+                restored, program,
+                "both complete archives retain the actual checked owners"
+            );
+            assert_eq!(
+                emit_rust(&restored).unwrap(),
+                rust,
+                "all Rust definitions, preludes, mappings, assumptions and encodings survive source-free replay"
+            );
+            let replayed = emit_javascript(&restored).unwrap();
+            assert_eq!(
+                replayed, emitted,
+                "the complete JavaScript emission survives source-free replay"
+            );
+            assert_eq!(
+                constructed_private_array_observations(&replayed.text, values),
+                expected
+            );
+        }
+    }
+}
+
+#[test]
+fn constructed_private_array_alias_capture_observed_append_and_nested_writes_remain_refused() {
+    let guard = "Number.isInteger(position)&&position>=0&&position<data.length";
+    for body in [
+        format!(
+            "const data=[];const alias=data;data.push(0);if({guard}){{data[position]=value;}}return alias;"
+        ),
+        format!(
+            "const data=[];data.push(0);const capture=()=>data;if({guard}){{data[position]=value;}}return capture();"
+        ),
+        format!(
+            "const data=[];function next(){{return 0;}}data.push(next());if({guard}){{data[position]=value;}}return data;"
+        ),
+        format!(
+            "const data=[];const length=data.push(0);if({guard}){{data[position]=value;}}return data;"
+        ),
+        format!(
+            "let data=[];data.push(0);data=[1];if({guard}){{data[position]=value;}}return data;"
+        ),
+        format!(
+            "const data=[];data.push(0);while(value>0){{if({guard}){{data[position]=value;}}value-=1;}}return data;"
+        ),
+        format!("const data=[];if({guard}){{data[position]=value;}}return data;"),
+    ] {
+        let source = format!(
+            "/** @param {{number}} value @param {{number}} position @param {{number}} count @returns {{number[]}} */ export function updated(value,position,count){{{body}}}"
+        );
+        let javascript = constructed_private_array_javascript_contract(&source);
+        assert_eq!(
+            javascript["accepted"],
+            Value::Bool(false),
+            "the unchanged JavaScript refusal input is retained: {source}"
+        );
+        let result = parse_javascript(&source)
+            .and_then(|surface| check_program(&surface))
+            .and_then(|program| emit_rust(&program));
+        assert!(
+            result.is_err(),
+            "the native frontend must preserve every original joint-proof refusal: {source}"
+        );
+    }
+}

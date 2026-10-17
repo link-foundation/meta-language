@@ -158,3 +158,77 @@ export function planGuardedPrivateArrayWrites(columns,rows,size,root){
  }
  return result;
 }
+
+// Joint construction proof retains every original occurrence before lowering.
+/** @param {string[]} columns @param {number[]} rows @param {number} size @param {number} statement @param {string} owner @returns {number} */
+export function readConstructedGuardedArrayAppend(columns,rows,size,statement,owner){
+ if(readGuardedWriteTextField(columns,rows,size,statement,'s')!=='expr')return -1;
+ const expression=readGuardedWriteField(columns,rows,size,statement,'expr');
+ if(readGuardedWriteKind(columns,rows,size,expression)!=='method'||readGuardedWriteTextField(columns,rows,size,expression,'op')!=='push'||readGuardedWriteName(columns,rows,size,readGuardedWriteField(columns,rows,size,expression,'object'))!==owner)return -1;
+ const args=readGuardedWriteField(columns,rows,size,expression,'args'),count=readGuardedWriteCount(columns,rows,size,args);
+ if(count<=0)return -1;
+ for(let index=0;index<count;index+=1){
+  const kind=readGuardedWriteKind(columns,rows,size,readGuardedWriteElement(columns,rows,size,args,index));
+  if(kind!=='num'&&kind!=='bool'&&kind!=='str')return -1;
+ }
+ return expression;
+}
+
+/** @param {string[]} columns @param {number[]} rows @param {number} size @param {string} owner @param {number} allocation @param {number[]} writes @param {number[]} appends @returns {boolean} */
+export function acceptConstructedGuardedArrayUses(columns,rows,size,owner,allocation,writes,appends){
+ for(let node=0;node<size;node+=1){
+  const kind=readGuardedWriteKind(columns,rows,size,node),statement=readGuardedWriteTextField(columns,rows,size,node,'s');
+  if(kind==='lambda'||statement==='block'||statement==='switch')return false;
+  if((statement==='assign'||statement==='const'||statement==='let')&&node!==allocation&&readGuardedWriteTextField(columns,rows,size,node,'name')===owner)return false;
+ }
+ for(let node=0;node<size;node+=1){
+  if(readGuardedWriteName(columns,rows,size,node)!==owner)continue;
+  let uses=0;
+  for(let parent=0;parent<size;parent+=1){
+   const start=rows[parent]??-1,count=rows[size+parent]??-1;
+   for(let offset=0;offset<count;offset+=1){
+    const edge=start+offset;if((rows[2*size+edge]??-1)!==node)continue;
+    uses+=1;
+    const label=columns[2*size+edge]??'',kind=readGuardedWriteKind(columns,rows,size,parent),statement=readGuardedWriteTextField(columns,rows,size,parent,'s');
+    const read=label==='object'&&(kind==='index'||kind==='field'&&readGuardedWriteTextField(columns,rows,size,parent,'field')==='length');
+    const write=label==='object'&&(statement==='assignReference'||kind==='referenceWrite')&&writes.includes(parent);
+    const append=label==='object'&&kind==='method'&&readGuardedWriteTextField(columns,rows,size,parent,'op')==='push'&&appends.includes(parent);
+    const transfer=label==='expr'&&statement==='return';
+    if(!read&&!write&&!append&&!transfer)return false;
+   }
+  }
+  if(uses===0)return false;
+ }
+ return true;
+}
+
+/** Complete plan rows: operation code, actual statement, actual operation, allocation.
+ * Code zero selects a direct guarded conditional; code one a discarded append.
+ * @param {string[]} columns @param {number[]} rows @param {number} size @param {number} root @returns {number[]} */
+export function planConstructedGuardedArrayWrites(columns,rows,size,root){
+ const result=[];
+ if(!acceptGuardedWriteColumns(columns,rows,size,root))return result;
+ const statements=readGuardedWriteField(columns,rows,size,root,'statements'),count=readGuardedWriteCount(columns,rows,size,statements);
+ if(count<0)return result;
+ for(let index=0;index<count;index+=1){
+  const allocation=readGuardedWriteElement(columns,rows,size,statements,index),statement=readGuardedWriteTextField(columns,rows,size,allocation,'s');
+  if(statement!=='const'&&statement!=='let')continue;
+  const value=readGuardedWriteField(columns,rows,size,allocation,'value');
+  if(readGuardedWriteKind(columns,rows,size,value)!=='array'||readGuardedWriteCount(columns,rows,size,readGuardedWriteField(columns,rows,size,value,'items'))!==0)continue;
+  const owner=readGuardedWriteTextField(columns,rows,size,allocation,'name');if(owner==='')continue;
+  const writes=[],conditionals=[],appends=[],appendStatements=[];
+  for(let later=index+1;later<count;later+=1){
+   const conditional=readGuardedWriteElement(columns,rows,size,statements,later),write=readGuardedWriteCandidate(columns,rows,size,conditional,owner);
+   if(write>=0){conditionals.push(conditional);writes.push(write);}
+  }
+  if(writes.length===0)continue;
+  for(let candidate=allocation+1;candidate<size;candidate+=1){
+   const append=readConstructedGuardedArrayAppend(columns,rows,size,candidate,owner);
+   if(append>=0){appendStatements.push(candidate);appends.push(append);}
+  }
+  if(appends.length===0||!acceptConstructedGuardedArrayUses(columns,rows,size,owner,allocation,writes,appends))continue;
+  for(let at=0;at<writes.length;at+=1)result.push(0,conditionals[at]??-1,writes[at]??-1,allocation);
+  for(let at=0;at<appends.length;at+=1)result.push(1,appendStatements[at]??-1,appends[at]??-1,allocation);
+ }
+ return result;
+}

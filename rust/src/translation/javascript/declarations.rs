@@ -639,6 +639,15 @@ impl JavaScriptParser {
             self.reference_state.forced,
             true,
         ) {
+            if self.indexed_reference_writes != indexed_writes_before {
+                self.eliminated_owned_array_append_operations.extend(
+                    super::constructed_guarded_array_writes::lower_constructed_guarded_array_writes(
+                        &mut statements,
+                        &params,
+                        &mut self.generated_count,
+                    ),
+                );
+            }
             self.eliminated_owned_array_append_operations.extend(
                 super::owned_array_append::lower_owned_array_appends(
                     &mut statements,

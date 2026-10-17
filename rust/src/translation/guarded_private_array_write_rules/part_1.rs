@@ -1,13 +1,27 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
+use super::MlAcceptConstructedGuardedArrayUsesLoop16Result;
+use super::MlAcceptConstructedGuardedArrayUsesLoop17Result;
 use super::MlAcceptGuardedWriteBoundsLoop7Result;
+use super::MlAcceptGuardedWriteColumnsLoop2Result;
+use super::MlAcceptGuardedWriteColumnsLoop3Result;
+use super::MlAcceptGuardedWriteLiteralLoop4Result;
+use super::MlAcceptGuardedWriteScalarLoop5Result;
 use super::MlAcceptGuardedWriteUsesLoop8Result;
 use super::MlAcceptGuardedWriteUsesLoop9Result;
+use super::MlReadConstructedGuardedArrayAppendLoop15Result;
+use super::ml_accept_constructed_guarded_array_uses_loop16;
+use super::ml_accept_constructed_guarded_array_uses_loop17;
 use super::ml_accept_guarded_write_bounds_loop7;
+use super::ml_accept_guarded_write_columns_loop2;
+use super::ml_accept_guarded_write_columns_loop3;
+use super::ml_accept_guarded_write_literal_loop4;
 use super::ml_accept_guarded_write_scalar_loop5;
 use super::ml_accept_guarded_write_uses_loop8;
 use super::ml_accept_guarded_write_uses_loop9;
+use super::ml_plan_constructed_guarded_array_writes_loop20;
 use super::ml_plan_guarded_private_array_writes_loop12;
+use super::ml_read_constructed_guarded_array_append_loop15;
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
@@ -714,6 +728,149 @@ pub fn plan_guarded_private_array_writes(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_constructed_guarded_array_append(
+    columns: &[String],
+    rows: &[f64],
+    size: f64,
+    statement: f64,
+    owner: &str,
+) -> f64 {
+    {
+        let ml_library_inequality_1 =
+            (self::read_guarded_write_text_field(columns, rows, size, statement, "s")) != "expr";
+        if ml_library_inequality_1 {
+            -1f64
+        } else {
+            {
+                let expression =
+                    self::read_guarded_write_field(columns, rows, size, statement, "expr");
+                if (((self::read_guarded_write_kind(columns, rows, size, expression)) != "method")
+                    || ((self::read_guarded_write_text_field(
+                        columns, rows, size, expression, "op",
+                    )) != "push"))
+                    || ((self::read_guarded_write_name(
+                        columns,
+                        rows,
+                        size,
+                        self::read_guarded_write_field(columns, rows, size, expression, "object"),
+                    )) != owner)
+                {
+                    -1f64
+                } else {
+                    {
+                        let args =
+                            self::read_guarded_write_field(columns, rows, size, expression, "args");
+                        {
+                            let count = self::read_guarded_write_count(columns, rows, size, args);
+                            if count <= 0f64 {
+                                -1f64
+                            } else {
+                                {
+                                    let index = 0f64;
+                                    {
+                                        let ml_s9 =
+                                            self::ml_read_constructed_guarded_array_append_loop15(
+                                                columns, rows, size, args, count, index,
+                                            );
+                                        match ml_s9 {
+                                        self::MlReadConstructedGuardedArrayAppendLoop15Result::MlReadConstructedGuardedArrayAppendLoop15Done => {
+                                            expression
+                                        }
+                                        self::MlReadConstructedGuardedArrayAppendLoop15Result::MlReadConstructedGuardedArrayAppendLoop15Return(ml_result15) => {
+                                            ml_result15
+                                        }
+                                    }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_constructed_guarded_array_uses(
+    columns: &[String],
+    rows: &[f64],
+    size: f64,
+    owner: &str,
+    allocation: f64,
+    writes: &[f64],
+    appends: &[f64],
+) -> bool {
+    {
+        let node = 0f64;
+        {
+            let ml_s10 = self::ml_accept_constructed_guarded_array_uses_loop16(
+                columns, rows, size, owner, allocation, node,
+            );
+            match ml_s10 {
+                self::MlAcceptConstructedGuardedArrayUsesLoop16Result::MlAcceptConstructedGuardedArrayUsesLoop16Done => {
+                    {
+                        let node_2 = 0f64;
+                        {
+                            let ml_s11 = self::ml_accept_constructed_guarded_array_uses_loop17(columns, rows, size, owner, writes, appends, node_2);
+                            match ml_s11 {
+                                self::MlAcceptConstructedGuardedArrayUsesLoop17Result::MlAcceptConstructedGuardedArrayUsesLoop17Done => {
+                                    true
+                                }
+                                self::MlAcceptConstructedGuardedArrayUsesLoop17Result::MlAcceptConstructedGuardedArrayUsesLoop17Return(ml_result17) => {
+                                    ml_result17
+                                }
+                            }
+                        }
+                    }
+                }
+                self::MlAcceptConstructedGuardedArrayUsesLoop16Result::MlAcceptConstructedGuardedArrayUsesLoop16Return(ml_result19) => {
+                    ml_result19
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_constructed_guarded_array_writes(
+    columns: &[String],
+    rows: &[f64],
+    size: f64,
+    root: f64,
+) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        if (self::accept_guarded_write_columns(columns, rows, size, root)) {
+            {
+                let statements =
+                    self::read_guarded_write_field(columns, rows, size, root, "statements");
+                {
+                    let count = self::read_guarded_write_count(columns, rows, size, statements);
+                    if count < 0f64 {
+                        result
+                    } else {
+                        {
+                            let index = 0f64;
+                            {
+                                self::ml_plan_constructed_guarded_array_writes_loop20(
+                                    columns, rows, size, result, statements, count, index,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            result
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlReadGuardedWriteFieldLoop1Result {
     MlReadGuardedWriteFieldLoop1Done,
@@ -763,148 +920,4 @@ pub fn ml_read_guarded_write_field_loop1(
             self::MlReadGuardedWriteFieldLoop1Result::MlReadGuardedWriteFieldLoop1Done
         };
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteColumnsLoop3Result {
-    MlAcceptGuardedWriteColumnsLoop3Done,
-    MlAcceptGuardedWriteColumnsLoop3Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_guarded_write_columns_loop3(
-    rows: &[f64],
-    mut size: f64,
-    mut edge: f64,
-) -> self::MlAcceptGuardedWriteColumnsLoop3Result {
-    loop {
-        return if edge < (rows.len() as f64) {
-            {
-                let target =
-                    (self::ml_array::optional_at(rows, self::ml_array::number_index(edge)))
-                        .unwrap_or_else(|| -1f64);
-                if (!(self::ml_math::is_safe_integer(target)) || (target < 0f64))
-                    || (target >= size)
-                {
-                    self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Return(false)
-                } else {
-                    {
-                        let edge_2 = edge + 1f64;
-                        {
-                            edge = edge_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteColumnsLoop2Result {
-    MlAcceptGuardedWriteColumnsLoop2Done,
-    MlAcceptGuardedWriteColumnsLoop2Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_guarded_write_columns_loop2(
-    rows: &[f64],
-    mut size: f64,
-    mut node: f64,
-) -> self::MlAcceptGuardedWriteColumnsLoop2Result {
-    loop {
-        return if node < size {
-            {
-                let start = (self::ml_array::optional_at(rows, self::ml_array::number_index(node)))
-                    .unwrap_or_else(|| -1f64);
-                {
-                    let count = (self::ml_array::optional_at(
-                        rows,
-                        self::ml_array::number_index(size + node),
-                    ))
-                    .unwrap_or_else(|| -1f64);
-                    if (((!(self::ml_math::is_safe_integer(start)) || (start < 0f64))
-                        || !(self::ml_math::is_safe_integer(count)))
-                        || (count < 0f64))
-                        || ((start + count) > ((rows.len() as f64) - (2f64 * size)))
-                    {
-                        self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Return(false)
-                    } else {
-                        {
-                            let node_2 = node + 1f64;
-                            {
-                                node = node_2;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteLiteralLoop4Result {
-    MlAcceptGuardedWriteLiteralLoop4Done,
-    MlAcceptGuardedWriteLiteralLoop4Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_guarded_write_literal_loop4(
-    columns: &[String],
-    rows: &[f64],
-    mut size: f64,
-    mut items: f64,
-    mut count: f64,
-    mut index: f64,
-) -> self::MlAcceptGuardedWriteLiteralLoop4Result {
-    loop {
-        return if index < count {
-            {
-                let item = self::read_guarded_write_element(columns, rows, size, items, index);
-                if (self::read_guarded_write_text_field(columns, rows, size, item, "spread"))
-                    == "true"
-                {
-                    self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
-                } else {
-                    {
-                        let kind = self::read_guarded_write_kind(
-                            columns,
-                            rows,
-                            size,
-                            self::read_guarded_write_field(columns, rows, size, item, "value"),
-                        );
-                        if ((kind != "num") && (kind != "bool")) && (kind != "str") {
-                            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
-                        } else {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    index = index_2;
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptGuardedWriteScalarLoop5Result {
-    MlAcceptGuardedWriteScalarLoop5Done,
-    MlAcceptGuardedWriteScalarLoop5Return(bool),
 }

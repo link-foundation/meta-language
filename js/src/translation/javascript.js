@@ -29,6 +29,7 @@ import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalar
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
 import { lowerGuardedPrivateArrayWrites } from './guarded-private-array-writes.js';
+import { lowerConstructedGuardedArrayWrites } from './constructed-guarded-array-writes.js';
 import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
   readJavaScriptCollectionConstruction, readJavaScriptConstructionObligation,
   readJavaScriptDocumentationTypeForm, readJavaScriptValueCaseForm,
@@ -647,6 +648,11 @@ class JavaScriptParser {
     // An explicit or forced reference context keeps actual heap operations.
     // Only the inferred construction context may become immutable rebinding.
     if (!selectSurfaceReferenceSemantics(this.referenceSemanticsOverride === true, this.referenceSemanticsForced, true)) {
+      if (this.indexedReferenceWrites !== indexedWritesBefore) {
+        for (const proof of lowerConstructedGuardedArrayWrites(statements, params, this)) {
+          this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
+        }
+      }
       for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
         if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
       }

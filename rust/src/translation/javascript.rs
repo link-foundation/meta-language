@@ -32,6 +32,7 @@ mod array_bindings;
 mod array_methods;
 mod callables;
 mod console;
+mod constructed_guarded_array_writes;
 mod declarations;
 mod expressions;
 mod flow;

@@ -1,14 +1,157 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlAcceptGuardedWriteScalarLoop5Result;
 use super::ml_array;
-use super::read_guarded_write_candidate;
+use super::ml_math;
 use super::read_guarded_write_count;
 use super::read_guarded_write_element;
 use super::read_guarded_write_field;
 use super::read_guarded_write_kind;
 use super::read_guarded_write_name;
 use super::read_guarded_write_text_field;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptGuardedWriteColumnsLoop3Result {
+    MlAcceptGuardedWriteColumnsLoop3Done,
+    MlAcceptGuardedWriteColumnsLoop3Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_guarded_write_columns_loop3(
+    rows: &[f64],
+    mut size: f64,
+    mut edge: f64,
+) -> self::MlAcceptGuardedWriteColumnsLoop3Result {
+    loop {
+        return if edge < (rows.len() as f64) {
+            {
+                let target =
+                    (self::ml_array::optional_at(rows, self::ml_array::number_index(edge)))
+                        .unwrap_or_else(|| -1f64);
+                if (!(self::ml_math::is_safe_integer(target)) || (target < 0f64))
+                    || (target >= size)
+                {
+                    self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Return(false)
+                } else {
+                    {
+                        let edge_2 = edge + 1f64;
+                        {
+                            edge = edge_2;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptGuardedWriteColumnsLoop2Result {
+    MlAcceptGuardedWriteColumnsLoop2Done,
+    MlAcceptGuardedWriteColumnsLoop2Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_guarded_write_columns_loop2(
+    rows: &[f64],
+    mut size: f64,
+    mut node: f64,
+) -> self::MlAcceptGuardedWriteColumnsLoop2Result {
+    loop {
+        return if node < size {
+            {
+                let start = (self::ml_array::optional_at(rows, self::ml_array::number_index(node)))
+                    .unwrap_or_else(|| -1f64);
+                {
+                    let count = (self::ml_array::optional_at(
+                        rows,
+                        self::ml_array::number_index(size + node),
+                    ))
+                    .unwrap_or_else(|| -1f64);
+                    if (((!(self::ml_math::is_safe_integer(start)) || (start < 0f64))
+                        || !(self::ml_math::is_safe_integer(count)))
+                        || (count < 0f64))
+                        || ((start + count) > ((rows.len() as f64) - (2f64 * size)))
+                    {
+                        self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Return(false)
+                    } else {
+                        {
+                            let node_2 = node + 1f64;
+                            {
+                                node = node_2;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlAcceptGuardedWriteColumnsLoop2Result::MlAcceptGuardedWriteColumnsLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptGuardedWriteLiteralLoop4Result {
+    MlAcceptGuardedWriteLiteralLoop4Done,
+    MlAcceptGuardedWriteLiteralLoop4Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_guarded_write_literal_loop4(
+    columns: &[String],
+    rows: &[f64],
+    mut size: f64,
+    mut items: f64,
+    mut count: f64,
+    mut index: f64,
+) -> self::MlAcceptGuardedWriteLiteralLoop4Result {
+    loop {
+        return if index < count {
+            {
+                let item = self::read_guarded_write_element(columns, rows, size, items, index);
+                if (self::read_guarded_write_text_field(columns, rows, size, item, "spread"))
+                    == "true"
+                {
+                    self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
+                } else {
+                    {
+                        let kind = self::read_guarded_write_kind(
+                            columns,
+                            rows,
+                            size,
+                            self::read_guarded_write_field(columns, rows, size, item, "value"),
+                        );
+                        if ((kind != "num") && (kind != "bool")) && (kind != "str") {
+                            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Return(false)
+                        } else {
+                            {
+                                let index_2 = index + 1f64;
+                                {
+                                    index = index_2;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlAcceptGuardedWriteLiteralLoop4Result::MlAcceptGuardedWriteLiteralLoop4Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptGuardedWriteScalarLoop5Result {
+    MlAcceptGuardedWriteScalarLoop5Done,
+    MlAcceptGuardedWriteScalarLoop5Return(bool),
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlAcceptGuardedWriteScalarLoop6Result {
@@ -212,8 +355,8 @@ pub fn ml_accept_guarded_write_scalar_loop5(
                                                         {
                                                             let index = 0f64;
                                                             {
-                                                                let ml_s9 = self::ml_accept_guarded_write_scalar_loop6(columns, rows, size, pending, args, count, index);
-                                                                match ml_s9 {
+                                                                let ml_s12 = self::ml_accept_guarded_write_scalar_loop6(columns, rows, size, pending, args, count, index);
+                                                                match ml_s12 {
                                                                             self::MlAcceptGuardedWriteScalarLoop6Result::MlAcceptGuardedWriteScalarLoop6Done(pending_5) => {
                                                                                 {
                                                                                     (pending, cursor) = (pending_5, cursor_2);
@@ -606,11 +749,11 @@ pub fn ml_accept_guarded_write_uses_loop10(
                     {
                         let offset = 0f64;
                         {
-                            let ml_s10 = self::ml_accept_guarded_write_uses_loop11(
+                            let ml_s13 = self::ml_accept_guarded_write_uses_loop11(
                                 columns, rows, size, candidates, node, uses, parent, start, count,
                                 offset,
                             );
-                            match ml_s10 {
+                            match ml_s13 {
                                 self::MlAcceptGuardedWriteUsesLoop11Result::MlAcceptGuardedWriteUsesLoop11Done(uses_2) => {
                                     {
                                         let parent_2 = parent + 1f64;
@@ -661,10 +804,10 @@ pub fn ml_accept_guarded_write_uses_loop9(
                     {
                         let parent = 0f64;
                         {
-                            let ml_s11 = self::ml_accept_guarded_write_uses_loop10(
+                            let ml_s14 = self::ml_accept_guarded_write_uses_loop10(
                                 columns, rows, size, candidates, node, uses, parent,
                             );
-                            match ml_s11 {
+                            match ml_s14 {
                                 self::MlAcceptGuardedWriteUsesLoop10Result::MlAcceptGuardedWriteUsesLoop10Done(uses_2) => {
                                     if uses_2 == 0f64 {
                                         self::MlAcceptGuardedWriteUsesLoop9Result::MlAcceptGuardedWriteUsesLoop9Return(false)
@@ -741,119 +884,6 @@ pub fn ml_accept_guarded_write_uses_loop8(
             }
         } else {
             self::MlAcceptGuardedWriteUsesLoop8Result::MlAcceptGuardedWriteUsesLoop8Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_guarded_private_array_writes_loop14(
-    mut result: Vec<f64>,
-    mut allocation: f64,
-    candidates: &[f64],
-    owners: &[f64],
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < (candidates.len() as f64) {
-            {
-                let result_2 = {
-                    let (ml_append_right, ml_append_left) = (
-                        vec![
-                            (self::ml_array::optional_at(owners, self::ml_array::number_index(at)))
-                                .unwrap_or_else(|| -1f64),
-                            (self::ml_array::optional_at(
-                                candidates,
-                                self::ml_array::number_index(at),
-                            ))
-                            .unwrap_or_else(|| -1f64),
-                            allocation,
-                        ],
-                        result,
-                    );
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        (result, at) = (result_2, at_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { result };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanGuardedPrivateArrayWritesLoop13Result {
-    MlPlanGuardedPrivateArrayWritesLoop13Done(Vec<f64>, Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn ml_plan_guarded_private_array_writes_loop13(
-    columns: &[String],
-    rows: &[f64],
-    mut size: f64,
-    mut statements: f64,
-    mut count: f64,
-    owner: &str,
-    mut candidates: Vec<f64>,
-    mut owners: Vec<f64>,
-    mut later: f64,
-) -> self::MlPlanGuardedPrivateArrayWritesLoop13Result {
-    loop {
-        if later < count {
-            {
-                let candidate =
-                    self::read_guarded_write_element(columns, rows, size, statements, later);
-                {
-                    let write =
-                        self::read_guarded_write_candidate(columns, rows, size, candidate, owner);
-                    if write >= 0f64 {
-                        {
-                            let candidates_2 = {
-                                let (ml_append_right, ml_append_left) = (vec![write], candidates);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let owners_2 = {
-                                    let (ml_append_right, ml_append_left) =
-                                        (vec![candidate], owners);
-                                    self::ml_array::append(ml_append_left, ml_append_right)
-                                };
-                                {
-                                    let later_2 = later + 1f64;
-                                    {
-                                        (candidates, owners, later) =
-                                            (candidates_2, owners_2, later_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    {
-                        {
-                            let later_3 = later + 1f64;
-                            {
-                                later = later_3;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return {
-            self::MlPlanGuardedPrivateArrayWritesLoop13Result::MlPlanGuardedPrivateArrayWritesLoop13Done(candidates, owners)
         };
     }
 }

@@ -19,7 +19,11 @@ export function guardedPrivateArrayWriteRulesPolicy(){
     admission:'A nonempty dense primitive literal has no alias or escaping incoming ownership edge. A direct single-write conditional retains integer, lower and upper guards; pure operands preserve source evaluation order. Unsupported facts retain the original write.',
     materialization:'The host saves the actual index and right operand once, then rebinds the private array through the existing immutable map operation. The original guard remains in place.',
     archivePath:'src/data/guarded-private-array-write-program.lino',
-    boundary:'This bounded profile excludes aliases, captures, blocks, loops, unknown calls and empty literals. It makes no linear-time or general indexed-mutation claim. Native behavior requires CI execution.'};
+    boundary:'The original nonempty-literal profile excludes aliases, captures, blocks, loops, unknown calls and empty literals. The joint construction profile below is separate. Neither makes a linear-time or general indexed-mutation claim. Native behavior requires CI execution.',
+    construction:{selection:'Flat four-field rows identify operation code, actual statement, actual operation and fresh empty allocation. Every discarded primitive-literal append and direct guarded write is jointly proved before either is lowered.',
+      admission:'The original guard proof applies to direct top-level writes. A fresh empty private array has at least one discarded primitive-literal append, including in builder loops. Every incoming owner use is checked; aliases, captures, rebinding, observed push results, unknown arguments and nested writes refuse.',
+      materialization:'Actual append arguments become immutable concatenation; guarded writes use the original immutable map rebinding. Original source order and both original ownership planners remain.',
+      boundary:'This conservative extension requires explicit integer and array bounds guards. It does not admit general mutable builders or claim linear complexity.'}};
 }
 
 export async function generateGuardedPrivateArrayWriteRules({check=false,native=false}={}){
