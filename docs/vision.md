@@ -426,6 +426,18 @@ elements, nonempty option values and null remain outside this bridge. Native
 compilation and executable parity for the combined draft await CI; broader
 runtime-module coverage and a complete intermediate-type fixed point remain
 separate obligations.
+
+JavaScript declaration admission records actual parser scopes, original identifier
+sites and initialization points before lowering or builtin normalization. A shared
+generated rule resolves the nearest binding. Blocks and loop heads own scopes;
+inline declaration wrappers share their existing owner. Deferred closures require
+an invocation-order proof for reads before an outer binding initializes. Named
+functions and parameter defaults explicitly refuse unrepresented mutable module
+captures in either source order. Parameters and constant shadows retain their
+existing checks. These parser-local records add no fields to checked programs or
+saved Links. Native hooks transport the same facts to the generated rule; native
+compilation and executable parity remain CI checks.
+
 The independently selected `closed empty primitive Rust option 1` source model
 admits flat zero-argument standard `Option<f64>` functions whose complete body
 is an explicitly typed empty constructor, together with an empty main. The
@@ -2265,6 +2277,15 @@ The Rust suite also forwards bounded, credential-redacted live output with
 Scaling checks report their language, attempt, size and sample outside the
 timed operation. These diagnostics preserve every workload, assertion, budget
 and deadline; they do not establish the cause or resolution of a timeout.
+
+The Formal AI workload may reuse CI build products in the explicitly selected
+`RUNNER_TEMP/issue-195-formal-ai-build/target` directory. Its cache key binds the
+compiler, platform, build profile, workload inputs and exact candidate crate;
+a narrower key may reuse dependency outputs. Every run still creates fresh
+consumers, verifies the candidate checksum and installed crate path, and runs
+every workload and probe. Consumers, reports and probe outputs never enter this
+cache. Build products are saved before task-owned cleanup; inherited Cargo target
+variables do not expand that cleanup's scope. Warm-run timings remain CI evidence.
 
 Native tests belong under `rust/tests/`. Private output-comparison tests use an
 isolated fixture extracted automatically from the actual owned Rust concrete
