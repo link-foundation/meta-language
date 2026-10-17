@@ -4,13 +4,15 @@ use crate::grammar::interchange::{
     parse_native_expression, parse_native_grammar, render_native_expression, render_native_grammar,
 };
 use crate::grammar::{
-    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarRule, RuleAttributes, RuleKind,
+    CharClassItem, Grammar, GrammarExpr, GrammarFormat, GrammarLexer, GrammarRule, RuleAttributes,
+    RuleKind,
 };
 use crate::link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::rust_codec::{FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, ToLinks};
 
 const GRAMMAR: &str = "grammar::grammar";
 const RULE: &str = "grammar::rule";
+const LEXER: &str = "grammar::lexer";
 
 const EXPR_EMPTY: &str = "grammar::expression::empty-expression";
 const EXPR_TERMINAL: &str = "grammar::expression::terminal";
@@ -109,6 +111,13 @@ fn encode_grammar(network: &mut LinkNetwork, grammar: &Grammar) -> LinkId {
             .iter()
             .map(|rule| encode_rule(network, rule)),
     );
+    references.extend(
+        grammar
+            .declarations()
+            .lexers
+            .iter()
+            .map(|lexer| encode_lexer(network, lexer)),
+    );
     insert_grammar_node(network, GRAMMAR, &references)
 }
 
@@ -131,10 +140,36 @@ fn decode_grammar(network: &LinkNetwork, link: LinkId) -> Result<Grammar, LinksC
         grammar = grammar.with_start(start);
     }
 
-    for rule in &references[2..] {
-        grammar.add_rule(decode_rule(network, *rule)?);
+    for item in &references[2..] {
+        if grammar_link(network, *item)?.0 == LEXER {
+            grammar
+                .declarations
+                .lexers
+                .push(decode_lexer(network, *item)?);
+        } else {
+            grammar.add_rule(decode_rule(network, *item)?);
+        }
     }
     Ok(grammar)
+}
+
+fn encode_lexer(network: &mut LinkNetwork, lexer: &GrammarLexer) -> LinkId {
+    let references = [
+        encode_string_value(network, &lexer.name),
+        encode_expr(network, &lexer.expression),
+    ];
+    insert_grammar_node(network, LEXER, &references)
+}
+
+fn decode_lexer(network: &LinkNetwork, link: LinkId) -> Result<GrammarLexer, LinksCodecError> {
+    let references = expect_tag(network, link, LEXER)?;
+    let [name, expression] = references else {
+        return Err(expected_count(link, 2, references.len()));
+    };
+    Ok(GrammarLexer {
+        name: decode_string_value(network, *name)?,
+        expression: decode_expr(network, *expression)?,
+    })
 }
 
 fn encode_rule(network: &mut LinkNetwork, rule: &GrammarRule) -> LinkId {

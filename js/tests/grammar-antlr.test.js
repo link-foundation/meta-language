@@ -7,6 +7,7 @@ import test from 'node:test';
 import { GrammarBuilder as G, deserializeGrammar, serializeGrammar } from '../src/grammar.js';
 import { importAntlr } from '../src/grammar-importers/antlr.js';
 import { GrammarImportError } from '../src/grammar-importers/common.js';
+import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
 import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
@@ -140,6 +141,26 @@ test('imported ANTLR grammar survives a serialization round trip', () => {
   const restored = deserializeGrammar(serializeGrammar(grammar));
 
   assert.deepEqual(restored.normalized(), grammar.normalized());
+});
+
+test('covering ANTLR Links round trip retains every ordered lexer clause without its source', () => {
+  const grammar = importAntlr(fixture('covering.g4'));
+  const links = renderGrammarLinks(grammar);
+  const restored = parseGrammarLinks(links);
+  assert.deepEqual(JSON.parse(serializeGrammar(restored)), JSON.parse(serializeGrammar(grammar)));
+  assert.deepEqual(restored.ruleNames(), grammar.ruleNames());
+  assert.deepEqual(restored.declarations.lexers, grammar.declarations.lexers);
+  assert.equal(restored.declarations.lexers.length, 1);
+  assert.equal(restored.declarations.lexers[0].name, 'Covering');
+  assert.deepEqual(restored.declarations.lexers[0].expression.items.map(({kind}) => kind), [
+    'lexicalType', 'lexicalType', 'lexicalMode',
+    'lexicalOwner', 'lexicalOwner', 'lexicalOwner', 'lexicalObligation',
+    'lexicalRule', 'lexicalFragment', 'lexicalRule',
+    'lexicalObligation', 'lexicalObligation', 'lexicalRule',
+    'lexicalBinding', 'lexicalBinding', 'lexicalBinding', 'lexicalBinding',
+  ]);
+  assert.equal(renderGrammarLinks(restored), links);
+  assert.equal(renderGrammarLinks(parseGrammarLinks(renderGrammarLinks(restored))), links);
 });
 
 // Rendered rules and error messages recorded from the Rust importer by

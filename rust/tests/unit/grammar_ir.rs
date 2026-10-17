@@ -1,8 +1,9 @@
 use std::collections::BTreeSet;
 
 use meta_language::{
-    CharClassItem, FromLinks, Grammar, GrammarExpr, GrammarFormat, GrammarRule, LinkNetwork,
-    LinkType, LinksDecoder, LinksEncoder, RuleKind, ToLinks,
+    CharClassItem, FromLinks, Grammar, GrammarExpr, GrammarFormat, GrammarRule, LinkMetadata,
+    LinkNetwork, LinkType, LinksCodecError, LinksDecoder, LinksEncoder, RuleKind, ToLinks,
+    import_antlr, render_grammar_links,
 };
 
 #[test]
@@ -134,6 +135,125 @@ fn grammar_round_trips_through_links_for_hand_built_fixtures() {
         let decoded_grammar =
             Grammar::from_links(&mut links_decoder, root).expect("grammar decodes");
         assert_eq!(decoded_grammar, grammar);
+    }
+}
+
+#[test]
+fn grammar_links_retain_ordered_unicode_lexer_feature_plans_without_source() {
+    let mut grammar = import_antlr(include_str!("../fixtures/grammar/antlr/covering.g4"))
+        .expect("the original covering fixture imports");
+    let mut declarations = grammar.declarations().clone();
+    assert_eq!(declarations.lexers.len(), 1);
+    let mut first = declarations.lexers[0].clone();
+    first.name = "漢字😀".to_owned();
+    declarations.lexers.insert(0, first);
+    grammar.set_declarations(declarations);
+
+    let mut encoder = LinksEncoder::new();
+    let root = grammar.to_links(&mut encoder);
+    let network = encoder.into_network();
+    let lexers = network
+        .links()
+        .filter(|link| link.metadata().term() == Some("grammar::lexer"))
+        .collect::<Vec<_>>();
+    assert_eq!(lexers.len(), 2);
+    assert!(lexers.iter().all(|link| {
+        link.references().len() == 2 && link.metadata().link_type() == Some(LinkType::Grammar)
+    }));
+    let lexer_ids = lexers.iter().map(|link| link.id()).collect::<Vec<_>>();
+    assert_eq!(
+        &network.link(root).unwrap().references()[2 + grammar.rules().len()..],
+        lexer_ids.as_slice()
+    );
+
+    let text = network.to_lino();
+    let reloaded = LinkNetwork::from_lino(&text).expect("the source-free network reloads");
+    let mut decoder = LinksDecoder::new(&reloaded);
+    let restored = Grammar::from_links(&mut decoder, root).expect("the lexer nodes decode");
+    assert_eq!(restored, grammar);
+    assert_eq!(restored.declarations().lexers[0].name, "漢字😀");
+    assert_eq!(restored.declarations().lexers[1].name, "Covering");
+    assert_eq!(
+        render_grammar_links(&restored),
+        render_grammar_links(&grammar)
+    );
+
+    let mut encoder = LinksEncoder::new();
+    assert_eq!(restored.to_links(&mut encoder), root);
+    assert_eq!(encoder.into_network().to_lino(), text);
+}
+
+#[test]
+fn grammar_lexer_links_refuse_wrong_arities_names_and_expressions() {
+    let grammar = import_antlr(include_str!("../fixtures/grammar/antlr/covering.g4"))
+        .expect("the original covering fixture imports");
+    let mut encoder = LinksEncoder::new();
+    let root = grammar.to_links(&mut encoder);
+    let network = encoder.into_network();
+    let lexer = network
+        .links()
+        .find(|link| link.metadata().term() == Some("grammar::lexer"))
+        .expect("the imported lexer has its transport node");
+    let lexer_id = lexer.id();
+    let [name, expression] = lexer.references() else {
+        panic!("the encoded lexer has exactly two fields");
+    };
+    let name = *name;
+    let expression = *expression;
+    for replacement in [
+        vec![],
+        vec![name],
+        vec![name, expression, name],
+        vec![expression, expression],
+        vec![name, name],
+    ] {
+        let mut malformed = network.clone();
+        let bad_lexer = malformed.insert_dynamic_link(
+            &replacement,
+            LinkMetadata::new()
+                .with_link_type(LinkType::Grammar)
+                .with_term("grammar::lexer"),
+        );
+        let references = network
+            .link(root)
+            .unwrap()
+            .references()
+            .iter()
+            .map(|reference| {
+                if *reference == lexer_id {
+                    bad_lexer
+                } else {
+                    *reference
+                }
+            })
+            .collect::<Vec<_>>();
+        let bad_root = malformed.insert_dynamic_link(
+            &references,
+            LinkMetadata::new()
+                .with_link_type(LinkType::Grammar)
+                .with_term("grammar::grammar"),
+        );
+        let error = Grammar::from_links(&mut LinksDecoder::new(&malformed), bad_root)
+            .expect_err("every malformed lexer node is refused");
+        if replacement.len() != 2 {
+            assert_eq!(
+                error,
+                LinksCodecError::MalformedObject {
+                    object: bad_lexer,
+                    reason: format!("expected 2 references, found {}", replacement.len()),
+                }
+            );
+        } else if replacement[0] == expression {
+            assert!(
+                matches!(error, LinksCodecError::InvalidLiteral { object, type_name, .. }
+                if object == expression && type_name == "String")
+            );
+        } else {
+            assert!(
+                matches!(error, LinksCodecError::MalformedObject { object, .. }
+                if object == name)
+            );
+        }
     }
 }
 
