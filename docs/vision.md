@@ -1291,6 +1291,17 @@ trees for nested formatted strings, escapes, layout and exception aliases.
 The pinned upstream corpus remains a separate CI check; this implementation
 does not yet constitute the required multi source union of Python grammars.
 
+The Python statement-boundary correction reuses the recorded
+`rule-prefix-exclusion` policy to guard the silent `Python_statement` rule
+against an immediately pending dedent. The speculative scanner state is
+discarded; the owning block consumes its closing dedent. Separate pure CST
+prefix walks and their index retain the original predicates, insertion order
+and trace callbacks; indexing alone does not resolve Python scaling.
+Pipeline generation retains 158 of the 159 rule bodies unchanged. Focused
+complete-tree and losslessness controls and the original 16- and 128-unit
+inputs pass in JavaScript; native timing, stack and Windows verification
+remain pending CI.
+
 The template context family retains nested quoted, interpolation, directive
 and here-document contexts, with closing labels on a separate text stack.
 The generated HCL grammar uses that family in both packages; Tree-sitter HCL
