@@ -1,5 +1,5 @@
 //! Mechanically extracted original expression arms; no semantic replacement.
-use super::*;
+use super::{Env, Inference, Result, SExpr, SNode, Term};
 
 impl Inference {
     pub(super) fn infer_conditional_expression(&mut self, expr: &SExpr, env: &Env) -> Result<Term> {

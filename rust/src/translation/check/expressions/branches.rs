@@ -1,5 +1,9 @@
 //! Mechanically extracted original expression arms; no semantic replacement.
-use super::*;
+use super::{
+    BOOL, Checker, Decimal, Env, ExpectedType, Expr, FLOAT, LitValue, Node, Result, SExpr, SNode,
+    STRING, SurfaceBindingTypeAnnotation, Type, UNIT, fixed_bounds, immutable_product_value,
+    negate_number, text_lit, type_error,
+};
 
 impl Checker {
     #[allow(clippy::too_many_lines)]

@@ -236,8 +236,7 @@ impl Checker {
             )?;
             let actual_input = index < args.len() && !replaced;
             let mut fallback_pure = replaced.then(|| pure_parameter_default(&value));
-            let mut coalesced = false;
-            if let Some(default) = &param.default_value
+            let coalesced = if let Some(default) = &param.default_value
                 && matches!(&value.ty, Type::Option { element, absence } if absence == "undefined" && element.same(&param.ty))
             {
                 let fallback =
@@ -251,8 +250,10 @@ impl Checker {
                     },
                     param.ty.clone(),
                 );
-                coalesced = true;
-            }
+                true
+            } else {
+                false
+            };
             plans.push(CheckedCallArgument {
                 parameter: param,
                 value,
