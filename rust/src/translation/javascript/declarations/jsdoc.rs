@@ -108,6 +108,35 @@ pub(super) fn read_jsdoc_type(
     if let Some(record) = records::read_record_type(name, range, aliases, expanding)? {
         return Ok(record);
     }
+    let collection = name
+        .strip_prefix("Set<")
+        .map(|inner| ("set", inner))
+        .or_else(|| name.strip_prefix("Map<").map(|inner| ("map", inner)))
+        .and_then(|(kind, inner)| {
+            inner
+                .strip_suffix('>')
+                .filter(|inner| !inner.is_empty())
+                .map(|inner| (kind, inner))
+        });
+    if let Some((kind, inner)) = collection {
+        let arguments = syntax::split_type(inner, u16::from(b','), range)?;
+        return match (kind, arguments.as_slice()) {
+            ("set", [element]) => Ok(Type::Set {
+                element: Box::new(read_jsdoc_type(element, range, aliases, expanding)?),
+                reference: false,
+            }),
+            ("map", [key, value]) => Ok(Type::Map {
+                key: Box::new(read_jsdoc_type(key, range, aliases, expanding)?),
+                value: Box::new(read_jsdoc_type(value, range, aliases, expanding)?),
+                reference: false,
+            }),
+            _ => Err(unsupported(
+                &format!("JSDoc type {{{name}}}"),
+                "Set has one type argument and Map has two",
+                Some(range),
+            )),
+        };
+    }
     let generic = name
         .strip_prefix("Array<")
         .or_else(|| name.strip_prefix("ReadonlyArray<"))

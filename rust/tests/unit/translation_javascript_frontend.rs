@@ -67,6 +67,79 @@ fn functions_read_their_types_from_jsdoc_and_guards_make_naturals() {
 }
 
 #[test]
+fn documented_collections_preserve_nested_type_arguments_and_exact_arities() {
+    let nested = Type::Map {
+        key: Box::new(STRING),
+        value: Box::new(Type::Set {
+            element: Box::new(Type::Array {
+                element: Box::new(FLOAT),
+                reference: false,
+            }),
+            reference: false,
+        }),
+        reference: false,
+    };
+    for (documentation, expected) in [
+        ("Map<string, Set<number[]>>", nested.clone()),
+        (
+            "Set<Map<string, Set<number[]>>>",
+            Type::Set {
+                element: Box::new(nested.clone()),
+                reference: false,
+            },
+        ),
+        (
+            "Map<string, Set<number[]>> | null",
+            Type::Option {
+                element: Box::new(nested.clone()),
+                absence: "null".to_owned(),
+            },
+        ),
+        (
+            "{items: Map<string, Set<number[]>>}",
+            Type::Record {
+                fields: vec![meta_language::translation::types::TypeField {
+                    name: "items".to_owned(),
+                    ty: nested,
+                }],
+                open: false,
+                reference: false,
+            },
+        ),
+    ] {
+        let source = format!(
+            "/** @param {{{documentation}}} value @returns {{{documentation}}} */ function identity(value){{return value;}}"
+        );
+        let program = parse(&source);
+        assert!(program.reference_semantics.is_none());
+        let SItem::Fn(function) = &program.items[0] else {
+            panic!("the documented function is retained")
+        };
+        assert_eq!(
+            function.params[0].ty.as_ref(),
+            Some(&expected),
+            "{documentation}"
+        );
+        assert_eq!(function.ret.as_ref(), Some(&expected), "{documentation}");
+    }
+    for documentation in [
+        "Set<number,string>",
+        "Map<number>",
+        "Map<number,string,boolean>",
+    ] {
+        let source = format!(
+            "/** @param {{{documentation}}} value */ function identity(value){{return value;}}"
+        );
+        let error = parse_javascript(&source).unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Unsupported);
+        assert_eq!(
+            error.reason,
+            format!("JSDoc type {{{documentation}}}: Set has one type argument and Map has two")
+        );
+    }
+}
+
+#[test]
 fn a_tag_switch_is_a_match_whose_field_reads_are_pattern_variables() {
     let source = format!(
         "{TREE}/**\n * @param {{Tree}} t\n * @returns {{bigint}}\n */\nfunction size(t) {{\n  switch (t.$) {{\n    case 'leaf': return 0n;\n    case 'node': return size(t.left) + 1n + size(t.right);\n  }}\n}}\n"
