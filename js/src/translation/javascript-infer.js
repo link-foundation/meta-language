@@ -17,7 +17,7 @@ import { readRecordFieldInsertionOrder, readRecordFieldPosition, readRecordSprea
 import { containsRecordTypeOwner } from './record-type-facts.js';
 import { constructCallableFunctionType, readCallableApplicationConstraints, readCallableCellOptionBinding, readCallableCellReadInference, readCallableFunctionConstraints, readCallableLambdaInference, readCallableTypeChildren } from './callable-source.js';
 import { acceptCallableApplicationInferenceResult, requireCallableNamedInference, requireCallableStructuralInference } from './callable-source-rules.js';
-import { acceptArgumentCount } from './frontend-rules.js';
+import { acceptArgumentCount, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
 import { readParameterDefaultArgumentInference } from './parameter-default-rules.js';
 import { BOOL, FLOAT, INT, STRING, UNIT, option } from './types.js';
 import { markSharedReferenceTypes } from './javascript-cells.js';
@@ -846,7 +846,9 @@ class Inference {
         return term;
       }
       case 'array': {
-        const want = expected && this.resolve(expected);
+        const context = expected && this.resolve(expected);
+        const present = context?.element && this.resolve(context.element);
+        const want = acceptJavaScriptOptionalTupleContext('JavaScript', node.k, context?.kind ?? '', present?.kind ?? '') ? present : context;
         if (acceptJavaScriptArrayTupleContext(node.k, want?.kind ?? '', node.items.some((item) => item.spread))) {
           const elements = node.items.map((item, index) => this.expr(item.value, env, want.elements[index]));
           const term = { kind: 'tuple', elements };

@@ -7,7 +7,7 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
-import { sameType } from '../src/translation/types.js';
+import { sameType, typeKey } from '../src/translation/types.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { readCallableFunctionConstraints } from '../src/translation/callable-source.js';
 import { createSurfaceReferenceFacts } from '../src/translation/surface-reference-facts.js';
@@ -111,12 +111,33 @@ test('actual nullable inference preserves falsy values field shapes and recursiv
     ["function field(value){return value?.item??'missing';} console.log(`${field(undefined)} ${field(null)} ${field({item:''})} ${field({item:'kept'})}`);", 'missing missing  kept\n'],
     ["function f(value){return value?g(false):undefined;} function g(value){return value?f(false):1;} console.log(f(false),f(true),g(false),g(true));", 'undefined 1 1 undefined\n'],
     ["function inspect(value){console.log(`${value===null} ${value===undefined} ${!!value} ${typeof value} ${value+1}`);return value||5;}console.log(inspect(null));console.log(inspect(undefined));console.log(inspect(0));console.log(inspect(2));", 'true false false object 1\n5\nfalse true false undefined NaN\n5\nfalse false false number 1\n5\nfalse false true number 3\n2\n'],
+    ["/** @param {{item:number}|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect({item:2}));", 'object undefined object\n', 'record'],
+    ["/** @param {[number,string]|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect([2,'kept']));", 'object undefined object\n', 'tuple'],
+    ["/** @param {Map<string,number>|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect(new Map([['kept',2]])));", 'object undefined object\n', 'map'],
+    ["/** @param {Set<number>|null|undefined} value @returns {string} */function inspect(value){return typeof value;}console.log('%s',inspect(null),inspect(undefined),inspect(new Set([2])));", 'object undefined object\n', 'set'],
+    ["function read(value){console.log('read');const n=value?.item??0;return value;}function describe(value){return typeof read(value);}console.log('%s',describe(null));console.log('%s',describe(undefined));console.log('%s',describe({item:2}));", 'read\nobject\nread\nundefined\nread\nobject\n'],
   ];
-  for (const [source, expected] of cases) {
+  for (const [source, expected, kind] of cases) {
     assert.equal(observations(source), expected, 'the original JavaScript supplies the observable oracle');
     const surface = parseJavaScript(source);
     const checked = checkProgram(surface);
     assert.equal(observations(emitJavaScript(checked).text), expected);
+    if (kind) {
+      const entry = checked.declarations.get('inspect');
+      assert.equal(entry.params[0].type.kind, 'option');
+      assert.equal(entry.params[0].type.element.kind, kind);
+      assert.equal(entry.params[0].type.absence, 'both');
+      assert.equal(entry.body.k, 'optionalTypeOf');
+      assert.equal(entry.body.present, 'object');
+      for (const [target, emit] of [['Rust',emitRust], ['Lean',emitLean], ['Rocq',emitRocq]]) {
+        const emitted = emit(checked);
+        assert.equal(emitted.mappings.filter(mapping => mapping.kind === 'function' && mapping.source === 'inspect').length, 1, target);
+        if (target === 'Rust') assert.match(emitted.text, /Value\(ml_present\) => \{ let _ = ml_present; [^}]*"object"/u, kind);
+        else if (target === 'Lean') assert.match(emitted.text, /some \(some ml_present\) => "object"/u, kind);
+        else assert.match(emitted.text, /Some \(Some ml_present\) => "object"%string/u, kind);
+        assert.match(emitted.text, /"undefined"/u, `${target}: the undefined alternative remains represented`);
+      }
+    }
   }
   const inferred = parseJavaScript(cases[0][0]).items.find(item => item.name === 'choose');
   assert.deepEqual(inferred.params[0].type, { kind: 'option', element: text, absence: 'both' });
@@ -128,6 +149,16 @@ test('optional inference keeps incompatible values and recursive types as checke
     error => error.kind === 'type' && /number.*string|string.*number/u.test(error.message));
   assert.throws(() => parseJavaScript('function recursive(value){return value??[value];}'),
     error => error.kind === 'type' && /recursive inferred type/u.test(error.message));
+  const unresolved = {
+    language: 'JavaScript',
+    items: [{ k: 'fn', name: 'unknownType', params: [{ name: 'value', type: {
+      kind: 'option', element: { kind: 'union', alternatives: [number, text] }, absence: 'both',
+    } }], ret: text, body: { k: 'typeOf', arg: { k: 'name', path: ['value'] } } }],
+    main: null,
+  };
+  assert.throws(() => checkProgram(unresolved), error => error.kind === 'unsupported'
+    && error.details.construct === `typeof ${typeKey(unresolved.items[0].params[0].type)}`
+    && /type queries require a known JavaScript value type/u.test(error.message));
 });
 
 test('nested absence widening retains declared annotations and inspects function results without changing parameters', () => {

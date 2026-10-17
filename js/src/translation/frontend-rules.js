@@ -306,8 +306,13 @@ export function readTypeQueryResult(kind) {
   if (kind === 'bool') return 'boolean';
   if (kind === 'string') return 'string';
   if (kind === 'function') return 'function';
-  if (kind === 'array' || kind === 'data') return 'object';
+  if (kind === 'array' || kind === 'data' || kind === 'record' || kind === 'tuple' || kind === 'map' || kind === 'set') return 'object';
   return '';
+}
+
+/** @param {string} language @param {string} sourceKind @param {string} expectedKind @param {string} presentKind @returns {boolean} */
+export function acceptJavaScriptOptionalTupleContext(language, sourceKind, expectedKind, presentKind) {
+  return language === 'JavaScript' && sourceKind === 'array' && expectedKind === 'option' && presentKind === 'tuple';
 }
 
 /** @param {string} method @returns {string} */

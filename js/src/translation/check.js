@@ -24,7 +24,7 @@ import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from '.
 import {prepareRustPrimitiveOwnerProof,checkRustPrimitiveOwnerProof} from './rust-primitive-owners.js';
 import {prepareRustOwnedLocalStateProof,checkRustOwnedLocalStateProof,checkRustOwnedLocalStateContainers} from './rust-owned-local-state.js';
 import {checkRustConstFunctionProof,checkRustConstFunctionContainers} from './rust-const-functions.js';
-import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult } from './frontend-rules.js';
+import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOperand, readTypeQueryResult, acceptJavaScriptOptionalTupleContext } from './frontend-rules.js';
 import { readParameterDefaultValueStep, requireParameterDefaultArgumentBindings } from './parameter-default-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
@@ -552,12 +552,14 @@ class Checker {
         if (object.type.kind !== 'array') throw typeError(`length of ${typeKey(object.type)}`, node.span);
         return { k: 'length', array: object, type: node.integer ? INT : FLOAT };
       }
-      case 'array':
-        if (expected?.kind === 'tuple') {
-          if (node.items.length !== expected.elements.length || node.items.some((item) => item.spread)) throw typeError('tuple literal has the wrong number of elements', node.span);
-          return { k: 'tuple', items: node.items.map((item, index) => coerce(this.expr(item.value, env, path, expected.elements[index]), expected.elements[index], this.language, node.span)), type: expected };
+      case 'array': {
+        const context = acceptJavaScriptOptionalTupleContext(this.language, node.k, expected?.kind ?? '', expected?.element?.kind ?? '') ? expected.element : expected;
+        if (context?.kind === 'tuple') {
+          if (node.items.length !== context.elements.length || node.items.some((item) => item.spread)) throw typeError('tuple literal has the wrong number of elements', node.span);
+          return { k: 'tuple', items: node.items.map((item, index) => coerce(this.expr(item.value, env, path, context.elements[index]), context.elements[index], this.language, node.span)), type: context };
         }
         return this.arrayLiteral(node, env, path, expected);
+      }
       case 'tuple': {
         if (node.frozen !== undefined && typeof node.frozen !== 'boolean') throw typeError('tuple frozen facet must be a boolean', node.span);
         if (node.productModel !== undefined && !acceptProgramTupleProductModel(node.productModel, node.frozen === true)) throw typeError('unknown or contradictory tuple product model', node.span);
@@ -732,7 +734,11 @@ class Checker {
       }
       case 'typeOf': {
         const arg = this.expr(node.arg, env, path, undefined);
-        if (arg.type.kind === 'option') return { k: 'optionalTypeOf', arg, present: arg.type.element.kind === 'unit' && this.language === 'JavaScript' ? 'undefined' : readTypeQueryResult(arg.type.element.kind), type: STRING };
+        if (arg.type.kind === 'option') {
+          const present = arg.type.element.kind === 'unit' && this.language === 'JavaScript' ? 'undefined' : readTypeQueryResult(arg.type.element.kind);
+          if (!present) throw unsupported(`typeof ${typeKey(arg.type)}`, 'type queries require a known JavaScript value type', node.span);
+          return { k: 'optionalTypeOf', arg, present, type: STRING };
+        }
         if (!acceptTypeQueryOperand(node.arg.k)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
         const constantReference = arg.k === 'call' && this.externals.get(arg.fn)?.k === 'const';
         if (!acceptCheckedTypeQueryOperand(arg.k, constantReference)) throw unsupported('typeof operand', 'type queries currently require a bound value or literal; evaluating other operands must retain their effects and exceptions', node.span);
