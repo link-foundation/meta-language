@@ -82,7 +82,7 @@ fn translation_javascript_products_in_record_entries_keep_the_existing_use_refus
     );
     assert_eq!(
         error.reason,
-        "a product only supports owned bindings, direct calls, and fixed positional reads"
+        "immutable tuple product use: a product only supports owned bindings, direct calls, and fixed positional reads"
     );
 }
 
