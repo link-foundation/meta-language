@@ -71,6 +71,19 @@ function readFamilyLibraryIf(tokens, matching, start) {
   let open = start + 1;
   if (tokens[open]?.value === '{' && matching.has(open)) open = matching.get(open) + 1;
   while (open < tokens.length && tokens[open].value !== '{') {
+    // A match condition owns its arm block before the if owns its body.
+    // This is the same complete-condition boundary recognized by the frozen
+    // product style producer; retain every operand and arm unchanged.
+    if (tokens[open].kind === 'identifier' && tokens[open].value === 'match') {
+      open += 1;
+      while (open < tokens.length && tokens[open].value !== '{') {
+        if (matching.has(open)) open = matching.get(open);
+        open += 1;
+      }
+      if (!matching.has(open)) return undefined;
+      open = matching.get(open) + 1;
+      continue;
+    }
     if (matching.has(open)) open = matching.get(open);
     open += 1;
   }

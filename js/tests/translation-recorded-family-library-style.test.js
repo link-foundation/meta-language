@@ -8,6 +8,10 @@ import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {emitRust} from '../src/translation/emit-rust.js';
+import {tokenize} from '../src/translation/lexer.js';
+import {parseNative} from '../src/native-grammar-parser.js';
+import {readPortableSourceLintStyles} from '../scripts/portable-source-library-style.mjs';
+import {simplifyPortableProductLibraryStyles, simplifyRustBranches} from '../scripts/reviewed-rust-branch-styles.mjs';
 import {removeFamilyLibraryDivergentElse} from '../scripts/portable-conditional-source-style.mjs';
 import {
   applyRecordedFamilyLibraryStyles, flattenFamilyLibraryElseIf,
@@ -405,4 +409,58 @@ test('family divergent then retains complete tail blocks, effects, opaque syntax
   const all = removeFamilyLibraryDivergentElse(many);
   assert.equal(all, many.replaceAll('else', '    '), 'all independent proven transfers are handled without a pass limit');
   assert.equal(removeFamilyLibraryDivergentElse(all), all);
+});
+
+test('family match conditions retain complete arm blocks before conditional bodies', () => {
+  const matched = 'match (Some(value),123f64){(Some(ml_left),ml_right)=>ml_left==ml_right,_=>false}';
+  for (const condition of [matched, '(' + matched + ')']) {
+    const before = 'pub fn decide(first:f64,second:f64,value:f64)->f64{if first!=second{11f64}else{if ' + condition + '{22f64}else{33f64}}}';
+    const flattened = flattenFamilyLibraryElseIf(before);
+    assert.equal(flattened, before.replace('else{if ', 'else if ').slice(0, -1), 'only the outer else wrapper is removed');
+    assert.equal(simplifyRustBranches(before), flattened.replace('else if ', 'elseif '), 'the original exported producer retains its frozen compact-source observation');
+    const portable = simplifyPortableProductLibraryStyles(before);
+    assert.equal(portable, flattened, 'the portable derivative separates the retained else and if tokens');
+    assert.equal(simplifyPortableProductLibraryStyles(portable), portable);
+    const bound = bindFamilyLibraryInequalityConditions(flattened);
+    assert.match(bound, /let ml_library_inequality_1 = first!=second;/u);
+    assert.ok(bound.includes('else if ' + condition + '{22f64}else{33f64}'), 'all match operands, arms and subsequent branches retain their exact bytes');
+    assert.equal(flattenFamilyLibraryElseIf(flattened), flattened);
+    assert.equal(bindFamilyLibraryInequalityConditions(bound), bound);
+    const reviewed = readPortableSourceLintStyles(before);
+    const styles = new DecoratorSet([{id: 'complete-match-condition-control', level: 'emitter', order: 0,
+      when: [['format', 'Rust']], actions: reviewed.actions}]);
+    assert.equal(styles.decorate('emitter', {format: 'Rust', source: before}).source, reviewed.source, 'the complete style sequence replays exactly');
+    for (const source of [before, portable, bound, reviewed.source]) {
+      const tree = parseNative('native-rust', source);
+      assert.equal(tree.term, 'source_file');
+      assert.equal(tree.hasError, false, source);
+      assert.equal(tree.start, 0);
+      assert.equal(tree.end, Buffer.byteLength(source), 'the whole source is parsed, including every closing scope');
+      assert.deepEqual(tokenize(source, 'Rust').tokens.filter(token => token.kind === 'number').map(token => token.raw),
+        tokenize(before, 'Rust').tokens.filter(token => token.kind === 'number').map(token => token.raw));
+    }
+  }
+});
+
+test('family match boundary reading preserves parenthesized opaque and commented syntax', () => {
+  const payload = 'if first!=second{11f64}else{if match (Some(value),123f64){(Some(left),right)=>left==right,_=>false}{22f64}else{33f64}}';
+  for (const source of [
+    'macro_rules! hidden{()=>{' + payload + '};}',
+    'hidden!(' + payload + ');',
+    '#[hidden(' + payload + ')]pub fn decide()->bool{false}',
+    'pub fn text()->&\'static str{r#"' + payload + '"#}',
+    '/* ' + payload + ' */pub fn decide()->bool{false}',
+  ]) {
+    assert.equal(flattenFamilyLibraryElseIf(source), source);
+    assert.equal(bindFamilyLibraryInequalityConditions(source), source);
+  }
+  const before = 'pub fn decide(first:f64,second:f64,value:f64)->f64{if first!=second{11f64}else{if /* condition */ match (Some(value),123f64){/* arm */(Some(left),right)=>left==right,_=>false}/* body */{22f64}else{/* fallback */33f64}}}';
+  const after = bindFamilyLibraryInequalityConditions(flattenFamilyLibraryElseIf(before));
+  assert.notEqual(after, before);
+  assert.deepEqual(tokenize(after, 'Rust').comments.map(comment => comment.text), tokenize(before, 'Rust').comments.map(comment => comment.text));
+  assert.equal(bindFamilyLibraryInequalityConditions(flattenFamilyLibraryElseIf(after)), after);
+  const tree = parseNative('native-rust', after);
+  assert.equal(tree.term, 'source_file');
+  assert.equal(tree.hasError, false);
+  assert.equal(tree.end, Buffer.byteLength(after));
 });
