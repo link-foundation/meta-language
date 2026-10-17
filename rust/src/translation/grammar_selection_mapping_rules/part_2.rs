@@ -213,7 +213,7 @@ pub fn read_grammar_selection_mapped_cover(
                                             let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_else(|| Vec::<f64>::new());
                                             if (((first.len() as f64) != 4f64) || (((self::ml_array::optional_at(&first, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64)) > start)) || (start >= ((self::ml_array::optional_at(&first, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {
                                                 Vec::<f64>::new()
-                                            } else  if start == end {
+                                            } else if start == end {
                                                     vec![(self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&first, self::ml_array::number_index(0f64))).unwrap_or_else(|| -1f64), (self::ml_array::optional_at(&first, self::ml_array::number_index(1f64))).unwrap_or_else(|| -1f64)]
                                                 } else {
                                                     {

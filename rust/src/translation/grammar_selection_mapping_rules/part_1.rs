@@ -655,7 +655,7 @@ pub fn decode_unicode_escape(units: &[f64], allow_fixed: bool) -> self::UnicodeE
                                                                                 self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Next(index_5)
                                                                             }
                                                                         }
-                                                                    } else  {
+                                                                    } else {
 let ml_library_inequality_1 = digits_2 != fixed_3 ;
 if ml_library_inequality_1 {
                                                                             self::MlDecodeUnicodeEscapeJoin4::MlDecodeUnicodeEscapeJoin4Return(Box::new(self::UnicodeEscape::Malformed))

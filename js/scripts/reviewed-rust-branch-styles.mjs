@@ -56,7 +56,8 @@ assert.equal(source.split(originalNegationGuard).length,2,'the guarded derivativ
 const originalBranchJoin='+ source.slice(tokens[inner].start, tokens[child.end].end)';
 assert.equal(source.split(originalBranchJoin).length,2,'the guarded derivative retains the complete nested if at its one frozen branch join');
 const guardedSource=source.replace(originalNegationGuard,"if (condition.startsWith('!') && acceptRustWholeConditionNegation(condition)) {")
-  .replace(originalBranchJoin,"+ ' ' + source.slice(tokens[inner].start, tokens[child.end].end)")
+  .replace(originalBranchJoin,"+ (tokens[node.alternate.open - 1].end === tokens[node.alternate.open].start ? ' ' : '')"
+    + " + source.slice(tokens[inner].start, tokens[child.end].end)")
   +'\n'+acceptRustWholeConditionNegation.toString()
   +'\nexport { simplifyBranches as simplifyRustBranches };\n';
 const guardedLinked=guardedSource.replace(/\bfrom (['"])(\.[^'"\n]+)\1/gu,(_,quote,path)=>'from '+quote+new URL(path,address).href+quote)

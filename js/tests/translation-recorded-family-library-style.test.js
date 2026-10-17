@@ -464,3 +464,25 @@ test('family match boundary reading preserves parenthesized opaque and commented
   assert.equal(tree.hasError, false);
   assert.equal(tree.end, Buffer.byteLength(after));
 });
+
+test('portable branch joins retain existing whitespace and comment separators exactly', () => {
+  for (const separator of [' ', '  ', '\t', '\n', '/* retained */', ' /* retained */ ']) {
+    const before = 'pub fn decide(first:bool,second:bool)->bool{if first{true}else' + separator + '{if second{false}else{true}}}';
+    const expected = 'pub fn decide(first:bool,second:bool)->bool{if first{true}else' + separator + 'if second{false}else{true}}';
+    const frozen = simplifyRustBranches(before), after = simplifyPortableProductLibraryStyles(before);
+    assert.equal(frozen, expected, 'the frozen original retains every preexisting separator byte');
+    assert.equal(after, frozen, 'a separated join requires no additional whitespace');
+    assert.equal(simplifyPortableProductLibraryStyles(after), after);
+    assert.deepEqual(tokenize(after, 'Rust').comments.map(comment => comment.text), tokenize(before, 'Rust').comments.map(comment => comment.text));
+    const original = readDecision(before), current = readDecision(after);
+    for (const first of [false, true]) for (const second of [false, true]) {
+      assert.equal(current(first, second), original(first, second));
+      assert.equal(current(first, second), first || !second);
+    }
+    const tree = parseNative('native-rust', after);
+    assert.equal(tree.term, 'source_file');
+    assert.equal(tree.hasError, false);
+    assert.equal(tree.start, 0);
+    assert.equal(tree.end, Buffer.byteLength(after));
+  }
+});
