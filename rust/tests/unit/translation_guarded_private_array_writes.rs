@@ -113,7 +113,7 @@ fn constructed_private_array_observations(source: &str, values: &str) -> Value {
     let mut script = source.to_owned();
     script.push_str("\nconst ml_probe_values=");
     script.push_str(values);
-    script.push_str(r#";
+    script.push_str(r";
 const ml_probe_number=new DataView(new ArrayBuffer(8));
 const ml_probe_encode=value=>{
   if(typeof value==='number'){
@@ -132,13 +132,13 @@ for(const count of [-2,0,0.5,1,3,5])for(const position of [-Infinity,-1,-0,0,0.5
   ml_probe_rows.push({count:ml_probe_encode(count),position:ml_probe_encode(position),value:ml_probe_encode(value),result:result.map(ml_probe_encode)});
 }
 console.log(JSON.stringify(ml_probe_rows));
-"#);
+");
     serde_json::from_str(&observe(&script)).unwrap()
 }
 
 fn constructed_private_array_javascript_contract(source: &str) -> Value {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
-    let script = r#"import {parseJavaScript} from './js/src/translation/javascript.js';
+    let script = r"import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
@@ -146,7 +146,7 @@ try{
   const surface=parseJavaScript(process.argv[1]),program=checkProgram(surface);
   process.stdout.write(JSON.stringify({accepted:true,surface,rust:emitRust(program).text,javascript:emitJavaScript(program).text}));
 }catch(error){process.stdout.write(JSON.stringify({accepted:false,kind:error.kind,reason:error.reason}));}
-"#;
+";
     let output = Command::new("node")
         .current_dir(root)
         .args(["--input-type=module", "-e", script, source])
@@ -193,7 +193,7 @@ fn constructed_private_arrays_and_guarded_updates_preserve_complete_observations
                 "const data=[];for(let index=0;index<count;index+=1){{data.push('');}}if({guard}){{data[position]=value;}}return data;"
             ),
             "string",
-            r#"['','前😀','\ud800']"#,
+            r"['','前😀','\ud800']",
             3,
         ),
     ] {
