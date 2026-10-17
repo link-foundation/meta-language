@@ -18,6 +18,11 @@ use super::tree::{SyntaxTree, public_tree};
 use crate::grammar::interchange::serialize_grammar;
 use crate::grammar::{Grammar, default_settling};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_included_range_rules::{
+    accept_grammar_selection_included_range_agreement,
+    accept_grammar_selection_included_range_candidate,
+    read_grammar_selection_included_range_context,
+};
 use crate::translation::grammar_selection_mapping_rules::read_grammar_selection_mapping_context;
 use crate::translation::grammar_selection_rules::{
     accept_grammar_selection_count, accept_grammar_selection_mapping,
@@ -460,31 +465,83 @@ impl Executor<'_> {
         let mappings = descriptor
             .candidates
             .iter()
-            .map(|(_, mapping)| mapping.to_string())
+            .map(|candidate| candidate.mapping.to_string())
             .collect::<Vec<_>>();
-        let context = number_index(read_grammar_selection_mapping_context(&mappings, in_token));
+        let range_context = number_index(read_grammar_selection_included_range_context(
+            &mappings, in_token,
+        ));
+        let context = if range_context == Some(0) {
+            number_index(read_grammar_selection_mapping_context(&mappings, in_token))
+        } else {
+            range_context
+        };
         if context == Some(2) {
             self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
-                "mapping":"json-string","detail":"mapped selection requires syntactic context and one common source mapping"}))?;
+                "mapping":if range_context == Some(2) {"included-ranges"} else {"json-string"},"detail":"mapped selection requires syntactic context and one common source mapping"}))?;
             return Ok(Vec::new());
+        }
+        let ranged = range_context == Some(1);
+        let mut ranges: Option<&[[f64; 2]]> = None;
+        if ranged {
+            if descriptor.candidates.iter().any(|candidate| {
+                !accept_grammar_selection_included_range_candidate(
+                    &candidate.kind,
+                    &candidate.mapping,
+                )
+            }) {
+                self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
+                    "mapping":"included-ranges","detail":"included ranges require an explicit grammar-range-candidate"}))?;
+                return Ok(Vec::new());
+            }
+            for candidate in &descriptor.candidates {
+                self.retain(candidate.ranges.len().saturating_mul(2).saturating_add(1))?;
+                let mut parameters = Vec::new();
+                for pair in &candidate.ranges {
+                    self.step()?;
+                    parameters.extend_from_slice(pair);
+                }
+                if let Some(first) = ranges {
+                    let first = first.iter().flatten().copied().collect::<Vec<_>>();
+                    if !accept_grammar_selection_included_range_agreement(&first, &parameters) {
+                        self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":start,
+                            "mapping":"included-ranges","detail":"included range candidates require one common ordered range plan"}))?;
+                        return Ok(Vec::new());
+                    }
+                } else {
+                    ranges = Some(&candidate.ranges);
+                }
+            }
         }
         let mapped = context == Some(1);
         let regions = self.evaluate(item, start, &skipped.state, !mapped)?;
         let mut results = Vec::new();
         for region in regions {
             let derived = if mapped {
-                let result = self
-                    .shared
-                    .selection_sources
-                    .borrow_mut()
-                    .map(self.bytes, start, region.end, self)?;
+                let result = if let Some(ranges) = ranges {
+                    self.shared
+                        .selection_sources
+                        .borrow_mut()
+                        .map_included(self.bytes, start, region.end, ranges, self)?
+                } else {
+                    self.shared
+                        .selection_sources
+                        .borrow_mut()
+                        .map(self.bytes, start, region.end, self)?
+                };
                 match result {
                     Ok(derived) => Some(derived),
                     Err(failed) => {
-                        self.remember_mapping_failure(json!({"reason":failed.reason,"start":failed.offset,"end":failed.offset,"mapping":"json-string"}))?;
+                        self.remember_mapping_failure(
+                            json!({"reason":failed.reason,"start":failed.offset,"end":failed.offset,
+                            "mapping":if ranged {"included-ranges"} else {"json-string"}}),
+                        )?;
                         self.fail(
                             failed.offset,
-                            &Name::from("a Unicode scalar JSON string source"),
+                            &Name::from(if ranged {
+                                "an ordered scalar-aligned source range view"
+                            } else {
+                                "a Unicode scalar JSON string source"
+                            }),
                         );
                         continue;
                     }
@@ -494,10 +551,12 @@ impl Executor<'_> {
             };
             let mut accepted = Vec::new();
             let mut candidates = Vec::new();
-            for (language, mapping) in &descriptor.candidates {
+            for candidate in &descriptor.candidates {
+                let language = &candidate.name;
+                let mapping = &candidate.mapping;
                 self.step()?;
                 self.retain(1)?;
-                if !accept_grammar_selection_mapping(mapping) {
+                if !ranged && !accept_grammar_selection_mapping(mapping) {
                     self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","language":&**language,"start":start,"end":region.end,"mapping":&**mapping}))?;
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unsupportedEmbeddingMapping","mapping":&**mapping}));
                     continue;
@@ -507,14 +566,19 @@ impl Executor<'_> {
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unknownGrammar"}));
                     continue;
                 };
-                let key = (
-                    Name::from(
-                        json!(["selection", &**mapping, &**language, start, region.end])
-                            .to_string(),
-                    ),
-                    start,
-                    region.end,
-                );
+                let parameters = if ranged {
+                    json!([
+                        "selection",
+                        &**mapping,
+                        &**language,
+                        start,
+                        region.end,
+                        ranges
+                    ])
+                } else {
+                    json!(["selection", &**mapping, &**language, start, region.end])
+                };
+                let key = (Name::from(parameters.to_string()), start, region.end);
                 let outcome = if let Some(outcome) = self.embed_memo.get(&key) {
                     Some(outcome.clone())
                 } else {
@@ -544,7 +608,8 @@ impl Executor<'_> {
                         let offset = if let Some(derived) = &derived {
                             let Some(cover) = mapped_cover(&derived.mapping, *farthest, *farthest)
                             else {
-                                self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":region.end,"mapping":"json-string"}))?;
+                                self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","start":start,"end":region.end,
+                                    "mapping":if ranged {"included-ranges"} else {"json-string"}}))?;
                                 continue;
                             };
                             candidates.push(json!({"language":&**language,"relation":"rejected","offset":cover[0],"expected":expected,
@@ -587,7 +652,11 @@ impl Executor<'_> {
             child.program = primary.program;
             child.selection = Some(Rc::new(SelectionMetadata {
                 mode: descriptor.mode.clone(),
-                mapping: Name::from(if mapped { "json-string" } else { "identity" }),
+                mapping: if mapped {
+                    descriptor.candidates[0].mapping.clone()
+                } else {
+                    Name::from("identity")
+                },
                 start,
                 end: region.end,
                 candidates,

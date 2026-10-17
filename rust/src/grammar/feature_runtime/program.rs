@@ -295,7 +295,16 @@ pub(super) enum Expr {
 #[derive(Clone, Debug)]
 pub(super) struct SelectionDescriptor {
     pub(super) mode: Name,
-    pub(super) candidates: Vec<(Name, Name)>,
+    pub(super) candidates: Vec<SelectionCandidate>,
+}
+
+/// One actual candidate form and its validated relative source byte pairs.
+#[derive(Clone, Debug)]
+pub(super) struct SelectionCandidate {
+    pub(super) kind: Name,
+    pub(super) name: Name,
+    pub(super) mapping: Name,
+    pub(super) ranges: Vec<[f64; 2]>,
 }
 
 /// One loaded rule; an instance of a parameterized rule keeps its kind.
