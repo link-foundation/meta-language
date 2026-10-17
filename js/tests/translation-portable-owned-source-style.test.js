@@ -10,6 +10,7 @@ import {STRING_PRELUDE} from '../src/translation/string-runtime.js';
 import {readPortableOwnedSourceStyles} from '../scripts/portable-owned-source-style.mjs';
 import {readGrammarSelectionMappingLibraryStyles} from '../scripts/grammar-selection-mapping-library-style.mjs';
 import {readPortableSourceParameterStyles, readPortableSourceLintStyles} from '../scripts/portable-source-library-style.mjs';
+import {mergeFamilyLibraryIdenticalBranches} from '../scripts/portable-conditional-source-style.mjs';
 
 const copies = source => (source.match(/\.clone\(\)/gu) ?? []).length;
 function review(source, options) {
@@ -307,7 +308,39 @@ test('mapping library empty-vector thunks become only the identical standard con
   const body = 'pub fn read_grammar_selection_mapped_cover(intervals: &[Vec<f64>], index: f64) -> Vec<f64> { '
     + '(self::ml_array::optional_at(intervals, self::ml_array::number_index(index))).unwrap_or_else(|| Vec::<f64>::new()) }';
   const source = provider + body;
-  assert.equal(reviewMappingLibraryStyle(source), source.replace('|| Vec::<f64>::new()', 'Vec::<f64>::new'));
+  const expected = source.replace('.unwrap_or_else(|| Vec::<f64>::new())', '.unwrap_or_default()');
+  assert.equal(reviewMappingLibraryStyle(source), expected);
+  const historical = source.replace('|| Vec::<f64>::new()', 'Vec::<f64>::new');
+  assert.equal(reviewMappingLibraryStyle(historical), expected,
+    'the historical standard constructor item and its original lazy closure share the same standard empty default');
+  const hashLiteral = 'pub fn hash_control(label: &str, flag: bool) -> Vec<f64> { '
+    + 'if (label == "#") { vec![-1f64] } else if flag { vec![-1f64] } else { vec![1f64] } }';
+  const mergedHash = mergeFamilyLibraryIdenticalBranches(hashLiteral);
+  assert.notEqual(mergedHash, hashLiteral, 'a literal hash cannot claim an actual attribute frame');
+  assert.ok(mergedHash.includes('label == "#"'));
+  assert.equal((mergedHash.match(/vec!\[-1f64\]/gu) ?? []).length, 1);
+  for (const actualAttribute of ['#[opaque]\n', '#[opaque(anything)]\n']) {
+    const opaque = actualAttribute + hashLiteral;
+    assert.equal(mergeFamilyLibraryIdenticalBranches(opaque), opaque,
+      'an actual unknown attribute still refuses standard macro provenance');
+  }
+  const callback = 'pub fn callback_guard(value: Option<String>, flag: bool) -> Vec<f64> { '
+    + 'if flag { vec![-1f64] } else if (value.map_or_else(|| String::from("undefined"), '
+    + '|present| { let _=present; String::from("string") })) != "string" { vec![-1f64] } else { vec![1f64] } }';
+  assert.equal(mergeFamilyLibraryIdenticalBranches(callback), callback, 'the generic rule retains its original binding refusal');
+  const scoped = {closedOptionStringPresence: true};
+  const mergedCallback = mergeFamilyLibraryIdenticalBranches(callback, scoped);
+  assert.notEqual(mergedCallback, callback);
+  assert.ok(mergedCallback.includes('|present| { let _=present; String::from("string") }'));
+  assert.equal((mergedCallback.match(/vec!\[-1f64\]/gu) ?? []).length, 1);
+  for (const refused of [
+    callback.replace('let _=present;', 'let leaked=present;'),
+    callback.replace('let _=present;', 'let _=other;'),
+    callback.replace('String::from("string")', 'unknown!(present)'),
+    callback.replace('if flag', 'if let Some(flag) = candidate'),
+    '#[opaque]\n' + callback,
+  ]) assert.equal(mergeFamilyLibraryIdenticalBranches(refused, scoped), refused,
+    'if-let, leaked bindings, unknown arms and opaque macro scope never inherit the closed callback proof');
   for (const refused of [
     source.replace('values.get(index)', 'values.custom(index)'),
     source.replace('|| Vec::<f64>::new()', '|| { self::observe(); Vec::<f64>::new() }'),

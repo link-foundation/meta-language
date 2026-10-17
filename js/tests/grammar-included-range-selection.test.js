@@ -11,6 +11,8 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { encodeStructuredDataLinks, decodeStructuredDataLinks, readStructuredDataLino } from '../src/structured-data-links.js';
 import { createGlobalConceptSpace, globalConceptSpaceToLinks,
   createGlobalConceptSpaceParser } from '../src/global-concept-space.js';
+import { DecoratorSet } from '../src/decorators.js';
+import { readGrammarSelectionRangeLibraryStyles } from '../scripts/generate-grammar-selection-included-range-rules.mjs';
 import {
   acceptGrammarSelectionIncludedRangeMapping,
   readGrammarSelectionIncludedRangeContext,
@@ -241,6 +243,32 @@ test('streamed scalar correspondence preserves the original multibyte excluded-r
   assert.deepEqual(result, [42, 195, 169, 10, 206, 178, 42]);
   assert.equal(new TextDecoder('utf-8', { fatal: true }).decode(Uint8Array.from(result)), '*é\nβ*');
   assert.deepEqual(readGrammarSelectionIncludedRangePart(plan, 0, 0, 1, 1), []);
+  const provider = 'pub mod ml_array { pub fn optional_at<T: Clone>(values: &[T], index: Option<usize>) -> Option<T> { index.and_then(|index| values.get(index)).cloned() } }\n';
+  const numeric = provider + 'pub fn read_grammar_selection_included_range_part(plan: &[f64], row: f64) -> Vec<f64> { '
+    + 'let end = (self::ml_array::optional_at(plan, self::ml_array::number_index(row))).unwrap_or_else(|| -1f64); '
+    + 'let next = (self::ml_array::optional_at(plan, self::ml_array::number_index(row + 1f64))).unwrap_or_else(|| end); vec![end, next] }';
+  for (const source of [numeric, numeric.replace('read_grammar_selection_included_range_part', 'read_grammar_selection_field_range_plan')]) {
+    const styled = readGrammarSelectionRangeLibraryStyles(source);
+    assert.equal(styled.actions.length, 1, 'one complete numeric source owner retains both scalar defaults');
+    assert.equal(styled.source, source.replaceAll('.unwrap_or_else(||', '.unwrap_or('));
+    const record = new DecoratorSet([{id: 'range-scalar-default-control', level: 'emitter', order: 0,
+      when: [['format', 'Rust']], actions: styled.actions}]);
+    assert.equal(record.decorate('emitter', {format: 'Rust', source}).source, styled.source);
+    assert.equal(styled.source.replace(styled.actions[0].to, styled.actions[0].from), source);
+    assert.deepEqual(readGrammarSelectionRangeLibraryStyles(styled.source), {source: styled.source, actions: []});
+    for (const refused of [
+      source.replace('plan: &[f64]', 'plan: &[Custom]'),
+      source.replace('values.get(index)', 'values.custom(index)'),
+      source.replace('|| -1f64', '|| /* retain */ -1f64'),
+      source.replace('|| -1f64', '|| observe()'),
+      'type f64=Custom;\n' + source, 'use custom::*;\n' + source,
+      source.replace('pub fn read_', '#[custom]\npub fn read_'),
+    ]) assert.deepEqual(readGrammarSelectionRangeLibraryStyles(refused), {source: refused, actions: []});
+    const unknown = source.replace('|| end', '|| unknown');
+    assert.ok(readGrammarSelectionRangeLibraryStyles(unknown).source.includes('.unwrap_or_else(|| unknown)'));
+    const note = '\nconst NOTE:&str=r#".unwrap_or_else(|| end)"#;\n';
+    assert.equal(readGrammarSelectionRangeLibraryStyles(source + note).source, styled.source + note);
+  }
 });
 
 test('actual valid UTF-8 source boundaries exclude every continuation byte', () => {

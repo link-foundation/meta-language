@@ -68,7 +68,7 @@ pub fn read_grammar_selection_mapped_cover(
                 intervals,
                 self::ml_array::number_index((intervals.len() as f64) - 1f64),
             ))
-            .unwrap_or_else(Vec::<f64>::new);
+            .unwrap_or_default();
             if ((closing.len() as f64) != 4f64)
                 || (end
                     > ((self::ml_array::optional_at(&closing, self::ml_array::number_index(3f64)))
@@ -104,7 +104,7 @@ pub fn read_grammar_selection_mapped_cover(
                             match ml_s12 {
                                     self::MlReadGrammarSelectionMappedCoverLoop12Result::MlReadGrammarSelectionMappedCoverLoop12Done(low_2, high_2) => {
                                         {
-                                            let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_else(Vec::<f64>::new);
+                                            let first = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_2))).unwrap_or_default();
                                             if (((first.len() as f64) != 4f64) || (((self::ml_array::optional_at(&first, self::ml_array::number_index(2f64))).unwrap_or_else(|| -1f64)) > start)) || (start >= ((self::ml_array::optional_at(&first, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {
                                                 Vec::<f64>::new()
                                             } else if start == end {
@@ -115,7 +115,7 @@ pub fn read_grammar_selection_mapped_cover(
                                                         {
                                                             let low_3 = self::ml_read_grammar_selection_mapped_cover_loop13(intervals, end, low_2, high_3);
                                                             {
-                                                                let last = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_3))).unwrap_or_else(Vec::<f64>::new);
+                                                                let last = (self::ml_array::optional_at(intervals, self::ml_array::number_index(low_3))).unwrap_or_default();
                                                                 if ((last.len() as f64) != 4f64) || (end > ((self::ml_array::optional_at(&last, self::ml_array::number_index(3f64))).unwrap_or_else(|| -1f64))) {
                                                                     Vec::<f64>::new()
                                                                 } else {
@@ -617,7 +617,7 @@ pub fn ml_read_grammar_selection_mapped_cover_loop13(
                         intervals,
                         self::ml_array::number_index(middle),
                     ))
-                    .unwrap_or_else(Vec::<f64>::new);
+                    .unwrap_or_default();
                     if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))
                         .unwrap_or_else(|| -1f64))
                         < end
@@ -669,7 +669,7 @@ pub fn ml_read_grammar_selection_mapped_cover_loop12(
                         intervals,
                         self::ml_array::number_index(middle),
                     ))
-                    .unwrap_or_else(Vec::<f64>::new);
+                    .unwrap_or_default();
                     if ((self::ml_array::optional_at(&row, self::ml_array::number_index(3f64)))
                         .unwrap_or_else(|| -1f64))
                         <= start

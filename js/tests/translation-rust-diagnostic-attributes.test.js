@@ -170,8 +170,16 @@ test('private complete diagnostic module retains every owner and decision throug
   const strings = /\.unwrap_or_else\(\|\| String::new\(\)\)/gu, number = /\.unwrap_or_else\(\|\| -1f64\)/gu;
   assert.equal([...reviewed.matchAll(strings)].length, 37);
   assert.equal([...reviewed.matchAll(number)].length, 1);
-  assert.equal(styled.source, reviewed.replace(strings, '.unwrap_or_default()').replace(number, '.unwrap_or(-1f64)'),
-    'all and only the actual String defaults and side-effect-free numeric constant fallbacks change');
+  const {readSourceTextRustBlock} = await import('../scripts/source-text-byte-library-style.mjs');
+  const fallbackOnly = reviewed.replace(strings, '.unwrap_or_default()').replace(number, '.unwrap_or(-1f64)');
+  const planBefore = readSourceTextRustBlock(fallbackOnly, 'fn', 'plan_rust_diagnostic_attribute');
+  const planAfter = readSourceTextRustBlock(styled.source, 'fn', 'plan_rust_diagnostic_attribute');
+  assert.equal(styled.source.replace(planAfter, planBefore), fallbackOnly,
+    'outside the one authenticated branch owner, only the original String defaults and pure scalar fallbacks change');
+  assert.match(planAfter, /\.map_or_else\(\|\| String::from\("undefined"\), \|ml_present\| \{\s*let _ = ml_present;\s*String::from\("string"\)\s*\}\)/u,
+    'the same owned present arm and distinct absent arm remain lazy with their original binding and body');
+  assert.equal((planAfter.match(/vec!\[\s*(?:\(\s*)?-1f64\s*\)?\s*\]/gu) ?? []).length, 2,
+    'the two original refusal regions each retain one identical allocation after ordered short-circuit guard merging');
   const recorded = new DecoratorSet([{id: 'diagnostic-fallback-control', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: styled.actions}]);
   assert.equal(recorded.decorate('emitter', {format: 'Rust', source: reviewed}).source, styled.source);

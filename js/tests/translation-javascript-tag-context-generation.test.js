@@ -62,7 +62,10 @@ test('tag context library styles retain both complete owners Number boundaries a
     ['read_java_script_tag_binding_step', 'read_java_script_tag_declared_owner']);
   const [binding, owner] = result.actions;
   assert.equal(binding.to, binding.from.replace(/^pub fn /u, 'pub const fn '));
-  assert.equal(owner.to, owner.from.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_else(String::new)'));
+  assert.equal(owner.to, owner.from.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_default()'));
+  const historical = owner.from.replace('.unwrap_or_else(|| String::new())', '.unwrap_or_else(String::new)');
+  assert.equal(readJavaScriptTagContextLibraryStyles(reviewed.replace(owner.from, historical)).source, result.source,
+    'the historical function-item input retains the same lazy standard String default');
   const recorded = new DecoratorSet([{id: 'tag-context-library-control', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: result.actions}]);
   assert.equal(recorded.decorate('emitter', {format: 'Rust', source: reviewed}).source, result.source);
@@ -102,7 +105,7 @@ test('tag context library styles retain both complete owners Number boundaries a
     owner.from.replace('|| String::new()', '|| { observe(); String::new() }'),
     owner.from.replace('|| String::new()', '|| /* retained */ String::new()'),
     'type f64=Custom;\n' + binding.from, 'type bool=Custom;\n' + binding.from,
-    'struct String;\n' + owner.from, 'use custom::*;\n' + owner.from,
+    'struct String;\n' + owner.from, 'type Option<T>=Custom<T>;\n' + owner.from, 'use custom::*;\n' + owner.from,
     'macro_rules! opaque { () => {' + binding.from + '} }',
     '#[custom(' + binding.from + ')]\npub fn untouched() {}',
     binding.from + '\n' + binding.from,

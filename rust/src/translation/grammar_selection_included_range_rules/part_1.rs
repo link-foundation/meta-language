@@ -388,23 +388,23 @@ pub fn read_grammar_selection_included_range_part(
     } else {
         {
             let start = (self::ml_array::optional_at(plan, self::ml_array::number_index(row)))
-                .unwrap_or_else(|| -1f64);
+                .unwrap_or(-1f64);
             {
                 let end =
                     (self::ml_array::optional_at(plan, self::ml_array::number_index(row + 1f64)))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                 {
                     let output_start = (self::ml_array::optional_at(
                         plan,
                         self::ml_array::number_index(row + 2f64),
                     ))
-                    .unwrap_or_else(|| -1f64);
+                    .unwrap_or(-1f64);
                     {
                         let output_end = (self::ml_array::optional_at(
                             plan,
                             self::ml_array::number_index(row + 3f64),
                         ))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                         {
                             let following = row + 4f64;
                             {
@@ -412,7 +412,7 @@ pub fn read_grammar_selection_included_range_part(
                                     plan,
                                     self::ml_array::number_index(following),
                                 ))
-                                .unwrap_or_else(|| end);
+                                .unwrap_or(end);
                                 if output_start == output_end {
                                     if (position != start) || (output != output_start) {
                                         Vec::<f64>::new()
@@ -665,13 +665,13 @@ pub fn ml_read_grammar_selection_included_range_plan_loop4(
             {
                 let start =
                     (self::ml_array::optional_at(ranges, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                 {
                     let end = (self::ml_array::optional_at(
                         ranges,
                         self::ml_array::number_index(index + 1f64),
                     ))
-                    .unwrap_or_else(|| -1f64);
+                    .unwrap_or(-1f64);
                     if (!(self::accept_grammar_selection_included_range_source_range(
                         "source-range",
                         start,

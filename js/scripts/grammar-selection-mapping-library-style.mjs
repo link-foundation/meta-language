@@ -121,13 +121,14 @@ export function readGrammarSelectionMappingLibraryStyles(source) {
       for (let at = body + 1; at < tokens.length - 1; at += 1) {
         if (words(at, at + 3) !== '.unwrap_or_else(') continue;
         const end = matching.get(at + 2);
-        if (words(at + 3, end) !== '||Vec::<f64>::new()' || !clean(at + 3, end) || tokens[at - 1]?.value !== ')') continue;
+        if (!['||Vec::<f64>::new()', 'Vec::<f64>::new'].includes(words(at + 3, end))
+          || !clean(at, end + 1) || tokens[at - 1]?.value !== ')') continue;
         let first = matching.get(at - 1), last = at;
         while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
         if (words(first, first + 6) !== 'self::ml_array::optional_at('
           || tokens[first + 6]?.value !== 'intervals' || tokens[first + 7]?.value !== ','
           || matching.get(first + 5) !== last - 1) continue;
-        edits.push([tokens[at + 3].start, tokens[end - 1].end, 'Vec::<f64>::new']);
+        edits.push([tokens[at].start, tokens[end].end, '.unwrap_or_default()']);
       }
       let shadowed = false;
       for (let at = body + 1; at < tokens.length - 1; at += 1) {

@@ -228,8 +228,7 @@ pub fn read_java_script_tag_declared_owner(
             _ => false,
         }
     {
-        (self::ml_array::optional_at(path, self::ml_array::number_index(1f64)))
-            .unwrap_or_else(String::new)
+        (self::ml_array::optional_at(path, self::ml_array::number_index(1f64))).unwrap_or_default()
     } else {
         String::new()
     }

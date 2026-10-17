@@ -79,6 +79,102 @@ function nativeParameters(value) {
   });
 }
 
+/** Eagerly read only proved primitive scalar defaults on actual numeric columns. */
+export function readGrammarSelectionRangeLibraryStyles(source) {
+  const items = readRustLibraryItems(source).items;
+  const complete = tokenize(source, 'Rust').tokens;
+  const protectedNames = new Set(['f64', 'Vec', 'Option', 'std', 'core']);
+  for (let at = 0; at < complete.length; at += 1) {
+    const token = complete[at];
+    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return { source, actions: [] };
+    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {
+      const next = complete[at + 1]?.value === 'mut' ? at + 2 : at + 1;
+      if (protectedNames.has(complete[next]?.value)) return { source, actions: [] };
+    }
+    if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return { source, actions: [] };
+    if (token.kind === 'punct' && token.value === '#') {
+      const open = complete[at + 1]?.value === '!' ? at + 2 : at + 1;
+      if (complete[open]?.value !== '[' || !['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(complete[open + 1]?.value)) return { source, actions: [] };
+    }
+  }
+  const spelling = text => tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof')
+    .map(token => token.kind === 'number' ? token.raw : token.value).join('');
+  const arrays = items.filter(item => item.kind === 'mod' && item.name === 'ml_array');
+  if (arrays.length !== 1 || spelling(readSourceTextRustBlock(arrays[0].source, 'fn', 'optional_at'))
+    !== 'pubfnoptional_at<T:Clone>(values:&[T],index:Option<usize>)->Option<T>{index.and_then(|index|values.get(index)).cloned()}') return { source, actions: [] };
+  let adapted = source;
+  const actions = [];
+  for (const item of items.filter(item => item.kind === 'fn'
+    && /^(?:read|ml_read)_grammar_selection_(?:included|field)_range_/u.test(item.name))) {
+    if (items.filter(candidate => candidate.kind === 'fn' && candidate.name === item.name).length !== 1) continue;
+    const block = item.source, header = /\bfn \w+\(([^)]*)\)\s*->\s*([^{}]+)\{/u.exec(block);
+    if (!header) continue;
+    const parameters = nativeParameters(header[1]);
+    const columns = new Set(parameters.flatMap(parameter => /^(?:mut )?(\w+):&\[f64\]$/u.exec(parameter)?.[1] ?? []));
+    if (columns.size === 0) continue;
+    const { tokens, comments } = tokenize(block, 'Rust'), matching = new Map(), stack = [], bindings = new Map();
+    for (let at = 0; at < tokens.length; at += 1) {
+      if (tokens[at].kind === 'identifier' && tokens[at].value === 'let') {
+        const name = tokens[at + 1]?.value === 'mut' ? tokens[at + 2]?.value : tokens[at + 1]?.value;
+        bindings.set(name, (bindings.get(name) ?? 0) + 1);
+      }
+      if (tokens[at].kind !== 'punct') continue;
+      if (['(', '[', '{'].includes(tokens[at].value)) stack.push(at);
+      else if ([')', ']', '}'].includes(tokens[at].value)) {
+        const open = stack.pop();
+        assert.equal(tokens[open]?.value, { ')': '(', ']': '[', '}': '{' }[tokens[at].value]);
+        matching.set(open, at); matching.set(at, open);
+      }
+    }
+    assert.equal(stack.length, 0, 'numeric fallback styles retain complete owner delimiters');
+    if ([...columns].some(name => bindings.has(name))) continue;
+    const words = (first, last) => tokens.slice(first, last).map(token => token.kind === 'number' ? token.raw : token.value).join('');
+    const reads = [];
+    for (let at = 0; at < tokens.length; at += 1) {
+      if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'unwrap_or_else'
+        || tokens[at + 2]?.value !== '(' || tokens[at - 1]?.value !== ')') continue;
+      const end = matching.get(at + 2), receiver = matching.get(at - 1);
+      if (end === undefined || receiver === undefined) continue;
+      let first = receiver, last = at;
+      if (tokens[first - 1]?.value === 'optional_at') first -= 5;
+      const start = first;
+      while (tokens[first]?.value === '(' && matching.get(first) === last - 1) { first += 1; last -= 1; }
+      if (words(first, first + 6) !== 'self::ml_array::optional_at(' || matching.get(first + 5) !== last - 1
+        || !columns.has(tokens[first + 6]?.value) || tokens[first + 7]?.value !== ',') continue;
+      if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) continue;
+      reads.push({ at, end, start, fallback: words(at + 3, end) });
+    }
+    const scalars = new Set(parameters.flatMap(parameter => /^(?:mut )?(\w+):f64$/u.exec(parameter)?.[1] ?? []));
+    for (const name of bindings.keys()) scalars.delete(name);
+    for (const read of reads) if (read.fallback === '||-1f64' && tokens[read.start - 3]?.value === 'let'
+      && tokens[read.start - 2]?.kind === 'identifier' && tokens[read.start - 1]?.value === '='
+      && tokens[read.end + 1]?.value === ';' && bindings.get(tokens[read.start - 2].value) === 1) scalars.add(tokens[read.start - 2].value);
+    const ownFunction = tokens.findIndex(token => token.kind === 'identifier' && token.value === 'fn');
+    const simpleBindings = !tokens.some((token, at) => token.kind === 'punct' && token.value === '|'
+      || token.kind === 'identifier' && (['for', 'match', 'move', 'ref', 'use'].includes(token.value)
+        || token.value === 'fn' && at !== ownFunction));
+    const edits = [];
+    for (const read of reads) {
+      const value = read.fallback.slice(2);
+      if (read.fallback !== '||-1f64' && !(simpleBindings && /^\|\|[A-Za-z_][A-Za-z_0-9]*$/u.test(read.fallback)
+        && scalars.has(value) && (!bindings.has(value) || bindings.get(value) === 1))) continue;
+      edits.push([tokens[read.at + 1].start, tokens[read.at + 1].end, 'unwrap_or'],
+        [tokens[read.at + 3].start, tokens[read.at + 3].end, '']);
+    }
+    let styled = block, boundary = block.length;
+    for (const [start, end, text] of edits.sort((left, right) => right[0] - left[0])) {
+      assert.ok(end <= boundary, 'the original numeric fallback edits are disjoint');
+      styled = styled.slice(0, start) + text + styled.slice(end); boundary = start;
+    }
+    if (styled !== block) {
+      assert.equal(adapted.split(block).length, 2, 'one complete actual numeric owner is recorded');
+      actions.push({ op: 'replace', field: 'source', from: block, to: styled });
+      adapted = adapted.replace(block, styled);
+    }
+  }
+  return { source: adapted, actions };
+}
+
 function rejectInputCopies(block, names) {
   const tokens = tokenize(block, 'Rust').tokens, matching = new Map(), stack = [];
   for (let index = 0; index < tokens.length; index += 1) {
@@ -184,7 +280,7 @@ export async function generateGrammarSelectionIncludedRangeRules({ check = false
       replays.push({ format, checkedNamedSourceInventory: restoredOwners,
         emittedTextBytes: Buffer.byteLength(replay.text), emittedTextSha256: digest(replay.text) });
     }
-    const files = writeRecordRuleLibrary(emitted, libraryName, { check });
+    const files = writeRecordRuleLibrary(emitted, libraryName, { check, sourceStyles: readGrammarSelectionRangeLibraryStyles });
     const library = readGrammarSelectionIncludedRangeLibraryInterface(files, emitted, owners);
     artifact = { schemaVersion: 1, model: policy.model, source: closed.source,
       sourceSha256: closed.sourceSha256, sourceClosure: closed.sourceClosure,

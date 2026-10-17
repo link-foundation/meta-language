@@ -144,7 +144,7 @@ export function readJavaScriptTagContextNativeParameters(value) {
 }
 
 // These two complete generated owners admit only a keyword qualification and
-// the same lazy standard constructor as a function item. No body is rebuilt.
+// the same lazy standard empty String default. No body is rebuilt.
 export function readJavaScriptTagContextLibraryStyles(source) {
   const {tokens, comments} = tokenize(source, 'Rust'), matching = new Map(), stack = [];
   const unchanged = () => ({source, actions: []});
@@ -153,7 +153,7 @@ export function readJavaScriptTagContextLibraryStyles(source) {
     if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return unchanged();
     if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {
       const next = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;
-      if (['f64', 'bool', 'String', 'std', 'core'].includes(tokens[next]?.value)) return unchanged();
+      if (['f64', 'bool', 'String', 'Option', 'Vec', 'std', 'core'].includes(tokens[next]?.value)) return unchanged();
     }
     if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return unchanged();
     if (token.kind !== 'punct') continue;
@@ -190,6 +190,18 @@ export function readJavaScriptTagContextLibraryStyles(source) {
   const expectedBinding = 'pub fn read_java_script_tag_binding_step(owns_binding:bool,boundary:f64)->f64{if owns_binding{1f64}else if boundary==0f64{0f64}else{2f64}}';
   const expectedOwner = 'pub fn read_java_script_tag_declared_owner(kind:&str,path:&[String],name:&str,root:&str)->String{if kind=="data"{name.to_owned()}else if ((kind=="named")&&((path.len() as f64)==2f64))&&match(self::ml_array::optional_at(path,self::ml_array::number_index(0f64)),root.to_owned()){(Some(ml_left),ml_right)=>ml_left==ml_right,_=>false}{(self::ml_array::optional_at(path,self::ml_array::number_index(1f64))).unwrap_or_else(||String::new())}else{String::new()}}';
   const tokenKey = text => JSON.stringify(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof').map(token => [token.kind, token.raw]));
+  const arrays = tokens.flatMap((token, at) => token.kind === 'identifier' && token.value === 'mod'
+    && tokens[at + 1]?.value === 'ml_array' && tokens[at + 2]?.value === '{' ? [at + 2] : []);
+  const optional = tokens.flatMap((token, at) => token.kind === 'identifier' && token.value === 'fn'
+    && tokens[at + 1]?.value === 'optional_at' ? [at] : []);
+  let optionalOwned = false;
+  if (arrays.length === 1 && optional.length === 1 && optional[0] > arrays[0] && optional[0] < matching.get(arrays[0])) {
+    let body = optional[0] + 2;
+    while (body < tokens.length && tokens[body].value !== '{') body += 1;
+    const end = matching.get(body);
+    optionalOwned = end !== undefined && tokenKey(source.slice(tokens[optional[0]].start, tokens[end].end))
+      === tokenKey('fn optional_at<T:Clone>(values:&[T],index:Option<usize>)->Option<T>{index.and_then(|index|values.get(index)).cloned()}');
+  }
   let adapted = source;
   const actions = [];
   for (const [name, expected] of [['read_java_script_tag_binding_step', expectedBinding], ['read_java_script_tag_declared_owner', expectedOwner]]) {
@@ -200,17 +212,20 @@ export function readJavaScriptTagContextLibraryStyles(source) {
     if (source.split(from).length !== 2) continue;
     const ordinary = fn.keyword === fn.at + 2 ? from.replace(/^pub\s+const\s+fn/u, 'pub fn') : from;
     const expanded = name === 'read_java_script_tag_declared_owner'
-      ? ordinary.replace(/\.unwrap_or_else\(\s*String\s*::\s*new\s*\)/u, '.unwrap_or_else(||String::new())') : ordinary;
+      ? ordinary.replace(/\.unwrap_or_else\(\s*String\s*::\s*new\s*\)/u, '.unwrap_or_else(||String::new())')
+        .replace(/\.unwrap_or_default\(\s*\)/u, '.unwrap_or_else(||String::new())') : ordinary;
     if (tokenKey(expanded) !== tokenKey(expected)) continue;
     let to = from;
     if (name === 'read_java_script_tag_binding_step' && fn.keyword === fn.at + 1) {
       to = from.slice(0, tokens[fn.keyword].start - start) + 'const ' + from.slice(tokens[fn.keyword].start - start);
     } else if (name === 'read_java_script_tag_declared_owner') {
+      if (!optionalOwned) continue;
       for (let at = fn.keyword; at < fn.end; at += 1) {
-        if (tokens[at].value !== '||' || tokens.slice(at + 1, at + 6).map(token => token.value).join(' ') !== 'String :: new ( )') continue;
-        if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[at + 5].end)) continue;
-        to = from.slice(0, tokens[at].start - start) + source.slice(tokens[at + 1].start, tokens[at + 3].end)
-          + from.slice(tokens[at + 5].end - start);
+        if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'unwrap_or_else' || tokens[at + 2]?.value !== '(') continue;
+        const end = matching.get(at + 2);
+        if (!['|| String :: new ( )', 'String :: new'].includes(tokens.slice(at + 3, end).map(token => token.value).join(' '))) continue;
+        if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) continue;
+        to = from.slice(0, tokens[at].start - start) + '.unwrap_or_default()' + from.slice(tokens[end].end - start);
       }
     }
     if (from !== to) {

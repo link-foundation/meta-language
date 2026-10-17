@@ -19,7 +19,7 @@ function readFamilyLibraryTokens(source) {
   const opaque = new Set(), frames = [];
   for (let index = 0; index < tokens.length; index += 1) {
     const macro = tokens[index].kind === 'macro';
-    const attribute = tokens[index].value === '#';
+    const attribute = tokens[index].kind === 'punct' && tokens[index].value === '#';
     const namedMacro = macro && tokens[index].value === 'macro_rules' && tokens[index + 1]?.kind === 'identifier';
     const open = index + (namedMacro || attribute && tokens[index + 1]?.value === '!' ? 2 : 1);
     if (!(macro || attribute) || !matching.has(open)) continue;
@@ -463,7 +463,7 @@ export function flattenFamilyLibraryElseIf(source) {
 }
 
 /** Merge exact sibling bodies; || retains the original conditional order. */
-export function mergeFamilyLibraryIdenticalBranches(source, {context = source} = {}) {
+export function mergeFamilyLibraryIdenticalBranches(source, {context = source, closedOptionStringPresence = false} = {}) {
   const standardMacros = acceptFamilyLibraryStandardMacros(readFamilyLibraryTokens(context));
   for (let pass = 0; pass < 100; pass += 1) {
     const {tokens, matching, opaque} = readFamilyLibraryTokens(source);
@@ -492,9 +492,29 @@ export function mergeFamilyLibraryIdenticalBranches(source, {context = source} =
       }
       if (commented) continue;
       // A condition-local binding cannot be read by a merged sibling body.
-      const firstCondition = tokens.slice(index + 1, first.open);
-      const secondCondition = tokens.slice(second.start + 1, second.open);
-      if ([...firstCondition, ...secondCondition].some(token => token.kind !== 'string' && ['let', '{', '}'].includes(token.value))) continue;
+      const conditions = [[index + 1, first.open], [second.start + 1, second.open]], closed = new Set();
+      if (closedOptionStringPresence === true) for (const [begin, end] of conditions) {
+        for (let at = begin; at < end; at += 1) {
+          if (tokens[at].value !== '.' || tokens[at + 1]?.value !== 'map_or_else' || tokens[at + 2]?.value !== '(') continue;
+          const open = at + 2, close = matching.get(open), argument = open + 1;
+          const parameter = argument + 8, binding = tokens[parameter + 1]?.value, body = parameter + 3;
+          const bodyEnd = matching.get(body);
+          if (close === undefined || close >= end || bodyEnd !== close - 1
+            || tokens[parameter + 1]?.kind !== 'identifier') continue;
+          const key = sequence => JSON.stringify(sequence.map(token => [token.kind, token.raw]));
+          const expected = text => key(tokenize(text, 'Rust').tokens.filter(token => token.kind !== 'eof'));
+          if (key(tokens.slice(argument, parameter)) !== expected('||String::from("undefined"),')
+            || key(tokens.slice(parameter, bodyEnd + 1)) !== expected('|' + binding
+              + '|{let _=' + binding + ';String::from("string")}')) continue;
+          // This exact complete callback has only its own owned parameter and
+          // a wildcard let. Neither introduces a binding visible to an if arm.
+          // The authenticated family caller separately proves standard Option
+          // and String ownership; both callback bodies retain every byte.
+          for (let inner = body; inner <= bodyEnd; inner += 1) closed.add(inner);
+        }
+      }
+      if (conditions.some(([begin, end]) => tokens.slice(begin, end).some((token, offset) =>
+        !closed.has(begin + offset) && token.kind !== 'string' && ['let', '{', '}'].includes(token.value)))) continue;
       // A copied macro may observe its original span or expand with distinct
       // hygiene. Only an authenticated standard vec invocation is reusable;
       // nested unknown macros and qualified custom vec names remain refused.

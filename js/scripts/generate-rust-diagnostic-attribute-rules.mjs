@@ -6,6 +6,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {RUST_DIAGNOSTIC_ATTRIBUTE_POLICY, readRustDiagnosticAttributeRuleSource} from './rust-diagnostic-attribute-policy.mjs';
 import {checkProjectData, writeProjectData} from './project-data.mjs';
+import {mergeFamilyLibraryIdenticalBranches} from './portable-conditional-source-style.mjs';
 
 const root = new URL('../../', import.meta.url);
 const sourcePath = 'js/src/translation/rust-diagnostic-attribute-rules.js';
@@ -107,8 +108,39 @@ export function readRustDiagnosticAttributeLibraryStyles(source, tokenize) {
       if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) return unchanged();
       edits.push({start: tokens[at].start, end: tokens[end].end, to: numeric ? '.unwrap_or(-1f64)' : '.unwrap_or_default()'});
     }
+    if (fn.name === 'plan_rust_diagnostic_attribute') for (let at = fn.body + 1; at < fn.end; at += 1) {
+      if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'match') continue;
+      let open = at + 1;
+      while (open < fn.end && tokens[open].value !== '{') open = matching.get(open) > open ? matching.get(open) + 1 : open + 1;
+      const end = matching.get(open), first = open + 1, presentEnd = matching.get(first + 5);
+      if (end === undefined || presentEnd === undefined || tokens[first]?.value !== 'Some'
+        || tokens[first + 2]?.kind !== 'identifier') continue;
+      if (key(tokens.slice(at + 1, open)) !== signature('self::ml_array::optional_at(values,self::ml_array::number_index(start+10f64))')) continue;
+      const binding = tokens[first + 2].value;
+      if (key(tokens.slice(first, presentEnd + 1)) !== signature('Some(' + binding
+        + ')=>{let _=' + binding + ';String::from("string")}')) continue;
+      let missing = presentEnd + 1;
+      if (tokens[missing]?.value === ',') missing += 1;
+      const last = tokens[end - 1]?.value === ',' ? end - 1 : end;
+      if (key(tokens.slice(missing, last)) !== signature('None=>String::from("undefined")')) continue;
+      if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[end].end)) continue;
+      const selected = source.slice(tokens[at + 1].start, tokens[open].start).trim();
+      const present = source.slice(tokens[first + 5].start, tokens[presentEnd].end);
+      const absent = source.slice(tokens[missing + 2].start, tokens[last - 1].end);
+      edits.push({start: tokens[at].start, end: tokens[end].end,
+        to: '(' + selected + ').map_or_else(|| ' + absent + ', |' + binding + '| ' + present + ')'});
+    }
     let to = from;
-    for (const edit of edits.reverse()) to = to.slice(0, edit.start - tokens[fn.at].start) + edit.to + to.slice(edit.end - tokens[fn.at].start);
+    let boundary = tokens[fn.end].end;
+    for (const edit of edits.sort((left, right) => right.start - left.start)) {
+      assert.ok(edit.end <= boundary, 'the actual diagnostic owner styles have disjoint source spans');
+      to = to.slice(0, edit.start - tokens[fn.at].start) + edit.to + to.slice(edit.end - tokens[fn.at].start);
+      boundary = edit.start;
+    }
+    // The complete family guard above authenticates standard types/macros.
+    // Re-run the existing exact sibling-body proof after optional-read styles.
+    if (fn.name === 'plan_rust_diagnostic_attribute') to = mergeFamilyLibraryIdenticalBranches(to,
+      {context: to, closedOptionStringPresence: true});
     if (from !== to) { actions.push({op: 'replace', field: 'source', from, to}); adapted = adapted.replace(from, to); }
   }
   return {source: adapted, actions};

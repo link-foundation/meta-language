@@ -206,102 +206,131 @@ pub fn accept_rust_diagnostic_attribute_offset(value: f64) -> bool {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start: f64) -> Vec<f64> {
-    if (((kinds.len() as f64) != (values.len() as f64))
+    if ((((((((((((((kinds.len() as f64) != (values.len() as f64))
         || !(self::accept_rust_diagnostic_attribute_offset(start)))
-        || (((kinds.len() as f64) - start) < 13f64)
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))
-        .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start)))
+        || (((kinds.len() as f64) - start) < 13f64))
+        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start)))
             .unwrap_or_default())
-            != "#")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 1f64)))
-        .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 1f64)))
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start),
+            ))
             .unwrap_or_default())
-            != "[")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 2f64)))
+                != "#")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 1f64),
+        ))
         .unwrap_or_default())
-        != "identifier")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 2f64)))
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 1f64),
+            ))
             .unwrap_or_default())
-            != "expect")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 3f64)))
+                != "[")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 2f64),
+        ))
         .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 3f64)))
+            != "identifier")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 2f64),
+            ))
             .unwrap_or_default())
-            != "(")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 4f64)))
+                != "expect")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 3f64),
+        ))
         .unwrap_or_default())
-        != "identifier")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 4f64)))
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 3f64),
+            ))
             .unwrap_or_default())
-            != "clippy")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 5f64)))
+                != "(")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 4f64),
+        ))
         .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 5f64)))
+            != "identifier")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 4f64),
+            ))
             .unwrap_or_default())
-            != "::")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 6f64)))
+                != "clippy")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 5f64),
+        ))
         .unwrap_or_default())
-        != "identifier")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 6f64)))
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 5f64),
+            ))
             .unwrap_or_default())
-            != "fn_params_excessive_bools")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 7f64)))
+                != "::")))
+        || ((((self::ml_array::optional_at(
+            kinds,
+            self::ml_array::number_index(start + 6f64),
+        ))
         .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 7f64)))
+            != "identifier")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 6f64),
+            ))
             .unwrap_or_default())
-            != ",")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 8f64)))
-        .unwrap_or_default())
-        != "identifier")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 8f64)))
+                != "fn_params_excessive_bools")))
+        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 7f64)))
             .unwrap_or_default())
-            != "reason")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 9f64)))
-        .unwrap_or_default())
-        != "punct")
-        || (((self::ml_array::optional_at(values, self::ml_array::number_index(start + 9f64)))
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 7f64),
+            ))
             .unwrap_or_default())
-            != "=")
-    {
-        vec![-1f64]
-    } else if (((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 10f64)))
-        .unwrap_or_default())
-        != "string")
-        || ((match self::ml_array::optional_at(values, self::ml_array::number_index(start + 10f64))
-        {
-            Some(ml_present) => {
-                let _ = ml_present;
-                String::from("string")
-            }
-            None => String::from("undefined"),
-        }) != "string")
+                != ",")))
+        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 8f64)))
+            .unwrap_or_default())
+            != "identifier")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 8f64),
+            ))
+            .unwrap_or_default())
+                != "reason")))
+        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 9f64)))
+            .unwrap_or_default())
+            != "punct")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 9f64),
+            ))
+            .unwrap_or_default())
+                != "=")))
+        || ((((self::ml_array::optional_at(kinds, self::ml_array::number_index(start + 10f64)))
+            .unwrap_or_default())
+            != "string")
+            || (((self::ml_array::optional_at(
+                values,
+                self::ml_array::number_index(start + 10f64),
+            ))
+            .map_or_else(
+                || String::from("undefined"),
+                |ml_present| {
+                    let _ = ml_present;
+                    String::from("string")
+                },
+            )) != "string"))
     {
         vec![-1f64]
     } else {
@@ -323,34 +352,31 @@ pub fn plan_rust_diagnostic_attribute(kinds: &[String], values: &[String], start
                     } else {
                         close
                     };
-                if ((kinds.len() as f64) - close_3) < 2f64 {
-                    vec![-1f64]
-                } else if (((self::ml_array::optional_at(
-                    kinds,
-                    self::ml_array::number_index(close_3),
-                ))
-                .unwrap_or_default())
-                    != "punct")
-                    || (((self::ml_array::optional_at(
-                        values,
+                if ((((kinds.len() as f64) - close_3) < 2f64)
+                    || ((((self::ml_array::optional_at(
+                        kinds,
                         self::ml_array::number_index(close_3),
                     ))
                     .unwrap_or_default())
-                        != ")")
-                {
-                    vec![-1f64]
-                } else if (((self::ml_array::optional_at(
-                    kinds,
-                    self::ml_array::number_index(close_3 + 1f64),
-                ))
-                .unwrap_or_default())
-                    != "punct")
-                    || (((self::ml_array::optional_at(
-                        values,
+                        != "punct")
+                        || (((self::ml_array::optional_at(
+                            values,
+                            self::ml_array::number_index(close_3),
+                        ))
+                        .unwrap_or_default())
+                            != ")")))
+                    || ((((self::ml_array::optional_at(
+                        kinds,
                         self::ml_array::number_index(close_3 + 1f64),
                     ))
                     .unwrap_or_default())
-                        != "]")
+                        != "punct")
+                        || (((self::ml_array::optional_at(
+                            values,
+                            self::ml_array::number_index(close_3 + 1f64),
+                        ))
+                        .unwrap_or_default())
+                            != "]"))
                 {
                     vec![-1f64]
                 } else {
