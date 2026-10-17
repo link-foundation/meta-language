@@ -10,12 +10,14 @@ import {ORIGINAL_LINK_RAW_SCHEMA_FILE, ORIGINAL_LINK_RAW_SCHEMA_PRODUCER, ORIGIN
   ORIGINAL_LINK_RAW_SCHEMA_ADDITIONS, readOriginalLinkRawHistoricalSources, verifyOriginalLinkRawSchemaSourceClosure} from './raw-schema-source-closure.mjs';
 import {verifyOriginalLinkRawSchemaExtensionClosure} from './raw-schema-extension-closure.mjs';
 import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
 import {verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 
 const root = new URL('../../', import.meta.url), receiptFile = new URL('./data/raw-schema-source-closure.lino', import.meta.url);
 const oracleFile = new URL('./raw-native-observations.mjs', import.meta.url);
 const extensionFile = new URL('./data/raw-schema-extension-closure.lino', import.meta.url);
 const secondExtensionFile = new URL('./data/raw-schema-second-extension-closure.lino', import.meta.url);
+const thirdExtensionFile = new URL('./data/raw-schema-third-extension-closure.lino', import.meta.url);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const command = 'node experiments/original-link-complete-table-projection/generate-raw.mjs --native --check';
 const gitSource = (commit, file) => execFileSync('git', ['show', commit + ':' + file], {cwd: root, maxBuffer: 1024 * 1024});
@@ -26,7 +28,12 @@ export function generateOriginalLinkRawSchemaSourceClosure({check = false, schem
   const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
   if (check) {
     const receipt = readProjectData(receiptFile);
-    if (existsSync(secondExtensionFile)) {
+    if (existsSync(thirdExtensionFile)) {
+      const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+      verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, readProjectData(extensionFile), actualBytes, historicalSources,
+        readProjectData(secondExtensionFile), readProjectData(thirdExtensionFile), authoredSources);
+      for (const file of [extensionFile, secondExtensionFile, thirdExtensionFile]) checkProjectData(file, readProjectData(file));
+    } else if (existsSync(secondExtensionFile)) {
       verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt, readProjectData(extensionFile), actualBytes, historicalSources, readProjectData(secondExtensionFile));
       checkProjectData(extensionFile, readProjectData(extensionFile));
       checkProjectData(secondExtensionFile, readProjectData(secondExtensionFile));

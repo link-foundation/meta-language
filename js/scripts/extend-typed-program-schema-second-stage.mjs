@@ -9,12 +9,14 @@ import {ORIGINAL_LINK_RAW_SCHEMA_FILE, ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES, read
 import {ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT, compareOriginalLinkRawSchemaExtension, verifyOriginalLinkRawSchemaExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSIONS, ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_SCOPE} from '../../experiments/original-link-complete-table-projection/raw-schema-second-extension-policy.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT, verifyOriginalLinkRawSchemaSecondDraftPredecessor, verifyOriginalLinkRawSchemaSecondExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-second-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-third-extension-closure.mjs';
 
 const schemaFile = new URL('../src/data/typed-program-links-schema.lino', import.meta.url);
 const base = new URL('../../experiments/original-link-complete-table-projection/', import.meta.url);
 const receiptFile = new URL('data/raw-schema-source-closure.lino', base);
 const firstFile = new URL('data/raw-schema-extension-closure.lino', base);
 const secondFile = new URL('data/raw-schema-second-extension-closure.lino', base);
+const thirdFile = new URL('data/raw-schema-third-extension-closure.lino', base);
 const oracleFile = new URL('raw-native-observations.mjs', base);
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const receiptBytes = readFileSync(receiptFile), firstBytes = readFileSync(firstFile);
@@ -23,11 +25,21 @@ assert.equal(sha256(firstBytes), ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIP
 const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
 const first = readStructuredDataLino(firstBytes.toString('utf8'));
 const sources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
-const actualBytes = readFileSync(schemaFile);
+let actualBytes = readFileSync(schemaFile);
 const args = process.argv.slice(2);
 const check = args.length === 1 && args[0] === '--check';
 const refresh = args.length === 2 && args[0] === '--refresh-draft';
 assert.ok(args.length === 0 || check || refresh, 'use no arguments, --check, or --refresh-draft PRESERVED_RECEIPT_FILE');
+if (existsSync(thirdFile)) {
+  assert.equal(refresh, false, 'the published second stage is immutable after its third successor exists');
+  const thirdBytes = readFileSync(thirdFile), third = readStructuredDataLino(thirdBytes.toString('utf8'));
+  const second = readStructuredDataLino(readFileSync(secondFile, 'utf8'));
+  assert.equal(sha256(thirdBytes), /^const schemaThirdExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1]);
+  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, readFileSync(new URL('../../' + file, import.meta.url))]));
+  verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt, first, actualBytes, sources, second, third, authoredSources);
+  checkProjectData(thirdFile, third);
+  actualBytes = Buffer.from(third.previous.source, 'utf8');
+}
 let second;
 let preservedFile, preservedBytes;
 if (refresh) {

@@ -10,11 +10,13 @@ import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structu
 import {parseLinoStatements} from '../../js/src/lino-serialization.js';
 import {formatLinoReadings} from '../../js/src/lino-semantics.js';
 import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
-import {verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchemaThirdExtensionClosure} from './raw-schema-third-extension-closure.mjs';
 
-const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaSecondExtensionClosure(receipt,
+const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaThirdExtensionClosure(receipt,
   readStructuredDataLino(readFileSync(new URL('./data/raw-schema-extension-closure.lino', import.meta.url), 'utf8')), bytes, historicalSources,
-  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-second-extension-closure.lino', import.meta.url), 'utf8')));
+  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-second-extension-closure.lino', import.meta.url), 'utf8')),
+  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-third-extension-closure.lino', import.meta.url), 'utf8')),
+  Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES.map(file => [file, readFileSync(new URL('../../' + file, import.meta.url))])));
 
 const schemaClosureFixture = () => ({
   receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),

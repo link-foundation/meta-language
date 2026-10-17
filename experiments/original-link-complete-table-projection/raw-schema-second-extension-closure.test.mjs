@@ -1,23 +1,32 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT} from './raw-schema-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT, verifyOriginalLinkRawSchemaSecondDraftPredecessor, verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT} from './raw-schema-third-extension-closure.mjs';
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 function fixture() {
   const base = new URL('./data/', import.meta.url);
   const receiptBytes = readFileSync(new URL('raw-schema-source-closure.lino', base));
   const firstBytes = readFileSync(new URL('raw-schema-extension-closure.lino', base));
+  const secondBytes = readFileSync(new URL('raw-schema-second-extension-closure.lino', base));
+  assert.equal(sha256(secondBytes), ORIGINAL_LINK_RAW_SCHEMA_SECOND_EXTENSION_RECEIPT);
+  const thirdFile = new URL('raw-schema-third-extension-closure.lino', base);
+  // The successor archives the exact published stage-two schema. These tests
+  // retain their original complete stage-two admission and refusal boundary.
+  const bytes = existsSync(thirdFile)
+    ? Buffer.from(readStructuredDataLino(readFileSync(thirdFile, 'utf8')).previous.source, 'utf8')
+    : readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url));
   return {
     receiptBytes, firstBytes,
     receipt: readStructuredDataLino(receiptBytes.toString('utf8')),
     first: readStructuredDataLino(firstBytes.toString('utf8')),
-    second: readStructuredDataLino(readFileSync(new URL('raw-schema-second-extension-closure.lino', base), 'utf8')),
-    bytes: readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url)),
+    second: readStructuredDataLino(secondBytes.toString('utf8')),
+    bytes,
     sources: readOriginalLinkRawHistoricalSources(readFileSync(new URL('./raw-native-observations.mjs', import.meta.url), 'utf8')),
   };
 }
