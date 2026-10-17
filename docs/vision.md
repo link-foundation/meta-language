@@ -1474,8 +1474,9 @@ validates declared ranges and rederives bytes, intervals and child coverage
 from the physical source.
 Mapping work uses existing shared parse budgets. Ranges are explicit grammar
 data: dynamic discovery from CST fields and complete Markdown block/inline
-scanning remain gaps. Native compilation and runtime parity remain subject to
-CI verification.
+scanning remain gaps. The native compiler prepares its owned grammar closure
+before input is available; range admission precedes execution of child parsers.
+Native compilation and runtime parity remain subject to CI verification.
 
 The default CST adapter follows supported discovered child regions through a
 FIFO queue, retaining direct-region order, actual parent Region links and

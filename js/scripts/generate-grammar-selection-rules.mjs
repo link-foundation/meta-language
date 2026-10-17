@@ -47,7 +47,7 @@ export function grammarSelectionRulesPolicy() {
 }
 
 export function renderGrammarSelectionNativeForms(forms) {
-  const fields = { name: 'FieldType::Name', expression: 'FieldType::Expression', expressions: 'FieldType::Expressions' };
+  const fields = { name: 'FieldType::Name', expression: 'FieldType::Expression', expressions: 'FieldType::Expressions', integer: 'FieldType::Integer' };
   return '// Generated from the shared grammar selection schema. Do not edit.\n'
     + 'use super::feature::{FieldType, FormFields};\n\n'
     + 'pub const SELECTION_EXPRESSION_FORMS: &[(&str, FormFields)] = &[\n'

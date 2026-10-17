@@ -5,7 +5,10 @@ import { acceptGrammarSelectionCount, acceptGrammarSelectionMapping,
   readGrammarSourceDefaultMatching } from '../translation/grammar-selection-rules.js';
 import { DEFAULT_SETTLING } from '../grammar-feature-forms.js';
 import { readGrammarSelectionMappingContext } from '../translation/grammar-selection-mapping-rules.js';
-import { mapGrammarSelectionSource, projectGrammarSelectionSpan,
+import { acceptGrammarSelectionIncludedRangeCandidate, acceptGrammarSelectionIncludedRangeSourceRange,
+  acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeContext,
+  readGrammarSelectionIncludedRangeFieldOrder } from '../translation/grammar-selection-included-range-rules.js';
+import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource, projectGrammarSelectionSpan,
   projectGrammarSelectionDiagnostic, rememberGrammarSelectionMappingFailure } from './selection-source-mapping.js';
 import { KeywordLexing } from './executor.js';
 
@@ -15,7 +18,19 @@ export function checkGrammarSelection(expression, fail) {
   if (!Array.isArray(expression.items) || expression.items.length === 0) fail('a grammar selection needs at least one candidate');
   const names = new Set();
   for (const candidate of expression.items) {
-    if (candidate?.kind !== 'grammar-candidate' || typeof candidate.name !== 'string' || candidate.name === '' || typeof candidate.mapping !== 'string') fail('a grammar selection needs named grammar-candidate definitions and an explicit mapping');
+    const ranged = acceptGrammarSelectionIncludedRangeCandidate(candidate?.kind ?? '', candidate?.mapping ?? '');
+    if (candidate?.kind !== 'grammar-candidate' && !ranged || typeof candidate.name !== 'string' || candidate.name === '' || typeof candidate.mapping !== 'string') fail('a grammar selection needs named grammar-candidate definitions and an explicit mapping');
+    if (ranged) {
+      const fields = readGrammarSelectionIncludedRangeFieldOrder('candidate').split('|');
+      if (Object.keys(candidate).length !== fields.length || fields.some(field => !Object.hasOwn(candidate, field))
+          || !Array.isArray(candidate.ranges) || candidate.ranges.length === 0) fail('an included range candidate needs its complete ordered range definitions');
+      const rangeFields = readGrammarSelectionIncludedRangeFieldOrder('range').split('|');
+      for (const range of candidate.ranges) {
+        if (!range || Array.isArray(range) || Object.keys(range).length !== rangeFields.length
+            || rangeFields.some(field => !Object.hasOwn(range, field))
+            || !acceptGrammarSelectionIncludedRangeSourceRange(range.kind, range.start, range.end)) fail('an included source range needs its kind and nonempty integer byte bounds');
+      }
+    }
     if (names.has(candidate.name)) fail(`duplicate selected grammar ${candidate.name}`);
     names.add(candidate.name);
   }
@@ -111,11 +126,34 @@ function readSelectionProvenance(executor, program, language, start, end) {
  */
 export function evaluateGrammarSelection(executor, expression, position, state, inToken, Executor) {
   const { end: start, leaves, state: afterTrivia } = executor.terminalStart(position, state, inToken);
-  const context = readGrammarSelectionMappingContext(expression.items.map(candidate => candidate.mapping), inToken);
+  const mappings = expression.items.map(candidate => candidate.mapping);
+  const rangeContext = readGrammarSelectionIncludedRangeContext(mappings, inToken);
+  const context = rangeContext === 0 ? readGrammarSelectionMappingContext(mappings, inToken) : rangeContext;
   if (context === 2) {
     reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
-      mapping: 'json-string', detail: 'mapped selection requires syntactic context and one common source mapping' });
+      mapping: rangeContext === 2 ? 'included-ranges' : 'json-string', detail: 'mapped selection requires syntactic context and one common source mapping' });
     return [];
+  }
+  const ranged = rangeContext === 1;
+  let ranges = null;
+  if (ranged) {
+    if (expression.items.some(candidate => !acceptGrammarSelectionIncludedRangeCandidate(candidate.kind, candidate.mapping))) {
+      reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
+        mapping: 'included-ranges', detail: 'included ranges require an explicit grammar-range-candidate' });
+      return [];
+    }
+    for (const candidate of expression.items) {
+      executor.retain(candidate.ranges.length * 2 + 1);
+      // Grammar integer fields have one zero representation in the native
+      // form. Dynamic source-plane Numbers retain their separate signed zero.
+      const parameters = candidate.ranges.map(range => { executor.step(); return [range.start === 0 ? 0 : range.start, range.end]; });
+      if (ranges && !acceptGrammarSelectionIncludedRangeAgreement(ranges.flat(), parameters.flat())) {
+        reportSelectionDiagnostic(executor, { reason: 'unsupportedEmbeddingMapping', start, end: start,
+          mapping: 'included-ranges', detail: 'included range candidates require one common ordered range plan' });
+        return [];
+      }
+      ranges ??= parameters;
+    }
   }
   const mapped = context === 1;
   // Identity keeps its exact historic token-context behavior. The NEW mapping
@@ -125,18 +163,19 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
   for (const region of regions) {
     const accepted = [];
     const candidates = [];
-    const derived = mapped ? mapGrammarSelectionSource(executor, start, region.end) : null;
+    const derived = ranged ? mapGrammarSelectionIncludedRangeSource(executor, start, region.end, ranges)
+      : mapped ? mapGrammarSelectionSource(executor, start, region.end) : null;
     if (derived?.reason) {
       rememberGrammarSelectionMappingFailure(executor, { reason: derived.reason, start: derived.offset, end: derived.offset,
-        mapping: 'json-string' });
-      executor.fail(derived.offset, 'a Unicode scalar JSON string source');
+        mapping: ranged ? 'included-ranges' : 'json-string' });
+      executor.fail(derived.offset, ranged ? 'an ordered scalar-aligned source range view' : 'a Unicode scalar JSON string source');
       continue;
     }
     for (const candidate of expression.items) {
       executor.step();
       executor.retain(1);
       const diagnostic = { language: candidate.name, start, end: region.end };
-      if (!acceptGrammarSelectionMapping(candidate.mapping)) {
+      if (!ranged && !acceptGrammarSelectionMapping(candidate.mapping)) {
         const reason = 'unsupportedEmbeddingMapping';
         reportSelectionDiagnostic(executor, { ...diagnostic, reason, mapping: candidate.mapping });
         candidates.push({ language: candidate.name, relation: 'unknown', reason, mapping: candidate.mapping });
@@ -149,7 +188,9 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
         candidates.push({ language: candidate.name, relation: 'unknown', reason });
         continue;
       }
-      const key = JSON.stringify(['selection', candidate.mapping, candidate.name, start, region.end]);
+      const key = JSON.stringify(ranged
+        ? ['selection', candidate.mapping, candidate.name, start, region.end, ranges]
+        : ['selection', candidate.mapping, candidate.name, start, region.end]);
       let outcome = executor.embedMemo.get(key);
       if (!outcome) {
         outcome = derived ? runEmbeddedGrammar(executor, program, 0, derived.bytes.length, candidate.name, Executor, derived.bytes)
@@ -180,7 +221,7 @@ export function evaluateGrammarSelection(executor, expression, position, state, 
     }
     if (!acceptGrammarSelectionCount(expression.kind, accepted.length, expression.items.length)) continue;
     const primary = accepted[0];
-    const selection = { mode: expression.kind, mapping: mapped ? 'json-string' : 'identity', start, end: region.end,
+    const selection = { mode: expression.kind, mapping: mapped ? expression.items[0].mapping : 'identity', start, end: region.end,
       candidates, provenance: primary.provenance, alternatives: accepted.slice(1) };
     if (derived) {
       selection.sourceMapping = derived.mapping;

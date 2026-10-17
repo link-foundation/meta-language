@@ -2,13 +2,17 @@
 // mapping/ownership, not that either CST is licensed by a language grammar.
 import { Executor, DEFAULT_MAX_DEPTH, memoryBudget, stepBudget, NestingTooDeep } from './executor.js';
 import { decodeAt, encodeText, textOf } from './text.js';
-import { mapGrammarSelectionSource } from './selection-source-mapping.js';
+import { mapGrammarSelectionSource, mapGrammarSelectionIncludedRangeSource } from './selection-source-mapping.js';
 import { readGrammarSelectionMappingFieldOrder, acceptGrammarSelectionSourceDefinition,
   acceptGrammarSelectionSourceDerivation, acceptGrammarSelectionSourceInterval,
   acceptGrammarSelectionSourceRoot, acceptGrammarSelectionMappingReference,
   acceptGrammarSelectionMappingOccurrence, acceptGrammarSelectionPhysicalSpan,
   readGrammarSelectionTreeChildren, acceptGrammarSelectionMappingProfile,
   acceptGrammarSelectionMappingDescriptor } from '../translation/grammar-selection-mapping-rules.js';
+import { acceptGrammarSelectionIncludedRangeMapping, acceptGrammarSelectionIncludedRangeSourceRange,
+  acceptGrammarSelectionIncludedRangeAgreement, readGrammarSelectionIncludedRangeFieldOrder,
+  acceptGrammarSelectionIncludedRangeDerivation, acceptGrammarSelectionIncludedRangeProfile,
+  acceptGrammarSelectionIncludedRangeDescriptor } from '../translation/grammar-selection-included-range-rules.js';
 
 const fail = detail => { throw new TypeError(`mapped grammar CST: ${detail}`); };
 
@@ -133,6 +137,18 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
     if (scalar.codePoint < 0) fail('the root source plane is not UTF-8');
     position += scalar.length;
   }
+  const rangeColumns = ranges => {
+    if (!Array.isArray(ranges)) fail('invalid included source ranges');
+    control.retain(ranges.length * 2 + 1);
+    const columns = [];
+    for (const row of ranges) {
+      control.step();
+      if (!Array.isArray(row) || row.length !== 2
+          || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', row[0], row[1])) fail('invalid included source ranges');
+      columns.push(row[0], row[1]);
+    }
+    return columns;
+  };
   const planes = [];
   for (let identity = 0; identity < sourcePlanes.length; identity += 1) {
     control.step();
@@ -147,12 +163,18 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       continue;
     }
     const origin = definition.derivation;
-    if (!exactKeys(origin, readGrammarSelectionMappingFieldOrder('derivation').split('|'))) fail('unowned source derivation');
+    const included = acceptGrammarSelectionIncludedRangeMapping(origin?.operation ?? '');
+    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('derivation')
+      : readGrammarSelectionMappingFieldOrder('derivation');
+    if (!exactKeys(origin, fields.split('|'))) fail('unowned source derivation');
     const parent = typeof origin.input === 'number' ? planes[origin.input] : null;
-    if (!parent || !acceptGrammarSelectionSourceDerivation(origin.operation, origin.input, identity,
+    const acceptDerivation = included ? acceptGrammarSelectionIncludedRangeDerivation : acceptGrammarSelectionSourceDerivation;
+    if (!parent || !acceptDerivation(origin.operation, origin.input, identity,
       origin.start, origin.end, parent.bytes.length)) fail('unowned source derivation');
+    if (included) rangeColumns(origin.ranges);
     control.bytes = parent.bytes;
-    const derived = mapGrammarSelectionSource(control, origin.start, origin.end);
+    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, origin.start, origin.end, origin.ranges)
+      : mapGrammarSelectionSource(control, origin.start, origin.end);
     if (derived.reason || derived.mapping.output !== identity || !acceptGrammarSelectionSourceDefinition(definition.kind,
       definition.identity, identity, definition.encoding, definition.byteLength, derived.bytes.length)) fail('invalid source derivation');
     planes.push({ identity, bytes: derived.bytes });
@@ -164,8 +186,10 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       return;
     }
     if (node.type !== 'embed') return;
-    const mapped = node.selection?.mapping === 'json-string';
-    if (!acceptGrammarSelectionMappingProfile(node.selection?.mapping ?? 'identity',
+    const included = acceptGrammarSelectionIncludedRangeMapping(node.selection?.mapping ?? '');
+    const mapped = node.selection?.mapping === 'json-string' || included;
+    const acceptProfile = included ? acceptGrammarSelectionIncludedRangeProfile : acceptGrammarSelectionMappingProfile;
+    if (!acceptProfile(node.selection?.mapping ?? 'identity',
       node.sourceChildren !== undefined, node.selection?.sourceMapping !== undefined)) fail('unknown mapping profile');
     if (!mapped) {
       walk(node.root, plane, level + 1);
@@ -173,8 +197,11 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
       return;
     }
     const mapping = node.selection.sourceMapping;
-    if (!exactKeys(mapping, readGrammarSelectionMappingFieldOrder('mapping').split('|'))
-        || !acceptGrammarSelectionMappingDescriptor(mapping.kind, mapping.operation)
+    const fields = included ? readGrammarSelectionIncludedRangeFieldOrder('mapping')
+      : readGrammarSelectionMappingFieldOrder('mapping');
+    const acceptDescriptor = included ? acceptGrammarSelectionIncludedRangeDescriptor : acceptGrammarSelectionMappingDescriptor;
+    if (!exactKeys(mapping, fields.split('|'))
+        || !acceptDescriptor(mapping.kind, mapping.operation)
         || !Array.isArray(node.sourceChildren) || mapping.input === mapping.output
         || !acceptGrammarSelectionMappingOccurrence(mapping.input, plane.identity,
           node.selection.start, node.start, node.selection.end, node.end)) fail('invalid mapped boundary');
@@ -182,8 +209,11 @@ export function checkGrammarSelectionMappedTree(bundle, options = {}) {
     const output = sourcePlanes[mapping.output], origin = output.derivation;
     if (!acceptGrammarSelectionMappingOccurrence(origin.input, mapping.input, origin.start, node.start,
       origin.end, node.end)) fail('mapping belongs to another source occurrence');
+    if (included && !acceptGrammarSelectionIncludedRangeAgreement(rangeColumns(mapping.ranges),
+      rangeColumns(origin.ranges))) fail('ordered included source ranges differ');
     control.bytes = plane.bytes;
-    const derived = mapGrammarSelectionSource(control, node.start, node.end);
+    const derived = included ? mapGrammarSelectionIncludedRangeSource(control, node.start, node.end, origin.ranges)
+      : mapGrammarSelectionSource(control, node.start, node.end);
     if (derived.reason) fail(derived.reason);
     if (!Array.isArray(mapping.intervals) || mapping.intervals.length !== derived.mapping.intervals.length
         || !mapping.intervals.every((row, index) => Array.isArray(row)

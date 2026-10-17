@@ -20,4 +20,16 @@ pub const SELECTION_EXPRESSION_FORMS: &[(&str, FormFields)] = &[
         "grammar-candidate",
         &[("name", FieldType::Name), ("mapping", FieldType::Name)],
     ),
+    (
+        "grammar-range-candidate",
+        &[
+            ("name", FieldType::Name),
+            ("mapping", FieldType::Name),
+            ("ranges", FieldType::Expressions),
+        ],
+    ),
+    (
+        "source-range",
+        &[("start", FieldType::Integer), ("end", FieldType::Integer)],
+    ),
 ];

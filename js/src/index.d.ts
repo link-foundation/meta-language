@@ -1371,8 +1371,10 @@ export type GrammarExpression =
   | { kind: 'predicate'; item: GrammarExpression; condition: GrammarOperation }
   | { kind: 'recover'; item: GrammarExpression; synchronize: GrammarExpression }
   | { kind: 'embed'; language: string; item: GrammarExpression }
-  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: GrammarSelectionCandidate[] }
+  | { kind: 'any-grammar' | 'all-grammar'; item: GrammarExpression; items: Array<GrammarSelectionCandidate | GrammarRangeSelectionCandidate> }
   | GrammarSelectionCandidate
+  | GrammarRangeSelectionCandidate
+  | GrammarSourceRange
   | { kind: 'expand'; name: string; arguments: GrammarExpression[] };
 
 export interface GrammarSelectionCandidate {
@@ -1380,6 +1382,23 @@ export interface GrammarSelectionCandidate {
   name: string;
   /** Unknown named mappings are retained as explicit diagnostics. */
   mapping: string;
+}
+
+/** An ordered nonempty range in UTF-8 bytes relative to the matched region. */
+export interface GrammarSourceRange {
+  kind: 'source-range';
+  start: number;
+  end: number;
+}
+
+/** One explicit source view shared by every any/all candidate. The selected
+ * scalar-aligned ranges must omit at least one byte from the physical region.
+ */
+export interface GrammarRangeSelectionCandidate {
+  kind: 'grammar-range-candidate';
+  name: string;
+  mapping: 'included-ranges';
+  ranges: GrammarSourceRange[];
 }
 
 /**
@@ -1546,7 +1565,8 @@ export interface GrammarSourcePlane {
   identity: number;
   encoding: 'UTF-8';
   byteLength: number;
-  derivation: null | { operation: 'json-string'; input: number; start: number; end: number };
+  derivation: null | { operation: 'json-string'; input: number; start: number; end: number }
+    | { operation: 'included-ranges'; input: number; start: number; end: number; ranges: Array<[number, number]> };
 }
 
 export interface GrammarSourceMapping {
@@ -1555,6 +1575,16 @@ export interface GrammarSourceMapping {
   input: number;
   output: number;
   /** Ordered [physicalStart, physicalEnd, decodedStart, decodedEnd] byte intervals. */
+  intervals: Array<[number, number, number, number]>;
+}
+
+export interface GrammarIncludedRangeSourceMapping {
+  kind: 'source-mapping';
+  operation: 'included-ranges';
+  input: number;
+  output: number;
+  ranges: Array<[number, number]>;
+  /** Scalar copies, excluded gaps and boundary points in their original order. */
   intervals: Array<[number, number, number, number]>;
 }
 
@@ -1599,7 +1629,7 @@ export interface GrammarSelection {
     source?: number; sourceOffset?: number; physicalRange?: [number, number];
     offsetSemantics?: 'covering-source-spelling' }>;
   /** Present only when the explicit mapping owns a separately decoded source. */
-  sourceMapping?: GrammarSourceMapping;
+  sourceMapping?: GrammarSourceMapping | GrammarIncludedRangeSourceMapping;
   provenance: GrammarSelectionProvenance;
   alternatives: GrammarSelectionAlternative[];
   ambiguous: boolean;

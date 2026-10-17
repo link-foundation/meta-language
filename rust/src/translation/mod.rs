@@ -30,6 +30,7 @@ pub mod emit_rocq;
 pub mod emit_rust;
 pub(crate) mod frontend_rules;
 pub(crate) mod grammar_lexer_rules;
+pub(crate) mod grammar_selection_included_range_rules;
 pub(crate) mod grammar_selection_mapping_rules;
 pub(crate) mod grammar_selection_rules;
 pub mod ir;

@@ -4,6 +4,14 @@ import { readGrammarSelectionJsonStringPart,
   readGrammarSelectionMappingReservation, readGrammarSelectionMappedCover } from '../translation/grammar-selection-mapping-rules.js';
 import { readSourceTextScalarByteWidth } from '../translation/source-text-byte-rules.js';
 import { decodeAt, encodeText } from './text.js';
+import {
+  acceptGrammarSelectionIncludedRangeSourceRange,
+  readGrammarSelectionIncludedRangeReservation,
+  readGrammarSelectionIncludedRangePlan,
+  readGrammarSelectionIncludedRangePart,
+  acceptGrammarSelectionIncludedRangeByteBoundary,
+  acceptGrammarSelectionIncludedRangeDerivation,
+} from '../translation/grammar-selection-included-range-rules.js';
 
 function sourceRegistry(executor) {
   return executor.budget.memory.selectionSources ??= { byBytes: new WeakMap(), records: [] };
@@ -85,6 +93,68 @@ export function mapGrammarSelectionSource(executor, start, end) {
   const record = { bytes, source, parent: input, mapping, mappings: new Map(),
     definition: Object.freeze({ kind: 'grammar-source', identity: source, encoding: 'UTF-8', byteLength: bytes.length,
       derivation: Object.freeze({ operation: 'json-string', input: input.source, start, end }) }) };
+  registry.records.push(record);
+  registry.byBytes.set(bytes, record);
+  const result = { bytes, mapping };
+  input.mappings.set(key, result);
+  return result;
+}
+
+/** Execute the explicit relative-range view on this actual parent source.
+ * The shared plans own interval, scalar-copy and contraction decisions.
+ */
+export function mapGrammarSelectionIncludedRangeSource(executor, start, end, ranges) {
+  const input = sourceRecord(executor);
+  if (input.reason) return input;
+  const registry = sourceRegistry(executor);
+  const failure = offset => ({ reason: 'invalidEmbeddingMapping', offset });
+  if (!acceptGrammarSelectionIncludedRangeDerivation('included-ranges', input.source,
+    registry.records.length, start, end, executor.bytes.length) || !Array.isArray(ranges)) return failure(start);
+  const reservation = readGrammarSelectionIncludedRangeReservation(end - start, ranges.length * 2, false);
+  if (reservation < 0) return failure(start);
+  for (const range of ranges) {
+    executor.step();
+    if (!Array.isArray(range) || range.length !== 2
+        || !acceptGrammarSelectionIncludedRangeSourceRange('source-range', range[0], range[1])) return failure(start);
+  }
+  const key = JSON.stringify(['included-ranges', start, end, ranges]);
+  if (input.mappings.has(key)) return input.mappings.get(key);
+  executor.retain(reservation);
+  const steps = readGrammarSelectionIncludedRangeReservation(end - start, ranges.length * 2, true);
+  for (let index = 0; index < steps; index += 1) executor.step();
+  const columns = ranges.flat();
+  const plan = readGrammarSelectionIncludedRangePlan(columns, end - start);
+  const refuse = offset => {
+    const result = failure(offset);
+    input.mappings.set(key, result);
+    return result;
+  };
+  if (plan.length === 0) return refuse(start);
+  for (const relative of [0, end - start, ...columns]) {
+    const position = start + relative;
+    if (!acceptGrammarSelectionIncludedRangeByteBoundary(executor.bytes[position] ?? -1,
+      position === executor.bytes.length)) return refuse(position);
+  }
+  const bytes = new Uint8Array(plan[plan.length - 1]);
+  const intervals = [];
+  let row = 0, position = 0, output = 0;
+  for (;;) {
+    const scalar = decodeAt(executor.bytes, start + position, end);
+    const part = readGrammarSelectionIncludedRangePart(plan, row, position, output, scalar.length);
+    if (part[0] === 1) break;
+    if (part.length !== 8 || part[0] !== 0) return refuse(start + position);
+    const [inputStart, inputEnd, outputStart, outputEnd] = part.slice(4);
+    intervals.push(Object.freeze([start + inputStart, start + inputEnd, outputStart, outputEnd]));
+    if (outputEnd > outputStart) bytes.set(executor.bytes.subarray(start + inputStart, start + inputEnd), outputStart);
+    [row, position, output] = part.slice(1, 4);
+  }
+  const source = registry.records.length;
+  const parameters = Object.freeze(ranges.map(range => Object.freeze([...range])));
+  const mapping = Object.freeze({ kind: 'source-mapping', operation: 'included-ranges', input: input.source,
+    output: source, ranges: parameters, intervals: Object.freeze(intervals) });
+  const record = { bytes, source, parent: input, mapping, mappings: new Map(),
+    definition: Object.freeze({ kind: 'grammar-source', identity: source, encoding: 'UTF-8', byteLength: bytes.length,
+      derivation: Object.freeze({ operation: 'included-ranges', input: input.source, start, end, ranges: parameters }) }) };
   registry.records.push(record);
   registry.byBytes.set(bytes, record);
   const result = { bytes, mapping };
