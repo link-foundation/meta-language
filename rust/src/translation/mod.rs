@@ -44,6 +44,7 @@ pub mod js_number;
 pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;
+pub(crate) mod link_network_binary_buffer_rules;
 pub(crate) mod network_projection_rules;
 pub(crate) mod nullable_type_syntax_rules;
 pub(crate) mod optional_inference_rules;

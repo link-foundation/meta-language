@@ -61,14 +61,23 @@ function checkRustWorkflowTimeouts(parsed) {
   for (const [name, limit] of [...original, ['original-link-raw-observations', 15]]) {
     const values = [...parsed.get(name).header.matchAll(/^ {4}timeout-minutes: (.+)$/gmu)].map(match => match[1]);
     if (name !== 'test') { assert.deepEqual(values, [String(limit)], name);continue; }
-    const expression = "${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}";
+    const expression = "${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}";
     assert.deepEqual(values, [expression], 'retain the exact published matrix limit, including its existing Windows grammar exception');
     const header = parsed.get(name).header;
     assert.match(header, /^ {8}os: \[ubuntu-latest, macos-latest, windows-latest\]$/mu);
     assert.match(header, /^ {8}suite: \[grammar, inference, generative, translation, remaining\]$/mu);
     for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const suite of ['grammar', 'inference', 'generative', 'translation', 'remaining']) {
-      const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os)).replaceAll('matrix.suite', JSON.stringify(suite))});`)();
+      const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os))
+        .replaceAll('matrix.logical_suite', 'undefined').replaceAll('matrix.suite', JSON.stringify(suite))});`)();
       assert.equal(actual, os === 'windows-latest' && suite === 'grammar' ? 30 : limit, `${os}/${suite}`);
+    }
+    for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const logicalSuite of ['grammar', 'translation', 'remaining']) {
+      for (const physicalShard of [2, 3, 4]) {
+        const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os))
+          .replaceAll('matrix.logical_suite', JSON.stringify(logicalSuite)).replaceAll('matrix.suite', '"physical"')});`)();
+        assert.equal(actual, os === 'windows-latest' && logicalSuite === 'grammar' ? 30 : limit,
+          `${os}/physical/${logicalSuite}/${physicalShard}`);
+      }
     }
   }
 }
@@ -86,7 +95,8 @@ test('Rust jobs preserve all prior deadlines and the exact published matrix exce
       '    timeout-minutes: $1\n    timeout-minutes: $1');});
     mutate(parsed => {parsed.get(name).header = parsed.get(name).header.replace(/^ {4}timeout-minutes: .+$/mu, '    timeout-minutes: 360');});
   }
-  for (const [before, after] of [["'windows-latest'", "'ubuntu-latest'"], ["'grammar'", "'translation'"], ['&& 30 || 15', '&& 60 || 15'], ['&& 30 || 15', '&& 30 || 30']]) {
+  for (const [before, after] of [["'windows-latest'", "'ubuntu-latest'"], ["'grammar'", "'translation'"], ['&& 30 || 15', '&& 60 || 15'], ['&& 30 || 15', '&& 30 || 30'],
+    ['&& (matrix.logical_suite || matrix.suite)', '&& matrix.suite']]) {
     const parsed = jobs('rust.yml');parsed.get('test').header = parsed.get('test').header.replace(before, after);
     assert.throws(() => checkRustWorkflowTimeouts(parsed), assert.AssertionError);
   }
@@ -416,6 +426,26 @@ test('the live RML head audit runs on main as a non-blocking post-merge report',
   assert.match(report.text, /GITHUB_TOKEN:/u);
 });
 
+function checkFreshMergeNativePhase(script) {
+  const branch='if [ "${1:-}" = "--native-checks" ]; then';
+  const finish='\n  exit "${status}"\nfi\n';
+  assert.equal(script.split(branch).length,2,'one explicit same-script native phase');
+  const start=script.indexOf(branch), end=script.indexOf(finish,start);
+  assert.ok(end>start);
+  const phase=script.slice(start,end+finish.length);
+  assert.match(phase,/status=0/u);
+  const commands=[...phase.matchAll(/with-cache-cleanup\.mjs --event test -- cargo test --no-fail-fast --all-features (--tests|--doc|--examples --no-run)/gu)]
+    .map(match=>match[1]);
+  assert.deepEqual(commands,['--tests','--doc','--examples --no-run'],'all three original commands retain their order');
+  assert.match(phase,/if \[ "\$\{META_LANGUAGE_SHARD_INDEX:-1\}" = 1 \]; then[\s\S]*--doc[\s\S]*--examples --no-run/u);
+  assert.equal([...phase.matchAll(/--config 'profile\.test\.package\.meta-language\.[^']+'/gu)].length,3);
+  const wrapper='node ../scripts/with-cache-cleanup.mjs --event test -- bash "${REPO_ROOT}/rust/scripts/simulate-fresh-merge.sh" --native-checks || status=1';
+  assert.equal(script.split(wrapper).length,2,'one absolute-path outer lease covers the whole native phase');
+  assert.ok(script.indexOf(wrapper)>script.indexOf('cargo clippy --all-targets --all-features || status=1'));
+  assert.ok(script.indexOf(wrapper)<script.indexOf('if [ "${status}" -ne 0 ]; then'));
+  assert.ok(script.indexOf(wrapper)<script.indexOf('rust-test-shards.mjs --finish'));
+}
+
 test('fresh merge keeps build artifacts out of its cache and optimizes the unchanged full test suite', () => {
   const job = jobs('rust.yml').get('fresh-merge');
   const cache = job.steps.find((step) => /actions\/cache@/u.test(step.text));
@@ -429,6 +459,17 @@ test('fresh merge keeps build artifacts out of its cache and optimizes the uncha
   assert.match(script, /profile\.test\.package\.meta-language\.opt-level=3/u);
   assert.match(script, /profile\.test\.package\.meta-language\.debug-assertions=true/u);
   assert.match(script, /profile\.test\.package\.meta-language\.overflow-checks=true/u);
+  checkFreshMergeNativePhase(script);
+  for(const [before,after] of [
+    ['-- bash "${REPO_ROOT}/rust/scripts/simulate-fresh-merge.sh" --native-checks','-- bash rust/scripts/simulate-fresh-merge.sh --native-checks'],
+    ['--all-features --doc','--all-features --tests'],
+    ['--all-features --examples --no-run','--all-features --examples'],
+    ['if [ "${META_LANGUAGE_SHARD_INDEX:-1}" = 1 ]; then','if false; then'],
+    ['--native-checks || status=1','--native-checks'],
+  ]) {
+    assert.ok(script.includes(before));
+    assert.throws(()=>checkFreshMergeNativePhase(script.replace(before,after)),assert.AssertionError);
+  }
 });
 
 test('both acceptance suites verify the complete published self-translation reports', () => {
@@ -1089,6 +1130,9 @@ const BINARY_RECORD_PACKAGE_STEPS = [
   ["Check generated record-local binary link network rules",
     "node scripts/generate-link-network-binary-record-rules.mjs --check",
     "1d755a98d2dbcf4cc332cbe6dd8c3d0b40e715686f32c27cd48baf394f74bfef", 'binary-candidates'],
+  ["Check generated buffered binary link network rules",
+    "node scripts/generate-link-network-binary-buffer-rules.mjs --check",
+    "655a1b382b06547c74b105cb74a0b4ab073c6639bf58a9250b99f2aa2bee506a", 'binary-candidates'],
 ];
 
 const RAW_SOURCE_PACKAGE_STEPS = [

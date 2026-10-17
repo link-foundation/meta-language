@@ -12,6 +12,36 @@
 #   GITHUB_BASE_REF - base branch name (set automatically for pull_request events)
 set -euo pipefail
 
+# The explicit child phase inherits the simulated merge and configured Cargo
+# runner. Its outer cleanup lease protects outputs across all three checks.
+if [ "${1:-}" = "--native-checks" ]; then
+  if [ "$#" -ne 1 ]; then exit 2; fi
+  status=0
+test_settings=(
+  --config 'profile.test.package.meta-language.opt-level=3'
+  --config 'profile.test.package.meta-language.debug-assertions=true'
+  --config 'profile.test.package.meta-language.overflow-checks=true'
+)
+echo "::group::cargo test --no-fail-fast --all-features"
+# Native parsing is also optimized in the installed formal-ai workload run.
+# Keep the full suite and its debug assertions; avoid timing it in an
+# unoptimized parser build and clean its linked binaries before cache saving.
+node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests \
+  "${test_settings[@]}" || status=1
+echo "::endgroup::"
+
+# Cargo's default invocation previously included doctests. The first physical
+# cell retains all of them; the other cells partition only native harnesses.
+if [ "${META_LANGUAGE_SHARD_INDEX:-1}" = 1 ]; then
+  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --doc \
+    "${test_settings[@]}" || status=1
+  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --examples --no-run \
+    "${test_settings[@]}" || status=1
+fi
+
+  exit "${status}"
+fi
+
 BASE_REF="${GITHUB_BASE_REF:-main}"
 
 if [ -z "${GITHUB_BASE_REF:-}" ]; then
@@ -75,27 +105,9 @@ echo "::group::cargo clippy --all-targets --all-features"
 cargo clippy --all-targets --all-features || status=1
 echo "::endgroup::"
 
-test_settings=(
-  --config 'profile.test.package.meta-language.opt-level=3'
-  --config 'profile.test.package.meta-language.debug-assertions=true'
-  --config 'profile.test.package.meta-language.overflow-checks=true'
-)
-echo "::group::cargo test --no-fail-fast --all-features"
-# Native parsing is also optimized in the installed formal-ai workload run.
-# Keep the full suite and its debug assertions; avoid timing it in an
-# unoptimized parser build and clean its linked binaries before cache saving.
-node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests \
-  "${test_settings[@]}" || status=1
-echo "::endgroup::"
-
-# Cargo's default invocation previously included doctests. The first physical
-# cell retains all of them; the other cells partition only native harnesses.
-if [ "${META_LANGUAGE_SHARD_INDEX:-1}" = 1 ]; then
-  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --doc \
-    "${test_settings[@]}" || status=1
-  node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --examples --no-run \
-    "${test_settings[@]}" || status=1
-fi
+# Keep one outer lease alive until native tests, doctests and examples finish.
+# Existing inner wrappers preserve their commands while seeing this active lease.
+node ../scripts/with-cache-cleanup.mjs --event test -- bash "${REPO_ROOT}/rust/scripts/simulate-fresh-merge.sh" --native-checks || status=1
 
 if [ "${status}" -ne 0 ]; then
   echo "::error::Checks failed on the simulated merge with origin/${BASE_REF} even though they pass on the pull request head. This is a semantic merge conflict."

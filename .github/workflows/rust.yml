@@ -558,7 +558,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     # Cold Windows grammar builds exhausted the 15-minute job deadline while
     # tests were still running. Preserve every test and bound this job at 30.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}
     concurrency:
       group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true

@@ -9,6 +9,11 @@ import { ByteRange, LinkMetadata, LinkType } from '../src/primitives.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary, BinaryLinksError } from '../src/link-network-binary.js';
 import { linkNetworkBinaryIntegerByte } from '../src/link-network-binary-rules.js';
 import { transcodeLinkNetworkBinary } from '../src/link-network-binary-record-rules.js';
+import { transcodeLinkNetworkBinary as buffered } from '../src/link-network-binary-buffer-rules.js';
+import { readLinkNetworkBinaryBufferSourceModule } from '../scripts/generate-link-network-binary-buffer-rules.mjs';
+import { parseJavaScript } from '../src/translation/javascript.js';
+import { checkProgram } from '../src/translation/check.js';
+import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { transcodeLinkNetworkBinary as previous } from '../../experiments/binary-metadata-buffer/prior-rules.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 
@@ -151,4 +156,133 @@ test('binary record generator paths relocate with the actual repository', () => 
     const actual = runInNewContext(action.to.replaceAll('import.meta.url', 'baseUrl') + '\nstyles.href;', { URL, baseUrl: base }, { timeout: 1000 });
     assert.equal(actual, new URL('../../parity/self-translation/link-network-binary-record-rules-decorators.lino', base).href);
   }
+});
+
+let bufferedBinaryEmission;
+function readBufferedBinaryEmission() {
+  if (!bufferedBinaryEmission) {
+    const source = readLinkNetworkBinaryBufferSourceModule();
+    const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
+    assert.equal(program.declarations.size, 74, 'the actual complete source and all generated owners are checked');
+    assert.deepEqual(program.items.filter(owner => !owner.generated).map(owner => owner.name), [
+      'linkNetworkBinaryUnit', 'acceptLinkNetworkBinaryInteger', 'readLinkNetworkBinaryInteger',
+      'linkNetworkBinaryIntegerByte', 'acceptLinkNetworkBinaryUnicode', 'renderLinkNetworkBinaryHexadecimalDigit',
+      'renderLinkNetworkBinaryField', 'transcodeLinkNetworkBinary',
+    ]);
+    const context = {};
+    runInNewContext(emitJavaScript(program).text, context, { timeout: 1000 });
+    assert.equal(typeof context.transcodeLinkNetworkBinary, 'function');
+    bufferedBinaryEmission = context;
+  }
+  return bufferedBinaryEmission;
+}
+
+function compareBufferedBinaryControl(input, binary, recordLimit = 1000, byteLimit = 65536) {
+  const before = Array.from(input);
+  const expected = previous(input, binary, recordLimit, byteLimit);
+  assert.deepEqual(input, before, 'the historical source preserves its input');
+  assert.equal(transcodeLinkNetworkBinary(input, binary, recordLimit, byteLimit), expected, 'record-local predecessor');
+  assert.deepEqual(input, before, 'the record-local source preserves its input');
+  assert.equal(buffered(input, binary, recordLimit, byteLimit), expected, 'direct buffered source');
+  assert.deepEqual(input, before, 'the buffered source preserves its input');
+  assert.equal(readBufferedBinaryEmission().transcodeLinkNetworkBinary(input, binary, recordLimit, byteLimit), expected,
+    'the complete checked and emitted JavaScript source');
+  assert.deepEqual(input, before, 'the emitted source preserves its input');
+  return expected;
+}
+
+test('buffered framing replays every retained fixture mutation truncation and identity order through complete checked emission', () => {
+  const context = readBufferedBinaryEmission();
+  let cases = 0;
+  for (const archive of [fixture.legacyVersion1Bytes, fixture.version2Bytes]) {
+    const flat = previous(archive, true, 1000, 65536).slice(0, -1).split(',').map(Number);
+    for (const limit of [16, archive.length - 1, archive.length, archive.length + 1]) for (const binary of [false, true]) {
+      compareBufferedBinaryControl(binary ? archive : flat, binary, 1000, limit);
+      cases++;
+    }
+    for (let index = 0; index < flat.length; index++) for (const value of [NaN, -1, 0.5, 256]) {
+      const input = flat.slice();
+      input[index] = value;
+      compareBufferedBinaryControl(input, false);
+      cases++;
+    }
+    for (let end = 0; end < archive.length; end++) {
+      compareBufferedBinaryControl(archive.slice(0, end), true);
+      cases++;
+    }
+  }
+  for (const version of [1, 2]) for (const identities of [[], [1, 2, 3], [3, 1, 2], [9, 2, 5], [1, 2, 1], [9, 2, 9], [5, 1, 5], [3, 2, 1, 2]]) {
+    const input = createBinaryIdentityControl(version, identities);
+    const expected = compareBufferedBinaryControl(input, false);
+    cases++;
+    if (!expected.startsWith('-')) {
+      compareBufferedBinaryControl(readBinaryControlBytes(expected), true);
+      cases++;
+    }
+  }
+  for (const version of [1, 2]) for (const record of [1, 2]) {
+    const input = createBinaryIdentityControl(version, [1, 2, 3]);
+    const bytes = readBinaryControlBytes(previous(input, false, 1000, 65536));
+    const offset = (version === 2 ? 24 : 16) + record * 34;
+    for (let index = 0; index < 8; index++) bytes[offset + index] = linkNetworkBinaryIntegerByte(1, index);
+    assert.match(compareBufferedBinaryControl(bytes, true), /^-8,/u);
+    cases++;
+  }
+  assert.equal(cases, 6856, 'the complete original bounded comparison inventory is replayed by both buffered forms');
+  assert.strictEqual(readBufferedBinaryEmission(), context, 'all cases share one complete checked emission');
+});
+
+test('buffered framing preserves safe integer identities cache membership limits and exact failure precedence', () => {
+  const largest = Number.MAX_SAFE_INTEGER - 1;
+  for (const version of [1, 2]) for (const identities of [[largest - 1, 1, largest], [largest, 1, largest - 1], [largest, 1, largest], [1, largest, 1]]) {
+    const input = createBinaryIdentityControl(version, identities);
+    if (version === 2) input[1] = Number.MAX_SAFE_INTEGER;
+    const expected = compareBufferedBinaryControl(input, false);
+    if (new Set(identities).size < identities.length) assert.match(expected, /^-8,/u);
+    else {
+      assert.ok(!expected.startsWith('-'));
+      compareBufferedBinaryControl(readBinaryControlBytes(expected), true);
+    }
+  }
+  for (const version of [1, 2]) for (const identity of [0, -0, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER + 1]) {
+    const input = createBinaryIdentityControl(version, [identity]);
+    if (version === 2) input[1] = Number.MAX_SAFE_INTEGER;
+    assert.match(compareBufferedBinaryControl(input, false), /^-7,/u);
+  }
+  for (const identity of [1, largest, 2, Number.MAX_SAFE_INTEGER]) {
+    const records = createBinaryIdentityControl(2, [largest, 1]);
+    records[1] = Number.MAX_SAFE_INTEGER;
+    const input = [...records.slice(0, -2), 1, 1, 99, identity, 0];
+    const expected = compareBufferedBinaryControl(input, false);
+    if (identity === 1 || identity === largest) {
+      assert.ok(!expected.startsWith('-'));
+      compareBufferedBinaryControl(readBinaryControlBytes(expected), true);
+    } else assert.match(expected, /^-21,/u, 'a numeric cache ID must name an actual recorded identity');
+  }
+  for (const recordLimit of [0, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.equal(compareBufferedBinaryControl([], false, recordLimit, 16), '-1,0,');
+  }
+  for (const byteLimit of [0, 15, 15.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.equal(compareBufferedBinaryControl([], false, 1, byteLimit), '-1,0,');
+  }
+  assert.match(compareBufferedBinaryControl(createBinaryIdentityControl(2, [1, 2, 3]), false, 1), /^-6,/u);
+  assert.equal(compareBufferedBinaryControl(fixture.version2Bytes, true, 1000, 16), '-2,0,');
+  assert.ok(!compareBufferedBinaryControl([1, 0], false, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER).startsWith('-'));
+  for (const archive of [fixture.legacyVersion1Bytes, fixture.version2Bytes]) {
+    compareBufferedBinaryControl(archive, true);
+    const flat = previous(archive, true, 1000, 65536).slice(0, -1).split(',').map(Number);
+    compareBufferedBinaryControl(flat, false);
+  }
+  const complete = createBinaryIdentityControl(1, [1]);
+  assert.equal(compareBufferedBinaryControl([...complete, 999], false, 1000, 16), '-2,14,',
+    'a completed record reaches its original cap before the trailing-input check');
+  const malformed = complete.slice();
+  malformed[4] = 0;
+  assert.equal(compareBufferedBinaryControl(malformed, false, 1000, 16), '-13,4,',
+    'invalid metadata is diagnosed before the record cap');
+  assert.equal(compareBufferedBinaryControl([2, 1, 0, 0, 0, 999], false, 1000, 16), '-22,5,',
+    'a trailing field is diagnosed before the final cap');
+  assert.equal(compareBufferedBinaryControl([2, 1, 0, 0, 0], false, 1000, 16), '-2,5,');
+  assert.equal(compareBufferedBinaryControl([2, 1, 0, 1, 0, 1, 0], false, 1000, 16), '-21,5,',
+    'an unrecorded cache identity is diagnosed before its entry cap');
 });

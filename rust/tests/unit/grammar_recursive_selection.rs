@@ -2,7 +2,6 @@
 //! independent. These tests execute only in CI, never local native builds.
 use std::collections::HashMap;
 
-use links_notation::{ParserConfig, parse_lino_to_links_with_config};
 use meta_language::{
     FeatureParseOptions, GlobalConceptOptions, GlobalConceptSource, Grammar, GrammarExpr, LeafText,
     SyntaxTree, check_grammar_selection_mapped_tree, compile_feature_grammar,
@@ -15,8 +14,8 @@ use serde_json::{Value, json};
 mod mapping_transport;
 use mapping_transport::{
     mapped_bundle, mapped_embeds, mapped_first, mapped_fixture, mapped_json_grammar,
-    mapped_json_host, mapped_link_data, mapped_link_text, mapped_literal, mapped_parse,
-    mapped_physical, mapped_python_grammar, mapped_stored_variants, mapped_tree_data,
+    mapped_json_host, mapped_literal, mapped_parse, mapped_physical, mapped_python_grammar,
+    mapped_stored_variants, mapped_tree_data,
 };
 
 fn selection_fixture() -> Value {
@@ -540,107 +539,7 @@ fn mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_
 
 #[test]
 fn nested_mapped_registry_and_complete_grammars_replay_from_text_and_binary_links() {
-    let inventory = mapped_fixture("language-grammar-inventory.lino");
-    let source = inventory["languages"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|item| item["name"] == "Python")
-        .unwrap()["source"]
-        .as_str()
-        .unwrap();
-    let middle = mapped_json_host(&[("Python", "json-string")], "any-grammar", "");
-    let outer = mapped_json_host(&[("Middle", "json-string")], "any-grammar", "");
-    let grammars = HashMap::from([
-        ("outer".to_owned(), outer),
-        ("Middle".to_owned(), middle),
-        ("Python".to_owned(), mapped_python_grammar()),
-    ]);
-    let inner_source = serde_json::to_string(source).unwrap();
-    let physical = serde_json::to_string(&inner_source).unwrap();
-    let outcome = mapped_parse(&grammars["outer"], &grammars, &physical);
-    assert!(outcome.ok, "{:?}", outcome.rejection);
-    let bundle = mapped_bundle(&outcome);
-    let mut embeds = Vec::new();
-    mapped_embeds(&bundle["tree"], &mut embeds);
-    assert_eq!(embeds.len(), 2);
-    assert_eq!(bundle["sourcePlanes"].as_array().unwrap().len(), 3);
-    assert_eq!(
-        bundle["sourcePlanes"][2]["derivation"],
-        json!({"operation":"json-string","input":1,"start":0,"end":inner_source.len()})
-    );
-    assert_eq!(
-        embeds[0]["selection"]["sourceMapping"]["output"],
-        embeds[1]["selection"]["sourceMapping"]["input"]
-    );
-    assert_eq!(embeds[1]["selection"]["sourceMapping"]["output"], 2);
-    for (embedded, physical) in embeds
-        .iter()
-        .zip([physical.as_str(), inner_source.as_str()])
-    {
-        let direct_json = mapped_parse(&mapped_json_grammar(), &HashMap::new(), physical);
-        assert!(direct_json.ok);
-        assert_eq!(
-            embedded["sourceChildren"],
-            json!([mapped_tree_data(direct_json.tree.as_ref().unwrap())])
-        );
-        assert_eq!(mapped_physical(embedded), physical.as_bytes());
-    }
-    assert_eq!(
-        embeds[1]["root"],
-        mapped_tree_data(
-            mapped_parse(&grammars["Python"], &HashMap::new(), source)
-                .tree
-                .as_ref()
-                .unwrap()
-        )
-    );
-    let documents = ["outer", "Middle", "Python"].map(|name| {
-        let syntax = parse_lino_to_links_with_config(
-            &render_grammar_links(&grammars[name]),
-            &ParserConfig::without_comments(),
-        )
-        .unwrap();
-        json!({"name":name,"syntax":syntax.iter().map(mapped_link_data).collect::<Vec<_>>()})
-    });
-    let archive = json!({"grammars":documents,"bundle":bundle});
-    for stored in mapped_stored_variants(&archive) {
-        assert_eq!(stored, archive);
-        check_grammar_selection_mapped_tree(&stored["bundle"], &FeatureParseOptions::default())
-            .unwrap();
-        let restored: HashMap<_, _> = stored["grammars"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|document| {
-                let listing = document["syntax"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(mapped_link_text)
-                    .collect::<Vec<_>>()
-                    .join("\n");
-                let grammar = parse_grammar_links(&listing).unwrap();
-                let name = document["name"].as_str().unwrap();
-                assert_eq!(
-                    grammar, grammars[name],
-                    "full rule/context/source/meaning metadata, not only listing syntax"
-                );
-                assert_eq!(
-                    render_grammar_links(&grammar),
-                    render_grammar_links(&grammars[name])
-                );
-                (name.to_owned(), grammar)
-            })
-            .collect();
-        let replay = mapped_parse(&restored["outer"], &restored, &physical);
-        assert_eq!(
-            replay, outcome,
-            "all CST, registry, ambiguity and rejection fields replay"
-        );
-        assert_eq!(mapped_bundle(&replay), stored["bundle"]);
-    }
-    mapping_transport::record_mapped_archives(source, &inner_source, &physical);
+    mapping_transport::check_nested_mapped_registry_and_complete_grammar_archives();
 }
 
 #[test]

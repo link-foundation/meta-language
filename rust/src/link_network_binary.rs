@@ -9,8 +9,8 @@ use std::sync::{Arc, OnceLock};
 use serde_json::Value;
 
 use crate::link_network::Link;
-use crate::link_network_binary_record_rules::transcode_link_network_binary;
 use crate::link_network_binary_rules::accept_link_network_binary_integer;
+use crate::translation::link_network_binary_buffer_rules::transcode_link_network_binary;
 use crate::{
     ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, Point, SourceSpan,
     read_structured_data_lino,
