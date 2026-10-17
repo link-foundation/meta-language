@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 171 | 170 | 1 | 0 |
+| Generators | 173 | 172 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 80 | 0 | 0 | 80 |
+| Published artifact contents | 82 | 0 | 0 | 82 |
 
 ## JavaScript engines
 
@@ -572,6 +572,7 @@ they are.
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-callable-emission-rules.mjs` | `js/scripts/generate-callable-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-callable-source-rules.mjs` | `js/scripts/generate-callable-source-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-construction-rules.mjs` | `js/scripts/generate-collection-construction-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-fixture.mjs` | `js/scripts/generate-concept-view-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-rules.mjs` | `js/scripts/generate-concept-view-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
@@ -594,6 +595,7 @@ they are.
 | `js/scripts/generate-grammar-lexer-rules.mjs` | `js/scripts/generate-grammar-lexer-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-fixtures.mjs` | `js/scripts/generate-grammar-selection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `js/scripts/generate-grammar-selection-mapping-fixtures.mjs` | `script` |  | derived | current |  |
@@ -797,11 +799,13 @@ they are.
 | `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/collection-construction-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-selection-field-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-selection-included-range-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-selection-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-line-terminators.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
