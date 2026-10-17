@@ -37,6 +37,7 @@ impl RustEmitter<'_> {
         };
         let receiver = object.ty.kind();
         if receiver == "array" && op == "map" {
+            self.preludes.insert(Prelude::Array);
             let callback = args
                 .first()
                 .and_then(Option::as_ref)
