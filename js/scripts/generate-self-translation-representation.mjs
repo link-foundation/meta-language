@@ -6,6 +6,7 @@ import {existsSync, readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {STRING_PRELUDE} from '../src/translation/string-runtime.js';
 import {checkProjectData, readProjectData, writeProjectData} from './project-data.mjs';
+import {applyCompleteExpressionParenthesisStyles} from './complete-expression-parenthesis-styles.mjs';
 
 const policyPath = new URL('../src/data/self-translation-representation.lino', import.meta.url);
 const nativePolicyPath = new URL('../../rust/src/data/self-translation-representation.lino', import.meta.url);
@@ -27,11 +28,14 @@ export function selfTranslationRepresentationPolicy() {
   assert.match(selector.source, /^const stringMethods = new Set\(\[(?:'[^']+'(?:, )?)+\]\);$/u);
   const memberNames = [...selector.source.matchAll(/'([^']+)'/gu)].map(match => match[1]);
   assert.equal(new Set(memberNames).size, memberNames.length);
+  const additionalMemberNames = ['charCodeAt'];
+  assert.equal(new Set([...memberNames, ...additionalMemberNames]).size, memberNames.length + additionalMemberNames.length);
   return {
     schemaVersion: 1,
     model: 'shared self translation UTF16 representation 1',
     originalSelector: selector,
     memberNames,
+    additionalMemberNames,
     selection: 'An explicit request, or a JavaScript-family module containing an actual member_expression property with one of these exact source spellings. Receiver types do not change this retained syntax policy.',
     nativeBoundary: 'Representation selection and exact emitted prelude bytes do not establish native Text lowering. Actual selected String values require independently paired rendering support.',
     prelude: STRING_PRELUDE,
@@ -43,7 +47,7 @@ function rules(policy) {
   return '// Generated from the shared self-translation representation policy. Do not edit.\n'
     + '/** @param {string} name @returns {boolean} */\n'
     + 'export function acceptSelfTranslationUtf16Member(name) {\n  return '
-    + policy.memberNames.map(name => `name === ${JSON.stringify(name)}`).join(' || ') + ';\n}\n\n'
+    + [...policy.memberNames, ...policy.additionalMemberNames].map(name => `name === ${JSON.stringify(name)}`).join(' || ') + ';\n}\n\n'
     + '/** @param {boolean} explicit @param {string} family @param {boolean} member @returns {boolean} */\n'
     + "export function requireSelfTranslationUtf16Representation(explicit, family, member) {\n  return explicit || (family === 'JavaScript' && member);\n}\n\n"
     + '/** @param {string} kind @returns {boolean} */\n'
@@ -64,8 +68,8 @@ export function generateSelfTranslationRepresentation(check = false) {
   return {policy, source};
 }
 
-export async function generateSelfTranslationRepresentationNative(check = false, updateStyles = false) {
-  assert.ok(!check || !updateStyles, 'freshness cannot modify recorded styles');
+export async function generateSelfTranslationRepresentationNative(check = false, updateStyles = false, updateCompleteStyles = false) {
+  assert.ok(!check || !(updateStyles || updateCompleteStyles), 'freshness cannot modify recorded styles');
   const {source} = generateSelfTranslationRepresentation(check);
   const [{parseJavaScript}, {checkProgram}, {emitRust}, {DecoratorSet}, {tokenize}, {formatProductRuleSource}] = await Promise.all([
     import('../src/translation/javascript.js'), import('../src/translation/check.js'), import('../src/translation/emit-rust.js'),
@@ -107,15 +111,20 @@ export async function generateSelfTranslationRepresentationNative(check = false,
     }
     writeFileSync(stylePath, new DecoratorSet([{id: 'self-translation-representation-library', level: 'emitter', order: 0, when: [['format', 'Rust']], actions}]).toLino());
   }
-  const decorators = DecoratorSet.fromLino(readFileSync(stylePath, 'utf8'));
+  const document = readFileSync(stylePath, 'utf8');
+  const decorators = DecoratorSet.fromLino(document);
   let reviewed = raw;
-  for (const entry of decorators.forLevel('emitter')) for (const action of entry.actions) {
+  for (const entry of decorators.forLevel('emitter').filter(({when}) => !when.some(([field]) => field === 'scope'))) for (const action of entry.actions) {
     assert.equal(action.op, 'replace'); assert.equal(action.field, 'source'); assert.ok(reviewed.includes(action.from));
     reviewed = reviewed.split(action.from).join(action.to);
   }
   const decorated = decorators.decorate('emitter', {format: 'Rust', source: raw}).source;
   assert.equal(decorated, reviewed);
-  const native = '// Automatically translated from the complete shared representation policy. Do not edit.\n' + formatProductRuleSource(decorated);
+  const correction = applyCompleteExpressionParenthesisStyles(document, formatProductRuleSource(decorated), {
+    update: updateStyles || updateCompleteStyles, format: formatProductRuleSource,
+  });
+  if (correction.document !== document) writeFileSync(stylePath, correction.document);
+  const native = '// Automatically translated from the complete shared representation policy. Do not edit.\n' + correction.source;
   const path = new URL('../../rust/src/self_translation/representation_rules.rs', import.meta.url);
   if (check) assert.equal(readFileSync(path, 'utf8'), native, 'native representation rules are stale');
   else writeFileSync(path, native);
@@ -125,7 +134,7 @@ export async function generateSelfTranslationRepresentationNative(check = false,
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
   if (process.argv.includes('--native')) {
-    console.log('Native shared representation rules: ' + Buffer.byteLength(await generateSelfTranslationRepresentationNative(check, process.argv.includes('--update-styles'))) + ' bytes');
+    console.log('Native shared representation rules: ' + Buffer.byteLength(await generateSelfTranslationRepresentationNative(check, process.argv.includes('--update-styles'), process.argv.includes('--update-complete-expression-styles'))) + ' bytes');
   } else {
     const {policy} = generateSelfTranslationRepresentation(check);
     console.log(`Shared self-translation representation: ${policy.memberNames.length} retained members; exact prelude ${Buffer.byteLength(policy.prelude)} bytes`);

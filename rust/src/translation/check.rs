@@ -40,6 +40,7 @@ mod optional_values;
 mod primitive_methods;
 mod records;
 mod recursion;
+mod string_code_unit_template;
 mod strings;
 mod type_queries;
 pub use self::recursion::*;

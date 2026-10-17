@@ -174,6 +174,11 @@ impl Checker {
             SNode::Bool { value } => Ok(Expr::lit(BOOL, LitValue::Bool(*value))),
             SNode::Str { value } => Ok(text_lit(STRING, value.clone())),
             SNode::Unit => Ok(Expr::new(Node::Unit, UNIT)),
+            SNode::NumberValue { arg } => {
+                let value = self.expr(arg, env, path, None, false)?;
+                let value = self.number_value(value, span)?;
+                self.coerce(value, &FLOAT, span)
+            }
             SNode::None { absence } => {
                 if !crate::translation::optional_value_rules::accept_optional_literal_absence(
                     absence,

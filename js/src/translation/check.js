@@ -15,6 +15,7 @@ import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFro
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
 import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation } from './array-binding-rules.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
+import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
 import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
@@ -34,7 +35,8 @@ import { acceptOptionalLiteralAbsence, acceptOptionalPrimitiveKind, readOptional
 import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
 import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
-  readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation } from './primitive-method-rules.js';
+  readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
+  readPrimitiveMethodLoweringForm } from './primitive-method-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
@@ -669,6 +671,8 @@ class Checker {
       }
       case 'method':
         return this.method(node, env, path, expected);
+      case 'numberValue':
+        return coerce(this.numberValue(this.expr(node.arg, env, path, undefined), node.span), FLOAT, this.language, node.span);
       case 'none':
         if (!acceptOptionalLiteralAbsence(node.absence)) throw typeError('an absent optional value requires its concrete null or undefined tag', node.span);
         if (expected?.kind === 'option' && !acceptOptionalAbsence(expected.absence ?? 'both', node.absence)) throw typeError('an absent optional value disagrees with its retained absence policy', node.span);
@@ -905,12 +909,23 @@ class Checker {
     const values = [];
     for (let index = 0; index < readPrimitiveMethodArgumentCount(receiver, node.op); index += 1) {
       const kind = readPrimitiveMethodCheckedArgumentKind(receiver, node.op, index);
-      const type = kind === 'element' ? object.type.element : kind === 'float' ? FLOAT : STRING;
+      const type = kind === 'element' ? object.type.element : kind === 'float' || kind === 'number-value' ? FLOAT : STRING;
       const form = readPrimitiveMethodDefaultForm(receiver, node.op, index);
       const fallback = form === 'absent' ? null : form === 'required' ? undefined
         : literal(form === 'float' ? FLOAT : STRING, readPrimitiveMethodDefaultValue(receiver, node.op, index));
       const argument = node.args[index];
-      values.push(argument ? coerce(this.expr(argument, env, path, type), type, this.language, argument.span ?? node.span) : fallback);
+      if (!argument) values.push(fallback);
+      else {
+        const value = this.expr(argument, env, path, type);
+        values.push(coerce(kind === 'number-value' ? this.numberValue(value, argument.span ?? node.span) : value,
+          type, this.language, argument.span ?? node.span));
+      }
+    }
+    if (readPrimitiveMethodLoweringForm(receiver, node.op) === 'code-unit-template') {
+      const signature = { kind: 'function', params: [STRING, FLOAT], ret: FLOAT };
+      const fn = coerce(this.expr(createStringCodeUnitTemplateExpression(node.span), new Map(), path, signature),
+        signature, this.language, node.span);
+      return { k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span };
     }
     const form = readPrimitiveMethodCheckedResultForm(receiver, node.op);
     const type = form === 'receiver' ? object.type : form === 'bool' ? BOOL : form === 'float' ? FLOAT

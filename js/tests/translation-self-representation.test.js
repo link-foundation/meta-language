@@ -52,3 +52,28 @@ test('unselected numeric source remains unchanged while comments do not select t
   assert.equal(selfTranslate('// value.slice() in a comment\n' + source, 'JavaScript', 'Rust').code.includes(STRING_PRELUDE), false);
   assert.ok(selfTranslate(source, 'JavaScript', 'Rust', {utf16Strings: true}).code.includes(STRING_PRELUDE));
 });
+
+test('additional code unit selection gives sibling callers the same Text representation without changing the original selector', () => {
+  assert.deepEqual(policy.additionalMemberNames, ['charCodeAt']);
+  assert.equal(acceptSelfTranslationUtf16Member('charCodeAt'), true);
+  for (const name of ['CharCodeAt', 'charCodeAt ', 'char_code_at']) assert.equal(acceptSelfTranslationUtf16Member(name), false);
+  assert.deepEqual([...policy.originalSelector.source.matchAll(/'([^']+)'/gu)].map(match => match[1]), policy.memberNames);
+  assert.ok(!policy.memberNames.includes('charCodeAt'));
+  assert.equal(digest(policy.originalSelector.source), policy.originalSelector.sha256);
+  const source = '/** @param {string} text @param {number} position @returns {number} */\n'
+    + 'export function codeUnit(text,position){return text.charCodeAt(position);}\n'
+    + '/** @returns {number} */\nexport function choose(){return codeUnit("A😀B",1);}\n';
+  const emitted = selfTranslate(source, 'JavaScript', 'Rust');
+  const sourceBytes = Buffer.from(source, 'utf8');
+  const functions = emitted.items.map(item => ({ item,
+    declaration: /^export function ([A-Za-z_][A-Za-z_0-9]*)\(/u.exec(sourceBytes.subarray(item.start, item.end).toString('utf8')),
+  })).filter(entry => entry.declaration);
+  assert.equal(functions.length, 2);
+  assert.deepEqual(functions.map(entry => entry.declaration[1]), ['codeUnit', 'choose']);
+  assert.ok(functions.every(({ item }) => item.status === 'translated'));
+  assert.ok(emitted.items.every(item => item.status !== 'carried'), 'both actual sibling function bodies translate');
+  assert.match(emitted.code, /pub fn code_unit\(text: crate::ml_string::Text, position: f64\) -> f64/u);
+  assert.match(emitted.code, /code_unit\(crate::ml_string::Text::from_units\(vec!\[65, 55357, 56832, 66\]\), 1f64\)/u);
+  assert.ok(emitted.code.includes(STRING_PRELUDE));
+  assert.equal(selfTranslate(emitted.code, 'Rust', 'JavaScript').code, source);
+});

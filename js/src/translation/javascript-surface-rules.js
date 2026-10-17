@@ -115,7 +115,8 @@ export function readJavaScriptMethodArgumentKind(receiver, operation, index) {
     return index === 1 ? 'float' : '';
   }
   if (receiver !== 'string') return '';
-  if (index === 0 && (operation === 'slice' || operation === 'substring' || operation === 'repeat' || operation === 'charAt' || operation === 'charCodeAt' || operation === 'codePointAt' || operation === 'padStart' || operation === 'padEnd')) return 'float';
+  if (operation === 'charCodeAt' && index === 0) return 'number-value';
+  if (index === 0 && (operation === 'slice' || operation === 'substring' || operation === 'repeat' || operation === 'charAt' || operation === 'codePointAt' || operation === 'padStart' || operation === 'padEnd')) return 'float';
   if (index === 0 && (operation === 'includes' || operation === 'startsWith' || operation === 'endsWith' || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'split')) return 'string';
   if (index === 1 && (operation === 'slice' || operation === 'substring' || operation === 'includes' || operation === 'startsWith' || operation === 'endsWith' || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'charCodeAt' || operation === 'split')) return 'float';
   if (index === 1 && (operation === 'padStart' || operation === 'padEnd')) return 'string';

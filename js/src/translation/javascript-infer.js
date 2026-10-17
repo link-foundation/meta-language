@@ -1080,6 +1080,7 @@ class Inference {
       args.forEach((arg, index) => {
         const kind = readJavaScriptMethodArgumentKind(receiver.kind, op, index);
         if (kind === 'float') this.unify(arg, FLOAT, where);
+        else if (kind === 'number-value') this.unify(this.numericValue(arg), FLOAT, where);
         else if (kind === 'string') this.unify(arg, STRING, where);
       });
       const form = readJavaScriptStringMethodResultForm(op);

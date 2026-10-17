@@ -39,6 +39,10 @@ pub enum SNode {
         #[serde(rename = "type")]
         ty: Type,
     },
+    /// Internal reconstruction of the represented JavaScript numeric conversion.
+    NumberValue {
+        arg: Box<SExpr>,
+    },
     FlattenOption {
         value: Box<SExpr>,
     },
@@ -309,6 +313,7 @@ impl SNode {
             Self::Unit => "unit",
             Self::None { .. } => "none",
             Self::Some { .. } => "some",
+            Self::NumberValue { .. } => "numberValue",
             Self::FlattenOption { .. } => "flattenOption",
             Self::Coalesce { .. } => "coalesce",
             Self::ArrayBindingRest { .. } => "arrayBindingRest",

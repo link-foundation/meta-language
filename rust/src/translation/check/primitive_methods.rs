@@ -124,7 +124,7 @@ impl Checker {
             let kind =
                 rules::read_primitive_method_checked_argument_kind(receiver, operation, position);
             let ty = match kind.as_str() {
-                "float" => FLOAT,
+                "float" | "number-value" => FLOAT,
                 "element" => element
                     .expect("the generated array element position")
                     .clone(),
@@ -132,6 +132,11 @@ impl Checker {
             };
             if let Some(Some(argument)) = args.get(index) {
                 let value = self.expr(argument, env, path, Some(&ty), false)?;
+                let value = if kind == "number-value" {
+                    self.number_value(value, argument.span.or(span))?
+                } else {
+                    value
+                };
                 values.push(Some(self.coerce(value, &ty, argument.span.or(span))?));
             } else {
                 let form = rules::read_primitive_method_default_form(receiver, operation, position);
@@ -149,6 +154,27 @@ impl Checker {
                     )));
                 }
             }
+        }
+        if rules::read_primitive_method_lowering_form(receiver, operation) == "code-unit-template" {
+            let template = super::string_code_unit_template::expression(span)?;
+            let signature = Type::Function {
+                params: vec![STRING, FLOAT],
+                ret: Box::new(FLOAT),
+            };
+            let function = self.expr(&template, &Env::default(), path, Some(&signature), false)?;
+            let function = self.coerce(function, &signature, span)?;
+            let arguments = std::iter::once(object)
+                .chain(values.into_iter().map(|value| {
+                    value.expect("the generated code-unit lowering supplies its numeric argument")
+                }))
+                .collect();
+            return Ok(Expr::new(
+                Node::Apply {
+                    func: Box::new(function),
+                    args: arguments,
+                },
+                FLOAT,
+            ));
         }
         let ty =
             match rules::read_primitive_method_checked_result_form(receiver, operation).as_str() {

@@ -263,6 +263,10 @@ impl Inference {
             match read_java_script_method_argument_kind(kind, &method.operation, position).as_str()
             {
                 "float" => self.unify(argument, &Term::Known(FLOAT), method.place)?,
+                "number-value" => {
+                    let value = self.numeric_value(argument);
+                    self.unify(&value, &Term::Known(FLOAT), method.place)?;
+                }
                 "string" => self.unify(argument, &Term::Known(STRING), method.place)?,
                 "element" => {
                     if let Term::Array(element) = &receiver {
