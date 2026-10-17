@@ -22,10 +22,34 @@ fn recursive_default_region_fixture() -> Value {
 }
 
 fn recursive_default_region_links(network: &LinkNetwork) -> Vec<&Link> {
-    network
+    // Match embedded_regions(): the self-description's Region type point is
+    // retained in the network, but only physical occurrences have both fields.
+    let regions: Vec<_> = network
         .links()
-        .filter(|link| link.metadata().link_type() == Some(LinkType::Region))
-        .collect()
+        .filter(|link| {
+            let metadata = link.metadata();
+            metadata.link_type() == Some(LinkType::Region)
+                && metadata.language().is_some()
+                && metadata.span().is_some()
+        })
+        .collect();
+    let definition = network
+        .link(
+            network
+                .find_term("region")
+                .expect("the Region type point remains"),
+        )
+        .expect("the retained Region type point resolves");
+    assert_eq!(
+        (
+            definition.metadata().link_type(),
+            definition.metadata().language(),
+            definition.metadata().span()
+        ),
+        (Some(LinkType::Region), None, None)
+    );
+    assert!(regions.iter().all(|region| region.id() != definition.id()));
+    regions
 }
 
 struct RecursiveConcreteProjection<'a> {
