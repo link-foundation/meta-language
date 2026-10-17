@@ -10,6 +10,15 @@ use super::operations::Abort;
 use super::selection_source_mapping::{MappingBudget, SourceRegistry, numeric};
 use super::{DEFAULT_MAX_DEPTH, DEFAULT_MEMORY_LIMIT, FeatureParseOptions, GrammarRuntimeError};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::grammar_selection_included_range_rules::{
+    accept_grammar_selection_included_range_agreement,
+    accept_grammar_selection_included_range_derivation,
+    accept_grammar_selection_included_range_descriptor,
+    accept_grammar_selection_included_range_mapping,
+    accept_grammar_selection_included_range_profile,
+    accept_grammar_selection_included_range_source_range,
+    read_grammar_selection_included_range_field_order,
+};
 use crate::translation::grammar_selection_mapping_rules::{
     accept_grammar_selection_mapping_descriptor, accept_grammar_selection_mapping_occurrence,
     accept_grammar_selection_mapping_profile, accept_grammar_selection_mapping_reference,
@@ -126,6 +135,46 @@ fn exact_keys(value: &Value, role: &str) -> bool {
     };
     let plan = read_grammar_selection_mapping_field_order(role);
     fields.keys().map(String::as_str).eq(plan.split('|'))
+}
+
+fn accept_included_range_keys(value: &Value, role: &str) -> bool {
+    let Some(fields) = value.as_object() else {
+        return false;
+    };
+    let plan = read_grammar_selection_included_range_field_order(role);
+    fields.keys().map(String::as_str).eq(plan.split('|'))
+}
+
+fn read_included_range_columns(
+    value: &Value,
+    budget: &ValidationBudget,
+) -> Result<Vec<f64>, GrammarRuntimeError> {
+    let ranges = value
+        .as_array()
+        .ok_or_else(|| invalid("invalid included source ranges"))?;
+    let cells = ranges
+        .len()
+        .checked_mul(2)
+        .and_then(|count| count.checked_add(1))
+        .ok_or_else(|| aborted(Abort::MemoryBudget))?;
+    budget.retain(cells)?;
+    let mut columns = Vec::new();
+    for range in ranges {
+        budget.step()?;
+        let row = range
+            .as_array()
+            .filter(|row| row.len() == 2)
+            .ok_or_else(|| invalid("invalid included source ranges"))?;
+        if !accept_grammar_selection_included_range_source_range(
+            "source-range",
+            number(&row[0]),
+            number(&row[1]),
+        ) {
+            return Err(invalid("invalid included source ranges"));
+        }
+        columns.extend([number(&row[0]), number(&row[1])]);
+    }
+    Ok(columns)
 }
 
 fn physical(
@@ -286,15 +335,25 @@ impl Validator<'_> {
             Some(Value::String(profile)) => profile,
             _ => return Err(invalid("unknown mapping profile")),
         };
-        if !accept_grammar_selection_mapping_profile(
-            profile,
-            node.get("sourceChildren").is_some(),
-            selection.get("sourceMapping").is_some(),
-        ) {
+        let included = accept_grammar_selection_included_range_mapping(profile);
+        let accepted_profile = if included {
+            accept_grammar_selection_included_range_profile(
+                profile,
+                node.get("sourceChildren").is_some(),
+                selection.get("sourceMapping").is_some(),
+            )
+        } else {
+            accept_grammar_selection_mapping_profile(
+                profile,
+                node.get("sourceChildren").is_some(),
+                selection.get("sourceMapping").is_some(),
+            )
+        };
+        if !accepted_profile {
             return Err(invalid("unknown mapping profile"));
         }
         let alternatives = selection["alternatives"].as_array();
-        if profile != "json-string" {
+        if profile != "json-string" && !included {
             self.walk(&node["root"], plane, depth + 1)?;
             if let Some(alternatives) = alternatives {
                 for alternative in alternatives {
@@ -304,11 +363,25 @@ impl Validator<'_> {
             return Ok(());
         }
         let mapping = &selection["sourceMapping"];
-        if !exact_keys(mapping, "mapping")
-            || !accept_grammar_selection_mapping_descriptor(
-                mapping["kind"].as_str().unwrap_or_default(),
-                mapping["operation"].as_str().unwrap_or_default(),
+        let (ordered_fields, descriptor) = if included {
+            (
+                accept_included_range_keys(mapping, "mapping"),
+                accept_grammar_selection_included_range_descriptor(
+                    mapping["kind"].as_str().unwrap_or_default(),
+                    mapping["operation"].as_str().unwrap_or_default(),
+                ),
             )
+        } else {
+            (
+                exact_keys(mapping, "mapping"),
+                accept_grammar_selection_mapping_descriptor(
+                    mapping["kind"].as_str().unwrap_or_default(),
+                    mapping["operation"].as_str().unwrap_or_default(),
+                ),
+            )
+        };
+        if !ordered_fields
+            || !descriptor
             || !node["sourceChildren"].is_array()
             || mapping["input"] == mapping["output"]
             || !accept_grammar_selection_mapping_occurrence(
@@ -343,13 +416,27 @@ impl Validator<'_> {
         ) {
             return Err(invalid("mapping belongs to another source occurrence"));
         }
+        let ranges = if included {
+            let actual = read_included_range_columns(&mapping["ranges"], &self.budget)?;
+            let expected = read_included_range_columns(&origin["ranges"], &self.budget)?;
+            if !accept_grammar_selection_included_range_agreement(&actual, &expected) {
+                return Err(invalid("ordered included source ranges differ"));
+            }
+            Some(expected.as_chunks::<2>().0.to_vec())
+        } else {
+            None
+        };
         let start = offset(&node["start"]).ok_or_else(|| invalid("invalid mapped boundary"))?;
         let end = offset(&node["end"]).ok_or_else(|| invalid("invalid mapped boundary"))?;
-        let derived = self
-            .registry
-            .map(&self.planes[plane], start, end, &self.budget)
-            .map_err(aborted)?
-            .map_err(|failed| invalid(failed.reason))?;
+        let derived = if let Some(ranges) = &ranges {
+            self.registry
+                .map_included(&self.planes[plane], start, end, ranges, &self.budget)
+        } else {
+            self.registry
+                .map(&self.planes[plane], start, end, &self.budget)
+        }
+        .map_err(aborted)?
+        .map_err(|failed| invalid(failed.reason))?;
         let actual = mapping["intervals"]
             .as_array()
             .ok_or_else(|| invalid("ordered source intervals differ"))?;
@@ -474,30 +561,58 @@ pub fn check_grammar_selection_mapped_tree<'a>(
             root.clone()
         } else {
             let origin = &definition["derivation"];
-            if !exact_keys(origin, "derivation") {
+            let included = accept_grammar_selection_included_range_mapping(
+                origin["operation"].as_str().unwrap_or_default(),
+            );
+            let ordered = if included {
+                accept_included_range_keys(origin, "derivation")
+            } else {
+                exact_keys(origin, "derivation")
+            };
+            if !ordered {
                 return Err(invalid("unowned source derivation"));
             }
             let input = offset(&origin["input"])
                 .and_then(|index| validator.planes.get(index))
                 .ok_or_else(|| invalid("unowned source derivation"))?;
-            if !accept_grammar_selection_source_derivation(
-                origin["operation"].as_str().unwrap_or_default(),
-                number(&origin["input"]),
-                numeric(identity),
-                number(&origin["start"]),
-                number(&origin["end"]),
-                numeric(input.len()),
-            ) {
+            let accepted = if included {
+                accept_grammar_selection_included_range_derivation(
+                    origin["operation"].as_str().unwrap_or_default(),
+                    number(&origin["input"]),
+                    numeric(identity),
+                    number(&origin["start"]),
+                    number(&origin["end"]),
+                    numeric(input.len()),
+                )
+            } else {
+                accept_grammar_selection_source_derivation(
+                    origin["operation"].as_str().unwrap_or_default(),
+                    number(&origin["input"]),
+                    numeric(identity),
+                    number(&origin["start"]),
+                    number(&origin["end"]),
+                    numeric(input.len()),
+                )
+            };
+            if !accepted {
                 return Err(invalid("unowned source derivation"));
             }
             let start =
                 offset(&origin["start"]).ok_or_else(|| invalid("unowned source derivation"))?;
             let end = offset(&origin["end"]).ok_or_else(|| invalid("unowned source derivation"))?;
-            let derived = validator
-                .registry
-                .map(input, start, end, &validator.budget)
-                .map_err(aborted)?
-                .map_err(|_| invalid("invalid source derivation"))?;
+            let derived = if included {
+                let ranges = read_included_range_columns(&origin["ranges"], &validator.budget)?
+                    .as_chunks::<2>()
+                    .0
+                    .to_vec();
+                validator
+                    .registry
+                    .map_included(input, start, end, &ranges, &validator.budget)
+            } else {
+                validator.registry.map(input, start, end, &validator.budget)
+            }
+            .map_err(aborted)?
+            .map_err(|_| invalid("invalid source derivation"))?;
             if offset(&derived.mapping["output"]) != Some(identity) {
                 return Err(invalid("invalid source derivation"));
             }
