@@ -50746,7 +50746,661 @@ const FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING={
 };
 const FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES=[{inventory:"B60 formal artificial intelligence build cache source name for "+FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING.source,files:[FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING.source],extract:text=>text.includes(FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING.sourceText)?[FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING.inventoryName]:[],recordOf:()=>FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_BINDING.id}];
 // END B60 formal artificial intelligence build cache source name.
-export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
+// BEGIN B61 actual lexical binding source names.
+const TEMPORAL_BINDING_SOURCE_BINDINGS=[
+  {
+    "id": "translation.read-java-script-temporal-binding-read",
+    "source": "js/src/translation/frontend-rules.js",
+    "name": "readJavaScriptTemporalBindingRead",
+    "inventoryName": "read java script temporal binding read",
+    "sourceText": "export function readJavaScriptTemporalBindingRead(parents, bounds, names, ends, readScopes, readNames, readStarts) {\n  for (let read = 0; read < readNames.length; read += 1) {\n    let scope = readScopes[read];\n    let bound = false;\n    let captured = false;\n    let moduleRead = false;\n    while (scope >= 0 && !bound) {\n      for (let at = bounds[scope * 3]; at < bounds[scope * 3] + bounds[scope * 3 + 1]; at += 1) {\n        if (names[at] === readNames[read]) {\n          if (ends[at] >= 0 && moduleRead) return [read, 2];\n          if (ends[at] >= 0 && readStarts[read] < ends[at]) return [read, captured ? 1 : 0];\n          bound = true;\n        }\n      }\n      if (!bound && bounds[scope * 3 + 2] === 1) captured = true;\n      if (!bound && bounds[scope * 3 + 2] === 2) moduleRead = true;\n      scope = parents[scope];\n    }\n  }\n  return [];\n}"
+  },
+  {
+    "id": "translation.read-java-script-temporal-binding-read",
+    "source": "rust/src/translation/frontend_rules/strings.rs",
+    "name": "read_java_script_temporal_binding_read",
+    "inventoryName": "read java script temporal binding read",
+    "sourceText": "pub fn read_java_script_temporal_binding_read(\n    parents: &[f64],\n    bounds: &[f64],\n    names: &[String],\n    ends: &[f64],\n    read_scopes: &[f64],\n    read_names: &[String],\n    read_starts: &[f64],\n) -> Vec<f64> {\n    {\n        let read = 0f64;\n        {\n            let ml_s18 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop30(parents, bounds, names, ends, read_scopes, read_names, read_starts, read);\n            match ml_s18 {\n                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done => {\n                    Vec::<f64>::new()\n                }\n                crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return(ml_result30) => {\n                    ml_result30\n                }\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.parse-with-lexical-binding-scope",
+    "source": "js/src/translation/javascript.js",
+    "name": "withLexicalScope",
+    "inventoryName": "parse with lexical binding scope",
+    "sourceText": "withLexicalScope(names, parse, boundary = 0) {\n    const outer = this.lexicalScope;\n    this.lexicalScope = this.lexicalScopes.length;\n    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });\n    for (const name of names) this.lexicalBinding(name);\n    try { return parse(); } finally { this.lexicalScope = outer; }\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.parse-with-lexical-binding-scope",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "with_lexical_scope",
+    "inventoryName": "parse with lexical binding scope",
+    "sourceText": "    pub(super) fn with_lexical_scope<T>(\n        &mut self,\n        names: &[String],\n        boundary: u8,\n        parse: impl FnOnce(&mut Self) -> Result<T>,\n    ) -> Result<T> {\n        let outer = self.lexical.current;\n        self.lexical.current = self.lexical.frames.len();\n        self.lexical.frames.push(Frame {\n            parent: Some(outer),\n            boundary,\n            bindings: Vec::new(),\n        });\n        for name in names {\n            self.lexical.binding(name, None);\n        }\n        let result = parse(self);\n        self.lexical.current = outer;\n        result\n    }",
+    "ownerContexts": [
+      "impl JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.record-lexical-binding-completion",
+    "source": "js/src/translation/javascript.js",
+    "name": "lexicalBinding",
+    "inventoryName": "record lexical binding completion",
+    "sourceText": "lexicalBinding(name, initializedAt = -1) {\n    const bindings = this.lexicalScopes[this.lexicalScope].bindings;\n    if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.record-lexical-binding-completion",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "binding",
+    "inventoryName": "record lexical binding completion",
+    "sourceText": "    pub(super) fn binding(&mut self, name: &str, initialized_at: Option<usize>) {\n        let bindings = &mut self.frames[self.current].bindings;\n        if let Some((_, end)) = bindings.iter_mut().find(|(bound, _)| bound == name) {\n            *end = initialized_at.or(*end);\n        } else {\n            bindings.push((name.to_owned(), initialized_at));\n        }\n    }",
+    "ownerContexts": [
+      "impl Trace {"
+    ]
+  },
+  {
+    "id": "translation.record-lexical-binding-access",
+    "source": "js/src/translation/javascript.js",
+    "name": "lexicalRead",
+    "inventoryName": "record lexical binding access",
+    "sourceText": "lexicalRead(token, assignment = false, where = span(token, token)) {\n    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.record-lexical-binding-access",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "read",
+    "inventoryName": "record lexical binding access",
+    "sourceText": "    pub(super) fn read(&mut self, token: &Token, assignment: bool, span: Span) {\n        self.reads.push(Read {\n            scope: self.current,\n            name: token.value.clone(),\n            start: token.start,\n            span,\n            assignment,\n        });\n    }",
+    "ownerContexts": [
+      "impl Trace {"
+    ]
+  },
+  {
+    "id": "translation.read-javascript-closure-with-binding-scope",
+    "source": "js/src/translation/javascript.js",
+    "name": "closure",
+    "inventoryName": "read javascript closure with binding scope",
+    "sourceText": "closure(method = false) {\n    return this.withLexicalScope([], () => {\n      const value = readClosure(this, method);\n      for (const parameter of value.params) this.lexicalBinding(parameter.name);\n      return value;\n    }, 1);\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.validate-lexical-binding-access-trace",
+    "source": "js/src/translation/javascript.js",
+    "name": "validateLexicalBindings",
+    "inventoryName": "validate lexical binding access trace",
+    "sourceText": "validateLexicalBindings() {\n    const bounds = [], names = [], ends = [];\n    for (const scope of this.lexicalScopes) {\n      bounds.push(names.length, scope.bindings.size, scope.boundary);\n      for (const [name, end] of scope.bindings) { names.push(name); ends.push(end); }\n    }\n    const plan = readJavaScriptTemporalBindingRead(this.lexicalScopes.map(scope => scope.parent), bounds, names, ends,\n      this.lexicalReads.map(read => read.scope), this.lexicalReads.map(read => read.name), this.lexicalReads.map(read => read.start));\n    if (!plan.length) return;\n    const read = this.lexicalReads[plan[0]];\n    if (plan[1] === 2) throw unsupported(`function reading ${read.name}`,\n      'a mutable module binding requires module-capture representation', read.span);\n    if (plan[1] === 1) throw unsupported(`closure reading ${read.name} before its declaration`,\n      'the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof', read.span);\n    if (read.assignment) throw unsupported(`assignment of ${read.name} before its declaration`, 'the binding is in its temporal dead zone, where assigning it throws a ReferenceError', read.span);\n    throw unsupported(readCallableReferenceConstruct(read.name, true), readCallableReferenceObligation(true, true), read.span);\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.validate-lexical-binding-access-trace",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "validate",
+    "inventoryName": "validate lexical binding access trace",
+    "sourceText": "    pub(super) fn validate(&self) -> Result<()> {\n        let mut parents = Vec::new();\n        let mut bounds = Vec::new();\n        let mut names = Vec::new();\n        let mut ends = Vec::new();\n        for frame in &self.frames {\n            parents.push(frame.parent.map_or(-1.0, number));\n            bounds.extend([\n                number(names.len()),\n                number(frame.bindings.len()),\n                f64::from(frame.boundary),\n            ]);\n            for (name, end) in &frame.bindings {\n                names.push(name.clone());\n                ends.push(end.map_or(-1.0, number));\n            }\n        }\n        let scopes = self\n            .reads\n            .iter()\n            .map(|read| number(read.scope))\n            .collect::<Vec<_>>();\n        let read_names = self\n            .reads\n            .iter()\n            .map(|read| read.name.clone())\n            .collect::<Vec<_>>();\n        let starts = self\n            .reads\n            .iter()\n            .map(|read| number(read.start))\n            .collect::<Vec<_>>();\n        let plan = frontend_rules::read_java_script_temporal_binding_read(\n            &parents,\n            &bounds,\n            &names,\n            &ends,\n            &scopes,\n            &read_names,\n            &starts,\n        );\n        let Some(index) = plan.first() else {\n            return Ok(());\n        };\n        let read = &self.reads[position(*index)];\n        let issue = frontend_rules::ml_array::number_index(plan[1]);\n        if issue == Some(2) {\n            return Err(unsupported(\n                &format!(\"function reading {}\", read.name),\n                \"a mutable module binding requires module-capture representation\",\n                Some(read.span),\n            ));\n        }\n        if issue == Some(1) {\n            return Err(unsupported(\n                &format!(\"closure reading {} before its declaration\", read.name),\n                \"the captured binding may still be in its temporal dead zone; invoking the closure after initialization needs an invocation-order proof\",\n                Some(read.span),\n            ));\n        }\n        if read.assignment {\n            return Err(unsupported(\n                &format!(\"assignment of {} before its declaration\", read.name),\n                \"the binding is in its temporal dead zone, where assigning it throws a ReferenceError\",\n                Some(read.span),\n            ));\n        }\n        Err(unsupported(\n            &callable_source_rules::read_callable_reference_construct(&read.name, true),\n            &callable_source_rules::read_callable_reference_obligation(true, true),\n            Some(read.span),\n        ))\n    }",
+    "ownerContexts": [
+      "impl Trace {"
+    ]
+  },
+  {
+    "id": "translation.read-for-statement-in-binding-scope",
+    "source": "js/src/translation/javascript.js",
+    "name": "forStatementInScope",
+    "inventoryName": "read for statement in binding scope",
+    "sourceText": "forStatementInScope() {\n    const c = this.cursor;\n    const start = c.next();\n    if (c.is('await')) throw unsupported('for await', 'asynchronous iteration is outside the portable core', span(start, c.peek()));\n    c.expect('(', 'for');\n    const declared = c.is('let') || c.is('const') || c.is('var');\n    if ((c.is('const') || c.is('let')) && c.is('[', 1) && c.tokens[this.matching(c.index + 1) + 1]?.value === 'of') return this.forOf(start);\n    if (c.isKind('identifier', declared ? 1 : 0) && (c.is('of', declared ? 2 : 1) || c.is('in', declared ? 2 : 1))) {\n      const kind = c.peek(declared ? 2 : 1).value;\n      if (kind === 'in') throw unsupported('for…in loop', 'iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …)', span(start, c.peek()));\n      if (!declared || c.is('var')) throw unsupported('for…of without const or let', 'declare the loop variable with const or let, so each iteration has its own', span(start, c.peek()));\n      return this.forOf(start);\n    }\n    const outer = this.scope;\n    this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };\n    try {\n      const init = [];\n      if (c.is('let')) {\n        init.push(...this.letDeclarations());\n      } else if (c.is('const') || c.is('var')) {\n        throw unsupported(`for with ${c.peek().value}`, 'declare the loop variables with let', span(c.peek(), c.peek()));\n      } else {\n        while (!c.is(';')) {\n          if (!this.startsAssignment()) throw this.fail('expected an assignment in the for initialiser');\n          init.push(this.assignment());\n          if (!c.eat(',')) break;\n        }\n      }\n      c.expect(';', 'for');\n      const cond = c.is(';') ? null : this.expr();\n      c.expect(';', 'for');\n      const update = [];\n      while (!c.is(')')) {\n        if (!this.startsAssignment()) throw unsupported('for update', 'the update of a for loop is a list of assignments', span(c.peek(), c.peek()));\n        update.push(this.assignment());\n        if (!c.eat(',')) break;\n      }\n      c.expect(')', 'for');\n      const body = this.loopBody();\n      return { s: 'for', init, cond, update, body, span: span(start, c.peek()) };\n    } finally {\n      this.scope = outer;\n    }\n  }",
+    "ownerContexts": [
+      "class JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.read-for-statement-in-binding-scope",
+    "source": "rust/src/translation/javascript/loops.rs",
+    "name": "for_statement_in_scope",
+    "inventoryName": "read for statement in binding scope",
+    "sourceText": "    fn for_statement_in_scope(&mut self) -> Result<Stmt> {\n        let start = self.cursor.advance();\n        if self.cursor.is(\"await\") {\n            return Err(unsupported(\n                \"for await\",\n                \"asynchronous iteration is outside the portable core\",\n                Some(self.to_here(&start)),\n            ));\n        }\n        self.cursor.expect(\"(\", Some(\"for\"))?;\n        if (self.cursor.is(\"const\") || self.cursor.is(\"let\"))\n            && self.cursor.is_at(\"[\", 1)\n            && self\n                .cursor\n                .tokens\n                .get(self.matching(self.cursor.index + 1) + 1)\n                .is_some_and(|token| token.value == \"of\")\n        {\n            return self.for_of(&start);\n        }\n        let declared =\n            usize::from(self.cursor.is(\"let\") || self.cursor.is(\"const\") || self.cursor.is(\"var\"));\n        if self.cursor.is_kind_at(TokenKind::Identifier, declared)\n            && (self.cursor.is_at(\"of\", declared + 1) || self.cursor.is_at(\"in\", declared + 1))\n        {\n            if self.cursor.is_at(\"in\", declared + 1) {\n                return Err(unsupported(\n                    \"for…in loop\",\n                    \"iteration over the keys of objects is outside the portable core; count with for (let i = …; …; …)\",\n                    Some(self.to_here(&start)),\n                ));\n            }\n            if declared == 0 || self.cursor.is(\"var\") {\n                return Err(unsupported(\n                    \"for…of without const or let\",\n                    \"declare the loop variable with const or let, so each iteration has its own\",\n                    Some(self.to_here(&start)),\n                ));\n            }\n            return self.for_of(&start);\n        }\n        let outer = self.scope.clone();\n        let result = self.for_rest(&start);\n        self.scope = outer;\n        result\n    }",
+    "ownerContexts": [
+      "impl JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-frame",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Frame",
+    "inventoryName": "lexical binding frame",
+    "sourceText": "struct Frame {\n    parent: Option<usize>,\n    boundary: u8,\n    bindings: Vec<(String, Option<usize>)>,\n}"
+  },
+  {
+    "id": "translation.lexical-binding-access",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read",
+    "inventoryName": "lexical binding access",
+    "sourceText": "struct Read {\n    scope: usize,\n    name: String,\n    start: usize,\n    span: Span,\n    assignment: bool,\n}"
+  },
+  {
+    "id": "translation.lexical-binding-access-trace",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Trace",
+    "inventoryName": "lexical binding access trace",
+    "sourceText": "pub(super) struct Trace {\n    frames: Vec<Frame>,\n    current: usize,\n    reads: Vec<Read>,\n}"
+  },
+  {
+    "id": "translation.lexical-binding-access-trace",
+    "source": "rust/src/translation/javascript.rs",
+    "name": "JavaScriptParser::lexical",
+    "inventoryName": "lexical binding access trace",
+    "sourceText": "    lexical: lexical_bindings::Trace,",
+    "ownerContexts": [
+      "struct JavaScriptParser {"
+    ]
+  },
+  {
+    "id": "translation.create-initial-lexical-binding-trace",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "default",
+    "inventoryName": "create initial lexical binding trace",
+    "sourceText": "    fn default() -> Self {\n        Self {\n            frames: vec![Frame::default()],\n            current: 0,\n            reads: Vec::new(),\n        }\n    }",
+    "ownerContexts": [
+      "impl Default for Trace {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-frame-list",
+    "source": "js/src/translation/javascript.js",
+    "name": "lexicalScopes",
+    "inventoryName": "lexical binding frame list",
+    "sourceText": "    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map() }];"
+  },
+  {
+    "id": "translation.lexical-binding-frame-list",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Trace::frames",
+    "inventoryName": "lexical binding frame list",
+    "sourceText": "frames: Vec<Frame>,",
+    "ownerContexts": [
+      "pub(super) struct Trace {"
+    ]
+  },
+  {
+    "id": "translation.current-lexical-binding-frame-index",
+    "source": "js/src/translation/javascript.js",
+    "name": "lexicalScope",
+    "inventoryName": "current lexical binding frame index",
+    "sourceText": "    this.lexicalScope = 0;"
+  },
+  {
+    "id": "translation.current-lexical-binding-frame-index",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Trace::current",
+    "inventoryName": "current lexical binding frame index",
+    "sourceText": "current: usize,",
+    "ownerContexts": [
+      "pub(super) struct Trace {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-access-list",
+    "source": "js/src/translation/javascript.js",
+    "name": "lexicalReads",
+    "inventoryName": "lexical binding access list",
+    "sourceText": "    this.lexicalReads = [];"
+  },
+  {
+    "id": "translation.lexical-binding-access-list",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Trace::reads",
+    "inventoryName": "lexical binding access list",
+    "sourceText": "reads: Vec<Read>,",
+    "ownerContexts": [
+      "pub(super) struct Trace {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-parent-frame-index",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalScopes.parent",
+    "inventoryName": "lexical binding parent frame index",
+    "sourceText": "    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });",
+    "ownerContexts": [
+      "  withLexicalScope(names, parse, boundary = 0) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-parent-frame-index",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Frame::parent",
+    "inventoryName": "lexical binding parent frame index",
+    "sourceText": "parent: Option<usize>,",
+    "ownerContexts": [
+      "struct Frame {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-scope-boundary",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalScopes.boundary",
+    "inventoryName": "lexical binding scope boundary",
+    "sourceText": "    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });",
+    "ownerContexts": [
+      "  withLexicalScope(names, parse, boundary = 0) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-scope-boundary",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Frame::boundary",
+    "inventoryName": "lexical binding scope boundary",
+    "sourceText": "boundary: u8,",
+    "ownerContexts": [
+      "struct Frame {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-completion-table",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalScopes.bindings",
+    "inventoryName": "lexical binding completion table",
+    "sourceText": "    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });",
+    "ownerContexts": [
+      "  withLexicalScope(names, parse, boundary = 0) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-binding-completion-table",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Frame::bindings",
+    "inventoryName": "lexical binding completion table",
+    "sourceText": "bindings: Vec<(String, Option<usize>)>,",
+    "ownerContexts": [
+      "struct Frame {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-frame-index",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalReads.scope",
+    "inventoryName": "lexical access frame index",
+    "sourceText": "    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });",
+    "ownerContexts": [
+      "  lexicalRead(token, assignment = false, where = span(token, token)) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-frame-index",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read::scope",
+    "inventoryName": "lexical access frame index",
+    "sourceText": "scope: usize,",
+    "ownerContexts": [
+      "struct Read {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-source-name",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalReads.name",
+    "inventoryName": "lexical access source name",
+    "sourceText": "    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });",
+    "ownerContexts": [
+      "  lexicalRead(token, assignment = false, where = span(token, token)) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-source-name",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read::name",
+    "inventoryName": "lexical access source name",
+    "sourceText": "name: String,",
+    "ownerContexts": [
+      "struct Read {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-source-start",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalReads.start",
+    "inventoryName": "lexical access source start",
+    "sourceText": "    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });",
+    "ownerContexts": [
+      "  lexicalRead(token, assignment = false, where = span(token, token)) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-source-start",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read::start",
+    "inventoryName": "lexical access source start",
+    "sourceText": "start: usize,",
+    "ownerContexts": [
+      "struct Read {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-diagnostic-interval",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalReads.span",
+    "inventoryName": "lexical access diagnostic interval",
+    "sourceText": "    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });",
+    "ownerContexts": [
+      "  lexicalRead(token, assignment = false, where = span(token, token)) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-diagnostic-interval",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read::span",
+    "inventoryName": "lexical access diagnostic interval",
+    "sourceText": "span: Span,",
+    "ownerContexts": [
+      "struct Read {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-assignment-flag",
+    "source": "js/src/translation/javascript.js",
+    "name": "JavaScriptParser.lexicalReads.assignment",
+    "inventoryName": "lexical access assignment flag",
+    "sourceText": "    this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });",
+    "ownerContexts": [
+      "  lexicalRead(token, assignment = false, where = span(token, token)) {"
+    ]
+  },
+  {
+    "id": "translation.lexical-access-assignment-flag",
+    "source": "rust/src/translation/javascript/lexical_bindings.rs",
+    "name": "Read::assignment",
+    "inventoryName": "lexical access assignment flag",
+    "sourceText": "assignment: bool,",
+    "ownerContexts": [
+      "struct Read {"
+    ]
+  },
+  {
+    "id": "repository.observe-lexical-binding-console-rows",
+    "source": "js/tests/translation-javascript-loops.test.js",
+    "name": "observed",
+    "inventoryName": "observe lexical binding console rows",
+    "sourceText": "const observed = (source) => {\n    const output = [];\n    runInNewContext(source, { console: { log: (...values) => output.push(format(...values)) } }, { timeout: 1000 });\n    return output;\n  };",
+    "ownerContexts": [
+      "test('actual lexical owners preserve initialized bindings, shadows and initializer order through Links', () => {"
+    ]
+  },
+  {
+    "id": "repository.observe-native-lexical-binding-output",
+    "source": "rust/tests/unit/translation_javascript_loops.rs",
+    "name": "lexical_binding_output",
+    "inventoryName": "observe native lexical binding output",
+    "sourceText": "fn lexical_binding_output(source: &str) -> Vec<u8> {\n    let result = Command::new(\"node\")\n        .args([\"--input-type=module\", \"-e\", source])\n        .output()\n        .unwrap();\n    assert!(\n        result.status.success(),\n        \"{}\",\n        String::from_utf8_lossy(&result.stderr)\n    );\n    result.stdout\n}"
+  },
+  {
+    "id": "repository.check-lexical-binding-owner-initialization-order",
+    "source": "js/tests/translation-javascript-loops.test.js",
+    "name": "actual lexical owners preserve initialized bindings, shadows and initializer order through Links",
+    "inventoryName": "check lexical binding owner initialization order",
+    "sourceText": "test('actual lexical owners preserve initialized bindings, shadows and initializer order through Links', () => {\n  const observed = (source) => {\n    const output = [];\n    runInNewContext(source, { console: { log: (...values) => output.push(format(...values)) } }, { timeout: 1000 });\n    return output;\n  };\n  for (const [source, expected] of [\n    ['function read(){let NaN=1,first=NaN;return first;}console.log(read());', ['1']],\n    ['function read(){let first=1\\nlet second=first+1;return second;}console.log(read());', ['2']],\n    ['function read(){let first=1\\n+2,second=first+1;return second;}console.log(read());', ['4']],\n    ['function read(){let first={let:2},second=first.let;return second;}console.log(read());', ['2']],\n    ['function read(){let first=[1,2],second={x:3,y:4};return first.length+second.x;}console.log(read());', ['5']],\n    ['function read(){const [NaN,other]=[1,2];let first=NaN,Infinity=other;return first+Infinity;}console.log(read());', ['3']],\n    ['function read(){let total=0;{const NaN=3;total=NaN;}let first=0,NaN=1;return total+NaN;}console.log(read());', ['4']],\n    ['function read(){let reader=(NaN)=>NaN,NaN=1;return reader(3);}console.log(read());', ['3']],\n    ['function read(){let NaN=1,reader=()=>NaN;return reader();}console.log(read());', ['1']],\n    ['function read(){let total=0;for(let NaN=0;NaN<2;NaN++){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());', ['4']],\n    ['function read(){let total=0;for(const NaN of [1,2]){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());', ['6']],\n    ['function read(){let total=0;for(const [x] of [[1],[2]]){total+=x;}return total;}console.log(read());', ['3']],\n    ['function pair(a,b){console.log(a);return b;}function read(){let first=pair(1,2),second=pair(first,3);return second;}console.log(read());', ['1', '2', '3']],\n  ]) {\n    assert.deepEqual(observed(source), expected, 'the unchanged original source is the execution oracle');\n    assert.deepEqual(observed(emitJavaScript(checkProgram(parseJavaScript(source))).text), expected, source);\n  }\n  // Nearest non-let shadows stop lookup; otherwise the outer initializer end\n  // still constrains an actual earlier read in a child scope.\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 1, 0], ['NaN', 'NaN'], [30, -1], [1], ['NaN'], [10]), []);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 0], ['NaN'], [30], [1], ['NaN'], [10]), [0, 0]);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 0], ['NaN'], [30], [1], ['NaN'], [30]), []);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0, 1], [0, 0, 0, 0, 0, 1, 0, 1, 0], ['NaN'], [30], [2], ['NaN'], [10]), [0, 0]);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0, 1], [0, 1, 0, 1, 0, 1, 1, 0, 0], ['NaN'], [30], [2], ['NaN'], [10]), [0, 1]);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 2], ['NaN'], [30], [1], ['NaN'], [10]), [0, 2]);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 0, 2], ['NaN'], [30], [1], ['NaN'], [40]), [0, 2]);\n  assert.deepEqual(readJavaScriptTemporalBindingRead([-1, 0], [0, 1, 0, 1, 1, 2], ['NaN', 'NaN'], [30, -1], [1], ['NaN'], [40]), []);\n  for (const [source, expected] of [\n    ['function read(NaN){return NaN;}let first=0,NaN=1;console.log(read(2));', ['2']],\n    ['const NaN=3;function read(){return NaN;}console.log(read());', ['3']],\n  ]) {\n    assert.deepEqual(observed(`'use strict';{${source}}`), expected);\n    const emitted = emitJavaScript(checkProgram(parseJavaScript(source))).text;\n    assert.deepEqual(observed(`'use strict';{${emitted}}`), expected, 'nearest parameter and existing constant ownership remain unchanged');\n  }\n  const source = 'function read(){let NaN=1,first=NaN;return first;}console.log(read()===1);';\n  const checked = checkProgram(parseJavaScript(source));\n  const archive = encodeTypedProgramLinks(checked);\n  const rust = emitRust(checked).text;\n  for (const program of [checked,\n    decodeTypedProgramLinks(LinkNetwork.fromLino(archive.network.toLino()), archive.root),\n    decodeTypedProgramLinks(decodeLinkNetworkBinary(encodeLinkNetworkBinary(archive.network)), archive.root),\n  ]) {\n    assert.deepEqual(observed(emitJavaScript(program).text), observed(source));\n    assert.equal(emitRust(program).text, rust, 'text and binary reload retain the actual initialized binding');\n  }\n})"
+  },
+  {
+    "id": "repository.check-lexical-binding-owner-initialization-order",
+    "source": "rust/tests/unit/translation_javascript_loops.rs",
+    "name": "actual_lexical_owners_preserve_initialized_bindings_shadows_and_order_through_links",
+    "inventoryName": "check lexical binding owner initialization order",
+    "sourceText": "fn actual_lexical_owners_preserve_initialized_bindings_shadows_and_order_through_links() {\n    for (source, expected) in [\n        (\n            \"function read(){let NaN=1,first=NaN;return first;}console.log(read());\",\n            \"1\\n\",\n        ),\n        (\n            \"function read(){let first=1\\nlet second=first+1;return second;}console.log(read());\",\n            \"2\\n\",\n        ),\n        (\n            \"function read(){let first=1\\n+2,second=first+1;return second;}console.log(read());\",\n            \"4\\n\",\n        ),\n        (\n            \"function read(){let first={let:2},second=first.let;return second;}console.log(read());\",\n            \"2\\n\",\n        ),\n        (\n            \"function read(){let first=[1,2],second={x:3,y:4};return first.length+second.x;}console.log(read());\",\n            \"5\\n\",\n        ),\n        (\n            \"function read(){const [NaN,other]=[1,2];let first=NaN,Infinity=other;return first+Infinity;}console.log(read());\",\n            \"3\\n\",\n        ),\n        (\n            \"function read(){let total=0;{const NaN=3;total=NaN;}let first=0,NaN=1;return total+NaN;}console.log(read());\",\n            \"4\\n\",\n        ),\n        (\n            \"function read(){let reader=(NaN)=>NaN,NaN=1;return reader(3);}console.log(read());\",\n            \"3\\n\",\n        ),\n        (\n            \"function read(){let NaN=1,reader=()=>NaN;return reader();}console.log(read());\",\n            \"1\\n\",\n        ),\n        (\n            \"function read(){let total=0;for(let NaN=0;NaN<2;NaN++){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());\",\n            \"4\\n\",\n        ),\n        (\n            \"function read(){let total=0;for(const NaN of [1,2]){total+=NaN;}let first=0,NaN=3;return total+NaN;}console.log(read());\",\n            \"6\\n\",\n        ),\n        (\n            \"function read(){let total=0;for(const [x] of [[1],[2]]){total+=x;}return total;}console.log(read());\",\n            \"3\\n\",\n        ),\n        (\n            \"function pair(a,b){console.log(a);return b;}function read(){let first=pair(1,2),second=pair(first,3);return second;}console.log(read());\",\n            \"1\\n2\\n3\\n\",\n        ),\n        (\n            \"function read(NaN){return NaN;}let first=0,NaN=1;console.log(read(2));\",\n            \"2\\n\",\n        ),\n        (\n            \"const NaN=3;function read(){return NaN;}console.log(read());\",\n            \"3\\n\",\n        ),\n    ] {\n        assert_eq!(\n            lexical_binding_output(source),\n            expected.as_bytes(),\n            \"the original source is the oracle\"\n        );\n        let checked = check_program(&parse(source)).unwrap();\n        assert_eq!(\n            lexical_binding_output(&emit_javascript(&checked).unwrap().text),\n            expected.as_bytes(),\n            \"{source}\"\n        );\n    }\n    let source = \"function read(){let NaN=1,first=NaN;return first;}console.log(read()===1);\";\n    let program = check_program(&parse(source)).unwrap();\n    let archive = encode_typed_program_links(&program).unwrap();\n    let rust = emit_rust(&program).unwrap().text;\n    for network in [\n        LinkNetwork::from_lino(&archive.network.to_lino()).unwrap(),\n        decode_link_network_binary(\n            &encode_link_network_binary(&archive.network, BinaryLinksOptions::default()).unwrap(),\n            BinaryLinksOptions::default(),\n        )\n        .unwrap(),\n    ] {\n        let restored = decode_typed_program_links(&network, archive.root).unwrap();\n        assert_eq!(restored, program);\n        assert_eq!(\n            lexical_binding_output(&emit_javascript(&restored).unwrap().text),\n            lexical_binding_output(source)\n        );\n        assert_eq!(emit_rust(&restored).unwrap().text, rust);\n    }\n}"
+  },
+  {
+    "id": "repository.temporal-binding-native-style-identity",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "frontendTemporalBindingNativeStyleId",
+    "inventoryName": "temporal binding native style identity",
+    "sourceText": "export const frontendTemporalBindingNativeStyleId='reviewed-frontend-temporal-binding-styles';"
+  },
+  {
+    "id": "repository.read-source-rule-temporal-binding-source-path",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendTemporalBindingSourcePaths",
+    "inventoryName": "read source rule temporal binding source path",
+    "sourceText": "function readFrontendTemporalBindingSourcePaths(source,names,local) {\n  const {tokens,comments}=tokenize(source,'Rust'),edits=[];\n  const prefix=local?['crate','::','translation','::','frontend_rules','::']:['crate','::'];\n  for(let at=0;at+prefix.length<tokens.length;at++){\n    if(tokens[at].kind!=='identifier'||tokens[at-1]?.value==='::'\n      ||!prefix.every((value,offset)=>tokens[at+offset]?.value===value)\n      ||!names.has(tokens[at+prefix.length]?.value))continue;\n    const end=tokens[at+prefix.length-1].end;\n    if(comments.some(comment=>comment.start>=tokens[at].start&&comment.end<=end))continue;\n    edits.push([tokens[at].start,end,local?'crate::':'crate::translation::frontend_rules::']);\n    at+=prefix.length-1;\n  }\n  for(const[start,end,text]of edits.reverse())source=source.slice(0,start)+text+source.slice(end);\n  return source;\n}"
+  },
+  {
+    "id": "repository.simplify-source-rule-temporal-binding-copy",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "simplifyFrontendTemporalBindingCopies",
+    "inventoryName": "simplify source rule temporal binding copy",
+    "sourceText": "function simplifyFrontendTemporalBindingCopies(source) {\n  const {tokens,comments}=tokenize(source,'Rust'),matching=new Map(),stack=[];\n  for(let at=0;at<tokens.length;at++){\n    if(tokens[at].kind!=='punct')continue;\n    if(['(','[','{'].includes(tokens[at].value))stack.push(at);\n    else if([')',']','}'].includes(tokens[at].value)){const open=stack.pop();matching.set(open,at);matching.set(at,open);}\n  }\n  const open=tokens.findIndex(token=>token.value==='('),close=matching.get(open),body=tokens.findIndex(token=>token.value==='{');\n  if(close===undefined||body<close)return source;\n  const parameters=new Set(),counts=new Map();\n  for(const part of source.slice(tokens[open].end,tokens[close].start).split(',')){\n    const match=/^\\s*(?:mut\\s+)?([A-Za-z_][A-Za-z_0-9]*)\\s*:\\s*(f64|bool|Option\\s*<\\s*(?:f64|bool)\\s*>)\\s*$/u.exec(part);\n    if(match){counts.set(match[1],(counts.get(match[1])??0)+1);parameters.add(match[1]);}\n  }\n  if(tokens.slice(body+1).some(token=>token.kind==='macro'&&token.value!=='vec'\n    ||token.kind==='identifier'&&['fn','use','type','struct','enum','ref'].includes(token.value)\n    ||token.kind==='punct'&&token.value==='|'))return source;\n  const opaque=new Set();\n  for(let at=body+1;at<tokens.length;at++){\n    if(tokens[at].kind==='macro'&&matching.has(at+1)){\n      const end=matching.get(at+1);for(let inner=at;inner<=end;inner++)opaque.add(inner);at=end;continue;\n    }\n    if(tokens[at].value==='let'){\n      let end=at+1;while(end<tokens.length&&!['=',';'].includes(tokens[end].value))end++;\n      for(const token of tokens.slice(at+1,end))if(token.kind==='identifier')parameters.delete(token.value);\n    }\n    if(tokens[at].value==='=>'){\n      let begin=at-1;\n      while(begin>body&&!['{','}',','].includes(tokens[begin].value)){\n        if(matching.get(begin)<begin)begin=matching.get(begin)-1;else begin--;\n      }\n      for(const token of tokens.slice(begin+1,at))if(token.kind==='identifier')parameters.delete(token.value);\n    }\n  }\n  const edits=[];\n  for(let at=body+1;at+4<tokens.length;at++){\n    if(opaque.has(at)||tokens[at].kind!=='identifier'||!parameters.has(tokens[at].value)||counts.get(tokens[at].value)!==1\n      ||['.','::'].includes(tokens[at-1]?.value)||tokens[at+1]?.value!=='.'||tokens[at+2]?.value!=='clone'\n      ||tokens[at+3]?.value!=='('||tokens[at+4]?.value!==')'\n      ||comments.some(comment=>comment.start>=tokens[at+1].start&&comment.end<=tokens[at+4].end))continue;\n    edits.push([tokens[at+1].start,tokens[at+4].end]);\n  }\n  for(const[start,end]of edits.reverse())source=source.slice(0,start)+source.slice(end);\n  return source;\n}"
+  },
+  {
+    "id": "repository.simplify-source-rule-temporal-binding-arity-attribute",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "simplifyFrontendTemporalBindingArityAttributes",
+    "inventoryName": "simplify source rule temporal binding arity attribute",
+    "sourceText": "function simplifyFrontendTemporalBindingArityAttributes(source) {\n  const reason='checked source arguments and captured continuation state retain their original order';\n  const expected=tokenize('#[expect(clippy::too_many_arguments, reason = \"'+reason+'\")]', 'Rust').tokens\n    .filter(token=>token.kind!=='eof').map(token=>[token.kind,token.value]);\n  const {tokens,comments}=tokenize(source,'Rust');\n  const declaration=tokens.findIndex((token,index)=>token.value==='pub'&&tokens[index+1]?.value==='fn');\n  if(declaration<0)return source;\n  for(let at=0;at<declaration;at++){\n    if(!expected.every(([kind,value],offset)=>tokens[at+offset]?.kind===kind&&tokens[at+offset]?.value===value))continue;\n    const end=at+expected.length;\n    const comment=comments.findLast(value=>value.end<=tokens[at].start);\n    assert.equal(comment?.text,'// The checked primitive-column interface retains every ordered source argument.',\n      'only the actual checked-source arity attribute is regenerated');\n    assert.equal(end,declaration,'the checked-source arity attribute immediately precedes its function');\n    assert.ok(/^\\s*$/u.test(source.slice(comment.end,tokens[at].start))\n      &&/^\\s*$/u.test(source.slice(tokens[end-1].end,tokens[declaration].start)),\n    'an arity style preserves every unrelated prefix byte');\n    return source.slice(0,comment.start)+source.slice(tokens[declaration].start);\n  }\n  return source;\n}"
+  },
+  {
+    "id": "repository.read-source-rule-temporal-binding-style-corrections",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendTemporalBindingStyleCorrections",
+    "inventoryName": "read source rule temporal binding style corrections",
+    "sourceText": "export function readFrontendTemporalBindingStyleCorrections(source) {\n  const inventory=readRustLibraryItems(source).items;\n  assert.ok(!inventory.some(item=>item.kind==='use'||['f64','bool','Option','Vec','String'].includes(item.name)),\n    'the generated temporal-binding source retains its actual primitive type ownership');\n  const selected=inventory.filter(item=>item.kind==='fn'&&/^(?:ml_)?read_java_script_temporal_binding_read(?:_loop[0-9]+)?$/u.test(item.name)\n    ||item.kind==='enum'&&/^MlReadJavaScriptTemporalBindingReadLoop[0-9]+Result$/u.test(item.name));\n  assert.equal(selected.filter(item=>item.kind==='fn').length,4,'the temporal-binding source owns its entry and three actual continuations');\n  assert.equal(selected.filter(item=>item.kind==='enum').length,3,'the temporal-binding proof retains every actual result enum');\n  const names=new Set([...selected.map(item=>item.name),'ml_array']);\n  assert.equal(names.size,8,'the temporal-binding family has no shadowed source declarations');\n  for(const item of selected.filter(item=>item.kind==='fn'&&item.name.startsWith('ml_'))){\n    const number=/loop([0-9]+)$/u.exec(item.name)?.[1];\n    assert.ok(names.has('MlReadJavaScriptTemporalBindingReadLoop'+number+'Result'),\n      'each actual temporal-binding continuation retains its own result type');\n  }\n  const local=readFrontendTemporalBindingSourcePaths(selected.map(item=>item.kind==='fn'\n    ?simplifyFrontendTemporalBindingArityAttributes(item.source):item.source).join(''),names,true);\n  const loans=readPortableSourceParameterStyles(local).source;\n  let prepared=loans;\n  for(const item of readRustLibraryItems(loans).items.filter(item=>item.kind==='fn')){\n    const copied=simplifyFrontendTemporalBindingCopies(item.source);\n    const to=simplifyRustOptionIdentityMatches(copied);\n    if(to!==item.source)prepared=prepared.replace(item.source,to);\n  }\n  const reviewed=readPortableSourceLintStyles(prepared).source;\n  const restored=readFrontendTemporalBindingSourcePaths(reviewed,names,false);\n  const targets=new Map(readRustLibraryItems(restored).items.map(item=>[item.name,item]));\n  return selected.flatMap(item=>{\n    const to=targets.get(item.name);\n    assert.equal(to?.kind,item.kind,'a temporal-binding style retains its complete declaration inventory');\n    assert.doesNotMatch(to.source,/#\\[allow\\(/u,'a temporal-binding style introduces no lint allowance');\n    return item.source===to.source?[]:[{op:'replace',field:'source',from:item.source,to:to.source}];\n  });\n}"
+  },
+  {
+    "id": "repository.check-temporal-binding-native-style-ownership",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "temporal-binding styles borrow the complete actual column family and preserve every historical owner",
+    "inventoryName": "check temporal binding native style ownership",
+    "sourceText": "test('temporal-binding styles borrow the complete actual column family and preserve every historical owner',()=>{\n  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');\n  const emitted=emitRust(checkProgram(parseJavaScript(input)));\n  const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));\n  const historical=decorators.decorators.filter(definition=>definition.id!==frontendTemporalBindingNativeStyleId);\n  assert.equal(historical.find(definition=>definition.id===frontendRuleNativeStyleId).actions.length,3);\n  assert.equal(historical.find(definition=>definition.id===frontendTypeQueryNativeStyleId).actions.length,2);\n  const base=new DecoratorSet(historical);\n  let raw=formatProductRuleSource(decorateEmitted('Rust',{source:emitted.text},base).source);\n  for(let round=0;round<10;round++){\n    const next=formatProductRuleSource(base.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source);\n    if(next===raw)break;\n    raw=next;\n    assert.ok(round<9,'historical frontend styles retain their complete fixed point');\n  }\n  const actions=readFrontendTemporalBindingStyleCorrections(raw);\n  assert.equal(actions.length,4,'one entry and three actual continuations own every new style');\n  const originals=readRustLibraryItems(raw).items;\n  const family=originals.filter(item=>item.kind==='fn'&&/^(?:ml_)?read_java_script_temporal_binding_read(?:_loop[0-9]+)?$/u.test(item.name));\n  assert.equal(family.length,4);\n  const columns={parents:'f64',bounds:'f64',names:'String',ends:'f64',read_scopes:'f64',read_names:'String',read_starts:'f64'};\n  const literals=source=>{\n    const body=source.slice(source.indexOf('{'));\n    return tokenize(body,'Rust').tokens.filter(token=>['string','number'].includes(token.kind))\n      .map(token=>[token.kind,token.kind==='number'?String(token.value).replaceAll('_',''):token.value]);\n  };\n  for(const action of actions){\n    const before=readRustLibraryItems(action.from).items.find(item=>item.kind==='fn');\n    const after=readSourceTextRustBlock(action.to,'fn',before.name);\n    const header=after.slice(0,after.indexOf('{'));\n    const signature=/^pub fn \\w+\\(([^)]*)\\)/u.exec(after);\n    assert.doesNotMatch(signature[1],/Vec</u,'all immutable column interfaces borrow their actual source values');\n    for(const[column,type]of Object.entries(columns))if(new RegExp('\\\\b'+column+':','u').test(header)){\n      assert.match(header,new RegExp('\\\\b'+column+': &\\\\['+type+'\\\\]','u'));\n      assert.doesNotMatch(after,new RegExp('\\\\b'+column+'\\\\.(?:clone|to_vec)\\\\(','u'));\n    }\n    assert.doesNotMatch(after,/\\b(?:scope|at|scope_2|ml_s[0-9]+|ml_result[0-9]+)\\.clone\\(\\)/u,\n      'primitive Copy values and proved final continuation payloads retain no redundant copies');\n    assert.doesNotMatch(after,/Some\\(ml_present\\)\\s*=>\\s*ml_present/u);\n    assert.deepEqual(literals(after),literals(before.source),'every original ordered literal operand retains its value');\n    assert.doesNotMatch(action.to,/#\\[allow\\(/u);\n    const arity=signature[1].split(',').filter(part=>part.trim()).length;\n    assert.equal((action.to.match(/clippy::too_many_arguments/gu)??[]).length,arity>7?1:0,\n      'only the actual generated continuation arity selects the existing conditional expectation');\n    if(arity>7)assert.match(action.to,/checked source arguments and captured continuation state retain their original order/u);\n  }\n  const styled=new DecoratorSet([{id:frontendTemporalBindingNativeStyleId,level:'emitter',order:3200,\n    when:[['format','Rust'],['scope','formatted-module']],actions}]);\n  const replay=styled.decorate('emitter',{format:'Rust',scope:'formatted-module',source:raw}).source;\n  assert.deepEqual(readFrontendTemporalBindingStyleCorrections(replay),[],'the complete new style is idempotent before formatting');\n  const targets=new Map(readRustLibraryItems(replay).items.map(item=>[item.name,item]));\n  for(const item of originals)if(!family.includes(item))assert.equal(targets.get(item.name).source,item.source,\n    'every older function, runtime and result enum retains its exact source bytes');\n  const recorded=decorators.decorators.find(definition=>definition.id===frontendTemporalBindingNativeStyleId);\n  assert.ok(recorded,'the dedicated updater records the complete new style separately');\n  assert.deepEqual(recorded.actions,actions);\n  const copyOwner=family.find(item=>/\\bscope\\.clone\\(\\)/u.test(item.source));\n  assert.ok(copyOwner,'the source-derived control retains a real optional-number copy site');\n  for(const extra of[\n    'fn nested(scope:String)->String{scope.clone()} ',\n    'opaque!(); ',\n  ]){\n    const changed=copyOwner.source.replace('{','{'+extra);\n    const conservative=readFrontendTemporalBindingStyleCorrections(raw.replace(copyOwner.source,changed));\n    const kept=conservative.find(action=>action.from===changed)?.to??changed;\n    assert.match(kept,/\\bscope\\.clone\\(\\)/u,'nested declarations and unknown macros cannot borrow a primitive parameter proof');\n    assert.ok(kept.includes(extra.trim()),'an unproved body retains its exact opaque source');\n  }\n  assert.throws(()=>readFrontendTemporalBindingStyleCorrections('type Option=Other;\\n'+raw),/primitive type ownership/u);\n  assert.throws(()=>readFrontendTemporalBindingStyleCorrections('use custom::Vec;\\n'+raw),/primitive type ownership/u);\n})"
+  },
+  {
+    "id": "repository.check-temporal-binding-column-refusal-boundaries",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "temporal-binding column decisions retain local closure and module-capture refusals without changing inputs",
+    "inventoryName": "check temporal binding column refusal boundaries",
+    "sourceText": "test('temporal-binding column decisions retain local closure and module-capture refusals without changing inputs',()=>{\n  const cases=[\n    [[-1],[0,1,0],['value'],[10],[0],['value'],[9],[0,0]],\n    [[-1],[0,1,0],['value'],[10],[0],['value'],[10],[]],\n    [[-1,0],[0,1,0,1,0,1],['value'],[10],[1],['value'],[9],[0,1]],\n    [[-1,0],[0,1,0,1,0,1],['value'],[10],[1],['value'],[11],[]],\n    [[-1,0],[0,1,0,1,0,2],['value'],[10],[1],['value'],[9],[0,2]],\n    [[-1,0],[0,1,0,1,0,2],['value'],[10],[1],['value'],[11],[0,2]],\n    [[-1,0],[0,1,0,1,1,2],['value','value'],[10,-1],[1],['value'],[9],[]],\n    [[-1],[0,1,0],['value'],[-1],[0],['value'],[0],[]],\n    [[-1],[0,1,0],['value'],[10],[],[],[],[]],\n    [[-1],[0,1,0],['value'],[10],[0],['other'],[0],[]],\n    [[-1],[0,1,0],['value'],[NaN],[0],['value'],[-Infinity],[]],\n    [[-1],[0,1,0],['value'],[Infinity],[0],['value'],[0],[0,0]],\n  ];\n  for(const row of cases){\n    const args=row.slice(0,-1),before=args.map(column=>column.slice());\n    assert.deepEqual(readJavaScriptTemporalBindingRead(...args),row.at(-1));\n    assert.deepEqual(args,before,'the source decision observes its immutable columns without mutation');\n  }\n})"
+  },
+  {
+    "id": "repository.read-source-rule-style-body-literal-sequence",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "literals",
+    "inventoryName": "read source rule style body literal sequence",
+    "sourceText": "const literals=source=>{\n    const body=source.slice(source.indexOf('{'));\n    return tokenize(body,'Rust').tokens.filter(token=>['string','number'].includes(token.kind))\n      .map(token=>[token.kind,token.kind==='number'?String(token.value).replaceAll('_',''):token.value]);\n  };",
+    "ownerContexts": [
+      "test('temporal-binding styles borrow the complete actual column family and preserve every historical owner',()=>{"
+    ]
+  },
+  {
+    "id": "repository.current-boolean-native-style-identity",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "frontendCurrentBooleanNativeStyleId",
+    "inventoryName": "current boolean native style identity",
+    "sourceText": "export const frontendCurrentBooleanNativeStyleId='reviewed-frontend-current-boolean-binding-style';"
+  },
+  {
+    "id": "repository.read-source-rule-boolean-style-spelling",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendBooleanStyleSpelling",
+    "inventoryName": "read source rule boolean style spelling",
+    "sourceText": "function readFrontendBooleanStyleSpelling(previous,current) {\n  const before=tokenize(previous,'Rust'),after=tokenize(current,'Rust');\n  const tokens=value=>value.tokens.filter(token=>token.kind!=='eof');\n  const left=tokens(before),right=tokens(after);\n  if(left.length!==right.length||JSON.stringify(before.comments.map(comment=>comment.text))!==JSON.stringify(after.comments.map(comment=>comment.text)))return null;\n  if([...left,...right].some(token=>token.kind==='macro')\n    ||[left,right].some(list=>list.filter(token=>token.kind==='identifier'&&token.value==='fn').length!==1))return null;\n  const bindings=list=>list.filter((token,index)=>token.kind==='identifier'&&/^ml_logical[0-9]+$/u.test(token.value)\n    &&list[index-1]?.value==='let'&&list[index+1]?.value==='=');\n  const original=bindings(left),actual=bindings(right);\n  if(original.length!==1||actual.length!==1)return null;\n  const from=original[0].value,to=actual[0].value;\n  for(let at=0;at<left.length;at++){\n    if(left[at].kind!==right[at].kind)return null;\n    if(left[at].kind==='identifier'&&left[at].value===from){\n      if(right[at].value!==to||['.','::'].includes(left[at-1]?.value)\n        ||left[at+1]?.value==='::')return null;\n    }else if(previous.slice(left[at].start,left[at].end)!==current.slice(right[at].start,right[at].end)\n      ||right[at].kind==='identifier'&&right[at].value===to)return null;\n  }\n  return new Map([[from,to]]);\n}"
+  },
+  {
+    "id": "repository.read-source-rule-current-boolean-style-corrections",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "readFrontendCurrentBooleanStyleCorrections",
+    "inventoryName": "read source rule current boolean style corrections",
+    "sourceText": "export function readFrontendCurrentBooleanStyleCorrections(source,historical) {\n  const name='ml_accept_precedence_operand_context_loop28';\n  const candidates=historical.actions.filter(action=>action.op==='replace'&&action.field==='source'\n    &&action.from.startsWith('pub fn '+name+'('));\n  assert.equal(candidates.length,1,'the original Boolean row retains its single complete continuation action');\n  const owners=readRustLibraryItems(source).items.filter(item=>item.kind==='fn'&&item.name===name);\n  assert.equal(owners.length,1,'a current Boolean style owns its unique top-level source function');\n  const action=candidates[0],from=readSourceTextRustBlock(owners[0].source,'fn',name);\n  assert.equal(readSourceTextRustBlock(action.from,'fn',name),action.from);\n  assert.equal(readSourceTextRustBlock(action.to,'fn',name),action.to);\n  if(readFrontendBooleanStyleSpelling(action.to,from))return [];\n  const mapping=readFrontendBooleanStyleSpelling(action.from,from);\n  assert.ok(mapping,'a current Boolean style requires the same complete function with one unique bound temporary spelling');\n  let to=action.to;\n  for(const token of tokenize(to,'Rust').tokens.filter(token=>token.kind==='identifier'&&mapping.has(token.value)).reverse()){\n    to=to.slice(0,token.start)+mapping.get(token.value)+to.slice(token.end);\n  }\n  return [{op:'replace',field:'source',from,to}];\n}"
+  },
+  {
+    "id": "repository.check-current-boolean-style-history-transport",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "current Boolean styles transport only the historical uniquely bound temporary and preserve every original record byte",
+    "inventoryName": "check current boolean style history transport",
+    "sourceText": "test('current Boolean styles transport only the historical uniquely bound temporary and preserve every original record byte',()=>{\n  const data=readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8');\n  assert.equal(createHash('sha256').update(data.slice(0,778522)).digest('hex'),\n    '3078e31556afef9341fa3bdae9ab1b45be924e84039165b773229ee7006fef25',\n    'the complete historical decorator file remains an exact byte prefix');\n  const decorators=DecoratorSet.fromLino(data);\n  const historical=decorators.decorators.find(definition=>definition.id==='reviewed-boolean-helper-styles');\n  const recorded=decorators.decorators.find(definition=>definition.id===frontendCurrentBooleanNativeStyleId);\n  assert.ok(historical);assert.ok(recorded);\n  assert.equal(recorded.actions.length,1);\n  const [action]=recorded.actions;\n  assert.deepEqual(readFrontendCurrentBooleanStyleCorrections(action.from,historical),recorded.actions,\n    'the current complete action is derived from the unchanged historical proof');\n  assert.deepEqual(readFrontendCurrentBooleanStyleCorrections(action.to,historical),[],'the mapped target is idempotent');\n  const temporary=tokenize(action.from,'Rust').tokens.find((token,index,array)=>/^ml_logical[0-9]+$/u.test(token.value)\n    &&array[index-1]?.value==='let'&&array[index+1]?.value==='=')?.value;\n  assert.ok(temporary);\n  assert.doesNotMatch(action.to,new RegExp(temporary+'\\\\.clone\\\\(','u'));\n  assert.equal((action.to.match(/\\.unwrap_or_default\\(\\)/gu)??[]).length,2,'both original nullable Boolean false defaults remain');\n  const renamed=source=>{\n    const tokens=tokenize(source,'Rust').tokens.filter(token=>token.kind==='identifier'&&token.value===temporary);\n    for(const token of tokens.reverse())source=source.slice(0,token.start)+'ml_logical999'+source.slice(token.end);\n    return source;\n  };\n  assert.equal(readFrontendCurrentBooleanStyleCorrections(renamed(action.from),historical)[0].to,renamed(action.to),\n    'only the same bijective local spelling is transported across future temporary numbers');\n  for(const changed of[\n    action.from.replace('None => false','None => true'),\n    action.from.replace('let '+temporary+' =','let '+temporary+' = 1f64; let '+temporary+' ='),\n    action.from.replace('let '+temporary+' =','let '+temporary+' = /* new source comment */'),\n    action.from.replace('let '+temporary+' =','opaque!(); let '+temporary+' ='),\n    'pub fn foreign_scope(){'+action.from+'}',\n    action.from+'\\n'+action.from,\n  ])assert.throws(()=>readFrontendCurrentBooleanStyleCorrections(changed,historical),/complete function|top-level source function/u,\n    'changed meaning, shadowing, comments, macros, nested functions and duplicate owners refuse historical proof reuse');\n})"
+  },
+  {
+    "id": "repository.read-source-rule-boolean-style-token-sequence",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "tokens",
+    "inventoryName": "read source rule boolean style token sequence",
+    "sourceText": "const tokens=value=>value.tokens.filter(token=>token.kind!=='eof');",
+    "ownerContexts": [
+      "function readFrontendBooleanStyleSpelling(previous,current) {"
+    ]
+  },
+  {
+    "id": "repository.read-source-rule-boolean-style-logical-binding",
+    "source": "js/scripts/frontend-rule-style-corrections.mjs",
+    "name": "bindings",
+    "inventoryName": "read source rule boolean style logical binding",
+    "sourceText": "const bindings=list=>list.filter((token,index)=>token.kind==='identifier'&&/^ml_logical[0-9]+$/u.test(token.value)\n    &&list[index-1]?.value==='let'&&list[index+1]?.value==='=');",
+    "ownerContexts": [
+      "function readFrontendBooleanStyleSpelling(previous,current) {"
+    ]
+  },
+  {
+    "id": "translation.rename-boolean-style-test-temporary",
+    "source": "js/tests/translation-frontend-rule-styles.test.js",
+    "name": "renamed",
+    "inventoryName": "rename boolean style test temporary",
+    "sourceText": "const renamed=source=>{\n    const tokens=tokenize(source,'Rust').tokens.filter(token=>token.kind==='identifier'&&token.value===temporary);\n    for(const token of tokens.reverse())source=source.slice(0,token.start)+'ml_logical999'+source.slice(token.end);\n    return source;\n  };",
+    "ownerContexts": [
+      "test('current Boolean styles transport only the historical uniquely bound temporary and preserve every original record byte',()=>{"
+    ]
+  },
+  {
+    "id": "translation.execute-temporal-binding-read-scan",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "ml_read_java_script_temporal_binding_read_loop30",
+    "inventoryName": "execute temporal binding read scan",
+    "sourceText": "pub fn ml_read_java_script_temporal_binding_read_loop30(\n    parents: &[f64],\n    bounds: &[f64],\n    names: &[String],\n    ends: &[f64],\n    read_scopes: &[f64],\n    read_names: &[String],\n    read_starts: &[f64],\n    mut read: f64,\n) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result {\n    loop {\n        return if read < (read_names.len() as f64) {\n            {\n                let scope = crate::translation::frontend_rules::ml_array::optional_at(\n                    read_scopes,\n                    crate::translation::frontend_rules::ml_array::number_index(read),\n                );\n                {\n                    let bound = false;\n                    {\n                        let captured = false;\n                        {\n                            let module_read = false;\n                            {\n                                let ml_s25 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop31(parents, bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read);\n                                match ml_s25 {\n                                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done => {\n                                        {\n                                            let read_2 = read + 1f64;\n                                            {\n                                                read = read_2;\n                                                continue;\n                                            }\n                                        }\n                                    }\n                                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Return(ml_result31) => {\n                                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return(ml_result31)\n                                    }\n                                }\n                            }\n                        }\n                    }\n                }\n            }\n        } else {\n            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.temporal-binding-read-scan-result",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop30Result",
+    "inventoryName": "temporal binding read scan result",
+    "sourceText": "pub enum MlReadJavaScriptTemporalBindingReadLoop30Result {\n    MlReadJavaScriptTemporalBindingReadLoop30Done,\n    MlReadJavaScriptTemporalBindingReadLoop30Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.construct-temporal-binding-read-scan-completion",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Done",
+    "inventoryName": "construct temporal binding read scan completion",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop30Done,",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop30Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-temporal-binding-read-scan-issue",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop30Result::MlReadJavaScriptTemporalBindingReadLoop30Return",
+    "inventoryName": "construct temporal binding read scan issue",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop30Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop30Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-temporal-binding-scope-scan",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "ml_read_java_script_temporal_binding_read_loop31",
+    "inventoryName": "execute temporal binding scope scan",
+    "sourceText": "pub fn ml_read_java_script_temporal_binding_read_loop31(\n    parents: &[f64],\n    bounds: &[f64],\n    names: &[String],\n    ends: &[f64],\n    read_names: &[String],\n    read_starts: &[f64],\n    mut read: f64,\n    mut scope: Option<f64>,\n    mut bound: bool,\n    mut captured: bool,\n    mut module_read: bool,\n) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result {\n    loop {\n        return if (((scope).unwrap_or(f64::NAN)) >= 0f64) && !bound {\n            {\n                let at = crate::translation::frontend_rules::ml_array::optional_at(\n                    bounds,\n                    crate::translation::frontend_rules::ml_array::number_index(\n                        ((scope).unwrap_or(f64::NAN) * 3f64),\n                    ),\n                );\n                {\n                    let ml_s24 = crate::translation::frontend_rules::ml_read_java_script_temporal_binding_read_loop32(bounds, names, ends, read_names, read_starts, read, scope, bound, captured, module_read, at);\n                    match ml_s24 {\n                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done(bound_2) => {\n                            {\n                                let captured_3 = if !bound_2 && match (crate::translation::frontend_rules::ml_array::optional_at(bounds, crate::translation::frontend_rules::ml_array::number_index(((scope).unwrap_or(f64::NAN) * 3f64) + 2f64)), 1f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {\n                                    {\n                                        true\n                                    }\n                                } else {\n                                    captured\n                                };\n                                {\n                                    let module_read_3 = if !bound_2 && match (crate::translation::frontend_rules::ml_array::optional_at(bounds, crate::translation::frontend_rules::ml_array::number_index(((scope).unwrap_or(f64::NAN) * 3f64) + 2f64)), 2f64) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {\n                                        {\n                                            true\n                                        }\n                                    } else {\n                                        module_read\n                                    };\n                                    {\n                                        let scope_2 = crate::translation::frontend_rules::ml_array::optional_at(parents, crate::translation::frontend_rules::ml_array::number_index((scope).unwrap_or(f64::NAN)));\n                                        {\n                                            (scope, bound, captured, module_read) = (scope_2, bound_2, captured_3, module_read_3);\n                                            continue;\n                                        }\n                                    }\n                                }\n                            }\n                        }\n                        crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(ml_result32) => {\n                            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Return(ml_result32)\n                        }\n                    }\n                }\n            }\n        } else {\n            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.temporal-binding-scope-scan-result",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop31Result",
+    "inventoryName": "temporal binding scope scan result",
+    "sourceText": "pub enum MlReadJavaScriptTemporalBindingReadLoop31Result {\n    MlReadJavaScriptTemporalBindingReadLoop31Done,\n    MlReadJavaScriptTemporalBindingReadLoop31Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.construct-temporal-binding-scope-scan-completion",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Done",
+    "inventoryName": "construct temporal binding scope scan completion",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop31Done,",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop31Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-temporal-binding-scope-scan-issue",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop31Result::MlReadJavaScriptTemporalBindingReadLoop31Return",
+    "inventoryName": "construct temporal binding scope scan issue",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop31Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop31Result {"
+    ]
+  },
+  {
+    "id": "translation.execute-temporal-binding-name-scan",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "ml_read_java_script_temporal_binding_read_loop32",
+    "inventoryName": "execute temporal binding name scan",
+    "sourceText": "pub fn ml_read_java_script_temporal_binding_read_loop32(\n    bounds: &[f64],\n    names: &[String],\n    ends: &[f64],\n    read_names: &[String],\n    read_starts: &[f64],\n    mut read: f64,\n    mut scope: Option<f64>,\n    mut bound: bool,\n    mut captured: bool,\n    mut module_read: bool,\n    mut at: Option<f64>,\n) -> crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result {\n    loop {\n        return if ((at).unwrap_or(f64::NAN))\n            < ((crate::translation::frontend_rules::ml_array::optional_at(\n                bounds,\n                crate::translation::frontend_rules::ml_array::number_index(\n                    ((scope).unwrap_or(f64::NAN) * 3f64),\n                ),\n            ))\n            .unwrap_or(f64::NAN)\n                + (crate::translation::frontend_rules::ml_array::optional_at(\n                    bounds,\n                    crate::translation::frontend_rules::ml_array::number_index(\n                        (((scope).unwrap_or(f64::NAN) * 3f64) + 1f64),\n                    ),\n                ))\n                .unwrap_or(f64::NAN))\n        {\n            if match (\n                crate::translation::frontend_rules::ml_array::optional_at(\n                    names,\n                    crate::translation::frontend_rules::ml_array::number_index(\n                        (at).unwrap_or(f64::NAN),\n                    ),\n                ),\n                crate::translation::frontend_rules::ml_array::optional_at(\n                    read_names,\n                    crate::translation::frontend_rules::ml_array::number_index(read),\n                ),\n            ) {\n                (Some(ml_left), Some(ml_right)) => ml_left == ml_right,\n                (None, None) => true,\n                _ => false,\n            } {\n                if (((crate::translation::frontend_rules::ml_array::optional_at(\n                    ends,\n                    crate::translation::frontend_rules::ml_array::number_index(\n                        (at).unwrap_or(f64::NAN),\n                    ),\n                ))\n                .unwrap_or(f64::NAN))\n                    >= 0f64)\n                    && module_read\n                {\n                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(vec![read, 2f64])\n                } else if (((crate::translation::frontend_rules::ml_array::optional_at(\n                    ends,\n                    crate::translation::frontend_rules::ml_array::number_index(\n                        (at).unwrap_or(f64::NAN),\n                    ),\n                ))\n                .unwrap_or(f64::NAN))\n                    >= 0f64)\n                    && (((crate::translation::frontend_rules::ml_array::optional_at(\n                        read_starts,\n                        crate::translation::frontend_rules::ml_array::number_index(read),\n                    ))\n                    .unwrap_or(f64::NAN))\n                        < ((crate::translation::frontend_rules::ml_array::optional_at(\n                            ends,\n                            crate::translation::frontend_rules::ml_array::number_index(\n                                (at).unwrap_or(f64::NAN),\n                            ),\n                        ))\n                        .unwrap_or(f64::NAN)))\n                {\n                    crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return(vec![read, if captured {\n                            1f64\n                        } else {\n                            0f64\n                        }])\n                } else {\n                    {\n                        let bound_2 = true;\n                        {\n                            let at_2 = (at).unwrap_or(f64::NAN) + 1f64;\n                            {\n                                (bound, at) = (bound_2, Some(at_2));\n                                continue;\n                            }\n                        }\n                    }\n                }\n            } else {\n                {\n                    let at_3 = (at).unwrap_or(f64::NAN) + 1f64;\n                    {\n                        at = Some(at_3);\n                        continue;\n                    }\n                }\n            }\n        } else {\n            crate::translation::frontend_rules::MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done(bound)\n        };\n    }\n}"
+  },
+  {
+    "id": "translation.temporal-binding-name-scan-result",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop32Result",
+    "inventoryName": "temporal binding name scan result",
+    "sourceText": "pub enum MlReadJavaScriptTemporalBindingReadLoop32Result {\n    MlReadJavaScriptTemporalBindingReadLoop32Done(bool),\n    MlReadJavaScriptTemporalBindingReadLoop32Return(Vec<f64>),\n}"
+  },
+  {
+    "id": "translation.construct-temporal-binding-name-scan-completion",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Done",
+    "inventoryName": "construct temporal binding name scan completion",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop32Done(bool),",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop32Result {"
+    ]
+  },
+  {
+    "id": "translation.construct-temporal-binding-name-scan-issue",
+    "source": "rust/src/translation/frontend_rules/continuations_2.rs",
+    "name": "MlReadJavaScriptTemporalBindingReadLoop32Result::MlReadJavaScriptTemporalBindingReadLoop32Return",
+    "inventoryName": "construct temporal binding name scan issue",
+    "sourceText": "MlReadJavaScriptTemporalBindingReadLoop32Return(Vec<f64>),",
+    "ownerContexts": [
+      "pub enum MlReadJavaScriptTemporalBindingReadLoop32Result {"
+    ]
+  },
+  {
+    "id": "repository.read-native-source-closure",
+    "source": "rust/src/translation/javascript/callables.rs",
+    "name": "read_closure_in_scope",
+    "inventoryName": "read native source closure",
+    "sourceText": "    fn read_closure_in_scope(&mut self, method: bool) -> Result<SExpr> {\n        let start = self.peek();\n        let expression = method || self.cursor.eat(\"function\").is_some();\n        let token = self.peek();\n        let token_kind = if token.kind == TokenKind::Identifier {\n            \"identifier\"\n        } else {\n            \"\"\n        };\n        let error = rules::read_callable_closure_prefix_error(expression, token_kind, &token.value);\n        match error.as_str() {\n            \"named function expression\" => {\n                return Err(unsupported(\n                    &error,\n                    \"the function name needs a recursive local binding\",\n                    Some(token.span()),\n                ));\n            }\n            \"generator function\" => {\n                return Err(unsupported(\n                    &error,\n                    \"generators require a suspended execution state\",\n                    Some(token.span()),\n                ));\n            }\n            _ => {}\n        }\n        let tokens = if self.cursor.eat(\"(\").is_some() {\n            self.parameters(\"closure\")?\n        } else {\n            vec![(self.cursor.identifier(Some(\"closure parameter\"))?, None)]\n        };\n        if !expression {\n            self.cursor.expect(\"=>\", Some(\"closure\"))?;\n        }\n        let names: Vec<_> = tokens\n            .iter()\n            .map(|(token, _)| token.value.clone())\n            .collect();\n        let error = rules::read_callable_closure_parameter_error(\n            &names,\n            &(tokens\n                .iter()\n                .map(|(_, value)| value.is_some())\n                .collect::<Vec<_>>()),\n        );\n        match error.as_str() {\n            \"duplicate closure parameter\" => return Err(type_error(error, Some(start.span()))),\n            \"closure parameter default\" => {\n                return Err(unsupported(\n                    &error,\n                    \"a function value needs a callable default-argument signature\",\n                    Some(start.span()),\n                ));\n            }\n            _ => {}\n        }\n        let token_values: Vec<_> = tokens\n            .iter()\n            .map(|(token, _)| json!({\"value\":token.value,\"start\":token.start,\"end\":token.end}))\n            .collect();\n        let scope_value = json!({\"outer\":{\"locals\":self.scope.locals,\"tdz\":self.scope.tdz,\"mutable\":self.scope.mutable},\"tokens\":token_values});\n        let facts = create_surface_reference_facts(&scope_value);\n        let tokens_node = field(&facts, facts.root, \"tokens\");\n        let scope_plan = rules::plan_callable_closure_scope(\n            &facts.texts,\n            &facts.starts,\n            &facts.counts,\n            &facts.labels,\n            &facts.targets,\n            field(&facts, facts.root, \"outer\"),\n            tokens_node,\n        );\n        let locals = position(scope_plan[0]);\n        let temporal = position(scope_plan[1]);\n        let mutable = position(scope_plan[2]);\n        let scope = Scope {\n            locals: strings(&facts, &scope_plan[3..3 + locals])\n                .into_iter()\n                .collect(),\n            tdz: strings(&facts, &scope_plan[3 + locals..3 + locals + temporal])\n                .into_iter()\n                .collect(),\n            mutable: strings(\n                &facts,\n                &scope_plan[3 + locals + temporal..3 + locals + temporal + mutable],\n            )\n            .into_iter()\n            .collect(),\n        };\n        let parameter_plan = rules::plan_callable_surface_parameters(\n            &facts.starts,\n            &facts.counts,\n            &facts.labels,\n            &facts.targets,\n            tokens_node,\n        );\n        let params = parameter_plan\n            .as_chunks::<3>()\n            .0\n            .iter()\n            .map(|entry| SParam {\n                optional: false,\n                name: facts\n                    .value(entry[0])\n                    .and_then(Value::as_str)\n                    .expect(\"a parameter retains its token spelling\")\n                    .to_owned(),\n                span: Some(Span::new(\n                    facts\n                        .value(entry[1])\n                        .and_then(Value::as_u64)\n                        .and_then(|value| usize::try_from(value).ok())\n                        .expect(\"a token start is a host offset\"),\n                    facts\n                        .value(entry[2])\n                        .and_then(Value::as_u64)\n                        .and_then(|value| usize::try_from(value).ok())\n                        .expect(\"a token end is a host offset\"),\n                )),\n                ty: None,\n                default_value: None,\n                guard: None,\n                rocq_type: None,\n            })\n            .collect::<Vec<_>>();\n        for parameter in &params {\n            self.lexical.binding(&parameter.name, None);\n        }\n        let outer = std::mem::replace(&mut self.scope, scope);\n        let outer_jumps = std::mem::take(&mut self.jumps);\n        let outer_top = std::mem::replace(&mut self.top_level, false);\n        let outer_async = std::mem::replace(&mut self.in_async, false);\n        let result = (|| {\n            let statements = if self.cursor.is(\"{\") {\n                self.block_statements()?\n            } else {\n                vec![Stmt::Return {\n                    expr: self.expr()?,\n                    span: start.span(),\n                }]\n            };\n            let place = Span::new(start.start, self.cursor.peek().start);\n            let value = statements_value(&statements);\n            let facts = create_surface_reference_facts(&value);\n            let plan = rules::plan_callable_statement_captures(\n                &facts.forms,\n                &facts.texts,\n                &facts.starts,\n                &facts.counts,\n                &facts.labels,\n                &facts.targets,\n                facts.root,\n                &names,\n                &(outer.locals.iter().cloned().collect::<Vec<_>>()),\n            );\n            let count = position(plan[0]);\n            let assigned = strings(&facts, &plan[1..=count]);\n            let captures = strings(&facts, &plan[1 + count..]);\n            if !assigned.is_empty() && !self.reference_state.enabled {\n                return Err(unsupported(\n                    \"mutable closure capture\",\n                    \"captured assignments require a shared cell across calls\",\n                    Some(place),\n                ));\n            }\n            let body = if imperative(&statements) {\n                self.generated_count += 1;\n                let name = format!(\"closure{}\", self.generated_count);\n                super::imperative::lower_imperative_with_captures(\n                    self,\n                    &name,\n                    &params,\n                    &statements,\n                    place,\n                    &assigned,\n                    &captures,\n                )?\n            } else {\n                super::lower(&statements, place, &mut self.generated_count)?\n            };\n            let assigned_captures =\n                rules::require_callable_assigned_capture_field(number(assigned.len()))\n                    .then_some(assigned);\n            Ok(node(\n                SNode::Lambda {\n                    params,\n                    ret: None,\n                    captures,\n                    assigned_captures,\n                    body: Box::new(body),\n                },\n                place,\n            ))\n        })();\n        self.scope = outer;\n        self.jumps = outer_jumps;\n        self.top_level = outer_top;\n        self.in_async = outer_async;\n        result\n    }",
+    "ownerContexts": [
+      "impl JavaScriptParser {"
+    ]
+  }
+];
+const TEMPORAL_BINDING_NAME_INVENTORIES=[...new Set(TEMPORAL_BINDING_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B61 actual lexical binding source names for "+source,files:[source],extract:text=>TEMPORAL_BINDING_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>TEMPORAL_BINDING_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
+const TEMPORAL_BINDING_CURRENT_WITNESSES=[];
+const TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES=TEMPORAL_BINDING_CURRENT_WITNESSES.map(row=>({inventory:row.inventory,files:[row.source],extract:text=>text.includes(row.sourceText)&&(row.ownerContexts??[]).every(context=>text.includes(context))?[row.inventoryName]:[],recordOf:()=>row.id}));
+// END B61 actual lexical binding source names.
+// BEGIN B61 current native source reference state context.
+const B61_CURRENT_REFERENCE_STATE_WITNESS={
+  "id": "repository.native-source-reference-policy-state-field",
+  "source": "rust/src/translation/javascript.rs",
+  "name": "JavaScriptParser::reference_state",
+  "inventoryName": "java-script-parser-reference-state",
+  "sourceText": "reference_state: ReferenceSemantics,",
+  "sourceContext": "struct JavaScriptParser {\n    source: Source,\n    cursor: TokenCursor,\n    docs: Vec<Comment>,\n    /// Tags of every @typedef data type, for `switch (x.$)`.\n    data_types: Vec<SData>,\n    type_aliases: HashMap<String, String>,\n    scope: Scope,\n    lexical: lexical_bindings::Trace,\n    literal_bindings: HashMap<String, SExpr>,\n    assertion: Option<Assertion>,\n    /// Async functions run sequentially: each call of one is awaited where it\n    /// is made, so nothing else runs until its result is back. `await` is\n    /// allowed at the top level of the module and in async functions.\n    async_names: HashSet<String>,\n    in_async: bool,\n    unawaited: Vec<(String, Span)>,\n    sequential_async: bool,\n    jumps: Jumps,\n    /// Whether a top-level statement is being read, where `return` is a syntax error.\n    top_level: bool,\n    readonly_constants: ReadonlyConstants,\n    reference_state: ReferenceSemantics,\n    eliminated_owned_array_append_operations: Vec<Span>,\n    scalar_loop_model: String,\n    /// Functions and data types that loops and joins of statements lower to, and their count.\n    generated: Vec<SItem>,\n    generated_count: usize,\n    /// The other items of the module an item may call and read.\n    externals: Vec<External>,\n    /// The module's directory inside its crate, which makes relative imports items of the crate.\n    module_directory: Option<Vec<String>>,\n    imports: Vec<SImport>,\n    exported_names: HashSet<String>,\n    function_names: HashSet<String>,\n    owned_array_readers: owned_array_append::Readers,\n    owned_array_reader_namespace: usize,\n    nested_product_bindings: HashSet<Span>,\n    global_binding_names: HashSet<String>,\n}"
+};
+const B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES=[{inventory:"B50 reviewed library and source oracle contracts for rust/src/translation/javascript.rs",files:["rust/src/translation/javascript.rs"],extract:text=>text.includes(B61_CURRENT_REFERENCE_STATE_WITNESS.sourceText)&&text.includes(B61_CURRENT_REFERENCE_STATE_WITNESS.sourceContext)?[B61_CURRENT_REFERENCE_STATE_WITNESS.inventoryName]:[],recordOf:()=>B61_CURRENT_REFERENCE_STATE_WITNESS.id}];
+// END B61 current native source reference state context.
+export const NAME_INVENTORIES = Object.freeze([...BASE_NAME_INVENTORIES, ...RESOLVED_SOURCE_NAME_INVENTORIES, ...VALUE_SOURCE_NAME_INVENTORIES, ...SOURCE_PROCESSING_NAME_INVENTORIES, ...RUNTIME_SHELL_NAME_INVENTORIES, ...RUST_NUMBER_BOUNDARY_NAME_INVENTORIES, ...JAVASCRIPT_LINE_BOUNDARY_NAME_INVENTORIES, ...OWNED_TUPLE_CALL_NAME_INVENTORIES, ...RUST_LEXICAL_SOURCE_NAME_INVENTORIES, ...RUST_LITERAL_VALUE_NAME_INVENTORIES, ...RUST_TEXT_PROJECTION_NAME_INVENTORIES, ...RUST_RAW_AND_TEXT_CERTIFICATE_NAME_INVENTORIES, ...RAW_BINDING_RULE_ORACLE_NAME_INVENTORIES, ...OWNED_SOURCE_ADAPTER_NAME_INVENTORIES, ...FINAL_SOURCE_ORACLE_NAME_INVENTORIES, ...ORIGINAL_LINK_AND_COLLECTOR_NAME_INVENTORIES, ...FRESH_COLLECTOR_GLOBAL_CONTEXT_NAME_INVENTORIES, ...ORIGINAL_LINK_VALUE_TABLE_NAME_INVENTORIES, ...GENERATED_PACKAGE_SCHEDULING_NAME_INVENTORIES, ...COMPLETE_TABLE_BINARY_CANDIDATE_NAME_INVENTORIES, ...ORIGINAL_RAW_CANCELLATION_NAME_INVENTORIES, ...NATIVE_REPAIR_NAME_INVENTORIES, ...ARCHIVE_LIFECYCLE_NAME_INVENTORIES, ...ARCHIVE_RELOAD_NAME_INVENTORIES, ...PROJECTION_MEMORY_NAME_INVENTORIES, ...BINARY_RECORD_NAME_INVENTORIES, ...GLOBAL_IDENTITY_RESOURCE_NAME_INVENTORIES, ...FINISHED_RULE_CALL_NAME_INVENTORIES, ...NATIVE_SOURCE_PROGRESS_NAME_INVENTORIES, ...KEYWORD_PARENT_CONTROL_NAME_INVENTORIES, ...RULE_CALL_KEY_NAME_INVENTORIES, ...NATIVE_SOURCE_POSITION_NAME_INVENTORIES, ...COMPILER_STYLE_BOUNDARY_NAME_INVENTORIES, ...RESOURCE_CONTROL_NAME_INVENTORIES, ...SILENT_RULE_STORAGE_NAME_INVENTORIES, ...IDENTITY_COMPILER_FEEDBACK_NAME_INVENTORIES, ...CONCEPT_SEED_INDEX_NAME_INVENTORIES, ...EXACT_CACHE_STORAGE_NAME_INVENTORIES, ...CONSERVATIVE_CACHE_FALLBACK_NAME_INVENTORIES, ...RULE_MEMO_WORKING_SET_NAME_INVENTORIES, ...RECURSIVE_SEED_CACHE_NAME_INVENTORIES, ...PROJECT_OWNED_CLEANUP_NAME_INVENTORIES, ...UNARY_OPERAND_AND_LEAN_RELEASE_NAME_INVENTORIES, ...GRAMMAR_WORK_PRIORITY_NAME_INVENTORIES, ...BINARY_RECORD_COMPILER_NAME_INVENTORIES, ...GRAMMAR_REJECTION_DESCRIPTION_NAME_INVENTORIES, ...PUBLIC_BINDING_IDENTITY_NAME_INVENTORIES, ...COMPLETE_WORKLOAD_NAME_INVENTORIES, ...BULK_FORTY_FIVE_NAME_INVENTORIES.map(reconcileBulkFortySixLexicalInventory).map(reconcileBulkFortySevenNativeInventory).map(reconcileBulkFiftyHistoricalInventory), ...BULK_FORTY_SIX_NAME_INVENTORIES, ...BULK_FORTY_SEVEN_NAME_INVENTORIES, ...BULK_FORTY_EIGHT_NAME_INVENTORIES, ...BULK_FORTY_NINE_NAME_INVENTORIES, ...BULK_FIFTY_NAME_INVENTORIES, ...BULK_FIFTY_ONE_NAME_INVENTORIES.map(reconcileB57MovedSourceInventory), ...VERSION_RANGE_EVIDENCE_NAME_INVENTORIES, ...FORMAT_RETRY_SOURCE_NAME_INVENTORIES, ...DISCOVERY_CERTIFICATE_NAME_INVENTORIES, ...SELECTED_NATIVE_GRAMMAR_PROJECTION_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_NAME_INVENTORIES, ...BULK_FIFTY_FIVE_STYLE_WITNESS_INVENTORIES, ...BULK_FIFTY_FIVE_CONST_ARCHIVE_ERROR_NAME_INVENTORIES, ...AUXILIARY_GRAMMAR_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_SOURCE_NAME_INVENTORIES, ...STRING_CODE_UNIT_CURRENT_WITNESS_INVENTORIES, ...CHILD_CHAIN_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_NAME_INVENTORIES, ...PARSER_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...PARSER_TOKEN_COVERING_CURRENT_WITNESS_INVENTORIES, ...EMBEDDED_REGION_NAME_INVENTORIES, ...EMBEDDED_REGION_CURRENT_WITNESS_INVENTORIES, ...B60_NATIVE_TOKEN_EXCLUSION_CURRENT_WITNESS_INVENTORIES, ...FORMAL_ARTIFICIAL_INTELLIGENCE_CACHE_NAME_INVENTORIES, ...TEMPORAL_BINDING_NAME_INVENTORIES, ...TEMPORAL_BINDING_CURRENT_WITNESS_INVENTORIES, ...B61_CURRENT_REFERENCE_STATE_WITNESS_INVENTORIES].map(entry=>entry.inventory!=="grammar link terms"?entry:{...entry,extract:(text,file)=>entry.extract(text,file).map(name=>file==="rust/src/grammar/links.rs"&&name==="grammar::lexer"?"grammar::native-source-lexical-analyser-declaration":name),recordOf:name=>name==="grammar::native-source-lexical-analyser-declaration"?"repository.native-source-lexical-analyser-declaration":entry.recordOf(name)}));
 
 /** Every canonical name the sources define, with its inventory, file and record. */
 export function extractNameInventory(root, inventories = NAME_INVENTORIES) {
