@@ -59,3 +59,4 @@ export { encodeStructuredDataLinks, decodeStructuredDataLinks, structuredDataToL
 export { structuredDataRecordToLino, readStructuredDataRecords } from './structured-data-records.js';
 export * from './transform.js';
 export * from './translation.js';
+export { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from './translation/source-text-bytes.js';
