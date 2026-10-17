@@ -13,6 +13,7 @@
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
+import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
 import { imperative, lowerImperative, lowerTopLevel, statementUses } from './javascript-lower.js';
 import { TokenCursor, describe, tokenize } from './lexer.js';
@@ -109,6 +110,11 @@ class JavaScriptParser {
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
     this.typeAliases = new Map();
+    // Parser-only facts from actual lexical owners and actual source headers.
+    // They never become checked IR or substitute for semantic validation.
+    this.tagBindingTypes = new WeakMap();
+    this.tagFunctionResults = new Map([...this.externals.values()]
+      .filter(entry => entry.k === 'fn').map(entry => [entry.name, { type: entry.ret }]));
     // Locals in scope, the ones `let` or a parameter makes assignable, and
     // names of the current block still in their temporal dead zone.
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
@@ -169,8 +175,22 @@ class JavaScriptParser {
         }
       }
       if (depth === 0 && token.kind === 'identifier') {
-        if (token.value === 'function' && c.tokens[index + 1]?.kind === 'identifier') this.functionNames.add(c.tokens[index + 1].value);
-        if (token.value === 'const' && c.tokens[index + 1]?.kind === 'identifier' && c.tokens[index + 2]?.value === '=' && this.startsFunction(index + 3)) this.functionNames.add(c.tokens[index + 1].value);
+        if (token.value === 'function' && c.tokens[index + 1]?.kind === 'identifier') {
+          const name = c.tokens[index + 1].value;
+          const asynchronous = c.tokens[index - 1]?.value === 'async';
+          let head = index - (asynchronous ? 1 : 0);
+          if (c.tokens[head - 1]?.value === 'export') head -= 1;
+          this.functionNames.add(name);
+          const expression = c.tokens[index - 1]?.value === '=' || asynchronous && c.tokens[index - 2]?.value === '=';
+          if (!expression) this.rememberTagFunction(name, c.tokens[head], asynchronous);
+        }
+        if (token.value === 'const' && c.tokens[index + 1]?.kind === 'identifier' && c.tokens[index + 2]?.value === '=' && this.startsFunction(index + 3)) {
+          const name = c.tokens[index + 1].value;
+          const asynchronous = c.tokens[index + 3]?.value === 'async' && c.tokens[index + 4]?.value !== '=>';
+          const head = c.tokens[index - 1]?.value === 'export' ? index - 1 : index;
+          this.functionNames.add(name);
+          this.rememberTagFunction(name, c.tokens[head], asynchronous);
+        }
       }
       if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
       if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
@@ -611,7 +631,10 @@ class JavaScriptParser {
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
       return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
     }
-    const statements = this.withLexicalScope(names, statementsOf, 2);
+    const statements = this.withLexicalScope(names, () => {
+      for (const parameter of params) this.rememberTagBinding(parameter.name, { type: parameter.type });
+      return statementsOf();
+    }, 2);
     validateClosureCaptures(statements, this.referenceSemantics);
     // An explicit or forced reference context keeps actual heap operations.
     // Only the inferred construction context may become immutable rebinding.
@@ -911,7 +934,9 @@ class JavaScriptParser {
     try { value = this.expr(); } finally { this.readonlyConstantInitializer = previous; }
     if (c.is(',')) throw unsupported('several declarators', 'declare one binding per const', span(start, c.peek()));
     c.eat(';');
+    const receiverFact = this.readTagReceiverFact(value);
     this.declareLocal(name.value);
+    if (receiverFact) this.rememberTagBinding(name.value, receiverFact);
     return { s: 'const', name: name.value, value, span: span(start, c.peek()) };
   }
 
@@ -1766,14 +1791,71 @@ class JavaScriptParser {
     }
   }
 
+  /** Retain the actual source header; parse its annotation only if an
+   * ambiguous tag test actually needs the result context. Duplicate source
+   * declarations/imports supply no unique owner. No unrelated diagnostic is
+   * moved into this ordinary declaration census.
+   */
+  rememberTagFunction(name, token, asynchronous) {
+    if (this.tagFunctionResults.has(name)) this.tagFunctionResults.set(name, null);
+    else this.tagFunctionResults.set(name, { token, asynchronous });
+  }
+
+  rememberTagBinding(name, fact) {
+    const owner = this.lexicalScopes[this.lexicalScope];
+    let bindings = this.tagBindingTypes.get(owner);
+    if (!bindings) { bindings = new Map(); this.tagBindingTypes.set(owner, bindings); }
+    bindings.set(name, fact);
+  }
+
+  /** Only declared parameters, actual named call results, and immutable
+   * aliases of those facts contribute context. A nearer lexical declaration
+   * stops lookup even when it has no type fact. Closure/function boundaries
+   * never borrow a same-spelled outer parameter's context.
+   */
+  readTagReceiverFact(node) {
+    const target = node.k === 'app' ? node.fn : node;
+    const path = target.path ?? [];
+    const form = readJavaScriptTagReceiverForm(node.k, node.k === 'app' ? target.k : '', path, ROOT);
+    if (form === 1) return this.tagFunctionResults.get(path[1]) ?? null;
+    if (form !== 2) return null;
+    for (let index = this.lexicalScope; index >= 0; index = this.lexicalScopes[index].parent) {
+      const scope = this.lexicalScopes[index];
+      const step = readJavaScriptTagBindingStep(scope.bindings.has(path[0]), scope.boundary);
+      if (step === 1) return this.tagBindingTypes.get(scope)?.get(path[0]) ?? null;
+      if (step === 2) break;
+    }
+    return null;
+  }
+
+  readTagReceiverOwner(node) {
+    const fact = this.readTagReceiverFact(node);
+    if (!fact) return '';
+    let type = fact.type;
+    if (acceptJavaScriptTagHeaderFact(Boolean(type), Boolean(fact.token), Boolean(fact.asynchronous))) {
+      // This is speculative context, not ordinary declaration validation.
+      // A later malformed header must not replace the current tag refusal.
+      try {
+        const doc = this.jsdocFor(fact.token);
+        if (doc?.returns) type = this.type(doc.returns, doc.range);
+      } catch (error) {
+        if (error instanceof TranslationError) return '';
+        throw error;
+      }
+    }
+    return readJavaScriptTagDeclaredOwner(type?.kind ?? '', type?.path ?? [], type?.name ?? '', ROOT);
+  }
+
   /** `x.$ === 'tag'` tests the alternative of a data value. */
   tagTest(op, left, right, where) {
     const [field, tag] = left.k === 'field' && left.field === '$' ? [left, right] : [right, left];
     if (field.k !== 'field' || field.field !== '$') return null;
     if (tag.k !== 'str') throw unsupported('computed tag test', 'compare the $ tag with a string literal', where);
     const candidates = [...this.dataTypes].filter(([, ctors]) => ctors.some((ctor) => ctor.name === tag.value));
-    if (candidates.length !== 1) throw typeError(candidates.length ? `tag ${tag.value} is ambiguous between data types` : `no @typedef has tag ${tag.value}`, where);
-    const [name, ctors] = candidates[0];
+    const receiver = candidates.length > 1 ? this.readTagReceiverOwner(field.object) : '';
+    const position = readJavaScriptTagOwnerPosition(candidates.map(([name]) => name), receiver);
+    if (position < 0) throw typeError(candidates.length ? `tag ${tag.value} is ambiguous between data types` : `no @typedef has tag ${tag.value}`, where);
+    const [name, ctors] = candidates[position];
     const ctor = ctors.find((candidate) => candidate.name === tag.value);
     const pattern = { k: 'ctor', path: [ROOT, name, tag.value], args: ctor.fields.map(() => ({ k: 'wild', span: where })), span: where };
     return {
