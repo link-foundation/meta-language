@@ -133,6 +133,8 @@ test('terminal tag guard source styles append exact new Boolean functions withou
     expected = expected.replace(from, to);
   }
   const styled = DecoratorSet.fromLino(document).decorate('emitter', { format: 'Rust', source: raw }).source;
+  expected = new DecoratorSet(DecoratorSet.fromLino(document).decorators.filter(row => row.id === 'javascript-terminal-tag-guard-interface-style'))
+    .decorate('emitter', { format: 'Rust', source: expected }).source;
   assert.equal(styled, expected);
   const additional = new DecoratorSet(DecoratorSet.fromLino(document).decorators.filter(row => row.id === id));
   assert.equal(additional.decorate('emitter', { format: 'Rust', source: styled }).source, styled);
@@ -150,4 +152,78 @@ test('terminal tag guard source styles append exact new Boolean functions withou
     assert.equal(original.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);
     assert.equal(generated.acceptJavaScriptTagGuardSequence(multiple, terminal), multiple && terminal);
   }
+});
+
+test('the terminal tag guard expectation retains the exact five-fact ABI body and all historical styles', async () => {
+  const { createHash } = await import('node:crypto');
+  const { readSourceTextRustBlock } = await import('../scripts/source-text-byte-library-style.mjs');
+  const document = readFileSync(new URL('../../parity/self-translation/javascript-surface-rules-decorators.lino', import.meta.url), 'utf8');
+  const lines = document.match(/[^\n]*\n|[^\n]+$/gu) ?? [];
+  for (const [index, bytes, sha256] of [
+    [0, 106060, 'ac9cf3ef2a0a4a4b16e59b9c2d33a2619fd8cbe44bf4042913f52419cc275e6a'],
+    [1, 1287, '61cbbe05766356d057df68a3d53fcf20bfb257f42b9ea3a45430d9d0a0112650'],
+    [2, 2656, '13100c9a1a0ecd7ec2d0fd5595b4b3c953054d68cc96c3861cdf53ecd30179cf'],
+  ]) {
+    assert.equal(Buffer.byteLength(lines[index]), bytes);
+    assert.equal(createHash('sha256').update(lines[index]).digest('hex'), sha256);
+  }
+  const id = 'javascript-terminal-tag-guard-interface-style';
+  const styles = DecoratorSet.fromLino(document), selected = styles.decorators.filter(row => row.id === id);
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].level, 'emitter');
+  assert.equal(selected[0].order, 120);
+  assert.deepEqual(selected[0].when, [['format', 'Rust']]);
+  assert.equal(selected[0].actions.length, 1);
+  const action = selected[0].actions[0], historical = DecoratorSet.fromLino(lines[1]).decorators[0].actions[0];
+  const attribute = '#[expect(clippy::fn_params_excessive_bools, reason = "the checked source interface retains five independent ordered Boolean facts")]\n';
+  assert.equal(action.op, 'replace');
+  assert.equal(action.field, 'source');
+  assert.equal(action.from, historical.to, 'the entire original const declaration supplies the ABI and body authority');
+  assert.equal(action.to, action.from.replace('#[must_use]\n', '#[must_use]\n' + attribute));
+  assert.equal(action.to.replace(attribute, ''), action.from, 'the full function inverse removes exactly one attribute');
+  assert.equal((action.to.match(/clippy::fn_params_excessive_bools/gu) ?? []).length, 1);
+  assert.doesNotMatch(action.to, /#\[(?:allow|expect)\([^)]*(?:unused|warnings)/u);
+  const isolated = new DecoratorSet(selected);
+  for (const counterfeit of [
+    action.from.replace('positive: bool', 'positive: u8'),
+    action.from.replace('same_binding: bool, duplicate: bool', 'duplicate: bool, same_binding: bool'),
+    action.from.replace('&& !duplicate', '&& duplicate'),
+    action.from.replace('positive && !alternate', '!alternate && positive'),
+    action.from.replace('accept_java_script_terminal_tag_guard', 'unrelated_predicate'),
+    action.from.replace('pub const fn', 'pub fn'),
+  ]) {
+    assert.notEqual(counterfeit, action.from);
+    assert.equal(isolated.decorate('emitter', {format: 'Rust', source: counterfeit}).source, counterfeit,
+      'a different ABI body or owner cannot borrow the expectation');
+  }
+  const source = readFileSync(new URL('../src/translation/javascript-surface-rules.js', import.meta.url), 'utf8');
+  const emitted = emitRust(checkProgram(parseJavaScript(source, {referenceSemantics: false})), {arrayConsumption: true});
+  const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
+  assert.ok(header);
+  const raw = header + '\n\n' + emitted.definitions.join('\n\n').replace(/^pub fn /gmu, '#[must_use]\npub fn ');
+  const before = new DecoratorSet(styles.decorators.filter(row => row.id !== id)).decorate('emitter', {format: 'Rust', source: raw}).source;
+  const after = styles.decorate('emitter', {format: 'Rust', source: raw}).source;
+  assert.equal(after.replace(attribute, ''), before, 'the complete library inverse preserves every original declaration and position');
+  assert.equal(isolated.decorate('emitter', {format: 'Rust', source: after}).source, after);
+  for (const name of [...before.matchAll(/^pub (?:const )?fn ([A-Za-z_][A-Za-z_0-9]*)\(/gmu)].map(match => match[1])) {
+    assert.equal(readSourceTextRustBlock(after, 'fn', name), readSourceTextRustBlock(before, 'fn', name),
+      name + ': exact complete body and signature');
+  }
+  const { parseRust } = await import('../src/translation/rust.js');
+  // The const source profile intentionally refuses lint attributes. This
+  // bounded runtime comparison removes only that existing const qualifier,
+  // retaining the complete actual signature/body and the new lint attribute.
+  const contexts = [action.from, action.to].map(declaration => {
+    const ordinary = declaration.replace('pub const fn', 'pub fn');
+    assert.equal(ordinary.replace('pub fn', 'pub const fn'), declaration);
+    const replay = emitJavaScript(checkProgram(parseRust(ordinary + '\nfn main() {}')));
+    const mapping = replay.mappings.filter(row => row.source === 'accept_java_script_terminal_tag_guard' && row.kind === 'function');
+    assert.equal(mapping.length, 1);
+    return {context: vm.runInNewContext(replay.text + '\n({' + mapping[0].target + '})'), target: mapping[0].target};
+  });
+  for (const positive of [false, true]) for (const alternate of [false, true]) for (const terminal of [false, true])
+    for (const same of [false, true]) for (const duplicate of [false, true]) {
+      for (const {context, target} of contexts) assert.equal(context[target](positive, alternate, terminal, same, duplicate),
+        positive && !alternate && terminal && same && !duplicate, 'all 32 complete ordinary Rust body decisions before and after the lint attribute');
+    }
 });

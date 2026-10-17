@@ -328,6 +328,10 @@ pub fn read_java_script_string_method_result_form(operation: &str) -> String {
 }
 
 #[must_use]
+#[expect(
+    clippy::fn_params_excessive_bools,
+    reason = "the checked source interface retains five independent ordered Boolean facts"
+)]
 pub const fn accept_java_script_terminal_tag_guard(
     positive: bool,
     alternate: bool,
