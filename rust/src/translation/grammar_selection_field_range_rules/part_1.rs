@@ -219,8 +219,7 @@ pub fn accept_grammar_selection_field_range_selector(
     first: f64,
     count: f64,
 ) -> bool {
-    (((((((((kind == "source-field-selector") && ("string" == "string"))
-        && (!(label).is_empty()))
+    ((((((((kind == "source-field-selector") && (!(label).is_empty()))
         && ((mode == "include") || (mode == "exclude")))
         && self::ml_math::is_integer(first))
         && (first >= 0f64))
@@ -296,8 +295,7 @@ pub fn accept_grammar_selection_field_range_match(
     label: &str,
     trivia: bool,
 ) -> bool {
-    (((!trivia && ("string" == "string")) && ("string" == "string")) && (!(label).is_empty()))
-        && (actual_field == label)
+    ((!trivia) && (!(label).is_empty())) && (actual_field == label)
 }
 
 /// Execute the checked shared source algorithm.

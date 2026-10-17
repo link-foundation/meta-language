@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { renderGrammarSelectionNativeForms } from '../scripts/generate-grammar-selection-rules.mjs';
+import { readGrammarSelectionFieldRangeLibraryStyles } from '../scripts/generate-grammar-selection-field-range-rules.mjs';
+import { DecoratorSet } from '../src/decorators.js';
 import { GRAMMAR_SELECTION_FORMS } from '../src/grammar-selection-forms.js';
 import {
   acceptGrammarSelectionFieldRangeMapping,
@@ -52,6 +54,32 @@ test('field range selectors require their closed kind, exact label, finite occur
     assert.equal(acceptGrammarSelectionFieldRangeSelector('source-field-selector', 'value', 'include', 0, bad), false);
   }
   assert.equal(acceptGrammarSelectionFieldRangeSelector('source-field-selector', 'value', 'include', 0, 0), false);
+  const owners = 'pub fn accept_grammar_selection_field_range_selector(kind: &str, label: &str, mode: &str, first: f64, count: f64) -> bool { '
+    + '((kind == "source-field-selector") && ("string" == "string")) && !label.is_empty() && mode == "include" && first >= 0f64 && count > 0f64 }\n'
+    + 'pub fn accept_grammar_selection_field_range_match(actual_field: &str, label: &str, trivia: bool) -> bool { '
+    + '((!trivia && ("string" == "string")) && ("string" == "string")) && !label.is_empty() && actual_field == label }';
+  const expected = owners.replaceAll('&& ("string" == "string")', '');
+  const styled = readGrammarSelectionFieldRangeLibraryStyles(owners);
+  assert.equal(styled.actions.length, 2, 'all three pure right-hand conjunctions belong to exactly two complete borrowed owners');
+  assert.equal(styled.source, expected, 'every other operand, order and source byte is retained');
+  assert.equal(readGrammarSelectionFieldRangeLibraryStyles(expected).source, expected);
+  assert.equal(readGrammarSelectionFieldRangeLibraryStyles(expected).actions.length, 0);
+  const replay = new DecoratorSet([{ id: 'field-type-guard-control', level: 'emitter', order: 0,
+    when: [['format', 'Rust']], actions: styled.actions }]);
+  assert.equal(DecoratorSet.fromLino(replay.toLino()).decorate('emitter', { format: 'Rust', source: owners }).source, expected);
+  for (const refused of [
+    owners.replace('(kind == "source-field-selector")', '{ assert!(true); kind == "source-field-selector" }'),
+    owners.replace('&& ("string" == "string")', '&& ("string" == "other")'),
+    owners.replace('&& ("string" == "string")', '&& ("string" /* retain */ == "string")'),
+    owners.replace('&& ("string" == "string")', '&& ("string" == "string").then_some(true).is_some()'),
+    owners.replace('&& ("string" == "string")', '&& unknown!("string" == "string")'),
+    owners.replace('label: &str', 'label: String'),
+    owners.replace('&& ("string" == "string")', '&& ("string" == "string") && ("string" == "string")'),
+    'type str = Custom;\n' + owners,
+    '#[opaque]\n' + owners,
+    owners + '\n' + owners,
+  ]) assert.equal(readGrammarSelectionFieldRangeLibraryStyles(refused).source, refused,
+    'changed ABI, comparison, count, scope, macros, comments and opaque declarations never inherit a type guard proof');
 });
 
 test('field ranges retain exact operation-specific field orders and match only non-trivia capture labels', () => {

@@ -83,6 +83,73 @@ function nativeParameters(value) {
   });
 }
 
+/** Remove only pure literal type guards already fixed by the actual borrowed ABI. */
+export function readGrammarSelectionFieldRangeLibraryStyles(source) {
+  const numeric = readGrammarSelectionRangeLibraryStyles(source);
+  const { tokens } = tokenize(numeric.source, 'Rust');
+  const protectedNames = new Set(['str', 'String', 'bool', 'f64', 'std', 'core']);
+  for (let at = 0; at < tokens.length; at += 1) {
+    const token = tokens[at];
+    if (token.kind === 'identifier' && ['use', 'extern', 'unsafe', 'impl'].includes(token.value)) return numeric;
+    if (token.kind === 'identifier' && ['type', 'struct', 'enum', 'union', 'mod', 'trait', 'fn', 'const', 'static', 'let'].includes(token.value)) {
+      const name = tokens[at + 1]?.value === 'mut' ? at + 2 : at + 1;
+      if (protectedNames.has(tokens[name]?.value)) return numeric;
+    }
+    if (token.kind === 'macro' && !['vec', 'format', 'panic', 'assert', 'matches'].includes(token.value)) return numeric;
+    if (token.kind === 'punct' && token.value === '#') {
+      const open = tokens[at + 1]?.value === '!' ? at + 2 : at + 1;
+      if (tokens[open]?.value !== '[' || !['allow', 'warn', 'deny', 'expect', 'must_use', 'derive'].includes(tokens[open + 1]?.value)) return numeric;
+    }
+  }
+  const items = readRustLibraryItems(numeric.source).items;
+  const owners = [
+    ['accept_grammar_selection_field_range_selector', ['kind:&str', 'label:&str', 'mode:&str', 'first:f64', 'count:f64'], 1],
+    ['accept_grammar_selection_field_range_match', ['actual_field:&str', 'label:&str', 'trivia:bool'], 2],
+  ];
+  const replacements = [];
+  for (const [name, parameters, count] of owners) {
+    const candidates = items.filter(item => item.kind === 'fn' && item.name === name);
+    if (candidates.length !== 1) return numeric;
+    const from = candidates[0].source, header = /\bfn \w+\(([^()]*)\)\s*->\s*bool\s*\{/u.exec(from);
+    if (!header || JSON.stringify(nativeParameters(header[1])) !== JSON.stringify(parameters)) return numeric;
+    const { tokens, comments } = tokenize(from, 'Rust'), matching = new Map(), stack = [];
+    for (let at = 0; at < tokens.length; at += 1) {
+      if (tokens[at].kind === 'macro') return numeric;
+      if (tokens[at].kind !== 'punct') continue;
+      if (['(', '[', '{'].includes(tokens[at].value)) stack.push(at);
+      else if ([')', ']', '}'].includes(tokens[at].value)) {
+        const open = stack.pop();
+        assert.equal(tokens[open]?.value, { ')': '(', ']': '[', '}': '{' }[tokens[at].value]);
+        matching.set(open, at);
+      }
+    }
+    assert.equal(stack.length, 0, 'literal type guards retain their complete actual owner');
+    const edits = [];
+    for (let at = 0; at + 6 < tokens.length; at += 1) {
+      if (tokens[at].kind !== 'punct' || tokens[at].value !== '&&'
+        || tokens[at + 1].kind !== 'punct' || tokens[at + 1].value !== '(' || matching.get(at + 1) !== at + 5
+        || tokens[at + 2].kind !== 'string' || tokens[at + 2].raw !== '"string"'
+        || tokens[at + 3].kind !== 'punct' || tokens[at + 3].value !== '=='
+        || tokens[at + 4].kind !== 'string' || tokens[at + 4].raw !== '"string"'
+        || tokens[at + 6].kind !== 'punct' || ![')', '&&', '||', '}'].includes(tokens[at + 6].value)) continue;
+      if (comments.some(comment => comment.start >= tokens[at].start && comment.end <= tokens[at + 5].end)) return numeric;
+      // Only this complete, side-effect-free right operand disappears. The
+      // preceding operand and every later operand retain their order and bytes.
+      edits.push([tokens[at].start, tokens[at + 5].end]);
+    }
+    if (edits.length !== count) return numeric;
+    let to = from;
+    for (const [start, end] of edits.reverse()) to = to.slice(0, start) + to.slice(end);
+    replacements.push({ op: 'replace', field: 'source', from, to });
+  }
+  let adapted = numeric.source;
+  for (const action of replacements) {
+    assert.equal(adapted.split(action.from).length, 2, 'one complete borrowed-string type guard owner is recorded');
+    adapted = adapted.replace(action.from, () => action.to);
+  }
+  return { source: adapted, actions: [...numeric.actions, ...replacements] };
+}
+
 function rejectInputCopies(block, names) {
   const tokens = tokenize(block, 'Rust').tokens, matching = new Map(), stack = [];
   for (let index = 0; index < tokens.length; index += 1) {
@@ -246,7 +313,7 @@ export async function generateGrammarSelectionFieldRangeRules({ check = false, n
       replays.push({ format, checkedNamedSourceInventory: restoredOwners,
         emittedTextBytes: Buffer.byteLength(replay.text), emittedTextSha256: digest(replay.text) });
     }
-    const files = writeRecordRuleLibrary(emitted, libraryName, { check, sourceStyles: readGrammarSelectionRangeLibraryStyles });
+    const files = writeRecordRuleLibrary(emitted, libraryName, { check, sourceStyles: readGrammarSelectionFieldRangeLibraryStyles });
     const library = readGrammarSelectionFieldRangeLibraryInterface(files, emitted, owners);
     artifact = { schemaVersion: 1, model: policy.model, source: closed.source,
       sourceSha256: closed.sourceSha256, sourceClosure: closed.sourceClosure,
