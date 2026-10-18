@@ -47,7 +47,7 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
-import { existsSync, lstatSync, realpathSync } from 'node:fs';
+import { appendFileSync, existsSync, lstatSync, realpathSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, statfs, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -759,12 +759,15 @@ function testTrace(label) {
 
 // Runs a command, logs it to <work-dir>/<label>.log and returns its output; the output of both
 // streams is also kept in arrival order, since cargo announces test binaries on stderr.
+// Persist raw chunks immediately, including incomplete UTF-8 scalars, so interruption
+// retains the actual transcript without waiting for the child to exit.
 // With `traceTests`, each libtest test's result is logged as it ends (see `testTrace`).
 async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), allowFailure = false, traceTests = false } = {}) {
   const log = path.join(workDirectory, `${label}.log`);
   const rendered = [command, ...args].join(' ');
   const started = Date.now();
   console.log(`[${label}] start: ${rendered} (${await resources()})`);
+  await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n`);
   const { code, stdout, stderr, combined } = await new Promise((resolve, reject) => {
     const windows = process.platform === 'win32';
     const child = spawn(command, args, {
@@ -784,8 +787,8 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
       const lines = chunk.toString('utf8').split('\n').map((line) => line.trim()).filter(Boolean);
       if (lines.length > 0) lastLine = lines.at(-1).slice(0, 200);
     };
-    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); remember(chunk); trace?.take(chunk); });
-    child.stderr.on('data', (chunk) => { err.push(chunk); both.push(chunk); remember(chunk); });
+    child.stdout.on('data', (chunk) => { appendFileSync(log, chunk); out.push(chunk); both.push(chunk); remember(chunk); trace?.take(chunk); });
+    child.stderr.on('data', (chunk) => { appendFileSync(log, chunk); err.push(chunk); both.push(chunk); remember(chunk); });
     const heartbeat = setInterval(async () => {
       console.log(`[${label}] running for ${Math.round((Date.now() - started) / 1000)} s (${await resources()}); last output: ${lastLine || '(none)'}`);
     }, HEARTBEAT_MS);
@@ -802,10 +805,14 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
       }
     }, 1_000);
     const stop = () => { clearInterval(heartbeat); clearInterval(guard); };
-    child.once('error', (error) => { stop(); reject(error); });
+    child.once('error', (error) => { stop(); appendFileSync(log, `\nspawn error: ${error.message}\n`); reject(error); });
     child.once('close', (exit) => {
       stop();
-      if (killedForMemory) both.push(Buffer.from(`\nkilled by the memory guard: ${killedForMemory}\n`));
+      if (killedForMemory) {
+        const explanation = Buffer.from(`\nkilled by the memory guard: ${killedForMemory}\n`);
+        appendFileSync(log, explanation);
+        both.push(explanation);
+      }
       resolve({
         code: killedForMemory ? 137 : exit,
         stdout: Buffer.concat(out).toString('utf8'),
@@ -814,7 +821,7 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
       });
     });
   });
-  await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n${combined}\nexit: ${code}\n`);
+  appendFileSync(log, `\nexit: ${code}\n`);
   logs.push({ label, command: rendered, log, exit: code });
   console.log(`[${label}] exit ${code} after ${Math.round((Date.now() - started) / 1000)} s (${await resources()})`);
   if (code !== 0 && !allowFailure) {

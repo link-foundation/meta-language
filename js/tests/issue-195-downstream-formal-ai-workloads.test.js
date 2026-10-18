@@ -393,6 +393,69 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.ok(cleanup.run.startsWith('env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown '));
 });
 
+test('the workload runner retains raw command output before exit and after spawn failure', async () => {
+  // Exercise each actual command runner with tiny JavaScript children. No downstream
+  // checkout, dependency installation, native compilation or workload runs here.
+  const fileSystem = await import('node:fs');
+  const promises = await import('node:fs/promises');
+  const childProcess = await import('node:child_process');
+  const operatingSystem = await import('node:os');
+  const timers = await import('node:timers/promises');
+  for (const script of ['run-formal-ai-workloads.mjs', 'run-rml-pr184-workloads.mjs']) {
+    const source = readFileSync(new URL(`../scripts/${script}`, import.meta.url), 'utf8');
+    const definition = /\nasync function run\([^]*?\n\}\n/u.exec(source)?.[0];
+    assert.ok(definition, 'the actual command runner is available without starting workloads');
+    const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-command-transcript-'));
+    const records = [];
+    const run = new Function('path', 'workDirectory', 'spawn', 'writeFile', 'appendFileSync', 'logs', 'childEnvironment', 'resources', 'os', 'HEARTBEAT_MS', 'MEMORY_FLOOR_BYTES', `${definition}\nreturn run;`)(
+      path, directory, childProcess.spawn, promises.writeFile, fileSystem.appendFileSync, records,
+      new Function('return process.env;'), new Function('return Promise.resolve("authored command control");'),
+      operatingSystem, 60_000, 0,
+    );
+    const released = path.join(directory, 'release');
+    const childSource = `const fs = require('node:fs');
+process.stdout.write(Buffer.from([0xcf]));
+const interval = setInterval(() => {
+  if (!fs.existsSync(process.argv[1])) return;
+  process.stdout.write(Buffer.from([0x80, 0xf0, 0x9f, 0x98, 0x80, 10]));
+  clearInterval(interval);
+}, 10);
+setTimeout(() => { clearInterval(interval); process.exitCode = 24; }, 5000).unref();`;
+    const pending = run('stream', process.execPath, ['-e', childSource, released]);
+    try {
+      try {
+        const transcript = path.join(directory, 'stream.log');
+        const deadline = Date.now() + 4_000;
+        while ((!existsSync(transcript) || readFileSync(transcript).at(-1) !== 0xcf) && Date.now() < deadline) {
+          await timers.setTimeout(10);
+        }
+        const partial = readFileSync(transcript);
+        assert.equal(partial.at(-1), 0xcf, 'the live log retains an incomplete UTF-8 scalar as its original byte');
+        assert.doesNotMatch(partial.toString('utf8'), /\nexit:/u, 'a running child has no invented exit');
+      } finally {
+        writeFileSync(released, 'finish');
+      }
+      const streamed = await pending;
+      assert.equal(streamed.code, 0);
+      assert.equal(streamed.stdout, 'π😀\n');
+      assert.equal(streamed.stderr, '');
+      assert.equal(streamed.combined, streamed.stdout);
+      assert.equal(readFileSync(streamed.log, 'utf8'), `command: ${process.execPath} -e ${childSource} ${released}\ncwd: ${directory}\n\n${streamed.combined}\nexit: 0\n`);
+      const failed = await run('failed', process.execPath, ['-e', 'process.stdout.write("output\\n"); process.stderr.write("problem\\n"); process.exitCode = 23;'], { allowFailure: true });
+      assert.equal(failed.code, 23);
+      assert.equal(failed.stdout, 'output\n');
+      assert.equal(failed.stderr, 'problem\n');
+      assert.equal(readFileSync(failed.log, 'utf8'), `command: ${records.at(-1).command}\ncwd: ${directory}\n\n${failed.combined}\nexit: 23\n`);
+      await assert.rejects(run('spawn-failure', path.join(directory, 'absent-command'), []), { code: 'ENOENT' });
+      assert.match(readFileSync(path.join(directory, 'spawn-failure.log'), 'utf8'), /command: [^]*\nspawn error: [^]*ENOENT/u);
+      assert.deepEqual(records.map(({ label, exit }) => [label, exit]), [['stream', 0], ['failed', 23]]);
+    } finally {
+      await Promise.allSettled([pending]);
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }
+});
+
 // The memory guard killed the Rust workloads in grammar_projection_corpus_ratchet
 // with two tests running at once: the tests now run one at a time and each one's
 // line gives its result, seconds and the lowest free memory while it ran.

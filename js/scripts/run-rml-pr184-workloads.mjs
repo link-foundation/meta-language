@@ -25,7 +25,7 @@
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { appendFileSync, existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -496,9 +496,11 @@ function childEnvironment() {
 
 // Runs a command, logs it to <work-dir>/<label>.log and returns its output; the output of both
 // streams is also kept in arrival order, since cargo announces test binaries on stderr.
+// Persist raw output before completion so an interrupted command retains its transcript.
 async function run(label, command, args, { cwd = workDirectory, env = childEnvironment(), allowFailure = false } = {}) {
   const log = path.join(workDirectory, `${label}.log`);
   const rendered = [command, ...args].join(' ');
+  await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n`);
   const { code, stdout, stderr, combined } = await new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -508,9 +510,9 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
     const out = [];
     const err = [];
     const both = [];
-    child.stdout.on('data', (chunk) => { out.push(chunk); both.push(chunk); });
-    child.stderr.on('data', (chunk) => { err.push(chunk); both.push(chunk); });
-    child.once('error', reject);
+    child.stdout.on('data', (chunk) => { appendFileSync(log, chunk); out.push(chunk); both.push(chunk); });
+    child.stderr.on('data', (chunk) => { appendFileSync(log, chunk); err.push(chunk); both.push(chunk); });
+    child.once('error', (error) => { appendFileSync(log, `\nspawn error: ${error.message}\n`); reject(error); });
     child.once('close', (exit) => resolve({
       code: exit,
       stdout: Buffer.concat(out).toString('utf8'),
@@ -518,7 +520,7 @@ async function run(label, command, args, { cwd = workDirectory, env = childEnvir
       combined: Buffer.concat(both).toString('utf8'),
     }));
   });
-  await writeFile(log, `command: ${rendered}\ncwd: ${cwd}\n\n${combined}\nexit: ${code}\n`);
+  appendFileSync(log, `\nexit: ${code}\n`);
   logs.push({ label, command: rendered, log, exit: code });
   if (code !== 0 && !allowFailure) {
     const tail = combined.trim().split('\n').slice(-40).join('\n');
