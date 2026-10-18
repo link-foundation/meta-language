@@ -12,6 +12,7 @@ import { selectVersionedAssertion } from './assertion-version-ranges.mjs';
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export const AGDA_HISTORICAL_FIXTURE_FILE = 'parity/fixtures/native-grammars/agda.lino';
+export const AGDA_CURRENT_NATIVE_FIXTURE_FILE = 'parity/fixtures/native-grammars/agda-current-native.lino';
 export const AGDA_CURRENT_ORACLE_PROFILE_FILE = 'parity/fixtures/native-grammars/agda-current-oracle-profile.lino';
 export const AGDA_HISTORICAL_FIXTURE = Object.freeze({
   file: AGDA_HISTORICAL_FIXTURE_FILE, bytes: 216411,
@@ -45,7 +46,9 @@ export function selectAgdaOracleAssertion({ root = repository, registry = readAs
   return { assertionPolicy: policies[0].id, expectation: selected.id, activeVersion: active[1],
     minimum: selected.minimum, maximum: selected.maximum,
     includeMinimum: selected.includeMinimum, includeMaximum: selected.includeMaximum,
-    applicabilityPolicySha256: registry.sha256, source: actual };
+    applicabilityPolicySha256: registry.sha256, source: actual,
+    nativeGrammar: { file: 'parity/grammars/native/agda.lino',
+      sha256: digest(readFileSync(join(root, 'parity/grammars/native/agda.lino'))) } };
 }
 
 /** Historical recovery assertions concern this exact sandboxed released WASM. */
@@ -62,20 +65,40 @@ export function selectAgdaReleasedOracleAssertion({ root = repository, registry 
 }
 
 /** This is an authored current expectation, never an observation of execution. */
-export function buildAgdaCurrentOracleFixture(originalBytes, profile) {
+export function buildAgdaCurrentOracleFixture(originalBytes, profile, nativeBytes) {
   assert.equal(originalBytes.length, AGDA_HISTORICAL_FIXTURE.bytes, 'the complete historical fixture byte count is retained');
   assert.equal(digest(originalBytes), AGDA_HISTORICAL_FIXTURE.sha256, 'the complete historical fixture remains immutable');
   const original = readStructuredDataLino(originalBytes.toString('utf8'));
   assert.equal(original.divergences.length, 4, 'every original authored layout source is retained');
+  const native = readStructuredDataLino(nativeBytes.toString('utf8'));
+  assert.deepEqual(native.matches, original.matches, 'every historical independent matching tree remains exact');
+  assert.equal(native.rejections.length, original.rejections.length);
+  for (const [position, row] of native.rejections.entries()) {
+    assert.equal(row.source, original.rejections[position].source, 'every historical rejected source remains exact');
+    assert.equal(row.recovered.replace('(set_universe "Set")', '(qualified_identifier "Set")'),
+      original.rejections[position].recovered, 'universe classification corrections preserve every recovery node and offset');
+  }
+  assert.equal(native.divergences.length, original.divergences.length);
+  for (const [position, row] of native.divergences.entries()) {
+    assert.deepEqual({ ...row, rows: original.divergences[position].rows }, original.divergences[position],
+      'current row corrections retain the actual historical source and reason');
+  }
+  for (const key of Object.keys(original).filter(key => !['matches', 'rejections', 'divergences'].includes(key))) {
+    assert.deepEqual(native[key], original[key], 'the current fixture retains original grammar and oracle provenance');
+  }
   const current = structuredClone(original);
-  current.matches.push(...current.divergences.map(({ source, rows }) => ({ source, rows })));
+  current.matches.push(...native.divergences.map(({ source, rows }) => ({ source, rows })));
+  current.rejections = structuredClone(native.rejections);
   current.divergences = [];
   current.oracleProfile = { ...structuredClone(profile), historicalFixture: { ...AGDA_HISTORICAL_FIXTURE },
-    expectationBasis: 'Authored current obligations: the complete corrected scanner must accept every retained valid source cleanly and match its entire accepted native row golden. Native and WebAssembly execution are CI checks, not prior observations.',
-    historicalDivergences: structuredClone(original.divergences) };
+    nativeFixture: { file: AGDA_CURRENT_NATIVE_FIXTURE_FILE, bytes: nativeBytes.length, sha256: digest(nativeBytes) },
+    expectationBasis: 'Authored current obligations: the complete corrected scanner must accept every retained valid source cleanly and match its entire accepted native row golden. Declared layout boundaries prevent an optional universe argument from consuming the next declaration. Original historical rows remain byte-exact; native and WebAssembly execution are CI checks, not prior observations.',
+    historicalDivergences: structuredClone(original.divergences),
+    historicalRejections: structuredClone(original.rejections) };
   const inverse = structuredClone(current);
   inverse.matches.splice(original.matches.length);
   inverse.divergences = inverse.oracleProfile.historicalDivergences;
+  inverse.rejections = inverse.oracleProfile.historicalRejections;
   delete inverse.oracleProfile;
   assert.deepEqual(inverse, original, 'the profile projection restores every historical field and row');
   assert.deepEqual(Buffer.from(structuredDataToLino(inverse)), originalBytes, 'the exact historical bytes are reconstructed');
@@ -84,5 +107,5 @@ export function buildAgdaCurrentOracleFixture(originalBytes, profile) {
 
 export function readAgdaCurrentOracleFixture(root = repository) {
   return buildAgdaCurrentOracleFixture(readFileSync(join(root, AGDA_HISTORICAL_FIXTURE_FILE)),
-    selectAgdaOracleAssertion({ root }));
+    selectAgdaOracleAssertion({ root }), readFileSync(join(root, AGDA_CURRENT_NATIVE_FIXTURE_FILE)));
 }

@@ -5,9 +5,14 @@ import test from 'node:test';
 import {readAgdaScannerPatchHunks,prepareAgdaQueueSafeScanner,AGDA_QUEUE_GROWTH_CONTROL} from '../scripts/agda-queue-safe-oracle.mjs';
 import {buildAgdaCurrentOracleFixture,readAgdaCurrentOracleFixture,selectAgdaOracleAssertion,
   selectAgdaReleasedOracleAssertion,AGDA_HISTORICAL_FIXTURE_FILE,
-  AGDA_CURRENT_ORACLE_PROFILE_FILE} from '../scripts/agda-oracle-profiles.mjs';
+  AGDA_CURRENT_ORACLE_PROFILE_FILE,AGDA_CURRENT_NATIVE_FIXTURE_FILE} from '../scripts/agda-oracle-profiles.mjs';
 import {assertionVersionPolicy} from '../scripts/generate-assertion-version-policy.mjs';
 import {readStructuredDataLino,structuredDataToLino} from '../src/structured-data-links.js';
+import {transformNativeSource} from '../scripts/native-grammar-transforms.mjs';
+import {compileGrammar} from '../src/grammar.js';
+import {parseGrammarLinks} from '../src/grammar-links.js';
+import {nativeGrammarText} from '../src/native-grammar-parser.js';
+import {nativeRows} from '../scripts/native-grammar-rows.mjs';
 
 const patch=readFileSync(new URL('../../rust/vendor/tree-sitter-agda-layout/layout-state.patch',import.meta.url),'utf8');
 const hunks=readAgdaScannerPatchHunks(patch);
@@ -45,24 +50,30 @@ test('Agda queue-only source derivation rejects changed missing duplicated or un
 test('Agda current profile retains every historical byte and adds strict clean-row obligations for all four sources',()=>{
   const bytes=readFileSync(new URL('../../'+AGDA_HISTORICAL_FIXTURE_FILE,import.meta.url));
   const original=readStructuredDataLino(bytes.toString('utf8'));
+  const nativeBytes=readFileSync(new URL('../../'+AGDA_CURRENT_NATIVE_FIXTURE_FILE,import.meta.url));
+  const native=readStructuredDataLino(nativeBytes.toString('utf8'));
   const current=readAgdaCurrentOracleFixture();
   assert.deepEqual(readStructuredDataLino(readFileSync(new URL('../../'+AGDA_CURRENT_ORACLE_PROFILE_FILE,import.meta.url),'utf8')),current);
   assert.deepEqual(current.matches.slice(0,original.matches.length),original.matches);
-  assert.deepEqual(current.matches.slice(original.matches.length),original.divergences.map(({source,rows})=>({source,rows})));
-  assert.deepEqual(current.rejections,original.rejections);
+  assert.deepEqual(current.matches.slice(original.matches.length),native.divergences.map(({source,rows})=>({source,rows})));
+  assert.deepEqual(native.matches,original.matches);
+  assert.deepEqual(current.rejections,native.rejections);
+  assert.deepEqual(current.oracleProfile.nativeFixture,{file:AGDA_CURRENT_NATIVE_FIXTURE_FILE,bytes:nativeBytes.length,sha256:digest(nativeBytes)});
+  assert.deepEqual(current.oracleProfile.historicalRejections,original.rejections);
   assert.deepEqual(current.divergences,[]);
   assert.deepEqual(current.oracleProfile.historicalDivergences,original.divergences);
   assert.match(current.oracleProfile.expectationBasis,/Authored current obligations/u);
   const inverse=structuredClone(current);
   inverse.matches.splice(original.matches.length);
   inverse.divergences=inverse.oracleProfile.historicalDivergences;
+  inverse.rejections=inverse.oracleProfile.historicalRejections;
   delete inverse.oracleProfile;
   assert.deepEqual(inverse,original);
   assert.deepEqual(Buffer.from(structuredDataToLino(inverse)),bytes);
   assert.deepEqual(readFileSync(new URL('../../'+AGDA_HISTORICAL_FIXTURE_FILE,import.meta.url)),bytes);
-  assert.throws(()=>buildAgdaCurrentOracleFixture(Buffer.concat([bytes,Buffer.from('\n')]),current.oracleProfile),/historical fixture/u);
+  assert.throws(()=>buildAgdaCurrentOracleFixture(Buffer.concat([bytes,Buffer.from('\n')]),current.oracleProfile,nativeBytes),/historical fixture/u);
   const changed=Buffer.from(bytes);changed[0]^=1;
-  assert.throws(()=>buildAgdaCurrentOracleFixture(changed,current.oracleProfile),/historical fixture/u);
+  assert.throws(()=>buildAgdaCurrentOracleFixture(changed,current.oracleProfile,nativeBytes),/historical fixture/u);
 });
 
 test('Agda oracle assertions select only exact registered scanner profiles and reject future versions or altered source pins',()=>{
@@ -88,4 +99,29 @@ test('Agda oracle assertions select only exact registered scanner profiles and r
     const changed=structuredClone(policy);mutate(changed.assertions.find(row=>row.id==='agda-released-wasm-oracle').expectations[0]);
     assert.throws(()=>selectAgdaReleasedOracleAssertion({registry:{policy:changed,sha256:'changed'}}));
   }
+});
+
+test('Agda optional universe arguments respect declared layout boundaries and the independently captured complete CI tree',()=>{
+  const source={name:'optional_boundary',rules:{document:{type:'SEQ',members:[{type:'STRING',value:'Set'},{type:'CHOICE',members:[{type:'SYMBOL',name:'atom'},{type:'BLANK'}]}]},atom:{type:'PATTERN',value:'[a-z]+'}},externals:[{type:'SYMBOL',name:'_newline'},{type:'SYMBOL',name:'_dedent'}]};
+  const original=structuredClone(source),decision={family:'prefer-optional-symbol',rule:'document',symbol:'atom',excludedRules:['_newline','_dedent']};
+  const transformed=transformNativeSource(source,[decision]);
+  assert.deepEqual(transformed.rules.document.members[1],{type:'NATIVE_ORDERED_CHOICE',members:[{type:'NATIVE_PREFIX_EXCLUSION',content:{type:'SYMBOL',name:'atom'},prefixes:{type:'CHOICE',members:[{type:'SYMBOL',name:'_newline'},{type:'SYMBOL',name:'_dedent'}]}},{type:'BLANK'}]});
+  assert.deepEqual(source,original);
+  assert.deepEqual(transformed.externals,source.externals);
+  assert.throws(()=>transformNativeSource(source,[{...decision,excludedRules:['_unknown']}]),/declared rules or external tokens/u);
+  const counterfeit=structuredClone(source);counterfeit.externals[0]={type:'STRING',name:'_newline',value:'\n'};
+  assert.throws(()=>transformNativeSource(counterfeit,[decision]),/declared rules or external tokens/u);
+  const witness=readStructuredDataLino(readFileSync(new URL('../../parity/fixtures/agda-current-oracle-universe-ci.lino',import.meta.url),'utf8'));
+  const historical=readStructuredDataLino(readFileSync(new URL('../../'+AGDA_HISTORICAL_FIXTURE_FILE,import.meta.url),'utf8'));
+  const current=readAgdaCurrentOracleFixture();
+  assert.deepEqual(witness.historicalRows,historical.divergences[0].rows);
+  assert.equal(witness.source,historical.divergences[0].source);
+  assert.deepEqual(witness.oracleSource,current.oracleProfile.source);
+  assert.equal(witness.nativeExecutionObserved,false);
+  assert.deepEqual(current.matches[historical.matches.length],{source:witness.source,rows:witness.oracleRows});
+  const outcome=compileGrammar(parseGrammarLinks(nativeGrammarText('native-agda'))).parseTree(witness.source);
+  assert.equal(outcome.ok,true);assert.deepEqual(outcome.ambiguities,[]);
+  assert.deepEqual(nativeRows(outcome.tree,witness.source,current),witness.oracleRows);
+  assert.equal(witness.oracleRows.filter(row=>row[2]==='SetN').length,2);
+  assert.equal(witness.oracleRows.filter(row=>row[2]==='Set').length,2);
 });

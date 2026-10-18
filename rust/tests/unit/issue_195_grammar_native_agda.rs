@@ -12,13 +12,30 @@ use sha2::{Digest, Sha256};
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/agda.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/agda.lino");
+const CURRENT_NATIVE_FIXTURE: &str =
+    include_str!("../../../parity/fixtures/native-grammars/agda-current-native.lino");
 const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/agda-corpus.lino");
 const CURRENT_ORACLE_PROFILE: &str =
     include_str!("../../../parity/fixtures/native-grammars/agda-current-oracle-profile.lino");
+const CURRENT_ORACLE_UNIVERSE_WITNESS: &str =
+    include_str!("../../../parity/fixtures/agda-current-oracle-universe-ci.lino");
 
 fn current_agda_oracle_fixture() -> Value {
     let current: Value = super::project_data::read_project_data(CURRENT_ORACLE_PROFILE).unwrap();
     let historical: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let native: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    assert_current_agda_fixture_history(&current, &historical, &native);
+    assert_current_agda_fixture_sources(&current["oracleProfile"]);
+    let profile = &current["oracleProfile"];
+    assert_eq!(profile["historicalFixture"]["bytes"], FIXTURE.len());
+    assert_eq!(
+        profile["historicalFixture"]["sha256"],
+        format!("{:x}", Sha256::digest(FIXTURE))
+    );
+    current
+}
+
+fn assert_current_agda_fixture_history(current: &Value, historical: &Value, native: &Value) {
     let original_matches = historical["matches"].as_array().unwrap();
     let original_divergences = historical["divergences"].as_array().unwrap();
     let current_matches = current["matches"].as_array().unwrap();
@@ -28,24 +45,60 @@ fn current_agda_oracle_fixture() -> Value {
         original_matches.len() + original_divergences.len()
     );
     assert_eq!(&current_matches[..original_matches.len()], original_matches);
-    for (actual, original) in current_matches[original_matches.len()..]
+    assert_eq!(native["matches"], historical["matches"]);
+    let witness: Value =
+        super::project_data::read_project_data(CURRENT_ORACLE_UNIVERSE_WITNESS).unwrap();
+    assert_eq!(witness["historicalRows"], original_divergences[0]["rows"]);
+    assert_eq!(witness["source"], original_divergences[0]["source"]);
+    assert_eq!(witness["oracleSource"], current["oracleProfile"]["source"]);
+    assert_eq!(witness["nativeExecutionObserved"], false);
+    assert_eq!(
+        witness["oracleRows"],
+        current_matches[original_matches.len()]["rows"]
+    );
+    let native_divergences = native["divergences"].as_array().unwrap();
+    assert_eq!(native_divergences.len(), original_divergences.len());
+    for ((actual, original), native) in current_matches[original_matches.len()..]
         .iter()
         .zip(original_divergences)
+        .zip(native_divergences)
     {
         assert_eq!(actual["source"], original["source"]);
-        assert_eq!(actual["rows"], original["rows"]);
+        assert_eq!(native["source"], original["source"]);
+        assert_eq!(native["reason"], original["reason"]);
+        assert_eq!(actual["rows"], native["rows"]);
     }
-    assert_eq!(current["rejections"], historical["rejections"]);
+    assert_eq!(current["rejections"], native["rejections"]);
+    let original_rejections = historical["rejections"].as_array().unwrap();
+    let native_rejections = native["rejections"].as_array().unwrap();
+    assert_eq!(native_rejections.len(), original_rejections.len());
+    for (actual, original) in native_rejections.iter().zip(original_rejections) {
+        assert_eq!(actual["source"], original["source"]);
+        assert_eq!(
+            actual["recovered"].as_str().unwrap().replacen(
+                "(set_universe \"Set\")",
+                "(qualified_identifier \"Set\")",
+                1
+            ),
+            original["recovered"].as_str().unwrap()
+        );
+    }
     assert_eq!(current["divergences"], serde_json::json!([]));
     assert_eq!(
         current["oracleProfile"]["historicalDivergences"],
         historical["divergences"]
     );
+    assert_eq!(
+        current["oracleProfile"]["historicalRejections"],
+        historical["rejections"]
+    );
+}
+
+fn assert_current_agda_fixture_sources(profile: &Value) {
     let manifest_bytes = include_str!("../../vendor/tree-sitter-agda-layout/source-manifest.lino");
     let manifest: Value = super::project_data::read_project_data(manifest_bytes).unwrap();
     let policy_bytes = include_str!("../../../parity/assertion-version-ranges.lino");
     let policy: Value = super::project_data::read_project_data(policy_bytes).unwrap();
-    let profile = &current["oracleProfile"];
     let assertion = policy["assertions"]
         .as_array()
         .unwrap()
@@ -60,6 +113,18 @@ fn current_agda_oracle_fixture() -> Value {
     assert_eq!(expected["includeMinimum"], true);
     assert_eq!(expected["includeMaximum"], true);
     assert_eq!(profile["source"], expected["expected"]);
+    assert_eq!(
+        profile["nativeGrammar"]["sha256"],
+        format!("{:x}", Sha256::digest(GRAMMAR))
+    );
+    assert_eq!(
+        profile["nativeFixture"]["bytes"],
+        CURRENT_NATIVE_FIXTURE.len()
+    );
+    assert_eq!(
+        profile["nativeFixture"]["sha256"],
+        format!("{:x}", Sha256::digest(CURRENT_NATIVE_FIXTURE))
+    );
     for field in [
         "crate",
         "revision",
@@ -87,12 +152,6 @@ fn current_agda_oracle_fixture() -> Value {
         profile["applicabilityPolicySha256"],
         format!("{:x}", Sha256::digest(policy_bytes))
     );
-    assert_eq!(profile["historicalFixture"]["bytes"], FIXTURE.len());
-    assert_eq!(
-        profile["historicalFixture"]["sha256"],
-        format!("{:x}", Sha256::digest(FIXTURE))
-    );
-    current
 }
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -118,7 +177,7 @@ fn native_agda_grammar_is_canonical_links_notation() {
 
 #[test]
 fn native_agda_focused_trees_match_oracle_and_preserve_every_byte() {
-    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     assert!(agda_layout_source_oracle::queue_growth_control());
@@ -154,7 +213,7 @@ fn native_agda_focused_trees_match_oracle_and_preserve_every_byte() {
 
 #[test]
 fn native_agda_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
-    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     for case in cases(&fixture, "rejections") {
         assert!(parse(&parser, source(case)).is_none());
@@ -194,7 +253,7 @@ fn native_agda_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
 // CI executes the upstream corpus; local checks select the focused tests.
 #[test]
 fn native_agda_upstream_corpus_matches_the_independent_oracle() {
-    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
     let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
@@ -240,7 +299,7 @@ fn native_agda_upstream_corpus_matches_the_independent_oracle() {
 
 #[test]
 fn native_agda_focused_layout_divergences_are_explicit_and_lossless() {
-    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     let divergent = cases(&fixture, "divergences");

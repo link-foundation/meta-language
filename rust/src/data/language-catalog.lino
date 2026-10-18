@@ -8997,7 +8997,7 @@
 (8997: 8998 8999 9001 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (8998: 7059 6965 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (8999: 7217 7301 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(9000: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 80af7dc90ef9ef3b5d6d75af6142e107285daf34cde0967a211ae5ba0aaa33e0) (lang: meta-language%20structured%20data)))
+(9000: (meta: (t: semantic) (n: 1) (term: string%20value) (def: ea78c2311861578ec6843697ae34f2879a495b9c3ad16e0e4c3f23e681c95e73) (lang: meta-language%20structured%20data)))
 (9001: 7220 9000 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (9002: 7212 8996 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (9003: 9004 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))

@@ -610,7 +610,8 @@ export function transformNativeSource(source, transformations = []) {
     if (decision.family === 'prefer-optional-symbol') {
       const { rule, symbol, excludedRules = [], excludedKeywords = [], wordRule = null } = decision;
       if (![rule, symbol].every((name) => Object.hasOwn(grammar.rules, name))) throw new TypeError('an optional symbol preference needs existing rules');
-      if (!Array.isArray(excludedRules) || excludedRules.some((name) => !Object.hasOwn(grammar.rules, name))) throw new TypeError('optional symbol boundaries need existing rules');
+      if (!Array.isArray(excludedRules) || excludedRules.some((name) => !Object.hasOwn(grammar.rules, name)
+        && !(grammar.externals ?? []).some(external => external.type === 'SYMBOL' && external.name === name))) throw new TypeError('optional symbol boundaries need declared rules or external tokens');
       if (!Array.isArray(excludedKeywords) || excludedKeywords.some((word) => typeof word !== 'string' || !word)
         || (excludedKeywords.length && !Object.hasOwn(grammar.rules, wordRule))) throw new TypeError('optional symbol keywords need nonempty words and an existing word rule');
       let changes = 0;

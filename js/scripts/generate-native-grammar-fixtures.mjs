@@ -1189,7 +1189,7 @@ export function buildNativeGrammarFixture(entry) {
   return buildNativeGrammarFixtureFromParser(entry, grammarParser(entry));
 }
 
-export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.id}.json`;
+export const fixturePath = (entry) => `parity/fixtures/native-grammars/${entry.fixture ?? entry.id}.json`;
 
 // The pinned tree-sitter-nix revision has no upstream corpus cases. Keep that
 // evidence gap explicit and use independent Nix 2.28.8 manual-derived cases,

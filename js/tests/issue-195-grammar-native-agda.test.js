@@ -7,7 +7,7 @@ import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFix
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { agdaLayoutOracleSnapshot } from '../scripts/agda-layout-oracle.mjs';
 import { checkAgdaLayoutOracleSources } from '../scripts/build-agda-layout-oracle.mjs';
-import { readAgdaCurrentOracleFixture, selectAgdaReleasedOracleAssertion } from '../scripts/agda-oracle-profiles.mjs';
+import { readAgdaCurrentOracleFixture, selectAgdaReleasedOracleAssertion, AGDA_HISTORICAL_FIXTURE_FILE } from '../scripts/agda-oracle-profiles.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
@@ -20,7 +20,7 @@ const text = (tree) => tree.type === 'node' ? tree.children.map(text).join('') :
 const observe = (assertions, testName) => recordIssue195Observations({
   requirementId: 'I195-GRAMMAR-NATIVE-AGDA', suffix: 'behavior',
   fixtureId: 'planned:repository-directive:i195-grammar-native-agda',
-  fixtureFile: fixturePath(entry), assertions, testName,
+  fixtureFile: AGDA_HISTORICAL_FIXTURE_FILE, assertions, testName,
 });
 
 test('native Agda grammar and scanners are canonical generated Links Notation', (context) => {

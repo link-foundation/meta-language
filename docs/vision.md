@@ -3279,10 +3279,21 @@ scanner. Its original serialization, focused fixture rows, rejections and known
 divergences remain unchanged; the full corrected development oracle keeps its
 existing corpus role. Current focused native checks also select that complete
 corrected scanner under an exact version and source profile. They require clean
-acceptance and every original accepted native row for the same four valid layout
-sources. Automatic profile derivation retains all historical matches, rejections
-and divergence records and reconstructs the entire original fixture byte for
-byte. Historical released WebAssembly recovery assertions retain their original
+acceptance and complete independent concrete rows for the same four valid layout
+sources. CI identified a universe classified as an identifier when its optional
+argument consumed a name from the next declaration. The recorded import decision
+now excludes the declared newline and dedent tokens from that argument while
+preserving the existing same-line argument preference. The automatic pipeline
+changes only that production and ships identical grammar bytes in both packages.
+A separately generated current fixture preserves every input and all 49
+previously matching trees. Three layout trees and two recovery trees acquire the
+actual universe node; every recovery node and offset remains intact. The complete
+independent CI counterexample is automatically converted from its retained TAP
+assertion to Links data and checked against the current tree. Historical fixture
+bytes, recovery trees and divergence rows remain immutable. Current-profile
+derivation binds the active grammar and fixture hashes, retains the historical
+rows and reconstructs the entire original fixture byte for byte.
+Historical released WebAssembly recovery assertions retain their original
 scope; the queue-only oracle remains a growth-safety control. The new complete
 profile's native and WebAssembly row checks require CI execution.
 An additional native control exercises the actual scanner
