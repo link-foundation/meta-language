@@ -459,3 +459,25 @@ export function requireSurfaceReferenceTokenAfterElimination(window, closure, mu
   return required && !(eliminated && readRequiredTextFact(window, 0) === 'punct'
     && readRequiredTextFact(window, 1) === '=' && readRequiredTextFact(window, 3) === ']');
 }
+
+/** @param {string} operation @param {string} kind @param {boolean} reference @param {boolean} selected @returns {string} */
+export function readSurfaceReferenceProjectionForm(operation, kind, reference, selected) {
+  if (operation === 'referenceAllocate') return 'allocation';
+  if (operation === 'referenceRead') return '';
+  return selectSurfaceReferenceAllocation(selected, kind, reference) ? 'referencePayload' : '';
+}
+
+/** @param {string} operation @returns {string} */
+export function readSurfaceReferencePayloadOperand(operation) {
+  return operation === 'referencePayload' ? 'value' : '';
+}
+
+/** @param {string} field @returns {boolean} */
+export function acceptSurfaceReferencePayloadField(field) {
+  return field === 'k' || field === 'value' || field === 'span';
+}
+
+/** @param {string} kind @param {boolean} reference @returns {string} */
+export function readSurfaceReferencePayloadError(kind, reference) {
+  return selectSurfaceReferenceAllocation(true, kind, reference) ? '' : 'a reference payload requires its nonreference structural value';
+}

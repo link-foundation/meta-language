@@ -71,6 +71,53 @@ pub fn require_surface_reference_token_after_elimination(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_surface_reference_projection_form(
+    operation: &str,
+    kind: &str,
+    reference: bool,
+    selected: bool,
+) -> String {
+    if operation == "referenceAllocate" {
+        String::from("allocation")
+    } else if operation == "referenceRead" {
+            String::new()
+        } else if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(selected, kind, reference) {
+                String::from("referencePayload")
+            } else {
+                String::new()
+            }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_surface_reference_payload_operand(operation: &str) -> String {
+    if operation == "referencePayload" {
+        String::from("value")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_surface_reference_payload_field(field: &str) -> bool {
+    ((field == "k") || (field == "value")) || (field == "span")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_surface_reference_payload_error(kind: &str, reference: bool) -> String {
+    if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(
+        true, kind, reference,
+    ) {
+        String::new()
+    } else {
+        String::from("a reference payload requires its nonreference structural value")
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptSurfaceReferenceMutatingMethodLoop1Result {
     MlAcceptSurfaceReferenceMutatingMethodLoop1Done,

@@ -2582,6 +2582,22 @@ their actual original input in the failure message. Neither diagnostic accepts,
 normalizes or drops differing metadata or assertions. Hashed authored ANTLR
 fixture and scanner-patch checkout bytes use LF on every platform.
 
+Checked reference reconstruction distinguishes structural value payloads from
+their allocations. A source-selected program projects nonreference arrays,
+records, maps and sets through an internal closed payload constructor. Checking
+still validates every operand, type, binding and source span; it suppresses only
+the payload's own automatic allocation. An allocation unwraps only that immediate
+payload boundary, retaining its original position around generated field-binding
+chains. Nested operands retain ordinary allocation. Shared JavaScript rules,
+automatically translated to Rust, select these forms and reject scalar or already
+referenced results. Unknown, inherited, hidden, symbol and accessor wrapper fields
+are refused; native transport preserves presence before rejecting unsupported
+metadata. Unselected programs retain their prior projection shapes. The exact
+checked-program comparison and original declaration-list inputs remain intact.
+Bounded JavaScript controls retain complete graphs, alias identity, ordered field
+effects, source spans, binding identities and full emission through both archive
+formats. Native execution remains a separate CI check.
+
 Original-source subprocess observations retain their existing execution,
 compiler and output limits. Explicit compiler profiles are shared Links data:
 the complete raw graph selects optimization with debug assertions and overflow

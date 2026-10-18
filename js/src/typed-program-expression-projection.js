@@ -5,6 +5,7 @@ import { acceptProgramExpressionField, acceptProgramExpressionOperation, readPro
 import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 import { readRecordProjection, readRecordProjectionError } from './translation/record-value-rules.js';
 import { readLinkedProgramNumberOperand } from './typed-program-number-projection.js';
+import { readSurfaceReferenceProjectionForm, readSurfaceReferencePayloadOperand } from './translation/surface-reference-analysis-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -16,7 +17,7 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
   return ['crate', ...actual];
 }
 
-export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false} = {}) {
+export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false} = {}) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
@@ -40,9 +41,12 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
-  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace});
+  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics});
+  const referenceForm = readSurfaceReferenceProjectionForm(value.k, value.type?.kind ?? '', value.type?.reference === true, referenceSemantics);
   if (plan.construct === 'operand') {
-    const projected = project(value[plan.operand]);
+    let projected = project(value[plan.operand]);
+    const payload = readSurfaceReferencePayloadOperand(projected.k);
+    if (referenceForm === 'allocation' && payload) projected = projected[payload];
     return value.span !== undefined && projected.span === undefined ? { ...projected, span: value.span } : projected;
   }
   const result = { k: plan.construct, ...(value.span !== undefined ? { span: value.span } : {}) };
@@ -106,5 +110,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     else if (mode === 'constant') result[target] = source;
     else throw new TypeError(`unknown shared projection instruction ${mode}`);
   }
-  return result;
+  return readSurfaceReferencePayloadOperand(referenceForm)
+    ? { k: referenceForm, value: result, ...(value.span !== undefined ? { span: value.span } : {}) }
+    : result;
 }

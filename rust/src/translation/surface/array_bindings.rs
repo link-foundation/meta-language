@@ -44,6 +44,14 @@ impl TryFrom<SurfaceExpression> for SExpr {
     type Error = String;
 
     fn try_from(raw: SurfaceExpression) -> Result<Self, Self::Error> {
+        if let SNode::ReferencePayload { extra, .. } = &raw.node
+            && (!extra.is_empty()
+                || raw.parenthesized.is_some()
+                || raw.block.is_some()
+                || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        {
+            return Err("a reference payload needs its closed owned expression".to_owned());
+        }
         if matches!(
             raw.node,
             SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. }

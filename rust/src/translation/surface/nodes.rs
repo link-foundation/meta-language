@@ -43,6 +43,12 @@ pub enum SNode {
     NumberValue {
         arg: Box<SExpr>,
     },
+    /// Preserve a checked structural payload independently of its allocation.
+    ReferencePayload {
+        value: Box<SExpr>,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
+    },
     FlattenOption {
         value: Box<SExpr>,
     },
@@ -324,6 +330,7 @@ impl SNode {
             Self::None { .. } => "none",
             Self::Some { .. } => "some",
             Self::NumberValue { .. } => "numberValue",
+            Self::ReferencePayload { .. } => "referencePayload",
             Self::FlattenOption { .. } => "flattenOption",
             Self::Coalesce { .. } => "coalesce",
             Self::ArrayBindingRest { .. } => "arrayBindingRest",

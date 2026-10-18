@@ -115,6 +115,7 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
         | SNode::FlattenOption { value: object }
         | SNode::OptionalField { object, .. }
         | SNode::CellAllocate { value: object, .. }
+        | SNode::ReferencePayload { value: object, .. }
         | SNode::CellRead { cell: object }
         | SNode::TypeOf { arg: object }
         | SNode::Unary { arg: object, .. }
@@ -780,6 +781,7 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             | SNode::FlattenOption { value: object }
             | SNode::OptionalField { object, .. }
             | SNode::CellAllocate { value: object, .. }
+            | SNode::ReferencePayload { value: object, .. }
             | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }

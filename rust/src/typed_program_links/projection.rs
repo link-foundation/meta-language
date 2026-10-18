@@ -5,6 +5,9 @@ use crate::translation::record_value_rules::{
     read_record_projection, read_record_projection_error,
 };
 use crate::translation::surface::SExpr;
+use crate::translation::surface_reference_analysis_rules::{
+    read_surface_reference_payload_operand, read_surface_reference_projection_form,
+};
 use crate::translation::typed_program_link_rules::{
     accept_program_expression_field, read_program_expression_projection,
 };
@@ -71,11 +74,25 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         )));
     }
     let plan = &plans[&key];
+    let reference_form = read_surface_reference_projection_form(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["reference"].as_bool().unwrap_or(false),
+        program.reference_semantics,
+    );
     if construct == "operand" {
         let mut projected = expression(
             &value[plan["operand"].as_str().unwrap_or_default()],
             program,
         )?;
+        let payload =
+            read_surface_reference_payload_operand(projected["k"].as_str().unwrap_or_default());
+        if reference_form == "allocation" && !payload.is_empty() {
+            projected = projected
+                .get_mut(&payload)
+                .ok_or_else(|| error("a projected reference payload has no owned value"))?
+                .take();
+        }
         if let Some(span) = value.get("span")
             && projected.get("span").is_none()
         {
@@ -322,7 +339,17 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         };
         result.insert(target.to_owned(), projected);
     }
-    Ok(Value::Object(result))
+    if !read_surface_reference_payload_operand(&reference_form).is_empty() {
+        let mut payload = Map::new();
+        payload.insert("k".to_owned(), Value::String(reference_form));
+        payload.insert("value".to_owned(), Value::Object(result));
+        if let Some(span) = value.get("span") {
+            payload.insert("span".to_owned(), span.clone());
+        }
+        Ok(Value::Object(payload))
+    } else {
+        Ok(Value::Object(result))
+    }
 }
 
 pub(super) fn project(value: &Expr, program: &Program) -> Result<SExpr> {

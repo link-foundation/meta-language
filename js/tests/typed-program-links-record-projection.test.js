@@ -11,6 +11,7 @@ import { projectLinkedProgramExpression } from '../src/typed-program-expression-
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 import { encodeTypedProgramLinks, decodeTypedProgramLinks, readTypedProgramBindingIdentities } from '../src/typed-program-links.js';
 import { readRecordProjection } from '../src/translation/record-value-rules.js';
+import { emitRust } from '../src/translation/emit-rust.js';
 
 function records(program, kind) {
   const seen = new WeakSet(), found = [];
@@ -70,6 +71,70 @@ test('whole checked record projection is idempotent without introducing new bind
       assert.deepEqual(observe(emitJavaScript(restored).text), expected);
     }
   }
+});
+
+test('reference record allocation retains its exact position across complete declaration lists and both archives', () => {
+  const cases = [
+    { source: "function values() { console.log('array'); return [2]; }\nfunction record() { console.log('record'); return {left: 3, right: 5}; }\nfunction selected() { const [first, next = first + 1] = values(), {left, right: last} = record(), total = first + next + left + last; return total; }\nconsole.log(selected());", expected: ['array', 'record', '13'] },
+    { source: 'function make(){return {z:{value:7n},a:2n};}const value=make();console.log("%s",String(value.z.value));', expected: ['7'] },
+    { source: 'function make(){const value={a:2};return {left:value,right:value};}const pair=make();console.log(pair.left===pair.right,pair.left.a);', expected: ['true 2'] },
+    { source: mark + 'function make(){return {z:mark("first",1n),a:mark("second",2n),z:mark("last",3n)};}const value=make();console.log("%s",String(value.a));console.log("%s",String(value.z));', expected: ['first', 'second', 'last', '2', '3'] },
+  ];
+  for (const {source, expected} of cases) {
+    const program = checkProgram(parseJavaScript(source, {referenceSemantics: true}));
+    const original = structuredClone(program);
+    const emitted = emitRust(program);
+    assert.deepEqual(observe(source), expected);
+    for (let repeat = 0; repeat < 3; repeat += 1) {
+      assert.equal(recheckLinkedTypedProgram(program, {wholeProgram: true}), program);
+      assert.deepEqual(program, original);
+    }
+    const packet = encodeTypedProgramLinks(program);
+    const names = bindingNames(packet.network, packet.root);
+    for (const network of archiveForms(packet)) {
+      const restored = decodeTypedProgramLinks(network, packet.root);
+      assert.equal(recheckLinkedTypedProgram(restored, {wholeProgram: true}), restored);
+      assert.deepEqual(restored, original);
+      assert.deepEqual(bindingNames(network, packet.root), names);
+      assert.deepEqual(emitRust(restored), emitted);
+      assert.deepEqual(observe(emitJavaScript(restored).text), expected);
+    }
+  }
+});
+
+test('reference payload reconstruction checks its actual value, fields, source span and prototype refusal', () => {
+  const value = {k: 'array', element: {kind: 'float'}, items: [{value: {k: 'num', value: '1', type: {kind: 'float'}}, spread: false}], span: {start: 3, end: 6}};
+  const make = body => ({language: 'JavaScript', referenceSemantics: true, items: [{k: 'fn', name: 'make', params: [], ret: {kind: 'array', element: {kind: 'float'}}, body}], main: null});
+  const program = checkProgram(make({k: 'referencePayload', value}));
+  assert.equal(program.declarations.get('make').body.k, 'array');
+  assert.deepEqual(program.declarations.get('make').body.span, value.span);
+  for (const body of [
+    {k: 'referencePayload'},
+    {k: 'referencePayload', value: null},
+    {k: 'referencePayload', value: {k: 'num', value: '1', type: {kind: 'float'}}},
+    {k: 'referencePayload', value: {k: 'referencePayload', value: {k: 'num', value: '1', type: {kind: 'float'}}}},
+    {k: 'referencePayload', value, extra: false},
+    {k: 'referencePayload', value, block: false},
+    {k: 'referencePayload', value, tagTest: null},
+    {k: 'referencePayload', value, parenthesized: null},
+    {k: 'referencePayload', value: {...value, prototypeDefinition: {span: value.span}}},
+    {k: 'referencePayload', value: {k: 'name', path: ['missing']}},
+  ]) assert.throws(() => checkProgram(make(body)), /reference payload|object prototype|unknown name/u);
+  for (const body of [
+    Object.defineProperty({k: 'referencePayload', value}, 'extra', {value: false}),
+    Object.defineProperty({k: 'referencePayload', value}, 'block', {value: false}),
+    Object.defineProperty({k: 'referencePayload', value}, Symbol('extra'), {value: false}),
+    Object.assign(Object.create({k: 'referencePayload'}), {value}),
+  ]) assert.throws(() => checkProgram(make(body)), /reference payload/u);
+  let getterReads = 0;
+  const accessor = {k: 'referencePayload', get value() {getterReads += 1; return value;}};
+  assert.throws(() => checkProgram(make(accessor)), /reference payload/u);
+  assert.equal(getterReads, 0, 'the payload operand must be an owned data field');
+  const identity = {language: 'JavaScript', referenceSemantics: true, items: [{k: 'fn', name: 'keep', params: [{name: 'value', type: {kind: 'array', element: {kind: 'float'}, reference: true}}], ret: {kind: 'array', element: {kind: 'float'}, reference: true}, body: {k: 'referencePayload', value: {k: 'name', path: ['value']}}}], main: null};
+  assert.throws(() => checkProgram(identity), /nonreference structural value/u);
+  const nested = {...value, items: [{value, spread: false}]};
+  const checked = checkProgram({...make({k: 'referencePayload', value: nested}), items: [{...make(null).items[0], ret: {kind: 'array', element: {kind: 'array', element: {kind: 'float'}, reference: true}}, body: {k: 'referencePayload', value: {...nested, element: {kind: 'array', element: {kind: 'float'}, reference: true}}}}]});
+  assert.equal(checked.declarations.get('make').body.items[0].k, 'referenceAllocate', 'nested operands retain ordinary allocation');
 });
 
 test('whole record rechecking retains source-free value edits field order and actual binding identities', () => {

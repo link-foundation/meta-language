@@ -135,6 +135,7 @@ pub(super) fn fill_arrays(program: &mut SProgram, arrays: &HashMap<*const SExpr,
             | SNode::CopySlice { object }
             | SNode::Field { object, .. }
             | SNode::CellAllocate { value: object, .. }
+            | SNode::ReferencePayload { value: object, .. }
             | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }
             | SNode::Unary { arg: object, .. }

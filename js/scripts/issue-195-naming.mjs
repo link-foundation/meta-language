@@ -67889,6 +67889,90 @@ const B70_SOURCE_BINDINGS=[
     "name": "QUEUE_SAFE_LANGUAGE",
     "inventoryName": "agda queue safe oracle language",
     "sourceText": "pub const QUEUE_SAFE_LANGUAGE: LanguageFn =\n    unsafe { LanguageFn::from_raw(tree_sitter_agda_queue_safe) };"
+  },
+  {
+    "id": "translation.read-surface-reference-projection-form",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferenceProjectionForm",
+    "inventoryName": "read surface reference projection form",
+    "sourceText": "export function readSurfaceReferenceProjectionForm(operation, kind, reference, selected) {\n  if (operation === 'referenceAllocate') return 'allocation';\n  if (operation === 'referenceRead') return '';\n  return selectSurfaceReferenceAllocation(selected, kind, reference) ? 'referencePayload' : '';\n}"
+  },
+  {
+    "id": "translation.read-surface-reference-projection-form",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "read_surface_reference_projection_form",
+    "inventoryName": "read surface reference projection form",
+    "sourceText": "pub fn read_surface_reference_projection_form(\n    operation: &str,\n    kind: &str,\n    reference: bool,\n    selected: bool,\n) -> String {\n    if operation == \"referenceAllocate\" {\n        String::from(\"allocation\")\n    } else if operation == \"referenceRead\" {\n            String::new()\n        } else if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(selected, kind, reference) {\n                String::from(\"referencePayload\")\n            } else {\n                String::new()\n            }\n}"
+  },
+  {
+    "id": "translation.read-surface-reference-payload-operand",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferencePayloadOperand",
+    "inventoryName": "read surface reference payload operand",
+    "sourceText": "export function readSurfaceReferencePayloadOperand(operation) {\n  return operation === 'referencePayload' ? 'value' : '';\n}"
+  },
+  {
+    "id": "translation.read-surface-reference-payload-operand",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "read_surface_reference_payload_operand",
+    "inventoryName": "read surface reference payload operand",
+    "sourceText": "pub fn read_surface_reference_payload_operand(operation: &str) -> String {\n    if operation == \"referencePayload\" {\n        String::from(\"value\")\n    } else {\n        String::new()\n    }\n}"
+  },
+  {
+    "id": "translation.accept-surface-reference-payload-field",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "acceptSurfaceReferencePayloadField",
+    "inventoryName": "accept surface reference payload field",
+    "sourceText": "export function acceptSurfaceReferencePayloadField(field) {\n  return field === 'k' || field === 'value' || field === 'span';\n}"
+  },
+  {
+    "id": "translation.accept-surface-reference-payload-field",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "accept_surface_reference_payload_field",
+    "inventoryName": "accept surface reference payload field",
+    "sourceText": "pub fn accept_surface_reference_payload_field(field: &str) -> bool {\n    ((field == \"k\") || (field == \"value\")) || (field == \"span\")\n}"
+  },
+  {
+    "id": "translation.read-surface-reference-payload-error",
+    "source": "js/src/translation/surface-reference-analysis-rules.js",
+    "name": "readSurfaceReferencePayloadError",
+    "inventoryName": "read surface reference payload error",
+    "sourceText": "export function readSurfaceReferencePayloadError(kind, reference) {\n  return selectSurfaceReferenceAllocation(true, kind, reference) ? '' : 'a reference payload requires its nonreference structural value';\n}"
+  },
+  {
+    "id": "translation.read-surface-reference-payload-error",
+    "source": "rust/src/translation/surface_reference_analysis_rules/part_2.rs",
+    "name": "read_surface_reference_payload_error",
+    "inventoryName": "read surface reference payload error",
+    "sourceText": "pub fn read_surface_reference_payload_error(kind: &str, reference: bool) -> String {\n    if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(\n        true, kind, reference,\n    ) {\n        String::new()\n    } else {\n        String::from(\"a reference payload requires its nonreference structural value\")\n    }\n}"
+  },
+  {
+    "id": "test.assert-reference-record-archive-allocation",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "reference record allocation retains its exact position across complete declaration lists and both archives",
+    "inventoryName": "assert reference record archive allocation",
+    "sourceText": "test('reference record allocation retains its exact position across complete declaration lists and both archives', () => {\n  const cases = [\n    { source: \"function values() { console.log('array'); return [2]; }\\nfunction record() { console.log('record'); return {left: 3, right: 5}; }\\nfunction selected() { const [first, next = first + 1] = values(), {left, right: last} = record(), total = first + next + left + last; return total; }\\nconsole.log(selected());\", expected: ['array', 'record', '13'] },\n    { source: 'function make(){return {z:{value:7n},a:2n};}const value=make();console.log(\"%s\",String(value.z.value));', expected: ['7'] },\n    { source: 'function make(){const value={a:2};return {left:value,right:value};}const pair=make();console.log(pair.left===pair.right,pair.left.a);', expected: ['true 2'] },\n    { source: mark + 'function make(){return {z:mark(\"first\",1n),a:mark(\"second\",2n),z:mark(\"last\",3n)};}const value=make();console.log(\"%s\",String(value.a));console.log(\"%s\",String(value.z));', expected: ['first', 'second', 'last', '2', '3'] },\n  ];\n  for (const {source, expected} of cases) {\n    const program = checkProgram(parseJavaScript(source, {referenceSemantics: true}));\n    const original = structuredClone(program);\n    const emitted = emitRust(program);\n    assert.deepEqual(observe(source), expected);\n    for (let repeat = 0; repeat < 3; repeat += 1) {\n      assert.equal(recheckLinkedTypedProgram(program, {wholeProgram: true}), program);\n      assert.deepEqual(program, original);\n    }\n    const packet = encodeTypedProgramLinks(program);\n    const names = bindingNames(packet.network, packet.root);\n    for (const network of archiveForms(packet)) {\n      const restored = decodeTypedProgramLinks(network, packet.root);\n      assert.equal(recheckLinkedTypedProgram(restored, {wholeProgram: true}), restored);\n      assert.deepEqual(restored, original);\n      assert.deepEqual(bindingNames(network, packet.root), names);\n      assert.deepEqual(emitRust(restored), emitted);\n      assert.deepEqual(observe(emitJavaScript(restored).text), expected);\n    }\n  }\n})"
+  },
+  {
+    "id": "test.assert-reference-payload-reconstruction",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "reference payload reconstruction checks its actual value, fields, source span and prototype refusal",
+    "inventoryName": "assert reference payload reconstruction",
+    "sourceText": "test('reference payload reconstruction checks its actual value, fields, source span and prototype refusal', () => {\n  const value = {k: 'array', element: {kind: 'float'}, items: [{value: {k: 'num', value: '1', type: {kind: 'float'}}, spread: false}], span: {start: 3, end: 6}};\n  const make = body => ({language: 'JavaScript', referenceSemantics: true, items: [{k: 'fn', name: 'make', params: [], ret: {kind: 'array', element: {kind: 'float'}}, body}], main: null});\n  const program = checkProgram(make({k: 'referencePayload', value}));\n  assert.equal(program.declarations.get('make').body.k, 'array');\n  assert.deepEqual(program.declarations.get('make').body.span, value.span);\n  for (const body of [\n    {k: 'referencePayload'},\n    {k: 'referencePayload', value: null},\n    {k: 'referencePayload', value: {k: 'num', value: '1', type: {kind: 'float'}}},\n    {k: 'referencePayload', value: {k: 'referencePayload', value: {k: 'num', value: '1', type: {kind: 'float'}}}},\n    {k: 'referencePayload', value, extra: false},\n    {k: 'referencePayload', value, block: false},\n    {k: 'referencePayload', value, tagTest: null},\n    {k: 'referencePayload', value, parenthesized: null},\n    {k: 'referencePayload', value: {...value, prototypeDefinition: {span: value.span}}},\n    {k: 'referencePayload', value: {k: 'name', path: ['missing']}},\n  ]) assert.throws(() => checkProgram(make(body)), /reference payload|object prototype|unknown name/u);\n  for (const body of [\n    Object.defineProperty({k: 'referencePayload', value}, 'extra', {value: false}),\n    Object.defineProperty({k: 'referencePayload', value}, 'block', {value: false}),\n    Object.defineProperty({k: 'referencePayload', value}, Symbol('extra'), {value: false}),\n    Object.assign(Object.create({k: 'referencePayload'}), {value}),\n  ]) assert.throws(() => checkProgram(make(body)), /reference payload/u);\n  let getterReads = 0;\n  const accessor = {k: 'referencePayload', get value() {getterReads += 1; return value;}};\n  assert.throws(() => checkProgram(make(accessor)), /reference payload/u);\n  assert.equal(getterReads, 0, 'the payload operand must be an owned data field');\n  const identity = {language: 'JavaScript', referenceSemantics: true, items: [{k: 'fn', name: 'keep', params: [{name: 'value', type: {kind: 'array', element: {kind: 'float'}, reference: true}}], ret: {kind: 'array', element: {kind: 'float'}, reference: true}, body: {k: 'referencePayload', value: {k: 'name', path: ['value']}}}], main: null};\n  assert.throws(() => checkProgram(identity), /nonreference structural value/u);\n  const nested = {...value, items: [{value, spread: false}]};\n  const checked = checkProgram({...make({k: 'referencePayload', value: nested}), items: [{...make(null).items[0], ret: {kind: 'array', element: {kind: 'array', element: {kind: 'float'}, reference: true}}, body: {k: 'referencePayload', value: {...nested, element: {kind: 'array', element: {kind: 'float'}, reference: true}}}}]});\n  assert.equal(checked.declarations.get('make').body.items[0].k, 'referenceAllocate', 'nested operands retain ordinary allocation');\n})"
+  },
+  {
+    "id": "test.construct-reference-payload-surface-program",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "reference payload reconstruction checks its actual value, fields, source span and prototype refusal::make",
+    "inventoryName": "construct reference payload surface program",
+    "sourceText": "make = body => ({language: 'JavaScript', referenceSemantics: true, items: [{k: 'fn', name: 'make', params: [], ret: {kind: 'array', element: {kind: 'float'}}, body}], main: null})"
+  },
+  {
+    "id": "test.read-refused-reference-payload-operand",
+    "source": "js/tests/typed-program-links-record-projection.test.js",
+    "name": "reference payload reconstruction checks its actual value, fields, source span and prototype refusal::accessor::get-value",
+    "inventoryName": "read refused reference payload operand",
+    "sourceText": "get value() {getterReads += 1; return value;}"
   }
 ];
 const B70_NAME_INVENTORIES=[...new Set(B70_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B70 physical field source view names for "+source,files:[source],extract:text=>B70_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B70_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));

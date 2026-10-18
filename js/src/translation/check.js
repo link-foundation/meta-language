@@ -31,7 +31,7 @@ import { acceptArgumentCount, acceptCheckedTypeQueryOperand, acceptTypeQueryOper
 import { readParameterDefaultValueStep, requireParameterDefaultArgumentBindings } from './parameter-default-rules.js';
 import { normaliseProof } from './proof.js';
 import { referenceOperation } from './reference-model.js';
-import { readSurfaceReferenceResultField, selectSurfaceReferenceAllocation, selectSurfaceReferenceRead } from './surface-reference-analysis-rules.js';
+import { readSurfaceReferenceResultField, selectSurfaceReferenceAllocation, selectSurfaceReferenceRead, readSurfaceReferencePayloadOperand, acceptSurfaceReferencePayloadField, readSurfaceReferencePayloadError } from './surface-reference-analysis-rules.js';
 import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, readTuplePosition } from './primitive-value-rules.js';
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { acceptOptionalAbsence, mergeOptionalAbsence } from './structured-type-rules.js';
@@ -461,15 +461,32 @@ class Checker {
   }
 
   expr(node, env, path, expected, allowLiteral = false) {
-    if (node.prototypeDefinition) throw unsupported('object prototype definition',
-      'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', node.prototypeDefinition.span);
+    const payload = readSurfaceReferencePayloadOperand(node.k);
+    if (payload) {
+      const descriptors = Object.getOwnPropertyDescriptors(node);
+      const prototype = Object.getPrototypeOf(node);
+      if ((prototype !== Object.prototype && prototype !== null) || !Object.hasOwn(descriptors, 'k')
+        || Reflect.ownKeys(descriptors).some(field => typeof field !== 'string' || !acceptSurfaceReferencePayloadField(field)
+          || !descriptors[field].enumerable || !Object.hasOwn(descriptors[field], 'value'))
+        || !Object.hasOwn(descriptors, payload) || !descriptors[payload].value || typeof descriptors[payload].value !== 'object'
+        || Array.isArray(descriptors[payload].value) || readSurfaceReferencePayloadOperand(descriptors[payload].value.k)) {
+        throw typeError('a reference payload needs its closed owned expression');
+      }
+    }
+    const expression = payload ? node[payload] : node;
+    if (expression.prototypeDefinition) throw unsupported('object prototype definition',
+      'an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes', expression.prototypeDefinition.span);
     // Control flow passes its expected result type to every branch. Literal
     // builders already construct value payloads before the allocation below.
-    let result = this.exprInner(node, env, path, expected, allowLiteral);
-    if (selectSurfaceReferenceAllocation(this.referenceSemantics, result.type.kind, result.type.reference)) {
+    let result = this.exprInner(expression, env, path, expected, allowLiteral);
+    if (payload) {
+      const refusal = readSurfaceReferencePayloadError(result.type.kind, result.type.reference === true);
+      if (refusal) throw typeError(refusal, node.span);
+    }
+    if (selectSurfaceReferenceAllocation(this.referenceSemantics && !payload, result.type.kind, result.type.reference)) {
       result = { k: 'referenceAllocate', value: result, type: { ...result.type, reference: true } };
     }
-    if (node.span && !result.span) result.span = node.span;
+    if ((node.span || (payload && expression.span)) && !result.span) result.span = node.span || expression.span;
     return result;
   }
 

@@ -70,9 +70,32 @@ impl Checker {
         expected: ExpectedType<'_>,
         allow_literal: bool,
     ) -> Result<Expr> {
-        let mut result = self.expr_inner(node, env, path, expected, allow_literal)?;
+        let expression = if let SNode::ReferencePayload { value, extra } = &node.node {
+            if !extra.is_empty()
+                || node.block
+                || node.tag_test.is_some()
+                || node.parenthesized.is_some()
+                || matches!(value.node, SNode::ReferencePayload { .. })
+            {
+                return Err(type_error(
+                    "a reference payload needs its closed owned expression",
+                    node.span,
+                ));
+            }
+            value.as_ref()
+        } else {
+            node
+        };
+        let payload = !crate::translation::surface_reference_analysis_rules::read_surface_reference_payload_operand(node.node.kind()).is_empty();
+        let mut result = self.expr_inner(expression, env, path, expected, allow_literal)?;
+        if payload {
+            let refusal = crate::translation::surface_reference_analysis_rules::read_surface_reference_payload_error(result.ty.kind(), result.ty.is_reference());
+            if !refusal.is_empty() {
+                return Err(type_error(refusal, node.span));
+            }
+        }
         if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(
-            self.reference_semantics,
+            self.reference_semantics && !payload,
             result.ty.kind(),
             result.ty.is_reference(),
         ) {
@@ -84,8 +107,9 @@ impl Checker {
                 ty,
             );
         }
-        if node.span.is_some() && result.span.is_none() {
-            result.span = node.span;
+        let span = node.span.or(if payload { expression.span } else { None });
+        if span.is_some() && result.span.is_none() {
+            result.span = span;
         }
         Ok(result)
     }

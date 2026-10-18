@@ -76,6 +76,29 @@ fn marked_record_surface_deserialization_checks_original_descriptors_before_defa
             "{failure}"
         );
     }
+    let payload = json!({"k":"referencePayload", "value":marked(json!([]), marker.clone()), "span":{"start":3,"end":6}});
+    let retained: SExpr = serde_json::from_value(payload.clone()).unwrap();
+    assert_eq!(serde_json::to_value(&retained).unwrap(), payload);
+    for (field, value) in [
+        ("extra", json!(false)),
+        ("block", json!(false)),
+        ("tagTest", Value::Null),
+        ("parenthesized", Value::Null),
+        ("parenthesized", json!(false)),
+    ] {
+        let mut malformed = payload.clone();
+        malformed[field] = value;
+        assert!(
+            serde_json::from_value::<SExpr>(malformed).is_err(),
+            "{field}"
+        );
+    }
+    for value in [Value::Null, json!(false), json!(3), json!([])] {
+        assert!(
+            serde_json::from_value::<SExpr>(json!({"k":"referencePayload", "value":value}))
+                .is_err()
+        );
+    }
 }
 
 #[test]
