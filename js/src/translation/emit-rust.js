@@ -14,6 +14,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
+import { renderArrayCallbackExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
@@ -1145,30 +1146,15 @@ class RustEmitter {
       }
       this.temporaries += 1;
       const suffix = this.temporaries;
-      const values = `ml_values${suffix}`;
-      const callback = `ml_callback${suffix}`;
-      const index = `ml_index${suffix}`;
-      const value = `ml_value${suffix}`;
       const fn = e.args[0];
       if (e.op === 'map') return renderArrayFromMapping('Rust', this.expr(e.object), this.expr(fn), fn.type.params.length, String(suffix));
-      const available = e.op === 'reduce' ? [`ml_accumulator${suffix}`, value, `(${index} as f64)`, `${values}.clone()`] : [value, `(${index} as f64)`, `${values}.clone()`];
-      const call = `${callback}(${available.slice(0, fn.type.params.length).join(', ')})`;
-      const head = `let ${values} = ${this.expr(e.object)}; let ${callback} = ${this.expr(fn)};`;
-      const iterator = `${values}.iter().cloned().enumerate()`;
-      if (e.op === 'some' || e.op === 'every') return `{ ${head} ${iterator}.${e.op === 'some' ? 'any' : 'all'}(|(${index}, ${value})| ${call}) }`;
-      if (e.op === 'findIndex') return `{ ${head} ${iterator}.position(|(${index}, ${value})| ${call}).map_or(-1f64, |ml_position| ml_position as f64) }`;
-      if (e.op === 'flatMap') return `{ ${head} ${iterator}.flat_map(|(${index}, ${value})| ${call}).collect::<Vec<_>>() }`;
-      if (e.op === 'filter' || e.op === 'find') {
-        const predicateArgs = available.slice(0, fn.type.params.length).map((argument, index) => index === 0 ? `${value}.clone()` : argument);
-        const predicate = `${callback}(${predicateArgs.join(', ')})`;
-        if (e.op === 'filter') return `{ ${head} ${iterator}.filter_map(|(${index}, ${value})| if ${predicate} { Some(${value}) } else { None }).collect::<Vec<_>>() }`;
-        return `{ ${head} ${iterator}.find_map(|(${index}, ${value})| if ${predicate} { Some(${value}) } else { None }) }`;
-      }
-      if (e.op === 'forEach') return `{ ${head} for (${index}, ${value}) in ${iterator} { ${call}; } () }`;
-      if (e.op === 'reduce') {
-        if (e.args.length === 1) return `{ ${head} let mut ml_iterator${suffix} = ${iterator}; let ml_initial${suffix} = ml_iterator${suffix}.next().map(|(_, ml_first)| ml_first).expect("Reduce of empty array with no initial value"); ml_iterator${suffix}.fold(ml_initial${suffix}, |ml_accumulator${suffix}, (${index}, ${value})| ${call}) }`;
-        return `{ ${head} ${iterator}.fold(${this.expr(e.args[1])}, |ml_accumulator${suffix}, (${index}, ${value})| ${call}) }`;
-      }
+      const parameterCount = fn.type.params.length;
+      const object = this.expr(e.object);
+      const callbackText = this.expr(fn);
+      const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;
+      const initial = hasInitial ? this.expr(e.args[1]) : '';
+      const rendered = renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);
+      if (rendered) return rendered;
     }
     throw unsupported(`method call .${e.op}()`, 'the Rust target has no operational encoding for this method', e.span);
   }

@@ -14,6 +14,9 @@ import { checkCollectionConstruction } from './collection-construction.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
+import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,
+  readArrayCallbackArgumentCountError, readArrayCallbackCheckedResultContext,
+  readArrayCallbackResultError, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation } from './array-binding-rules.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
@@ -993,9 +996,19 @@ class Checker {
       const element = object.type.element;
       const callback = (index, params, ret) => {
         const value = this.expr(args[index], env, path, { kind: 'function', params, ret });
-        if (value.type.kind !== 'function') throw typeError(`.${node.op}() requires a function`, node.span);
-        if (value.type.params.length > params.length || value.type.params.some((type, index) => !sameType(type, params[index]))) throw typeError(`.${node.op}() callback parameters differ`, node.span);
-        if (ret && !sameType(value.type.ret, ret)) throw typeError(`.${node.op}() callback result must be ${typeKey(ret)}`, node.span);
+        const kindError = readArrayCallbackSignatureError(node.op, value.type.kind, 0, params.length, true, true, '');
+        if (kindError) throw typeError(kindError, node.span);
+        const parametersMatch = value.type.params.length > params.length
+          || value.type.params.every((type, index) => sameType(type, params[index]));
+        const parameterError = readArrayCallbackSignatureError(node.op, value.type.kind,
+          value.type.params.length, params.length, parametersMatch, true, '');
+        if (parameterError) throw typeError(parameterError, node.span);
+        if (ret) {
+          const resultMatches = sameType(value.type.ret, ret);
+          const resultError = readArrayCallbackSignatureError(node.op, value.type.kind,
+            value.type.params.length, params.length, true, resultMatches, resultMatches ? '' : typeKey(ret));
+          if (resultError) throw typeError(resultError, node.span);
+        }
         return value;
       };
       if (node.op === 'map') {
@@ -1007,30 +1020,29 @@ class Checker {
         if (error) throw typeError(error, node.span);
         return { k: 'method', object, op: node.op, args: [fn], type: array(selection.ret), span: node.span };
       }
-      if (['map', 'filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'forEach'].includes(node.op)) {
-        count(1);
-        const predicate = ['filter', 'find', 'findIndex', 'some', 'every'].includes(node.op);
-        const fn = callback(0, [element, FLOAT, object.type], predicate ? BOOL : undefined);
-        let type = node.op === 'map' ? array(fn.type.ret) : object.type;
-        if (node.op === 'flatMap') {
-          if (fn.type.ret.kind !== 'array') throw typeError('flatMap callback must return an array', node.span);
-          type = fn.type.ret;
+      const callbackForm = readArrayCallbackResultForm(node.op);
+      if (callbackForm) {
+        const countError = readArrayCallbackArgumentCountError(node.op, args.length);
+        if (countError) throw unsupported(`method call .${node.op}()`, countError, node.span);
+        const initialPosition = readArrayCallbackCheckedArgumentPosition(node.op, Boolean(args[1]), 0);
+        const initial = initialPosition === 1 ? this.expr(args[1], env, path, expected) : null;
+        const accumulator = initial ? initial.type : element;
+        const params = [];
+        for (let position = 0; ; position += 1) {
+          const role = readArrayCallbackParameterRole(node.op, position);
+          if (!role) break;
+          params.push(role === 'accumulator' ? accumulator : role === 'element' ? element : role === 'index' ? FLOAT : object.type);
         }
-        if (node.op === 'find') type = { kind: 'option', element, absence: 'undefined' };
-        if (node.op === 'findIndex') type = FLOAT;
-        if (node.op === 'some' || node.op === 'every') type = BOOL;
-        if (node.op === 'forEach') type = UNIT;
-        return { k: 'method', object, op: node.op, args: [fn], type, span: node.span };
-      }
-      if (node.op === 'reduce') {
-        count(1, 2);
-        if (!args[1]) {
-          const fn = callback(0, [element, element, FLOAT, object.type], element);
-          return { k: 'method', object, op: node.op, args: [fn], type: element, span: node.span };
-        }
-        const initial = this.expr(args[1], env, path, expected);
-        const fn = callback(0, [initial.type, element, FLOAT, object.type], initial.type);
-        return { k: 'method', object, op: node.op, args: [fn, initial], type: initial.type, span: node.span };
+        const context = readArrayCallbackCheckedResultContext(node.op);
+        const fn = callback(0, params, context === 'bool' ? BOOL : context === 'accumulator' ? accumulator : undefined);
+        const resultError = readArrayCallbackResultError(node.op, fn.type.ret.kind);
+        if (resultError) throw typeError(resultError, node.span);
+        const type = callbackForm === 'receiver' ? object.type
+          : callbackForm === 'optional element' ? { kind: 'option', element, absence: 'undefined' }
+          : callbackForm === 'float' ? FLOAT : callbackForm === 'bool' ? BOOL
+          : callbackForm === 'unit' ? UNIT : callbackForm === 'accumulator' ? accumulator
+          : callbackForm === 'mapped array' ? array(fn.type.ret) : fn.type.ret;
+        return { k: 'method', object, op: node.op, args: initial ? [fn, initial] : [fn], type, span: node.span };
       }
       if (node.op === 'slice') {
         return this.primitiveMethod(node, object, env, path);
