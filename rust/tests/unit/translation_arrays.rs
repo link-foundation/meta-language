@@ -421,8 +421,8 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
             compiler.arg("-C").arg(format!("linker={linker}"));
         }
-        let compiled = run(compiler.arg(&rust_file).arg("-o").arg(&executable));
-        assert!(compiled.ok, "{}: {}", row["id"], compiled.stderr);
+        let build_result = run(compiler.arg(&rust_file).arg("-o").arg(&executable));
+        assert!(build_result.ok, "{}: {}", row["id"], build_result.stderr);
         let output = run(&mut Command::new(&executable));
         assert!(output.ok, "{}: {}", row["id"], output.stderr);
         assert_eq!(output.stdout, expected, "{}", row["id"]);
