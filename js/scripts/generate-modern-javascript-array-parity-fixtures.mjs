@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {existsSync,readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import ts from 'typescript';
+import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
 import {checkProjectData,readProjectData,writeProjectData} from './project-data.mjs';
 
@@ -25,26 +25,36 @@ export const MODERN_ARRAY_CASE_IDS=Object.freeze(['original-array-corpus','origi
  'original-array-hole-refusal','original-for-in-refusal','supplementary-string-length','observable-array-absence']);
 export const MODERN_ARRAY_IN_BOUNDS='the translation agrees with the source on executions whose array reads are in bounds; JavaScript reads undefined at an index outside an array, where the target aborts';
 const digest=value=>createHash('sha256').update(value).digest('hex');
-const literal=node=>{assert.ok(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node),'an actual complete literal is required');return node.text;};
-function visit(node,callback){callback(node);ts.forEachChild(node,child=>visit(child,callback));}
+const field=(node,name)=>{const found=node.children.filter(child=>child.field===name);assert.equal(found.length,1,`one ${name} field is required`);return found[0].node;};
+const namedChildren=node=>node.children.filter(child=>child.node.named&&!child.node.isExtra).map(child=>child.node);
+function literal(node,bytes){
+ assert.ok(node.term==='string'||node.term==='template_string','an actual complete literal is required');
+ const raw=bytes.subarray(node.start,node.end).toString('utf8'),tokens=tokenize(raw,'JavaScript').tokens;
+ assert.equal(tokens.length,2);assert.equal(tokens[1].kind,'eof');assert.equal(tokens[0].start,0);assert.equal(tokens[0].end,raw.length);
+ const token=tokens[0];if(token.kind==='string')return token.value;
+ assert.equal(token.kind,'template');assert.equal(token.parts.length,1);assert.equal(Object.hasOwn(token.parts[0],'expression'),false,'template substitution is not a literal');
+ return token.parts[0].text;
+}
+function visit(node,callback){callback(node);for(const child of node.children)visit(child.node,callback);}
 function originalBody(source){const at=source.indexOf(MODERN_ARRAY_APPEND_MARKER);if(at<0)return source;assert.equal(source.split(MODERN_ARRAY_APPEND_MARKER).length,2);return source.slice(0,at);}
 function readOriginalJavaScriptInputs(source){
- const tree=ts.createSourceFile('translation-arrays.test.js',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
- assert.equal(tree.parseDiagnostics.length,0);
- const calls=tree.statements.filter(node=>ts.isExpressionStatement(node)&&ts.isCallExpression(node.expression)
-  &&ts.isIdentifier(node.expression.expression)&&node.expression.expression.text==='test').map(node=>node.expression);
+ const bytes=Buffer.from(source),text=node=>bytes.subarray(node.start,node.end).toString('utf8');
+ const tree=parseNative('native-javascript',source);assert.equal(tree.term,'program');assert.equal(tree.hasError,false);assert.equal(tree.end,bytes.length);
+ const calls=namedChildren(tree).filter(node=>node.term==='expression_statement').flatMap(namedChildren)
+  .filter(node=>node.term==='call_expression'&&field(node,'function').term==='identifier'&&text(field(node,'function'))==='test');
  assert.equal(calls.length,5,'all five original callback bodies remain');
  let arrays;
- for(const node of tree.statements)if(ts.isVariableStatement(node))for(const declaration of node.declarationList.declarations)
-  if(ts.isIdentifier(declaration.name)&&declaration.name.text==='ARRAYS')arrays=literal(declaration.initializer);
+ for(const node of namedChildren(tree))if(node.term==='lexical_declaration')for(const declaration of namedChildren(node))
+  if(declaration.term==='variable_declarator'&&field(declaration,'name').term==='identifier'&&text(field(declaration,'name'))==='ARRAYS')arrays=literal(field(declaration,'value'),bytes);
  assert.equal(typeof arrays,'string');
+ const argumentsOf=call=>namedChildren(field(call,'arguments'));
  const readLocalSource=title=>{
-  const selected=calls.filter(call=>literal(call.arguments[0])===title);assert.equal(selected.length,1);
-  const found=[];visit(selected[0].arguments[1],node=>{if(ts.isVariableDeclaration(node)&&ts.isIdentifier(node.name)&&node.name.text==='source')found.push(literal(node.initializer));});
+  const selected=calls.filter(call=>literal(argumentsOf(call)[0],bytes)===title);assert.equal(selected.length,1);
+  const found=[];visit(argumentsOf(selected[0])[1],node=>{if(node.term==='variable_declarator'&&field(node,'name').term==='identifier'&&text(field(node,'name'))==='source')found.push(literal(field(node,'value'),bytes));});
   assert.equal(found.length,1);return found[0];
  };
- const refusalCall=calls.find(call=>literal(call.arguments[0])==='the array forms that are not kept are refused with a reason');assert.ok(refusalCall);
- const refusals=[];visit(refusalCall.arguments[1],node=>{if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='refusal')refusals.push(literal(node.arguments[0]));});
+ const refusalCall=calls.find(call=>literal(argumentsOf(call)[0],bytes)==='the array forms that are not kept are refused with a reason');assert.ok(refusalCall);
+ const refusals=[];visit(argumentsOf(refusalCall)[1],node=>{if(node.term==='call_expression'&&field(node,'function').term==='identifier'&&text(field(node,'function'))==='refusal')refusals.push(literal(argumentsOf(node)[0],bytes));});
  const distinct=[...new Set(refusals)];assert.equal(distinct.length,6);
  return [arrays,readLocalSource('inference fixes the element type of an empty array from its later use'),
   readLocalSource('a @typedef field may hold an array, of data too'),...distinct];
