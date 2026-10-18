@@ -7,13 +7,86 @@ import {structuredDataToLino} from '../src/structured-data-links.js';
 export const COMPLETE_DECLARATION_RECEIPTS = new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
 const digest=value=>createHash('sha256').update(value).digest('hex');
 
+// A source revision authenticates source descriptors; it does not claim that
+// the derived successor artifact was already committed at that source revision.
+const descriptorSuccessor = {
+ identity:'raw consuming',
+ previous:{file:'experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino',
+  revision:'191f214903cc123cfb1566d82a90e18819be6b4d',bytes:1814953,
+  sha256:'99c8d2e697ee99d9b8b8c34c7c1bfb9c7a121206aa455618756f37435c7624a9'},
+ current:{file:'experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino',
+  sourceRevision:'b4b92d47ee0a186dbe3920c1844eb907afe56aeb',bytes:1814953,
+  sha256:'0698669cdac848bfd661a1f87be629cdc81ddc3b4a2213bfb145d4c9de441644'},
+ sources:[
+  {file:'js/src/translation/check.js',
+   previous:{bytes:126330,sha256:'e4a95a59a9f9878d2842928db794a4973eaa56daae8e11a970dfafd4f15f7551'},
+   current:{bytes:127369,sha256:'abf66bd551b94e9870a8d2c0d709af7c4a72e5fdc3fbd1e828a89de140f92880'}},
+  {file:'js/src/translation/emit-rust.js',
+   previous:{bytes:79266,sha256:'69315a498f97e54b16f2fb8f3d7454d84e818ddce7bb89904b4ae85279af1f79'},
+   current:{bytes:77647,sha256:'843b6c072917fa8f86d36eabf64df022c92824062a921e5d8df71ac3d2df0f31'}},
+ ],
+};
+
+/** Apply the one reviewed descriptor edge before the original receipt inverse. */
+function readCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ const {successors,...originalRegister}=register;
+ const originalBytes=Buffer.from(structuredDataToLino(originalRegister));
+ assert.equal(originalBytes.length,68598,'all four original receipt rows retain their complete byte count');
+ assert.equal(digest(originalBytes),'932974138d4bcd76ca097ed5d1e726abae850a85bea3f7d96ff8143ad84602ba',
+  'removing only successors restores the complete immutable four-row register');
+ const base=register.receipts.find(row=>row.identity===identity);
+ assert.ok(base,'the successor cannot introduce an undeclared receipt identity');
+ const bytes=Buffer.from(structuredDataToLino(artifact)),actual=digest(bytes);
+ if(successors===undefined){
+  assert.ok([base.previous.sha256,base.current.sha256].includes(actual),'unregistered descriptor successors refuse');
+  return {artifact:structuredClone(artifact),bytes};
+ }
+ assert.ok(Array.isArray(successors));
+ assert.equal(successors.length,1,'the reviewed finite chain has exactly one descriptor successor');
+ const edge=successors[0],{changes,...metadata}=edge;
+ assert.deepEqual(metadata,descriptorSuccessor,'the whole descriptor edge and both source revisions are independently pinned');
+ const expected=[];
+ for(const [index,source]of descriptorSuccessor.sources.entries())for(const field of ['bytes','sha256']){
+  expected.push({path:['decisionSources',String(index+3),field],before:source.previous[field],after:source.current[field]});
+ }
+ assert.deepEqual(changes,expected,'only the two owned descriptor byte counts and hashes may change');
+ if(identity!==edge.identity||actual!==edge.current.sha256){
+  assert.ok([base.previous.sha256,base.current.sha256].includes(actual),'unknown artifacts cannot enter the descriptor chain');
+  return {artifact:structuredClone(artifact),bytes};
+ }
+ assert.equal(bytes.length,edge.current.bytes,'the entire descriptor successor byte count is exact');
+ const inverse=structuredClone(artifact);
+ for(const [index,source]of edge.sources.entries()){
+  const descriptor=inverse.decisionSources[index+3];
+  assert.deepEqual(descriptor,{file:source.file,...source.current},'each actual descriptor retains its exact file owner and fields');
+ }
+ for(const change of changes){
+  const descriptor=inverse.decisionSources[Number(change.path[1])],field=change.path[2];
+  assert.deepEqual(descriptor[field],change.after);
+  descriptor[field]=change.before;
+ }
+ const restored=Buffer.from(structuredDataToLino(inverse));
+ assert.equal(restored.length,edge.previous.bytes,'the whole preceding current artifact byte count is recovered');
+ assert.equal(digest(restored),edge.previous.sha256,'only the reviewed descriptor fields changed in the complete artifact');
+ assert.equal(edge.previous.sha256,base.current.sha256,'the successor rejoins the unchanged original receipt current endpoint');
+ assert.equal(edge.previous.bytes,base.current.bytes);
+ assert.equal(edge.previous.file,base.current.file);
+ return {artifact:inverse,bytes:restored};
+}
+
+/** The public standalone gate retains its cloned-data result and all checks. */
+export function restoreCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ return readCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;
+}
+
 /** Restore only a recorded source endpoint, archive receipt or source descriptor. */
-export function restoreCompleteDeclarationReceipt(artifact,identity){
- const register=readProjectData(COMPLETE_DECLARATION_RECEIPTS);
+export function restoreCompleteDeclarationReceipt(artifact,identity,{register=readProjectData(COMPLETE_DECLARATION_RECEIPTS)}={}){
+ const successor=readCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
+ artifact=successor.artifact;
  assert.equal(register.schemaVersion,1);
  const matches=register.receipts.filter(row=>row.identity===identity);
  assert.equal(matches.length,1,'one complete declaration-range receipt has this identity');
- const receipt=matches[0],bytes=Buffer.from(structuredDataToLino(artifact)),actual=digest(bytes);
+ const receipt=matches[0],bytes=successor.bytes,actual=digest(bytes);
  if(actual===receipt.previous.sha256){assert.equal(bytes.length,receipt.previous.bytes);return structuredClone(artifact);}
  assert.equal(actual,receipt.current.sha256,'the entire current artifact must match its reviewed receipt');
  assert.equal(bytes.length,receipt.current.bytes);
