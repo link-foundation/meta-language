@@ -69,6 +69,63 @@ test('raw consumer data restores every exact original carrier cell and keeps com
   assert.throws(() => createOriginalLinkRawConsumerPacket(observations, foreign, header), /word indices must exist/u);
 });
 
+test('raw consumer progress is bounded stderr-only transport and preserves every original consumer byte', () => {
+  const {carrier, observations, header} = rawConsumerDataFixture(), original = structuredClone({carrier, observations, header});
+  const packet = createOriginalLinkRawConsumerPacket(observations, carrier, header), source = packet.consumerSource;
+  assert.deepEqual([...source.matchAll(/^progress\(&progress_started,&mut progress_remaining,(None|Some\(index\)),"([a-z-]+)"\);$/gmu)]
+    .map(match => [match[1], match[2]]), [
+    ['None', 'carrier-start'], ['None', 'block-index-start'], ['None', 'block-index-end'], ['None', 'carrier-ready'],
+    ['Some(index)', 'reconstruct-start'], ['Some(index)', 'input-verification-start'],
+    ['Some(index)', 'call-start'], ['Some(index)', 'call-end'],
+    ['Some(index)', 'verification-end'], ['Some(index)', 'encode-end'], ['None', 'complete'],
+  ]);
+  assert.match(source, /let mut progress_remaining=64\*1024;/u);
+  assert.match(source, /if \*remaining==0\{return;\}/u);
+  assert.match(source, /if line\.len\(\)>\*remaining\{\*remaining=0;return;\}\*remaining-=line\.len\(\);/u);
+  assert.match(source, /std::io::Write::write_all\(&mut std::io::stderr\(\)\.lock\(\),line\.as_bytes\(\)\)/u);
+  assert.match(source, /elapsed_ms=\{elapsed\}/u);
+  const unchanged = source.split('\n').filter(line => !line.startsWith('fn progress(')
+    && !line.startsWith('let progress_started=') && !line.startsWith('progress(&progress_started,')
+    && !line.startsWith('let mut block_indices=')).join('\n')
+    .replace('let block=*block_indices.get(chunk).expect("actual output block");',
+      'let block=blocks.iter().position(|block|block.len()==chunk.len()&&block.iter().zip(chunk).all(|(word,actual)|words[*word]==*actual)).expect("actual output block");');
+  assert.equal(Buffer.byteLength(unchanged), 4852);
+  assert.equal(createHash('sha256').update(unchanged).digest('hex'), '233d9cbff3dba399b55b0fef24b0170ae3f99d007696d52aa9f0d24632a0a2f9',
+    'inverting diagnostics and the exact-bit lookup restores the entire prior consumer, including every assertion, invocation and exact stdout protocol');
+  assert.deepEqual({carrier, observations, header}, original);
+  for (const functionName of ['check_original_link_raw_shape;panic!()', 'check_original_link_raw_shape\nforeign', '']) {
+    assert.throws(() => createOriginalLinkRawConsumerPacket(observations, carrier, {functionName}), assert.AssertionError);
+  }
+  assert.throws(() => createOriginalLinkRawConsumerPacket(observations.slice(1), carrier, header), /every observation has one complete carrier invocation/u);
+});
+
+test('raw consumer exact-bit block indexing agrees with the original linear first-match lookup', () => {
+  const words = ['0000000000000000', '8000000000000000', '7ff0000000000000', 'fff0000000000000',
+    '7ff8000000000001', '7ff8000000000002', 'ffffffffffffffff', '0000000000000000', '0000000000000001', '7ff0000000000001'];
+  const blocks = [[0, 1, 4], [7, 1, 4], [0, 1], [0, 1, 4, 8], [1], [0], [4], [5], [2, 3, 6, 8, 9], [], []];
+  const linear = chunk => blocks.findIndex(block => block.length === chunk.length && block.every((word, index) => words[word] === chunk[index]));
+  // Fixed-width exact hexadecimal words form injective sequence keys, including length.
+  const index = new Map();
+  for (const [position, block] of blocks.entries()) {
+    const key = block.map(word => words[word]).join('');if (!index.has(key)) index.set(key, position);
+  }
+  const queries = [...blocks.map(block => block.map(word => words[word])), [words[1], words[0], words[4]],
+    [words[0], words[1], words[4], words[8], words[9]], ['7ff8000000000003']];
+  assert.deepEqual(queries.map(linear), [0, 0, 2, 3, 4, 5, 6, 7, 8, 9, 9, -1, -1, -1]);
+  for (const chunk of queries) assert.equal(index.get(chunk.join('')) ?? -1, linear(chunk));
+  const {carrier, observations, header} = rawConsumerDataFixture(), source = createOriginalLinkRawConsumerPacket(observations, carrier, header).consumerSource;
+  assert.match(source, /HashMap::<Vec<u64>,usize>::new\(\)/u);
+  assert.match(source, /let key=block\.iter\(\)\.map\(\|word\|words\[\*word\]\)\.collect::<Vec<_>>\(\);let _=block_indices\.entry\(key\)\.or_insert\(index\);/u);
+  assert.match(source, /let block=\*block_indices\.get\(chunk\)\.expect\("actual output block"\);/u);
+  assert.doesNotMatch(source, /blocks\.iter\(\)\.position/u);
+  for (const reference of [-1, carrier.words.length, '0', NaN, Infinity]) {
+    const invalid = structuredClone(carrier);invalid.blocks.push([reference]);
+    assert.ok(invalid.vectors.every(vector => !vector.includes(invalid.blocks.length - 1)), 'the malformed block is deliberately unused');
+    assert.throws(() => createOriginalLinkRawConsumerPacket(observations, invalid, header), assert.AssertionError,
+      'complete preflight must reject an unused invalid reference before the eager native index can read it');
+  }
+});
+
 test('raw consumer data uses the existing complete packet preflight and detects edits around every injected phase', () => {
   const {carrier, observations, header} = rawConsumerDataFixture(), packet = createOriginalLinkRawConsumerPacket(observations, carrier, header);
   const source = 'pub fn check_original_link_raw_shape()->Vec<f64>{Vec::new()}\n', sha256 = value => createHash('sha256').update(value).digest('hex');

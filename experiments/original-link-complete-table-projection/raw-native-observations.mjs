@@ -372,6 +372,8 @@ export function createOriginalLinkRawConsumerPacket(observations, carrier, heade
     additionalSources: [{relativePath: 'carrier.lino', source: data, sourceBytes: consumerDataBytes, sourceSha256: sha256(textBytes(data))}]};
 }
 
+// Complete packet preflight validates every word reference, including unused
+// blocks. Index those exact u64 sequences once, retaining their first position.
 function consumerSource(header) {
   return `extern crate oracle_source;
 use std::fmt::Write as _;
@@ -386,25 +388,39 @@ fn read_list(fields:&mut Fields<'_>)->Vec<usize>{(0..read_index(fields)).map(|_|
 fn read_group(fields:&mut Fields<'_>,name:&str,prefix:&str)->usize{begin(fields,name);let count=read_index(fields);for index in 0..count{expect(fields,&format!("{prefix}-{index}"));}expect(fields,")");count}
 fn read_rows(fields:&mut Fields<'_>,name:&str,prefix:&str)->Vec<Vec<usize>>{let count=read_group(fields,name,prefix);(0..count).map(|index|{begin(fields,&format!("{prefix}-{index}"));let row=read_list(fields);expect(fields,")");row}).collect()}
 fn vector_bits(words:&[u64],blocks:&[Vec<usize>],vectors:&[Vec<usize>],index:usize)->Vec<u64>{let mut result=Vec::new();for block in &vectors[index]{for word in &blocks[*block]{result.push(words[*word]);}}result}
+fn progress(started:&std::time::Instant,remaining:&mut usize,invocation:Option<usize>,phase:&str){if *remaining==0{return;}let elapsed=started.elapsed().as_millis();let line=match invocation{Some(index)=>format!("Raw native consumer: invocation={index}; phase={phase}; elapsed_ms={elapsed}\\n"),None=>format!("Raw native consumer: phase={phase}; elapsed_ms={elapsed}\\n")};if line.len()>*remaining{*remaining=0;return;}*remaining-=line.len();let _=std::io::Write::write_all(&mut std::io::stderr().lock(),line.as_bytes());}
 fn main(){
+let progress_started=std::time::Instant::now();let mut progress_remaining=64*1024;
+progress(&progress_started,&mut progress_remaining,None,"carrier-start");
 let data=std::fs::read_to_string("carrier.lino").expect("authenticated complete carrier Links");let mut fields=Fields{remaining:&data};
 begin(&mut fields,"carrier");begin(&mut fields,"schema");expect(&mut fields,"original-link-raw-carrier");expect(&mut fields,"1");expect(&mut fields,")");for name in ["words","blocks","vectors","invocations"]{expect(&mut fields,name);}expect(&mut fields,")");
 begin(&mut fields,"words");let words:Vec<u64>=(0..read_index(&mut fields)).map(|_|read_word(&mut fields)).collect();expect(&mut fields,")");let blocks=read_rows(&mut fields,"blocks","block");let vectors=read_rows(&mut fields,"vectors","vector");let mut output=String::new();
+progress(&progress_started,&mut progress_remaining,None,"block-index-start");
+let mut block_indices=std::collections::HashMap::<Vec<u64>,usize>::new();for (index,block) in blocks.iter().enumerate(){let key=block.iter().map(|word|words[*word]).collect::<Vec<_>>();let _=block_indices.entry(key).or_insert(index);}
+progress(&progress_started,&mut progress_remaining,None,"block-index-end");
+progress(&progress_started,&mut progress_remaining,None,"carrier-ready");
 let invocation_count=read_group(&mut fields,"invocations","invocation");for index in 0..invocation_count{
+progress(&progress_started,&mut progress_remaining,Some(index),"reconstruct-start");
 begin(&mut fields,&format!("invocation-{index}"));begin(&mut fields,"roots");let root_high_bits=read_word(&mut fields);let root_low_bits=read_word(&mut fields);expect(&mut fields,")");begin(&mut fields,"result");let expected_result=read_index(&mut fields);expect(&mut fields,")");begin(&mut fields,"columns");let column_ids=read_list(&mut fields);expect(&mut fields,")");expect(&mut fields,")");
 let columns:Vec<Vec<f64>>=column_ids.iter().map(|index| vector_bits(&words,&blocks,&vectors,*index).into_iter().map(f64::from_bits).collect()).collect();
+progress(&progress_started,&mut progress_remaining,Some(index),"input-verification-start");
 for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"complete carrier input differs");}
 let root_high=f64::from_bits(root_high_bits);let root_low=f64::from_bits(root_low_bits);
+progress(&progress_started,&mut progress_remaining,Some(index),"call-start");
 let result=oracle_source::${header.functionName}(root_high,root_low,columns.clone());
+progress(&progress_started,&mut progress_remaining,Some(index),"call-end");
 let observed:Vec<u64>=result.iter().map(|value|value.to_bits()).collect();
 assert_eq!(observed,vector_bits(&words,&blocks,&vectors,expected_result),"complete raw decision differs");
 assert_eq!(root_high.to_bits(),root_high_bits);assert_eq!(root_low.to_bits(),root_low_bits);
 for (column,index) in columns.iter().zip(&column_ids) {assert_eq!(column.iter().map(|value|value.to_bits()).collect::<Vec<_>>(),vector_bits(&words,&blocks,&vectors,*index),"caller input changed");}
+progress(&progress_started,&mut progress_remaining,Some(index),"verification-end");
 write!(&mut output,"{index}:{}",observed.len()).expect("invocation length");
-for chunk in observed.chunks(${blockWidth}) {let block=blocks.iter().position(|block|block.len()==chunk.len()&&block.iter().zip(chunk).all(|(word,actual)|words[*word]==*actual)).expect("actual output block");write!(&mut output,":{block:x}").expect("output block");}
+for chunk in observed.chunks(${blockWidth}) {let block=*block_indices.get(chunk).expect("actual output block");write!(&mut output,":{block:x}").expect("output block");}
 output.push('\\n');
+progress(&progress_started,&mut progress_remaining,Some(index),"encode-end");
 }
 assert!(fields.next().is_none(),"complete carrier has trailing fields");
+progress(&progress_started,&mut progress_remaining,None,"complete");
 print!("{output}");}
 `;
 }
