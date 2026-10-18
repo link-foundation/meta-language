@@ -184,6 +184,15 @@ return type, including callbacks returned through conditional, binding, effect
 and match expressions. Matching branches derive their concrete result from an
 actual checked branch before coercion; contextual parameters cannot substitute
 for the callback's declared arity or actual result.
+Array callback admission and Rust rendering share the complete checked
+JavaScript rule module, including its generated continuation. Hosts retain actual
+receiver, element and accumulator type owners, ordered argument checks and
+the outer expected context for a reduce initial value. Complete source-free
+program fixtures retain both explicit reference profiles, original refusals and
+independent values and execution traces. The current reference profile refuses
+callbacks that declare the receiver parameter; separately admitted cases do not establish
+support for that parameter or shared receiver mutation. Native execution remains
+a CI obligation.
 Direct native programs can retain dynamic proof widths as floating Number
 values. Their selected validation uses a bounded private comparison view with
 the same fixed-width record adapter as Links decoding; the original proof

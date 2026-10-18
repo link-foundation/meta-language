@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 176 | 175 | 1 | 0 |
+| Generators | 178 | 177 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 85 | 0 | 0 | 85 |
+| Published artifact contents | 86 | 0 | 0 | 86 |
 
 ## JavaScript engines
 
@@ -566,6 +566,8 @@ they are.
 | `js/scripts/build-web-tree-sitter-runtime.mjs` | `js/scripts/build-web-tree-sitter-runtime.mjs` | `script` |  | derived | behind | Built from `image emscripten/emsdk@4.0.15`, which is behind (see its reason). |
 | `js/scripts/generate-antlr-reverse-fixture.mjs` | `js/scripts/generate-antlr-reverse-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-binding-rules.mjs` | `js/scripts/generate-array-binding-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-callback-fixtures.mjs` | `js/scripts/generate-array-callback-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-callback-rules.mjs` | `js/scripts/generate-array-callback-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-from-rules.mjs` | `js/scripts/generate-array-from-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
@@ -798,6 +800,7 @@ they are.
 | `README.md` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/**/*.rs` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-callback-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
