@@ -142,9 +142,9 @@ fn empty_tags_elements_and_source_owner_shadowing_keep_their_boundary() {
         assert_eq!(actual.stdout, expected.stdout);
         assert_eq!(actual.stderr, expected.stderr);
         assert_eq!(actual.stdout, format!("{absence}\n"));
-        assert!(!emit_rust(&restored).unwrap().text.is_empty());
-        assert!(!emit_lean(&restored).unwrap().text.is_empty());
-        assert!(!emit_rocq(&restored).unwrap().text.is_empty());
+        assert_ne!(emit_rust(&restored).unwrap().text, "");
+        assert_ne!(emit_lean(&restored).unwrap().text, "");
+        assert_ne!(emit_rocq(&restored).unwrap().text, "");
     }
     let null_program =
         check_program(&parse_javascript("function empty(){return null;}").unwrap()).unwrap();

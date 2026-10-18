@@ -216,7 +216,8 @@ fn structural_optional_type_queries_round_trip_and_execute_as_one_complete_rust_
 
 fn optional_equality_contracts() -> serde_json::Value {
     use super::issue_195_translation_pairs::run;
-    let script = r#"
+    let script = concat!(
+        r"
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -244,7 +245,8 @@ for(const [index,declarations]of [readers,[...readers].reverse()].entries())case
  '/** @param {number[]} numbers @param {string[]} texts @returns {boolean} */function compare(numbers,texts){return readNumber(numbers)===readText(texts);}'
  +declarations.join('\n')+'console.log(compare([],[]));console.log(compare([0],[\'0\']));',
  ['left','right','true','left','right','false']]);
-function observe(source){const lines=[];vm.runInNewContext(source,{console:{log:value=>lines.push(String(value))}},{timeout:1000});return lines;}
+function observe(source){const lines=[];vm.runInNewContext(source,{console:{log:value=>lines.push(String(value))}},{",
+        r"timeout:1000});return lines;}
 const contracts=[];
 for(const [name,source,expected]of cases){
  assert.deepEqual(observe(source),Array.from(expected));
@@ -262,7 +264,8 @@ for(const [name,source,expected]of cases){
   editedExpected,editedJavaScript:emitJavaScript(edited).text,editedRust:emitRust(edited,{arrayConsumption:true}).text});
 }
 console.log(JSON.stringify(contracts));
-"#;
+"
+    );
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

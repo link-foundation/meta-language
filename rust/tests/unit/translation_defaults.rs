@@ -481,7 +481,8 @@ fn type_queries_preserve_bound_value_names_without_discarding_evaluation() {
 }
 
 fn parameter_default_contract(source: &str, native_javascript: &str) -> serde_json::Value {
-    let script = r#"
+    let script = concat!(
+        r"
 import {format} from 'node:util';
 import vm from 'node:vm';
 import {parseJavaScript} from './js/src/translation/javascript.js';
@@ -490,14 +491,16 @@ import {emitJavaScript} from './js/src/translation/emit-javascript.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
 function observe(source){
  const lines=[];let error=null;
- try{vm.runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}},{timeout:1000});}
+ try{vm.runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}},{",
+        r"timeout:1000});}
  catch(failure){error=failure.message;}
  return {output:lines.length?lines.join('\n')+'\n':'',error};
 }
 const surface=parseJavaScript(process.argv[1]),checked=checkProgram(surface);
 const javascript=emitJavaScript(checked).text,rust=emitRust(checked,{arrayConsumption:true}).text;
 console.log(JSON.stringify({surface,javascript,rust,observations:[observe(process.argv[1]),observe(process.argv[2]),observe(javascript)]}));
-"#;
+"
+    );
     let result = run(Command::new("node")
         .current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
         .args([

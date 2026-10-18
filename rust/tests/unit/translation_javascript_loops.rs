@@ -270,7 +270,10 @@ fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
     }
     for source in [
         "function read(){let first=0\nInfinity,NaN;return first;}",
-        "function read(){let first={let:2};first.let\nNaN,Infinity;return first.let;}",
+        concat!(
+            "function read(){let first={",
+            "let:2};first.let\nNaN,Infinity;return first.let;}"
+        ),
     ] {
         assert!(parse_javascript(source).is_err(), "{source}");
     }
@@ -305,7 +308,10 @@ fn actual_lexical_owners_preserve_initialized_bindings_shadows_and_order_through
             "4\n",
         ),
         (
-            "function read(){let first={let:2},second=first.let;return second;}console.log(read());",
+            concat!(
+                "function read(){let first={",
+                "let:2},second=first.let;return second;}console.log(read());"
+            ),
             "2\n",
         ),
         (
@@ -411,11 +417,17 @@ fn literal_bindings_share_recursive_admission_without_spreads_effects_or_mutable
             "word\n",
         ),
         (
-            "const NaN={value:3};function read(){return NaN.value;}console.log(read());",
+            concat!(
+                "const NaN={",
+                "value:3};function read(){return NaN.value;}console.log(read());"
+            ),
             "3\n",
         ),
         (
-            "const NaN={outer:{inner:{value:7}}};function read(){return NaN.outer.inner.value;}console.log(read());",
+            concat!(
+                "const NaN={outer:{inner:{",
+                "value:7}}};function read(){return NaN.outer.inner.value;}console.log(read());"
+            ),
             "7\n",
         ),
         (
@@ -464,22 +476,34 @@ fn literal_bindings_share_recursive_admission_without_spreads_effects_or_mutable
     }
     for (source, expected, earlier_construct) in [
         (
-            "const base={value:3};const NaN={...base};function read(){return NaN.value;}console.log(read());",
+            concat!(
+                "const base={",
+                "value:3};const NaN={...base};function read(){return NaN.value;}console.log(read());"
+            ),
             "3\n",
             Some("namespace after a top-level statement"),
         ),
         (
-            "const base={value:3};const NaN={nested:{...base}};function read(){return NaN.nested.value;}console.log(read());",
+            concat!(
+                "const base={",
+                "value:3};const NaN={nested:{...base}};function read(){return NaN.nested.value;}console.log(read());"
+            ),
             "3\n",
             Some("namespace after a top-level statement"),
         ),
         (
-            "const NaN={...{value:3}};function read(){return NaN.value;}console.log(read());",
+            concat!(
+                "const NaN={...{",
+                "value:3}};function read(){return NaN.value;}console.log(read());"
+            ),
             "3\n",
             None,
         ),
         (
-            "const NaN={nested:{...{value:3}}};function read(){return NaN.nested.value;}console.log(read());",
+            concat!(
+                "const NaN={nested:{...{",
+                "value:3}}};function read(){return NaN.nested.value;}console.log(read());"
+            ),
             "3\n",
             None,
         ),

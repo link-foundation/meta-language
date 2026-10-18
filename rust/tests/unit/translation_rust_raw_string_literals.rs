@@ -880,7 +880,7 @@ fn rust_character_selection_preserves_lifetimes_labels_strings_comments_and_fore
             assert_eq!(token.span(), Span::new(start, start + token.raw.len()));
             end = start + token.raw.len();
         }
-        assert!(result.comments.is_empty());
+        assert_eq!(result.comments.as_slice(), &[]);
     }
     let source = "\"'{' b'x'\" r##\"'}' \" // /* b'y'\"## // 'z'\n/* b'w' */ value";
     let result = tokenize(source, Language::Rust).unwrap();

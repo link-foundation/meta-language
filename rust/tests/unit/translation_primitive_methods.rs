@@ -9,6 +9,7 @@ use meta_language::{
     BinaryLinksOptions, LinkNetwork, create_typed_program_links, decode_link_network_binary,
     decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
 };
+use std::fmt::Write as _;
 use std::fs;
 use std::process::Command;
 
@@ -144,7 +145,7 @@ fn utf16_method_self_translation_matches_javascript_and_restores_the_actual_sour
 }
 
 fn char_code_unit_oracle(source: &str, self_translation: bool) -> serde_json::Value {
-    let script = r#"
+    let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
@@ -156,7 +157,7 @@ if(process.argv[2]==='true'){
   const checked=checkProgram(parseJavaScript(process.argv[1]));
   process.stdout.write(JSON.stringify({javascript:emitJavaScript(checked).text,rust:emitRust(checked).text}));
 }
-"#;
+";
     let output = Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -262,7 +263,7 @@ fn code_unit_parameters_keep_lone_surrogates_pair_halves_and_unusual_positions_i
             .collect::<Vec<_>>()
             .join(",");
         for position in positions {
-            calls.push_str(&format!("println!(\"{{}}\",unit(crate::ml_string::Text::from_units(vec![{value}]),{position}));\n"));
+            writeln!(calls, "println!(\"{{}}\",unit(crate::ml_string::Text::from_units(vec![{value}]),{position}));").unwrap();
         }
     }
     let rust_code = emitted.preludes.join("\n\n")

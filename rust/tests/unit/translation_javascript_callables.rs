@@ -243,11 +243,7 @@ fn native_callable_sources_execute_from_both_formats_with_shared_and_independent
                 }
             } else {
                 for target in ["Lean", "Rocq"] {
-                    assert!(
-                        !portable_emission(&network, saved.root, target)
-                            .unwrap()
-                            .is_empty()
-                    );
+                    assert_ne!(portable_emission(&network, saved.root, target).unwrap(), "");
                 }
             }
         }
@@ -389,11 +385,7 @@ fn native_callable_jsdoc_forms_recheck_and_emit_every_existing_standard_target()
                 "3n\n"
             );
             for target in ["Rust", "Lean", "Rocq"] {
-                assert!(
-                    !portable_emission(&network, saved.root, target)
-                        .unwrap()
-                        .is_empty()
-                );
+                assert_ne!(portable_emission(&network, saved.root, target).unwrap(), "");
             }
         }
     }

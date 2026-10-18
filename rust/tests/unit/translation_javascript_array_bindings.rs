@@ -107,7 +107,7 @@ fn every_original_binding_refusal_remains_a_refusal() {
     }
 }
 
-fn raw_program(start: Value) -> Value {
+fn raw_program(start: &Value) -> Value {
     json!({"language":"JavaScript","items":[{"k":"fn","name":"suffix","params":[{"name":"values","type":{"kind":"array","element":{"kind":"float"}}}],"ret":{"kind":"array","element":{"kind":"float"}},"body":{"k":"arrayBindingRest","object":{"k":"name","path":["values"]},"start":start}}],"main":null})
 }
 
@@ -121,7 +121,7 @@ fn raw_binding_transport_preserves_presence_and_only_validates_the_selected_lite
         json!({"k":"num","value":"1e0"}),
         json!({"k":"num","value":"-0"}),
     ] {
-        let raw = raw_program(start);
+        let raw = raw_program(&start);
         let program: SProgram = serde_json::from_value(raw.clone()).unwrap();
         assert_eq!(
             serde_json::to_value(&program).unwrap()["items"][0]["body"]["start"],
@@ -142,7 +142,7 @@ fn raw_binding_transport_preserves_presence_and_only_validates_the_selected_lite
         json!({"k":"num","value":"-1"}),
         json!({"k":"num","value":"9007199254740992"}),
     ] {
-        let program: SProgram = serde_json::from_value(raw_program(start)).unwrap();
+        let program: SProgram = serde_json::from_value(raw_program(&start)).unwrap();
         assert!(check_program(&program).is_err());
     }
     for (name, value) in [
@@ -151,7 +151,7 @@ fn raw_binding_transport_preserves_presence_and_only_validates_the_selected_lite
         ("tagTest", Value::Null),
         ("parenthesized", Value::Null),
     ] {
-        let mut raw = raw_program(valid.clone());
+        let mut raw = raw_program(&valid);
         raw["items"][0]["body"][name] = value;
         let refused = serde_json::from_value::<SProgram>(raw)
             .map_or(true, |program| check_program(&program).is_err());
@@ -163,16 +163,19 @@ fn raw_binding_transport_preserves_presence_and_only_validates_the_selected_lite
 }
 
 fn declaration_list_contract(source: &str, emitted: &str) -> Value {
-    let script = r#"
+    let script = concat!(
+        r"
 import {runInNewContext} from 'node:vm';
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
-function observe(source){const lines=[];try{runInNewContext(source,{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{timeout:1000});return{lines,error:null};}catch(error){return{lines,error:{name:error.name,message:error.message}};}}
+function observe(source){const lines=[];try{runInNewContext(source,{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{",
+        r"timeout:1000});return{lines,error:null};}catch(error){return{lines,error:{name:error.name,message:error.message}};}}
 const source=process.argv[1];
 try{const surface=parseJavaScript(source);process.stdout.write(JSON.stringify({surface,rust:emitRust(checkProgram(surface)).text,original:observe(source),emitted:observe(process.argv[2])}));}
 catch(error){process.stdout.write(JSON.stringify({diagnostic:{kind:error.kind,reason:error.reason,span:error.span}}));}
-"#;
+"
+    );
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let output = Command::new("node")
         .current_dir(root)
@@ -345,7 +348,7 @@ fn const_lists_preserve_temporal_dead_zones_duplicate_and_empty_pattern_refusals
     for declaration in [
         "first=1,first=2",
         "first=1,[first]=[2]",
-        "first=1,{value:first}={value:2}",
+        concat!("first=1,{", "value:first}={", "value:2}"),
     ] {
         require_declaration_list_refusal(
             &format!("function selected(){{const {declaration};return first;}}"),

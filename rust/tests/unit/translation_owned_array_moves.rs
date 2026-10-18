@@ -68,8 +68,8 @@ fn generated_array_loops_consume_actual_final_bindings_without_repeated_vector_c
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(&source_path).arg("-o").arg(&executable));
-    assert!(compiled.ok, "{}", compiled.stderr);
+    let build = run(compiler.arg(&source_path).arg("-o").arg(&executable));
+    assert!(build.ok, "{}", build.stderr);
     let observed = run(&mut Command::new(executable));
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, "100002 0 100001\n2 12 12\n");
@@ -111,8 +111,8 @@ fn copied_and_consumed_array_profiles_preserve_actual_alias_observations() {
         if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
             compiler.arg("-C").arg(format!("linker={linker}"));
         }
-        let compiled = run(compiler.arg(&source_path).arg("-o").arg(&executable));
-        assert!(compiled.ok, "{name}: {}", compiled.stderr);
+        let build = run(compiler.arg(&source_path).arg("-o").arg(&executable));
+        assert!(build.ok, "{name}: {}", build.stderr);
         let observed = run(&mut Command::new(executable));
         assert!(observed.ok, "{name}: {}", observed.stderr);
         assert_eq!(observed.stdout, "12\n", "{name}");

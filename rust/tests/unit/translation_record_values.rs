@@ -55,7 +55,8 @@ fn archives(packet: &TypedProgramLinks) -> [LinkNetwork; 2] {
 }
 
 fn javascript_contract(source: &str) -> Value {
-    let script = r#"
+    let script = concat!(
+        r"
 import {createTypedProgramLinks,decodeTypedProgramLinks,emitTypedProgramLinks} from './js/src/index.js';
 import {emitLean} from './js/src/translation/emit-lean.js';
 import {emitRocq} from './js/src/translation/emit-rocq.js';
@@ -63,7 +64,8 @@ import vm from 'node:vm';
 import {format} from 'node:util';
 const source=process.argv[1];
 const lines=[];
-vm.runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}},{timeout:1000});
+vm.runInNewContext(source,{console:{log:(...values)=>lines.push(format(...values))}},{",
+        r"timeout:1000});
 const packet=createTypedProgramLinks(source,'JavaScript');
 const codes={};
 for(const target of ['JavaScript','Rust','Lean','Rocq']){
@@ -80,7 +82,8 @@ for(const target of ['JavaScript','Rust','Lean','Rocq']){
   catch(error){codes[target]={error:error.message};}
 }
 console.log(JSON.stringify({lines,codes}));
-"#;
+"
+    );
     let directory = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let observed = run(Command::new("node").current_dir(directory).args([
         "--input-type=module",
@@ -99,12 +102,12 @@ fn observe_javascript(code: &str, expected: &str) {
 }
 
 fn observe_threaded(program: &Program) -> Value {
-    let script = r#"
+    let script = r"
 import {observeThreadedOptionalProgram} from './js/tests/helpers/translation-output-observer.js';
 const program=JSON.parse(process.argv[1]);
 program.declarations=new Map(program.declarations.map(entry=>[entry.fullName,entry]));
 console.log(JSON.stringify(observeThreadedOptionalProgram(program)));
-"#;
+";
     let directory = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let encoded = serde_json::to_string(program).unwrap();
     let observed = run(Command::new("node").current_dir(directory).args([
@@ -187,7 +190,7 @@ fn replace_three(expression: &Expr, count: &mut usize) -> Expr {
         } = &mut copy.node
         && value == "3"
     {
-        *value = "7".to_owned();
+        "7".clone_into(value);
         *count += 1;
     }
     copy
@@ -389,7 +392,7 @@ fn source_free_record_descriptor_calls_preserve_actual_targets_and_threaded_outp
         );
         for target in TARGETS {
             let emitted = portable_emission(&network, edited.root, target).unwrap();
-            assert!(!emitted.is_empty());
+            assert_ne!(emitted, "");
             if target == "JavaScript" {
                 observe_javascript(&emitted, "1\n2\n2\n");
             }

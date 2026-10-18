@@ -93,7 +93,9 @@ fn archive_bytes(value: &Value) -> Vec<u8> {
     let text = value.as_str().unwrap();
     assert_eq!(text.len() % 2, 0);
     text.as_bytes()
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| u8::from_str_radix(std::str::from_utf8(pair).unwrap(), 16).unwrap())
         .collect()
 }
@@ -178,7 +180,7 @@ fn complete_callback_profiles_preserve_actual_frontends_targets_owners_and_both_
         }
     }
     assert_eq!((admitted, refused), (18, 9));
-    let script = r#"
+    let script = r"
 import {readFileSync} from 'node:fs';
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {observeArrayCallbackProgram} from './js/scripts/generate-array-callback-fixtures.mjs';
@@ -187,7 +189,7 @@ process.stdout.write(JSON.stringify(rows.map(row=>({
   observation:observeArrayCallbackProgram(row.source),
   surface:row.readSurface?parseJavaScript(row.source):null,
 }))));
-"#;
+";
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let mut child = Command::new("node")
         .current_dir(root)
@@ -297,7 +299,7 @@ fn every_admitted_callback_rust_target_observes_the_independent_values_and_effec
             let Some(Decl::Fn(probe)) = program.declaration("probe") else {
                 panic!("the complete original program retains its zero-argument probe");
             };
-            assert!(probe.params.is_empty());
+            assert_eq!(probe.params.as_slice(), &[]);
             let actual = if probe.ret.is_reference() {
                 "&*actual.borrow()"
             } else {
@@ -324,12 +326,10 @@ fn every_admitted_callback_rust_target_observes_the_independent_values_and_effec
             assert!(compiled.ok, "{}: {}", row["id"], compiled.stderr);
             let observed = run(&mut Command::new(&executable));
             assert!(observed.ok, "{}: {}", row["id"], observed.stderr);
-            let trace = row["expectedTrace"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|index| format!("{}\n", index.as_u64().unwrap()))
-                .collect::<String>();
+            let mut trace = String::new();
+            for index in row["expectedTrace"].as_array().unwrap() {
+                writeln!(trace, "{}", index.as_u64().unwrap()).unwrap();
+            }
             assert_eq!(observed.stdout, trace, "{}", row["id"]);
             executed += 1;
         }
@@ -431,7 +431,7 @@ fn callback_required_operands_refuse_and_optional_reduce_initial_keeps_its_origi
                     if edit == 2 {
                         params.push(Type::Bool);
                     } else {
-                        *ret = Box::new(Type::Bool);
+                        **ret = Type::Bool;
                     }
                 }
                 4 => owner.body.ty = Type::Float,

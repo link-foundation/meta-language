@@ -244,11 +244,11 @@ fn signature(program: &SProgram, name: &str) -> (Vec<Option<Type>>, Option<Type>
 }
 
 // Native compilation and process observations run only when this suite runs in CI.
-pub(super) fn preserves_javascript_translation_behavior(source: &str, expected: &str) {
+pub fn preserves_javascript_translation_behavior(source: &str, expected: &str) {
     let original = run(Command::new("node").args(["--input-type=module", "-e", source]));
     assert!(original.ok, "{}", original.stderr);
     assert_eq!(original.stdout, expected);
-    let script = r#"
+    let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
@@ -256,7 +256,7 @@ import {emitRust} from './js/src/translation/emit-rust.js';
 const surface=parseJavaScript(process.argv[1]);
 const program=checkProgram(surface);
 console.log(JSON.stringify({surface,javascript:emitJavaScript(program).text,rust:emitRust(program).text}));
-"#;
+";
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let observed = run(Command::new("node").current_dir(root).args([
         "--input-type=module",
@@ -296,8 +296,8 @@ console.log(JSON.stringify({surface,javascript:emitJavaScript(program).text,rust
     if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
         compiler.arg("-C").arg(format!("linker={linker}"));
     }
-    let compiled = run(compiler.arg(input).arg("-o").arg(&binary));
-    assert!(compiled.ok, "{}", compiled.stderr);
+    let build = run(compiler.arg(input).arg("-o").arg(&binary));
+    assert!(build.ok, "{}", build.stderr);
     let translated = run(&mut Command::new(binary));
     assert!(translated.ok, "{}", translated.stderr);
     assert_eq!(translated.stdout, original.stdout);

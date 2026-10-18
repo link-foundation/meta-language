@@ -97,7 +97,7 @@ fn value_case_syntax_and_incompatible_types_keep_their_distinct_boundaries() {
         // following value's start. The frozen negative-bool pipeline case in
         // parity/fixtures/translation-stages.lino likewise records 86..87.
         assert_eq!(error.span, Some(Span::new(start, start + 1)));
-        assert_eq!(&source[start..start + 1], "-");
+        assert_eq!(&source[start..=start], "-");
     }
     let source = "/** @param {bigint} value @returns {bigint} */function choose(value){switch(value){case \"one\":return 1n;default:return 0n;}}";
     let surface =
@@ -119,7 +119,7 @@ fn lazy_documentation_aliases_resolve_real_types_and_preserve_reference_errors()
         "/** @typedef {{ x: bigint }} A */\nconsole.log('x');",
     ] {
         let surface = parse_javascript(source).expect("the unused alias remains lazy");
-        assert!(surface.items.is_empty());
+        assert_eq!(surface.items.as_slice(), &[]);
         check_program(&surface).expect("the original program checks");
     }
     let source = "/** @typedef {number} Scalar */\n/** @typedef {Scalar[]} Values */\n/** @typedef {[Scalar,Scalar]} Pair */\n/** @param {Values} values @returns {Scalar} */\nfunction size(values){return values.length;}\n/** @param {Pair} value @returns {Pair} */\nfunction identity(value){return value;}";

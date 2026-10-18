@@ -193,7 +193,8 @@ fn constructor_immutability_preserves_its_source_model_and_checked_marker() {
 }
 
 fn terminal_tag_guard_contract(source: &str, native_javascript: &str) -> Value {
-    let script = r#"
+    let script = concat!(
+        r"
 import {format} from 'node:util';
 import vm from 'node:vm';
 import {parseJavaScript} from './js/src/translation/javascript.js';
@@ -204,7 +205,8 @@ import {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-pr
 import {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';
 import {LinkNetwork} from './js/src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';
-function observe(source){const output=[];vm.runInNewContext(source,{console:{log:(...values)=>output.push(format(...values))}},{timeout:1000});return output.join('\n')+'\n';}
+function observe(source){const output=[];vm.runInNewContext(source,{console:{log:(...values)=>output.push(format(...values))}},{",
+        r"timeout:1000});return output.join('\n')+'\n';}
 const surface=parseJavaScript(process.argv[1]),checked=checkProgram(surface);
 const javascript=emitJavaScript(checked).text,rust=emitRust(checked,{arrayConsumption:true}).text;
 const packet=encodeTypedProgramLinks(checked),archives=[];
@@ -214,7 +216,8 @@ for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNe
  archives.push({javascript:emitJavaScript(program).text,rust:emitRust(program,{arrayConsumption:true}).text,output:observe(emitJavaScript(program).text)});
 }
 console.log(JSON.stringify({surface,javascript,rust,archives,observations:[observe(process.argv[1]),observe(process.argv[2]),observe(javascript)]}));
-"#;
+"
+    );
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -326,7 +329,8 @@ const TAG_CONTEXT_MAKE: &str = "/** @param {number} n @returns {Input} */functio
 const TAG_CONTEXT_CONVERT: &str = "/** @param {number} n @returns {Output} */function convert(n){const state=readInput(n);if(state.$==='malformed')return {$:'malformed',at:1,end:2};if(state.$==='unsupported')return {$:'nonScalar',at:3,end:state.end};return {$:'value',code:state.code};}\n";
 
 fn tag_receiver_contract(source: &str, javascript: &str, expression: &str) -> Value {
-    let script = r#"
+    let script = concat!(
+        r"
 import vm from 'node:vm';
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
@@ -336,7 +340,8 @@ import {encodeTypedProgramLinks,decodeTypedProgramLinks} from './js/src/typed-pr
 import {recheckLinkedTypedProgram} from './js/src/typed-program-checked-projection.js';
 import {LinkNetwork} from './js/src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from './js/src/link-network-binary.js';
-function observe(source){const lines=[];const result=vm.runInNewContext(source+'\nJSON.stringify('+process.argv[3]+');',{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{timeout:1000});return {lines,result};}
+function observe(source){const lines=[];const result=vm.runInNewContext(source+'\nJSON.stringify('+process.argv[3]+');',{console:{log:(...values)=>lines.push(values.map(String).join(' '))}},{",
+        r"timeout:1000});return {lines,result};}
 const surface=parseJavaScript(process.argv[1],{referenceSemantics:false}),checked=checkProgram(surface);
 const javascript=emitJavaScript(checked).text,rust=emitRust(checked).text;
 const packet=encodeTypedProgramLinks(checked),archives=[];
@@ -345,7 +350,8 @@ for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNe
  archives.push({javascript:emitJavaScript(replayed).text,rust:emitRust(replayed).text,output:observe(emitJavaScript(replayed).text)});
 }
 console.log(JSON.stringify({surface,javascript,rust,archives,observations:[observe(process.argv[1]),observe(process.argv[2]),observe(javascript)]}));
-"#;
+"
+    );
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -412,12 +418,12 @@ fn assert_tag_receiver_contract(source: &str, expression: &str, expected: &Value
 fn tag_receiver_refusal(source: &str) -> Value {
     let failure = parse_javascript(source).unwrap_err();
     let actual = serde_json::json!({"kind":failure.kind.as_str(),"reason":failure.reason,"span":failure.span});
-    let script = r#"
+    let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 let caught;try{parseJavaScript(process.argv[1]);}catch(error){caught=error;}
 if(!caught)throw new Error('the complete unchanged source must refuse');
 console.log(JSON.stringify({kind:caught.kind,reason:caught.reason,span:caught.span}));
-"#;
+";
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

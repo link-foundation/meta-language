@@ -62,10 +62,10 @@ process.stdout.write(serializeProjectData({cases:observations},'complete-declara
     for (row, javascript) in rows.iter().zip(observed) {
         assert_eq!(row["id"], javascript["id"]);
         let source = row["source"].as_str().unwrap();
-        let result = match row["context"]["scalarLoopModel"].as_str() {
-            Some(model) => parse_javascript_with_scalar_loop_model(source, model),
-            None => parse_javascript(source),
-        };
+        let result = row["context"]["scalarLoopModel"].as_str().map_or_else(
+            || parse_javascript(source),
+            |model| parse_javascript_with_scalar_loop_model(source, model),
+        );
         if !row["expectedError"].is_null() {
             let error = result.unwrap_err();
             assert_eq!(

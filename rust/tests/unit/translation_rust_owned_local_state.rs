@@ -110,7 +110,7 @@ fn actual_generated_owned_decisions_match_linked_fixtures_and_javascript() {
         accept_rust_owned_local_source_operation, accept_rust_owned_local_source_span,
         accept_rust_owned_local_state_model, accept_rust_owned_local_value_type,
     };
-    let script = r#"
+    let script = r"
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 const root=pathToFileURL(process.argv[1]+'/../');
@@ -135,7 +135,7 @@ for(const row of fixture.recordDecisions)assert.equal(rules.acceptRustOwnedLocal
 for(const row of fixture.spanDecisions)assert.equal(rules.acceptRustOwnedLocalSourceSpan(row.present,row.recordShape,row.offsetShape),row.expected);
 for(const rows of Object.values(observations)){assert.ok(rows.some(row=>row.expected));assert.ok(rows.some(row=>!row.expected));}
 process.stdout.write(JSON.stringify(observations));
-"#;
+";
     let result = run(Command::new("node").args([
         "--input-type=module",
         "--eval",
@@ -222,7 +222,8 @@ process.stdout.write(JSON.stringify(observations));
 fn actual_native_text_renderer_preserves_javascript_bytes_and_utf16_input_decisions() {
     let renderer =
         super::translation::rust::owned_local_state_rules::render_rust_owned_local_text_input();
-    let script = r#"
+    let script = concat!(
+        r"
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import vm from 'node:vm';
@@ -231,7 +232,8 @@ const {readProjectData}=await import(new URL('js/scripts/project-data.mjs',root)
 const rules=await import(new URL('js/src/translation/rust-owned-local-state-rules.js',root));
 const fixture=readProjectData(new URL('experiments/rust-owned-local-state-fixture.lino',root));
 assert.equal(process.argv[2],rules.renderRustOwnedLocalTextInput());
-const context={};vm.runInNewContext(process.argv[2],context,{timeout:1000});
+const context={};vm.runInNewContext(process.argv[2],context,{",
+        r"timeout:1000});
 let count=0;
 for(const [role,expected]of [['validText',true],['invalidText',false]]){
  assert.equal(fixture.inputValues[role].length,7);
@@ -244,7 +246,8 @@ for(const [role,expected]of [['validText',true],['invalidText',false]]){
 }
 for(const value of[null,undefined,1,{},new String('boxed')])assert.equal(context.ml_ownedTextInput(value),false);
 assert.equal(count,14);console.log('owned-native-renderer:14:5');
-"#;
+"
+    );
     let result = run(Command::new("node").args([
         "--input-type=module",
         "--eval",

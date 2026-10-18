@@ -25,7 +25,7 @@ fn observe(source: &str) -> String {
 }
 
 fn javascript_contract(source: &str) -> Value {
-    let script = r#"
+    let script = r"
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
@@ -39,7 +39,7 @@ for(const [target,emit] of [['JavaScript',emitJavaScript],['Rust',emitRust],['Le
  try{codes[target]={code:emit(program).text};}catch(error){codes[target]={error:error.reason};}
 }
 console.log(JSON.stringify({surface,codes}));
-"#;
+";
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let output = run(Command::new("node").current_dir(root).args([
         "--input-type=module",

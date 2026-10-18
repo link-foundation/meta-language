@@ -18,7 +18,7 @@ use serde_json::{Value, json};
 fn fixtures() -> &'static [Value] {
     static FIXTURES: OnceLock<Vec<Value>> = OnceLock::new();
     FIXTURES.get_or_init(|| {
-        let script = r#"
+        let script = concat!(r"
 import {callableExpectedContextCases,callableExpectedContextSummary} from './js/tests/fixtures/callable-expected-context.mjs';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
@@ -26,11 +26,11 @@ import vm from 'node:vm';
 import {format} from 'node:util';
 const observed=callableExpectedContextCases().map(entry=>{
   const program=checkProgram(entry.surface),lines=[];
-  vm.runInNewContext(emitJavaScript(program).text,{console:{log:(...values)=>lines.push(format(...values))}},{timeout:1000});
+  vm.runInNewContext(emitJavaScript(program).text,{console:{log:(...values)=>lines.push(format(...values))}},{", r"timeout:1000});
   return {...entry,summary:callableExpectedContextSummary(program),observed:lines};
 });
 console.log(JSON.stringify(observed));
-"#;
+");
         let output = Command::new("node")
             .current_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
             .args(["--input-type=module", "-e", script])

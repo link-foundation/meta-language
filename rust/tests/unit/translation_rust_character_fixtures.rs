@@ -93,9 +93,9 @@ fn character_fixture_result(tag: &str, fields: &[(&str, f64)]) -> StructuredData
 
 // Mechanical observation of the actual generated enum fields; this implements
 // no lexical decision, escape decoding or expected result calculation.
-fn character_fixture_scan_result(result: rules::RustCharacterLiteral) -> StructuredDataValue {
+fn character_fixture_scan_result(result: &rules::RustCharacterLiteral) -> StructuredDataValue {
     use rules::RustCharacterLiteral;
-    let (tag, fields) = match result {
+    let (tag, fields) = match *result {
         RustCharacterLiteral::NotCharacter => ("notCharacter", Vec::new()),
         RustCharacterLiteral::Char(value, content_start, content_end, end) => (
             "char",
@@ -237,7 +237,7 @@ fn all_shared_character_vectors_match_independent_premises_and_generated_javascr
                     before,
                     "{id}: original source vector is not rewritten"
                 );
-                character_fixture_scan_result(result)
+                character_fixture_scan_result(&result)
             }
             "readRustCharacterByteEscapeValue" => {
                 counts[1] += 1;
@@ -443,7 +443,7 @@ fn original_nonfinite_character_numbers_match_shared_ieee754_words_and_exact_gen
                     before,
                     "{id}: source unit bits including the original NaN or infinity are retained"
                 );
-                character_fixture_scan_result(result)
+                character_fixture_scan_result(&result)
             }
             "readRustCharacterByteEscapeValue" => {
                 targets[1] += 1;

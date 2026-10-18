@@ -12,7 +12,7 @@ use meta_language::{
 use serde_json::{Value, json};
 use std::process::Command;
 
-fn marked(entries: Value, marker: Value) -> Value {
+fn marked(entries: &Value, marker: &Value) -> Value {
     json!({"k":"record", "recordProjection":marker, "entries":entries})
 }
 
@@ -36,8 +36,8 @@ fn marked_record_surface_deserialization_checks_original_descriptors_before_defa
     assert!(!entries[0].spread);
     assert!(record_projection.is_none());
     let canonical: SExpr = serde_json::from_value(marked(
-        json!([{"name":"a", "spread":false, "value":value()}]),
-        marker.clone(),
+        &json!([{"name":"a", "spread":false, "value":value()}]),
+        &marker,
     ))
     .unwrap();
     assert_eq!(
@@ -56,7 +56,7 @@ fn marked_record_surface_deserialization_checks_original_descriptors_before_defa
         json!([{"name":"a", "spread":false, "value":null}]),
         json!([null]),
     ] {
-        let failure = serde_json::from_value::<SExpr>(marked(invalid, marker.clone())).unwrap_err();
+        let failure = serde_json::from_value::<SExpr>(marked(&invalid, &marker)).unwrap_err();
         assert!(
             failure
                 .to_string()
@@ -68,7 +68,7 @@ fn marked_record_surface_deserialization_checks_original_descriptors_before_defa
         json!([{"name":"b", "spread":false, "value":value()}, {"name":"a", "spread":false, "value":value()}]),
         json!([{"name":"a", "spread":false, "value":value()}, {"name":"a", "spread":false, "value":value()}]),
     ] {
-        let failure = serde_json::from_value::<SExpr>(marked(entries, marker.clone())).unwrap_err();
+        let failure = serde_json::from_value::<SExpr>(marked(&entries, &marker)).unwrap_err();
         assert!(
             failure
                 .to_string()
@@ -76,7 +76,7 @@ fn marked_record_surface_deserialization_checks_original_descriptors_before_defa
             "{failure}"
         );
     }
-    let payload = json!({"k":"referencePayload", "value":marked(json!([]), marker.clone()), "span":{"start":3,"end":6}});
+    let payload = json!({"k":"referencePayload", "value":marked(&json!([]), &marker), "span":{"start":3,"end":6}});
     let retained: SExpr = serde_json::from_value(payload.clone()).unwrap();
     assert_eq!(serde_json::to_value(&retained).unwrap(), payload);
     for (field, value) in [
@@ -112,7 +112,7 @@ fn present_invalid_record_markers_cannot_select_the_raw_surface_path() {
         json!(0),
         json!({}),
     ] {
-        let failure = serde_json::from_value::<SExpr>(marked(json!([]), marker)).unwrap_err();
+        let failure = serde_json::from_value::<SExpr>(marked(&json!([]), &marker)).unwrap_err();
         assert!(
             failure
                 .to_string()
@@ -141,7 +141,7 @@ fn replace_nine(expression: &Expr, edits: &mut usize) -> Expr {
         } = &mut result.node
         && value == "9"
     {
-        *value = "17".to_owned();
+        "17".clone_into(value);
         *edits += 1;
     }
     result
