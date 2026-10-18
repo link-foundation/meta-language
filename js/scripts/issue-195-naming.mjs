@@ -68651,6 +68651,91 @@ const B70_SOURCE_BINDINGS=[
     "name": "callback_required_operands_refuse_and_optional_reduce_initial_keeps_its_original_presence",
     "inventoryName": "assert native array callback operand presence",
     "sourceText": "fn callback_required_operands_refuse_and_optional_reduce_initial_keeps_its_original_presence() {\n    let fixture = fixture();\n    for row in fixture[\"cases\"].as_array().unwrap().iter().take(9) {\n        let profile = &row[\"profiles\"][0];\n        assert_eq!(profile[\"referenceSemantics\"], false);\n        let mut value = profile[\"surface\"].clone();\n        let owner = value[\"items\"]\n            .as_array_mut()\n            .unwrap()\n            .iter_mut()\n            .find(|item| item[\"k\"] == \"fn\" && item[\"name\"] == \"run\")\n            .unwrap();\n        assert_eq!(owner[\"body\"][\"k\"], \"method\");\n        owner[\"body\"][\"args\"][0] = Value::Null;\n        let surface: SProgram = serde_json::from_value(value).unwrap();\n        let error = check_program(&surface).unwrap_err();\n        assert_eq!(error.kind.as_str(), \"type\");\n        assert_eq!(\n            error.reason,\n            format!(\n                \".{}() requires a function\",\n                row[\"operation\"].as_str().unwrap()\n            )\n        );\n    }\n    let reduce = fixture[\"cases\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .find(|row| row[\"operation\"] == \"reduce\" && row.get(\"referenceProfiles\").is_none())\n        .unwrap();\n    let mut absent = reduce[\"profiles\"][0][\"surface\"].clone();\n    let mut optional = absent.clone();\n    for (value, keep_slot) in [(&mut absent, false), (&mut optional, true)] {\n        let owner = value[\"items\"]\n            .as_array_mut()\n            .unwrap()\n            .iter_mut()\n            .find(|item| item[\"k\"] == \"fn\" && item[\"name\"] == \"run\")\n            .unwrap();\n        let args = owner[\"body\"][\"args\"].as_array_mut().unwrap();\n        assert_eq!(args.len(), 2);\n        if keep_slot {\n            args[1] = Value::Null;\n        } else {\n            args.truncate(1);\n        }\n    }\n    let absent: SProgram = serde_json::from_value(absent).unwrap();\n    let optional: SProgram = serde_json::from_value(optional).unwrap();\n    assert_eq!(\n        check_program(&optional).unwrap(),\n        check_program(&absent).unwrap()\n    );\n    let original =\n        check_program(&parse_javascript(fixture[\"cases\"][0][\"source\"].as_str().unwrap()).unwrap())\n            .unwrap();\n    let packet = encode_typed_program_links(&original).unwrap();\n    let binary =\n        encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();\n    let mut refusals = 0;\n    for network in [\n        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),\n        decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),\n    ] {\n        let restored = decode_typed_program_links(&network, packet.root).unwrap();\n        assert_eq!(restored, original);\n        for edit in 0..5 {\n            let mut changed = restored.clone();\n            let Some(Decl::Fn(owner)) = changed\n                .declarations\n                .iter_mut()\n                .find(|owner| owner.name() == \"run\")\n            else {\n                panic!(\"the original complete map owner exists\");\n            };\n            let Node::Method { op, args, .. } = &mut owner.body.node else {\n                panic!(\"the original map remains an actual checked method\");\n            };\n            match edit {\n                0 => *op = \"unrepresented\".to_owned(),\n                1 => args[0] = None,\n                2 | 3 => {\n                    let Type::Function { params, ret } = &mut args[0].as_mut().unwrap().ty else {\n                        panic!(\"the original callback retains its function type\");\n                    };\n                    if edit == 2 {\n                        params.push(Type::Bool);\n                    } else {\n                        *ret = Box::new(Type::Bool);\n                    }\n                }\n                4 => owner.body.ty = Type::Float,\n                _ => unreachable!(),\n            }\n            // The native encoder unconditionally projects and checks the full\n            // program before encoding; tuple-free inputs use the same boundary.\n            assert!(encode_typed_program_links(&changed).is_err());\n            refusals += 1;\n        }\n    }\n    assert_eq!(refusals, 10);\n}"
+  },
+  {
+    "id": "serialization.write-network-links-notation-in-bounded-groups",
+    "source": "js/src/lino-serialization-write.js",
+    "name": "encodeNetworkLino",
+    "inventoryName": "write network links notation in bounded groups",
+    "sourceText": "export function encodeNetworkLino(links, registeredIds) {\n  const chunks = [];\n  let lines = [];\n  for (const link of links) {\n    const id = link.id().asU64();\n    lines.push(`${encodeLinkStatement(id, link.references(), link.metadata(), registeredIds.has(id))}\\n`);\n    if (lines.length === 512) {\n      chunks.push(lines.join(''));\n      lines = [];\n    }\n  }\n  if (lines.length > 0) chunks.push(lines.join(''));\n  return chunks.join('');\n}"
+  },
+  {
+    "id": "test.write-historical-network-serialization",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "previousNetworkWriter",
+    "inventoryName": "write historical network serialization",
+    "sourceText": "function previousNetworkWriter(links, registeredIds) {\n  let output = '';\n  for (const link of links) {\n    const id = link.id().asU64();\n    output += `${encodeLinkStatement(id, link.references(), link.metadata(), registeredIds.has(id))}\\n`;\n  }\n  return output;\n}"
+  },
+  {
+    "id": "test.create-network-writer-observation-input",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "input",
+    "inventoryName": "create network writer observation input",
+    "sourceText": "function input(identities,trace){\n const links=identities.map((id,index)=>({\n  id(){trace.push(['identity',id]);return LinkId.from(id);},\n  references(){trace.push(['references',id]);return [id,1].map(LinkId.from);},\n  metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };},\n }));\n return{links,registered:{has(id){trace.push(['registered',id]);return id%3===0;}}};\n}"
+  },
+  {
+    "id": "test.observe-network-writer-link-identity",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "input::id",
+    "inventoryName": "observe network writer link identity",
+    "sourceText": "id(){trace.push(['identity',id]);return LinkId.from(id);}",
+    "ownerContexts": [
+      "function input(identities,trace){\n const links=identities.map((id,index)=>({\n  id(){trace.push(['identity',id]);return LinkId.from(id);},\n  references(){trace.push(['references',id]);return [id,1].map(LinkId.from);},\n  metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };},\n }));\n return{links,registered:{has(id){trace.push(['registered',id]);return id%3===0;}}};\n}"
+    ]
+  },
+  {
+    "id": "test.observe-network-writer-link-references",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "input::references",
+    "inventoryName": "observe network writer link references",
+    "sourceText": "references(){trace.push(['references',id]);return [id,1].map(LinkId.from);}",
+    "ownerContexts": [
+      "function input(identities,trace){\n const links=identities.map((id,index)=>({\n  id(){trace.push(['identity',id]);return LinkId.from(id);},\n  references(){trace.push(['references',id]);return [id,1].map(LinkId.from);},\n  metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };},\n }));\n return{links,registered:{has(id){trace.push(['registered',id]);return id%3===0;}}};\n}"
+    ]
+  },
+  {
+    "id": "test.observe-network-writer-link-metadata",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "input::metadata",
+    "inventoryName": "observe network writer link metadata",
+    "sourceText": "metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };}",
+    "ownerContexts": [
+      "function input(identities,trace){\n const links=identities.map((id,index)=>({\n  id(){trace.push(['identity',id]);return LinkId.from(id);},\n  references(){trace.push(['references',id]);return [id,1].map(LinkId.from);},\n  metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };},\n }));\n return{links,registered:{has(id){trace.push(['registered',id]);return id%3===0;}}};\n}"
+    ]
+  },
+  {
+    "id": "test.observe-network-writer-registration-membership",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "input::registered::has",
+    "inventoryName": "observe network writer registration membership",
+    "sourceText": "has(id){trace.push(['registered',id]);return id%3===0;}",
+    "ownerContexts": [
+      "function input(identities,trace){\n const links=identities.map((id,index)=>({\n  id(){trace.push(['identity',id]);return LinkId.from(id);},\n  references(){trace.push(['references',id]);return [id,1].map(LinkId.from);},\n  metadata(){trace.push(['metadata',id]);return {\n   linkType:index%61===0?'custom-\\ud800-λ':'semantic',named:index%2===0,\n   term:' opaque α😀\\n% (quoted) \\ud800 ',definition:index%3===0?'':'payload '+index,\n   language:'language with spaces',span:{byteRange:{start:index,end:index+1},start:{row:1,column:index},end:{row:1,column:index+1}},\n   flags:{isError:index%2===0,hasError:index%3===0,isMissing:index%5===0,isExtra:index%7===0},\n  };},\n }));\n return{links,registered:{has(id){trace.push(['registered',id]);return id%3===0;}}};\n}"
+    ]
+  },
+  {
+    "id": "test.assert-bounded-network-writer-statement-and-observation-conservation",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "bounded canonical writer retains every statement and host observation across batch boundaries",
+    "inventoryName": "assert bounded network writer statement and observation conservation",
+    "sourceText": "test('bounded canonical writer retains every statement and host observation across batch boundaries',()=>{\n const historical=execFileSync('git',['show','d1fa44c2803602ca9a08c24848de184f2c39a800:js/src/lino-serialization-write.js'],{cwd:new URL('../../',import.meta.url),encoding:'utf8'});\n assert.equal(historical.split('export '+previousNetworkWriter.toString().replace('previousNetworkWriter','encodeNetworkLino')).length,2,'the comparison retains the entire exact preceding writer body');\n for(const count of[0,1,2,511,512,513,1024,1025]){\n  const identities=Array.from({length:count},(_,at)=>at+1),left=[],right=[];\n  const before=input(identities,left),after=input(identities,right);\n  const expected=previousNetworkWriter(before.links,before.registered),actual=candidate(after.links,after.registered);\n  assert.equal(actual,expected,'all UTF-16 code units, escaping, flags, spans, registration and line endings at '+count);\n  assert.deepEqual(right,left,'every actual getter and membership call retains its complete order');\n  if(count)assert.ok(actual.includes('\\ud800'),'unknown type tokens retain their existing unpaired UTF-16 code unit');\n }\n})"
+  },
+  {
+    "id": "test.assert-bounded-network-writer-order-and-error-conservation",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "bounded canonical writer retains supplied order repeated identities and thrown errors",
+    "inventoryName": "assert bounded network writer order and error conservation",
+    "sourceText": "test('bounded canonical writer retains supplied order repeated identities and thrown errors',()=>{\n const left=[],right=[],before=input([4,2,4,1],left),after=input([4,2,4,1],right);\n assert.equal(candidate(after.links,after.registered),previousNetworkWriter(before.links,before.registered));\n assert.deepEqual(right,left);\n for(const write of[previousNetworkWriter,candidate]){\n  const trace=[],value=input([1,2,3],trace),error=new Error('the actual metadata owner failed');\n  value.links[1].metadata=()=>{throw error;};\n  assert.throws(()=>write(value.links,value.registered),actual=>actual===error);\n  assert.deepEqual(trace,[['identity',1],['references',1],['metadata',1],['registered',1],['identity',2],['references',2]]);\n }\n})"
+  },
+  {
+    "id": "test.raise-network-writer-metadata-failure",
+    "source": "js/tests/lino-serialization-bounded-writer.test.js",
+    "name": "bounded canonical writer retains supplied order repeated identities and thrown errors::value.links[1].metadata",
+    "inventoryName": "raise network writer metadata failure",
+    "sourceText": "value.links[1].metadata=()=>{throw error;}",
+    "ownerContexts": [
+      "test('bounded canonical writer retains supplied order repeated identities and thrown errors',()=>{\n const left=[],right=[],before=input([4,2,4,1],left),after=input([4,2,4,1],right);\n assert.equal(candidate(after.links,after.registered),previousNetworkWriter(before.links,before.registered));\n assert.deepEqual(right,left);\n for(const write of[previousNetworkWriter,candidate]){\n  const trace=[],value=input([1,2,3],trace),error=new Error('the actual metadata owner failed');\n  value.links[1].metadata=()=>{throw error;};\n  assert.throws(()=>write(value.links,value.registered),actual=>actual===error);\n  assert.deepEqual(trace,[['identity',1],['references',1],['metadata',1],['registered',1],['identity',2],['references',2]]);\n }\n})"
+    ]
   }
 ];
 const B70_NAME_INVENTORIES=[...new Set(B70_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B70 physical field source view names for "+source,files:[source],extract:text=>B70_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B70_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));
