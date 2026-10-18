@@ -12,7 +12,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   CONSUMER_REGISTRIES,
@@ -139,6 +139,30 @@ test('the check rejects a hard-coded universal logic and a consumer foundation b
 });
 
 test('no production source names a consumer\'s own foundation outside the consumer registries', () => {
+  // Execute the actual native boundary expressions with both host path APIs.
+  // Rust canonicalize() may supply a Windows verbatim path while Node's
+  // imported producer paths use ordinary drive or UNC paths.
+  const native = readFileSync(path.join(root, 'rust/tests/unit/foundation_models.rs'), 'utf8');
+  const rootExpression = native.match(/^const root = ([^\n]+);$/mu)?.[1];
+  const pathsExpression = native.match(/paths: (CONCEPT_RECORD_PATHS\.map\([^\n]+\)),/u)?.[1];
+  assert.ok(rootExpression);assert.ok(pathsExpression);
+  const readRoot = new Function('process', 'fileURLToPath', 'pathToFileURL', 'return ' + rootExpression + ';');
+  const project = new Function('CONCEPT_RECORD_PATHS', 'root', 'relative', 'return ' + pathsExpression + ';');
+  for (const [platform, base, windows] of [
+    [path.posix, '/workspace/meta-language', false],
+    [path.win32, 'C:\\workspace\\meta-language', true],
+    [path.win32, path.win32.toNamespacedPath('C:\\workspace\\meta-language'), true],
+    [path.win32, path.win32.toNamespacedPath('\\\\server\\share\\meta-language'), true],
+  ]) {
+    const normalized = readRoot({argv: ['node', base]},
+      file => fileURLToPath(file, {windows}), file => pathToFileURL(file, {windows}));
+    const paths = ['js/src/data/concept-records.lino', 'rust/src/data/concept-records.lino'];
+    const files = paths.map(file => platform.join(normalized, file));
+    assert.deepEqual(project(files, normalized, platform.relative), paths,
+      'the native audit and shared producer must agree on slash-separated source identities');
+    if (base !== normalized) assert.notDeepEqual(project(files, base, platform.relative), paths,
+      'the unchanged pre-normalization Windows root reproduces the actual path-transport mismatch');
+  }
   assert.deepEqual(consumerFoundationReferences(root), []);
   const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-foundations-'));
   try {

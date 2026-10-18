@@ -389,8 +389,8 @@ fn scan(base: &Path) -> Vec<String> {
 fn audit_command_metadata(base: &Path, mut found: Vec<String>) -> Vec<String> {
     let program = r#"
 import {join, relative} from "node:path";
-import {pathToFileURL} from 'node:url';
-const root = process.argv[1];
+import {fileURLToPath, pathToFileURL} from 'node:url';
+const root = fileURLToPath(pathToFileURL(process.argv[1]));
 const {consumerFoundationReferences} = await import(pathToFileURL(join(root, 'js/scripts/build-foundation-models.mjs')));
 const {CONCEPT_RECORD_PATHS} = await import(pathToFileURL(join(root, 'js/scripts/build-concept-records.mjs')));
 const {structuredDataToLino} = await import(pathToFileURL(join(root, 'scripts/lib/structured-data-bootstrap.mjs')));
