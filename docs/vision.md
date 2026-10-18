@@ -1658,6 +1658,13 @@ independently of the initiating request, with its token extent, inspected cursor
 and resulting state. Native promotion requires correspondence with the source
 parser's actual eligibility contexts and independent complete CST comparisons.
 
+Default native CST adapters must transport the complete selection result before
+mapped composition is promoted into the catalog. Their current ordinary-tree
+projection does not yet preserve embedded roots, physical `sourceChildren`,
+mapping provenance and the `sourcePlanes` table in the public language CST.
+Retain every existing ordinary CST contract while adding that transport in both
+packages; successful generic archive parsing alone does not establish this path.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
