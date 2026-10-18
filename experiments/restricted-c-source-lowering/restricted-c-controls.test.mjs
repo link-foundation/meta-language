@@ -78,10 +78,16 @@ test('external calls and unimplemented C forms remain obligations and cannot rep
   const source = 'void reserve(void) { void *value = malloc(8); } int width(void) { return sizeof(int); }';
   const unit = lower(source);
   assert.ok(unit.obligations.some(item => item.category === 'C external primitive' && item.detail === 'malloc'));
-  assert.ok(unit.obligations.some(item => item.category === 'C expression form'
-    && ['sizeof_expression', 'size_of_expression'].includes(item.detail)));
-  assert.ok(instructions(unit.functions.find(fn => fn.name === 'width').body)
-    .some(item => item.operation === 'unresolved C expression'));
+  // The actual C grammar exposes sizeof(type); fixed-object operands are now
+  // translated as source-owned queries. Physical layout remains unresolved.
+  const query = instructions(unit.functions.find(fn => fn.name === 'width').body)
+    .find(item => item.operation === 'C size query');
+  assert.ok(query);
+  assert.equal(query.form, 'type');
+  assert.equal(query.operandEvaluation, 'unevaluated');
+  assert.equal(query.byteSize, null);
+  assert.ok(unit.obligations.some(item => item.category === 'C sizeof layout'));
+  assert.equal(unit.checkedPortableProgram, null);
   assert.throws(() => lower(source, {primitives: {reserve: {kind: 'C function', result: {kind: 'C void'}, parameters: []}}}),
     /source function cannot be replaced/u);
 });

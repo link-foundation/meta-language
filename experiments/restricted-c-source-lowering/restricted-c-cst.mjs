@@ -82,7 +82,7 @@ export function lowerRestrictedCst(parsed, source, options = {}) {
     at = range.end;
   }
   if (at !== bytes.length) throw new TypeError('C CST token coverage is incomplete');
-  const state = new Lowering(parsed, bytes, options);
+  const state = new SizeQueryLowering(parsed, bytes, options);
   return state.lower();
 }
 
@@ -656,5 +656,224 @@ class Lowering {
       globalInitializers, functions,
       unselectedSourceFunctions: [...this.functionNodes].filter(([name]) => !selected.has(name)).map(([name, node]) => ({name, span: this.span(node)})),
       obligations: this.obligations, checkedPortableProgram: null});
+  }
+}
+
+// Extend only the source size-query operation family. The complete existing
+// Lowering implementation above remains byte-for-byte unchanged.
+class SizeQueryLowering extends Lowering {
+  constructor(parsed, bytes, options) {
+    super(parsed, bytes, options);
+    this.sizeofTypeOwners = new Map();
+    this.sizeofAliasSources = new WeakMap();
+    for (const source of this.children(parsed.tree)) {
+      if (source.term !== 'type_definition') continue;
+      for (const declarator of this.fields(source, 'declarator')) {
+        if (this.sizeofAliasSources.has(declarator)) throw new TypeError('a size-query type declarator requires one actual source owner');
+        this.sizeofAliasSources.set(declarator, source);
+      }
+    }
+  }
+
+  declarator(node, base) {
+    const source = this.sizeofAliasSources.get(node);
+    let declaration;
+    if (source && node.term === 'primitive_type' && /^[A-Za-z_][A-Za-z_0-9]*$/u.test(this.text(node))) {
+      // The source projection may retain a header type name in this actual
+      // declarator role. Keep that CST intact and record the role refinement.
+      this.obligation('C typedef declarator projection', node, 'the actual typedef declarator role supplies this name; independent C syntax derivation remains required');
+      declaration = {name: this.text(node), type: base};
+    } else declaration = super.declarator(node, base);
+    if (source && declaration.name) {
+      const owners = this.sizeofTypeOwners.get(declaration.name) ?? [];
+      owners.push({name: declaration.name, source, declarator: node, boundType: declaration.type});
+      this.sizeofTypeOwners.set(declaration.name, owners);
+    }
+    return declaration;
+  }
+
+  expression(node, out) {
+    if (node.term === 'sizeof_expression' || node.term === 'size_of_expression') return this.sizeofExpression(node, out);
+    return super.expression(node, out);
+  }
+
+  sizeofTypeOwner(name, at) {
+    const declarations = (this.sizeofTypeOwners.get(name) ?? [])
+      .filter(owner => this.span(owner.source).start < this.span(at).start);
+    if (declarations.length === 1) return declarations[0];
+    if (declarations.length > 1) {
+      this.obligation('C sizeof type visibility', at, 'repeated type declarations require a source scope/compatibility proof');
+      return null;
+    }
+    if (Object.hasOwn(this.options.types ?? {}, name)) return this.options.types[name];
+    return null;
+  }
+
+  sizeofTypeFacts(node) {
+    const base = node.term === 'type_descriptor' ? this.field(node, 'type') : node;
+    const name = this.text(base).trim(), owner = this.sizeofTypeOwner(name, node);
+    const arrays = [], pending = [node];
+    while (pending.length) {
+      const child = pending.pop();
+      if (['array_declarator', 'abstract_array_declarator'].includes(child.term)) arrays.push(child);
+      pending.push(...(child.children ?? []));
+    }
+    if (arrays.length) {
+      this.obligation('C sizeof array extent', node, 'array bounds and variably modified type evaluation remain unsupported');
+      return {source: node, owner, type: unknownType('sizeof array extent'), arrays};
+    }
+    if (this.types.has(name) && !owner) {
+      this.obligation('C sizeof type visibility', node, 'the type has no unique visible declaration owner');
+      return {source: node, owner: null, type: unknownType('sizeof type visibility'), arrays};
+    }
+    // Inline aggregate declarations have additional completeness/scope rules.
+    // Preserve their source rather than mutating declaration state through type().
+    if (['struct_specifier', 'structure_specifier', 'enum_specifier', 'enumeration_specifier', 'union_specifier'].includes(base.term)) {
+      this.obligation('C sizeof aggregate type', node, 'aggregate completeness and source layout need their own proof');
+      return {source: node, owner: base, type: unknownType('sizeof aggregate type'), arrays};
+    }
+    if (owner) {
+      const basis = owner.boundType ?? owner;
+      const qualified = this.qualified(basis, node);
+      const declarator = node.term === 'type_descriptor' ? this.field(node, 'declarator', true) : null;
+      return {source: node, owner, type: declarator ? this.declarator(declarator, qualified).type : qualified, arrays};
+    }
+    return {source: node, owner: base, type: this.type(node), arrays};
+  }
+
+  sizeofExpressionFacts(node) {
+    if (node.term === 'parenthesized_expression') {
+      const value = this.sizeofExpressionFacts(this.onlyExpression(node));
+      return {...value, source: node};
+    }
+    if (node.term === 'identifier') {
+      const owner = this.lookup(this.text(node));
+      if (owner && Number.isSafeInteger(owner.span?.start) && owner.span.start < this.span(node).start) return {source: node, owner, type: owner.type, arrays: []};
+      this.obligation('C sizeof operand type', node, 'the expression requires an actual visible declaration');
+      return {source: node, owner: null, type: unknownType('sizeof binding'), arrays: []};
+    }
+    if (node.term === 'update_expression') {
+      const value = this.sizeofExpressionFacts(this.field(node, 'argument'));
+      this.obligation('C sizeof operand constraints', node, 'source update/lvalue constraints remain to be checked without performing the update');
+      return {...value, source: node, type: unqualified(value.type)};
+    }
+    if (node.term === 'cast_expression') {
+      const value = this.sizeofTypeFacts(this.field(node, 'type'));
+      this.obligation('C sizeof operand constraints', node, 'source cast constraints remain to be checked without evaluating its value');
+      return {...value, source: node};
+    }
+    if (node.term === 'call_expression') {
+      const callee = this.field(node, 'function');
+      const name = callee.term === 'identifier' ? this.text(callee) : null;
+      const binding = name ? this.lookup(name) : null;
+      const signature = binding ? unqualified(binding.type) : name ? this.signatures.get(name) ?? this.options.primitives?.[name] : null;
+      const functionType = signature?.kind === 'C function' ? signature : signature?.kind === 'C pointer' && signature.to?.kind === 'C function' ? signature.to : null;
+      this.obligation('C sizeof operand constraints', node, 'callee and argument constraints remain to be checked without evaluating the call');
+      const owner = binding ?? (name ? this.functionNodes.get(name) ?? this.options.primitives?.[name] ?? null : null);
+      const ownerStart = owner?.span?.byteRange?.start ?? owner?.span?.start;
+      if (!owner || (Number.isSafeInteger(ownerStart) && ownerStart >= this.span(node).start)) {
+        this.obligation('C sizeof operand type', node, 'callee result type requires an actual visible declaration owner');
+        return {source: node, owner, type: unknownType('sizeof callee ownership'), arrays: []};
+      }
+      return {source: node, owner, type: functionType?.result ?? unknownType('sizeof call result'), arrays: []};
+    }
+    this.obligation('C sizeof operand type', node, 'this expression type needs a non-evaluating C type derivation');
+    return {source: node, owner: null, type: unknownType('sizeof expression type'), arrays: []};
+  }
+
+  sizeofFixedObject(type, active = new Set()) {
+    type = unqualified(type);
+    if (!type || active.has(type)) return false;
+    if (type.kind === 'C integer' || type.kind === 'C boolean') return true;
+    if (type.kind !== 'C pointer') return false;
+    active.add(type);
+    // A pointer to a possibly variably modified type is deliberately refused:
+    // proving that its size ignores a bound does not prove bound effects absent.
+    const child = unqualified(type.to);
+    const fixed = child?.kind === 'C void' || this.sizeofFixedObject(child, active);
+    active.delete(type);
+    return fixed;
+  }
+
+  sizeofValueOperand(node) {
+    let selected = node;
+    while (selected.term === 'parenthesized_expression') selected = this.onlyExpression(selected);
+    if (selected.term === 'identifier' && !this.lookup(this.text(selected))) {
+      const owner = this.sizeofTypeOwner(this.text(selected), selected);
+      if (owner) {
+        this.obligation('C sizeof namespace refinement', node, 'the actual preceding type owner refines an expression-shaped operand without changing its source CST');
+        return {form: 'type', operand: {source: node, owner, type: owner.boundType ?? owner, arrays: []},
+          refinement: {source: selected, owner, rule: 'visible type without value binding'}};
+      }
+    }
+    return {form: 'expression', operand: this.sizeofExpressionFacts(node), refinement: null};
+  }
+
+  sizeofTypeOperand(node) {
+    const base = this.field(node, 'type'), declarator = this.field(node, 'declarator', true);
+    if (base.term === 'type_identifier') {
+      const name = this.text(base), binding = this.lookup(name), owner = this.sizeofTypeOwner(name, base);
+      if (!declarator && binding) {
+        this.obligation('C sizeof namespace refinement', node, 'the actual visible value binding refines a type-shaped operand without changing its source CST');
+        return {form: 'expression', operand: {...this.sizeofExpressionFacts(base), source: node},
+          refinement: {source: base, owner: binding, rule: 'visible value binding'}};
+      }
+      if (declarator?.term === 'abstract_function_declarator' && (!owner || binding)) {
+        const parameters = this.fields(declarator, 'parameters');
+        const empty = parameters.length === 1 && this.children(parameters[0]).length === 0
+          && this.fields(declarator, 'declarator').length === 0;
+        const signature = binding ? unqualified(binding.type) : this.signatures.get(name) ?? this.options.primitives?.[name];
+        const functionType = signature?.kind === 'C function' ? signature
+          : signature?.kind === 'C pointer' && signature.to?.kind === 'C function' ? signature.to : null;
+        const declaration = binding ?? this.functionNodes.get(name) ?? this.options.primitives?.[name] ?? null;
+        const start = declaration?.span?.byteRange?.start ?? declaration?.span?.start;
+        if (empty && functionType && declaration && (!Number.isSafeInteger(start) || start < this.span(node).start)) {
+          this.obligation('C sizeof namespace refinement', node, 'an actual visible function owner refines the empty-call alternative without changing its source CST');
+          this.obligation('C sizeof operand constraints', node, 'callee and argument constraints remain to be checked without evaluating the call');
+          return {form: 'expression', operand: {source: node, owner: declaration, type: functionType.result, arrays: []},
+            refinement: {source: declarator, owner: declaration, rule: 'visible function and empty call shape'}};
+        }
+        this.obligation('C sizeof operand type', node, 'the source type or call alternative needs a unique visible declaration and supported argument shape');
+      }
+    }
+    return {form: 'type', operand: this.sizeofTypeFacts(node), refinement: null};
+  }
+
+  sizeofResultType(node) {
+    const declaration = this.sizeofTypeOwner('size_t', node);
+    const declared = declaration ? unqualified(declaration.boundType ?? declaration) : null;
+    const width = this.abi?.sizeBits;
+    const abiType = Number.isSafeInteger(width) && width >= 16 && width <= 128 ? this.integer(width, false) : null;
+    const sourceType = declared?.kind === 'C integer' && declared.signed === false
+      && Number.isSafeInteger(declared.bits) && declared.bits >= 16 && declared.bits <= 128 ? declared : null;
+    if (!abiType) {
+      this.obligation('C sizeof size type', node, 'an explicit 16..128 bit selected ABI size type is required; an arbitrary typedef spelling cannot define the compiler result type');
+      return {type: unknownType('missing or invalid size_t ABI basis'), declaration, abiOwner: this.abi};
+    }
+    if (sourceType && abiType && !sameType(sourceType, abiType)) {
+      this.obligation('C sizeof size type', node, 'the visible size_t declaration conflicts with the selected ABI width');
+      return {type: unknownType('conflicting size_t basis'), declaration, abiOwner: this.abi};
+    }
+    if (!sourceType && declaration) {
+      this.obligation('C sizeof size type', node, 'a visible size_t declaration must be an unsigned integer compatible with the selected ABI size type');
+      return {type: unknownType('sizeof size_t'), declaration, abiOwner: this.abi};
+    }
+    return {type: sourceType ?? abiType, declaration, abiOwner: this.abi};
+  }
+
+  sizeofExpression(node, out) {
+    const types = this.fields(node, 'type'), values = this.fields(node, 'value');
+    if (types.length + values.length !== 1) throw new TypeError('C sizeof requires exactly one actual type or value CST field');
+    const sourceForm = types.length ? 'type' : 'expression';
+    const {form, operand, refinement} = types.length ? this.sizeofTypeOperand(types[0]) : this.sizeofValueOperand(values[0]);
+    const fixed = operand.arrays.length === 0 && this.sizeofFixedObject(operand.type);
+    const sizeType = this.sizeofResultType(node);
+    if (!fixed) this.obligation('C sizeof evaluation mode', node, 'fixed object type and absence of variably modified evaluation have not been proved');
+    this.obligation('C sizeof layout', node, 'physical byte size requires a source-owned object representation and a checked selected ABI layout');
+    const admitted = fixed && sizeType.type.kind === 'C integer';
+    return this.temporaryValue(out, admitted ? 'C size query' : 'unresolved C size query', {
+      source: node, sourceForm, form, operand, refinement, operandEvaluation: fixed ? 'unevaluated' : 'unproved',
+      resultTypeBasis: sizeType, byteSize: null,
+    }, sizeType.type, node);
   }
 }

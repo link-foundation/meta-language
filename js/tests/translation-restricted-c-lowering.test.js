@@ -2,3 +2,4 @@
 import '../../experiments/restricted-c-source-lowering/restricted-c-controls.test.mjs';
 import '../../experiments/restricted-c-source-lowering/restricted-c-enums.test.mjs';
 import '../../experiments/restricted-c-source-lowering/restricted-c-owners.test.mjs';
+import '../../experiments/restricted-c-source-lowering/restricted-c-sizeof.test.mjs';
