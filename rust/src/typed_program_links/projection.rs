@@ -339,7 +339,9 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
         };
         result.insert(target.to_owned(), projected);
     }
-    if !read_surface_reference_payload_operand(&reference_form).is_empty() {
+    if read_surface_reference_payload_operand(&reference_form).is_empty() {
+        Ok(Value::Object(result))
+    } else {
         let mut payload = Map::new();
         payload.insert("k".to_owned(), Value::String(reference_form));
         payload.insert("value".to_owned(), Value::Object(result));
@@ -347,8 +349,6 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
             payload.insert("span".to_owned(), span.clone());
         }
         Ok(Value::Object(payload))
-    } else {
-        Ok(Value::Object(result))
     }
 }
 

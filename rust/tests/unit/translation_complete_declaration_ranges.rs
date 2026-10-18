@@ -12,7 +12,8 @@ use meta_language::{
     BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
     encode_link_network_binary, encode_typed_program_links, read_structured_data_lino,
 };
-use serde_json::Value;
+#[path = "../../src/typed_program_links/source_span_rules.rs"]
+mod complete_declaration_source_span_rules;
 
 #[test]
 fn complete_declaration_ranges_preserve_original_owners_values_targets_and_both_archives() {
@@ -131,7 +132,7 @@ process.stdout.write(serializeProjectData({cases:observations},'complete-declara
 
 #[test]
 fn completed_declaration_interval_uses_the_original_scalar_offset_contract() {
-    use meta_language::typed_program_links::source_span_rules::accept_complete_declaration_source_interval;
+    use complete_declaration_source_span_rules::accept_complete_declaration_source_interval;
     for [start, prefix, end] in [
         [0.0, 6.0, 50.0],
         [25.0, 31.0, 62.0],
