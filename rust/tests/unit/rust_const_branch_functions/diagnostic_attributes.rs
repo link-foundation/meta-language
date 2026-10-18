@@ -34,7 +34,7 @@ fn diagnostic_digest(source: &str) -> String {
 }
 
 fn diagnostic_oracle(source: &str, model: &str, name: &str, inputs: &Value) -> Value {
-    let script = r#"
+    let script = r"
 import vm from 'node:vm';
 import {parseRust,parseRustTokenStream} from './js/src/translation/rust.js';
 import {tokenize} from './js/src/translation/lexer.js';
@@ -56,7 +56,7 @@ for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNe
 let tokenOnly;
 try{tokenOnly={surface:parseRustTokenStream(tokenize(source,'Rust').tokens,options)};}catch(error){tokenOnly={kind:error.kind,reason:error.reason};}
 console.log(JSON.stringify({surface,rust:emission.text,definitions:emission.definitions,javascript:emitJavaScript(program).text,values:observe(program),archives,tokenOnly}));
-"#;
+";
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -124,13 +124,13 @@ fn diagnostic_refusal(source: &str, model: &str, checked: bool) -> Value {
         parsed.map(|_| ()).unwrap_err()
     };
     let actual = json!({"kind":error.kind.as_str(),"reason":error.reason,"span":error.span});
-    let script = r#"
+    let script = r"
 import {parseRust} from './js/src/translation/rust.js';
 import {checkProgram} from './js/src/translation/check.js';
 let error;try{const surface=parseRust(process.argv[1],{constFunctionModel:process.argv[2]});if(process.argv[3]==='checked')checkProgram(surface);}catch(caught){error=caught;}
 if(!error)throw new Error('the complete unchanged source must refuse');
 console.log(JSON.stringify({kind:error.kind,reason:error.reason,span:error.span??null}));
-"#;
+";
     let output = run(Command::new("node")
         .current_dir(
             std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

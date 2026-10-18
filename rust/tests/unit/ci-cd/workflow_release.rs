@@ -345,7 +345,7 @@ fn workflow_propagates_cancellation_without_always_override() {
     // The JavaScript workflow contract retains this one artifact-only upload
     // after failure/cancellation. It cannot admit a job, run a command or
     // substitute a successful observation; all execution gates stay unchanged.
-    let diagnostics = r#"      - name: Retain raw source native process diagnostics
+    let diagnostics = r"      - name: Retain raw source native process diagnostics
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
@@ -354,8 +354,8 @@ fn workflow_propagates_cancellation_without_always_override() {
           if-no-files-found: warn
           retention-days: 30
 
-"#;
-    let prerequisites = r#"    needs: [detect-changes, changelog, cargo-lock, check]
+";
+    let prerequisites = r"    needs: [detect-changes, changelog, cargo-lock, check]
     if: |
       !cancelled() &&
       needs.cargo-lock.result == 'success' &&
@@ -369,8 +369,8 @@ fn workflow_propagates_cancellation_without_always_override() {
         needs.detect-changes.outputs.toml-changed == 'true' ||
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
-"#;
-    let execution = r#"      - name: Run complete original link raw observations
+";
+    let execution = r"      - name: Run complete original link raw observations
         if: ${{ !cancelled() }}
         working-directory: ${{ github.workspace }}
         env:
@@ -378,8 +378,8 @@ fn workflow_propagates_cancellation_without_always_override() {
           ORIGINAL_LINK_RAW_NATIVE: '1'
         run: node scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
-"#;
-    let report = r#"      - name: Retain complete original link raw observations
+";
+    let report = r"      - name: Retain complete original link raw observations
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
@@ -388,7 +388,7 @@ fn workflow_propagates_cancellation_without_always_override() {
           if-no-files-found: error
           retention-days: 7
 
-"#;
+";
     let mut cases = vec![("original workflow", workflow.clone(), true)];
     for (name, replacement) in [
         ("omitted upload", String::new()),

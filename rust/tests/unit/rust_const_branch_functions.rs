@@ -506,7 +506,11 @@ fn actual_original_and_whole_emitted_rust_execute_all_truth_rows_and_const_invoc
 
 #[test]
 fn diagnostic_facet_present_null_and_owned_metadata_forgeries_refuse_before_emission() {
-    let source = "#[expect(clippy::fn_params_excessive_bools, reason = \"why\")] pub    const fn keep(value:bool)->bool{value}fn main(){}";
+    let source = concat!(
+        "#[expect(clippy::fn_params_excessive_bools, reason = \"why\")] pub    const fn keep(value:bool)->bool",
+        "{",
+        "value}fn main(){}"
+    );
     for selected_model in [
         "closed pure Rust const predicates 1",
         "closed Boolean Rust const decision trees 1",
@@ -543,19 +547,19 @@ fn diagnostic_facet_present_null_and_owned_metadata_forgeries_refuse_before_emis
                 2 => function["sourceDiagnosticAttributes"]["edition"] = json!(2024),
                 3 => {
                     function["sourceDiagnosticAttributes"]["attachment"]["sourceName"] =
-                        json!("foreign")
+                        json!("foreign");
                 }
                 4 => {
                     function["sourceDiagnosticAttributes"]["attachment"]["modulePath"] =
-                        json!(["foreign"])
+                        json!(["foreign"]);
                 }
                 5 => {
                     function["sourceDiagnosticAttributes"]["tokens"][0]["kind"] =
-                        json!("identifier")
+                        json!("identifier");
                 }
                 6 => function["sourceDiagnosticAttributes"]["tokens"][0]["raw"] = json!("@"),
                 7 => {
-                    function["sourceDiagnosticAttributes"]["tokens"][0]["span"]["start"] = json!(1)
+                    function["sourceDiagnosticAttributes"]["tokens"][0]["span"]["start"] = json!(1);
                 }
                 _ => {
                     function

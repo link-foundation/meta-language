@@ -35,7 +35,7 @@ fn report_code_difference(name: &str, actual: &str, expected: &str) {
         .chars()
         .zip(expected.chars())
         .position(|(actual, expected)| actual != expected)
-        .unwrap_or(actual_characters.min(expected_characters));
+        .unwrap_or_else(|| actual_characters.min(expected_characters));
     let start = at.saturating_sub(90);
     let window = |text: &str| {
         text.chars()
