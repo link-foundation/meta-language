@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {writeRecordRuleLibrary} from './record-rule-library.mjs';
+import {readGuardedPrivateArrayWriteLibraryStyles} from './guarded-private-array-write-library-style.mjs';
 
 const root=new URL('../../',import.meta.url);
 const sourcePath='js/src/translation/guarded-private-array-write-rules.js';
@@ -65,7 +66,7 @@ export async function generateGuardedPrivateArrayWriteRules({check=false,native=
       const output=new URL(path,root);
       if(check)assert.equal(readFileSync(output,'utf8'),text,'the actual inspectable linked program is fresh');else writeFileSync(output,text);
     }
-    const files=writeRecordRuleLibrary(emitted,'guarded_private_array_write_rules',{check});
+    const files=writeRecordRuleLibrary(emitted,'guarded_private_array_write_rules',{check,sourceStyles:readGuardedPrivateArrayWriteLibraryStyles});
     artifact={schemaVersion:1,model:policy.model,source:{path:sourcePath,text:policy.source,bytes:policy.sourceBytes,sha256:policy.sourceSha256},
       inventory,checkedNamedSourceInventory,replays,
       emitted:{text:emitted.text,definitions:emitted.definitions,preludes:emitted.preludes,mappings:emitted.mappings,assumptions:emitted.assumptions,encodings:emitted.encodings},

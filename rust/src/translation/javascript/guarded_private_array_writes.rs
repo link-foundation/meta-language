@@ -33,7 +33,7 @@ fn local(name: &str, span: Span) -> SExpr {
     )
 }
 
-fn parameter(name: String) -> SParam {
+const fn parameter(name: String) -> SParam {
     SParam {
         name,
         optional: false,

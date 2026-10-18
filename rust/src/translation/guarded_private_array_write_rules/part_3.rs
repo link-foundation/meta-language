@@ -335,7 +335,7 @@ pub fn ml_accept_constructed_guarded_array_uses_loop19(
                                 columns,
                                 self::ml_array::number_index((2f64 * size) + edge),
                             ))
-                            .unwrap_or_else(|| String::new());
+                            .unwrap_or_default();
                             {
                                 let kind =
                                     self::read_guarded_write_kind(columns, rows, size, parent);

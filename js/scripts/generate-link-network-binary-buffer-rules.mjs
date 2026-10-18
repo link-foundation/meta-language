@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {readProjectData,writeProjectData,checkProjectData} from './project-data.mjs';
 import {writeRecordRuleLibrary} from './record-rule-library.mjs';
+import {readBinaryBufferCompilerStyles} from './binary-buffer-compiler-styles.mjs';
 
 const root=new URL('../../',import.meta.url);
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -60,7 +61,7 @@ export async function generateLinkNetworkBinaryBufferRules({check=false}={}) {
       'the entire source-free emitted '+field+' agrees after '+format);
     replays.push({format,owners:restored.declarations.size,emittedBytes:Buffer.byteLength(replay.text),emittedSha256:digest(replay.text)});
   }
-  const files=writeRecordRuleLibrary(emitted,'link_network_binary_buffer_rules',{check});
+  const files=writeRecordRuleLibrary(emitted,'link_network_binary_buffer_rules',{check,sourceStyles:readBinaryBufferCompilerStyles});
   const artifact={schemaVersion:1,model:'owned binary framing field buffers 1',
     inputs:[sourceFile,primitiveFile,originalFile].map(path=>{const bytes=readFileSync(new URL(path,root));return{path,bytes:bytes.length,sha256:digest(bytes)};}),
     sourceClosure:{source,bytes:Buffer.byteLength(source),sha256:digest(source),removedImport:imported},

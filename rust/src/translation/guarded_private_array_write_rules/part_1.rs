@@ -265,7 +265,7 @@ pub fn read_guarded_write_field(
 pub fn read_guarded_write_text(columns: &[String], size: f64, node: f64) -> String {
     if (node >= 0f64) && (node < size) {
         (self::ml_array::optional_at(columns, self::ml_array::number_index(size + node)))
-            .unwrap_or_else(|| String::new())
+            .unwrap_or_default()
     } else {
         String::new()
     }
@@ -298,7 +298,7 @@ pub fn read_guarded_write_kind(columns: &[String], rows: &[f64], size: f64, node
 pub fn read_guarded_write_count(columns: &[String], rows: &[f64], size: f64, node: f64) -> f64 {
     if ((node >= 0f64) && (node < size))
         && (((self::ml_array::optional_at(columns, self::ml_array::number_index(node)))
-            .unwrap_or_else(|| String::new()))
+            .unwrap_or_default())
             == "array")
     {
         (self::ml_array::optional_at(rows, self::ml_array::number_index(size + node)))
@@ -386,7 +386,7 @@ pub fn accept_guarded_write_columns(
                                 let ml_s3 = self::ml_accept_guarded_write_columns_loop3(rows, size, edge);
                                 match ml_s3 {
                                     self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Done => {
-                                        ((self::ml_array::optional_at(columns, self::ml_array::number_index(root))).unwrap_or_else(|| String::new())) == "object"
+                                        ((self::ml_array::optional_at(columns, self::ml_array::number_index(root))).unwrap_or_default()) == "object"
                                     }
                                     self::MlAcceptGuardedWriteColumnsLoop3Result::MlAcceptGuardedWriteColumnsLoop3Return(ml_result3) => {
                                         ml_result3
@@ -561,13 +561,13 @@ pub fn read_guarded_write_candidate(
                     columns,
                     self::ml_array::number_index(alternative),
                 ))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                     != "null"))
                 && (((self::ml_array::optional_at(
                     columns,
                     self::ml_array::number_index(alternative),
                 ))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                     != "undefined")
             {
                 -1f64
@@ -896,7 +896,7 @@ pub fn ml_read_guarded_write_field_loop1(
                     columns,
                     self::ml_array::number_index((2f64 * size) + edge),
                 ))
-                .unwrap_or_else(|| String::new()))
+                .unwrap_or_default())
                     == label
                 {
                     self::MlReadGuardedWriteFieldLoop1Result::MlReadGuardedWriteFieldLoop1Return(
