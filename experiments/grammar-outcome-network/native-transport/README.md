@@ -60,3 +60,17 @@ Links publication archives retain complete original private authors and exact
 portability/harness changes. Source and JavaScript controls alone do not prove
 native compilation or native behavior. Read the producer and runner receipts
 before refreshing any frozen pin.
+
+The `types/` inventory preserves exact type CSTs and complete original source
+before wire projection. Recursive references remain finite, and owned strings
+stay distinct from static borrows. Type policy and original authoring are Links
+data; the normal generator checks every artifact and complete source inverse:
+
+```sh
+node experiments/grammar-outcome-network/native-transport/types/generate.mjs --check
+```
+
+Use the same generator with an explicit `--output-dir` for scratch output.
+Target widths, JSON representation profiles, static-reference resolution and
+original native DTO reconstruction remain unresolved. This source inventory
+does not supply a paired decoder or native execution evidence.

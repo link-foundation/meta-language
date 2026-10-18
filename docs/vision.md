@@ -1739,6 +1739,17 @@ API and public default CST integration remain open. Neither production sources
 nor the existing generic codec's limits and number semantics change through this
 experiment.
 
+Its source-type inventory retains the complete original declarations and exact
+type CSTs before wire projection. A closed reference graph preserves recursive
+owners, every field and variant, qualified bindings, owning containers and the
+distinction between `String` and `&'static str`. Shared Links policy derives from
+authenticated authoring literals; regeneration preserves whole-source inverses,
+and candidate projections must match the complete authenticated inventory.
+Unicode type comments retain UTF-8 byte spans; unpaired UTF-16 input refuses.
+Native target widths, effective JSON representation profiles, static-reference
+resolution and original DTO reconstruction remain explicit obligations. This
+inventory does not implement the paired decoder or public default CST transport.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
