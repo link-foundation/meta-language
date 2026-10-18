@@ -453,6 +453,7 @@ fn mapped_profile_fixture() -> Value {
             .join(relative);
         let bytes =
             std::fs::read(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+        let bytes = crate::grammar_mapping_capture_source::original_capture(relative, bytes);
         assert_eq!(json!(bytes.len()), capture["bytes"], "{}", path.display());
         let digest =
             Sha256::digest(bytes)

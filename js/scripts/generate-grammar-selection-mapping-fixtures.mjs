@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { grammarSelectionMappingFixture } from '../tests/support/grammar-selection-mapping-cases.js';
 import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { originalGrammarSelectionCapture } from './grammar-selection-capture-profile.mjs';
 
 const root = new URL('../../', import.meta.url);
 const fixtureFile = new URL('parity/fixtures/grammar-selection-json-string.lino', root);
@@ -24,7 +25,7 @@ const sourceFiles = [
 
 export function generateGrammarSelectionMappingFixtures({ check = false } = {}) {
   const bytes = new Map(sourceFiles.map(([, relative]) =>
-    [relative, readProjectFileBytes(new URL(relative, root))]));
+    [relative, originalGrammarSelectionCapture(relative, readProjectFileBytes(new URL(relative, root)))]));
   for (const language of ['json', 'python']) assert.deepEqual(
     bytes.get(`js/src/data/native-grammars/${language}.lino`),
     bytes.get(`rust/src/data/native-grammars/${language}.lino`),

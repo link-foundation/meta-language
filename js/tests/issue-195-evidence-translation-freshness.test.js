@@ -66,11 +66,14 @@ test('bulk translation freshness includes every new native family without repeat
     { script: 'js/scripts/generate-grammar-rule-composition-rules.mjs', arguments: ['--native', '--check'] },
   ], 'grammar rule composition appends after the complete retained thirty-command prefix');
   assert.equal(BULK_TRANSLATION_RULE_CHECKS.slice(0, 31).length, 31, 'the complete preceding source freshness scope remains retained');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(31), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(31, 33), [
     { script: 'js/scripts/generate-array-callback-rules.mjs', arguments: ['--native', '--check'] },
     { script: 'js/scripts/generate-array-callback-fixtures.mjs', arguments: ['--check'] },
   ], 'callback source and complete program fixtures append after all thirty-one preceding checks');
-  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 33, 'the expanded complete freshness inventory has no missing or duplicate command');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(33), [
+    { script: 'js/scripts/generate-grammar-selection-capture-profile.mjs', arguments: ['--check'] },
+  ], 'capture corrections append after all thirty-three preceding checks');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 34, 'the expanded complete freshness inventory has no missing or duplicate command');
   const nativePackage = readFileSync(path.join(repository, 'rust/Cargo.toml'), 'utf8');
   const includedFiles = /^include = \[([\s\S]*?)^\]/mu.exec(nativePackage)?.[1];
   assert.ok(includedFiles, 'the native package retains its explicit source inventory');

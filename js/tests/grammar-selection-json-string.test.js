@@ -13,6 +13,7 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { encodeStructuredDataLinks, decodeStructuredDataLinks, readStructuredDataLino,
   structuredDataToLino } from '../src/structured-data-links.js';
 import { readProjectData, readProjectFileBytes } from '../scripts/project-data.mjs';
+import { originalGrammarSelectionCapture } from '../scripts/grammar-selection-capture-profile.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { grammarSelectionMappingObservationSections } from './support/grammar-selection-mapping-cases.js';
 import { nativeRows } from '../scripts/native-grammar-rows.mjs';
@@ -50,7 +51,8 @@ const mappedCapturePaths = [
 ];
 assert.deepEqual(mappedFixture.captures.map(({ id, path }) => [id, path]), mappedCapturePaths);
 for (const capture of mappedFixture.captures) {
-  const bytes = readProjectFileBytes(new URL(`../../${capture.path}`, import.meta.url));
+  const bytes = originalGrammarSelectionCapture(capture.path,
+    readProjectFileBytes(new URL(`../../${capture.path}`, import.meta.url)));
   assert.equal(bytes.length, capture.bytes, capture.id + ': exact original capture byte count');
   assert.equal(createHash('sha256').update(bytes).digest('hex'), capture.sha256,
     capture.id + ': exact source bytes captured after the test hooks freeze');

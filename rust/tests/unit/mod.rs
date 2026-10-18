@@ -48,6 +48,7 @@ mod grammar_ir;
 mod grammar_lexical_cache;
 mod grammar_lexical_cache_memory;
 mod grammar_literal_quoting;
+mod grammar_mapping_capture_source;
 mod grammar_merge;
 mod grammar_native_ruby_expression_syntax;
 mod grammar_native_ruby_literal_ci;
