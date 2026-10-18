@@ -15,7 +15,7 @@ use meta_language::translation::{
     emit_rust::{RustEmissionOptions, emit_rust_with_array_consumption},
     ir::{Decl, Node, Program},
     javascript::parse_javascript,
-    surface::SProgram,
+    surface::{SItem, SProgram},
     types::Type,
 };
 use meta_language::{
@@ -119,6 +119,7 @@ fn complete_callback_profiles_preserve_actual_frontends_targets_owners_and_both_
     let mut expected_surfaces = Vec::new();
     let mut admitted = 0;
     let mut refused = 0;
+    let mut allocations = Vec::new();
     for row in fixture["cases"].as_array().unwrap() {
         let source = row["programSource"].as_str().unwrap();
         assert_eq!(digest(source.as_bytes()), row["programSourceSha256"]);
@@ -140,6 +141,31 @@ fn complete_callback_profiles_preserve_actual_frontends_targets_owners_and_both_
                 continue;
             }
             let program = check_program(&surface).unwrap();
+            let source = surface
+                .items
+                .iter()
+                .find_map(|item| match item {
+                    SItem::Fn(function) if function.name == "run" => Some(function),
+                    _ => None,
+                })
+                .unwrap();
+            let Some(Decl::Fn(function)) = program.declaration("run") else {
+                panic!("the actual callback declaration retains its source owner");
+            };
+            assert!(source.body.span.is_some());
+            let method = if let Node::ReferenceAllocate { value } = &function.body.node {
+                allocations.push(row["id"].as_str().unwrap());
+                value.as_ref()
+            } else {
+                &function.body
+            };
+            assert!(matches!(method.node, Node::Method { .. }));
+            assert_eq!(method.span, source.body.span, "{}: inner method", row["id"]);
+            assert_eq!(
+                function.body.span, source.body.span,
+                "{}: result",
+                row["id"]
+            );
             check_targets(&program, profile);
             assert_eq!(profile["observedOutput"], row["expectedOutput"]);
             let javascript = emit_javascript(&program).unwrap();
@@ -180,6 +206,13 @@ fn complete_callback_profiles_preserve_actual_frontends_targets_owners_and_both_
         }
     }
     assert_eq!((admitted, refused), (18, 9));
+    assert_eq!(
+        allocations,
+        [
+            "array-callback-map-reference-value-parameters",
+            "array-callback-filter-reference-value-parameters",
+        ]
+    );
     let script = r"
 import {readFileSync} from 'node:fs';
 import {parseJavaScript} from './js/src/translation/javascript.js';

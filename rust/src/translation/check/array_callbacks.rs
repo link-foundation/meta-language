@@ -146,6 +146,7 @@ impl Checker {
                 args: values,
             },
             ty,
-        ))
+        )
+        .with_span(node.span))
     }
 }

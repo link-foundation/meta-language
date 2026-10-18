@@ -199,6 +199,7 @@ impl Checker {
                 args: vec![Some(callback)],
             },
             ty,
-        ))
+        )
+        .with_span(span))
     }
 }

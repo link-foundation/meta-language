@@ -285,3 +285,36 @@ test('source-free callback archives reject actual missing operands and changed t
     }, name + ': ' + format);
   }
 });
+
+test('callback method spans remain inside reference allocations through complete archive rechecks', () => {
+  const fixture = readProjectData(new URL('../../parity/fixtures/array-callbacks.lino', import.meta.url));
+  let methods = 0;
+  const allocations = [];
+  for (const row of fixture.cases) for (const profile of row.profiles) {
+    if (profile.checkDiagnostic) continue;
+    const source = profile.surface.items.find(owner => owner.k === 'fn' && owner.name === 'run');
+    assert.equal(source.body.k, 'method');
+    assert.ok(source.body.span, 'the original source method owns its complete span');
+    const checked = checkProgram(structuredClone(profile.surface));
+    const checkSpans = program => {
+      const body = program.declarations.get('run').body;
+      const method = body.k === 'referenceAllocate' ? body.value : body;
+      assert.equal(method.k, 'method');
+      assert.deepEqual(method.span, source.body.span, row.id + ': inner checked method span');
+      assert.deepEqual(body.span, source.body.span, row.id + ': complete result span');
+      return body.k === 'referenceAllocate';
+    };
+    if (checkSpans(checked)) allocations.push(row.id);
+    const packet = encodeTypedProgramLinks(checked);
+    for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+      const restored = decodeTypedProgramLinks(network, packet.root);
+      assert.deepEqual(restored, checked);
+      assert.equal(recheckLinkedTypedProgram(restored, {wholeProgram: true}), restored);
+      checkSpans(restored);
+    }
+    methods += 1;
+  }
+  assert.equal(methods, 18);
+  assert.deepEqual(allocations, ['array-callback-map-reference-value-parameters', 'array-callback-filter-reference-value-parameters'],
+    'map and filter retain both span owners; flatMap keeps its already-reference callback result');
+});
