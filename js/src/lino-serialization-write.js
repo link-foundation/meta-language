@@ -147,11 +147,17 @@ export function encodeLinkStatement(id, references, metadata, registered = false
 
 /** Serializes every link of a network, one statement per line, in id order. */
 export function encodeNetworkLino(links, registeredIds) {
-  let output = '';
+  const chunks = [];
+  let lines = [];
   for (const link of links) {
     const id = link.id().asU64();
-    output += `${encodeLinkStatement(id, link.references(), link.metadata(), registeredIds.has(id))}\n`;
+    lines.push(`${encodeLinkStatement(id, link.references(), link.metadata(), registeredIds.has(id))}\n`);
+    if (lines.length === 512) {
+      chunks.push(lines.join(''));
+      lines = [];
+    }
   }
-  return output;
+  if (lines.length > 0) chunks.push(lines.join(''));
+  return chunks.join('');
 }
 

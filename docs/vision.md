@@ -2732,6 +2732,11 @@ agent-count instructions for this continuation; it does not establish a
 permanent project-wide cap. Existing ownership, bounded local checks and the
 restriction of native compilation and expensive workloads to CI remain intact.
 
+Canonical Links Notation writing combines bounded groups of complete statements
+before assembling the final text. This bounds temporary string construction while
+retaining every statement, UTF-16 code unit, source order, metadata field,
+registration decision, line ending and host observation.
+
 Each bulk grammar worker reads projection metadata from its selected actual
 generated grammar. The fixture generator uses the same reader, while unrelated
 grammar projections and corpus definitions stay outside that worker's setup.
