@@ -331,11 +331,29 @@ test('actual repeated string predicates factor only immutable standard receiver 
   assert.equal(styles.decorate('emitter', {format: 'Rust', source: loaned}).source, reviewed.source);
   const context = {};
   runInNewContext(emitJavaScript(checked).text, context, {timeout: 1000});
-  for (const receiver of ['array', 'string', 'unknown']) for (const operation of ['slice', 'includes', 'indexOf', 'lastIndexOf', 'repeat', 'codePointAt', 'split', 'replace', 'padStart', 'unknown']) {
-    const expected = receiver === 'array' ? ['slice', 'includes', 'indexOf', 'lastIndexOf'].includes(operation) ? 2 : -1
-      : receiver === 'string' ? ['repeat', 'codePointAt'].includes(operation) ? 1
+  // Preserve the exact pre-grouping decision as a separate checked emission.
+  const originalSource = `/** @param {string} receiver @param {string} operation @returns {number} */
+export function readPrimitiveMethodMaximumArguments(receiver, operation) {
+  if (receiver === 'array' && operation === 'join') return 1;
+  if (receiver === 'array' && operation === 'slice') return 2;
+  if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return 2;
+  if (receiver !== 'string') return -1;
+  if (operation === 'repeat' || operation === 'codePointAt' || operation === 'charCodeAt') return 1;
+  if (operation === 'split' || operation === 'slice' || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'replace' || operation === 'replaceAll' || operation === 'padStart' || operation === 'padEnd') return 2;
+  return -1;
+}`;
+  const originalContext = {};
+  runInNewContext(emitJavaScript(checkProgram(parseJavaScript(originalSource, {referenceSemantics: false}))).text,
+    originalContext, {timeout: 1000});
+  for (const receiver of ['array', 'string', 'unknown']) for (const operation of ['slice', 'includes', 'indexOf', 'lastIndexOf', 'repeat', 'codePointAt', 'split', 'replace', 'padStart', 'unknown', 'join', 'charCodeAt', 'replaceAll', 'padEnd']) {
+    const expected = receiver === 'array' ? operation === 'join' ? 1 : ['slice', 'includes', 'indexOf', 'lastIndexOf'].includes(operation) ? 2 : -1
+      : receiver === 'string' ? ['repeat', 'codePointAt', 'charCodeAt'].includes(operation) ? 1
         : ['split', 'slice', 'indexOf', 'lastIndexOf', 'replace', 'replaceAll', 'padStart', 'padEnd'].includes(operation) ? 2 : -1 : -1;
     assert.equal(context.readPrimitiveMethodMaximumArguments(receiver, operation), expected);
+    assert.equal(originalContext.readPrimitiveMethodMaximumArguments(receiver, operation), expected,
+      'the original separate receiver predicates retain the independent expected behavior');
+    assert.equal(readPrimitiveMethodMaximumArguments(receiver, operation), expected,
+      'the actual JavaScript provider agrees with both complete checked emissions');
   }
   const condition = '((receiver == "array") && (operation == "slice")) || ((receiver == "array") && (operation == "includes"))';
   for (const type of ['String', '&str']) {

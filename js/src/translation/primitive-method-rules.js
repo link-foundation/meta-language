@@ -44,9 +44,11 @@ export function readPrimitiveMethodMinimumArguments(receiver, operation) {
 
 /** @param {string} receiver @param {string} operation @returns {number} */
 export function readPrimitiveMethodMaximumArguments(receiver, operation) {
-  if (receiver === 'array' && operation === 'join') return 1;
-  if (receiver === 'array' && operation === 'slice') return 2;
-  if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return 2;
+  if (receiver === 'array') {
+    if (operation === 'join') return 1;
+    if (operation === 'slice' || operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf') return 2;
+    return -1;
+  }
   if (receiver !== 'string') return -1;
   if (operation === 'repeat' || operation === 'codePointAt' || operation === 'charCodeAt') return 1;
   if (operation === 'split' || operation === 'slice' || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'replace' || operation === 'replaceAll' || operation === 'padStart' || operation === 'padEnd') return 2;

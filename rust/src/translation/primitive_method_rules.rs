@@ -171,14 +171,17 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) -> f64 {
-    if (receiver == "array") && (operation == "join") {
-        1f64
-    } else if (receiver == "array")
-        && ((operation == "slice")
-            || (((operation == "includes") || (operation == "indexOf"))
-                || (operation == "lastIndexOf")))
-    {
-        2f64
+    if receiver == "array" {
+        if operation == "join" {
+            1f64
+        } else if (((operation == "slice") || (operation == "includes"))
+            || (operation == "indexOf"))
+            || (operation == "lastIndexOf")
+        {
+            2f64
+        } else {
+            -1f64
+        }
     } else if receiver == "string" {
         if ((operation == "repeat") || (operation == "codePointAt")) || (operation == "charCodeAt")
         {
