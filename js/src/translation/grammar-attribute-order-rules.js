@@ -2,8 +2,8 @@
 // code units and retain insertion order between non-index attribute names.
 /** @param {number[]} units @returns {number} */
 export function readGrammarAttributeIntegerKey(units) {
-  if (units.length < 1 || units.length > 10) return -1;
-  if (units.length > 1 && units[0] === 48) return -1;
+  if (units.length < 1 || units.length > 10
+    || (units.length > 1 && units[0] === 48)) return -1;
   let value = 0;
   for (let index = 0; index < units.length; index += 1) {
     const unit = units[index];

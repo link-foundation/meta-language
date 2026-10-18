@@ -1,3 +1,4 @@
+use meta_language::read_structured_data_lino;
 mod access_mode;
 mod api_style_parity;
 mod binary_format;

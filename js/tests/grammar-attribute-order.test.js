@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {runInNewContext} from 'node:vm';
 import {compileGrammar} from '../src/grammar.js';
 import {parseGrammarLinks} from '../src/grammar-links.js';
 import {renderSyntaxTree} from '../src/grammar-runtime/syntax-tree.js';
@@ -10,7 +12,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {generateGrammarAttributeOrderFixtures} from '../scripts/generate-grammar-attribute-order-fixtures.mjs';
 import {selectVersionedAssertion} from '../scripts/assertion-version-ranges.mjs';
 
-import {readGrammarAttributeOrderNativeStyles} from '../scripts/generate-grammar-attribute-order-rules.mjs';
+import {readGrammarAttributeOrderNativeStyles,generateGrammarAttributeOrderRules} from '../scripts/generate-grammar-attribute-order-rules.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {DecoratorSet} from '../src/decorators.js';
 import {formatProductRuleSource} from '../scripts/product-rule-style-corrections.mjs';
@@ -47,7 +49,10 @@ test('integer attribute names retain exact decimal boundaries and reject non-can
 });
 
 test('recorded attribute native styles authenticate primitive owners and finite slice length only', () => {
-  const native = readFileSync(new URL('../../rust/src/translation/grammar_attribute_order_rules/part_1.rs', import.meta.url), 'utf8');
+  const previous = readProjectData(new URL('../../parity/fixtures/grammar-attribute-order-legacy-profile.lino', import.meta.url));
+  assert.equal(previous.native.sha256, '6daba3b8fdc3b66822848fa2c26a298ae02fc5e5d801077b5a5cf1ca95abdfbd');
+  assert.equal(createHash('sha256').update(previous.native.text).digest('hex'), previous.native.sha256);
+  const native = previous.native.text;
   const previousGuard = '((units.len() as f64) < 1f64) || ((units.len() as f64) > 10f64)';
   const currentGuard = '!(1usize..=10usize).contains(&units.len())';
   const raw = native.replace('pub const fn compare_grammar_attribute_integer_keys(', 'pub fn compare_grammar_attribute_integer_keys(')
@@ -96,4 +101,70 @@ test('recorded attribute native styles authenticate primitive owners and finite 
   assert.equal(duplicate.actions.length, 1, 'opaque copies cannot share a complete replacement context');
   assert.ok(duplicate.source.endsWith(literal));
   assert.equal(readSourceTextRustBlock(duplicate.source, 'fn', 'compare_grammar_attribute_integer_keys'), compare);
+});
+
+
+test('joined attribute rejects preserve current generated style and exact historical short-circuit reads', () => {
+  const previous = readProjectData(new URL('../../parity/fixtures/grammar-attribute-order-legacy-profile.lino', import.meta.url));
+  for (const [field, digest] of [
+    ['source', 'a2622b82f95529e4b537d279592c13ecc8fa20838c203fb97fb60227c989d406'],
+    ['native', '6daba3b8fdc3b66822848fa2c26a298ae02fc5e5d801077b5a5cf1ca95abdfbd'],
+    ['decorators', '98e581fbf2d884c4e64f8edcf24e2dac3e59eff5faffb745858c119b219439a5'],
+  ]) {
+    assert.equal(previous[field].sha256, digest);
+    assert.equal(Buffer.byteLength(previous[field].text), previous[field].bytes);
+    assert.equal(createHash('sha256').update(previous[field].text).digest('hex'), digest);
+  }
+  const current = readFileSync(new URL('../src/translation/grammar-attribute-order-rules.js', import.meta.url), 'utf8');
+  assert.equal(current.replace(
+    '  if (units.length < 1 || units.length > 10\n    || (units.length > 1 && units[0] === 48)) return -1;',
+    '  if (units.length < 1 || units.length > 10) return -1;\n  if (units.length > 1 && units[0] === 48) return -1;'), previous.source.text,
+  'the current source has exactly one ordered guard join and preserves every other original byte');
+  const original = runInNewContext(previous.source.text.replace(/^export /gmu, '') + '\nreadGrammarAttributeIntegerKey', {}, {timeout: 1000});
+  const execute = (operation, values) => {
+    const reads = [];
+    const input = new Proxy(values, {get(target, key, receiver) {
+      reads.push(String(key));
+      return Reflect.get(target, key, receiver);
+    }});
+    return {value: operation(input), reads};
+  };
+  for (const units of [[], [48], [49], [48,49], [49,48], Array(10).fill(57), Array(11).fill(48),
+    [NaN], [Infinity], [-Infinity], [48.5], [-1], [65536], [49,NaN]]) {
+    assert.deepEqual(execute(readGrammarAttributeIntegerKey,units),execute(original,units));
+  }
+  for (const {name,index} of fixture.integerNames) {
+    const units = codeUnits(name);
+    assert.equal(original(units),index,name);
+    assert.equal(readGrammarAttributeIntegerKey(units),index,name);
+  }
+  // The normal producer authenticates source policies, all complete owners,
+  // recorded styles, every partition and the independent fixture. Rustfmt only.
+  generateGrammarAttributeOrderRules({check:true,native:true});
+  const native = readFileSync(new URL('../../rust/src/translation/grammar_attribute_order_rules/part_1.rs', import.meta.url), 'utf8');
+  const previousGuard = '((units.len() as f64) < 1f64) || ((units.len() as f64) > 10f64)';
+  const currentGuard = '!(1usize..=10usize).contains(&units.len())';
+  assert.equal(native.split(currentGuard).length,2);
+  const raw = native.replace('pub const fn compare_grammar_attribute_integer_keys(', 'pub fn compare_grammar_attribute_integer_keys(')
+    .replace(currentGuard,previousGuard);
+  const styled = readGrammarAttributeOrderNativeStyles(raw);
+  assert.equal(styled.actions.length,2);
+  assert.equal(formatProductRuleSource(styled.source),native);
+  const record = new DecoratorSet([{id:'attribute-current-native-control',level:'emitter',order:0,
+    when:[['format','Rust']],actions:styled.actions}]);
+  assert.equal(DecoratorSet.fromLino(record.toLino()).decorate('emitter',{format:'Rust',source:raw}).source,styled.source);
+  assert.deepEqual(readGrammarAttributeOrderNativeStyles(styled.source),{source:styled.source,actions:[]});
+  const rawOwner = readSourceTextRustBlock(raw,'fn','read_grammar_attribute_integer_key');
+  const styledOwner = readSourceTextRustBlock(styled.source,'fn','read_grammar_attribute_integer_key');
+  assert.equal(styledOwner.replace(currentGuard,previousGuard),rawOwner,'only the finite length subpredicate is restyled');
+  assert.equal((rawOwner.match(/-1f64/gmu)??[]).length,2,'one leading reject plus the unchanged final overflow reject');
+  for (const changed of [
+    rawOwner.replace('units: &[f64]','units: &mut [f64]'),
+    rawOwner.replace('10f64','11f64'),
+    rawOwner.replace('48f64','49f64'),
+    rawOwner.replace('read_grammar_attribute_integer_key','foreign_range'),
+    rawOwner.replace('units.len()','foreign(units).len()'),
+    'type usize = CustomSize;\n' + rawOwner,
+    'use crate::custom::f64;\n' + rawOwner,
+  ]) assert.deepEqual(readGrammarAttributeOrderNativeStyles(changed),{source:changed,actions:[]});
 });

@@ -20,6 +20,16 @@ const CURRENT_ORACLE_PROFILE: &str =
 const CURRENT_ORACLE_UNIVERSE_WITNESS: &str =
     include_str!("../../../parity/fixtures/agda-current-oracle-universe-ci.lino");
 
+fn sha256(bytes: impl AsRef<[u8]>) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hexadecimal, byte| {
+            use std::fmt::Write as _;
+            write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+            hexadecimal
+        })
+}
+
 fn current_agda_oracle_fixture() -> Value {
     let current: Value = super::project_data::read_project_data(CURRENT_ORACLE_PROFILE).unwrap();
     let historical: Value = super::project_data::read_project_data(FIXTURE).unwrap();
@@ -28,10 +38,7 @@ fn current_agda_oracle_fixture() -> Value {
     assert_current_agda_fixture_sources(&current["oracleProfile"]);
     let profile = &current["oracleProfile"];
     assert_eq!(profile["historicalFixture"]["bytes"], FIXTURE.len());
-    assert_eq!(
-        profile["historicalFixture"]["sha256"],
-        format!("{:x}", Sha256::digest(FIXTURE))
-    );
+    assert_eq!(profile["historicalFixture"]["sha256"], sha256(FIXTURE));
     current
 }
 
@@ -113,17 +120,14 @@ fn assert_current_agda_fixture_sources(profile: &Value) {
     assert_eq!(expected["includeMinimum"], true);
     assert_eq!(expected["includeMaximum"], true);
     assert_eq!(profile["source"], expected["expected"]);
-    assert_eq!(
-        profile["nativeGrammar"]["sha256"],
-        format!("{:x}", Sha256::digest(GRAMMAR))
-    );
+    assert_eq!(profile["nativeGrammar"]["sha256"], sha256(GRAMMAR));
     assert_eq!(
         profile["nativeFixture"]["bytes"],
         CURRENT_NATIVE_FIXTURE.len()
     );
     assert_eq!(
         profile["nativeFixture"]["sha256"],
-        format!("{:x}", Sha256::digest(CURRENT_NATIVE_FIXTURE))
+        sha256(CURRENT_NATIVE_FIXTURE)
     );
     for field in [
         "crate",
@@ -137,21 +141,15 @@ fn assert_current_agda_fixture_sources(profile: &Value) {
     assert_eq!(profile["source"]["treeSitter"], manifest["treeSitterCli"]);
     assert_eq!(
         profile["source"]["sourceManifestSha256"],
-        format!("{:x}", Sha256::digest(manifest_bytes))
+        sha256(manifest_bytes)
     );
     assert_eq!(
         profile["source"]["patchSha256"],
-        format!(
-            "{:x}",
-            Sha256::digest(include_str!(
-                "../../vendor/tree-sitter-agda-layout/layout-state.patch"
-            ))
-        )
+        sha256(include_str!(
+            "../../vendor/tree-sitter-agda-layout/layout-state.patch"
+        ))
     );
-    assert_eq!(
-        profile["applicabilityPolicySha256"],
-        format!("{:x}", Sha256::digest(policy_bytes))
-    );
+    assert_eq!(profile["applicabilityPolicySha256"], sha256(policy_bytes));
 }
 
 fn observe(assertions: &[&str], test_name: &str) {

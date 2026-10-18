@@ -1,4 +1,6 @@
 // Generated from complete owned Rust CST declarations. Do not edit by hand.
+#[path = "production_model/attributes.rs"]
+mod attributes;
 #[path = "production_model/forking.rs"]
 mod forking;
 #[path = "production_model/grammar_selection.rs"]

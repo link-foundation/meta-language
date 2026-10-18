@@ -281,7 +281,7 @@ fn any_retains_alternative_concrete_trees_and_all_requires_every_explicit_candid
                 .unwrap();
             assert_eq!(rejected.rejection.unwrap().reason, "ambiguity");
         } else {
-            assert_eq!(result.ambiguities.as_slice(), []);
+            assert!(result.ambiguities.is_empty());
         }
     }
 }
@@ -304,7 +304,7 @@ fn unknown_grammars_and_unimplemented_escape_mappings_remain_explicit_rejections
         assert!(!result.ok);
         let rejection = result.rejection.unwrap();
         assert_eq!(json!(rejection.reason), fixture[name]["reason"]);
-        assert_ne!(rejection.diagnostics.unwrap().as_slice(), []);
+        assert!(!rejection.diagnostics.unwrap().is_empty());
         if name == "unknown" {
             assert_eq!(rebuilt_selection_source(&result.tree.unwrap()), "π");
         }

@@ -67,3 +67,9 @@ test('the array forms that are not kept are refused with a reason', () => {
   assert.match(refusal('const xs = [1, , 2];\n'), /^array hole/u);
   assert.match(refusal('for (const k in { a: 1 }) console.log(k);\n'), /^for…in loop/u);
 });
+
+// BEGIN modern JavaScript array parity observations
+test('retained modern JavaScript array contract executes every original input', async () => {
+  const {runModernArrayParityAssertions}=await import('./support/modern-javascript-array-parity.js');
+  runModernArrayParityAssertions({record:true,testName:'retained modern JavaScript array contract executes every original input'});
+});

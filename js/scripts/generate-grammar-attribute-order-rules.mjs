@@ -12,7 +12,7 @@ import {generateGrammarAttributeOrderFixtures} from './generate-grammar-attribut
 
 import {tokenize} from '../src/translation/lexer.js';
 import {readRustLibraryItems} from './rust-library-packaging.mjs';
-import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
+import {readSourceTextRustBlock,simplifySourceTextRustParentheses} from './source-text-byte-library-style.mjs';
 
 const root=new URL('../../',import.meta.url);
 /** Record only the two exact generated owners' primitive native spellings. */
@@ -105,9 +105,30 @@ export function readGrammarAttributeOrderNativeStyles(source) {
       }
     }`],
   ];
+  // The original two-guard profile remains exact above. The current source
+  // joins only those ordered rejects; all other owner tokens stay identical.
+  const lengthGuard = '((units.len() as f64) < 1f64) || ((units.len() as f64) > 10f64)';
+  const leadingZeroGuard = `((units.len() as f64) > 1f64)
+        && match (self::ml_array::optional_at(units, self::ml_array::number_index(0f64)), 48f64) {
+          (Some(ml_left), ml_right) => ml_left == ml_right,
+          _ => false,
+        }`;
+  const legacyOwner = expected.find(([name]) => name === 'read_grammar_attribute_integer_key')[1];
+  const separated = `if ${lengthGuard} {
+        -1f64
+      } else if ${leadingZeroGuard}
+      {
+        -1f64
+      } else {`;
+  const combined = `if (${lengthGuard}) || (${leadingZeroGuard}) {
+        -1f64
+      } else {`;
+  assert.equal(legacyOwner.split(separated).length, 2, 'the preserved historical owner has exactly its two original rejects');
+  expected.push(['read_grammar_attribute_integer_key',
+    simplifySourceTextRustParentheses(legacyOwner.replace(separated, combined)), 'combined']);
   let adapted = source;
   const actions = [];
-  for (const [name, body] of expected) {
+  for (const [name, body, profile] of expected) {
     const owners = items.filter(item => item.kind === 'fn' && item.name === name);
     if (owners.length !== 1) continue;
     const from = readSourceTextRustBlock(owners[0].source, 'fn', name);
@@ -121,6 +142,17 @@ export function readGrammarAttributeOrderNativeStyles(source) {
       // custom operators, references, local shadows, imports and captures.
       const fn = own.tokens.find(token => token.kind === 'identifier' && token.value === 'fn');
       to = from.slice(0, fn.start) + 'const ' + from.slice(fn.start);
+    } else if (profile === 'combined') {
+      // The complete authenticated owner fixes grouping and evaluation order.
+      // Only the nested finite-length predicate is restyled, before any bind.
+      const needle = tokenize(lengthGuard, 'Rust').tokens.filter(token => token.kind !== 'eof');
+      const positions = own.tokens.flatMap((token, at) => needle.every((part, offset) =>
+        own.tokens[at + offset]?.kind === part.kind && own.tokens[at + offset]?.raw === part.raw) ? [at] : []);
+      if (positions.length !== 1) continue;
+      const first = own.tokens[positions[0]].start;
+      const last = own.tokens[positions[0] + needle.length - 1].end;
+      if (own.comments.some(comment => comment.start < last && comment.end > first)) continue;
+      to = from.slice(0, first) + '!(1usize..=10usize).contains(&units.len())' + from.slice(last);
     } else {
       // This exact first guard reads the immutable &[f64] parameter's finite
       // usize length before any local binding. It is not an arbitrary f64.

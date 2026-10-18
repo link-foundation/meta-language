@@ -973,7 +973,7 @@ fn composition_retains_no_match_child_refusal_profile_boundaries_and_existing_fa
     let result = mapped(&outcome, r#"{"k":1}"#);
     let mut nodes = Vec::new();
     embeddings(&result["tree"], &mut nodes);
-    assert_eq!(nodes.as_slice(), []);
+    assert!(nodes.is_empty());
     assert_eq!(outcome.source_planes.as_ref().unwrap().len(), 2);
     assert_eq!(
         outcome.source_planes.as_ref().unwrap()[1]["derivation"]["operation"],

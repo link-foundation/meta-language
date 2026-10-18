@@ -14,7 +14,7 @@ fn lexical_round_trip_mutation_retains_source_order_and_renumbers_later_implicit
     let mutated = mutate_grammar_start_rule(&original, GRAMMAR_ROUND_TRIP_MARKER)
         .expect("source-scoped literal extension");
     let (emitted, report) = emit_antlr(&mutated).expect("ANTLR emission");
-    assert_eq!(report.lossy.as_slice(), []);
+    assert!(report.lossy.is_empty());
     let reimported = import_antlr(&emitted).expect("the edited emitted source imports");
     let expected = render_grammar_links(&mutated);
     assert_eq!(render_grammar_links(&reimported), expected);
@@ -65,7 +65,7 @@ fn lexical_round_trip_mutation_reuses_existing_tokens_and_preserves_unknown_alia
         let original = import_antlr(source).expect("original source imports");
         let mutated = mutate_grammar_start_rule(&original, marker).expect("literal plan extension");
         let (emitted, report) = emit_antlr(&mutated).expect("source emission");
-        assert_eq!(report.lossy.as_slice(), []);
+        assert!(report.lossy.is_empty());
         assert_eq!(
             render_grammar_links(&import_antlr(&emitted).expect("reimport")),
             render_grammar_links(&mutated)

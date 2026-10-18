@@ -211,3 +211,265 @@ fn string_iteration_uses_code_points_while_length_uses_utf16_units() {
             .starts_with("string iteration:")
     );
 }
+
+// BEGIN modern JavaScript array parity observations
+fn modern_array_digest(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write as _;
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut text, byte| {
+            write!(text, "{byte:02x}").expect("String writes");
+            text
+        })
+}
+
+// This adapter transports every public descriptor field; it supplies no semantics.
+fn modern_array_translation_record(
+    value: &meta_language::program_translation::ProgramTranslation,
+) -> serde_json::Value {
+    use serde_json::json;
+    let contract = value.contract();
+    let semantics = value.semantics().map(|record| json!({
+        "entry": record.entry,
+        "observationProcedure": record.observation_procedure,
+        "encodings": record.encodings,
+        "assumptions": record.assumptions,
+        "obligations": record.obligations.iter().map(|obligation| json!({
+            "source": obligation.source, "target": obligation.target, "kind": obligation.kind,
+            "closedGoal": obligation.closed_goal, "discharge": obligation.discharge, "check": obligation.check,
+        })).collect::<Vec<_>>(),
+        "mappings": record.mappings,
+        "runtimeDependencies": record.runtime_dependencies,
+        "provenance": {
+            "translator": record.provenance.translator,
+            "sourceLanguage": record.provenance.source_language,
+            "sourceSha256": record.provenance.source_sha256,
+            "sourceBytes": record.provenance.source_bytes,
+            "header": record.provenance.header,
+        },
+    }));
+    let diagnostic = value.diagnostic().map(|record| {
+        json!({
+            "kind": record.kind, "message": record.message, "span": record.span,
+        })
+    });
+    json!({
+        "sourceLanguage": value.source_language(), "targetLanguage": value.target_language(),
+        "code": value.code(),
+        "contract": {
+            "schemaVersion": contract.schema_version, "source": contract.source, "target": contract.target,
+            "support": match contract.support {
+                meta_language::TranslationSupport::PortableEncoding => "portable-encoding",
+                meta_language::TranslationSupport::SemanticSubset => "semantic-subset",
+                meta_language::TranslationSupport::SemanticTranslation => "semantic-translation",
+            },
+            "observation": contract.observation, "requiredRuntime": contract.required_runtime,
+            "encoding": contract.encoding, "assumptions": contract.assumptions, "obligation": contract.obligation,
+        },
+        "semantics": semantics, "diagnostic": diagnostic,
+    })
+}
+
+#[test]
+fn retained_modern_javascript_array_contract_executes_every_original_input() {
+    use super::issue_195_observations::{Observation, record};
+    use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+    use meta_language::translation::{check::check_program, emit_javascript::emit_javascript};
+    use std::fs;
+    use std::process::Command;
+
+    const FIXTURE: &str =
+        include_str!("../../../parity/fixtures/modern-javascript-array-parity.lino");
+    const NAME: &str = "retained_modern_javascript_array_contract_executes_every_original_input";
+    let fixture = meta_language::read_structured_data_lino(FIXTURE).unwrap();
+    assert_eq!(fixture["schemaVersion"], 1);
+    assert_eq!(
+        fixture["model"],
+        "retained modern JavaScript array parity 1"
+    );
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap();
+    let contract_bytes =
+        fs::read(root.join("parity/sources/modern-javascript-parity-expectations-2026-10-16.txt"))
+            .unwrap();
+    assert_eq!(
+        modern_array_digest(&contract_bytes),
+        "e2c4a14e4cff20b8bd4e77c1110151f5add84292836591c5eac2c1dc40c141af"
+    );
+    assert_eq!(
+        modern_array_digest(
+            fixture["historicalNative"]["source"]
+                .as_str()
+                .unwrap()
+                .as_bytes()
+        ),
+        "1eec6a923a4d78d79b85fb5da684670f7b2383727539e19b26a363ff8a0bbee2"
+    );
+    // Fresh actual JavaScript calls and all original-source executions, not a stored emitter snapshot.
+    // run() has no per-command timeout. The unchanged physical CI module deadline bounds this test.
+    let probe = run(Command::new("node").current_dir(root).args([
+        "js/tests/support/modern-javascript-array-parity.js",
+        "--probe",
+    ]));
+    assert!(probe.ok, "{}", probe.stderr);
+    let records = meta_language::read_structured_data_records(&probe.stdout).unwrap();
+    assert_eq!(records.len(), 12);
+    assert_eq!(records[0]["kind"], "metadata");
+    assert_eq!(
+        records[0]["fixtureDigest"],
+        modern_array_digest(FIXTURE.as_bytes())
+    );
+    assert!(!records[0]["nodeVersion"].as_str().unwrap().is_empty());
+    assert_eq!(records[0]["admitted"], 6);
+    assert_eq!(records[0]["refused"], 5);
+    let rows = fixture["cases"].as_array().unwrap();
+    assert_eq!(rows.len(), 11);
+    assert_eq!(
+        rows.iter()
+            .filter(|row| row["origin"] == "original")
+            .count(),
+        9
+    );
+    let mut admitted = 0;
+    let mut refused = 0;
+    for (index, row) in rows.iter().enumerate() {
+        let expected_record = &records[index + 1];
+        assert_eq!(expected_record["kind"], "case");
+        assert_eq!(expected_record["id"], row["id"]);
+        assert_eq!(expected_record["sourceSha256"], row["sourceSha256"]);
+        let source = row["source"].as_str().unwrap();
+        assert_eq!(modern_array_digest(source.as_bytes()), row["sourceSha256"]);
+        let targets = row["targets"].as_array().unwrap();
+        let expected_targets = expected_record["targets"].as_array().unwrap();
+        assert_eq!(targets.len(), expected_targets.len());
+        let mut rust_code = None;
+        for (target, expected) in targets.iter().zip(expected_targets) {
+            let target = target.as_str().unwrap();
+            assert_eq!(expected["target"], target);
+            let translated = translate_program(source, "JavaScript", target).unwrap();
+            assert_eq!(
+                modern_array_translation_record(&translated),
+                expected["descriptor"],
+                "{}:{target}",
+                row["id"]
+            );
+            if row["expected"]["outcome"] == "refused" {
+                assert_eq!(target, "Rust");
+                let message = &translated
+                    .diagnostic()
+                    .expect("a genuine retained refusal")
+                    .message;
+                let expected = row["expected"]["diagnostic"].as_str().unwrap();
+                match row["expected"]["match"].as_str().unwrap() {
+                    "exact" => assert_eq!(message, expected),
+                    "prefix" => assert!(message.starts_with(expected), "{message}"),
+                    _ => panic!(
+                        "only an independently declared exact or prefix diagnostic is admitted"
+                    ),
+                }
+            } else {
+                assert_eq!(row["expected"]["outcome"], "admitted");
+                assert!(translated.diagnostic().is_none(), "{}:{target}", row["id"]);
+                assert_eq!(
+                    translated.contract().support,
+                    TranslationSupport::SemanticTranslation
+                );
+                assert!(!translated.contract().assumptions.contains(&IN_BOUNDS));
+                if target == "Rust" {
+                    rust_code = Some(translated.code().to_owned());
+                }
+            }
+        }
+        if row["expected"]["outcome"] == "refused" {
+            refused += 1;
+            continue;
+        }
+        let expected = row["expected"]["stdout"].as_str().unwrap();
+        assert_eq!(expected_record["originalStdout"], expected);
+        assert_eq!(expected_record["checkedJavaScriptStdout"], expected);
+        let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+        let javascript = emit_javascript(&checked).unwrap();
+        assert_eq!(
+            javascript.text, expected_record["checkedJavaScript"],
+            "{}: complete checked JavaScript emission",
+            row["id"]
+        );
+        let directory = TemporaryDirectory::new("retained-modern-array-parity");
+        let original_file = directory.0.join("source.mjs");
+        let javascript_file = directory.0.join("checked.mjs");
+        fs::write(&original_file, source).unwrap();
+        fs::write(&javascript_file, javascript.text).unwrap();
+        for file in [&original_file, &javascript_file] {
+            let output = run(Command::new("node").arg(file));
+            assert!(output.ok, "{}: {}", row["id"], output.stderr);
+            assert_eq!(output.stdout, expected, "{}", row["id"]);
+        }
+        let rust_file = directory.0.join("program.rs");
+        let executable = directory
+            .0
+            .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+        fs::write(
+            &rust_file,
+            rust_code.expect("every admitted original target set includes Rust"),
+        )
+        .unwrap();
+        let mut compiler = Command::new("rustc");
+        compiler.arg("--edition=2024");
+        #[cfg(windows)]
+        if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+            compiler.arg("-C").arg(format!("linker={linker}"));
+        }
+        let compiled = run(compiler.arg(&rust_file).arg("-o").arg(&executable));
+        assert!(compiled.ok, "{}: {}", row["id"], compiled.stderr);
+        let output = run(&mut Command::new(&executable));
+        assert!(output.ok, "{}: {}", row["id"], output.stderr);
+        assert_eq!(output.stdout, expected, "{}", row["id"]);
+        admitted += 1;
+    }
+    assert_eq!(admitted, 6);
+    assert_eq!(refused, 5);
+    // No record is produced until actual native frontends, all preserved refusals,
+    // full descriptors, both JS paths and all six Rust executables pass.
+    let modern = [
+        "originalArrayAndStringInputsRetained",
+        "utf16StringLengthParityExecuted",
+        "observableOutOfBoundsParityExecuted",
+    ];
+    let obsolete = [
+        "obsoleteExpectationConflictRecorded",
+        "correctedExpectationsFollowModernJavaScript",
+        "originalCoverageAndGenuineRefusalsRetained",
+    ];
+    for (fixture_id, fixture_file) in [
+        (
+            "conversation-contract:modernJavaScriptParityRequest",
+            "parity/sources/modern-javascript-parity-expectations-2026-10-16.txt",
+        ),
+        (
+            "modern-javascript-array-parity-programs",
+            "parity/fixtures/modern-javascript-array-parity.lino",
+        ),
+    ] {
+        for (requirement_id, assertions) in [
+            (
+                "I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR",
+                modern.as_slice(),
+            ),
+            (
+                "I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS",
+                obsolete.as_slice(),
+            ),
+        ] {
+            record(&Observation {
+                requirement_id,
+                suffix: "behavior",
+                fixture_id,
+                fixture_file,
+                assertions,
+                test_name: NAME,
+            });
+        }
+    }
+}

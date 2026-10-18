@@ -94,25 +94,25 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
       let text=parsed.bytes.toString('utf8');
       if(omitted.length){const item=omitted[0],declaration=parsed.bytes.subarray(item.start,item.end).toString();assert.equal(declaration.trim(),'#[cfg(test)]\nmod tests;');text=parsed.bytes.subarray(0,item.start).toString()+parsed.bytes.subarray(item.end).toString();}
       bind(module.name,parsed,parsed.items.filter(item=>!omitted.includes(item)));parts.push(text);
-      if(module.cases){
-        const paths=module.cases.files.filter(file=>existsSync(resolve(repository,file)));assert.ok(paths.length>=1,'owned comparison cases remain present');
-        const bytes=readFileSync(resolve(repository,paths[0]));for(const path of paths)assert.deepEqual(readFileSync(resolve(repository,path)),bytes,'case path aliases retain identical bytes');
-        assert.equal(digest(bytes.subarray(0,module.cases.originalBytes)),module.cases.originalSha256,'every original test assertion remains byte exact');
-        const cases=readRustSourceItems(bytes),names=cases.items.filter(item=>item.kind==='function_item'&&bytes.subarray(item.start,item.node.start).toString().includes('#[test]')).map(item=>item.name);
-        assert.deepEqual(names.slice(0,module.cases.originalTests.length),module.cases.originalTests);
-        inputs.push({file:paths[0],sourceAliases:module.cases.files,bytes:bytes.length,sha256:digest(bytes),testNames:names});
-        const additional=[];
-        for(const file of module.cases.extraCases??[]){
-          assert.ok(!module.cases.files.includes(file),'additional cases have their own source identity');
-          const extra=readFileSync(resolve(repository,file)),parsed=readRustSourceItems(extra);
-          const testNames=parsed.items.filter(item=>item.kind==='function_item'&&extra.subarray(item.start,item.node.start).toString().includes('#[test]')).map(item=>item.name);
-          assert.ok(testNames.length>0,'each additional case source owns actual tests');
-          assert.equal(new Set([...names,...testNames,...additional.flatMap(row=>row.testNames)]).size,names.length+testNames.length+additional.reduce((count,row)=>count+row.testNames.length,0),'comparison test identities remain distinct');
-          inputs.push({file,bytes:extra.length,sha256:digest(extra),testNames});
-          additional.push({source:extra.toString('utf8'),testNames});
-        }
-        parts.push('mod tests {\n'+bytes.toString('utf8')+'\n'+additional.map(row=>row.source).join('\n')+'\n}');
+    }
+    if(module.cases){
+      const paths=module.cases.files.filter(file=>existsSync(resolve(repository,file)));assert.ok(paths.length>=1,'owned comparison cases remain present');
+      const bytes=readFileSync(resolve(repository,paths[0]));for(const path of paths)assert.deepEqual(readFileSync(resolve(repository,path)),bytes,'case path aliases retain identical bytes');
+      assert.equal(digest(bytes.subarray(0,module.cases.originalBytes)),module.cases.originalSha256,'every original test assertion remains byte exact');
+      const cases=readRustSourceItems(bytes),names=cases.items.filter(item=>item.kind==='function_item'&&bytes.subarray(item.start,item.node.start).toString().includes('#[test]')).map(item=>item.name);
+      assert.deepEqual(names.slice(0,module.cases.originalTests.length),module.cases.originalTests);
+      inputs.push({file:paths[0],sourceAliases:module.cases.files,bytes:bytes.length,sha256:digest(bytes),testNames:names});
+      const additional=[];
+      for(const file of module.cases.extraCases??[]){
+        assert.ok(!module.cases.files.includes(file),'additional cases have their own source identity');
+        const extra=readFileSync(resolve(repository,file)),parsed=readRustSourceItems(extra);
+        const testNames=parsed.items.filter(item=>item.kind==='function_item'&&extra.subarray(item.start,item.node.start).toString().includes('#[test]')).map(item=>item.name);
+        assert.ok(testNames.length>0,'each additional case source owns actual tests');
+        assert.equal(new Set([...names,...testNames,...additional.flatMap(row=>row.testNames)]).size,names.length+testNames.length+additional.reduce((count,row)=>count+row.testNames.length,0),'comparison test identities remain distinct');
+        inputs.push({file,bytes:extra.length,sha256:digest(extra),testNames});
+        additional.push({source:extra.toString('utf8'),testNames});
       }
+      parts.push('mod tests {\n'+bytes.toString('utf8')+'\n'+additional.map(row=>row.source).join('\n')+'\n}');
     }
     // Bind copied items in their owning module, where original private types
     // and fields are accessible. Their source visibility stays byte exact.

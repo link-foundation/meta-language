@@ -200,16 +200,15 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
-    if !(1usize..=10usize).contains(&units.len()) {
-        -1f64
-    } else if ((units.len() as f64) > 1f64)
-        && match (
-            self::ml_array::optional_at(units, self::ml_array::number_index(0f64)),
-            48f64,
-        ) {
-            (Some(ml_left), ml_right) => ml_left == ml_right,
-            _ => false,
-        }
+    if (!(1usize..=10usize).contains(&units.len()))
+        || (((units.len() as f64) > 1f64)
+            && match (
+                self::ml_array::optional_at(units, self::ml_array::number_index(0f64)),
+                48f64,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            })
     {
         -1f64
     } else {
@@ -221,17 +220,17 @@ pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
                     let ml_s1 =
                         self::ml_read_grammar_attribute_integer_key_loop1(units, value, index);
                     match ml_s1 {
-                            self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Done(value_2) => {
-                                if value_2 <= 4_294_967_294f64 {
-                                    value_2
-                                } else {
-                                    -1f64
-                                }
-                            }
-                            self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Return(ml_result1) => {
-                                ml_result1
+                        self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Done(value_2) => {
+                            if value_2 <= 4_294_967_294f64 {
+                                value_2
+                            } else {
+                                -1f64
                             }
                         }
+                        self::MlReadGrammarAttributeIntegerKeyLoop1Result::MlReadGrammarAttributeIntegerKeyLoop1Return(ml_result1) => {
+                            ml_result1
+                        }
+                    }
                 }
             }
         }

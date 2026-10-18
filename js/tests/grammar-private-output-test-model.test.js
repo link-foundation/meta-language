@@ -31,7 +31,20 @@ test('private native model retains complete original test bodies and production 
   assert.equal(extraSources.length,1);
   const extras=model.receipt.inputs.filter(row=>extraSources.includes(row.file));
   assert.equal(extras.length,extraSources.length);assert.equal(extras.flatMap(row=>row.testNames).length,3);
-  assert.equal((model.source.match(/#\[test\]/gu)??[]).length,6);
+  const attributeOutput=model.outputs.find(output=>output.file.endsWith('/attributes.rs'));
+  assert.ok(attributeOutput);
+  assert.equal((model.outputs.filter(output=>output!==attributeOutput).map(output=>output.source).join('\n').match(/#\[test\]/gu)??[]).length,6);
+  assert.equal((attributeOutput.source.match(/#\[test\]/gu)??[]).length,1);
+  assert.equal((model.source.match(/#\[test\]/gu)??[]).length,7);
+  const attributeCase=policy.modules.find(module=>module.name==='attributes').cases;
+  const bytes=readFileSync(new URL('../../'+attributeCase.files[0],import.meta.url));
+  const actual=readRustSourceItems(bytes);
+  for(const name of attributeCase.originalTests){
+    const source=actual.items.filter(item=>item.kind==='function_item'&&item.name===name);
+    const generated=functions.filter(node=>functionName(node)===name);
+    assert.equal(source.length,1);assert.equal(generated.length,1);
+    assert.deepEqual(tokenize(text(modelBytes,generated[0]),'Rust').tokens.map(token=>[token.kind,token.value]),tokenize(text(bytes,source[0].node),'Rust').tokens.map(token=>[token.kind,token.value]),name);
+  }
 });
 
 test('private native model retains every selected declaration field and source provenance',()=>{

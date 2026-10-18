@@ -177,6 +177,12 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  ...Object.fromEntries(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].map(id => [id, {
+    javascript: ['js/src/program-translation.js', 'js/src/translation/array-value-rules.js', 'js/src/translation/frontend-rules.js',
+      'js/tests/translation-arrays.test.js', 'js/tests/support/modern-javascript-array-parity.js'],
+    rust: ['rust/src/program_translation.rs', 'rust/src/translation/check/arrays.rs',
+      'rust/src/translation/array_value_rules.rs', 'rust/tests/unit/translation_arrays.rs'],
+  }])),
   'I195-CST-EXPLICIT-AST-SELECTION': {
     javascript: ['js/src/network.js', 'js/src/network-projection-rules.js'],
     rust: ['rust/src/link_network.rs', 'rust/src/network_projection.rs',
@@ -201,6 +207,9 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     fixtureId: `conversation-contract:${sourceKey}`,
     ...(area === 'formal-concept-definitions' ? {
       additionalFixtures: [{ id: 'formal-concept-definitions', path: 'parity/fixtures/formal-concept-definitions.json' }],
+    } : {}),
+    ...(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].includes(id) ? {
+      additionalFixtures: [{ id: 'modern-javascript-array-parity-programs', path: 'parity/fixtures/modern-javascript-array-parity.lino' }],
     } : {}),
     specification, area,
     ...(tooling ? { tooling: dataTooling[id]?.tooling ?? sourceTooling[id] ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),

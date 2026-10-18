@@ -181,7 +181,7 @@ fn default_parse_keeps_concrete_source_after_explicit_abstract_selection() {
     let abstract_links = network
         .projected_links(NetworkProjection::AbstractSyntax)
         .collect::<Vec<_>>();
-    assert_ne!(abstract_links.as_slice(), []);
+    assert!(!abstract_links.is_empty());
     assert!(abstract_links.iter().all(|link| !matches!(
         link.metadata().link_type(),
         Some(LinkType::Token | LinkType::Trivia)
@@ -259,7 +259,7 @@ process.stdout.write(JSON.stringify({
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert_eq!(output.stderr.as_slice(), []);
+    assert!(output.stderr.is_empty());
     let observed: Value = serde_json::from_slice(&output.stdout)
         .expect("the complete actual process result is valid JSON");
     for entry in fixture()["cases"].as_array().unwrap() {
@@ -438,7 +438,7 @@ fn assert_projection_replay(
         .projected_links(NetworkProjection::AbstractSyntax)
         .map(meta_language::Link::id)
         .collect::<Vec<_>>();
-    assert_ne!(abstract_ids.as_slice(), []);
+    assert!(!abstract_ids.is_empty());
     assert_ne!(
         abstract_ids, concrete_ids,
         "abstract syntax requires a distinct explicit selection"
@@ -484,6 +484,7 @@ fn assert_projection_replay(
         assert_eq!(
             abstract_links
                 .iter()
+                .copied()
                 .map(meta_language::Link::id)
                 .collect::<Vec<_>>(),
             abstract_ids

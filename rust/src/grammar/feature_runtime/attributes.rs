@@ -10,10 +10,6 @@ use crate::translation::grammar_attribute_order_rules::{
     compare_grammar_attribute_integer_keys, read_grammar_attribute_integer_key,
 };
 
-#[cfg(test)]
-#[path = "attributes/tests.rs"]
-mod tests;
-
 fn attribute_integer_key(name: &str) -> f64 {
     // More than ten units always refuse the integer-key profile. Retain one
     // extra unit to distinguish that case without copying an arbitrary name.

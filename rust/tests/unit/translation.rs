@@ -18,3 +18,6 @@ pub mod rust {
     pub use super::owned_local_state_rules;
     pub use super::owned_tuple_call_rules;
 }
+
+#[path = "../../src/translation/grammar_attribute_order_rules.rs"]
+pub mod grammar_attribute_order_rules;
