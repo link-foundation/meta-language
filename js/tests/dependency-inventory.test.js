@@ -125,7 +125,10 @@ test('local declaration reconciliation retains audited releases and rejects unau
   assert.deepEqual(cache.source, { type: 'github-release', repository: 'actions/cache' });
   const auditedCache = inventory.items.find(({ id }) => id === cache.id);
   for (const field of ['name', 'pinned', 'compare', 'source', 'declaredIn']) assert.deepEqual(cache[field], auditedCache[field]);
-  for (const action of ['actions/cache/restore', 'actions/cache/save']) {
+  for (const [action, expectedOwners] of [
+    ['actions/cache/restore', ['.github/workflows/ci.yml', '.github/workflows/rust.yml']],
+    ['actions/cache/save', ['.github/workflows/ci.yml']],
+  ]) {
     const child = collected.find(({ id }) => id === `action ${action}@v6`);
     assert.ok(child, action);
     assert.equal(child.category, 'action');
@@ -133,7 +136,7 @@ test('local declaration reconciliation retains audited releases and rejects unau
     assert.equal(child.pinned, cache.pinned);
     assert.equal(child.compare, cache.compare);
     assert.deepEqual(child.source, cache.source, 'nested actions share only the actual repository release source');
-    assert.deepEqual(child.declaredIn, ['.github/workflows/ci.yml']);
+    assert.deepEqual(child.declaredIn, expectedOwners);
     assert.throws(() => reconcileLocalDeclarations({ auditDate: TODAY, items: [auditedCache] }, [child]), /live dependency refresh/u);
   }
   const checkout = collected.find(({ id }) => id === 'action actions/checkout@v7');
