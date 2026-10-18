@@ -71488,6 +71488,1233 @@ const B70_SOURCE_BINDINGS=[
     "name": "mapped_profile_fixture",
     "inventoryName": "read native mapped profile fixture",
     "sourceText": "fn mapped_profile_fixture() -> Value {\n    use sha2::{Digest, Sha256};\n    use std::fmt::Write as _;\n    let fixture = mapped_fixture(\"fixtures/grammar-selection-json-string.lino\");\n    assert_eq!(fixture[\"schemaVersion\"], 1);\n    assert_eq!(fixture[\"id\"], \"grammar-selection-json-string\");\n    let expected_captures = [\n        (\"inventory\", \"parity/language-grammar-inventory.lino\"),\n        (\n            \"originalConcreteOracle\",\n            \"parity/fixtures/default-cst-expected.lino\",\n        ),\n        (\n            \"nativeConcreteOracle\",\n            \"parity/fixtures/native-default-cst-expected.lino\",\n        ),\n        (\n            \"javascriptJsonGrammar\",\n            \"js/src/data/native-grammars/json.lino\",\n        ),\n        (\n            \"javascriptPythonGrammar\",\n            \"js/src/data/native-grammars/python.lino\",\n        ),\n        (\"rustJsonGrammar\", \"rust/src/data/native-grammars/json.lino\"),\n        (\n            \"rustPythonGrammar\",\n            \"rust/src/data/native-grammars/python.lino\",\n        ),\n        (\n            \"javascriptTests\",\n            \"js/tests/grammar-selection-json-string.test.js\",\n        ),\n        (\n            \"rustTests\",\n            \"rust/tests/unit/grammar_recursive_selection.rs\",\n        ),\n        (\n            \"rustTestTransport\",\n            \"rust/tests/unit/grammar_recursive_selection_mapping.rs\",\n        ),\n        (\n            \"fixtureAuthor\",\n            \"js/tests/support/grammar-selection-mapping-cases.js\",\n        ),\n        (\n            \"fixtureGenerator\",\n            \"js/scripts/generate-grammar-selection-mapping-fixtures.mjs\",\n        ),\n    ];\n    let captures = fixture[\"captures\"].as_array().unwrap();\n    assert_eq!(captures.len(), expected_captures.len());\n    for (capture, (id, relative)) in captures.iter().zip(expected_captures) {\n        assert_eq!(capture[\"id\"], id);\n        assert_eq!(capture[\"path\"], relative);\n        let path = std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n            .join(\"..\")\n            .join(relative);\n        let bytes =\n            std::fs::read(&path).unwrap_or_else(|error| panic!(\"{}: {error}\", path.display()));\n        let bytes = crate::grammar_mapping_capture_source::original_capture(relative, bytes);\n        assert_eq!(json!(bytes.len()), capture[\"bytes\"], \"{}\", path.display());\n        let digest =\n            Sha256::digest(bytes)\n                .iter()\n                .fold(String::with_capacity(64), |mut text, byte| {\n                    write!(text, \"{byte:02x}\").unwrap();\n                    text\n                });\n        assert_eq!(\n            digest,\n            capture[\"sha256\"].as_str().unwrap(),\n            \"{}\",\n            path.display()\n        );\n    }\n    fixture\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.hash-grammar-outcome-source-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/generate.mjs",
+    "name": "digest",
+    "inventoryName": "hash grammar outcome source bytes",
+    "sourceText": "digest=source=>createHash('sha256').update(source).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source.locate-unique-grammar-outcome-bridge-source-occurrence",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/generate.mjs",
+    "name": "unique",
+    "inventoryName": "locate unique grammar outcome bridge source occurrence",
+    "sourceText": "unique=(source,needle)=>{\n  const index=source.indexOf(needle);assert.ok(index>=0&&source.indexOf(needle,index+1)===-1,'one exact qualified source occurrence');return index;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source.construct-grammar-outcome-bridge-source-parent-proposal",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/generate.mjs",
+    "name": "proposeParent",
+    "inventoryName": "construct grammar outcome bridge source parent proposal",
+    "sourceText": "export function proposeParent(source) {\n  assert.equal(digest(source),outcomeWirePolicy.pins[parentPath],'original parent remains authenticated');\n  const parsed=readRustSourceItems(Buffer.from(source));\n  assert.ok(!parsed.items.some(item=>item.name==='exact_json_number'||item.name==='grammar_outcome'),'no hidden new owner collision');\n  const functions=parsed.items.filter(item=>item.kind==='function_item'&&item.name==='from_json');\n  assert.equal(functions.length,1);\n  const originalFunction=parsed.text(functions[0].node);\n  const start=unique(originalFunction,armPrefix);\n  const end=originalFunction.indexOf('\\n        Value::String(text) =>',start);\n  assert.ok(end>start);\n  const originalArm=originalFunction.slice(start,end);\n  assert.ok(originalArm.endsWith(armSuffix));\n  const indented=originalArm.slice(armPrefix.length,-armSuffix.length).split('\\n');\n  assert.ok(indented.every(line=>line===''||line.startsWith('            ')),'only source indentation is removed');\n  const body=indented.map(line=>line.slice(12)).join('\\n');\n  const returnLine='StructuredDataValue::Number(value)';\n  assert.ok(body.endsWith(returnLine));unique(body,returnLine);\n  const borrowedBody=body.slice(0,-returnLine.length)+'Ok(value)';\n  const helper='fn exact_json_number(number: &Number) -> Result<f64, String> {\\n'\n    +borrowedBody.split('\\n').map(line=>'    '+line).join('\\n')+'\\n}\\n\\n';\n  const fromJsonReplacement=originalFunction.replace(originalArm,callArm);\n  unique(source,originalFunction);unique(source,moduleAnchor);unique(source,functionAnchor);\n  const proposed=source.replace(originalFunction,fromJsonReplacement)\n    .replace(functionAnchor,helper+functionAnchor).replace(moduleAnchor,moduleAddition+moduleAnchor);\n  const inverse=candidate=>{\n    unique(candidate,moduleAddition);unique(candidate,helper);unique(candidate,callArm);\n    return candidate.replace(moduleAddition,'').replace(helper,'').replace(callArm,originalArm);\n  };\n  assert.equal(inverse(proposed),source,'whole original parent is exactly reconstructible');\n  return {source:proposed,inverse,helper,originalArm,callArm,\n    evidence:{path:parentPath,originalBytes:Buffer.byteLength(source),originalSha256:digest(source),\n      proposedBytes:Buffer.byteLength(proposed),proposedSha256:digest(proposed),\n      originalNumberArmSha256:digest(originalArm),helperSha256:digest(helper),\n      sourceFunction:{start:functions[0].node.start,end:functions[0].node.end,sha256:digest(originalFunction)},\n      permittedChanges:['private child module and public use','exact Number arm extraction and scalar call']}};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source.restore-grammar-outcome-bridge-source-original-parent",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/generate.mjs",
+    "name": "proposeParent::inverse",
+    "inventoryName": "restore grammar outcome bridge source original parent",
+    "sourceText": "inverse=candidate=>{\n    unique(candidate,moduleAddition);unique(candidate,helper);unique(candidate,callArm);\n    return candidate.replace(moduleAddition,'').replace(helper,'').replace(callArm,originalArm);\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source.build-grammar-outcome-bridge-source-integration-proposal",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/generate.mjs",
+    "name": "buildIntegration",
+    "inventoryName": "build grammar outcome bridge source integration proposal",
+    "sourceText": "export function buildIntegration(root=repository) {\n  // This reauthenticates all B94 source pins, aliases, imports, root paths and\n  // every one of the nine declarations before emitting any private output.\n  const packet=buildOutcomePacket(root);\n  const original=readFileSync(resolve(root,parentPath),'utf8');\n  const parent=proposeParent(original);\n  const template=readFileSync(new URL('./sinks.rs',import.meta.url),'utf8');\n  const oldNotice='// PRIVATE GENERATED PROPOSAL; no concrete sink or native execution.\\n'\n    +'// One ordered borrowed visitor drives CountSink(Node=()) and DirectSink(Node=LinkId).\\n'\n    +'// Recursive control flow below is NOT an arbitrary-depth resource proof.\\n';\n  assert.ok(packet.source.startsWith(oldNotice),'exact unchanged generated visitor notice');\n  const notice='// Generated exact borrowed declaration transport. Native execution remains unverified.\\n'\n    +'// Recursive visitor admission is explicitly bounded to depth limits at most 256.\\n';\n  const child=template+'\\n'+notice+packet.source.slice(oldNotice.length);\n  assert.ok(!child.includes('.clone(')&&!child.includes('to_value')&&!child.includes('from_json('));\n  assert.ok(!child.includes('StructuredDataValue')&&!child.includes(' as f64'));\n  assert.ok(child.split('\\n').length<1000,'bounded source owner');\n  return {original,parent,child,plan:packet.plan,receipt:{schemaVersion:1,\n    boundary:'Private mechanically generated transport; no native compilation, execution, public API parity or default CST integration claim.',\n    parent:parent.evidence,child:{path:'rust/src/structured_data_links/grammar_outcome.rs',bytes:Buffer.byteLength(child),sha256:digest(child)},\n    predecessor:{policySha256:digest(readFileSync(new URL('../wire/wire-policy.mjs',import.meta.url))),\n      originalParentPin:outcomeWirePolicy.pins[parentPath],pins:packet.receipt.inputs},\n    sourcePolicyChanges:[], // Parent successor is recorded separately above; no old pin is overwritten.\n    generatorSha256:digest(readFileSync(fileURLToPath(import.meta.url))),templateSha256:digest(template),\n    profile:{maximumDepthLimit:256,limits:'positive; expanded occurrences/scalar bytes; new API only',rootCountOrder:'last'},\n    pending:['native compilation and execution','matching JavaScript API or experiment-only placement','CI all-nine-type parity and budget controls','arbitrary-depth explicit native frames']}};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source-verification.load-grammar-outcome-bridge-source-verification-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/integration.test.mjs",
+    "name": "current",
+    "inventoryName": "load grammar outcome bridge source verification fixture",
+    "sourceText": "current=()=>result??=buildIntegration()"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source-verification.verify-grammar-outcome-bridge-source-verification-first-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/integration.test.mjs",
+    "name": "the native parent proposal is exactly invertible and moves the actual Number arm without changing its validation",
+    "inventoryName": "verify grammar outcome bridge source verification first contract",
+    "sourceText": "test('the native parent proposal is exactly invertible and moves the actual Number arm without changing its validation',()=>{\n  const packet=current();\n  assert.equal(packet.parent.inverse(packet.parent.source),packet.original);\n  assert.equal(packet.receipt.parent.originalSha256,packet.receipt.predecessor.originalParentPin);\n  assert.deepEqual(packet.receipt.sourcePolicyChanges,[]);\n  assert.ok(packet.parent.source.includes('mod grammar_outcome;\\npub use grammar_outcome::encode_grammar_parse_outcome_links;'));\n  assert.ok(packet.parent.helper.includes('fn exact_json_number(number: &Number) -> Result<f64, String>'));\n  const statements=packet.parent.originalArm.slice('        Value::Number(number) => {\\n'.length,-'\\n        }'.length)\n    .split('\\n').map(line=>line.slice(12)).join('\\n');\n  const expected='fn exact_json_number(number: &Number) -> Result<f64, String> {\\n'\n    +statements.replace('StructuredDataValue::Number(value)','Ok(value)').split('\\n').map(line=>'    '+line).join('\\n')+'\\n}\\n\\n';\n  assert.equal(packet.parent.helper,expected);\n  assert.ok(packet.parent.source.includes(packet.parent.callArm));\n  // Whole-source conservation catches every unrelated mutation; an old pin\n  // cannot be replaced by a caller's merely similar source.\n  assert.throws(()=>proposeParent(packet.original+'\\n'),/authenticated/);\n  assert.throws(()=>packet.parent.inverse(packet.parent.source.replace('mod grammar_outcome;','mod foreign;')));\n  const changed=packet.parent.source.replace('const LANGUAGE:', 'const OTHER_LANGUAGE:');\n  assert.notEqual(packet.parent.inverse(changed),packet.original);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-bridge-source-verification.verify-grammar-outcome-bridge-source-verification-second-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/integration.test.mjs",
+    "name": "the concrete sink proposal counts before graph allocation and shares the exact borrowed exhaustive visitor",
+    "inventoryName": "verify grammar outcome bridge source verification second contract",
+    "sourceText": "test('the concrete sink proposal counts before graph allocation and shares the exact borrowed exhaustive visitor',()=>{\n  const {child}=current();\n  for(const declaration of ['impl OutcomeWireSink for CountSink','type Node = ();','impl OutcomeWireSink for DirectSink','type Node = LinkId;',\n    'fn wire_parse_outcome<S: OutcomeWireSink>','fn wire_syntax_tree<S: OutcomeWireSink>',\n    'fn wire_grammar_selection<S: OutcomeWireSink>','fn wire_leaf_text<S: OutcomeWireSink>','fn wire_operation_value<S: OutcomeWireSink>'])\n    assert.ok(child.includes(declaration),declaration);\n  const entry=child.slice(child.indexOf('pub fn encode_grammar_parse_outcome_links('),child.indexOf('// Generated exact borrowed declaration transport.'));\n  const ordered=['limits.node_limit == 0','limits.depth_limit > 256','let mut count = CountSink',\n    'wire_parse_outcome(outcome, &mut count, 1)?;','count.occurrence(0, 1)?;',\n    'let mut sink = DirectSink::new(limits);','wire_parse_outcome(outcome, &mut sink, 1)?;',\n    'sink.encoder.node(\"structured data\", Some(\"1\"), &[body], 0)?;'];\n  let previous=-1;\n  for(const marker of ordered) {const position=entry.indexOf(marker);assert.ok(position>previous,marker);previous=position;}\n  assert.ok(child.includes('checked_add(1)')&&child.includes('checked_add(bytes)'));\n  assert.ok(child.includes('references.try_reserve(count)'));\n  assert.ok(child.includes('self.encoder.scalar(\"string value\", Some(value), depth)'));\n  assert.ok(child.includes('write_number(exact_json_number(value)?)?'));\n  assert.ok(child.includes('self.json_number(&serde_json::Number::from(integer), depth)'));\n  for(const forbidden of ['.clone(', 'from_json(', 'to_value', 'StructuredDataValue', ' as f64', 'encode_utf16', '_ =>'])\n    assert.ok(!child.includes(forbidden),forbidden);\n  // A syntax/type/CI runtime check remains required. These assertions verify\n  // source contracts, not successful native CountSink or DirectSink execution.\n  assert.ok(current().receipt.pending.includes('native compilation and execution'));\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.calculate-native-grammar-outcome-graph-depth",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "next_depth",
+    "inventoryName": "calculate native grammar outcome graph depth",
+    "sourceText": "fn next_depth(depth: usize, increment: usize) -> Result<usize, String> {\n    depth\n        .checked_add(increment)\n        .ok_or_else(|| fail(\"the outcome exceeds its structural resource limit\"))\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-array-occurrence-counter",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountArray",
+    "inventoryName": "native grammar outcome array occurrence counter",
+    "sourceText": "struct CountArray {\n    depth: usize,\n    expected: usize,\n    seen: usize,\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-occurrence-count-visitor",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink",
+    "inventoryName": "native grammar outcome occurrence count visitor",
+    "sourceText": "struct CountSink {\n    limits: StructuredDataLinksLimits,\n    occurrences: usize,\n    bytes: usize,\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.count-native-grammar-outcome-graph-occurrence",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink::occurrence",
+    "inventoryName": "count native grammar outcome graph occurrence",
+    "sourceText": "fn occurrence(&mut self, depth: usize, bytes: usize) -> Result<(), String> {\n        let occurrences = self.occurrences.checked_add(1)\n            .ok_or_else(|| fail(\"the outcome exceeds its structural resource limit\"))?;\n        let total_bytes = self.bytes.checked_add(bytes)\n            .ok_or_else(|| fail(\"the outcome exceeds its scalar byte resource limit\"))?;\n        if occurrences > self.limits.node_limit || depth > self.limits.depth_limit {\n            return Err(fail(\"the outcome exceeds its structural resource limit\"));\n        }\n        if total_bytes > self.limits.byte_limit {\n            return Err(fail(\"the outcome exceeds its scalar byte resource limit\"));\n        }\n        self.occurrences = occurrences;\n        self.bytes = total_bytes;\n        Ok(())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-count-visitor-unit",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::Node",
+    "inventoryName": "native grammar outcome count visitor unit",
+    "sourceText": "type Node = ();"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-count-visitor-object-depth",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::Object",
+    "inventoryName": "native grammar outcome count visitor object depth",
+    "sourceText": "type Object = usize;"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-count-visitor-array-state",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::Array",
+    "inventoryName": "native grammar outcome count visitor array state",
+    "sourceText": "type Array = CountArray;"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.begin-native-grammar-outcome-count-visitor-object",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::begin_object",
+    "inventoryName": "begin native grammar outcome count visitor object",
+    "sourceText": "fn begin_object(&mut self, depth: usize) -> Result<usize, String> {\n        self.occurrence(depth, 0)?;\n        Ok(depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-object-field",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::object_field",
+    "inventoryName": "visit native grammar outcome count visitor object field",
+    "sourceText": "fn object_field<F>(&mut self, object: &mut usize, key: &str, visit: F) -> Result<(), String>\n    where F: FnOnce(&mut Self, usize) -> Result<(), String> {\n        let child_depth = next_depth(*object, 2)?;\n        self.occurrence(next_depth(*object, 1)?, 0)?;\n        self.string(key, child_depth)?;\n        visit(self, child_depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.finish-native-grammar-outcome-count-visitor-object",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::end_object",
+    "inventoryName": "finish native grammar outcome count visitor object",
+    "sourceText": "fn end_object(&mut self, _object: usize) -> Result<(), String> { Ok(()) }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.begin-native-grammar-outcome-count-visitor-array",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::begin_array",
+    "inventoryName": "begin native grammar outcome count visitor array",
+    "sourceText": "fn begin_array(&mut self, count: usize, depth: usize) -> Result<CountArray, String> {\n        self.occurrence(depth, 0)?;\n        Ok(CountArray { depth, expected: count, seen: 0 })\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-array-item",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::array_item",
+    "inventoryName": "visit native grammar outcome count visitor array item",
+    "sourceText": "fn array_item<F>(&mut self, array: &mut CountArray, visit: F) -> Result<(), String>\n    where F: FnOnce(&mut Self, usize) -> Result<(), String> {\n        if array.seen >= array.expected {\n            return Err(fail(\"the outcome array changed during traversal\"));\n        }\n        visit(self, next_depth(array.depth, 1)?)?;\n        array.seen += 1;\n        Ok(())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.finish-native-grammar-outcome-count-visitor-array",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::end_array",
+    "inventoryName": "finish native grammar outcome count visitor array",
+    "sourceText": "fn end_array(&mut self, array: CountArray) -> Result<(), String> {\n        if array.seen != array.expected {\n            return Err(fail(\"the outcome array changed during traversal\"));\n        }\n        Ok(())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-null-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::null",
+    "inventoryName": "visit native grammar outcome count visitor null scalar",
+    "sourceText": "fn null(&mut self, depth: usize) -> Result<(), String> { self.occurrence(depth, 0) }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-boolean-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::boolean",
+    "inventoryName": "visit native grammar outcome count visitor boolean scalar",
+    "sourceText": "fn boolean(&mut self, value: bool, depth: usize) -> Result<(), String> {\n        self.occurrence(depth, if value { 4 } else { 5 })\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-string-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::string",
+    "inventoryName": "visit native grammar outcome count visitor string scalar",
+    "sourceText": "fn string(&mut self, value: &str, depth: usize) -> Result<(), String> {\n        self.occurrence(depth, value.len())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-unsigned-integer-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::usize",
+    "inventoryName": "visit native grammar outcome count visitor unsigned integer scalar",
+    "sourceText": "fn usize(&mut self, value: usize, depth: usize) -> Result<(), String> {\n        let integer = u64::try_from(value).map_err(|_| fail(\"a JSON integer is not binary64\"))?;\n        self.json_number(&serde_json::Number::from(integer), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-signed-integer-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::i64",
+    "inventoryName": "visit native grammar outcome count visitor signed integer scalar",
+    "sourceText": "fn i64(&mut self, value: i64, depth: usize) -> Result<(), String> {\n        self.json_number(&serde_json::Number::from(value), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-count-visitor-exact-structured-data-number",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "CountSink as OutcomeWireSink::json_number",
+    "inventoryName": "visit native grammar outcome count visitor exact structured data number",
+    "sourceText": "fn json_number(&mut self, value: &serde_json::Number, depth: usize) -> Result<(), String> {\n        // Existing formatter's binary64 scratch is bounded constant work, not\n        // an input-sized output tree. No replacement numerical algorithm.\n        let spelling = write_number(exact_json_number(value)?)?;\n        self.occurrence(depth, spelling.len())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-object-state",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectObject",
+    "inventoryName": "native grammar outcome direct object state",
+    "sourceText": "struct DirectObject {\n    id: LinkId,\n    depth: usize,\n    references: Vec<LinkId>,\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-array-state",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectArray",
+    "inventoryName": "native grammar outcome direct array state",
+    "sourceText": "struct DirectArray {\n    object: DirectObject,\n    expected: usize,\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-graph-visitor",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink",
+    "inventoryName": "native grammar outcome direct graph visitor",
+    "sourceText": "struct DirectSink {\n    encoder: Encoder,\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.create-native-grammar-outcome-direct-graph-visitor",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink::new",
+    "inventoryName": "create native grammar outcome direct graph visitor",
+    "sourceText": "fn new(limits: StructuredDataLinksLimits) -> Self {\n        Self { encoder: Encoder {\n            network: LinkNetwork::new(), limits, bytes: 0,\n            scalars: HashMap::new(), container_aliases: HashMap::new(),\n            containers: HashMap::new(), consumed_aliases: HashSet::new(), heights: HashMap::new(),\n        } }\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.reserve-native-grammar-outcome-direct-graph-references",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink::reserve",
+    "inventoryName": "reserve native grammar outcome direct graph references",
+    "sourceText": "fn reserve(references: &mut Vec<LinkId>, count: usize) -> Result<(), String> {\n        references.try_reserve(count)\n            .map_err(|_| fail(\"unable to reserve the bounded outcome references\"))\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.finish-native-grammar-outcome-direct-graph-container",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink::finish",
+    "inventoryName": "finish native grammar outcome direct graph container",
+    "sourceText": "fn finish(&mut self, object: DirectObject) -> LinkId {\n        self.encoder.network.set_references(object.id, &object.references);\n        object.id\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-visitor-graph-identifier",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::Node",
+    "inventoryName": "native grammar outcome direct visitor graph identifier",
+    "sourceText": "type Node = LinkId;"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-visitor-object-state",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::Object",
+    "inventoryName": "native grammar outcome direct visitor object state",
+    "sourceText": "type Object = DirectObject;"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.native-grammar-outcome-direct-visitor-array-state",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::Array",
+    "inventoryName": "native grammar outcome direct visitor array state",
+    "sourceText": "type Array = DirectArray;"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.begin-native-grammar-outcome-direct-visitor-object",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::begin_object",
+    "inventoryName": "begin native grammar outcome direct visitor object",
+    "sourceText": "fn begin_object(&mut self, depth: usize) -> Result<DirectObject, String> {\n        let id = self.encoder.node(\"object value\", None, &[], depth)?;\n        Ok(DirectObject { id, depth, references: Vec::new() })\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-object-field",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::object_field",
+    "inventoryName": "visit native grammar outcome direct visitor object field",
+    "sourceText": "fn object_field<F>(&mut self, object: &mut DirectObject, key: &str, visit: F) -> Result<(), String>\n    where F: FnOnce(&mut Self, usize) -> Result<LinkId, String> {\n        Self::reserve(&mut object.references, 1)?;\n        let child_depth = next_depth(object.depth, 2)?;\n        let key = self.encoder.scalar(\"string value\", Some(key), child_depth)?;\n        let value = visit(self, child_depth)?;\n        let pair = self.encoder.node(\"key value pair\", None, &[key, value], next_depth(object.depth, 1)?)?;\n        object.references.push(pair);\n        Ok(())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.finish-native-grammar-outcome-direct-visitor-object",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::end_object",
+    "inventoryName": "finish native grammar outcome direct visitor object",
+    "sourceText": "fn end_object(&mut self, object: DirectObject) -> Result<LinkId, String> {\n        Ok(self.finish(object))\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.begin-native-grammar-outcome-direct-visitor-array",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::begin_array",
+    "inventoryName": "begin native grammar outcome direct visitor array",
+    "sourceText": "fn begin_array(&mut self, count: usize, depth: usize) -> Result<DirectArray, String> {\n        let id = self.encoder.node(\"array value\", None, &[], depth)?;\n        let mut references = Vec::new();\n        Self::reserve(&mut references, count)?;\n        Ok(DirectArray { object: DirectObject { id, depth, references }, expected: count })\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-array-item",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::array_item",
+    "inventoryName": "visit native grammar outcome direct visitor array item",
+    "sourceText": "fn array_item<F>(&mut self, array: &mut DirectArray, visit: F) -> Result<(), String>\n    where F: FnOnce(&mut Self, usize) -> Result<LinkId, String> {\n        if array.object.references.len() >= array.expected {\n            return Err(fail(\"the outcome array changed during traversal\"));\n        }\n        Self::reserve(&mut array.object.references, 1)?;\n        let value = visit(self, next_depth(array.object.depth, 1)?)?;\n        array.object.references.push(value);\n        Ok(())\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.finish-native-grammar-outcome-direct-visitor-array",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::end_array",
+    "inventoryName": "finish native grammar outcome direct visitor array",
+    "sourceText": "fn end_array(&mut self, array: DirectArray) -> Result<LinkId, String> {\n        if array.object.references.len() != array.expected {\n            return Err(fail(\"the outcome array changed during traversal\"));\n        }\n        Ok(self.finish(array.object))\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-null-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::null",
+    "inventoryName": "visit native grammar outcome direct visitor null scalar",
+    "sourceText": "fn null(&mut self, depth: usize) -> Result<LinkId, String> {\n        self.encoder.scalar(\"null value\", None, depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-boolean-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::boolean",
+    "inventoryName": "visit native grammar outcome direct visitor boolean scalar",
+    "sourceText": "fn boolean(&mut self, value: bool, depth: usize) -> Result<LinkId, String> {\n        self.encoder.scalar(\"boolean value\", Some(if value { \"true\" } else { \"false\" }), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-string-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::string",
+    "inventoryName": "visit native grammar outcome direct visitor string scalar",
+    "sourceText": "fn string(&mut self, value: &str, depth: usize) -> Result<LinkId, String> {\n        self.encoder.scalar(\"string value\", Some(value), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-unsigned-integer-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::usize",
+    "inventoryName": "visit native grammar outcome direct visitor unsigned integer scalar",
+    "sourceText": "fn usize(&mut self, value: usize, depth: usize) -> Result<LinkId, String> {\n        let integer = u64::try_from(value).map_err(|_| fail(\"a JSON integer is not binary64\"))?;\n        self.json_number(&serde_json::Number::from(integer), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-signed-integer-scalar",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::i64",
+    "inventoryName": "visit native grammar outcome direct visitor signed integer scalar",
+    "sourceText": "fn i64(&mut self, value: i64, depth: usize) -> Result<LinkId, String> {\n        self.json_number(&serde_json::Number::from(value), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.visit-native-grammar-outcome-direct-visitor-exact-structured-data-number",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "DirectSink as OutcomeWireSink::json_number",
+    "inventoryName": "visit native grammar outcome direct visitor exact structured data number",
+    "sourceText": "fn json_number(&mut self, value: &serde_json::Number, depth: usize) -> Result<LinkId, String> {\n        self.encoder.scalar(\"number value\", Some(&write_number(exact_json_number(value)?)?), depth)\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.encode-native-grammar-outcome-borrowed-graph",
+    "source": "experiments/grammar-outcome-network/native-transport/bridge/sinks.rs",
+    "name": "encode_grammar_parse_outcome_links",
+    "inventoryName": "encode native grammar outcome borrowed graph",
+    "sourceText": "pub fn encode_grammar_parse_outcome_links(\n    outcome: &ParseOutcome,\n    limits: StructuredDataLinksLimits,\n) -> Result<StructuredDataLinks, String> {\n    if limits.node_limit == 0 || limits.depth_limit == 0 || limits.byte_limit == 0 {\n        return Err(fail(\"resource limits must be positive\"));\n    }\n    if limits.depth_limit > 256 {\n        return Err(fail(\"the borrowed outcome profile requires a depth limit at most 256\"));\n    }\n    let mut count = CountSink { limits, occurrences: 0, bytes: 0 };\n    wire_parse_outcome(outcome, &mut count, 1)?;\n    // Count the schema root LAST as in the ordered plan. The whole counting\n    // pass still finishes before any input-sized output allocation.\n    count.occurrence(0, 1)?;\n    let mut sink = DirectSink::new(limits);\n    let body = wire_parse_outcome(outcome, &mut sink, 1)?;\n    let root = sink.encoder.node(\"structured data\", Some(\"1\"), &[body], 0)?;\n    Ok(StructuredDataLinks { network: sink.encoder.network, root })\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.read-native-grammar-outcome-ordered-field",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "member",
+    "inventoryName": "read native grammar outcome ordered field",
+    "sourceText": "fn member<'a>(value: &'a StructuredDataValue, name: &str) -> &'a StructuredDataValue {\n    let StructuredDataValue::Object(entries) = value else {\n        panic!(\"expected object at {name}\")\n    };\n    entries\n        .iter()\n        .find(|(key, _)| key.iter().copied().eq(name.encode_utf16()))\n        .map(|(_, value)| value)\n        .unwrap_or_else(|| panic!(\"missing ordered field {name}\"))\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.read-native-grammar-outcome-ordered-array",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "array",
+    "inventoryName": "read native grammar outcome ordered array",
+    "sourceText": "fn array(value: &StructuredDataValue) -> &[StructuredDataValue] {\n    let StructuredDataValue::Array(values) = value else {\n        panic!(\"expected ordered array\")\n    };\n    values\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.compare-native-grammar-outcome-ordered-values",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "exact",
+    "inventoryName": "compare native grammar outcome ordered values",
+    "sourceText": "fn exact(actual: &StructuredDataValue, expected: &StructuredDataValue) {\n    match (actual, expected) {\n        (StructuredDataValue::Number(a), StructuredDataValue::Number(b)) => {\n            assert_eq!(a.to_bits(), b.to_bits(), \"number bits, including -0\");\n        }\n        (StructuredDataValue::Array(a), StructuredDataValue::Array(b)) => {\n            assert_eq!(a.len(), b.len());\n            for (a, b) in a.iter().zip(b) {\n                exact(a, b);\n            }\n        }\n        (StructuredDataValue::Object(a), StructuredDataValue::Object(b)) => {\n            assert_eq!(a.len(), b.len());\n            for ((ak, av), (bk, bv)) in a.iter().zip(b) {\n                assert_eq!(ak, bk, \"actual ordered object keys\");\n                exact(av, bv);\n            }\n        }\n        _ => assert_eq!(actual, expected),\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.read-native-grammar-outcome-exact-fixture-limits",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "limits",
+    "inventoryName": "read native grammar outcome exact fixture limits",
+    "sourceText": "fn limits(row: &Value) -> StructuredDataLinksLimits {\n    let size = |key: &str| {\n        usize::try_from(row[\"limits\"][key].as_u64().expect(\"unsigned limit\"))\n            .expect(\"limit fits usize\")\n    };\n    StructuredDataLinksLimits {\n        node_limit: size(\"nodes\"),\n        byte_limit: size(\"bytes\"),\n        depth_limit: size(\"depth\"),\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.verify-native-grammar-outcome-graph-archive-replay",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "replay",
+    "inventoryName": "verify native grammar outcome graph archive replay",
+    "sourceText": "fn replay(packet: &StructuredDataLinks, expected: &StructuredDataValue) {\n    // Independent historical decoder budgets, not the candidate's exact expanded\n    // scalar-byte budget. Serialized text/binary size has a different meaning.\n    let replay_limits = StructuredDataLinksLimits::default();\n    assert_eq!(\n        packet.network.links().last().unwrap().id(),\n        packet.root,\n        \"schema root is emitted last\"\n    );\n    let text = packet.network.to_lino();\n    let text_graph = LinkNetwork::from_lino(&text).expect(\"this actual native text graph reloads\");\n    assert_eq!(text_graph.to_lino(), text, \"native graph exact text replay\");\n    let binary = encode_link_network_binary(&packet.network, BinaryLinksOptions::default())\n        .expect(\"encode this actual native graph\");\n    let binary_graph = decode_link_network_binary(&binary, BinaryLinksOptions::default())\n        .expect(\"native binary graph reloads\");\n    assert_eq!(\n        binary_graph.to_lino(),\n        text,\n        \"this native graph's IDs/references/metadata\"\n    );\n    assert_eq!(\n        encode_link_network_binary(&binary_graph, BinaryLinksOptions::default()).unwrap(),\n        binary\n    );\n    for graph in [&packet.network, &text_graph, &binary_graph] {\n        exact(\n            &decode_structured_data_links_ordered_with_limits(graph, packet.root, replay_limits)\n                .unwrap(),\n            expected,\n        );\n    }\n    // Deliberately no comparison of JS versus native physical graph IDs or aliases.\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.parse-native-grammar-outcome-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "parse",
+    "inventoryName": "parse native grammar outcome fixture",
+    "sourceText": "fn parse(row: &Value) -> ParseOutcome {\n    let mut grammars: HashMap<String, Grammar> = HashMap::new();\n    if let Some(bindings) = row[\"grammars\"].as_object() {\n        for (name, listing) in bindings {\n            grammars.insert(\n                name.clone(),\n                parse_grammar_links(listing.as_str().unwrap()).unwrap(),\n            );\n        }\n    }\n    let resolve = |name: &str| grammars.get(name).cloned();\n    let options = FeatureParseOptions {\n        grammar_name: row[\"options\"][\"grammarName\"].as_str().map(str::to_owned),\n        error_recovery: row[\"options\"][\"errorRecovery\"].as_bool(),\n        accept_recovery: (row[\"options\"][\"recovery\"].as_str() == Some(\"accept\")).then_some(true),\n        reject_ambiguity: (row[\"options\"][\"ambiguity\"].as_str() == Some(\"reject\")).then_some(true),\n        ..FeatureParseOptions::default()\n    };\n    let grammar = parse_grammar_links(row[\"listing\"].as_str().unwrap()).unwrap();\n    let parser = compile_feature_grammar(&grammar, Some(&resolve), options).unwrap();\n    let bytes = row[\"sourceBytes\"].as_array().map_or_else(\n        || row[\"source\"].as_str().unwrap().as_bytes().to_vec(),\n        |values| {\n            values\n                .iter()\n                .map(|value| u8::try_from(value.as_u64().unwrap()).unwrap())\n                .collect()\n        },\n    );\n    parser\n        .parse_tree(&bytes, &FeatureParseOptions::default())\n        .unwrap()\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.construct-native-grammar-outcome-minimal-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "minimal",
+    "inventoryName": "construct native grammar outcome minimal fixture",
+    "sourceText": "fn minimal() -> ParseOutcome {\n    ParseOutcome {\n        ok: true,\n        tree: None,\n        ambiguities: Vec::new(),\n        rejection: None,\n        source_planes: None,\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.construct-native-grammar-outcome-opaque-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "opaque",
+    "inventoryName": "construct native grammar outcome opaque fixture",
+    "sourceText": "fn opaque() -> Value {\n    json!({\"negativeZero\": -0.0, \"empty\": [], \"nothing\": null, \"flag\": false, \"zero\": 0, \"text\": \"é\"})\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.construct-native-grammar-outcome-token-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "token",
+    "inventoryName": "construct native grammar outcome token fixture",
+    "sourceText": "fn token() -> SyntaxTree {\n    SyntaxTree::Token {\n        kind: Some(\"word\".into()),\n        field: Some(\"value\".into()),\n        trivia: true,\n        start: 0,\n        end: 1,\n        attributes: None,\n        text: LeafText::Text(\"x\".into()),\n        lexical: None,\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.construct-native-grammar-outcome-complete-variant-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "full_boundary",
+    "inventoryName": "construct native grammar outcome complete variant fixture",
+    "sourceText": "fn full_boundary() -> ParseOutcome {\n    // Owned enum boundary values, not a claim that a grammar/action language can\n    // produce these arbitrary metadata records or out-of-safe-range operation integers.\n    let attributes: SyntaxAttributes = [\n        (\"2\".into(), OperationValue::Integer(2)),\n        (\"10\".into(), OperationValue::Integer(10)),\n        (\"z\".into(), OperationValue::Text(\"last\".into())),\n        (\"a\".into(), OperationValue::Text(\"first\".into())),\n        (\n            \"wide\".into(),\n            OperationValue::Integer(9_007_199_254_740_992),\n        ),\n        (\"minimum\".into(), OperationValue::Integer(i64::MIN)),\n    ]\n    .into_iter()\n    .collect();\n    let selection = GrammarSelection {\n        mode: \"boundary\".into(),\n        mapping: \"identity\".into(),\n        start: 0,\n        end: 4,\n        candidates: vec![opaque()],\n        provenance: Value::Null,\n        alternatives: vec![GrammarSelectionAlternative {\n            language: \"alternative\".into(),\n            root: Box::new(SyntaxTree::Missing {\n                kind: None,\n                start: 1,\n                end: 1,\n                literal: false,\n            }),\n            provenance: json!([]),\n        }],\n        ambiguous: true,\n        source_mapping: Some(Value::Null),\n    };\n    ParseOutcome {\n        ok: false,\n        tree: Some(SyntaxTree::Node {\n            kind: \"boundary\".into(),\n            field: Some(String::new()),\n            trivia: true,\n            start: 0,\n            end: 4,\n            children: vec![\n                SyntaxTree::Token {\n                    kind: None,\n                    field: None,\n                    trivia: false,\n                    start: 0,\n                    end: 1,\n                    attributes: Some(SyntaxAttributes::new()),\n                    text: LeafText::Hex(\"ff\".into()),\n                    lexical: Some(opaque()),\n                },\n                SyntaxTree::Error {\n                    start: 1,\n                    end: 3,\n                    text: LeafText::Text(\"π\".into()),\n                    reason: Some(String::new()),\n                },\n                SyntaxTree::Missing {\n                    kind: Some(\"word\".into()),\n                    start: 3,\n                    end: 3,\n                    literal: true,\n                },\n                SyntaxTree::Embed {\n                    language: \"child\".into(),\n                    start: 0,\n                    end: 4,\n                    root: Box::new(token()),\n                    selection: Some(Box::new(selection)),\n                    source_children: Some(Vec::new()),\n                },\n            ],\n            attributes: Some(attributes),\n        }),\n        ambiguities: vec![Ambiguity {\n            rule: \"boundary\".into(),\n            start: 0,\n            end: 4,\n            languages: Some(Vec::new()),\n            source: Some(0),\n            source_start: Some(0),\n            source_end: Some(4),\n            source_route: Some(vec![opaque()]),\n            offset_semantics: Some(\"boundary\".into()),\n        }],\n        rejection: Some(ParseRejection {\n            reason: \"boundary\",\n            offset: Some(0),\n            line: Some(1),\n            column: Some(2),\n            expected: Some(vec![\"x\".into(), \"π\".into()]),\n            limit: Some(9),\n            diagnostics: Some(vec![opaque()]),\n            offset_semantics: Some(\"boundary\".into()),\n        }),\n        source_planes: Some(vec![opaque()]),\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.construct-native-grammar-outcome-independent-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "constructed",
+    "inventoryName": "construct native grammar outcome independent fixture",
+    "sourceText": "fn constructed(id: &str) -> ParseOutcome {\n    match id {\n        \"minimal\" => minimal(),\n        \"all-native-variants\" => full_boundary(),\n        \"repeated-scalars\" => ParseOutcome {\n            source_planes: Some(vec![json!(0); 32]),\n            ..minimal()\n        },\n        _ => panic!(\"unknown independent boundary {id}\"),\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.verify-native-grammar-outcome-refusal",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "refusal",
+    "inventoryName": "verify native grammar outcome refusal",
+    "sourceText": "fn refusal(outcome: &ParseOutcome, limit: StructuredDataLinksLimits, phrase: &str) {\n    let error = encode_grammar_parse_outcome_links(outcome, limit)\n        .expect_err(\"must refuse before publication\");\n    assert!(error.contains(phrase), \"expected {phrase}: {error}\");\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.verify-native-grammar-outcome-independent-resource-boundaries",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "independent_boundaries",
+    "inventoryName": "verify native grammar outcome independent resource boundaries",
+    "sourceText": "fn independent_boundaries() {\n    let ordinary = StructuredDataLinksLimits::default();\n    let base = minimal();\n    for limits in [\n        StructuredDataLinksLimits {\n            node_limit: 0,\n            ..ordinary\n        },\n        StructuredDataLinksLimits {\n            byte_limit: 0,\n            ..ordinary\n        },\n        StructuredDataLinksLimits {\n            depth_limit: 0,\n            ..ordinary\n        },\n    ] {\n        refusal(&base, limits, \"positive\");\n    }\n    refusal(\n        &base,\n        StructuredDataLinksLimits {\n            depth_limit: 257,\n            ..ordinary\n        },\n        \"at most 256\",\n    );\n\n    let long = ParseOutcome {\n        source_planes: Some(vec![Value::String(\"x\".repeat(1024))]),\n        ..minimal()\n    };\n    refusal(\n        &long,\n        StructuredDataLinksLimits {\n            byte_limit: 64,\n            ..ordinary\n        },\n        \"scalar byte resource limit\",\n    );\n    let mut deep = token();\n    for _ in 0..300 {\n        deep = SyntaxTree::Node {\n            kind: \"deep\".into(),\n            field: None,\n            trivia: false,\n            start: 0,\n            end: 1,\n            children: vec![deep],\n            attributes: None,\n        };\n    }\n    refusal(\n        &ParseOutcome {\n            tree: Some(deep),\n            ..minimal()\n        },\n        ordinary,\n        \"structural resource limit\",\n    );\n\n    // Actual serde_json Number domain and existing exact codec, not a new cast.\n    for integer in [9_007_199_254_740_993_i64, i64::MAX] {\n        let opaque_number = ParseOutcome {\n            source_planes: Some(vec![json!(integer)]),\n            ..minimal()\n        };\n        refusal(\n            &opaque_number,\n            ordinary,\n            \"exactly representable as binary64\",\n        );\n        let attributes = [(\"integer\".into(), OperationValue::Integer(integer))]\n            .into_iter()\n            .collect();\n        let operation_number = ParseOutcome {\n            tree: Some(SyntaxTree::Node {\n                kind: \"integer-boundary\".into(),\n                field: None,\n                trivia: false,\n                start: 0,\n                end: 0,\n                children: Vec::new(),\n                attributes: Some(attributes),\n            }),\n            ..minimal()\n        };\n        refusal(\n            &operation_number,\n            ordinary,\n            \"exactly representable as binary64\",\n        );\n    }\n\n    // Native IndexMap order is authoritative, even where JS object enumeration\n    // would reorder numeric keys. This case is NOT advertised as parser parity.\n    let native_keys = [\"z\", \"2\", \"a\"];\n    let attrs = native_keys\n        .iter()\n        .map(|key| ((*key).into(), OperationValue::Integer(1)))\n        .collect();\n    let owned = ParseOutcome {\n        tree: Some(SyntaxTree::Node {\n            kind: \"owned-order\".into(),\n            field: None,\n            trivia: false,\n            start: 0,\n            end: 0,\n            children: Vec::new(),\n            attributes: Some(attrs),\n        }),\n        ..minimal()\n    };\n    let graph = encode_grammar_parse_outcome_links(&owned, ordinary).unwrap();\n    let expected = StructuredDataValue::Object(vec![\n        (\n            \"ok\".encode_utf16().collect(),\n            StructuredDataValue::Boolean(true),\n        ),\n        (\n            \"tree\".encode_utf16().collect(),\n            StructuredDataValue::Object(vec![\n                (\n                    \"type\".encode_utf16().collect(),\n                    StructuredDataValue::String(\"node\".encode_utf16().collect()),\n                ),\n                (\n                    \"kind\".encode_utf16().collect(),\n                    StructuredDataValue::String(\"owned-order\".encode_utf16().collect()),\n                ),\n                (\n                    \"start\".encode_utf16().collect(),\n                    StructuredDataValue::Number(0.0),\n                ),\n                (\n                    \"end\".encode_utf16().collect(),\n                    StructuredDataValue::Number(0.0),\n                ),\n                (\n                    \"children\".encode_utf16().collect(),\n                    StructuredDataValue::Array(Vec::new()),\n                ),\n                (\n                    \"attributes\".encode_utf16().collect(),\n                    StructuredDataValue::Object(\n                        native_keys\n                            .iter()\n                            .map(|key| {\n                                (\n                                    key.encode_utf16().collect(),\n                                    StructuredDataValue::Number(1.0),\n                                )\n                            })\n                            .collect(),\n                    ),\n                ),\n            ]),\n        ),\n        (\n            \"ambiguities\".encode_utf16().collect(),\n            StructuredDataValue::Array(Vec::new()),\n        ),\n        (\n            \"rejection\".encode_utf16().collect(),\n            StructuredDataValue::Null,\n        ),\n    ]);\n    replay(&graph, &expected);\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.native.verify-native-grammar-outcome-fresh-ordered-values-and-resource-boundaries",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs",
+    "name": "borrowed_outcomes_match_fresh_javascript_values_and_independent_boundaries",
+    "inventoryName": "verify native grammar outcome fresh ordered values and resource boundaries",
+    "sourceText": "fn borrowed_outcomes_match_fresh_javascript_values_and_independent_boundaries() {\n    let source = fs::read_to_string(\n        std::env::var(\"META_LANGUAGE_B95_OUTCOME_FIXTURE\")\n            .expect(\"runner supplies the fresh private JS oracle fixture\"),\n    )\n    .unwrap();\n    let fixture = read_structured_data_lino(&source).unwrap();\n    let ordered = read_structured_data_lino_ordered(&source).unwrap();\n    assert_eq!(fixture[\"schemaVersion\"], 1);\n    assert_eq!(\n        fixture[\"profile\"],\n        \"private borrowed native outcome probe 1\"\n    );\n    let rows = fixture[\"cases\"].as_array().unwrap();\n    let ordered_rows = array(member(&ordered, \"cases\"));\n    assert_eq!(rows.len(), 14);\n    assert_eq!(ordered_rows.len(), rows.len());\n    let mut parsed = 0;\n    let mut constructed_rows = 0;\n    let mut failures = Vec::new();\n    for (row, ordered_row) in rows.iter().zip(ordered_rows) {\n        let case_label = row[\"id\"]\n            .as_str()\n            .unwrap_or(\"invalid case identity\")\n            .to_owned();\n        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {\n            let id = row[\"id\"].as_str().unwrap();\n            let outcome = if row[\"listing\"].is_string() {\n                parsed += 1;\n                assert_eq!(row[\"origin\"], \"fresh JavaScript public grammar outcome\");\n                let actual = parse(row);\n                assert_eq!(actual.ok, row[\"ok\"].as_bool().unwrap(), \"{id}\");\n                if let Some(reason) = row[\"reason\"].as_str() {\n                    assert_eq!(actual.rejection.as_ref().unwrap().reason, reason, \"{id}\");\n                }\n                actual\n            } else {\n                constructed_rows += 1;\n                assert_eq!(\n                    row[\"origin\"],\n                    \"independent constructed value; not a parser/mapping validity claim\"\n                );\n                constructed(id)\n            };\n            let expected = member(ordered_row, \"expected\");\n            let exact_limits = limits(row);\n            assert!(\n                exact_limits.node_limit > 1\n                    && exact_limits.byte_limit > 1\n                    && exact_limits.depth_limit > 1\n            );\n            let packet = encode_grammar_parse_outcome_links(&outcome, exact_limits)\n                .unwrap_or_else(|error| panic!(\"{id}: {error}\"));\n            if id == \"all-native-variants\" {\n                assert!(\n                    packet\n                        .network\n                        .links()\n                        .any(|link| link.metadata().term() == Some(\"number value\")\n                            && link.metadata().definition() == Some(\"-0\")),\n                    \"actual negative-zero scalar spelling\"\n                );\n            }\n            replay(&packet, expected);\n            replay(\n                &encode_grammar_parse_outcome_links(&outcome, StructuredDataLinksLimits::default())\n                    .unwrap(),\n                expected,\n            );\n            if id == \"repeated-scalars\" {\n                assert!(\n                    packet.network.len() < exact_limits.node_limit,\n                    \"expanded costs include reused scalar references\"\n                );\n            }\n            if row[\"mapped\"] == true {\n                let value = decode_structured_data_links(&packet.network, packet.root).unwrap();\n                check_grammar_selection_mapped_tree(&value, &FeatureParseOptions::default())\n                    .unwrap();\n            }\n            for smaller in [\n                StructuredDataLinksLimits {\n                    node_limit: exact_limits.node_limit - 1,\n                    ..exact_limits\n                },\n                StructuredDataLinksLimits {\n                    byte_limit: exact_limits.byte_limit - 1,\n                    ..exact_limits\n                },\n                StructuredDataLinksLimits {\n                    depth_limit: exact_limits.depth_limit - 1,\n                    ..exact_limits\n                },\n            ] {\n                refusal(&outcome, smaller, \"resource limit\");\n            }\n        }));\n        if result.is_err() {\n            failures.push(case_label);\n        }\n    }\n    let counts = std::panic::catch_unwind(|| {\n        assert_eq!((parsed, constructed_rows), (11, 3));\n    });\n    if counts.is_err() {\n        failures.push(\"case counts\".to_owned());\n    }\n    let boundaries = std::panic::catch_unwind(|| {\n        independent_boundaries();\n    });\n    if boundaries.is_err() {\n        failures.push(\"independent boundaries\".to_owned());\n    }\n    assert!(\n        failures.is_empty(),\n        \"native outcome checks failed: {failures:?}\"\n    );\n    // Report only AFTER every native assertion above, through the old generic\n    // codec, never through the candidate whose behavior is under examination.\n    if let Some(path) = std::env::var_os(\"META_LANGUAGE_B95_OUTCOME_REPORT\") {\n        let report = json!({\"schemaVersion\": 1, \"profile\": \"private borrowed native outcome probe 1\",\n            \"javascriptOutcomeRows\": parsed, \"independentConstructedRows\": constructed_rows,\n            \"archiveReplay\": [\"each actual native graph text\", \"each actual native graph binary\"],\n            \"valueComparison\": \"complete ordered fields and binary64 bits\",\n            \"limits\": \"expanded occurrence/scalar-byte/depth exact and one-below boundaries\",\n            \"scope\": \"scratch candidate only; no public/default CST, alias identity or general-language support claim\"});\n        fs::write(path, structured_data_to_lino(&report).unwrap()).unwrap();\n    }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.load-grammar-outcome-expected-value-author-module",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "load",
+    "inventoryName": "load grammar outcome expected value author module",
+    "sourceText": "load=path=>import(pathToFileURL(resolve(repository,path)).href)"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.measure-grammar-outcome-expected-value-author-expanded-graph",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "metrics",
+    "inventoryName": "measure grammar outcome expected value author expanded graph",
+    "sourceText": "function metrics({network,root}) {\n  const pending=[{id:root,depth:0}];let nodes=0,bytes=0,depth=0;\n  while(pending.length){\n    const item=pending.pop(),link=network.link(item.id);\n    nodes+=1;bytes+=Buffer.byteLength(link.metadata().definition??'');depth=Math.max(depth,item.depth);\n    for(const id of link.references())pending.push({id,depth:item.depth+1});\n  }\n  assert.ok(depth<=256);\n  return {nodes,bytes,depth};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.capture-grammar-outcome-expected-value-author-ordered-graph-value",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "capture",
+    "inventoryName": "capture grammar outcome expected value author ordered graph value",
+    "sourceText": "function capture(expected) {\n  const packet=encodeStructuredDataLinks(expected),text=packet.network.toLino();\n  const canonical=LinkNetwork.fromLino(text),binary=encodeLinkNetworkBinary(canonical);\n  const restored=decodeLinkNetworkBinary(binary);\n  assert.equal(restored.toLino(),canonical.toLino(),'only this actual graph is compared by identity');\n  assert.deepEqual(decodeStructuredDataLinks(canonical,packet.root),expected);\n  assert.deepEqual(decodeStructuredDataLinks(restored,packet.root),expected);\n  return {expected,limits:metrics(packet),jsPhysicalNodes:packet.network.links().length};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.construct-grammar-outcome-expected-value-author-literal-grammar",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "literal",
+    "inventoryName": "construct grammar outcome expected value author literal grammar",
+    "sourceText": "literal=text=>`(grammar (start document))\\n(rule document normal (literal ${percentEncodeLinksText(text)}))\\n`"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.resolve-grammar-outcome-expected-value-author-grammar-binding",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "resolveGrammar",
+    "inventoryName": "resolve grammar outcome expected value author grammar binding",
+    "sourceText": "resolveGrammar:name=>linked.get(name)"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-expected-value-author.construct-grammar-outcome-expected-value-author-opaque-value",
+    "source": "experiments/grammar-outcome-network/native-transport/probe/oracle.mjs",
+    "name": "opaque",
+    "inventoryName": "construct grammar outcome expected value author opaque value",
+    "sourceText": "opaque=()=>({negativeZero:-0,empty:[],nothing:null,flag:false,zero:0,text:'é'})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.load-grammar-outcome-ordered-event-verification-fixture",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "current",
+    "inventoryName": "load grammar outcome ordered event verification fixture",
+    "sourceText": "current=()=>{inventory??=readOutcomeInventory();plan??=buildOrderedWirePlan(inventory);return plan;}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.describe-grammar-outcome-ordered-event-verification-owned-type",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "owned",
+    "inventoryName": "describe grammar outcome ordered event verification owned type",
+    "sourceText": "owned=name=>({kind:'owned',name})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.collect-grammar-outcome-ordered-event-verification-ordered-events",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "trace",
+    "inventoryName": "collect grammar outcome ordered event verification ordered events",
+    "sourceText": "trace=(name,value)=>[...outcomeWireEvents(current(),value,owned(name))]"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.read-grammar-outcome-ordered-event-verification-ordered-keys",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "keys",
+    "inventoryName": "read grammar outcome ordered event verification ordered keys",
+    "sourceText": "keys=(name,value)=>trace(name,value).filter(event=>event.key&&event.depth===3).map(event=>event.value)"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.construct-grammar-outcome-ordered-event-verification-leaf-control",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "leaf",
+    "inventoryName": "construct grammar outcome ordered event verification leaf control",
+    "sourceText": "leaf=(variant,payload)=>({$variant:variant,payload})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.construct-grammar-outcome-ordered-event-verification-token-control",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "token",
+    "inventoryName": "construct grammar outcome ordered event verification token control",
+    "sourceText": "token=(extra={})=>({$variant:'Token',trivia:false,start:0,end:1,text:leaf('Text','a'),...extra})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.verify-grammar-outcome-ordered-event-verification-first-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "current complete native CST ownership supplies nine exhaustive declarations and only authenticated root paths",
+    "inventoryName": "verify grammar outcome ordered event verification first contract",
+    "sourceText": "test('current complete native CST ownership supplies nine exhaustive declarations and only authenticated root paths',()=>{\n  const source=renderBorrowedVisitors((current(),inventory),plan);\n  assert.equal(inventory.declarations.length,9);assert.equal(inventory.inputs.length,4);\n  assert.equal(inventory.declarations.find(item=>item.name==='SyntaxAttributes').alias,'IndexMap<String,OperationValue>');\n  assert.ok(inventory.rootReexport.source.includes('ParseOutcome'));\n  for(const edit of [\n    value=>value.declarations.find(item=>item.name==='ParseOutcome').fields.push({name:'future',type:'bool'}),\n    value=>value.declarations.find(item=>item.name==='SyntaxTree').variants.push({name:'Future',unit:true}),\n    value=>{value.declarations.find(item=>item.name==='SyntaxAttributes').alias='BTreeMap<String,OperationValue>';},\n    value=>{value.declarations.find(item=>item.name==='SyntaxTree').variants.find(item=>item.name==='Embed').fields.find(item=>item.name==='selection').type='Option<Box<foreign::GrammarSelection>>';},\n    value=>value.inputs[0].imports.push({source:'use foreign::SyntaxTree;'}),\n    value=>{value.rootReexport.source=value.rootReexport.source.replace('LeafText,','LeafText as OtherText,');},\n  ]) {const forged=structuredClone(inventory);edit(forged);assert.throws(()=>checkOutcomeInventory(forged));}\n  for(const name of ['parse_outcome','parse_rejection','ambiguity','grammar_selection','grammar_selection_alternative','syntax_tree','leaf_text','operation_value','syntax_attributes','json'])\n    assert.ok(source.includes('fn wire_'+name+'<S: OutcomeWireSink>'));\n  assert.ok(source.includes('type Node;')&&source.includes('FnOnce(&mut Self, usize)'));\n  for(const forbidden of ['..','_ =>','.clone(', 'from_json','to_value',' as f64']) assert.ok(!source.includes(forbidden),forbidden);\n  // These are borrowed input uses, never allocated intermediate values.\n  assert.ok(source.includes('value: &serde_json::Value')&&source.includes('value: &crate::SyntaxAttributes'));\n  assert.deepEqual(buildOrderedWirePlan(inventory),plan);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.verify-grammar-outcome-ordered-event-verification-second-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "ordered events preserve option presence flattening flags and current JavaScript construction order",
+    "inventoryName": "verify grammar outcome ordered event verification second contract",
+    "sourceText": "test('ordered events preserve option presence flattening flags and current JavaScript construction order',()=>{\n  const ordinary={ok:false,ambiguities:[]};\n  assert.deepEqual(keys('ParseOutcome',ordinary),['ok','tree','ambiguities','rejection']);\n  assert.deepEqual(keys('ParseOutcome',{...ordinary,source_planes:[]}),['ok','tree','ambiguities','rejection','sourcePlanes']);\n  const rejection={reason:'syntax',offset:0,line:1,column:1,expected:[],limit:0,diagnostics:[],offset_semantics:''};\n  assert.deepEqual(keys('ParseRejection',rejection),['reason','offset','line','column','expected','limit','diagnostics','offsetSemantics']);\n  const selection={mode:'any-grammar',mapping:'field-ranges',start:0,end:1,candidates:[],provenance:{},alternatives:[],source_mapping:null,ambiguous:false};\n  assert.deepEqual(keys('GrammarSelection',selection),['mode','mapping','start','end','candidates','provenance','alternatives','sourceMapping','ambiguous']);\n  assert.ok(trace('GrammarSelection',selection).some(event=>event.kind==='boolean'&&event.value===false));\n  const ambiguity={rule:'r',start:0,end:1,languages:[],source:0,source_start:0,source_end:0,offset_semantics:'',source_route:[]};\n  assert.deepEqual(keys('Ambiguity',ambiguity),['rule','start','end','languages','source','sourceStart','sourceEnd','offsetSemantics','sourceRoute']);\n  assert.deepEqual(keys('SyntaxTree',token({field:'',attributes:new Map(),lexical:null,text:leaf('Hex','ff')})),['type','kind','field','start','end','attributes','lexical','text','hex']);\n  assert.deepEqual(keys('SyntaxTree',{$variant:'Error',start:0,end:0,text:leaf('Text',''),reason:''}),['type','start','end','text','reason']);\n  assert.deepEqual(keys('SyntaxTree',{$variant:'Missing',start:0,end:0,literal:false}),['type','kind','start','end']);\n  assert.deepEqual(keys('SyntaxTree',{$variant:'Embed',language:'Json',start:0,end:1,root:token(),source_children:[],selection}),['type','language','start','end','root','sourceChildren','selection']);\n  assert.deepEqual(keys('SyntaxTree',{$variant:'Node',kind:'root',trivia:true,start:0,end:1,children:[token()],attributes:new Map()}),['type','kind','trivia','start','end','children','attributes']);\n  // Plain control fields encode native None by absence; present null is legal\n  // for Option<Value>, not a fabricated Some(null SyntaxTree).\n  assert.throws(()=>trace('ParseOutcome',{...ordinary,tree:null}));\n  assert.throws(()=>trace('SyntaxTree',token({future:true})),/unknown native control field/);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.verify-grammar-outcome-ordered-event-verification-third-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "attribute order opaque source references exact integers and signed zero remain observable",
+    "inventoryName": "verify grammar outcome ordered event verification third contract",
+    "sourceText": "test('attribute order opaque source references exact integers and signed zero remain observable',()=>{\n  const attributes=new Map([\n    ['2',leaf('Integer',2n)],['10',leaf('Integer',10n)],['z',leaf('Text','last')],['a',leaf('Text','')],['😀',leaf('Integer',0n)],\n  ]);\n  attributes.set('z',leaf('Text','overwritten'));\n  const events=trace('SyntaxAttributes',attributes);\n  assert.deepEqual(events.filter(event=>event.key).map(event=>event.value),['2','10','z','a','😀']);\n  assert.ok(events.some(event=>event.value==='overwritten'));\n  const value={ok:false,ambiguities:[],source_planes:[{kind:'grammar-source',identity:0,derivation:{input:0,negativeZero:-0},extra:[]}]};\n  const sourceEvents=trace('ParseOutcome',value);\n  assert.ok(sourceEvents.some(event=>event.kind==='number'&&Object.is(event.value,-0)));\n  assert.equal(sourceEvents.filter(event=>event.kind==='number'&&Object.is(event.value,0)).length,2);\n  assert.ok(preflightOutcome(current(),value,limits).scalarBytes>0);\n  assert.doesNotThrow(()=>trace('OperationValue',leaf('Integer',1n<<60n)));\n  assert.throws(()=>trace('OperationValue',leaf('Integer',(1n<<53n)+1n)),/exactly representable/);\n  assert.throws(()=>preflightOutcome(current(),{...value,source_planes:[{invalid:Infinity}]},limits),/finite binary64/);\n  assert.throws(()=>trace('SyntaxTree',token({text:leaf('Text','\\ud800')})),/unpaired/);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-verification.verify-grammar-outcome-ordered-event-verification-fourth-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/draft.test.mjs",
+    "name": "expanded preflight matches an independent existing codec traversal and refuses at exact resource boundaries",
+    "inventoryName": "verify grammar outcome ordered event verification fourth contract",
+    "sourceText": "test('expanded preflight matches an independent existing codec traversal and refuses at exact resource boundaries',()=>{\n  current();\n  const native={ok:false,ambiguities:[]};\n  const expected={ok:false,tree:null,ambiguities:[],rejection:null};\n  const encoded=encodeStructuredDataLinks(expected);\n  const frames=[{id:encoded.root,depth:0}];\n  let occurrences=0,scalarBytes=0,maximumDepth=0;\n  while(frames.length) {\n    const {id,depth}=frames.pop(),link=encoded.network.link(id);\n    occurrences++;scalarBytes+=Buffer.byteLength(link.metadata().definition??'');maximumDepth=Math.max(maximumDepth,depth);\n    for(const child of link.references()) frames.push({id:child,depth:depth+1});\n  }\n  const actual=preflightOutcome(plan,native,limits);\n  assert.deepEqual(actual,{occurrences,scalarBytes,maximumDepth,references:occurrences-1});\n  assert.deepEqual(decodeStructuredDataLinks(encoded.network,encoded.root,{nodeLimit:occurrences,depthLimit:maximumDepth,byteLimit:scalarBytes}),expected);\n  assert.deepEqual(preflightOutcome(plan,native,{nodeLimit:occurrences,depthLimit:maximumDepth,byteLimit:scalarBytes}),actual);\n  for(const [name,count] of [['nodeLimit',occurrences],['depthLimit',maximumDepth],['byteLimit',scalarBytes]])\n    assert.throws(()=>preflightOutcome(plan,native,{...limits,[name]:count-1}),/resource limit/);\n  // Repeated primitive references decode repeatedly; never relax the existing\n  // encoder defaults or existing callers' intentionally larger decoder limits.\n  const repeated={ok:false,ambiguities:[],source_planes:Array.from({length:30},()=>0)};\n  const once=preflightOutcome(plan,{ok:false,ambiguities:[],source_planes:[0]},limits);\n  const many=preflightOutcome(plan,repeated,limits);\n  assert.equal(many.occurrences-once.occurrences,29);assert.equal(many.scalarBytes-once.scalarBytes,29);\n  assert.throws(()=>preflightOutcome(plan,repeated,{...limits,nodeLimit:once.occurrences}),/resource limit/);\n  assert.throws(()=>preflightOutcome(plan,{ok:false,ambiguities:[],source_planes:['x'.repeat(1024)]},{...limits,byteLimit:64}),/resource limit/);\n  const nested={};nested.loop=nested;\n  assert.throws(()=>preflightOutcome(plan,{ok:false,ambiguities:[],source_planes:[nested]},limits),/cyclic/);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.describe-grammar-outcome-ordered-event-control-owned-type",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "owned",
+    "inventoryName": "describe grammar outcome ordered event control owned type",
+    "sourceText": "owned = name => ({kind:'owned',name})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.test-grammar-outcome-ordered-event-control-field-presence",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "has",
+    "inventoryName": "test grammar outcome ordered event control field presence",
+    "sourceText": "has = (object,key) => Object.hasOwn(object,key)"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.validate-grammar-outcome-ordered-event-control-string",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "text",
+    "inventoryName": "validate grammar outcome ordered event control string",
+    "sourceText": "text = value => {assert.equal(typeof value,'string');assert.ok(wellFormedString(value),'native UTF-8 string cannot contain an unpaired code unit');return value;}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.validate-grammar-outcome-ordered-event-control-record-fields",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "fields",
+    "inventoryName": "validate grammar outcome ordered event control record fields",
+    "sourceText": "fields = (value,names,variant=false) => {\n  assert.ok(value&&Object.getPrototypeOf(value)===Object.prototype,'native record control must be plain tagged data');\n  assert.ok(Reflect.ownKeys(value).every(key=>typeof key==='string'&&(names.includes(key)||(variant&&key==='$variant'))),'unknown native control field');\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.iterate-grammar-outcome-ordered-event-control-ordered-fields",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "orderedEntries",
+    "inventoryName": "iterate grammar outcome ordered event control ordered fields",
+    "sourceText": "function* orderedEntries(plan,rows,sourceFields,value,variant=false) {\n  fields(value,sourceFields,variant);\n  for(const row of rows) {\n    if(row.literal) {yield {key:row.key,type:typeof row.value==='string'?string:{kind:'null'},value:row.value};continue;}\n    if(row.flatten) {\n      const leaf=value[row.native],shape=plan.shapes.find(shape=>shape.native==='LeafText');\n      fields(leaf,['payload'],true);\n      const selected=shape.variants.find(variant=>variant.name===leaf.$variant);\n      assert.ok(selected,'unknown LeafText variant');text(leaf.payload);\n      for(const entry of selected.flatten) yield {key:entry.key,type:entry.literal?{kind:'null'}:string,value:entry.literal?entry.value:leaf.payload};\n      continue;\n    }\n    const present=has(value,row.native);\n    if(row.presence==='some'&&!present) continue;\n    if(row.presence==='nullable'&&!present) {yield {key:row.key,type:{kind:'null'},value:null};continue;}\n    assert.ok(present,'native control lacks required '+row.native);\n    if(row.presence==='true') {assert.equal(typeof value[row.native],'boolean');if(!value[row.native]) continue;}\n    yield {key:row.key,type:['some','nullable'].includes(row.presence)?row.type.item:row.type,value:value[row.native]};\n  }\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.classify-grammar-outcome-ordered-event-control-value",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "classify",
+    "inventoryName": "classify grammar outcome ordered event control value",
+    "sourceText": "function classify(plan,type,value) {\n  if(type.kind==='Box') return classify(plan,type.item,value);\n  if(type.kind==='Vec') {assert.ok(Array.isArray(value));return {kind:'array',identity:value,values:value,item:type.item};}\n  if(type.kind==='owned') {\n    if(type.name==='SyntaxAttributes') {\n      assert.ok(value instanceof Map,'IndexMap control uses ordered entries, not a JS object that reorders numeric keys');\n      return {kind:'object',identity:value,entries:(function*(){for(const [key,item] of value) yield {key:text(key),type:owned('OperationValue'),value:item};})()};\n    }\n    const shape=plan.shapes.find(shape=>shape.native===type.name);assert.ok(shape,'unknown owned declaration');\n    if(shape.entries) return {kind:'object',identity:value,entries:orderedEntries(plan,shape.entries,shape.sourceFields,value)};\n    const variant=shape.variants.find(variant=>variant.name===value?.$variant);assert.ok(variant,'unknown native variant');\n    if(variant.entries) return {kind:'object',identity:value,entries:orderedEntries(plan,variant.entries,variant.sourceFields,value,true)};\n    assert.equal(variant.transparent,0,'LeafText is flattened only inside its owning object');\n    fields(value,['payload'],true);assert.ok(has(value,'payload'));\n    return classify(plan,variant.payloadType,value.payload);\n  }\n  if(type.kind==='json') {\n    if(value===null) return {kind:'null'};\n    if(typeof value==='boolean') return {kind:'boolean',value};\n    if(typeof value==='number') return {kind:'number',value};\n    if(typeof value==='string') return {kind:'string',value:text(value)};\n    if(Array.isArray(value)) return {kind:'array',identity:value,values:value,item:json};\n    assert.ok(value&&Object.getPrototypeOf(value)===Object.prototype,'native JSON control must be representable plain data');\n    return {kind:'object',identity:value,entries:(function*(){for(const key of Object.keys(value)) yield {key:text(key),type:json,value:value[key]};})()};\n  }\n  if(type.kind==='null') {assert.equal(value,null);return {kind:'null'};}\n  if(type.kind==='string') return {kind:'string',value:text(value)};\n  if(type.kind==='bool') {assert.equal(typeof value,'boolean');return {kind:'boolean',value};}\n  if(type.kind==='usize'||type.kind==='i64') {\n    assert.ok(typeof value==='bigint'||typeof value==='number','integer fixture must retain its original integer');\n    if(typeof value==='number') assert.ok(Number.isSafeInteger(value),'use BigInt for large native integer controls');\n    const integer=BigInt(value);\n    if(type.kind==='i64') assert.ok(integer>=-(1n<<63n)&&integer<(1n<<63n));\n    else assert.ok(integer>=0n,'usize cannot be negative');\n    const represented=Number(integer);\n    assert.ok(Number.isFinite(represented)&&BigInt(represented)===integer,'native integer is not exactly representable as binary64');\n    return {kind:'number',value:represented};\n  }\n  throw new TypeError('unsupported control type '+type.kind);\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.iterate-grammar-outcome-ordered-event-control-graph-events",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "outcomeWireEvents",
+    "inventoryName": "iterate grammar outcome ordered event control graph events",
+    "sourceText": "export function* outcomeWireEvents(plan,value,type=owned('ParseOutcome'),options={}) {\n  const maximumFrames=options.maximumFrames??1_000_000;\n  assert.ok(Number.isSafeInteger(maximumFrames)&&maximumFrames>0);\n  const stack=[],active=new Set();\n  const push=frame=>{assert.ok(stack.length<maximumFrames,'control frame reservation exceeds resource limit');stack.push(frame);};\n  push({kind:'value',type,value,depth:1});\n  while(stack.length) {\n    const frame=stack.pop(),depth=frame.depth;\n    if(frame.kind==='end') {active.delete(frame.identity);yield {kind:frame.array?'endArray':'endObject',depth};continue;}\n    if(frame.kind==='fields') {\n      const next=frame.entries.next();\n      if(next.done) continue;\n      push(frame);\n      yield {kind:'pair',depth:depth+1};\n      yield {kind:'string',value:text(next.value.key),depth:depth+2,key:true};\n      push({kind:'endPair',depth:depth+1});\n      push({kind:'value',type:next.value.type,value:next.value.value,depth:depth+2});\n      continue;\n    }\n    if(frame.kind==='items') {\n      if(frame.index===frame.values.length) continue;\n      assert.ok(has(frame.values,frame.index),'sparse native vector control');\n      const value=frame.values[frame.index++];push(frame);\n      push({kind:'value',type:frame.item,value,depth:depth+1});continue;\n    }\n    if(frame.kind==='endPair') {yield {kind:'endPair',depth};continue;}\n    const result=classify(plan,frame.type,frame.value);\n    if(result.kind!=='object'&&result.kind!=='array') {yield {...result,depth};continue;}\n    assert.ok(!active.has(result.identity),'cyclic native control fixture');\n    yield {kind:result.kind,depth}; // Budget sink sees this BEFORE child frames.\n    active.add(result.identity);\n    push({kind:'end',identity:result.identity,array:result.kind==='array',depth});\n    if(result.kind==='array') push({kind:'items',values:result.values,item:result.item,index:0,depth});\n    else push({kind:'fields',entries:result.entries,depth});\n  }\n  yield {kind:'root',depth:0}; // Existing Encoder inserts schema root last.\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.reserve-grammar-outcome-ordered-event-control-control-frame",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "outcomeWireEvents::push",
+    "inventoryName": "reserve grammar outcome ordered event control control frame",
+    "sourceText": "push=frame=>{assert.ok(stack.length<maximumFrames,'control frame reservation exceeds resource limit');stack.push(frame);}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.count-grammar-outcome-ordered-event-control-expanded-graph",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "preflightOutcome",
+    "inventoryName": "count grammar outcome ordered event control expanded graph",
+    "sourceText": "export function preflightOutcome(plan,value,limits,type=owned('ParseOutcome')) {\n  for(const key of ['nodeLimit','depthLimit','byteLimit']) assert.ok(Number.isSafeInteger(limits[key])&&limits[key]>0,'positive explicit limits required');\n  let occurrences=0,scalarBytes=0,maximumDepth=0,references=0;\n  const add=(left,right)=>{assert.ok(right<=Number.MAX_SAFE_INTEGER-left,'resource counter overflow');return left+right;};\n  for(const event of outcomeWireEvents(plan,value,type,{maximumFrames:limits.nodeLimit})) {\n    if(['endArray','endObject','endPair'].includes(event.kind)) continue;\n    occurrences=add(occurrences,1);assert.ok(occurrences<=limits.nodeLimit,'expanded occurrence resource limit');\n    maximumDepth=Math.max(maximumDepth,event.depth);assert.ok(event.depth<=limits.depthLimit,'graph depth resource limit');\n    let bytes=0;\n    if(event.kind==='string') bytes=Buffer.byteLength(event.value,'utf8');\n    else if(event.kind==='boolean') bytes=event.value?4:5;\n    else if(event.kind==='number') {\n      assert.ok(Number.isFinite(event.value),'finite binary64 required');\n      // JS itself supplies its Number spelling for this private control. Native\n      // MUST call the existing formatter, with its bounded scratch reservation.\n      bytes=Buffer.byteLength(Object.is(event.value,-0)?'-0':String(event.value));\n    } else if(event.kind==='root') bytes=1;\n    scalarBytes=add(scalarBytes,bytes);assert.ok(scalarBytes<=limits.byteLimit,'expanded scalar byte resource limit');\n    references=add(references,event.kind==='pair'?2:event.kind==='root'?1:0);\n    // Array edges: count each child when read; object edges: each pair.\n    // Total edges of this expanded tree are occurrences-1, independently of\n    // whether scalar encoding later interns actual graph nodes.\n  }\n  assert.ok(references<=occurrences-1);\n  return {occurrences,scalarBytes,maximumDepth,references:occurrences-1};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-ordered-event-control.add-grammar-outcome-ordered-event-control-bounded-counters",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/events.mjs",
+    "name": "preflightOutcome::add",
+    "inventoryName": "add grammar outcome ordered event control bounded counters",
+    "sourceText": "add=(left,right)=>{assert.ok(right<=Number.MAX_SAFE_INTEGER-left,'resource counter overflow');return left+right;}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.hash-grammar-outcome-native-declaration-source-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "digest",
+    "inventoryName": "hash grammar outcome native declaration source bytes",
+    "sourceText": "digest = bytes => createHash('sha256').update(bytes).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-compact-tokens",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "tokenText",
+    "inventoryName": "read grammar outcome native declaration source compact tokens",
+    "sourceText": "tokenText = source => tokenize(source,'Rust').tokens.filter(token=>token.kind!=='eof').map(token=>token.value).join('')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.convert-grammar-outcome-native-declaration-source-identifier-words",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "snake",
+    "inventoryName": "convert grammar outcome native declaration source identifier words",
+    "sourceText": "snake = name => name.replace(/([a-z0-9])([A-Z])/gu,'$1_$2').toLowerCase()"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-crate-owner-path",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "pathOf",
+    "inventoryName": "read grammar outcome native declaration source crate owner path",
+    "sourceText": "pathOf = name => {assert.ok(names.includes(name),'unknown crate-root owner');return 'crate::'+name;}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.compare-grammar-outcome-native-declaration-source-members",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "same",
+    "inventoryName": "compare grammar outcome native declaration source members",
+    "sourceText": "same = (actual,expected,label) => {\n  assert.equal(new Set(actual).size,actual.length,label+' has no duplicate members');\n  assert.deepEqual([...actual].sort(),[...expected].sort(),label+' covers every source member');\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-complete-declaration-inventory",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "readOutcomeInventory",
+    "inventoryName": "read grammar outcome native declaration source complete declaration inventory",
+    "sourceText": "export function readOutcomeInventory(root=repository) {\n  const pins=[];\n  for(const [file,sha256] of Object.entries(policy.pins)) {\n    const bytes=readFileSync(resolve(root,file));\n    assert.equal(digest(bytes),sha256,'reviewed complete input changed: '+file);\n    pins.push({file,bytes:bytes.length,sha256});\n  }\n  const inputs=[],declarations=[];\n  for(const source of policy.sources) {\n    const bytes=readFileSync(resolve(root,source.file));\n    assert.ok(bytes.length<=131072,'bounded complete source CST');\n    const parsed=readRustSourceItems(bytes);\n    const imports=parsed.items.filter(item=>item.kind==='use_declaration').map(item=>({\n      source:parsed.text(item.node),span:{start:item.node.start,end:item.node.end}}));\n    const protectedNames=new Set(['Vec','Option','Box','String','usize','i64','bool']);\n    assert.ok(!parsed.items.some(item=>protectedNames.has(item.name)),'no local shadow of primitive transport owners');\n    for(const item of imports) {\n      const tokens=tokenize(item.source,'Rust').tokens.map(token=>token.value);\n      assert.ok(!tokens.includes('*'),'unknown glob imports refuse');\n      assert.ok(!tokens.some(token=>protectedNames.has(token)),'no imported shadow of primitive transport owners');\n      assert.ok(!tokens.includes('as')||tokenText(item.source)==='usestd::fmt::Writeas_;','unknown import aliases refuse');\n    }\n    for(const binding of policy.bindings.filter(binding=>binding.file===source.file))\n      assert.equal(imports.filter(item=>tokenText(item.source)===tokenText(binding.declaration)).length,1,'actual import/reexport binding remains owned');\n    const requireText=node=>{assert.ok(node,'actual CST field required');return parsed.text(node);};\n    const dataFields=body=>{\n      assert.equal(body?.term,'field_declaration_list');\n      const nodes=body.children.filter(({node})=>node.named&&!ignored.has(node.term)).map(({node})=>node);\n      assert.ok(nodes.every(node=>node.term==='field_declaration'),'all named source fields are inventoried');\n      return nodes.map(node=>({name:requireText(parsed.field(node,'name')),\n        type:tokenText(requireText(parsed.field(node,'type'))),source:parsed.text(node),span:{start:node.start,end:node.end}}));\n    };\n    inputs.push({file:source.file,bytes:bytes.length,sha256:digest(bytes),source:bytes.toString('utf8'),imports,\n      importsSha256:digest(imports.map(item=>item.source).join('\\n'))});\n    for(const name of source.names) {\n      const found=parsed.items.filter(item=>item.name===name);\n      assert.equal(found.length,1,'one source declaration owns '+name);\n      const item=found[0],body=parsed.field(item.node,'body');\n      const declaration={name,kind:item.kind,file:source.file,span:{start:item.start,end:item.end},\n        source:bytes.subarray(item.start,item.end).toString('utf8'),sha256:digest(bytes.subarray(item.start,item.end))};\n      if(item.kind==='struct_item') declaration.fields=dataFields(body);\n      else if(item.kind==='enum_item') {\n        assert.ok(body,'actual enum body required');\n        const variants=body.children.filter(({node})=>node.named&&!ignored.has(node.term)).map(({node})=>node);\n        assert.ok(variants.every(node=>node.term==='enum_variant'),'all source variants are inventoried');\n        declaration.variants=variants.map(node=>{\n          const payload=parsed.field(node,'body');\n          const result={name:requireText(parsed.field(node,'name')),source:parsed.text(node),span:{start:node.start,end:node.end}};\n          if(!payload) result.unit=true;\n          else if(payload.term==='field_declaration_list') result.fields=dataFields(payload);\n          else {\n            assert.equal(payload.term,'ordered_field_declaration_list');\n            result.tuple=payload.children.filter(({node})=>node.named&&!ignored.has(node.term)).map(({node})=>({\n              type:tokenText(parsed.text(node)),source:parsed.text(node),span:{start:node.start,end:node.end}}));\n          }\n          return result;\n        });\n      } else {\n        assert.equal(item.kind,'type_item','unknown declaration kinds refuse');\n        declaration.alias=tokenText(requireText(parsed.field(item.node,'type')));\n      }\n      declarations.push(declaration);\n    }\n  }\n  const rootBytes=readFileSync(resolve(root,'rust/src/lib.rs'));\n  const rootItems=readRustSourceItems(rootBytes);\n  const exports=rootItems.items.filter(item=>item.kind==='use_declaration');\n  const rootExport=exports.filter(item=>tokenText(rootItems.text(item.node))===tokenText(policy.rootReexport));\n  assert.equal(rootExport.length,1,'actual crate-root reexport remains complete');\n  for(const name of names) assert.equal(exports.filter(item=>tokenize(rootItems.text(item.node),'Rust').tokens.some(token=>token.value===name)).length,1,'crate-root owner is unique: '+name);\n  return {schemaVersion:1,model:policy.model,pins,inputs,declarations,\n    rootReexport:{file:'rust/src/lib.rs',source:rootItems.text(rootExport[0].node),span:{start:rootExport[0].node.start,end:rootExport[0].node.end}}};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-required-concrete-text",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "readOutcomeInventory::requireText",
+    "inventoryName": "read grammar outcome native declaration source required concrete text",
+    "sourceText": "requireText=node=>{assert.ok(node,'actual CST field required');return parsed.text(node);}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-declaration-fields",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "readOutcomeInventory::dataFields",
+    "inventoryName": "read grammar outcome native declaration source declaration fields",
+    "sourceText": "dataFields=body=>{\n      assert.equal(body?.term,'field_declaration_list');\n      const nodes=body.children.filter(({node})=>node.named&&!ignored.has(node.term)).map(({node})=>node);\n      assert.ok(nodes.every(node=>node.term==='field_declaration'),'all named source fields are inventoried');\n      return nodes.map(node=>({name:requireText(parsed.field(node,'name')),\n        type:tokenText(requireText(parsed.field(node,'type'))),source:parsed.text(node),span:{start:node.start,end:node.end}}));\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.read-grammar-outcome-native-declaration-source-owned-type",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "readOwnedType",
+    "inventoryName": "read grammar outcome native declaration source owned type",
+    "sourceText": "export function readOwnedType(type,owner) {\n  if(type==='Self') {assert.equal(owner,'SyntaxTree');return {kind:'owned',name:owner};}\n  if(type==='super::grammar_selection::GrammarSelection') {assert.equal(owner,'SyntaxTree');return {kind:'owned',name:'GrammarSelection'};}\n  if(type==='Value') {assert.ok(['GrammarSelection','GrammarSelectionAlternative'].includes(owner));return {kind:'json'};}\n  if(type==='serde_json::Value') return {kind:'json'};\n  if(['String',\"&'staticstr\"].includes(type)) return {kind:'string'};\n  if(['bool','usize','i64'].includes(type)) return {kind:type};\n  if(names.includes(type)) return {kind:'owned',name:type};\n  const generic=/^(Vec|Box|Option)<(.+)>$/u.exec(type);\n  assert.ok(generic,'unknown source-owned type: '+type);\n  return {kind:generic[1],item:readOwnedType(generic[2],owner)};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.validate-grammar-outcome-native-declaration-source-complete-declaration-inventory",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "checkOutcomeInventory",
+    "inventoryName": "validate grammar outcome native declaration source complete declaration inventory",
+    "sourceText": "export function checkOutcomeInventory(inventory) {\n  same(inventory.declarations.map(item=>item.name),names,'declaration inventory');\n  same(inventory.inputs.map(item=>item.file),policy.sources.map(item=>item.file),'complete source inventory');\n  for(const input of inventory.inputs) {\n    assert.equal(digest(input.source),policy.pins[input.file],'complete source authentication');\n    assert.equal(digest(input.imports.map(item=>item.source).join('\\n')),input.importsSha256,'complete import inventory');\n  }\n  assert.equal(tokenText(inventory.rootReexport.source),tokenText(policy.rootReexport),'root reexport ownership');\n  const aliases=inventory.declarations.filter(item=>item.alias);\n  assert.deepEqual(aliases.map(item=>[item.name,item.alias]),[['SyntaxAttributes','IndexMap<String,OperationValue>']],'only the actual IndexMap alias is admitted');\n  const checkEntries=(entries,fields,owner)=>{\n    same(entries.filter(entry=>!entry.literal).map(entry=>entry.native),fields.map(field=>field.name),owner+' fields');\n    for(const entry of entries) {\n      if(entry.literal) continue;\n      const type=readOwnedType(fields.find(field=>field.name===entry.native).type,owner);\n      if(entry.flatten) assert.deepEqual(type,{kind:'owned',name:'LeafText'});\n      else if(['some','nullable'].includes(entry.presence)) assert.equal(type.kind,'Option','optional wire role requires actual Option');\n      else if(entry.presence==='true') assert.deepEqual(type,{kind:'bool'});\n      else {assert.equal(entry.presence,'always');assert.notEqual(type.kind,'Option','None omission must be explicit');}\n    }\n  };\n  for(const shape of policy.shapes) {\n    const declaration=inventory.declarations.find(item=>item.name===shape.native);\n    if(shape.entries) {assert.equal(declaration.kind,'struct_item');checkEntries(shape.entries,declaration.fields,shape.native);}\n    else {\n      assert.equal(declaration.kind,'enum_item');\n      same(shape.variants.map(item=>item.name),declaration.variants.map(item=>item.name),shape.native+' variants');\n      for(const variant of shape.variants) {\n        const actual=declaration.variants.find(item=>item.name===variant.name);\n        if(variant.entries) checkEntries(variant.entries,actual.fields,shape.native);\n        else {\n          assert.equal(actual.tuple?.length,1,'all tuple payloads are owned');\n          assert.equal(actual.tuple[0].type,shape.native==='OperationValue'&&variant.name==='Integer'?'i64':'String');\n        }\n      }\n    }\n  }\n  return inventory;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.validate-grammar-outcome-native-declaration-source-field-roles",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "checkOutcomeInventory::checkEntries",
+    "inventoryName": "validate grammar outcome native declaration source field roles",
+    "sourceText": "checkEntries=(entries,fields,owner)=>{\n    same(entries.filter(entry=>!entry.literal).map(entry=>entry.native),fields.map(field=>field.name),owner+' fields');\n    for(const entry of entries) {\n      if(entry.literal) continue;\n      const type=readOwnedType(fields.find(field=>field.name===entry.native).type,owner);\n      if(entry.flatten) assert.deepEqual(type,{kind:'owned',name:'LeafText'});\n      else if(['some','nullable'].includes(entry.presence)) assert.equal(type.kind,'Option','optional wire role requires actual Option');\n      else if(entry.presence==='true') assert.deepEqual(type,{kind:'bool'});\n      else {assert.equal(entry.presence,'always');assert.notEqual(type.kind,'Option','None omission must be explicit');}\n    }\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.construct-grammar-outcome-native-declaration-source-ordered-transport-plan",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "buildOrderedWirePlan",
+    "inventoryName": "construct grammar outcome native declaration source ordered transport plan",
+    "sourceText": "export function buildOrderedWirePlan(inventory) {\n  checkOutcomeInventory(inventory);\n  const entries=(rows,fields,owner)=>rows.map(row=>row.literal?{...row}:{...row,\n    type:readOwnedType(fields.find(field=>field.name===row.native).type,owner)});\n  return {schemaVersion:1,model:policy.model,root:'ParseOutcome',attributeAlias:'SyntaxAttributes',\n    shapes:policy.shapes.map(shape=>{\n      const actual=inventory.declarations.find(item=>item.name===shape.native);\n      return shape.entries?{native:shape.native,sourceFields:actual.fields.map(field=>field.name),entries:entries(shape.entries,actual.fields,shape.native)}\n        :{native:shape.native,variants:shape.variants.map(variant=>{\n          const fields=actual.variants.find(item=>item.name===variant.name);\n          return variant.entries?{name:variant.name,sourceFields:fields.fields.map(field=>field.name),entries:entries(variant.entries,fields.fields,shape.native)}\n            :{...variant,payloadType:readOwnedType(fields.tuple[0].type,shape.native)};\n        })};\n    })};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.construct-grammar-outcome-native-declaration-source-typed-plan-entries",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "buildOrderedWirePlan::entries",
+    "inventoryName": "construct grammar outcome native declaration source typed plan entries",
+    "sourceText": "entries=(rows,fields,owner)=>rows.map(row=>row.literal?{...row}:{...row,\n    type:readOwnedType(fields.find(field=>field.name===row.native).type,owner)})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.generate-grammar-outcome-native-declaration-source-borrowed-visitors",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "renderBorrowedVisitors",
+    "inventoryName": "generate grammar outcome native declaration source borrowed visitors",
+    "sourceText": "export function renderBorrowedVisitors(inventory,plan=buildOrderedWirePlan(inventory)) {\n  checkOutcomeInventory(inventory);\n  assert.deepEqual(plan,buildOrderedWirePlan(inventory),'emission consumes the exact counted plan');\n  const convert=(type,expression,depth)=>{\n    if(type.kind==='owned') return `wire_${snake(type.name)}(${expression}, sink, ${depth})`;\n    if(type.kind==='json') return `wire_json(${expression}, sink, ${depth})`;\n    if(type.kind==='string') return `sink.string(${expression}, ${depth})`;\n    if(['bool','usize','i64'].includes(type.kind)) return `sink.${type.kind==='bool'?'boolean':type.kind}(*${expression}, ${depth})`;\n    if(type.kind==='Box') return convert(type.item,`${expression}.as_ref()`,depth);\n    if(type.kind==='Vec') return `{ let mut array = sink.begin_array(${expression}.len(), ${depth})?;\n        for item in ${expression} { sink.array_item(&mut array, |sink, depth| ${convert(type.item,'item','depth')})?; }\n        sink.end_array(array) }`;\n    throw new TypeError('unsupported conversion role: '+type.kind);\n  };\n  const fields=(entries,object)=>{\n    const output=[];\n    for(const entry of entries) {\n      if(entry.literal) {\n        assert.equal(typeof entry.value,'string');\n        output.push(`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| sink.string(${JSON.stringify(entry.value)}, depth))?;`);\n      } else if(entry.flatten) output.push(`wire_leaf_text(${entry.native}, sink, ${object})?;`);\n      else {\n        const optional=['some','nullable'].includes(entry.presence),type=optional?entry.type.item:entry.type;\n        const expression=optional?'item':entry.native;\n        const body=`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| ${convert(type,expression,'depth')})?;`;\n        if(entry.presence==='some') output.push(`if let Some(item) = ${entry.native} { ${body} }`);\n        else if(entry.presence==='nullable') output.push(`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| match ${entry.native} {\n            Some(item) => ${convert(type,'item','depth')}, None => sink.null(depth), })?;`);\n        else if(entry.presence==='true') output.push(`if *${entry.native} { ${body} }`);\n        else output.push(body);\n      }\n    }\n    return output.join('\\n');\n  };\n  const object=entries=>`let mut object = sink.begin_object(depth)?;\\n${fields(entries,'&mut object')}\\nsink.end_object(object)`;\n  const functions=[];\n  for(const shape of plan.shapes) {\n    const declaration=inventory.declarations.find(item=>item.name===shape.native),path=pathOf(shape.native);\n    if(shape.native==='LeafText') {\n      const arms=shape.variants.map(variant=>`${path}::${variant.name}(payload) => { ${variant.flatten.map(entry=>\n        `sink.object_field(object, ${JSON.stringify(entry.key)}, |sink, depth| ${entry.literal?'sink.null(depth)':'sink.string(payload, depth)'})?;`).join('\\n')} }`);\n      functions.push(`fn wire_leaf_text<S: OutcomeWireSink>(value: &${path}, sink: &mut S, object: &mut S::Object) -> Result<(), String> {\n        match value { ${arms.join(',\\n')} }\\nOk(())\\n}`);\n      continue;\n    }\n    const body=shape.entries?`let ${path} { ${declaration.fields.map(field=>field.name).join(', ')} } = value;\\n${object(shape.entries)}`\n      :`match value {\\n${shape.variants.map(variant=>{\n        const actual=declaration.variants.find(item=>item.name===variant.name);\n        return variant.entries?`${path}::${variant.name} { ${actual.fields.map(field=>field.name).join(', ')} } => { ${object(variant.entries)} }`\n          :`${path}::${variant.name}(payload) => ${convert(variant.payloadType,'payload','depth')}`;\n      }).join(',\\n')}\\n}`;\n    functions.push(`fn wire_${snake(shape.native)}<S: OutcomeWireSink>(value: &${path}, sink: &mut S, depth: usize) -> Result<S::Node, String> {\\n${body}\\n}`);\n  }\n  functions.push(`fn wire_syntax_attributes<S: OutcomeWireSink>(value: &crate::SyntaxAttributes, sink: &mut S, depth: usize) -> Result<S::Node, String> {\n    let mut object = sink.begin_object(depth)?;\n    for (key, item) in value { sink.object_field(&mut object, key, |sink, depth| wire_operation_value(item, sink, depth))?; }\n    sink.end_object(object)\n}`);\n  functions.push(`fn wire_json<S: OutcomeWireSink>(value: &serde_json::Value, sink: &mut S, depth: usize) -> Result<S::Node, String> {\n    match value {\n        serde_json::Value::Null => sink.null(depth),\n        serde_json::Value::Bool(value) => sink.boolean(*value, depth),\n        serde_json::Value::Number(value) => sink.json_number(value, depth),\n        serde_json::Value::String(value) => sink.string(value, depth),\n        serde_json::Value::Array(values) => {\n            let mut array = sink.begin_array(values.len(), depth)?;\n            for item in values { sink.array_item(&mut array, |sink, depth| wire_json(item, sink, depth))?; }\n            sink.end_array(array)\n        },\n        serde_json::Value::Object(values) => {\n            let mut object = sink.begin_object(depth)?;\n            for (key, item) in values { sink.object_field(&mut object, key, |sink, depth| wire_json(item, sink, depth))?; }\n            sink.end_object(object)\n        },\n    }\n}`);\n  const output=sinkContract+'\\n'+functions.join('\\n\\n')+'\\n';\n  assert.ok(!output.includes('..')&&!output.includes('_ =>'),'no rest/wildcard patterns');\n  assert.ok(!output.includes('.clone(')&&!output.includes('from_json')&&!output.includes('to_value')&&!output.includes(' as f64'),'no copied intermediate or alternate numeric conversion');\n  return output;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.generate-grammar-outcome-native-declaration-source-typed-conversion",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "renderBorrowedVisitors::convert",
+    "inventoryName": "generate grammar outcome native declaration source typed conversion",
+    "sourceText": "convert=(type,expression,depth)=>{\n    if(type.kind==='owned') return `wire_${snake(type.name)}(${expression}, sink, ${depth})`;\n    if(type.kind==='json') return `wire_json(${expression}, sink, ${depth})`;\n    if(type.kind==='string') return `sink.string(${expression}, ${depth})`;\n    if(['bool','usize','i64'].includes(type.kind)) return `sink.${type.kind==='bool'?'boolean':type.kind}(*${expression}, ${depth})`;\n    if(type.kind==='Box') return convert(type.item,`${expression}.as_ref()`,depth);\n    if(type.kind==='Vec') return `{ let mut array = sink.begin_array(${expression}.len(), ${depth})?;\n        for item in ${expression} { sink.array_item(&mut array, |sink, depth| ${convert(type.item,'item','depth')})?; }\n        sink.end_array(array) }`;\n    throw new TypeError('unsupported conversion role: '+type.kind);\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.generate-grammar-outcome-native-declaration-source-object-fields",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "renderBorrowedVisitors::fields",
+    "inventoryName": "generate grammar outcome native declaration source object fields",
+    "sourceText": "fields=(entries,object)=>{\n    const output=[];\n    for(const entry of entries) {\n      if(entry.literal) {\n        assert.equal(typeof entry.value,'string');\n        output.push(`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| sink.string(${JSON.stringify(entry.value)}, depth))?;`);\n      } else if(entry.flatten) output.push(`wire_leaf_text(${entry.native}, sink, ${object})?;`);\n      else {\n        const optional=['some','nullable'].includes(entry.presence),type=optional?entry.type.item:entry.type;\n        const expression=optional?'item':entry.native;\n        const body=`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| ${convert(type,expression,'depth')})?;`;\n        if(entry.presence==='some') output.push(`if let Some(item) = ${entry.native} { ${body} }`);\n        else if(entry.presence==='nullable') output.push(`sink.object_field(${object}, ${JSON.stringify(entry.key)}, |sink, depth| match ${entry.native} {\n            Some(item) => ${convert(type,'item','depth')}, None => sink.null(depth), })?;`);\n        else if(entry.presence==='true') output.push(`if *${entry.native} { ${body} }`);\n        else output.push(body);\n      }\n    }\n    return output.join('\\n');\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.generate-grammar-outcome-native-declaration-source-object-visitor",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "renderBorrowedVisitors::object",
+    "inventoryName": "generate grammar outcome native declaration source object visitor",
+    "sourceText": "object=entries=>`let mut object = sink.begin_object(depth)?;\\n${fields(entries,'&mut object')}\\nsink.end_object(object)`"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-declaration-source.build-grammar-outcome-native-declaration-source-transport-packet",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/generate.mjs",
+    "name": "buildOutcomePacket",
+    "inventoryName": "build grammar outcome native declaration source transport packet",
+    "sourceText": "export function buildOutcomePacket(root=repository) {\n  const inventory=readOutcomeInventory(root),plan=buildOrderedWirePlan(inventory),source=renderBorrowedVisitors(inventory,plan);\n  return {inventory,plan,source,receipt:{schemaVersion:1,model:policy.model,declarations:inventory.declarations.length,\n    inputs:inventory.pins,sourceBytes:Buffer.byteLength(source),sourceSha256:digest(source),\n    generatorSha256:digest(readFileSync(fileURLToPath(import.meta.url))),policySha256:digest(readFileSync(new URL('./wire-policy.mjs',import.meta.url))),\n    unresolved:['concrete counted/direct Encoder sinks','bounded native explicit-frame traversal','allocation and numeric scratch reservations','native compilation and parity execution']}};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-scratch-output.prepare-grammar-outcome-scratch-output-explicit-owned-directory",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/output.mjs",
+    "name": "explicitOutputDirectory",
+    "inventoryName": "prepare grammar outcome scratch output explicit owned directory",
+    "sourceText": "export function explicitOutputDirectory(args) {\n  assert.equal(args.length,2,'supply --output-dir and one task-owned scratch directory');\n  assert.equal(args[0],'--output-dir');\n  const directory=resolve(args[1]),root=realpathSync(repository);\n  const permitted=path=>path==='..'||path.startsWith('..'+sep)||path.startsWith('.issue-195-work'+sep);\n  assert.ok(permitted(relative(root,directory)),\n    'output must be outside the checkout or inside its ignored .issue-195-work directory');\n  let ancestor=directory;const tail=[];\n  while(!existsSync(ancestor)){tail.unshift(basename(ancestor));ancestor=dirname(ancestor);}\n  const actual=resolve(realpathSync(ancestor),...tail);\n  assert.ok(permitted(relative(root,actual)),'resolved output must remain outside production sources');\n  const marker=resolve(actual,'.meta-language-native-outcome-output.lino');\n  const owner={schemaVersion:1,repository:root,purpose:'native grammar outcome source proposals'};\n  if(existsSync(actual)&&readdirSync(actual).length>0){\n    assert.ok(existsSync(marker),'existing output must be empty or have the exact task ownership marker');\n    assert.deepEqual(readProjectData(marker),owner,'output belongs to this source proposal task');\n  }\n  mkdirSync(actual,{recursive:true});\n  if(!existsSync(marker))writeProjectData(marker,owner);\n  return actual;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-scratch-output.test-grammar-outcome-scratch-output-path-scope",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/output.mjs",
+    "name": "explicitOutputDirectory::permitted",
+    "inventoryName": "test grammar outcome scratch output path scope",
+    "sourceText": "permitted=path=>path==='..'||path.startsWith('..'+sep)||path.startsWith('.issue-195-work'+sep)"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.hash-grammar-outcome-source-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.mjs",
+    "name": "digest",
+    "inventoryName": "hash grammar outcome source bytes",
+    "sourceText": "digest=source=>createHash('sha256').update(source).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-source-publication.read-grammar-outcome-source-publication-formatting-token-witness",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.mjs",
+    "name": "tokens",
+    "inventoryName": "read grammar outcome source publication formatting token witness",
+    "sourceText": "tokens=source=>tokenize(source,'Rust').tokens.filter(({kind,value})=>kind!=='punct'||!['{','}',','].includes(value))\n  .map(({kind,value})=>({kind,value}))"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-source-publication.replay-grammar-outcome-source-publication-exact-author-changes",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.mjs",
+    "name": "replayPublicationEdits",
+    "inventoryName": "replay grammar outcome source publication exact author changes",
+    "sourceText": "export function replayPublicationEdits(record) {\n  assert.equal(Buffer.byteLength(record.original),record.originalBytes);\n  assert.equal(digest(record.original),record.originalSha256);\n  let source=record.original;\n  for(const {from,to,count} of record.edits){\n    assert.equal(source.split(from).length-1,count,'one declared portability occurrence count');\n    source=source.split(from).join(to);\n  }\n  return source;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-source-publication.verify-grammar-outcome-source-publication-exact-author-history",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.mjs",
+    "name": "verifyPublication",
+    "inventoryName": "verify grammar outcome source publication exact author history",
+    "sourceText": "export function verifyPublication({checkNativeCst=false}={}) {\n  const archive=readProjectData(archivePath);\n  assert.equal(archive.schemaVersion,1);\n  assert.equal(archive.baseline,'3780504667f4abe167a270263453e54be2b1cc43');\n  assert.equal(digest(archive.originalPolicySource),'6c0e4ee1d490c6b155cfcc9910d7f144ac889f314f16bbe4729c0d2f57a812eb',\n    'the complete original policy author remains authenticated');\n  assert.equal(digest(readFileSync(new URL('./predecessor-receipt.lino',import.meta.url))),\n    'f0b779d66ba81ea6470609575202a716d41d671b8e01f125cf1f2999789a53aa',\n    'the original B94-to-B95 source-owner correction receipt remains exact');\n  assert.deepEqual(outcomeWirePolicy,archive.policy,'the Links policy retains every original field and pin');\n  const files=[];\n  for(const record of archive.records){\n    const source=readFileSync(new URL('../'+record.path,import.meta.url),'utf8');\n    assert.equal(Buffer.byteLength(source),record.publishedBytes,record.path+' byte length');\n    assert.equal(digest(source),record.publishedSha256,record.path+' published hash');\n    const adapted=replayPublicationEdits(record);\n    if(record.formatting){\n      assert.equal(record.path,'probe/native-outcome-probe.rs');\n      assert.deepEqual(tokens(source),tokens(adapted),'all non-formatting tokens retained after explicit harness edits');\n      if(checkNativeCst&&!declarationChecks.has(record.publishedSha256)){\n        const original=readRustSourceItems(Buffer.from(adapted));\n        const formatted=readRustSourceItems(Buffer.from(source));\n        const owners=parsed=>parsed.items.map(({kind,name})=>({kind,name}));\n        assert.deepEqual(owners(formatted),owners(original),'complete native CST retains every ordered source owner');\n        declarationChecks.set(record.publishedSha256,true);\n      }\n    }else assert.equal(source,adapted,record.path+' exact original-to-published transformation');\n    files.push({path:record.path,bytes:record.publishedBytes,sha256:record.publishedSha256});\n  }\n  const originalSources=archive.archivalSources.map(({group,file,source,bytes,sha256})=>{\n    assert.equal(Buffer.byteLength(source),bytes,'archival byte length '+file);\n    assert.equal(digest(source),sha256,'archival complete source '+file);\n    return {group,file,bytes,sha256};\n  });\n  return {schemaVersion:1,baseline:archive.baseline,files,originalSources,\n    archive:{bytes:Buffer.byteLength(readFileSync(archivePath)),sha256:digest(readFileSync(archivePath))}};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-source-publication.read-grammar-outcome-source-publication-declaration-owners",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.mjs",
+    "name": "verifyPublication::owners",
+    "inventoryName": "read grammar outcome source publication declaration owners",
+    "sourceText": "owners=parsed=>parsed.items.map(({kind,name})=>({kind,name}))"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-publication-verification.verify-grammar-outcome-publication-verification-first-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.test.mjs",
+    "name": "published experiment retains authenticated original authors and explicit whole-source transformations",
+    "inventoryName": "verify grammar outcome publication verification first contract",
+    "sourceText": "test('published experiment retains authenticated original authors and explicit whole-source transformations',()=>{\n  const result=verifyPublication({checkNativeCst:true});\n  assert.equal(result.files.length,8);\n  assert.equal(result.originalSources.length,9);\n  const archive=readProjectData(fileURLToPath(new URL('./original-authoring.lino',import.meta.url)));\n  const original=archive.records[0];\n  assert.throws(()=>replayPublicationEdits({...original,original:original.original+'\\n'}));\n  assert.throws(()=>replayPublicationEdits({...original,edits:[{from:'unknown predecessor bytes',to:'',count:1}]}));\n  const probe=readFileSync(new URL('../probe/native-outcome-probe.rs',import.meta.url),'utf8');\n  const end=probe.indexOf('// Report only AFTER');\n  assert.ok(probe.indexOf('std::panic::catch_unwind')<end);\n  assert.ok(probe.indexOf('failures.is_empty()')<end);\n  assert.ok(probe.indexOf('independent_boundaries();')<end);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-publication-verification.verify-grammar-outcome-publication-verification-second-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/publication.test.mjs",
+    "name": "generators refuse implicit output and production directories before writing",
+    "inventoryName": "verify grammar outcome publication verification second contract",
+    "sourceText": "test('generators refuse implicit output and production directories before writing',()=>{\n  assert.throws(()=>explicitOutputDirectory([]));\n  assert.throws(()=>explicitOutputDirectory(['--output-dir',repository]));\n  assert.throws(()=>explicitOutputDirectory(['--output-dir',repository+'/rust/src']));\n  const scratch=mkdtempSync(join(tmpdir(),'meta-language-native-output-control-'));\n  try{\n    const foreign=join(scratch,'foreign');\n    writeFileSync(join(scratch,'unrelated.txt'),'preserve');\n    assert.throws(()=>explicitOutputDirectory(['--output-dir',scratch]),/ownership marker/);\n    assert.equal(readFileSync(join(scratch,'unrelated.txt'),'utf8'),'preserve');\n    symlinkSync(repository+'/rust/src',foreign);\n    assert.throws(()=>explicitOutputDirectory(['--output-dir',join(foreign,'native-outcome-refusal-control')]),/production sources/);\n    assert.equal(existsSync(repository+'/rust/src/native-outcome-refusal-control'),false);\n    const owned=join(scratch,'owned');\n    assert.equal(explicitOutputDirectory(['--output-dir',owned]),explicitOutputDirectory(['--output-dir',owned]));\n  }finally{rmSync(scratch,{recursive:true,force:true});}\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-declaration-transport-policy.grammar-outcome-declaration-transport-policy-repository-root",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs",
+    "name": "repository",
+    "inventoryName": "grammar outcome declaration transport policy repository root",
+    "sourceText": "repository=fileURLToPath(new URL('../../../../',import.meta.url))"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-declaration-transport-policy.grammar-outcome-declaration-transport-policy-transport-definition-policy",
+    "source": "experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs",
+    "name": "outcomeWirePolicy",
+    "inventoryName": "grammar outcome declaration transport policy transport definition policy",
+    "sourceText": "outcomeWirePolicy=readProjectData(fileURLToPath(new URL('./wire-policy.lino',import.meta.url)))"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-policy.grammar-outcome-native-runner-policy-source-publication-archive",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/policy.mjs",
+    "name": "runnerPublication",
+    "inventoryName": "grammar outcome native runner policy source publication archive",
+    "sourceText": "runnerPublication=readProjectData(new URL('./publication.lino',import.meta.url))"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.hash-grammar-outcome-source-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/policy.mjs",
+    "name": "hash",
+    "inventoryName": "hash grammar outcome source bytes",
+    "sourceText": "hash=value=>createHash('sha256').update(value).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-policy.grammar-outcome-native-runner-policy-isolated-overlay-policy",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/policy.mjs",
+    "name": "overlayPolicy",
+    "inventoryName": "grammar outcome native runner policy isolated overlay policy",
+    "sourceText": "overlayPolicy=runnerPublication.originalPolicy"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.hash-grammar-outcome-source-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "hash",
+    "inventoryName": "hash grammar outcome source bytes",
+    "sourceText": "hash=value=>createHash('sha256').update(value).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.construct-grammar-outcome-native-runner-source-publication-native-oracle-policy",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "nativeOraclePolicy",
+    "inventoryName": "construct grammar outcome native runner source publication native oracle policy",
+    "sourceText": "export function nativeOraclePolicy(baseCommit,repository=resolve(directory,'../../../..')) {\n  const frozen=file=>{\n    const gitObject=execFileSync('git',['-C',repository,'rev-parse',baseCommit+':'+file],{encoding:'utf8',timeout:15000}).trim();\n    const bytes=execFileSync('git',['-C',repository,'cat-file','blob',gitObject],{timeout:15000,maxBuffer:8*1024*1024});\n    return{file,gitObject,bytes:bytes.length,sha256:hash(bytes),source:bytes};\n  };\n  const manifest=frozen('parity/grammars/external-assets.lino');\n  const provisioner=frozen('js/scripts/external-grammar-cache.mjs');\n  const registry=readStructuredDataLino(manifest.source.toString('utf8'));\n  const closureInputs=['rust/Cargo.toml','rust/oracles/agda-layout-source-oracle/build.rs',\n    'rust/oracles/cmake-source-oracle/build.rs','rust/oracles/native-source-oracles/build.rs',\n    'js/scripts/agda-queue-safe-oracle.mjs','rust/vendor/tree-sitter-agda-layout/source-manifest.lino',\n    'rust/vendor/tree-sitter-agda-layout/layout-state.patch'].map(frozen);\n  const families=closureInputs.slice(1,3).map(({source})=>{\n    const matches=[...source.toString('utf8').matchAll(/PathBuf::from\\(\"\\.\\.\\/\\.\\.\\/vendor\\/tree-sitter-([a-z-]+)\\/src\"\\)/gu)];\n    assert.equal(matches.length,1,'one exact native oracle vendor root');return matches[0][1];\n  });\n  const names=/const VENDORED_GRAMMARS: &\\[&str\\] = &\\[([^\\]]+)\\];/u.exec(closureInputs[3].source.toString('utf8'));\n  assert.ok(names,'exact native source oracle grammar inventory');\n  families.push(...[...names[1].matchAll(/\"([a-z-]+)\"/gu)].map(match=>match[1]));\n  const assets=Object.entries(registry.assets).filter(([path,asset])=>asset.group==='native-oracles'\n    &&families.some(name=>path.startsWith('rust/vendor/tree-sitter-'+name+'/src/'))\n    &&/\\/(?:parser\\.c\\.gz|scanner\\.c|scanner\\.c\\.upstream\\.gz|tree_sitter\\/[a-z_]+\\.h)$/u.test(path))\n    .map(([path,asset])=>({path,...asset}));\n  assert.equal(assets.length,18,'frozen four-family native build input closure');\n  const pin=({source,...record})=>record;\n  return{schemaVersion:1,group:'native-oracles',manifest:pin(manifest),provisioner:pin(provisioner),\n    closureInputs:closureInputs.map(pin),families,assets,\n    timeoutMs:90000,jobs:2,requestTimeoutMs:10000};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.read-grammar-outcome-native-runner-source-publication-frozen-input",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "nativeOraclePolicy::frozen",
+    "inventoryName": "read grammar outcome native runner source publication frozen input",
+    "sourceText": "frozen=file=>{\n    const gitObject=execFileSync('git',['-C',repository,'rev-parse',baseCommit+':'+file],{encoding:'utf8',timeout:15000}).trim();\n    const bytes=execFileSync('git',['-C',repository,'cat-file','blob',gitObject],{timeout:15000,maxBuffer:8*1024*1024});\n    return{file,gitObject,bytes:bytes.length,sha256:hash(bytes),source:bytes};\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.authenticate-grammar-outcome-native-runner-source-publication-frozen-input",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "nativeOraclePolicy::pin",
+    "inventoryName": "authenticate grammar outcome native runner source publication frozen input",
+    "sourceText": "pin=({source,...record})=>record"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.describe-grammar-outcome-native-runner-source-publication-exact-changed-interval",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "publicationEdit",
+    "inventoryName": "describe grammar outcome native runner source publication exact changed interval",
+    "sourceText": "export function publicationEdit(original,current) {\n  let start=0,end=original.length,finish=current.length;\n  while(start<end&&start<finish&&original[start]===current[start])start++;\n  while(end>start&&finish>start&&original[end-1]===current[finish-1]){end--;finish--;}\n  return{start,end,removed:original.slice(start,end),inserted:current.slice(start,finish)};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.replay-grammar-outcome-native-runner-source-publication-exact-changed-interval",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "replayPublication",
+    "inventoryName": "replay grammar outcome native runner source publication exact changed interval",
+    "sourceText": "export function replayPublication(original,edit) {\n  assert.ok(Number.isSafeInteger(edit.start)&&Number.isSafeInteger(edit.end)&&edit.start>=0&&edit.end>=edit.start&&edit.end<=original.length);\n  assert.equal(original.slice(edit.start,edit.end),edit.removed,'exact publication source interval');\n  const current=original.slice(0,edit.start)+edit.inserted+original.slice(edit.end);\n  const inverse=current.slice(0,edit.start)+edit.removed+current.slice(edit.start+edit.inserted.length);\n  assert.equal(inverse,original,'whole original publication inverse');\n  return current;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.check-grammar-outcome-native-runner-source-publication-exact-source-history",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "checkRunnerPublication",
+    "inventoryName": "check grammar outcome native runner source publication exact source history",
+    "sourceText": "export function checkRunnerPublication(packet=readProjectData(path)) {\n  assert.equal(packet.schemaVersion,1);\n  assert.deepEqual(packet.originalSources.map(source=>source.file),Object.keys(originalPins));\n  for(const original of packet.originalSources) {\n    assert.equal(hash(original.source),originalPins[original.file],'original reviewed runner source');\n    assert.equal(original.bytes,Buffer.byteLength(original.source));\n    assert.equal(original.sha256,originalPins[original.file]);\n    const published=packet.publication.find(source=>source.file===original.file);\n    assert.ok(published,'published source registration');\n    const current=readFileSync(resolve(directory,original.file),'utf8');\n    assert.equal(replayPublication(original.source,published.edit),current,'exact published runner source');\n    assert.equal(published.sha256,hash(current));assert.equal(published.bytes,Buffer.byteLength(current));\n    assert.deepEqual(published.edit,publicationEdit(original.source,current),'canonical complete publication delta');\n  }\n  assert.equal(hash(JSON.stringify(packet.originalPolicy)),'8a12deb1cd59946232fe2d9b65fdb75aa9ab214e355d935ef05539bf3e023791');\n  assert.deepEqual(packet.newSources.map(source=>source.file),newSourceFiles);\n  for(const source of packet.newSources) {\n    const bytes=readFileSync(resolve(directory,source.file));\n    assert.equal(source.bytes,bytes.length,'published adapter bytes');assert.equal(source.sha256,hash(bytes),'published adapter hash');\n  }\n  assert.deepEqual(packet.nativeOraclePolicy,nativeOraclePolicy(packet.originalPolicy.baseCommit),'exact frozen external oracle closure');\n  checkProjectData(path,packet);\n  return packet;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-publication.execute-grammar-outcome-native-runner-source-publication-command",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/generate-publication.mjs",
+    "name": "main",
+    "inventoryName": "execute grammar outcome native runner source publication command",
+    "sourceText": "async function main() {\n  const args=process.argv.slice(2);\n  if(args.length===1&&args[0]==='--check'){checkRunnerPublication();console.log('Runner publication preserves every reviewed source and exact inverse.');return;}\n  assert.ok(args.length===0||(args.length===2&&args[0]==='--original-dir'));\n  let packet;\n  if(args.length) {\n    const originalDirectory=resolve(args[1]);\n    const originalSources=Object.entries(originalPins).map(([file,sha256])=>{\n      const source=readFileSync(resolve(originalDirectory,file),'utf8');assert.equal(hash(source),sha256);\n      return{file,bytes:Buffer.byteLength(source),sha256,source};\n    });\n    // Only this fixed authenticated module is evaluated during the one-time\n    // conversion. Normal --check and runtime loading never evaluate archives.\n    const {overlayPolicy}=await import('data:text/javascript;base64,'+Buffer.from(originalSources[0].source).toString('base64'));\n    packet={schemaVersion:1,scope:'Source publication provenance; no native execution evidence.',originalPolicy:overlayPolicy,originalSources,publication:[]};\n  } else packet=readProjectData(path);\n  packet.nativeOraclePolicy=nativeOraclePolicy(packet.originalPolicy.baseCommit);\n  packet.newSources=newSourceFiles.map(file=>{\n    const bytes=readFileSync(resolve(directory,file));return{file,bytes:bytes.length,sha256:hash(bytes)};\n  });\n  packet.publication=packet.originalSources.map(original=>{\n    const current=readFileSync(resolve(directory,original.file),'utf8');\n    return{file:original.file,bytes:Buffer.byteLength(current),sha256:hash(current),edit:publicationEdit(original.source,current)};\n  });\n  writeProjectData(path,packet);checkRunnerPublication(packet);\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.hash-grammar-outcome-native-runner-source-plan-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "sha256",
+    "inventoryName": "hash grammar outcome native runner source plan bytes",
+    "sourceText": "sha256=bytes=>createHash('sha256').update(bytes).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.test-grammar-outcome-native-runner-source-plan-path-containment",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "within",
+    "inventoryName": "test grammar outcome native runner source plan path containment",
+    "sourceText": "within=(root,file)=>{const path=relative(root,file);return path!==''&&!path.startsWith('..'+sep)&&path!=='..'&&!path.startsWith(sep);}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.read-grammar-outcome-native-runner-source-plan-version-control-object",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "git",
+    "inventoryName": "read grammar outcome native runner source plan version control object",
+    "sourceText": "export function git(repository,args) {\n  return execFileSync('git',['-C',repository,...args],{shell:false,encoding:'utf8',timeout:15000,maxBuffer:8*1024*1024});\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.read-grammar-outcome-native-runner-source-plan-bounded-file",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "bytesAt",
+    "inventoryName": "read grammar outcome native runner source plan bounded file",
+    "sourceText": "export function bytesAt(directory,file,maximum=policy.maximumFileBytes) {\n  const path=resolve(directory,file);assert.ok(within(directory,path),'owned input path');\n  const stat=lstatSync(path);assert.ok(stat.isFile()&&!stat.isSymbolicLink()&&stat.size<=maximum,'bounded regular input: '+file);\n  assert.ok(within(directory,realpathSync(path)),'input cannot escape its owner');\n  return readFileSync(path);\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.read-grammar-outcome-native-runner-source-plan-authenticated-frozen-bytes",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "frozenSourceBytes",
+    "inventoryName": "read grammar outcome native runner source plan authenticated frozen bytes",
+    "sourceText": "export function frozenSourceBytes(repository,file,{readWorking=bytesAt,readBlob}={}) {\n  assert.match(file.gitObject,/^[0-9a-f]{40}$/u,'exact frozen Git object');\n  const current=readWorking(repository,file.path),workingSha256=sha256(current);\n  if(file.workingSha256)assert.equal(workingSha256,file.workingSha256,'production input changed after planning: '+file.path);\n  const object=bytes=>createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');\n  const bytes=object(current)===file.gitObject?current:(readBlob?readBlob(repository,file.gitObject):execFileSync('git',\n    ['-C',repository,'cat-file','blob',file.gitObject],{shell:false,timeout:15000,maxBuffer:policy.maximumFileBytes}));\n  assert.ok(bytes.length<=policy.maximumFileBytes,'bounded frozen source');\n  assert.equal(object(bytes),file.gitObject,'frozen Git blob identity');\n  if(file.sha256)assert.equal(sha256(bytes),file.sha256,'reviewed snapshot bytes');\n  return{bytes,workingSha256,workingBytes:current.length};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.hash-grammar-outcome-native-runner-source-plan-version-control-object",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "frozenSourceBytes::object",
+    "inventoryName": "hash grammar outcome native runner source plan version control object",
+    "sourceText": "object=bytes=>createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex')"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.verify-grammar-outcome-native-runner-source-plan-complete-parent-inverse",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "verifyParentInverse",
+    "inventoryName": "verify grammar outcome native runner source plan complete parent inverse",
+    "sourceText": "export function verifyParentInverse(original,proposed,receipt) {\n  assert.equal(sha256(original),receipt.parent.originalSha256);\n  assert.equal(sha256(proposed),receipt.parent.proposedSha256);\n  const {start,end,sha256:expected}=receipt.parent.sourceFunction;\n  assert.ok(Number.isSafeInteger(start)&&Number.isSafeInteger(end)&&start>=0&&end>start&&end<=original.length);\n  const sourceFunction=original.subarray(start,end).toString('utf8');assert.equal(sha256(sourceFunction),expected);\n  const prefix='        Value::Number(number) => {\\n',suffix='\\n        }';\n  const begin=sourceFunction.indexOf(prefix),finish=sourceFunction.indexOf('\\n        Value::String(text) =>',begin);\n  assert.ok(begin>=0&&finish>begin&&sourceFunction.indexOf(prefix,begin+1)===-1);\n  const arm=sourceFunction.slice(begin,finish);assert.ok(arm.endsWith(suffix));\n  assert.equal(sha256(arm),receipt.parent.originalNumberArmSha256);\n  const lines=arm.slice(prefix.length,-suffix.length).split('\\n');\n  assert.ok(lines.every(line=>line===''||line.startsWith('            ')));\n  const body=lines.map(line=>line.slice(12)).join('\\n');\n  const tail='StructuredDataValue::Number(value)';assert.ok(body.endsWith(tail));\n  const helper='fn exact_json_number(number: &Number) -> Result<f64, String> {\\n'\n    +(body.slice(0,-tail.length)+'Ok(value)').split('\\n').map(line=>'    '+line).join('\\n')+'\\n}\\n\\n';\n  assert.equal(sha256(helper),receipt.parent.helperSha256);\n  const module='mod grammar_outcome;\\npub use grammar_outcome::encode_grammar_parse_outcome_links;\\n\\n';\n  const call='        Value::Number(number) => StructuredDataValue::Number(exact_json_number(number)?),';\n  let restored=proposed.toString('utf8');\n  for(const part of [module,helper,call]) assert.equal(restored.split(part).length,2,'one exact inverse source operation');\n  restored=restored.replace(module,'').replace(helper,'').replace(call,arm);\n  assert.deepEqual(Buffer.from(restored),original,'whole original parent inverse');\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.inventory-grammar-outcome-native-runner-source-plan-frozen-crate",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "crateInventory",
+    "inventoryName": "inventory grammar outcome native runner source plan frozen crate",
+    "sourceText": "export function crateInventory(repository) {\n  const format=git(repository,['rev-parse','--show-object-format']).trim();assert.equal(format,'sha1','explicit current Git object profile');\n  const listing=git(repository,['ls-tree','-r','-z',policy.baseCommit,'--','rust',...policy.auxiliarySources]);\n  const entries=listing.split('\\0').filter(Boolean);assert.ok(entries.length>0&&entries.length<=policy.maximumFiles);\n  let total=0;\n  const files=entries.map(entry=>{\n    const match=/^(100644|100755) blob ([0-9a-f]{40})\\t([^\\0]+)$/u.exec(entry);assert.ok(match,'ordinary tracked source blob required');\n    const [,mode,oid,path]=match;\n    const {bytes,workingSha256,workingBytes}=frozenSourceBytes(repository,{path,gitObject:oid});\n    assert.ok(path.startsWith('rust/')||policy.auxiliarySources.includes(path),'exact build-helper source closure');\n    const blob=createHash('sha1').update('blob '+bytes.length+'\\0').update(bytes).digest('hex');assert.equal(blob,oid,'unchanged pinned crate: '+path);\n    assert.ok(total<=policy.maximumCrateBytes-bytes.length,'bounded total crate copy');total+=bytes.length;\n    return {path,mode,gitObject:oid,bytes:bytes.length,sha256:sha256(bytes),workingSha256,workingBytes};\n  });\n  assert.ok(files.some(file=>file.path==='rust/Cargo.toml')&&files.some(file=>file.path==='rust/Cargo.lock'));\n  assert.ok(policy.auxiliarySources.every(path=>files.some(file=>file.path===path)),'every declared JS build-helper source remains tracked');\n  assert.ok(!files.some(file=>file.path===policy.child||file.path==='rust/tests/'+policy.testName+'.rs'),'overlay additions must be absent in the base');\n  return {files,bytes:total};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-source-plan.construct-grammar-outcome-native-runner-source-plan-isolated-overlay-plan",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/plan.mjs",
+    "name": "createOverlayPlan",
+    "inventoryName": "construct grammar outcome native runner source plan isolated overlay plan",
+    "sourceText": "export async function createOverlayPlan({repository=fileURLToPath(new URL('../../../../',import.meta.url)),candidateDirectory,\n  probeDirectory=fileURLToPath(new URL('../probe/',import.meta.url))}={}) {\n  repository=realpathSync(repository);if(candidateDirectory)candidateDirectory=realpathSync(candidateDirectory);probeDirectory=realpathSync(probeDirectory);\n  const runnerPublication=checkRunnerPublication();\n  const publication=verifyPublication();\n  for(const [group,pins]of [['candidate',policy.candidatePins],['probe',policy.probePins]])for(const [file,expected]of Object.entries(pins)) {\n    const original=publication.originalSources.find(source=>source.group===group&&source.file===file);\n    assert.ok(original,'archival reviewed input: '+group+'/'+file);\n    assert.equal(original.sha256,expected,'retained original reviewed input: '+group+'/'+file);\n  }\n  for(const file of ['oracle.mjs','native-outcome-probe.rs']) {\n    const published=publication.files.find(source=>source.path==='probe/'+file);\n    assert.ok(published,'published probe source: '+file);\n    const bytes=bytesAt(probeDirectory,file);\n    assert.equal(bytes.length,published.bytes,'selected actual probe source bytes: '+file);\n    assert.equal(sha256(bytes),published.sha256,'selected actual probe source hash: '+file);\n  }\n  assert.equal(git(repository,['rev-parse',policy.baseCommit+'^{commit}']).trim(),policy.baseCommit);\n  // Future commits may publish experiment files. Core source/dependency drift\n  // is authenticated by predecessor pins; the compiled full crate stays frozen.\n  // Current source pins are retained separately and checked again after execution.\n  // Dependency locks stay identical for the shared installed JS build dependencies.\n  git(repository,['diff','--exit-code','--quiet',policy.baseCommit,'--','js/package.json','js/package-lock.json']);\n  const executionCommit=git(repository,['rev-parse','HEAD']).trim();\n  const {readProjectData}=await import(pathToFileURL(resolve(repository,'js/scripts/project-data.mjs')));\n  const generated=buildIntegration(repository);\n  const receipt=candidateDirectory?readProjectData(resolve(candidateDirectory,'integration-receipt.lino')):generated.receipt;\n  assert.deepEqual(receipt,generated.receipt,'fresh qualified bridge receipt');\n  for(const input of receipt.predecessor.pins) assert.equal(sha256(bytesAt(repository,input.file)),input.sha256,'predecessor source: '+input.file);\n  const original=bytesAt(repository,policy.parent),parent=candidateDirectory?bytesAt(candidateDirectory,'structured_data_links.proposed.rs'):Buffer.from(generated.parent.source);\n  const child=candidateDirectory?bytesAt(candidateDirectory,'grammar_outcome.rs'):Buffer.from(generated.child);\n  assert.deepEqual(parent,Buffer.from(generated.parent.source),'fresh mechanically generated parent');\n  assert.deepEqual(child,Buffer.from(generated.child),'fresh mechanically generated child');\n  verifyParentInverse(original,parent,receipt);assert.equal(sha256(child),receipt.child.sha256);\n  const manifest=bytesAt(repository,'rust/Cargo.toml').toString('utf8');\n  assert.ok(!/^\\s*autotests\\s*=\\s*false\\s*$/mu.test(manifest),'actual probe auto-discovery required');\n  return {repository,candidateDirectory,probeDirectory,executionCommit,inventory:crateInventory(repository),receipt,parent,child,\n    probe:bytesAt(probeDirectory,'native-outcome-probe.rs'),policy,runnerPublication,publication,\n    nativeOraclePolicy:runnerPublication.nativeOraclePolicy};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.require-grammar-outcome-native-runner-execution-native-continuous-integration-authorization",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "requireNativeCI",
+    "inventoryName": "require grammar outcome native runner execution native continuous integration authorization",
+    "sourceText": "export function requireNativeCI(plan,environment=process.env,platform=process.platform) {\n  assert.equal(environment.META_LANGUAGE_B95_NATIVE_OUTCOME,'1','explicit native experiment opt-in required');\n  assert.equal(environment.CI,'true','native execution is forbidden locally');\n  assert.equal(environment.GITHUB_ACTIONS,'true','native execution requires GitHub Actions');\n  assert.equal(platform,'linux','first experiment process-group profile is Linux only');\n  assert.equal(realpathSync(environment.GITHUB_WORKSPACE),plan.repository,'actual CI checkout owner');\n  const temporary=realpathSync(environment.RUNNER_TEMP);\n  assert.ok(temporary!=='/'&&!within(plan.repository,temporary)&&temporary!==plan.repository,'compiler scratch is outside production checkout');\n  return temporary;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.execute-grammar-outcome-native-runner-execution-bounded-process",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "runBounded",
+    "inventoryName": "execute grammar outcome native runner execution bounded process",
+    "sourceText": "export function runBounded(command,args,{cwd,environment,timeout,logs,label,spawnProcess=spawn}) {\n  return new Promise((accept,reject)=>{\n    let child;\n    try {child=spawnProcess(command,args,{cwd,env:environment,shell:false,detached:true,stdio:['ignore','pipe','pipe']});}\n    catch(error) {reject(error);return;}\n    const started=Date.now(),captured={stdout:[],stderr:[]},counts={stdout:0,stderr:0},kept={stdout:0,stderr:0};\n    let failure=null,forceTimer;\n    const stop=reason=>{\n      failure??=reason;\n      if(Number.isInteger(child.pid)&&child.pid>0) {\n        try {process.kill(-child.pid,'SIGTERM');} catch(error) {if(error.code!=='ESRCH') failure+='; TERM '+error.message;}\n        forceTimer??=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH') failure+='; KILL '+error.message;}},policy.terminationGrace);\n      }\n    };\n    const timer=setTimeout(()=>stop('deadline '+timeout+'ms'),timeout);\n    for(const stream of ['stdout','stderr']) child[stream].on('data',chunk=>{\n      counts[stream]+=chunk.length;\n      const width=Math.min(chunk.length,Math.max(0,policy.maximumOutputBytes-kept[stream]));\n      if(width) {captured[stream].push(chunk.subarray(0,width));kept[stream]+=width;}\n      if(counts[stream]>policy.maximumOutputBytes) stop(stream+' output limit');\n    });\n    child.on('error',error=>{failure??=error.message;});\n    child.on('close',(status,signal)=>{\n      clearTimeout(timer);if(forceTimer)clearTimeout(forceTimer);\n      const result={label,command,arguments:args,status,signal,elapsedMs:Date.now()-started,timeout,\n        processMode:spawnProcess===spawn?'actual subprocess':'injected process contract',\n        error:failure,stdoutBytes:counts.stdout,stderrBytes:counts.stderr,streams:{}};\n      const buffers={};\n      try {\n        for(const stream of ['stdout','stderr']) {\n          const bytes=Buffer.concat(captured[stream]);buffers[stream]=bytes;\n          const path=join(logs,label+'.'+stream+'.log');writeFileSync(path,bytes,{flag:'wx'});\n          result.streams[stream]={path,bytes:bytes.length,sha256:sha256(bytes),truncated:counts[stream]!==bytes.length};\n        }\n      } catch(error) {reject(error);return;}\n      accept({result,...buffers}); // Caller preserves failures; never calls them observations.\n    });\n  });\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.stop-grammar-outcome-native-runner-execution-owned-process-group",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "runBounded::stop",
+    "inventoryName": "stop grammar outcome native runner execution owned process group",
+    "sourceText": "stop=reason=>{\n      failure??=reason;\n      if(Number.isInteger(child.pid)&&child.pid>0) {\n        try {process.kill(-child.pid,'SIGTERM');} catch(error) {if(error.code!=='ESRCH') failure+='; TERM '+error.message;}\n        forceTimer??=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch(error){if(error.code!=='ESRCH') failure+='; KILL '+error.message;}},policy.terminationGrace);\n      }\n    }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.prepare-grammar-outcome-native-runner-execution-bounded-environment",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "environmentFor",
+    "inventoryName": "prepare grammar outcome native runner execution bounded environment",
+    "sourceText": "function environmentFor(work,original) {\n  const environment={...original};\n  for(const name of Object.keys(environment)) if(name.startsWith('ISSUE_195_')) delete environment[name];\n  for(const name of ['CARGO_TARGET_DIR','CARGO_BUILD_TARGET_DIR','CARGO_BUILD_TARGET','RUSTFLAGS','CARGO_ENCODED_RUSTFLAGS',\n    'RUSTC_WRAPPER','RUSTC_WORKSPACE_WRAPPER','RUSTC','CARGO_BUILD_RUSTC','CARGO_BUILD_RUSTC_WRAPPER','CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER']) delete environment[name];\n  return {...environment,CARGO_TARGET_DIR:join(work,'target'),CARGO_BUILD_JOBS:'1',CARGO_NET_OFFLINE:'true',\n    CARGO_INCREMENTAL:'0',NODE_OPTIONS:'',RUST_TEST_THREADS:'1'};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.copy-grammar-outcome-native-runner-execution-exact-frozen-files",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "copySnapshot",
+    "inventoryName": "copy grammar outcome native runner execution exact frozen files",
+    "sourceText": "function copySnapshot(plan,overlay) {\n  for(const file of plan.inventory.files) {\n    const destination=join(overlay,file.path);\n    const {bytes}=frozenSourceBytes(plan.repository,file);\n    mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,bytes,{flag:'wx'});\n    chmodSync(destination,file.mode==='100755'?0o755:0o644);\n    assert.equal(sha256(bytesAt(overlay,file.path)),file.sha256,'exact independent scratch file');\n  }\n  // The Agda dev-oracle build invokes its existing JS queue helper. Its small\n  // SOURCE closure is copied above; only the already installed dependency\n  // directory is shared. No npm/install script is invoked.\n  const modules=realpathSync(join(plan.repository,'js/node_modules'));\n  assert.ok(lstatSync(modules).isDirectory(),'existing CI dependency installation');\n  symlinkSync(modules,join(overlay,'js/node_modules'),'dir');\n  writeFileSync(join(overlay,policy.parent),plan.parent);\n  mkdirSync(dirname(join(overlay,policy.child)),{recursive:true});\n  writeFileSync(join(overlay,policy.child),plan.child,{flag:'wx'});\n  writeFileSync(join(overlay,'rust/tests',policy.testName+'.rs'),plan.probe,{flag:'wx'});\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.execute-grammar-outcome-native-runner-execution-isolated-overlay",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "runOverlay",
+    "inventoryName": "execute grammar outcome native runner execution isolated overlay",
+    "sourceText": "export async function runOverlay(plan,{environment=process.env,spawnProcess=spawn}={}) {\n  const temporary=requireNativeCI(plan,environment);\n  const artifactParent=join(plan.repository,'issue-195-artifacts','bulk95-outcome-overlay');\n  mkdirSync(artifactParent,{recursive:true});assert.ok(!lstatSync(artifactParent).isSymbolicLink());\n  assert.ok(within(plan.repository,realpathSync(artifactParent)),'artifact owner cannot escape through an ancestor symlink');\n  const artifacts=mkdtempSync(join(artifactParent,'run-'));\n  const work=mkdtempSync(join(temporary,'meta-language-bulk95-outcome-'));\n  const overlay=join(work,'overlay');mkdirSync(overlay);\n  const {writeProjectData,readProjectData}=await import(pathToFileURL(join(plan.repository,'js/scripts/project-data.mjs')));\n  writeProjectData(join(work,'.meta-language-bulk95-owned.lino'),{repository:plan.repository,executionCommit:plan.executionCommit,artifacts});\n  const receipt={schemaVersion:1,scope:policy.profile,baseCommit:policy.baseCommit,executionCommit:plan.executionCommit,\n    processMode:spawnProcess===spawn?'actual subprocess':'injected process contract',\n    work,artifacts,sourceManifest:plan.inventory.files,sourceBytes:plan.inventory.bytes,\n    originalCandidatePins:policy.candidatePins,originalProbePins:policy.probePins,\n    publication:plan.publication,runnerPublication:plan.runnerPublication.publication,\n    runnerAdapterSources:plan.runnerPublication.newSources,\n    bridgeReceipt:plan.receipt,nativeOraclePolicy:plan.nativeOraclePolicy,processes:[]};\n  let failure=null;\n  const execute=async(command,args,timeout,label,env=environmentFor(work,environment))=>{\n    requireNativeCI(plan,environment); // Also guards injected contract processes.\n    const process=await runBounded(command,args,{cwd:join(overlay,'rust'),environment:env,timeout,logs:artifacts,label,spawnProcess});\n    receipt.processes.push(process.result);\n    if(process.result.error||process.result.status!==0||process.result.signal) throw new Error(label+' failed; exact logs in '+artifacts);\n    return process.stdout.toString('utf8');\n  };\n  try {\n    copySnapshot(plan,overlay);\n    // Dev-dependency build scripts require their registered external oracle\n    // source assets even when the selected probe never calls those oracles.\n    // Acquire them only inside this owned overlay, never in production.\n    const assetRequest=join(work,'native-oracle-assets-request.lino');\n    const assetReceipt=join(artifacts,'native-oracle-assets-receipt.lino');\n    writeProjectData(assetRequest,plan.nativeOraclePolicy);\n    await execute(process.execPath,['--max-old-space-size=512',fileURLToPath(new URL('./provision-assets.mjs',import.meta.url)),\n      '--repository',plan.repository,'--work',work,'--overlay',overlay,'--request',assetRequest,\n      '--request-sha256',sha256(readFileSync(assetRequest)),'--receipt',assetReceipt],plan.nativeOraclePolicy.timeoutMs,'external-oracle-assets');\n    const assetBytes=readFileSync(assetReceipt);\n    receipt.nativeOracleAssets={path:assetReceipt,bytes:assetBytes.length,sha256:sha256(assetBytes)};\n    const fixture=join(artifacts,'oracle.lino'),report=join(artifacts,'native-report.lino');\n    assert.ok(!existsSync(fixture)&&!existsSync(report));\n    // Exactly one independent JS oracle generation, never substitute it for\n    // native probe execution or attach a ledger record to its metadata.\n    const authoredFixture=join(work,'oracle.lino');\n    await execute(process.execPath,['--max-old-space-size=512',join(plan.probeDirectory,'oracle.mjs'),\n      '--repository',plan.repository,'--output',authoredFixture],policy.oracleTimeout,'oracle');\n    const oracleBytes=bytesAt(work,'oracle.lino',8*1024*1024);\n    writeFileSync(fixture,oracleBytes,{flag:'wx'});\n    assert.deepEqual(bytesAt(artifacts,'oracle.lino',8*1024*1024),oracleBytes,'retained exact outside-checkout oracle output');\n    receipt.oracle={bytes:oracleBytes.length,sha256:sha256(oracleBytes),authoredFixture,fixture};\n    await execute('cargo',['--version','--verbose'],10000,'cargo-version');\n    await execute('rustc',['--version','--verbose'],10000,'rustc-version');\n    const nativeEnvironment={...environmentFor(work,environment),META_LANGUAGE_B95_OUTCOME_FIXTURE:fixture,META_LANGUAGE_B95_OUTCOME_REPORT:report};\n    const build=await execute('cargo',['test','--manifest-path',join(overlay,'rust/Cargo.toml'),'--locked','--offline',\n      '--no-default-features','--jobs','1','--test',policy.testName,'--no-fail-fast','--no-run',\n      '--message-format=json-render-diagnostics'],policy.compilerTimeout,'compile',nativeEnvironment);\n    const targets=build.split(/\\r?\\n/u).filter(Boolean).map(line=>JSON.parse(line)).filter(item=>\n      item.reason==='compiler-artifact'&&item.target?.name===policy.testName&&item.target.kind.includes('test')&&item.executable);\n    assert.equal(targets.length,1,'one actual selected native test artifact');\n    const executable=realpathSync(targets[0].executable);\n    assert.ok(within(join(work,'target'),executable)&&lstatSync(executable).isFile(),'native artifact belongs to exact scratch target');\n    await execute(executable,['--test-threads=1','--nocapture'],policy.executionTimeout,'native-probe',nativeEnvironment);\n    const nativeBytes=bytesAt(artifacts,'native-report.lino',8*1024*1024);\n    const data=readProjectData(report);assert.ok(data&&typeof data==='object','actual native post-assertions linked report');\n    receipt.nativeReport={bytes:nativeBytes.length,sha256:sha256(nativeBytes),path:report};\n    // Even Cargo.lock and all dev-oracle/generated sources remain original in\n    // the checkout. The two candidate source files exist only in the overlay.\n    assert.deepEqual(crateInventory(plan.repository),plan.inventory,'production inputs remain unchanged');\n    assert.deepEqual(checkRunnerPublication(),plan.runnerPublication,'runner publication remains unchanged');\n    assert.deepEqual(verifyPublication(),plan.publication,'bridge/probe publication remains unchanged');\n  } catch(error) {\n    failure=error;receipt.failure={name:error.name,message:error.message};\n  } finally {\n    writeProjectData(join(artifacts,'runner-receipt.lino'),receipt);\n    // Deliberately retain logs, native report and exact scratch ownership. CI\n    // teardown may clean this stopped task's work/target; never the evidence.\n    console.error('B95 scratch outcome diagnostics: '+artifacts+'; stopped scratch: '+work);\n  }\n  if(failure) throw failure;\n  return receipt;\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.execute-grammar-outcome-native-runner-execution-retained-process",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "runOverlay::execute",
+    "inventoryName": "execute grammar outcome native runner execution retained process",
+    "sourceText": "execute=async(command,args,timeout,label,env=environmentFor(work,environment))=>{\n    requireNativeCI(plan,environment); // Also guards injected contract processes.\n    const process=await runBounded(command,args,{cwd:join(overlay,'rust'),environment:env,timeout,logs:artifacts,label,spawnProcess});\n    receipt.processes.push(process.result);\n    if(process.result.error||process.result.status!==0||process.result.signal) throw new Error(label+' failed; exact logs in '+artifacts);\n    return process.stdout.toString('utf8');\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-execution.execute-grammar-outcome-native-runner-execution-command",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/run.mjs",
+    "name": "main",
+    "inventoryName": "execute grammar outcome native runner execution command",
+    "sourceText": "async function main() {\n  const args=process.argv.slice(2),options={};let native=false;\n  for(let index=0;index<args.length;index++) {\n    if(args[index]==='--native') {assert.equal(native,false);native=true;}\n    else {\n      assert.ok(['--repository','--candidate-dir','--probe-dir'].includes(args[index]));\n      const key={'--repository':'repository','--candidate-dir':'candidateDirectory','--probe-dir':'probeDirectory'}[args[index]];\n      assert.ok(!options[key]&&typeof args[index+1]==='string');options[key]=resolve(args[++index]);\n    }\n  }\n  const plan=await createOverlayPlan(options);\n  if(native) await runOverlay(plan);\n  else console.log(JSON.stringify({scope:'source plan only; no Cargo/oracle execution',baseCommit:policy.baseCommit,\n    executionCommit:plan.executionCommit,files:plan.inventory.files.length,bytes:plan.inventory.bytes,probe:policy.testName}));\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-first-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "native authorization refuses before even an injected compiler process or scratch creation",
+    "inventoryName": "verify grammar outcome native runner contract verification first contract",
+    "sourceText": "test('native authorization refuses before even an injected compiler process or scratch creation',async()=>{\n  const repository=realpathSync(mkdtempSync(join(tmpdir(),'meta-language-b95-runner-contract-')));\n  const plan={repository};let calls=0;\n  const base={CI:'true',GITHUB_ACTIONS:'true',META_LANGUAGE_B95_NATIVE_OUTCOME:'1',GITHUB_WORKSPACE:repository,RUNNER_TEMP:tmpdir()};\n  for(const field of ['CI','GITHUB_ACTIONS','META_LANGUAGE_B95_NATIVE_OUTCOME']) {\n    const environment={...base,[field]:undefined};\n    await assert.rejects(()=>runOverlay(plan,{environment,spawnProcess:()=>{calls++;throw new Error('forbidden');}}));\n  }\n  assert.equal(calls,0);\n  assert.throws(()=>requireNativeCI(plan,base,'win32'),/Linux only/);\n  assert.equal(requireNativeCI(plan,base,'linux'),realpathSync(tmpdir()));\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.refuse-grammar-outcome-native-runner-contract-verification-injected-compiler-first-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "native authorization refuses before even an injected compiler process or scratch creation::spawnProcess",
+    "inventoryName": "refuse grammar outcome native runner contract verification injected compiler first contract",
+    "sourceText": "spawnProcess:()=>{calls++;throw new Error('forbidden');}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-second-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "injected process transport retains exact diagnostics and explicitly identifies contracts",
+    "inventoryName": "verify grammar outcome native runner contract verification second contract",
+    "sourceText": "test('injected process transport retains exact diagnostics and explicitly identifies contracts',async()=>{\n  const directory=mkdtempSync(join(tmpdir(),'meta-language-b95-process-contract-'));\n  const logs=join(directory,'logs');mkdirSync(logs);\n  let invocation;\n  const fake=(command,args,options)=>{\n    invocation={command,args,options};\n    const child=new EventEmitter();child.stdout=new EventEmitter();child.stderr=new EventEmitter();\n    queueMicrotask(()=>{child.stdout.emit('data',Buffer.from('oracle-data\\n'));child.stderr.emit('data',Buffer.from('retained warning\\n'));child.emit('close',0,null);});\n    return child;\n  };\n  const process=await runBounded('contract-command',['--source-only'],{cwd:directory,environment:{},timeout:1000,logs,label:'contract',spawnProcess:fake});\n  assert.equal(process.result.processMode,'injected process contract');\n  assert.equal(process.stdout.toString(),'oracle-data\\n');assert.equal(process.stderr.toString(),'retained warning\\n');\n  assert.equal(readFileSync(join(logs,'contract.stderr.log'),'utf8'),'retained warning\\n');\n  assert.equal(invocation.options.shell,false);assert.equal(invocation.options.detached,true);\n  assert.equal(process.result.status,0);assert.equal(process.result.signal,null);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.construct-grammar-outcome-native-runner-contract-verification-injected-process-second-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "injected process transport retains exact diagnostics and explicitly identifies contracts::fake",
+    "inventoryName": "construct grammar outcome native runner contract verification injected process second contract",
+    "sourceText": "fake=(command,args,options)=>{\n    invocation={command,args,options};\n    const child=new EventEmitter();child.stdout=new EventEmitter();child.stderr=new EventEmitter();\n    queueMicrotask(()=>{child.stdout.emit('data',Buffer.from('oracle-data\\n'));child.stderr.emit('data',Buffer.from('retained warning\\n'));child.emit('close',0,null);});\n    return child;\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-third-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the default CLI has no native branch and the explicit branch selects only the isolated probe",
+    "inventoryName": "verify grammar outcome native runner contract verification third contract",
+    "sourceText": "test('the default CLI has no native branch and the explicit branch selects only the isolated probe',()=>{\n  const source=readFileSync(new URL('./run.mjs',import.meta.url),'utf8');\n  assert.ok(source.includes('let native=false'));\n  assert.ok(source.includes('if(native) await runOverlay(plan);'));\n  assert.ok(source.includes(\"'--test',policy.testName,'--no-fail-fast','--no-run'\"));\n  assert.ok(source.includes(\"'--locked','--offline'\"));\n  assert.ok(source.includes(\"['--test-threads=1','--nocapture']\"));\n  assert.ok(!source.includes('recordIssue195Observations')&&!source.includes('cargo fetch')&&!source.includes('npm install'));\n  assert.ok(source.includes(\"name.startsWith('ISSUE_195_')\"));\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-fourth-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata",
+    "inventoryName": "verify grammar outcome native runner contract verification fourth contract",
+    "sourceText": "test('the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata',()=>{\n  const original=Buffer.from('retained frozen source\\n'),current=Buffer.from('later source registration\\n');\n  const gitObject=createHash('sha1').update('blob '+original.length+'\\0').update(original).digest('hex');\n  const file={path:'rust/src/data/concept-records.lino',gitObject,sha256:sha256(original)};\n  const packet=frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>original});\n  assert.deepEqual(packet.bytes,original);assert.equal(packet.workingSha256,sha256(current));assert.equal(packet.workingBytes,current.length);\n  assert.throws(()=>frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>Buffer.from('corrupt')}),/frozen Git blob identity/u);\n  assert.throws(()=>frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original}),/production input changed after planning/u);\n  let loads=0;const retained=frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}});\n  assert.deepEqual(retained.bytes,original);assert.equal(loads,0);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-working-file-fourth-contract-first-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readWorking::call:0",
+    "inventoryName": "read grammar outcome native runner contract verification working file fourth contract first injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>original})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>original})",
+    "scopeOccurrence": "call:0"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-frozen-object-fourth-contract-first-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readBlob::call:0",
+    "inventoryName": "read grammar outcome native runner contract verification frozen object fourth contract first injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>original})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>original})",
+    "scopeOccurrence": "call:0"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-working-file-fourth-contract-second-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readWorking::call:1",
+    "inventoryName": "read grammar outcome native runner contract verification working file fourth contract second injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>Buffer.from('corrupt')})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>Buffer.from('corrupt')})",
+    "scopeOccurrence": "call:1"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-frozen-object-fourth-contract-second-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readBlob::call:1",
+    "inventoryName": "read grammar outcome native runner contract verification frozen object fourth contract second injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>Buffer.from('corrupt')})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>current,readBlob:()=>Buffer.from('corrupt')})",
+    "scopeOccurrence": "call:1"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-working-file-fourth-contract-third-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readWorking::call:2",
+    "inventoryName": "read grammar outcome native runner contract verification working file fourth contract third injected call",
+    "sourceText": "frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original})",
+    "sourceContext": "frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original})",
+    "scopeOccurrence": "call:2"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-frozen-object-fourth-contract-third-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readBlob::call:2",
+    "inventoryName": "read grammar outcome native runner contract verification frozen object fourth contract third injected call",
+    "sourceText": "frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original})",
+    "sourceContext": "frozenSourceBytes('/unused',{...file,workingSha256:sha256(original)},{readWorking:()=>current,readBlob:()=>original})",
+    "scopeOccurrence": "call:2"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-working-file-fourth-contract-fourth-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readWorking::call:3",
+    "inventoryName": "read grammar outcome native runner contract verification working file fourth contract fourth injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}})",
+    "scopeOccurrence": "call:3"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.read-grammar-outcome-native-runner-contract-verification-frozen-object-fourth-contract-fourth-injected-call",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "the compiled snapshot uses exact frozen blobs while separately retaining current publication metadata::readBlob::call:3",
+    "inventoryName": "read grammar outcome native runner contract verification frozen object fourth contract fourth injected call",
+    "sourceText": "frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}})",
+    "sourceContext": "frozenSourceBytes('/unused',file,{readWorking:()=>original,readBlob:()=>{loads++;return original;}})",
+    "scopeOccurrence": "call:3"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-fifth-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "publication edits retain the complete original and refuse a changed original interval",
+    "inventoryName": "verify grammar outcome native runner contract verification fifth contract",
+    "sourceText": "test('publication edits retain the complete original and refuse a changed original interval',()=>{\n  const original='before\\nreviewed source\\nafter\\n',published='before\\nportable reviewed source\\nafter\\n';\n  const edit=publicationEdit(original,published);\n  assert.equal(replayPublication(original,edit),published);\n  assert.throws(()=>replayPublication(original,{...edit,removed:'unrelated'}),/exact publication source interval/u);\n  assert.throws(()=>replayPublication(original,{...edit,end:original.length+1}));\n  assert.equal(replayPublication(original,publicationEdit(original,original)),original);\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-sixth-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "output overflow retains the bounded prefix and reports a failed process contract",
+    "inventoryName": "verify grammar outcome native runner contract verification sixth contract",
+    "sourceText": "test('output overflow retains the bounded prefix and reports a failed process contract',async()=>{\n  const directory=mkdtempSync(join(tmpdir(),'meta-language-b95-output-contract-'));\n  const fake=()=>{\n    const child=new EventEmitter();child.stdout=new EventEmitter();child.stderr=new EventEmitter();\n    queueMicrotask(()=>{child.stderr.emit('data',Buffer.alloc(overlayPolicy.maximumOutputBytes+1,120));child.emit('close',0,null);});\n    return child;\n  };\n  const result=await runBounded('contract-command',[],{cwd:directory,environment:{},timeout:1000,logs:directory,label:'overflow',spawnProcess:fake});\n  assert.equal(result.result.error,'stderr output limit');\n  assert.equal(result.result.stderrBytes,overlayPolicy.maximumOutputBytes+1);\n  assert.equal(result.stderr.length,overlayPolicy.maximumOutputBytes);\n  assert.equal(result.result.streams.stderr.truncated,true);\n  assert.equal(result.result.processMode,'injected process contract');\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.construct-grammar-outcome-native-runner-contract-verification-injected-process-sixth-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "output overflow retains the bounded prefix and reports a failed process contract::fake",
+    "inventoryName": "construct grammar outcome native runner contract verification injected process sixth contract",
+    "sourceText": "fake=()=>{\n    const child=new EventEmitter();child.stdout=new EventEmitter();child.stderr=new EventEmitter();\n    queueMicrotask(()=>{child.stderr.emit('data',Buffer.alloc(overlayPolicy.maximumOutputBytes+1,120));child.emit('close',0,null);});\n    return child;\n  }"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-runner-contract-verification.verify-grammar-outcome-native-runner-contract-verification-seventh-contract",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/runner.test.mjs",
+    "name": "an alternate probe directory cannot substitute an unqualified oracle or native source",
+    "inventoryName": "verify grammar outcome native runner contract verification seventh contract",
+    "sourceText": "test('an alternate probe directory cannot substitute an unqualified oracle or native source',async()=>{\n  const directory=mkdtempSync(join(tmpdir(),'meta-language-b95-probe-source-contract-'));\n  const files=['oracle.mjs','native-outcome-probe.rs'];\n  for(const file of files)copyFileSync(new URL('../probe/'+file,import.meta.url),join(directory,file));\n  for(const file of files) {\n    const path=join(directory,file),bytes=readFileSync(path);\n    writeFileSync(path,Buffer.concat([bytes,Buffer.from('\\n')]));\n    await assert.rejects(()=>createOverlayPlan({probeDirectory:directory}),/selected actual probe source/u);\n    writeFileSync(path,bytes);\n  }\n})"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-oracle-asset-preparation.require-grammar-outcome-native-oracle-asset-preparation-owned-asset-scratch",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/provision-assets.mjs",
+    "name": "requireOwnedAssetScratch",
+    "inventoryName": "require grammar outcome native oracle asset preparation owned asset scratch",
+    "sourceText": "export function requireOwnedAssetScratch({repository,work,overlay,request,receipt},environment=process.env) {\n  const temporary=requireNativeCI({repository},environment);\n  work=realpathSync(work);overlay=realpathSync(overlay);\n  assert.ok(within(temporary,work)&&within(work,overlay),'external owned scratch only');\n  assert.ok(within(work,request)&&within(repository,receipt),'request and retained receipt owners');\n  assert.equal(readProjectData(join(work,'.meta-language-bulk95-owned.lino')).repository,repository);\n  assert.ok(lstatSync(overlay).isDirectory()&&!lstatSync(overlay).isSymbolicLink());\n  assert.ok(!existsSync(join(overlay,'.git')),'scratch asset root must not be a checkout');\n  return{work,overlay};\n}"
+  },
+  {
+    "id": "native-grammar-outcome-experiment.grammar-outcome-native-oracle-asset-preparation.execute-grammar-outcome-native-oracle-asset-preparation-command",
+    "source": "experiments/grammar-outcome-network/native-transport/runner/provision-assets.mjs",
+    "name": "main",
+    "inventoryName": "execute grammar outcome native oracle asset preparation command",
+    "sourceText": "async function main() {\n  const args=process.argv.slice(2);\n  assert.equal(args.length,12);\n  const options={};\n  for(let index=0;index<args.length;index+=2) {\n    assert.ok(['--repository','--work','--overlay','--request','--request-sha256','--receipt'].includes(args[index]));\n    const name=args[index].slice(2);assert.ok(!options[name]);options[name]=args[index+1];\n  }\n  const repository=realpathSync(options.repository),work=realpathSync(options.work),overlay=realpathSync(options.overlay);\n  const request=resolve(options.request),receipt=resolve(options.receipt);\n  requireOwnedAssetScratch({repository,work,overlay,request,receipt});\n  assert.equal(sha256(readFileSync(request)),options['request-sha256'],'exact parent-authored frozen asset request');\n  const policy=readProjectData(request);\n  assert.equal(policy.schemaVersion,1);assert.equal(policy.group,'native-oracles');\n  assert.equal(sha256(bytesAt(repository,policy.provisioner.file)),policy.provisioner.sha256,'unchanged frozen asset downloader');\n  const {downloadExternalGrammarAssets,externalGrammarPath}=await import(pathToFileURL(join(repository,policy.provisioner.file)));\n  const manifest={schemaVersion:1,assets:Object.fromEntries(policy.assets.map(({path,...asset})=>{\n    assert.ok(/^rust\\/vendor\\/tree-sitter-[a-z-]+\\/src\\//u.test(path),'only native oracle source assets');\n    assert.equal(asset.group,policy.group);return[path,asset];\n  }))};\n  const context={root:overlay,cacheRoot:join(work,'external-grammar-assets'),manifest};\n  const captured={schemaVersion:1,scope:'Authenticated temporary native oracle build inputs; no grammar capability evidence.',\n    manifest:policy.manifest,provisioner:policy.provisioner,closureInputs:policy.closureInputs,files:[]};\n  let failure;\n  try {\n    await downloadExternalGrammarAssets({...context,assets:policy.assets.map(asset=>asset.path),materialize:true,\n      jobs:policy.jobs,timeoutMs:policy.requestTimeoutMs});\n  } catch(error) {failure=error;captured.error={name:error.name,message:error.message};}\n  finally {\n    for(const asset of policy.assets) {\n      if(!existsSync(join(overlay,asset.path)))continue;\n      const actual=externalGrammarPath(asset.path,context);assert.ok(within(overlay,realpathSync(actual)),'asset is materialized in owned overlay');\n      const bytes=readFileSync(actual);\n      captured.files.push({path:asset.path,bytes:bytes.length,sha256:sha256(bytes),\n        ...(asset.encoding==='gzip'?{decodedBytes:asset.decodedBytes,decodedSha256:asset.decodedSha256}:{})});\n    }\n    writeProjectData(receipt,captured);\n  }\n  if(failure)throw failure;\n  assert.equal(captured.files.length,policy.assets.length,'every registered build input was authenticated');\n  console.log('Authenticated '+captured.files.length+' temporary native oracle source assets.');\n}"
+  },
+  {
+    "id": "repository.check-rust-workflow-time-limits",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "checkRustWorkflowTimeouts",
+    "inventoryName": "check rust workflow time limits",
+    "sourceText": "function checkRustWorkflowTimeouts(parsed) {\n  const original = [['detect-changes', 5], ['changelog', 10], ['version-check', 5], ['secrets-scan', 10],\n    ['fresh-merge', 20], ['cargo-lock', 5], ['check', 15], ['msrv', 30], ['lint', 10], ['test', 15],\n    ['coverage', 15], ['coverage-report', 10], ['build', 10], ['auto-release', 30], ['manual-release', 30],\n    ['changelog-pr', 10], ['deploy-docs', 20]];\n  const originalNames = original.map(([name]) => name), actualNames = [...parsed.keys()];\n  const precedingNames = actualNames.filter(name => name !== 'native-grammar-outcome-experiment');\n  assert.deepEqual(precedingNames.filter(name => name !== 'original-link-raw-observations'), originalNames);\n  const preceding = [...originalNames.slice(0, 10), 'original-link-raw-observations', ...originalNames.slice(10)];\n  assert.deepEqual(precedingNames, preceding);\n  assert.deepEqual(actualNames, [...preceding.slice(0, 7), 'native-grammar-outcome-experiment', ...preceding.slice(7)]);\n  for (const [name, limit] of [...original, ['original-link-raw-observations', 15], ['native-grammar-outcome-experiment', 20]]) {\n    const values = [...parsed.get(name).header.matchAll(/^ {4}timeout-minutes: (.+)$/gmu)].map(match => match[1]);\n    if (name !== 'test') { assert.deepEqual(values, [String(limit)], name);continue; }\n    const expression = \"${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\";\n    assert.deepEqual(values, [expression], 'retain the exact published matrix limit, including its existing Windows grammar exception');\n    const header = parsed.get(name).header;\n    assert.match(header, /^ {8}os: \\[ubuntu-latest, macos-latest, windows-latest\\]$/mu);\n    assert.match(header, /^ {8}suite: \\[grammar, inference, generative, translation, remaining\\]$/mu);\n    for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const suite of ['grammar', 'inference', 'generative', 'translation', 'remaining']) {\n      const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os))\n        .replaceAll('matrix.logical_suite', 'undefined').replaceAll('matrix.suite', JSON.stringify(suite))});`)();\n      assert.equal(actual, os === 'windows-latest' && suite === 'grammar' ? 30 : limit, `${os}/${suite}`);\n    }\n    for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const logicalSuite of ['grammar', 'translation', 'remaining']) {\n      const expanded = os === 'windows-latest' && ['translation','remaining'].includes(logicalSuite)\n        || os === 'ubuntu-latest' && ['grammar','translation'].includes(logicalSuite);\n      const physicalShards = expanded ? [2, 3, 4, 5, 6, 7, 8] : [2, 3, 4];\n      for (const physicalShard of physicalShards) {\n        const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os))\n          .replaceAll('matrix.logical_suite', JSON.stringify(logicalSuite)).replaceAll('matrix.suite', '\"physical\"')});`)();\n        assert.equal(actual, os === 'windows-latest' && logicalSuite === 'grammar' ? 30 : limit,\n          `${os}/physical/${logicalSuite}/${physicalShard}`);\n      }\n    }\n  }\n}"
+  },
+  {
+    "id": "native-workflow-conservation.verify-registered-native-experiment-workflow-prerequisites",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "registered native experiments and Links data select the complete prerequisite chain without changing ordinary exclusions",
+    "inventoryName": "verify registered native experiment workflow prerequisites",
+    "sourceText": "test('registered native experiments and Links data select the complete prerequisite chain without changing ordinary exclusions', () => {\n  for (const file of ['experiments/original-link-identity/policy.mjs', 'experiments/original-link-identity/data/policy.lino',\n    'experiments/rust-text-value-projection/native-observations.test.mjs', 'experiments/source-native-observations.mjs',\n    'experiments/grammar-outcome-network/native-transport/wire/generate.mjs',\n    'experiments/grammar-outcome-network/native-transport/wire/wire-policy.lino',\n    'experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs',\n    'parity/fixtures/link-network-binary.lino', 'rust/src/data/link-network-binary-schema.lino']) {\n    const actual = nativeInputJobChain([file]);\n    assert.deepEqual(actual.selection, { rust: true, native_test_inputs_changed: true }, file);\n    assert.deepEqual(actual.outputs, { 'rs-changed': false, 'toml-changed': false, 'workflow-changed': false, 'any-code-changed': false }, file);\n    assert.equal(actual.changelog, false, file);for (const job of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(actual[job], true, `${file}: ${job}`);\n    assert.equal(nativeInputJobChain([file], { javascript: 'failure' }).outer, false, file);\n    assert.equal(nativeInputJobChain([file], { input: false }).test, false, 'the new input closes the actual old gate-chain gap');\n  }\n  for (const file of ['experiments/repro.mjs', 'experiments/repro.lino', 'js/experiments/repro.mjs', 'docs/notes.md',\n    'experiments/grammar-outcome-network/native-transport/README.md',\n    'experiments/original-link-identity/README.md', 'parity/README.md', 'js/src/plain.js']) {\n    const actual = nativeInputJobChain([file]);assert.equal(actual.selection.native_test_inputs_changed, false, file);assert.equal(actual.test, false, file);\n  }\n  const rust = nativeInputJobChain(['rust/src/link_network.rs']);assert.equal(rust.selection.native_test_inputs_changed, false);assert.equal(rust.changelog, true);assert.equal(rust.test, true);\n  for (const options of [{ base: '' }, { valid: false }]) {\n    const unknown = nativeInputJobChain([], options);assert.deepEqual(unknown.selection, { rust: true, native_test_inputs_changed: true });assert.equal(unknown.test, true);\n  }\n  assert.equal(nativeInputJobChain(['docs/notes.md'], { event: 'push' }).test, true);\n  assert.equal(nativeInputJobChain(['experiments/original-link-identity/data/policy.lino'], { event: 'push' }).test, true);\n  assert.equal(nativeInputJobChain(['experiments/repro.mjs'], { event: 'push' }).outer, false);\n})"
+  },
+  {
+    "id": "native-workflow-conservation.verify-optional-native-input-workflow-interface",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "the optional native-input workflow interface preserves defaults, JavaScript gating and all original prerequisites",
+    "inventoryName": "verify optional native input workflow interface",
+    "sourceText": "test('the optional native-input workflow interface preserves defaults, JavaScript gating and all original prerequisites', () => {\n  const ci = jobs('ci.yml'), rust = jobs('rust.yml');\n  assert.match(workflow('rust.yml'), /^ {2}workflow_call:\\n {4}inputs:\\n {6}native_test_inputs_changed:\\n {8}description: [^\\n]+\\n {8}type: boolean\\n {8}required: false\\n {8}default: false$/mu);\n  assert.match(ci.get('changes').header, /native_test_inputs_changed: \\$\\{\\{ steps\\.paths\\.outputs\\.native_test_inputs_changed \\}\\}/u);\n  assert.match(ci.get('rust').header, /native_test_inputs_changed: \\$\\{\\{ needs\\.changes\\.outputs\\.native_test_inputs_changed == 'true' \\}\\}/u);\n  assert.ok(needs(ci.get('rust')).includes('js'));assert.doesNotMatch(nativeInputCondition(ci.get('rust')), /always\\(|cancelled\\(/u);\n  const changed = [...rust].filter(([, job]) => job.header.includes('inputs.native_test_inputs_changed')).map(([name]) => name).sort();\n  const preceding = changed.filter(name => name !== 'native-grammar-outcome-experiment');\n  assert.deepEqual(preceding.filter(name => name !== 'original-link-raw-observations'), ['cargo-lock', 'check', 'test']);\n  assert.deepEqual(preceding, ['cargo-lock', 'check', 'original-link-raw-observations', 'test']);\n  assert.deepEqual(changed, ['cargo-lock', 'check', 'native-grammar-outcome-experiment', 'original-link-raw-observations', 'test']);\n  assert.deepEqual(needs(rust.get('native-grammar-outcome-experiment')), ['detect-changes', 'cargo-lock', 'check']);\n  assert.deepEqual(needs(rust.get('check')), ['detect-changes', 'cargo-lock']);assert.deepEqual(needs(rust.get('test')), ['detect-changes', 'changelog', 'cargo-lock', 'check']);\n  for (const [name, fields] of [['cargo-lock', ['rs-changed', 'toml-changed', 'workflow-changed', 'any-code-changed']], ['check', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']], ['test', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']]]) {\n    const expression = nativeInputCondition(rust.get(name));assert.match(expression, /!cancelled\\(\\)/u);assert.match(expression, /github\\.event_name == 'push'/u);assert.match(expression, /github\\.event_name == 'workflow_dispatch'/u);\n    for (const field of fields) assert.ok(expression.includes(`needs.detect-changes.outputs.${field} == 'true'`));\n    const context = { event: 'pull_request', selection: { rust: true }, outputs: Object.fromEntries(fields.map(field => [field, false])), results: { 'detect-changes': 'success', 'cargo-lock': 'success', check: 'success', changelog: 'skipped' } };\n    assert.equal(evaluateNativeInputCondition(rust.get(name), context), false, 'default false preserves old selection');\n    assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true }), true);\n    if (name !== 'cargo-lock') assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true, results: { ...context.results, 'cargo-lock': 'failure' } }), false);\n    if (name === 'test') for (const failed of ['check', 'changelog']) assert.equal(evaluateNativeInputCondition(rust.get(name), { ...context, input: true, results: { ...context.results, [failed]: 'failure' } }), false);\n  }\n})"
+  },
+  {
+    "id": "native-workflow-conservation.verify-rust-text-workflow-selector-conservation",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "the complete Rust text source oracle is mandatory after JavaScript and its source changes select Rust",
+    "inventoryName": "verify rust text workflow selector conservation",
+    "sourceText": "test('the complete Rust text source oracle is mandatory after JavaScript and its source changes select Rust', () => {\n  checkRustTextValueNativeStep(jobs('rust.yml'));\n  const parsed = jobs('ci.yml');\n  assert.ok(needs(parsed.get('rust')).includes('js'));\n  const classifier = /rust_paths='([^']+)'/u.exec(workflow('ci.yml'))?.[1];\n  assert.ok(classifier);\n  const addition = '|experiments/rust-text-value-projection/';\n  assert.equal(classifier.split(addition).length, 2);\n  assert.equal(classifier.replace(addition, '').replace('|experiments/rust-raw-binding-identifiers/', '')\n    .replace('|experiments/rust-text-certificate/', '')\n    .replace('|experiments/rust-raw-binding-certificate-adapter/', '')\n    .replace('|experiments/rust-text-certificate-adapter/', '')\n    .replace('|experiments/rust-text-certificate-library/', '')\n    .replace('|experiments/original-link-identity/', '')\n    .replace('|experiments/original-link-role-projection/', '')\n    .replace('|experiments/original-link-symbol-projection/', '')\n    .replace('|experiments/original-link-table-projection/', '')\n    .replace('|experiments/original-link-complete-table-projection/', '')\n    .replace('|experiments/grammar-outcome-network/native-transport/', '')\n    .replace('|experiments/binary-metadata-buffer/', '')\n    .replace('|js/scripts/generate-link-network-binary-rules\\\\.mjs$', '')\n    .replace('|js/scripts/binary-metadata-candidate-styles\\\\.mjs$', '')\n    .replace('|js/scripts/source-text-byte-library-style\\\\.mjs$', '')\n    .replace('|js/scripts/product-rule-style-corrections\\\\.mjs$', '')\n    .replace('|experiments/fresh-number-array-collectors/', '')\n    .replace('|js/scripts/rust-library-packaging\\\\.mjs$', '')\n    .replace('|experiments/source-native-observations\\\\.mjs$', ''),\n    '^(rust/|parity/|docs/|scripts/|\\\\.github/workflows/(ci|rust)\\\\.yml$|\\\\.secretlintrc\\\\.json$)',\n    'the native source selection preserves every existing Rust workflow trigger');\n  const matches = new RegExp(classifier, 'u');\n  for (const file of ['model.mjs', 'source.mjs', 'data/fixtures.lino', 'native-observations.mjs', 'native-observations.test.mjs']) {\n    assert.ok(matches.test(`experiments/rust-text-value-projection/${file}`), file);\n  }\n})"
+  },
+  {
+    "id": "native-workflow-conservation.verify-new-native-source-workflow-selector-conservation",
+    "source": "js/tests/ci-workflow-structure.test.js",
+    "name": "new native source paths preserve the exact old selector and reach every native prerequisite after JavaScript",
+    "inventoryName": "verify new native source workflow selector conservation",
+    "sourceText": "test('new native source paths preserve the exact old selector and reach every native prerequisite after JavaScript', () => {\n  const step = jobs('ci.yml').get('changes').steps.find(step => step.name === 'Detect whether the Rust workflow is needed');\n  assert.ok(step);\n  const additions = ['experiments/original-link-complete-table-projection/', 'experiments/binary-metadata-buffer/',\n    'js/scripts/generate-link-network-binary-rules\\\\.mjs$', 'js/scripts/binary-metadata-candidate-styles\\\\.mjs$',\n    'js/scripts/source-text-byte-library-style\\\\.mjs$', 'js/scripts/product-rule-style-corrections\\\\.mjs$',\n    'experiments/grammar-outcome-network/native-transport/'];\n  let original = step.run;\n  const classifier = /rust_paths='([^']+)'/u.exec(step.run)[1], matches = new RegExp(classifier, 'u');\n  for (const addition of additions) {\n    assert.equal(classifier.split('|' + addition).length, 2, `${addition} is registered exactly once`);\n    original = original.replace('|' + addition, '');\n  }\n  const inner = '|^js/scripts/(generate-link-network-binary-rules|binary-metadata-candidate-styles|source-text-byte-library-style|product-rule-style-corrections)\\\\.mjs$';\n  assert.equal(original.split(inner).length, 2);\n  original = original.replace(inner, '');\n  assert.equal(createHash('sha256').update(original).digest('hex'), 'd66cc6c3e7004b34a9914cefb9548150933b57939f700112f7704493906ed633',\n    'removing only the seven registered additions restores every old selector byte');\n  const paths = [\n    'experiments/original-link-complete-table-projection/data/native-definitions.lino',\n    'experiments/original-link-complete-table-projection/projection.test.mjs',\n    'experiments/original-link-complete-table-projection/native-observations.mjs',\n    'experiments/original-link-complete-table-projection/native-observations.test.mjs',\n    'experiments/binary-metadata-buffer/native-observations.test.mjs',\n    'experiments/binary-metadata-buffer/native/part_0.rs',\n    ...additions.slice(2).map(file => file.replace('\\\\.', '.').replace(/\\$$/u, '')),\n  ];\n  for (const file of paths) {\n    assert.ok(matches.test(file), file);\n    const chain = nativeInputJobChain([file]);\n    assert.deepEqual(chain.selection, { rust: true, native_test_inputs_changed: true }, file);\n    for (const job of ['outer', 'cargo-lock', 'check', 'test']) assert.equal(chain[job], true, `${file}: ${job}`);\n    assert.equal(nativeInputJobChain([file], { javascript: 'failure' }).outer, false, file);\n  }\n  for (const file of ['experiments/original-link-complete-table-projection/README.md',\n    'experiments/binary-metadata-buffer/README.md', 'experiments/original-link-complete-table-projection-other/model.mjs',\n    'experiments/binary-metadata-buffer-other/model.mjs', 'js/scripts/binary-metadata-candidate-styles.mjs.extra']) {\n    assert.equal(nativeInputJobChain([file]).selection.native_test_inputs_changed, false, file);\n  }\n})"
+  },
+  {
+    "id": "repository.read-native-original-grammar-selection-source-capture",
+    "source": "rust/tests/unit/grammar_mapping_capture_source.rs",
+    "name": "original_capture",
+    "inventoryName": "read native original grammar selection source capture",
+    "sourceText": "pub fn original_capture(relative: &str, bytes: Vec<u8>) -> Vec<u8> {\n    let root = std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"..\");\n    let profile: Value = meta_language::project_data::read_project_data_file(\n        root.join(\"parity/fixtures/grammar-selection-capture-source-profile.lino\"),\n    )\n    .unwrap();\n    assert_eq!(profile[\"schemaVersion\"], 1);\n    assert_eq!(profile[\"historicalFixture\"][\"path\"], FIXTURE_PATH);\n    assert_eq!(profile[\"historicalFixture\"][\"sha256\"], FIXTURE_SHA256);\n    let fixture_bytes = std::fs::read(root.join(FIXTURE_PATH)).unwrap();\n    assert_eq!(sha256(&fixture_bytes), FIXTURE_SHA256);\n    let originals = profile[\"sources\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .filter(|source| source[\"path\"] == relative)\n        .collect::<Vec<_>>();\n    assert!(originals.len() <= 1);\n    let Some(original) = originals.first() else {\n        return bytes;\n    };\n    let fixture: Value =\n        meta_language::project_data::read_project_data_file(root.join(FIXTURE_PATH)).unwrap();\n    let capture = fixture[\"captures\"]\n        .as_array()\n        .unwrap()\n        .iter()\n        .find(|source| source[\"path\"] == relative)\n        .unwrap();\n    let original_source = original[\"source\"].as_str().unwrap();\n    assert_eq!(Value::from(original_source.len()), capture[\"bytes\"]);\n    assert_eq!(sha256(original_source), capture[\"sha256\"].as_str().unwrap());\n    assert_eq!(Value::from(bytes.len()), original[\"current\"][\"bytes\"]);\n    assert_eq!(\n        sha256(&bytes),\n        original[\"current\"][\"sha256\"].as_str().unwrap()\n    );\n    let current_source = std::str::from_utf8(&bytes).unwrap();\n    let original_record = DecoratorRecord::from([\n        (\"capture\".to_owned(), relative.to_owned()),\n        (\"source\".to_owned(), original_source.to_owned()),\n    ]);\n    let current_record = DecoratorRecord::from([\n        (\"capture\".to_owned(), relative.to_owned()),\n        (\"source\".to_owned(), current_source.to_owned()),\n    ]);\n    let forward = DecoratorSet::from_lino(profile[\"forwardDecorators\"].as_str().unwrap())\n        .unwrap()\n        .decorate(DecoratorLevel::Emitter, &original_record);\n    assert_eq!(forward.as_ref(), Some(&current_record));\n    let reverse = DecoratorSet::from_lino(profile[\"reverseDecorators\"].as_str().unwrap())\n        .unwrap()\n        .decorate(DecoratorLevel::Emitter, &current_record);\n    assert_eq!(reverse.as_ref(), Some(&original_record));\n    original_source.as_bytes().to_vec()\n}"
+  },
+  {
+    "id": "test.assert-retained-modern-array-native-parity",
+    "source": "rust/tests/unit/translation_arrays.rs",
+    "name": "retained_modern_javascript_array_contract_executes_every_original_input",
+    "inventoryName": "assert retained modern array native parity",
+    "sourceText": "fn retained_modern_javascript_array_contract_executes_every_original_input() {\n    use super::issue_195_observations::{Observation, record};\n    use super::issue_195_translation_pairs::{TemporaryDirectory, run};\n    use meta_language::translation::{check::check_program, emit_javascript::emit_javascript};\n    use std::fs;\n    use std::process::Command;\n\n    const FIXTURE: &str =\n        include_str!(\"../../../parity/fixtures/modern-javascript-array-parity.lino\");\n    const NAME: &str = \"retained_modern_javascript_array_contract_executes_every_original_input\";\n    let fixture = meta_language::read_structured_data_lino(FIXTURE).unwrap();\n    assert_eq!(fixture[\"schemaVersion\"], 1);\n    assert_eq!(\n        fixture[\"model\"],\n        \"retained modern JavaScript array parity 1\"\n    );\n    let root = std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n        .parent()\n        .unwrap();\n    let contract_bytes =\n        fs::read(root.join(\"parity/sources/modern-javascript-parity-expectations-2026-10-16.txt\"))\n            .unwrap();\n    assert_eq!(\n        modern_array_digest(&contract_bytes),\n        \"e2c4a14e4cff20b8bd4e77c1110151f5add84292836591c5eac2c1dc40c141af\"\n    );\n    assert_eq!(\n        modern_array_digest(\n            fixture[\"historicalNative\"][\"source\"]\n                .as_str()\n                .unwrap()\n                .as_bytes()\n        ),\n        \"1eec6a923a4d78d79b85fb5da684670f7b2383727539e19b26a363ff8a0bbee2\"\n    );\n    // Fresh actual JavaScript calls and all original-source executions, not a stored emitter snapshot.\n    // run() has no per-command timeout. The unchanged physical CI module deadline bounds this test.\n    let probe = run(Command::new(\"node\").current_dir(root).args([\n        \"js/tests/support/modern-javascript-array-parity.js\",\n        \"--probe\",\n    ]));\n    assert!(probe.ok, \"{}\", probe.stderr);\n    let records = meta_language::read_structured_data_records(&probe.stdout).unwrap();\n    assert_eq!(records.len(), 12);\n    assert_eq!(records[0][\"kind\"], \"metadata\");\n    assert_eq!(\n        records[0][\"fixtureDigest\"],\n        modern_array_digest(FIXTURE.as_bytes())\n    );\n    assert!(!records[0][\"nodeVersion\"].as_str().unwrap().is_empty());\n    assert_eq!(records[0][\"admitted\"], 6);\n    assert_eq!(records[0][\"refused\"], 5);\n    let rows = fixture[\"cases\"].as_array().unwrap();\n    assert_eq!(rows.len(), 11);\n    assert_eq!(\n        rows.iter()\n            .filter(|row| row[\"origin\"] == \"original\")\n            .count(),\n        9\n    );\n    let mut admitted = 0;\n    let mut refused = 0;\n    for (index, row) in rows.iter().enumerate() {\n        let expected_record = &records[index + 1];\n        assert_eq!(expected_record[\"kind\"], \"case\");\n        assert_eq!(expected_record[\"id\"], row[\"id\"]);\n        assert_eq!(expected_record[\"sourceSha256\"], row[\"sourceSha256\"]);\n        let source = row[\"source\"].as_str().unwrap();\n        assert_eq!(modern_array_digest(source.as_bytes()), row[\"sourceSha256\"]);\n        let targets = row[\"targets\"].as_array().unwrap();\n        let expected_targets = expected_record[\"targets\"].as_array().unwrap();\n        assert_eq!(targets.len(), expected_targets.len());\n        let mut rust_code = None;\n        for (target, expected) in targets.iter().zip(expected_targets) {\n            let target = target.as_str().unwrap();\n            assert_eq!(expected[\"target\"], target);\n            let translated = translate_program(source, \"JavaScript\", target).unwrap();\n            assert_eq!(\n                modern_array_translation_record(&translated),\n                expected[\"descriptor\"],\n                \"{}:{target}\",\n                row[\"id\"]\n            );\n            if row[\"expected\"][\"outcome\"] == \"refused\" {\n                assert_eq!(target, \"Rust\");\n                let message = &translated\n                    .diagnostic()\n                    .expect(\"a genuine retained refusal\")\n                    .message;\n                let expected = row[\"expected\"][\"diagnostic\"].as_str().unwrap();\n                match row[\"expected\"][\"match\"].as_str().unwrap() {\n                    \"exact\" => assert_eq!(message, expected),\n                    \"prefix\" => assert!(message.starts_with(expected), \"{message}\"),\n                    _ => panic!(\n                        \"only an independently declared exact or prefix diagnostic is admitted\"\n                    ),\n                }\n            } else {\n                assert_eq!(row[\"expected\"][\"outcome\"], \"admitted\");\n                assert!(translated.diagnostic().is_none(), \"{}:{target}\", row[\"id\"]);\n                assert_eq!(\n                    translated.contract().support,\n                    TranslationSupport::SemanticTranslation\n                );\n                assert!(!translated.contract().assumptions.contains(&IN_BOUNDS));\n                if target == \"Rust\" {\n                    rust_code = Some(translated.code().to_owned());\n                }\n            }\n        }\n        if row[\"expected\"][\"outcome\"] == \"refused\" {\n            refused += 1;\n            continue;\n        }\n        let expected = row[\"expected\"][\"stdout\"].as_str().unwrap();\n        assert_eq!(expected_record[\"originalStdout\"], expected);\n        assert_eq!(expected_record[\"checkedJavaScriptStdout\"], expected);\n        let checked = check_program(&parse_javascript(source).unwrap()).unwrap();\n        let javascript = emit_javascript(&checked).unwrap();\n        assert_eq!(\n            javascript.text, expected_record[\"checkedJavaScript\"],\n            \"{}: complete checked JavaScript emission\",\n            row[\"id\"]\n        );\n        let directory = TemporaryDirectory::new(\"retained-modern-array-parity\");\n        let original_file = directory.0.join(\"source.mjs\");\n        let javascript_file = directory.0.join(\"checked.mjs\");\n        fs::write(&original_file, source).unwrap();\n        fs::write(&javascript_file, javascript.text).unwrap();\n        for file in [&original_file, &javascript_file] {\n            let output = run(Command::new(\"node\").arg(file));\n            assert!(output.ok, \"{}: {}\", row[\"id\"], output.stderr);\n            assert_eq!(output.stdout, expected, \"{}\", row[\"id\"]);\n        }\n        let rust_file = directory.0.join(\"program.rs\");\n        let executable = directory\n            .0\n            .join(format!(\"program{}\", std::env::consts::EXE_SUFFIX));\n        fs::write(\n            &rust_file,\n            rust_code.expect(\"every admitted original target set includes Rust\"),\n        )\n        .unwrap();\n        let mut compiler = Command::new(\"rustc\");\n        compiler.arg(\"--edition=2024\");\n        #[cfg(windows)]\n        if let Ok(linker) = std::env::var(\"CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER\") {\n            compiler.arg(\"-C\").arg(format!(\"linker={linker}\"));\n        }\n        let build_result = run(compiler.arg(&rust_file).arg(\"-o\").arg(&executable));\n        assert!(build_result.ok, \"{}: {}\", row[\"id\"], build_result.stderr);\n        let output = run(&mut Command::new(&executable));\n        assert!(output.ok, \"{}: {}\", row[\"id\"], output.stderr);\n        assert_eq!(output.stdout, expected, \"{}\", row[\"id\"]);\n        admitted += 1;\n    }\n    assert_eq!(admitted, 6);\n    assert_eq!(refused, 5);\n    // No record is produced until actual native frontends, all preserved refusals,\n    // full descriptors, both JS paths and all six Rust executables pass.\n    let modern = [\n        \"originalArrayAndStringInputsRetained\",\n        \"utf16StringLengthParityExecuted\",\n        \"observableOutOfBoundsParityExecuted\",\n    ];\n    let obsolete = [\n        \"obsoleteExpectationConflictRecorded\",\n        \"correctedExpectationsFollowModernJavaScript\",\n        \"originalCoverageAndGenuineRefusalsRetained\",\n    ];\n    for (fixture_id, fixture_file) in [\n        (\n            \"conversation-contract:modernJavaScriptParityRequest\",\n            \"parity/sources/modern-javascript-parity-expectations-2026-10-16.txt\",\n        ),\n        (\n            \"modern-javascript-array-parity-programs\",\n            \"parity/fixtures/modern-javascript-array-parity.lino\",\n        ),\n    ] {\n        for (requirement_id, assertions) in [\n            (\n                \"I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR\",\n                modern.as_slice(),\n            ),\n            (\n                \"I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS\",\n                obsolete.as_slice(),\n            ),\n        ] {\n            record(&Observation {\n                requirement_id,\n                suffix: \"behavior\",\n                fixture_id,\n                fixture_file,\n                assertions,\n                test_name: NAME,\n            });\n        }\n    }\n}"
   }
 ];
 const B70_NAME_INVENTORIES=[...new Set(B70_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B70 physical field source view names for "+source,files:[source],extract:text=>B70_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B70_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));

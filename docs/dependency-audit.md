@@ -758,7 +758,7 @@ they are.
 | Item | Declared in | Pinned | Current stable release | Comparison | Status | Reason |
 |---|---|---|---|---|---|---|
 | `actions/cache` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
-| `actions/cache/restore` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
+| `actions/cache/restore` | `.github/workflows/ci.yml`, `.github/workflows/rust.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 | `actions/cache/save` | `.github/workflows/ci.yml` | `v6` | v6.1.0 (GitHub release, actions/cache) | major | current |  |
 | `actions/checkout` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/checkout) | major | current |  |
 | `actions/configure-pages` | `.github/workflows/rust.yml` | `v6` | v6.0.0 (GitHub release, actions/configure-pages) | major | current |  |
