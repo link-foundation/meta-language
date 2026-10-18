@@ -2,6 +2,7 @@
 import {Link, LinkMetadata, LinkType, idKey} from '../../js/src/primitives.js';
 import {StructuredDataNetwork, encodeStructuredDataLinks} from '../../js/src/structured-data-encode.js';
 import {decodeStructuredDataLinks} from '../../js/src/structured-data-graph.js';
+import {limitsOf} from '../../js/src/structured-data-model.js';
 import {checkGrammarSelectionMappedTree} from '../../js/src/grammar-runtime/mapped-tree-validation.js';
 
 const language = 'meta-language concrete grammar outcome';
@@ -10,7 +11,7 @@ const fail = detail => { throw new TypeError('owned grammar outcome: '+detail); 
 
 function sourceBytes(network, tokens) {
   const chunks=[];
-  let cursor=null;
+  let cursor=0;
   const seen=new Set();
   for(const token of tokens){
     if(seen.has(idKey(token)))fail('duplicate physical source token');
@@ -18,7 +19,6 @@ function sourceBytes(network, tokens) {
     const data=network.link(token)?.metadata();
     if(data?.linkType!==LinkType.SourceToken||!data.span||typeof data.term!=='string')fail('owned physical source tokens are required');
     const range=data.span.byteRange;
-    if(cursor===null)cursor=range.start;
     if(!Number.isSafeInteger(range.start)||range.start<0||range.start!==cursor||!Number.isSafeInteger(range.end)||range.end<range.start)fail('physical token intervals must be contiguous');
     const bytes=Buffer.from(data.term,'utf8');
     if(data.flags.isMissing){if(range.end!==range.start)fail('a missing token must be empty');}
@@ -26,6 +26,28 @@ function sourceBytes(network, tokens) {
     cursor=range.end;
   }
   return Buffer.concat(chunks);
+}
+
+function ownedPhysicalTokens(network,owner,limit){
+  const pending=[owner],seen=new Set(),tokens=new Set();
+  while(pending.length){
+    const id=pending.pop(),key=idKey(id);
+    if(seen.has(key))continue;
+    if(seen.size>=limit)fail('concrete ownership node resource limit exceeded');
+    seen.add(key);
+    const link=network.link(id);
+    if(!link)fail('a concrete containment member is absent');
+    const type=link.metadata().linkType;
+    if(type===LinkType.SourceToken)tokens.add(key);
+    else if(type===LinkType.Syntax||type===LinkType.Document){
+      for(const reference of link.references()){
+        if(pending.length>=limit)fail('concrete ownership node resource limit exceeded');
+        pending.push(reference);
+      }
+    }
+    else fail('concrete containment must reach only syntax or physical tokens');
+  }
+  return tokens;
 }
 
 function physicalBytes(tree){
@@ -41,8 +63,13 @@ function physicalBytes(tree){
   fail('unsupported concrete node');
 }
 
-function validate(network,tokens,outcome,options){
-  if(outcome?.ok!==true||!outcome.tree)fail('this finite prototype requires a successful complete grammar outcome');
+function validate(network,owner,tokens,outcome,options){
+  if(typeof outcome?.ok!=='boolean'||!outcome.tree||!Array.isArray(outcome.ambiguities)
+    ||(outcome.ok?outcome.rejection!==null:!outcome.rejection||typeof outcome.rejection.reason!=='string'))
+    fail('this finite prototype requires a complete grammar outcome with a concrete tree');
+  const owned=ownedPhysicalTokens(network,owner,limitsOf(options.codec??{}).nodeLimit);
+  if(owned.size!==tokens.length||tokens.some(token=>!owned.has(idKey(token))))
+    fail('physical source tokens must belong to the concrete owner');
   // The mapping verifier checks derivation/ownership, not grammar acceptance.
   // A caller must still obtain this outcome from its actual grammar parser.
   checkGrammarSelectionMappedTree({tree:outcome.tree,sourcePlanes:outcome.sourcePlanes},options.mapping??{});
@@ -56,7 +83,7 @@ export function insertOwnedGrammarOutcome(network,owner,tokens,outcome,options={
   // host getter is read or any target-network link is inserted.
   const encoded=encodeStructuredDataLinks(outcome,options.codec??{});
   const snapshot=decodeStructuredDataLinks(encoded.network,encoded.root,options.codec??{});
-  validate(network,tokens,snapshot,options);
+  validate(network,owner,tokens,snapshot,options);
   const translations=new Map();
   for(const link of encoded.network.links())translations.set(idKey(link.id()),network.insertLink([],link.metadata().clone()));
   for(const link of encoded.network.links())network.link(translations.get(idKey(link.id()))).setReferences(link.references().map(reference=>translations.get(idKey(reference))));
@@ -80,7 +107,7 @@ export function readOwnedGrammarOutcome(network,association,options={}){
     isolated._links.set(idKey(id),new Link(id,stored.references(),stored.metadata().clone()));
   }
   const outcome=decodeStructuredDataLinks(isolated,root,options.codec??{});
-  validate(network,physical.references(),outcome,options);
+  validate(network,owner,physical.references(),outcome,options);
   return {owner,tokens:physical.references(),outcome,members};
 }
 

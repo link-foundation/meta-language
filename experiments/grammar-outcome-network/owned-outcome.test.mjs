@@ -14,7 +14,7 @@ import {insertOwnedGrammarOutcome,readOwnedGrammarOutcome,concreteLinksWithOwned
 
 function composedGrammar(candidate){
  const grammar=parseGrammarLinks(nativeGrammarText('native-json'));
- return decorateGrammar(grammar,new DecoratorSet([{id:'owned-composition',level:'grammar-rule',when:[['name',grammar.startRule().name]],actions:[{op:'set',field:'composition',value:renderLinksExpression({kind:'any-grammar',item:{kind:'empty'},items:[candidate]})}]}]));
+ return decorateGrammar(grammar,new DecoratorSet([{id:'owned-composition',level:'grammar-rule',when:[['name',grammar.startRule().name]],actions:[{op:'set',field:'composition',value:renderLinksExpression({kind:'any-grammar',item:{kind:'empty'},items:Array.isArray(candidate)?candidate:[candidate]})}]}]));
 }
 
 function archivedFixture(){
@@ -95,4 +95,57 @@ test('owned transport preserves actual tree aliases signed zero and explicit res
   assert.deepEqual(actual,outcome);assert.equal(witness.first,witness.second);assert.equal(witness.first.root,actual.tree);
   assert.notEqual(witness.first,witness.independent);assert.notEqual(witness.first.root,witness.independent.root);assert.ok(Object.is(witness.negativeZero,-0));
  }
+});
+
+test('owned transport retains actual ambiguous acceptance and rejection with every decoded source plane',()=>{
+ const field=name=>({kind:'grammar-field-candidate',name,mapping:'field-ranges',selector:{kind:'source-field-selector',label:'value',mode:'include',first:0,count:1}});
+ const grammars=[composedGrammar([field('Quoted'),field('QuotedTwin')]),composedGrammar({kind:'grammar-candidate',name:'Inner',mapping:'json-string'}),composedGrammar(field('Leaf')),parseGrammarLinks(nativeGrammarText('native-json'))];
+ const names=['Host','Quoted','Inner','Leaf'];
+ const sources=grammars.map((grammar,index)=>({id:names[index],language:names[index],grammar}));
+ sources.push({id:'QuotedTwin',language:'QuotedTwin',grammar:grammars[1]});
+ const archive=globalConceptSpaceToLinks(createGlobalConceptSpace(sources,{records:[]}));
+ for(const grammar of grammars)grammar.rules.clear();sources.length=0;
+ const parser=createGlobalConceptSpaceParser(archive,'Host',{records:[]});
+ const source='{"k":"{\\"k\\":2}"}',network=LinkNetwork.parse(source,'JSON');
+ const tokens=network.links().filter(link=>link.metadata().linkType===LinkType.SourceToken).map(link=>link.id());
+ const owner=network.links().find(link=>link.metadata().linkType===LinkType.Syntax&&link.metadata().span?.byteRange.start===0&&link.metadata().span?.byteRange.end===Buffer.byteLength(source)).id();
+ for(const [options,accepted]of [[{},true],[{ambiguity:'reject'},false]]){
+  const outcome=parser.parseTree(source,options);
+  assert.equal(outcome.ok,accepted);assert.ok(outcome.tree);assert.ok(outcome.ambiguities.length>0);
+  assert.ok(outcome.ambiguities.some(item=>item.languages?.includes('QuotedTwin')));
+  assert.ok(outcome.sourcePlanes.length>=4);
+  if(accepted)assert.equal(outcome.rejection,null);
+  else assert.equal(outcome.rejection.reason,'ambiguity');
+  const association=insertOwnedGrammarOutcome(network,owner,tokens,outcome);
+  for(const restored of [network,LinkNetwork.fromLino(network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))]){
+   assert.equal(restored.reconstructText(),source);
+   assert.deepEqual(readOwnedGrammarOutcome(restored,association).outcome,outcome);
+  }
+ }
+});
+
+test('equal bytes cannot substitute unrelated owners or foreign physical token identities',()=>{
+ const {network,owner,tokens,association}=attachedFixture();
+ const original=readOwnedGrammarOutcome(network,association);
+ const unrelated=network.insertSyntaxNode('JSON','unrelated',[]);
+ const donor=network.insertLink([],network.link(tokens[0]).metadata().clone());
+ const foreign=[donor,...tokens.slice(1)],count=network.len();
+ assert.throws(()=>insertOwnedGrammarOutcome(network,unrelated,tokens,original.outcome),/belong to the concrete owner/);
+ assert.throws(()=>insertOwnedGrammarOutcome(network,owner,foreign,original.outcome),/belong to the concrete owner/);
+ for(const edit of ['owner','physical-token']){
+  const restored=LinkNetwork.fromLino(network.toLino()),link=restored.link(association),refs=[...link.references()];
+  if(edit==='owner'){refs[0]=unrelated;link.setReferences(refs);}
+  else {const manifest=restored.link(refs[1]);manifest.setReferences(foreign);}
+  assert.throws(()=>readOwnedGrammarOutcome(restored,association),/belong to the concrete owner/);
+ }
+ const shifted=LinkNetwork.fromLino(network.toLino());
+ for(const token of tokens){
+  const span=shifted.link(token).metadata().span.clone();span.byteRange.start+=7;span.byteRange.end+=7;shifted.setSpan(token,span);
+ }
+ assert.throws(()=>readOwnedGrammarOutcome(shifted,association),/physical token intervals must be contiguous/);
+ for(const changes of [{ok:'true'},{ok:false},{rejection:{reason:'forged'}},{ambiguities:null},{tree:null}]){
+  assert.throws(()=>insertOwnedGrammarOutcome(network,owner,tokens,{...original.outcome,...changes}),/complete grammar outcome/);
+ }
+ assert.equal(network.len(),count);
+ assert.deepEqual(readOwnedGrammarOutcome(network,association).outcome,original.outcome);
 });

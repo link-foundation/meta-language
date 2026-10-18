@@ -13,10 +13,16 @@ structured-data root, and every member of the closed outcome graph.
 
 The reader isolates that graph, uses the unchanged structured-data decoder,
 rechecks the actual mapping derivations, and binds the physical CST bytes to
-the manifest's tokens. Decoded-plane leaves remain inspectable data; they never
+the manifest's tokens. Each token identity must also belong to the actual
+owner's Syntax/Document containment graph, under the codec's node bound;
+equal bytes from an unrelated owner do not establish ownership. Physical
+coordinates start at zero for this complete-root profile. Decoded-plane leaves remain inspectable data; they never
 enter global source-token ordering. Tests check complete text/binary replay,
 source reconstruction, missing and duplicate members, foreign links, altered
 source bytes and derivations, and refusal before mutation or accessor execution.
+Accepted and rejected ambiguous parses retain their complete trees,
+alternatives, ambiguities, rejection details and decoded source planes.
+Outcomes without a concrete tree remain outside this finite experiment.
 
 `concreteLinksWithOwnedGrammarOutcomes` is an experimental projection. The
 tests explicitly retain the fact that the public default projection still

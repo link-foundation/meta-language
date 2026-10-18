@@ -1687,7 +1687,13 @@ uses the public parser registry to attach an entire source-free mapped result
 to an actual default concrete source network. An explicit association names the
 concrete owner, ordered physical tokens, structured-data root and every owned
 graph member. Reload isolates that closed graph, checks its mapping derivations
-and binds its physical bytes to the host tokens. Decoded-plane text stays within
+and binds its physical bytes to the host tokens. Token identities must belong
+to the actual owner's Syntax/Document containment graph, with the codec's node
+bound also limiting that traversal; equal foreign bytes cannot prove ownership.
+This complete-root profile requires physical coordinates beginning at zero.
+Both accepted and rejected ambiguous results retain their complete trees,
+alternatives, diagnostics and source planes. Results without a concrete tree
+remain outside the experiment. Decoded-plane text stays within
 the owned graph. The experimental concrete view includes all its members;
 public default projection and native integration remain the gaps above.
 
