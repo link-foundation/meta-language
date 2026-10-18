@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 182 | 181 | 1 | 0 |
+| Generators | 183 | 182 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -601,6 +601,7 @@ they are.
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-rule-composition-rules.mjs` | `js/scripts/generate-grammar-rule-composition-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-selection-capture-profile.mjs` | `js/scripts/generate-grammar-selection-capture-profile.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `js/scripts/generate-grammar-selection-field-range-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-fixtures.mjs` | `js/scripts/generate-grammar-selection-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `js/scripts/generate-grammar-selection-included-range-rules.mjs` | `script` |  | derived | current |  |
