@@ -18,7 +18,7 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 
 pub fn original_capture(relative: &str, bytes: Vec<u8>) -> Vec<u8> {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
-    let profile = meta_language::project_data::read_project_data_file(
+    let profile: Value = meta_language::project_data::read_project_data_file(
         root.join("parity/fixtures/grammar-selection-capture-source-profile.lino"),
     )
     .unwrap();
@@ -37,7 +37,7 @@ pub fn original_capture(relative: &str, bytes: Vec<u8>) -> Vec<u8> {
     let Some(original) = originals.first() else {
         return bytes;
     };
-    let fixture =
+    let fixture: Value =
         meta_language::project_data::read_project_data_file(root.join(FIXTURE_PATH)).unwrap();
     let capture = fixture["captures"]
         .as_array()
