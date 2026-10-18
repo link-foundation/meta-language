@@ -145,9 +145,12 @@ jobs:
           - {group: grammar, partition: 1, shards: 3}
           - {group: grammar, partition: 2, shards: 3}
           - {group: grammar, partition: 3, shards: 3}
-          - {group: grammar-native, partition: 1, shards: 3}
-          - {group: grammar-native, partition: 2, shards: 3}
-          - {group: grammar-native, partition: 3, shards: 3}
+          - {group: grammar-native, partition: 1, shards: 6}
+          - {group: grammar-native, partition: 2, shards: 6}
+          - {group: grammar-native, partition: 3, shards: 6}
+          - {group: grammar-native, partition: 4, shards: 6}
+          - {group: grammar-native, partition: 5, shards: 6}
+          - {group: grammar-native, partition: 6, shards: 6}
           - {group: conformance, partition: 1, shards: 2}
           - {group: conformance, partition: 2, shards: 2}
           - {group: translation, partition: 1, shards: 3}

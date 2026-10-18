@@ -74,7 +74,9 @@ test('optional symbol shifts retain the absent branch and reject stale decisions
   const guardedDecision = { ...decision, excludedKeywords: ['where'], wordRule: 'atom' };
   const guardedParser = compileGrammar(parseGrammarLinks(renderTreeSitterNative(importTreeSitterNative(transformNativeSource(guarded, [guardedDecision])))));
   for (const text of ['Set where', 'Set leaf where', 'Set whereabouts where']) assert.equal(guardedParser.parseTree(text).ok, true, text);
-  assert.throws(() => transformNativeSource(source, [{ ...decision, excludedRules: ['missing'] }]), /existing rules/);
+  // The same unknown-symbol input still refuses. The diagnostic now names
+  // both source rules and declared external tokens admitted as boundaries.
+  assert.throws(() => transformNativeSource(source, [{ ...decision, excludedRules: ['missing'] }]), /declared rules or external tokens/u);
   assert.throws(() => transformNativeSource(source, [{ ...guardedDecision, wordRule: 'missing' }]), /existing word rule/);
 });
 
