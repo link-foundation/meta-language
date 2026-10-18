@@ -337,6 +337,81 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: node scripts/clean-caches.mjs --event ci-teardown
 
+  # The called workflow inherits ci.yml's complete JavaScript prerequisite.
+  # This isolated candidate does not alter the production crate or its gates.
+  native-grammar-outcome-experiment:
+    name: Native Grammar Outcome Transport Experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [detect-changes, cargo-lock, check]
+    if: |
+      !cancelled() && github.event_name != 'workflow_dispatch' &&
+      needs.cargo-lock.result == 'success' && needs.check.result == 'success' && (
+        github.event_name == 'push' ||
+        inputs.native_test_inputs_changed == true ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - name: Install the existing JavaScript dependencies
+        working-directory: js
+        run: npm ci --ignore-scripts
+
+      - name: Restore the successful native check dependency cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+          fail-on-cache-miss: true
+
+      - name: Release the restored build target before allocating isolated scratch
+        env:
+          META_LANGUAGE_B95_NATIVE_OUTCOME: '1'
+        run: node experiments/grammar-outcome-network/native-transport/runner/release-restored-target.mjs
+
+      - name: Compile and execute the bounded frozen native candidate
+        env:
+          META_LANGUAGE_B95_NATIVE_OUTCOME: '1'
+        run: node --max-old-space-size=512 experiments/grammar-outcome-network/native-transport/runner/run.mjs --native
+
+      - name: Release only stopped experiment scratch and retain its ownership receipt
+        if: ${{ !cancelled() }}
+        env:
+          META_LANGUAGE_B95_NATIVE_OUTCOME: '1'
+        run: node experiments/grammar-outcome-network/native-transport/runner/teardown.mjs
+
+      - name: Retain source inventories, oracle, process logs and native report
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/bulk95-outcome-overlay/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-grammar-outcome-experiment-${{ github.sha }}
+          path: issue-195-artifacts/bulk95-outcome-overlay/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Clean regenerable caches
+        if: ${{ !cancelled() && hashFiles('scripts/clean-caches.mjs') != '' }}
+        run: node scripts/clean-caches.mjs --event ci-teardown --project-owned-only --no-preflight --no-docker
+
   # === MINIMUM SUPPORTED RUST VERSION ===
   # Builds the library, binaries and tests with the toolchain Cargo.toml declares
   # as `rust-version`, so the declared minimum stays true as dependencies update.
