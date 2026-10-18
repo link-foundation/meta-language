@@ -281,7 +281,7 @@ fn any_retains_alternative_concrete_trees_and_all_requires_every_explicit_candid
                 .unwrap();
             assert_eq!(rejected.rejection.unwrap().reason, "ambiguity");
         } else {
-            assert!(result.ambiguities.is_empty());
+            assert_eq!(result.ambiguities.as_slice(), []);
         }
     }
 }
@@ -304,7 +304,7 @@ fn unknown_grammars_and_unimplemented_escape_mappings_remain_explicit_rejections
         assert!(!result.ok);
         let rejection = result.rejection.unwrap();
         assert_eq!(json!(rejection.reason), fixture[name]["reason"]);
-        assert!(!rejection.diagnostics.unwrap().is_empty());
+        assert_ne!(rejection.diagnostics.unwrap().as_slice(), []);
         if name == "unknown" {
             assert_eq!(rebuilt_selection_source(&result.tree.unwrap()), "π");
         }
@@ -472,7 +472,7 @@ fn mapped_json_retains_shipped_python_cst_original_oracle_rows_and_exact_escape_
     );
     assert!(std::ptr::eq(
         check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap(),
-        &bundle
+        &raw const bundle
     ));
     let resolve = |name: &str| grammars.get(name).cloned();
     let parser =
@@ -867,7 +867,7 @@ fn mapped_selection_memo_keys_keep_delimiter_bearing_names_separate_from_profile
             GrammarExpr::And(Box::new(warm.rule("mapped_document").unwrap().expr.clone())),
             selected.rule("mapped_document").unwrap().expr.clone(),
         ]);
-        let host = mapping_transport::mapped_root_expression(&mapped, expression);
+        let host = mapping_transport::mapped_root_expression(&mapped, &expression);
         let outcome = mapped_parse(&host, &grammars, source);
         assert!(outcome.ok, "{:?}", outcome.rejection);
         let bundle = mapped_bundle(&outcome);

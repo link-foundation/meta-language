@@ -238,7 +238,7 @@ fn raw_source_view_records_refuse_before_global_archive_field_loss() {
         ("/ranges/0/opaqueBinding", json!(true)),
         ("/ranges/0/start", json!("0")),
         ("/ranges/0/end", json!("1")),
-        ("/ranges/0/end", json!(4294967296_u64)),
+        ("/ranges/0/end", json!(4_294_967_296_u64)),
         ("/name", json!(7)),
         ("/mapping", json!(7)),
         ("/ranges", json!([])),
@@ -246,9 +246,10 @@ fn raw_source_view_records_refuse_before_global_archive_field_loss() {
         let mut changed = document.clone();
         let mut keys = suffix.trim_start_matches('/').rsplitn(2, '/');
         let key = keys.next().unwrap();
-        let parent = keys.next().map_or(candidate_path.to_owned(), |path| {
-            format!("{candidate_path}/{path}")
-        });
+        let parent = keys.next().map_or_else(
+            || candidate_path.to_owned(),
+            |path| format!("{candidate_path}/{path}"),
+        );
         changed.pointer_mut(&parent).unwrap()[key] = value.clone();
         let candidate = changed.pointer(candidate_path).unwrap().clone();
         assert!(

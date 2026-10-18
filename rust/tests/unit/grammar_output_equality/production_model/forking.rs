@@ -14,10 +14,10 @@ const _: fn() = || {
     let _ = self::Lead::Ref;
     let _ = |value: &self::Lead| match value {
         self::Lead::Literal(field_0) => {
-            let _ = field_0;
+            let _ = (self::Lead::Literal, field_0);
         }
         self::Lead::Ref(field_0) => {
-            let _ = field_0;
+            let _ = (self::Lead::Ref, field_0);
         }
     };
 };

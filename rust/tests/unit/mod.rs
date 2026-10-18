@@ -307,6 +307,7 @@ mod issue_195_grammar_profile_ruby;
 
 mod grammar_composition;
 mod grammar_included_range_selection;
+mod grammar_included_range_transport;
 mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;

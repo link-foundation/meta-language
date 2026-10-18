@@ -97,23 +97,24 @@ fn embeddings_compare_full_nested_roots_and_every_selection_witness() {
         |tree| {
             Rc::make_mut(tree.selection.as_mut().unwrap())
                 .candidates
-                .reverse()
+                .reverse();
         },
         |tree| {
             Rc::make_mut(tree.selection.as_mut().unwrap()).provenance["edition"] =
-                serde_json::json!("other")
+                serde_json::json!("other");
         },
         |tree| {
-            Rc::make_mut(tree.selection.as_mut().unwrap()).alternatives[0].language = "other".into()
+            Rc::make_mut(tree.selection.as_mut().unwrap()).alternatives[0].language =
+                "other".into();
         },
         |tree| {
             Rc::make_mut(tree.selection.as_mut().unwrap()).alternatives[0].root =
-                selection_equality_root("other")
+                selection_equality_root("other");
         },
         |tree| {
             Rc::make_mut(tree.selection.as_mut().unwrap())
                 .alternatives
-                .reverse()
+                .reverse();
         },
         |tree| tree.selection = None,
     ];

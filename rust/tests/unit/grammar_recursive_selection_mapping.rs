@@ -295,7 +295,7 @@ pub fn mapped_link_text(node: &Value) -> String {
     )
 }
 
-pub fn mapped_root_expression(grammar: &Grammar, expression: GrammarExpr) -> Grammar {
+pub fn mapped_root_expression(grammar: &Grammar, expression: &GrammarExpr) -> Grammar {
     let mut restored = Grammar::new();
     let root = grammar.start().unwrap();
     restored.set_start(root);
@@ -306,7 +306,7 @@ pub fn mapped_root_expression(grammar: &Grammar, expression: GrammarExpr) -> Gra
     restored.set_kinds(grammar.kinds().to_vec());
     for mut rule in grammar.rules().iter().cloned() {
         if rule.name == root {
-            rule.expr.clone_from(&expression);
+            rule.expr.clone_from(expression);
         }
         restored.add_rule(rule);
     }
@@ -328,7 +328,7 @@ fn mapped_scalar_profile_does_not_relabel_invalid_utf8_or_admit_lexical_escapes(
             GrammarExpr::AnyChar,
             host.rule("mapped_document").unwrap().expr.clone(),
         ]);
-        let host = mapped_root_expression(&host, expression);
+        let host = mapped_root_expression(&host, &expression);
         let result = compile_feature_grammar(&host, Some(&resolve), FeatureParseOptions::default())
             .unwrap()
             .parse_tree(&bytes, &FeatureParseOptions::default())

@@ -1,4 +1,4 @@
-//! Test-only transport of public CST fields and official LiNo syntax.
+//! Test-only transport of public CST fields and official `LiNo` syntax.
 //! This module has no tests, observation calls or mapping decision algorithms.
 use links_notation::LiNo;
 use meta_language::{
@@ -41,7 +41,7 @@ fn included_range_field_header(
     value["end"] = json!(tree.end());
 }
 
-pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
+pub fn included_range_tree_data(tree: &SyntaxTree) -> Value {
     let mut value = json!({});
     match tree {
         SyntaxTree::Node {
@@ -151,11 +151,11 @@ pub(super) fn included_range_tree_data(tree: &SyntaxTree) -> Value {
     value
 }
 
-pub(super) fn included_range_bundle(outcome: &ParseOutcome) -> Value {
+pub fn included_range_bundle(outcome: &ParseOutcome) -> Value {
     json!({"tree":outcome.tree.as_ref().map(included_range_tree_data),"sourcePlanes":outcome.source_planes})
 }
 
-pub(super) fn included_range_physical(tree: &Value) -> Vec<u8> {
+pub fn included_range_physical(tree: &Value) -> Vec<u8> {
     match tree["type"].as_str().unwrap() {
         "missing" => Vec::new(),
         "token" | "error" => tree["text"].as_str().map_or_else(
@@ -189,7 +189,7 @@ pub(super) fn included_range_physical(tree: &Value) -> Vec<u8> {
     }
 }
 
-pub(super) fn included_range_stored(value: &Value) -> [Value; 2] {
+pub fn included_range_stored(value: &Value) -> [Value; 2] {
     let graph = encode_structured_data_links(value).unwrap();
     let text = graph.network.to_lino();
     let restored = LinkNetwork::from_lino(&text).unwrap();
@@ -206,7 +206,7 @@ pub(super) fn included_range_stored(value: &Value) -> [Value; 2] {
     ]
 }
 
-pub(super) fn included_range_link_data(node: &LiNo<String>) -> Value {
+pub fn included_range_link_data(node: &LiNo<String>) -> Value {
     match node {
         LiNo::Ref(word) => json!(word),
         LiNo::Link { id, values } => {
@@ -215,7 +215,7 @@ pub(super) fn included_range_link_data(node: &LiNo<String>) -> Value {
     }
 }
 
-pub(super) fn included_range_link_text(node: &Value) -> String {
+pub fn included_range_link_text(node: &Value) -> String {
     node.as_str().map_or_else(
         || {
             let prefix = node["id"]

@@ -299,7 +299,9 @@ impl<'a> Rows<'a> {
                     "M"
                 ]));
             }
-            other => panic!("the oracle projection does not handle {other:?}"),
+            other @ SyntaxTree::Embed { .. } => {
+                panic!("the oracle projection does not handle {other:?}")
+            }
         }
     }
 

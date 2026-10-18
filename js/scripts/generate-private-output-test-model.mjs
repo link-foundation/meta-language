@@ -62,7 +62,10 @@ export function buildPrivateOutputTestModel(repository=root,policy=readProjectDa
             assert.equal(body.term,'ordered_field_declaration_list','enum payload binding uses complete tuple fields');
             const fields=body.children.filter(({node})=>node.named&&!['attribute_item','visibility_modifier'].includes(node.term)).map((_,index)=>'field_'+index);
             assert.ok(fields.length>0);
-            arms.push(`${path}(${fields.join(', ')}) => { ${fields.map(field=>'let _ = '+field+';').join(' ')} }`);
+            // Retain the actual variant constructor beside every payload binding.
+            // Distinct variants can own identical payload types without producing
+            // identical match arms or merging incompatible payload owners.
+            arms.push(`${path}(${fields.join(', ')}) => { let _ = (${path}, ${fields.join(', ')}); }`);
           }else arms.push(`${path} => {}`);
         }
         if(variants.some(variant=>parsed.field(variant,'body')))append(`let _ = |value: &${module}::${name(node)}| { match value { ${arms.join(', ')} } };`);

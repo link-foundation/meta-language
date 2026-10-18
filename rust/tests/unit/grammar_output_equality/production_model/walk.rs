@@ -599,24 +599,24 @@ mod tests {
             |tree| {
                 Rc::make_mut(tree.selection.as_mut().unwrap())
                     .candidates
-                    .reverse()
+                    .reverse();
             },
             |tree| {
                 Rc::make_mut(tree.selection.as_mut().unwrap()).provenance["edition"] =
-                    serde_json::json!("other")
+                    serde_json::json!("other");
             },
             |tree| {
                 Rc::make_mut(tree.selection.as_mut().unwrap()).alternatives[0].language =
-                    "other".into()
+                    "other".into();
             },
             |tree| {
                 Rc::make_mut(tree.selection.as_mut().unwrap()).alternatives[0].root =
-                    selection_equality_root("other")
+                    selection_equality_root("other");
             },
             |tree| {
                 Rc::make_mut(tree.selection.as_mut().unwrap())
                     .alternatives
-                    .reverse()
+                    .reverse();
             },
             |tree| tree.selection = None,
         ];
@@ -688,13 +688,13 @@ const _: fn() = || {
     let _ = self::Walk::End;
     let _ = |value: &self::Walk| match value {
         self::Walk::Part(field_0) => {
-            let _ = field_0;
+            let _ = (self::Walk::Part, field_0);
         }
         self::Walk::Item(field_0) => {
-            let _ = field_0;
+            let _ = (self::Walk::Item, field_0);
         }
         self::Walk::End(field_0) => {
-            let _ = field_0;
+            let _ = (self::Walk::End, field_0);
         }
     };
     let _ = self::open_part;

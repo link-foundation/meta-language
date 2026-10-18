@@ -163,19 +163,19 @@ fn with_source_format_provenance(expected: &Value, input: &[GlobalConceptSource]
 fn with_source_format_statements(links: &str, input: &[GlobalConceptSource]) -> String {
     use meta_language::grammar::interchange::percent_encode_links_text;
 
-    let mut lines = Vec::new();
+    let mut statements = Vec::new();
     for line in links.split('\n') {
-        lines.push(line.to_owned());
+        statements.push(line.to_owned());
         for source in input {
             let id = percent_encode_links_text(&source.id);
             if line.starts_with(&format!("(grammar-origin {id} "))
                 && let Some(format) = source.grammar.source_format()
             {
-                lines.push(format!("(grammar-source-format {id} {})", format.as_str()));
+                statements.push(format!("(grammar-source-format {id} {})", format.as_str()));
             }
         }
     }
-    lines.join("\n")
+    statements.join("\n")
 }
 
 #[test]
@@ -186,7 +186,7 @@ fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_
         create_global_concept_space(&sources(&data), &options).unwrap(),
         with_source_format_provenance(&data["expectedSpace"], &sources(&data))
     );
-    let mut scoped = data.clone();
+    let mut scoped = data;
     for (index, source) in scoped["sources"]
         .as_array_mut()
         .unwrap()
@@ -214,7 +214,7 @@ fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_
         shared["mappings"]["first:root"],
         shared["mappings"]["second:page"]
     );
-    assert!(!shared["proofs"].as_array().unwrap().is_empty());
+    assert_ne!(shared["proofs"].as_array().unwrap().as_slice(), []);
     let links = global_concept_space_to_links(&shared).unwrap();
     assert!(links.contains("lexicalRule"));
     assert_eq!(
@@ -246,7 +246,7 @@ fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_
             compared["mappings"]["first:root"],
             compared["mappings"]["second:page"]
         );
-        assert!(compared["proofs"].as_array().unwrap().is_empty());
+        assert_eq!(compared["proofs"].as_array().unwrap().as_slice(), []);
         assert_eq!(
             compared["failures"].as_array().unwrap().len(),
             options.equivalences.len()

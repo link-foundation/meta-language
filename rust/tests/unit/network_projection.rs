@@ -181,7 +181,7 @@ fn default_parse_keeps_concrete_source_after_explicit_abstract_selection() {
     let abstract_links = network
         .projected_links(NetworkProjection::AbstractSyntax)
         .collect::<Vec<_>>();
-    assert!(!abstract_links.is_empty());
+    assert_ne!(abstract_links.as_slice(), []);
     assert!(abstract_links.iter().all(|link| !matches!(
         link.metadata().link_type(),
         Some(LinkType::Token | LinkType::Trivia)
@@ -259,7 +259,7 @@ process.stdout.write(JSON.stringify({
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr.as_slice(), []);
     let observed: Value = serde_json::from_slice(&output.stdout)
         .expect("the complete actual process result is valid JSON");
     for entry in fixture()["cases"].as_array().unwrap() {
@@ -417,13 +417,13 @@ fn assert_projection_replay(
     let before = network.to_lino();
     let concrete_ids = network
         .projected_links(NetworkProjection::ConcreteSyntax)
-        .map(|link| link.id())
+        .map(meta_language::Link::id)
         .collect::<Vec<_>>();
     assert_eq!(
         concrete_ids,
         network
             .projected_links(NetworkProjection::ConcreteSyntax)
-            .map(|link| link.id())
+            .map(meta_language::Link::id)
             .collect::<Vec<_>>()
     );
     for role in [LinkType::Syntax, LinkType::Token, LinkType::Trivia] {
@@ -436,9 +436,9 @@ fn assert_projection_replay(
     }
     let abstract_ids = network
         .projected_links(NetworkProjection::AbstractSyntax)
-        .map(|link| link.id())
+        .map(meta_language::Link::id)
         .collect::<Vec<_>>();
-    assert!(!abstract_ids.is_empty());
+    assert_ne!(abstract_ids.as_slice(), []);
     assert_ne!(
         abstract_ids, concrete_ids,
         "abstract syntax requires a distinct explicit selection"
@@ -474,7 +474,7 @@ fn assert_projection_replay(
         assert_eq!(
             restored
                 .projected_links(NetworkProjection::ConcreteSyntax)
-                .map(|link| link.id())
+                .map(meta_language::Link::id)
                 .collect::<Vec<_>>(),
             concrete_ids
         );
@@ -484,7 +484,7 @@ fn assert_projection_replay(
         assert_eq!(
             abstract_links
                 .iter()
-                .map(|link| link.id())
+                .map(meta_language::Link::id)
                 .collect::<Vec<_>>(),
             abstract_ids
         );
@@ -547,7 +547,7 @@ fn four_priority_language_csts_keep_original_abstract_provenance_through_both_sa
             .unwrap();
         let expected = native["languages"]
             .get(name)
-            .unwrap_or(&oracle["languages"][name]);
+            .unwrap_or_else(|| &oracle["languages"][name]);
         assert!(
             !expected.is_null(),
             "{name}: independent CST expectations exist"

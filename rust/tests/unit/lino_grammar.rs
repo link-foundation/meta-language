@@ -161,7 +161,7 @@ fn leaves(node: &Node) -> Vec<&Node> {
 }
 
 /// Preserve the shared fixture and the legacy deeply nested JSON boundary.
-pub(super) fn read_lino_grammar_cases() -> Value {
+pub fn read_lino_grammar_cases() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/lino-grammar-cases.json");
     let physical = super::project_data::resolve_project_data_path(path)

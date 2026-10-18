@@ -1,5 +1,5 @@
 //! CI-only mirrors of the authored JavaScript included-range controls.
-//! Helpers transport public CST fields and official LiNo syntax; the actual
+//! Helpers transport public CST fields and official `LiNo` syntax; the actual
 //! generated policies, parser and mapped-tree checker make every decision.
 use std::cell::Cell;
 use std::collections::HashMap;
@@ -13,8 +13,7 @@ use meta_language::{
 };
 use serde_json::{Value, json};
 
-#[path = "grammar_included_range_transport.rs"]
-mod included_range_transport;
+use super::grammar_included_range_transport as included_range_transport;
 use included_range_transport::{
     included_range_bundle, included_range_link_data, included_range_link_text,
     included_range_physical, included_range_stored, included_range_tree_data,
@@ -168,7 +167,10 @@ fn included_range_plans_preserve_kept_bytes_gaps_boundaries_and_original_inputs(
         (vec![0.0, 1.0], 4_294_967_296.0),
         (vec![0.0, f64::NAN], 5.0),
     ] {
-        assert!(read_grammar_selection_included_range_plan(&ranges, length).is_empty());
+        assert_eq!(
+            read_grammar_selection_included_range_plan(&ranges, length).as_slice(),
+            []
+        );
     }
     assert!(!accept_grammar_selection_included_range_agreement(
         &[0.0, 4.0],
@@ -306,7 +308,10 @@ fn included_range_scalar_stream_preserves_the_original_multibyte_example() {
     );
     assert_eq!(result, [42, 195, 169, 10, 206, 178, 42]);
     assert_eq!(std::str::from_utf8(&result).unwrap(), "*é\nβ*");
-    assert!(read_grammar_selection_included_range_part(&plan, 0.0, 0.0, 1.0, 1.0).is_empty());
+    assert_eq!(
+        read_grammar_selection_included_range_part(&plan, 0.0, 0.0, 1.0, 1.0).as_slice(),
+        []
+    );
 }
 
 #[test]
@@ -423,7 +428,7 @@ fn included_range_any_and_all_keep_physical_cst_and_complete_derived_witnesses()
             assert!(std::ptr::eq(
                 check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default())
                     .unwrap(),
-                &bundle
+                &raw const bundle
             ));
         }
     }
@@ -455,7 +460,7 @@ fn included_range_views_execute_the_shipped_json_grammar_without_changing_its_cs
     );
     assert!(std::ptr::eq(
         check_grammar_selection_mapped_tree(&bundle, &FeatureParseOptions::default()).unwrap(),
-        &bundle
+        &raw const bundle
     ));
 }
 
@@ -686,7 +691,7 @@ fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_
         let rejection = failure.rejection.unwrap();
         assert_eq!(rejection.reason, "invalidEmbeddingMapping");
         let diagnostics = rejection.diagnostics.unwrap();
-        assert!(!diagnostics.is_empty());
+        assert_ne!(diagnostics.as_slice(), []);
         assert_eq!(diagnostics[0]["reason"], "invalidEmbeddingMapping");
         assert!(
             diagnostics
@@ -713,7 +718,7 @@ fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_
     let rejection = failure.rejection.unwrap();
     assert_eq!(rejection.reason, "unsupportedEmbeddingMapping");
     let diagnostics = rejection.diagnostics.unwrap();
-    assert!(!diagnostics.is_empty());
+    assert_ne!(diagnostics.as_slice(), []);
     assert_eq!(
         diagnostics[0]["detail"],
         "included range candidates require one common ordered range plan"
@@ -863,7 +868,7 @@ fn included_range_public_cst_equality_keeps_physical_and_derived_witness_fields(
     }
 }
 
-fn included_range_shorten(tree: &mut SyntaxTree) {
+const fn included_range_shorten(tree: &mut SyntaxTree) {
     let (SyntaxTree::Node { end, .. }
     | SyntaxTree::Token { end, .. }
     | SyntaxTree::Error { end, .. }
@@ -909,7 +914,7 @@ fn included_range_archived_parameters_retain_signed_zero_without_changing_gramma
         );
         assert!(std::ptr::eq(
             check_grammar_selection_mapped_tree(&stored, &FeatureParseOptions::default()).unwrap(),
-            &stored
+            &raw const stored
         ));
     }
 }

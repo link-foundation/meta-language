@@ -118,7 +118,7 @@ pub(super) fn candidates(expression: &GrammarExpr) -> &[GrammarExpr] {
     items
 }
 
-pub(super) fn replaced(grammar: &Grammar, name: &str, replacement: GrammarRule) -> Grammar {
+pub(super) fn replaced(grammar: &Grammar, name: &str, replacement: &GrammarRule) -> Grammar {
     let mut output = Grammar::new().with_declarations(grammar.declarations().clone());
     if let Some(start) = grammar.start() {
         output.set_start(start);

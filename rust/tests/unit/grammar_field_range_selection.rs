@@ -15,7 +15,7 @@ fn field_range_json() -> Grammar {
 
 // Replace only the actual start expression, retaining every source rule,
 // declaration, kind, alias and grammar format. No generated listing is edited.
-fn field_range_with_expression(grammar: &Grammar, expression: GrammarExpr) -> Grammar {
+fn field_range_with_expression(grammar: &Grammar, expression: &GrammarExpr) -> Grammar {
     let start = grammar.start_rule().unwrap().name.clone();
     let mut result = Grammar::new()
         .with_start(start.clone())
@@ -48,7 +48,7 @@ fn field_range_host(
     )).unwrap()).collect();
     field_range_with_expression(
         grammar,
-        GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+        &GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
             policy,
             vec![
                 FieldValue::Expression(grammar.start_rule().unwrap().expr.clone()),
@@ -580,7 +580,7 @@ fn failed_field_attempts_retain_independently_replayable_witnesses_after_a_liter
             GrammarExpr::Terminal(source.to_owned()),
         ],
     );
-    let host = field_range_with_expression(&host, expression);
+    let host = field_range_with_expression(&host, &expression);
     let outcome = included_range_parse(
         &host,
         &HashMap::from([("Refusing".to_owned(), included_range_literal("absent"))]),
@@ -640,7 +640,7 @@ fn invalid_field_windows_and_full_views_refuse_before_child_execution_or_derived
         let rejection = outcome.rejection.unwrap();
         assert_eq!(rejection.reason, "invalidEmbeddingMapping");
         let diagnostics = rejection.diagnostics.unwrap();
-        assert!(!diagnostics.is_empty());
+        assert_ne!(diagnostics.as_slice(), []);
         assert!(
             diagnostics
                 .iter()
@@ -656,7 +656,7 @@ fn nested_field_json_string_and_field_views_replay_four_source_planes_from_links
     let inner = field_range_host(&json, &["Leaf"], 0, 1, "include", "any-grammar");
     let quoted = field_range_with_expression(
         &json,
-        GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
+        &GrammarExpr::feature(FeatureExpr::Form(FeatureForm::new(
             "any-grammar",
             vec![
                 FieldValue::Expression(json.start_rule().unwrap().expr.clone()),
@@ -704,10 +704,7 @@ fn nested_field_json_string_and_field_views_replay_four_source_planes_from_links
     assert_eq!(last["selection"]["sourceMapping"]["input"], 2);
     assert_eq!(last["selection"]["sourceMapping"]["output"], 3);
     assert_eq!(included_range_physical(&bundle["tree"]), source.as_bytes());
-    assert_eq!(
-        included_range_physical(&first["root"]),
-        r#""{\"k\":2}""#.as_bytes()
-    );
+    assert_eq!(included_range_physical(&first["root"]), br#""{\"k\":2}""#);
     let direct = included_range_parse(&json, &HashMap::new(), "2");
     assert!(direct.ok);
     assert_eq!(
@@ -783,19 +780,20 @@ fn raw_field_forms_refuse_wrong_types_unknown_fields_and_invalid_windows_before_
         ("/selector/count", Some(json!("1"))),
         ("/selector/first", Some(json!(-1))),
         ("/selector/first", Some(json!(0.5))),
-        ("/selector/first", Some(json!(4294967296_u64))),
+        ("/selector/first", Some(json!(4_294_967_296_u64))),
         ("/selector/first", Some(Value::Null)),
         ("/selector/count", Some(json!(0))),
         ("/selector/count", Some(json!(-1))),
-        ("/selector/count", Some(json!(4294967296_u64))),
+        ("/selector/count", Some(json!(4_294_967_296_u64))),
         ("/selector/count", Some(Value::Null)),
     ] {
         let mut changed = document.clone();
         let mut keys = suffix.trim_start_matches('/').rsplitn(2, '/');
         let key = keys.next().unwrap();
-        let parent = keys.next().map_or(candidate_path.to_owned(), |path| {
-            format!("{candidate_path}/{path}")
-        });
+        let parent = keys.next().map_or_else(
+            || candidate_path.to_owned(),
+            |path| format!("{candidate_path}/{path}"),
+        );
         let owner = changed
             .pointer_mut(&parent)
             .unwrap()
@@ -832,7 +830,7 @@ fn raw_field_forms_refuse_wrong_types_unknown_fields_and_invalid_windows_before_
     let grammars = HashMap::from([("Child".to_owned(), included_range_literal("π"))]);
     let expected = included_range_parse(&host, &grammars, "<π>");
     assert!(expected.ok, "{:?}", expected.rejection);
-    let mut floating = document.clone();
+    let mut floating = document;
     let selector = floating
         .pointer_mut("/rules/0/expression/items/0/selector")
         .unwrap();

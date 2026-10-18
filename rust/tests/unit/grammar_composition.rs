@@ -1,8 +1,7 @@
 //! CI-only mirrors of the six JavaScript grammar-composition controls.
 //! The production decorators, generated policies and mapped-CST checker own
 //! all decisions; helpers below transport public grammar/CST data only.
-#[path = "grammar_included_range_transport.rs"]
-mod transport;
+use super::grammar_included_range_transport as transport;
 use transport::{
     included_range_bundle as bundle, included_range_physical as physical,
     included_range_stored as stored, included_range_tree_data as tree_data,
@@ -19,9 +18,12 @@ fn composition_decisions_are_closed_and_reject_context_candidate_and_source_name
         read_grammar_composition_field_order("selection"),
         "kind|item|items"
     );
-    assert!(read_grammar_composition_field_order("unknown").is_empty());
+    assert_eq!(read_grammar_composition_field_order("unknown"), "");
     for mode in ["any-grammar", "all-grammar"] {
-        assert!(read_grammar_composition_context_issue("normal", mode, "empty", false).is_empty());
+        assert_eq!(
+            read_grammar_composition_context_issue("normal", mode, "empty", false),
+            ""
+        );
     }
     for (kind, mode, slot, trees) in [
         ("silent", "any-grammar", "empty", false),
@@ -29,7 +31,10 @@ fn composition_decisions_are_closed_and_reject_context_candidate_and_source_name
         ("normal", "any-grammar", "literal", false),
         ("normal", "any-grammar", "empty", true),
     ] {
-        assert!(!read_grammar_composition_context_issue(kind, mode, slot, trees).is_empty());
+        assert_ne!(
+            read_grammar_composition_context_issue(kind, mode, slot, trees),
+            ""
+        );
     }
     assert!(accept_grammar_composition_candidate_profile(
         "grammar-field-candidate",
@@ -57,14 +62,14 @@ fn composition_decisions_are_closed_and_reject_context_candidate_and_source_name
             vec!["same", "same"],
         ],
     ] {
-        assert!(
+        assert_eq!(
             read_grammar_composition_candidate_issue(
                 &strings(&columns[0]),
                 &strings(&columns[1]),
                 &strings(&columns[2]),
                 &strings(&columns[3])
-            )
-            .is_empty()
+            ),
+            ""
         );
     }
     for columns in [
@@ -107,14 +112,14 @@ fn composition_decisions_are_closed_and_reject_context_candidate_and_source_name
             vec![""],
         ],
     ] {
-        assert!(
-            !read_grammar_composition_candidate_issue(
+        assert_ne!(
+            read_grammar_composition_candidate_issue(
                 &strings(&columns[0]),
                 &strings(&columns[1]),
                 &strings(&columns[2]),
                 &strings(&columns[3])
-            )
-            .is_empty()
+            ),
+            ""
         );
     }
     for (actual, key, requested, next, opcode) in [
@@ -129,9 +134,9 @@ fn composition_decisions_are_closed_and_reject_context_candidate_and_source_name
             Some(opcode)
         );
     }
-    assert!(read_grammar_composition_publication_issue(false, true).is_empty());
-    assert!(read_grammar_composition_publication_issue(true, false).is_empty());
-    assert!(!read_grammar_composition_publication_issue(true, true).is_empty());
+    assert_eq!(read_grammar_composition_publication_issue(false, true), "");
+    assert_eq!(read_grammar_composition_publication_issue(true, false), "");
+    assert_ne!(read_grammar_composition_publication_issue(true, true), "");
 }
 
 #[test]
@@ -140,7 +145,7 @@ fn composition_materializes_the_original_expression_once_and_preserves_fallback_
     let initial = parse_grammar_links("(grammar (start root))\n(rule root normal (choice ordered (ref item) (literal %222%22)) (concept grammar.root) (source-names (own original_root)))\n(rule item normal (literal %221%22))\n").unwrap();
     let mut rule = initial.start_rule().unwrap().clone();
     rule.doc = Some("Original complete rule documentation.".to_owned());
-    let mut grammar = replaced(&initial, "root", rule);
+    let mut grammar = replaced(&initial, "root", &rule);
     grammar.set_kinds(vec![GrammarKind {
         name: "kept".to_owned(),
         source_names: vec![GrammarSourceName {
@@ -494,11 +499,11 @@ fn composition_rejects_malformed_templates_idempotence_data_and_mapped_witness_r
     for mutation in 0..5 {
         let wrapped = decorate_grammar(&grammar, &set, DecoratorLevel::GrammarRule).unwrap();
         let mut root = wrapped.start_rule().unwrap().clone();
-        let wrapper = form_mut(&mut root.expr);
+        let selection = form_mut(&mut root.expr);
         if mutation == 4 {
-            wrapper.fields[0] = FieldValue::Name("erased-original".to_owned());
+            selection.fields[0] = FieldValue::Name("erased-original".to_owned());
         } else {
-            let FieldValue::Expressions(items) = &mut wrapper.fields[1] else {
+            let FieldValue::Expressions(items) = &mut selection.fields[1] else {
                 panic!("actual candidates")
             };
             if mutation == 3 {
@@ -521,7 +526,7 @@ fn composition_rejects_malformed_templates_idempotence_data_and_mapped_witness_r
                 }
             }
         }
-        let forged = replaced(&wrapped, wrapped.start().unwrap(), root);
+        let forged = replaced(&wrapped, wrapped.start().unwrap(), &root);
         assert!(
             decorate_grammar(&forged, &set, DecoratorLevel::GrammarRule).is_err(),
             "mutation {mutation}"
@@ -941,7 +946,7 @@ fn composition_retains_no_match_child_refusal_profile_boundaries_and_existing_fa
             root.expr.clone(),
         ],
     };
-    let mut fallback = replaced(&json, &root.name, fallback_rule);
+    let mut fallback = replaced(&json, &root.name, &fallback_rule);
     fallback.add_rule(GrammarRule::new("attempt", root.expr.clone()));
     let template = render_links_expression(&parse_links_expression("(any-grammar empty (grammar-field-candidate Refusing field-ranges (source-field-selector value include 0 1)))").unwrap());
     let set = DecoratorSet::new(vec![author(
@@ -968,7 +973,7 @@ fn composition_retains_no_match_child_refusal_profile_boundaries_and_existing_fa
     let result = mapped(&outcome, r#"{"k":1}"#);
     let mut nodes = Vec::new();
     embeddings(&result["tree"], &mut nodes);
-    assert!(nodes.is_empty());
+    assert_eq!(nodes.as_slice(), []);
     assert_eq!(outcome.source_planes.as_ref().unwrap().len(), 2);
     assert_eq!(
         outcome.source_planes.as_ref().unwrap()[1]["derivation"]["operation"],

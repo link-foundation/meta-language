@@ -635,7 +635,9 @@ fn token_negation_declaration(body: &str) -> String {
 
 // An independent oracle for these exact authored fixtures, not an executed
 // ANTLR oracle: complete lexical words are elected before token exclusion.
-fn token_negation_oracle(input: &str) -> Option<Vec<(String, String, usize, usize, bool)>> {
+type TokenNegationOracleRow = (String, String, usize, usize, bool);
+
+fn token_negation_oracle(input: &str) -> Option<Vec<TokenNegationOracleRow>> {
     let mut rows = Vec::new();
     let mut start = 0;
     while start < input.len() {
@@ -873,9 +875,7 @@ fn parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligat
             .iter()
             .find(|rule| rule["name"] == name)
             .unwrap();
-        if name != "item" {
-            assert_eq!(new, old, "{name}");
-        } else {
+        if name == "item" {
             assert_eq!(
                 &new["expression"]["items"].as_array().unwrap()[..2],
                 &old["expression"]["items"].as_array().unwrap()[..2]
@@ -884,6 +884,8 @@ fn parser_token_negation_rolls_back_mode_commands_and_preserves_original_obligat
                 new["expression"]["items"][2],
                 serde_json::json!({"kind":"seq","items":[{"kind":"not","item":{"kind":"literal","value":"x"}},{"kind":"any"}]})
             );
+        } else {
+            assert_eq!(new, old, "{name}");
         }
     }
 }
