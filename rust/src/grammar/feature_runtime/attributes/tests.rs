@@ -4,7 +4,7 @@ use crate::translation::grammar_attribute_order_rules::read_grammar_attribute_in
 #[test]
 fn actual_attribute_names_keep_shared_decimal_and_unicode_boundaries() {
     let fixture = crate::read_structured_data_lino(include_str!(
-        "../../../../../parity/fixtures/grammar-attribute-order.lino"
+        "../../../data/grammar-attribute-order-fixtures.lino"
     ))
     .expect("shared attribute order fixture");
     for case in fixture["integerNames"]

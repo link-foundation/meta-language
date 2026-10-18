@@ -22,8 +22,11 @@ export function generateGrammarAttributeOrderFixtures({check=false}={}) {
         expected:'preserve insertion order when collecting attribute entries',
         evidence:'IndexMap 2.14.2 documents insertion-ordered iteration. The shared grammar cases independently declare observable entry order; native execution remains a CI check. https://docs.rs/indexmap/2.14.2/indexmap/map/struct.IndexMap.html'}]},
     cases,integerNames:grammarAttributeIntegerNameCases()};
-  const output=new URL('parity/fixtures/grammar-attribute-order.lino',root);
-  if(check)checkProjectData(output,fixture);else writeProjectData(output,fixture);
+  for(const path of ['parity/fixtures/grammar-attribute-order.lino',
+    'js/src/data/grammar-attribute-order-fixtures.lino','rust/src/data/grammar-attribute-order-fixtures.lino']){
+    const output=new URL(path,root);
+    if(check)checkProjectData(output,fixture);else writeProjectData(output,fixture);
+  }
   return fixture;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
