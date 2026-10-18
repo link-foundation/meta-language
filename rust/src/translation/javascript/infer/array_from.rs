@@ -77,7 +77,7 @@ impl Inference {
         }
     }
 
-    fn array_from_callback(
+    pub(super) fn array_from_callback(
         &mut self,
         term: &Term,
         params: &[Term],

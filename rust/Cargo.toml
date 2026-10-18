@@ -33,6 +33,7 @@ include = [
     "src/data/array-values.lino",
     "src/data/array-bindings.lino",
     "src/data/array-from-rules.lino",
+    "src/data/array-callback-rules.lino",
     "src/data/network-projection-rules.lino",
     "src/data/program-number-projection-rules.lino",
     "src/data/partial-callable-rules.lino",

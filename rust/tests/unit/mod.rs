@@ -290,6 +290,7 @@ mod self_translation_line_endings;
 
 mod grammar_elm_layout_candidate;
 mod native_development_oracles;
+mod translation_array_callbacks;
 mod translation_array_construction;
 mod translation_array_from;
 mod translation_product_unit;

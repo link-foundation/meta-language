@@ -102,6 +102,61 @@ impl RustEmitter<'_> {
                 ),
             );
         }
+        if receiver == "array"
+            && !crate::translation::array_callback_rules::read_array_callback_result_form(op)
+                .is_empty()
+        {
+            self.preludes.insert(Prelude::Array);
+            let callback = args.first().and_then(Option::as_ref).ok_or_else(|| {
+                unsupported(
+                    &format!(".{op}()"),
+                    "the checked callback is absent",
+                    expression.span,
+                )
+            })?;
+            let Type::Function { params, .. } = &callback.ty else {
+                return Err(unsupported(
+                    &format!(".{op}()"),
+                    "the checked callback has no function type",
+                    expression.span,
+                ));
+            };
+            self.temporaries += 1;
+            let suffix = self.temporaries.to_string();
+            #[allow(clippy::cast_precision_loss)]
+            let parameter_count = params.len() as f64;
+            let object = self.expr(object)?;
+            let callback = self.expr(callback)?;
+            let initial_position = crate::translation::array_callback_rules::read_array_callback_checked_argument_position(
+                op, args.len() != 1, 0.0,
+            );
+            let has_initial =
+                crate::translation::frontend_rules::ml_array::number_index(initial_position)
+                    == Some(1);
+            let initial = if has_initial {
+                let value = args.get(1).and_then(Option::as_ref).ok_or_else(|| {
+                    unsupported(
+                        &format!(".{op}()"),
+                        "the checked initial value is absent",
+                        expression.span,
+                    )
+                })?;
+                self.expr(value)?
+            } else {
+                String::new()
+            };
+            return Ok(
+                crate::translation::array_callback_rules::render_array_callback_expression(
+                    op,
+                    &object,
+                    &callback,
+                    parameter_count,
+                    &suffix,
+                    &initial,
+                    has_initial,
+                ),
+            );
+        }
         if let Type::Array { element, .. } = &object.ty
             && op == "join"
         {

@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod aborts;
 pub(crate) mod array_binding_rules;
+pub(crate) mod array_callback_rules;
 pub(crate) mod array_from_rules;
 pub(crate) mod array_value_rules;
 pub(crate) mod borrowed_call_interface;

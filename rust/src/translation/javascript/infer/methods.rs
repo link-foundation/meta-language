@@ -257,6 +257,17 @@ impl Inference {
         if kind != "string" && kind != "array" {
             return Ok(false);
         }
+        if kind == "array"
+            && self.array_callback_method(
+                &receiver,
+                &method.operation,
+                &method.args,
+                &method.result,
+                method.place,
+            )?
+        {
+            return Ok(true);
+        }
         for (index, argument) in method.args.iter().enumerate() {
             #[allow(clippy::cast_precision_loss)]
             let position = index as f64;

@@ -316,7 +316,13 @@ impl Checker {
             SNode::StringMap { .. } => self.string_map(node, env, path),
             SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
             SNode::Method { object, op, args } => {
-                self.primitive_method(object, op, args, env, path, span)
+                let form =
+                    crate::translation::array_callback_rules::read_array_callback_result_form(op);
+                if form.is_empty() || form == "mapped array" {
+                    self.primitive_method(object, op, args, env, path, span)
+                } else {
+                    self.array_callback_method(node, env, path, context, &form)
+                }
             }
             SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {

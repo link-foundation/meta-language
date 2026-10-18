@@ -11,6 +11,7 @@
 //! Mirrors `js/src/translation/javascript-infer.js`.
 
 mod array_bindings;
+mod array_callbacks;
 mod array_from;
 mod arrays;
 mod callables;

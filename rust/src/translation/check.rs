@@ -27,6 +27,7 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed
 use super::{Language, Span};
 
 mod array_bindings;
+mod array_callbacks;
 mod array_from;
 mod arrays;
 mod callables;
