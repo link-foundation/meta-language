@@ -5,9 +5,26 @@ import {fileURLToPath} from 'node:url';
 import {parseProgrammingLanguage} from '../../js/src/programming-language-parser.js';
 import {LinkNetwork} from '../../js/src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../../js/src/link-network-binary.js';
+import {structuredDataGraphCost} from '../../js/src/structured-data-graph.js';
 import {lowerRestrictedCst,archiveRestrictedCLowering,readRestrictedCLowering} from './restricted-c-cst.mjs';
 const source='typedef enum { OPEN, CLOSE } Token; int stored = 5; int inspect(int parameter) { int local = parameter; local = local + stored; return local + CLOSE; }';
 const lower=()=>lowerRestrictedCst(parseProgrammingLanguage(source,'C'),source,{abi:{intBits:32,sizeBits:64,charSigned:true}});
+
+test('C archive replay keeps default traversal refusal and accepts an explicit exact caller budget',()=>{
+ let shared={value:'authored'};
+ for(let depth=0;depth<18;depth++)shared={left:shared,right:shared};
+ const unit=lowerRestrictedCst(parseProgrammingLanguage(source,'C'),source,{
+  abi:{intBits:32,sizeBits:64,charSigned:true},sourceDenominators:shared,
+ });
+ const packet=archiveRestrictedCLowering(unit),cost=structuredDataGraphCost(packet.network,packet.root);
+ assert.ok(packet.network.links().length<1_000_000&&cost.nodes>1_000_000,'a small physical graph can have a larger expanded traversal');
+ assert.throws(()=>readRestrictedCLowering(packet.network,packet.root),/traversal resource limit|expanded data resource limit/u);
+ assert.throws(()=>readRestrictedCLowering(packet.network,packet.root,{nodeLimit:cost.nodes-1}),/traversal resource limit|expanded data resource limit/u);
+ const restored=readRestrictedCLowering(packet.network,packet.root,{nodeLimit:cost.nodes});
+ assertOwners(restored);
+ assert.equal(restored.sourceDenominators,restored.loweringOptions.sourceDenominators);
+ assert.equal(restored.sourceDenominators.left,restored.sourceDenominators.right);
+});
 
 function assertOwners(unit){
  const body=unit.functions[0].body,enumerator=unit.enums[0].entries[1].bindingOwner;

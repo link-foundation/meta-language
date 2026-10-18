@@ -8,7 +8,8 @@ import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {captureMarkdownNativeSources,findMarkdownNativeSourceArchive} from '../../js/scripts/capture-markdown-native-sources.mjs';
 import {readMarkdownNativeSourceProfile} from '../../js/scripts/markdown-native-source-profile.mjs';
-import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {readProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
+import {structuredDataGraphCost} from '../../js/src/structured-data-graph.js';
 import {lowerRestrictedCst,archiveRestrictedCLowering,readRestrictedCLowering} from './restricted-c-cst.mjs';
 
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -46,9 +47,22 @@ export async function captureMarkdownScannerLowering({archive,receipt,output}) {
   assert.ok(unit.obligations.some(item=>item.category==='C execution boundary'));
   assert.ok(unit.obligations.some(item=>item.category==='C syntax derivation'));
   const packet=archiveRestrictedCLowering(unit);
-  readRestrictedCLowering(packet.network,packet.root);
+  // Encoding keeps its unchanged physical-node, depth and byte limits. Full
+  // CSTs repeat token/coordinate facts along many semantic paths, so replay
+  // additionally declares a source-sized expanded traversal budget. Never
+  // derive an unbounded admission limit from the archive's requested cost.
+  const cost=structuredDataGraphCost(packet.network,packet.root);
+  const maximumExpandedNodes=Math.min(8_000_000,Math.max(1_000_000,bytes.length*128));
+  const limits={nodeLimit:Math.max(1_000_000,cost.nodes),depthLimit:256,byteLimit:128*1024*1024};
   mkdirSync(dirname(resolve(output)),{recursive:true});
   writeFileSync(resolve(output),packet.network.toLino());
+  writeProjectData(resolve(output).replace(/\.lino$/u,'.transport.lino'),{
+    kind:'source-only C archive transport budget',sourceSha256:unit.sourceSha256,sourceBytes:bytes.length,
+    physicalNodes:packet.network.links().length,expandedNodes:cost.nodes,expandedBytes:cost.bytes,
+    maximumExpandedNodes,callerLimits:limits,
+  });
+  assert.ok(Number.isSafeInteger(cost.nodes)&&cost.nodes<=maximumExpandedNodes,'complete C data must fit the bounded source-sized traversal profile');
+  readRestrictedCLowering(packet.network,packet.root,limits);
   console.log('Source lowering only:',unit.functions.length,'original functions;',unit.obligations.length,'explicit obligations; no scanner execution performed');
   return unit;
 }

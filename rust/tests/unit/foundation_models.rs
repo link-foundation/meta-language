@@ -376,6 +376,73 @@ fn scan(base: &Path) -> Vec<String> {
     for root in ["js/src", "rust/src"] {
         consumer_references(base, &base.join(root), &mut found);
     }
+    if found.is_empty() {
+        found
+    } else {
+        audit_command_metadata(base, found)
+    }
+}
+
+// Keep the original native source scan. Only the shared authoring validator
+// decides whether generated command naming metadata is descriptive data.
+// Its result crosses the test boundary as Links, without copying that policy.
+fn audit_command_metadata(base: &Path, mut found: Vec<String>) -> Vec<String> {
+    let program = r#"
+import {join, relative} from "node:path";
+import {pathToFileURL} from 'node:url';
+const root = process.argv[1];
+const {consumerFoundationReferences} = await import(pathToFileURL(join(root, 'js/scripts/build-foundation-models.mjs')));
+const {CONCEPT_RECORD_PATHS} = await import(pathToFileURL(join(root, 'js/scripts/build-concept-records.mjs')));
+const {structuredDataToLino} = await import(pathToFileURL(join(root, 'scripts/lib/structured-data-bootstrap.mjs')));
+process.stdout.write(structuredDataToLino({
+  paths: CONCEPT_RECORD_PATHS.map(file => relative(root, file).split('\\').join('/')),
+  references: consumerFoundationReferences(process.argv[2]).map(({path, line}) => [path, line]),
+}));
+"#;
+    let output = std::process::Command::new("node")
+        .args(["--input-type=module", "--eval", program])
+        .arg(repository().canonicalize().expect("repository"))
+        .arg(base)
+        .output()
+        .expect("shared authoring audit runs in the configured CI Node environment");
+    assert!(
+        output.status.success(),
+        "shared naming audit failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let text = String::from_utf8(output.stdout).expect("the audit emits UTF-8 Links");
+    let data =
+        meta_language::read_structured_data_lino(&text).expect("complete shared audit Links");
+    let paths = data["paths"]
+        .as_array()
+        .expect("producer paths")
+        .iter()
+        .map(|path| path.as_str().expect("a producer path"))
+        .collect::<Vec<_>>();
+    let rejected = data["references"]
+        .as_array()
+        .expect("source references")
+        .iter()
+        .map(|reference| {
+            let pair = reference.as_array().expect("a source reference pair");
+            assert_eq!(pair.len(), 2);
+            format!(
+                "{}:{}",
+                pair[0].as_str().expect("source path"),
+                pair[1].as_u64().expect("source line")
+            )
+        })
+        .collect::<Vec<_>>();
+    found.retain(|reference| {
+        let (file, _) = reference.rsplit_once(':').expect("native source location");
+        !paths.contains(&file) || rejected.contains(reference)
+    });
+    for reference in rejected {
+        if !found.contains(&reference) {
+            found.push(reference);
+        }
+    }
+    found.sort();
     found
 }
 

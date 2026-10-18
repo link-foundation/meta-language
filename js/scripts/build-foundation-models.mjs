@@ -8,10 +8,12 @@
 //
 //   node js/scripts/build-foundation-models.mjs          # write both copies
 //   node js/scripts/build-foundation-models.mjs --check  # fail on drift or a violation
-import { readFileSync, readdirSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readProjectData, checkProjectData, writeProjectData } from './project-data.mjs';
+import { readProjectData, checkProjectData, serializeProjectData, writeProjectData } from './project-data.mjs';
+import { buildConceptRecords, CONCEPT_RECORD_PATHS } from './build-concept-records.mjs';
+import { readBootstrapStructuredDataLino, structuredDataToLino } from '../../scripts/lib/structured-data-bootstrap.mjs';
 
 import { checkFoundationModels } from '../src/foundation-models.js';
 
@@ -45,16 +47,56 @@ function sourceFiles(directory) {
   return files;
 }
 
+// A command's descriptive identity does not supply a language's foundation.
+// Accept only exact generated snapshots and operation identities whose complete
+// source ownership stays in real, non-symlinked authoring scripts. Every other
+// reference keeps the ordinary rejection path, including stale or altered data.
+function toolingConceptMetadata(base) {
+  try {
+    const register = readBootstrapStructuredDataLino(readFileSync(join(base, 'parity/naming/canonical-concepts.lino'), 'utf8'));
+    const records = buildConceptRecords(register);
+    const permitted = new Set();
+    for (const record of records.concepts) {
+      if (!CONSUMER_FOUNDATION_NAMES.some(pattern => pattern.test(JSON.stringify(record)))) continue;
+      if (record.role !== 'operation' || !Array.isArray(record.sourceAliases) || record.sourceAliases.length === 0 ||
+          !record.sourceAliases.every(({ source }) => {
+            if (typeof source !== 'string' || !/^js\/scripts\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.mjs$/u.test(source)) return false;
+            const status = lstatSync(join(base, source));
+            return status.isFile() && !status.isSymbolicLink();
+          })) return null;
+      for (const line of structuredDataToLino(record.id).trim().split('\n')) {
+        if (CONSUMER_FOUNDATION_NAMES.some(pattern => pattern.test(line))) {
+          permitted.add(line.replace(/^\(\d+:/u, '(identity:'));
+        }
+      }
+    }
+    return { text: serializeProjectData(records, CONCEPT_RECORD_PATHS[0]), permitted };
+  } catch {
+    return null;
+  }
+}
+
 /** Production source lines that name a consumer's foundation outside the consumer registries. */
 export function consumerFoundationReferences(base = root) {
   const found = [];
+  const conceptPaths = CONCEPT_RECORD_PATHS.map(file => relative(root, file).split('\\').join('/'));
+  let metadata;
   for (const directory of NEUTRAL_SOURCE_ROOTS) {
     for (const file of sourceFiles(join(base, directory))) {
       const path = relative(base, file).split('\\').join('/');
       if (CONSUMER_REGISTRIES.includes(path)) continue;
-      readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
-        if (CONSUMER_FOUNDATION_NAMES.some((pattern) => pattern.test(line))) found.push({ path, line: index + 1, text: line.trim() });
+      const source = readFileSync(file, 'utf8');
+      const references = [];
+      source.split('\n').forEach((line, index) => {
+        if (CONSUMER_FOUNDATION_NAMES.some((pattern) => pattern.test(line))) references.push({ path, line: index + 1, text: line.trim() });
       });
+      if (references.length === 0) continue;
+      if (conceptPaths.includes(path)) {
+        if (metadata === undefined) metadata = toolingConceptMetadata(base);
+        if (metadata?.text === source && references.every(({ text }) =>
+          metadata.permitted.has(text.replace(/^\(\d+:/u, '(identity:')))) continue;
+      }
+      found.push(...references);
     }
   }
   return found;

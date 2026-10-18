@@ -255,11 +255,11 @@ jobs:
           --out grammar-bulk/markdown-fence-source-lowering.lino
 
       - name: Upload the source-only C lowering and explicit obligations
-        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-fence-source-lowering.lino') != '' }}
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-fence-source-lowering*.lino') != '' }}
         uses: actions/upload-artifact@v7
         with:
           name: markdown-fence-source-lowering-${{ github.sha }}
-          path: grammar-bulk/markdown-fence-source-lowering.lino
+          path: grammar-bulk/markdown-fence-source-lowering*.lino
           if-no-files-found: error
 
       - name: Upload the independent inline scanner comparisons

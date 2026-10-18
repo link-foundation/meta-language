@@ -4,7 +4,8 @@
 // production source builds in a consumer's own foundation, and the check
 // rejects a hard-coded universal logic (requirement I195-VISION-FOUNDATION-NEUTRAL).
 // The Rust twin is rust/tests/unit/foundation_models.rs.
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData, writeProjectData } from '../scripts/project-data.mjs';
+import { buildConceptRecords } from '../scripts/build-concept-records.mjs';
 
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -147,6 +148,44 @@ test('no production source names a consumer\'s own foundation outside the consum
     writeFileSync(path.join(directory, 'rust/src/parity.rs'), '// upstream: relative-meta-logic\n');
     assert.deepEqual(consumerFoundationReferences(directory).map(({ path: file, line }) => `${file}:${line}`), ['js/src/logic.js:1']);
     assert.ok(CONSUMER_REGISTRIES.includes('rust/src/parity.rs'));
+
+    // The actual CI regression was the stable identity of a command operation,
+    // carried as descriptive metadata rather than a built-in language foundation.
+    for (const name of ['js/scripts', 'js/src/data', 'rust/src/data', 'parity/naming']) {
+      mkdirSync(path.join(directory, name), { recursive: true });
+    }
+    writeFileSync(path.join(directory, 'js/scripts/workload-command.mjs'), 'export function run() { return []; }\n');
+    const commandRegister = { concepts: [{
+      id: 'repository.run-relative-meta-logic-workload-command', phrase: 'run consumer workload command',
+      role: 'operation', definition: 'Execute a selected command and preserve its output.', constraints: [],
+      sourceAliases: [{ source: 'js/scripts/workload-command.mjs', name: 'run' }], formerNames: [],
+    }] };
+    const canonicalPath = path.join(directory, 'parity/naming/canonical-concepts.lino');
+    const snapshots = ['js/src/data/concept-records.lino', 'rust/src/data/concept-records.lino'];
+    writeProjectData(canonicalPath, commandRegister);
+    for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(commandRegister), file));
+    assert.deepEqual(consumerFoundationReferences(directory).map(({ path: file }) => file), ['js/src/logic.js']);
+
+    for (const alter of [
+      value => { value.concepts[0].role = 'concept'; },
+      value => { value.concepts[0].sourceAliases = []; },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/src/logic.js'; },
+      value => { value.concepts[0].sourceAliases.push({ source: 'js/src/logic.js', name: 'logic' }); },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/scripts/absent.mjs'; },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/scripts/../src/logic.js'; },
+    ]) {
+      const invalid = structuredClone(commandRegister); alter(invalid);
+      writeProjectData(canonicalPath, invalid);
+      for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(invalid), file));
+      const references = consumerFoundationReferences(directory);
+      assert.deepEqual(references.filter(({ path: file }) => snapshots.includes(file)).map(({ path: file }) => file).sort(), [...snapshots].sort(), 'both generated registries still refuse foundational concepts and non-tooling or missing owners');
+      assert.ok(references.some(({ path: file, line }) => file === 'js/src/logic.js' && line === 1), 'the original production-code rejection survives every metadata case');
+    }
+    writeProjectData(canonicalPath, commandRegister);
+    for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(commandRegister), file));
+    const altered = path.join(directory, snapshots[0]);
+    writeFileSync(altered, readFileSync(altered, 'utf8') + '\n');
+    assert.deepEqual(consumerFoundationReferences(directory).filter(({ path: file }) => snapshots.includes(file)).map(({ path: file }) => file), [snapshots[0]], 'even harmless drift cannot gain the generated-data allowance');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

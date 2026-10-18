@@ -1648,6 +1648,11 @@ authenticated source archive and capture receipt; external source files remain
 temporary. The supplied CST and declared ABI are explicit inputs. Internal replay
 does not prove grammar derivation, memory semantics or executable C translation;
 unresolved obligations remain data and the checked portable program remains absent.
+The whole CST and declaration relationships remain in the archive. Encoding keeps
+the codec's normal physical-node, depth and byte bounds. The authenticated CI
+input declares a source-sized expanded-traversal ceiling and records measured
+physical and expanded costs before replay; the reader takes an explicit caller
+budget. Default refusal and every source/owner replay check remain required.
 
 Simultaneous scanner eligibility belongs to one explicit parser continuation,
 including its caller returns, input range, scanner state and recovery phase.
@@ -1916,6 +1921,18 @@ execution policy and proof authority stay in
 Foundation choices are represented as data. No single logic is hard-coded as
 universal: integer and overflow models, universes, effects and proof systems are
 distinct concepts with explicit correspondences.
+
+Foundation neutrality distinguishes command naming metadata from executable
+foundation choices. A generated concept snapshot may retain an operation's
+consumer-specific identifier only when the entire snapshot exactly matches its
+canonical producer and every owning alias names a real authoring script outside
+the runtimes. The check retains its production-source rejection and rejects
+foundational concepts, runtime aliases, missing owners and altered snapshots.
+Describing a CI command supplies no language syntax, model or proof authority.
+The native source-audit fixture retains its original scan and consumes that
+same authoring validation through Links. It keeps every native production-code
+rejection and adds any shared rejection; model validation and translation
+assertions still execute natively in CI.
 
 ### Associative stack and theoretical foundation
 

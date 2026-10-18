@@ -17,6 +17,12 @@ scanner's fenced-code function and its ordinary declared call closure, retaining
 the entire scanner CST. External sources stay in memory. The output is a `.lino`
 artifact; it is never a vendored grammar or a behavioral support declaration.
 
+The collector retains the full archive and a small transport-cost receipt before
+replay. Encoding keeps the codec's default bounds; replay uses an explicit caller
+budget within the CI input's fixed source-sized ceiling. Default traversal refusal
+and complete data/owner comparison remain required. No CST or token is removed to
+fit the transport budget.
+
 The supplied CST is an explicit input assumption. Its reconstruction and internal
 lowering replay do not independently prove grammar derivation. C memory layout,
 pointer behavior, external primitives, preprocessor semantics, arithmetic and

@@ -90,8 +90,8 @@ export function archiveRestrictedCLowering(unit) {
   return encodeStructuredDataLinks(unit);
 }
 
-export function readRestrictedCLowering(network, root) {
-  const value = decodeStructuredDataLinks(network, root);
+export function readRestrictedCLowering(network, root, limits = {}) {
+  const value = decodeStructuredDataLinks(network, root, limits);
   if (value?.kind !== 'restricted C source lowering' || value.checkedPortableProgram !== null) {
     throw new TypeError('this prototype archive is lowered C data, not a checked portable Program');
   }
