@@ -121,7 +121,7 @@ function assertInitialTranslationShards(text) {
   assert.doesNotMatch(tests.header, /exclude:/u);
   const include = [...tests.header.matchAll(/\{group: ([a-z-]+), partition: (\d+), shards: (\d+)\}/gu)]
     .map(([, group, partition, shards]) => ({ group, partition: Number(partition), shards: Number(shards) }));
-  assert.deepEqual(include, [['grammar', 3], ['grammar-native', 3], ['conformance', 2], ['translation', 3]].flatMap(([group, shards]) =>
+  assert.deepEqual(include, [['grammar', 3], ['grammar-native', 6], ['conformance', 2], ['translation', 3]].flatMap(([group, shards]) =>
     Array.from({ length: shards }, (_, index) => ({ group, partition: index + 1, shards }))));
   const rows = new Map(groups.map(group => [`${group}/1`, { group, partition: 1, shards: 1 }]));
   for (const row of include) rows.set(`${row.group}/${row.partition}`, row);
@@ -188,9 +188,12 @@ test('omitted or duplicate initial shards, flattened feedback and a weakened fin
   const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
   const row = '          - {group: translation, partition: 2, shards: 3}\n';
   const grammarRow = '          - {group: grammar, partition: 2, shards: 3}\n';
+  const nativeRow = '          - {group: grammar-native, partition: 5, shards: 6}\n';
   for (const mutate of [
     text => text.replace(row, ''), text => text.replace(row, row + row),
     text => text.replace(grammarRow, ''), text => text.replace(grammarRow, grammarRow + grammarRow),
+    text => text.replace(nativeRow, ''), text => text.replace(nativeRow, nativeRow + nativeRow),
+    text => text.replace('{group: grammar-native, partition: 6, shards: 6}', '{group: grammar-native, partition: 6, shards: 3}'),
     text => text.replace('{group: translation, partition: 3, shards: 3}', '{group: translation, partition: 3, shards: 2}'),
     text => text.replace('merge-multiple: false', 'merge-multiple: true'),
     text => text.replace('needs: [tests, report-assertions, package-checks, translation-test-feedback]', 'needs: [tests, report-assertions, package-checks]'),
