@@ -200,7 +200,7 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
-    if ((units.len() as f64) < 1f64) || ((units.len() as f64) > 10f64) {
+    if !(1usize..=10usize).contains(&units.len()) {
         -1f64
     } else if ((units.len() as f64) > 1f64)
         && match (
@@ -240,7 +240,7 @@ pub fn read_grammar_attribute_integer_key(units: &[f64]) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn compare_grammar_attribute_integer_keys(left: f64, right: f64) -> f64 {
+pub const fn compare_grammar_attribute_integer_keys(left: f64, right: f64) -> f64 {
     if left < 0f64 {
         if right < 0f64 { 0f64 } else { 1f64 }
     } else if (right < 0f64) || (left < right) {

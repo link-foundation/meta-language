@@ -7,7 +7,7 @@ use serde_json::{Map, Value, json};
 
 #[test]
 fn actual_grammar_actions_preserve_attribute_positions_values_and_utf16_rendering() {
-    let fixture = super::project_data::read_project_data(include_str!(
+    let fixture: Value = super::project_data::read_project_data(include_str!(
         "../../../parity/fixtures/grammar-attribute-order.lino"
     ))
     .expect("shared attribute order fixture");
