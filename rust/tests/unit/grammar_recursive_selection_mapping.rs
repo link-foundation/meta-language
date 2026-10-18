@@ -4,9 +4,9 @@ use links_notation::{LiNo, ParserConfig, parse_lino_to_links_with_config};
 use meta_language::{
     BinaryLinksOptions, FeatureParseOptions, Grammar, GrammarExpr, GrammarRule, LeafText,
     LinkNetwork, OperationValue, ParseOutcome, SyntaxAttributes, SyntaxTree,
-    compile_feature_grammar, decode_link_network_binary, decode_structured_data_links,
-    encode_link_network_binary, encode_structured_data_links, parse_grammar_links,
-    parse_links_expression, percent_encode_links_text, render_grammar_links,
+    check_grammar_selection_mapped_tree, compile_feature_grammar, decode_link_network_binary,
+    decode_structured_data_links, encode_link_network_binary, encode_structured_data_links,
+    parse_grammar_links, parse_links_expression, percent_encode_links_text, render_grammar_links,
 };
 use serde_json::{Value, json};
 use std::collections::HashMap;

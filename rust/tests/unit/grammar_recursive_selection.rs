@@ -13,9 +13,9 @@ use serde_json::{Value, json};
 #[path = "grammar_recursive_selection_mapping.rs"]
 mod mapping_transport;
 use mapping_transport::{
-    mapped_bundle, mapped_embeds, mapped_first, mapped_fixture, mapped_json_grammar,
-    mapped_json_host, mapped_literal, mapped_parse, mapped_physical, mapped_python_grammar,
-    mapped_stored_variants, mapped_tree_data,
+    mapped_bundle, mapped_first, mapped_fixture, mapped_json_grammar, mapped_json_host,
+    mapped_literal, mapped_parse, mapped_physical, mapped_python_grammar, mapped_stored_variants,
+    mapped_tree_data,
 };
 
 fn selection_fixture() -> Value {
