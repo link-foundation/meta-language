@@ -246,6 +246,22 @@ jobs:
           node experiments/markdown-inline-source-oracle/check.mjs
           --cargo-cache --out grammar-bulk/markdown-inline-source-oracle.lino
 
+      - name: Lower the original Markdown fence source into inspectable C data
+        if: ${{ !cancelled() }}
+        timeout-minutes: 5
+        run: >-
+          node experiments/restricted-c-source-lowering/capture-markdown.mjs
+          --cargo-cache --receipt grammar-bulk/markdown-native-source-capture.lino
+          --out grammar-bulk/markdown-fence-source-lowering.lino
+
+      - name: Upload the source-only C lowering and explicit obligations
+        if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-fence-source-lowering.lino') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: markdown-fence-source-lowering-${{ github.sha }}
+          path: grammar-bulk/markdown-fence-source-lowering.lino
+          if-no-files-found: error
+
       - name: Upload the independent inline scanner comparisons
         if: ${{ !cancelled() && hashFiles('grammar-bulk/markdown-inline-source-oracle.lino') != '' }}
         uses: actions/upload-artifact@v7

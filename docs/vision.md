@@ -1639,6 +1639,16 @@ callback comparisons do not establish parser eligibility, Rust execution or
 complete Markdown CST support. Keep native promotion blocked until the parser
 supplies faithful context and the block scanner and composition also work.
 
+The restricted C source-lowering experiment follows original declared helper
+calls from the block scanner's fence entry point and archives typed instructions
+with the full source CST. Enum values and variable references retain their actual
+declaration owners as shared links; text and binary reloads preserve those
+relationships, and replay rejects substituted equal-looking owners. CI reuses the
+authenticated source archive and capture receipt; external source files remain
+temporary. The supplied CST and declared ABI are explicit inputs. Internal replay
+does not prove grammar derivation, memory semantics or executable C translation;
+unresolved obligations remain data and the checked portable program remains absent.
+
 Simultaneous scanner eligibility belongs to one explicit parser continuation,
 including its caller returns, input range, scanner state and recovery phase.
 Close that continuation to its token boundaries before constructing an immutable
