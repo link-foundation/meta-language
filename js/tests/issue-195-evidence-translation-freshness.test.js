@@ -62,10 +62,15 @@ test('bulk translation freshness includes every new native family without repeat
   assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(29, 30), [
     { script: 'js/scripts/generate-collection-construction-rules.mjs', arguments: ['--native', '--check'] },
   ], 'collection construction appends after the complete retained twenty-nine-command prefix');
-  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(30), [
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(30, 31), [
     { script: 'js/scripts/generate-grammar-rule-composition-rules.mjs', arguments: ['--native', '--check'] },
   ], 'grammar rule composition appends after the complete retained thirty-command prefix');
-  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 31, 'the complete source freshness gate retains exactly its reviewed scope');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.slice(0, 31).length, 31, 'the complete preceding source freshness scope remains retained');
+  assert.deepEqual(BULK_TRANSLATION_RULE_CHECKS.slice(31), [
+    { script: 'js/scripts/generate-array-callback-rules.mjs', arguments: ['--native', '--check'] },
+    { script: 'js/scripts/generate-array-callback-fixtures.mjs', arguments: ['--check'] },
+  ], 'callback source and complete program fixtures append after all thirty-one preceding checks');
+  assert.equal(BULK_TRANSLATION_RULE_CHECKS.length, 33, 'the expanded complete freshness inventory has no missing or duplicate command');
   const nativePackage = readFileSync(path.join(repository, 'rust/Cargo.toml'), 'utf8');
   const includedFiles = /^include = \[([\s\S]*?)^\]/mu.exec(nativePackage)?.[1];
   assert.ok(includedFiles, 'the native package retains its explicit source inventory');
@@ -98,7 +103,8 @@ test('bulk translation freshness includes every new native family without repeat
       'js/scripts/generate-grammar-selection-included-range-rules.mjs',
       'js/scripts/generate-grammar-selection-field-range-rules.mjs',
       'js/scripts/generate-collection-construction-rules.mjs',
-      'js/scripts/generate-grammar-rule-composition-rules.mjs'].includes(check.script)) {
+      'js/scripts/generate-grammar-rule-composition-rules.mjs',
+      'js/scripts/generate-array-callback-rules.mjs'].includes(check.script)) {
       assert.equal(source.includes('const args = process.argv.slice(2);'), true, check.script);
       assert.equal(source.includes("check: args.includes('--check'), native: args.includes('--native')"), true, check.script);
     } else if (check.arguments.includes('--native')) assert.equal(source.includes("process.argv.includes('--native')"), true, check.script);
