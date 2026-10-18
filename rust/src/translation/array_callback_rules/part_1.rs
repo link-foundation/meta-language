@@ -334,6 +334,56 @@ pub fn read_array_callback_checked_argument_position(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn render_array_callback_reference_expression(
+    operation: &str,
+    object: &str,
+    callback: &str,
+    parameter_count: f64,
+    suffix: &str,
+    reference_result: bool,
+) -> String {
+    if (operation != "flatMap") || !reference_result {
+        String::new()
+    } else {
+        {
+            let values = format!("ml_values{}", suffix.to_owned());
+            {
+                let index = format!("ml_index{}", suffix.to_owned());
+                {
+                    let value = format!("ml_value{}", suffix.to_owned());
+                    {
+                        let result = format!("ml_callback_values{}", suffix.to_owned());
+                        {
+                            let call = self::render_array_callback_call(
+                                operation,
+                                parameter_count,
+                                suffix,
+                                false,
+                            );
+                            {
+                                let head = format!(
+                                    "let {values} = {}; let ml_callback{} = {};",
+                                    object.to_owned(),
+                                    suffix.to_owned(),
+                                    callback.to_owned()
+                                );
+                                {
+                                    let iterator = format!("{values}.iter().cloned().enumerate()");
+                                    format!(
+                                        "{{ {head} std::rc::Rc::new(std::cell::RefCell::new({iterator}.flat_map(|({index}, {value})| {{ let {result} = {call}.borrow().clone(); {result} }}).collect::<Vec<_>>())) }}"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_render_array_callback_call_loop1(
     operation: &str,
     mut parameter_count: f64,

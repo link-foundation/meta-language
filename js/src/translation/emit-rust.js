@@ -14,7 +14,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
-import { renderArrayCallbackExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
+import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
@@ -1153,7 +1153,9 @@ class RustEmitter {
       const callbackText = this.expr(fn);
       const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;
       const initial = hasInitial ? this.expr(e.args[1]) : '';
-      const rendered = renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);
+      const referenceResult = fn.type.ret.kind === 'array' && fn.type.ret.reference === true;
+      const rendered = renderArrayCallbackReferenceExpression(e.op, object, callbackText, parameterCount, String(suffix), referenceResult)
+        || renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);
       if (rendered) return rendered;
     }
     throw unsupported(`method call .${e.op}()`, 'the Rust target has no operational encoding for this method', e.span);

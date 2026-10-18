@@ -123,3 +123,16 @@ export function readArrayCallbackCheckedArgumentPosition(operation, hasInitial, 
   }
   return position === 0 ? 0 : -1;
 }
+
+/** @param {string} operation @param {string} object @param {string} callback @param {number} parameterCount @param {string} suffix @param {boolean} referenceResult @returns {string} */
+export function renderArrayCallbackReferenceExpression(operation, object, callback, parameterCount, suffix, referenceResult) {
+  if (operation !== 'flatMap' || !referenceResult) return '';
+  const values = 'ml_values' + suffix;
+  const index = 'ml_index' + suffix;
+  const value = 'ml_value' + suffix;
+  const result = 'ml_callback_values' + suffix;
+  const call = renderArrayCallbackCall(operation, parameterCount, suffix, false);
+  const head = 'let ' + values + ' = ' + object + '; let ml_callback' + suffix + ' = ' + callback + ';';
+  const iterator = values + '.iter().cloned().enumerate()';
+  return '{ ' + head + ' std::rc::Rc::new(std::cell::RefCell::new(' + iterator + '.flat_map(|(' + index + ', ' + value + ')| { let ' + result + ' = ' + call + '.borrow().clone(); ' + result + ' }).collect::<Vec<_>>())) }';
+}

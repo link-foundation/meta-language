@@ -478,3 +478,154 @@ fn callback_required_operands_refuse_and_optional_reduce_initial_keeps_its_origi
     }
     assert_eq!(refusals, 10);
 }
+
+#[test]
+fn reference_flat_map_retains_nested_aliases_fresh_results_and_callback_order_through_archives() {
+    let sources = [
+        concat!(
+            "/** @param {number[][]} values */ function run(values){return values.flatMap((value,index)=>{console.log(index);return [value,value];});}",
+            "\nfunction probe(){const item=[7];return run([item,item]);}"
+        ),
+        concat!(
+            "/** @param {number[]} values */ function run(values){return values.flatMap((value,index)=>{console.log(index);return values;});}",
+            "\nfunction probe(){return run([4,5]);}"
+        ),
+    ];
+    let script = r"
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitJavaScript} from './js/src/translation/emit-javascript.js';
+import {emitRust} from './js/src/translation/emit-rust.js';
+function observe(source,nested){
+  const trace=[],context={console:{log:value=>trace.push(String(value))}};
+  runInNewContext(source,context,{timeout:1000});
+  const actual=context.probe();
+  const aliases=nested?actual[0]===actual[1]&&actual[0]===actual[2]:true;
+  if(nested)actual[0].push(8);
+  const values=nested?Array.from(actual,value=>Array.from(value)):Array.from(actual);
+  const receiver=nested?[[7]]:[4,5],result=context.run(receiver);
+  const fresh=result!==receiver;
+  result.push(nested?[9]:9);
+  return {trace,aliases,values,fresh,receiverLength:receiver.length};
+}
+const sources=JSON.parse(readFileSync(0,'utf8'));
+process.stdout.write(JSON.stringify(sources.map((source,index)=>{
+  const surface=parseJavaScript(source,{referenceSemantics:true}),program=checkProgram(surface);
+  const rust=emitRust(program,{arrayConsumption:true});
+  return {surface,rust:{emitted:{...rust,preludes:rust.preludes,definitions:rust.definitions}},
+    observed:[source,emitJavaScript(program).text].map(text=>observe(text,index===0))};
+})));
+";
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let mut child = Command::new("node")
+        .current_dir(root)
+        .args(["--input-type=module", "-e", script])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(&serde_json::to_vec(&sources).unwrap())
+        .unwrap();
+    let observed = child.wait_with_output().unwrap();
+    assert!(
+        observed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&observed.stderr)
+    );
+    let observed: Vec<Value> = serde_json::from_slice(&observed.stdout).unwrap();
+    assert_eq!(observed.len(), sources.len());
+    let expected = [
+        json!({"trace":["0","1","0"],"aliases":true,"values":[[7,8],[7,8],[7,8],[7,8]],"fresh":true,"receiverLength":1}),
+        json!({"trace":["0","1","0","1"],"aliases":true,"values":[4,5,4,5],"fresh":true,"receiverLength":2}),
+    ];
+    for (index, row) in observed.iter().enumerate() {
+        assert_eq!(row["observed"], json!([expected[index], expected[index]]));
+        let surface: SProgram = serde_json::from_value(row["surface"].clone()).unwrap();
+        assert_eq!(serde_json::to_value(&surface).unwrap(), row["surface"]);
+        let program = check_program(&surface).unwrap();
+        let Some(Decl::Fn(function)) = program.declaration("run") else {
+            panic!("the source retains its complete flatMap function");
+        };
+        let Node::Method { op, args, .. } = &function.body.node else {
+            panic!("the actual reference result needs no additional allocation node");
+        };
+        assert_eq!(op, "flatMap");
+        let Type::Function { ret, .. } = &args[0].as_ref().unwrap().ty else {
+            panic!("the actual callback retains its checked function result");
+        };
+        assert!(matches!(
+            ret.as_ref(),
+            Type::Array {
+                reference: true,
+                ..
+            }
+        ));
+        assert_eq!(&function.body.ty, ret.as_ref());
+        assert_eq!(target_record(&program, "Rust"), row["rust"]);
+        let packet = encode_typed_program_links(&program).unwrap();
+        let binary =
+            encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap();
+        for network in [
+            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+            decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
+        ] {
+            let restored = decode_typed_program_links(&network, packet.root).unwrap();
+            assert_eq!(restored, program);
+            encode_typed_program_links(&restored).unwrap();
+            assert_eq!(target_record(&restored, "Rust"), row["rust"]);
+            assert_eq!(
+                emit_javascript(&restored).unwrap(),
+                emit_javascript(&program).unwrap()
+            );
+        }
+        let main = if index == 0 {
+            concat!(
+                "fn main(){let actual=probe();{let values=actual.borrow();assert_eq!(values.len(),4);",
+                "assert!(std::rc::Rc::ptr_eq(&values[0],&values[1]));assert!(std::rc::Rc::ptr_eq(&values[0],&values[2]));",
+                "values[0].borrow_mut().push(8f64);}assert!(actual.borrow().iter().all(|value|*value.borrow()==vec![7f64,8f64]));",
+                "let receiver=std::rc::Rc::new(std::cell::RefCell::new(vec![std::rc::Rc::new(std::cell::RefCell::new(vec![7f64]))]));",
+                "let result=run(receiver.clone());assert!(!std::rc::Rc::ptr_eq(&receiver,&result));",
+                "result.borrow_mut().push(std::rc::Rc::new(std::cell::RefCell::new(vec![9f64])));assert_eq!(receiver.borrow().len(),1);}"
+            )
+        } else {
+            concat!(
+                "fn main(){let actual=probe();assert_eq!(*actual.borrow(),vec![4f64,5f64,4f64,5f64]);",
+                "let receiver=std::rc::Rc::new(std::cell::RefCell::new(vec![4f64,5f64]));let result=run(receiver.clone());",
+                "assert!(!std::rc::Rc::ptr_eq(&receiver,&result));result.borrow_mut().push(9f64);assert_eq!(*receiver.borrow(),vec![4f64,5f64]);}"
+            )
+        };
+        let emitted = target(&program, "Rust").unwrap();
+        let source = format!(
+            "{}\n\n{}\n\n{main}\n",
+            emitted.preludes.join("\n\n"),
+            emitted.definitions.join("\n\n")
+        );
+        let directory = TemporaryDirectory::new("reference-flat-map-aliases");
+        let file = directory.0.join("program.rs");
+        let executable = directory.0.join("program");
+        fs::write(&file, source).unwrap();
+        let compiled = run(Command::new("rustc")
+            .args(["--edition=2024"])
+            .arg(&file)
+            .arg("-o")
+            .arg(&executable));
+        assert!(compiled.ok, "{}", compiled.stderr);
+        let actual = run(&mut Command::new(&executable));
+        assert!(actual.ok, "{}", actual.stderr);
+        assert_eq!(
+            actual.stdout,
+            if index == 0 {
+                "0\n1\n0\n"
+            } else {
+                "0\n1\n0\n1\n"
+            }
+        );
+    }
+}

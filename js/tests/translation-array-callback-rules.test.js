@@ -40,10 +40,10 @@ const historical = {
 };
 const integration = {
   "checkerImport": "import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,\n  readArrayCallbackArgumentCountError, readArrayCallbackCheckedResultContext,\n  readArrayCallbackResultError, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';\n",
-  "emitterImport": "import { renderArrayCallbackExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';\n",
+  "emitterImport": "import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';\n",
   "callback": "      const callback = (index, params, ret) => {\n        const value = this.expr(args[index], env, path, { kind: 'function', params, ret });\n        const kindError = readArrayCallbackSignatureError(node.op, value.type.kind, 0, params.length, true, true, '');\n        if (kindError) throw typeError(kindError, node.span);\n        const parametersMatch = value.type.params.length > params.length\n          || value.type.params.every((type, index) => sameType(type, params[index]));\n        const parameterError = readArrayCallbackSignatureError(node.op, value.type.kind,\n          value.type.params.length, params.length, parametersMatch, true, '');\n        if (parameterError) throw typeError(parameterError, node.span);\n        if (ret) {\n          const resultMatches = sameType(value.type.ret, ret);\n          const resultError = readArrayCallbackSignatureError(node.op, value.type.kind,\n            value.type.params.length, params.length, true, resultMatches, resultMatches ? '' : typeKey(ret));\n          if (resultError) throw typeError(resultError, node.span);\n        }\n        return value;\n      };\n",
   "checkerBranches": "      const callbackForm = readArrayCallbackResultForm(node.op);\n      if (callbackForm) {\n        const countError = readArrayCallbackArgumentCountError(node.op, args.length);\n        if (countError) throw unsupported(`method call .${node.op}()`, countError, node.span);\n        const initialPosition = readArrayCallbackCheckedArgumentPosition(node.op, Boolean(args[1]), 0);\n        const initial = initialPosition === 1 ? this.expr(args[1], env, path, expected) : null;\n        const accumulator = initial ? initial.type : element;\n        const params = [];\n        for (let position = 0; ; position += 1) {\n          const role = readArrayCallbackParameterRole(node.op, position);\n          if (!role) break;\n          params.push(role === 'accumulator' ? accumulator : role === 'element' ? element : role === 'index' ? FLOAT : object.type);\n        }\n        const context = readArrayCallbackCheckedResultContext(node.op);\n        const fn = callback(0, params, context === 'bool' ? BOOL : context === 'accumulator' ? accumulator : undefined);\n        const resultError = readArrayCallbackResultError(node.op, fn.type.ret.kind);\n        if (resultError) throw typeError(resultError, node.span);\n        const type = callbackForm === 'receiver' ? object.type\n          : callbackForm === 'optional element' ? { kind: 'option', element, absence: 'undefined' }\n          : callbackForm === 'float' ? FLOAT : callbackForm === 'bool' ? BOOL\n          : callbackForm === 'unit' ? UNIT : callbackForm === 'accumulator' ? accumulator\n          : callbackForm === 'mapped array' ? array(fn.type.ret) : fn.type.ret;\n        return { k: 'method', object, op: node.op, args: initial ? [fn, initial] : [fn], type, span: node.span };\n      }\n",
-  "renderer": "      const parameterCount = fn.type.params.length;\n      const object = this.expr(e.object);\n      const callbackText = this.expr(fn);\n      const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;\n      const initial = hasInitial ? this.expr(e.args[1]) : '';\n      const rendered = renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);\n      if (rendered) return rendered;",
+  "renderer": "      const parameterCount = fn.type.params.length;\n      const object = this.expr(e.object);\n      const callbackText = this.expr(fn);\n      const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;\n      const initial = hasInitial ? this.expr(e.args[1]) : '';\n      const referenceResult = fn.type.ret.kind === 'array' && fn.type.ret.reference === true;\n      const rendered = renderArrayCallbackReferenceExpression(e.op, object, callbackText, parameterCount, String(suffix), referenceResult)\n        || renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);\n      if (rendered) return rendered;",
   "emitterPrefix": "      this.temporaries += 1;\n      const suffix = this.temporaries;\n      const fn = e.args[0];\n"
 };
 
@@ -85,7 +85,9 @@ test('callback extraction preserves complete original sources map blocks and unc
   assert.ok(readSource('emit-rust.js').includes(historical.mapRenderer));
   const source = Buffer.from(readArrayCallbackSourceModule());
   assert.equal(digest(source.subarray(0, historical.prefixBytes)), historical.prefixSha256, 'all eight original pure functions retain their exact prefix');
-  assert.equal([...source.toString().matchAll(/^export function /gmu)].length, 12);
+  assert.equal(digest(source.subarray(0, 7249)), 'a5fa80c7683dc2a127b2500b464e049ccf23d29979ff596aa14999c369e5c554',
+    'all twelve previous shared functions retain every original byte');
+  assert.equal([...source.toString().matchAll(/^export function /gmu)].length, 13);
 });
 
 test('all 224 original callback renderings retain complete template bytes and checked JavaScript behavior', () => {
@@ -93,7 +95,7 @@ test('all 224 original callback renderings retain complete template bytes and ch
   const checked = checkProgram(parseJavaScript(readArrayCallbackSourceModule(), {referenceSemantics: false}));
   const emitted = emitRust(checked, {arrayConsumption: true}), context = {};
   assert.deepEqual(emitted.preludes, []);
-  assert.equal(checked.declarations.size, 13);
+  assert.equal(checked.declarations.size, 14);
   runInNewContext(emitJavaScript(checked).text, context, {timeout: 1000});
   let count = 0;
   for (const operation of operations) for (let parameterCount = 0; parameterCount < 7; parameterCount += 1)
@@ -121,6 +123,7 @@ test('all 224 original callback renderings retain complete template bytes and ch
 test('actual callback programs retain both reference profiles full checked archives and original target behavior', async () => {
   const originals = await readOriginalModules(), fixture = buildArrayCallbackFixtures();
   assert.equal(fixture.cases.length, 18);
+  let corrected = 0;
   for (const row of fixture.cases) {
     assert.deepEqual(row.profiles.map(profile => profile.referenceSemantics), row.referenceProfiles ?? [false, true]);
     for (const profile of row.profiles) {
@@ -146,12 +149,28 @@ test('actual callback programs retain both reference profiles full checked archi
         if (!error.kind) throw error;
         output = {diagnostic: {kind: error.kind, reason: error.reason, span: error.span ?? null, details: error.details ?? null}};
       }
-      assert.deepEqual(profile.targets.Rust, output, row.id + ': complete original Rust target behavior');
+      const method = current.declarations.get('run').body;
+      if (method.k === 'method' && method.op === 'flatMap' && method.args[0].type.ret.reference === true) {
+        const previous = 'ml_values1.iter().cloned().enumerate().flat_map(|(ml_index1, ml_value1)| ml_callback1(ml_value1, (ml_index1 as f64))).collect::<Vec<_>>()';
+        const replacement = 'std::rc::Rc::new(std::cell::RefCell::new(ml_values1.iter().cloned().enumerate().flat_map(|(ml_index1, ml_value1)| { let ml_callback_values1 = ml_callback1(ml_value1, (ml_index1 as f64)).borrow().clone(); ml_callback_values1 }).collect::<Vec<_>>()))';
+        const inverse = structuredClone(profile.targets.Rust);
+        inverse.emitted.text = replaceOnce(inverse.emitted.text, replacement, previous);
+        let definitions = 0;
+        inverse.emitted.definitions = inverse.emitted.definitions.map(definition => {
+          if (!definition.includes(replacement)) return definition;
+          definitions += 1;
+          return replaceOnce(definition, replacement, previous);
+        });
+        assert.equal(definitions, 1);
+        assert.deepEqual(inverse, output, row.id + ': exact inverse retains every historical target field and byte');
+        corrected += 1;
+      } else assert.deepEqual(profile.targets.Rust, output, row.id + ': complete original Rust target behavior');
       assert.equal(digest(profile.checkedArchive.text), profile.checkedArchive.textSha256);
       assert.equal(digest(Buffer.from(profile.checkedArchive.binaryHex, 'hex')), profile.checkedArchive.binarySha256);
       assert.equal(profile.checkedOwners.length, original.declarations.size);
     }
   }
+  assert.equal(corrected, 1, 'only the actual reference-array flatMap result needs target representation repair');
 });
 
 test('all original whole-program callback arity inputs retain exact errors in both profiles', async () => {
@@ -243,7 +262,11 @@ test('callback source policy retains the entire module without importing runtime
   assert.equal(owner.actions.at(-1).field, 'source');
   assert.equal(owner.actions.at(-1).from.includes(call + ' == ""'), true);
   assert.equal(owner.actions.at(-1).to.includes(call + '.is_empty()'), true);
-  assert.equal(digest(new DecoratorSet([{...owner, actions: owner.actions.slice(0, -1)}]).toLino()),
+  const referenceActions = owner.actions.filter(action => action.from?.startsWith('pub fn render_array_callback_reference_expression('));
+  assert.equal(referenceActions.length, 2, 'only the new complete renderer needs additional loan and lint styles');
+  const historicalActions = owner.actions.filter(action => !referenceActions.includes(action));
+  assert.equal(historicalActions.length, 39);
+  assert.equal(digest(new DecoratorSet([{...owner, actions: historicalActions.slice(0, -1)}]).toLino()),
     '026555406f9d97fe4f2629698053c20352c64ac0b1f4c89bb3bf45f34024fccd', 'every existing recorded action retains its exact original serialization');
 
 });
@@ -317,4 +340,67 @@ test('callback method spans remain inside reference allocations through complete
   assert.equal(methods, 18);
   assert.deepEqual(allocations, ['array-callback-map-reference-value-parameters', 'array-callback-filter-reference-value-parameters'],
     'map and filter retain both span owners; flatMap keeps its already-reference callback result');
+});
+
+test('reference flatMap snapshots callback arrays and retains fresh results nested identities and call order', () => {
+  const source = readArrayCallbackSourceModule();
+  const module = checkProgram(parseJavaScript(source, {referenceSemantics: false}));
+  const context = {};
+  runInNewContext(emitJavaScript(module).text, context, {timeout: 1000});
+  for (const operation of [...operations, 'map', 'unrepresented']) for (const reference of [false, true])
+    for (const count of [0, 1, 2, 3]) for (const suffix of ['1', '27']) {
+      const args = [operation, 'makeReceiver()', 'makeCallback()', count, suffix, reference];
+      const actual = rules.renderArrayCallbackReferenceExpression(...args);
+      assert.equal(context.renderArrayCallbackReferenceExpression(...args), actual);
+      if (operation !== 'flatMap' || !reference) assert.equal(actual, '');
+      else {
+        const call = 'ml_callback' + suffix + '(' + ['ml_value' + suffix, '(ml_index' + suffix + ' as f64)', 'ml_values' + suffix + '.clone()'].slice(0, count).join(', ') + ')';
+        const snapshot = '{ let ml_callback_values' + suffix + ' = ' + call + '.borrow().clone(); ml_callback_values' + suffix + ' }';
+        assert.ok(actual.includes('.flat_map(|(ml_index' + suffix + ', ml_value' + suffix + ')| ' + snapshot + ')'));
+        for (const once of ['makeReceiver()', 'makeCallback()', call]) assert.equal(actual.split(once).length, 2);
+        assert.ok(actual.includes('std::rc::Rc::new(std::cell::RefCell::new('));
+      }
+    }
+  const programs = [
+    '/** @param {number[]} values */ function run(values){return values.flatMap((value,index)=>{console.log(index);return [value,value];});}\nfunction probe(){return run([-1,2,0,3]);}',
+    '/** @param {number[][]} values */ function run(values){return values.flatMap((value,index)=>{console.log(index);return [value,value];});}\nfunction probe(){const item=[7];return run([item,item]);}',
+    '/** @param {number[]} values */ function run(values){return values.flatMap((value,index)=>{console.log(index);return values;});}\nfunction probe(){return run([4,5]);}',
+  ];
+  for (let index = 0; index < programs.length; index += 1) {
+    const input = programs[index], checked = checkProgram(parseJavaScript(input, {referenceSemantics: true}));
+    const method = checked.declarations.get('run').body;
+    assert.equal(method.k, 'method');
+    assert.equal(method.op, 'flatMap');
+    assert.equal(method.args[0].type.ret.kind, 'array');
+    assert.equal(method.args[0].type.ret.reference, true);
+    assert.deepEqual(method.type, method.args[0].type.ret);
+    const rust = emitRust(checked, {arrayConsumption: true});
+    assert.match(rust.text, /\.borrow\(\)\.clone\(\); ml_callback_values\d+ \}\)\.collect::<Vec<_>>\(\)\)\)/u);
+    const expected = observeArrayCallbackProgram(input);
+    assert.deepEqual(observeArrayCallbackProgram(emitJavaScript(checked).text), expected);
+    const packet = encodeTypedProgramLinks(checked);
+    for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+      const restored = decodeTypedProgramLinks(network, packet.root);
+      assert.deepEqual(restored, checked);
+      assert.equal(recheckLinkedTypedProgram(restored, {wholeProgram: true}), restored);
+      assert.deepEqual(emitRust(restored, {arrayConsumption: true}), rust);
+      assert.deepEqual(observeArrayCallbackProgram(emitJavaScript(restored).text), expected);
+    }
+    for (const text of [input, emitJavaScript(checked).text]) {
+      const runtime = {console: {log() {}}};
+      runInNewContext(text, runtime, {timeout: 1000});
+      const result = runtime.probe();
+      if (index === 1) {
+        assert.equal(result[0], result[1]);
+        assert.equal(result[0], result[2]);
+        result[0].push(8);
+        assert.deepEqual(Array.from(result, value => Array.from(value)), [[7, 8], [7, 8], [7, 8], [7, 8]]);
+      }
+      const receiver = index === 1 ? [[7]] : [4, 5];
+      const fresh = runtime.run(receiver);
+      assert.notEqual(fresh, receiver);
+      fresh.push(index === 1 ? [9] : 9);
+      assert.equal(receiver.length, index === 1 ? 1 : 2);
+    }
+  }
 });

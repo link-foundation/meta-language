@@ -114,7 +114,7 @@ impl RustEmitter<'_> {
                     expression.span,
                 )
             })?;
-            let Type::Function { params, .. } = &callback.ty else {
+            let Type::Function { params, ret } = &callback.ty else {
                 return Err(unsupported(
                     &format!(".{op}()"),
                     "the checked callback has no function type",
@@ -125,6 +125,13 @@ impl RustEmitter<'_> {
             let suffix = self.temporaries.to_string();
             #[allow(clippy::cast_precision_loss)]
             let parameter_count = params.len() as f64;
+            let reference_result = matches!(
+                ret.as_ref(),
+                Type::Array {
+                    reference: true,
+                    ..
+                }
+            );
             let object = self.expr(object)?;
             let callback = self.expr(callback)?;
             let initial_position = crate::translation::array_callback_rules::read_array_callback_checked_argument_position(
@@ -145,6 +152,12 @@ impl RustEmitter<'_> {
             } else {
                 String::new()
             };
+            let referenced = crate::translation::array_callback_rules::render_array_callback_reference_expression(
+                op, &object, &callback, parameter_count, &suffix, reference_result,
+            );
+            if !referenced.is_empty() {
+                return Ok(referenced);
+            }
             return Ok(
                 crate::translation::array_callback_rules::render_array_callback_expression(
                     op,
