@@ -4,7 +4,8 @@ import {relocateCheckedModuleImports} from './overlay.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {readProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
+import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {readReviewedOverlayProviderSources,reviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
 import {createCheckedModuleOverlay} from './overlay.mjs';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
@@ -138,14 +139,14 @@ test('the collection renderer revision restores all five complete preceding prov
 test('callback renderer revision restores all preceding providers and the complete historical policy',()=>{
  const root=new URL('../../',import.meta.url),sourceRoot=new URL('../../js/src/',import.meta.url);
  const previous=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='fdf6b2868d9804bc62eceb9209b8ebce9274b8ed');
- const current=reviewedOverlayProviderPolicy.revisions.at(-1);
+ const current=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
  assert.equal(current.sourceCommit,'b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
  assert.equal(current.inverse.length,2);
  assert.deepEqual(current.providers.map(row=>row.module),previous.providers.map(row=>row.module));
  assert.deepEqual([...new Set(current.inverse.map(row=>row.module))],['translation/emit-rust.js']);
  const changed=[];
  for(const[index,row]of current.providers.entries()){
-  const bytes=readFileSync(new URL(row.module,sourceRoot)),source=bytes.toString('utf8');
+  const bytes=execFileSync('git',['show',current.sourceCommit+':js/src/'+row.module],{cwd:root}),source=bytes.toString('utf8');
   assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sourceSha256);
   const preceding=execFileSync('git',['show','191f214903cc123cfb1566d82a90e18819be6b4d:js/src/'+row.module],{cwd:root});
   if(!bytes.equals(preceding))changed.push(row.module);
@@ -158,12 +159,81 @@ test('callback renderer revision restores all preceding providers and the comple
   assert.equal(createHash('sha256').update(inverse).digest('hex'),previous.providers[index].sourceSha256);
  }
  assert.deepEqual(changed,['translation/emit-rust.js']);
- const policy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const policy=execFileSync('git',['show','42023d402abd577ae935f2686eca3f39f5e0b9dd:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const previousPolicy=execFileSync('git',['show','191f214903cc123cfb1566d82a90e18819be6b4d:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const marker='    {\n      "sourceCommit": "b4b92d47ee0a186dbe3920c1844eb907afe56aeb",\n';
  assert.equal(policy.split(marker).length,2);
  const start=policy.indexOf(marker),end=policy.indexOf('\n  ],\n};',start);assert.ok(end>start);
  assert.equal(policy.slice(0,start)+policy.slice(end+1),previousPolicy,'the entire original policy and reader remain exact');
+ for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
+  const bytes=readFileSync(new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);
+ }
+});
+
+
+test('reference callback provider revision restores every preceding source and historical policy',()=>{
+ const root=new URL('../../',import.meta.url),sourceRoot=new URL('../../js/src/',import.meta.url);
+ const previous=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
+ const current=reviewedOverlayProviderPolicy.revisions.at(-1);
+ assert.equal(current.sourceCommit,'113a7747f799cbce5167167a783eb88427bd2825');
+ assert.equal(current.inverse.length,2);
+ assert.deepEqual(current.providers.map(row=>row.module),previous.providers.map(row=>row.module));
+ assert.deepEqual([...new Set(current.inverse.map(row=>row.module))],['translation/emit-rust.js']);
+ const changed=[];
+ for(const[index,row]of current.providers.entries()){
+  const bytes=readFileSync(new URL(row.module,sourceRoot));
+  assert.deepEqual(bytes,execFileSync('git',['show',current.sourceCommit+':js/src/'+row.module],{cwd:root}));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sourceSha256);
+  const preceding=execFileSync('git',['show',previous.sourceCommit+':js/src/'+row.module],{cwd:root});
+  if(!bytes.equals(preceding))changed.push(row.module);
+  let restored=bytes.toString('utf8');
+  for(const action of current.inverse.filter(action=>action.module===row.module)){
+   assert.equal(restored.split(action.from).length,2,'every exact reviewed edit has one whole contextual inverse');
+   restored=restored.replace(action.from,()=>action.to);
+  }
+  assert.deepEqual(Buffer.from(restored),preceding,'all preceding provider bytes are recovered');
+  assert.equal(createHash('sha256').update(restored).digest('hex'),previous.providers[index].sourceSha256);
+ }
+ assert.deepEqual(changed,['translation/emit-rust.js']);
+ const dependency='js/src/translation/array-callback-rules.js';
+ const before=execFileSync('git',['show',previous.sourceCommit+':'+dependency],{cwd:root});
+ const actual=readFileSync(new URL('../../'+dependency,import.meta.url));
+ assert.equal(before.length,7249);
+ assert.equal(createHash('sha256').update(before).digest('hex'),'a5fa80c7683dc2a127b2500b464e049ccf23d29979ff596aa14999c369e5c554');
+ assert.deepEqual(actual,execFileSync('git',['show',current.sourceCommit+':'+dependency],{cwd:root}));
+ assert.deepEqual(actual.subarray(0,before.length),before,'every previous callback function and byte remains exact');
+ assert.deepEqual([...actual.subarray(before.length).toString('utf8').matchAll(/^export function (\w+)/gmu)].map(match=>match[1]),['renderArrayCallbackReferenceExpression']);
+ const fixtureFile='parity/fixtures/array-callbacks.lino';
+ const originalBytes=execFileSync('git',['show',previous.sourceCommit+':'+fixtureFile],{cwd:root,maxBuffer:8*1024*1024});
+ const original=readStructuredDataLino(originalBytes.toString('utf8'));
+ const fixture=readProjectData(new URL('../../'+fixtureFile,import.meta.url)),inverse=structuredClone(fixture);
+ assert.equal(fixture.cases.length,18);
+ const rows=inverse.cases.filter(row=>row.id==='array-callback-flatMap-reference-value-parameters');
+ assert.equal(rows.length,1);assert.equal(rows[0].profiles.length,1);assert.equal(rows[0].profiles[0].referenceSemantics,true);
+ const emission=rows[0].profiles[0].targets.Rust.emitted;
+ const old='ml_values1.iter().cloned().enumerate().flat_map(|(ml_index1, ml_value1)| ml_callback1(ml_value1, (ml_index1 as f64))).collect::<Vec<_>>()';
+ const replacement='std::rc::Rc::new(std::cell::RefCell::new(ml_values1.iter().cloned().enumerate().flat_map(|(ml_index1, ml_value1)| { let ml_callback_values1 = ml_callback1(ml_value1, (ml_index1 as f64)).borrow().clone(); ml_callback_values1 }).collect::<Vec<_>>()))';
+ assert.equal(emission.text.split(replacement).length,2);
+ emission.text=emission.text.replace(replacement,()=>old);
+ let definitions=0;
+ emission.definitions=emission.definitions.map(text=>{
+  if(!text.includes(replacement))return text;
+  assert.equal(text.split(replacement).length,2);definitions+=1;return text.replace(replacement,()=>old);
+ });
+ assert.equal(definitions,1);
+ assert.deepEqual(inverse,original,'all original cases, source inputs, expected values, traces, archives and target fields are recovered');
+ assert.deepEqual(Buffer.from(serializeProjectData(inverse,new URL('../../'+fixtureFile,import.meta.url))),originalBytes,
+  'the complete original canonical fixture bytes remain independently recoverable');
+ const policy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const previousPolicy=execFileSync('git',['show','42023d402abd577ae935f2686eca3f39f5e0b9dd:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
+ const marker='    {\n      "sourceCommit": "113a7747f799cbce5167167a783eb88427bd2825",\n';
+ assert.equal(policy.split(marker).length,2);
+ const start=policy.indexOf(marker),end=policy.indexOf('\n  ],\n};',start);assert.ok(end>start);
+ assert.equal(policy.slice(0,start)+policy.slice(end+1),previousPolicy,'all earlier revisions and the entire admission reader stay byte exact');
+ const withoutCurrent=structuredClone(reviewedOverlayProviderPolicy);withoutCurrent.revisions.pop();
+ const previousData=readStructuredDataLino(execFileSync('git',['show','42023d402abd577ae935f2686eca3f39f5e0b9dd:experiments/rust-text-certificate-adapter/data/provider-revisions.lino'],{cwd:root,encoding:'utf8'}));
+ assert.deepEqual(withoutCurrent,previousData,'all prior policy records retain their original values and order');
  for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
   const bytes=readFileSync(new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);

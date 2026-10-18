@@ -146,6 +146,44 @@ export const reviewedOverlayProviderPolicy = {
         }
       ]
     },
+    {
+      "sourceCommit": "113a7747f799cbce5167167a783eb88427bd2825",
+      "review": "Reviewed the complete reference-array flatMap correction against b4b92d47ee0a186dbe3920c1844eb907afe56aeb: only translation/emit-rust.js changes among the five providers. It imports the shared reference-result renderer and selects it only for an array callback return carrying reference:true, falling back to the unchanged existing callback renderer. Two complete contextual inverses restore every preceding provider byte. The shared dependency retains its entire 7249-byte twelve-function prefix and appends only renderArrayCallbackReferenceExpression; the existing 224 templates are unchanged. A full eighteen-case fixture inverse restores every prior field and byte after reversing exactly the corrected flatMap Rust text and one definition. Historical overlays, every preceding revision, unique hooks and certificate/raw-owner/descriptor/saved-LinkId checks remain required. Native compilation and execution remain CI-only.",
+      "providers": [
+        {
+          "module": "typed-program-links.js",
+          "sourceSha256": "a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458"
+        },
+        {
+          "module": "typed-program-links-validation.js",
+          "sourceSha256": "0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3"
+        },
+        {
+          "module": "typed-program-checked-projection.js",
+          "sourceSha256": "fb2636a04a45c38c5dda0d99c239eb6dc97f5d3d441245f6855fde22789e3691"
+        },
+        {
+          "module": "translation/emit-javascript.js",
+          "sourceSha256": "9b0ed7afe95aacf71364e3444fa0571d3856a32967a7cffceef17e38625b1018"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "sourceSha256": "143e41659d4f0915c2f4e90865c96fce1fba8d3e1cfaf99e8cbdb56108a62c64"
+        }
+      ],
+      "inverse": [
+        {
+          "module": "translation/emit-rust.js",
+          "from": "import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';\nimport { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';\nimport { renderArrayFromMapping } from './array-from-rules.js';\nimport { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';\nimport { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';\nimport { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';\nimport { renderRecordField, renderRecordValue } from './record-emission-rules.js';\n",
+          "to": "import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';\nimport { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';\nimport { renderArrayFromMapping } from './array-from-rules.js';\nimport { renderArrayCallbackExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';\nimport { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';\nimport { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';\nimport { renderRecordField, renderRecordValue } from './record-emission-rules.js';\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "      const callbackText = this.expr(fn);\n      const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;\n      const initial = hasInitial ? this.expr(e.args[1]) : '';\n      const referenceResult = fn.type.ret.kind === 'array' && fn.type.ret.reference === true;\n      const rendered = renderArrayCallbackReferenceExpression(e.op, object, callbackText, parameterCount, String(suffix), referenceResult)\n        || renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);\n      if (rendered) return rendered;\n    }\n    throw unsupported(`method call .${e.op}()`, 'the Rust target has no operational encoding for this method', e.span);\n",
+          "to": "      const callbackText = this.expr(fn);\n      const hasInitial = readArrayCallbackCheckedArgumentPosition(e.op, e.args.length !== 1, 0) === 1;\n      const initial = hasInitial ? this.expr(e.args[1]) : '';\n      const rendered = renderArrayCallbackExpression(e.op, object, callbackText, parameterCount, String(suffix), initial, hasInitial);\n      if (rendered) return rendered;\n    }\n    throw unsupported(`method call .${e.op}()`, 'the Rust target has no operational encoding for this method', e.span);\n"
+        }
+      ]
+    },
   ],
 };
 
