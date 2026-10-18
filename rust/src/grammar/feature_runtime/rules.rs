@@ -878,10 +878,7 @@ impl Machine for ActionMachine<'_, '_, '_> {
     }
 
     fn set_attribute(&mut self, name: &str, value: OperationValue) {
-        self.node
-            .attributes
-            .get_or_insert_with(Default::default)
-            .insert(name.to_owned(), value);
+        super::attributes::set_attribute(self.node, name, value);
     }
 
     fn build_node(&mut self, kind: &Arc<str>) {

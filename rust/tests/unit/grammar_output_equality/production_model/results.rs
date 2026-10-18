@@ -119,6 +119,8 @@ pub(super) struct Tree {
     pub(super) end: usize,
     pub(super) children: Children,
     pub(super) attributes: Option<BTreeMap<String, OperationValue>>,
+    /// Actual own-key order, separate from historical unordered equality.
+    pub(super) attribute_order: Option<Vec<String>>,
     /// Lossless source-local lexer metadata, including unknown linked keys.
     pub(super) lexical: Option<serde_json::Value>,
     pub(super) precedence: Option<PrecedenceTag>,
@@ -183,6 +185,7 @@ impl Tree {
             end,
             children: no_children(),
             attributes: None,
+            attribute_order: None,
             lexical: None,
             precedence: None,
             tail: None,
@@ -251,6 +254,7 @@ const _: fn() = || {
             &value.end,
             &value.children,
             &value.attributes,
+            &value.attribute_order,
             &value.lexical,
             &value.precedence,
             &value.tail,

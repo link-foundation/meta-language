@@ -9,6 +9,7 @@
 //! result. docs/grammar/feature-union.md is the specification both
 //! runtimes follow.
 
+mod attributes;
 mod compile;
 mod executor;
 mod expectation_requests;

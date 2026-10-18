@@ -103,7 +103,9 @@ fn node(
                 budget
                     .mapping_retain(attributes.len().checked_add(2).ok_or(Abort::MemoryBudget)?)?;
                 let mut values = Map::new();
-                for (key, value) in attributes {
+                for (key, value) in super::super::attributes::attribute_entries(tree)
+                    .expect("the physical tree retains its attribute values")
+                {
                     budget.mapping_step()?;
                     let key = copy_string(key, budget)?;
                     budget.mapping_retain(6)?;

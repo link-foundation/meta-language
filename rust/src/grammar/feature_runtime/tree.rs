@@ -5,8 +5,9 @@
 //! embedded-language nodes stay in the tree, so the tree reproduces the input
 //! byte for byte.
 
-use std::collections::BTreeMap;
 use std::fmt::Write as _;
+
+use indexmap::IndexMap;
 
 use super::operations::OperationValue;
 use super::program::Compiled;
@@ -14,7 +15,7 @@ use super::results::{Tree, TreeType};
 use super::text::{hex_of, quote_text, text_of};
 
 /// The attributes semantic actions set on a node or token, by name.
-pub type SyntaxAttributes = BTreeMap<String, OperationValue>;
+pub type SyntaxAttributes = IndexMap<String, OperationValue>;
 
 /// The text of a leaf: the exact UTF-8 text, or the hexadecimal spelling of
 /// bytes that are not well-formed UTF-8.
@@ -418,7 +419,9 @@ fn render_name(name: &str) -> String {
 
 fn render_attributes(attributes: &SyntaxAttributes, out: &mut String) {
     out.push('{');
-    for (index, (name, value)) in attributes.iter().enumerate() {
+    let mut entries: Vec<_> = attributes.iter().collect();
+    entries.sort_by(|(left, _), (right, _)| left.encode_utf16().cmp(right.encode_utf16()));
+    for (index, (name, value)) in entries.into_iter().enumerate() {
         if index > 0 {
             out.push(',');
         }
@@ -451,7 +454,7 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
                 .iter()
                 .map(|child| public_tree(child, bytes))
                 .collect(),
-            attributes: node.attributes.clone(),
+            attributes: super::attributes::public_attributes(node),
         },
         TreeType::Token => SyntaxTree::Token {
             kind: if node.projection_anonymous {
@@ -463,7 +466,7 @@ pub(super) fn public_tree(node: &Tree, bytes: &[u8]) -> SyntaxTree {
             trivia: node.trivia,
             start: node.start,
             end: node.end,
-            attributes: node.attributes.clone(),
+            attributes: super::attributes::public_attributes(node),
             text: LeafText::of(bytes, node.start, node.end),
             lexical: node.lexical.clone(),
         },

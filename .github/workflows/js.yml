@@ -682,6 +682,10 @@ jobs:
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-grammar-selection-field-range-rules.mjs --native --check
 
+      - name: Check generated grammar attribute order rules against JavaScript
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        run: node js/scripts/generate-grammar-attribute-order-rules.mjs --native --check
+
       - name: Check generated collection construction rules against JavaScript
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
         run: node js/scripts/generate-collection-construction-rules.mjs --native --check

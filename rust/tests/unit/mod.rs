@@ -305,6 +305,7 @@ mod typed_program_tuples;
 
 mod issue_195_grammar_profile_ruby;
 
+mod grammar_attribute_order;
 mod grammar_composition;
 mod grammar_included_range_selection;
 mod grammar_included_range_transport;

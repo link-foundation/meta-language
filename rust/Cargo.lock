@@ -1036,6 +1036,7 @@ dependencies = [
  "clap",
  "cmake-source-oracle",
  "doublets",
+ "indexmap",
  "lindera",
  "lingua",
  "links-notation",

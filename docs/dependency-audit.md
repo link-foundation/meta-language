@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 179 | 178 | 1 | 0 |
+| Generators | 181 | 180 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -221,7 +221,7 @@ they are.
 | `idna` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.1.0` | transitive |  | 1.1.0 (crates.io, idna) | version | current |  |
 | `include_dir_macros` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.4` | transitive |  | 0.7.4 (crates.io, include_dir_macros) | version | current |  |
 | `include_dir` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.7.4` | transitive |  | 0.7.4 (crates.io, include_dir) | version | current |  |
-| `indexmap` | `rust/Cargo.lock` | `rust/Cargo.lock` | `2.14.2` | transitive |  | 2.14.2 (crates.io, indexmap) | version | current |  |
+| `indexmap` | `rust/Cargo.lock` | `rust/Cargo.lock`, `rust/Cargo.toml` | `2.14.2` | direct, runtime | `=2.14.2` | 2.14.2 (crates.io, indexmap) | version | current |  |
 | `is_terminal_polyfill` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.70.2` | transitive |  | 1.70.2 (crates.io, is_terminal_polyfill) | version | current |  |
 | `itertools` | `rust/Cargo.lock` | `rust/Cargo.lock` | `0.14.0` | transitive |  | 0.15.0 (crates.io, itertools) | version | behind | Held by the requirement of `lingua` 1.8.0 (`^0.14.0`), which does not admit 0.15.0; it moves when that dependent does. |
 | `itoa` | `rust/Cargo.lock` | `rust/Cargo.lock` | `1.0.18` | transitive |  | 1.0.18 (crates.io, itoa) | version | current |  |
@@ -595,6 +595,8 @@ they are.
 | `js/scripts/generate-global-concept-rule-styles.mjs` | `js/scripts/generate-global-concept-rule-styles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-global-concept-rules.mjs` | `js/scripts/generate-global-concept-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-global-concept-space-fixture.mjs` | `js/scripts/generate-global-concept-space-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-attribute-order-fixtures.mjs` | `js/scripts/generate-grammar-attribute-order-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-attribute-order-rules.mjs` | `js/scripts/generate-grammar-attribute-order-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-lexer-rules.mjs` | `js/scripts/generate-grammar-lexer-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-merge-decisions.mjs` | `js/scripts/generate-grammar-merge-decisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `js/scripts/generate-grammar-prefix-operand-fixtures.mjs` | `script` |  | derived | current |  |

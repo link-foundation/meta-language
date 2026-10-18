@@ -1337,6 +1337,18 @@ source preservation from any richer linguistic capability they verify.
 
 ## Grammar feature union
 
+Grammar attributes preserve ordinary JavaScript own-key order: canonical
+array-index names come first numerically, other names retain insertion order,
+and overwrites retain position. The complete shared JavaScript kernel generates
+native key decisions and every continuation. Native nodes retain order beside
+their historical lookup values; public attributes use an ordered map, and
+physical witnesses borrow the same entries without a full intermediate copy.
+Compact rendering sorts names by UTF-16 code units in both packages. Historical
+attribute equality still compares dictionary meanings. Shared grammar fixtures
+retain decimal boundaries, overwrite values and Unicode names; the map's exact
+dependency version selects a bounded assertion profile. Native execution remains
+a CI check.
+
 Structured scanner descriptors cover whole-line quoted and FIFO here-documents,
 nested quoted and interpolation contexts, offside layout tokens and Markdown
 fence width and indentation rules. Shared accepted and rejected lexical fixtures
