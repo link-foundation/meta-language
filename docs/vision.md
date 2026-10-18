@@ -564,6 +564,13 @@ restores each whole preceding artifact before applying the existing historical
 proof. Semantic fields cannot be refreshed through this path. Actual generated
 source, both typed archive replays and the unchanged native execution obligations
 remain required independently of that metadata proof.
+Scalar-loop snapshots use the same normal producers and full callable ranges.
+Their finite receipts independently check actual token boundaries and recover
+the complete preceding fixtures, retaining every original source, semantic
+field, emitted definition and native comparison. Historical overlay provider
+registrations likewise remain intact: each reviewed successor binds all five
+complete sources and exact contextual inverses; every original hook, certificate
+and saved-link identity check still applies.
 Two independently selected owned-text source models retain local ownership
 before projecting it into value semantics. `closed owned text local state 1`
 records one once-evaluated standard `(String, i32)` initialization, its ordered
