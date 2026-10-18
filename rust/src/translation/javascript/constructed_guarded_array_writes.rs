@@ -56,7 +56,7 @@ fn statement_paths(
         };
         match statement {
             Stmt::Block { body, .. } | Stmt::While { body, .. } | Stmt::DoWhile { body, .. } => {
-                child(ChildList::Body, body, &value["body"])
+                child(ChildList::Body, body, &value["body"]);
             }
             Stmt::If {
                 then, otherwise, ..

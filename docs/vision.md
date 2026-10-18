@@ -547,6 +547,23 @@ the bounded experiment and both freshness checks.
 Named source spans compare safe, nonnegative integral offsets by value, including
 equivalent decimal and exponent spellings. Source-position negative zero remains
 invalid while primitive floating-point negative zero retains its value.
+JavaScript callable declarations retain their actual first token through the end
+of the last consumed token, in UTF-16 code units. A following declaration's
+documentation and trailing comments are outside that interval; end-of-file
+never collapses it to the opening keyword. Normal, expression and scalar-loop
+paths use one automatically translated interval decision, with existing scalar
+offset and ordering rules. Checked mappings and both source-free Links archives
+retain the complete owner interval. Independent original execution, target
+execution and source-range controls remain separate obligations. Correcting this
+provenance preserves source inputs, emitted program bytes and historical
+receipts; current generated snapshots record the corrected ranges explicitly.
+The [finite receipt register](../parity/self-translation/complete-declaration-receipts.lino)
+records exact current and preceding artifact hashes, immutable Git provenance
+and every changed endpoint, archive receipt and producer descriptor. Its inverse
+restores each whole preceding artifact before applying the existing historical
+proof. Semantic fields cannot be refreshed through this path. Actual generated
+source, both typed archive replays and the unchanged native execution obligations
+remain required independently of that metadata proof.
 Two independently selected owned-text source models retain local ownership
 before projecting it into value semantics. `closed owned text local state 1`
 records one once-evaluated standard `(String, i32)` initialization, its ordered

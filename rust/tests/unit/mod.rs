@@ -310,6 +310,7 @@ mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;
 mod translation_callable_expected_context;
+mod translation_complete_declaration_ranges;
 mod translation_guarded_private_array_writes;
 mod translation_javascript_array_bindings;
 mod translation_owned_array_append;

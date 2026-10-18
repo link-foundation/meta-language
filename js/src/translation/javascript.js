@@ -30,6 +30,7 @@ import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
 import { lowerGuardedPrivateArrayWrites } from './guarded-private-array-writes.js';
 import { lowerConstructedGuardedArrayWrites } from './constructed-guarded-array-writes.js';
+import { acceptCompleteDeclarationSourceInterval } from '../source-span-rules.js';
 import { acceptJavaScriptFunctionStart, acceptJavaScriptNamespaceMethod,
   readJavaScriptCollectionConstruction, readJavaScriptConstructionObligation,
   readJavaScriptDocumentationTypeForm, readJavaScriptValueCaseForm,
@@ -637,7 +638,7 @@ class JavaScriptParser {
       let loop;
       try { loop = this.withLexicalScope(names, () => readJavaScriptScalarLoop(this, name, params, isAsync), 2); }
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
-      return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: span(docToken, c.peek())};
+      return {k: 'fn', name, params, ret, body: loop.body, sourceLoop: loop.proof, span: readCompleteDeclarationSpan(docToken, c)};
     }
     const indexedWritesBefore = this.indexedReferenceWrites;
     const statements = this.withLexicalScope(names, () => {
@@ -680,10 +681,10 @@ class JavaScriptParser {
       const [thrown] = statements[index].then.filter((inner) => inner.s !== 'empty');
       param.guard = { message: thrown.message, order: index };
     }
-    const where = span(nameToken, c.peek());
+    const where = readCompleteDeclarationSpan(nameToken, c);
     const rest = statements.slice(index);
     const body = imperative(rest, this) ? lowerImperative(this, name, params, rest, where) : this.lower(rest, where);
-    const declaration = { k: 'fn', name, params, ret, body, span: span(docToken, c.peek()) };
+    const declaration = { k: 'fn', name, params, ret, body, span: readCompleteDeclarationSpan(docToken, c) };
     if (!this.ownedArrayReaderNamespace) this.ownedArrayReaders.set(name, readOwnedArrayReaderParameters(declaration, this.ownedArrayReaders, statements));
     return declaration;
   }
@@ -2603,6 +2604,15 @@ function cratePath(specifier, directory) {
 
 function joined(left, right, token) {
   return { start: left.span?.start ?? left.start ?? token.start, end: right.span?.end ?? right.end ?? token.end };
+}
+
+function readCompleteDeclarationSpan(from, cursor) {
+  const consumed = cursor.tokens[cursor.index - 1];
+  if (!consumed || consumed.kind === 'eof'
+      || !acceptCompleteDeclarationSourceInterval(from.start, from.end, consumed.end)) {
+    throw new TypeError('an actual completed declaration requires its last consumed ordered source token');
+  }
+  return { start: from.start, end: consumed.end };
 }
 
 function span(from, to) {

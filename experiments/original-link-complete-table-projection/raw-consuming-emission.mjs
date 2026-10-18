@@ -11,6 +11,7 @@ import {readRustLibraryItems} from '../../js/scripts/rust-library-packaging.mjs'
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
+import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
 
 export const ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT = new URL('./data/raw-consuming-native-definitions.lino',import.meta.url);
 export const ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT = new URL('./data/raw-consuming-current-native-definitions.lino',import.meta.url);
@@ -86,12 +87,13 @@ const totals = owners => ({cloneCalls:owners.reduce((sum,owner)=>sum+owner.clone
 
 /** Restore only the recorded provenance changes and authenticate the entire original artifact. */
 export function verifyOriginalLinkRawConsumingConservation(artifact,read=readFileSync) {
+  assert.deepEqual(artifact.decisionSources,decisionSources(read),'actual final-use decision sources changed');
+  artifact=restoreCompleteDeclarationReceipt(artifact,'raw consuming');
   const successor=ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR, originalBytes=read(ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT);
   assert.equal(originalBytes.length,successor.original.bytes,'the original consuming artifact byte count is immutable');
   assert.equal(sha256(originalBytes),successor.original.sha256,'the complete original consuming artifact is immutable');
   const original=readStructuredDataLino(originalBytes.toString('utf8'));
   assert.deepEqual(artifact.predecessorConservation,successor,'the explicit consuming successor provenance is exact');
-  assert.deepEqual(artifact.decisionSources,decisionSources(read),'actual final-use decision sources changed');
   assert.deepEqual(original.decisionSources.map(row=>row.file),decisionFiles,'the original decision-source inventory stays complete');
   assert.equal(Object.hasOwn(original,'predecessorConservation'),false);
   const inverse=structuredClone(artifact);

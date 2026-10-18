@@ -10,7 +10,15 @@ const javascript=new URL('../src/source-span-rules.js',import.meta.url);
 const native=new URL('../../rust/src/typed_program_links/source_span_rules.rs',import.meta.url);
 const copy=new URL('../../rust/src/data/source-span.lino',import.meta.url);
 const style=new URL('../../parity/self-translation/source-span-rules-decorators.lino',import.meta.url);
-const source=`// Generated from the shared source-span offset policy.\n/** @param {number} value @param {boolean} negativeZero @returns {boolean} */\nexport function acceptSourceSpanOffset(value, negativeZero) { return !negativeZero && value >= 0 && value <= ${policy.offsetMaximum} && value % 1 === 0; }\n/** @param {number} start @param {number} end @returns {boolean} */\nexport function acceptSourceSpanInterval(start, end) { return start <= end; }\n`;
+const source=`// Generated from the shared source-span offset policy.\n/** @param {number} value @param {boolean} negativeZero @returns {boolean} */\nexport function acceptSourceSpanOffset(value, negativeZero) { return !negativeZero && value >= 0 && value <= ${policy.offsetMaximum} && value % 1 === 0; }\n/** @param {number} start @param {number} end @returns {boolean} */\nexport function acceptSourceSpanInterval(start, end) { return start <= end; }\n` +
+`/** Actual token offsets have no negative-zero spelling.
+ * @param {number} start @param {number} prefixEnd @param {number} consumedEnd @returns {boolean} */
+export function acceptCompleteDeclarationSourceInterval(start,prefixEnd,consumedEnd){
+ return acceptSourceSpanOffset(start,false) && acceptSourceSpanOffset(prefixEnd,false)
+  && acceptSourceSpanOffset(consumedEnd,false) && acceptSourceSpanInterval(start,prefixEnd)
+  && acceptSourceSpanInterval(prefixEnd,consumedEnd);
+}
+`;
 if(process.argv.includes('--check')) {
   if(readFileSync(javascript,'utf8')!==source)throw new Error('source-span JavaScript rules are stale');
 } else writeFileSync(javascript,source);
@@ -18,13 +26,17 @@ if(!process.argv.includes('--javascript-only')) {
   const {parseJavaScript}=await import('../src/translation/javascript.js');
   const {checkProgram}=await import('../src/translation/check.js');
   const {emitRust}=await import('../src/translation/emit-rust.js');
-  const raw=emitRust(checkProgram(parseJavaScript(source))).definitions.join('\n\n');
+  const emitted=emitRust(checkProgram(parseJavaScript(source)));
+  if(emitted.preludes.length!==0)throw new Error('source-span scalar rules must not omit a required runtime prelude');
+  const raw=emitted.definitions.join('\n\n');
   if(process.argv.includes('--update-styles')) {
     const actions=[];let current=raw;
     const replace=(from,to)=>{if(!current.includes(from))throw new Error(`source-span style target is absent: ${from}`);actions.push({op:'replace',field:'source',from,to});current=current.split(from).join(to);};
+    const targetNames=[...raw.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1]);
     for(const definition of raw.matchAll(/pub fn [\s\S]*?\n\}/gu)) {
       const original=definition[0],opening=original.indexOf('{');
       let body=stripRustSourceHeaderStyleParentheses(original.slice(opening+1,-1));
+      for(const name of targetNames)body=body.replaceAll('crate::'+name+'(', 'self::'+name+'(');
       if(original.startsWith('pub fn accept_source_span_offset(')) {
         // This predicate is a conjunction of pure scalar comparisons. Removing
         // their grouping preserves precedence and short-circuit evaluation.

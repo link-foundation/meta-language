@@ -10,3 +10,17 @@ pub fn accept_source_span_offset(value: f64, negative_zero: bool) -> bool {
 pub const fn accept_source_span_interval(start: f64, end: f64) -> bool {
     start <= end
 }
+
+/// Apply the shared source-span offset policy.
+#[must_use]
+pub fn accept_complete_declaration_source_interval(
+    start: f64,
+    prefix_end: f64,
+    consumed_end: f64,
+) -> bool {
+    (((self::accept_source_span_offset(start, false)
+        && self::accept_source_span_offset(prefix_end, false))
+        && self::accept_source_span_offset(consumed_end, false))
+        && self::accept_source_span_interval(start, prefix_end))
+        && self::accept_source_span_interval(prefix_end, consumed_end)
+}

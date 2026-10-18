@@ -259,18 +259,27 @@ test('historical code unit templates preserve complete metadata and agree throug
   assert.equal(current.basePreludeSha256, basePreludeSha256);
   assert.equal(digest(STRING_PRELUDE), basePreludeSha256);
   assert.deepEqual(historical.inventory, [{ kind: 'fn', name: 'readStringCodeUnit', span: { start: 227, end: 233 } }]);
-  assert.deepEqual(current.inventory, historical.inventory);
+  // The unchanged, hash-pinned source ends at its actual closing brace;
+  // the old EOF range stopped at the opening export keyword.
+  assert.equal(historical.source.slice(227, 243), 'export function ');
+  assert.equal(historical.source[461], '}');
+  assert.equal(historical.source.slice(462).trim(), '');
+  assert.deepEqual(current.inventory, [{ kind: 'fn', name: 'readStringCodeUnit', span: { start: 227, end: 462 } }]);
   assert.equal(historical.source[345], ';');
   assert.equal(historical.source.slice(345, 349), ';\n  ');
   assert.equal(historical.source.slice(349, 351), 'if');
   const expectedCurrent = structuredClone(historical);
+  expectedCurrent.inventory[0].span.end = 462;
   for (const field of ['originalDeclaration', 'checkedDeclaration', 'template']) {
     assert.deepEqual(historical[field].body.span, { start: 282, end: 349 });
     assert.deepEqual(current[field].body.span, { start: 282, end: 345 });
     expectedCurrent[field].body.span.end = 345;
+    assert.deepEqual(historical[field].span, { start: 227, end: 233 });
+    assert.deepEqual(current[field].span, { start: 227, end: 462 });
+    expectedCurrent[field].span.end = 462;
   }
   assert.deepEqual(current, expectedCurrent,
-    'every source, declaration, operation, binder, type and metadata field is retained except exactly three authenticated endpoints');
+    'every source, declaration, operation, binder, type and metadata field is retained except the three prior body endpoints and four complete owner endpoints');
   const caller = parseJavaScript(source, { referenceSemantics: false }).items[0].body;
   assert.equal(caller.k, 'method');
   assert.equal(caller.op, 'charCodeAt');

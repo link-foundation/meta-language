@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
+import { restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 
 const applicabilityDigest = value => createHash('sha256').update(value).digest('hex');
 const freezeApplicability = value => {
@@ -95,8 +96,14 @@ function verifyApplicabilitySource(sources, descriptor) {
 function verifyCollectionArchiveReceiptRefresh(sources, descriptor) {
   const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
   assert.deepEqual(descriptor, refresh.previous, 'only the exact recorded artifact has a receipt successor');
-  const source = verifyApplicabilitySource(sources, refresh.current);
-  const artifact = readStructuredDataLino(sources[source.file].toString('utf8'));
+  const actual = sources[refresh.current.file];
+  assert.ok(Buffer.isBuffer(actual));
+  const current = readStructuredDataLino(actual.toString('utf8'));
+  assert.deepEqual(actual, Buffer.from(structuredDataToLino(current)), 'the complete supplied receipt bytes are canonical and exact');
+  const artifact = restoreCompleteDeclarationReceipt(current, 'collection construction');
+  const previousBytes = Buffer.from(structuredDataToLino(artifact));
+  verifyApplicabilitySource({ ...sources, [refresh.current.file]: previousBytes }, refresh.current);
+  const source = { file: refresh.current.file, bytes: actual.length, sha256: applicabilityDigest(actual) };
   const inverse = structuredClone(artifact);
   for (const change of refresh.changes) {
     assert.equal(inverse.archive[change.field], change.after, 'the exact new archive digest is recorded');

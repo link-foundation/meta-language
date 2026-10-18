@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
+import { COMPLETE_DECLARATION_RECEIPTS, restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { LinkNetwork } from '../../js/src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../../js/src/link-network-binary.js';
@@ -338,7 +339,7 @@ test('authored extraction applicability refuses altered bodies incomplete depend
 
 function originalRawArchiveReceiptInput(input) {
   const refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
-  const inverse = readStructuredDataLino(input.producerSources[refresh.current.file].toString('utf8'));
+  const inverse = restoreCompleteDeclarationReceipt(readStructuredDataLino(input.producerSources[refresh.current.file].toString('utf8')), 'collection construction');
   for (const change of refresh.changes) {
     assert.equal(inverse.archive[change.field], change.after);
     inverse.archive[change.field] = change.before;
@@ -367,8 +368,9 @@ test('the archive receipt successor retains every original producer pin and comp
   assert.deepEqual(before.producerApplicability.sources, [ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[0],
     ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference,
     ...ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies]);
+  const currentDescriptor = readProjectData(COMPLETE_DECLARATION_RECEIPTS).receipts.find(row => row.identity === 'collection construction').current;
   assert.deepEqual(after.producerApplicability.sources, before.producerApplicability.sources.map(row =>
-    row.file === refresh.current.file ? refresh.current : row), 'actual current bytes have their actual descriptor');
+    row.file === refresh.current.file ? currentDescriptor : row), 'actual current bytes have their actual descriptor');
   assert.deepEqual(before.producerApplicability.sourceClosure, after.producerApplicability.sourceClosure);
   assert.deepEqual(before.producerApplicability.causalProducers, after.producerApplicability.causalProducers);
   assert.deepEqual(before.producerApplicability.inverse, after.producerApplicability.inverse);

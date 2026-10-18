@@ -468,6 +468,36 @@ impl JavaScriptParser {
         span(from, self.cursor.peek())
     }
 
+    /// Retain the actual last consumed token after the shared interval proof.
+    fn read_complete_declaration_span(&self, from: &Token) -> Result<Span> {
+        let fail = || {
+            TranslationError::syntax(
+                "an actual completed declaration requires its last consumed ordered source token",
+                Some(from.span()),
+            )
+        };
+        let consumed = self
+            .cursor
+            .index
+            .checked_sub(1)
+            .and_then(|index| self.cursor.tokens.get(index))
+            .filter(|token| token.kind != TokenKind::Eof)
+            .ok_or_else(fail)?;
+        // Reuse the existing integer Number transport. The shared offset rule
+        // rejects any conversion outside its exact safe-integer domain.
+        let numbers = [from.start, from.end, consumed.end]
+            .map(|offset| serde_json::Number::from(offset).as_f64());
+        let [Some(start), Some(prefix_end), Some(consumed_end)] = numbers else {
+            return Err(fail());
+        };
+        if !crate::typed_program_links::source_span_rules::accept_complete_declaration_source_interval(
+            start, prefix_end, consumed_end,
+        ) {
+            return Err(fail());
+        }
+        Ok(Span::new(from.start, consumed.end))
+    }
+
     fn fail(message: &str, token: &Token) -> TranslationError {
         TranslationError::syntax(
             format!("{message} but found {}", describe(token)),

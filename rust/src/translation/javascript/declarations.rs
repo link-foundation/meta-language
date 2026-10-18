@@ -592,7 +592,7 @@ impl JavaScriptParser {
                 source_local_state: None,
                 source_const_function: None,
                 source_diagnostic_attributes: None,
-                span: Some(self.to_here(doc_token)),
+                span: Some(self.read_complete_declaration_span(doc_token)?),
                 generated: false,
                 source_pure_unit: None,
             });
@@ -691,7 +691,7 @@ impl JavaScriptParser {
             });
             index += 1;
         }
-        let place = self.to_here(name_token);
+        let place = self.read_complete_declaration_span(name_token)?;
         let tail = &statements[index..];
         let body = if imperative(tail) {
             lower_imperative(self, &name, &params, tail, place)?
@@ -712,7 +712,7 @@ impl JavaScriptParser {
             source_diagnostic_attributes: None,
             source_loop: None,
             body,
-            span: Some(self.to_here(doc_token)),
+            span: Some(self.read_complete_declaration_span(doc_token)?),
             generated: false,
             source_pure_unit: None,
         };
