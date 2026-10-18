@@ -45,9 +45,8 @@ probe overlaid in scratch. Current working hashes are recorded separately.
 Publication metadata cannot silently replace that frozen baseline.
 
 Native test development dependencies also need independent parser sources.
-Those remain checksum-verified temporary downloads from the frozen external
-asset registry, materialized only in owned CI scratch. No external grammar
-source is committed or used as a replacement for the native runtime.
+The runner downloads these registered, checksum-verified oracle build inputs
+into its owned CI scratch. Production parser removal remains unfinished.
 
 CI retains source identities, the fresh oracle, tool versions, all process logs
 and any actual native post-assertion report. Cargo uses locked/offline dependency
