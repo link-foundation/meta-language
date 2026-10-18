@@ -82,7 +82,9 @@ impl Checker {
         } else {
             None
         };
-        let accumulator = initial.as_ref().map_or(element.as_ref(), |value| &value.ty);
+        let accumulator = initial
+            .as_ref()
+            .map_or_else(|| element.as_ref(), |value| &value.ty);
         let mut params = Vec::new();
         loop {
             let role = rules::read_array_callback_parameter_role(op, number(params.len()));

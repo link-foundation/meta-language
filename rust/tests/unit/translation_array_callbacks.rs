@@ -1,4 +1,5 @@
 //! Complete shared callback profiles and native execution; run only in CI.
+use std::fmt::Write as _;
 use std::fs;
 use std::io::Write as _;
 use std::path::Path;
@@ -38,7 +39,12 @@ fn fixture() -> Value {
 }
 
 fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::new(), |mut text, byte| {
+            write!(text, "{byte:02x}").expect("writing into a String succeeds");
+            text
+        })
 }
 
 fn diagnostic(error: &TranslationError) -> Value {

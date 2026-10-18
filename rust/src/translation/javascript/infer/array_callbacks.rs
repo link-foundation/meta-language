@@ -27,7 +27,7 @@ impl Inference {
         let Term::Array(element) = &receiver else {
             return Ok(false);
         };
-        let accumulator = arguments.get(1).unwrap_or(element.as_ref()).clone();
+        let accumulator = arguments.get(1).unwrap_or_else(|| element.as_ref()).clone();
         let context = rules::read_array_callback_expected_result_form(operation);
         let ret = match context.as_str() {
             "bool" => Term::Known(BOOL),
