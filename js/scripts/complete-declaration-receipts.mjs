@@ -28,7 +28,7 @@ const descriptorSuccessor = {
 };
 
 /** Apply the one reviewed descriptor edge before the original receipt inverse. */
-function readCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+function readHistoricalCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
  const {successors,...originalRegister}=register;
  const originalBytes=Buffer.from(structuredDataToLino(originalRegister));
  assert.equal(originalBytes.length,68598,'all four original receipt rows retain their complete byte count');
@@ -72,6 +72,83 @@ function readCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
  assert.equal(edge.previous.bytes,base.current.bytes);
  assert.equal(edge.previous.file,base.current.file);
  return {artifact:inverse,bytes:restored};
+}
+
+// This second finite edge authenticates source descriptors only. It never
+// changes an emitted definition, archive premise or original receipt row.
+const descriptorRefreshSuccessor = {
+  "identity": "raw consuming",
+  "previous": {
+    "file": "experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino",
+    "revision": "1a69d1b33be71ca7421eb8a7a2e4dba9b599ef26",
+    "bytes": 1814953,
+    "sha256": "0698669cdac848bfd661a1f87be629cdc81ddc3b4a2213bfb145d4c9de441644"
+  },
+  "current": {
+    "file": "experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino",
+    "sourceRevision": "113a7747f799cbce5167167a783eb88427bd2825",
+    "bytes": 1814953,
+    "sha256": "95032ee3af3c0de10c6486aa1d76e4b4d315e34379cb5d081a47ae9cb35793e2"
+  },
+  "sources": [
+    {
+      "file": "js/src/translation/emit-rust.js",
+      "previous": {
+        "bytes": 77647,
+        "sha256": "843b6c072917fa8f86d36eabf64df022c92824062a921e5d8df71ac3d2df0f31"
+      },
+      "current": {
+        "bytes": 77908,
+        "sha256": "143e41659d4f0915c2f4e90865c96fce1fba8d3e1cfaf99e8cbdb56108a62c64"
+      }
+    }
+  ],
+  "changes": [
+    {
+      "path": [
+        "decisionSources",
+        "4",
+        "bytes"
+      ],
+      "before": 77647,
+      "after": 77908
+    },
+    {
+      "path": [
+        "decisionSources",
+        "4",
+        "sha256"
+      ],
+      "before": "843b6c072917fa8f86d36eabf64df022c92824062a921e5d8df71ac3d2df0f31",
+      "after": "143e41659d4f0915c2f4e90865c96fce1fba8d3e1cfaf99e8cbdb56108a62c64"
+    }
+  ]
+};
+
+function readCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ if(!Object.hasOwn(register,'descriptorSuccessors'))return readHistoricalCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
+ const {descriptorSuccessors,...previousRegister}=register;
+ const previousBytes=Buffer.from(structuredDataToLino(previousRegister));
+ assert.equal(previousBytes.length,76897,'the complete preceding register byte count stays exact');
+ assert.equal(digest(previousBytes),'2ca95df9f892d1093548021d37ac8a2e909d15eaffe337cbd888b3dd5f0cbad6',
+  'removing only descriptorSuccessors restores every original receipt and the first successor');
+ assert.ok(Array.isArray(descriptorSuccessors));
+ assert.equal(descriptorSuccessors.length,1,'exactly one separately reviewed descriptor refresh is registered');
+ const edge=descriptorSuccessors[0];
+ assert.deepEqual(edge,descriptorRefreshSuccessor,'the whole second descriptor edge is independently pinned');
+ const bytes=Buffer.from(structuredDataToLino(artifact));
+ if(identity!==edge.identity||digest(bytes)!==edge.current.sha256)return readHistoricalCompleteDeclarationDescriptorSuccessor(artifact,identity,previousRegister);
+ assert.equal(bytes.length,edge.current.bytes);
+ const inverse=structuredClone(artifact),source=edge.sources[0];
+ assert.deepEqual(inverse.decisionSources[4],{file:source.file,...source.current},
+  'the changed descriptor retains its exact owner and complete field set');
+ inverse.decisionSources[4].bytes=source.previous.bytes;
+ inverse.decisionSources[4].sha256=source.previous.sha256;
+ const restored=Buffer.from(structuredDataToLino(inverse));
+ assert.equal(restored.length,edge.previous.bytes);
+ assert.equal(digest(restored),edge.previous.sha256,
+  'only the two reviewed fields change in the entire raw consuming artifact');
+ return readHistoricalCompleteDeclarationDescriptorSuccessor(inverse,identity,previousRegister);
 }
 
 /** The public standalone gate retains its cloned-data result and all checks. */

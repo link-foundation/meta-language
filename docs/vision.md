@@ -573,6 +573,13 @@ restores each whole preceding artifact before applying the existing historical
 proof. Semantic fields cannot be refreshed through this path. Actual generated
 source, both typed archive replays and the unchanged native execution obligations
 remain required independently of that metadata proof.
+The reference-callback emitter revision adds a separately pinned descriptor
+edge that reverses only the emitter's byte count and hash before entering the
+unchanged earlier chain. Removing that edge restores the whole prior register;
+all 106 emitted owners and archive obligations remain exact. The corresponding
+borrowed receipt changes only its predecessor descriptor. Historical controls
+select their recorded source revision; current controls retain the complete
+source and artifact inverses and reject unreviewed fields or repins.
 Scalar-loop snapshots use the same normal producers and full callable ranges.
 Their finite receipts independently check actual token boundaries and recover
 the complete preceding fixtures, retaining every original source, semantic
