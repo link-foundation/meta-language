@@ -5,12 +5,16 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
-import {exactHarnessArguments, executePhysicalHarness, isRootHarness, matchesLogicalFilters,
+import {exactHarnessArguments, executePhysicalHarness, isRootHarness, matchesLogicalFilters, physicalShardCount,
   readHarnessInventory, readHarnessOutcomes, readPhysicalShardPolicy, readShardAdmission, renderCargoRunnerConfiguration, selectPhysicalTests,
   verifyHarnessExecution, verifyPhysicalShardDirectory, verifyPhysicalShardUnion} from '../scripts/rust-test-shards.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../src/structured-data-links.js';
 
 const policy = readPhysicalShardPolicy();
+// Keep the original scheduling inputs alongside their platform expansions.
+const originalPolicy = structuredClone(policy);
+for (const row of originalPolicy.suites) delete row.platformShards;
+delete originalPolicy.freshMergeExpansion;
 const sha = value => createHash('sha256').update(value).digest('hex');
 const commit = 'a'.repeat(40), tree = 'b'.repeat(40), base = 'c'.repeat(40);
 const expected = {commit, run: '123', attempt: '2', profiles: ['test', 'coverage', 'fresh-merge']};
@@ -33,16 +37,16 @@ function fakeNative(all = inventory, failure = null, calls = []) {
   };
 }
 
-async function groups() {
+async function groups(configuration = policy) {
   const result = [];
-  for (const profile of expected.profiles) for (const platform of profile === 'test' ? policy.platforms : ['ubuntu-latest']) {
-    const suites = profile === 'fresh-merge' ? [{name: 'all', shards: policy.freshMergeShards, filters: []}] : policy.suites;
-    for (const row of suites) for (let shard = 1; shard <= row.shards; shard++) {
+  for (const profile of expected.profiles) for (const platform of profile === 'test' ? configuration.platforms : ['ubuntu-latest']) {
+    const suites = profile === 'fresh-merge' ? [{name: 'all', filters: []}] : configuration.suites;
+    for (const row of suites) for (let shard = 1, count = physicalShardCount(configuration, profile, row.name, platform); shard <= count; shard++) {
       const identity = {commit, run: expected.run, attempt: expected.attempt, profile, platform, suite: row.name, tree};
       if (profile === 'fresh-merge') Object.assign(identity, {base, head: commit});
       const execution = await executePhysicalHarness({binary: '/project/rust/target/debug/deps/unit-abcdef01',
-        arguments: row.filters, identity, shard, count: row.shards, invoke: fakeNative()});
-      result.push({seal: {identity, shard, count: row.shards, result: 'success'}, executions: [execution], expectedBinaries: ['unit']});
+        arguments: row.filters, identity, shard, count, invoke: fakeNative()});
+      result.push({seal: {identity, shard, count, result: 'success'}, executions: [execution], expectedBinaries: ['unit']});
     }
   }
   return result;
@@ -120,8 +124,10 @@ test('empty selections execute zero tests and exact names cannot admit longer ne
 });
 
 test('the full physical union authenticates every platform, source identity, test outcome and native inventory', async () => {
+  const original = await groups(originalPolicy);
+  assert.deepEqual(verifyPhysicalShardUnion(original, originalPolicy, expected), {cells: 64, inventories: 21});
   const valid = await groups();
-  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 64, inventories: 21});
+  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 96, inventories: 21});
   const mutations = [
     rows => rows.pop(),
     rows => rows.push(structuredClone(rows[0])),
@@ -142,7 +148,8 @@ test('the full physical union authenticates every platform, source identity, tes
     assert.throws(() => verifyPhysicalShardUnion(rows, policy, expected));
   }
   const testOnly = valid.filter(row => row.seal.identity.profile === 'test');
-  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 42);
+  assert.equal(verifyPhysicalShardUnion(original.filter(row => row.seal.identity.profile === 'test'), originalPolicy, {...expected, profiles: ['test']}).cells, 42);
+  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 58);
   assert.throws(() => verifyPhysicalShardUnion(testOnly, policy, expected), /missing/u);
 });
 
@@ -194,7 +201,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(cell, 'execution.all-inventory.log'), listing(execution.allInventory));
     }
     const options = {...expected, profiles: ['test']};
-    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 42, inventories: 15});
+    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 58, inventories: 15});
     // The artifact reader must apply the same inventory-bound normalization as
     // the live producer without modifying or discarding authenticated stdout.
     const annotatedIndex = rows.findIndex(row => row.executions[0].outcomes.length > 0);
@@ -213,7 +220,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(annotatedCell, 'execution.stdout.log'), stdout);
       writeFileSync(path.join(annotatedCell, 'execution.lino'), source);
       writeFileSync(path.join(annotatedCell, 'seal.lino'), structuredDataToLino(seal));
-      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 42, inventories: 15});
+      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 58, inventories: 15});
     } finally {
       for (const [file, bytes] of originals) writeFileSync(path.join(annotatedCell, file), bytes);
     }
@@ -230,20 +237,26 @@ test('retained complete stdout, listings, configuration and receipt seals reject
 });
 
 test('exact-attempt admission requires every physical job and retains legitimate original conditional scopes', () => {
+  const originalJobs = [];
+  for (const platform of originalPolicy.platforms) for (const row of originalPolicy.suites) for (let shard = 1; shard <= row.shards; shard++) originalJobs.push({name: `Rust / Test (${platform}, ${row.name})`, status: 'completed', conclusion: 'success'});
+  assert.deepEqual(readShardAdmission(originalJobs, originalPolicy), ['test']);
   const jobs = [];
-  for (const platform of policy.platforms) for (const row of policy.suites) for (let shard = 1; shard <= row.shards; shard++) jobs.push({name: `Rust / Test (${platform}, ${row.name})`, status: 'completed', conclusion: 'success'});
+  for (const platform of policy.platforms) for (const row of policy.suites) for (let shard = 1; shard <= physicalShardCount(policy, 'test', row.name, platform); shard++) jobs.push({name: `Rust / Test (${platform}, ${row.name})`, status: 'completed', conclusion: 'success'});
   assert.deepEqual(readShardAdmission(jobs, policy), ['test']);
   assert.deepEqual(readShardAdmission([{name: 'Rust / Fresh Merge Simulation', status: 'completed', conclusion: 'skipped'}], policy), []);
   assert.throws(() => readShardAdmission(jobs.slice(1), policy), /scheduled physical/u);
   const changed = structuredClone(jobs);changed[0].name = changed.at(-1).name;
   assert.throws(() => readShardAdmission(changed, policy), /logical scopes/u);
-  const fresh = Array.from({length: policy.freshMergeShards}, () => ({name: 'Rust / Fresh Merge Simulation', status: 'completed', conclusion: 'success'}));
+  const originalFresh = Array.from({length: policy.freshMergeShards}, () => ({name: 'Rust / Fresh Merge Simulation', status: 'completed', conclusion: 'success'}));
+  assert.deepEqual(readShardAdmission(originalFresh, originalPolicy), ['fresh-merge']);
+  const fresh = Array.from({length: physicalShardCount(policy, 'fresh-merge', 'all')}, () => ({name: 'Rust / Fresh Merge Simulation', status: 'completed', conclusion: 'success'}));
   assert.deepEqual(readShardAdmission(fresh, policy), ['fresh-merge']);
   const indexed = fresh.map((job, index) => ({...job, name: `${job.name} (${index + 1})`}));
   assert.deepEqual(readShardAdmission(indexed, policy), ['fresh-merge']);
   for (const mutate of [
     rows => {rows[0].name = rows[1].name;},
     rows => {rows[0].name = 'Rust / Fresh Merge Simulation (9)';},
+    rows => {rows[0].name = 'Rust / Fresh Merge Simulation (17)';},
     rows => {rows[0].name = 'Rust / Fresh Merge Simulation';},
   ]) {const rows = structuredClone(indexed);mutate(rows);assert.throws(() => readShardAdmission(rows, policy), /physical identities/u);}
 });
@@ -251,7 +264,9 @@ test('exact-attempt admission requires every physical job and retains legitimate
 test('supplemental physical cells preserve original native oracle, doctest and example owners and all deadlines', () => {
   const source = readFileSync(new URL('../../.github/workflows/rust.yml', import.meta.url), 'utf8');
   const jobs = new Map(parseWorkflow(source).map(job => [job.id, job]));
-  for (const [id, cells] of [['test', 27], ['coverage', 9]]) {
+  assert.equal(originalPolicy.platforms.length * originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 27);
+  assert.equal(originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 9);
+  for (const [id, cells] of [['test', 43], ['coverage', 17]]) {
     const job = jobs.get(id);
     assert.equal([...job.header.matchAll(/- suite: physical\n/gu)].length, cells);
     assert.match(job.header, /suite: \[grammar, inference, generative, translation, remaining\]/u);
@@ -262,7 +277,8 @@ test('supplemental physical cells preserve original native oracle, doctest and e
   assert.equal(native.length, 9);
   for (const step of native) assert.match(step.text, /matrix.suite == 'translation' && matrix.os == 'ubuntu-latest'/u);
   for (const name of ['Run doc tests', 'Check examples']) assert.match(jobs.get('test').steps.find(step => step.name === name).text, /matrix.suite == 'remaining'/u);
-  assert.match(jobs.get('fresh-merge').header, /physical_shard: \[1, 2, 3, 4, 5, 6, 7, 8\]/u);
+  assert.equal(originalPolicy.freshMergeShards, 8);
+  assert.match(jobs.get('fresh-merge').header, /physical_shard: \[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16\]/u);
   const caller = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
   assert.match(caller, /acceptance:[\s\S]*?needs: \[js, rust,/u);
   assert.match(caller, /attempts\/\$GITHUB_RUN_ATTEMPT\/jobs\?per_page=100/u);

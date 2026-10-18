@@ -3,6 +3,7 @@ import test from 'node:test';
 import {relocateCheckedModuleImports} from './overlay.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {readReviewedOverlayProviderSources,reviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
 import {createCheckedModuleOverlay} from './overlay.mjs';
@@ -30,11 +31,12 @@ test('reviewed provider revisions preserve historical receipts and refuse every 
 });
 
 test('the collection renderer revision restores all five complete preceding providers by its exact inverse',()=>{
- const current=reviewedOverlayProviderPolicy.revisions.at(-1),previous=reviewedOverlayProviderPolicy.revisions.at(-2);
+ const current=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='b51d48140220bf2ac071334d79d28aa77273c00e'),previous=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='b87d3499746d56e8f303464343c8edfecef84a8a');
  assert.equal(current.sourceCommit,'b51d48140220bf2ac071334d79d28aa77273c00e');
  assert.equal(previous.sourceCommit,'b87d3499746d56e8f303464343c8edfecef84a8a');
  assert.deepEqual(current.providers.map(row=>row.module),previous.providers.map(row=>row.module));
- const policySource=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const root=new URL('../../',import.meta.url);
+ const policySource=execFileSync('git',['show','fdf6b2868d9804bc62eceb9209b8ebce9274b8ed:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const marker="    { sourceCommit: 'b51d48140220bf2ac071334d79d28aa77273c00e',\n";
  assert.equal(policySource.split(marker).length,2);
  const start=policySource.indexOf(marker),end=policySource.indexOf('\n  ],\n};',start);
@@ -87,7 +89,7 @@ test('the collection renderer revision restores all five complete preceding prov
  };
  const changed=[],sourceRoot=new URL('../../js/src/',import.meta.url);
  for(const[index,row]of current.providers.entries()){
-  const source=readFileSync(new URL(row.module,sourceRoot),'utf8');
+  const source=execFileSync('git',['show',current.sourceCommit+':js/src/'+row.module],{cwd:root,encoding:'utf8'});
   assert.equal(createHash('sha256').update(source).digest('hex'),row.sourceSha256);
   let restored=source;
   if(Object.hasOwn(replacements,row.module)){
@@ -100,6 +102,33 @@ test('the collection renderer revision restores all five complete preceding prov
    row.module+': the exact contextual inverse restores the complete preceding source');
  }
  assert.deepEqual(changed,['translation/emit-javascript.js','translation/emit-rust.js']);
+ // The current providers additionally retain exact inverses to that complete
+ // collection-renderer revision; no historical input or comparison is removed.
+ const reviewed=reviewedOverlayProviderPolicy.revisions.at(-1);
+ assert.equal(reviewed.sourceCommit,'fdf6b2868d9804bc62eceb9209b8ebce9274b8ed');
+ assert.equal(reviewed.inverse.length,3);
+ assert.deepEqual(reviewed.providers.map(row=>row.module),current.providers.map(row=>row.module));
+ assert.deepEqual([...new Set(reviewed.inverse.map(row=>row.module))],['typed-program-checked-projection.js','translation/emit-rust.js']);
+ for(const[index,row]of reviewed.providers.entries()){
+  const source=readFileSync(new URL(row.module,sourceRoot),'utf8');
+  assert.equal(createHash('sha256').update(source).digest('hex'),row.sourceSha256);
+  let restored=source;
+  for(const inverse of reviewed.inverse.filter(inverse=>inverse.module===row.module)){
+   assert.equal(restored.split(inverse.from).length,2,'each exact inverse has one complete contextual match');
+   restored=restored.replace(inverse.from,inverse.to);
+  }
+  const bytes=execFileSync('git',['show',current.sourceCommit+':js/src/'+row.module],{cwd:root});
+  assert.deepEqual(Buffer.from(restored),bytes,'every byte of the original reviewed provider is restored');
+  assert.equal(createHash('sha256').update(restored).digest('hex'),current.providers[index].sourceSha256);
+ }
+ const actualPolicy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const appendedMarker="    { sourceCommit: 'fdf6b2868d9804bc62eceb9209b8ebce9274b8ed',\n";
+ assert.equal(actualPolicy.split(appendedMarker).length,2);
+ const appendedStart=actualPolicy.indexOf(appendedMarker),appendedEnd=actualPolicy.indexOf('\n  ],\n};',appendedStart);
+ assert.ok(appendedEnd>appendedStart);
+ const restoredPolicy=actualPolicy.slice(0,appendedStart)+actualPolicy.slice(appendedEnd+1);
+ assert.equal(createHash('sha256').update(restoredPolicy).digest('hex'),'5874eb2978ba2cf2ba2bded4073e567e2a03c89705ded1229f4fb9b55684bcea');
+ assert.equal(restoredPolicy,policySource,'the complete historical registrations and admission reader remain byte exact');
  for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
   const bytes=readFileSync(new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);

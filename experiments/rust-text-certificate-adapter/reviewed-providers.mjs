@@ -67,6 +67,47 @@ export const reviewedOverlayProviderPolicy = {
         { module: 'translation/emit-javascript.js', sourceSha256: '9b0ed7afe95aacf71364e3444fa0571d3856a32967a7cffceef17e38625b1018' },
         { module: 'translation/emit-rust.js', sourceSha256: '67fde3f36f800ab6667ae8b43171f32291440342b029f4abff6d0b7292d9eff2' },
       ] },
+    { sourceCommit: 'fdf6b2868d9804bc62eceb9209b8ebce9274b8ed',
+      review: "Reviewed every provider change against b51d48140220bf2ac071334d79d28aa77273c00e: the checked projection passes the actual reference-semantics flag to preserve selected payload allocation boundaries, and the Rust emitter delegates its original complete array-join branch to shared generated decisions and renderers. Three exact contextual inverses restore all five complete preceding provider sources byte for byte. The other three providers, every historical overlay, unique hook and certificate/raw-owner/descriptor/saved-LinkId requirement remain unchanged. Existing original-program checks retain complete checked graphs and target output; native execution remains CI-only.",
+      providers: [
+        {
+          "module": "typed-program-links.js",
+          "sourceSha256": "a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458"
+        },
+        {
+          "module": "typed-program-links-validation.js",
+          "sourceSha256": "0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3"
+        },
+        {
+          "module": "typed-program-checked-projection.js",
+          "sourceSha256": "fb2636a04a45c38c5dda0d99c239eb6dc97f5d3d441245f6855fde22789e3691"
+        },
+        {
+          "module": "translation/emit-javascript.js",
+          "sourceSha256": "9b0ed7afe95aacf71364e3444fa0571d3856a32967a7cffceef17e38625b1018"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "sourceSha256": "69315a498f97e54b16f2fb8f3d7454d84e818ddce7bb89904b4ae85279af1f79"
+        }
+      ],
+      inverse: [
+        {
+          "module": "typed-program-checked-projection.js",
+          "from": "  // shared native projection boundary. Explicit product qualifiers always\n  // require whole-program rechecking, including after a true-to-false edit.\n  if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;\n  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true});\n  function projectType(value) {\n    if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };\n    if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };\n",
+          "to": "  // shared native projection boundary. Explicit product qualifiers always\n  // require whole-program rechecking, including after a true-to-false edit.\n  if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;\n  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace});\n  function projectType(value) {\n    if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };\n    if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';\nimport { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';\nimport { renderArrayFromMapping } from './array-from-rules.js';\nimport { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';\nimport { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';\nimport { renderRecordField, renderRecordValue } from './record-emission-rules.js';\nimport { readUnionTargetRefusal } from './type-syntax-rules.js';\n",
+          "to": "import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';\nimport { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';\nimport { renderArrayFromMapping } from './array-from-rules.js';\nimport { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation } from './primitive-method-rules.js';\nimport { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';\nimport { renderRecordField, renderRecordValue } from './record-emission-rules.js';\nimport { readUnionTargetRefusal } from './type-syntax-rules.js';\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "      this.usesArray = true;\n      if (['slice', 'indexOf', 'lastIndexOf', 'includes'].includes(e.op)) this.usesStandardArray = true;\n      if (e.op === 'join') {\n        const stringElement = e.object.type.element.kind === 'string';\n        const operand = (value, role) => readPrimitiveArrayJoinOperandForm(this.utf16Strings, stringElement, role) === 'borrow' ? this.borrow(value) : this.receiver(value);\n        const text = (name, type) => {\n          const form = readPrimitiveArrayJoinElementForm(type.kind);\n          const empty = form === 'empty' || form === 'optional' ? this.literal({ type: { kind: 'string' }, value: '' }) : '';\n          if (form === 'optional' && type.absence === 'both') this.usesOptional = true;\n          const present = form === 'optional' ? text('ml_present', type.element) : form === 'empty' ? ''\n            : this.expr({ k: 'toString', arg: { k: 'var', name, type }, type: { kind: 'string' } });\n          return renderPrimitiveArrayJoinElement(type.kind, type.absence ?? '', name, present, empty);\n        };\n        const object = operand(e.object, 'object');\n        const separator = operand(e.args[0], 'separator');\n        return renderPrimitiveArrayJoinExpression(this.utf16Strings, stringElement, object, separator,\n          stringElement ? '' : text('ml_value', e.object.type.element));\n      }\n      if (e.op === 'slice') return renderPrimitiveMethodExpression('Rust', 'array', e.op, this.borrow(e.object), e.args.map((arg) => this.expr(arg)).join(', '));\n      if (['indexOf', 'lastIndexOf', 'includes'].includes(e.op)) {\n",
+          "to": "      this.usesArray = true;\n      if (['slice', 'indexOf', 'lastIndexOf', 'includes'].includes(e.op)) this.usesStandardArray = true;\n      if (e.op === 'join') {\n        if (e.object.type.element.kind === 'string') return this.utf16Strings ? `crate::ml_string::join(${this.borrow(e.object)}, ${this.borrow(e.args[0])})` : `${this.receiver(e.object)}.join(${this.receiver(e.args[0])}.as_str())`;\n        const text = (name, type) => {\n          if (type.kind === 'unit') return this.literal({ type: { kind: 'string' }, value: '' });\n          if (type.kind === 'option') {\n            const empty = this.literal({ type: { kind: 'string' }, value: '' });\n            if (type.absence === 'both') { this.usesOptional = true; return `match ${name} { crate::MlOptional::Value(ml_present) => ${text('ml_present', type.element)}, _ => ${empty} }`; }\n            return `match ${name} { Some(ml_present) => ${text('ml_present', type.element)}, None => ${empty} }`;\n          }\n          return this.expr({ k: 'toString', arg: { k: 'var', name, type }, type: { kind: 'string' } });\n        };\n        const values = `${this.receiver(e.object)}.iter().cloned().map(|ml_value| ${text('ml_value', e.object.type.element)}).collect::<Vec<_>>()`;\n        return this.utf16Strings ? `crate::ml_string::join(&${values}, ${this.borrow(e.args[0])})` : `(${values}).join(${this.receiver(e.args[0])}.as_str())`;\n      }\n      if (e.op === 'slice') return renderPrimitiveMethodExpression('Rust', 'array', e.op, this.borrow(e.object), e.args.map((arg) => this.expr(arg)).join(', '));\n      if (['indexOf', 'lastIndexOf', 'includes'].includes(e.op)) {\n"
+        }
+      ] },
   ],
 };
 
