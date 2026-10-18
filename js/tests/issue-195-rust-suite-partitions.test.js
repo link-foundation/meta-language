@@ -14,6 +14,7 @@ import { rustEvidencePartitionPolicy } from '../scripts/generate-rust-evidence-p
 import { executePhysicalHarness, matchesLogicalFilters, physicalShardCount, readHarnessInventory,
   readPhysicalShardPolicy, readShardAdmission, selectPhysicalTests, verifyHarnessExecution, verifyPhysicalShardUnion } from '../scripts/rust-test-shards.mjs';
 import { structuredDataRecordToLino } from '../src/structured-data-records.js';
+import { readStructuredDataLino } from '../src/structured-data-links.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const policy = readPhysicalShardPolicy();
@@ -74,15 +75,18 @@ test('Rust evidence partition policy preserves every existing native scope and c
 
 test('Windows translation expands only its physical cells and preserves every old test under the original deadline', () => {
   assert.deepEqual(policy.suites.find(row => row.name === 'translation').platformShards,
-    [{platform: 'windows-latest', shards: 8},{platform:'ubuntu-latest',shards:8}]);
+    [{platform:'windows-latest',profile:'coverage',shards:8},
+      {platform:'windows-latest',profile:'test',shards:16},{platform:'ubuntu-latest',shards:8}]);
   for (const platform of policy.platforms) for (const suite of policy.suites) {
     const expanded = platform === 'windows-latest' && ['translation','remaining'].includes(suite.name)
-      || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name);
-    const expected = expanded ? 8 : suite.shards;
+      || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name)
+      || platform === 'macos-latest' && suite.name === 'grammar';
+    const expected = platform === 'windows-latest' && suite.name === 'translation' ? 16 : expanded ? 8 : suite.shards;
     assert.equal(physicalShardCount(policy, 'test', suite.name, platform), expected);
   }
   for (const suite of policy.suites) assert.equal(physicalShardCount(policy, 'coverage', suite.name, 'ubuntu-latest'),
     ['grammar','translation'].includes(suite.name) ? 8 : suite.shards);
+  assert.equal(physicalShardCount(policy,'coverage','translation','windows-latest'),8);
   for (let previous = 1; previous <= 4; previous++) {
     const before = selectPhysicalTests(inventory, previous, 4).map(row => row.name).sort();
     const after = [...selectPhysicalTests(inventory, previous, 8), ...selectPhysicalTests(inventory, previous + 4, 8)].map(row => row.name).sort();
@@ -90,6 +94,14 @@ test('Windows translation expands only its physical cells and preserves every ol
   }
   const workflow = readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8');
   for (const shard of [5, 6, 7, 8]) assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
+  for(let previous=1;previous<=8;previous++)assert.deepEqual(
+    [...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort(),
+    selectPhysicalTests(inventory,previous,8).map(row=>row.name).sort());
+  for(const shard of [9,10,11,12,13,14,15,16])assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
+  const deadline=readStructuredDataLino(readFileSync(path.join(root,'parity/fixtures/native-translation-deadline-2026-10-18.lino'),'utf8'));
+  assert.equal(deadline.run,39113660901);assert.equal(deadline.job,117640079261);
+  assert.equal(deadline.oldCount,8);assert.equal(deadline.newCount,16);
+  assert.equal(deadline.annotations[0].message,'The job has exceeded the maximum execution time of 15m0s');
   assert.ok(workflow.includes("    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\n"));
   for (const override of [{platform: 'unknown', shards: 8}, {platform: 'windows-latest', shards: 3}, {platform: 'windows-latest', shards: 8.5}]) {
     const altered = structuredClone(policy);altered.suites.find(row => row.name === 'translation').platformShards = [override];
@@ -113,10 +125,11 @@ test('fresh merge physical expansion preserves the complete original eight-cell 
 
 test('instrumented grammar expansion subdivides every original coverage cell without changing native test scope',()=>{
   assert.deepEqual(policy.suites.find(row=>row.name==='grammar').platformShards,
-    [{platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:8}]);
+    [{platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:8},
+      {platform:'macos-latest',profile:'test',shards:8}]);
   assert.equal(physicalShardCount(policy,'coverage','grammar','ubuntu-latest'),8);
   assert.equal(physicalShardCount(policy,'test','grammar','ubuntu-latest'),8);
-  for(const platform of ['macos-latest','windows-latest'])assert.equal(physicalShardCount(policy,'test','grammar',platform),4);
+  for(const [platform,count] of [['macos-latest',8],['windows-latest',4]])assert.equal(physicalShardCount(policy,'test','grammar',platform),count);
   for(let previous=1;previous<=4;previous++)assert.deepEqual(
     [...selectPhysicalTests(inventory,previous,8),...selectPhysicalTests(inventory,previous+4,8)].map(row=>row.name).sort(),
     selectPhysicalTests(inventory,previous,4).map(row=>row.name).sort());

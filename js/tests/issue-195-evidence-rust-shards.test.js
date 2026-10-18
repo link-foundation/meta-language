@@ -54,6 +54,18 @@ async function groups(configuration = policy) {
 
 test('the physical policy retains all five original disjoint filters and unchanged small suites', () => {
   assert.deepEqual(policy.suites.map(row => [row.name, row.shards]), [['grammar', 4], ['inference', 1], ['generative', 1], ['translation', 4], ['remaining', 4]]);
+  assert.equal(physicalShardCount(policy, 'test', 'grammar', 'macos-latest'), 8);
+  assert.equal(physicalShardCount(policy, 'coverage', 'grammar', 'macos-latest'), 4);
+  const deadline = readStructuredDataLino(readFileSync(new URL('../../parity/fixtures/native-grammar-deadline-2026-10-18.lino', import.meta.url), 'utf8'));
+  assert.equal(deadline.run, 39113660901);
+  assert.equal(deadline.job, 117640078610);
+  assert.equal(deadline.profile, 'test');
+  assert.equal(deadline.platform, 'macos-latest');
+  assert.equal(deadline.suite, 'grammar');
+  assert.equal(deadline.shard, 2);
+  assert.equal(deadline.oldCount, 4);
+  assert.equal(deadline.newCount, 8);
+  assert.equal(deadline.annotations[0].message, 'The job has exceeded the maximum execution time of 15m0s');
   for (const row of inventory) assert.equal(policy.suites.filter(suite => matchesLogicalFilters(row.name, suite.filters)).length, 1, row.name);
   for (const count of [1, 4, 8]) {
     const selected = Array.from({length: count}, (_, index) => selectPhysicalTests(inventory, index + 1, count)).flat();
@@ -127,7 +139,7 @@ test('the full physical union authenticates every platform, source identity, tes
   const original = await groups(originalPolicy);
   assert.deepEqual(verifyPhysicalShardUnion(original, originalPolicy, expected), {cells: 64, inventories: 21});
   const valid = await groups();
-  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 96, inventories: 21});
+  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 108, inventories: 21});
   const mutations = [
     rows => rows.pop(),
     rows => rows.push(structuredClone(rows[0])),
@@ -149,7 +161,7 @@ test('the full physical union authenticates every platform, source identity, tes
   }
   const testOnly = valid.filter(row => row.seal.identity.profile === 'test');
   assert.equal(verifyPhysicalShardUnion(original.filter(row => row.seal.identity.profile === 'test'), originalPolicy, {...expected, profiles: ['test']}).cells, 42);
-  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 58);
+  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 70);
   assert.throws(() => verifyPhysicalShardUnion(testOnly, policy, expected), /missing/u);
 });
 
@@ -201,7 +213,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(cell, 'execution.all-inventory.log'), listing(execution.allInventory));
     }
     const options = {...expected, profiles: ['test']};
-    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 58, inventories: 15});
+    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 70, inventories: 15});
     // The artifact reader must apply the same inventory-bound normalization as
     // the live producer without modifying or discarding authenticated stdout.
     const annotatedIndex = rows.findIndex(row => row.executions[0].outcomes.length > 0);
@@ -220,7 +232,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(annotatedCell, 'execution.stdout.log'), stdout);
       writeFileSync(path.join(annotatedCell, 'execution.lino'), source);
       writeFileSync(path.join(annotatedCell, 'seal.lino'), structuredDataToLino(seal));
-      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 58, inventories: 15});
+      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 70, inventories: 15});
     } finally {
       for (const [file, bytes] of originals) writeFileSync(path.join(annotatedCell, file), bytes);
     }
@@ -266,7 +278,7 @@ test('supplemental physical cells preserve original native oracle, doctest and e
   const jobs = new Map(parseWorkflow(source).map(job => [job.id, job]));
   assert.equal(originalPolicy.platforms.length * originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 27);
   assert.equal(originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 9);
-  for (const [id, cells] of [['test', 43], ['coverage', 17]]) {
+  for (const [id, cells] of [['test', 55], ['coverage', 17]]) {
     const job = jobs.get(id);
     assert.equal([...job.header.matchAll(/- suite: physical\n/gu)].length, cells);
     assert.match(job.header, /suite: \[grammar, inference, generative, translation, remaining\]/u);

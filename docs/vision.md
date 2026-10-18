@@ -777,7 +777,12 @@ Twenty-eight raw-owner refusals remain separate JavaScript host checks.
 The actual mixed interface has two scalar and fifteen owned vector inputs and
 a nested vector result. A reversible first-observed bit dictionary retains all
 row boundaries while bounding the process protocol to one MiB; the complete
-mechanical consumer has a four MiB source bound. Heavy planning and injected
+mechanical consumer has a four MiB source bound. Its authenticated block table
+may use a derived index over complete ordered u64 words, retaining first-match
+duplicate semantics and every word bit. Bounded phase diagnostics use standard
+error; the original standard output protocol and process limits remain intact.
+Index construction and native execution time still require CI evidence.
+Heavy planning and injected
 contracts run in CI, and only explicit native authorization permits compilation,
 execution and an observation artifact. Native graph capture, production
 integration and resource improvement still require their own evidence.
@@ -2626,7 +2631,22 @@ eight-cell successors for Windows remaining tests, Ubuntu grammar and translatio
 tests, and Ubuntu instrumented grammar and translation coverage. Fresh Merge similarly
 subdivides its original eight partitions into sixteen after a twenty-minute job
 timeout. Both expansions preserve the exact union of every old hash partition,
-all original filters and deadlines. Other platform and suite assignments retain
+all original filters and deadlines. After CI39113660901's macOS grammar test
+partition exceeded its fifteen-minute job deadline, that profile also uses
+eight physical cells. Its exact timeout annotation and source identity are
+retained in
+[`native-grammar-deadline-2026-10-18.lino`](../parity/fixtures/native-grammar-deadline-2026-10-18.lino).
+Its logical filters, fifteen-minute deadline and complete inventory union remain
+the acceptance contract; the successor's native timing still requires CI.
+The same run's first Windows translation partition also exhausted fifteen
+minutes. Its sixteen-cell successor separates the observed Lean and seeded
+generative workloads from reconciliation while preserving each old eight-cell
+inventory as an exact two-cell union. Windows coverage keeps its existing
+eight-cell assignment. The frozen
+[`native-translation-deadline-2026-10-18.lino`](../parity/fixtures/native-translation-deadline-2026-10-18.lino)
+records the automatic timeout; the unchanged deadline and native work still
+require successful successor execution.
+Other platform and suite assignments retain
 their original counts. Fresh Merge uses the same fetched base, head and merged tree,
 retaining all doctests and example linking in its first partition. Each Cargo
 test executable supplies its complete inventory before partitioning. Links
