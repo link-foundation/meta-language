@@ -54,6 +54,38 @@ export function assertionVersionPolicy() {
         expected: ['TS2820'],
         evidence: 'js/package.json and js/package-lock.json pin TypeScript 7.0.2. This singleton specifies the required CI diagnostic for the same unchanged closed pure Rust const predicates 99 consumer; it is not a local TypeScript 7 execution observation.',
       }],
+    }, {
+      id: 'agda-corrected-layout-oracle',
+      subject: 'Agda complete scanner layout source oracle',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'agda-1-3-3-complete-layout-state',
+        minimum: '1.3.3', maximum: '1.3.3', includeMinimum: true, includeMaximum: true,
+        expected: {
+          profile: 'complete-layout-state', crate: 'tree-sitter-agda 1.3.3',
+          revision: '47802091de0cb8ac2533d67ac37e65692c5902c4', treeSitter: '0.27.0',
+          parserSha256: 'ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980',
+          originalScannerSha256: '2f8cf5eba1412dcbe69bf3b392e7ca0c9664ff7f340c9848885c929a12a223ae',
+          scannerSha256: '3ca7f8e7f0dbe37a5d42e966b0eae83402365ed2c19e8860f649119a51a6f018',
+          patchSha256: 'f1747d924a997bea118bba9522def550a41f729536dccb64c0af60694cb1b9c6',
+          sourceManifestSha256: 'c9aabb15fb9396ae42ce365684928a081d0f42527d3bcdc99f370c0bfa9c9d21',
+        },
+        evidence: 'Authored current obligations, not prior execution observations: the independently built complete layout-state oracle must cleanly accept the same four retained valid Agda layout sources and equal every original accepted native row. CI39113660901 job117640078958 proved that the queue-only scanner already accepts the retained postulate source without recovery, so the released-oracle recovery expectation cannot be applied to a corrected scanner. The original historical fixture and released WebAssembly profile remain unchanged.',
+      }],
+    }, {
+      id: 'agda-released-wasm-oracle',
+      subject: 'Agda historical released WebAssembly oracle',
+      comparison: { kind: 'release', precision: 3 },
+      expectations: [{
+        id: 'agda-1-3-3-released-wasm-layout-recovery',
+        minimum: '1.3.3', maximum: '1.3.3', includeMinimum: true, includeMaximum: true,
+        expected: {
+          profile: 'released-wasm', crate: 'tree-sitter-agda', version: '1.3.3', treeSitter: '0.27.0',
+          parserSha256: 'ab45429d4acee054bcc0d93dabc7b818051b8c98aca3695b3a08b5ba47315980',
+          wasmSha256: '9587dfbf28a91100dc4cb8717288ae9d99693e1d8aade1396443a5142fe28f7a',
+        },
+        evidence: 'The existing authenticated grammar lock pins this exact released Agda1.3.3 WebAssembly artifact. Existing JavaScript focused match/rejection/divergence assertions remain in this historical sandboxed profile; this does not select the unsafe original native C scanner or apply historical recovery expectations to corrected scanner sources.',
+      }],
     }],
     observationBindings: [{
       testId: 'i195-assertion-explicit-version-ranges-tooling-antlr-command-order',

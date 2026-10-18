@@ -7,6 +7,7 @@ import { NATIVE_GRAMMARS, buildNativeGrammarCorpusSources, buildNativeGrammarFix
 import { nativeRows, oracleRows, oracleRecovers, nativeCorpusFailure } from '../scripts/native-grammar-rows.mjs';
 import { agdaLayoutOracleSnapshot } from '../scripts/agda-layout-oracle.mjs';
 import { checkAgdaLayoutOracleSources } from '../scripts/build-agda-layout-oracle.mjs';
+import { readAgdaCurrentOracleFixture, selectAgdaReleasedOracleAssertion } from '../scripts/agda-oracle-profiles.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const read = (file) => readFileSync(resolveProjectDataPath(new URL(`../../${file}`, import.meta.url)), 'utf8');
@@ -23,6 +24,7 @@ const observe = (assertions, testName) => recordIssue195Observations({
 });
 
 test('native Agda grammar and scanners are canonical generated Links Notation', (context) => {
+  selectAgdaReleasedOracleAssertion();
   assert.equal(renderGrammarLinks(parseGrammarLinks(listing)), listing);
   assert.deepEqual(fixture, buildNativeGrammarFixture(entry));
   checkAgdaLayoutOracleSources();
@@ -30,6 +32,7 @@ test('native Agda grammar and scanners are canonical generated Links Notation', 
 });
 
 test('native Agda focused trees match the independent oracle and preserve every byte', (context) => {
+  selectAgdaReleasedOracleAssertion();
   for (const { source, rows } of fixture.matches) {
     assert.equal(oracleRecovers(source, 'Agda'), false, JSON.stringify(source));
     assert.deepEqual(oracleRows(source, 'Agda'), rows);
@@ -46,6 +49,7 @@ test('native Agda focused trees match the independent oracle and preserve every 
 });
 
 test('native Agda rejects and losslessly recovers invalid focused sources', (context) => {
+  selectAgdaReleasedOracleAssertion();
   for (const { source, recovered } of fixture.rejections) {
     assert.equal(oracleRecovers(source, 'Agda'), true, JSON.stringify(source));
     assert.equal(parser.parseTree(source).ok, false, JSON.stringify(source));
@@ -83,6 +87,7 @@ test('native Agda matches the independent oracle on every pinned upstream corpus
 });
 
 test('native Agda focused layout divergences remain explicit and lossless', (context) => {
+  selectAgdaReleasedOracleAssertion();
   for (const { source, rows } of fixture.divergences) {
     assert.equal(oracleRecovers(source, 'Agda'), true);
     const outcome = parser.parseTree(source);
@@ -91,4 +96,19 @@ test('native Agda focused layout divergences remain explicit and lossless', (con
     assert.equal(text(outcome.tree), source);
   }
   observe(['nativeAgdaDeclaredDivergencesLossless'], context.name);
+});
+
+test('Agda complete layout oracle cleanly matches all retained current focused rows under its exact source profile', () => {
+  const current=readAgdaCurrentOracleFixture();
+  for(const {source,rows} of current.matches){
+    const oracle=agdaLayoutOracleSnapshot(source);
+    assert.equal(oracle.recovers,false,JSON.stringify(source));
+    assert.deepEqual(oracle.rows,rows,JSON.stringify(source));
+    const outcome=parser.parseTree(source);
+    assert.equal(outcome.ok,true,JSON.stringify(source));
+    assert.deepEqual(outcome.ambiguities,[]);
+    assert.deepEqual(nativeRows(outcome.tree,source,fixture),rows,JSON.stringify(source));
+    assert.equal(text(outcome.tree),source);
+  }
+  for(const {source} of current.rejections)assert.equal(agdaLayoutOracleSnapshot(source).recovers,true,JSON.stringify(source));
 });

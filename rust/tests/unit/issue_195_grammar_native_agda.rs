@@ -8,10 +8,92 @@ use meta_language::{
     render_grammar_links,
 };
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/agda.lino");
 const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/agda.lino");
 const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/agda-corpus.lino");
+const CURRENT_ORACLE_PROFILE: &str =
+    include_str!("../../../parity/fixtures/native-grammars/agda-current-oracle-profile.lino");
+
+fn current_agda_oracle_fixture() -> Value {
+    let current: Value = super::project_data::read_project_data(CURRENT_ORACLE_PROFILE).unwrap();
+    let historical: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let original_matches = historical["matches"].as_array().unwrap();
+    let original_divergences = historical["divergences"].as_array().unwrap();
+    let current_matches = current["matches"].as_array().unwrap();
+    assert_eq!(original_divergences.len(), 4);
+    assert_eq!(
+        current_matches.len(),
+        original_matches.len() + original_divergences.len()
+    );
+    assert_eq!(&current_matches[..original_matches.len()], original_matches);
+    for (actual, original) in current_matches[original_matches.len()..]
+        .iter()
+        .zip(original_divergences)
+    {
+        assert_eq!(actual["source"], original["source"]);
+        assert_eq!(actual["rows"], original["rows"]);
+    }
+    assert_eq!(current["rejections"], historical["rejections"]);
+    assert_eq!(current["divergences"], serde_json::json!([]));
+    assert_eq!(
+        current["oracleProfile"]["historicalDivergences"],
+        historical["divergences"]
+    );
+    let manifest_bytes = include_str!("../../vendor/tree-sitter-agda-layout/source-manifest.lino");
+    let manifest: Value = super::project_data::read_project_data(manifest_bytes).unwrap();
+    let policy_bytes = include_str!("../../../parity/assertion-version-ranges.lino");
+    let policy: Value = super::project_data::read_project_data(policy_bytes).unwrap();
+    let profile = &current["oracleProfile"];
+    let assertion = policy["assertions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["id"] == "agda-corrected-layout-oracle")
+        .unwrap();
+    let expectations = assertion["expectations"].as_array().unwrap();
+    assert_eq!(expectations.len(), 1);
+    let expected = &expectations[0];
+    assert_eq!(expected["minimum"], "1.3.3");
+    assert_eq!(expected["maximum"], "1.3.3");
+    assert_eq!(expected["includeMinimum"], true);
+    assert_eq!(expected["includeMaximum"], true);
+    assert_eq!(profile["source"], expected["expected"]);
+    for field in [
+        "crate",
+        "revision",
+        "parserSha256",
+        "originalScannerSha256",
+        "scannerSha256",
+    ] {
+        assert_eq!(profile["source"][field], manifest[field]);
+    }
+    assert_eq!(profile["source"]["treeSitter"], manifest["treeSitterCli"]);
+    assert_eq!(
+        profile["source"]["sourceManifestSha256"],
+        format!("{:x}", Sha256::digest(manifest_bytes))
+    );
+    assert_eq!(
+        profile["source"]["patchSha256"],
+        format!(
+            "{:x}",
+            Sha256::digest(include_str!(
+                "../../vendor/tree-sitter-agda-layout/layout-state.patch"
+            ))
+        )
+    );
+    assert_eq!(
+        profile["applicabilityPolicySha256"],
+        format!("{:x}", Sha256::digest(policy_bytes))
+    );
+    assert_eq!(profile["historicalFixture"]["bytes"], FIXTURE.len());
+    assert_eq!(
+        profile["historicalFixture"]["sha256"],
+        format!("{:x}", Sha256::digest(FIXTURE))
+    );
+    current
+}
 
 fn observe(assertions: &[&str], test_name: &str) {
     record(&Observation {
@@ -40,10 +122,8 @@ fn native_agda_focused_trees_match_oracle_and_preserve_every_byte() {
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
     assert!(agda_layout_source_oracle::queue_growth_control());
-    oracle_agrees(
-        &agda_layout_source_oracle::QUEUE_SAFE_LANGUAGE.into(),
-        &fixture,
-    );
+    let current = current_agda_oracle_fixture();
+    oracle_agrees(&agda_layout_source_oracle::LANGUAGE.into(), &current);
     for case in cases(&fixture, "matches") {
         let tree = parse(&parser, source(case)).expect("the native grammar accepts the source");
         assert_eq!(
