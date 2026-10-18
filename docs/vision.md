@@ -1723,6 +1723,22 @@ remain outside the experiment. Decoded-plane text stays within
 the owned graph. The experimental concrete view includes all its members;
 public default projection and native integration remain the gaps above.
 
+The separate [native outcome transport experiment](../experiments/grammar-outcome-network/native-transport/README.md)
+derives exhaustive borrowed visitors from the actual concrete syntax of all nine
+native outcome declarations and an inspectable Links wire policy. Its proposed
+encoder counts expanded occurrences, depth and scalar bytes before allocating
+the graph. The original number conversion is extracted from its actual source
+owner with a complete parent inverse. A CI-only scratch overlay keeps an explicit
+frozen source baseline separate from the current checkout and compares ordered
+values, binary64 bits and each native graph's text/binary replay with fresh
+JavaScript parser results and independent constructed boundaries. Registered
+external oracle inputs remain authenticated temporary downloads. Native execution
+must precede any evidence claim. The finite candidate rejects depth limits above
+256; arbitrary-depth safety, physical container-alias equivalence, a paired public
+API and public default CST integration remain open. Neither production sources
+nor the existing generic codec's limits and number semantics change through this
+experiment.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,

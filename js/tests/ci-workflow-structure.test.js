@@ -56,9 +56,12 @@ function checkRustWorkflowTimeouts(parsed) {
     ['coverage', 15], ['coverage-report', 10], ['build', 10], ['auto-release', 30], ['manual-release', 30],
     ['changelog-pr', 10], ['deploy-docs', 20]];
   const originalNames = original.map(([name]) => name), actualNames = [...parsed.keys()];
-  assert.deepEqual(actualNames.filter(name => name !== 'original-link-raw-observations'), originalNames);
-  assert.deepEqual(actualNames, [...originalNames.slice(0, 10), 'original-link-raw-observations', ...originalNames.slice(10)]);
-  for (const [name, limit] of [...original, ['original-link-raw-observations', 15]]) {
+  const precedingNames = actualNames.filter(name => name !== 'native-grammar-outcome-experiment');
+  assert.deepEqual(precedingNames.filter(name => name !== 'original-link-raw-observations'), originalNames);
+  const preceding = [...originalNames.slice(0, 10), 'original-link-raw-observations', ...originalNames.slice(10)];
+  assert.deepEqual(precedingNames, preceding);
+  assert.deepEqual(actualNames, [...preceding.slice(0, 7), 'native-grammar-outcome-experiment', ...preceding.slice(7)]);
+  for (const [name, limit] of [...original, ['original-link-raw-observations', 15], ['native-grammar-outcome-experiment', 20]]) {
     const values = [...parsed.get(name).header.matchAll(/^ {4}timeout-minutes: (.+)$/gmu)].map(match => match[1]);
     if (name !== 'test') { assert.deepEqual(values, [String(limit)], name);continue; }
     const expression = "${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}";
@@ -232,6 +235,9 @@ function nativeInputJobChain(paths, { event = 'pull_request', javascript = 'succ
 test('registered native experiments and Links data select the complete prerequisite chain without changing ordinary exclusions', () => {
   for (const file of ['experiments/original-link-identity/policy.mjs', 'experiments/original-link-identity/data/policy.lino',
     'experiments/rust-text-value-projection/native-observations.test.mjs', 'experiments/source-native-observations.mjs',
+    'experiments/grammar-outcome-network/native-transport/wire/generate.mjs',
+    'experiments/grammar-outcome-network/native-transport/wire/wire-policy.lino',
+    'experiments/grammar-outcome-network/native-transport/probe/native-outcome-probe.rs',
     'parity/fixtures/link-network-binary.lino', 'rust/src/data/link-network-binary-schema.lino']) {
     const actual = nativeInputJobChain([file]);
     assert.deepEqual(actual.selection, { rust: true, native_test_inputs_changed: true }, file);
@@ -241,6 +247,7 @@ test('registered native experiments and Links data select the complete prerequis
     assert.equal(nativeInputJobChain([file], { input: false }).test, false, 'the new input closes the actual old gate-chain gap');
   }
   for (const file of ['experiments/repro.mjs', 'experiments/repro.lino', 'js/experiments/repro.mjs', 'docs/notes.md',
+    'experiments/grammar-outcome-network/native-transport/README.md',
     'experiments/original-link-identity/README.md', 'parity/README.md', 'js/src/plain.js']) {
     const actual = nativeInputJobChain([file]);assert.equal(actual.selection.native_test_inputs_changed, false, file);assert.equal(actual.test, false, file);
   }
@@ -260,8 +267,11 @@ test('the optional native-input workflow interface preserves defaults, JavaScrip
   assert.match(ci.get('rust').header, /native_test_inputs_changed: \$\{\{ needs\.changes\.outputs\.native_test_inputs_changed == 'true' \}\}/u);
   assert.ok(needs(ci.get('rust')).includes('js'));assert.doesNotMatch(nativeInputCondition(ci.get('rust')), /always\(|cancelled\(/u);
   const changed = [...rust].filter(([, job]) => job.header.includes('inputs.native_test_inputs_changed')).map(([name]) => name).sort();
-  assert.deepEqual(changed.filter(name => name !== 'original-link-raw-observations'), ['cargo-lock', 'check', 'test']);
-  assert.deepEqual(changed, ['cargo-lock', 'check', 'original-link-raw-observations', 'test']);
+  const preceding = changed.filter(name => name !== 'native-grammar-outcome-experiment');
+  assert.deepEqual(preceding.filter(name => name !== 'original-link-raw-observations'), ['cargo-lock', 'check', 'test']);
+  assert.deepEqual(preceding, ['cargo-lock', 'check', 'original-link-raw-observations', 'test']);
+  assert.deepEqual(changed, ['cargo-lock', 'check', 'native-grammar-outcome-experiment', 'original-link-raw-observations', 'test']);
+  assert.deepEqual(needs(rust.get('native-grammar-outcome-experiment')), ['detect-changes', 'cargo-lock', 'check']);
   assert.deepEqual(needs(rust.get('check')), ['detect-changes', 'cargo-lock']);assert.deepEqual(needs(rust.get('test')), ['detect-changes', 'changelog', 'cargo-lock', 'check']);
   for (const [name, fields] of [['cargo-lock', ['rs-changed', 'toml-changed', 'workflow-changed', 'any-code-changed']], ['check', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']], ['test', ['any-code-changed', 'rs-changed', 'toml-changed', 'workflow-changed']]]) {
     const expression = nativeInputCondition(rust.get(name));assert.match(expression, /!cancelled\(\)/u);assert.match(expression, /github\.event_name == 'push'/u);assert.match(expression, /github\.event_name == 'workflow_dispatch'/u);
@@ -1523,6 +1533,7 @@ test('the complete Rust text source oracle is mandatory after JavaScript and its
     .replace('|experiments/original-link-symbol-projection/', '')
     .replace('|experiments/original-link-table-projection/', '')
     .replace('|experiments/original-link-complete-table-projection/', '')
+    .replace('|experiments/grammar-outcome-network/native-transport/', '')
     .replace('|experiments/binary-metadata-buffer/', '')
     .replace('|js/scripts/generate-link-network-binary-rules\\.mjs$', '')
     .replace('|js/scripts/binary-metadata-candidate-styles\\.mjs$', '')
@@ -2227,7 +2238,8 @@ test('new native source paths preserve the exact old selector and reach every na
   assert.ok(step);
   const additions = ['experiments/original-link-complete-table-projection/', 'experiments/binary-metadata-buffer/',
     'js/scripts/generate-link-network-binary-rules\\.mjs$', 'js/scripts/binary-metadata-candidate-styles\\.mjs$',
-    'js/scripts/source-text-byte-library-style\\.mjs$', 'js/scripts/product-rule-style-corrections\\.mjs$'];
+    'js/scripts/source-text-byte-library-style\\.mjs$', 'js/scripts/product-rule-style-corrections\\.mjs$',
+    'experiments/grammar-outcome-network/native-transport/'];
   let original = step.run;
   const classifier = /rust_paths='([^']+)'/u.exec(step.run)[1], matches = new RegExp(classifier, 'u');
   for (const addition of additions) {
@@ -2238,7 +2250,7 @@ test('new native source paths preserve the exact old selector and reach every na
   assert.equal(original.split(inner).length, 2);
   original = original.replace(inner, '');
   assert.equal(createHash('sha256').update(original).digest('hex'), 'd66cc6c3e7004b34a9914cefb9548150933b57939f700112f7704493906ed633',
-    'removing only the six registered additions restores every old selector byte');
+    'removing only the seven registered additions restores every old selector byte');
   const paths = [
     'experiments/original-link-complete-table-projection/data/native-definitions.lino',
     'experiments/original-link-complete-table-projection/projection.test.mjs',
