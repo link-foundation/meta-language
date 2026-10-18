@@ -1670,6 +1670,22 @@ mapping provenance and the `sourcePlanes` table in the public language CST.
 Retain every existing ordinary CST contract while adding that transport in both
 packages; successful generic archive parsing alone does not establish this path.
 
+The bounded four-language archive controls keep complete C, JavaScript, Rust
+and TypeScript grammar definitions together in one space, remove the original
+grammar maps, and compare full qualified outcomes and independent CST rows after
+reload. Their selected sources come from existing pinned fixtures; they do not
+establish whole-language coverage. JavaScript also compares every public default
+CST node and physical token on these inputs. Native execution remains a CI check.
+
+The JavaScript-first [owned outcome experiment](../experiments/grammar-outcome-network/README.md)
+uses the public parser registry to attach an entire source-free mapped result
+to an actual default concrete source network. An explicit association names the
+concrete owner, ordered physical tokens, structured-data root and every owned
+graph member. Reload isolates that closed graph, checks its mapping derivations
+and binds its physical bytes to the host tokens. Decoded-plane text stays within
+the owned graph. The experimental concrete view includes all its members;
+public default projection and native integration remain the gaps above.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,

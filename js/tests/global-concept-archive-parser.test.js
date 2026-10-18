@@ -7,7 +7,9 @@ import { createGlobalConceptSpace, createGlobalConceptSpaceParser,
 import { readStructuredDataLino, structuredDataToLino } from '../src/structured-data-links.js';
 import { encodeFormalConceptDefinition } from '../src/formal-concept-definition.js';
 import { readGrammarSourceDefaultMatching } from '../src/translation/grammar-selection-rules.js';
-import { nativeGrammarText } from '../src/native-grammar-parser.js';
+import { isNativeGrammar, nativeGrammarText } from '../src/native-grammar-parser.js';
+import { parseProgrammingLanguage } from '../src/programming-language-parser.js';
+import { languageEntry } from '../src/language-catalog.js';
 import { nativeRows } from '../scripts/native-grammar-rows.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { authoredGrammarSelectionListing, grammarSelectionFixture,
@@ -296,3 +298,60 @@ test('one existing native JavaScript fixture executes from the archived shipped 
   assert.deepEqual(nativeRows(actual.tree.root, sample.source, fixture), sample.rows);
   assert.deepEqual(archivedTreeBytes(actual.tree), [...encoder.encode(sample.source)]);
 });
+
+test('one archive retains complete C JavaScript Rust and TypeScript grammars and independent concrete rows', () => {
+  const fixtures = ['c', 'javascript', 'rust', 'typescript'].map(id => {
+    const fixture = readProjectData(new URL(`../../parity/fixtures/native-grammars/${id}.lino`, import.meta.url));
+    const sample = fixture.matches.find(({ source, rows }) => source.length > 0
+      && encoder.encode(source).length <= 64 && rows.length >= 4);
+    assert.ok(sample, id + ': an existing independent fixture supplies a bounded nontrivial CST');
+    assert.equal(languageEntry(fixture.language).grammars[0].id, 'native-' + id);
+    assert.equal(isNativeGrammar('native-' + id), true);
+    return { id: 'native-' + id, fixture, sample };
+  });
+  const sources = fixtures.map(({ id, fixture }) => ({ id, language: fixture.language,
+    grammar: parseGrammarLinks(nativeGrammarText(id)) }));
+  const space = createGlobalConceptSpace(sources, { records: [] });
+  const limits = { stepLimit: 4_000_000 };
+  const expected = fixtures.map(({ id, fixture, sample }, index) => {
+    const grammar = sources[index].grammar;
+    const ordinary = compileGrammar(grammar).parseTree(sample.source);
+    assert.equal(ordinary.ok, true, id + ': ' + JSON.stringify(ordinary.rejection));
+    assert.deepEqual(nativeRows(ordinary.tree, sample.source, fixture), sample.rows);
+    const parsed = parseProgrammingLanguage(sample.source, fixture.language);
+    assert.equal(parsed.tree.flags.hasError, false, id + ': default public CST uses no recovery');
+    assert.equal(parsed.tokens.map(token => token.text).join(''), sample.source,
+      id + ': all physical default CST tokens remain in source order');
+    assert.deepEqual(publicArchiveConcreteRows(parsed.tree), sample.rows,
+      id + ': every public CST kind field flag and byte interval retains its independent oracle');
+    const qualified = compileGrammar(grammar, { ...limits, grammarName: id, globalConceptSpace: space }).parseTree(sample.source);
+    assert.equal(qualified.ok, true, id + ': ' + JSON.stringify(qualified.rejection));
+    return qualified;
+  });
+  const archive = globalConceptSpaceToLinks(space), mappings = { ...space.mappings };
+  for (const { grammar } of sources) grammar.rules.clear();
+  sources.length = 0;
+  space.sources.length = 0;
+  space.concepts.length = 0;
+  const restored = readGlobalConceptSpaceLinks(archive, { records: [] });
+  assert.deepEqual(restored.mappings, mappings);
+  assert.equal(globalConceptSpaceToLinks(restored), archive);
+  for (const [index, { id, fixture, sample }] of fixtures.entries()) {
+    const actual = createGlobalConceptSpaceParser(archive, id, { ...limits, records: [] }).parseTree(sample.source);
+    assert.deepEqual(actual, expected[index], id + ': the complete outcome survives removal of all original grammar maps');
+    assert.deepEqual(nativeRows(actual.tree.root, sample.source, fixture), sample.rows);
+    assert.deepEqual(archivedTreeBytes(actual.tree), [...encoder.encode(sample.source)]);
+    assert.deepEqual(readStructuredDataLino(structuredDataToLino(actual)), actual,
+      id + ': every qualified result field remains inspectable Links data');
+  }
+});
+
+function publicArchiveConcreteRows(node, depth = 0, rows = []) {
+  if (node.gap) return rows;
+  const flags = node.flags;
+  rows.push([depth, node.field ?? null, node.term, node.named ? 1 : 0,
+    node.span.byteRange.start, node.span.byteRange.end,
+    (flags.isError ? 'E' : '') + (flags.isMissing ? 'M' : '') + (flags.isExtra ? 'X' : '')]);
+  for (const child of node.children) publicArchiveConcreteRows(child, depth + 1, rows);
+  return rows;
+}
