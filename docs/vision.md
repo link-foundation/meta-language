@@ -1698,6 +1698,13 @@ and binds its physical bytes to the host tokens. Token identities must belong
 to the actual owner's Syntax/Document containment graph, with the codec's node
 bound also limiting that traversal; equal foreign bytes cannot prove ownership.
 This complete-root profile requires physical coordinates beginning at zero.
+Physical extraction traverses iteratively under the codec's node and byte
+bounds and concatenates leaf bytes once. Oversized payload manifests refuse
+before member cloning; expanded structured values retain the decoder's earlier
+resource checks. This avoids repeated complete-source copies at nested nodes.
+Ordinary UTF-8 results retain an absent source-plane field. Their checker uses
+a temporary root-only envelope derived from actual owned bytes; mapped results
+still require their complete source declarations and derivations.
 Both accepted and rejected ambiguous results retain their complete trees,
 alternatives, diagnostics and source planes. Results without a concrete tree
 remain outside the experiment. Decoded-plane text stays within
@@ -2793,6 +2800,10 @@ The initial translation, native grammar and conformance test groups run in disjo
 partitions. Their union retains every original file exactly once, and each job
 keeps the existing time limit. File partitioning does not change assertions,
 fixtures, runtime obligations or the requirement scope.
+The initial native grammar group uses six file partitions after
+[CI39125289901's captured deadline](../parity/fixtures/javascript-native-grammar-deadline-2026-10-18.lino).
+Each original three-way partition is exactly the union of two current
+partitions. The JavaScript job deadline remains fifteen minutes.
 Three initial translation partitions retain the fifteen-minute deadline. Each
 transports feedback with a LiNo receipt of the exact commit, selected files and
 payload hashes. A required merge validates every partition, permits an empty

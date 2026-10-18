@@ -23,6 +23,15 @@ source bytes and derivations, and refusal before mutation or accessor execution.
 Accepted and rejected ambiguous parses retain their complete trees,
 alternatives, ambiguities, rejection details and decoded source planes.
 Outcomes without a concrete tree remain outside this finite experiment.
+Physical extraction uses one bounded iterative traversal and one final byte
+concatenation, avoiding a full source copy at each nested node. The codec's
+node and byte limits also bound this traversal and physical buffers. The
+reader refuses an oversized payload manifest before cloning its members;
+the existing decoder still checks the complete expanded value, including
+repeated strings, before mapping validation or physical extraction.
+Ordinary UTF-8 outcomes keep their absent `sourcePlanes` field absent. The
+reader derives a root-only checker envelope from the actual owned bytes;
+mapped outcomes still require every declared source plane and derivation.
 
 `concreteLinksWithOwnedGrammarOutcomes` is an experimental projection. The
 tests explicitly retain the fact that the public default projection still

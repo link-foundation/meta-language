@@ -10,6 +10,8 @@ import {DecoratorSet} from '../../js/src/decorators.js';
 import {decorateGrammar} from '../../js/src/grammar-decorators.js';
 import {renderLinksExpression} from '../../js/src/grammar-links.js';
 import {createGlobalConceptSpace,globalConceptSpaceToLinks,createGlobalConceptSpaceParser} from '../../js/src/global-concept-space.js';
+import {compileGrammar} from '../../js/src/grammar.js';
+import {encodeStructuredDataLinks} from '../../js/src/structured-data-encode.js';
 import {insertOwnedGrammarOutcome,readOwnedGrammarOutcome,concreteLinksWithOwnedGrammarOutcomes} from './owned-outcome.mjs';
 
 function composedGrammar(candidate){
@@ -148,4 +150,48 @@ test('equal bytes cannot substitute unrelated owners or foreign physical token i
  }
  assert.equal(network.len(),count);
  assert.deepEqual(readOwnedGrammarOutcome(network,association).outcome,original.outcome);
+});
+
+test('owned transport bounds physical expansion and refuses oversized membership before cloning payloads',()=>{
+ const {network,association}=attachedFixture();
+ const members=readOwnedGrammarOutcome(network,association).members;
+ const withoutPlanes={...readOwnedGrammarOutcome(network,association).outcome};
+ delete withoutPlanes.sourcePlanes;
+ const originalCount=network.len();
+ const original=readOwnedGrammarOutcome(network,association);
+ assert.throws(()=>insertOwnedGrammarOutcome(network,original.owner,original.tokens,withoutPlanes),TypeError);
+ assert.equal(network.len(),originalCount);
+ let clones=0;
+ const metadata=members.map(id=>network.link(id).metadata());
+ for(const value of metadata)value.clone=()=>{clones++;throw new Error('payload clone executed before membership limit');};
+ try{
+  assert.throws(()=>readOwnedGrammarOutcome(network,association,{codec:{nodeLimit:1}}),/owned payload node resource limit/);
+  assert.equal(clones,0);
+ }finally{
+  for(const value of metadata)delete value.clone;
+ }
+ const source='['.repeat(12)+JSON.stringify(Array(4).fill('x'.repeat(4096)))+']'.repeat(12);
+ const outcome=compileGrammar(parseGrammarLinks(nativeGrammarText('native-json'))).parseTree(source);
+ assert.equal(outcome.ok,true);
+ assert.equal(Object.hasOwn(outcome,'sourcePlanes'),false);
+ const codec={byteLimit:8192};
+ assert.ok(Buffer.byteLength(source)>codec.byteLimit);
+ // Actual repeated token strings fit the encoder's unique-scalar budget.
+ // The existing decoder must still refuse their larger expanded value before
+ // mapping or physical extraction; nested containers keep original bytes.
+ assert.ok(encodeStructuredDataLinks(outcome,codec).network.links().length>0);
+ const host=LinkNetwork.parse(source,'JSON');
+ const tokens=host.links().filter(link=>link.metadata().linkType===LinkType.SourceToken).map(link=>link.id());
+ const owner=host.links().find(link=>link.metadata().linkType===LinkType.Syntax&&link.metadata().span?.byteRange.start===0&&link.metadata().span?.byteRange.end===Buffer.byteLength(source)).id();
+ const count=host.len();
+ assert.throws(()=>insertOwnedGrammarOutcome(host,owner,tokens,outcome,{codec}),/expanded data resource limit/);
+ assert.equal(host.len(),count);
+ assert.equal(host.reconstructText(),source);
+ const attached=insertOwnedGrammarOutcome(host,owner,tokens,outcome);
+ assert.deepEqual(readOwnedGrammarOutcome(host,attached).outcome,outcome);
+ for(const restored of [LinkNetwork.fromLino(host.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(host))]){
+  assert.equal(restored.reconstructText(),source);
+  assert.throws(()=>readOwnedGrammarOutcome(restored,attached,{codec}),/expanded data resource limit/);
+  assert.deepEqual(readOwnedGrammarOutcome(restored,attached).outcome,outcome);
+ }
 });
