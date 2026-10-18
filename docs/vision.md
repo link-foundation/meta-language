@@ -1678,6 +1678,20 @@ input declares a source-sized expanded-traversal ceiling and records measured
 physical and expanded costs before replay; the reader takes an explicit caller
 budget. Default refusal and every source/owner replay check remain required.
 
+Source `sizeof` operations retain their actual operand CST, declaration owners,
+selected ABI and unsigned result-type basis as linked layout queries. Their byte
+size remains unresolved until object representation and layout are checked.
+The original lowerer remains intact; a size-query adapter records source-bound
+namespace refinements separately from the parser's selected type/expression
+shape. A visible value binding takes precedence over a type spelling, and a
+later or ambiguous declaration cannot supply the missing owner. Supported fixed
+object operands remain unevaluated; array extents, possibly variably modified
+types, unknown expressions and aggregate layout retain explicit obligations.
+No operand call or update executes during this source-only type derivation.
+Complete original source and test inputs remain available through reversible
+Links publication. This does not repair the public C parser's ambiguity choices
+or establish executable scanner translation.
+
 Simultaneous scanner eligibility belongs to one explicit parser continuation,
 including its caller returns, input range, scanner state and recovery phase.
 Close that continuation to its token boundaries before constructing an immutable
