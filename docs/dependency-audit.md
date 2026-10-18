@@ -72,7 +72,7 @@ they are.
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 86 | 0 | 0 | 86 |
+| Published artifact contents | 88 | 0 | 0 | 88 |
 
 ## JavaScript engines
 
@@ -812,6 +812,8 @@ they are.
 | `src/data/concept-records.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/formal-concept-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/foundation-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-order-fixtures.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/grammar-attribute-order-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lexer-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-lock.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/grammar-rule-composition-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
