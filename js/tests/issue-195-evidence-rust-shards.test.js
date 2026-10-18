@@ -139,7 +139,7 @@ test('the full physical union authenticates every platform, source identity, tes
   const original = await groups(originalPolicy);
   assert.deepEqual(verifyPhysicalShardUnion(original, originalPolicy, expected), {cells: 64, inventories: 21});
   const valid = await groups();
-  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 108, inventories: 21});
+  assert.deepEqual(verifyPhysicalShardUnion(valid, policy, expected), {cells: 116, inventories: 21});
   const mutations = [
     rows => rows.pop(),
     rows => rows.push(structuredClone(rows[0])),
@@ -161,7 +161,7 @@ test('the full physical union authenticates every platform, source identity, tes
   }
   const testOnly = valid.filter(row => row.seal.identity.profile === 'test');
   assert.equal(verifyPhysicalShardUnion(original.filter(row => row.seal.identity.profile === 'test'), originalPolicy, {...expected, profiles: ['test']}).cells, 42);
-  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 70);
+  assert.equal(verifyPhysicalShardUnion(testOnly, policy, {...expected, profiles: ['test']}).cells, 78);
   assert.throws(() => verifyPhysicalShardUnion(testOnly, policy, expected), /missing/u);
 });
 
@@ -213,7 +213,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(cell, 'execution.all-inventory.log'), listing(execution.allInventory));
     }
     const options = {...expected, profiles: ['test']};
-    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 70, inventories: 15});
+    assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 78, inventories: 15});
     // The artifact reader must apply the same inventory-bound normalization as
     // the live producer without modifying or discarding authenticated stdout.
     const annotatedIndex = rows.findIndex(row => row.executions[0].outcomes.length > 0);
@@ -232,7 +232,7 @@ test('retained complete stdout, listings, configuration and receipt seals reject
       writeFileSync(path.join(annotatedCell, 'execution.stdout.log'), stdout);
       writeFileSync(path.join(annotatedCell, 'execution.lino'), source);
       writeFileSync(path.join(annotatedCell, 'seal.lino'), structuredDataToLino(seal));
-      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 70, inventories: 15});
+      assert.deepEqual(verifyPhysicalShardDirectory(directory, options), {cells: 78, inventories: 15});
     } finally {
       for (const [file, bytes] of originals) writeFileSync(path.join(annotatedCell, file), bytes);
     }
@@ -278,7 +278,7 @@ test('supplemental physical cells preserve original native oracle, doctest and e
   const jobs = new Map(parseWorkflow(source).map(job => [job.id, job]));
   assert.equal(originalPolicy.platforms.length * originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 27);
   assert.equal(originalPolicy.suites.reduce((sum, row) => sum + row.shards - 1, 0), 9);
-  for (const [id, cells] of [['test', 55], ['coverage', 17]]) {
+  for (const [id, cells] of [['test', 63], ['coverage', 17]]) {
     const job = jobs.get(id);
     assert.equal([...job.header.matchAll(/- suite: physical\n/gu)].length, cells);
     assert.match(job.header, /suite: \[grammar, inference, generative, translation, remaining\]/u);

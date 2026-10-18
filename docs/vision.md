@@ -2148,6 +2148,10 @@ declared assertion and fixture identities, authenticates its source and policy
 hashes, and checks the selected range independently of the incoming test name.
 Missing or forged version context is an error. These bounded bindings do not
 establish version coverage for assertions that have not yet been registered.
+Agda oracle profiles separately select exact released WebAssembly and corrected
+scanner source identities within the registered 1.3.3 singleton range. Their
+fixture derivation authenticates source, patch, runtime and policy hashes;
+authored expected rows remain separate from execution observations.
 
 - Native merged grammars run against pinned **independent** ANTLR, tree-sitter
   and official parser, compiler and prover corpora, and against real projects,
@@ -2646,6 +2650,11 @@ eight-cell assignment. The frozen
 [`native-translation-deadline-2026-10-18.lino`](../parity/fixtures/native-translation-deadline-2026-10-18.lino)
 records the automatic timeout; the unchanged deadline and native work still
 require successful successor execution.
+The first Ubuntu translation partition later passed all sixty-eight native tests
+in 525 seconds, then hit the same deadline during its final supplemental oracle.
+Its sixteen-cell successor keeps all nine supplemental oracles with their
+original owner and commands; Ubuntu translation coverage retains eight cells.
+The same frozen timeout receipt records this additional source-specific result.
 Other platform and suite assignments retain
 their original counts. Fresh Merge uses the same fetched base, head and merged tree,
 retaining all doctests and example linking in its first partition. Each Cargo
@@ -3262,7 +3271,15 @@ without relocating queued entries. A separate native queue-safe oracle derives
 only the existing authenticated queue-relocation patch from the pinned original
 scanner. Its original serialization, focused fixture rows, rejections and known
 divergences remain unchanged; the full corrected development oracle keeps its
-existing corpus role. An additional native control exercises the actual scanner
+existing corpus role. Current focused native checks also select that complete
+corrected scanner under an exact version and source profile. They require clean
+acceptance and every original accepted native row for the same four valid layout
+sources. Automatic profile derivation retains all historical matches, rejections
+and divergence records and reconstructs the entire original fixture byte for
+byte. Historical released WebAssembly recovery assertions retain their original
+scope; the queue-only oracle remains a growth-safety control. The new complete
+profile's native and WebAssembly row checks require CI execution.
+An additional native control exercises the actual scanner
 queue across wrapped one-element growth. Exact source inverses are checked in
 JavaScript; native execution and attribution of the Windows process abort remain
 CI questions. Its JavaScript source record selects fresh-process

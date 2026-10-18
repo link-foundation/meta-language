@@ -76,12 +76,13 @@ test('Rust evidence partition policy preserves every existing native scope and c
 test('Windows translation expands only its physical cells and preserves every old test under the original deadline', () => {
   assert.deepEqual(policy.suites.find(row => row.name === 'translation').platformShards,
     [{platform:'windows-latest',profile:'coverage',shards:8},
-      {platform:'windows-latest',profile:'test',shards:16},{platform:'ubuntu-latest',shards:8}]);
+      {platform:'windows-latest',profile:'test',shards:16},
+      {platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:16}]);
   for (const platform of policy.platforms) for (const suite of policy.suites) {
     const expanded = platform === 'windows-latest' && ['translation','remaining'].includes(suite.name)
       || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name)
       || platform === 'macos-latest' && suite.name === 'grammar';
-    const expected = platform === 'windows-latest' && suite.name === 'translation' ? 16 : expanded ? 8 : suite.shards;
+    const expected = ['windows-latest','ubuntu-latest'].includes(platform) && suite.name === 'translation' ? 16 : expanded ? 8 : suite.shards;
     assert.equal(physicalShardCount(policy, 'test', suite.name, platform), expected);
   }
   for (const suite of policy.suites) assert.equal(physicalShardCount(policy, 'coverage', suite.name, 'ubuntu-latest'),
@@ -98,6 +99,7 @@ test('Windows translation expands only its physical cells and preserves every ol
     [...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort(),
     selectPhysicalTests(inventory,previous,8).map(row=>row.name).sort());
   for(const shard of [9,10,11,12,13,14,15,16])assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
+  for(const shard of [9,10,11,12,13,14,15,16])assert.ok(workflow.includes('            os: ubuntu-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
   const deadline=readStructuredDataLino(readFileSync(path.join(root,'parity/fixtures/native-translation-deadline-2026-10-18.lino'),'utf8'));
   assert.equal(deadline.run,39113660901);assert.equal(deadline.job,117640079261);
   assert.equal(deadline.oldCount,8);assert.equal(deadline.newCount,16);

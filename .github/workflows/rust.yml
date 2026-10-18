@@ -851,6 +851,46 @@ jobs:
             physical_shard: 8
             filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
           - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 9
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 10
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 11
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 12
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 13
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 14
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 15
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 16
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
             os: windows-latest
             logical_suite: remaining
             physical_shard: 5
