@@ -17,8 +17,12 @@ const encoded = value => structuredDataToLino(value);
 const read = file => readStructuredDataLino(readFileSync(file, 'utf8'));
 export function readPhysicalShardPolicy() {return read(policyPath);}
 
-export function physicalShardCount(policy, profile, suite) {
-  if (profile === 'fresh-merge') return policy.freshMergeShards;
+export function physicalShardCount(policy, profile, suite, platform = null) {
+  if (profile === 'fresh-merge') {
+    const count=policy.freshMergeExpansion ?? policy.freshMergeShards;
+    requireValue(Number.isSafeInteger(count) && count >= policy.freshMergeShards, 'invalid fresh merge shard expansion');
+    return count;
+  }
   if (profile === 'evidence') {
     requireValue(suite === 'all' && Number.isSafeInteger(policy.evidence?.shards) && policy.evidence.shards > 0
       && policy.evidence.unit === 'top-level native test module' && Array.isArray(policy.evidence.sharedScopes), 'invalid complete evidence suite policy');
@@ -27,7 +31,17 @@ export function physicalShardCount(policy, profile, suite) {
   requireValue(['test', 'coverage'].includes(profile), 'unknown execution profile');
   const row = policy.suites.find(row => row.name === suite);
   requireValue(row, 'unknown logical suite');
-  return row.shards;
+  const overrides = row.platformShards ?? [];
+  requireValue(Array.isArray(overrides) && overrides.every(entry => entry && typeof entry === 'object'
+    && policy.platforms.includes(entry.platform) && (entry.profile === undefined || ['test','coverage'].includes(entry.profile))
+    && Number.isSafeInteger(entry.shards) && entry.shards >= row.shards)
+    && new Set(overrides.map(entry => JSON.stringify([entry.platform,entry.profile??null]))).size === overrides.length,
+  'invalid platform shard expansion');
+  if (platform === null) return row.shards;
+  requireValue(policy.platforms.includes(platform), 'unknown physical platform');
+  const matches=overrides.filter(entry => entry.platform === platform && (entry.profile === undefined || entry.profile === profile));
+  requireValue(matches.length <= 1,'overlapping platform shard expansions');
+  return matches[0]?.shards ?? row.shards;
 }
 
 export function readHarnessInventory(output) {
@@ -160,7 +174,7 @@ function context(environment = process.env) {
   const profile = environment.META_LANGUAGE_SHARD_PROFILE;
   const suite = environment.META_LANGUAGE_SHARD_SUITE;
   const shard = Number(environment.META_LANGUAGE_SHARD_INDEX);
-  const count = physicalShardCount(policy, profile, suite);
+  const count = physicalShardCount(policy, profile, suite, environment.META_LANGUAGE_SHARD_PLATFORM);
   selectPhysicalTests([], shard, count);
   const directory = path.join(repository, 'issue-195-artifacts/rust-physical-shards', `${profile}-${environment.META_LANGUAGE_SHARD_PLATFORM}-${suite}-${shard}`);
   return {policy, profile, suite, shard, count, directory, identity: shardIdentity(environment)};
@@ -279,16 +293,17 @@ export function readShardAdmission(jobs, policy) {
   for (const [profile, pattern] of definitions) {
     const active = jobs.filter(job => pattern.test(job.name) && job.conclusion !== 'skipped');
     if (!active.length) continue;
-    const expected = profile === 'evidence' ? physicalShardCount(policy, profile, 'all') : profile === 'fresh-merge' ? policy.freshMergeShards
-      : policy.suites.reduce((sum, row) => sum + row.shards, 0) * (profile === 'test' ? policy.platforms.length : 1);
+    const expected = ['evidence','fresh-merge'].includes(profile) ? physicalShardCount(policy, profile, 'all')
+      : (profile === 'test' ? policy.platforms : ['ubuntu-latest']).reduce((sum, platform) => sum
+        + policy.suites.reduce((subtotal, row) => subtotal + physicalShardCount(policy, profile, row.name, platform), 0), 0);
     requireValue(active.length === expected, 'missing or duplicate scheduled physical jobs');
     const expectedNames = profile === 'evidence' ? Array.from({length: expected}, (_, index) => `Evidence Stage (rust-suite - ${index + 1}/${expected})`)
-      : profile === 'fresh-merge' ? Array(policy.freshMergeShards).fill('Rust / Fresh Merge Simulation')
-      : (profile === 'test' ? policy.platforms : [null]).flatMap(platform => policy.suites.flatMap(row =>
-        Array(row.shards).fill(profile === 'test' ? `Rust / Test (${platform}, ${row.name})` : `Rust / Code Coverage (${row.name})`)));
+      : profile === 'fresh-merge' ? Array(expected).fill('Rust / Fresh Merge Simulation')
+      : (profile === 'test' ? policy.platforms : ['ubuntu-latest']).flatMap(platform => policy.suites.flatMap(row =>
+        Array(physicalShardCount(policy, profile, row.name, platform)).fill(profile === 'test' ? `Rust / Test (${platform}, ${row.name})` : `Rust / Code Coverage (${row.name})`)));
     let actualNames = active.map(job => job.name);
     if (profile === 'fresh-merge' && actualNames.some(name => name !== 'Rust / Fresh Merge Simulation')) {
-      const indexed = Array.from({length: policy.freshMergeShards}, (_, index) => `Rust / Fresh Merge Simulation (${index + 1})`);
+      const indexed = Array.from({length: expected}, (_, index) => `Rust / Fresh Merge Simulation (${index + 1})`);
       requireValue(JSON.stringify([...actualNames].sort()) === JSON.stringify(indexed.sort()), 'changed scheduled fresh merge physical identities');
       actualNames = actualNames.map(() => 'Rust / Fresh Merge Simulation');
     }
@@ -304,9 +319,9 @@ export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, 
     && new Set(profiles).size === profiles.length, 'unknown or duplicate admitted execution profiles');
   const expected = [];
   for (const profile of ['test', 'coverage'].filter(profile => profiles.includes(profile))) for (const platform of profile === 'test' ? policy.platforms : ['ubuntu-latest']) {
-    for (const row of policy.suites) for (let shard = 1; shard <= row.shards; shard++) expected.push([profile, platform, row.name, shard]);
+    for (const row of policy.suites) for (let shard = 1; shard <= physicalShardCount(policy, profile, row.name, platform); shard++) expected.push([profile, platform, row.name, shard]);
   }
-  if (profiles.includes('fresh-merge')) for (let shard = 1; shard <= policy.freshMergeShards; shard++) expected.push(['fresh-merge', 'ubuntu-latest', 'all', shard]);
+  if (profiles.includes('fresh-merge')) for (let shard = 1; shard <= physicalShardCount(policy,'fresh-merge','all'); shard++) expected.push(['fresh-merge', 'ubuntu-latest', 'all', shard]);
   if (profiles.includes('evidence')) for (let shard = 1; shard <= physicalShardCount(policy, 'evidence', 'all'); shard++) expected.push(['evidence', 'ubuntu-latest', 'all', shard]);
   const keys = new Set();
   const inventories = new Map();
@@ -320,7 +335,7 @@ export function verifyPhysicalShardUnion(groups, policy, {commit, run, attempt, 
     const key = JSON.stringify([identity.profile, identity.platform, identity.suite, seal.shard]);
     requireValue(!keys.has(key), 'duplicate physical cell');keys.add(key);
     requireValue(seal.result === 'success', 'failed physical cell');
-    const count = physicalShardCount(policy, identity.profile, identity.suite);
+    const count = physicalShardCount(policy, identity.profile, identity.suite, identity.platform);
     requireValue(seal.count === count, 'changed physical cell count');
     const scope = JSON.stringify([identity.profile, identity.platform, identity.suite]);
     const source = JSON.stringify({tree: identity.tree, base: identity.base ?? null, head: identity.head ?? null});

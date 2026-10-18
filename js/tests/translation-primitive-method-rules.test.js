@@ -12,12 +12,42 @@ import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { emitLean } from '../src/translation/emit-lean.js';
 import { emitRocq } from '../src/translation/emit-rocq.js';
+import {encodeTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-program-links.js';
+import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
+import {LinkNetwork} from '../src/network.js';
+import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 
 function observe(source) {
   const output = [];
   vm.runInNewContext(source, { console: { log: (...values) => output.push(values.map(String).join(' ')) } }, { timeout: 1000 });
   return output;
 }
+
+test('primitive array joins preserve number text nullable cells UTF16 separators and both complete source-free archives',()=>{
+  for(const [source,expected] of [
+    ["console.log([0,-0,NaN,Infinity,-Infinity,1e-7,1e21].join());",['0,0,NaN,Infinity,-Infinity,1e-7,1e+21']],
+    ["console.log([true,false,true].join('|'));",['true|false|true']],
+    ["console.log([1,null,undefined,2].join('|'));",['1|||2']],
+    ["console.log([null,undefined].join());",[',']],
+    ["console.log(['a','b'].join('😀'));",['a😀b']],
+    ["/** @param {number[]} values @returns {string} */ function join(values){return values.join('|');} console.log(join([1,2]));",['1|2']],
+    ["function separator(){console.log('separator');return '|';} console.log([1,2].join(separator()));",['separator','1|2']],
+  ]) {
+    assert.deepEqual(observe(source),expected);
+    const program=checkProgram(parseJavaScript(source)),rust=emitRust(program),packet=encodeTypedProgramLinks(program);
+    for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+      const restored=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});
+      assert.deepEqual(observe(emitJavaScript(restored).text),expected);
+      assert.deepEqual(emitRust(restored),rust);
+    }
+  }
+});
+
+test('primitive array joins retain structured conversion arity and non-scalar escape refusals',()=>{
+  assert.throws(()=>checkProgram(parseJavaScript("console.log([{value:1}].join());")),/array join: joining structured values/u);
+  assert.throws(()=>checkProgram(parseJavaScript("console.log([1].join(',',','));")),/expects 0 to 1 arguments/u);
+  assert.throws(()=>parseJavaScript("console.log(['\\uD800'].join());"),/not a scalar value/u);
+});
 
 test('primitive methods retain default slots, UTF-16 results and actual evaluation order', () => {
   const source = '/** @param {string} text @returns {string} */function pick(text){console.log(`${text}`);return text;}\n'

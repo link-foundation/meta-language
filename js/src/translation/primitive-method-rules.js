@@ -33,7 +33,7 @@ export function readPrimitiveCopySliceForm(kind) {
 
 /** @param {string} receiver @param {string} operation @returns {number} */
 export function readPrimitiveMethodMinimumArguments(receiver, operation) {
-  if (receiver === 'array' && operation === 'slice') return 0;
+  if (receiver === 'array' && (operation === 'slice' || operation === 'join')) return 0;
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return 1;
   if (receiver !== 'string') return -1;
   if (operation === 'split' || operation === 'slice' || operation === 'charCodeAt') return 0;
@@ -44,6 +44,7 @@ export function readPrimitiveMethodMinimumArguments(receiver, operation) {
 
 /** @param {string} receiver @param {string} operation @returns {number} */
 export function readPrimitiveMethodMaximumArguments(receiver, operation) {
+  if (receiver === 'array' && operation === 'join') return 1;
   if (receiver === 'array' && operation === 'slice') return 2;
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return 2;
   if (receiver !== 'string') return -1;
@@ -59,6 +60,7 @@ export function readPrimitiveMethodArgumentCount(receiver, operation) {
 
 /** @param {string} receiver @param {string} operation @param {number} index @returns {string} */
 export function readPrimitiveMethodCheckedArgumentKind(receiver, operation, index) {
+  if (receiver === 'array' && operation === 'join') return 'string';
   if (receiver === 'array' && operation === 'slice') return 'float';
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return index === 0 ? 'element' : 'float';
   if (receiver !== 'string') return '';
@@ -71,6 +73,7 @@ export function readPrimitiveMethodCheckedArgumentKind(receiver, operation, inde
 
 /** @param {string} receiver @param {string} operation @param {number} index @returns {string} */
 export function readPrimitiveMethodDefaultForm(receiver, operation, index) {
+  if (receiver === 'array' && operation === 'join') return 'string';
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf') && index === 1) return 'float';
   if (receiver === 'string' && operation === 'split' && index === 0) return 'absent';
   if (receiver === 'string' && operation === 'split' && index === 1) return 'float';
@@ -83,6 +86,7 @@ export function readPrimitiveMethodDefaultForm(receiver, operation, index) {
 
 /** @param {string} receiver @param {string} operation @param {number} index @returns {string} */
 export function readPrimitiveMethodDefaultValue(receiver, operation, index) {
+  if (receiver === 'array' && operation === 'join') return ',';
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf') && index === 1) return '0';
   if (receiver === 'array' && operation === 'lastIndexOf' && index === 1) return 'Infinity';
   if (receiver === 'string' && operation === 'split' && index === 1) return '4294967295';
@@ -96,6 +100,7 @@ export function readPrimitiveMethodDefaultValue(receiver, operation, index) {
 
 /** @param {string} receiver @param {string} operation @returns {string} */
 export function readPrimitiveMethodCheckedResultForm(receiver, operation) {
+  if (receiver === 'array' && operation === 'join') return 'string';
   if (receiver === 'array' && operation === 'slice') return 'receiver';
   if (receiver === 'array' && operation === 'includes') return 'bool';
   if (receiver === 'array' && (operation === 'indexOf' || operation === 'lastIndexOf')) return 'float';
@@ -108,6 +113,10 @@ export function readPrimitiveMethodCheckedResultForm(receiver, operation) {
 
 /** @param {string} receiver @param {string} operation @param {string} element @returns {string} */
 export function readPrimitiveMethodArgumentObligation(receiver, operation, element) {
+  if (receiver === 'array' && operation === 'join') {
+    const form = readPrimitiveArrayJoinElementForm(element);
+    return form === 'refuse' || form === 'optional' ? 'joining structured values needs their JavaScript string conversion and cycle semantics' : '';
+  }
   if (receiver !== 'array' || (operation !== 'includes' && operation !== 'indexOf' && operation !== 'lastIndexOf')) return '';
   if (element === 'array' || element === 'record' || element === 'map' || element === 'set' || element === 'data' || element === 'function') return 'object identity must be represented before searching arrays of objects';
   return '';
@@ -164,4 +173,41 @@ export function requirePrimitiveMethodUtf16(expression, receiver) {
 /** @param {string} receiver @param {string} operation @returns {string} */
 export function readPrimitiveMethodLoweringForm(receiver, operation) {
   return receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method';
+}
+
+/** @param {string} kind @returns {string} */
+export function readPrimitiveArrayJoinElementForm(kind) {
+  if (kind === 'string') return 'string';
+  if (kind === 'unit') return 'empty';
+  if (kind === 'option') return 'optional';
+  if (kind === 'bool' || kind === 'float' || kind === 'fixed' || kind === 'int' || kind === 'nat') return 'text';
+  return 'refuse';
+}
+
+/** @param {string} operation @returns {string} */
+export function readPrimitiveMethodArgumentObligationFeature(operation) {
+  return operation === 'join' ? 'array join' : 'array identity search';
+}
+
+/** @param {boolean} units @param {boolean} stringElement @param {string} operand @returns {string} */
+export function readPrimitiveArrayJoinOperandForm(units, stringElement, operand) {
+  return units && (operand === 'separator' || stringElement) ? 'borrow' : 'receiver';
+}
+
+/** @param {string} kind @param {string} absence @param {string} name @param {string} present @param {string} empty @returns {string} */
+export function renderPrimitiveArrayJoinElement(kind, absence, name, present, empty) {
+  const form = readPrimitiveArrayJoinElementForm(kind);
+  if (form === 'empty') return empty;
+  if (form === 'optional') {
+    if (absence === 'both') return 'match ' + name + ' { crate::MlOptional::Value(ml_present) => ' + present + ', _ => ' + empty + ' }';
+    return 'match ' + name + ' { Some(ml_present) => ' + present + ', None => ' + empty + ' }';
+  }
+  return present;
+}
+
+/** @param {boolean} units @param {boolean} stringElement @param {string} object @param {string} separator @param {string} elementText @returns {string} */
+export function renderPrimitiveArrayJoinExpression(units, stringElement, object, separator, elementText) {
+  if (stringElement) return units ? 'crate::ml_string::join(' + object + ', ' + separator + ')' : object + '.join(' + separator + '.as_str())';
+  const values = object + '.iter().cloned().map(|ml_value| ' + elementText + ').collect::<Vec<_>>()';
+  return units ? 'crate::ml_string::join(&' + values + ', ' + separator + ')' : '(' + values + ').join(' + separator + '.as_str())';
 }

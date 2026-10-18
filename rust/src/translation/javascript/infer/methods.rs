@@ -260,8 +260,16 @@ impl Inference {
         for (index, argument) in method.args.iter().enumerate() {
             #[allow(clippy::cast_precision_loss)]
             let position = index as f64;
-            match read_java_script_method_argument_kind(kind, &method.operation, position).as_str()
+            let argument_kind = if kind == "array"
+                && position < crate::translation::primitive_method_rules::read_primitive_method_argument_count(kind, &method.operation)
             {
+                crate::translation::primitive_method_rules::read_primitive_method_checked_argument_kind(
+                    kind, &method.operation, position,
+                )
+            } else {
+                read_java_script_method_argument_kind(kind, &method.operation, position)
+            };
+            match argument_kind.as_str() {
                 "float" => self.unify(argument, &Term::Known(FLOAT), method.place)?,
                 "number-value" => {
                     let value = self.numeric_value(argument);
@@ -294,6 +302,7 @@ impl Inference {
             let result = match form.as_str() {
                 "bool" => Term::Known(BOOL),
                 "float" => Term::Known(FLOAT),
+                "string" => Term::Known(STRING),
                 _ => receiver,
             };
             self.unify(&method.result, &result, method.place)?;

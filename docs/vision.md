@@ -819,6 +819,15 @@ checked current plan and reuses its entire carrier, premises, observations and
 consumer by identity and hash. Historical and current copy artifacts remain
 unchanged. The consuming oracle retains every fixture and the existing process,
 heap, source and output bounds; successful execution remains CI evidence.
+A further explicit profile mechanically borrows immutable internal parameters
+using the existing checked-library styles. Its compact Links receipt binds all
+106 definitions, actual style decisions and complete before/after source hashes.
+Every whole-function style has an exact inverse to the consuming predecessor;
+the public owned entry signature and every carrier, premise, expected result,
+fixture and process limit remain unchanged. The native oracle selects this
+successor after authenticating both earlier plans. Fewer emitted copies are a
+source observation; native correctness and the unchanged ten-second execution
+budget require CI execution.
 The separate `closed fresh Number array collector 1` experiment selects one
 complete JavaScript function with a fresh unaliased array, one counted input
 loop, one ignored one-argument append per iteration and a terminal array return.
@@ -2543,9 +2552,16 @@ an exact negative; separate legal identifiers exercise the same actual emitted
 temporary-name collisions.
 
 The five native logical suites retain their original filters and Cargo commands.
-Grammar, translation and remaining tests each use four physical partitions on
-every original platform; inference and generative suites each keep one. Fresh
-Merge uses eight partitions of the same fetched base, head and merged tree,
+Grammar, translation and remaining tests retain their four-partition base on
+every original platform; inference and generative suites each keep one. Windows
+translation subdivides each base partition into two, using eight physical cells
+after CI39087221416 exceeded its fifteen-minute deadline. The same run required
+eight-cell successors for Windows remaining tests, Ubuntu grammar and translation
+tests, and Ubuntu instrumented grammar and translation coverage. Fresh Merge similarly
+subdivides its original eight partitions into sixteen after a twenty-minute job
+timeout. Both expansions preserve the exact union of every old hash partition,
+all original filters and deadlines. Other platform and suite assignments retain
+their original counts. Fresh Merge uses the same fetched base, head and merged tree,
 retaining all doctests and example linking in its first partition. Each Cargo
 test executable supplies its complete inventory before partitioning. Links
 receipts bind original filters, selected test identities, actual outcomes and
@@ -2560,6 +2576,11 @@ and validates the native Windows linker after shell setup. Grammar-tool
 operation failures retain their source errors and causes instead of becoming
 syntax rejections. These diagnostic checks do not establish native success or
 resolve an unexplained process failure.
+An exact native checked-program mismatch keeps its original rejection and adds
+a bounded first differing field path. Declaration-list archive failures retain
+their actual original input in the failure message. Neither diagnostic accepts,
+normalizes or drops differing metadata or assertions. Hashed authored ANTLR
+fixture and scanner-patch checkout bytes use LF on every platform.
 
 Original-source subprocess observations retain their existing execution,
 compiler and output limits. Explicit compiler profiles are shared Links data:
@@ -3129,8 +3150,15 @@ pending dedent/newline queue in shared Links state. Its reviewed source import
 retains lexical token identities under prefix guards and distributes named
 aliases over alternatives without erasing a hidden qualified-name child. A
 recorded preference preserves the pinned parser's lambda-arrow choice. The
-pinned development oracle's circular queue changes its modulus during growth
-without relocating queued entries. Its source record selects fresh-process
+pinned released oracle's circular queue changes its modulus during growth
+without relocating queued entries. A separate native queue-safe oracle derives
+only the existing authenticated queue-relocation patch from the pinned original
+scanner. Its original serialization, focused fixture rows, rejections and known
+divergences remain unchanged; the full corrected development oracle keeps its
+existing corpus role. An additional native control exercises the actual scanner
+queue across wrapped one-element growth. Exact source inverses are checked in
+JavaScript; native execution and attribution of the Windows process abort remain
+CI questions. Its JavaScript source record selects fresh-process
 oracle snapshots to isolate allocator history while retaining the original
 parser, source hashes and oracle assertions. Production parsing uses the
 shared native grammar directly. Focused layout discrepancies remain explicit;

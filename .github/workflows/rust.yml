@@ -187,7 +187,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     env:
       META_LANGUAGE_SHARD_PROFILE: fresh-merge
       META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest
@@ -730,6 +730,86 @@ jobs:
             logical_suite: remaining
             physical_shard: 4
             filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 5
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 6
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 7
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: translation
+            physical_shard: 8
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 5
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 6
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 7
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: grammar
+            physical_shard: 8
+            filters: grammar_
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 5
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 6
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 7
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: ubuntu-latest
+            logical_suite: translation
+            physical_shard: 8
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 5
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 6
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 7
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            os: windows-latest
+            logical_suite: remaining
+            physical_shard: 8
+            filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
     env:
       META_LANGUAGE_SHARD_PROFILE: test
       META_LANGUAGE_SHARD_PLATFORM: ${{ matrix.os }}
@@ -1199,6 +1279,22 @@ jobs:
             physical_shard: 4
             filters: grammar_
           - suite: physical
+            logical_suite: grammar
+            physical_shard: 5
+            filters: grammar_
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 6
+            filters: grammar_
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 7
+            filters: grammar_
+          - suite: physical
+            logical_suite: grammar
+            physical_shard: 8
+            filters: grammar_
+          - suite: physical
             logical_suite: translation
             physical_shard: 2
             filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
@@ -1222,6 +1318,22 @@ jobs:
             logical_suite: remaining
             physical_shard: 4
             filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 5
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 6
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 7
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            logical_suite: translation
+            physical_shard: 8
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
     env:
       META_LANGUAGE_SHARD_PROFILE: coverage
       META_LANGUAGE_SHARD_PLATFORM: ubuntu-latest

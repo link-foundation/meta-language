@@ -249,7 +249,8 @@ fn require_declaration_list_equivalent(source: &str, expected: &Value) {
         "unchanged independent source: {source}"
     );
     assert_eq!(&original["emitted"], expected, "{source}");
-    let saved = encode_typed_program_links(&program).unwrap();
+    let saved = encode_typed_program_links(&program)
+        .unwrap_or_else(|error| panic!("initial checked archive encoding for {source}: {error}"));
     for network in [
         LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
         decode_link_network_binary(
@@ -258,8 +259,11 @@ fn require_declaration_list_equivalent(source: &str, expected: &Value) {
         )
         .unwrap(),
     ] {
-        let restored = decode_typed_program_links(&network, saved.root).unwrap();
-        encode_typed_program_links(&restored).unwrap();
+        let restored = decode_typed_program_links(&network, saved.root)
+            .unwrap_or_else(|error| panic!("source-free archive decoding for {source}: {error}"));
+        encode_typed_program_links(&restored).unwrap_or_else(|error| {
+            panic!("restored checked archive encoding for {source}: {error}")
+        });
         assert_eq!(restored, program);
         assert_eq!(emit_javascript(&restored).unwrap().text, javascript);
         assert_eq!(emit_rust(&restored).unwrap().text, rust);

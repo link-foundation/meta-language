@@ -39,7 +39,11 @@ fn native_agda_focused_trees_match_oracle_and_preserve_every_byte() {
     let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
     let parser = parser(GRAMMAR);
     let rows = Rows::new(&fixture);
-    oracle_agrees(&tree_sitter_agda::LANGUAGE.into(), &fixture);
+    assert!(agda_layout_source_oracle::queue_growth_control());
+    oracle_agrees(
+        &agda_layout_source_oracle::QUEUE_SAFE_LANGUAGE.into(),
+        &fixture,
+    );
     for case in cases(&fixture, "matches") {
         let tree = parse(&parser, source(case)).expect("the native grammar accepts the source");
         assert_eq!(

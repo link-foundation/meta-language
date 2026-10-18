@@ -16,6 +16,7 @@ import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, read
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
 // Actual immutable producer and source closure; no capability declaration substitutes for execution.
@@ -426,11 +427,12 @@ function readOriginalLinkRawSelectedEmissionProfile(profile) {
   const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
   const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
   const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const selected = readOriginalLinkRawEmissionProfile(profile === 'consuming' ? 'current' : profile, {historicalArtifact, currentArtifact, source,
+  const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
     producerSources: readOriginalLinkRawEmissionProducerSources()});
   const {source: selectedSource, ...descriptor} = selected;
   assert.equal(sha256(selectedSource), descriptor.sourceSha256);
   if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);
+  if (profile === 'borrowed consuming') return readOriginalLinkRawBorrowedProfile(descriptor);
   return descriptor;
 }
 
@@ -592,6 +594,40 @@ export async function planOriginalLinkRawConsumingNative(currentPlan,environment
   checkedPlans.add(plan);return plan;
 }
 
+/** Reuse the complete checked consuming matrix with mechanical immutable loans. */
+export async function planOriginalLinkRawBorrowedNative(consumingPlan,environment=process.env) {
+  requireOriginalLinkRawPlanning(environment);
+  assert.ok(checkedPlans.has(consumingPlan),'the loan successor requires the exact checked consuming plan');
+  assert.equal(consumingPlan.emissionProfile.profile,'consuming');
+  assert.equal(consumingPlan.entries.length,1);
+  const previous=consumingPlan.entries[0];
+  const generated=prepareOriginalLinkRawBorrowedEmission(consumingPlan.emissionProfile);
+  assert.deepEqual(generated.profile.declarationNames,previous.declarationNames);
+  const [{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary},{tokenize}]=await Promise.all([
+    import('../../js/src/network.js'),import('../../js/src/link-network-binary.js'),import('../../js/src/translation/lexer.js'),
+  ]);
+  assert.deepEqual(nativeInterface(generated.source,tokenize),Object.fromEntries(
+    ['functionName','parameterOrder','parameterModes','resultMode','interfaceSha256'].map(key=>[key,previous[key]])));
+  const originalReceipt=archiveCompleteRustSource(generated.source,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);
+  const entry={...previous,fixtureId:'experiments/original-link-complete-table-projection/'+generated.profile.sourceArtifact,
+    source:generated.source,sourceBytes:generated.profile.sourceBytes,sourceSha256:generated.profile.sourceSha256,
+    emissionProfile:generated.profile,replaySha256:originalReceipt.binaryReplaySha256,originalReceipt,
+    sizes:{...previous.sizes,sourceBytes:generated.profile.sourceBytes}};
+  const replaced=new Set(['fixtureId','source','sourceBytes','sourceSha256','emissionProfile','replaySha256','originalReceipt','sizes']);
+  assert.deepEqual(Reflect.ownKeys(entry),Reflect.ownKeys(previous));
+  for(const key of Reflect.ownKeys(previous))if(!replaced.has(key))assert.equal(entry[key],previous[key],
+    'the loan successor retains the exact original observation/process field: '+key);
+  assert.equal(sha256(JSON.stringify(entry.carrier)),previous.carrierSha256);
+  assert.equal(originalLinkRawRecordDigest(entry.premises),originalLinkRawRecordDigest(previous.premises));
+  assert.equal(originalLinkRawRecordDigest(entry.observations),originalLinkRawRecordDigest(previous.observations));
+  const plan=freeze({...consumingPlan,emissionProfile:generated.profile,entries:[entry],
+    borrowedPlanProof:{predecessorSourceSha256:previous.sourceSha256,carrierSha256:previous.carrierSha256,
+      premiseSha256:originalLinkRawRecordDigest(entry.premises),observationSha256:originalLinkRawRecordDigest(entry.observations),
+      observations:entry.observations.length,premises:entry.premises.length,
+      scope:'Whole predecessor retained through exact mechanical styles; every fixture, result, premise and consumer input reused.'}});
+  checkedPlans.add(plan);return plan;
+}
+
 function parseObservations(output, expected, carrier) {
   assert.ok(Buffer.byteLength(output) <= maximumProtocolBytes);
   const lines = output.split('\n'); assert.equal(lines.pop(), ''); assert.equal(lines.length, expected.length);
@@ -616,5 +652,6 @@ export function runOriginalLinkRawNative(plan, options) {
   assert.deepEqual(plan.emissionProfile, readOriginalLinkRawSelectedEmissionProfile(plan.emissionProfile.profile), 'the selected emission profile changed during execution');
   assert.deepEqual(plan.transportSources, [readCanonicalArchiveTransportSource()], 'the raw archive transport source changed during execution');
   return {...receipt, transportSources: plan.transportSources, emissionProfile: plan.emissionProfile,
-    ...(plan.consumingPlanProof?{consumingPlanProof:plan.consumingPlanProof}:{})};
+    ...(plan.consumingPlanProof?{consumingPlanProof:plan.consumingPlanProof}:{}),
+    ...(plan.borrowedPlanProof?{borrowedPlanProof:plan.borrowedPlanProof}:{})};
 }

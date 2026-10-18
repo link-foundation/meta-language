@@ -72,6 +72,56 @@ test('Rust evidence partition policy preserves every existing native scope and c
   assert.throws(() => selectPhysicalTests(inventory, 1, 8, [['alpha', 'beta'], ['beta', 'gamma']]), /overlapping shared observation/u);
 });
 
+test('Windows translation expands only its physical cells and preserves every old test under the original deadline', () => {
+  assert.deepEqual(policy.suites.find(row => row.name === 'translation').platformShards,
+    [{platform: 'windows-latest', shards: 8},{platform:'ubuntu-latest',shards:8}]);
+  for (const platform of policy.platforms) for (const suite of policy.suites) {
+    const expanded = platform === 'windows-latest' && ['translation','remaining'].includes(suite.name)
+      || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name);
+    const expected = expanded ? 8 : suite.shards;
+    assert.equal(physicalShardCount(policy, 'test', suite.name, platform), expected);
+  }
+  for (const suite of policy.suites) assert.equal(physicalShardCount(policy, 'coverage', suite.name, 'ubuntu-latest'),
+    ['grammar','translation'].includes(suite.name) ? 8 : suite.shards);
+  for (let previous = 1; previous <= 4; previous++) {
+    const before = selectPhysicalTests(inventory, previous, 4).map(row => row.name).sort();
+    const after = [...selectPhysicalTests(inventory, previous, 8), ...selectPhysicalTests(inventory, previous + 4, 8)].map(row => row.name).sort();
+    assert.deepEqual(after, before, 'each old hash cell is exactly subdivided without losing or duplicating a test');
+  }
+  const workflow = readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8');
+  for (const shard of [5, 6, 7, 8]) assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
+  assert.ok(workflow.includes("    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\n"));
+  for (const override of [{platform: 'unknown', shards: 8}, {platform: 'windows-latest', shards: 3}, {platform: 'windows-latest', shards: 8.5}]) {
+    const altered = structuredClone(policy);altered.suites.find(row => row.name === 'translation').platformShards = [override];
+    assert.throws(() => physicalShardCount(altered, 'test', 'translation', 'windows-latest'), /invalid platform shard expansion/u);
+  }
+});
+
+test('fresh merge physical expansion preserves the complete original eight-cell inventory and deadline',()=>{
+  assert.equal(policy.freshMergeShards,8);assert.equal(policy.freshMergeExpansion,16);
+  assert.equal(physicalShardCount(policy,'fresh-merge','all'),16);
+  for(let previous=1;previous<=8;previous++) {
+    const before=selectPhysicalTests(inventory,previous,8).map(row=>row.name).sort();
+    const after=[...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort();
+    assert.deepEqual(after,before);
+  }
+  for(const freshMergeExpansion of [7,16.5,NaN])assert.throws(()=>physicalShardCount({...policy,freshMergeExpansion},'fresh-merge','all'),/invalid fresh merge shard expansion/u);
+  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  assert.ok(workflow.includes('        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]\n'));
+  assert.match(workflow,/name: Fresh Merge Simulation\n[\s\S]*?timeout-minutes: 20\n/u);
+});
+
+test('instrumented grammar expansion subdivides every original coverage cell without changing native test scope',()=>{
+  assert.deepEqual(policy.suites.find(row=>row.name==='grammar').platformShards,
+    [{platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:8}]);
+  assert.equal(physicalShardCount(policy,'coverage','grammar','ubuntu-latest'),8);
+  assert.equal(physicalShardCount(policy,'test','grammar','ubuntu-latest'),8);
+  for(const platform of ['macos-latest','windows-latest'])assert.equal(physicalShardCount(policy,'test','grammar',platform),4);
+  for(let previous=1;previous<=4;previous++)assert.deepEqual(
+    [...selectPhysicalTests(inventory,previous,8),...selectPhysicalTests(inventory,previous+4,8)].map(row=>row.name).sort(),
+    selectPhysicalTests(inventory,previous,4).map(row=>row.name).sort());
+});
+
 test('Rust evidence CLI scope and configured Cargo runner must agree exactly', () => {
   assert.equal(rustSuiteSelection([], 'rust-suite', false), null);
   for (const selection of selections()) {

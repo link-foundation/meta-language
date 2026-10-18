@@ -31,6 +31,46 @@ pub(super) fn program_requires_method_units(program: &crate::translation::ir::Pr
 }
 
 impl RustEmitter<'_> {
+    fn primitive_array_join_element(&mut self, name: &str, ty: &Type) -> Result<String> {
+        let form = rules::read_primitive_array_join_element_form(ty.kind());
+        let empty = if matches!(form.as_str(), "empty" | "optional") {
+            let value = super::LitValue::Text(String::new());
+            self.literal(&Expr::lit(Type::String, value.clone()), &value)
+        } else {
+            String::new()
+        };
+        let (present, absence) = if form == "optional" {
+            let Type::Option { element, absence } = ty else {
+                unreachable!("the generated join element form selects the actual Option");
+            };
+            if absence == "both" {
+                self.preludes.insert(Prelude::Optional);
+            }
+            (
+                self.primitive_array_join_element("ml_present", element)?,
+                absence.as_str(),
+            )
+        } else if form == "empty" {
+            (String::new(), "")
+        } else {
+            let value = Expr::new(
+                Node::ToString {
+                    arg: Box::new(Expr::var(name, ty.clone())),
+                    console: false,
+                },
+                Type::String,
+            );
+            (self.expr(&value)?, "")
+        };
+        Ok(rules::render_primitive_array_join_element(
+            ty.kind(),
+            absence,
+            name,
+            &present,
+            &empty,
+        ))
+    }
+
     pub(super) fn primitive_method(&mut self, expression: &Expr) -> Result<String> {
         let Node::Method { object, op, args } = &expression.node else {
             unreachable!("primitive method dispatch")
@@ -61,6 +101,47 @@ impl RustEmitter<'_> {
                     &suffix,
                 ),
             );
+        }
+        if let Type::Array { element, .. } = &object.ty
+            && op == "join"
+        {
+            self.preludes.insert(Prelude::Array);
+            let string_element = element.kind() == "string";
+            let separator = args[0]
+                .as_ref()
+                .expect("the checked join retains its separator");
+            let object_text = if rules::read_primitive_array_join_operand_form(
+                self.utf16_strings,
+                string_element,
+                "object",
+            ) == "borrow"
+            {
+                self.borrow(object)?
+            } else {
+                self.receiver(object)?
+            };
+            let separator_text = if rules::read_primitive_array_join_operand_form(
+                self.utf16_strings,
+                string_element,
+                "separator",
+            ) == "borrow"
+            {
+                self.borrow(separator)?
+            } else {
+                self.receiver(separator)?
+            };
+            let element_text = if string_element {
+                String::new()
+            } else {
+                self.primitive_array_join_element("ml_value", element)?
+            };
+            return Ok(rules::render_primitive_array_join_expression(
+                self.utf16_strings,
+                string_element,
+                &object_text,
+                &separator_text,
+                &element_text,
+            ));
         }
         if receiver == "string" {
             let object_text = self.receiver(object)?;

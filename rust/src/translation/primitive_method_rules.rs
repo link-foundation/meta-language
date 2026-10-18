@@ -143,7 +143,7 @@ pub fn read_primitive_copy_slice_form(kind: &str) -> String {
 
 #[must_use]
 pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) -> f64 {
-    if (receiver == "array") && (operation == "slice") {
+    if (receiver == "array") && ((operation == "slice") || (operation == "join")) {
         0f64
     } else if (receiver == "array")
         && (((operation == "includes") || (operation == "indexOf")) || (operation == "lastIndexOf"))
@@ -171,7 +171,9 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
 
 #[must_use]
 pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) -> f64 {
-    if (receiver == "array")
+    if (receiver == "array") && (operation == "join") {
+        1f64
+    } else if (receiver == "array")
         && ((operation == "slice")
             || (((operation == "includes") || (operation == "indexOf"))
                 || (operation == "lastIndexOf")))
@@ -209,7 +211,9 @@ pub fn read_primitive_method_checked_argument_kind(
     operation: &str,
     index: f64,
 ) -> String {
-    if (receiver == "array") && (operation == "slice") {
+    if (receiver == "array") && (operation == "join") {
+        String::from("string")
+    } else if (receiver == "array") && (operation == "slice") {
         String::from("float")
     } else if (receiver == "array")
         && (((operation == "includes") || (operation == "indexOf")) || (operation == "lastIndexOf"))
@@ -239,7 +243,9 @@ pub fn read_primitive_method_checked_argument_kind(
 
 #[must_use]
 pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index: f64) -> String {
-    if ((receiver == "array")
+    if (receiver == "array") && (operation == "join") {
+        String::from("string")
+    } else if ((receiver == "array")
         && (((operation == "includes") || (operation == "indexOf"))
             || (operation == "lastIndexOf")))
         && (index == 1f64)
@@ -265,7 +271,9 @@ pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index
 
 #[must_use]
 pub fn read_primitive_method_default_value(receiver: &str, operation: &str, index: f64) -> String {
-    if ((receiver == "array") && ((operation == "includes") || (operation == "indexOf")))
+    if (receiver == "array") && (operation == "join") {
+        String::from(",")
+    } else if ((receiver == "array") && ((operation == "includes") || (operation == "indexOf")))
         && (index == 1f64)
     {
         String::from("0")
@@ -296,7 +304,9 @@ pub fn read_primitive_method_default_value(receiver: &str, operation: &str, inde
 
 #[must_use]
 pub fn read_primitive_method_checked_result_form(receiver: &str, operation: &str) -> String {
-    if (receiver == "array") && (operation == "slice") {
+    if (receiver == "array") && (operation == "join") {
+        String::from("string")
+    } else if (receiver == "array") && (operation == "slice") {
         String::from("receiver")
     } else if (receiver == "array") && (operation == "includes") {
         String::from("bool")
@@ -325,7 +335,18 @@ pub fn read_primitive_method_argument_obligation(
     operation: &str,
     element: &str,
 ) -> String {
-    if (receiver != "array")
+    if (receiver == "array") && (operation == "join") {
+        {
+            let form = self::read_primitive_array_join_element_form(element);
+            if (form == "refuse") || (form == "optional") {
+                String::from(
+                    "joining structured values needs their JavaScript string conversion and cycle semantics",
+                )
+            } else {
+                String::new()
+            }
+        }
+    } else if (receiver != "array")
         || (((operation != "includes") && (operation != "indexOf")) && (operation != "lastIndexOf"))
     {
         String::new()
@@ -537,5 +558,120 @@ pub fn read_primitive_method_lowering_form(receiver: &str, operation: &str) -> S
         String::from("code-unit-template")
     } else {
         String::from("method")
+    }
+}
+
+#[must_use]
+pub fn read_primitive_array_join_element_form(kind: &str) -> String {
+    if kind == "string" {
+        String::from("string")
+    } else if kind == "unit" {
+        String::from("empty")
+    } else if kind == "option" {
+        String::from("optional")
+    } else if ((((kind == "bool") || (kind == "float")) || (kind == "fixed")) || (kind == "int"))
+        || (kind == "nat")
+    {
+        String::from("text")
+    } else {
+        String::from("refuse")
+    }
+}
+
+#[must_use]
+pub fn read_primitive_method_argument_obligation_feature(operation: &str) -> String {
+    if operation == "join" {
+        String::from("array join")
+    } else {
+        String::from("array identity search")
+    }
+}
+
+#[must_use]
+pub fn read_primitive_array_join_operand_form(
+    units: bool,
+    string_element: bool,
+    operand: &str,
+) -> String {
+    if units && ((operand == "separator") || string_element) {
+        String::from("borrow")
+    } else {
+        String::from("receiver")
+    }
+}
+
+#[must_use]
+pub fn render_primitive_array_join_element(
+    kind: &str,
+    absence: &str,
+    name: &str,
+    present: &str,
+    empty: &str,
+) -> String {
+    {
+        let form = self::read_primitive_array_join_element_form(kind);
+        if form == "empty" {
+            empty.to_owned()
+        } else if form == "optional" {
+            if absence == "both" {
+                format!(
+                    "match {}{}{}, _ => {} }}",
+                    name.to_owned(),
+                    String::from(" { crate::MlOptional::Value(ml_present) => "),
+                    present.to_owned(),
+                    empty.to_owned()
+                )
+            } else {
+                format!(
+                    "match {} {{ Some(ml_present) => {}, None => {} }}",
+                    name.to_owned(),
+                    present.to_owned(),
+                    empty.to_owned()
+                )
+            }
+        } else {
+            present.to_owned()
+        }
+    }
+}
+
+#[must_use]
+pub fn render_primitive_array_join_expression(
+    units: bool,
+    string_element: bool,
+    object: &str,
+    separator: &str,
+    element_text: &str,
+) -> String {
+    if string_element {
+        if units {
+            format!(
+                "crate::ml_string::join({}, {})",
+                object.to_owned(),
+                separator.to_owned()
+            )
+        } else {
+            format!(
+                "{}.join({}.as_str())",
+                object.to_owned(),
+                separator.to_owned()
+            )
+        }
+    } else {
+        {
+            let values = format!(
+                "{}.iter().cloned().map(|ml_value| {}).collect::<Vec<_>>()",
+                object.to_owned(),
+                element_text.to_owned()
+            );
+            if units {
+                format!(
+                    "crate::ml_string::join(&{values}, {})",
+                    separator.to_owned()
+                )
+            } else {
+                format!("({values}).join({}.as_str())", separator.to_owned())
+            }
+        }
     }
 }

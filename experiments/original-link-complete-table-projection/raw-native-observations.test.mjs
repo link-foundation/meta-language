@@ -5,7 +5,7 @@ import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import test from 'node:test';
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
-import {createOriginalLinkRawConsumerPacket, decodeOriginalLinkRawCarrierData, requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, planOriginalLinkRawConsumingNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
+import {createOriginalLinkRawConsumerPacket, decodeOriginalLinkRawCarrierData, requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, planOriginalLinkRawConsumingNative, planOriginalLinkRawBorrowedNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {parseLinoStatements} from '../../js/src/lino-serialization.js';
 import {formatLinoReadings} from '../../js/src/lino-semantics.js';
@@ -14,6 +14,7 @@ import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFi
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE} from './raw-emission-profiles.mjs';
 import './raw-emission-profiles.test.mjs';
 import './raw-consuming-emission.test.mjs';
+import './raw-borrowed-emission.test.mjs';
 
 const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaFifthExtensionClosure(
   {...readOriginalLinkRawSchemaFifthContext(), receipt, historicalSources}, bytes,
@@ -318,17 +319,25 @@ if (process.env.CI === 'true') {
     assert.deepEqual(selected.entries[0].inventoryCounts,{fixtures:78,formats:195,numericPremises:190,serializationRefusals:5});
     assert.equal(selected.entries[0].premises.length,211);
     assert.equal(selected.entries[0].carrier.vectors.length,383);assert.equal(selected.entries[0].carrier.blocks.length,3051);
-    const receipt = runOriginalLinkRawNative(selected); assert.equal(receipt.processMode, 'native subprocesses');
-    assert.equal(receipt.emissionProfile.profile,'consuming');
+    // CI39087221416 exceeded the unchanged execution limit while copying read-only
+    // parameters. The mechanical successor retains this complete selected plan.
+    const borrowed=await planOriginalLinkRawBorrowedNative(selected);
+    for(const key of ['carrier','observations','premises','fixtureInventory','inventoryCounts','additionalSources'])
+      assert.equal(borrowed.entries[0][key],entry[key],'the loan successor retains every original '+key);
+    assert.deepEqual(borrowed.emissionProfile.proof.predecessor,selected.emissionProfile);
+    const receipt = runOriginalLinkRawNative(borrowed); assert.equal(receipt.processMode, 'native subprocesses');
+    assert.equal(receipt.emissionProfile.profile,'borrowed consuming');
+    assert.equal(receipt.emissionProfile.proof.predecessor.profile,'consuming');
     assert.deepEqual(receipt.processCounts,{libraryCompilations:1,consumerCompilations:1,executions:1});
     assert.equal(receipt.observations[0].observations.length,entry.observations.length);
     assert.equal(receipt.emissionProfile.currentSourceSha256,ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
     // The inherited current profile remains independently checked above and in every existing group.
-    const predecessor=receipt.emissionProfile.proof.predecessor;
+    const predecessor=receipt.emissionProfile.proof.predecessor.proof.predecessor;
     assert.equal(predecessor.profile,'current');
     assert.equal(predecessor.sourceSha256,ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);
     assert.equal(receipt.consumingPlanProof.carrierSha256,entry.carrierSha256);
-    assert.equal(receipt.observations[0].sourceSha256,selected.entries[0].sourceSha256);
+    assert.equal(receipt.borrowedPlanProof.carrierSha256,entry.carrierSha256);
+    assert.equal(receipt.observations[0].sourceSha256,borrowed.entries[0].sourceSha256);
     const [{writeProjectData}, {fileURLToPath}] = await Promise.all([import('../../js/scripts/project-data.mjs'), import('node:url')]);
     const file = fileURLToPath(new URL('../../issue-195-artifacts/original-link-raw-native-observations.lino', import.meta.url)); mkdirSync(dirname(file), {recursive: true}); writeProjectData(file, receipt);
   });

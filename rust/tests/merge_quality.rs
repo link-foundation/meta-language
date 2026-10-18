@@ -116,7 +116,7 @@ fn natives() -> Vec<Native> {
         native!(
             "native-agda",
             "agda",
-            Some(|| tree_sitter_agda::LANGUAGE.into())
+            Some(|| agda_layout_source_oracle::QUEUE_SAFE_LANGUAGE.into())
         ),
         native!(
             "native-html",

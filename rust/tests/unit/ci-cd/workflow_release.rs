@@ -164,14 +164,14 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         .chain([("original-link-raw-observations", 15)])
     {
         let job = job_block(&workflow, job_name);
-        // Keep the published Windows grammar exception exactly; every other
-        // test matrix cell retains the original fifteen-minute deadline.
+        // Physical shards retain their logical suite for the published Windows
+        // grammar exception; every other cell keeps fifteen minutes.
         let expected = if job_name == "test" {
             assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
             assert!(job.contains(
                 "        suite: [grammar, inference, generative, translation, remaining]\n"
             ));
-            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && matrix.suite == 'grammar' && 30 || 15 }}\n".to_owned()
+            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\n".to_owned()
         } else {
             format!("    timeout-minutes: {timeout_minutes}\n")
         };

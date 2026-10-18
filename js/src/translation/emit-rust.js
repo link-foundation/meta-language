@@ -14,7 +14,7 @@ import { renderStringLengthExpression, renderStringMapExpression, renderStringTe
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
-import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation } from './primitive-method-rules.js';
+import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
@@ -1122,18 +1122,20 @@ class RustEmitter {
       this.usesArray = true;
       if (['slice', 'indexOf', 'lastIndexOf', 'includes'].includes(e.op)) this.usesStandardArray = true;
       if (e.op === 'join') {
-        if (e.object.type.element.kind === 'string') return this.utf16Strings ? `crate::ml_string::join(${this.borrow(e.object)}, ${this.borrow(e.args[0])})` : `${this.receiver(e.object)}.join(${this.receiver(e.args[0])}.as_str())`;
+        const stringElement = e.object.type.element.kind === 'string';
+        const operand = (value, role) => readPrimitiveArrayJoinOperandForm(this.utf16Strings, stringElement, role) === 'borrow' ? this.borrow(value) : this.receiver(value);
         const text = (name, type) => {
-          if (type.kind === 'unit') return this.literal({ type: { kind: 'string' }, value: '' });
-          if (type.kind === 'option') {
-            const empty = this.literal({ type: { kind: 'string' }, value: '' });
-            if (type.absence === 'both') { this.usesOptional = true; return `match ${name} { crate::MlOptional::Value(ml_present) => ${text('ml_present', type.element)}, _ => ${empty} }`; }
-            return `match ${name} { Some(ml_present) => ${text('ml_present', type.element)}, None => ${empty} }`;
-          }
-          return this.expr({ k: 'toString', arg: { k: 'var', name, type }, type: { kind: 'string' } });
+          const form = readPrimitiveArrayJoinElementForm(type.kind);
+          const empty = form === 'empty' || form === 'optional' ? this.literal({ type: { kind: 'string' }, value: '' }) : '';
+          if (form === 'optional' && type.absence === 'both') this.usesOptional = true;
+          const present = form === 'optional' ? text('ml_present', type.element) : form === 'empty' ? ''
+            : this.expr({ k: 'toString', arg: { k: 'var', name, type }, type: { kind: 'string' } });
+          return renderPrimitiveArrayJoinElement(type.kind, type.absence ?? '', name, present, empty);
         };
-        const values = `${this.receiver(e.object)}.iter().cloned().map(|ml_value| ${text('ml_value', e.object.type.element)}).collect::<Vec<_>>()`;
-        return this.utf16Strings ? `crate::ml_string::join(&${values}, ${this.borrow(e.args[0])})` : `(${values}).join(${this.receiver(e.args[0])}.as_str())`;
+        const object = operand(e.object, 'object');
+        const separator = operand(e.args[0], 'separator');
+        return renderPrimitiveArrayJoinExpression(this.utf16Strings, stringElement, object, separator,
+          stringElement ? '' : text('ml_value', e.object.type.element));
       }
       if (e.op === 'slice') return renderPrimitiveMethodExpression('Rust', 'array', e.op, this.borrow(e.object), e.args.map((arg) => this.expr(arg)).join(', '));
       if (['indexOf', 'lastIndexOf', 'includes'].includes(e.op)) {

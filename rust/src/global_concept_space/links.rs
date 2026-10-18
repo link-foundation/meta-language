@@ -12,7 +12,9 @@ use super::{
 use crate::formal_concept_definition::read_formal_concept_definition;
 use crate::global_concept_rules::verify_global_concept_correspondence;
 use crate::grammar::Grammar;
-use crate::grammar::feature::check_grammar_selection_included_range_data;
+use crate::grammar::feature::{
+    check_grammar_selection_included_range_data, check_grammar_selection_included_range_grammar,
+};
 use crate::grammar::interchange::{
     deserialize_grammar, parse_grammar_links, percent_decode_links_text, percent_encode_links_text,
     render_declaration_links, render_links_expression, render_rule_fields, serialize_grammar,
@@ -472,6 +474,7 @@ pub(super) fn read_validated_global_concept_archive(
                         .join(" ")
                 ))
                 .map_err(|error| error.to_string())?;
+                check_grammar_selection_included_range_grammar(&grammar)?;
                 let serialized: Value = serde_json::from_str(&serialize_grammar(&grammar))
                     .map_err(|error| error.to_string())?;
                 let definition = production(&serialized["rules"][0]);
@@ -555,6 +558,7 @@ pub(super) fn read_validated_global_concept_archive(
             declared.join("\n")
         ))
         .map_err(|error| error.to_string())?;
+        check_grammar_selection_included_range_grammar(&placeholder)?;
         let serialized: Value = serde_json::from_str(&serialize_grammar(&placeholder))
             .map_err(|error| error.to_string())?;
         let context = declarations(serialized.get("declarations"));

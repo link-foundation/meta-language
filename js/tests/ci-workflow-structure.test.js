@@ -72,7 +72,10 @@ function checkRustWorkflowTimeouts(parsed) {
       assert.equal(actual, os === 'windows-latest' && suite === 'grammar' ? 30 : limit, `${os}/${suite}`);
     }
     for (const os of ['ubuntu-latest', 'macos-latest', 'windows-latest']) for (const logicalSuite of ['grammar', 'translation', 'remaining']) {
-      for (const physicalShard of [2, 3, 4]) {
+      const expanded = os === 'windows-latest' && ['translation','remaining'].includes(logicalSuite)
+        || os === 'ubuntu-latest' && ['grammar','translation'].includes(logicalSuite);
+      const physicalShards = expanded ? [2, 3, 4, 5, 6, 7, 8] : [2, 3, 4];
+      for (const physicalShard of physicalShards) {
         const actual = Function(`return (${values[0].slice(3, -2).replaceAll('matrix.os', JSON.stringify(os))
           .replaceAll('matrix.logical_suite', JSON.stringify(logicalSuite)).replaceAll('matrix.suite', '"physical"')});`)();
         assert.equal(actual, os === 'windows-latest' && logicalSuite === 'grammar' ? 30 : limit,

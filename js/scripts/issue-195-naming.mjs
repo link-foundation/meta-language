@@ -55594,6 +55594,30 @@ const B63_CURRENT_INVENTORY_WITNESSES=[
     "name": "statement_paths",
     "inventoryName": "read native private array statement paths",
     "sourceText": "fn statement_paths(\n    statements: &[Stmt],\n    values: &Value,\n    parents: &mut Vec<(usize, ChildList)>,\n    paths: &mut HashMap<*const Value, StatementPath>,\n) {\n    let values = values\n        .as_array()\n        .expect(\"actual statement lists serialize as arrays\");\n    assert_eq!(statements.len(), values.len());\n    for (index, statement) in statements.iter().enumerate() {\n        let value = &values[index];\n        assert!(\n            paths\n                .insert(\n                    std::ptr::from_ref(value),\n                    StatementPath {\n                        parents: parents.clone(),\n                        index,\n                    }\n                )\n                .is_none()\n        );\n        let mut child = |slot, statements: &[Stmt], values: &Value| {\n            parents.push((index, slot));\n            statement_paths(statements, values, parents, paths);\n            parents.pop();\n        };\n        match statement {\n            Stmt::Block { body, .. } | Stmt::While { body, .. } | Stmt::DoWhile { body, .. } => {\n                child(ChildList::Body, body, &value[\"body\"]);\n            }\n            Stmt::If {\n                then, otherwise, ..\n            } => {\n                child(ChildList::Then, then, &value[\"then\"]);\n                if let Some(otherwise) = otherwise {\n                    child(ChildList::Otherwise, otherwise, &value[\"else\"]);\n                }\n            }\n            Stmt::For {\n                init, body, update, ..\n            } => {\n                child(ChildList::Initializers, init, &value[\"init\"]);\n                child(ChildList::Body, body, &value[\"body\"]);\n                child(ChildList::Updates, update, &value[\"update\"]);\n            }\n            Stmt::Switch(switch) => {\n                assert_eq!(\n                    switch.clauses.len(),\n                    value[\"clauses\"]\n                        .as_array()\n                        .expect(\"actual switch clauses serialize as an array\")\n                        .len()\n                );\n                for (clause, item) in switch.clauses.iter().enumerate() {\n                    child(\n                        ChildList::Clause(clause),\n                        &item.body,\n                        &value[\"clauses\"][clause][\"body\"],\n                    );\n                }\n            }\n            _ => {}\n        }\n    }\n}"
+  },
+  {
+    "inventory": "B64 authenticated raw emission source names for experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "id": "repository.read-selected-raw-emission-profile",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "name": "readOriginalLinkRawSelectedEmissionProfile",
+    "inventoryName": "read selected raw emission profile",
+    "sourceText": "function readOriginalLinkRawSelectedEmissionProfile(profile) {\n  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));\n  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));\n  const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');\n  const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,\n    producerSources: readOriginalLinkRawEmissionProducerSources()});\n  const {source: selectedSource, ...descriptor} = selected;\n  assert.equal(sha256(selectedSource), descriptor.sourceSha256);\n  if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);\n  if (profile === 'borrowed consuming') return readOriginalLinkRawBorrowedProfile(descriptor);\n  return descriptor;\n}"
+  },
+  {
+    "inventory": "B64 authenticated raw emission source names for experiments/original-link-complete-table-projection/raw-native-observations.test.mjs",
+    "id": "repository.check-selected-raw-native-emission-observations",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.test.mjs",
+    "name": "CI executes the selected complete raw emission profile and persists only real observations",
+    "inventoryName": "check selected raw native emission observations",
+    "sourceText": "test('CI executes the selected complete raw emission profile and persists only real observations', async () => {\n    // Preserve the earlier current-profile assertions before selecting its explicit successor.\n    assert.equal(plan.emissionProfile.profile,'current');\n    assert.equal(plan.emissionProfile.sourceSha256,ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);\n    const selected=await planOriginalLinkRawConsumingNative(plan);\n    assert.equal(selected.emissionProfile.profile,'consuming');\n    for(const key of ['carrier','observations','premises','fixtureInventory','inventoryCounts','additionalSources']) {\n      assert.equal(selected.entries[0][key],entry[key],'every original '+key+' object is reused');\n    }\n    assert.deepEqual(selected.entries[0].inventoryCounts,{fixtures:78,formats:195,numericPremises:190,serializationRefusals:5});\n    assert.equal(selected.entries[0].premises.length,211);\n    assert.equal(selected.entries[0].carrier.vectors.length,383);assert.equal(selected.entries[0].carrier.blocks.length,3051);\n    // CI39087221416 exceeded the unchanged execution limit while copying read-only\n    // parameters. The mechanical successor retains this complete selected plan.\n    const borrowed=await planOriginalLinkRawBorrowedNative(selected);\n    for(const key of ['carrier','observations','premises','fixtureInventory','inventoryCounts','additionalSources'])\n      assert.equal(borrowed.entries[0][key],entry[key],'the loan successor retains every original '+key);\n    assert.deepEqual(borrowed.emissionProfile.proof.predecessor,selected.emissionProfile);\n    const receipt = runOriginalLinkRawNative(borrowed); assert.equal(receipt.processMode, 'native subprocesses');\n    assert.equal(receipt.emissionProfile.profile,'borrowed consuming');\n    assert.equal(receipt.emissionProfile.proof.predecessor.profile,'consuming');\n    assert.deepEqual(receipt.processCounts,{libraryCompilations:1,consumerCompilations:1,executions:1});\n    assert.equal(receipt.observations[0].observations.length,entry.observations.length);\n    assert.equal(receipt.emissionProfile.currentSourceSha256,ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);\n    // The inherited current profile remains independently checked above and in every existing group.\n    const predecessor=receipt.emissionProfile.proof.predecessor.proof.predecessor;\n    assert.equal(predecessor.profile,'current');\n    assert.equal(predecessor.sourceSha256,ORIGINAL_LINK_RAW_EMISSION_BASELINE.currentSha256);\n    assert.equal(receipt.consumingPlanProof.carrierSha256,entry.carrierSha256);\n    assert.equal(receipt.borrowedPlanProof.carrierSha256,entry.carrierSha256);\n    assert.equal(receipt.observations[0].sourceSha256,borrowed.entries[0].sourceSha256);\n    const [{writeProjectData}, {fileURLToPath}] = await Promise.all([import('../../js/scripts/project-data.mjs'), import('node:url')]);\n    const file = fileURLToPath(new URL('../../issue-195-artifacts/original-link-raw-native-observations.lino', import.meta.url)); mkdirSync(dirname(file), {recursive: true}); writeProjectData(file, receipt);\n  })"
+  },
+  {
+    "inventory": "B70 physical field source view names for rust/tests/unit/translation_javascript_array_bindings.rs",
+    "id": "test.require-native-declaration-list-equivalence",
+    "source": "rust/tests/unit/translation_javascript_array_bindings.rs",
+    "name": "require_declaration_list_equivalent",
+    "inventoryName": "require native declaration list equivalence",
+    "sourceText": "fn require_declaration_list_equivalent(source: &str, expected: &Value) {\n    let surface =\n        parse_javascript(source).unwrap_or_else(|error| panic!(\"{source}: {}\", error.message()));\n    let program = check_program(&surface).unwrap();\n    let javascript = emit_javascript(&program).unwrap().text;\n    let rust = emit_rust(&program).unwrap().text;\n    let original = declaration_list_contract(source, &javascript);\n    assert_eq!(\n        serde_json::to_value(&surface).unwrap(),\n        original[\"surface\"],\n        \"{source}\"\n    );\n    assert_eq!(rust, original[\"rust\"].as_str().unwrap(), \"{source}\");\n    assert_eq!(\n        &original[\"original\"], expected,\n        \"unchanged independent source: {source}\"\n    );\n    assert_eq!(&original[\"emitted\"], expected, \"{source}\");\n    let saved = encode_typed_program_links(&program)\n        .unwrap_or_else(|error| panic!(\"initial checked archive encoding for {source}: {error}\"));\n    for network in [\n        LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),\n        decode_link_network_binary(\n            &encode_link_network_binary(&saved.network, BinaryLinksOptions::default()).unwrap(),\n            BinaryLinksOptions::default(),\n        )\n        .unwrap(),\n    ] {\n        let restored = decode_typed_program_links(&network, saved.root)\n            .unwrap_or_else(|error| panic!(\"source-free archive decoding for {source}: {error}\"));\n        encode_typed_program_links(&restored).unwrap_or_else(|error| {\n            panic!(\"restored checked archive encoding for {source}: {error}\")\n        });\n        assert_eq!(restored, program);\n        assert_eq!(emit_javascript(&restored).unwrap().text, javascript);\n        assert_eq!(emit_rust(&restored).unwrap().text, rust);\n    }\n}"
   }
 ];
 const reconcileCurrentWitnessInventory=entry=>{const rows=B63_CURRENT_INVENTORY_WITNESSES.filter(row=>entry.inventory===row.inventory&&entry.files.length===1&&entry.files[0]===row.source);if(rows.length===0)return entry;return{...entry,extract:(text,file)=>[...new Set([...entry.extract(text,file),...rows.filter(row=>{if(!text.includes(row.sourceText)||!(!row.sourceContext||text.includes(row.sourceContext))||!(row.ownerContexts??[]).every(context=>text.includes(context)))return false;if(!row.styleSource)return true;const style=inventoryText(repositoryRoot,row.styleSource),end=style.indexOf("\n"),first=end<0?"":style.slice(0,end+1);return Buffer.byteLength(first)===row.styleRowBytes&&createB57MovedSourceHash("sha256").update(first).digest("hex")===row.styleRowSha256&&first.startsWith("(decorator "+row.name+" ");}).map(row=>row.inventoryName)])],recordOf:name=>rows.find(row=>row.inventoryName===name)?.id??entry.recordOf(name)};};
@@ -67571,6 +67595,300 @@ const B70_SOURCE_BINDINGS=[
     "name": "declaration receipt checks refuse altered semantics endpoints archives descriptors identities and unknown fields",
     "inventoryName": "assert complete declaration receipt refusals",
     "sourceText": "test('declaration receipt checks refuse altered semantics endpoints archives descriptors identities and unknown fields',()=>{\n let refused=0;\n for(const receipt of register.receipts){\n  const current=readProjectData(new URL(receipt.current.file,root));\n  for(const mutate of[\n   value=>{value.extra='unreviewed';},\n   value=>{value.archive.textSha256='0'.repeat(64);},\n   value=>{value.archive.textBytes+=1;},\n   value=>{delete value.archive;},\n   value=>{if(value.completeRust)value.completeRust+=' ';else value.sourceClosure.source+=' ';},\n   value=>{const path=receipt.changes.find(row=>row.path.at(-2)==='sourceSpan').path;let parent=value;for(const key of path.slice(0,-1))parent=parent[key];parent.end+=1;},\n  ]){\n   const changed=structuredClone(current);mutate(changed);\n   assert.throws(()=>restoreCompleteDeclarationReceipt(changed,receipt.identity),assert.AssertionError);refused+=1;\n  }\n  assert.throws(()=>restoreCompleteDeclarationReceipt(current,receipt.identity+' unknown'),assert.AssertionError);refused+=1;\n }\n assert.equal(refused,14);\n})"
+  },
+  {
+    "id": "translation.read-primitive-array-join-element-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveArrayJoinElementForm",
+    "inventoryName": "read primitive array join element form",
+    "sourceText": "export function readPrimitiveArrayJoinElementForm(kind) {\n  if (kind === 'string') return 'string';\n  if (kind === 'unit') return 'empty';\n  if (kind === 'option') return 'optional';\n  if (kind === 'bool' || kind === 'float' || kind === 'fixed' || kind === 'int' || kind === 'nat') return 'text';\n  return 'refuse';\n}"
+  },
+  {
+    "id": "translation.read-primitive-array-join-element-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_array_join_element_form",
+    "inventoryName": "read primitive array join element form",
+    "sourceText": "pub fn read_primitive_array_join_element_form(kind: &str) -> String {\n    if kind == \"string\" {\n        String::from(\"string\")\n    } else if kind == \"unit\" {\n        String::from(\"empty\")\n    } else if kind == \"option\" {\n        String::from(\"optional\")\n    } else if ((((kind == \"bool\") || (kind == \"float\")) || (kind == \"fixed\")) || (kind == \"int\"))\n        || (kind == \"nat\")\n    {\n        String::from(\"text\")\n    } else {\n        String::from(\"refuse\")\n    }\n}"
+  },
+  {
+    "id": "translation.read-primitive-method-obligation-feature",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveMethodArgumentObligationFeature",
+    "inventoryName": "read primitive method obligation feature",
+    "sourceText": "export function readPrimitiveMethodArgumentObligationFeature(operation) {\n  return operation === 'join' ? 'array join' : 'array identity search';\n}"
+  },
+  {
+    "id": "translation.read-primitive-method-obligation-feature",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_method_argument_obligation_feature",
+    "inventoryName": "read primitive method obligation feature",
+    "sourceText": "pub fn read_primitive_method_argument_obligation_feature(operation: &str) -> String {\n    if operation == \"join\" {\n        String::from(\"array join\")\n    } else {\n        String::from(\"array identity search\")\n    }\n}"
+  },
+  {
+    "id": "translation.read-primitive-array-join-operand-form",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "readPrimitiveArrayJoinOperandForm",
+    "inventoryName": "read primitive array join operand form",
+    "sourceText": "export function readPrimitiveArrayJoinOperandForm(units, stringElement, operand) {\n  return units && (operand === 'separator' || stringElement) ? 'borrow' : 'receiver';\n}"
+  },
+  {
+    "id": "translation.read-primitive-array-join-operand-form",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "read_primitive_array_join_operand_form",
+    "inventoryName": "read primitive array join operand form",
+    "sourceText": "pub fn read_primitive_array_join_operand_form(\n    units: bool,\n    string_element: bool,\n    operand: &str,\n) -> String {\n    if units && ((operand == \"separator\") || string_element) {\n        String::from(\"borrow\")\n    } else {\n        String::from(\"receiver\")\n    }\n}"
+  },
+  {
+    "id": "translation.render-primitive-array-join-element",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveArrayJoinElement",
+    "inventoryName": "render primitive array join element",
+    "sourceText": "export function renderPrimitiveArrayJoinElement(kind, absence, name, present, empty) {\n  const form = readPrimitiveArrayJoinElementForm(kind);\n  if (form === 'empty') return empty;\n  if (form === 'optional') {\n    if (absence === 'both') return 'match ' + name + ' { crate::MlOptional::Value(ml_present) => ' + present + ', _ => ' + empty + ' }';\n    return 'match ' + name + ' { Some(ml_present) => ' + present + ', None => ' + empty + ' }';\n  }\n  return present;\n}"
+  },
+  {
+    "id": "translation.render-primitive-array-join-element",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_array_join_element",
+    "inventoryName": "render primitive array join element",
+    "sourceText": "pub fn render_primitive_array_join_element(\n    kind: &str,\n    absence: &str,\n    name: &str,\n    present: &str,\n    empty: &str,\n) -> String {\n    {\n        let form = self::read_primitive_array_join_element_form(kind);\n        if form == \"empty\" {\n            empty.to_owned()\n        } else if form == \"optional\" {\n            if absence == \"both\" {\n                format!(\n                    \"match {}{}{}, _ => {} }}\",\n                    name.to_owned(),\n                    String::from(\" { crate::MlOptional::Value(ml_present) => \"),\n                    present.to_owned(),\n                    empty.to_owned()\n                )\n            } else {\n                format!(\n                    \"match {} {{ Some(ml_present) => {}, None => {} }}\",\n                    name.to_owned(),\n                    present.to_owned(),\n                    empty.to_owned()\n                )\n            }\n        } else {\n            present.to_owned()\n        }\n    }\n}"
+  },
+  {
+    "id": "translation.render-primitive-array-join-expression",
+    "source": "js/src/translation/primitive-method-rules.js",
+    "name": "renderPrimitiveArrayJoinExpression",
+    "inventoryName": "render primitive array join expression",
+    "sourceText": "export function renderPrimitiveArrayJoinExpression(units, stringElement, object, separator, elementText) {\n  if (stringElement) return units ? 'crate::ml_string::join(' + object + ', ' + separator + ')' : object + '.join(' + separator + '.as_str())';\n  const values = object + '.iter().cloned().map(|ml_value| ' + elementText + ').collect::<Vec<_>>()';\n  return units ? 'crate::ml_string::join(&' + values + ', ' + separator + ')' : '(' + values + ').join(' + separator + '.as_str())';\n}"
+  },
+  {
+    "id": "translation.render-primitive-array-join-expression",
+    "source": "rust/src/translation/primitive_method_rules.rs",
+    "name": "render_primitive_array_join_expression",
+    "inventoryName": "render primitive array join expression",
+    "sourceText": "pub fn render_primitive_array_join_expression(\n    units: bool,\n    string_element: bool,\n    object: &str,\n    separator: &str,\n    element_text: &str,\n) -> String {\n    if string_element {\n        if units {\n            format!(\n                \"crate::ml_string::join({}, {})\",\n                object.to_owned(),\n                separator.to_owned()\n            )\n        } else {\n            format!(\n                \"{}.join({}.as_str())\",\n                object.to_owned(),\n                separator.to_owned()\n            )\n        }\n    } else {\n        {\n            let values = format!(\n                \"{}.iter().cloned().map(|ml_value| {}).collect::<Vec<_>>()\",\n                object.to_owned(),\n                element_text.to_owned()\n            );\n            if units {\n                format!(\n                    \"crate::ml_string::join(&{values}, {})\",\n                    separator.to_owned()\n                )\n            } else {\n                format!(\"({values}).join({}.as_str())\", separator.to_owned())\n            }\n        }\n    }\n}"
+  },
+  {
+    "id": "repository.plan-raw-borrowed-native-observations",
+    "source": "experiments/original-link-complete-table-projection/raw-native-observations.mjs",
+    "name": "planOriginalLinkRawBorrowedNative",
+    "inventoryName": "plan raw borrowed native observations",
+    "sourceText": "export async function planOriginalLinkRawBorrowedNative(consumingPlan,environment=process.env) {\n  requireOriginalLinkRawPlanning(environment);\n  assert.ok(checkedPlans.has(consumingPlan),'the loan successor requires the exact checked consuming plan');\n  assert.equal(consumingPlan.emissionProfile.profile,'consuming');\n  assert.equal(consumingPlan.entries.length,1);\n  const previous=consumingPlan.entries[0];\n  const generated=prepareOriginalLinkRawBorrowedEmission(consumingPlan.emissionProfile);\n  assert.deepEqual(generated.profile.declarationNames,previous.declarationNames);\n  const [{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary},{tokenize}]=await Promise.all([\n    import('../../js/src/network.js'),import('../../js/src/link-network-binary.js'),import('../../js/src/translation/lexer.js'),\n  ]);\n  assert.deepEqual(nativeInterface(generated.source,tokenize),Object.fromEntries(\n    ['functionName','parameterOrder','parameterModes','resultMode','interfaceSha256'].map(key=>[key,previous[key]])));\n  const originalReceipt=archiveCompleteRustSource(generated.source,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);\n  const entry={...previous,fixtureId:'experiments/original-link-complete-table-projection/'+generated.profile.sourceArtifact,\n    source:generated.source,sourceBytes:generated.profile.sourceBytes,sourceSha256:generated.profile.sourceSha256,\n    emissionProfile:generated.profile,replaySha256:originalReceipt.binaryReplaySha256,originalReceipt,\n    sizes:{...previous.sizes,sourceBytes:generated.profile.sourceBytes}};\n  const replaced=new Set(['fixtureId','source','sourceBytes','sourceSha256','emissionProfile','replaySha256','originalReceipt','sizes']);\n  assert.deepEqual(Reflect.ownKeys(entry),Reflect.ownKeys(previous));\n  for(const key of Reflect.ownKeys(previous))if(!replaced.has(key))assert.equal(entry[key],previous[key],\n    'the loan successor retains the exact original observation/process field: '+key);\n  assert.equal(sha256(JSON.stringify(entry.carrier)),previous.carrierSha256);\n  assert.equal(originalLinkRawRecordDigest(entry.premises),originalLinkRawRecordDigest(previous.premises));\n  assert.equal(originalLinkRawRecordDigest(entry.observations),originalLinkRawRecordDigest(previous.observations));\n  const plan=freeze({...consumingPlan,emissionProfile:generated.profile,entries:[entry],\n    borrowedPlanProof:{predecessorSourceSha256:previous.sourceSha256,carrierSha256:previous.carrierSha256,\n      premiseSha256:originalLinkRawRecordDigest(entry.premises),observationSha256:originalLinkRawRecordDigest(entry.observations),\n      observations:entry.observations.length,premises:entry.premises.length,\n      scope:'Whole predecessor retained through exact mechanical styles; every fixture, result, premise and consumer input reused.'}});\n  checkedPlans.add(plan);return plan;\n}"
+  },
+  {
+    "id": "translation.render-array-join-owned-or-borrowed-operand",
+    "source": "js/src/translation/emit-rust.js",
+    "name": "RustEmitter::method::operand",
+    "inventoryName": "render array join owned or borrowed operand",
+    "sourceText": "operand = (value, role) => readPrimitiveArrayJoinOperandForm(this.utf16Strings, stringElement, role) === 'borrow' ? this.borrow(value) : this.receiver(value)"
+  },
+  {
+    "id": "translation.render-native-array-join-value",
+    "source": "rust/src/translation/emit_rust/primitive_methods.rs",
+    "name": "RustEmitter::primitive_array_join_element",
+    "inventoryName": "render native array join value",
+    "sourceText": "fn primitive_array_join_element(&mut self, name: &str, ty: &Type) -> Result<String> {\n        let form = rules::read_primitive_array_join_element_form(ty.kind());\n        let empty = if matches!(form.as_str(), \"empty\" | \"optional\") {\n            let value = super::LitValue::Text(String::new());\n            self.literal(&Expr::lit(Type::String, value.clone()), &value)\n        } else {\n            String::new()\n        };\n        let (present, absence) = if form == \"optional\" {\n            let Type::Option { element, absence } = ty else {\n                unreachable!(\"the generated join element form selects the actual Option\");\n            };\n            if absence == \"both\" {\n                self.preludes.insert(Prelude::Optional);\n            }\n            (\n                self.primitive_array_join_element(\"ml_present\", element)?,\n                absence.as_str(),\n            )\n        } else if form == \"empty\" {\n            (String::new(), \"\")\n        } else {\n            let value = Expr::new(\n                Node::ToString {\n                    arg: Box::new(Expr::var(name, ty.clone())),\n                    console: false,\n                },\n                Type::String,\n            );\n            (self.expr(&value)?, \"\")\n        };\n        Ok(rules::render_primitive_array_join_element(\n            ty.kind(),\n            absence,\n            name,\n            &present,\n            &empty,\n        ))\n    }"
+  },
+  {
+    "id": "repository.execute-agda-queue-growth-control",
+    "source": "rust/oracles/agda-layout-source-oracle/src/lib.rs",
+    "name": "queue_growth_control",
+    "inventoryName": "execute agda queue growth control",
+    "sourceText": "pub fn queue_growth_control() -> bool {\n    // SAFETY: the generated control owns and releases its local scanner queue.\n    unsafe { meta_language_agda_queue_growth_control() == 1 }\n}"
+  },
+  {
+    "id": "translation.read-rejected-checked-program-difference",
+    "source": "rust/src/typed_program_links/checked.rs",
+    "name": "read_checked_program_difference",
+    "inventoryName": "read rejected checked program difference",
+    "sourceText": "fn read_checked_program_difference(\n    retained: &Value,\n    checked: &Value,\n    path: &str,\n    depth: usize,\n    remaining: &mut usize,\n) -> Option<String> {\n    if depth > 256 || *remaining == 0 {\n        return Some(format!(\"{path}: comparison detail resource limit\"));\n    }\n    *remaining -= 1;\n    match (retained, checked) {\n        (Value::Object(retained), Value::Object(checked)) => {\n            for (field, value) in retained {\n                let field_path = format!(\"{path}/{}\", field.replace('~', \"~0\").replace('/', \"~1\"));\n                let Some(actual) = checked.get(field) else {\n                    return Some(format!(\n                        \"{field_path}: retained field is absent after recheck\"\n                    ));\n                };\n                if let Some(difference) = read_checked_program_difference(\n                    value,\n                    actual,\n                    &field_path,\n                    depth + 1,\n                    remaining,\n                ) {\n                    return Some(difference);\n                }\n            }\n            checked\n                .keys()\n                .find(|field| !retained.contains_key(*field))\n                .map(|field| {\n                    format!(\n                        \"{path}/{}: recheck introduced a field\",\n                        field.replace('~', \"~0\").replace('/', \"~1\")\n                    )\n                })\n        }\n        (Value::Array(retained), Value::Array(checked)) => {\n            if retained.len() != checked.len() {\n                return Some(format!(\n                    \"{path}: retained length {} differs from rechecked length {}\",\n                    retained.len(),\n                    checked.len()\n                ));\n            }\n            retained\n                .iter()\n                .zip(checked)\n                .enumerate()\n                .find_map(|(index, (value, actual))| {\n                    read_checked_program_difference(\n                        value,\n                        actual,\n                        &format!(\"{path}/{index}\"),\n                        depth + 1,\n                        remaining,\n                    )\n                })\n        }\n        _ if retained == checked => None,\n        _ => Some(format!(\n            \"{path}: retained {} differs from rechecked {}\",\n            read_checked_program_value(retained),\n            read_checked_program_value(checked)\n        )),\n    }\n}"
+  },
+  {
+    "id": "translation.render-rejected-checked-program-value",
+    "source": "rust/src/typed_program_links/checked.rs",
+    "name": "read_checked_program_value",
+    "inventoryName": "render rejected checked program value",
+    "sourceText": "fn read_checked_program_value(value: &Value) -> String {\n    match value {\n        Value::Object(_) => \"an object\".to_owned(),\n        Value::Array(_) => \"an array\".to_owned(),\n        Value::String(text) => format!(\"{:?}\", text.chars().take(96).collect::<String>()),\n        _ => value.to_string(),\n    }\n}"
+  },
+  {
+    "id": "repository.calculate-raw-loan-source-digest",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "digest",
+    "inventoryName": "calculate raw loan source digest",
+    "sourceText": "digest = value => createHash('sha256').update(value).digest('hex')"
+  },
+  {
+    "id": "repository.describe-raw-loan-source",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "descriptor",
+    "inventoryName": "describe raw loan source",
+    "sourceText": "descriptor = value => ({bytes: Buffer.byteLength(value), sha256: digest(value)})"
+  },
+  {
+    "id": "repository.count-raw-loan-clone-calls",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "cloneCalls",
+    "inventoryName": "count raw loan clone calls",
+    "sourceText": "cloneCalls = source => {\n  const tokens = tokenize(source, 'Rust').tokens;\n  return tokens.filter((token, index) => token.kind === 'identifier' && token.value === 'clone'\n    && tokens[index - 1]?.value === '.' && tokens[index + 1]?.value === '(' && tokens[index + 2]?.value === ')').length;\n}"
+  },
+  {
+    "id": "repository.prepare-raw-borrowed-source-emission",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "prepareOriginalLinkRawBorrowedEmission",
+    "inventoryName": "prepare raw borrowed source emission",
+    "sourceText": "export function prepareOriginalLinkRawBorrowedEmission(predecessor, {read = readFileSync, check = true} = {}) {\n  const storedBytes = read(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);\n  const stored = readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);\n  assert.equal(predecessor.profile, 'consuming');\n  assert.equal(predecessor.proof.artifactSha256, digest(storedBytes),'the complete consuming predecessor bytes changed');\n  assert.equal(stored.sourceSha256, predecessor.sourceSha256);\n  const source = stored.completeRust;\n  assert.deepEqual(descriptor(source), {bytes: predecessor.sourceBytes, sha256: predecessor.sourceSha256});\n  const options = {ownedParameters: {check_original_link_raw_shape: ['columns']}};\n  const styled = readPortableSourceParameterStyles(source, options);\n  const names = text => [...text.matchAll(/^pub fn (\\w+)\\(/gmu)].map(match => match[1]);\n  const header = text => text.split('\\n').find(line => line.startsWith('pub fn check_original_link_raw_shape('));\n  assert.equal(names(source).length, 62);\n  assert.equal(stored.owners.length, 106);\n  assert.deepEqual(names(styled.source), names(source));\n  assert.equal(header(styled.source), header(source), 'the full public consumer interface stays exact');\n  let inverse = styled.source;\n  for (const action of [...styled.actions].reverse()) {\n    assert.equal(action.op, 'replace'); assert.equal(action.field, 'source');\n    assert.equal(inverse.split(action.to).length, 2, 'a whole styled function has exactly one inverse');\n    inverse = inverse.replace(action.to, () => action.from);\n  }\n  assert.equal(inverse, source, 'every complete predecessor byte is recovered');\n  const receipt = {version: 1, profile: 'borrowed consuming', options,\n    predecessor: {...descriptor(storedBytes), source: descriptor(source)},\n    source: descriptor(styled.source), definitionCount: 106,\n    declarationNames: stored.declarationNames, publicEntryHeader: header(source),\n    decisions: decisions.map(file => ({file, ...descriptor(read(new URL(file, root)))})),\n    styles: styled.actions.map(action => ({name: names(action.from)[0],\n      before: descriptor(action.from), after: descriptor(action.to)})),\n    cloneCalls: {before: cloneCalls(source), after: cloneCalls(styled.source)},\n    nativeCompilation: false, nativeExecution: false,\n    boundary: 'Exact mechanical parameter styles and whole predecessor inverse; no native timing or execution claim.'};\n  assert.ok(receipt.cloneCalls.after < receipt.cloneCalls.before);\n  if (check) checkProjectData(ORIGINAL_LINK_RAW_BORROWED_RECEIPT, receipt);\n  const profile = {profile: 'borrowed consuming', sourceBytes: receipt.source.bytes, sourceSha256: receipt.source.sha256,\n    historicalSourceSha256: predecessor.historicalSourceSha256, currentSourceSha256: predecessor.currentSourceSha256,\n    sourceArtifact: 'data/raw-borrowed-parameter-receipt.lino', declarationNames: predecessor.declarationNames,\n    definitionCount: 106, proof: {artifactSha256: digest(structuredDataToLino(receipt)), predecessor, receipt}};\n  return {source: styled.source, receipt, profile};\n}"
+  },
+  {
+    "id": "repository.read-raw-loan-function-names",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "prepareOriginalLinkRawBorrowedEmission::names",
+    "inventoryName": "read raw loan function names",
+    "sourceText": "names = text => [...text.matchAll(/^pub fn (\\w+)\\(/gmu)].map(match => match[1])"
+  },
+  {
+    "id": "repository.read-raw-loan-public-entry-header",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "prepareOriginalLinkRawBorrowedEmission::header",
+    "inventoryName": "read raw loan public entry header",
+    "sourceText": "header = text => text.split('\\n').find(line => line.startsWith('pub fn check_original_link_raw_shape('))"
+  },
+  {
+    "id": "repository.read-raw-borrowed-emission-profile",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "readOriginalLinkRawBorrowedProfile",
+    "inventoryName": "read raw borrowed emission profile",
+    "sourceText": "export function readOriginalLinkRawBorrowedProfile(currentProfile, read = readFileSync) {\n  const predecessor = readOriginalLinkRawConsumingProfile(currentProfile, read);\n  return prepareOriginalLinkRawBorrowedEmission(predecessor, {read}).profile;\n}"
+  },
+  {
+    "id": "test.assert-raw-loan-definition-conservation",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs",
+    "name": "raw immutable parameter loans retain the complete predecessor and every checked definition",
+    "inventoryName": "assert raw loan definition conservation",
+    "sourceText": "test('raw immutable parameter loans retain the complete predecessor and every checked definition', () => {\n  const before=readFileSync(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);\n  const stored=readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);\n  const predecessor=readOriginalLinkRawConsumingProfile(stored.predecessor);\n  const {source,receipt,profile}=prepareOriginalLinkRawBorrowedEmission(predecessor);\n  assert.equal(receipt.definitionCount,106);assert.deepEqual(receipt.declarationNames,stored.declarationNames);\n  assert.deepEqual(profile.proof.predecessor,predecessor);\n  assert.deepEqual(receipt.cloneCalls,{before:746,after:396});\n  assert.equal(receipt.styles.length,59);\n  assert.equal(receipt.publicEntryHeader,'pub fn check_original_link_raw_shape(root_high: f64, root_low: f64, columns: Vec<Vec<f64>>) -> Vec<f64> {');\n  assert.equal(source.split(receipt.publicEntryHeader).length,2);\n  assert.equal(receipt.nativeCompilation,false);assert.equal(receipt.nativeExecution,false);\n  assert.deepEqual(readOriginalLinkRawBorrowedProfile(stored.predecessor),profile);\n  assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT),before);\n})"
+  },
+  {
+    "id": "test.assert-raw-loan-source-refusals",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs",
+    "name": "raw immutable parameter loans reject changed predecessor bytes and actual mechanical decision sources",
+    "inventoryName": "assert raw loan source refusals",
+    "sourceText": "test('raw immutable parameter loans reject changed predecessor bytes and actual mechanical decision sources', () => {\n  const stored=readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);\n  const predecessor=readOriginalLinkRawConsumingProfile(stored.predecessor);\n  for(const file of [ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,new URL('../../js/scripts/portable-source-library-style.mjs',import.meta.url)]) {\n    assert.throws(()=>prepareOriginalLinkRawBorrowedEmission(predecessor,{read:path=>{\n      const bytes=readFileSync(path);return String(path)===String(file)?Buffer.concat([bytes,Buffer.from('\\n')]):bytes;\n    }}),/complete consuming predecessor bytes changed|project data is stale/u);\n  }\n  const changed=structuredClone(predecessor);changed.sourceSha256='0'.repeat(64);\n  assert.throws(()=>prepareOriginalLinkRawBorrowedEmission(changed),assert.AssertionError);\n})"
+  },
+  {
+    "id": "test.read-altered-raw-loan-source",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs",
+    "name": "raw immutable parameter loans reject changed predecessor bytes and actual mechanical decision sources::read",
+    "inventoryName": "read altered raw loan source",
+    "sourceText": "read:path=>{\n      const bytes=readFileSync(path);return String(path)===String(file)?Buffer.concat([bytes,Buffer.from('\\n')]):bytes;\n    }"
+  },
+  {
+    "id": "test.assert-raw-loan-planning-boundaries",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs",
+    "name": "raw loan native planning remains CI-only and cannot launch a detached checked plan",
+    "inventoryName": "assert raw loan planning boundaries",
+    "sourceText": "test('raw loan native planning remains CI-only and cannot launch a detached checked plan', async () => {\n  await assert.rejects(planOriginalLinkRawBorrowedNative({},{}),/CI/u);\n  await assert.rejects(planOriginalLinkRawBorrowedNative({},{CI:'true',ORIGINAL_LINK_RAW_NATIVE:'1'}),/exact checked consuming plan/u);\n})"
+  },
+  {
+    "id": "repository.calculate-agda-queue-source-digest",
+    "source": "js/scripts/agda-queue-safe-oracle.mjs",
+    "name": "digest",
+    "inventoryName": "calculate agda queue source digest",
+    "sourceText": "digest=value=>createHash('sha256').update(value).digest('hex')"
+  },
+  {
+    "id": "repository.read-agda-scanner-patch-hunks",
+    "source": "js/scripts/agda-queue-safe-oracle.mjs",
+    "name": "readAgdaScannerPatchHunks",
+    "inventoryName": "read agda scanner patch hunks",
+    "sourceText": "export function readAgdaScannerPatchHunks(patch) {\n  assert.ok(patch.startsWith('--- a/src/scanner.c\\n+++ b/src/scanner.c\\n'));\n  const parts=patch.split(/^@@ .* @@.*\\n/gmu).slice(1);\n  assert.equal(parts.length,3,'the existing scanner patch has exactly its three original hunks');\n  return parts.map(part=>{\n    const lines=part.split('\\n');if(lines.at(-1)==='')lines.pop();\n    assert.ok(lines.every(line=>[' ','-','+'].includes(line[0])));\n    return {before:lines.filter(line=>line[0]!=='+').map(line=>line.slice(1)).join('\\n')+'\\n',\n      after:lines.filter(line=>line[0]!=='-').map(line=>line.slice(1)).join('\\n')+'\\n'};\n  });\n}"
+  },
+  {
+    "id": "repository.prepare-agda-queue-safe-scanner",
+    "source": "js/scripts/agda-queue-safe-oracle.mjs",
+    "name": "prepareAgdaQueueSafeScanner",
+    "inventoryName": "prepare agda queue safe scanner",
+    "sourceText": "export function prepareAgdaQueueSafeScanner(original,patch,manifest) {\n  assert.equal(digest(original),manifest.originalScannerSha256,'the original scanner remains authenticated');\n  assert.equal(digest(patch),manifest.files['layout-state.patch'],'the complete existing patch remains authenticated');\n  const hunks=readAgdaScannerPatchHunks(patch);\n  const replace=(source,hunk)=>{\n    assert.equal(source.split(hunk.before).length,2,'an exact scanner hunk occurs once');\n    return source.replace(hunk.before,()=>hunk.after);\n  };\n  const full=hunks.reduce(replace,original);\n  assert.equal(digest(full),manifest.scannerSha256,'all existing scanner changes still reconstruct the original full successor');\n  assert.match(hunks[0].before,/#define QUEUE_RESIZE\\(queue, _cap\\)/u);\n  assert.match(hunks[0].after,/tmp\\[index\\] = \\(queue\\).data/u);\n  const queue=replace(original,hunks[0]);\n  assert.equal(queue.split(hunks[0].after).length,2);\n  assert.equal(queue.replace(hunks[0].after,()=>hunks[0].before),original,'the single queue hunk restores every original source byte');\n  for(const hunk of hunks.slice(1))assert.equal(queue.split(hunk.before).length,2,'serialization and deserialization retain their complete original bytes');\n  return queue;\n}"
+  },
+  {
+    "id": "repository.replace-one-exact-agda-scanner-hunk",
+    "source": "js/scripts/agda-queue-safe-oracle.mjs",
+    "name": "prepareAgdaQueueSafeScanner::replace",
+    "inventoryName": "replace one exact agda scanner hunk",
+    "sourceText": "replace=(source,hunk)=>{\n    assert.equal(source.split(hunk.before).length,2,'an exact scanner hunk occurs once');\n    return source.replace(hunk.before,()=>hunk.after);\n  }"
+  },
+  {
+    "id": "test.calculate-agda-queue-control-digest",
+    "source": "js/tests/grammar-agda-queue-safe-oracle.test.js",
+    "name": "digest",
+    "inventoryName": "calculate agda queue control digest",
+    "sourceText": "digest=value=>createHash('sha256').update(value).digest('hex')"
+  },
+  {
+    "id": "test.assert-agda-queue-source-conservation",
+    "source": "js/tests/grammar-agda-queue-safe-oracle.test.js",
+    "name": "Agda queue-only source derivation preserves the complete original serialization and full patched successor",
+    "inventoryName": "assert agda queue source conservation",
+    "sourceText": "test('Agda queue-only source derivation preserves the complete original serialization and full patched successor',()=>{\n  const queue=prepareAgdaQueueSafeScanner(original,patch,manifest);\n  assert.equal(queue,original.replace(hunks[0].before,()=>hunks[0].after));\n  assert.equal(queue.replace(hunks[0].after,()=>hunks[0].before),original);\n  for(const hunk of hunks.slice(1))assert.ok(queue.includes(hunk.before));\n  assert.equal(hunks.slice(1).reduce((source,hunk)=>source.replace(hunk.before,()=>hunk.after),queue),full);\n  assert.match(AGDA_QUEUE_GROWTH_CONTROL,/token_queue queue = token_queue_new\\(\\)/u);\n  assert.match(AGDA_QUEUE_GROWTH_CONTROL,/QUEUE_POP\\(queue\\);\\n    QUEUE_PUSH\\(queue, DEDENT\\);\\n    QUEUE_PUSH\\(queue, NEWLINE\\);/u);\n  assert.match(AGDA_QUEUE_GROWTH_CONTROL,/free\\(queue.data\\)/u);\n})"
+  },
+  {
+    "id": "test.assert-agda-queue-source-refusals",
+    "source": "js/tests/grammar-agda-queue-safe-oracle.test.js",
+    "name": "Agda queue-only source derivation rejects changed missing duplicated or unrelated source edits",
+    "inventoryName": "assert agda queue source refusals",
+    "sourceText": "test('Agda queue-only source derivation rejects changed missing duplicated or unrelated source edits',()=>{\n  for(const source of [original+'/* unrelated edit */\\n',original.replace(hunks[0].before,''),original+hunks[0].before])\n    assert.throws(()=>prepareAgdaQueueSafeScanner(source,patch,manifest),/original scanner remains authenticated/u);\n  assert.throws(()=>prepareAgdaQueueSafeScanner(original,patch+'\\n',manifest),/complete existing patch remains authenticated/u);\n  const duplicate=original+hunks[0].before;\n  assert.throws(()=>prepareAgdaQueueSafeScanner(duplicate,patch,{...manifest,originalScannerSha256:digest(duplicate)}),/hunk occurs once/u);\n  const missing=original.replace(hunks[0].before,'');\n  assert.throws(()=>prepareAgdaQueueSafeScanner(missing,patch,{...manifest,originalScannerSha256:digest(missing)}),/hunk occurs once/u);\n  const wrong={...manifest,scannerSha256:'0'.repeat(64)};\n  assert.throws(()=>prepareAgdaQueueSafeScanner(original,patch,wrong),/full successor/u);\n  assert.throws(()=>readAgdaScannerPatchHunks(patch.replace(/^@@ .* @@.*\\n[\\s\\S]*?(?=^@@)/mu,'')),/three original hunks/u);\n})"
+  },
+  {
+    "id": "test.assert-platform-partition-expansion-conservation",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "Windows translation expands only its physical cells and preserves every old test under the original deadline",
+    "inventoryName": "assert platform partition expansion conservation",
+    "sourceText": "test('Windows translation expands only its physical cells and preserves every old test under the original deadline', () => {\n  assert.deepEqual(policy.suites.find(row => row.name === 'translation').platformShards,\n    [{platform: 'windows-latest', shards: 8},{platform:'ubuntu-latest',shards:8}]);\n  for (const platform of policy.platforms) for (const suite of policy.suites) {\n    const expanded = platform === 'windows-latest' && ['translation','remaining'].includes(suite.name)\n      || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name);\n    const expected = expanded ? 8 : suite.shards;\n    assert.equal(physicalShardCount(policy, 'test', suite.name, platform), expected);\n  }\n  for (const suite of policy.suites) assert.equal(physicalShardCount(policy, 'coverage', suite.name, 'ubuntu-latest'),\n    ['grammar','translation'].includes(suite.name) ? 8 : suite.shards);\n  for (let previous = 1; previous <= 4; previous++) {\n    const before = selectPhysicalTests(inventory, previous, 4).map(row => row.name).sort();\n    const after = [...selectPhysicalTests(inventory, previous, 8), ...selectPhysicalTests(inventory, previous + 4, 8)].map(row => row.name).sort();\n    assert.deepEqual(after, before, 'each old hash cell is exactly subdivided without losing or duplicating a test');\n  }\n  const workflow = readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8');\n  for (const shard of [5, 6, 7, 8]) assert.ok(workflow.includes('            os: windows-latest\\n            logical_suite: translation\\n            physical_shard: '+shard+'\\n'));\n  assert.ok(workflow.includes(\"    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\\n\"));\n  for (const override of [{platform: 'unknown', shards: 8}, {platform: 'windows-latest', shards: 3}, {platform: 'windows-latest', shards: 8.5}]) {\n    const altered = structuredClone(policy);altered.suites.find(row => row.name === 'translation').platformShards = [override];\n    assert.throws(() => physicalShardCount(altered, 'test', 'translation', 'windows-latest'), /invalid platform shard expansion/u);\n  }\n})"
+  },
+  {
+    "id": "test.assert-fresh-merge-partition-expansion-conservation",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "fresh merge physical expansion preserves the complete original eight-cell inventory and deadline",
+    "inventoryName": "assert fresh merge partition expansion conservation",
+    "sourceText": "test('fresh merge physical expansion preserves the complete original eight-cell inventory and deadline',()=>{\n  assert.equal(policy.freshMergeShards,8);assert.equal(policy.freshMergeExpansion,16);\n  assert.equal(physicalShardCount(policy,'fresh-merge','all'),16);\n  for(let previous=1;previous<=8;previous++) {\n    const before=selectPhysicalTests(inventory,previous,8).map(row=>row.name).sort();\n    const after=[...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort();\n    assert.deepEqual(after,before);\n  }\n  for(const freshMergeExpansion of [7,16.5,NaN])assert.throws(()=>physicalShardCount({...policy,freshMergeExpansion},'fresh-merge','all'),/invalid fresh merge shard expansion/u);\n  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');\n  assert.ok(workflow.includes('        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]\\n'));\n  assert.match(workflow,/name: Fresh Merge Simulation\\n[\\s\\S]*?timeout-minutes: 20\\n/u);\n})"
+  },
+  {
+    "id": "test.assert-grammar-coverage-partition-expansion-conservation",
+    "source": "js/tests/issue-195-rust-suite-partitions.test.js",
+    "name": "instrumented grammar expansion subdivides every original coverage cell without changing native test scope",
+    "inventoryName": "assert grammar coverage partition expansion conservation",
+    "sourceText": "test('instrumented grammar expansion subdivides every original coverage cell without changing native test scope',()=>{\n  assert.deepEqual(policy.suites.find(row=>row.name==='grammar').platformShards,\n    [{platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:8}]);\n  assert.equal(physicalShardCount(policy,'coverage','grammar','ubuntu-latest'),8);\n  assert.equal(physicalShardCount(policy,'test','grammar','ubuntu-latest'),8);\n  for(const platform of ['macos-latest','windows-latest'])assert.equal(physicalShardCount(policy,'test','grammar',platform),4);\n  for(let previous=1;previous<=4;previous++)assert.deepEqual(\n    [...selectPhysicalTests(inventory,previous,8),...selectPhysicalTests(inventory,previous+4,8)].map(row=>row.name).sort(),\n    selectPhysicalTests(inventory,previous,4).map(row=>row.name).sort());\n})"
+  },
+  {
+    "id": "test.assert-primitive-array-join-observations-and-archives",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "primitive array joins preserve number text nullable cells UTF16 separators and both complete source-free archives",
+    "inventoryName": "assert primitive array join observations and archives",
+    "sourceText": "test('primitive array joins preserve number text nullable cells UTF16 separators and both complete source-free archives',()=>{\n  for(const [source,expected] of [\n    [\"console.log([0,-0,NaN,Infinity,-Infinity,1e-7,1e21].join());\",['0,0,NaN,Infinity,-Infinity,1e-7,1e+21']],\n    [\"console.log([true,false,true].join('|'));\",['true|false|true']],\n    [\"console.log([1,null,undefined,2].join('|'));\",['1|||2']],\n    [\"console.log([null,undefined].join());\",[',']],\n    [\"console.log(['a','b'].join('😀'));\",['a😀b']],\n    [\"/** @param {number[]} values @returns {string} */ function join(values){return values.join('|');} console.log(join([1,2]));\",['1|2']],\n    [\"function separator(){console.log('separator');return '|';} console.log([1,2].join(separator()));\",['separator','1|2']],\n  ]) {\n    assert.deepEqual(observe(source),expected);\n    const program=checkProgram(parseJavaScript(source)),rust=emitRust(program),packet=encodeTypedProgramLinks(program);\n    for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {\n      const restored=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});\n      assert.deepEqual(observe(emitJavaScript(restored).text),expected);\n      assert.deepEqual(emitRust(restored),rust);\n    }\n  }\n})"
+  },
+  {
+    "id": "test.assert-primitive-array-join-refusals",
+    "source": "js/tests/translation-primitive-method-rules.test.js",
+    "name": "primitive array joins retain structured conversion arity and non-scalar escape refusals",
+    "inventoryName": "assert primitive array join refusals",
+    "sourceText": "test('primitive array joins retain structured conversion arity and non-scalar escape refusals',()=>{\n  assert.throws(()=>checkProgram(parseJavaScript(\"console.log([{value:1}].join());\")),/array join: joining structured values/u);\n  assert.throws(()=>checkProgram(parseJavaScript(\"console.log([1].join(',',','));\")),/expects 0 to 1 arguments/u);\n  assert.throws(()=>parseJavaScript(\"console.log(['\\\\uD800'].join());\"),/not a scalar value/u);\n})"
+  },
+  {
+    "id": "repository.raw-parameter-loan-receipt",
+    "source": "experiments/original-link-complete-table-projection/raw-borrowed-emission.mjs",
+    "name": "ORIGINAL_LINK_RAW_BORROWED_RECEIPT",
+    "inventoryName": "raw parameter loan receipt",
+    "sourceText": "ORIGINAL_LINK_RAW_BORROWED_RECEIPT = new URL('./data/raw-borrowed-parameter-receipt.lino', import.meta.url)"
+  },
+  {
+    "id": "repository.agda-queue-growth-control-source",
+    "source": "js/scripts/agda-queue-safe-oracle.mjs",
+    "name": "AGDA_QUEUE_GROWTH_CONTROL",
+    "inventoryName": "agda queue growth control source",
+    "sourceText": "AGDA_QUEUE_GROWTH_CONTROL = '\\nint meta_language_agda_queue_growth_control(void) {\\n'\n  +'    token_queue queue = token_queue_new();\\n'\n  +'    QUEUE_PUSH(queue, NEWLINE);\\n'\n  +'    QUEUE_POP(queue);\\n'\n  +'    QUEUE_PUSH(queue, DEDENT);\\n'\n  +'    QUEUE_PUSH(queue, NEWLINE);\\n'\n  +'    int valid = queue.tail - queue.head == 2 && QUEUE_FRONT(queue) == DEDENT;\\n'\n  +'    QUEUE_POP(queue);\\n'\n  +'    valid = valid && QUEUE_FRONT(queue) == NEWLINE;\\n'\n  +'    QUEUE_POP(queue);\\n'\n  +'    valid = valid && queue.tail == queue.head;\\n'\n  +'    free(queue.data);\\n'\n  +'    return valid;\\n}\\n'"
+  },
+  {
+    "id": "repository.agda-queue-safe-oracle-language",
+    "source": "rust/oracles/agda-layout-source-oracle/src/lib.rs",
+    "name": "QUEUE_SAFE_LANGUAGE",
+    "inventoryName": "agda queue safe oracle language",
+    "sourceText": "pub const QUEUE_SAFE_LANGUAGE: LanguageFn =\n    unsafe { LanguageFn::from_raw(tree_sitter_agda_queue_safe) };"
   }
 ];
 const B70_NAME_INVENTORIES=[...new Set(B70_SOURCE_BINDINGS.map(row=>row.source))].map(source=>({inventory:"B70 physical field source view names for "+source,files:[source],extract:text=>B70_SOURCE_BINDINGS.filter(row=>row.source===source&&text.includes(row.sourceText)&&(!row.sourceContext||text.includes(row.sourceContext))&&(row.ownerContexts??[]).every(context=>text.includes(context))).map(row=>row.inventoryName),recordOf:name=>B70_SOURCE_BINDINGS.find(row=>row.source===source&&row.inventoryName===name).id}));

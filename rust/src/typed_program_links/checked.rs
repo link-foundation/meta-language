@@ -355,9 +355,105 @@ pub(super) fn validate(program: &Program) -> Result<()> {
     };
     let checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
     if checked != *program {
-        return Err(error(
-            "the linked program has inconsistent types, bindings or operation semantics",
-        ));
+        let retained_records =
+            serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?;
+        let checked_records =
+            serde_json::to_value(&checked).map_err(|failure| error(failure.to_string()))?;
+        let detail = read_checked_program_difference(
+            &retained_records,
+            &checked_records,
+            "",
+            0,
+            &mut 100_000,
+        )
+        .unwrap_or_else(|| {
+            "the internal Rust representation differs despite equal serialized fields".to_owned()
+        });
+        return Err(error(format!(
+            "the linked program has inconsistent types, bindings or operation semantics: {detail}",
+        )));
     }
     Ok(())
+}
+
+// This diagnostic runs only after the unchanged exact checked-IR comparison
+// rejects. It never accepts, normalizes or discards a mismatching field.
+fn read_checked_program_difference(
+    retained: &Value,
+    checked: &Value,
+    path: &str,
+    depth: usize,
+    remaining: &mut usize,
+) -> Option<String> {
+    if depth > 256 || *remaining == 0 {
+        return Some(format!("{path}: comparison detail resource limit"));
+    }
+    *remaining -= 1;
+    match (retained, checked) {
+        (Value::Object(retained), Value::Object(checked)) => {
+            for (field, value) in retained {
+                let field_path = format!("{path}/{}", field.replace('~', "~0").replace('/', "~1"));
+                let Some(actual) = checked.get(field) else {
+                    return Some(format!(
+                        "{field_path}: retained field is absent after recheck"
+                    ));
+                };
+                if let Some(difference) = read_checked_program_difference(
+                    value,
+                    actual,
+                    &field_path,
+                    depth + 1,
+                    remaining,
+                ) {
+                    return Some(difference);
+                }
+            }
+            checked
+                .keys()
+                .find(|field| !retained.contains_key(*field))
+                .map(|field| {
+                    format!(
+                        "{path}/{}: recheck introduced a field",
+                        field.replace('~', "~0").replace('/', "~1")
+                    )
+                })
+        }
+        (Value::Array(retained), Value::Array(checked)) => {
+            if retained.len() != checked.len() {
+                return Some(format!(
+                    "{path}: retained length {} differs from rechecked length {}",
+                    retained.len(),
+                    checked.len()
+                ));
+            }
+            retained
+                .iter()
+                .zip(checked)
+                .enumerate()
+                .find_map(|(index, (value, actual))| {
+                    read_checked_program_difference(
+                        value,
+                        actual,
+                        &format!("{path}/{index}"),
+                        depth + 1,
+                        remaining,
+                    )
+                })
+        }
+        _ if retained == checked => None,
+        _ => Some(format!(
+            "{path}: retained {} differs from rechecked {}",
+            read_checked_program_value(retained),
+            read_checked_program_value(checked)
+        )),
+    }
+}
+
+fn read_checked_program_value(value: &Value) -> String {
+    match value {
+        Value::Object(_) => "an object".to_owned(),
+        Value::Array(_) => "an array".to_owned(),
+        Value::String(text) => format!("{:?}", text.chars().take(96).collect::<String>()),
+        _ => value.to_string(),
+    }
 }

@@ -111,7 +111,11 @@ impl Checker {
             base.map_or("", Type::kind),
         );
         if !obligation.is_empty() {
-            return Err(unsupported("array identity search", &obligation, span));
+            return Err(unsupported(
+                &rules::read_primitive_method_argument_obligation_feature(operation),
+                &obligation,
+                span,
+            ));
         }
         let count = number_index(rules::read_primitive_method_argument_count(
             receiver, operation,

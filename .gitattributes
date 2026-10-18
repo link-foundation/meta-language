@@ -40,5 +40,8 @@ rust/tests/unit/grammar_recursive_selection.rs text eol=lf
 rust/tests/unit/grammar_recursive_selection_mapping.rs text eol=lf
 # The lexer-complement control matches its complete original source snapshot.
 rust/tests/fixtures/grammar/antlr/set-complement.g4 text eol=lf
+# The original token-negation snapshot and queue patch authenticate exact bytes.
+rust/tests/fixtures/grammar/antlr/covering.g4 text eol=lf
+rust/vendor/tree-sitter-agda-layout/layout-state.patch text eol=lf
 # Rust embeds a copy of the foundation register and compares it to this file byte for byte.
 parity/foundation-models.json text eol=lf

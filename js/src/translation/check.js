@@ -40,7 +40,7 @@ import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPositio
 import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
-  readPrimitiveMethodLoweringForm } from './primitive-method-rules.js';
+  readPrimitiveMethodLoweringForm, readPrimitiveMethodArgumentObligationFeature } from './primitive-method-rules.js';
 import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
@@ -912,7 +912,7 @@ class Checker {
     const element = object.type.element;
     const obligation = readPrimitiveMethodArgumentObligation(receiver, node.op,
       element?.kind === 'option' ? element.element.kind : element?.kind ?? '');
-    if (obligation) throw unsupported('array identity search', obligation, node.span);
+    if (obligation) throw unsupported(readPrimitiveMethodArgumentObligationFeature(node.op), obligation, node.span);
     const values = [];
     for (let index = 0; index < readPrimitiveMethodArgumentCount(receiver, node.op); index += 1) {
       const kind = readPrimitiveMethodCheckedArgumentKind(receiver, node.op, index);
@@ -1021,12 +1021,7 @@ class Checker {
       if (node.op === 'indexOf' || node.op === 'lastIndexOf' || node.op === 'includes') {
         return this.primitiveMethod(node, object, env, path);
       }
-      if (node.op === 'join') {
-        count(0, 1);
-        const base = element.kind === 'option' ? element.element : element;
-        if (!primitiveKey(base)) throw unsupported('array join', 'joining structured values needs their JavaScript string conversion and cycle semantics', node.span);
-        return { k: 'method', object, op: node.op, args: [checked(0, STRING, literal(STRING, ','))], type: STRING, span: node.span };
-      }
+      if (node.op === 'join') return this.primitiveMethod(node, object, env, path);
     }
     throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked operation on ${typeKey(object.type)}`, node.span);
   }
