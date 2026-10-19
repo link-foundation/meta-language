@@ -121,6 +121,14 @@ definition; it does not prove that the expanded current operation has the same
 meaning. Naming inventories can reference the exact archived definition without
 reassigning its identity to a changed current body.
 
+Historical source guards authenticate the complete current module before
+inverting recorded, disjoint byte intervals and checking every predecessor byte.
+Original source hashes, receipt edges, assertions and refusal cases stay exact;
+current translation behavior uses current imports and independent controls.
+Native evidence includes an experimental Rust source only when its exact path
+belongs to the actual registered native test module. A JavaScript driver or an
+unregistered Rust filename cannot supply that evidence.
+
 Incremental import validates that historical identities and origin aliases are
 unique before reusing them. It reserves every historical identity before
 allocating new current classes. A restored origin whose old identity is still

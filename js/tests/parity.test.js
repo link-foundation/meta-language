@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readProjectData } from '../scripts/project-data.mjs';
+import { readFileSync } from 'node:fs';
 
 import {
   API_OPERATIONS,
@@ -48,7 +49,13 @@ test('issue-163 parity manifest keeps Rust and JavaScript feature rows in sync',
   );
 
   // Keep the native evidence scope gate visible in the JavaScript-first checks.
+  const nativeAdapter = 'experiments/grammar-outcome-network/native-transport/inverse/static-borrows.rs';
+  const nativeOwner = readFileSync(new URL('../../rust/tests/unit/grammar_outcome_static_borrows.rs', import.meta.url), 'utf8');
+  const nativeModules = readFileSync(new URL('../../rust/tests/unit/mod.rs', import.meta.url), 'utf8');
+  const nativeStorageRegistered = nativeOwner.includes('#[path = "../../../' + nativeAdapter + '"]\nmod storage;')
+    && nativeModules.split('\n').includes('mod grammar_outcome_static_borrows;');
   const rustEvidence = (feature, file) => file.startsWith('rust/') || file.startsWith('docs/') || file.startsWith('parity/')
+    || file === nativeAdapter && nativeStorageRegistered
     || file.startsWith('experiments/') && file.endsWith('.lino')
       && file.split('/').every(part => part !== '' && part !== '.' && part !== '..')
       && feature.javascript.evidence.includes(file);
@@ -66,6 +73,11 @@ test('issue-163 parity manifest keeps Rust and JavaScript feature rows in sync',
   assert.equal(receipt.nativeExecution, false);
   assert.ok(rustEvidence(translation, fixture));
   assert.equal(rustEvidence(translation, driver), false, 'citing a driver in JavaScript does not turn it into native evidence');
+  assert.equal(nativeStorageRegistered, true, 'the exact native storage source belongs to the actual registered Rust unit module');
+  assert.equal(rustEvidence(translation, nativeAdapter), true, 'a compiled native Rust module remains native source inside experiments');
+  for (const file of [nativeAdapter.replace('static-borrows.rs', 'unregistered.rs'), nativeAdapter.replace('.rs', '.mjs')]) {
+    assert.equal(rustEvidence({...translation, javascript: {evidence: [file]}}, file), false, 'unregistered native sources and JavaScript drivers remain outside native evidence');
+  }
   assert.equal(rustEvidence({...translation, javascript: {evidence: []}}, fixture), false, 'experiment data must be shared by both runtime cells');
   for (const file of ['experiments/../outside.lino', 'experiments//outside.lino', 'outside/receipt.lino']) {
     assert.equal(rustEvidence({...translation, javascript: {evidence: [file]}}, file), false);

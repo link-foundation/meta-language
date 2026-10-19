@@ -21,6 +21,7 @@ import {encodeTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-prog
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
 
 // Frozen original source seams and exact current inverse, captured before integration.
 const historical = {
@@ -49,7 +50,8 @@ const integration = {
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const translationRoot = new URL('../src/translation/', import.meta.url);
-const readSource = name => readFileSync(new URL(name, translationRoot), 'utf8');
+const readSource = name => restoreTranslationSourceHistory(readFileSync(new URL(name, translationRoot), 'utf8'),
+  'js/src/translation/' + name, '81107a5945651f17c962e4bb81fb560f96c65ccd');
 const operations = ['filter', 'find', 'findIndex', 'some', 'every', 'flatMap', 'forEach', 'reduce'];
 
 function replaceOnce(source, from, to) {
