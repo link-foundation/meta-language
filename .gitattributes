@@ -45,3 +45,11 @@ rust/tests/fixtures/grammar/antlr/covering.g4 text eol=lf
 rust/vendor/tree-sitter-agda-layout/layout-state.patch text eol=lf
 # Rust embeds a copy of the foundation register and compares it to this file byte for byte.
 parity/foundation-models.json text eol=lf
+# The retained array contract and both authored source profiles are hashed before
+# execution. Preserve their exact bytes when Windows enables automatic CRLF.
+parity/sources/modern-javascript-parity-expectations-2026-10-16.txt text eol=lf
+js/tests/translation-arrays.test.js text eol=lf
+rust/tests/unit/translation_arrays.rs text eol=lf
+# Native diagnostic assertions select the exact hashed dependency source profile.
+rust/Cargo.lock text eol=lf
+rust/Cargo.toml text eol=lf

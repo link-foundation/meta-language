@@ -621,12 +621,12 @@ impl Executor<'_> {
                 self.step()?;
                 self.retain(1)?;
                 if !fielded && !has_included_ranges && !accept_grammar_selection_mapping(mapping) {
-                    self.report_selection_diagnostic(json!({"reason":"unsupportedEmbeddingMapping","language":&**language,"start":start,"end":region.end,"mapping":&**mapping}))?;
+                    self.report_selection_diagnostic(json!({"language":&**language,"start":start,"end":region.end,"reason":"unsupportedEmbeddingMapping","mapping":&**mapping}))?;
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unsupportedEmbeddingMapping","mapping":&**mapping}));
                     continue;
                 }
                 let Some(&program) = self.compiled.languages.get(&**language) else {
-                    self.report_selection_diagnostic(json!({"reason":"unknownGrammar","language":&**language,"start":start,"end":region.end}))?;
+                    self.report_selection_diagnostic(json!({"language":&**language,"start":start,"end":region.end,"reason":"unknownGrammar"}))?;
                     candidates.push(json!({"language":&**language,"relation":"unknown","reason":"unknownGrammar"}));
                     continue;
                 };

@@ -84,7 +84,7 @@ export function buildIntegration(root=repository) {
     boundary:'Private mechanically generated transport; no native compilation, execution, public API parity or default CST integration claim.',
     parent:parent.evidence,child:{path:'rust/src/structured_data_links/grammar_outcome.rs',bytes:Buffer.byteLength(child),sha256:digest(child)},
     predecessor:{policySha256:digest(readFileSync(new URL('../wire/wire-policy.mjs',import.meta.url))),
-      originalParentPin:outcomeWirePolicy.pins[parentPath],pins:packet.receipt.inputs},
+      originalParentPin:outcomeWirePolicy.pins[parentPath],pins:packet.receipt.inputs,sourceViews:packet.receipt.sourceViews},
     sourcePolicyChanges:[], // Parent successor is recorded separately above; no old pin is overwritten.
     generatorSha256:digest(readFileSync(fileURLToPath(import.meta.url))),templateSha256:digest(template),
     profile:{maximumDepthLimit:256,limits:'positive; expanded occurrences/scalar bytes; new API only',rootCountOrder:'last'},

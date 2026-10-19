@@ -9,6 +9,8 @@ import {overlayPolicy as policy} from './policy.mjs';
 import {checkRunnerPublication} from './generate-publication.mjs';
 import {buildIntegration} from '../bridge/generate.mjs';
 import {verifyPublication} from '../wire/publication.mjs';
+import {applyFrozenOutcomeProducerCorrection} from '../diagnostic-order/source-view.mjs';
+import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
 
 export const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const within=(root,file)=>{const path=relative(root,file);return path!==''&&!path.startsWith('..'+sep)&&path!=='..'&&!path.startsWith(sep);};
@@ -118,7 +120,10 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   const generated=buildIntegration(repository);
   const receipt=candidateDirectory?readProjectData(resolve(candidateDirectory,'integration-receipt.lino')):generated.receipt;
   assert.deepEqual(receipt,generated.receipt,'fresh qualified bridge receipt');
-  for(const input of receipt.predecessor.pins) assert.equal(sha256(bytesAt(repository,input.file)),input.sha256,'predecessor source: '+input.file);
+  assert.deepEqual(receipt.predecessor.pins,receipt.predecessor.sourceViews.historicalPins,'frozen predecessors remain separate');
+  for(const input of receipt.predecessor.sourceViews.currentPins) assert.equal(sha256(bytesAt(repository,input.file)),input.sha256,'current authenticated source: '+input.file);
+  const originalProducer=diagnosticOrderDecorator.inputs.find(input=>input.path==='rust/src/grammar/feature_runtime/grammar_selection.rs').source;
+  const producerCorrection=applyFrozenOutcomeProducerCorrection(originalProducer,diagnosticOrderDecorator);
   const original=bytesAt(repository,policy.parent),parent=candidateDirectory?bytesAt(candidateDirectory,'structured_data_links.proposed.rs'):Buffer.from(generated.parent.source);
   const child=candidateDirectory?bytesAt(candidateDirectory,'grammar_outcome.rs'):Buffer.from(generated.child);
   assert.deepEqual(parent,Buffer.from(generated.parent.source),'fresh mechanically generated parent');
@@ -128,5 +133,5 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   assert.ok(!/^\s*autotests\s*=\s*false\s*$/mu.test(manifest),'actual probe auto-discovery required');
   return {repository,candidateDirectory,probeDirectory,executionCommit,inventory:crateInventory(repository),receipt,parent,child,
     probe:bytesAt(probeDirectory,'native-outcome-probe.rs'),policy,runnerPublication,publication,
-    nativeOraclePolicy:runnerPublication.nativeOraclePolicy};
+    nativeOraclePolicy:runnerPublication.nativeOraclePolicy,producerCorrection};
 }

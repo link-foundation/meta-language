@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -77,11 +78,12 @@ test('Windows translation expands only its physical cells and preserves every ol
   assert.deepEqual(policy.suites.find(row => row.name === 'translation').platformShards,
     [{platform:'windows-latest',profile:'coverage',shards:8},
       {platform:'windows-latest',profile:'test',shards:16},
-      {platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:16}]);
+      {platform:'ubuntu-latest',profile:'coverage',shards:8},{platform:'ubuntu-latest',profile:'test',shards:16},
+      {platform:'macos-latest',profile:'test',shards:8}]);
   for (const platform of policy.platforms) for (const suite of policy.suites) {
     const expanded = platform === 'windows-latest' && ['translation','remaining'].includes(suite.name)
       || platform === 'ubuntu-latest' && ['grammar','translation'].includes(suite.name)
-      || platform === 'macos-latest' && suite.name === 'grammar';
+      || platform === 'macos-latest' && ['grammar','translation'].includes(suite.name);
     const expected = ['windows-latest','ubuntu-latest'].includes(platform) && suite.name === 'translation' ? 16 : expanded ? 8 : suite.shards;
     assert.equal(physicalShardCount(policy, 'test', suite.name, platform), expected);
   }
@@ -301,4 +303,79 @@ test('the Rust evidence workflow preserves its tools, producer gates and origina
   assert.match(job.steps.find(step => step.name === 'Upload the stage outputs').text, /issue-195-stage-rust-suite-\$\{\{ matrix.physical_shard \}\}-of-8-/u);
   const aggregate = jobs.get('acceptance');
   assert.match(aggregate.steps.find(step => step.name === 'Require the complete authenticated Rust test union').run, /RUST_EVIDENCE_RESULT/u);
+});
+
+test('macOS translation subdivides all four old hash cells into eight complete cells under the same fifteen-minute deadline',()=>{
+  const translation=policy.suites.find(row=>row.name==='translation');
+  assert.deepEqual(translation.platformShards.at(-1),{platform:'macos-latest',profile:'test',shards:8});
+  assert.equal(physicalShardCount(policy,'test','translation','macos-latest'),8);
+  assert.equal(physicalShardCount(policy,'coverage','translation','macos-latest'),translation.shards);
+  const original=structuredClone(policy);original.suites.find(row=>row.name==='translation').platformShards.pop();
+  assert.equal(physicalShardCount(original,'test','translation','macos-latest'),4);
+  for(const platform of policy.platforms)for(const suite of policy.suites)for(const profile of ['test','coverage']) {
+    if(platform==='macos-latest'&&suite.name==='translation'&&profile==='test')continue;
+    assert.equal(physicalShardCount(policy,profile,suite.name,platform),physicalShardCount(original,profile,suite.name,platform),'every other physical scope stays unchanged');
+  }
+  const fixtureInventory=readHarnessInventory(Array.from({length:128},(_,index)=>`translation_fixture::case_${index}: test`).join('\n'));
+  const seen=new Set();
+  for(let previous=1;previous<=4;previous++) {
+    const before=selectPhysicalTests(fixtureInventory,previous,4).map(row=>row.name).sort();
+    const children=[previous,previous+4].flatMap(index=>selectPhysicalTests(fixtureInventory,index,8)).map(row=>row.name).sort();
+    assert.deepEqual(children,before,'each exact old SHA256 bucket is conserved');
+    for(const name of children){assert.equal(seen.has(name),false);seen.add(name);}
+  }
+  assert.equal(seen.size,fixtureInventory.length,'all original test identities survive exactly once');
+  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  const job=parseWorkflow(workflow).find(job=>job.id==='test');assert.ok(job);
+  const deadline=job.header.split('\n').find(line=>/^    timeout-minutes:/u.test(line)).trim();
+  assert.ok(deadline==='timeout-minutes: 15'||deadline==="timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}",'macOS translation keeps the unchanged fifteen-minute branch');
+  for(const shard of [2,3,4,5,6,7,8])assert.ok(workflow.includes('            os: macos-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
+  const fixture=readStructuredDataLino(readFileSync(path.join(root,'parity/fixtures/macos-translation-deadline-2026-10-18.lino'),'utf8'));
+  assert.equal(fixture.run,39157701329);assert.equal(fixture.job,117771563485);assert.equal(fixture.oldCount,4);assert.equal(fixture.newCount,8);assert.equal(fixture.timeoutMinutes,15);
+  assert.equal(fixture.responses.length,4);
+  for(const response of fixture.responses){assert.equal(Buffer.byteLength(response.raw),response.bytes);assert.equal(createHash('sha256').update(response.raw).digest('hex'),response.sha256);JSON.parse(response.raw);}
+  assert.ok(fixture.annotations.some(row=>row.message==='The job has exceeded the maximum execution time of 15m0s'));
+  const capturedWorkflow=JSON.parse(fixture.responses.find(row=>row.name==='workflow').raw);
+  const bytes=Buffer.from(capturedWorkflow.content.replace(/\s/gu,''),'base64');
+  assert.equal(bytes.toString(),fixture.workflow.source);
+  assert.equal(createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex'),capturedWorkflow.sha);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),fixture.workflow.sha256);
+  assert.equal(fixture.workflow.reference,'024fbb7a4b0ffbb0d48053fff7311b2d1913e286');
+  const prior=readStructuredDataLino(fixture.policyBefore.source),inverse=structuredClone(policy);
+  assert.deepEqual(inverse.suites.find(row=>row.name==='translation').platformShards.pop(),fixture.change.appendedPolicyRow);
+  assert.deepEqual(inverse,prior,'every complete original policy row and field remains');
+  const sourceBefore=fixture.currentWorkflowBefore.source;
+  assert.equal(workflow.replace(fixture.change.addedWorkflowRows,''),sourceBefore,'whole current workflow before this append is retained exactly');
+});
+
+test('macOS eight-cell native union rejects missing duplicate relabelled or reduced four-cell executions',async()=>{
+  const translation=structuredClone(policy.suites.find(row=>row.name==='translation'));
+  translation.platformShards=translation.platformShards.filter(row=>row.platform==='macos-latest');
+  const scoped={...structuredClone(policy),platforms:['macos-latest'],suites:[translation]};
+  const all=readHarnessInventory(Array.from({length:128},(_,index)=>`translation_fixture::case_${index}: test`).join('\n'));
+  const identity={commit,tree,run,attempt,profile:'test',platform:'macos-latest',suite:'translation'};
+  const invoke=async(binary,args,listing)=>{
+    if(listing)return {stdout:all.map(row=>`${row.name}: test\n`).join(''),stderr:'',exitCode:0,signal:null};
+    const selected=all.filter(row=>args.includes(row.name));
+    return {stdout:selected.map(row=>`test ${row.name} ... ok\n`).join(''),stderr:'complete fake process diagnostics',exitCode:0,signal:null};
+  };
+  const groups=[];
+  for(let shard=1;shard<=8;shard++) {
+    const execution=await executePhysicalHarness({binary:'/fixture/unit-abcdef01',arguments:translation.filters,identity,shard,count:8,invoke});
+    groups.push({seal:{identity:structuredClone(identity),shard,count:8,result:'success'},executions:[execution],expectedBinaries:['unit']});
+  }
+  assert.deepEqual(verifyPhysicalShardUnion(groups,scoped,{commit,run,attempt,profiles:['test']}),{cells:8,inventories:1});
+  for(const mutate of [
+    rows=>rows.pop(),rows=>rows.push(structuredClone(rows[0])),
+    rows=>{rows[0].seal.count=4;},
+    rows=>{rows[0].executions[0].count=4;},
+    rows=>{rows[0].seal.shard=rows[1].seal.shard;},
+    rows=>{rows[0].executions[0].outcomes.pop();},
+    rows=>{rows[0].executions[0].outcomes.push(structuredClone(rows[0].executions[0].outcomes[0]));},
+    rows=>{rows[0].executions[0].arguments=[...rows[0].executions[0].arguments,'--skip','translation_fixture'];}
+  ]){const changed=structuredClone(groups);mutate(changed);assert.throws(()=>verifyPhysicalShardUnion(changed,scoped,{commit,run,attempt,profiles:['test']}));}
+  const old=[];
+  for(let shard=1;shard<=4;shard++)old.push({seal:{identity:structuredClone(identity),shard,count:4,result:'success'},
+    executions:[await executePhysicalHarness({binary:'/fixture/unit-abcdef01',arguments:translation.filters,identity,shard,count:4,invoke})],expectedBinaries:['unit']});
+  assert.throws(()=>verifyPhysicalShardUnion(old,scoped,{commit,run,attempt,profiles:['test']}),/changed physical cell count/u);
 });

@@ -52,14 +52,34 @@ CI retains source identities, the fresh oracle, tool versions, all process logs
 and any actual native post-assertion report. Cargo uses locked/offline dependency
 resolution and one build job; compiler execution and probe execution have
 separate bounds. Failed or missing reports never establish support. The
-experiment does not change production sources, package exports or the default
-projection. Public integration still requires paired APIs, ownership/provenance
+shared diagnostic-order correction below also applies to production sources.
+Package exports and the default projection retain their existing behavior.
+Public integration still requires paired APIs, ownership/provenance
 validation and the remaining exact-commit acceptance obligations.
 
 Links publication archives retain complete original private authors and exact
 portability/harness changes. Source and JavaScript controls alone do not prove
 native compilation or native behavior. Read the producer and runner receipts
 before refreshing any frozen pin.
+
+The `diagnostic-order/` author reads all nine actual JavaScript diagnostic call
+contexts and their native counterparts. It derives exactly two permutations of
+complete existing native object members, preserving values and predicates. The
+same Links decorator supplies the production correction and the frozen CI
+overlay correction, with separate role-qualified receipts and full source
+inverses. Historical pins stay historical; explicit current views independently
+check actual imports and complete selected declarations. A private one-entry
+syntax cache avoids repeated parsing of identical whole source bytes while
+checking every caller field and proof again. Dependency assertions retain the
+exact locked serializer patch, declared ordering feature and source hashes.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs --check
+```
+
+Use `--write` for normal regeneration, or supply an explicit `--output-root` for
+scratch output. This correction preserves all fourteen original probe cases and
+their strict independent comparator; native behavior still requires CI.
 
 The `types/` inventory preserves exact type CSTs and complete original source
 before wire projection. Recursive references remain finite, and owned strings

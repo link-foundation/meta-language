@@ -94,6 +94,9 @@ function copySnapshot(plan,overlay) {
   mkdirSync(dirname(join(overlay,policy.child)),{recursive:true});
   writeFileSync(join(overlay,policy.child),plan.child,{flag:'wx'});
   writeFileSync(join(overlay,'rust/tests',policy.testName+'.rs'),plan.probe,{flag:'wx'});
+  const producerPath='rust/src/grammar/feature_runtime/grammar_selection.rs';
+  assert.equal(readFileSync(join(overlay,producerPath),'utf8'),plan.producerCorrection.original,'actual frozen producer matches the explicit adapter input');
+  writeFileSync(join(overlay,producerPath),plan.producerCorrection.source);
 }
 
 /** No ledger writes. Native report is only the probe's own post-assertions
@@ -115,7 +118,7 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     originalCandidatePins:policy.candidatePins,originalProbePins:policy.probePins,
     publication:plan.publication,runnerPublication:plan.runnerPublication.publication,
     runnerAdapterSources:plan.runnerPublication.newSources,
-    bridgeReceipt:plan.receipt,nativeOraclePolicy:plan.nativeOraclePolicy,processes:[]};
+    bridgeReceipt:plan.receipt,producerCorrection:plan.producerCorrection.receipt,nativeOraclePolicy:plan.nativeOraclePolicy,processes:[]};
   let failure=null;
   const execute=async(command,args,timeout,label,env=environmentFor(work,environment))=>{
     requireNativeCI(plan,environment); // Also guards injected contract processes.

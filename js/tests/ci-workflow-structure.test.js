@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
@@ -21,6 +22,34 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 const workflow = (name) => read(`.github/workflows/${name}`);
 const jobs = (name) => new Map(parseWorkflow(workflow(name)).map((job) => [job.id, job]));
+
+test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {
+  const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));
+  const sources = [fixture.contract, ...fixture.sourceProfiles,
+    {path: 'rust/Cargo.lock'}, {path: 'rust/Cargo.toml'}];
+  for (const source of sources) {
+    const original = spawnSync('git', ['cat-file', 'blob', `HEAD:${source.path}`],
+      {cwd: root, maxBuffer: 1024 * 1024});
+    const checkout = spawnSync('git', ['-c', 'core.autocrlf=true', 'cat-file', '--filters', `HEAD:${source.path}`],
+      {cwd: root, maxBuffer: 1024 * 1024});
+    assert.equal(original.status, 0, String(original.stderr));
+    assert.equal(checkout.status, 0, String(checkout.stderr));
+    assert.deepEqual(checkout.stdout, original.stdout, `${source.path}: checkout retains every published byte`);
+    let input = checkout.stdout;
+    if (source !== fixture.contract) {
+      const marker = Buffer.from('\n// BEGIN modern JavaScript array parity observations\n');
+      const end = input.indexOf(marker);
+      if (end >= 0) input = input.subarray(0, end);
+    }
+    if (source.sha256) assert.equal(createHash('sha256').update(input).digest('hex'), source.sha256, source.path);
+    if (source === fixture.contract) {
+      const converted = Buffer.from(input.toString('utf8').replaceAll('\n', '\r\n'));
+      assert.equal(createHash('sha256').update(converted).digest('hex'),
+        '7eb94b4395049619bdf47f3b911cb60d206bce99e9ae5901a12e3495d89fbe29',
+        'the observed Windows CI mismatch is exactly the automatic CRLF conversion');
+    }
+  }
+});
 
 function needs(job) {
   const match = /^ {4}needs:\s*(.+)$/mu.exec(job.header);

@@ -150,19 +150,25 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         actual_jobs
             .iter()
             .copied()
-            .filter(|job_name| *job_name != "original-link-raw-observations")
+            .filter(|job_name| {
+                !matches!(
+                    *job_name,
+                    "original-link-raw-observations" | "native-grammar-outcome-experiment"
+                )
+            })
             .collect::<Vec<_>>(),
         expected_jobs,
         "preserve all seventeen original jobs in their original order"
     );
     let mut complete_jobs = expected_jobs;
     complete_jobs.insert(10, "original-link-raw-observations");
+    complete_jobs.insert(7, "native-grammar-outcome-experiment");
     assert_eq!(actual_jobs, complete_jobs);
 
-    for (job_name, timeout_minutes) in expected_timeouts
-        .into_iter()
-        .chain([("original-link-raw-observations", 15)])
-    {
+    for (job_name, timeout_minutes) in expected_timeouts.into_iter().chain([
+        ("original-link-raw-observations", 15),
+        ("native-grammar-outcome-experiment", 20),
+    ]) {
         let job = job_block(&workflow, job_name);
         // Physical shards retain their logical suite for the published Windows
         // grammar exception; every other cell keeps fifteen minutes.

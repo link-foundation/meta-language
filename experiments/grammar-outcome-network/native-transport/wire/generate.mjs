@@ -9,6 +9,8 @@ import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {writeProjectData} from '../../../../js/scripts/project-data.mjs';
 import {outcomeWirePolicy as policy,repository} from './wire-policy.mjs';
 import {explicitOutputDirectory} from './output.mjs';
+import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews} from '../diagnostic-order/source-view.mjs';
+import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const tokenText = source => tokenize(source,'Rust').tokens.filter(token=>token.kind!=='eof').map(token=>token.value).join('');
@@ -23,15 +25,11 @@ const same = (actual,expected,label) => {
 
 /** Read complete actual source CSTs; never copy a native declaration by hand. */
 export function readOutcomeInventory(root=repository) {
-  const pins=[];
-  for(const [file,sha256] of Object.entries(policy.pins)) {
-    const bytes=readFileSync(resolve(root,file));
-    assert.equal(digest(bytes),sha256,'reviewed complete input changed: '+file);
-    pins.push({file,bytes:bytes.length,sha256});
-  }
+  const sourceCapture=captureOutcomeSourceViews(root,diagnosticOrderDecorator);
+  const pins=sourceCapture.pins;
   const inputs=[],declarations=[];
   for(const source of policy.sources) {
-    const bytes=readFileSync(resolve(root,source.file));
+    const bytes=sourceCapture.historical.get(source.file);
     assert.ok(bytes.length<=131072,'bounded complete source CST');
     const parsed=readRustSourceItems(bytes);
     const imports=parsed.items.filter(item=>item.kind==='use_declaration').map(item=>({
@@ -86,13 +84,14 @@ export function readOutcomeInventory(root=repository) {
       declarations.push(declaration);
     }
   }
-  const rootBytes=readFileSync(resolve(root,'rust/src/lib.rs'));
+  const rootBytes=sourceCapture.historical.get('rust/src/lib.rs');
   const rootItems=readRustSourceItems(rootBytes);
   const exports=rootItems.items.filter(item=>item.kind==='use_declaration');
   const rootExport=exports.filter(item=>tokenText(rootItems.text(item.node))===tokenText(policy.rootReexport));
   assert.equal(rootExport.length,1,'actual crate-root reexport remains complete');
   for(const name of names) assert.equal(exports.filter(item=>tokenize(rootItems.text(item.node),'Rust').tokens.some(token=>token.value===name)).length,1,'crate-root owner is unique: '+name);
   return {schemaVersion:1,model:policy.model,pins,inputs,declarations,
+    sourceViews:finalizeOutcomeSourceViews(sourceCapture,inputs,declarations),
     rootReexport:{file:'rust/src/lib.rs',source:rootItems.text(rootExport[0].node),span:{start:rootExport[0].node.start,end:rootExport[0].node.end}}};
 }
 
@@ -111,6 +110,7 @@ export function readOwnedType(type,owner) {
 }
 
 export function checkOutcomeInventory(inventory) {
+  checkOutcomeSourceViews(inventory,diagnosticOrderDecorator);
   same(inventory.declarations.map(item=>item.name),names,'declaration inventory');
   same(inventory.inputs.map(item=>item.file),policy.sources.map(item=>item.file),'complete source inventory');
   for(const input of inventory.inputs) {
@@ -277,7 +277,7 @@ export function renderBorrowedVisitors(inventory,plan=buildOrderedWirePlan(inven
 export function buildOutcomePacket(root=repository) {
   const inventory=readOutcomeInventory(root),plan=buildOrderedWirePlan(inventory),source=renderBorrowedVisitors(inventory,plan);
   return {inventory,plan,source,receipt:{schemaVersion:1,model:policy.model,declarations:inventory.declarations.length,
-    inputs:inventory.pins,sourceBytes:Buffer.byteLength(source),sourceSha256:digest(source),
+    inputs:inventory.pins,sourceViews:inventory.sourceViews,sourceBytes:Buffer.byteLength(source),sourceSha256:digest(source),
     generatorSha256:digest(readFileSync(fileURLToPath(import.meta.url))),policySha256:digest(readFileSync(new URL('./wire-policy.mjs',import.meta.url))),
     unresolved:['concrete counted/direct Encoder sinks','bounded native explicit-frame traversal','allocation and numeric scratch reservations','native compilation and parity execution']}};
 }

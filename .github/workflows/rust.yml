@@ -767,6 +767,26 @@ jobs:
             filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
           - suite: physical
             os: macos-latest
+            logical_suite: translation
+            physical_shard: 5
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 6
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 7
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
+            logical_suite: translation
+            physical_shard: 8
+            filters: translation_ issue_195_ conformance --skip grammar_ --skip inference_ --skip issue_195_generative
+          - suite: physical
+            os: macos-latest
             logical_suite: remaining
             physical_shard: 2
             filters: --skip grammar_ --skip inference_ --skip issue_195_generative --skip translation_ --skip issue_195_ --skip conformance
