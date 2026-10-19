@@ -26,8 +26,10 @@ test('raw immutable parameter loans retain the complete predecessor and every ch
   // Regeneration may refresh the containing artifact descriptor only. Keep
   // the complete earlier loan receipt, every style and emitted byte exact.
   const file='experiments/original-link-complete-table-projection/data/raw-borrowed-parameter-receipt.lino';
-  const previousBytes=execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+file],
-    {cwd:new URL('../../',import.meta.url),maxBuffer:2*1024*1024});
+  const previousBytes=verifyGitArtifactCertificate(
+    readProjectData(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0-proof.lino',import.meta.url)),
+    readFileSync(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0.lino',import.meta.url)),
+    {revision:'18a8e0a04bab43f6572be311ceb75c6596fdc147',path:file});
   const previous=readStructuredDataLino(previousBytes.toString('utf8'));
   assert.deepEqual(receipt.predecessor,{...previous.predecessor,bytes:before.length,
     sha256:createHash('sha256').update(before).digest('hex')});
@@ -52,3 +54,5 @@ test('raw loan native planning remains CI-only and cannot launch a detached chec
   await assert.rejects(planOriginalLinkRawBorrowedNative({},{}),/CI/u);
   await assert.rejects(planOriginalLinkRawBorrowedNative({},{CI:'true',ORIGINAL_LINK_RAW_NATIVE:'1'}),/exact checked consuming plan/u);
 });
+
+import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';

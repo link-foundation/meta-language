@@ -43,6 +43,18 @@ requirement. The
 [September 28 audit](https://github.com/link-foundation/meta-language/pull/196#issuecomment-5870004788)
 is kept as historical evidence. Its failure counts are not the current status.
 
+Historical tooling inputs may retain an independently checked Git object
+certificate as Links data. The supported SHA-1 profile keeps exact UTF-8 commit
+text, every complete ordered tree on the original path, modes, object identities
+and original blob bytes. Verification recomputes each object identity against
+the independently supplied original revision and path, with explicit resource
+bounds. Normal verification needs neither the Git database nor a network read;
+automatic capture reads the original objects. Unsupported encodings and formats
+refuse. This establishes immutable source membership, not semantic equivalence
+between concepts. The original loan receipt uses this path without changing its
+source revision, expected contents or predecessor assertions. The object framing
+follows the [Git object model](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects).
+
 ## One common language of links
 
 Meta-language provides **one common, extensible language, represented
