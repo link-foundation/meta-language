@@ -47,6 +47,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Direct user requirement for explicit applicable version ranges on assertions that depend on language or dependency versions.',
     ledgerCoverage: ['I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER'],
   },
+  {
+    id: 'solo-continuation-2026-10-19',
+    key: 'soloContinuationRequest',
+    title: 'Finish existing agent work and continue only as coordinator',
+    role: 'Latest user direction to let active subagents finish slowly, then continue implementation and CI follow-up alone without starting or reactivating agents.',
+    ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */

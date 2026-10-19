@@ -2916,12 +2916,13 @@ identified correction, so the native runtime remains independent of the oracle.
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
 
-For the current task, the [latest continuation instruction](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt)
-allows active subagents to finish their work, then limits continued work to no
-more than two subagents. This task-specific authorization supersedes earlier
-agent-count instructions for this continuation; it does not establish a
-permanent project-wide cap. Existing ownership, bounded local checks and the
-restriction of native compilation and expensive workloads to CI remain intact.
+For the current task, the [latest continuation instruction](../parity/sources/solo-continuation-2026-10-19.txt)
+allows active subagents to finish slowly, then requires the coordinator to
+continue alone, without starting or reactivating agents. This supersedes the
+earlier [two-subagent allowance](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt)
+for this continuation; it does not establish a permanent project-wide cap.
+Existing ownership, bounded local checks and the restriction of native
+compilation and expensive workloads to CI remain intact.
 
 Canonical Links Notation writing combines bounded groups of complete statements
 before assembling the final text. This bounds temporary string construction while
