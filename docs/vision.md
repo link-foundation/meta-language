@@ -1856,6 +1856,16 @@ JSON variants, static references, original DTO construction and physical CST
 ownership remain separate obligations. Edge admission supplies no completed
 native transport or public CST integration claim.
 
+Generated Option reads normalize pure floating literal defaults through recorded
+Links source styles. The author authenticates the complete array helper and its
+standard type context, then retains the complete owning functions and their
+source inverses. Calls, allocated defaults, comments, custom types, imports,
+extension traits, opaque macros and nested namespaces retain their original
+forms. Eager evaluation applies only to an effect-free typed literal, preserving
+the receiver evaluation, value and signed zero. This supplies no replacement
+native algorithm and changes no lint gate. Both complete owned-outcome libraries
+regenerate through this author.
+
 Implicit module reference selection respects the complete frontend's checked
 owned array rewrites before forcing reference representation from method syntax.
 Explicit reference requests and imported reference signatures retain their

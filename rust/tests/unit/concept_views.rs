@@ -226,7 +226,7 @@ fn public_concept_views_retain_independent_memberships_and_every_root_through_bo
                     assert_eq!(other["link"], concept["link"]);
                     for field in ["definitionRoots", "provenanceRoots"] {
                         let roots = concept[field].as_array().unwrap();
-                        assert!(!roots.is_empty());
+                        assert_ne!(roots.as_slice(), &[] as &[Value]);
                         for id in roots {
                             assert!(
                                 network

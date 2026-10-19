@@ -17,7 +17,7 @@ export function generateOwnedOutcomePreorder({check=false}={}) {
     'ml_checkOwnedOutcomePreorder_loop2','ml_checkOwnedOutcomePreorder_loop1_result','ml_checkOwnedOutcomePreorder_loop1'];
   assert.deepEqual([...program.declarations.keys()],declarations,'every original and lifted control declaration is retained');
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.definitions.length,declarations.length);
-  const files=writeRecordRuleLibrary(emitted,'owned_outcome_preorder_rules',{check});
+  const files=writeRecordRuleLibrary(emitted,'owned_outcome_preorder_rules',{check,sourceStyles:readPortableLiteralOptionStyles});
   const fixture={schemaVersion:1,source:'experiments/grammar-outcome-network/native-transport/inverse/preorder-rules.mjs',
     sourceSha256:createHash('sha256').update(source).digest('hex'),declarations,
     cases:[
@@ -54,3 +54,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   const result=generateOwnedOutcomePreorder({check:process.argv[2]==='--check'});
   console.log('Translated the complete iterative preorder algorithm with '+result.fixture.cases.length+' independent controls.');
 }
+
+import {readPortableLiteralOptionStyles} from '../../../../js/scripts/portable-literal-option-style.mjs';

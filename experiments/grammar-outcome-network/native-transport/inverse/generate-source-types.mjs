@@ -22,7 +22,7 @@ export function generateOwnedOutcomeSourceTypes({check=false}={}) {
   const declarations=[...program.declarations.keys()];assert.equal(declarations.length,16);
   assert.equal(declarations[0],'checkOwnedOutcomeSourceTypes');
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.definitions.length,16);
-  const files=writeRecordRuleLibrary(emitted,'owned_outcome_source_type_rules',{check});
+  const files=writeRecordRuleLibrary(emitted,'owned_outcome_source_type_rules',{check,sourceStyles:readPortableLiteralOptionStyles});
   const ordinary=captureOrdinaryInversePlan(),recursive=extendRecursiveInversePlan(ordinary);
   const schema={modes:[0,0,0,1,2,3,4,5,-1],patterns:[0,1,2,3,4,5,6,7,8],
     patternOffsets:[0,0,0,2,3,4,6,6,6,6,7,8],patternTypes:[0,1,0,1,1,0,0,2],
@@ -78,3 +78,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   const result=generateOwnedOutcomeSourceTypes({check:process.argv[2]==='--check'});
   console.log('Translated all sixteen source-type declarations and retained '+result.fixture.cases.length+' independent shapes plus all fourteen original projections.');
 }
+
+import {readPortableLiteralOptionStyles} from '../../../../js/scripts/portable-literal-option-style.mjs';

@@ -379,7 +379,7 @@ pub fn ml_check_owned_outcome_source_types_loop8(
             {
                 let child =
                     (self::ml_array::optional_at(children, self::ml_array::number_index(edge)))
-                        .unwrap_or_else(|| 0f64);
+                        .unwrap_or(0f64);
                 if (!(self::ml_math::is_safe_integer(child)) || (child < 1f64)) || (child > count) {
                     self::MlCheckOwnedOutcomeSourceTypesLoop8Result::MlCheckOwnedOutcomeSourceTypesLoop8Return(-6f64)
                 } else {
@@ -400,7 +400,7 @@ pub fn ml_check_owned_outcome_source_types_loop8(
                                         },
                                 ),
                             ))
-                            .unwrap_or_else(|| -1f64)
+                            .unwrap_or(-1f64)
                         };
                         if (match (
                             self::ml_array::optional_at(
@@ -464,7 +464,7 @@ pub fn ml_check_owned_outcome_source_types_loop6(
         return if at < count {
             {
                 let type_ = (self::ml_array::optional_at(types, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| -1f64);
+                    .unwrap_or(-1f64);
                 if (!(self::ml_math::is_safe_integer(type_)) || (type_ < 0f64))
                     || (type_ >= type_count)
                 {
@@ -475,7 +475,7 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                             modes,
                             self::ml_array::number_index(type_),
                         ))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                         if mode < 0f64 {
                             self::MlCheckOwnedOutcomeSourceTypesLoop6Result::MlCheckOwnedOutcomeSourceTypesLoop6Return(-3f64)
                         } else {
@@ -484,14 +484,14 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                                     selectors,
                                     self::ml_array::number_index(at),
                                 ))
-                                .unwrap_or_else(|| -2f64);
+                                .unwrap_or(-2f64);
                                 if (self::ml_math::is_safe_integer(selector)) {
                                     {
                                         let pattern = (self::ml_array::optional_at(
                                             patterns,
                                             self::ml_array::number_index(type_),
                                         ))
-                                        .unwrap_or_else(|| -1f64);
+                                        .unwrap_or(-1f64);
                                         {
                                             let ml_s7 = if mode == 4f64 {
                                                 if ((selector < 0f64)
@@ -539,13 +539,13 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                                             match ml_s7 {
                                                 self::MlCheckOwnedOutcomeSourceTypesJoin7::MlCheckOwnedOutcomeSourceTypesJoin7Next(pattern_3) => {
                                                     {
-                                                        let start = (self::ml_array::optional_at(offsets, self::ml_array::number_index(at))).unwrap_or_else(|| -1f64);
+                                                        let start = (self::ml_array::optional_at(offsets, self::ml_array::number_index(at))).unwrap_or(-1f64);
                                                         {
-                                                            let end = (self::ml_array::optional_at(offsets, self::ml_array::number_index(at + 1f64))).unwrap_or_else(|| -1f64);
+                                                            let end = (self::ml_array::optional_at(offsets, self::ml_array::number_index(at + 1f64))).unwrap_or(-1f64);
                                                             {
-                                                                let first = (self::ml_array::optional_at(pattern_offsets, self::ml_array::number_index(pattern_3))).unwrap_or_else(|| -1f64);
+                                                                let first = (self::ml_array::optional_at(pattern_offsets, self::ml_array::number_index(pattern_3))).unwrap_or(-1f64);
                                                                 {
-                                                                    let size = (self::ml_array::optional_at(pattern_offsets, self::ml_array::number_index(pattern_3 + 1f64))).unwrap_or_else(|| -1f64) - first;
+                                                                    let size = (self::ml_array::optional_at(pattern_offsets, self::ml_array::number_index(pattern_3 + 1f64))).unwrap_or(-1f64) - first;
                                                                     if (((((mode == 0f64) || (mode == 4f64)) && ((end - start) != size)) || ((mode == 1f64) && ((end - start) != selector))) || ((mode == 3f64) && (((end - start) % 2f64) != 0f64))) || (((mode == 5f64) && (selector < 4f64)) && (end != start)) {
                                                                         self::MlCheckOwnedOutcomeSourceTypesLoop6Result::MlCheckOwnedOutcomeSourceTypesLoop6Return(-5f64)
                                                                     } else {
@@ -613,7 +613,7 @@ pub fn ml_check_owned_outcome_source_types_loop5(
             {
                 let value =
                     (self::ml_array::optional_at(offsets, self::ml_array::number_index(at)))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                 if ((!(self::ml_math::is_safe_integer(value)) || (value < 0f64))
                     || (value > (children.len() as f64)))
                     || ((at > 0f64)
@@ -622,7 +622,7 @@ pub fn ml_check_owned_outcome_source_types_loop5(
                                 offsets,
                                 self::ml_array::number_index(at - 1f64),
                             ))
-                            .unwrap_or_else(|| -1f64))))
+                            .unwrap_or(-1f64))))
                 {
                     self::MlCheckOwnedOutcomeSourceTypesLoop5Result::MlCheckOwnedOutcomeSourceTypesLoop5Return(-2f64)
                 } else {
@@ -662,11 +662,11 @@ pub fn ml_check_owned_outcome_source_types_loop4(
         return if at < type_count {
             {
                 let mode = (self::ml_array::optional_at(modes, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| -2f64);
+                    .unwrap_or(-2f64);
                 {
                     let pattern =
                         (self::ml_array::optional_at(patterns, self::ml_array::number_index(at)))
-                            .unwrap_or_else(|| -1f64);
+                            .unwrap_or(-1f64);
                     if (((((!(self::ml_math::is_safe_integer(mode)) || (mode < -1f64))
                         || (mode > 5f64))
                         || !(self::ml_math::is_safe_integer(pattern)))
@@ -690,12 +690,12 @@ pub fn ml_check_owned_outcome_source_types_loop4(
                                 pattern_offsets,
                                 self::ml_array::number_index(pattern + 1f64),
                             ))
-                            .unwrap_or_else(|| -1f64)
+                            .unwrap_or(-1f64)
                                 - (self::ml_array::optional_at(
                                     pattern_offsets,
                                     self::ml_array::number_index(pattern),
                                 ))
-                                .unwrap_or_else(|| -1f64);
+                                .unwrap_or(-1f64);
                             if ((((mode == 1f64) || (mode == 2f64)) && (size != 1f64))
                                 || ((mode == 3f64) && (size != 2f64)))
                                 || ((((mode == -1f64) || (mode == 4f64)) || (mode == 5f64))
@@ -741,7 +741,7 @@ pub fn ml_check_owned_outcome_source_types_loop3(
             {
                 let owner =
                     (self::ml_array::optional_at(variant_owners, self::ml_array::number_index(at)))
-                        .unwrap_or_else(|| -2f64);
+                        .unwrap_or(-2f64);
                 if ((!(self::ml_math::is_safe_integer(owner)) || (owner < -1f64))
                     || (owner >= type_count))
                     || ((owner >= 0f64)
@@ -788,7 +788,7 @@ pub fn ml_check_owned_outcome_source_types_loop2(
             {
                 let value =
                     (self::ml_array::optional_at(pattern_types, self::ml_array::number_index(at)))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                 if (!(self::ml_math::is_safe_integer(value)) || (value < 0f64))
                     || (value >= type_count)
                 {
@@ -829,7 +829,7 @@ pub fn ml_check_owned_outcome_source_types_loop1(
                     pattern_offsets,
                     self::ml_array::number_index(at),
                 ))
-                .unwrap_or_else(|| -1f64);
+                .unwrap_or(-1f64);
                 if ((!(self::ml_math::is_safe_integer(value)) || (value < 0f64))
                     || (value > (pattern_types.len() as f64)))
                     || ((at > 0f64)
@@ -838,7 +838,7 @@ pub fn ml_check_owned_outcome_source_types_loop1(
                                 pattern_offsets,
                                 self::ml_array::number_index(at - 1f64),
                             ))
-                            .unwrap_or_else(|| -1f64))))
+                            .unwrap_or(-1f64))))
                 {
                     self::MlCheckOwnedOutcomeSourceTypesLoop1Result::MlCheckOwnedOutcomeSourceTypesLoop1Return(-1f64)
                 } else {

@@ -326,7 +326,7 @@ pub fn ml_check_owned_outcome_preorder_loop3(
             {
                 let child =
                     (self::ml_array::optional_at(children, self::ml_array::number_index(at)))
-                        .unwrap_or_else(|| 0f64);
+                        .unwrap_or(0f64);
                 if (!(self::ml_math::is_safe_integer(child)) || (child <= identity))
                     || (child > count)
                 {
@@ -403,17 +403,17 @@ pub fn ml_check_owned_outcome_preorder_loop2(
             {
                 let identity =
                     (self::ml_array::optional_at(&identities, self::ml_array::number_index(head)))
-                        .unwrap_or_else(|| 0f64);
+                        .unwrap_or(0f64);
                 {
                     let depth =
                         (self::ml_array::optional_at(&depths, self::ml_array::number_index(head)))
-                            .unwrap_or_else(|| 0f64);
+                            .unwrap_or(0f64);
                     {
                         let head_2 = (self::ml_array::optional_at(
                             &successors,
                             self::ml_array::number_index(head),
                         ))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                         if ((identity != (visited + 1f64)) || (identity > count)) || (depth < 1f64)
                         {
                             self::MlCheckOwnedOutcomePreorderLoop2Result::MlCheckOwnedOutcomePreorderLoop2Return(vec![-3f64, 0f64, 0f64, 0f64])
@@ -429,13 +429,13 @@ pub fn ml_check_owned_outcome_preorder_loop2(
                                             offsets,
                                             self::ml_array::number_index(identity - 1f64),
                                         ))
-                                        .unwrap_or_else(|| -1f64);
+                                        .unwrap_or(-1f64);
                                         {
                                             let end = (self::ml_array::optional_at(
                                                 offsets,
                                                 self::ml_array::number_index(identity),
                                             ))
-                                            .unwrap_or_else(|| -1f64);
+                                            .unwrap_or(-1f64);
                                             if (((identities.len() as f64) + end) - start)
                                                 > node_limit
                                             {
@@ -494,7 +494,7 @@ pub fn ml_check_owned_outcome_preorder_loop1(
             {
                 let offset =
                     (self::ml_array::optional_at(offsets, self::ml_array::number_index(at)))
-                        .unwrap_or_else(|| -1f64);
+                        .unwrap_or(-1f64);
                 if ((!(self::ml_math::is_safe_integer(offset)) || (offset < 0f64))
                     || (offset > (children.len() as f64)))
                     || ((at > 0f64)
@@ -503,7 +503,7 @@ pub fn ml_check_owned_outcome_preorder_loop1(
                                 offsets,
                                 self::ml_array::number_index(at - 1f64),
                             ))
-                            .unwrap_or_else(|| -1f64))))
+                            .unwrap_or(-1f64))))
                 {
                     self::MlCheckOwnedOutcomePreorderLoop1Result::MlCheckOwnedOutcomePreorderLoop1Return(vec![-2f64, 0f64, 0f64, 0f64])
                 } else {
