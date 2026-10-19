@@ -45,15 +45,15 @@ export function checkOwnedOutcomeSourceTypes(types, selectors, offsets, children
       || at > 0 && value < (offsets[at - 1] ?? -1)) return -2;
   }
   for (let at = 0; at < count; at += 1) {
-    const type = types[at] ?? -1;
-    if (!Number.isSafeInteger(type) || type < 0 || type >= typeCount) return -3;
-    const mode = modes[type] ?? -1;
+    const sourceTypeIndex = types[at] ?? -1;
+    if (!Number.isSafeInteger(sourceTypeIndex) || sourceTypeIndex < 0 || sourceTypeIndex >= typeCount) return -3;
+    const mode = modes[sourceTypeIndex] ?? -1;
     if (mode < 0) return -3;
     const selector = selectors[at] ?? -2;
     if (!Number.isSafeInteger(selector)) return -4;
-    let pattern = patterns[type] ?? -1;
+    let pattern = patterns[sourceTypeIndex] ?? -1;
     if (mode === 4) {
-      if (selector < 0 || selector >= patternCount || variantOwners[selector] !== type) return -4;
+      if (selector < 0 || selector >= patternCount || variantOwners[selector] !== sourceTypeIndex) return -4;
       pattern = selector;
     } else if (mode === 1) {
       if (selector !== 0 && selector !== 1) return -4;
@@ -70,7 +70,7 @@ export function checkOwnedOutcomeSourceTypes(types, selectors, offsets, children
     for (let edge = start; edge < end; edge += 1) {
       const child = children[edge] ?? 0;
       if (!Number.isSafeInteger(child) || child < 1 || child > count) return -6;
-      const expected = mode === 5 ? type : patternTypes[first + (mode === 1 || mode === 2 ? 0 : mode === 3 ? (edge - start) % 2 : edge - start)] ?? -1;
+      const expected = mode === 5 ? sourceTypeIndex : patternTypes[first + (mode === 1 || mode === 2 ? 0 : mode === 3 ? (edge - start) % 2 : edge - start)] ?? -1;
       if (types[child - 1] !== expected) return -6;
     }
   }

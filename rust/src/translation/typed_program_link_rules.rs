@@ -523,7 +523,11 @@ pub fn accept_program_expression_operation(kind: &str, operation: &str) -> bool 
             || operation == "rustTrimStart")
             || operation == "rustTrimEnd"
     } else if kind == "stringTest" {
-        (operation == "startsWith" || operation == "endsWith") || operation == "includes"
+        (((((operation == "startsWith" || operation == "endsWith") || operation == "includes")
+            || (operation == "unicodeCodeUnitLessThan"))
+            || (operation == "unicodeCodeUnitLessThanOrEqual"))
+            || (operation == "unicodeCodeUnitGreaterThan"))
+            || (operation == "unicodeCodeUnitGreaterThanOrEqual")
     } else if kind == "method" {
         (((((((((((((((((((operation == "split" || operation == "slice")
             || operation == "indexOf")

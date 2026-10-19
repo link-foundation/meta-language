@@ -11,7 +11,10 @@ const history=readStructuredDataLino(bytes.toString('utf8'));
 
 export function restoreNativeTestProfileHistory(source) {
   assert.equal(typeof source,'string');
+  source=restorePlatformTestDeadlineHistory(source);
   assert.equal(source.split(history.after).length,2,'the complete checked package profile occurs exactly once');
   assert.equal(source.includes(history.before),false,'the preceding command cannot coexist with its corrected profile');
   return source.replace(history.after,history.before);
 }
+
+import {restorePlatformTestDeadlineHistory} from './platform-test-deadline-history.js';

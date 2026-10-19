@@ -477,3 +477,133 @@ fn character_parameters_retain_every_surrogate_unit_and_empty_out_of_range_resul
         source
     );
 }
+
+fn assert_unicode_order_fixture_observations(cases: &[serde_json::Value], observations: &str) {
+    assert_eq!(cases.len(), 2916);
+    let observed = observations.split_whitespace().collect::<Vec<_>>();
+    assert_eq!(observed.len(), cases.len());
+    for (index, (actual, row)) in observed.iter().zip(cases).enumerate() {
+        assert_eq!(
+            row["left"].as_f64().unwrap().to_string(),
+            (index / (27 * 4)).to_string()
+        );
+        assert_eq!(
+            row["right"].as_f64().unwrap().to_string(),
+            ((index / 4) % 27).to_string()
+        );
+        assert_eq!(
+            row["operator"].as_str().unwrap(),
+            ["lt", "le", "gt", "ge"][index % 4]
+        );
+        assert_eq!(
+            *actual,
+            if row["expected"].as_bool().unwrap() {
+                "true"
+            } else {
+                "false"
+            }
+        );
+    }
+}
+
+#[test]
+fn explicit_unicode_order_matches_every_shared_case_and_every_single_code_unit() {
+    let source = "/** @param {string} left @param {string} right @returns {boolean} */function before(left,right){return left<right;}\n/** @param {string} left @param {string} right @returns {boolean} */function atMost(left,right){return left<=right;}\n/** @param {string} left @param {string} right @returns {boolean} */function after(left,right){return left>right;}\n/** @param {string} left @param {string} right @returns {boolean} */function atLeast(left,right){return left>=right;}";
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/unicode-string-order.lino"
+    ))
+    .unwrap();
+    let units = fixture["units"].as_array().unwrap();
+    let cases = fixture["cases"].as_array().unwrap();
+    assert_eq!(units.len(), 27);
+    assert_eq!(cases.len(), 2916);
+    let driver = format!(
+        "for(const left of {})for(const right of {}){{const a=String.fromCharCode(...left),b=String.fromCharCode(...right);console.log(before(a,b),atMost(a,b),after(a,b),atLeast(a,b));}}",
+        serde_json::to_string(units).unwrap(),
+        serde_json::to_string(units).unwrap()
+    );
+    let expected = javascript(&(source.to_owned() + &driver));
+    assert_unicode_order_fixture_observations(cases, &expected);
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    assert!(
+        meta_language::translation::emit_lean(&program)
+            .unwrap_err()
+            .reason
+            .contains("UTF-16 operational string encoding for lexical comparison")
+    );
+    assert!(
+        meta_language::translation::emit_rocq(&program)
+            .unwrap_err()
+            .reason
+            .contains("UTF-16 operational string encoding for lexical comparison")
+    );
+    let native_source = "fn before(left: String,right: String)->bool {left<right} fn main() {}";
+    let refusal = meta_language::translation::parse_rust(native_source)
+        .and_then(|surface| check_program(&surface))
+        .unwrap_err();
+    assert!(refusal.reason.contains("ordering on string"));
+    let emitted = emit_rust(&program).unwrap();
+    let javascript_code = emit_javascript(&program).unwrap().text;
+    let oracle = char_code_unit_oracle(source, false);
+    assert_eq!(emitted.text, oracle["rust"].as_str().unwrap());
+    assert_eq!(javascript_code, oracle["javascript"].as_str().unwrap());
+    assert_eq!(javascript(&(javascript_code + &driver)), expected);
+    let mut native = String::from("let inputs:Vec<Vec<u16>>=vec![\n");
+    for row in units {
+        let values = row
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| {
+                let text = value.as_f64().unwrap().to_string();
+                assert!(
+                    text.parse::<u16>().is_ok(),
+                    "a source unit is a canonical unsigned sixteen bit integer"
+                );
+                text
+            })
+            .collect::<Vec<_>>()
+            .join(",");
+        writeln!(native, "vec![{values}],").unwrap();
+    }
+    native.push_str("];for left in &inputs{for right in &inputs{println!(\"{} {} {} {}\",before(crate::ml_string::Text::from_units(left.clone()),crate::ml_string::Text::from_units(right.clone())),at_most(crate::ml_string::Text::from_units(left.clone()),crate::ml_string::Text::from_units(right.clone())),after(crate::ml_string::Text::from_units(left.clone()),crate::ml_string::Text::from_units(right.clone())),at_least(crate::ml_string::Text::from_units(left.clone()),crate::ml_string::Text::from_units(right.clone())));}}\n");
+    native.push_str("for unit in 0u16..=u16::MAX{let left=crate::ml_string::Text::from_units(vec![unit]);let right=crate::ml_string::Text::from_units(vec![0xd800]);assert_eq!(before(left.clone(),right.clone()),unit<0xd800);assert_eq!(at_most(left.clone(),right.clone()),unit<=0xd800);assert_eq!(after(left.clone(),right.clone()),unit>0xd800);assert_eq!(at_least(left,right),unit>=0xd800);}\n");
+    let code = emitted.preludes.join("\n\n")
+        + "\n\n"
+        + &emitted.definitions.join("\n\n")
+        + "\nfn main(){\n"
+        + &native
+        + "}\n";
+    assert_eq!(
+        rust(&code, "unicode-order-all-units-and-shared-cases"),
+        expected
+    );
+    let packet = create_typed_program_links(source, "JavaScript").unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        assert_eq!(
+            emit_typed_program_links(&network, packet.root, "Rust")
+                .unwrap()
+                .code,
+            emitted.text
+        );
+        let linked = emit_typed_program_links(&network, packet.root, "JavaScript")
+            .unwrap()
+            .code;
+        assert_eq!(javascript(&(linked + &driver)), expected);
+    }
+    let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
+    assert!(translated.items.iter().all(|item| item.status != "carried"));
+    assert_eq!(
+        meta_language::self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}

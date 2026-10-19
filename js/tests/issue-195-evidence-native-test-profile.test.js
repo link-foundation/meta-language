@@ -22,7 +22,7 @@ test('actual native test optimization retains every target, logical scope, safet
   for(const path of ['.github/workflows/rust.yml','rust/tests/unit/ci-cd/workflow_release.rs']){
     const original=history.sources.find(source=>source.file===path);assert.ok(original);
     const raw=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
-    const current=path.endsWith('.yml')?restoreWindowsLinkerLookupHistory(raw):raw;
+    const current=path.endsWith('.yml')?restoreWindowsLinkerLookupHistory(raw):restorePlatformTestDeadlineHistory(raw);
     assert.equal(current,original.sourceText.replace(before,after),'only the explicit checked package profile changes');
     assert.equal(restoreNativeTestProfileHistory(current),original.sourceText);
   }
@@ -72,3 +72,5 @@ test('native test profile history refuses missing or weakened flags and exposes 
 });
 
 import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

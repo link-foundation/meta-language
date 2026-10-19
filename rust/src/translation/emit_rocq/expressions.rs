@@ -202,6 +202,10 @@ impl RocqEmitter<'_> {
                 e.span,
             )),
             Node::StringTest { op, string, search } => {
+                let refusal = crate::translation::string_order_rules::read_string_order_refusal("Rocq", op);
+                if !refusal.is_empty() {
+                    return Err(crate::translation::diagnostics::unsupported("string comparison", &refusal, e.span));
+                }
                 let helper =
                     crate::translation::frontend_rules::read_string_test_helper("Rocq", op);
                 self.helpers.insert(match helper.as_str() {

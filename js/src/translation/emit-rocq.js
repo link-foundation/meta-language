@@ -1,4 +1,5 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import {readStringOrderRefusal} from './string-order-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -794,6 +795,8 @@ class RocqEmitter {
       case 'stringMap':
         throw unsupported(`.${e.op}()`, readStringMapRefusal('Rocq', e.op), e.span);
       case 'stringTest': {
+        const refusal = readStringOrderRefusal('Rocq', e.op);
+        if (refusal) throw unsupported('string comparison', refusal, e.span);
         const helper = readStringTestHelper('Rocq', e.op);
         this.helpers.add(helper);
         return renderStringTestExpression('Rocq', e.op, this.expr(e.string), this.expr(e.search));

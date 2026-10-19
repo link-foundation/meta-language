@@ -44,7 +44,8 @@ import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPr
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
   readPrimitiveMethodLoweringForm, readPrimitiveMethodArgumentObligationFeature } from './primitive-method-rules.js';
-import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
+import { acceptProgramTupleProductModel, acceptProgramExpressionOperation } from '../typed-program-link-rules.js';
+import {readStringOrderOperation} from './string-order-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
@@ -814,6 +815,7 @@ class Checker {
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
       case 'stringTest': {
+        if (!acceptProgramExpressionOperation('stringTest', node.op)) throw unsupported('string test operation', 'the declared string operation has no checked model', node.span);
         const string = this.expr(node.object, env, path, undefined);
         if (string.type.kind !== 'string') {
           throw unsupported(`method call .${node.op}()`, `.${node.op}() is portable on strings, not on ${typeKey(string.type)}`, node.span);
@@ -1174,6 +1176,8 @@ class Checker {
       if (left.type.kind === 'array') {
         throw unsupported('comparison of arrays', '=== of two arrays compares which array each is, which a value translation does not keep; compare their elements', node.span);
       }
+      const stringOrder = readStringOrderOperation(this.language, op, left.type.kind);
+      if (stringOrder) return { k: 'stringTest', op: stringOrder, string: left, search: right, type: BOOL, span: node.span };
       if (op !== 'eq' && op !== 'ne' && !isOrdered(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
       return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
     }

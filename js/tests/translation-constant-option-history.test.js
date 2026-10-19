@@ -20,7 +20,7 @@ test('actual constant option and empty root CI repairs retain every complete pre
   for(const old of history.sources){
     assert.equal(Buffer.byteLength(old.sourceText),old.bytes);
     assert.equal(createHash('sha256').update(old.sourceText).digest('hex'),old.sha256);
-    const current=readFileSync(new URL('../../'+old.file,import.meta.url),'utf8');
+    const current=restoreSourceTypeBindingHistory(readFileSync(new URL('../../'+old.file,import.meta.url),'utf8'));
     if(old.file.endsWith('/part_1.rs')){
       const result=readPortableLiteralOptionStyles(old.sourceText);
       const expected=old.file.includes('_preorder_')?8:20;
@@ -43,3 +43,5 @@ test('actual constant option and empty root CI repairs retain every complete pre
     }
   }
 });
+
+import {restoreSourceTypeBindingHistory} from './support/source-type-binding-name-history.js';

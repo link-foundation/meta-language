@@ -10,7 +10,7 @@ import { boundedEnvironment } from '../../scripts/with-cache-cleanup.mjs';
 import { TEST_GROUPS, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => restorePlatformTestDeadlineHistory(readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8'));
 const WORKFLOWS = '.github/workflows';
 
 /** The text of job `id` in `workflow`, from its key to the next job key. */
@@ -181,3 +181,5 @@ test('the cleanup wrapper is the documented way to run long local commands and b
 import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
 
 import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

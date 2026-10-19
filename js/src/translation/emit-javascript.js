@@ -1,5 +1,6 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
+import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
 // Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names
@@ -544,6 +545,7 @@ class JavaScriptEmitter {
         return renderStringMapExpression('JavaScript', e.op, string);
       }
       case 'stringTest': {
+        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('JavaScript', e.op, this.expr(e.string), this.expr(e.search));
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
         return renderStringTestExpression('JavaScript', e.op, string, this.expr(e.search));
       }

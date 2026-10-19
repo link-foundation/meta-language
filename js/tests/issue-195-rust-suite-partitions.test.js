@@ -95,7 +95,7 @@ test('Windows translation expands only its physical cells and preserves every ol
     const after = [...selectPhysicalTests(inventory, previous, 8), ...selectPhysicalTests(inventory, previous + 4, 8)].map(row => row.name).sort();
     assert.deepEqual(after, before, 'each old hash cell is exactly subdivided without losing or duplicating a test');
   }
-  const workflow = readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8');
+  const workflow = restorePlatformTestDeadlineHistory(readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8'));
   for (const shard of [5, 6, 7, 8]) assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
   for(let previous=1;previous<=8;previous++)assert.deepEqual(
     [...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort(),
@@ -122,7 +122,7 @@ test('fresh merge physical expansion preserves the complete original eight-cell 
     assert.deepEqual(after,before);
   }
   for(const freshMergeExpansion of [7,16.5,NaN])assert.throws(()=>physicalShardCount({...policy,freshMergeExpansion},'fresh-merge','all'),/invalid fresh merge shard expansion/u);
-  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  const workflow=restorePlatformTestDeadlineHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8'));
   assert.ok(workflow.includes('        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]\n'));
   assert.match(workflow,/name: Fresh Merge Simulation\n[\s\S]*?timeout-minutes: 20\n/u);
 });
@@ -385,3 +385,5 @@ import { restoreVerificationConcurrencyHistory } from './support/verification-co
 import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
 
 import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

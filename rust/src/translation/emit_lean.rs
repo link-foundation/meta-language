@@ -696,6 +696,15 @@ impl LeanEmitter<'_> {
                 ));
             }
             Node::StringTest { op, string, search } => {
+                let refusal =
+                    crate::translation::string_order_rules::read_string_order_refusal("Lean", op);
+                if !refusal.is_empty() {
+                    return Err(crate::translation::diagnostics::unsupported(
+                        "string comparison",
+                        &refusal,
+                        e.span,
+                    ));
+                }
                 let helper =
                     crate::translation::frontend_rules::read_string_test_helper("Lean", op);
                 if helper == "stringIncludes" {

@@ -216,6 +216,21 @@ impl JavaScriptEmitter<'_> {
                 )
             }
             Node::StringTest { op, string, search } => {
+                if crate::translation::string_order_rules::require_string_order_units(
+                    "stringTest",
+                    op,
+                ) {
+                    let left = self.expr(string)?;
+                    let right = self.expr(search)?;
+                    return Ok(
+                        crate::translation::string_order_rules::render_string_order_expression(
+                            "JavaScript",
+                            op,
+                            &left,
+                            &right,
+                        ),
+                    );
+                }
                 let value = self.expr(string)?;
                 let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
                     value

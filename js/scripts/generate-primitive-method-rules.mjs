@@ -32,3 +32,7 @@ const text = '// Generated from js/src/translation/primitive-method-rules.js. Do
 if (process.argv.includes('--check')) {
   if (readFileSync(target, 'utf8') !== text) throw new Error('native primitive-method decisions are stale');
 } else writeFileSync(target, text);
+
+await generateStringOrderRules({check:process.argv.includes('--check')});
+
+import {generateStringOrderRules} from './string-order-generation.mjs';

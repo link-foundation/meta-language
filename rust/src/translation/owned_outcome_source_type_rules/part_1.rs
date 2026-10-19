@@ -367,7 +367,7 @@ pub fn ml_check_owned_outcome_source_types_loop8(
     children: &[f64],
     pattern_types: &[f64],
     mut count: f64,
-    mut type_: f64,
+    mut source_type_index: f64,
     mut mode: f64,
     mut start: f64,
     mut end: f64,
@@ -385,7 +385,7 @@ pub fn ml_check_owned_outcome_source_types_loop8(
                 } else {
                     {
                         let expected = if mode == 5f64 {
-                            type_
+                            source_type_index
                         } else {
                             (self::ml_array::optional_at(
                                 pattern_types,
@@ -463,17 +463,19 @@ pub fn ml_check_owned_outcome_source_types_loop6(
     loop {
         return if at < count {
             {
-                let type_ = (self::ml_array::optional_at(types, self::ml_array::number_index(at)))
-                    .unwrap_or(-1f64);
-                if (!(self::ml_math::is_safe_integer(type_)) || (type_ < 0f64))
-                    || (type_ >= type_count)
+                let source_type_index =
+                    (self::ml_array::optional_at(types, self::ml_array::number_index(at)))
+                        .unwrap_or(-1f64);
+                if (!(self::ml_math::is_safe_integer(source_type_index))
+                    || (source_type_index < 0f64))
+                    || (source_type_index >= type_count)
                 {
                     self::MlCheckOwnedOutcomeSourceTypesLoop6Result::MlCheckOwnedOutcomeSourceTypesLoop6Return(-3f64)
                 } else {
                     {
                         let mode = (self::ml_array::optional_at(
                             modes,
-                            self::ml_array::number_index(type_),
+                            self::ml_array::number_index(source_type_index),
                         ))
                         .unwrap_or(-1f64);
                         if mode < 0f64 {
@@ -489,7 +491,7 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                                     {
                                         let pattern = (self::ml_array::optional_at(
                                             patterns,
-                                            self::ml_array::number_index(type_),
+                                            self::ml_array::number_index(source_type_index),
                                         ))
                                         .unwrap_or(-1f64);
                                         {
@@ -501,7 +503,7 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                                                             variant_owners,
                                                             self::ml_array::number_index(selector),
                                                         ),
-                                                        type_,
+                                                        source_type_index,
                                                     ) {
                                                         (Some(ml_left), ml_right) => {
                                                             ml_left == ml_right
@@ -552,7 +554,7 @@ pub fn ml_check_owned_outcome_source_types_loop6(
                                                                         {
                                                                             let edge = start;
                                                                             {
-                                                                                let ml_s8 = self::ml_check_owned_outcome_source_types_loop8(types, children, pattern_types, count, type_, mode, start, end, first, edge);
+                                                                                let ml_s8 = self::ml_check_owned_outcome_source_types_loop8(types, children, pattern_types, count, source_type_index, mode, start, end, first, edge);
                                                                                 match ml_s8 {
                                                                                     self::MlCheckOwnedOutcomeSourceTypesLoop8Result::MlCheckOwnedOutcomeSourceTypesLoop8Done => {
                                                                                         {

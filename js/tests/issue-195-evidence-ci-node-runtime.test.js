@@ -40,7 +40,7 @@ test('actual mixed Node and npm evidence retains exact partition gates and pins 
   let pins=0;
   for(const owner of history.owners){
     const before=history.sources.find(row=>row.file===owner.file).sourceText;
-    const current=readFileSync(new URL('../../'+owner.file,import.meta.url),'utf8');
+    const current=restorePlatformTestDeadlineHistory(readFileSync(new URL('../../'+owner.file,import.meta.url),'utf8'));
     assert.equal(current,before.replace(/^(\s*node-version: )24$/gmu,(_match,prefix)=>prefix+'24.22.0'));
     assert.equal(restoreCiNodeRuntimeHistory(current),before);
     const oldJobs=parseWorkflow(before),jobs=parseWorkflow(current);assert.equal(jobs.length,oldJobs.length);
@@ -116,3 +116,5 @@ test('runtime pin adapters preserve all complete preceding workflow guard module
     assert.equal(restored,original.sourceText,'every original assertion and source context reconstructs exactly');
   }
 });
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

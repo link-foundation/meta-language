@@ -170,14 +170,14 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("native-grammar-outcome-experiment", 20),
     ]) {
         let job = job_block(&workflow, job_name);
-        // Physical shards retain their logical suite for the published Windows
-        // grammar exception; every other cell keeps fifteen minutes.
+        // Cold platform test builds retain all original logical suites and tests
+        // with the same bounded thirty-minute deadline for every physical cell.
         let expected = if job_name == "test" {
             assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
             assert!(job.contains(
                 "        suite: [grammar, inference, generative, translation, remaining]\n"
             ));
-            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\n".to_owned()
+            "    timeout-minutes: 30\n".to_owned()
         } else {
             format!("    timeout-minutes: {timeout_minutes}\n")
         };

@@ -18,6 +18,13 @@ pub(super) fn program_requires_method_units(program: &crate::translation::ir::Pr
                     .and_then(serde_json::Value::as_str)
                     .unwrap_or("");
                 rules::require_primitive_method_utf16(expression, receiver)
+                    || crate::translation::string_order_rules::require_string_order_units(
+                        expression,
+                        fields
+                            .get("op")
+                            .and_then(serde_json::Value::as_str)
+                            .unwrap_or(""),
+                    )
                     || fields
                         .iter()
                         .any(|(key, value)| key != "type" && key != "span" && walk(value))

@@ -631,9 +631,9 @@ jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.logical_suite || matrix.suite }})
     runs-on: ${{ matrix.os }}
-    # Cold Windows grammar builds exhausted the 15-minute job deadline while
-    # tests were still running. Preserve every test and bound this job at 30.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}
+    # Cold platform builds and complete test cells exhausted fifteen minutes.
+    # Retain every test and compiler safety check within a bounded thirty minutes.
+    timeout-minutes: 30
     concurrency:
       group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true

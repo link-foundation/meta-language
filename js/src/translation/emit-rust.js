@@ -1,6 +1,7 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
+import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -719,6 +720,7 @@ class RustEmitter {
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
+      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -1334,6 +1336,7 @@ class RustEmitter {
         }
         return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
+        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('Rust', e.op, this.borrow(e.string), this.borrow(e.search));
         if (this.utf16Strings) {
           return renderPrimitiveStringRepresentation(true, 'test', this.receiver(e.string), this.borrow(e.search), e.op);
         }

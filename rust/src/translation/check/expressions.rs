@@ -587,6 +587,22 @@ impl Checker {
                         span,
                     ));
                 }
+                let string_order =
+                    crate::translation::string_order_rules::read_string_order_operation(
+                        self.language.as_str(),
+                        op_name(op),
+                        if left.ty == STRING { "string" } else { "" },
+                    );
+                if !string_order.is_empty() {
+                    return Ok(Expr::new(
+                        Node::StringTest {
+                            op: string_order,
+                            string: Box::new(left),
+                            search: Box::new(right),
+                        },
+                        BOOL,
+                    ));
+                }
                 if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
                     return Err(type_error(format!("ordering on {}", left.ty.key()), span));
                 }

@@ -90,6 +90,7 @@ pub(crate) mod source_text_byte_rules;
 pub(crate) mod source_text_bytes;
 pub(crate) mod source_type_namespaces;
 pub(crate) mod source_unit_clone_derivations;
+mod string_order_rules;
 pub mod structured_type_rules;
 pub mod surface;
 pub mod surface_raw_metadata_rules;

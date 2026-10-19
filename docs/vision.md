@@ -2709,10 +2709,26 @@ an iterative decimal digit traversal. Complete automatic native translation
 retains every lifted control declaration. Independent BigInt and native standard
 integer parsing check canonical spelling and exact endpoints, including distinct
 integers that share a binary64 value. The complete earlier ordering draft and
-its unsupported string-order diagnostic remain an executable original fixture.
-String ordering translation, effective native JSON number origins, complete DTO
-construction, static borrows and physical CST ownership remain required; decimal
-admission alone does not discharge them.
+its original unsupported string-order diagnostic remain an executable historical
+fixture. The complete original draft now translates without carried items and
+restores every source byte using the explicit JavaScript ordering model below.
+Effective native JSON number origins, complete DTO construction, static borrows
+and physical CST ownership remain required; decimal admission alone does not
+discharge them.
+
+JavaScript primitive string relations `<`, `<=`, `>` and `>=` retain explicit
+UTF-16 code-unit lexical meanings in the shared typed Links schema. Complete
+shared JavaScript selectors and rendering rules generate every native declaration.
+Rust targets use the actual `ml_string::Text` type through a fully qualified
+comparison trait, preserving isolated surrogates and supplementary characters
+whose order differs from UTF-8 or Unicode scalar order. Ordered operands evaluate
+once. Complete text and binary program reloads retain the selected model and
+recheck before emission. Independent primitive observations cover 2,916 string
+pair relations and every individual UTF-16 unit. Ordinary Rust `String` source
+ordering remains a distinct unsupported source model; Lean and Rocq refuse the
+missing UTF-16 operational encoding. The original schemas, rule meanings and
+style prefix retain complete historical source identities. Native execution
+and full Rust runtime reimport remain CI and translation obligations.
 
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
@@ -2908,7 +2924,7 @@ Their platform test command uses the same package-specific optimized test
 profile as fresh-merge and evidence execution: optimization level three, with
 debug assertions and overflow checks explicitly enabled. The exact native
 targets, all-feature selection, failure aggregation, physical assignments and
-deadlines remain unchanged. Actual unoptimized Windows and Ubuntu deadline
+original deadlines are retained in the historical record below. Actual unoptimized Windows and Ubuntu deadline
 diagnostics and complete preceding sources are retained in
 [`native-test-profile-source-history.lino`](../parity/naming/native-test-profile-source-history.lino).
 Independent controls inspect the raw current workflow and actual shell argument
@@ -2952,6 +2968,27 @@ every admitted physical cell and the complete target and test union. Existing
 oracle, doctest and example steps retain their original single owners. These
 partitions preserve deadlines and acceptance scope; synthetic scheduling checks
 do not establish native platform behavior or deadline fit.
+
+CI run 39309745847 subsequently exhausted fifteen-minute platform cells after
+cold optimized builds on Windows, macOS and Ubuntu. Complete logs and original
+workflow and guard sources are retained in
+[`platform-test-deadline-source-history.lino`](../parity/naming/platform-test-deadline-source-history.lino).
+The current platform test job therefore has a finite thirty-minute deadline for
+every physical cell. This supersedes the historical fifteen-minute timing
+expectations above; it changes no matrix assignment, logical filter, test,
+compiler safety argument, prerequisite, failure aggregation or other job limit.
+Exact source inverses retain predecessor assertions, while independent controls
+inspect the complete raw current workflow. CI must establish actual deadline fit.
+
+An actual Clippy 1.99.1 similar-name diagnostic in the complete source-type
+validator is corrected by renaming its fresh JavaScript binding from `type` to
+`sourceTypeIndex` and regenerating every native declaration. The original
+complete source, compiler diagnostics, all 33 source shapes and 14 parser
+projections remain in
+[`source-type-binding-name-source-history.lino`](../parity/naming/source-type-binding-name-source-history.lino).
+The diagnostic observation is bounded to the recorded compiler patch range;
+source-byte conservation and independent executable controls do not certify
+native compilation or general semantic equivalence.
 
 CI keeps expected-panic display annotations separate from actual test identities
 and validates the native Windows linker after shell setup. Grammar-tool

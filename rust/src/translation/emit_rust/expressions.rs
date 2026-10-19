@@ -323,6 +323,18 @@ impl RustEmitter<'_> {
                 )
             }
             Node::StringTest { op, string, search } => {
+                if crate::translation::string_order_rules::require_string_order_units(
+                    "stringTest",
+                    op,
+                ) {
+                    let left = self.borrow(string)?;
+                    let right = self.borrow(search)?;
+                    return Ok(
+                        crate::translation::string_order_rules::render_string_order_expression(
+                            "Rust", op, &left, &right,
+                        ),
+                    );
+                }
                 let object = self.receiver(string)?;
                 if self.utf16_strings {
                     let search = self.borrow(search)?;
