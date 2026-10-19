@@ -3115,7 +3115,9 @@ constructor edits. Current source meanings retain their own qualified identities
 a historical text view does not prove whole-program meaning equivalence.
 New local generators enter the normal dependency inventory without replacing
 earlier entries. Historical inventory assertions reconstruct their exact earlier
-projection only after independently checking the complete new entry; a separate
+projection only after independently checking every actual current declaration;
+the complete original prefix retains its item order, sharing and audit facts,
+authenticated against the immutable Git source. A separate
 current assertion checks the full live inventory and unchanged collector.
 Recorded whole-module corrections retain every original input and assertion.
 Current inventory witnesses identify actual current declarations explicitly;

@@ -34,7 +34,7 @@ test('one-source Node reconciliation retains every unrelated audit fact and exac
   assert.equal(actual.replace(history.insertion,'').replace(history.after,history.before),collector.sourceText);
   const original=history.sources.find(row=>row.file==='parity/dependency-inventory.lino');
   const before=readStructuredDataLino(original.sourceText);
-  const current=readProjectData(new URL('../../parity/dependency-inventory.lino',import.meta.url));
+  const current=readNodeDependencyInventoryOriginalView();
   const generator=readNodeDependencyGeneratorRegistrationHistory().generator;
   assert.deepEqual(current.items.filter(row=>row.id===generator.id),[generator]);
   current.items=current.items.filter(row=>row.id!==generator.id);
@@ -75,13 +75,14 @@ test('original Node dependency test discovery preserves all draft source and the
 
 import {readNodeDependencyGeneratorRegistrationHistory,restoreNodeDependencyGeneratorTestHistory} from '../scripts/node-dependency-registration-history.mjs';
 import {checkInventory} from '../scripts/dependency-inventory.mjs';
+import {readNodeDependencyInventoryOriginalView} from '../scripts/dependency-inventory-append-history.mjs';
 
 test('the new source placement generator is independently inventoried with every preceding entry intact',()=>{
   const history=readNodeDependencyGeneratorRegistrationHistory();
-  const inventory=readProjectData(new URL('../../parity/dependency-inventory.lino',import.meta.url));
+  const inventory=readNodeDependencyInventoryOriginalView();
   assert.equal(inventory.items.length,history.currentItemCount);
   assert.equal(inventory.items.length,745);
   assert.equal(inventory.auditDate,history.fullAuditDate);
   assert.deepEqual(inventory.items.filter(row=>row.id===history.generator.id),[history.generator]);
-  assert.deepEqual(checkInventory(inventory,collectDependencies(fileURLToPath(new URL('../../',import.meta.url)))),[]);
+  assert.deepEqual(checkInventory(readProjectData(new URL('../../parity/dependency-inventory.lino',import.meta.url)),collectDependencies(fileURLToPath(new URL('../../',import.meta.url)))),[]);
 });

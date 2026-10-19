@@ -16,6 +16,7 @@ export function readNodeDependencyGeneratorRegistrationHistory() {
 }
 
 export function restoreNodeDependencyGeneratorTestHistory(source) {
+  source=restoreNodeDependencyInventoryTestSource(source);
   const history=readNodeDependencyGeneratorRegistrationHistory(),rule=history.testCorrection;
   const original=history.sources.find(row=>row.file===rule.file).sourceText;
   let expected=original;
@@ -27,3 +28,5 @@ export function restoreNodeDependencyGeneratorTestHistory(source) {
   assert.equal(source,expected,'the complete current test retains every original input and assertion through only the recorded inventory correction');
   return original;
 }
+
+import {restoreNodeDependencyInventoryTestSource} from './dependency-inventory-append-history.mjs';

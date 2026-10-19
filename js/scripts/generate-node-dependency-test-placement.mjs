@@ -26,7 +26,7 @@ export function generateNodeDependencyTestPlacement({check=false}={}) {
   const history=readProjectData(new URL(policy.locationHistory.path,root)),before=history.sources[0];
   assert.equal(policy.placement.source,before.file);assert.equal(policy.placement.destination,history.target);
   assert.equal(policy.placement.inventory,'B70 physical field source view names for '+before.file);
-  const destination=readFileSync(new URL(policy.placement.destination,root),'utf8');
+  const destination=restoreNodeDependencyInventoryTestSource(readFileSync(new URL(policy.placement.destination,root),'utf8'));
   assert.equal(restoreNodeDependencyGeneratorTestHistory(destination),before.sourceText+history.additions);
   assert.equal(Buffer.byteLength(destination),policy.placement.bytes);
   assert.equal(createHash('sha256').update(destination).digest('hex'),policy.placement.sha256);
@@ -51,3 +51,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
 }
 
 import {restoreNodeDependencyGeneratorTestHistory} from './node-dependency-registration-history.mjs';
+
+import {restoreNodeDependencyInventoryTestSource} from './dependency-inventory-append-history.mjs';

@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 187 | 186 | 1 | 0 |
+| Generators | 188 | 187 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -734,6 +734,7 @@ they are.
 | `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
 | `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
