@@ -21,11 +21,11 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request cancels that pull request's older run; push runs
-# are grouped by their own run id, so a release on main is never cancelled.
+# Pull request numbers keep cancellation queues stable after merge. Every other
+# verification run and its jobs use their own run id; main runs cannot collide.
 # The called workflows use their own literal js- and rust- prefixes.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -311,7 +311,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-candidates-${{ github.ref }}
+      group: issue-195-candidates-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -381,7 +381,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     concurrency:
-      group: issue-195-consumer-${{ github.ref }}-${{ matrix.os }}
+      group: issue-195-consumer-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.os }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -537,7 +537,7 @@ jobs:
     # theory-network.test.mjs alone takes minutes, and the Rust workloads build RML from scratch.
     timeout-minutes: 90
     concurrency:
-      group: issue-195-rml-workloads-${{ github.ref }}
+      group: issue-195-rml-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -609,7 +609,7 @@ jobs:
     # Every candidate runs fresh consumers; the optional target cache reuses build outputs only.
     timeout-minutes: 120
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}-${{ matrix.partition }}
+      group: issue-195-formal-ai-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -754,7 +754,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      group: issue-195-formal-ai-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -847,7 +847,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-runtime-parity-${{ github.ref }}
+      group: issue-195-stage-runtime-parity-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -918,7 +918,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-javascript
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -983,7 +983,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-rust
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-rust
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1050,7 +1050,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-${{ matrix.target }}
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.target }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -1236,7 +1236,7 @@ jobs:
             shard: 1/1
             partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1397,7 +1397,7 @@ jobs:
             shard: 1/1
             partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1571,7 +1571,7 @@ jobs:
       matrix:
         physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-rust-suite-${{ matrix.physical_shard }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-rust-suite-${{ matrix.physical_shard }}
       cancel-in-progress: true
     env:
       META_LANGUAGE_SHARD_PROFILE: evidence
@@ -1754,7 +1754,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-delivery
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-delivery
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1846,7 +1846,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-post-merge-${{ github.ref }}
+      group: issue-195-post-merge-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1912,7 +1912,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-acceptance-${{ github.ref }}
+      group: issue-195-acceptance-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     # When a JavaScript job failed, no acceptance stage ran: the first step
     # reports that as one gate error naming the failed JavaScript jobs, not one

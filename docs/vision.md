@@ -1189,6 +1189,9 @@ CI is finished and every prior error has a concrete fix before the next reviewed
 batch push. A feedback push does not finish the authorized work: the coordinator
 continues implementation and CI follow-up until the required work is complete,
 as reiterated in the [captured follow-through instruction](../parity/sources/ci-follow-through-2026-10-13.txt).
+The [current bulk completion instruction](../parity/sources/continuous-bulk-completion-2026-10-19.txt)
+requires all remaining changes to be drafted and delivered. Opening a continuation
+PR is a checkpoint; implementation continues during CI under the same full scope.
 Local validation uses targeted JavaScript checks and never compiles
 Rust; compiled parity and expensive workloads belong to CI.
 The [local resource instruction](../parity/sources/meta-language-local-resource-scope-2026-10-16.txt)
@@ -1798,6 +1801,26 @@ Unicode type comments retain UTF-8 byte spans; unpaired UTF-16 input refuses.
 Native target widths, effective JSON representation profiles, static-reference
 resolution and original DTO reconstruction remain explicit obligations. This
 inventory does not implement the paired decoder or public default CST transport.
+
+The source-derived ordinary inverse reconstructs an owned occurrence graph from
+the closed Links wire graph. It retains source field order, wrappers, qualified
+variants, ordered map entries, option presence, integer bits and unresolved
+static-borrow descriptors. Counting precedes construction; a separate validator
+checks the whole graph before deriving controls for the existing forward visitor.
+The complete ordered projection must equal the original input. Plans and owned
+models use normal Links data, with text and binary reload controls. This finite
+profile admits four ordinary syntax variants, null-only opaque JSON and explicit
+32/64-bit logical pointer widths. A separate authenticated recursive profile
+also owns Embed and nested JSON projections, preserving every scalar and ordered
+member. Explicit occurrence links retain shared projected JSON containers;
+independent equal containers stay distinct. Complete earlier subtrees and every
+nested alias edge are checked before reuse; ancestor cycles refuse. Other native
+owning container aliases retain their earlier refusal. JSON Numbers retain binary64 bits and explicit unresolved native variant
+requirements; the erased signed/unsigned/float origin is never guessed. Both
+profiles use the complete automatically translated portable decision module.
+Native JSON representation facts, static-reference resolution, native DTO
+reconstruction and physical CST integration remain required. JavaScript controls
+do not prove native execution.
 
 ## Grammar import, conversion and reverse conversion
 
@@ -2651,6 +2674,12 @@ before every JavaScript job passed, and the Rust jobs show as skipped when
 JavaScript fails. Inside the acceptance workflow, the Rust evidence stages,
 the Rust native translations and the Rust consumers likewise need the
 JavaScript stages.
+Verification concurrency uses stable pull request numbers for updates and
+individual run identifiers for other events, through every nested job group.
+Release write jobs retain their separate non-cancelling queue. The retained
+[checkpoint cancellation responses](../parity/fixtures/ci-concurrency-cancellation-2026-10-19.lino)
+show an automatic collision on the former main-reference job group. The
+annotation does not name the higher-priority run or a human cancelling actor.
 Windows grammar deadlines select the logical suite even when the physical
 matrix cell is named `physical`. A fresh-merge native phase retains its active
 build-output lease across tests, doctests and examples, then cleans once the

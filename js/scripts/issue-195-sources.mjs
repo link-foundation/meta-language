@@ -20,7 +20,7 @@ export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
 export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -53,6 +53,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     title: 'Finish existing agent work and continue only as coordinator',
     role: 'Latest user direction to let active subagents finish slowly, then continue implementation and CI follow-up alone without starting or reactivating agents.',
     ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
+  {
+    id: 'continuous-bulk-completion-2026-10-19',
+    key: 'continuousBulkCompletionRequest',
+    title: 'Fully draft and deliver the authorized scope while CI executes',
+    role: 'Direct correction that opening a continuation PR does not deliver the task; keep drafting all outstanding changes during CI and carry the complete scope through implementation and verification.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
   },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 

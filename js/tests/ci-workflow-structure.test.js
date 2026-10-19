@@ -22,6 +22,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
 const workflow = (name) => read(`.github/workflows/${name}`);
 const jobs = (name) => new Map(parseWorkflow(workflow(name)).map((job) => [job.id, job]));
+const verificationDomain="${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}";
 
 test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {
   const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));
@@ -326,6 +327,37 @@ test('js.yml and rust.yml are called by ci.yml and have no push or pull_request 
     'js.yml and rust.yml start only when ci.yml calls them');
 });
 
+test('verification concurrency separates merged pull requests, pushes and standalone runs without cancelling sibling cells', () => {
+  const domain=verificationDomain;
+  const contexts=[
+    {event:'push',ref:'refs/heads/main',run:39221979958},
+    {event:'pull_request',ref:'refs/heads/main',number:201,run:39222035006},
+    {event:'pull_request',ref:'refs/pull/201/merge',number:201,run:39211740972},
+    {event:'pull_request',ref:'refs/pull/226/merge',number:226,run:39235574933},
+    {event:'workflow_dispatch',ref:'refs/heads/main',run:39222035007},
+    {event:'release',ref:'refs/tags/v1.0.0',run:39222035008},
+    {event:'push',ref:'refs/heads/main',run:39221979959}
+  ];
+  let count=0;
+  for(const name of ['ci.yml','js.yml','rust.yml']) {
+    const groups=[...workflow(name).matchAll(/^\s*group: (.+)\n\s*cancel-in-progress: (true|false)$/gmu)];
+    assert.ok(groups.length>1,name);
+    for(const [,group,cancel] of groups) {
+      if(group==='release-${{ github.repository }}-main-write') {assert.equal(cancel,'false');continue;}
+      count++;
+      assert.equal(cancel,'true');assert.ok(group.includes(domain),`${name}: ${group}`);
+      const physical=context=>group.replace(domain,context.event==='pull_request'?`pull-${context.number}`:String(context.run));
+      const identities=contexts.map(physical);
+      assert.equal(identities[1],identities[2],'a merged reference retains its PR queue');
+      assert.equal(new Set(identities).size,contexts.length-1,'only updates of the same PR share a cancellation queue');
+      for(const suffix of ['${{ matrix.group }}','${{ matrix.partition }}','${{ matrix.generated_slice }}','${{ matrix.physical_shard }}','${{ matrix.os }}','${{ matrix.target }}']) {
+        if(group.includes(suffix))assert.notEqual(physical(contexts[1]).replace(suffix,'first'),physical(contexts[1]).replace(suffix,'second'));
+      }
+    }
+  }
+  assert.equal(count,36,'all existing verification groups are covered');
+});
+
 test('every cargo test command in the workflows and the scripts they call uses --no-fail-fast', () => {
   const files = [
     '.github/workflows/ci.yml',
@@ -438,7 +470,7 @@ test('the JavaScript evidence matrix retains every group and file once with disj
   for (const suite of suites) {
     assert.match(suite.header, /timeout-minutes: 60\n/u);
     assert.match(suite.header, /fail-fast: false\n/u);
-    assert.match(suite.header, /group: issue-195-stage-\$\{\{ github.ref \}\}-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}/u);
+    assert.ok(suite.header.includes('group: issue-195-stage-'+verificationDomain+'-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}'));
     const execute = suite.steps.find(step => step.name === 'Produce the stage evidence');
     assert.match(execute.text, /JAVASCRIPT_GROUP: \$\{\{ matrix.group \}\}/u);
     assert.match(execute.text, /JAVASCRIPT_SHARD: \$\{\{ matrix.shard \}\}/u);
@@ -1479,7 +1511,7 @@ function checkGeneratedPackageSlices(parsed) {
   const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
   assert.equal(concurrencyGroups.length, 1);
   const concurrency = concurrencyGroups[0];
-  assert.equal(concurrency, 'check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}',
+  assert.equal(concurrency, "check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}",
     'both generated runners require independent concurrency identities');
   const physicalNames = cells.map(cell => concurrency
     .replace('${{ matrix.group }}', cell.group).replace('${{ matrix.generated_slice }}', cell.generated_slice));
@@ -2087,7 +2119,11 @@ function checkOriginalLinkRawNativeJob(parsed) {
   assert.equal(job.steps.indexOf(diagnostics[0]), job.steps.findIndex(step => step.name === 'Retain complete original link raw observations') + 1);
   assert.equal(job.steps.at(-1).name, 'Clean raw source observation caches');
   const originalSteps = job.steps.filter(step => step.name !== ORIGINAL_LINK_RAW_DIAGNOSTICS);
-  assert.equal(packageStepSignature({text: job.header + originalSteps.map(step => step.text).join('')}, true),
+  const originalGroup='      group: rust-${{ github.ref }}-original-link-raw-observations';
+  const correctedGroup='      group: rust-'+verificationDomain+'-original-link-raw-observations';
+  assert.equal(job.header.split(correctedGroup).length,2,'the observed main/PR concurrency collision has exactly one source correction');
+  const originalHeader=job.header.replace(correctedGroup,originalGroup);
+  assert.equal(packageStepSignature({text: originalHeader + originalSteps.map(step => step.text).join('')}, true),
     '35e9be5d27a7b6bdc0b730fb0a7b8c38a2485b491ccc2cd9eec4889e89889291',
     'the raw oracle retains its complete setup, bounds, source command, native switch, receipt and cleanup');
   return job;
@@ -2416,7 +2452,7 @@ test('package partitions conserve every original check, condition and artifact o
     'all five published partitions remain required in their original order');
   assert.deepEqual(groups, PACKAGE_GROUPS);
   assert.match(checks.header, /fail-fast: false/u);
-  assert.match(checks.header, /group: check-js-\$\{\{ github.ref \}\}-javascript-package-checks-\$\{\{ matrix.group \}\}/u);
+  assert.ok(checks.header.includes("group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}"));
   assert.deepEqual(needs(checks), ['tests', 'report-assertions']);
   assert.match(condition(checks), /!cancelled\(\)/u);
   for (const id of ['package-checks', 'test']) {

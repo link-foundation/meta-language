@@ -94,3 +94,38 @@ Use the same generator with an explicit `--output-dir` for scratch output.
 Target widths, JSON representation profiles, static-reference resolution and
 original native DTO reconstruction remain unresolved. This source inventory
 does not supply a paired decoder or native execution evidence.
+
+The `inverse/` JavaScript draft reconstructs an owned source-typed occurrence
+graph for ordinary outcomes, independently validates that graph, then derives
+the existing forward visitor's controls. Every ordered event must match the
+original projection. It retains all nine declarations and thirteen source pins,
+distinguishes absent options from present null, preserves map order and integer
+bits, and records unresolved static borrows. It checks exact and one-below limits
+before construction. Plans and models use Links Notation; controls also check
+the existing text and binary reload paths.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate.mjs --check
+cd js && node --test tests/grammar-outcome-native-inverse.test.js
+```
+
+Use `--write` for normal plan regeneration. This ordinary profile explicitly
+refuses Embed and non-null opaque JSON. Actual native DTO reconstruction,
+effective JSON number profiles, static-reference resolution and physical
+ownership remain required. These JavaScript controls do not establish native
+execution or complete default CST integration.
+
+The separate recursive projection profile also reconstructs nested Embed and
+all JSON projection kinds. Its Number rows retain exact binary64 bits, including
+negative zero, plus an independently checked manifest of unresolved native
+number variants. Explicit JSON alias links preserve shared source mappings while
+keeping independent equal containers distinct. Validation compares complete
+earlier subtrees and every nested alias edge and refuses ancestor cycles.
+The ordinary profile retains all original refusals. All four
+portable admission and descriptor decisions are automatically translated as a
+complete JavaScript module; the shared independent cases run in native CI.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-rules.mjs --check
+node experiments/grammar-outcome-network/native-transport/inverse/generate-fixtures.mjs --check
+```

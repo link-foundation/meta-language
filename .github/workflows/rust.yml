@@ -40,13 +40,13 @@ on:
 permissions:
   contents: read
 
-# A newer push to a pull request cancels the run of its older head. Push,
+# Pull request numbers identify update queues, including a late merged run. Push,
 # release and dispatch runs are grouped by their own run id, so they never
 # cancel each other; their write jobs queue in the release write group. The
 # group has its own literal prefix: called from ci.yml, github.workflow names
 # the caller, and a group equal to the caller's would deadlock with it.
 concurrency:
-  group: rust-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-detect-changes
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-detect-changes
       cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-changelog
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-changelog
       cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-version-check
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-version-check
       cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-secrets-scan
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-secrets-scan
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: rust-${{ github.ref }}-fresh-merge-${{ matrix.physical_shard }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-fresh-merge-${{ matrix.physical_shard }}
       cancel-in-progress: true
     needs: [detect-changes, check]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
@@ -238,7 +238,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-cargo-lock
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-cargo-lock
       cancel-in-progress: true
     needs: [detect-changes]
     defaults:
@@ -276,7 +276,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-check
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-check
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -420,7 +420,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: rust-${{ github.ref }}-msrv
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-msrv
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -493,7 +493,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-lint
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-lint
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -635,7 +635,7 @@ jobs:
     # tests were still running. Preserve every test and bound this job at 30.
     timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}
     concurrency:
-      group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
@@ -1359,7 +1359,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-original-link-raw-observations
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-original-link-raw-observations
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     if: |
@@ -1433,7 +1433,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -1620,7 +1620,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-coverage-report
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-report
       cancel-in-progress: true
     needs: [coverage]
     env:
@@ -1658,7 +1658,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-build
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-build
       cancel-in-progress: true
     needs: [lint, test]
     defaults:

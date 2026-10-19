@@ -53,6 +53,7 @@ mod grammar_merge;
 mod grammar_native_ruby_expression_syntax;
 mod grammar_native_ruby_literal_ci;
 mod grammar_native_ruby_patterns;
+mod grammar_outcome_inverse_rules;
 mod grammar_parsing;
 mod grammar_render;
 mod grammar_round_trip_lexical_mutation;

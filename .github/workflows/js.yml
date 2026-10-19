@@ -24,13 +24,13 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request cancels that pull request's older runs. Push,
-# release and dispatch runs each get their own group, so a release is never
-# cancelled; the write jobs also share the release queue below. The group has
+# Pull request numbers identify update queues, including a late merged run.
+# Push, release and dispatch verification runs use their own run id in every
+# job; write jobs retain the shared release queue below. The group has
 # its own literal prefix: called from ci.yml, github.workflow names the caller,
 # and a group equal to the caller's would deadlock with it.
 concurrency:
-  group: js-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-tests-${{ matrix.group }}-${{ matrix.partition }}
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-tests-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -256,7 +256,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: check-js-${{ github.ref }}-translation-test-feedback
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-translation-test-feedback
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -325,7 +325,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -1498,7 +1498,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-test
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-test
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7

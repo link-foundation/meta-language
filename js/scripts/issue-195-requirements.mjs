@@ -113,6 +113,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/two-subagent-continuation-limit-2026-10-18.txt',
   soloContinuationRequest:
     'parity/sources/solo-continuation-2026-10-19.txt',
+  continuousBulkCompletionRequest:
+    'parity/sources/continuous-bulk-completion-2026-10-19.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.
