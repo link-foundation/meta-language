@@ -2380,6 +2380,13 @@ cancellation policy. Unrelated edits remain visible to the original guards;
 queue removal, changed dimensions and restored unsafe groups refuse. Current
 queue behavior is checked independently on the actual workflow source.
 
+Measured execution deadlines are addressed by rebalancing complete existing
+checks across existing physical cells. The generated check plan keeps its
+matrix, ten-minute limits, commands, failure predicates, source inputs and
+global order. Its recorded three-owner inverse preserves the original plan
+for historical guards; separate controls check every actual current owner,
+disjoint execution, unchanged feedback producers and refusal of altered checks.
+
 A pull request check depends only on what exists before merge. State that
 exists only after merge runs on `main`:
 

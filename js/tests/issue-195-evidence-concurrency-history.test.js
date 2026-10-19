@@ -8,7 +8,8 @@ test('historical workflow comparison authenticates every current queue before re
   const history = readProjectData(new URL('../../parity/fixtures/verification-concurrency-history.lino', import.meta.url));
   let count = 0;
   for (const file of history.files) {
-    const current = readFileSync(new URL('../../' + file.after.path, import.meta.url), 'utf8');
+    const actual = readFileSync(new URL('../../' + file.after.path, import.meta.url), 'utf8');
+    const current = file.name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(actual) : actual;
     assert.equal(current, file.after.source);
     assert.equal(restoreVerificationConcurrencyHistory(current, file.name), file.before.source);
     assert.throws(() => restoreVerificationConcurrencyHistory(file.before.source, file.name), /current queue identities/u);
@@ -34,3 +35,5 @@ test('historical workflow comparison authenticates every current queue before re
   assert.throws(() => restoreVerificationConcurrencyHistory('', 'unregistered.yml'));
   assert.throws(() => restoreVerificationConcurrencyHistory(null, 'ci.yml'));
 });
+
+import { restoreGeneratedPackageOwnerHistory } from './support/generated-package-owner-history.js';

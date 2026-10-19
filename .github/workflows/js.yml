@@ -1341,7 +1341,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs
 
       - name: Run Rust owned local container checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs
 
@@ -1398,11 +1398,11 @@ jobs:
         run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
 
       - name: Check strict public declaration consumers
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
 
       - name: Authenticate reviewed generated-stage migration refreshes
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript
