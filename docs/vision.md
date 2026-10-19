@@ -99,6 +99,16 @@ without the original grammar sources and yield identical decisions in both
 runtime packages. Shared identity simplifies translation by exposing a reusable
 meaning; target-specific syntax and faithful encodings remain explicit rules.
 
+An implementation revision that admits a new input domain does not establish
+equivalence with the preceding operation. Current declarations retain qualified
+source identities until their complete meanings can be compared. Historical
+definitions remain available through authenticated Links source archives,
+including their full declaration and import context, original source hash and
+revision. Reconstructing old source bytes proves preservation of that historical
+definition; it does not prove that the expanded current operation has the same
+meaning. Naming inventories can reference the exact archived definition without
+reassigning its identity to a changed current body.
+
 Incremental import validates that historical identities and origin aliases are
 unique before reusing them. It reserves every historical identity before
 allocating new current classes. A restored origin whose old identity is still
@@ -588,6 +598,13 @@ all 106 emitted owners and archive obligations remain exact. The corresponding
 borrowed receipt changes only its predecessor descriptor. Historical controls
 select their recorded source revision; current controls retain the complete
 source and artifact inverses and reject unreviewed fields or repins.
+The neutral-type rule revision adds a third finite descriptor edge for the
+generated helper. Removing its complete declaration restores the entire earlier
+module, including all 23 prior exports. Only that module's descriptor changes
+in the raw artifact; all 106 owners, archives and replay records remain exact.
+The whole preceding reader and register remain recoverable, and the loan receipt
+again changes only its containing artifact descriptor. This source-conservation
+proof leaves full generated output and archive execution checks in CI.
 Scalar-loop snapshots use the same normal producers and full callable ranges.
 Their finite receipts independently check actual token boundaries and recover
 the complete preceding fixtures, retaining every original source, semantic
