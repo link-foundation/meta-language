@@ -1868,6 +1868,19 @@ JSON variants, static references, original DTO construction and physical CST
 ownership remain separate obligations. Edge admission supplies no completed
 native transport or public CST integration claim.
 
+Owned integer range admission uses one complete automatically translated
+JavaScript operation. It admits exactly the binary64 integers within the signed
+64-bit or active unsigned 32/64-bit range, excluding negative zero, nonfinite
+values, fractions and unknown target widths. The original complete BigInt
+operation remains an authenticated executable oracle in
+[`owned-integer-range-source-history.lino`](../parity/naming/owned-integer-range-source-history.lino).
+Both logical widths and immediate binary64 endpoint neighbors have shared native
+fixtures. JavaScript reconstruction retains its original input classification,
+exact decimal reconstruction and bit encoding. Whole-source inversion preserves
+the complete preceding module. This range layer does not resolve native JSON
+number origins, static references, physical ownership or actual DTO construction;
+native execution remains a CI check.
+
 Generated Option reads normalize pure floating literal defaults through recorded
 Links source styles. The author authenticates the complete array helper and its
 standard type context, then retains the complete owning functions and their

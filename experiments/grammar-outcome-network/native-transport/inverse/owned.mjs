@@ -80,9 +80,8 @@ function readOptions(plan,options) {
 
 function readInteger(value,kind,limits,frame) {
   requireValue(typeof value==='number'&&Number.isFinite(value)&&Number.isInteger(value)&&!Object.is(value,-0),frame,'integer','finite integral binary64 excluding negative zero required');
-  const integer=BigInt(value),width=kind==='i64'?64:limits.usizeBits;
-  const lower=kind==='i64'?-(1n<<63n):0n,upper=kind==='i64'?(1n<<63n)-1n:(1n<<BigInt(width))-1n;
-  requireValue(integer>=lower&&integer<=upper,frame,'integer-range','integer exceeds its source type and target width');
+  const integer=BigInt(value);
+  requireValue(acceptOwnedOutcomeIntegerValue(value,kind==='i64',limits.usizeBits),frame,'integer-range','integer exceeds its source type and target width');
   const buffer=Buffer.alloc(8);buffer.writeDoubleBE(value);
   return {decimal:integer.toString(),bits:buffer.toString('hex')};
 }
@@ -423,3 +422,5 @@ function projectionEvents(value,limits) {
   }
   events.push({kind:'root',depth:0});return events;
 }
+
+import {acceptOwnedOutcomeIntegerValue} from './integer-rules.mjs';

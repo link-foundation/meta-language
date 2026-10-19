@@ -156,6 +156,20 @@ chain. Matching Rust tests run only in CI. Root/scalar admission, native JSON
 number origins, static borrows, actual DTO construction and physical CST
 integration remain separate work.
 
+Integer value admission also uses a complete automatically translated decision.
+Its 1,688 shared finite observations come from executing the exact authenticated
+original BigInt source, including both pointer widths, signed bounds, immediate
+binary64 endpoint predecessors, subnormal inputs and negative zero. Separate
+nonfinite and invalid-width controls refuse. JavaScript retains original input
+classification, decimal reconstruction and exact bit encoding. Native tests run
+only in CI; this step does not construct a native DTO or recover erased JSON
+number origins.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-integers.mjs --check
+cd js && node --test tests/grammar-outcome-native-integers.test.js
+```
+
 ```sh
 node experiments/grammar-outcome-network/native-transport/inverse/generate-source-types.mjs --check
 cd js && node --test tests/grammar-outcome-native-source-types.test.js
