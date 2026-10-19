@@ -2691,6 +2691,29 @@ clone the complete Text argument; this gives no constant-time or allocation-free
 guarantee. Full emitted-Rust runtime reimport and bidirectional execution remain
 separate obligations; native execution requires CI verification.
 
+`charAt` uses the same closed-source mechanism with the complete
+`readStringCharacter` definition. The existing packaged Links policy appends its
+independently checked character template; removing that extension reconstructs
+every preceding code-unit policy byte. Both checkers instantiate the same
+ordinary lambda, preserving one UTF-16 unit, empty out-of-range results, numeric
+index normalization, caller spans and once-only operand evaluation. Text and
+binary program archives retain these operations without a new graph operation
+or handwritten native character algorithm. The represented numeric conversion
+and source-literal boundaries above still apply. This follows
+[ECMAScript character selection](https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.charat).
+
+Exact source integer reconstruction also retains canonical decimal text before
+binary64 projection. Shared JavaScript decisions select signed 64-bit and
+explicit 32/64-bit unsigned limits and validate at most twenty UTF-16 units with
+an iterative decimal digit traversal. Complete automatic native translation
+retains every lifted control declaration. Independent BigInt and native standard
+integer parsing check canonical spelling and exact endpoints, including distinct
+integers that share a binary64 value. The complete earlier ordering draft and
+its unsupported string-order diagnostic remain an executable original fixture.
+String ordering translation, effective native JSON number origins, complete DTO
+construction, static borrows and physical CST ownership remain required; decimal
+admission alone does not discharge them.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose

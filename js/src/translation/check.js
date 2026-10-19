@@ -948,9 +948,12 @@ class Checker {
           type, this.language, argument.span ?? node.span));
       }
     }
-    if (readPrimitiveMethodLoweringForm(receiver, node.op) === 'code-unit-template') {
-      const signature = { kind: 'function', params: [STRING, FLOAT], ret: FLOAT };
-      const fn = coerce(this.expr(createStringCodeUnitTemplateExpression(node.span), new Map(), path, signature),
+    const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
+    if (lowering === 'code-unit-template' || lowering === 'character-template') {
+      const character = lowering === 'character-template';
+      const signature = { kind: 'function', params: [STRING, FLOAT], ret: character ? STRING : FLOAT };
+      const template = character ? createStringCharacterTemplateExpression(node.span) : createStringCodeUnitTemplateExpression(node.span);
+      const fn = coerce(this.expr(template, new Map(), path, signature),
         signature, this.language, node.span);
       return { k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span };
     }
@@ -1719,6 +1722,8 @@ class Checker {
     throw unsupported('pattern', `${pattern.k} patterns are not in the portable core`, span);
   }
 }
+
+import {createStringCharacterTemplateExpression} from './string-character-template.js';
 
 /** Arrays have a text, but not one the translation reproduces yet. */
 function arrayText(span) {

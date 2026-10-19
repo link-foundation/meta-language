@@ -359,3 +359,121 @@ fn code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit
     }
     assert!(serde_json::from_value::<SExpr>(serde_json::json!({"k":"numberValue"})).is_err());
 }
+
+#[test]
+fn character_template_preserves_defaults_order_and_complete_semantic_archives() {
+    let source = "/** @param {string} text @param {number} position @returns {string} */function character(text,position){return text.charAt(position);}\n/** @param {string} text @param {number|null|undefined} position @returns {string} */function nullableCharacter(text,position){return text.charAt(position);}\nconsole.log('%s %s %s','ABC'.charAt(),'ABC'.charAt(undefined),'ABC'.charAt(null));console.log('%s %s %s',character('ABC',-0.9),character('ABC',1.9),character('ABC',NaN));console.log(character('ABC',-1).length,character('ABC',3).length,character('',0).length);console.log('%s %s',nullableCharacter('ABC',null),nullableCharacter('ABC',undefined));\n/** @returns {string} */function receiver(){console.log('receiver');return 'ABC';}/** @returns {number} */function position(){console.log('position');return 1.9;}console.log(receiver().charAt(position()));console.log(receiver().charAt());";
+    let expected = "A A A\nA B A\n0 0 0\nA A\nreceiver\nposition\nB\nreceiver\nA\n";
+    assert_eq!(javascript(source), expected);
+    let oracle = char_code_unit_oracle(source, false);
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript_code = emit_javascript(&program).unwrap().text;
+    let rust_code = emit_rust(&program).unwrap().text;
+    assert_eq!(javascript_code, oracle["javascript"].as_str().unwrap());
+    assert_eq!(rust_code, oracle["rust"].as_str().unwrap());
+    assert_eq!(javascript(&javascript_code), expected);
+    assert_eq!(rust(&rust_code, "character-template-semantics"), expected);
+    let packet = create_typed_program_links(source, "JavaScript").unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert!(
+            !serde_json::to_string(&restored)
+                .unwrap()
+                .contains("\"op\":\"charAt\"")
+        );
+        assert_eq!(
+            emit_typed_program_links(&network, packet.root, "JavaScript")
+                .unwrap()
+                .code,
+            javascript_code
+        );
+        assert_eq!(
+            emit_typed_program_links(&network, packet.root, "Rust")
+                .unwrap()
+                .code,
+            rust_code
+        );
+    }
+}
+
+#[test]
+fn character_parameters_retain_every_surrogate_unit_and_empty_out_of_range_result() {
+    let source = "/** @param {string} text @param {number} position @returns {string} */function character(text,position){return text.charAt(position);}";
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_rust(&program).unwrap();
+    let oracle = char_code_unit_oracle(source, false);
+    assert_eq!(emitted.text, oracle["rust"].as_str().unwrap());
+    let units: [Vec<u16>; 7] = [
+        vec![],
+        vec![65, 66, 67],
+        vec![0, 65535],
+        vec![0xd800, 120, 0xdfff],
+        vec![0xd800],
+        vec![0xdfff],
+        vec![65, 0xd83d, 0xde00, 66],
+    ];
+    let driver = format!(
+        "for(const units of {}){{const text=String.fromCharCode(...units);for(const position of [-Infinity,-0.9,-0,0,1.9,2,Infinity,NaN]){{const value=character(text,position);console.log('['+Array.from({{length:value.length}},(_,index)=>value.charCodeAt(index)).join(', ')+']');}}}}",
+        serde_json::to_string(&units).unwrap()
+    );
+    let expected = javascript(&(source.to_owned() + &driver));
+    assert_eq!(
+        javascript(&(emit_javascript(&program).unwrap().text + &driver)),
+        expected
+    );
+    let mut calls = String::new();
+    for value in &units {
+        let value = value
+            .iter()
+            .map(u16::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        for position in [
+            "f64::NEG_INFINITY",
+            "-0.9f64",
+            "-0f64",
+            "0f64",
+            "1.9f64",
+            "2f64",
+            "f64::INFINITY",
+            "f64::NAN",
+        ] {
+            writeln!(calls,"println!(\"{{:?}}\",character(crate::ml_string::Text::from_units(vec![{value}]),{position}).0);").unwrap();
+        }
+    }
+    let native = emitted.preludes.join("\n\n")
+        + "\n\n"
+        + &emitted.definitions.join("\n\n")
+        + "\nfn main(){\n"
+        + &calls
+        + "}\n";
+    assert_eq!(
+        rust(&native, "character-template-surrogate-parameters"),
+        expected
+    );
+    assert!(expected.contains("[55296]\n"));
+    assert!(expected.contains("[57343]\n"));
+    assert!(expected.contains("[]\n"));
+    let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
+    assert_eq!(
+        translated
+            .items
+            .iter()
+            .filter(|item| item.status == "carried")
+            .count(),
+        0
+    );
+    assert_eq!(
+        meta_language::self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+}

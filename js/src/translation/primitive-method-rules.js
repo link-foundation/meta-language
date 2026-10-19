@@ -36,7 +36,7 @@ export function readPrimitiveMethodMinimumArguments(receiver, operation) {
   if (receiver === 'array' && (operation === 'slice' || operation === 'join')) return 0;
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return 1;
   if (receiver !== 'string') return -1;
-  if (operation === 'split' || operation === 'slice' || operation === 'charCodeAt') return 0;
+  if (operation === 'split' || operation === 'slice' || operation === 'charCodeAt' || operation === 'charAt') return 0;
   if (operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'repeat' || operation === 'padStart' || operation === 'padEnd' || operation === 'codePointAt') return 1;
   if (operation === 'replace' || operation === 'replaceAll') return 2;
   return -1;
@@ -50,7 +50,7 @@ export function readPrimitiveMethodMaximumArguments(receiver, operation) {
     return -1;
   }
   if (receiver !== 'string') return -1;
-  if (operation === 'repeat' || operation === 'codePointAt' || operation === 'charCodeAt') return 1;
+  if (operation === 'repeat' || operation === 'codePointAt' || operation === 'charCodeAt' || operation === 'charAt') return 1;
   if (operation === 'split' || operation === 'slice' || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'replace' || operation === 'replaceAll' || operation === 'padStart' || operation === 'padEnd') return 2;
   return -1;
 }
@@ -66,7 +66,7 @@ export function readPrimitiveMethodCheckedArgumentKind(receiver, operation, inde
   if (receiver === 'array' && operation === 'slice') return 'float';
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf')) return index === 0 ? 'element' : 'float';
   if (receiver !== 'string') return '';
-  if (operation === 'charCodeAt') return 'number-value';
+  if (operation === 'charCodeAt' || operation === 'charAt') return 'number-value';
   if (operation === 'replace' || operation === 'replaceAll') return 'string';
   if (index === 0 && (operation === 'split' || operation === 'indexOf' || operation === 'lastIndexOf')) return 'string';
   if (index === 1 && (operation === 'padStart' || operation === 'padEnd')) return 'string';
@@ -79,7 +79,7 @@ export function readPrimitiveMethodDefaultForm(receiver, operation, index) {
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf' || operation === 'lastIndexOf') && index === 1) return 'float';
   if (receiver === 'string' && operation === 'split' && index === 0) return 'absent';
   if (receiver === 'string' && operation === 'split' && index === 1) return 'float';
-  if (receiver === 'string' && operation === 'charCodeAt' && index === 0) return 'float';
+  if (receiver === 'string' && (operation === 'charCodeAt' || operation === 'charAt') && index === 0) return 'float';
   if ((receiver === 'string' || receiver === 'array') && operation === 'slice') return 'float';
   if (receiver === 'string' && (operation === 'indexOf' || operation === 'lastIndexOf') && index === 1) return 'float';
   if (receiver === 'string' && (operation === 'padStart' || operation === 'padEnd') && index === 1) return 'string';
@@ -92,7 +92,7 @@ export function readPrimitiveMethodDefaultValue(receiver, operation, index) {
   if (receiver === 'array' && (operation === 'includes' || operation === 'indexOf') && index === 1) return '0';
   if (receiver === 'array' && operation === 'lastIndexOf' && index === 1) return 'Infinity';
   if (receiver === 'string' && operation === 'split' && index === 1) return '4294967295';
-  if (receiver === 'string' && operation === 'charCodeAt' && index === 0) return '0';
+  if (receiver === 'string' && (operation === 'charCodeAt' || operation === 'charAt') && index === 0) return '0';
   if ((receiver === 'string' || receiver === 'array') && operation === 'slice') return index === 0 ? '0' : 'Infinity';
   if (receiver === 'string' && operation === 'indexOf' && index === 1) return '0';
   if (receiver === 'string' && operation === 'lastIndexOf' && index === 1) return 'Infinity';
@@ -174,6 +174,7 @@ export function requirePrimitiveMethodUtf16(expression, receiver) {
 
 /** @param {string} receiver @param {string} operation @returns {string} */
 export function readPrimitiveMethodLoweringForm(receiver, operation) {
+  if (receiver === 'string' && operation === 'charAt') return 'character-template';
   return receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method';
 }
 

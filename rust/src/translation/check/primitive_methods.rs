@@ -159,11 +159,18 @@ impl Checker {
                 }
             }
         }
-        if rules::read_primitive_method_lowering_form(receiver, operation) == "code-unit-template" {
-            let template = super::string_code_unit_template::expression(span)?;
+        let lowering = rules::read_primitive_method_lowering_form(receiver, operation);
+        if lowering == "code-unit-template" || lowering == "character-template" {
+            let character = lowering == "character-template";
+            let result = if character { STRING } else { FLOAT };
+            let template = if character {
+                super::string_code_unit_template::character_expression(span)?
+            } else {
+                super::string_code_unit_template::expression(span)?
+            };
             let signature = Type::Function {
                 params: vec![STRING, FLOAT],
-                ret: Box::new(FLOAT),
+                ret: Box::new(result.clone()),
             };
             let function = self.expr(&template, &Env::default(), path, Some(&signature), false)?;
             let function = self.coerce(function, &signature, span)?;
@@ -177,7 +184,7 @@ impl Checker {
                     func: Box::new(function),
                     args: arguments,
                 },
-                FLOAT,
+                result,
             ));
         }
         let ty =

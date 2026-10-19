@@ -58,3 +58,22 @@ pub(super) fn expression(span: Option<Span>) -> Result<SExpr> {
         )
     })
 }
+
+pub(super) fn character_expression(span: Option<Span>) -> Result<SExpr> {
+    let policy = &policy()["character"];
+    if policy.get("schemaVersion").and_then(Value::as_u64) != Some(1)
+        || policy.get("model").and_then(Value::as_str) != Some("portable UTF16 character lambda 1")
+        || policy.pointer("/template/k").and_then(Value::as_str) != Some("lambda")
+    {
+        return Err(type_error(
+            "the generated UTF-16 character template is malformed",
+            span,
+        ));
+    }
+    serde_json::from_value(instantiate(&policy["template"], span)).map_err(|_| {
+        type_error(
+            "the generated UTF-16 character template is not a representable expression",
+            span,
+        )
+    })
+}
