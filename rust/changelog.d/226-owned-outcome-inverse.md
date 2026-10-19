@@ -11,3 +11,5 @@ with explicit version bounds and complete original probe source preservation.
 Paired ontology and taxonomy acceptance checks now cover independent memberships,
 all selectable roots, explicit root type models, and complete text and binary
 archive reloads. Native execution remains a CI check.
+Retain failed scheduled dependency audit findings and publish their actual outcome
+to repair pull requests while preserving required PR and delivery checks.

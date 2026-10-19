@@ -2251,8 +2251,14 @@ lockfile resolve graphs and the coupled sources, such as the emscripten version
 that a tree-sitter release pins. Every holder must itself be delivered, and an
 external holder must be at its newest release. A pin behind its newest
 compatible release is stale, as is anything built from it. In CI the delivery
-gate also queries the registries again, and it fails when the recorded audit no
-longer matches them or when they cannot be reached.
+gate retains the complete current-dependency policy. Pull request checks use
+the recorded pre-merge audit. The scheduled registry refresh runs only on main
+as a non-blocking live report: it preserves the actual audit outcome, complete
+log and refreshed audit artifact, and opens or updates the repair PR even when
+new upstream releases leave unresolved findings. The PR body and job summary
+retain those findings; required offline PR and delivery gates still fail until
+the applicable dependency problems are repaired. An unavailable registry cannot
+be presented as a current audit.
 
 ## Acceptance and evidence
 

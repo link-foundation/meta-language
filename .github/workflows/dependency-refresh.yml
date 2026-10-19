@@ -48,18 +48,49 @@ jobs:
           (cd rust && cargo update)
 
       - name: Refresh the dependency audit from the registries
+        id: audit
+        # Live registry state is a main-only report. Keep the actual failed
+        # outcome and findings so they reach the repair PR and its strict checks.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: npm run dependencies:refresh
         working-directory: js
+        run: |
+          npm run dependencies:refresh 2>&1 | tee dependency-refresh.log
+
+      - name: Retain the live dependency report
+        if: ${{ !cancelled() && hashFiles('js/dependency-refresh.log') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            js/dependency-refresh.log
+            parity/dependency-inventory.lino
+            docs/dependency-audit.md
+          if-no-files-found: error
+
+      - name: Report the live audit outcome
+        if: ${{ !cancelled() }}
+        env:
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+        run: |
+          printf 'Live dependency audit outcome: **%s**. See the retained report and refresh PR for repairs. Required PR dependency checks remain unchanged.\n' "$AUDIT_OUTCOME" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$AUDIT_OUTCOME" != success ]; then
+            echo '::warning::The live dependency audit reported failures. Its retained findings require repair; no PR or delivery gate is waived.'
+          fi
 
       - name: Open or update the refresh pull request
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: automation/dependency-refresh
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
         run: |
           if git diff --quiet; then
-            echo "dependencies and the audit are current"
+            if [ "$AUDIT_OUTCOME" = success ]; then
+              echo "dependencies and the audit are current"
+            else
+              echo "no tracked updates; live audit findings remain in the retained report"
+            fi
             exit 0
           fi
           git config user.name 'github-actions[bot]'
@@ -67,10 +98,19 @@ jobs:
           git switch --create "$BRANCH"
           git commit --all --message "chore(deps): scheduled dependency refresh ($(date -u +%F))"
           git push --force origin "$BRANCH"
-          if [ -z "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')" ]; then
+          body="$RUNNER_TEMP/dependency-refresh-pr.md"
+          cat > "$body" <<EOF
+          Lockfile updates within the declared ranges and the refreshed dependency audit in docs/dependency-audit.md.
+
+          Live audit outcome: **$AUDIT_OUTCOME**. The retained dependency-refresh artifact contains the complete audit log. Any unresolved findings require repairs; compatibility reasons are not invented. Required offline PR checks and current-dependency delivery gates remain unchanged.
+          EOF
+          existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[].number')"
+          if [ -z "$existing" ]; then
             gh pr create --base main --head "$BRANCH" \
               --title "chore(deps): scheduled dependency refresh" \
-              --body "Lockfile updates within the declared ranges and the refreshed dependency audit (docs/dependency-audit.md), opened by the scheduled Dependency Refresh workflow on main. Items behind their current stable release are listed in the audit with their recorded reason."
+              --body-file "$body"
+          else
+            gh pr edit "$existing" --body-file "$body"
           fi
 
       - name: Clean regenerable caches

@@ -24,6 +24,70 @@ const workflow = (name) => read(`.github/workflows/${name}`);
 const jobs = (name) => new Map(parseWorkflow(workflow(name)).map((job) => [job.id, job]));
 const verificationDomain="${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}";
 
+test('main dependency refresh retains failed live findings and delivers their outcome to repair pull requests', async () => {
+  const {mkdirSync, writeFileSync} = await import('node:fs');
+  const text = workflow('dependency-refresh.yml'), job = jobs('dependency-refresh.yml').get('refresh');
+  assert.deepEqual(triggers(text).sort(), ['schedule', 'workflow_dispatch']);
+  assert.match(condition(job), /github\.ref == 'refs\/heads\/main'/u);
+  const audit = job.steps.find(step => step.name === 'Refresh the dependency audit from the registries');
+  const retain = job.steps.find(step => step.name === 'Retain the live dependency report');
+  const summary = job.steps.find(step => step.name === 'Report the live audit outcome');
+  const publish = job.steps.find(step => step.name === 'Open or update the refresh pull request');
+  assert.match(audit.text, /id: audit/u);assert.match(audit.text, /continue-on-error: true/u);
+  assert.equal(job.steps.filter(step => /continue-on-error:/u.test(step.text)).length, 1);
+  assert.ok(retain.afterFailure && summary.afterFailure);
+  for (const file of ['js/dependency-refresh.log', 'parity/dependency-inventory.lino', 'docs/dependency-audit.md']) assert.ok(retain.text.includes(file));
+  assert.match(retain.text, /if-no-files-found: error/u);
+  for (const step of [summary, publish]) assert.ok(step.text.includes('AUDIT_OUTCOME: ${{ steps.audit.outcome }}'));
+  assert.doesNotMatch(publish.text, /continue-on-error/u);
+  assert.match(job.header, /group: dependency-refresh-\$\{\{ github\.repository \}\}-write\n\s+cancel-in-progress: false/u);
+  const script = step => step.run.replace(/^\|\s*\n/u, '').replace(/^ {10}/gmu, '');
+  for (const step of [audit, summary, publish]) {
+    const syntax = spawnSync('bash', ['-n', '-c', script(step)], {encoding: 'utf8'});
+    assert.equal(syntax.status, 0, syntax.stderr);
+  }
+  const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-live-audit-contract-'));
+  try {
+    const failure = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
+      "npm() { printf '23 dependency inventory problem(s)\\n' >&2; return 1; }\n" + script(audit)],
+    {cwd: directory, encoding: 'utf8'});
+    assert.equal(failure.status, 1, 'the real audit command keeps its failure status under pipefail');
+    assert.equal(readFileSync(path.join(directory, 'dependency-refresh.log'), 'utf8'), '23 dependency inventory problem(s)\n');
+    const stub = `git() {
+      if [ "$1" = diff ]; then return 1; fi
+      printf '%s\\n' "$*" >> "$CALLS"
+    }
+    gh() {
+      if [ "$1 $2" = 'pr list' ]; then printf '%s' "$EXISTING"; return 0; fi
+      printf '%s\\n' "$*" >> "$CALLS"
+      while [ "$#" -gt 0 ]; do
+        if [ "$1" = --body-file ]; then cp "$2" "$CAPTURED_BODY"; return 0; fi
+        shift
+      done
+      return 1
+    }
+    `;
+    for (const outcome of ['success', 'failure']) for (const existing of ['', '227']) {
+      const selected = path.join(directory, outcome + (existing || '-new'));mkdirSync(selected);
+      const calls = path.join(selected, 'calls.log'), body = path.join(selected, 'captured.md'), report = path.join(selected, 'summary.md');
+      const environment = {...process.env, AUDIT_OUTCOME: outcome, EXISTING: existing, RUNNER_TEMP: selected,
+        BRANCH: 'automation/dependency-refresh', CALLS: calls, CAPTURED_BODY: body, GITHUB_STEP_SUMMARY: report};
+      writeFileSync(calls, '');
+      const note = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', script(summary)], {cwd: selected, env: environment, encoding: 'utf8'});
+      assert.equal(note.status, 0, note.stderr);
+      assert.ok(readFileSync(report, 'utf8').includes('**' + outcome + '**'));
+      assert.equal(note.stdout.includes('::warning::'), outcome === 'failure');
+      const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', stub + script(publish)], {cwd: selected, env: environment, encoding: 'utf8'});
+      assert.equal(result.status, 0, result.stderr);
+      assert.ok(readFileSync(body, 'utf8').includes('Live audit outcome: **' + outcome + '**'));
+      assert.match(readFileSync(body, 'utf8'), /Required offline PR checks and current-dependency delivery gates remain unchanged/u);
+      const invocations = readFileSync(calls, 'utf8');
+      assert.ok(invocations.includes(existing ? 'pr edit 227 --body-file ' : 'pr create --base main --head automation/dependency-refresh'));
+      assert.ok(invocations.includes('push --force origin automation/dependency-refresh'));
+    }
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});
+
 test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {
   const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));
   const sources = [fixture.contract, ...fixture.sourceProfiles,
