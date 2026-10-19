@@ -749,7 +749,7 @@ impl Inference {
                         | Term::Function { .. }
                         | Term::Cell(_) => false,
                     };
-                    if unknown {
+                    if unknown && crate::translation::number_predicate_rules::read_number_predicate_argument_form("JavaScript", op, "", "").is_empty() {
                         let want = if item.spread {
                             Term::Array(Box::new(Term::Known(FLOAT)))
                         } else {

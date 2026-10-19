@@ -322,14 +322,18 @@ Type queries also accept reads of eligible captured primitive literal constants.
 The checked reference is identified from its external constant signature; source
 calls and unsafe captures keep their existing refusals.
 
-Sources containing carriage returns also retain an escaped JSON source envelope
-in the translation header. Restoring that envelope requires matching the source
+Sources containing carriage returns, a leading prefix, a noncanonical trailing
+suffix or inter-item gaps that emitted separators cannot reproduce retain an
+escaped JSON source envelope in the translation header. Restoring that envelope requires matching the source
 language, UTF-8 byte length and source digest, and the digest of the complete
 translated body, including preludes and layout. This preserves CRLF, mixed line
 endings, leading and trailing whitespace and Unicode separators when the
 translation is unedited. An edited body or damaged envelope falls back to the
 ordinary per-item provenance rules; it cannot restore the stale envelope.
-The restoration decision is generated from the JavaScript frontend module.
+The restoration gate is generated from the JavaScript frontend module. A
+complete shared JavaScript rule also generates the native layout selection.
+The envelope preserves source bytes; carried items still require executable
+translation support.
 
 Dense immutable arrays also support zero-argument `slice()`, one-array
 `Array.from()` without a mapper, and homogeneous `Array.of()` construction.

@@ -678,7 +678,7 @@ function externalName(kind, name) {
 export function emitRustConstants(program) {
   const effects = program.main?.effects ?? [];
   const effect = effects[0];
-  const legalName = effect && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
+  const legalName = typeof effect?.name === 'string' && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
   if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,

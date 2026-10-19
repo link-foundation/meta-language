@@ -346,6 +346,23 @@ fn translate_module(
     };
     let results =
         translate_binding_groups(&groups, source, from, to, decorators, &outs, utf16_strings);
+    let layout_envelope =
+        crate::translation::self_translation_layout_rules::require_self_translation_layout_envelope(
+            source.contains('\r'),
+            results
+                .first()
+                .and_then(|(group, _)| group.items.first())
+                .map_or(source.len(), |item| item.start)
+                > 0,
+            !matches!(
+                results.last().map_or(source, |(group, _)| group.after),
+                "" | "\n"
+            ),
+            results
+                .iter()
+                .take(results.len().saturating_sub(1))
+                .any(|(group, _)| group.after != breaks(group.after)),
+        );
     let exported_names: HashSet<&str> = scans
         .iter()
         .flatten()
@@ -487,7 +504,7 @@ fn translate_module(
         lines.push(PRELUDE_END.to_owned());
         lines.push(String::new());
     }
-    if source.contains('\r') {
+    if layout_envelope {
         let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
         let original = serde_json::to_string(source)
             .expect("source text serializes")

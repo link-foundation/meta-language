@@ -607,3 +607,102 @@ fn explicit_unicode_order_matches_every_shared_case_and_every_single_code_unit()
         source
     );
 }
+
+#[test]
+fn number_predicates_preserve_all_shared_values_ordered_effects_and_complete_archives() {
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/number-predicate-observations.lino"
+    ))
+    .unwrap();
+    let cases = fixture["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 80);
+    let mut source = String::new();
+    let mut expected = String::new();
+    for row in cases {
+        writeln!(
+            source,
+            "console.log(Number.{}({}));",
+            row["operation"].as_str().unwrap(),
+            row["expression"].as_str().unwrap()
+        )
+        .unwrap();
+        writeln!(expected, "{}", row["expected"].as_bool().unwrap()).unwrap();
+    }
+    source.push_str("/** @param {string | null | undefined} value @returns {boolean} */function nullable(value){return Number.isNaN(value);}console.log(nullable('NaN'),nullable(null),nullable(undefined));\n/** @returns {number} */function number(){console.log('number');return 2;}/** @returns {string} */function text(){console.log('text');return 'NaN';}/** @returns {boolean} */function extra(){console.log('extra');return true;}console.log(Number.isInteger(number(),text(),extra()));console.log(Number.isNaN(text(),number(),extra()));");
+    expected.push_str("false false false\nnumber\ntext\nextra\ntrue\ntext\nnumber\nextra\nfalse\n");
+    assert_eq!(javascript(&source), expected);
+    let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
+    let emitted = emit_rust(&program).unwrap();
+    let actual_javascript = emit_javascript(&program).unwrap().text;
+    let oracle = char_code_unit_oracle(&source, false);
+    assert_eq!(emitted.text, oracle["rust"].as_str().unwrap());
+    assert_eq!(actual_javascript, oracle["javascript"].as_str().unwrap());
+    assert_eq!(javascript(&actual_javascript), expected);
+    assert_eq!(
+        rust(&emitted.text, "number-predicate-arguments-and-all-types"),
+        expected
+    );
+    let packet = create_typed_program_links(&source, "JavaScript").unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        assert_eq!(
+            emit_typed_program_links(&network, packet.root, "Rust")
+                .unwrap()
+                .code,
+            emitted.text
+        );
+        assert_eq!(
+            javascript(
+                &emit_typed_program_links(&network, packet.root, "JavaScript")
+                    .unwrap()
+                    .code
+            ),
+            expected
+        );
+    }
+}
+
+#[test]
+fn complete_source_layout_envelopes_retain_bytes_and_refuse_obsolete_target_restoration() {
+    for source in [
+        "const a=1;const b=2;",
+        "  const a=1;\tconst b=2; \n  ",
+        "\n\nconst a=1;\n \t\nconst b=2;\t",
+        "/*😀*/const a=1;/*é*/const b=2;",
+        " \t\n",
+        "",
+        "/** @returns {number} */function value(){return 1;}console.log(value());",
+    ] {
+        let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
+        assert_eq!(
+            translated.code,
+            char_code_unit_oracle(source, true)["rust"]
+                .as_str()
+                .unwrap()
+        );
+        assert_eq!(
+            meta_language::self_translate(&translated.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+    let source = "  /** @returns {number} */function value(){return 1;}\t";
+    let mut translated = meta_language::self_translate(source, "JavaScript", "Rust")
+        .unwrap()
+        .code;
+    assert!(translated.contains(" envelope-sha256="));
+    let index = translated.rfind("1f64").unwrap();
+    translated.replace_range(index..index + 4, "2f64");
+    let restored = meta_language::self_translate(&translated, "Rust", "JavaScript")
+        .unwrap()
+        .code;
+    assert_ne!(restored, source);
+    assert_eq!(javascript(&(restored + "\nconsole.log(value());")), "2\n");
+}

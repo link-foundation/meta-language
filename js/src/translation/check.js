@@ -46,6 +46,7 @@ import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPr
   readPrimitiveMethodLoweringForm, readPrimitiveMethodArgumentObligationFeature } from './primitive-method-rules.js';
 import { acceptProgramTupleProductModel, acceptProgramExpressionOperation } from '../typed-program-link-rules.js';
 import {readStringOrderOperation} from './string-order-rules.js';
+import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
@@ -1106,6 +1107,24 @@ class Checker {
     }
     const spread = node.args.find((item) => item.spread);
     if (spread) throw unsupported('spread argument', `pass ${node.name} its argument`, spread.value.span ?? node.span);
+    if (readNumberPredicateArgumentForm(this.language, node.op, '', '')) {
+      const args = node.args.map(({ value }) => this.expr(value, env, path, undefined));
+      if (args.length === 0) return { k: 'lit', value: false, type: BOOL };
+      const first = args[0];
+      const form = readNumberPredicateArgumentForm(this.language, node.op, first.type.kind, first.type.kind === 'option' ? first.type.element.kind : '');
+      if (form === 'unsupported') throw typeError(`${node.name} of ${typeKey(first.type)}; it takes Numbers, and converts or rejects anything else`, node.args[0].value.span ?? node.span);
+      if (args.length === 1 && form === 'number') return { k: 'math', op: node.op, args, type: BOOL };
+      if (args.length === 1 && form === 'optional-number') return { k: 'optionalPredicate', op: node.op, arg: first, type: BOOL };
+      const name = this.freshName('ml_number_predicate');
+      const bound = { k: 'var', name, type: first.type };
+      let body = form === 'number' ? { k: 'math', op: node.op, args: [bound], type: BOOL }
+        : form === 'optional-number' ? { k: 'optionalPredicate', op: node.op, arg: bound, type: BOOL }
+        : { k: 'lit', value: false, type: BOOL };
+      for (let index = args.length - 1; index >= 0; index--) {
+        body = { k: 'let', name: index === 0 ? name : this.freshName('ml_number_predicate_unused'), value: args[index], body, type: BOOL };
+      }
+      return body;
+    }
     if (!variadic && node.args.length !== 1) {
       throw unsupported(`${node.name} with ${node.args.length} arguments`, `${node.name} takes one Number`, node.span);
     }

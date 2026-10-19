@@ -2716,6 +2716,19 @@ Effective native JSON number origins, complete DTO construction, static borrows
 and physical CST ownership remain required; decimal admission alone does not
 discharge them.
 
+JavaScript `Number.isInteger`, `Number.isSafeInteger`, `Number.isFinite` and
+`Number.isNaN` inspect the represented value without numeric conversion. Shared
+Links decisions distinguish Number, optional Number and known nonnumeric types.
+Missing arguments yield false; all supplied expressions still evaluate once in
+source order, including ignored extra arguments. Both checkers construct existing
+numeric, optional and binding nodes from the same automatically translated
+rules. Eighty independent Node primitive observations retain their actual source
+expressions. Complete text and binary archives recheck the selected behavior.
+Boxed primitives, symbols, unresolved unions, unsupported empty-container
+inference and iterable argument expansion remain separate obligations. Ordinary
+Math conversion boundaries retain their previous diagnostics. The model follows
+[the ECMAScript Number predicates](https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-number.isfinite).
+
 JavaScript primitive string relations `<`, `<=`, `>` and `>=` retain explicit
 UTF-16 code-unit lexical meanings in the shared typed Links schema. Complete
 shared JavaScript selectors and rendering rules generate every native declaration.
@@ -2729,6 +2742,15 @@ ordering remains a distinct unsupported source model; Lean and Rocq refuse the
 missing UTF-16 operational encoding. The original schemas, rule meanings and
 style prefix retain complete historical source identities. Native execution
 and full Rust runtime reimport remain CI and translation obligations.
+
+Self-translation also retains its existing authenticated source envelope when
+leading or trailing whitespace or inter-group gaps cannot be reconstructed by
+emitted block separators, including minified adjacent items. A complete shared
+JavaScript layout decision generates the native rule. Exact original UTF-8
+bytes, language and source digest still require the hash of the entire actual
+translated body before restoration. Editing emitted code cannot restore obsolete
+source. This source-preservation metadata does not count carried items as
+executable translation or substitute for the complete CST contract.
 
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,

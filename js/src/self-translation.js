@@ -25,6 +25,7 @@ import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure
 import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
+import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -222,7 +223,10 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   if (family(to) === 'Rust' && recorded.some(({ status }) => status === 'translated')) preludes.unshift(RUST_ALLOW);
   const lines = [`${HEADER}source=${from} target=${to} sha256=${sha256(text)} bytes=${bytes.length}`, ''];
   if (preludes.length) lines.push(PRELUDE_BEGIN, ...preludes.flatMap((prelude, index) => (index ? ['', prelude] : [prelude])), PRELUDE_END, '');
-  if (text.includes('\r')) {
+  if (requireSelfTranslationLayoutEnvelope(text.includes('\r'),
+    (results[0]?.group.items[0]?.start ?? bytes.length) > 0,
+    !['', '\n'].includes(results.at(-1)?.group.after ?? text),
+    results.slice(0, -1).some(({group}) => group.after !== breaks(group.after)))) {
     const tail = `\n${lines.slice(1).join('\n')}\n${body}`;
     const original = JSON.stringify(text).replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
     lines[0] += ` envelope-sha256=${sha256(tail)} original=${original}`;

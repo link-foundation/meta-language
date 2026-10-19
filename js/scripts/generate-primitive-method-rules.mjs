@@ -36,3 +36,7 @@ if (process.argv.includes('--check')) {
 await generateStringOrderRules({check:process.argv.includes('--check')});
 
 import {generateStringOrderRules} from './string-order-generation.mjs';
+
+await generateNumberPredicateRules({check:process.argv.includes('--check')});
+
+import {generateNumberPredicateRules} from './number-predicate-generation.mjs';

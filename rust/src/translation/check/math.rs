@@ -1,8 +1,8 @@
 //! `Math` and `Number` functions, whose arguments are Numbers.
 
 use super::{
-    BOOL, Checker, Env, Expr, FLOAT, Node, Result, SArrayItem, Span, Type, array, type_error,
-    unsupported,
+    BOOL, Checker, Env, Expr, FLOAT, LitValue, Node, Result, SArrayItem, Span, Type, array,
+    type_error, unsupported,
 };
 
 /// The functions whose value is a boolean.
@@ -43,6 +43,16 @@ impl Checker {
                 &format!("pass {name} its argument"),
                 spread.value.span.or(span),
             ));
+        }
+        if !crate::translation::number_predicate_rules::read_number_predicate_argument_form(
+            self.language.as_str(),
+            op,
+            "",
+            "",
+        )
+        .is_empty()
+        {
+            return self.number_predicate(op, name, args, span, env, path);
         }
         if !variadic && args.len() != 1 {
             return Err(unsupported(
@@ -92,5 +102,96 @@ impl Checker {
             },
             ty,
         ))
+    }
+
+    fn number_predicate(
+        &mut self,
+        op: &str,
+        name: &str,
+        arguments: &[SArrayItem],
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        let args = arguments
+            .iter()
+            .map(|item| self.expr(&item.value, env, path, None, false))
+            .collect::<Result<Vec<_>>>()?;
+        let Some(first) = args.first() else {
+            return Ok(Expr::lit(BOOL, LitValue::Bool(false)));
+        };
+        let element = if let Type::Option { element, .. } = &first.ty {
+            element.kind()
+        } else {
+            ""
+        };
+        let form = crate::translation::number_predicate_rules::read_number_predicate_argument_form(
+            self.language.as_str(),
+            op,
+            first.ty.kind(),
+            element,
+        );
+        if form == "unsupported" {
+            return Err(type_error(
+                format!(
+                    "{name} of {}; it takes Numbers, and converts or rejects anything else",
+                    first.ty.key()
+                ),
+                arguments[0].value.span.or(span),
+            ));
+        }
+        if args.len() == 1 && form == "number" {
+            return Ok(Expr::new(
+                Node::Math {
+                    op: op.to_owned(),
+                    args,
+                },
+                BOOL,
+            ));
+        }
+        if args.len() == 1 && form == "optional-number" {
+            return Ok(Expr::new(
+                Node::OptionalPredicate {
+                    op: op.to_owned(),
+                    arg: Box::new(first.clone()),
+                },
+                BOOL,
+            ));
+        }
+        let binding = self.fresh_name("ml_number_predicate");
+        let bound = Expr::var(binding.clone(), first.ty.clone());
+        let mut body = match form.as_str() {
+            "number" => Expr::new(
+                Node::Math {
+                    op: op.to_owned(),
+                    args: vec![bound],
+                },
+                BOOL,
+            ),
+            "optional-number" => Expr::new(
+                Node::OptionalPredicate {
+                    op: op.to_owned(),
+                    arg: Box::new(bound),
+                },
+                BOOL,
+            ),
+            _ => Expr::lit(BOOL, LitValue::Bool(false)),
+        };
+        for (index, value) in args.into_iter().enumerate().rev() {
+            let name = if index == 0 {
+                binding.clone()
+            } else {
+                self.fresh_name("ml_number_predicate_unused")
+            };
+            body = Expr::new(
+                Node::Let {
+                    name,
+                    value: Box::new(value),
+                    body: Box::new(body),
+                },
+                BOOL,
+            );
+        }
+        Ok(body)
     }
 }
