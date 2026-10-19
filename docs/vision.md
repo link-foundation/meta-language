@@ -1838,6 +1838,21 @@ controls and the actual fourteen owned projection models exercise this layer.
 Native execution, source types, scalar representation and physical ownership
 remain independent checks.
 
+Complete source-type edge admission is also a shared translated algorithm. Its
+schema derives from all nine original declarations, thirteen source pins and
+every reachable type owner. Fixed fields, options, vectors, ordered map pairs,
+qualified variants and recursive JSON children keep their exact source-type
+identities and order. The captured ordinary profile retains its earlier Embed
+and non-null JSON refusals. A caller's numeric schema cannot authenticate itself;
+the JavaScript adapter first validates the complete owned model against the
+captured source plan. All sixteen lowered declarations remain in generated
+Rust, including seven actual iterative control functions. Independent shape
+cases, every original projection, nonfinite columns and deep bounded chains
+check this layer. Native execution, root and scalar admission, effective native
+JSON variants, static references, original DTO construction and physical CST
+ownership remain separate obligations. Edge admission supplies no completed
+native transport or public CST integration claim.
+
 Implicit module reference selection respects the complete frontend's checked
 owned array rewrites before forcing reference representation from method syntax.
 Explicit reference requests and imported reference signatures retain their
@@ -2910,10 +2925,12 @@ Package validation runs nine required logical check groups across ten parallel
 jobs: native imports, native fixtures, grammar, contracts, generated code and
 source models, complete original-link tables, binary candidates and raw graph
 preflight. The
-generated group has two physical slices. One retains the
-literal-edit rule, fixture and experiment triplet; the other retains every
-remaining generated check, including both compiler-feedback producers and their
-single upload. All checks execute exactly once in their original relative order;
+generated group has two physical slices. The first retains the literal-edit
+rule, fixture and experiment triplet, owned local container checks, strict public
+declaration consumers and the reviewed generated-stage migration refresh. The
+second retains every remaining generated check, including both compiler-feedback
+producers and their single upload. All checks execute exactly once in their
+original relative order;
 each runner keeps the same setup and ten-minute deadline. Distinct concurrency
 identities prevent sibling cancellation. All six earlier check-context names
 remain, and the additional generated slice has its own name. The

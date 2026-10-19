@@ -299,6 +299,12 @@ representation. A refused complete parse retains lexical admission. The complete
 owned outcome worklist exercises this path with zero carried items and exact
 source restoration; its native counterpart runs in CI.
 
+The complete source-type edge validator also exercises this path. All sixteen
+declarations translate together and restore the original JavaScript bytes.
+Seven native control declarations remain iterative. The shared schema retains
+every captured source owner, field and variant; structural edge admission stays
+separate from scalar semantics, actual native ownership and execution evidence.
+
 Whole-string `startsWith`, `endsWith` and `includes` predicates use shared
 generated decisions in both translators. Focused checks cover Unicode text,
 empty searches, missing matches, four-target emission parity and Rust method

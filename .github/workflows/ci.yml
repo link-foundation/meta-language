@@ -1927,8 +1927,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$JAVASCRIPT_RESULT" = failure ] || [ "$JAVASCRIPT_RESULT" = cancelled ] || [ "$REPORTS_RESULT" = failure ] || [ "$REPORTS_RESULT" = cancelled ]; then
-            failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
-              --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name' 2>/dev/null | paste -sd ',' - | sed 's/,/, /g')
+            if failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
+              --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name'); then
+              failed=$(printf '%s\n' "$failed" | paste -sd ',' - | sed 's/,/, /g')
+            else
+              printf '%s\n' 'GitHub failed-job metadata is unavailable; raw response follows:' "$failed" >&2
+              failed=''
+            fi
             echo "::error::${failed:-The JavaScript workflow and report assertions} finished as '${JAVASCRIPT_RESULT}/${REPORTS_RESULT}'; the acceptance stages run only after every JavaScript job passes, so none of them ran"
           else
             echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"

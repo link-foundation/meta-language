@@ -144,3 +144,19 @@ separate obligations.
 node experiments/grammar-outcome-network/native-transport/inverse/generate-preorder.mjs --check
 cd js && node --test tests/grammar-outcome-native-preorder.test.js
 ```
+
+The complete source-type edge algorithm translates all sixteen declarations.
+Its seven lifted loops check source identities, exact fixed fields, option
+presence, repeated children, ordered map pairs, variant ownership and recursive
+JSON children. The numeric schema derives from the complete captured source
+plan; it is never its own authority. The JavaScript adapter validates the whole
+owned model before extracting columns. Independent controls cover 33 shapes,
+all fourteen original projections, every nonfinite column and an 8,192-node
+chain. Matching Rust tests run only in CI. Root/scalar admission, native JSON
+number origins, static borrows, actual DTO construction and physical CST
+integration remain separate work.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-source-types.mjs --check
+cd js && node --test tests/grammar-outcome-native-source-types.test.js
+```
