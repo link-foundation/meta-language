@@ -181,7 +181,7 @@ fn default_parse_keeps_concrete_source_after_explicit_abstract_selection() {
     let abstract_links = network
         .projected_links(NetworkProjection::AbstractSyntax)
         .collect::<Vec<_>>();
-    assert!(!abstract_links.is_empty());
+    assert_ne!(abstract_links, [] as [&meta_language::Link; 0]);
     assert!(abstract_links.iter().all(|link| !matches!(
         link.metadata().link_type(),
         Some(LinkType::Token | LinkType::Trivia)
@@ -259,7 +259,7 @@ process.stdout.write(JSON.stringify({
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, [] as [u8; 0]);
     let observed: Value = serde_json::from_slice(&output.stdout)
         .expect("the complete actual process result is valid JSON");
     for entry in fixture()["cases"].as_array().unwrap() {
@@ -438,7 +438,7 @@ fn assert_projection_replay(
         .projected_links(NetworkProjection::AbstractSyntax)
         .map(meta_language::Link::id)
         .collect::<Vec<_>>();
-    assert!(!abstract_ids.is_empty());
+    assert_ne!(abstract_ids, [] as [meta_language::LinkId; 0]);
     assert_ne!(
         abstract_ids, concrete_ids,
         "abstract syntax requires a distinct explicit selection"
@@ -525,7 +525,7 @@ fn assert_projection_replay(
         assert_eq!(
             restored
                 .projected_links(NetworkProjection::ConcreteSyntax)
-                .map(|link| link.id())
+                .map(meta_language::Link::id)
                 .collect::<Vec<_>>(),
             concrete_ids,
             "AST selection cannot change the concrete view"

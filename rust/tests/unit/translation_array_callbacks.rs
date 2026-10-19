@@ -491,14 +491,16 @@ fn reference_flat_map_retains_nested_aliases_fresh_results_and_callback_order_th
             "\nfunction probe(){return run([4,5]);}"
         ),
     ];
-    let script = r"
+    let script = concat!(
+        r"
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {parseJavaScript} from './js/src/translation/javascript.js';
 import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
-function observe(source,nested){
+",
+        r"function observe(source,nested){
   const trace=[],context={console:{log:value=>trace.push(String(value))}};
   runInNewContext(source,context,{timeout:1000});
   const actual=context.probe();
@@ -517,7 +519,8 @@ process.stdout.write(JSON.stringify(sources.map((source,index)=>{
   return {surface,rust:{emitted:{...rust,preludes:rust.preludes,definitions:rust.definitions}},
     observed:[source,emitJavaScript(program).text].map(text=>observe(text,index===0))};
 })));
-";
+"
+    );
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let mut child = Command::new("node")
         .current_dir(root)

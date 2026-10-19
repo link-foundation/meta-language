@@ -321,7 +321,7 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
         records[0]["fixtureDigest"],
         modern_array_digest(FIXTURE.as_bytes())
     );
-    assert!(!records[0]["nodeVersion"].as_str().unwrap().is_empty());
+    assert_ne!(records[0]["nodeVersion"].as_str().unwrap(), "");
     assert_eq!(records[0]["admitted"], 6);
     assert_eq!(records[0]["refused"], 5);
     let rows = fixture["cases"].as_array().unwrap();

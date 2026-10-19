@@ -640,7 +640,7 @@ fn invalid_field_windows_and_full_views_refuse_before_child_execution_or_derived
         let rejection = outcome.rejection.unwrap();
         assert_eq!(rejection.reason, "invalidEmbeddingMapping");
         let diagnostics = rejection.diagnostics.unwrap();
-        assert!(!diagnostics.is_empty());
+        assert_ne!(diagnostics, [] as [serde_json::Value; 0]);
         assert!(
             diagnostics
                 .iter()

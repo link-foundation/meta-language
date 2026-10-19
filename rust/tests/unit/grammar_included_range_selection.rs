@@ -167,7 +167,10 @@ fn included_range_plans_preserve_kept_bytes_gaps_boundaries_and_original_inputs(
         (vec![0.0, 1.0], 4_294_967_296.0),
         (vec![0.0, f64::NAN], 5.0),
     ] {
-        assert!(read_grammar_selection_included_range_plan(&ranges, length).is_empty());
+        assert_eq!(
+            read_grammar_selection_included_range_plan(&ranges, length),
+            [] as [f64; 0]
+        );
     }
     assert!(!accept_grammar_selection_included_range_agreement(
         &[0.0, 4.0],
@@ -305,7 +308,10 @@ fn included_range_scalar_stream_preserves_the_original_multibyte_example() {
     );
     assert_eq!(result, [42, 195, 169, 10, 206, 178, 42]);
     assert_eq!(std::str::from_utf8(&result).unwrap(), "*é\nβ*");
-    assert!(read_grammar_selection_included_range_part(&plan, 0.0, 0.0, 1.0, 1.0).is_empty());
+    assert_eq!(
+        read_grammar_selection_included_range_part(&plan, 0.0, 0.0, 1.0, 1.0),
+        [] as [f64; 0]
+    );
 }
 
 #[test]
@@ -685,7 +691,7 @@ fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_
         let rejection = failure.rejection.unwrap();
         assert_eq!(rejection.reason, "invalidEmbeddingMapping");
         let diagnostics = rejection.diagnostics.unwrap();
-        assert!(!diagnostics.is_empty());
+        assert_ne!(diagnostics, [] as [serde_json::Value; 0]);
         assert_eq!(diagnostics[0]["reason"], "invalidEmbeddingMapping");
         assert!(
             diagnostics
@@ -712,7 +718,7 @@ fn included_range_profiles_refuse_invalid_or_mixed_plans_before_child_execution_
     let rejection = failure.rejection.unwrap();
     assert_eq!(rejection.reason, "unsupportedEmbeddingMapping");
     let diagnostics = rejection.diagnostics.unwrap();
-    assert!(!diagnostics.is_empty());
+    assert_ne!(diagnostics, [] as [serde_json::Value; 0]);
     assert_eq!(
         diagnostics[0]["detail"],
         "included range candidates require one common ordered range plan"
