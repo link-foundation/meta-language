@@ -5,6 +5,8 @@
 // uses them to build the fixtures the native tree-sitter CLI then parses, and the
 // suites use them to generate more inputs at run time. The PRNG and the property
 // checks are mirrored by rust/tests/unit/generative_support.rs.
+import { readProjectData, resolveProjectDataPath } from '../../scripts/project-data.mjs';
+
 import { LinkType } from '../../src/index.js';
 import { readFileSync } from 'node:fs';
 
@@ -12,7 +14,7 @@ import { parseCstLines } from './cst-lines.js';
 import { parseCorpus } from './cst-sexpression.js';
 
 const conformanceRoot = new URL('../../../parity/fixtures/issue-195-conformance/', import.meta.url);
-const readConformance = (path) => readFileSync(new URL(path, conformanceRoot), 'utf8');
+const readConformance = (path) => readFileSync(resolveProjectDataPath(new URL(path, conformanceRoot)), 'utf8');
 
 /** FNV-1a (32-bit) of a UTF-8 string: the numeric seed of a textual seed. */
 export function seedNumber(text) {
@@ -94,8 +96,8 @@ const MAX_SEED_BYTES = 600;
 
 /** Seed sources of one language: its small conformance inputs, in a stable order. */
 export function seedSources(language) {
-  const details = JSON.parse(readConformance('manifest.json')).languages[language];
-  const oracle = JSON.parse(readConformance(details.oracle));
+  const details = readProjectData(new URL('manifest.json', conformanceRoot)).languages[language];
+  const oracle = readProjectData(new URL(details.oracle, conformanceRoot));
   const sources = [];
   for (const file of Object.keys(details.corpus.files)) {
     const text = readConformance(`${details.corpus.directory}/${file}`);

@@ -1,13 +1,20 @@
 //! Expression checking: operators, arithmetic, applications and constructors.
 
-use super::arrays::array_text;
+use super::arrays::{array_text, immutable_product_value};
+use super::expectation::ExpectedType;
 use super::{
-    BOOL, BinaryOp, Checker, Ctor, Decimal, Decl, Entry, Env, Expr, FLOAT, Flavor, INT, Language,
-    LitValue, Node, Param, Result, Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT,
-    UnaryOp, arithmetic_semantics, binary_node, cast_to, coerce, comparison, data, fixed_bounds,
-    negate_number, op_name, plain_binary, text_lit, type_error, unsupported,
+    BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
+    Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
+    binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
+    text_lit, type_error, unsupported,
 };
-use crate::translation::frontend_rules::accept_argument_count;
+use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
+use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
+use crate::translation::surface::SurfaceBindingTypeAnnotation;
+use crate::translation::typed_program_link_rules::accept_program_tuple_product_model;
+
+mod branches;
+mod calls;
 
 impl Checker {
     pub(super) fn coerce(&self, value: Expr, ty: &Type, span: Option<Span>) -> Result<Expr> {
@@ -22,11 +29,105 @@ impl Checker {
         expected: Option<&Type>,
         allow_literal: bool,
     ) -> Result<Expr> {
-        let mut result = self.expr_inner(node, env, path, expected, allow_literal)?;
-        if node.span.is_some() && result.span.is_none() {
-            result.span = node.span;
+        self.expr_with_context(
+            node,
+            env,
+            path,
+            ExpectedType::Concrete(expected),
+            allow_literal,
+        )
+    }
+
+    pub(super) fn expr_with_callable_expectation(
+        &mut self,
+        node: &SExpr,
+        env: &Env,
+        path: &[String],
+        params: &[Type],
+        ret: Option<&Type>,
+    ) -> Result<Expr> {
+        if let Some(ret) = ret {
+            let expected = Type::Function {
+                params: params.to_vec(),
+                ret: Box::new(ret.clone()),
+            };
+            return self.expr(node, env, path, Some(&expected), false);
+        }
+        self.expr_with_context(
+            node,
+            env,
+            path,
+            ExpectedType::Callable { params, ret },
+            false,
+        )
+    }
+
+    pub(super) fn expr_with_context(
+        &mut self,
+        node: &SExpr,
+        env: &Env,
+        path: &[String],
+        expected: ExpectedType<'_>,
+        allow_literal: bool,
+    ) -> Result<Expr> {
+        let expression = if let SNode::ReferencePayload { value, extra } = &node.node {
+            if !extra.is_empty()
+                || node.block
+                || node.tag_test.is_some()
+                || node.parenthesized.is_some()
+                || matches!(value.node, SNode::ReferencePayload { .. })
+            {
+                return Err(type_error(
+                    "a reference payload needs its closed owned expression",
+                    node.span,
+                ));
+            }
+            value.as_ref()
+        } else {
+            node
+        };
+        let payload = !crate::translation::surface_reference_analysis_rules::read_surface_reference_payload_operand(node.node.kind()).is_empty();
+        let mut result = self.expr_inner(expression, env, path, expected, allow_literal)?;
+        if payload {
+            let refusal = crate::translation::surface_reference_analysis_rules::read_surface_reference_payload_error(result.ty.kind(), result.ty.is_reference());
+            if !refusal.is_empty() {
+                return Err(type_error(refusal, node.span));
+            }
+        }
+        if crate::translation::surface_reference_analysis_rules::select_surface_reference_allocation(
+            self.reference_semantics && !payload,
+            result.ty.kind(),
+            result.ty.is_reference(),
+        ) {
+            let ty = result.ty.with_reference(true);
+            result = Expr::new(
+                Node::ReferenceAllocate {
+                    value: Box::new(result),
+                },
+                ty,
+            );
+        }
+        let span = node.span.or(if payload { expression.span } else { None });
+        if span.is_some() && result.span.is_none() {
+            result.span = span;
         }
         Ok(result)
+    }
+
+    pub(super) fn reference_value(value: Expr) -> Expr {
+        if crate::translation::surface_reference_analysis_rules::select_surface_reference_read(
+            value.ty.is_reference(),
+        ) {
+            let ty = value.ty.with_reference(false);
+            Expr::new(
+                Node::ReferenceRead {
+                    reference: Box::new(value),
+                },
+                ty,
+            )
+        } else {
+            value
+        }
     }
 
     #[allow(clippy::too_many_lines)]
@@ -35,97 +136,61 @@ impl Checker {
         node: &SExpr,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
+        context: ExpectedType<'_>,
         allow_literal: bool,
     ) -> Result<Expr> {
         let span = node.span;
+        let expected = context.concrete();
         match &node.node {
-            SNode::Num {
-                value,
-                ty,
-                negative,
-                unit,
-            } => {
-                // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
-                if ty.as_ref().is_some_and(Type::is_float) {
-                    let text = if *negative {
-                        negate_number(value)
-                    } else {
-                        value.clone()
-                    };
-                    return Ok(text_lit(FLOAT, text));
-                }
-                // The 1 of `x++` takes the type of `x`, which may be a Number.
-                if *unit && expected.is_some_and(Type::is_float) {
-                    return Ok(text_lit(FLOAT, value.clone()));
-                }
-                let ty = ty
-                    .clone()
-                    .or_else(|| expected.filter(|ty| ty.is_numeric()).cloned());
-                let Some(ty) = ty else {
-                    if allow_literal {
-                        return Ok(text_lit(Type::Literal, value.clone()));
-                    }
-                    return self.expr(node, env, path, Some(&self.default_number()), false);
-                };
-                if !ty.is_numeric() {
-                    return Err(type_error(
-                        format!("numeric literal where {} is expected", ty.key()),
-                        span,
-                    ));
-                }
-                let mut number = Decimal::parse(value)
-                    .ok_or_else(|| type_error(format!("invalid numeric literal {value}"), span))?;
-                if *negative {
-                    number = number.negate();
-                }
-                if ty.is_natural() && number.is_negative() {
-                    return Err(type_error("negative literal for a natural type", span));
-                }
-                if let Type::Fixed { bits, signed } = ty {
-                    let (min, max) = fixed_bounds(bits, signed);
-                    if number < Decimal::from_i128(min) || number > Decimal::from_u128(max) {
-                        return Err(type_error(
-                            format!("literal out of range for {}", ty.key()),
-                            span,
-                        ));
-                    }
-                }
-                Ok(text_lit(ty, number.to_string()))
+            SNode::ArrayBindingRest { .. } | SNode::ArrayBindingDefault { .. } => {
+                self.array_binding(node, env, path)
             }
-            SNode::Bool { value } => Ok(Expr::lit(BOOL, LitValue::Bool(*value))),
-            SNode::Str { value } => Ok(text_lit(STRING, value.clone())),
-            SNode::Unit => Ok(Expr::new(Node::Unit, UNIT)),
+            SNode::Num { .. }
+            | SNode::Bool { .. }
+            | SNode::Str { .. }
+            | SNode::Unit
+            | SNode::None { .. } => {
+                self.check_literal_expression(node, env, path, context, allow_literal)
+            }
+            SNode::NumberValue { arg } => {
+                let value = self.expr(arg, env, path, None, false)?;
+                let value = self.number_value(value, span)?;
+                self.coerce(value, &FLOAT, span)
+            }
+            SNode::Some { .. }
+            | SNode::FlattenOption { .. }
+            | SNode::Coalesce { .. }
+            | SNode::OptionalField { .. } => self.optional_expr(node, env, path, expected),
             SNode::Name { path: segments } => {
                 if let Some(name) = env.local(node) {
                     return Ok(Expr::var(name, env.vars[name].clone()));
                 }
-                let _ = segments;
+                if let Some(reference) = self.callable_reference(node, segments, path, context)? {
+                    return Ok(reference);
+                }
                 self.application(node, &[], env, path, expected, span)
             }
+            SNode::FunctionValue { .. }
+            | SNode::Lambda { .. }
+            | SNode::CellAllocate { .. }
+            | SNode::CellRead { .. }
+            | SNode::CellWrite { .. } => self.callable_expression(node, env, path, context),
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
-                if field == "length"
-                    && let Some(length) = self.length_field(object, span, env, path)?
-                {
-                    return Ok(length);
-                }
-                Err(unsupported(
-                    "field access",
-                    &format!("field {field} is only portable inside a constructor match"),
-                    span,
-                ))
+                self.record_source_field(object, field, env, path, span)
             }
+            SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, Some(&BOOL), false)?;
+                let arg = self.expr(arg, env, path, None, false)?;
+                let arg = self.boolean_value(arg, span)?;
                 Ok(Expr::new(
                     Node::Unary {
                         op: UnaryOp::Not,
-                        arg: Box::new(self.coerce(arg, &BOOL, span)?),
+                        arg: Box::new(arg),
                         semantics: None,
                     },
                     BOOL,
@@ -142,6 +207,16 @@ impl Checker {
                     ..
                 } = &arg.node
                 {
+                    if !accept_rust_numeric_literal_negation(
+                        self.language.as_str(),
+                        ty.as_ref().map_or("", Type::kind),
+                        matches!(ty, Some(Type::Fixed { signed: true, .. })),
+                    ) {
+                        let name = ty
+                            .as_ref()
+                            .map_or_else(|| "untyped literal".to_owned(), Type::key);
+                        return Err(type_error(format!("negation of {name}"), span));
+                    }
                     let flipped = SExpr {
                         node: SNode::Num {
                             value: value.clone(),
@@ -150,13 +225,26 @@ impl Checker {
                             unit: false,
                         },
                         span,
+                        parenthesized: arg.parenthesized.clone(),
                         block: arg.block,
                         tag_test: None,
                     };
-                    return self.expr(&flipped, env, path, expected, allow_literal);
+                    let literal = self.expr(&flipped, env, path, expected, allow_literal)?;
+                    if !accept_rust_numeric_literal_negation(
+                        self.language.as_str(),
+                        literal.ty.kind(),
+                        matches!(literal.ty, Type::Fixed { signed: true, .. }),
+                    ) {
+                        return Err(type_error(
+                            format!("negation of {}", literal.ty.key()),
+                            span,
+                        ));
+                    }
+                    return Ok(literal);
                 }
                 let numeric = expected.filter(|ty| ty.is_numeric());
                 let arg = self.expr(arg, env, path, numeric, false)?;
+                let arg = self.number_value(arg, span)?;
                 if arg.ty.is_float() {
                     return Ok(Expr::new(
                         Node::Unary {
@@ -212,78 +300,56 @@ impl Checker {
                 expected,
                 allow_literal,
             ),
-            SNode::If {
-                cond,
-                then,
-                otherwise,
-            } => {
-                let checked = self.expr(cond, env, path, Some(&BOOL), false)?;
-                let cond = self.coerce(checked, &BOOL, span)?;
-                let mut then_expr = self.expr(then, env, path, expected, allow_literal)?;
-                let else_expected = if then_expr.ty.is_literal() {
-                    expected.cloned()
-                } else {
-                    Some(then_expr.ty.clone())
-                };
-                let mut else_expr =
-                    self.expr(otherwise, env, path, else_expected.as_ref(), allow_literal)?;
-                if then_expr.ty.is_literal() && !else_expr.ty.is_literal() {
-                    then_expr = self.expr(then, env, path, Some(&else_expr.ty), false)?;
-                }
-                if then_expr.ty.is_literal() {
-                    then_expr = self.expr(then, env, path, Some(&self.default_number()), false)?;
-                    else_expr = self.expr(otherwise, env, path, Some(&then_expr.ty), false)?;
-                }
-                let (then_expr, else_expr) =
-                    self.unify_branches(then_expr, else_expr, expected, span)?;
-                let ty = then_expr.ty.clone();
-                Ok(Expr::new(
-                    Node::If {
-                        cond: Box::new(cond),
-                        then: Box::new(then_expr),
-                        otherwise: Box::new(else_expr),
-                    },
-                    ty,
-                ))
+            SNode::If { .. } => {
+                self.check_conditional_expression(node, env, path, context, allow_literal)
             }
-            SNode::Let {
-                name,
-                ty,
-                value,
-                body,
-            } => {
-                let declared = match ty {
-                    Some(ty) => Some(self.resolve_type(Some(ty), path, span)?),
-                    None => None,
-                };
-                let mut value = self.expr(value, env, path, declared.as_ref(), false)?;
-                if let Some(declared) = &declared {
-                    value = self.coerce(value, declared, span)?;
-                }
-                let mut inner = env.clone();
-                inner.bind_local(name, value.ty.clone());
-                let body = self.expr(body, &inner, path, expected, allow_literal)?;
-                let ty = body.ty.clone();
-                Ok(Expr::new(
-                    Node::Let {
-                        name: name.clone(),
-                        value: Box::new(value),
-                        body: Box::new(body),
-                    },
-                    ty,
-                ))
+            SNode::Let { .. } => {
+                self.check_binding_expression(node, env, path, context, allow_literal)
             }
             SNode::Match { scrutinees, rows } => {
                 let compiled = self.compile_match(scrutinees, rows, span, env, path)?;
-                self.expr(&compiled, env, path, expected, allow_literal)
+                self.expr_with_context(&compiled, env, path, context, allow_literal)
             }
             SNode::Match1 { scrutinee, cases } => {
-                self.match_cases(scrutinee, cases, span, env, path, expected)
+                self.match_cases(scrutinee, cases, span, env, path, context)
             }
+            SNode::StringMap { .. } => self.string_map(node, env, path),
+            SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
+            SNode::Method { object, op, args } => {
+                let form =
+                    crate::translation::array_callback_rules::read_array_callback_result_form(op);
+                if form.is_empty() || form == "mapped array" {
+                    self.primitive_method(object, op, args, env, path, span)
+                } else {
+                    self.array_callback_method(node, env, path, context, &form)
+                }
+            }
+            SNode::StringTest { .. } => self.string_test(node, env, path),
             SNode::ToString { arg } => {
                 let arg = self.expr(arg, env, path, None, false)?;
+                let refusal =
+                    crate::translation::primitive_value_rules::read_number_display_refusal(
+                        self.language.as_str(),
+                        arg.ty.kind(),
+                    );
+                if !refusal.is_empty() {
+                    return Err(unsupported("Rust Float display", &refusal, span));
+                }
                 if arg.ty == Type::String {
                     return Ok(arg);
+                }
+                if let Type::Option { element, .. } = &arg.ty
+                    && crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                        element.kind(),
+                    )
+                {
+                    return Ok(Expr::new(
+                        Node::OptionalText {
+                            arg: Box::new(arg),
+                            console: false,
+                        },
+                        STRING,
+                    ));
                 }
                 if arg.ty.element().is_some() {
                     return Err(array_text(span));
@@ -321,12 +387,32 @@ impl Checker {
                     expected.clone(),
                 ))
             }
-            SNode::CtorObject { tag, fields } => {
-                self.ctor_object(tag, fields, span, env, path, expected)
+            SNode::CtorObject {
+                tag,
+                fields,
+                frozen,
+                prototype_definition,
+            } => {
+                if let Some(definition) = prototype_definition {
+                    return Err(unsupported(
+                        "object prototype definition",
+                        "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                        Some(definition.span),
+                    ));
+                }
+                let mut value = self.ctor_object(tag, fields, span, env, path, expected)?;
+                if let Node::Ctor {
+                    frozen: checked_frozen,
+                    ..
+                } = &mut value.node
+                {
+                    *checked_frozen = *frozen;
+                }
+                Ok(value)
             }
             SNode::Print { expr, style, body } => {
                 let text = self.show(expr, env, path, *style)?;
-                let body = self.expr(body, env, path, expected, allow_literal)?;
+                let body = self.expr_with_context(body, env, path, context, allow_literal)?;
                 let ty = body.ty.clone();
                 Ok(Expr::new(
                     Node::Print {
@@ -338,9 +424,95 @@ impl Checker {
             }
             SNode::Length { object, integer } => self.length(object, *integer, span, env, path),
             SNode::Array { items, element } => {
-                self.array_literal(items, element.as_ref(), span, env, path, expected)
+                let context = match expected {
+                    Some(ty @ Type::Option { element, .. })
+                        if accept_java_script_optional_tuple_context(
+                            self.language.as_str(),
+                            node.node.kind(),
+                            ty.kind(),
+                            element.kind(),
+                        ) =>
+                    {
+                        Some(element.as_ref())
+                    }
+                    _ => expected,
+                };
+                self.array_literal(items, element.as_ref(), span, env, path, context)
             }
-            SNode::Index { object, index } => self.index(object, index, span, env, path),
+            SNode::Record {
+                entries,
+                record_projection,
+                prototype_definition,
+                ..
+            } => {
+                if let Some(definition) = prototype_definition {
+                    return Err(unsupported(
+                        "object prototype definition",
+                        "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                        Some(definition.span),
+                    ));
+                }
+                self.record_literal(
+                    entries,
+                    record_projection.as_ref(),
+                    env,
+                    path,
+                    expected,
+                    span,
+                )
+            }
+            SNode::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => {
+                if product_model
+                    .as_ref()
+                    .is_some_and(|model| !accept_program_tuple_product_model(model, *frozen))
+                {
+                    return Err(type_error(
+                        "unknown or contradictory tuple product model",
+                        span,
+                    ));
+                }
+                let mut value = self.tuple_literal(items, *frozen, span, env, path, expected)?;
+                if let Node::Tuple {
+                    product_model: checked_model,
+                    ..
+                } = &mut value.node
+                {
+                    checked_model.clone_from(product_model);
+                }
+                Ok(value)
+            }
+            SNode::TupleIndex { object, index } => {
+                self.tuple_index(object, *index, span, env, path)
+            }
+            SNode::Index { .. } => self.index(node, env, path, expected),
+            SNode::ForOfIterable { object, .. } => self.for_of_iterable(object, span, env, path),
+            SNode::ArrayFrom { args, .. } => self.array_from(args, env, path, expected, span),
+            SNode::Set { .. } | SNode::Map { .. } => {
+                self.collection_construction(node, env, path, expected)
+            }
+            SNode::StringPoints { object } => {
+                let value = self.expr(object, env, path, Some(&STRING), false)?;
+                let object = self.coerce(value, &STRING, span)?;
+                Ok(Expr::new(
+                    Node::StringPoints {
+                        object: Box::new(object),
+                    },
+                    crate::translation::types::array(STRING),
+                ))
+            }
+            SNode::ReferenceWrite { .. } => Err(unsupported(
+                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
+                    "feature",
+                ),
+                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
+                    "reason",
+                ),
+                span,
+            )),
             SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
@@ -363,16 +535,44 @@ impl Checker {
         allow_literal: bool,
     ) -> Result<Expr> {
         match op {
-            BinaryOp::And | BinaryOp::Or | BinaryOp::Concat => {
-                let ty = if op == BinaryOp::Concat { STRING } else { BOOL };
-                let checked = self.expr(left, env, path, Some(&ty), false)?;
-                let left = self.coerce(checked, &ty, span)?;
-                let checked = self.expr(right, env, path, Some(&ty), false)?;
-                let right = self.coerce(checked, &ty, span)?;
-                Ok(plain_binary(op, left, right, ty))
+            BinaryOp::And | BinaryOp::Or => {
+                let left = self.expr(left, env, path, None, false)?;
+                let right = self.expr(right, env, path, None, false)?;
+                self.logical_values(op, left, right, span)
+            }
+            BinaryOp::Concat => {
+                let left = self.expr(left, env, path, Some(&STRING), false)?;
+                let left = self.coerce(left, &STRING, span)?;
+                let right = self.expr(right, env, path, Some(&STRING), false)?;
+                let right = self.coerce(right, &STRING, span)?;
+                Ok(plain_binary(op, left, right, STRING))
             }
             _ if comparison(op) => {
+                if self.language == Language::JavaScript {
+                    let mut checked_left = self.expr(left, env, path, None, true)?;
+                    let mut checked_right = self.expr(right, env, path, None, true)?;
+                    if checked_left.ty.is_literal() {
+                        checked_left =
+                            self.expr(left, env, path, Some(&self.default_number()), false)?;
+                    }
+                    if checked_right.ty.is_literal() {
+                        checked_right =
+                            self.expr(right, env, path, Some(&self.default_number()), false)?;
+                    }
+                    if let Some(value) =
+                        self.optional_comparison(op, checked_left, checked_right, span)?
+                    {
+                        return Ok(value);
+                    }
+                }
                 let (left, right) = self.operands(left, right, env, path, span)?;
+                if matches!(left.ty, Type::Tuple { .. }) {
+                    return Err(unsupported(
+                        "comparison of tuples",
+                        "tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements",
+                        span,
+                    ));
+                }
                 if matches!(left.ty, Type::Data { .. } | Type::Unit) {
                     return Err(unsupported(
                         "structural equality of data values",
@@ -486,6 +686,24 @@ impl Checker {
                 surface.span,
             ));
         }
+        if let Type::Option { element, .. } = &checked.ty {
+            if !crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                element.kind(),
+            ) {
+                return Err(unsupported(
+                    "string conversion of nullable structured values",
+                    "this conversion needs its source structured-value formatter",
+                    surface.span,
+                ));
+            }
+            return Ok(Expr::new(
+                Node::OptionalText {
+                    arg: Box::new(checked),
+                    console: false,
+                },
+                STRING,
+            ));
+        }
         if checked.ty.element().is_some() {
             return Err(array_text(surface.span));
         }
@@ -563,6 +781,10 @@ impl Checker {
         if left.ty.is_literal() {
             left = self.expr(left_surface, env, path, Some(&right.ty), false)?;
         }
+        if self.language == Language::JavaScript {
+            left = self.number_value(left, span)?;
+            right = self.number_value(right, span)?;
+        }
         if self.language == Language::JavaScript && (left.ty == Type::Nat || right.ty == Type::Nat)
         {
             // BigInt arithmetic is integer arithmetic even on guarded naturals: `n - 1n` is -1n for n = 0n.
@@ -591,376 +813,5 @@ impl Checker {
             ),
             ty,
         ))
-    }
-
-    pub(super) fn application(
-        &mut self,
-        head: &SExpr,
-        args: &[SExpr],
-        env: &Env,
-        path: &[String],
-        expected: Option<&Type>,
-        span: Option<Span>,
-    ) -> Result<Expr> {
-        let segments = match &head.node {
-            SNode::DotCtor { name } => {
-                let Some(Type::Data { name: data_name }) = expected else {
-                    return Err(type_error(
-                        format!("cannot infer the type of .{name}"),
-                        span,
-                    ));
-                };
-                let decl = self.data_decl(data_name)?;
-                let full_name = decl.full_name.clone();
-                let Some(ctor) = decl.ctors.iter().find(|ctor| ctor.name == *name).cloned() else {
-                    return Err(type_error(
-                        format!("{data_name} has no constructor {name}"),
-                        span,
-                    ));
-                };
-                return self.construct(&full_name, &ctor, args, env, path, span);
-            }
-            SNode::Name { path } => path,
-            _ => {
-                return Err(unsupported(
-                    "higher-order application",
-                    "only named functions and constructors can be applied",
-                    span,
-                ));
-            }
-        };
-        if let Some(name) = env.local(head) {
-            return Err(unsupported(
-                "higher-order application",
-                &format!("local {name} is not a function in the portable core"),
-                span,
-            ));
-        }
-        let Some(entry) = self.lookup(segments, path, span)? else {
-            return Err(type_error(
-                format!("unknown name {}", segments.join(".")),
-                span,
-            ));
-        };
-        let decl_name = match entry {
-            Entry::Ctor { data, name } => {
-                let decl = self.data_decl(&data)?;
-                let Some(ctor) = decl.ctors.iter().find(|ctor| ctor.name == name).cloned() else {
-                    return Err(type_error(
-                        format!("{data} has no constructor {name}"),
-                        span,
-                    ));
-                };
-                return self.construct(&data, &ctor, args, env, path, span);
-            }
-            Entry::External(name) => {
-                return self.external_application(&name, segments, args, env, path, span);
-            }
-            Entry::Decl(name) => name,
-        };
-        let Some(Decl::Fn(entry)) = self.decls.get(&decl_name) else {
-            return Err(type_error(
-                format!("{} is not a function", segments.join(".")),
-                span,
-            ));
-        };
-        if !self.signatures.contains(&decl_name) {
-            return Err(type_error(
-                format!("{} is used before its signature is known", entry.full_name),
-                span,
-            ));
-        }
-        let (full_name, params, ret, module_path) = (
-            entry.full_name.clone(),
-            entry.params.clone(),
-            entry.ret.clone(),
-            entry.module_path.clone(),
-        );
-        self.checked_call(full_name, &params, ret, &module_path, args, env, path, span)
-    }
-
-    /// A call of the function `full_name` with its checked arguments: an
-    /// omitted argument takes its parameter's default, checked in `module_path`.
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn checked_call(
-        &mut self,
-        full_name: String,
-        params: &[Param],
-        ret: Type,
-        module_path: &[String],
-        args: &[SExpr],
-        env: &Env,
-        path: &[String],
-        span: Option<Span>,
-    ) -> Result<Expr> {
-        let mut arguments: Vec<(&SExpr, bool)> = args.iter().map(|arg| (arg, false)).collect();
-        #[allow(clippy::cast_precision_loss)]
-        let argument_count = args.len() as f64;
-        if args.len() < params.len()
-            && accept_argument_count(
-                params
-                    .iter()
-                    .map(|param| param.default_value.is_some())
-                    .collect(),
-                argument_count,
-            )
-        {
-            arguments.extend(params[args.len()..].iter().map(|param| {
-                (
-                    param
-                        .default_value
-                        .as_ref()
-                        .expect("omitted parameter has a default"),
-                    true,
-                )
-            }));
-        }
-        if arguments.len() != params.len() {
-            if args.len() < params.len() {
-                return Err(unsupported(
-                    "partial application",
-                    &format!("{full_name} expects {} arguments", params.len()),
-                    span,
-                ));
-            }
-            return Err(type_error(
-                format!(
-                    "{full_name} expects {} arguments but got {}",
-                    params.len(),
-                    args.len()
-                ),
-                span,
-            ));
-        }
-        let mut checked = Vec::new();
-        let closed_env = Env::default();
-        for ((arg, closed_default), param) in arguments.iter().zip(params) {
-            // A guarded argument is an integer the guard checks, wherever in it a negative value arises.
-            let expected = if param.guard.is_some() && !matches!(arg.node, SNode::Num { .. }) {
-                &INT
-            } else {
-                &param.ty
-            };
-            let value = self.expr(
-                arg,
-                if *closed_default { &closed_env } else { env },
-                if *closed_default { module_path } else { path },
-                Some(expected),
-                false,
-            )?;
-            let flavor = param.guard.is_some().then_some(Flavor::Checked);
-            let mut value = coerce(value, &param.ty, self.language, arg.span.or(span), flavor)?;
-            if let (
-                Node::Cast {
-                    flavor: Flavor::Checked,
-                    message,
-                    order,
-                    ..
-                },
-                Some(guard),
-            ) = (&mut value.node, &param.guard)
-            {
-                *message = Some(guard.message.clone());
-                *order = Some(guard.order);
-            }
-            checked.push(value);
-        }
-        Ok(self.guard_order(full_name, checked, ret))
-    }
-
-    /// A JavaScript call evaluates every argument, then the callee's guards run
-    /// in their order. Checking each argument where it is passed is the same
-    /// unless a later argument could print or abort, or the guards run in
-    /// another order; then the arguments are bound first and checked after.
-    fn guard_order(&mut self, func: String, args: Vec<Expr>, ret: Type) -> Expr {
-        let guarded: Vec<(usize, usize)> = args
-            .iter()
-            .enumerate()
-            .filter_map(|(index, arg)| guard_of(arg).map(|(order, _)| (index, order)))
-            .collect();
-        let Some(&(first, _)) = guarded.first() else {
-            return Expr::new(Node::Call { func, args }, ret);
-        };
-        let in_order = guarded.windows(2).all(|pair| pair[0].1 < pair[1].1);
-        let later = args[first + 1..]
-            .iter()
-            .all(|arg| simple(guard_of(arg).map_or(arg, |(_, inner)| inner)));
-        if in_order && later {
-            return Expr::new(Node::Call { func, args }, ret);
-        }
-        let bound: Vec<(String, Expr)> = args
-            .iter()
-            .map(|arg| {
-                let value = guard_of(arg).map_or(arg, |(_, inner)| inner).clone();
-                (self.fresh_name("ml_a"), value)
-            })
-            .collect();
-        let mut sorted = guarded;
-        sorted.sort_by_key(|&(_, order)| order);
-        let checks: Vec<(usize, String, Expr)> = sorted
-            .into_iter()
-            .map(|(index, _)| {
-                let mut value = args[index].clone();
-                if let Node::Cast { arg, .. } = &mut value.node {
-                    let ty = arg.ty.clone();
-                    **arg = Expr::var(bound[index].0.clone(), ty);
-                }
-                (index, self.fresh_name("ml_a"), value)
-            })
-            .collect();
-        let call_args = args
-            .iter()
-            .enumerate()
-            .map(|(index, arg)| {
-                let name = checks
-                    .iter()
-                    .find(|(candidate, ..)| *candidate == index)
-                    .map_or(&bound[index].0, |(_, name, _)| name);
-                Expr::var(name.clone(), arg.ty.clone())
-            })
-            .collect();
-        let call = Expr::new(
-            Node::Call {
-                func,
-                args: call_args,
-            },
-            ret,
-        );
-        let bindings = bound
-            .into_iter()
-            .chain(checks.into_iter().map(|(_, name, value)| (name, value)));
-        bindings.rev().fold(call, |body, (name, value)| {
-            let ty = body.ty.clone();
-            Expr::new(
-                Node::Let {
-                    name,
-                    value: Box::new(value),
-                    body: Box::new(body),
-                },
-                ty,
-            )
-        })
-    }
-
-    pub(super) fn construct(
-        &mut self,
-        data_name: &str,
-        ctor: &Ctor,
-        args: &[SExpr],
-        env: &Env,
-        path: &[String],
-        span: Option<Span>,
-    ) -> Result<Expr> {
-        if args.len() != ctor.fields.len() {
-            return Err(type_error(
-                format!(
-                    "{data_name}.{} expects {} fields but got {}",
-                    ctor.name,
-                    ctor.fields.len(),
-                    args.len()
-                ),
-                span,
-            ));
-        }
-        let mut checked = Vec::new();
-        for (arg, field) in args.iter().zip(&ctor.fields) {
-            let value = self.expr(arg, env, path, Some(&field.ty), false)?;
-            checked.push(self.coerce(value, &field.ty, arg.span.or(span))?);
-        }
-        Ok(Expr::new(
-            Node::Ctor {
-                data: data_name.to_owned(),
-                ctor: ctor.name.clone(),
-                args: checked,
-            },
-            data(data_name),
-        ))
-    }
-
-    pub(super) fn ctor_object(
-        &mut self,
-        tag: &str,
-        fields: &[(String, SExpr)],
-        span: Option<Span>,
-        env: &Env,
-        path: &[String],
-        expected: Option<&Type>,
-    ) -> Result<Expr> {
-        let mut candidates = Vec::new();
-        for name in &self.order {
-            let Some(Decl::Data(entry)) = self.decls.get(name) else {
-                continue;
-            };
-            if let Some(Type::Data { name: expected }) = expected
-                && entry.full_name != *expected
-            {
-                continue;
-            }
-            if let Some(ctor) = entry.ctors.iter().find(|ctor| ctor.name == tag) {
-                candidates.push((entry.full_name.clone(), ctor.clone()));
-            }
-        }
-        if candidates.len() != 1 {
-            return Err(type_error(
-                if candidates.is_empty() {
-                    format!("no data type has tag {tag}")
-                } else {
-                    format!("tag {tag} is ambiguous")
-                },
-                span,
-            ));
-        }
-        let (data_name, ctor) = candidates.remove(0);
-        let expected_names: Vec<&str> = ctor
-            .fields
-            .iter()
-            .map(|field| field.name.as_str())
-            .collect();
-        if fields.len() != expected_names.len()
-            || fields
-                .iter()
-                .any(|(name, _)| !expected_names.contains(&name.as_str()))
-        {
-            return Err(type_error(
-                format!("{tag} expects fields {}", expected_names.join(", ")),
-                span,
-            ));
-        }
-        let args: Vec<SExpr> = expected_names
-            .iter()
-            .filter_map(|name| {
-                fields
-                    .iter()
-                    .rev()
-                    .find(|(field, _)| field == name)
-                    .map(|(_, value)| value.clone())
-            })
-            .collect();
-        self.construct(&data_name, &ctor, &args, env, path, span)
-    }
-}
-
-/// The order of the guard a checked argument is, and the argument it checks.
-fn guard_of(arg: &Expr) -> Option<(usize, &Expr)> {
-    match &arg.node {
-        Node::Cast {
-            arg: inner,
-            order: Some(order),
-            ..
-        } => Some((*order, inner)),
-        _ => None,
-    }
-}
-
-/// A value whose evaluation neither prints nor aborts.
-fn simple(e: &Expr) -> bool {
-    match &e.node {
-        Node::Var { .. } | Node::Lit { .. } => true,
-        Node::Cast {
-            flavor: Flavor::Exact,
-            arg,
-            ..
-        } => simple(arg),
-        _ => false,
     }
 }

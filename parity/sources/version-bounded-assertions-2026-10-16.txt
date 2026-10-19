@@ -1,0 +1,1 @@
+If assertions depend on language or dependency version, they should be bounded by a range of versions, depending on what is active at the moment.

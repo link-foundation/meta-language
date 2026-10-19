@@ -26,6 +26,8 @@
 // share is no evidence at all: those rules are compared by their exact text.
 import { compareText, normalize, q } from './grammar-merge-normalize.js';
 import { mapReferences } from './grammar-rename.js';
+import { renderRuleFieldLinks } from './grammar-links.js';
+import { acceptRuleCorrespondence } from './grammar-merge-decisions.js';
 
 /** How a reconciled class of corresponding rules is justified. */
 export const GRAMMAR_RECONCILE_METHOD = 'structural-correspondence-up-to-lexical-roles';
@@ -79,7 +81,8 @@ export function reconcileClasses(nodes, index, strict, sourceLabel, trace = null
     for (const [id, positions] of members) {
       const bySource = strictClassesBySource(nodes, strict, positions);
       if (bySource.size < 2) continue;
-      if ([...bySource.values()].every((set) => set.size === 1)) reconciled.add(id);
+      const concepts = new Set(positions.map((position) => nodes[position].rule.concept).filter((concept) => concept !== undefined));
+      if (acceptRuleCorrespondence(bySource.size > 1, [...bySource.values()].every((set) => set.size === 1), concepts.size <= 1)) reconciled.add(id);
       else {
         for (const position of positions) fixed[position] = true;
         rejected = true;
@@ -110,7 +113,7 @@ function refineUpToRoles(nodes, index, strict, sourceLabel, tokens, roles, fixed
     const current = classes;
     const signatures = nodes.map((node, position) => {
       const prefix = count === 0 ? (fixed[position] ? `!${strict[position]}` : '') : String(current[position]);
-      if (tokens[position]) return `${prefix}|lex|${roles[position]}`;
+      if (tokens[position]) return `${prefix}|lex|${roles[position]}|${ruleFields(node.rule, (name) => name)}`;
       const label = sourceLabel(node.source, (name) => {
         const target = index.get(`${node.source.id}:${name}`);
         if (!tokens[target]) return `#${current[target]}`;
@@ -155,8 +158,9 @@ function reconcileByName(nodes, strict, tokens, keys, bases) {
   const byName = new Map();
   for (const [position, node] of nodes.entries()) {
     if (!keys[position].startsWith('s') || shared.has(strict[position])) continue;
-    const name = comparedName(node.name, node.source.language);
-    if (name.length === 0) continue;
+    const compared = comparedName(node.name, node.source.language);
+    if (compared.length === 0) continue;
+    const name = `${compared}\u0000${ruleFields(node.rule, (reference) => reference)}`;
     if (!byName.has(name)) byName.set(name, []);
     byName.get(name).push(position);
   }
@@ -168,6 +172,7 @@ function reconcileByName(nodes, strict, tokens, keys, bases) {
     const ids = [...new Set(positions.map((position) => strict[position]))];
     if (ids.some((id) => used.has(id))) continue;
     if (new Set(positions.map((position) => tokens[position])).size !== 1) continue;
+    if (new Set(positions.map((position) => nodes[position].rule.concept).filter((concept) => concept !== undefined)).size > 1) continue;
     const key = `n${strict[positions[0]]}`;
     for (const id of ids) used.add(id);
     for (const [position, current] of keys.entries()) if (ids.includes(strict[position]) && current.startsWith('s')) keys[position] = key;
@@ -503,8 +508,12 @@ function inRange(probe, start, end) {
 // The comparison text of a parser rule: its language-preserving form with
 // references printed by `label`, and its parameters.
 function comparisonText(rule, label) {
-  const parameters = rule.parameters?.length > 0 ? ` (${rule.parameters.join(' ')})` : '';
-  return `${normalize(parserForm(rule.expression, true), label).text}${parameters}`;
+  return `${normalize(parserForm(rule.expression, true), label).text}${ruleFields(rule, label)}`;
+}
+
+function ruleFields(rule, label) {
+  const action = rule.action === undefined ? undefined : mapReferences(rule.action, label);
+  return renderRuleFieldLinks({ ...rule, action }).join(' ');
 }
 
 // A parser expression without wrappers, captures, a closing end-of-input

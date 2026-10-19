@@ -9,41 +9,20 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use super::executor::{Element, Executor, Run};
-use super::forking::target_name;
 use super::operations::{
     Abort, Machine, OpError, OpResult, OperationValue, State, Working, run_statements,
 };
-use super::program::{Expr, Name, PrecedenceTag, Rule, Target};
+use super::program::{Expr, InExtra, Name, PrecedenceTag, Rule, Target};
 use super::results::{
-    Children, Entry, Outcome, Res, ResultSet, Scanned, Tree, TreeType, children_of, complete_order,
-    concat, content_start, longest_result, no_children, reduced_alone, same_children, with_leaf,
+    Children, Entry, Outcome, Res, ResultSet, Scanned, Skipped, Tree, TreeType, children_of,
+    complete_order, concat, content_start, longest_result, no_children, reduced_alone,
+    same_children, with_leaf,
 };
 use super::text::{column_of, decode_at};
 use super::walk::first_meaningful;
 use crate::grammar::RuleKind;
 
 impl Executor<'_> {
-    /// Records that the parse requests `item`, a literal or a rule a
-    /// scanner's `expected` may ask about, at `position` (see
-    /// `Expectations`).
-    pub(super) fn request_item(&self, item: &Expr, position: usize) {
-        let program = self.program;
-        let id = match item {
-            Expr::Ref(target) => program
-                .expected_references
-                .get(&**target_name(target, &program.rules))
-                .copied(),
-            Expr::Terminal { expected, .. } => *expected,
-            _ => None,
-        };
-        if let Some(id) = id {
-            self.shared
-                .expectations
-                .borrow_mut()
-                .request(position, (self.program_index, id));
-        }
-    }
-
     /// A rule call or an external token, memoized with left-recursion growth.
     pub(super) fn reference(
         &mut self,
@@ -52,7 +31,39 @@ impl Executor<'_> {
         state: &State,
         in_token: bool,
     ) -> Run<Vec<Res>> {
+        let nested_syntax =
+            match target {
+                Target::Rule(index) => {
+                    !in_token
+                        && self.in_extra == InExtra::Flat
+                        && matches!(self.program.rules[*index].kind, RuleKind::Normal)
+                        && !self.program.trivia.iter().any(|item| {
+                            item.kind.as_ref() == Some(&self.program.rules[*index].name)
+                        })
+                }
+                Target::External(_) => false,
+            };
+        if !nested_syntax {
+            return self.reference_at(target, position, state, in_token);
+        }
+        let outer = self.in_extra;
+        self.in_extra = InExtra::Nesting;
+        let outcome = self.reference_at(target, position, state, in_token);
+        self.in_extra = outer;
+        outcome
+    }
+
+    fn reference_at(
+        &mut self,
+        target: &Target,
+        position: usize,
+        state: &State,
+        in_token: bool,
+    ) -> Run<Vec<Res>> {
         let program = self.program;
+        if let Some(results) = self.lexical_reference(target, position, state, in_token)? {
+            return Ok(results);
+        }
         if !in_token && !program.expected_references.is_empty() {
             let name = match target {
                 Target::External(name) => name,
@@ -66,7 +77,9 @@ impl Executor<'_> {
             }
         }
         let index = match target {
-            Target::External(name) => return self.scanner_token(name, position, state, in_token),
+            Target::External(name) => {
+                return self.scanner_token(name, position, state, in_token, false);
+            }
             Target::Rule(index) => *index,
         };
         let rule = &program.rules[index];
@@ -85,6 +98,9 @@ impl Executor<'_> {
             state.clone(),
             in_token,
             self.repair_mode(position),
+            self.in_extra,
+            self.extra_start,
+            self.lexer_family.clone(),
         );
         if let Some(known) = self.memo.get(&key).cloned() {
             if let Some(keywords) = self.keywords {
@@ -237,7 +253,7 @@ impl Executor<'_> {
             entry.borrow_mut().seed = seed;
             let mut merged = current.clone();
             let mut changed = false;
-            let mut renewed: Vec<(usize, State)> = Vec::new();
+            let mut renewed: Vec<(usize, State, Option<Name>)> = Vec::new();
             for result in self.rule_body(rule, position, state, in_token)? {
                 let key = result.key();
                 let existing = merged
@@ -338,7 +354,8 @@ impl Executor<'_> {
         let mut built = Vec::new();
         if matches!(rule.kind, RuleKind::Token | RuleKind::Atomic) {
             let skipped = self.terminal_start(position, state, in_token)?;
-            let skipped = self.own_extra(rule, skipped, state, in_token)?;
+            let skipped = self.own_extra(rule, skipped, in_token)?;
+            let state = &skipped.state;
             let start = skipped.end;
             let mut results =
                 self.quietly(|this| this.evaluate(&rule.expression, start, state, true))?;
@@ -525,36 +542,33 @@ impl Executor<'_> {
 
     // An external scanner run for one requested token: a cursor over the
     // input, a token start that `skip` moves, and an optional end `mark`.
-    fn scanner_token(
+    pub(super) fn scanner_token(
         &mut self,
         name: &Name,
         position: usize,
         state: &State,
         in_token: bool,
+        raw_start: bool,
     ) -> Run<Vec<Res>> {
-        let skipped = self.terminal_start(position, state, in_token)?;
+        let skipped = if raw_start {
+            Rc::new(Skipped {
+                end: position,
+                leaves: no_children(),
+                state: state.clone(),
+                states: vec![state.clone()],
+            })
+        } else {
+            self.terminal_start(position, state, in_token)?
+        };
         let start = skipped.end;
-        let program = self.program;
-        let consults = program.scanners[program.external[&**name]].consults;
+        let state = &skipped.state;
         // Where the scanner answers `expected` for (see `Expectations`).
-        let context = if in_token {
+        let context = if in_token || raw_start {
             self.scan_context.unwrap_or(start)
         } else {
             position
         };
-        let key = (
-            name.clone(),
-            start,
-            consults.then_some(context),
-            state.clone(),
-        );
-        let scanned = if let Some(scanned) = self.scanner_memo.get(&key) {
-            scanned.clone()
-        } else {
-            let scanned = self.run_scanner(name, start, context, state)?.map(Rc::new);
-            self.scanner_memo.insert(key, scanned.clone());
-            scanned
-        };
+        let scanned = self.run_scanner(name, start, context, state)?;
         let Some(scanned) = scanned else {
             self.fail(start, name);
             if in_token {
@@ -590,44 +604,58 @@ impl Executor<'_> {
         )])
     }
 
-    fn run_scanner(
+    pub(super) fn run_scanner(
         &mut self,
         name: &Name,
         start: usize,
         context: usize,
         state: &State,
-    ) -> Run<Option<Scanned>> {
+    ) -> Run<Option<Rc<Scanned>>> {
         let program = self.program;
         let scanner = &program.scanners[program.external[&**name]];
-        let mut machine = ScannerMachine {
-            executor: self,
-            requested: name.clone(),
-            context,
-            state,
-            working: state.working(),
-            cursor: start,
-            token_start: start,
-            mark: None,
-            skipped: Vec::new(),
-        };
-        let signal = match run_statements(&scanner.operations, &mut machine) {
-            Ok(signal) => signal,
-            Err(OpError::Failed) => return Ok(None),
-            Err(OpError::Abort(abort)) => return Err(abort),
-        };
-        if signal.as_deref() != Some(&**name) {
-            return Ok(None);
+        // Lexical priority and extra probes share the token scanner's memo:
+        // identical input, context and state must execute its operations once.
+        let key = (
+            name.clone(),
+            start,
+            scanner.consults.then_some(context),
+            state.clone(),
+        );
+        if let Some(cached_result) = self.scanner_memo.get(&key) {
+            return Ok(cached_result.clone());
         }
-        let end = machine.mark.unwrap_or(machine.cursor);
-        if end < machine.token_start {
-            return Ok(None);
-        }
-        Ok(Some(Scanned {
-            token_start: machine.token_start,
-            end,
-            skipped: machine.skipped,
-            state: machine.working.settle(),
-        }))
+        let outcome = (|| {
+            let mut machine = ScannerMachine {
+                executor: self,
+                requested: name.clone(),
+                context,
+                working: state.working(),
+                cursor: start,
+                token_start: start,
+                mark: None,
+                skipped: Vec::new(),
+            };
+            let signal = match run_statements(&scanner.operations, &mut machine) {
+                Ok(signal) => signal,
+                Err(OpError::Failed) => return Ok(None),
+                Err(OpError::Abort(abort)) => return Err(abort),
+            };
+            if signal.as_deref() != Some(&**name) {
+                return Ok(None);
+            }
+            let end = machine.mark.unwrap_or(machine.cursor);
+            if end < machine.token_start {
+                return Ok(None);
+            }
+            Ok(Some(Rc::new(Scanned {
+                token_start: machine.token_start,
+                end,
+                skipped: machine.skipped,
+                state: machine.working.settle(),
+            })))
+        })()?;
+        self.scanner_memo.insert(key, outcome.clone());
+        Ok(outcome)
     }
 
     /// Parses the whole range from `start_rule`: the tree, or the farthest
@@ -648,7 +676,13 @@ impl Executor<'_> {
         // The result that reaches farthest, with its cost before the rest.
         let mut partial: Option<(usize, usize, Res, Children)> = None;
         for result in results {
-            let trailing = self.skip_trivia(result.end, &result.state)?;
+            let previous = self.lexer_family.clone();
+            if let Some(family) = &result.lexical_family {
+                self.lexer_family = family.clone();
+            }
+            let trailing = self.skip_trivia(result.end, &result.state);
+            self.lexer_family = previous;
+            let trailing = trailing?;
             if trailing.end == self.end {
                 complete.push((result, trailing.leaves.clone(), None));
                 continue;
@@ -844,10 +878,7 @@ impl Machine for ActionMachine<'_, '_, '_> {
     }
 
     fn set_attribute(&mut self, name: &str, value: OperationValue) {
-        self.node
-            .attributes
-            .get_or_insert_with(Default::default)
-            .insert(name.to_owned(), value);
+        super::attributes::set_attribute(self.node, name, value);
     }
 
     fn build_node(&mut self, kind: &Arc<str>) {
@@ -856,12 +887,11 @@ impl Machine for ActionMachine<'_, '_, '_> {
 }
 
 /// The machine an external scanner runs on.
-struct ScannerMachine<'e, 'c, 's> {
+struct ScannerMachine<'e, 'c> {
     executor: &'e mut Executor<'c>,
     requested: Name,
     /// The offset the scanner answers `expected` for.
     context: usize,
-    state: &'s State,
     working: Working,
     cursor: usize,
     token_start: usize,
@@ -869,20 +899,20 @@ struct ScannerMachine<'e, 'c, 's> {
     skipped: Vec<Rc<Tree>>,
 }
 
-impl ScannerMachine<'_, '_, '_> {
+impl ScannerMachine<'_, '_> {
     // The end of the longest match of `item` at the cursor, in the state the
-    // scanner started in.
+    // preceding operations leave it in.
     fn match_at(&mut self, item: &Expr) -> OpResult<Option<usize>> {
         let cursor = self.cursor;
-        let state = self.state;
+        let state = self.working.clone().settle();
         let results = self
             .executor
-            .quietly(|this| this.evaluate(item, cursor, state, true))?;
+            .quietly(|this| this.evaluate(item, cursor, &state, true))?;
         Ok(longest_result(results).map(|result| result.end))
     }
 }
 
-impl Machine for ScannerMachine<'_, '_, '_> {
+impl Machine for ScannerMachine<'_, '_> {
     fn state(&mut self) -> &mut Working {
         &mut self.working
     }
@@ -906,6 +936,10 @@ impl Machine for ScannerMachine<'_, '_, '_> {
 
     fn column(&mut self) -> usize {
         column_of(self.executor.bytes, self.cursor, self.executor.begin)
+    }
+
+    fn matched(&mut self) -> OpResult<String> {
+        Ok(self.executor.text(self.token_start, self.cursor))
     }
 
     fn at_end(&mut self) -> bool {

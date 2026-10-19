@@ -1,0 +1,1 @@
+Admit bounded read-only standard vector and immutable slice source policies, preserving source ownership distinctions and replaying actual emitted Rust definitions through the shared checked representation.

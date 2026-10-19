@@ -6,14 +6,16 @@
 use std::collections::HashSet;
 use std::rc::Rc;
 
-use serde_json::Value;
-
 use super::lowering::switch_tags;
 use super::{CaseTest, SExpr, SNode, Span, Stmt, Switch};
 
 /// Whether statements use `let`, assignments, loops, `break`, `continue`,
 /// print or discard a value.
 pub(super) fn imperative(statements: &[Stmt]) -> bool {
+    !super::callables::mutable_cells(statements).is_empty() || ordinary_imperative(statements)
+}
+
+fn ordinary_imperative(statements: &[Stmt]) -> bool {
     statements.iter().any(|statement| match statement {
         Stmt::Let { .. }
         | Stmt::Assign { .. }
@@ -24,11 +26,25 @@ pub(super) fn imperative(statements: &[Stmt]) -> bool {
         | Stmt::Continue { .. }
         | Stmt::Print { .. }
         | Stmt::Expr { .. } => true,
-        Stmt::Block { body, .. } => imperative(body),
+        Stmt::Block { body, inline, .. } => {
+            !inline && !super::lowering::terminates(body) || ordinary_imperative(body)
+        }
         Stmt::If {
             then, otherwise, ..
-        } => imperative(then) || otherwise.as_deref().is_some_and(imperative),
-        Stmt::Switch(node) => node.clauses.iter().any(|clause| imperative(&clause.body)),
+        } => {
+            crate::translation::frontend_rules::require_java_script_branch_continuation(
+                super::lowering::terminates(then),
+                otherwise.is_some(),
+                otherwise
+                    .as_deref()
+                    .is_some_and(super::lowering::terminates),
+            ) || ordinary_imperative(then)
+                || otherwise.as_deref().is_some_and(ordinary_imperative)
+        }
+        Stmt::Switch(node) => node
+            .clauses
+            .iter()
+            .any(|clause| ordinary_imperative(&clause.body)),
         _ => false,
     })
 }
@@ -42,131 +58,7 @@ pub(super) struct Uses {
 }
 
 pub(super) fn statement_uses(statements: &[Stmt]) -> Uses {
-    let mut uses = Uses::default();
-    use_list(statements, &mut HashSet::new(), &mut uses);
-    uses
-}
-
-fn use_list(statements: &[Stmt], scope: &mut HashSet<String>, uses: &mut Uses) {
-    for statement in statements {
-        use_statement(statement, scope, uses);
-    }
-}
-
-fn read(expr: &SExpr, scope: &HashSet<String>, uses: &mut Uses) {
-    for name in references(expr) {
-        if !scope.contains(&name) {
-            uses.free.insert(name);
-        }
-    }
-}
-
-fn use_statement(statement: &Stmt, scope: &mut HashSet<String>, uses: &mut Uses) {
-    match statement {
-        Stmt::Const { name, value, .. } | Stmt::Let { name, value, .. } => {
-            read(value, scope, uses);
-            scope.insert(name.clone());
-        }
-        Stmt::Assign { name, value, .. } => {
-            read(value, scope, uses);
-            if !scope.contains(name) {
-                uses.free.insert(name.clone());
-                uses.assigned.insert(name.clone());
-            }
-        }
-        Stmt::Return { expr, .. } | Stmt::Expr { expr, .. } | Stmt::Print { expr, .. } => {
-            read(expr, scope, uses);
-        }
-        Stmt::Block { body, inline, .. } => {
-            if *inline {
-                use_list(body, scope, uses);
-            } else {
-                use_list(body, &mut scope.clone(), uses);
-            }
-        }
-        Stmt::If {
-            cond,
-            then,
-            otherwise,
-            ..
-        } => {
-            read(cond, scope, uses);
-            use_list(then, &mut scope.clone(), uses);
-            if let Some(otherwise) = otherwise {
-                use_list(otherwise, &mut scope.clone(), uses);
-            }
-        }
-        Stmt::Switch(node) => {
-            read(&node.scrutinee, scope, uses);
-            for clause in &node.clauses {
-                use_list(&clause.body, &mut scope.clone(), uses);
-            }
-        }
-        Stmt::While { cond, body, .. } | Stmt::DoWhile { cond, body, .. } => {
-            read(cond, scope, uses);
-            use_list(body, &mut scope.clone(), uses);
-        }
-        Stmt::For {
-            init,
-            cond,
-            update,
-            body,
-            ..
-        } => {
-            let mut inner = scope.clone();
-            use_list(init, &mut inner, uses);
-            if let Some(cond) = cond {
-                read(cond, &inner, uses);
-            }
-            use_list(update, &mut inner, uses);
-            use_list(body, &mut inner.clone(), uses);
-        }
-        Stmt::Throw { .. } | Stmt::Break { .. } | Stmt::Continue { .. } | Stmt::Empty => {}
-    }
-}
-
-/// An expression as the JSON the JavaScript frontend walks.
-pub(super) fn json(expr: &SExpr) -> Value {
-    serde_json::to_value(expr).unwrap_or(Value::Null)
-}
-
-/// Whether a JSON key holds source that names variables.
-pub(super) fn walked(key: &str) -> bool {
-    key != "span" && key != "type" && key != "data"
-}
-
-/// A single-segment name node's name.
-pub(super) fn local_name(map: &serde_json::Map<String, Value>) -> Option<&str> {
-    if map.get("k").and_then(Value::as_str) != Some("name") {
-        return None;
-    }
-    match map.get("path").and_then(Value::as_array)?.as_slice() {
-        [Value::String(name)] => Some(name),
-        _ => None,
-    }
-}
-
-/// Local variables an expression reads.
-fn references(expr: &SExpr) -> Vec<String> {
-    fn visit(value: &Value, names: &mut Vec<String>) {
-        match value {
-            Value::Array(items) => items.iter().for_each(|item| visit(item, names)),
-            Value::Object(map) => {
-                if let Some(name) = local_name(map) {
-                    names.push(name.to_owned());
-                }
-                for (key, value) in map {
-                    if walked(key) {
-                        visit(value, names);
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-    let mut names = Vec::new();
-    visit(&json(expr), &mut names);
-    names
+    super::callables::statement_usage(statements, &[])
 }
 
 /// Statements of a block, with the declarations of `let a, b` inline and empty statements dropped.

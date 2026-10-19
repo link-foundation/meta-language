@@ -18,6 +18,20 @@ import {
   workingState,
 } from './operations.js';
 import { columnOf, decodeAt, encodeText, quoteText, textOf, utf16View } from './text.js';
+import { acceptFixedLexicalExpression } from './lexical-cache.js';
+import { releaseLexicalCaches, retainLexicalCache } from './lexical-cache-memory.js';
+import { packLexicalCacheResults, readLexicalCacheResults, packTriviaCacheResult } from './cache-storage.js';
+import { PrefixReachCache } from './prefix-reach-cache.js';
+import { RULE_MEMO_PAGE_WIDTH, retireCompletedRuleMemoPrefix } from './rule-memo-window.js';
+import { readRecursiveMemoSeed, rememberRecursiveMemoDependency, acceptRecursiveMemoEntry, reuseRecursiveMemoEntry, advanceRecursiveMemoSeed, finishRecursiveMemoSeed, storeRecursiveMemoEntry } from './recursive-seed-memo.js';
+import { readTriviaPrefixPolicy, acceptTriviaExtraPrefix } from './trivia-prefix-cache.js';
+import { completeRuleContexts } from './precedence-contexts.js';
+import { acceptLexicalCacheContext, acceptLexicalCacheReservation, acceptPrecedenceOperandContext, acceptPrecedenceOperandHead, acceptScannerPreemptionBoundary, readLexicalWinnerIndex, readScannerContinuationAction } from '../translation/frontend-rules.js';
+import { lexerObligationsFor } from './lexer-election.js';
+import { acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity } from '../translation/grammar-lexer-rules.js';
+import { GrammarRuntimeError } from './load.js';
+import { evaluateGrammarSelection, runEmbeddedGrammar } from './grammar-selection.js';
+import { sameGrammarOutput, sameGrammarTree } from './tree-equality.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -28,7 +42,7 @@ export class StepLimitReached extends Error {}
 /** Thrown when a parse runs out of its memory budget (see `memoryBudget`). */
 export class MemoryBudgetReached extends Error {}
 
-const DEFAULT_MAX_DEPTH = 1000;
+export const DEFAULT_MAX_DEPTH = 1000;
 const DEFAULT_MEMO_LIMIT = 1_000_000;
 const DEFAULT_MEMORY_LIMIT = 2_000_000;
 const NO_CHILDREN = Object.freeze([]);
@@ -94,10 +108,11 @@ export function stepBudget(options, length, memory = memoryBudget(options)) {
 /**
  * The memory budget of one parse, shared by its runs, its recovery rounds and
  * its embedded languages: the memo cells it may make, one per rule call it
- * records and one per result such a call keeps (`memoryLimit`, default
- * 2000000). The cells are what a parse keeps until it ends (the calls under
- * keyword lexing outlive their run), so they are counted, never released,
- * and a parse that needs more is rejected with `memoryBudget` instead of
+ * records, one per fixed lexical match cached, and one per result each keeps (`memoryLimit`, default
+ * 2000000). Rule cells stay counted until the parse ends (the calls under
+ * keyword lexing outlive their run). Optional fixed lexical caches are cleared
+ * when memory is needed, releasing only the cells those discarded entries held.
+ * A parse whose rule cells need more is rejected with `memoryBudget` instead of
  * growing until the process runs out of memory.
  */
 export function memoryBudget(options) {
@@ -112,7 +127,7 @@ function makeResult(end, state, children = NO_CHILDREN, dynamic = 0, cost = 0) {
 }
 
 function resultKey(result) {
-  return `${result.end}|${result.state.key}`;
+  return `${result.end}|${result.state.key}${result.lexicalFamily === undefined ? '' : `|lexer:${result.lexicalFamily}`}`;
 }
 
 // The settling of a program loaded before grammars declared one: every step.
@@ -169,24 +184,7 @@ function addResult(results, result, tokens = null, settling = ALL_SETTLING) {
 // `+.` in a token tree, one run of `(precedence 0 right (repeat1 ...))` or two,
 // both flattened by the silent rule) are one parse, not an ambiguity.
 function sameOutput(a, b) {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  return a.every((first, index) => {
-    const second = b[index];
-    if (first === second) return true;
-    if (first.type !== second.type || first.kind !== second.kind || first.start !== second.start || first.end !== second.end) return false;
-    if (Boolean(first.trivia) !== Boolean(second.trivia) || (first.field ?? null) !== (second.field ?? null) || (first.language ?? null) !== (second.language ?? null)) return false;
-    if (!sameValue(first.attributes ?? null, second.attributes ?? null)) return false;
-    return first.type !== 'node' || sameOutput(first.children, second.children);
-  });
-}
-
-// Whether two attribute values are equal, objects whatever their key order.
-function sameValue(a, b) {
-  if (a === b) return true;
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null || Array.isArray(a) !== Array.isArray(b)) return false;
-  const keys = Object.keys(a);
-  return keys.length === Object.keys(b).length && keys.every((key) => Object.hasOwn(b, key) && sameValue(a[key], b[key]));
+  return sameGrammarOutput(a, b);
 }
 
 // Which of two results over the same text has the tokens a lexer prefers:
@@ -200,8 +198,8 @@ function sameValue(a, b) {
 // has the preferred token, -1 when `existing` has, 0 when neither (a pair
 // without ranks that ends alike but differs in kind, or every leaf alike).
 function preferredTokens(result, existing, tokens) {
-  const left = [[result.children, 0]];
-  const right = [[existing.children, 0]];
+  const left = [{ part: partOf(result) }];
+  const right = [{ part: partOf(existing) }];
   // The trivia each side skipped since the last leaf both share.
   let skipped = [[], []];
   // Where one parse has a leaf alone and the other a node that begins with
@@ -225,22 +223,54 @@ function preferredTokens(result, existing, tokens) {
   // comment of a lower precedence).
   const covers = (leaf, trivia) => trivia.some((item) => item.start === leaf.start
     && ((item.kind === null || item.kind === leaf.kind) ? leaf.end >= item.end : (tokens !== null && item.type === 'token' && tokenConflict(leaf, item, tokens) > 0)));
+  const openPart = (stack) => {
+    const { part } = stack.pop();
+    if (!Array.isArray(part) && part.left !== null && part.left !== undefined) {
+      stack.push({ part: part.right }, { part: part.left });
+      return;
+    }
+    const children = Array.isArray(part) ? part : part.flat;
+    for (let index = children.length - 1; index >= 0; index -= 1) stack.push({ item: children[index] });
+  };
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
-      if (top[1] < top[0].length) return top[0][top[1]];
-      stack.pop();
+      if (top.item !== undefined) return top.item;
+      openPart(stack);
     }
     return null;
   };
-  const skip = (stack) => { stack[stack.length - 1][1] += 1; };
+  const skip = (stack) => { stack.pop(); };
   const enter = (stack, node) => {
     skip(stack);
-    stack.push([node.children, 0]);
+    stack.push({ part: partOf(node) });
   };
   for (;;) {
-    const a = peek(left);
-    const b = peek(right);
+    const leftPart = left[left.length - 1]?.part;
+    const rightPart = right[right.length - 1]?.part;
+    // Shared prefixes contain no new conflict. A pending lookahead must
+    // still visit their leaves until its first token decides the boundary.
+    if (leftPart !== undefined && rightPart !== undefined && (pending === Infinity || decided !== Infinity)) {
+      let shared = leftPart === rightPart;
+      if (!shared) {
+        const leftArray = Array.isArray(leftPart) ? leftPart : leftPart.flat;
+        const rightArray = Array.isArray(rightPart) ? rightPart : rightPart.flat;
+        shared = Array.isArray(leftArray) && leftArray === rightArray;
+      }
+      if (shared) {
+        if (leftPart.length > 0) skipped = [[], []];
+        left.pop();
+        right.pop();
+        continue;
+      }
+    }
+    if (leftPart !== undefined || rightPart !== undefined) {
+      if (leftPart !== undefined && (rightPart === undefined || !(rightPart.length > leftPart.length))) openPart(left);
+      if (rightPart !== undefined && (leftPart === undefined || !(leftPart.length > rightPart.length))) openPart(right);
+      continue;
+    }
+    const a = left[left.length - 1]?.item ?? null;
+    const b = right[right.length - 1]?.item ?? null;
     if (a === null || b === null) {
       // One parse ends where the other goes on with a token of the external
       // scanner, which then scans it, of no width, in the state both share
@@ -456,7 +486,10 @@ function wrapped(node) {
   let current = node;
   while (current.type === 'node' && current.precedence) {
     const meaningful = current.children.filter((child) => !isTrivia(child));
-    if (meaningful.length !== 1 || meaningful[0].type !== 'node' || !samePrecedence(meaningful[0].precedence, current.precedence)) break;
+    const child = meaningful[0];
+    // A wrapper does not replace its operand's associativity at the same rank.
+    if (meaningful.length !== 1 || child.type !== 'node' || !child.precedence
+      || child.precedence.level !== current.precedence.level || child.precedence.name !== current.precedence.name) break;
     current = meaningful[0];
   }
   return current;
@@ -493,7 +526,7 @@ function directEdge(expression, side, owner, found = [], tag = null) {
     case 'precedence': case 'namedPrecedence':
       directEdge(expression.item, side, owner, found, { level: expression.level ?? 0, name: expression.name ?? null, associativity: expression.associativity, rule: owner });
       break;
-    case 'capture': case 'dynamicPrecedence': case 'alias':
+    case 'lexicalScope': case 'capture': case 'dynamicPrecedence': case 'alias':
     case 'optional': case 'repeat0': case 'repeat1': case 'repeat': directEdge(expression.item, side, owner, found, tag);
   }
   return found;
@@ -511,7 +544,7 @@ const IMMEDIATE_LITERALS = new WeakMap();
 function immediateLiterals(choice) {
   if (IMMEDIATE_LITERALS.has(choice)) return IMMEDIATE_LITERALS.get(choice);
   const patternOf = (expression) => {
-    if (expression.kind === 'alias' || expression.kind === 'capture') return patternOf(expression.item);
+    if (expression.kind === 'alias' || expression.kind === 'capture' || expression.kind === 'lexicalScope') return patternOf(expression.item);
     return expression.kind === 'immediateToken' && expression.item.kind !== 'literal' && expression.item.kind !== 'lexicalPrecedence' ? expression.item : null;
   };
   const leading = (expression) => {
@@ -519,7 +552,7 @@ function immediateLiterals(choice) {
       case 'immediateToken': return expression.item.kind === 'literal' ? [expression.item.value] : [];
       case 'seq': return expression.items.length > 0 ? leading(expression.items[0]) : [];
       case 'choice': return expression.items.flatMap(leading);
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': return leading(expression.item);
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': return leading(expression.item);
       default: return [];
     }
   };
@@ -589,7 +622,7 @@ function firstOf(expression, rules, sets, found = new Set()) {
       break;
     case 'choice': for (const item of expression.items) firstOf(item, rules, sets, found); break;
     case 'alias': found.add(`ref ${expression.name}`); firstOf(expression.item, rules, sets, found); break;
-    case 'token': case 'immediateToken': case 'lexicalPrecedence': case 'capture': case 'precedence': case 'namedPrecedence':
+    case 'lexicalScope': case 'token': case 'immediateToken': case 'lexicalPrecedence': case 'capture': case 'precedence': case 'namedPrecedence':
     case 'dynamicPrecedence': case 'optional': case 'repeat0': case 'repeat1': case 'repeat':
       firstOf(expression.item, rules, sets, found);
   }
@@ -622,7 +655,7 @@ function followSets(rules, first) {
         walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
         break;
       case 'choice': for (const item of expression.items) walk(item, after); break;
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
         walk(expression.item, after);
     }
   };
@@ -662,7 +695,7 @@ function literalFollowSets(rules, first) {
         walk(expression.item, new Set([...firstOf(expression.item, rules, first), ...after]));
         break;
       case 'choice': for (const item of expression.items) walk(item, after); break;
-      case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
+      case 'lexicalScope': case 'alias': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'optional':
         walk(expression.item, after);
     }
   };
@@ -706,7 +739,7 @@ function leftCornerFollow(rules, first) {
     switch (expression.kind) {
       case 'ref': return [expression.name];
       case 'choice': return expression.items.flatMap(units);
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': return units(expression.item);
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': return units(expression.item);
       default: return [];
     }
   };
@@ -736,7 +769,7 @@ function leftCornerFollow(rules, first) {
         expression.items.forEach(walk);
         break;
       case 'choice': expression.items.forEach(walk); break;
-      case 'repeat0': case 'repeat1': case 'repeat': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'optional':
+      case 'lexicalScope': case 'repeat0': case 'repeat1': case 'repeat': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'optional':
         walk(expression.item);
     }
   };
@@ -773,7 +806,7 @@ function reductionFacts(grammar) {
   const visit = (name, expression) => {
     switch (expression.kind) {
       case 'choice': expression.items.forEach((item) => visit(name, item)); return;
-      case 'capture': case 'alias': visit(name, expression.item); return;
+      case 'lexicalScope': case 'capture': case 'alias': visit(name, expression.item); return;
       case 'precedence': case 'namedPrecedence': break;
       default: return;
     }
@@ -951,7 +984,7 @@ function unitClosure(grammar, slot) {
         if (solid.length === 1 && expression.items.length === 1) walk(solid[0]);
         break;
       }
-      case 'precedence': case 'namedPrecedence': case 'capture': case 'dynamicPrecedence': walk(expression.item);
+      case 'lexicalScope': case 'precedence': case 'namedPrecedence': case 'capture': case 'dynamicPrecedence': walk(expression.item);
     }
   };
   while (pending.length > 0) {
@@ -995,7 +1028,7 @@ function shiftItems(grammar, slot) {
           walk(expression.item, { level: expression.level ?? 0, name: expression.name ?? null, associativity: expression.associativity, rule: name }, rest);
           break;
         case 'repeat0': case 'repeat1': case 'repeat': walk(expression.item, tag, [expression, ...rest]); break;
-        case 'capture': case 'dynamicPrecedence': case 'alias': case 'optional': walk(expression.item, tag, rest);
+        case 'lexicalScope': case 'capture': case 'dynamicPrecedence': case 'alias': case 'optional': walk(expression.item, tag, rest);
       }
     };
     walk(rule.expression, null, []);
@@ -1292,8 +1325,9 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
     // its term), it reduced `b` where `a`'s result shifted on in `parent`:
     // the shift's precedence against the reduction's decides, as in
     // `shiftPreferred`.
+    // The separate following expression may extend beyond this reduction.
     const [mine, theirs] = [own[1], next[1]];
-    if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end !== parent.end) return 0;
+    if (!mine || !theirs || theirs.type !== 'node' || sameTree(mine, theirs) || firstLeafStart(mine) !== firstLeafStart(theirs) || theirs.end < parent.end) return 0;
     // Unless the other builds the rest of `parent` as one node, the same
     // tokens by another name (Solidity's `revert Error();`, whose `()` the
     // silent `call_arguments` of a call takes where the other parse aliases
@@ -1371,9 +1405,23 @@ function endingReduction(a, b, stack, orders) {
 // (`forked`), the rule as one it was reduced to there (`forkedTo`, see
 // `forkedOrder`); any other result as it is.
 function reducedAlone(result, name, ranked, forked = false) {
-  const meaningful = result.children.filter((child) => !isTrivia(child));
-  if (meaningful.length !== 1) return result;
-  const only = meaningful[0];
+  // Only a lone meaningful item needs a tag. Visit lazy parts from the end
+  // and stop at the second item, without materializing every joined prefix.
+  const pending = [partOf(result)];
+  let only = null;
+  while (pending.length > 0) {
+    const part = pending.pop();
+    if (Array.isArray(part)) {
+      for (let index = part.length - 1; index >= 0; index -= 1) {
+        const child = part[index];
+        if (isTrivia(child)) continue;
+        if (only) return result;
+        only = child;
+      }
+    } else if (part.flat) pending.push(part.flat);
+    else pending.push(part.left, part.right);
+  }
+  if (!only) return result;
   const changes = {};
   if (only.type === 'token' && !only.alone) changes.alone = true;
   if (ranked && !only.reducedTo?.includes(name)) changes.reducedTo = [...(only.reducedTo ?? []), name];
@@ -1581,12 +1629,32 @@ function oneLeaf(leaf, other) {
     && (leaf.kind === other.kind || (leaf.lexed !== undefined && leaf.lexed === other.lexed));
 }
 
-// The leaves under `children` that are not white space, last first.
+// Direct children in their exact order, without materializing joined prefixes.
+// Retained links still expose shared parts after an owner has read its array.
+function* walkChildParts(children, backward = false) {
+  const pending = [children];
+  while (pending.length > 0) {
+    const part = pending.pop();
+    if (Array.isArray(part)) {
+      if (backward) for (let index = part.length - 1; index >= 0; index -= 1) yield part[index];
+      else yield* part;
+    } else if (part.left != null && part.right != null) {
+      if (backward) pending.push(part.left, part.right);
+      else pending.push(part.right, part.left);
+    } else if (part.flat) pending.push(part.flat);
+  }
+}
+
+function firstMeaningfulChild(children) {
+  for (const child of walkChildParts(children)) if (!isTrivia(child)) return child;
+  return undefined;
+}
+
+// The leaves under a child part that are not white space, last first.
 function* leavesBackward(children) {
-  for (let index = children.length - 1; index >= 0; index -= 1) {
-    const child = children[index];
+  for (const child of walkChildParts(children, true)) {
     if (isTrivia(child)) continue;
-    if (child.type === 'node') yield* leavesBackward(child.children);
+    if (child.type === 'node') yield* leavesBackward(partOf(child));
     else yield child;
   }
 }
@@ -1598,27 +1666,34 @@ function* leavesBackward(children) {
 function lastRepaired(children) {
   let skipped = false;
   for (const leaf of leavesBackward(children)) {
-    if (!widthless(leaf)) return skipped ? leaf : children.findLast((child) => !isSeparator(child));
+    if (!widthless(leaf)) {
+      if (skipped) return leaf;
+      for (const child of walkChildParts(children, true)) if (!isSeparator(child)) return child;
+      return undefined;
+    }
     skipped = true;
   }
-  return skipped ? undefined : children.findLast((child) => !isSeparator(child));
+  if (!skipped) for (const child of walkChildParts(children, true)) if (!isSeparator(child)) return child;
+  return undefined;
 }
 
 // Whether the first leaf of `result` that is not white space is a token the
 // external scanner scanned of no width.
 function startsWidthless(result) {
-  let first = result.children.find((child) => !isTrivia(child));
-  while (first?.type === 'node') first = first.children.find((child) => !isTrivia(child));
+  let first = firstMeaningfulChild(partOf(result));
+  while (first?.type === 'node') first = firstMeaningfulChild(partOf(first));
   return first !== undefined && widthless(first);
 }
 
 // Whether `result` holds the token `last` and goes on past it with a token
 // its lexer lexed, not one the external scanner scanned of no width.
-function lexedPast(result, last) {
+function lexedPast(result, last, baseCost) {
   let after = null;
-  for (const leaf of leavesBackward(result.children)) {
-    if (leaf.start >= last.end && (leaf.end > last.end || widthless(leaf))) after = leaf;
-    else return after !== null && !widthless(after) && oneLeaf(leaf, last);
+  for (const leaf of leavesBackward(partOf(result))) {
+    if (!acceptScannerPreemptionBoundary(widthless(leaf) && result.cost === baseCost, leaf.start === last.end)) return false;
+    const action = readScannerContinuationAction(widthless(leaf), leaf.start >= last.end, leaf.end > last.end);
+    if (action === 1) after = leaf;
+    else if (action === -1) return after !== null && oneLeaf(leaf, last);
   }
   return false;
 }
@@ -1640,25 +1715,111 @@ function lexedPast(result, last) {
 // Null when none is; `globalThis.__preemptTrace`, when set, is called with
 // each pair.
 function preempted(continued) {
-  let pruned = null;
-  for (const [left, rights] of continued) {
+  // A trace may mutate a later candidate. Keep its original call order and
+  // read-after-write behavior instead of indexing a changing input.
+  if ('__preemptTrace' in globalThis) {
+    let pruned = null;
+    for (const [left, rights] of continued) {
+      if (!rights.some(startsWidthless)) continue;
+      let last;
+      for (const leaf of leavesBackward(partOf(left))) {
+        if (!widthless(leaf)) {
+          last = leaf;
+          break;
+        }
+      }
+      if (last === undefined) continue;
+      for (const [other] of continued) {
+        if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last, left.cost)) {
+          (pruned ??= new Set()).add(other);
+          globalThis.__preemptTrace?.(left, other);
+        }
+      }
+    }
+    return pruned;
+  }
+  const index = new Map();
+  let candidates = 0;
+  for (let order = 0; order < continued.length; order += 1) {
+    const [left, rights] = continued[order];
     if (!rights.some(startsWidthless)) continue;
     let last;
-    for (const leaf of leavesBackward(left.children)) {
+    for (const leaf of leavesBackward(partOf(left))) {
       if (!widthless(leaf)) {
         last = leaf;
         break;
       }
     }
     if (last === undefined) continue;
-    for (const [other] of continued) {
-      if (other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost && !pruned?.has(other) && lexedPast(other, last)) {
-        (pruned ??= new Set()).add(other);
-        globalThis.__preemptTrace?.(left, other);
-      }
+    const slot = readScannerPreemptionLeafIndex(index, left.state.key, last, true);
+    const candidate = { left, last, order };
+    const identities = [[slot.kinds, last.kind]];
+    if (last.lexed !== undefined) identities.push([slot.origins, last.lexed]);
+    for (const [table, identity] of identities) {
+      let rows = table.get(identity);
+      if (!rows) table.set(identity, rows = []);
+      rows.push(candidate);
     }
+    candidates += 1;
   }
-  return pruned;
+  if (candidates === 0) return null;
+  const matches = new Map();
+  for (let otherOrder = 0; otherOrder < continued.length; otherOrder += 1) {
+    const [other] = continued[otherOrder];
+    if (matches.has(other)) continue;
+    if (!index.has(other.state.key)) continue;
+    let chosen = null;
+    let hasFollowing = false;
+    let firstFollowing = Infinity;
+    let endFollowing = Infinity;
+    const virtualStarts = new Set();
+    for (const leaf of leavesBackward(partOf(other))) {
+      if (widthless(leaf)) {
+        virtualStarts.add(leaf.start);
+        continue;
+      }
+      // Every real leaf after the matching token must be a continuation,
+      // including in user grammars whose leaf spans overlap or run backwards.
+      if (hasFollowing && firstFollowing >= leaf.end && endFollowing > leaf.end) {
+        const slot = readScannerPreemptionLeafIndex(index, other.state.key, leaf, false);
+        if (slot) for (const rows of [slot.kinds.get(leaf.kind), leaf.lexed === undefined ? undefined : slot.origins.get(leaf.lexed)]) {
+          if (!rows) continue;
+          for (const candidate of rows) {
+            const { left, last, order } = candidate;
+            if ((chosen === null || order < chosen.order)
+              && other.end > left.end && other.state.key === left.state.key && other.cost >= left.cost
+              && oneLeaf(leaf, last)
+              && acceptScannerPreemptionBoundary(other.cost === left.cost, virtualStarts.has(last.end))) {
+              chosen = candidate;
+            }
+          }
+        }
+      }
+      hasFollowing = true;
+      firstFollowing = Math.min(firstFollowing, leaf.start);
+      endFollowing = Math.min(endFollowing, leaf.end);
+      if (chosen?.order === 0) break;
+    }
+    if (chosen !== null) matches.set(other, { order: chosen.order, otherOrder, other });
+  }
+  if (matches.size === 0) return null;
+  // Preserve the original left-major insertion order of the identity set.
+  return new Set([...matches.values()].sort((a, b) => a.order - b.order || a.otherOrder - b.otherOrder).map(row => row.other));
+}
+
+function readScannerPreemptionLeafIndex(index, state, leaf, create) {
+  let current = index;
+  for (const key of [state, leaf.type, leaf.start]) {
+    let next = current.get(key);
+    if (next === undefined) {
+      if (!create) return null;
+      current.set(key, next = new Map());
+    }
+    current = next;
+  }
+  let slot = current.get(leaf.end);
+  if (slot === undefined && create) current.set(leaf.end, slot = { kinds: new Map(), origins: new Map() });
+  return slot ?? null;
 }
 
 // Whether two subtrees hold the same tokens: leaves of one span each, of one
@@ -1687,19 +1848,7 @@ function sameTokens(a, b) {
 // two leftmost chains compared node by node share their subtrees, which
 // would otherwise be compared again for every pair above them.
 function sameTree(a, b, memo) {
-  if (a === b) return true;
-  if (a.type !== b.type || a.kind !== b.kind) return false;
-  if (a.type !== 'node') return a.start === b.start && a.end === b.end;
-  const known = memo?.get(a)?.get(b);
-  if (known !== undefined) return known;
-  const first = a.children.filter((child) => !isTrivia(child));
-  const second = b.children.filter((child) => !isTrivia(child));
-  const same = first.length === second.length && first.every((child, index) => sameTree(child, second[index], memo));
-  if (memo) {
-    if (!memo.has(a)) memo.set(a, new Map());
-    memo.get(a).set(b, same);
-  }
-  return same;
+  return sameGrammarTree(a, b, memo);
 }
 
 // Whether two child lists are the same trees over the same text.
@@ -1831,13 +1980,36 @@ function shiftPreferred(long, short, orders, grammar, lookahead = null) {
   for (;;) {
     const inner = progress.children.find((child) => child.type === 'node' && child.start < short.end && child.end > short.end);
     if (!inner) break;
-    if (firstLeafStart(inner) === begin) {
+    // A call may wrap the same incomplete operator. Descend to that operator;
+    // a one-part expression wrapper alone does not establish this relationship.
+    const continues = leftmostChain(inner).some((node) => node.rule === short.rule
+      && node.children.filter((child) => !isTrivia(child)).length > 1);
+    if (firstLeafStart(inner) === begin && inner.rule !== short.rule && !continues) {
       return -comparePrecedence(reduction(short), unranked(), orders);
     }
     progress = inner;
   }
-  const shifted = progress.precedence ?? unranked(progress.rule);
-  const reduced = reducedBefore(short, progress);
+  let shifted = progress.precedence ?? unranked(progress.rule);
+  // A suffix inside the first operand shifts before the enclosing operator.
+  const head = progress.children.find((child) => !isTrivia(child));
+  if (grammar && head?.end === short.end && lookahead !== null) {
+    grammar.first ??= firstSets(grammar.rules);
+    const rule = grammar.rules.get(progress.rule);
+    const slots = rule ? directEdge(rule.expression, 'right', rule.name).map(([slot]) => slot) : [];
+    const operand = acceptPrecedenceOperandHead(
+      slots.some((slot) => {
+        const units = unitClosure(grammar, slot);
+        return units.has(head.kind) || units.has(head.rule);
+      }),
+      slots.some((slot) => head.reducedTo?.includes(slot)),
+    );
+    const shifts = (operand ? slots : []).flatMap((slot) => shiftItems(grammar, slot))
+      .filter((item) => firstOf({ kind: 'seq', items: item.rest }, grammar.rules, grammar.first).has(lookahead));
+    if (shifts.length && !shifts.some((item) => item.rule === progress.rule)) {
+      shifted = shifts.reduce((best, item) => comparePrecedence(item.tag, best, orders) > 0 ? item.tag : best, shifts[0].tag);
+    }
+  }
+  const reduced = reducedBefore(short, progress, grammar);
   const before = shiftReduction(short, progress, grammar);
   if (before !== null) {
     const order = comparePrecedence(unranked(before), reduced, orders);
@@ -1900,7 +2072,7 @@ function reduction(node) {
 // whose `module_name_and_body` of level 0 right ends with the name where the
 // body is left out, so the body shifts); else the precedence `short` reduces
 // with.
-function reducedBefore(short, progress) {
+function reducedBefore(short, progress, grammar) {
   const first = progress.children.find((child) => !isTrivia(child));
   let closing = null;
   for (let node = short; first && node.type === 'node';) {
@@ -1908,25 +2080,29 @@ function reducedBefore(short, progress) {
     const last = meaningful[meaningful.length - 1];
     if (!last) break;
     if (sameTree(last, first)) {
-      if (last.type === 'token' && last.reduced) return last.reduced;
+      if (last.reduced && (last.type === 'token'
+        || (grammar?.rules.get(last.reduced.rule)?.kind === 'silent'
+          && !samePrecedence(last.reduced, first.reduced)))) return last.reduced;
       // A token a silent rule reduced alone where the shift takes it as the
       // first part of its node (Lean's `c` in `fun x c s`, a `_pattern` of
       // level 0 in one parse and the constructor of `c s`, of level 80, in
       // the other) is that rule's reduction, not the node's it ends.
-      if (last.type === 'token' && last.alone && !first.alone) return last.precedence ?? unranked();
+      if (last.type === 'token' && last.alone && (!first.alone
+        || (last.precedence && grammar?.rules.get(last.precedence.rule)?.kind === 'silent'
+          && !samePrecedence(last.precedence, first.precedence)))) return last.precedence ?? unranked();
       return reduction(node);
     }
     node = last;
     closing = (node.type === 'token' ? node.reduced ?? node.precedence : node.closes) ?? closing;
   }
-  return closing ?? reduction(short);
+  return closing && grammar?.rules.get(closing.rule)?.kind === 'silent' ? closing : reduction(short);
 }
 
 // The offset of the first leaf under a node that is not white space.
 function firstLeafStart(node) {
   let current = node;
   while (current.type === 'node') {
-    const first = current.children.find((child) => !isTrivia(child));
+    const first = firstMeaningfulChild(partOf(current));
     if (!first) return current.start;
     current = first;
   }
@@ -1939,17 +2115,27 @@ function firstLeafStart(node) {
 // n items cost O(n²) time and memory, as each iteration (and every prefix the
 // generalized repetition keeps) copied all the children before it. A join
 // instead links its two parts with their child count, and the children are
-// flattened, once, when they are first read; the links are then dropped. A
-// node built from a result shares its chain, so the nodes of the prefixes of
-// a repetition are not flattened either.
+// flattened, once, when they are first read. Retaining the links lets partial
+// walks still skip shared prefixes after an array was needed. A node built
+// from a result shares its chain, so repetition prefixes stay shared too.
 const CHAIN = Symbol('children chain');
 
+function readActiveChildChain(result) {
+  const chain = result[CHAIN];
+  if (!chain) return null;
+  const descriptor = Object.getOwnPropertyDescriptor(result, 'children');
+  // A spread may copy the symbol while replacing its materialized children.
+  // Only the actual lazy owner (or its symbol-only carrier) owns this chain.
+  return descriptor ? (descriptor.get === readChainChildren ? chain : null)
+    : ('children' in result ? null : chain);
+}
+
 function partOf(result) {
-  return result[CHAIN] ?? result.children;
+  return readActiveChildChain(result) ?? result.children;
 }
 
 function childCount(result) {
-  return result[CHAIN]?.length ?? result.children.length;
+  return readActiveChildChain(result)?.length ?? result.children.length;
 }
 
 function flattenChain(chain) {
@@ -1963,14 +2149,18 @@ function flattenChain(chain) {
     else pending.push(part.right, part.left);
   }
   chain.flat = flat;
-  chain.left = null;
-  chain.right = null;
   return flat;
+}
+
+// One accessor also lets lazy owners share their property descriptors. The
+// chain belongs to the receiver, rather than a closure retained by each owner.
+export function readChainChildren() {
+  return flattenChain(this[CHAIN]);
 }
 
 // Gives `target` the children of `source`, shared and still unflattened.
 function shareChildren(target, source) {
-  const chain = source[CHAIN];
+  const chain = readActiveChildChain(source);
   if (!chain) {
     target.children = source.children;
     return target;
@@ -1979,7 +2169,7 @@ function shareChildren(target, source) {
   Object.defineProperty(target, 'children', {
     configurable: true,
     enumerable: true,
-    get() { return flattenChain(chain); },
+    get: readChainChildren,
   });
   return target;
 }
@@ -1999,6 +2189,7 @@ function copyResult(result, changes) {
     precedence: result.precedence, tail: result.tail, ambiguous: result.ambiguous, cost: result.cost,
   };
   if (result.before !== undefined) copy.before = result.before;
+  if (result.lexicalFamily !== undefined) copy.lexicalFamily = result.lexicalFamily;
   if (result.open) copy.open = true;
   if (!('children' in changes)) shareChildren(copy, result);
   return Object.assign(copy, changes);
@@ -2014,6 +2205,7 @@ function joinResults(left, right, inToken) {
     ambiguous: left.ambiguous || right.ambiguous,
     cost: left.cost + right.cost,
   };
+  if (right.lexicalFamily !== undefined || left.lexicalFamily !== undefined) joined.lexicalFamily = right.lexicalFamily ?? left.lexicalFamily;
   if (right.open || (left.open && right.end === left.end)) joined.open = true;
   if (inToken) {
     joined.children = NO_CHILDREN;
@@ -2045,7 +2237,7 @@ function nullable(expression) {
     case 'repeat': return expression.min === 0 || nullable(expression.item);
     case 'seq': return expression.items.every(nullable);
     case 'choice': return expression.items.some(nullable);
-    case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
+    case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias': case 'repeat1': return nullable(expression.item);
     default: return false;
   }
 }
@@ -2121,9 +2313,17 @@ export class Executor {
     this.reducing = this.settling.precedence ? this.longestTokens : null;
     this.depth = 0;
     this.memo = new Map();
+    this.retiredRuleMemoEntries = 0;
+    this.recursiveMemoEnabled = end - begin >= RULE_MEMO_PAGE_WIDTH;
+    this.triviaPrefixPolicy = this.recursiveMemoEnabled ? readTriviaPrefixPolicy(program) : null;
     this.memoLimit = options.memoLimit ?? DEFAULT_MEMO_LIMIT;
     this.callStack = [];
     this.triviaMemo = new Map();
+    this.lexerFamily = program.defaultLexer ?? '';
+    this.lexerWorkers = new Map();
+    this.lexerWinners = new Map();
+    this.lexerTerminals = new Map();
+    this.separatorLeaves = new Map();
     // The starts of separators a token lexed at them took, going on past
     // the trivia, each with the node calls the token was lexed in, their
     // kinds and offsets (see `tokenBeforeExtra` and `widenTokens`).
@@ -2132,12 +2332,15 @@ export class Executor {
     this.shiftMemo = new Map();
     this.owners = null;
     this.edgeMemo = new Map();
+    this.precedenceContextMemo = new Map();
     this.belowMemo = new Map();
     this.inExtra = false;
     this.extraStart = -1;
     // The repair points where a continuation after a MISSING leaf is open.
     this.chained = new Set();
     this.scannerMemo = new Map();
+    this.lexicalCacheForms = new WeakMap();
+    this.lexicalCache = { entries: new WeakMap(), cells: 0, size: 0 };
     // The requests a scanner's `expected` asks about, and the offset a
     // scanner run in token context answers for (see `Expectations`).
     this.expectations = new Expectations();
@@ -2173,6 +2376,7 @@ export class Executor {
   // Takes `count` memo cells of the parse's memory budget.
   retain(count) {
     const { memory } = this.budget;
+    if (!acceptLexicalCacheReservation(memory.cells, count, memory.limit)) releaseLexicalCaches(memory);
     memory.cells += count;
     if (memory.cells > memory.limit) throw new MemoryBudgetReached();
   }
@@ -2251,16 +2455,112 @@ export class Executor {
     return results;
   }
 
+  // A context-free election within one source lexer. Probes use only that
+  // lexer's original closure, never canonical unions or parser expectations.
+  electedWinner(plan, position, state) {
+    const key = `${plan.name}|${position}|${state.key}`;
+    if (this.lexerWinners.has(key)) return this.lexerWinners.get(key);
+    let worker = this.lexerWorkers.get(plan.name);
+    if (!worker && plan.rules.length > 0) {
+      worker = new Executor(plan.program, this.bytes, this.begin, this.end, this.options, this.budget, this.maxDepth - this.depth);
+      this.lexerWorkers.set(plan.name, worker);
+    }
+    const stack = state.stacks[`lexer:${plan.name}:modes`] ?? ['default'];
+    const mode = stack[stack.length - 1];
+    const ends = [];
+    const eligible = [];
+    for (const rule of plan.rules) {
+      const result = acceptGrammarLexerMode(rule.mode, mode) ? worker.quietly(() => longestResult(worker.reference(rule.name, position, state, true))) : null;
+      ends.push(result?.end ?? -1);
+      eligible.push(result !== null && result.end > position);
+    }
+    const selected = readLexicalWinnerIndex(ends, eligible);
+    if (selected < 0) {
+      this.retain(1);
+      this.lexerWinners.set(key, null);
+      return null;
+    }
+    const rule = plan.rules[selected];
+    const unresolved = lexerObligationsFor(plan, rule.name)[0];
+    if (unresolved) throw new GrammarRuntimeError(`unresolved ${unresolved.category} in ${plan.name}:${rule.name}: ${unresolved.source}`, 'operation');
+    const working = workingState(state);
+    const nativeModes = working.modes;
+    working.modes = [...stack];
+    try { runStatements(rule.action, { state: working, step: () => this.step() }); }
+    catch (error) {
+      if (error instanceof OperationFailed) throw new GrammarRuntimeError(`failed lexer command in ${plan.name}:${rule.name}`, 'operation');
+      throw error;
+    }
+    working.stacks[`lexer:${plan.name}:modes`] = working.modes;
+    working.modes = nativeModes;
+    const winner = { rule, end: ends[selected], state: settleState(working) };
+    this.retain(1);
+    this.lexerWinners.set(key, winner);
+    return winner;
+  }
+
+  electedLeaf(plan, winner, start, kind, trivia = false) {
+    return { type: 'token', kind, start, end: winner.end, ...(trivia ? { trivia: true } : {}),
+      lexical: { lexer: plan.name, rule: winner.rule.name, type: winner.rule.type, channel: winner.rule.channel, disposition: winner.rule.disposition } };
+  }
+
+  skipElectedTrivia(plan, position, state) {
+    const leaves = [];
+    const states = [state];
+    let cursor = position;
+    let current = state;
+    for (;;) {
+      const winner = this.electedWinner(plan, cursor, current);
+      if (winner === null || !acceptGrammarLexerTrivia(winner.rule.channel, winner.rule.disposition)) break;
+      const identity = readGrammarLexerTriviaIdentity(winner.rule.name, winner.rule.type, winner.rule.disposition);
+      leaves.push(this.electedLeaf(plan, winner, cursor, plan.bindings.get(identity) ?? identity, true));
+      cursor = winner.end;
+      current = winner.state;
+      states.push(current);
+    }
+    return { end: cursor, leaves, state: current, states };
+  }
+
+  electedTerminal(plan, expected, position, state, kind) {
+    if (expected === undefined) throw new GrammarRuntimeError(`unbound parser literal in lexer ${plan.name}`, 'operation');
+    const skipped = this.skipElectedTrivia(plan, position, state);
+    const winner = this.electedWinner(plan, skipped.end, skipped.state);
+    if (winner !== null && acceptGrammarLexerExpectedToken(expected ?? '', winner.rule.type, expected === null)) {
+      const selectedKind = kind ?? plan.bindings.get(winner.rule.type) ?? winner.rule.type;
+      return [makeResult(winner.end, winner.state, [...skipped.leaves, this.electedLeaf(plan, winner, skipped.end, selectedKind)])];
+    }
+    this.fail(skipped.end, expected ?? 'token');
+    // Recovery may skip a complete token, never retry inside that token.
+    let boundary = skipped.end;
+    let boundaryState = skipped.state;
+    const retry = (cursor) => {
+      while (boundary < cursor) {
+        const token = this.electedWinner(plan, boundary, boundaryState);
+        if (token) { boundary = token.end; boundaryState = token.state; }
+        else boundary += decodeAt(this.bytes, boundary, this.end).length;
+      }
+      return boundary === cursor ? this.electedTerminal(plan, expected, cursor, boundaryState, kind) : [];
+    };
+    const elementKey = `${plan.name}|${expected}|${kind}`;
+    if (!this.lexerTerminals.has(elementKey)) {
+      this.retain(1);
+      this.lexerTerminals.set(elementKey, {});
+    }
+    return this.elementFailed(skipped.end, skipped.leaves, skipped.state, { kind: kind ?? expected }, this.lexerTerminals.get(elementKey), retry);
+  }
+
   // Skips trivia: repeatedly the longest match of any trivia expression
-  // allowed in the current mode. Returns the new offset and the trivia leaves.
+  // allowed in the current mode. State follows the selected parse, with a
+  // snapshot at each leaf boundary for tokens that retake an extra's text.
   // Inside an extra that builds a node, only the extras that are no rule
   // (white space) are trivia, unless the extra's rule reaches no scanner
   // token: then every extra nests in it, as a tree-sitter lexer lexes extras
   // there (see `nestingExtras` in load.js), except at its own start, where
   // the extra is its own rule's first token.
   skipTrivia(position, state) {
+    if (this.lexerFamily !== '') return this.skipElectedTrivia(this.program.lexers.get(this.lexerFamily), position, state);
     const { trivia } = this.program;
-    if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN };
+    if (trivia.length === 0) return { end: position, leaves: NO_CHILDREN, state, states: [state] };
     const outrank = this.lexFrame(position)?.outranks?.get(position) ?? 0;
     // A separator an immediate token takes there is lexed, not skipped (see
     // `KeywordLexing`).
@@ -2269,12 +2569,14 @@ export class Executor {
     const key = `${position}|${state.key}|${this.inExtra}|${atExtra}|${outrank}`;
     const cached = this.triviaMemo.get(key);
     if (cached) return cached;
-    const mode = state.modes[state.modes.length - 1];
+    let current = state;
     const leaves = [];
+    const states = [state];
     let cursor = position;
     // A tree-sitter lexer skips a byte order mark at the start of the input.
     if (position === 0 && this.longestTokens && this.bytes[0] === 0xef && this.bytes[1] === 0xbb && this.bytes[2] === 0xbf) {
       leaves.push({ type: 'token', kind: null, start: 0, end: 3, trivia: true });
+      states.push(current);
       cursor = 3;
     }
     const context = this.scanContext;
@@ -2283,29 +2585,73 @@ export class Executor {
     for (;;) {
       let best = cursor;
       let bestKind = null;
+      let bestProjectionName = null;
+      let bestProjectionAnonymous = false;
+      let bestResult = null;
+      let bestExtra = null;
+      const mode = current.modes[current.modes.length - 1];
       for (const item of trivia) {
         if (item.modes && !item.modes.includes(mode)) continue;
         if (item.kind !== null && (this.inExtra === true || (atExtra && cursor === position))) continue;
+        if (!acceptTriviaExtraPrefix(this.triviaPrefixPolicy,item.kind,this.bytes[cursor])) continue;
         if (cursor === position && outrank > 0 && this.priorityOf(item.expression) < outrank) continue;
         if (cursor === position && lexed && item.kind === null) continue;
-        const end = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, state, true))?.end ?? -1);
+        // A composite extra is syntax: its internal separators remain trivia.
+        // Probing it as one token would disable those separators and reject
+        // directives such as a name followed by a whitespace-separated value.
+        const composite = item.kind !== null && this.program.rules.get(item.kind)?.kind === 'normal'
+          ? this.extraNode(item.kind, cursor, null, current) : null;
+        if (composite === NO_EXTRA) continue;
+        if (composite !== null) {
+          if (composite.end > best) {
+            best = composite.end;
+            bestKind = item.kind;
+            bestProjectionName = item.projectionName ?? null;
+            bestProjectionAnonymous = item.projectionAnonymous === true;
+            bestResult = composite;
+            bestExtra = composite;
+          }
+          continue;
+        }
+        const result = this.quietly(() => longestResult(this.evaluate(item.expression, cursor, current, true)));
+        const end = result?.end ?? -1;
         if (end > best) {
           best = end;
           bestKind = item.kind;
+          bestProjectionName = item.projectionName ?? null;
+          bestProjectionAnonymous = item.projectionAnonymous === true;
+          bestResult = result;
+          bestExtra = null;
         }
       }
       if (best === cursor) break;
-      const extra = this.extraNode(bestKind, cursor, best, state);
+      const extra = bestExtra ?? this.extraNode(bestKind, cursor, best, current);
       if (extra === NO_EXTRA) break;
-      leaves.push(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true });
+      // An external extra may skip a prefix before its named token. Keep the
+      // prefix as separate whitespace, as scannerToken does for syntax tokens.
+      const scanned = extra === null && this.program.externalTokens.has(bestKind)
+        ? this.runScanner(bestKind, cursor, current, position) : null;
+      // Lexical comparisons still need the source token identity. Apply the
+      // declared alias only when the selected tree becomes a public CST.
+      const project = (leaf) => bestProjectionAnonymous ? { ...leaf, projectionAnonymous: true }
+        : bestProjectionName === null ? leaf : { ...leaf, projectionName: bestProjectionName };
+      if (scanned?.end === best && !bestProjectionAnonymous) {
+        leaves.push(...scanned.skipped, project({ type: 'token', kind: bestKind, start: scanned.tokenStart, end: best, trivia: true }));
+      } else {
+        leaves.push(project(extra?.node ?? { type: 'token', kind: bestKind, start: cursor, end: best, trivia: true }));
+      }
       cursor = extra?.end ?? best;
+      while (states.length <= leaves.length) states.push(current);
+      current = extra?.state ?? bestResult.state;
+      states[leaves.length] = current;
     }
     } finally {
       this.scanContext = context;
     }
-    const skipped = { end: cursor, leaves };
-    this.triviaMemo.set(key, skipped);
-    return skipped;
+    const skipped = { end: cursor, leaves, state: current, states };
+    const stored = packTriviaCacheResult(skipped, position, this.separatorLeaves, this.memoLimit);
+    this.triviaMemo.set(key, stored);
+    return stored;
   }
 
   // The node an extra of a rule that builds one makes of its text, parsed as
@@ -2334,14 +2680,14 @@ export class Executor {
       let best = null;
       for (const result of results) {
         if (!this.lexing) {
-          if (result.end === end) best ??= result;
+          if (end === null ? best === null || result.end > best.end : result.end === end && best === null) best = result;
           continue;
         }
         const order = best === null ? 1 : preferredTokens(result, best, this.lexing);
         if (order > 0 || (order === 0 && result.end > best.end)) best = result;
       }
       const node = best?.children.find((child) => child.type === 'node');
-      return node ? { node: { ...node, trivia: true }, end: best.end } : null;
+      return node ? { node: { ...node, trivia: true }, end: best.end, state: best.state } : end === null ? NO_EXTRA : null;
     } finally {
       this.inExtra = outer;
       this.extraStart = outerStart;
@@ -2358,27 +2704,37 @@ export class Executor {
   // as a lexer lexes it in one parse state: after the opening quote of a
   // string, not after a string the parse tried to open at its closing quote.
   outrankTrivia(item, position, state) {
-    const level = this.priorityOf(item);
+    // A requested external scanner runs before the internal lexer. A match
+    // beginning here therefore owns its content even when an internal extra
+    // would run farther (a comment-shaped fragment of an interpolated string).
+    // The scanner retains padding it explicitly skipped as separate trivia;
+    // zero-width layout tokens leave the internal extras available.
+    const external = item.kind === 'ref' && this.program.externalTokens.has(item.name)
+      ? this.quietly(() => this.runScanner(item.name, position, state, this.scanContext ?? position)) : null;
+    const ownsStart = external !== null && external.end > external.tokenStart;
+    const level = ownsStart ? Number.MAX_SAFE_INTEGER : this.priorityOf(item);
     if (level <= 0) return;
     const frame = this.lexFrame(position);
     if (!frame || (frame.outranks?.get(position) ?? 0) >= level) return;
-    const end = this.quietly(() => longestResult(this.evaluate(item, position, state, true))?.end ?? -1);
+    const end = ownsStart ? external.end : this.quietly(() => longestResult(this.evaluate(item, position, state, true))?.end ?? -1);
     if (end > position) (frame.outranks ??= new Map()).set(position, level);
   }
 
   // The innermost rule call that began before `position`: the one a token
   // at `position` is lexed for, the calls that begin there being part of
-  // the same parse state.
+  // the same parse state. A composite extra owns its frame from its first
+  // token, so scanner priority there never reaches the enclosing syntax.
   lexFrame(position) {
     for (let index = this.callStack.length - 1; index >= 0; index -= 1) {
-      if (this.callStack[index].position < position) return this.callStack[index];
+      const frame = this.callStack[index];
+      if (frame.position < position || (this.inExtra !== false && frame.position === this.extraStart && frame.rule.kind === 'normal')) return frame;
     }
     return null;
   }
 
   // The start of a terminal: after trivia in syntactic context, at once in token context.
   terminalStart(position, state, inToken) {
-    return inToken ? { end: position, leaves: NO_CHILDREN } : this.skipTrivia(position, state);
+    return inToken ? { end: position, leaves: NO_CHILDREN, state, states: [state] } : this.skipTrivia(position, state);
   }
 
   // The starts of an immediate token: at once, or, in syntactic context under
@@ -2386,11 +2742,11 @@ export class Executor {
   // (such as a comment): a lexer skips no separator before an immediate token,
   // but lexes an extra token before it as before any other.
   immediateStarts(position, state, inToken) {
-    const starts = [{ end: position, leaves: NO_CHILDREN }];
+    const starts = [{ end: position, leaves: NO_CHILDREN, state, states: [state] }];
     if (inToken || !this.lexing) return starts;
-    const { leaves } = this.skipTrivia(position, state);
+    const { leaves, states } = this.skipTrivia(position, state);
     leaves.forEach((leaf, index) => {
-      if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1) });
+      if (leaf.kind !== null) starts.push({ end: leaf.end, leaves: leaves.slice(0, index + 1), state: states[index + 1], states: states.slice(0, index + 2) });
     });
     return starts;
   }
@@ -2443,21 +2799,21 @@ export class Executor {
   // least as far, and without the trivia from it on (CSV's row ends with a
   // `\n` token where `\s` is trivia); otherwise `start` after them.
   // An extra that is a token rule is taken over too where the token wins the
-  // lexical conflict with it, lexing longer at no lower precedence or as far
-  // at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
+  // lexical conflict with it, lexing longer at no lower precedence or matching a
+  // nonempty token at a higher one: Make's `raw_line` of a define directive, `#comment\n`,
   // is no comment of a lower precedence.
-  tokenBeforeExtra(item, start, leaves, state) {
+  tokenBeforeExtra(item, start, leaves, states) {
     const level = this.priorityOf(item);
-    const at = leaves.findIndex((leaf) => {
+    const at = leaves.findIndex((leaf, index) => {
       const plain = isSeparator(leaf) || this.silentExtra(leaf);
       const rule = !plain && leaf.type === 'token' && leaf.trivia === true && leaf.kind !== null ? this.program.rules.get(leaf.kind) : null;
       if (!plain && rule?.kind !== 'token') return false;
-      const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, state, true))?.end ?? -1);
+      const reach = this.quietly(() => longestResult(this.evaluate(item, leaf.start, states[index], true))?.end ?? -1);
       if (plain) return reach >= leaf.end;
       const other = rule.lexicalPriority ?? 0;
-      return (reach > leaf.end && level >= other) || (reach === leaf.end && level > other);
+      return (reach > leaf.end && level >= other) || (reach > leaf.start && level > other);
     });
-    if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, state, true))?.end ?? -1) > start) {
+    if (at >= 0 && isSeparator(leaves[at]) && this.quietly(() => longestResult(this.evaluate(item, leaves[at].start, states[at], true))?.end ?? -1) > start) {
       const chain = this.callStack.filter((entry) => entry.rule.kind === 'normal').map((entry) => [entry.rule.nodeKind, entry.position]);
       const chains = this.separatorTaken.get(leaves[at].start) ?? new Map();
       this.separatorTaken.set(leaves[at].start, chains.set(chain.join('>'), chain));
@@ -2469,13 +2825,13 @@ export class Executor {
       // only the separator goes on (Make's `\\` before a newline); one alive
       // at the separator's end reads on from the lexer's start state.
       const call = this.callStack[this.callStack.length - 1] ?? null;
-      for (const leaf of leaves.slice(0, at < 0 ? leaves.length : at)) {
+      for (const [index, leaf] of leaves.slice(0, at < 0 ? leaves.length : at).entries()) {
         if (!isSeparator(leaf)) continue;
-        const reach = this.prefixReach(item, leaf.start, state);
+        const reach = this.prefixReach(item, leaf.start, states[index]);
         if (reach >= leaf.end) this.keywords.matchJoin(leaf.start, reach, call);
       }
     }
-    return at < 0 ? { end: start, leaves } : { end: leaves[at].start, leaves: leaves.slice(0, at) };
+    return at < 0 ? { end: start, leaves, state: states[leaves.length], states } : { end: leaves[at].start, leaves: leaves.slice(0, at), state: states[at], states: states.slice(0, at + 1) };
   }
 
   // The farthest offset to which the text from `position` begins a match of
@@ -2483,9 +2839,10 @@ export class Executor {
   prefixReach(expression, position, state) {
     this.prefixReaches ??= new Map();
     let reaches = this.prefixReaches.get(expression);
-    if (!reaches) this.prefixReaches.set(expression, reaches = new Map());
-    if (!reaches.has(position)) reaches.set(position, this.prefixReachOf(expression, position, state));
-    return reaches.get(position);
+    if (!reaches) this.prefixReaches.set(expression, reaches = new PrefixReachCache(this.end));
+    const key = `${position}|${state.key}`;
+    if (!reaches.has(key)) reaches.set(key, this.prefixReachOf(expression, position, state));
+    return reaches.get(key);
   }
 
   prefixReachOf(expression, position, state) {
@@ -2621,10 +2978,17 @@ export class Executor {
   }
 
   terminal(expression, position, state, inToken) {
+    if (!inToken && this.lexerFamily !== '') {
+      const lexer = this.program.lexers.get(this.lexerFamily);
+      if (expression.kind === 'literal') return this.electedTerminal(lexer, lexer.literals.get(expression.value), position, state, expression.value);
+      if (expression.kind === 'any') return this.electedTerminal(lexer, null, position, state, null);
+      throw new GrammarRuntimeError(`unsupported parser terminal ${expression.kind} in lexer ${lexer.name}`, 'operation');
+    }
     if (!inToken) this.requestItem(expression, position);
-    let { end: start, leaves } = this.terminalStart(position, state, inToken);
+    let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
     let end = -1;
     if (this.lexing && leaves.length > 0) ({ start, end, leaves } = this.beforeSeparator(expression, start, leaves));
+    state = states[leaves.length];
     if (end < 0) end = this.matchTerminal(expression, start);
     // A literal the grammar also takes as an immediate token (see
     // `KeywordLexing`) is not lexed plainly where the immediate one outranks it.
@@ -2648,6 +3012,17 @@ export class Executor {
   // A token under a lexical precedence keeps its level on the leaf, as the
   // token's rank where it is matched (see `tokenRank`).
   tokenLeaf(item, start, leaves, state, inToken, kind) {
+    // A scanner owns its token start after skip(). Wrapping that token must
+    // retain the skipped trivia, rather than turn it into token content.
+    if (!inToken && item.kind === 'ref' && this.program.externalTokens.has(item.name)) {
+      const scanned = this.scannerToken(item.name, start, state, false, true);
+      // Layout tokens of no width keep their grammar-owned padding span.
+      if (scanned.every((result) => result.children.some((child) => child.scanned && child.end > child.start))) {
+        return scanned.map((result) => copyResult(result, {
+          children: [...leaves, ...result.children.map((child) => (child.scanned ? { ...child, kind } : child))],
+        }));
+      }
+    }
     const best = longestResult(this.evaluate(item, start, state, true));
     if (!best) return [];
     const joined = inToken ? { start, leaves } : this.joinedStart(start, leaves);
@@ -2663,9 +3038,45 @@ export class Executor {
 
   /** Every result of `expression` at `position` in `state`. */
   evaluate(expression, position, state, inToken) {
+    // Fixed lexical trees read input and retain the supplied state. In token
+    // context they neither skip extras nor request syntax expectations; quiet
+    // evaluation also has no diagnostic or recovery effects to replay.
+    const cacheable = acceptLexicalCacheContext(inToken, this.suppressed > 0, this.repairPoints !== null)
+      && acceptFixedLexicalExpression(expression, this.lexicalCacheForms);
+    if (!cacheable) return this.evaluateCase(expression, position, state, inToken);
+    const cache = this.lexicalCache.entries.get(expression);
+    const key = `${position}|${state.key}`;
+    if (cache?.has(key)) return readLexicalCacheResults(cache.get(key));
+    const results = this.evaluateCase(expression, position, state, inToken);
+    if (this.lexicalCache.size < this.memoLimit
+      && retainLexicalCache(this.budget.memory, this.lexicalCache, 1 + results.length)) {
+      // Recursive evaluation may have evicted the map first looked up above.
+      let current = this.lexicalCache.entries.get(expression);
+      if (!current) this.lexicalCache.entries.set(expression, current = new Map());
+      this.lexicalCache.size += 1;
+      current.set(key, packLexicalCacheResults(results));
+    }
+    return results;
+  }
+
+  evaluateCase(expression, position, state, inToken) {
     this.step();
     switch (expression.kind) {
       case 'empty': return [makeResult(position, state)];
+      case 'lexicalScope': {
+        const previous = this.lexerFamily;
+        this.lexerFamily = expression.name;
+        try {
+          const plan = this.program.lexers.get(expression.name);
+          const unresolved = expression.owner === '' ? null : plan?.obligations.find((entry) => entry.name === expression.owner);
+          if (unresolved) throw new GrammarRuntimeError(`unresolved ${unresolved.category} in ${plan.name}:${expression.owner}: ${unresolved.source}`, 'operation');
+          return this.evaluate(expression.item, position, state, inToken).map((result) => copyResult(result, { lexicalFamily: expression.name }));
+        } finally { this.lexerFamily = previous; }
+      }
+      case 'lexicalToken': {
+        const plan = this.program.lexers.get(expression.name);
+        return this.electedTerminal(plan, expression.token, position, state, plan.bindings.get(expression.token) ?? expression.token);
+      }
       case 'literal': case 'literalInsensitive': case 'charRange': case 'charClass': case 'byteClass': case 'any': case 'regex':
         return this.terminal(expression, position, state, inToken);
       case 'ref': return this.reference(expression.name, position, state, inToken);
@@ -2703,7 +3114,7 @@ export class Executor {
           ? [this.terminalStart(position, state, inToken)]
           : this.immediateStarts(position, state, inToken);
         if (expression.kind === 'token' && this.lexing && starts[0].leaves.length > 0) {
-          starts = [this.tokenBeforeExtra(expression.item, starts[0].end, starts[0].leaves, state)];
+          starts = [this.tokenBeforeExtra(expression.item, starts[0].end, starts[0].leaves, starts[0].states)];
         }
         const found = new Map();
         const keyword = this.keywords !== null && !inToken && isKeyword(expression.item);
@@ -2724,8 +3135,8 @@ export class Executor {
         const context = this.scanContext;
         if (!inToken) this.scanContext = position;
         try {
-          for (const { end, leaves } of starts) {
-            for (const result of this.tokenLeaf(expression.item, end, leaves, state, inToken, null)) {
+          for (const { end, leaves, state: afterTrivia } of starts) {
+            for (const result of this.tokenLeaf(expression.item, end, leaves, afterTrivia, inToken, null)) {
               if (keyword || immediate) this.keywords.match(`${end}|${result.end}`, this.callStack[this.callStack.length - 1] ?? null, immediate);
               if (separating && end === position && this.separatorText(end, result.end)) this.keywords.matchSeparator(end, this.callStack[this.callStack.length - 1] ?? null);
               addResult(found, result, this.longestTokens, this.settling);
@@ -2738,12 +3149,13 @@ export class Executor {
         const results = [...found.values()];
         const { end: start, leaves } = starts[0];
         if (results.length > 0 || inToken) return results;
-        return this.elementFailed(start, leaves, state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, state, false));
+        return this.elementFailed(start, leaves, starts[0].state, missingOf(expression.item), expression, scanned ? null : (cursor) => this.evaluate(expression, cursor, starts[0].state, false));
       }
       case 'predicate': return this.predicate(expression, position, state, inToken);
       case 'recover': return this.recover(expression, position, state, inToken);
       case 'missing': return this.missing(expression, position, state, inToken);
       case 'embed': return this.embed(expression, position, state, inToken);
+      case 'any-grammar': case 'all-grammar': return evaluateGrammarSelection(this, expression, position, state, inToken, Executor);
       default: throw new TypeError(`the grammar executor has no case for expression kind ${expression.kind}`);
     }
   }
@@ -2759,7 +3171,7 @@ export class Executor {
   // another at the offset, up to the scanner's deepest indentation.
   continuation(item, left, inToken) {
     if (!this.repairPoints?.has(left.end)) return this.evaluate(item, left.end, left.state, inToken);
-    const last = lastRepaired(left.children);
+    const last = lastRepaired(partOf(left));
     if (last?.type !== 'missing') return this.evaluate(item, left.end, left.state, inToken);
     if (this.chained.has(left.end)) return this.quietly(() => this.evaluate(item, left.end, left.state, inToken));
     this.chained.add(left.end);
@@ -2785,6 +3197,8 @@ export class Executor {
     // The offset each result's optional parts begin at, where its rule
     // could have been reduced (see `reductionFacts`).
     const boundaries = split ? new Map() : null;
+    // Silent operands may expose several children; keep their sequence boundaries.
+    const firstParts = keep ? new WeakMap() : null;
     let current = [makeResult(position, state)];
     for (const [index, item] of items.entries()) {
       const next = new Map();
@@ -2807,7 +3221,11 @@ export class Executor {
               if (split.marked.has(lookahead)) joined = Object.assign(joined, { before: lookahead });
             }
           }
-          if (last && keep && !keep(joined)) continue;
+          if (keep) {
+            const first = index === 0 ? right.children : firstParts.get(left.children);
+            firstParts.set(joined.children, first);
+            if (last && !keep(joined, first, right.children)) continue;
+          }
           addResult(next, joined, tokens, this.settling);
         }
       }
@@ -2990,8 +3408,8 @@ export class Executor {
     // A result whose right operand is of one part waits for the others: it
     // stands only when no result of the expression ends before that operand.
     const pending = [];
-    const valid = (result) => {
-      const verdict = allowed(result);
+    const valid = (result, first = null, last = null) => {
+      const verdict = allowed(result, first, last);
       if (verdict === LONE) pending.push(result);
       if (verdict === true) return true;
       if (verdict === false) this.fail(result.end, 'precedence');
@@ -3002,6 +3420,9 @@ export class Executor {
       if (child.type !== 'node' || !child.precedence) return false;
       const order = comparePrecedence(child.precedence, tag, orders);
       if (order > 0 || (order === 0 && associativity === side)) return false;
+      // Regrouping requires the nested operator to fit the opposite operand.
+      const opposite = this.operandKinds(expression)[side === 'left' ? 'right' : 'left'];
+      if (order === 0 && child.rule === tag.rule && opposite !== null && !opposite.has(wrapper.kind)) return false;
       if (side === 'right' && this.shiftsBelow(expression, child, orders)) return false;
       if (side === 'right' && this.lexedShift(child.rule)) return false;
       if (!this.reachesOwner(expression, wrapper.rule, side)) return false;
@@ -3016,10 +3437,12 @@ export class Executor {
       const edge = side === 'left' ? facing[facing.length - 1] : facing[0];
       return edge !== undefined && kinds.has(edge.kind);
     };
-    const allowed = (result) => {
+    const allowed = (result, first, last) => {
       const meaningful = result.children.filter((child) => !isTrivia(child));
-      if (meaningful.length < 2 || conflicts(meaningful[0], 'left', meaningful[1])) return meaningful.length < 2;
-      const right = conflicts(meaningful[meaningful.length - 1], 'right');
+      const leftParts = Array.isArray(first) ? first.filter((child) => !isTrivia(child)) : null;
+      const rightParts = Array.isArray(last) ? last.filter((child) => !isTrivia(child)) : null;
+      if (meaningful.length < 2 || ((!leftParts || leftParts.length === 1) && conflicts(meaningful[0], 'left', meaningful[1]))) return meaningful.length < 2;
+      const right = !rightParts || rightParts.length === 1 ? conflicts(meaningful[meaningful.length - 1], 'right') : false;
       return right === LONE ? LONE : !right;
     };
     let results = inToken
@@ -3166,7 +3589,7 @@ export class Executor {
         const leads = expression.items.map((item) => this.leadPriority(item, visiting)).filter((lead) => lead !== null);
         return leads.length > 0 ? Math.min(...leads) : null;
       }
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.leadPriority(expression.item, visiting);
       case 'empty': case 'and': case 'not': return null;
       default: return 0;
@@ -3183,6 +3606,11 @@ export class Executor {
     const owner = this.ownerOf(expression);
     const rule = this.program.rules.get(kind);
     if (owner === null || rule?.nodeKind !== kind) return true;
+    const contexts = (name) => {
+      if (!this.precedenceContextMemo.has(name)) this.precedenceContextMemo.set(name, completeRuleContexts(this.program, name));
+      return this.precedenceContextMemo.get(name);
+    };
+    if (!acceptPrecedenceOperandContext(contexts(owner), contexts(kind))) return false;
     const key = `${kind}|${side}`;
     let names = this.edgeMemo.get(key);
     if (!names) {
@@ -3228,7 +3656,7 @@ export class Executor {
         return;
       }
       case 'choice': for (const item of expression.items) this.edgeRules(item, side, names); return;
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence': case 'alias':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': this.edgeRules(expression.item, side, names);
     }
   }
@@ -3239,7 +3667,7 @@ export class Executor {
     let kinds = this.operandMemo.get(expression);
     if (kinds) return kinds;
     const edge = (item, side) => {
-      if (item.kind === 'capture') return edge(item.item, side);
+      if (item.kind === 'capture' || item.kind === 'lexicalScope') return edge(item.item, side);
       if (item.kind === 'seq' && item.items.length > 0) return this.unitKinds(item.items[side === 'left' ? 0 : item.items.length - 1], new Set(), side);
       if (item.kind === 'choice') return union(item.items.map((choice) => edge(choice, side)));
       return null;
@@ -3276,7 +3704,7 @@ export class Executor {
         return kinds.length > 0 ? union(kinds) : null;
       }
       case 'choice': return union(expression.items.map((item) => this.unitKinds(item, visiting, side)));
-      case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence':
+      case 'lexicalScope': case 'capture': case 'precedence': case 'namedPrecedence': case 'dynamicPrecedence':
       case 'optional': case 'repeat0': case 'repeat1': case 'repeat': return this.unitKinds(expression.item, visiting, side);
       case 'alias': return new Set([expression.name]);
       default: return null;
@@ -3309,7 +3737,8 @@ export class Executor {
   // Lexical longest match: the alternative with the longest match wins, a
   // tie goes to the higher lexical priority and then to the first.
   longest(expression, position, state, inToken) {
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     let best = null;
     for (const item of expression.items) {
       const result = longestResult(this.evaluate(item, start, state, true));
@@ -3362,7 +3791,8 @@ export class Executor {
   recover(expression, position, state, inToken) {
     const results = this.evaluate(expression.item, position, state, inToken);
     if (results.length > 0) return results;
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     for (let cursor = start; cursor < this.end;) {
       cursor += decodeAt(this.bytes, cursor, this.end).length;
       const synchronized = this.quietly(() => this.evaluate(expression.synchronize, cursor, state, inToken).length > 0);
@@ -3388,18 +3818,18 @@ export class Executor {
   // bytes, so its offsets stay absolute.
   embed(expression, position, state, inToken) {
     const language = this.program.language(expression.language);
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
+    const { end: start, leaves, state: afterTrivia } = this.terminalStart(position, state, inToken);
+    state = afterTrivia;
     const regions = this.evaluate(expression.item, start, state, true);
     const results = [];
     for (const region of regions) {
       const key = `${expression.language}|${start}|${region.end}`;
       let outcome = this.embedMemo.get(key);
       if (!outcome) {
-        const nested = new Executor(language, this.bytes, start, region.end, this.options, this.budget, this.maxDepth - this.depth);
-        nested.expectations = this.expectations;
-        outcome = nested.run(language.start);
-        this.embedMemo.set(key, outcome);
+        outcome = runEmbeddedGrammar(this, language, start, region.end, expression.language, Executor);
+        if (outcome) this.embedMemo.set(key, outcome);
       }
+      if (!outcome) continue;
       if (!outcome.ok) {
         for (const expectation of outcome.expected) this.fail(outcome.farthest, expectation);
         continue;
@@ -3419,6 +3849,27 @@ export class Executor {
 
   /** A rule call or an external token, memoized with left-recursion growth. */
   reference(name, position, state, inToken) {
+    const rule = this.program.rules.get(name);
+    const nestedSyntax = !inToken && this.inExtra === true && rule?.kind === 'normal'
+      && !this.program.trivia.some(item => item.kind === name);
+    if (!nestedSyntax) return this.referenceAt(name, position, state, inToken);
+    // Ordinary syntax within a scanned extra (an interpolation, for example)
+    // admits its own comment extras while the surrounding scanned text does not.
+    const outer = this.inExtra;
+    this.inExtra = 'nesting';
+    try {
+      return this.referenceAt(name, position, state, inToken);
+    } finally {
+      this.inExtra = outer;
+    }
+  }
+
+  referenceAt(name, position, state, inToken) {
+    if (!inToken && this.lexerFamily !== '') {
+      const plan = this.program.lexers.get(this.lexerFamily);
+      const binding = [...plan.bindings].find(([, canonical]) => canonical === name);
+      if (binding) return this.electedTerminal(plan, binding[0], position, state, name);
+    }
     if (!inToken && this.program.expectedReferences.size > 0) {
       const id = this.program.expectedReferences.get(name);
       if (id !== undefined) this.expectations.request(position, id);
@@ -3432,26 +3883,46 @@ export class Executor {
     }
     // While repairing, a call made quietly (where nothing is repaired) or
     // after a MISSING leaf at its offset is memoized apart from the same call
-    // made in the open.
+    // made in the open. Extra parser contexts have different trivia behavior
+    // and must not reuse the results of an ordinary syntactic context.
     const quiet = !this.repairPoints ? '' : this.suppressed > 0 ? '|quiet' : this.chained.has(position) ? '|chained' : '';
-    const key = `${rule.index}|${position}|${state.key}|${inToken ? 1 : 0}${quiet}`;
+    const keyParts = [`${rule.index}`, `${position}`, `${state.key}`, `${inToken ? 1 : 0}`, `${this.inExtra}`, `${this.extraStart}${quiet}${this.lexerFamily ? `|lexer:${this.lexerFamily}` : ''}`];
+    const key = keyParts[2].length <= 64 ? keyParts.join('|')
+      : `${keyParts[0]}|${keyParts[1]}|${keyParts[2]}|${keyParts[3]}|${keyParts[4]}|${keyParts[5]}`;
     const known = this.memo.get(key);
-    if (known) {
-      known.parents?.add(this.callStack[this.callStack.length - 1] ?? null);
+    const reusableKnown=!known?.recursiveMemoDependencies||known.evaluating||reuseRecursiveMemoEntry(known,this.callStack);
+    if(!reusableKnown)this.memo.delete(key);
+    if (known && reusableKnown) {
+      if (known.keywordContext) {
+        const parent = this.callStack[this.callStack.length - 1]?.keywordContext ?? null;
+        const parents = known.keywordContext.parents;
+        if (Array.isArray(parents)) {
+          if (!parents.includes(parent)) {
+            parents.push(parent);
+            if (parents.length > 8) known.keywordContext.parents = new Set(parents);
+          }
+        } else parents.add(parent);
+      }
       if (!known.evaluating) return known.results;
       // Left recursion: answer with the current seed and mark every call
-      // between the two as depending on it, so none of them is memoized.
+      // between the two as depending on it. Large parses can reuse a completed
+      // dependent call only while all of its exact seed revisions still match.
       known.leftRecursive = true;
+      const recursiveSeed=this.recursiveMemoEnabled?readRecursiveMemoSeed(known,this.callStack.indexOf(known)):null;
       for (let index = this.callStack.length - 1; index >= 0 && this.callStack[index] !== known; index -= 1) {
         this.callStack[index].involved = true;
+        if(recursiveSeed)rememberRecursiveMemoDependency(this.callStack[index],recursiveSeed);
       }
       return known.seed;
     }
     // Under keyword lexing, the calls it was made from (`null` for none),
     // where it began and whether it builds a node: the parse states of a
     // keyword matched in it (see `KeywordLexing`).
-    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, parents: null, position, rule };
-    if (this.keywords) Object.assign(entry, { parents: new Set([this.callStack[this.callStack.length - 1] ?? null]), builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name });
+    const entry = { evaluating: true, leftRecursive: false, involved: false, seed: [], results: null, position, rule };
+    // Keyword decisions need the live call ancestry, not this memo entry's
+    // result trees or left-recursive seeds. Parents reference only contexts,
+    // so keyword matches cannot keep retired memo results alive.
+    if (this.keywords) entry.keywordContext = { parents: [this.callStack[this.callStack.length - 1]?.keywordContext ?? null], position, builds: rule.kind === 'normal', nodeKind: rule.nodeKind, name };
     this.retain(1);
     this.memo.set(key, entry);
     this.callStack.push(entry);
@@ -3463,11 +3934,19 @@ export class Executor {
       this.retain(results.length);
       entry.results = results;
     } finally {
+      finishRecursiveMemoSeed(entry,this.memo,this.callStack);
       this.depth -= 1;
       this.callStack.pop();
       entry.evaluating = false;
     }
-    if (entry.involved || this.memo.size > this.memoLimit) this.memo.delete(key);
+    if (!entry.involved && this.memo.size > this.memoLimit) this.retiredRuleMemoEntries += retireCompletedRuleMemoPrefix(this.memo, position);
+    const reusableRecursiveCall=entry.involved&&acceptRecursiveMemoEntry(entry,this.callStack);
+    if (entry.involved&&!reusableRecursiveCall || this.memo.size > this.memoLimit) this.memo.delete(key);
+    // Only an evaluating call needs its rule, position, seeds and lexer
+    // precedence state. Preserve its exact results and live keyword context
+    // in the memo without retaining those retired active-call fields.
+    else if(reusableRecursiveCall)storeRecursiveMemoEntry(entry,key,this.memo);
+    else this.memo.set(key, { results: entry.results, keywordContext: entry.keywordContext });
     return entry.results;
   }
 
@@ -3475,6 +3954,7 @@ export class Executor {
     if (this.peg) {
       let best = first[0];
       while (best) {
+        advanceRecursiveMemoSeed(entry,this.memo);
         entry.seed = [best];
         const [next] = this.ruleBody(rule, position, state, inToken);
         if (!next || next.end <= best.end) break;
@@ -3510,6 +3990,7 @@ export class Executor {
     let current = new Map(first.map((result) => [resultKey(result), result]));
     let seed = [...current.values()];
     for (let settled = 0; ;) {
+      advanceRecursiveMemoSeed(entry,this.memo);
       entry.seed = seed;
       const merged = new Map(current);
       let changed = false;
@@ -3552,8 +4033,9 @@ export class Executor {
   }
 
   ruleBody(rule, position, state, inToken) {
+    if (rule.kind === 'token' && rule.electedAlternatives) return this.evaluate(rule.expression, position, state, inToken);
     if (rule.kind === 'token' || rule.kind === 'atomic') {
-      let { end: start, leaves } = this.terminalStart(position, state, inToken);
+      let { end: start, leaves, states } = this.terminalStart(position, state, inToken);
       // An extra token is the token of a rule that names it where the rule
       // asks for it: a tree-sitter parser takes a token as an extra only in
       // a parse state with no action on it (GraphQL's `comma`, an extra that
@@ -3564,8 +4046,9 @@ export class Executor {
         // A token rule that matches a separator before it takes it, as a
         // token does (see `tokenBeforeExtra`): Make's `raw_line` of a define
         // directive keeps its indentation.
-        else if (rule.kind === 'token') ({ end: start, leaves } = this.tokenBeforeExtra(rule.expression, start, leaves, state));
+        else if (rule.kind === 'token') ({ end: start, leaves, states } = this.tokenBeforeExtra(rule.expression, start, leaves, states));
       }
+      state = states[leaves.length];
       let results = this.quietly(() => this.evaluate(rule.expression, start, state, true));
       if (rule.kind === 'token' || this.peg) results = results.length > 0 ? [longestResult(results)] : [];
       const built = [];
@@ -3593,8 +4076,11 @@ export class Executor {
     const expected = rule.kind === 'silent' && this.program.conflicts.has(rule.nodeKind);
     for (const result of results) {
       if (rule.kind === 'silent' || inToken) {
-        const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
-        let acted = this.runAction(rule, result, scratch, position);
+        let acted = result;
+        if (rule.action) {
+          const scratch = { type: 'node', kind: rule.nodeKind, start: position, end: result.end, children: result.children };
+          acted = this.runAction(rule, result, scratch, position);
+        }
         if (!acted) continue;
         // An item a silent rule reduces alone records it, for the conflict
         // with a shift where the item is not reduced (see `preferredTokens`
@@ -3685,19 +4171,11 @@ export class Executor {
 
   // An external scanner run for one requested token: a cursor over the
   // input, a token start that `skip` moves, and an optional end `mark`.
-  scannerToken(name, position, state, inToken) {
-    const { end: start, leaves } = this.terminalStart(position, state, inToken);
-    const scanner = this.program.scanners.get(name);
-    const context = inToken ? (this.scanContext ?? start) : position;
-    const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
-    let scanned = this.scannerMemo.get(key);
-    if (scanned === undefined) {
-      scanned = this.runScanner(name, start, state, context);
-      this.scannerMemo.set(key, scanned);
-      // A trace, off unless a probe sets the array: every scanner run, the
-      // token it was asked for and what it scanned.
-      globalThis.__scanTrace?.push([name, start, context, scanned]);
-    }
+  scannerToken(name, position, state, inToken, rawStart = false) {
+    const { end: start, leaves, state: afterTrivia } = rawStart ? { end: position, leaves: NO_CHILDREN, state } : this.terminalStart(position, state, inToken);
+    state = afterTrivia;
+    const context = inToken || rawStart ? (this.scanContext ?? start) : position;
+    const scanned = this.runScanner(name, start, state, context);
     if (!scanned) {
       this.fail(start, name);
       if (inToken) return [];
@@ -3713,51 +4191,66 @@ export class Executor {
 
   runScanner(name, start, state, context) {
     const scanner = this.program.scanners.get(name);
-    const working = workingState(state);
-    const skipped = [];
-    let cursor = start;
-    let tokenStart = start;
-    let markPosition = null;
-    const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, state, true))?.end ?? -1);
-    const machine = {
-      state: working,
-      requested: name,
-      step: () => this.step(),
-      column: () => columnOf(this.bytes, cursor, this.begin),
-      atEnd: () => cursor >= this.end,
-      expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
-      lookahead: (expression) => match(expression) >= 0,
-      advance: () => {
-        if (cursor >= this.end) throw new OperationFailed();
-        cursor += decodeAt(this.bytes, cursor, this.end).length;
-      },
-      consume: (expression) => {
-        const end = match(expression);
-        if (end < 0) throw new OperationFailed();
-        cursor = end;
-      },
-      skip: (expression) => {
-        const end = match(expression);
-        if (cursor !== tokenStart || end < 0) throw new OperationFailed();
-        if (end > cursor) skipped.push({ type: 'token', kind: null, start: cursor, end, trivia: true });
-        cursor = end;
-        tokenStart = end;
-      },
-      mark: () => {
-        markPosition = cursor;
-      },
-    };
-    let signal;
-    try {
-      signal = runStatements(scanner.operations, machine);
-    } catch (error) {
-      if (error instanceof OperationFailed) return null;
-      throw error;
-    }
-    if (!signal || signal.emit !== name) return null;
-    const end = markPosition ?? cursor;
-    if (end < tokenStart) return null;
-    return { tokenStart, end, skipped, state: settleState(working) };
+    // Scanner probes for lexical priority and extras have the same input,
+    // context and state as token scans. Share their memo so a repeated probe
+    // cannot spend the parse budget executing the same operations again.
+    const key = scanner.consults ? `${name}|${start}|${context}|${state.key}` : `${name}|${start}|${state.key}`;
+    if (this.scannerMemo.has(key)) return this.scannerMemo.get(key);
+    const scanned = (() => {
+      const working = workingState(state);
+      const skipped = [];
+      let cursor = start;
+      let tokenStart = start;
+      let markPosition = null;
+      // Predicates read the state after preceding scanner operations, including
+      // temporary stack traversal and restoration.
+      const match = (expression) => this.quietly(() => longestResult(this.evaluate(expression, cursor, settleState(working), true))?.end ?? -1);
+      const machine = {
+        state: working,
+        requested: name,
+        step: () => this.step(),
+        matched: () => this.text(tokenStart, cursor),
+        column: () => columnOf(this.bytes, cursor, this.begin),
+        atEnd: () => cursor >= this.end,
+        expected: (item) => this.expectations.holds(context, this.program.expectedItems.get(item)),
+        lookahead: (expression) => match(expression) >= 0,
+        advance: () => {
+          if (cursor >= this.end) throw new OperationFailed();
+          cursor += decodeAt(this.bytes, cursor, this.end).length;
+        },
+        consume: (expression) => {
+          const end = match(expression);
+          if (end < 0) throw new OperationFailed();
+          cursor = end;
+        },
+        skip: (expression) => {
+          const end = match(expression);
+          if (cursor !== tokenStart || end < 0) throw new OperationFailed();
+          if (end > cursor) skipped.push({ type: 'token', kind: null, start: cursor, end, trivia: true });
+          cursor = end;
+          tokenStart = end;
+        },
+        mark: () => {
+          markPosition = cursor;
+        },
+      };
+      let signal;
+      try {
+        signal = runStatements(scanner.operations, machine);
+      } catch (error) {
+        if (error instanceof OperationFailed) return null;
+        throw error;
+      }
+      if (!signal || signal.emit !== name) return null;
+      const end = markPosition ?? cursor;
+      if (end < tokenStart) return null;
+      return { tokenStart, end, skipped, state: settleState(working) };
+    })();
+    this.scannerMemo.set(key, scanned);
+    // A trace, off unless a probe sets the array: every scanner run, the
+    // token it was asked for and what it scanned.
+    globalThis.__scanTrace?.push([name, start, context, scanned]);
+    return scanned;
   }
 
   /**
@@ -3772,7 +4265,11 @@ export class Executor {
     const complete = [];
     let partial = null;
     for (const result of results) {
-      const trailing = this.skipTrivia(result.end, result.state);
+      const previousFamily = this.lexerFamily;
+      this.lexerFamily = result.lexicalFamily ?? previousFamily;
+      let trailing;
+      try { trailing = this.skipTrivia(result.end, result.state); }
+      finally { this.lexerFamily = previousFamily; }
       if (trailing.end === this.end) {
         complete.push({ result, trailing: trailing.leaves });
         continue;
@@ -3989,6 +4486,7 @@ export class KeywordLexing {
 
   /** Records a separator at `position` a token in the rule call `call` begins with, read on with up to `reach`. */
   matchJoin(position, reach, call) {
+    call = call?.keywordContext ?? call;
     const join = this.matchedJoins.get(position);
     if (!join) this.matchedJoins.set(position, { reach, calls: new Set([call]) });
     else {
@@ -3999,6 +4497,7 @@ export class KeywordLexing {
 
   /** Records an immediate token of separator text alone matched at `position` in the rule call `call`. */
   matchSeparator(position, call) {
+    call = call?.keywordContext ?? call;
     const calls = this.matchedSeparators.get(position);
     if (!calls) this.matchedSeparators.set(position, new Set([call]));
     else calls.add(call);
@@ -4006,6 +4505,7 @@ export class KeywordLexing {
 
   /** Records a keyword or `immediate` literal token matched over `span` in the rule call `call`. */
   match(span, call, immediate = false) {
+    call = call?.keywordContext ?? call;
     const matched = immediate ? this.matchedImmediate : this.matched;
     const calls = matched.get(span);
     if (!calls) matched.set(span, new Set([call]));

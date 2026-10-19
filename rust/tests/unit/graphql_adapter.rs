@@ -6,10 +6,11 @@ use meta_language::{
 };
 use serde_json::Value;
 
-const FIXTURES: &str = include_str!("../../../parity/fixtures/graphql-query-plans.json");
+const FIXTURES: &str = include_str!("../../../parity/fixtures/graphql-query-plans.lino");
 
 fn registry_and_cases() -> (GraphQlSchemaRegistry, Vec<Value>) {
-    let fixture: Value = serde_json::from_str(FIXTURES).expect("fixture is valid JSON");
+    let fixture: Value =
+        super::project_data::read_project_data(FIXTURES).expect("fixture is valid JSON");
     let registry =
         GraphQlSchemaRegistry::from_json(&fixture["registry"]).expect("fixture registry is valid");
     let cases = fixture["cases"]
@@ -27,7 +28,8 @@ fn shared_graphql_fixtures_lower_to_canonical_query_plans() {
         let source = fixture["source"].as_str().expect("source is a string");
         let lowered = lower_graphql(source, &registry).expect("fixture lowers");
         let actual: Value =
-            serde_json::from_str(&lowered.plan().canonical_json()).expect("canonical plan is JSON");
+            super::project_data::read_project_data(&lowered.plan().canonical_json())
+                .expect("canonical plan is JSON");
 
         assert_eq!(actual, fixture["canonicalPlan"], "{}", fixture["name"]);
         assert_ne!(lowered.plan().source_evidence(), []);

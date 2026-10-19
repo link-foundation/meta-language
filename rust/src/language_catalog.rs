@@ -1,6 +1,6 @@
 //! The registered language catalog shared with the JavaScript runtime.
 //!
-//! `src/data/language-catalog.json` is generated from
+//! `src/data/language-catalog.lino` is generated from
 //! `parity/language-grammar-inventory.json` by
 //! `js/scripts/build-language-catalog.mjs`; the npm package ships the same
 //! file, so both runtimes agree on every alias, file extension, and default
@@ -11,7 +11,7 @@ use std::sync::OnceLock;
 
 use serde_json::Value;
 
-const LANGUAGE_CATALOG_JSON: &str = include_str!("data/language-catalog.json");
+const LANGUAGE_CATALOG_LINKS: &str = include_str!("data/language-catalog.lino");
 
 /// A grammar that parses a registered language by default.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,6 +39,16 @@ pub struct LanguageEntry {
     pub extensions: Vec<String>,
     /// Grammars that parse the language by default, primary grammar first.
     pub grammars: Vec<GrammarProvenance>,
+    /// Pinned grammar sources, licenses, scanners and independent corpora.
+    pub grammar_sources: Vec<Value>,
+    /// Language targets embedded in this host language's native regions.
+    pub embedded_languages: Vec<String>,
+    /// Explicit inventoried language versions, separate from grammar releases.
+    pub versions: Option<Value>,
+    /// Explicit inventoried editions, retained without joining their coverage.
+    pub editions: Option<Value>,
+    /// Explicit inventoried dialect boundaries.
+    pub dialects: Option<Value>,
 }
 
 /// Returns every registered language in inventory order.
@@ -144,6 +154,8 @@ pub struct NativeGrammarEntry {
     pub anonymous: Vec<String>,
     /// Node kinds the oracle marks as extras.
     pub extras: Vec<String>,
+    /// Whether the root span includes trivia before its first token.
+    pub root_includes_leading_trivia: bool,
     /// The tree-sitter kind of each rule renamed from it, by rule name.
     pub oracle_kinds: BTreeMap<String, String>,
 }
@@ -164,6 +176,9 @@ pub fn native_grammars() -> &'static [NativeGrammarEntry] {
                         hidden: strings(&grammar["hidden"]),
                         anonymous: strings(&grammar["anonymous"]),
                         extras: strings(&grammar["extras"]),
+                        root_includes_leading_trivia: grammar["rootIncludesLeadingTrivia"]
+                            .as_bool()
+                            .unwrap_or(false),
                         oracle_kinds: grammar["oracleKinds"]
                             .as_object()
                             .map(|kinds| {
@@ -189,7 +204,8 @@ pub fn native_grammar(id: &str) -> Option<&'static NativeGrammarEntry> {
 fn catalog_value() -> &'static Value {
     static VALUE: OnceLock<Value> = OnceLock::new();
     VALUE.get_or_init(|| {
-        serde_json::from_str(LANGUAGE_CATALOG_JSON).expect("language catalog is valid JSON")
+        crate::structured_data_links::read_structured_data_lino(LANGUAGE_CATALOG_LINKS)
+            .expect("language catalog is valid Links Notation")
     })
 }
 
@@ -217,6 +233,16 @@ fn parse_catalog() -> Vec<LanguageEntry> {
             aliases: strings(&language["aliases"]),
             extensions: strings(&language["extensions"]),
             grammars: provenance(&language["grammars"]),
+            grammar_sources: language["grammarSources"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default(),
+            embedded_languages: language["embeddedLanguages"]
+                .as_array()
+                .map_or_else(Vec::new, |_| strings(&language["embeddedLanguages"])),
+            versions: language.get("versions").cloned(),
+            editions: language.get("editions").cloned(),
+            dialects: language.get("dialects").cloned(),
         })
         .collect()
 }

@@ -1,0 +1,1 @@
+The associative foundation audit now captures exact pinned guide and meta-theory documents with content hashes, Git blob identities and verified commit metadata. An offline checker rejects source or revision drift while retaining the distinction between source inspection and execution evidence.

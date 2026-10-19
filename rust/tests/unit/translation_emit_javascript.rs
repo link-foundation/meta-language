@@ -220,7 +220,7 @@ fn checks_theorems_on_bounded_domains() {
     );
     assert!(emitted.text.contains(
         "  if (!(ml_product([ml_small_int]).every((args) => t(...args)))) \
-         throw new Error('theorem t fails on a bounded input');"
+         throw new Error(\"theorem t fails on a bounded input\");"
     ));
     assert!(emitted.text.ends_with(
         "if (process.argv.includes('--ml-check-theorems')) ml_checkTheorems();\nelse main();\n"
@@ -241,4 +241,42 @@ fn checks_theorems_on_bounded_domains() {
     let error =
         emit_javascript(&program(&[theorem(&literal)], &Value::Null)).expect_err("no domain");
     assert_eq!(error.message(), "no JavaScript domain for literal");
+}
+
+#[test]
+fn primed_theorem_names_execute_in_success_and_failure_messages() {
+    let byte = json!({ "kind": "fixed", "bits": 8, "signed": true });
+    let mut entry = theorem(&byte);
+    entry["name"] = json!("t'");
+    entry["fullName"] = json!("t'");
+    let emitted = emit_javascript(&program(&[entry], &Value::Null)).expect("emits");
+    let execute = |source: &str| {
+        std::process::Command::new("node")
+            .args([
+                "--input-type=module",
+                "--eval",
+                source,
+                "--",
+                "--ml-check-theorems",
+            ])
+            .output()
+            .expect("execute the emitted JavaScript with Node")
+    };
+    let output = execute(&emitted.text);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        String::from_utf8(output.stdout).expect("UTF-8 output"),
+        "theorem t': holds on the bounded domain\n"
+    );
+    let mutation = emitted.text.replace("return (x === x);", "return false;");
+    assert_ne!(mutation, emitted.text);
+    let output = execute(&mutation);
+    assert!(!output.status.success());
+    let diagnostic = String::from_utf8(output.stderr).expect("UTF-8 diagnostic");
+    assert!(diagnostic.contains("Error: theorem t' fails on a bounded input"));
+    assert!(!diagnostic.contains("SyntaxError"));
 }

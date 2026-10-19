@@ -24,7 +24,7 @@ use serde_json::Value;
 
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.lino");
 const REQUIREMENT_ID: &str = "I195-INTERCHANGE-API-CLI";
 
 fn record(assertion: &str, test_name: &str) {
@@ -43,7 +43,7 @@ fn record(assertion: &str, test_name: &str) {
 }
 
 fn corpus() -> Value {
-    serde_json::from_str(FIXTURE).expect("shared importer fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("shared importer fixture is JSON")
 }
 
 fn text<'a>(value: &'a Value, key: &str) -> &'a str {

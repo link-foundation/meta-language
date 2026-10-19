@@ -1,3 +1,20 @@
+use crate::translation::embedded_region_rules::accept_embedded_region_limit;
+
+mod embedded_region_defaults {
+    include!("data/embedded-region-defaults.rs");
+}
+
+use embedded_region_defaults::{
+    DEFAULT_EMBEDDED_REGION_BYTE_LIMIT, DEFAULT_EMBEDDED_REGION_COUNT_LIMIT,
+    DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT,
+};
+
+pub(crate) fn embedded_region_number(value: usize) -> f64 {
+    serde_json::Number::from(value)
+        .as_f64()
+        .expect("a host index has a JavaScript Number representation")
+}
+
 /// Trivia attachment strategy.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TriviaAttachmentPolicy {
@@ -99,6 +116,9 @@ pub struct ParseConfiguration {
     naturalization_direction: NaturalizationDirection,
     access_mode: AccessMode,
     profile: Option<&'static str>,
+    embedded_region_depth_limit: usize,
+    embedded_region_count_limit: usize,
+    embedded_region_byte_limit: usize,
 }
 
 impl ParseConfiguration {
@@ -113,7 +133,55 @@ impl ParseConfiguration {
             naturalization_direction: NaturalizationDirection::Naturalize,
             access_mode: AccessMode::Mutable,
             profile: None,
+            embedded_region_depth_limit: DEFAULT_EMBEDDED_REGION_DEPTH_LIMIT,
+            embedded_region_count_limit: DEFAULT_EMBEDDED_REGION_COUNT_LIMIT,
+            embedded_region_byte_limit: DEFAULT_EMBEDDED_REGION_BYTE_LIMIT,
         }
+    }
+
+    /// Bounds recursive CST attachment independently of each parser's budgets.
+    ///
+    /// Native `usize` arguments already exclude negative, fractional and
+    /// nonnumeric values. Values above JavaScript's safe integer range refuse.
+    ///
+    /// # Errors
+    ///
+    /// Returns the shared range error when any limit is not a safe integer.
+    pub fn with_embedded_region_limits(
+        mut self,
+        depth_limit: usize,
+        count_limit: usize,
+        byte_limit: usize,
+    ) -> Result<Self, &'static str> {
+        for value in [depth_limit, count_limit, byte_limit] {
+            if !u64::try_from(value).is_ok_and(|value| value <= 9_007_199_254_740_991)
+                || !accept_embedded_region_limit(embedded_region_number(value))
+            {
+                return Err("embedded region limits must be nonnegative safe integers");
+            }
+        }
+        self.embedded_region_depth_limit = depth_limit;
+        self.embedded_region_count_limit = count_limit;
+        self.embedded_region_byte_limit = byte_limit;
+        Ok(self)
+    }
+
+    /// Maximum child attachment depth; the original root is depth zero.
+    #[must_use]
+    pub const fn embedded_region_depth_limit(self) -> usize {
+        self.embedded_region_depth_limit
+    }
+
+    /// Maximum admitted child parse attempts over the complete traversal.
+    #[must_use]
+    pub const fn embedded_region_count_limit(self) -> usize {
+        self.embedded_region_count_limit
+    }
+
+    /// Maximum sum of physical child parse bytes over the complete traversal.
+    #[must_use]
+    pub const fn embedded_region_byte_limit(self) -> usize {
+        self.embedded_region_byte_limit
     }
 
     /// Returns configuration with a mixed-language region detection policy.

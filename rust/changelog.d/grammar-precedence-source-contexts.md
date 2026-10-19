@@ -1,0 +1,1 @@
+Native grammar precedence now checks the complete source contexts of both constructs before regrouping an operand. Comma-separated assignment values retain their low source precedence while remaining valid where a value list cannot replace the enclosing assignment.

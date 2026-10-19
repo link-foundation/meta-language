@@ -8,6 +8,10 @@ import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { DecoratorSet } from '../src/decorators.js';
+import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
+import { LinkNetwork } from '../src/network.js';
+import { createModuleContext } from '../scripts/generate-self-translation-report.mjs';
+import { writeProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const script = path.join(root, 'js/scripts/generate-self-translation-report.mjs');
@@ -19,10 +23,64 @@ const list = (directory) => readdirSync(path.join(root, directory), { withFileTy
 });
 const metrics = { functions: 0, matched: 0, identical: 0, codeLines: 0, sharedLines: 0, handWrittenLines: 0 };
 
+test('report contexts resolve real translated exports across relative module dependencies', () => {
+  const modules = new Map([
+    ['value.js', '/** @param {number} x @returns {number} */\nexport function increment(x) { return x + 1; }\n'],
+    ['nested/second.js', "import { increment as next } from '../value.js';\n/** @param {number} x @returns {number} */\nexport function second(x) { return next(x) + 1; }\n"],
+    ['main.js', "import { second } from './nested/second.js';\n/** @param {number} x @returns {number} */\nexport function compute(x) { return second(x) + 1; }\n"],
+  ]);
+  const reads = new Map();
+  const context = createModuleContext((name) => {
+    reads.set(name, (reads.get(name) ?? 0) + 1);
+    return modules.get(name) ?? null;
+  });
+  for (const name of ['main.js', 'nested/second.js']) {
+    const translation = selfTranslate(modules.get(name), 'JavaScript', 'Rust', context(name));
+    assert.ok(translation.items.every((item) => item.status !== 'carried'), translation.code);
+  }
+  assert.deepEqual(context('nested/second.js').moduleDirectory, ['nested']);
+  assert.deepEqual(context('main.js').imports['./nested/second.js'].map(({ name }) => name), ['second']);
+  assert.equal(context('main.js'), context('main.js'));
+  assert.ok([...reads.values()].every((count) => count === 1));
+});
+
+test('report contexts use syntax imports and refuse paths outside the source root', () => {
+  const source = `// import { fake } from './fake.js'
+import { outside } from '../outside.js';
+import { absent } from './missing.js';
+export const message = 'import { pretend } from "./pretend.js"';
+`;
+  const reads = [];
+  const context = createModuleContext((name) => {
+    reads.push(name);
+    return name === 'main.js' ? source : null;
+  });
+  assert.deepEqual(context('main.js').imports, {});
+  assert.deepEqual(reads, ['main.js', 'missing.js']);
+});
+
+test('report contexts keep missing exports and import cycles unbound', () => {
+  const modules = new Map([
+    ['provider.js', 'export class Unsupported {}\n'],
+    ['missing.js', "import { absent } from './provider.js';\n/** @returns {number} */\nexport function read() { return absent(); }\n"],
+    ['first.js', "import { second } from './second.js';\n/** @returns {number} */\nexport function first() { return second(); }\n"],
+    ['second.js', "import { first } from './first.js';\n/** @returns {number} */\nexport function second() { return first(); }\n"],
+  ]);
+  const context = createModuleContext((name) => modules.get(name) ?? null);
+  for (const name of ['missing.js', 'first.js']) {
+    const translation = selfTranslate(modules.get(name), 'JavaScript', 'Rust', context(name));
+    assert.ok(translation.items.some((item) => item.status === 'carried'), translation.code);
+  }
+});
+
 function fixture() {
   const modules = list('js/src').sort().map((module) => {
     const stem = path.posix.relative('js/src', module).replace(/\.js$/u, '').replaceAll('-', '_');
-    const rust = [`rust/src/${stem}.rs`, `rust/src/${stem}/mod.rs`].find((file) => existsSync(path.join(root, file))) ?? null;
+    const nativeStem = stem.replace(/^grammar_runtime\//u, 'grammar/feature_runtime/');
+    const rust = module === 'js/src/typed-program-pattern-bindings.js'
+      ? 'rust/src/typed_program_links/codec_scopes.rs'
+      : [stem, nativeStem].flatMap(path => [`rust/src/${path}.rs`, `rust/src/${path}/mod.rs`])
+        .find((file) => existsSync(path.join(root, file))) ?? null;
     return {
       module, rust, sourceSha256: digest(module), rustSha256: rust ? digest(rust) : null,
       items: { translated: 0, carried: 0, comment: 0 }, milliseconds: 0,
@@ -38,7 +96,7 @@ function verify(report, markdown) {
   try {
     const shard = path.join(directory, 'shard');
     mkdirSync(shard);
-    writeFileSync(path.join(shard, 'self-translation-report.json'), JSON.stringify(report));
+    writeProjectData(path.join(shard, 'self-translation-report.lino'), report);
     writeFileSync(path.join(shard, 'self-translation-report.md'), markdown ?? report.modules.map(({ module }) => `| ${module} |`).join('\n'));
     return spawnSync(process.execPath, [script, '--verify-reports', directory, '--commit', commit], { encoding: 'utf8' });
   } finally {
@@ -48,6 +106,15 @@ function verify(report, markdown) {
 
 test('the published report validator covers every source module at the observed commit', () => {
   const report = fixture();
+  for (const [module, rust] of [
+    ['js/src/grammar-runtime/lexical-cache.js', 'rust/src/grammar/feature_runtime/lexical_cache.rs'],
+    ['js/src/grammar-runtime/lexical-cache-memory.js', 'rust/src/grammar/feature_runtime/lexical_cache_memory.rs'],
+    ['js/src/typed-program-pattern-bindings.js', 'rust/src/typed_program_links/codec_scopes.rs'],
+  ]) {
+    const row = report.modules.find(row => row.module === module);
+    assert.equal(row?.rust, rust);
+    assert.equal(row.rustSha256, digest(rust));
+  }
   const result = verify(report);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, new RegExp(`${report.modules.length} modules at ${commit}`, 'u'));
@@ -73,6 +140,11 @@ test('incomplete, stale or inconsistent reports cannot record the reporting asse
     [(report) => { report.commit = '2'.repeat(40); }, /commit/u],
     [(report) => { report.modules[0].sourceSha256 = '0'.repeat(64); }, /source hash/u],
     [(report) => { report.modules.find(({ rust }) => rust).rustSha256 = '0'.repeat(64); }, /Rust hash/u],
+    [(report) => {
+      const row = report.modules.find(({ module }) => module === 'js/src/typed-program-pattern-bindings.js');
+      row.rust = null;
+      row.rustSha256 = null;
+    }, /Rust counterpart/u],
     [(report) => { report.modules[0].decorated.sharedLines = 1; }, /measurements/u],
     [(report) => { report.decorators = []; }, /decorators/u],
     [(report) => { report.failures.push({ module: report.modules[0].module, error: 'refused' }); }, /failed modules/u],
@@ -86,4 +158,23 @@ test('incomplete, stale or inconsistent reports cannot record the reporting asse
   const result = verify(fixture(), 'No per-module rows.');
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Markdown row/u);
+});
+
+
+test('signature discovery checks exports without constructing another complete source graph', () => {
+  const source = '/** @returns {number} */\nexport function count() { return 2; }\nexport const limit = 3;\nexport class Unsupported {}\n';
+  const original = LinkNetwork.parse;
+  let signatures;
+  try {
+    LinkNetwork.parse = () => { throw new Error('signature discovery constructed a source graph'); };
+    signatures = selfTranslationSignatures(source, 'JavaScript');
+  } finally { LinkNetwork.parse = original; }
+  assert.deepEqual(signatures, [
+    { k: 'fn', name: 'count', params: [], ret: { kind: 'float' } },
+    { k: 'const', name: 'limit', type: { kind: 'float' }, literal: true },
+  ]);
+  const translation = selfTranslate(source, 'JavaScript', 'Rust');
+  assert.ok(translation.items.some(({ status }) => status === 'translated'));
+  assert.ok(translation.items.some(({ status }) => status === 'carried'));
+  assert.throws(() => selfTranslationSignatures("export const invalid = '\ud800';", 'JavaScript'), /do not reproduce/u);
 });

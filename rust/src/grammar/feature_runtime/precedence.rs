@@ -58,7 +58,8 @@ pub(super) fn nullable(expr: &Expr) -> bool {
         Expr::Repeat { item, min, .. } => *min == 0 || nullable(item),
         Expr::Seq(items) => items.iter().all(nullable),
         Expr::Choice { items, .. } => items.iter().any(nullable),
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. } => nullable(item),
@@ -91,7 +92,13 @@ fn wrapped(node: &Rc<Tree>) -> Rc<Tree> {
             .collect();
         if parts.len() != 1
             || parts[0].ty != TreeType::Node
-            || !PrecedenceTag::same(parts[0].precedence.as_ref(), current.precedence.as_ref())
+            || !parts[0]
+                .precedence
+                .as_ref()
+                .zip(current.precedence.as_ref())
+                .is_some_and(|(child, parent)| {
+                    child.level == parent.level && child.name == parent.name
+                })
         {
             break;
         }
@@ -107,6 +114,16 @@ impl Executor<'_> {
     // when it conflicts, that is when its own child facing the operator could
     // have been the operand instead (`-a->t` but not `f(a)->t`).
     pub(super) fn precedence_valid(&mut self, keep: &Keep, result: &Res) -> bool {
+        self.precedence_valid_edges(keep, result, true, true)
+    }
+
+    pub(super) fn precedence_valid_edges(
+        &mut self,
+        keep: &Keep,
+        result: &Res,
+        left_single: bool,
+        right_single: bool,
+    ) -> bool {
         let meaningful: Vec<Rc<Tree>> = result
             .children
             .iter()
@@ -115,10 +132,13 @@ impl Executor<'_> {
             .collect();
         let verdict = if meaningful.len() < 2 {
             Conflict::No
-        } else if self.conflicts(keep, &meaningful[0], Associativity::Left, meaningful.get(1))
-            == Conflict::Yes
+        } else if left_single
+            && self.conflicts(keep, &meaningful[0], Associativity::Left, meaningful.get(1))
+                == Conflict::Yes
         {
             Conflict::Yes
+        } else if !right_single {
+            Conflict::No
         } else {
             self.conflicts(
                 keep,
@@ -187,6 +207,23 @@ impl Executor<'_> {
         let order = compare_precedence(inner, &keep.tag, &self.program.precedence_orders);
         if order == std::cmp::Ordering::Greater
             || (order == std::cmp::Ordering::Equal && keep.tag.associativity == side)
+        {
+            return Conflict::No;
+        }
+        // Regrouping requires the nested operator to fit the opposite operand.
+        let opposite = if side == Associativity::Left {
+            &keep.operands.right
+        } else {
+            &keep.operands.left
+        };
+        if order == std::cmp::Ordering::Equal
+            && child.rule == keep.tag.rule
+            && opposite.as_ref().is_some_and(|kinds| {
+                wrapper
+                    .kind
+                    .as_ref()
+                    .is_some_and(|kind| !kinds.contains(kind))
+            })
         {
             return Conflict::No;
         }
@@ -384,6 +421,7 @@ impl Executor<'_> {
         while let Some(
             Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
+            | Expr::LexicalScope { item, .. }
             | Expr::Capture { item, .. },
         ) = body
         {
@@ -425,7 +463,8 @@ impl Executor<'_> {
                 .iter()
                 .filter_map(|item| self.lead_priority(item, visiting))
                 .min(),
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Alias { item, .. }
@@ -464,6 +503,26 @@ impl Executor<'_> {
         let (Some(owner), Some(index)) = (owner, self.own_rule(kind)) else {
             return true;
         };
+        let owner_contexts = Rc::clone(self.precedence_context_memo.entry(owner).or_insert_with(
+            || {
+                Rc::new(super::precedence_contexts::complete_rule_contexts(
+                    program, owner,
+                ))
+            },
+        ));
+        let child_contexts = Rc::clone(self.precedence_context_memo.entry(index).or_insert_with(
+            || {
+                Rc::new(super::precedence_contexts::complete_rule_contexts(
+                    program, index,
+                ))
+            },
+        ));
+        if !crate::translation::frontend_rules::accept_precedence_operand_context(
+            owner_contexts.as_ref().clone(),
+            child_contexts.as_ref().clone(),
+        ) {
+            return false;
+        }
         let key = (kind.clone(), side);
         let names = if let Some(names) = self.edge_memo.get(&key) {
             Rc::clone(names)
@@ -499,6 +558,7 @@ impl Executor<'_> {
                         Expr::Repeat { item, .. }
                         | Expr::And(item)
                         | Expr::Not(item)
+                        | Expr::LexicalScope { item, .. }
                         | Expr::Capture { item, .. }
                         | Expr::Alias { item, .. }
                         | Expr::DynamicPrecedence { item, .. }
@@ -509,7 +569,10 @@ impl Executor<'_> {
                         | Expr::Recover { item, .. }
                         | Expr::Missing { item, .. }
                         | Expr::Embed { item, .. } => pending.push(item),
-                        Expr::Empty | Expr::Terminal { .. } | Expr::Ref(_) => {}
+                        Expr::Empty
+                        | Expr::LexicalToken { .. }
+                        | Expr::Terminal { .. }
+                        | Expr::Ref(_) => {}
                     }
                 }
             }
@@ -550,7 +613,8 @@ impl Executor<'_> {
                     self.edge_rules(item, side, names);
                 }
             }
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Alias { item, .. }
@@ -662,7 +726,9 @@ impl Executor<'_> {
 
     pub(super) fn edge_kinds(&self, item: &Expr, side: Associativity) -> Option<HashSet<Name>> {
         match item {
-            Expr::Capture { item, .. } => self.edge_kinds(item, side),
+            Expr::LexicalScope { item, .. } | Expr::Capture { item, .. } => {
+                self.edge_kinds(item, side)
+            }
             Expr::Seq(items) if !items.is_empty() => {
                 let operand = if side == Associativity::Left {
                     &items[0]
@@ -721,7 +787,8 @@ impl Executor<'_> {
                     .iter()
                     .map(|item| self.unit_kinds(item, visiting, side)),
             ),
-            Expr::Capture { item, .. }
+            Expr::LexicalScope { item, .. }
+            | Expr::Capture { item, .. }
             | Expr::Precedence { item, .. }
             | Expr::DynamicPrecedence { item, .. }
             | Expr::Repeat { item, .. } => self.unit_kinds(item, visiting, side),

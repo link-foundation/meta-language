@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Compares the native Make grammar (parity/grammars/native/make.lino) with its
 // tree-sitter-make oracle on every case of the pinned upstream corpus
 // (parity/grammars/sources/tree-sitter-make-*.corpus.json.gz), one case at a
@@ -16,7 +17,7 @@ import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-gramma
 const grammar = 'make';
 const language = 'Make';
 // LINO names another grammar file, as a variant of the scanner to try.
-const text = readFileSync(process.env.LINO ?? new URL(`../../parity/grammars/native/${grammar}.lino`, import.meta.url), 'utf8');
+const text = readFileSync(resolveProjectDataPath(process.env.LINO ?? new URL(`../../parity/grammars/native/${grammar}.lino`, import.meta.url)), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: [], anonymous: ['unnamed_token', 'raw_line'], extras: ['comment'], oracleKinds: nativeOracleKinds(text) };
 const show = new Set(process.env.SHOW ? process.env.SHOW.split(',') : []);

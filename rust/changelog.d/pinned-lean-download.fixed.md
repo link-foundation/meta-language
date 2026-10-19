@@ -1,0 +1,1 @@
+CI can recover from an unavailable Lean release index using the same official, checksum-pinned release from GitHub. The fallback verifies its exact version, preserves native verification gates and refuses local execution.

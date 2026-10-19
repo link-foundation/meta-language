@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Declared settling: how two parses of one text that end alike are settled
 // is grammar data, `(settling STEP...)`, which the executor reads for every
 // grammar, whatever format it was imported from.
@@ -87,7 +88,7 @@ test('every importer settles through the same declared steps', (context) => {
   const directory = new URL('js/src/data/native-grammars/', repositoryRoot);
   const declaredBy = new Map();
   for (const file of readdirSync(directory).filter((name) => name.endsWith('.lino'))) {
-    const header = readFileSync(new URL(file, directory), 'utf8').split('\n', 1)[0];
+    const header = readFileSync(resolveProjectDataPath(new URL(file, directory)), 'utf8').split('\n', 1)[0];
     if (header.includes('(matching longest)')) declaredBy.set(file, /\(settling ([^)]*)\)/u.exec(header)?.[1] ?? null);
   }
   assert.ok(declaredBy.size >= 6);
@@ -97,9 +98,14 @@ test('every importer settles through the same declared steps', (context) => {
   // the PEG one, and either follows a settling declared on it.
   const antlr = importAntlr("grammar g;\ns : a | b ;\na : 'x' ;\nb : 'x' ;\n");
   assert.equal(antlr.declarations.settling, undefined);
-  assert.deepEqual(settle(antlr, 'x'), ['(s (a "x"))', 1]);
-  assert.deepEqual(settle(withSettling(antlr, [...DEFAULT_SETTLING.generalized]), 'x'), ['(s (a "x"))', 1]);
-  assert.deepEqual(settle(withSettling(antlr, ['first']), 'x'), ['(s (a "x"))', 0]);
+  // Elected lexical leaves retain their concrete token kind and source
+  // provenance; settling still selects the same parser rule and ambiguity.
+  assert.deepEqual(settle(antlr, 'x'), ['(s (a (x "x")))', 1]);
+  assert.deepEqual(settle(withSettling(antlr, [...DEFAULT_SETTLING.generalized]), 'x'), ['(s (a (x "x")))', 1]);
+  assert.deepEqual(settle(withSettling(antlr, ['first']), 'x'), ['(s (a (x "x")))', 0]);
+  const unmarked = new Grammar(antlr.start, antlr.rules, undefined, antlr.declarations);
+  assert.deepEqual(settle(unmarked, 'x'), settle(antlr, 'x'));
+  assert.deepEqual(settle(parseGrammarLinks(renderGrammarLinks(unmarked)), 'x'), settle(antlr, 'x'));
   const pest = importPest('s = { a | b }\na = { "x" }\nb = { "x" }\n');
   assert.deepEqual(settle(pest, 'x'), settle(withSettling(pest, [...DEFAULT_SETTLING.peg]), 'x'));
   observe(['sharedByEveryImporter'], context.name);
@@ -108,12 +114,12 @@ test('every importer settles through the same declared steps', (context) => {
 test('the executor settles by the declared steps, not by source format', (context) => {
   const runtime = new URL('js/src/grammar-runtime/', repositoryRoot);
   for (const file of readdirSync(runtime)) {
-    const source = readFileSync(new URL(file, runtime), 'utf8');
+    const source = readFileSync(resolveProjectDataPath(new URL(file, runtime)), 'utf8');
     // No settling decided by the format a grammar was imported from.
     assert.doesNotMatch(source, /sourceFormat\s*===\s*'(?!peg')/u, file);
     assert.doesNotMatch(source, /'tree-sitter'|'antlr'|'lark'/u, file);
   }
-  const executor = readFileSync(new URL('executor.js', runtime), 'utf8');
+  const executor = readFileSync(resolveProjectDataPath(new URL('executor.js', runtime)), 'utf8');
   for (const step of SETTLING_STEPS.filter((name) => name !== 'first')) assert.match(executor, new RegExp(`'${step}'|settling\\.${step}`, 'u'), step);
   observe(['noHostCodeSettling'], context.name);
 });

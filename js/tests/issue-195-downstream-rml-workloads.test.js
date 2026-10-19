@@ -6,8 +6,9 @@
 // and records the JavaScript observations. The Rust suite
 // (rust/tests/unit/issue_195_downstream_rml_workloads.rs) reads the crate part.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   RML_PROBE_ASSERTIONS,
@@ -226,7 +227,7 @@ const liveSkip = !reportPath
     : false;
 
 test('the CI workload report holds every assertion for the installed npm package', { skip: liveSkip }, () => {
-  const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  const report = readProjectData(reportPath);
   assert.equal(report.requirementId, RML_WORKLOAD_REQUIREMENT);
   assert.equal(report.fixture, RML_WORKLOAD_FIXTURE);
   const { problems, observed } = validateRmlWorkloadReport(report, fixture, 'javascript');

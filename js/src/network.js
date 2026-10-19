@@ -10,6 +10,7 @@ import {
   LinkId,
   LinkMetadata,
   LinkType,
+  NetworkProjection,
   ParseConfiguration,
   Point,
   SourceSpan,
@@ -35,7 +36,14 @@ import {
   hasMetaSublinks,
   parseLinoStatements,
 } from './lino-serialization.js';
-import { grammarProvenance } from './language-catalog.js';
+import { canonicalLanguageName, grammarProvenance } from './language-catalog.js';
+import {
+  acceptEmbeddedRegionSourceCoverage, readEmbeddedRegionAncestor,
+  readEmbeddedRegionCharge, readEmbeddedRegionDefaultLimit,
+  readEmbeddedRegionDiagnosticLimit, readEmbeddedRegionDiagnosticObserved,
+  readEmbeddedRegionDisposition,
+} from './translation/embedded-region-rules.js';
+import { acceptNetworkProjection, acceptNetworkProjectionLink } from './network-projection-rules.js';
 import { seedStatehoodWorkedExample } from './concept-ontology.js';
 import {
   CONCEPT_RECORDS,
@@ -51,6 +59,28 @@ const decoder = new TextDecoder('utf-8', { ignoreBOM: true });
 const EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-identifier:';
 const FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX = 'external-id:';
 const FIELD_LABEL_DEFINITION = 'A field label names a relation between links.';
+
+// Derived only for a synchronous bulk seeding call, then discarded even when
+// it throws. The links remain authoritative, including their query order.
+const BULK_SEMANTIC_PAIR_INDEXES = new WeakMap();
+
+function insertSemanticPairIndexEntry(index, link) {
+  const references = link.references(), metadata = link.metadata();
+  if (metadata.linkType !== LinkType.Semantic || references.length !== 2) return;
+  let seconds = index.get(idKey(references[0]));
+  if (!seconds) index.set(idKey(references[0]), seconds = new Map());
+  let terms = seconds.get(idKey(references[1]));
+  if (!terms) seconds.set(idKey(references[1]), terms = new Map());
+  let languages = terms.get(metadata.term);
+  if (!languages) terms.set(metadata.term, languages = new Map());
+  if (!languages.has(metadata.language)) languages.set(metadata.language, link.id());
+}
+
+function indexSemanticPairs(network) {
+  const index = new Map();
+  for (const link of network.links()) insertSemanticPairIndexEntry(index, link);
+  return index;
+}
 
 function externalVocabularyFromTerm(term) {
   for (const prefix of [EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX, FORMER_EXTERNAL_IDENTIFIER_VOCABULARY_PREFIX]) {
@@ -82,8 +112,7 @@ export class LinkNetwork {
     return LinkNetwork._parseWithLinks(text, 'LiNo', configuration);
   }
 
-  static _parseWithLinks(text, language, configuration) {
-    const parsed = parseProgrammingLanguage(text, language);
+  static _parseWithLinks(text, language, configuration, parsed = parseProgrammingLanguage(text, language)) {
     if (!parsed) return { network: LinkNetwork.parseLosslessText(text, language, configuration), links: [] };
     const network = new LinkNetwork();
     const { root: document } = network._insertProgrammingLanguage(parsed, language, configuration);
@@ -162,9 +191,11 @@ export class LinkNetwork {
   }
 
   insertLinkWithOptionalId(preferredId, references = [], metadata = LinkMetadata.new()) {
-    const id = preferredId === undefined ? this._allocateId() : LinkId.from(preferredId);
-    this._nextId = Math.max(this._nextId, id.asU64() + 1);
-    this._links.set(id.asU64(), new Link(id, references, metadata));
+    const id = preferredId === undefined ? new LinkId(this._nextId) : LinkId.from(preferredId);
+    const link = new Link(id, references, metadata);
+    const numeric = id.asU64();
+    this._nextId = Math.max(this._nextId, numeric + 1);
+    this._links.set(numeric, link);
     return id;
   }
 
@@ -329,9 +360,15 @@ export class LinkNetwork {
 
   /** Assigns every concept record and returns the counts of concepts and links added. */
   seedConceptRecords() {
-    let links = 0;
-    for (const record of CONCEPT_RECORDS) links += insertConceptRecord(this, record).links;
-    return { concepts: CONCEPT_RECORDS.length, links };
+    const owned = !BULK_SEMANTIC_PAIR_INDEXES.has(this);
+    if (owned) BULK_SEMANTIC_PAIR_INDEXES.set(this, indexSemanticPairs(this));
+    try {
+      let links = 0;
+      for (const record of CONCEPT_RECORDS) links += insertConceptRecord(this, record).links;
+      return { concepts: CONCEPT_RECORDS.length, links };
+    } finally {
+      if (owned) BULK_SEMANTIC_PAIR_INDEXES.delete(this);
+    }
   }
 
   /**
@@ -392,17 +429,17 @@ export class LinkNetwork {
     if (existing !== undefined) {
       return [existing, false];
     }
-    return [
-      this.insertLink(
-        [conceptLink, vocabularyLink],
-        LinkMetadata.new()
-          .withLinkType(LinkType.Semantic)
-          .withNamed(true)
-          .withTerm(externalId)
-          .withLanguage(vocabulary),
-      ),
-      true,
-    ];
+    const id = this.insertLink(
+      [conceptLink, vocabularyLink],
+      LinkMetadata.new()
+        .withLinkType(LinkType.Semantic)
+        .withNamed(true)
+        .withTerm(externalId)
+        .withLanguage(vocabulary),
+    );
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) insertSemanticPairIndexEntry(index, this.link(id));
+    return [id, true];
   }
 
   _insertConceptSyntaxMapping(conceptLink, concept, language, syntax, updateReconstruction) {
@@ -415,7 +452,7 @@ export class LinkNetwork {
     if (existing !== undefined) {
       return existing;
     }
-    return this.insertLink(
+    const id = this.insertLink(
       [conceptLink, languageLink],
       LinkMetadata.new()
         .withLinkType(LinkType.Semantic)
@@ -423,9 +460,14 @@ export class LinkNetwork {
         .withTerm(syntax)
         .withLanguage(language),
     );
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) insertSemanticPairIndexEntry(index, this.link(id));
+    return id;
   }
 
   _findSemanticPair(first, second, term, language) {
+    const index = BULK_SEMANTIC_PAIR_INDEXES.get(this);
+    if (index) return index.get(idKey(first))?.get(idKey(second))?.get(term)?.get(language);
     return this.links().find((link) => {
       const references = link.references();
       const metadata = link.metadata();
@@ -464,6 +506,23 @@ export class LinkNetwork {
 
   links() {
     return [...this._links.values()].sort((left, right) => left.id().asU64() - right.id().asU64());
+  }
+
+  /**
+   * Select original links in identifier order. The omitted selection keeps
+   * concrete syntax; abstract syntax requires an explicit selection. References
+   * still resolve against this complete source network, including excluded
+   * source tokens and trivia. Returned links and metadata retain identity.
+   */
+  projectedLinks(projection = NetworkProjection.ConcreteSyntax) {
+    if (typeof projection !== 'string' || !acceptNetworkProjection(projection)) {
+      throw new TypeError('a network projection must be Lossless, ConcreteSyntax, AbstractSyntax or Semantic');
+    }
+    return this.links().filter(link => acceptNetworkProjectionLink(projection, link.metadata().linkType ?? ''));
+  }
+
+  projected_links(projection = NetworkProjection.ConcreteSyntax) {
+    return this.projectedLinks(projection);
   }
 
   len() {
@@ -667,11 +726,20 @@ export class LinkNetwork {
   }
 
   renderSource(language) {
-    return this._sourceTokenLinks()
+    const rendered = [];
+    let coveredUntil = 0;
+    const tokens = this._sourceTokenLinks()
       .filter((link) => link.metadata().language === language && !link.metadata().flags.isMissing)
-      .sort(sourceOrder)
-      .map((link) => link.metadata().term ?? '')
-      .join('');
+      .sort((left, right) => Number(!left.metadata().span) - Number(!right.metadata().span)
+        || sourceOrder(left, right));
+    for (const token of tokens) {
+      const metadata = token.metadata();
+      const range = metadata.span?.byteRange;
+      if (range && !acceptEmbeddedRegionSourceCoverage(range.start, coveredUntil)) continue;
+      rendered.push(metadata.term ?? '');
+      if (range) coveredUntil = range.end;
+    }
+    return rendered.join('');
   }
 
   reconstructTextAsWithRules(targetLanguage, _configuration, rules) {
@@ -705,11 +773,13 @@ export class LinkNetwork {
   }
 
   _allocateId() {
-    return new LinkId(this._nextId++);
+    const id = new LinkId(this._nextId);
+    this._nextId += 1;
+    return id;
   }
 
   _insertParsedLinoLink(parsed) {
-    const id = parsed.id === null ? undefined : Number(parsed.id);
+    const id = parsed.id === null ? undefined : LinkId.from(parsed.id);
     const references = parsed.values.map((value) => LinkId.from(value.id));
     this.insertLinkWithOptionalId(id, references, LinkMetadata.new().withLinkType(LinkType.Relation));
   }
@@ -736,7 +806,7 @@ export class LinkNetwork {
             .filter(Boolean)
             .map((value) => LinkId.from(value))
         : [];
-      parsed.push({ id: Number(match[1]), references });
+      parsed.push({ id: LinkId.from(match[1]), references });
     }
 
     for (const link of parsed) {
@@ -935,59 +1005,95 @@ export class LinkNetwork {
 
   _attachEmbeddedRegions(document, text, language, configuration, parsed) {
     const policy = configuration.regionDetectionPolicy ?? 'Both';
-    // HTML and Markdown regions come from the host CST already parsed.
-    const host = parsed.canonical;
-    const regions = host === 'HTML' || host === 'Markdown'
-      ? detectEmbeddedRegionsInTree(parsed.tree, text, host, policy)
-      : detectEmbeddedRegions(text, language, policy);
-    // Encoded once: every region slices the same bytes.
     const source = encoder.encode(text);
+    const depthLimit = configuration.embeddedRegionDepthLimit ?? readEmbeddedRegionDefaultLimit('depth');
+    const countLimit = configuration.embeddedRegionCountLimit ?? readEmbeddedRegionDefaultLimit('count');
+    const byteLimit = configuration.embeddedRegionByteLimit ?? readEmbeddedRegionDefaultLimit('bytes');
+    const languageIdentifiers = new Map([[parsed.canonical, 0]]);
+    const parents = [-1], languages = [0], starts = [0], ends = [source.length];
+    const frames = [{ parent: document, text, language, parsed, span: undefined, depth: 0 }];
     const recordedLanguages = new Set();
-    for (const region of regions) {
-      const regionLanguage = region.language();
-      const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
-      const regionLink = this.insertLink(
-        [document, languageLink],
-        LinkMetadata.new()
-          .withLinkType(LinkType.Region)
-          .withNamed(true)
-          .withTerm(`${regionLanguage} region`)
-          .withLanguage(regionLanguage)
-          .withSpan(region.span()),
-      );
-      const { start, end } = region.span().byteRange;
-      // A region spanning the whole document in the document's own language
-      // already has its grammar CST below the document; reparsing it would
-      // duplicate every node.
-      if (
-        regionLanguage.toLowerCase() === String(language).toLowerCase() &&
-        start === 0 &&
-        end === source.length
-      ) {
-        continue;
-      }
-      // _recordGrammars scans the network, so it runs once per region language
-      // rather than once per region: a document with a fenced block in every
-      // section would otherwise parse in quadratic time.
-      const languageKey = languageLink.asU64();
-      if (!recordedLanguages.has(languageKey)) {
-        recordedLanguages.add(languageKey);
-        this._recordGrammars(languageLink, regionLanguage);
-      }
-      const parsed = parseEmbeddedProgrammingLanguage(
-        decoder.decode(source.subarray(start, end)),
-        regionLanguage,
-      );
-      if (parsed) {
-        const { outer } = this._insertProgrammingLanguage(
-          parsed,
-          regionLanguage,
-          configuration,
-          region.span(),
+    let count = 0, bytes = 0;
+    // FIFO: every original direct region and its CST is inserted before any
+    // descendant. Ancestry lives in columns, not the JavaScript call stack.
+    for (let position = 0; position < frames.length; position += 1) {
+      const frame = frames[position];
+      const host = frame.parsed.canonical;
+      const regions = host === 'HTML' || host === 'Markdown'
+        ? detectEmbeddedRegionsInTree(frame.parsed.tree, frame.text, host, policy)
+        : detectEmbeddedRegions(frame.text, frame.language, policy);
+      // The inserted Links own the CST now; consumed queue entries need only
+      // their parent identity and absolute boundary for ancestry diagnostics.
+      frame.parsed = null;
+      frame.text = null;
+      for (const region of regions) {
+        const regionLanguage = region.language();
+        const canonical = canonicalLanguageName(regionLanguage) ?? regionLanguage;
+        if (!languageIdentifiers.has(canonical)) languageIdentifiers.set(canonical, languageIdentifiers.size);
+        const selectedLanguage = languageIdentifiers.get(canonical);
+        const span = offsetSpan(region.span(), frame.span);
+        const { start, end } = span.byteRange;
+        const depth = frame.depth + 1;
+        const ancestor = readEmbeddedRegionAncestor(parents, languages, starts, ends,
+          position, selectedLanguage, start, end);
+        const disposition = readEmbeddedRegionDisposition(starts[position], ends[position],
+          languages[position], selectedLanguage, start, end, ancestor,
+          depth, count, bytes, depthLimit, countLimit, byteLimit,
+          regionLanguage.toLowerCase() === String(frame.language).toLowerCase());
+        // A nested host already has its Region boundary. The root's legacy
+        // whole-buffer region is retained, without duplicating nested ones.
+        if (disposition === 'reuseAttached') continue;
+        const languageLink = this.insertTypedPoint(LinkType.Language, regionLanguage);
+        const regionLink = this.insertLink(
+          [frame.parent, languageLink],
+          LinkMetadata.new().withLinkType(LinkType.Region).withNamed(true)
+            .withTerm(`${regionLanguage} region`).withLanguage(regionLanguage).withSpan(span),
         );
-        this.link(regionLink).setReferences([document, languageLink, ...outer]);
+        if (disposition === 'reuse') continue;
+        if (disposition !== 'parse') {
+          this._insertEmbeddedRegionDiagnostic(regionLink, regionLanguage, span, disposition, {
+            depth, count, bytes,
+            observed: readEmbeddedRegionDiagnosticObserved(disposition, depth, count, bytes, start, end),
+            limit: readEmbeddedRegionDiagnosticLimit(disposition, depthLimit, countLimit, byteLimit),
+            ancestor: ancestor >= 0 ? frames[ancestor].parent : undefined,
+          });
+          continue;
+        }
+        count = readEmbeddedRegionCharge(count, start, end, false);
+        bytes = readEmbeddedRegionCharge(bytes, start, end, true);
+        // Grammar provenance is recorded once per language over the traversal.
+        const languageKey = languageLink.asU64();
+        if (!recordedLanguages.has(languageKey)) {
+          recordedLanguages.add(languageKey);
+          this._recordGrammars(languageLink, regionLanguage);
+        }
+        const regionText = decoder.decode(source.subarray(start, end));
+        const child = parseEmbeddedProgrammingLanguage(regionText, regionLanguage);
+        if (!child) continue;
+        const { outer } = this._insertProgrammingLanguage(child, regionLanguage, configuration, span);
+        this.link(regionLink).setReferences([frame.parent, languageLink, ...outer]);
+        frames.push({ parent: regionLink, text: regionText, language: regionLanguage,
+          parsed: child, span, depth });
+        parents.push(position); languages.push(selectedLanguage); starts.push(start); ends.push(end);
       }
     }
+  }
+
+  _insertEmbeddedRegionDiagnostic(region, language, span, reason, counters) {
+    const diagnostic = this.insertLink([region], LinkMetadata.new()
+      .withLinkType(LinkType.Relation).withTerm('embedded region diagnostic')
+      .withLanguage(language).withDefinition(reason).withSpan(span).withFlags(LinkFlags.error()));
+    for (const [label, value] of Object.entries({
+      depth: counters.depth, 'region count': counters.count, 'child parse bytes': counters.bytes,
+      observed: counters.observed, limit: counters.limit,
+    })) {
+      if (value < 0) continue;
+      const scalar = this.insertLink([], LinkMetadata.new().withLinkType(LinkType.Object)
+        .withTerm(String(value)).withDefinition('nonnegative integer'));
+      this.insertFieldRelation(diagnostic, label, scalar);
+    }
+    if (counters.ancestor !== undefined) this.insertFieldRelation(diagnostic, 'ancestor', counters.ancestor);
+    return diagnostic;
   }
 
   _sourceTokenLinks() {

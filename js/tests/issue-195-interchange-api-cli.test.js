@@ -8,9 +8,10 @@
 // renames are re-imported in their own format and must accept and reject the
 // samples of the shared cases they came from. The Rust twin is
 // rust/tests/unit/issue_195_interchange_api_cli.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -30,7 +31,7 @@ import {
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const corpus = JSON.parse(readFileSync(path.join(root, ISSUE_195_FIXTURE_FILES.grammarImporters), 'utf8'));
+const corpus = readProjectData(path.join(root, ISSUE_195_FIXTURE_FILES.grammarImporters));
 const CLI = path.join(root, 'js', 'src', 'cli.js');
 const REQUIREMENT_ID = 'I195-INTERCHANGE-API-CLI';
 

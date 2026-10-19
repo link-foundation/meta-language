@@ -3,6 +3,8 @@
 // case of parity/fixtures/grammar-importers.json to the output of the Rust
 // `meta-language import-grammar --format <fmt> --to antlr|lark` command, so both
 // runtimes produce byte-identical ANTLR and Lark text for the shared corpus.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
@@ -25,8 +27,8 @@ import {
   importTreeSitterJson,
 } from '../src/grammar-importers.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)));
-const fixture = (relative) => readFile(new URL(`../../rust/tests/fixtures/grammar/${relative}`, import.meta.url), 'utf8');
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
+const fixture = (relative) => readFile(resolveProjectDataPath(new URL(`../../rust/tests/fixtures/grammar/${relative}`, import.meta.url)), 'utf8');
 
 const TARGETS = [
   ['antlr', emitAntlr, importAntlr],

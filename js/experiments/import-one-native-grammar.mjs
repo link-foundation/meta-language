@@ -1,3 +1,4 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 // Imports one pinned source of parity/grammars/sources.json (by native id)
 // without the others, prints its import report and, with WRITE=1, writes
 // its native grammar to parity/grammars/native/<language>.lino, so a new
@@ -9,7 +10,7 @@ import { grammarSourceOf, importSource, NAME_EXPANSIONS, NATIVE_DIRECTORY } from
 
 const root = new URL('../../', import.meta.url);
 const entry = grammarSourceOf(process.argv[2]);
-const naming = JSON.parse(readFileSync(new URL(NAME_EXPANSIONS, root), 'utf8'));
+const naming = readProjectData(new URL(NAME_EXPANSIONS, root));
 const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
 const result = importSource(entry, words, naming.grammars[entry.language]);
 console.log(JSON.stringify({ rules: result.rules.length, report: result.imported.report }, null, 1).slice(0, 6000));

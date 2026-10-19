@@ -17,27 +17,29 @@ const IN_BOUNDS = 'the translation agrees with the source on executions whose ar
 
 const refusal = (source) => translateProgram(source, 'JavaScript', 'Rust').diagnostic?.message;
 
-test('arrays the program reads are a semantic translation in every target, assuming reads in bounds', () => {
+test('arrays the program reads are a semantic translation in every target with observable absence', () => {
   for (const target of ['Rust', 'Lean', 'Rocq']) {
     const translated = translateProgram(ARRAYS, 'JavaScript', target);
     assert.equal(translated.diagnostic, null, target);
     assert.equal(translated.contract.support, 'semantic-translation', target);
-    assert.ok(translated.contract.assumptions.includes(IN_BOUNDS), target);
+    assert.equal(translated.contract.assumptions.includes(IN_BOUNDS), false, target);
   }
 });
 
-test('an array is a Rust Vec, a Lean Array and a Rocq list, read through a bounds-checked helper', () => {
+test('an array is a Rust Vec, a Lean Array and a Rocq list with optional bounds-checked reads', () => {
   const rust = translateProgram(ARRAYS, 'JavaScript', 'Rust').code;
   assert.ok(rust.includes('let xs = vec![1f64, 2f64];'), rust);
-  assert.ok(rust.includes('crate::ml_array::at(&xs, crate::ml_array::number_index(1f64)) + (xs.len() as f64)'), rust);
+  assert.ok(rust.includes('match crate::ml_array::optional_at(&xs, crate::ml_array::number_index(1f64)) { Some(ml_present) => ml_present, None => f64::NAN } + (xs.len() as f64)'), rust);
   assert.ok(rust.includes('crate::ml_array::append(vec![crate::ml::Big::from_i128(1)], vec![crate::ml::Big::from_i128(2)])'), rust);
   const lean = translateProgram(ARRAYS, 'JavaScript', 'Lean').code;
   assert.ok(lean.includes('let xs := (#[(1 : Float), (2 : Float)] : (Array Float))'), lean);
-  assert.ok(lean.includes('(ml_array_at_float xs (1 : Float)) + (Float.ofNat xs.size)'), lean);
+  assert.ok(lean.includes('xs[ml_index.toUInt64.toNat]? else none'), lean);
+  assert.ok(lean.includes('| none => (0 / 0 : Float)) + (Float.ofNat xs.size)'), lean);
   assert.ok(lean.includes('((#[(1 : Int)] : (Array Int)) ++ (#[(2 : Int)] : (Array Int)))'), lean);
   const rocq = translateProgram(ARRAYS, 'JavaScript', 'Rocq').code;
   assert.ok(rocq.includes('let xs := (1%float :: 2%float :: @nil float) in'), rocq);
-  assert.ok(rocq.includes('(ml_list_at xs (ml_float_index 1%float) 0%float)'), rocq);
+  assert.ok(rocq.includes('List.nth_error xs (Z.to_nat ml_index)'), rocq);
+  assert.ok(rocq.includes('| None => PrimFloat.nan end)'), rocq);
   assert.ok(rocq.includes('(List.app (1%Z :: @nil Z) (2%Z :: @nil Z))'), rocq);
 });
 
@@ -58,10 +60,16 @@ test('a @typedef field may hold an array, of data too', () => {
 
 test('the array forms that are not kept are refused with a reason', () => {
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs);\n'), 'text of an array: console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one at 31..33');
-  assert.equal(refusal('const xs = [1, 2];\nxs[0] = 3;\n'), 'assignment of an array element: the portable core reads arrays and does not mutate them; build a new array with [...xs, value] at 19..24');
+  assert.equal(refusal('const xs = [1, 2];\nxs[0] = 3;\n'), 'reference mutation: this mutation requires its shared reference and slot operations to be represented at 19..28');
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs === xs);\n'), 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');
-  assert.equal(refusal("const s = 'ab';\nconsole.log(s.length);\n"), 'length of a string: String.prototype.length counts UTF-16 code units, which the portable string types do not keep at 28..36');
+  assert.equal(refusal("const s = 'ab';\nconsole.log(s.length);\n"), undefined);
   assert.equal(refusal('const xs = [1, , 2];\n'), refusal('const xs = [1, , 2];\n'));
   assert.match(refusal('const xs = [1, , 2];\n'), /^array hole/u);
   assert.match(refusal('for (const k in { a: 1 }) console.log(k);\n'), /^for…in loop/u);
+});
+
+// BEGIN modern JavaScript array parity observations
+test('retained modern JavaScript array contract executes every original input', async () => {
+  const {runModernArrayParityAssertions}=await import('./support/modern-javascript-array-parity.js');
+  runModernArrayParityAssertions({record:true,testName:'retained modern JavaScript array contract executes every original input'});
 });

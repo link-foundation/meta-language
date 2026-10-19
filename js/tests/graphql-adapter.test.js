@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import test from 'node:test';
 
 import {
@@ -16,7 +17,7 @@ import {
 const fixtureUrl = new URL('../../parity/fixtures/graphql-query-plans.json', import.meta.url);
 
 async function registryAndCases() {
-  const fixture = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  const fixture = readProjectData(fixtureUrl);
   return {
     registry: GraphQlSchemaRegistry.fromJson(fixture.registry),
     cases: fixture.cases,

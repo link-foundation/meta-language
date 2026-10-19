@@ -6,7 +6,7 @@
 // is specific to that language. A construct translates from one native
 // grammar to another through its concept record alone, with no rule for the
 // pair of languages. rust/src/grammar_concepts.rs is the Rust port.
-import { CONCEPT_RECORDS } from './concept-records.js';
+import { CONCEPT_RECORDS, conceptRecordsForSourceName } from './concept-records.js';
 import { decoratorSet } from './decorators.js';
 import { compileGrammar } from './grammar.js';
 import { parseGrammarLinks } from './grammar-links.js';
@@ -16,6 +16,7 @@ import { nativeGrammarText } from './native-grammar-parser.js';
 const NATIVE_GRAMMARS = LANGUAGE_CATALOG.nativeGrammars ?? {};
 const NATIVE_SOURCE_PREFIX = 'native:';
 const PARSERS = new Map();
+const RULE_CONCEPTS = new Map();
 
 /** The id of every native grammar of the catalog, sorted. */
 export function nativeGrammarIds() {
@@ -40,7 +41,14 @@ export function nativeGrammarSource(id) {
  * none.
  */
 export function nativeGrammarRuleConcepts(id) {
-  return [...parseGrammarLinks(nativeGrammarText(id)).rules].map(([rule, { concept }]) => ({ rule, concept: concept ?? null }));
+  const text = nativeGrammarText(id);
+  let snapshot = RULE_CONCEPTS.get(id);
+  if (!snapshot || snapshot.text !== text) {
+    const rules = [...parseGrammarLinks(text).rules].map(([rule, { concept }]) => ({ rule, concept: concept ?? null }));
+    snapshot = { text, rules };
+    RULE_CONCEPTS.set(id, snapshot);
+  }
+  return snapshot.rules.map((entry) => ({ ...entry }));
 }
 
 // The language a concept identity is specific to by its namespace:
@@ -164,7 +172,9 @@ function findNativeConstruct(from, rule, to, options) {
   const { records = CONCEPT_RECORDS } = options;
   const source = nativeGrammarSource(from);
   const target = nativeGrammarSource(to);
-  const meanings = records.filter(({ sourceAliases }) => sourceAliases.some((alias) => alias.source === source && alias.name === rule));
+  const meanings = records === CONCEPT_RECORDS
+    ? conceptRecordsForSourceName(source, rule)
+    : records.filter(({ sourceAliases }) => sourceAliases.some((alias) => alias.source === source && alias.name === rule));
   if (meanings.length === 0) return { relation: 'unknown', concept: null, rules: [] };
   if (meanings.length > 1) return { relation: 'ambiguous', concept: null, rules: [] };
   const [record] = meanings;

@@ -14,7 +14,7 @@
 // recorded seed and fails when a fixture differs.
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -26,6 +26,8 @@ import { cliCstToLines, parseCstLines } from '../tests/support/cst-lines.js';
 import { COUNTS, DEFAULT_SEED, createRandom, generateInputs, relationHolds, seedNumber, seedSources } from '../tests/support/generative.js';
 
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { checkProjectData, readProjectData } from './project-data.mjs';
+import { readFixtureSourceBytes, writeFixtureSourceData } from './fixture-source-bytes.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -57,12 +59,12 @@ function formatCases(value) {
 }
 
 async function generate(treeSitter, seed) {
-  const lock = JSON.parse(await readFile(lockPath, 'utf8'));
+  const lock = readProjectData(lockPath);
   const version = (await run(treeSitter, ['--version'])).stdout.trim();
   if (version !== lock.treeSitterCli) throw new Error(`${treeSitter} is ${version}; the grammar lock pins ${lock.treeSitterCli}`);
   const versions = await cargoLockVersions();
-  const reproducerBytes = await readFile(join(fixtureDir, 'reproducers.json'));
-  const reproducers = JSON.parse(reproducerBytes.toString('utf8'));
+  const reproducerBytes = readFixtureSourceBytes(join(fixtureDir, 'reproducers.json'));
+  const reproducers = readProjectData(join(fixtureDir, 'reproducers.json'));
   const scratch = makeScratchDirectory('issue-195-generative-');
   process.env.TREE_SITTER_LIBDIR = join(scratch, 'lib');
   const outputs = new Map();
@@ -80,7 +82,7 @@ async function generate(treeSitter, seed) {
     counts: COUNTS,
     inputs: {
       'reproducers.json': sha256(reproducerBytes),
-      'issue-195-conformance/manifest.json': sha256(await readFile(join(root, 'parity/fixtures/issue-195-conformance/manifest.json'))),
+      'issue-195-conformance/manifest.json': sha256(readFixtureSourceBytes(join(root, 'parity/fixtures/issue-195-conformance/manifest.json'))),
     },
     oracle: {
       tool: version,
@@ -120,9 +122,11 @@ async function generate(treeSitter, seed) {
         }
         return result;
       }));
-      const text = formatCases({ language: language.name, seed, cases });
+      const value = { language: language.name, seed, cases };
+      // Retain the original rendering solely as the protected provenance hash.
+      const text = formatCases(value);
       const file = `${language.id}.json`;
-      outputs.set(join(fixtureDir, file), text);
+      outputs.set(join(fixtureDir, file), { value, legacyText: text });
       const counts = {};
       for (const entry of cases) counts[entry.kind] = (counts[entry.kind] ?? 0) + 1;
       const holding = cases.filter((entry) => entry.kind === 'metamorphic' && entry.relationHolds).length;
@@ -138,7 +142,7 @@ async function generate(treeSitter, seed) {
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
-  outputs.set(join(fixtureDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  outputs.set(join(fixtureDir, 'manifest.json'), { value: manifest, legacyText: `${JSON.stringify(manifest, null, 2)}\n` });
   return outputs;
 }
 
@@ -148,14 +152,17 @@ async function main() {
   const seedIndex = args.indexOf('--seed');
   let seed = seedIndex >= 0 ? args[seedIndex + 1] : DEFAULT_SEED;
   if (args.includes('--check')) {
-    seed = JSON.parse(await readFile(join(fixtureDir, 'manifest.json'), 'utf8')).seed;
+    seed = readProjectData(join(fixtureDir, 'manifest.json')).seed;
   }
   const outputs = await generate(treeSitter, seed);
   if (args.includes('--check')) {
     const stale = [];
     for (const [path, content] of outputs) {
-      const current = await readFile(path).catch(() => null);
-      if (!current || !current.equals(Buffer.from(content))) stale.push(relative(path));
+      try {
+        checkProjectData(path, content.value);
+        if (!readFixtureSourceBytes(path).equals(Buffer.from(content.legacyText))) stale.push(relative(path));
+      }
+      catch { stale.push(relative(path)); }
     }
     if (stale.length) {
       console.error(`stale generative fixtures (run node js/scripts/generate-issue-195-generative.mjs):\n  ${stale.join('\n  ')}`);
@@ -165,8 +172,7 @@ async function main() {
     return;
   }
   for (const [path, content] of outputs) {
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, content);
+    writeFixtureSourceData(path, content.value, content.legacyText);
   }
   console.log(`wrote ${outputs.size} files to ${relative(fixtureDir)}`);
 }

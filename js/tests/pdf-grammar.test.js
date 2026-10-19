@@ -1,12 +1,11 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import { LinkNetwork, LinkType } from '../src/index.js';
 
-const { cases } = JSON.parse(
-  await readFile(new URL('../../parity/fixtures/pdf-grammar-cases.json', import.meta.url), 'utf8'),
-);
+const { cases } = readProjectData(new URL('../../parity/fixtures/pdf-grammar-cases.json', import.meta.url));
 
 /** The Syntax tree of a public PDF network as {term, field, named, flags, span, children}. */
 function syntaxTree(network) {

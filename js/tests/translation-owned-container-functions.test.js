@@ -1,0 +1,92 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {readProjectData} from '../scripts/project-data.mjs';
+import {createTypedProgramLinks,decodeTypedProgramLinks,encodeTypedProgramLinks} from '../src/index.js';
+import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {emitRust} from '../src/translation/emit-rust.js';
+import {validateLinkedTypedProgram} from '../src/typed-program-links-validation.js';
+import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
+
+const owned=readProjectData(new URL('../../experiments/rust-owned-local-state-fixture.lino',import.meta.url));
+const namespace=readProjectData(new URL('../../parity/fixtures/rust-type-namespace.lino',import.meta.url));
+const models=[
+ {source:'const fn keep(value:bool)->bool{value}fn main(){}',options:{rustConstFunctionModel:'closed pure Rust const predicates 1'},markers:['sourceConstFunction']},
+ {source:owned.cases[0].source,options:{rustOwnedLocalStateModel:owned.models.moves},markers:['sourceLocalState']},
+ {source:namespace.cases[0].source,options:{rustTypeNamespaceModel:namespace.typeNamespaceModel},markers:['sourceTypeNamespace','sourceUnitCloneDerivation']},
+];
+const create=entry=>{const packet=createTypedProgramLinks(entry.source,'Rust',entry.options);return decodeTypedProgramLinks(packet.network,packet.root);};
+function removeMarkers(program,markers){
+ const visited=new Set(),found=[];
+ function visit(value){if(!value||typeof value!=='object'||visited.has(value))return;visited.add(value);if(value instanceof Map){for(const child of value.values())visit(child);return;}for(const[key,child]of Object.entries(value)){if(markers.includes(key)){found.push([key,child]);delete value[key];}else visit(child);}}
+ visit(program);assert.ok(found.length);return found[0];
+}
+
+test('actual public const, owned text and namespace programs refuse function roots and callback proofs at their guarded boundaries',()=>{
+ for(const entry of models)for(const form of['root','inherited','nested','getter']){
+  let program=create(entry),calls=0;
+  if(form==='root')program=Object.assign(function host(){},program);
+  else if(form==='inherited')program=Object.create(program);
+  else{const[marker,proof]=removeMarkers(program,entry.markers);program.hidden=function host(){};if(form==='getter')Object.defineProperty(program.hidden,marker,{get(){calls++;return proof;},enumerable:true});else program.hidden[marker]=proof;}
+  const checks=[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)];
+  for(const check of checks)assert.throws(check,entry.markers[0]+' '+form);
+  assert.equal(calls,0,'source marker accessors must not run');
+ }
+});
+
+test('inherited program fields cannot conceal an invalid actual const qualification',()=>{
+ const program=create(models[0]);program.items[0].sourceConstFunction.keyword='not-const';
+ for(const input of[program,Object.create(program)]){
+  assert.throws(()=>emitRust(input));assert.throws(()=>emitJavaScript(input));
+ }
+});
+
+test('inherited function records and proof descriptors cannot hide invalid actual const facts',()=>{
+ for(const form of['function','chain','proof','getter','depth']){
+  const program=create(models[0]),original=program.items[0];let calls=0;
+  original.sourceConstFunction.keyword='not-const';
+  let replacement;
+  if(form==='function')replacement=Object.create(original);
+  else if(form==='chain')replacement=Object.create(Object.create(original));
+  else if(form==='depth'){replacement=original;for(let index=0;index<257;index++)replacement=Object.create(replacement);}
+  else{
+   const prototype={};
+   if(form==='getter')Object.defineProperty(prototype,'sourceConstFunction',{get(){calls++;return original.sourceConstFunction;}});
+   else prototype.sourceConstFunction=original.sourceConstFunction;
+   replacement=Object.defineProperties(Object.create(prototype),Object.getOwnPropertyDescriptors(original));delete replacement.sourceConstFunction;
+  }
+  program.items[0]=replacement;program.declarations.set(original.fullName,replacement);
+  assert.equal(program.items[0],program.declarations.get(original.fullName));
+  for(const check of[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)])assert.throws(check,form);
+  assert.equal(calls,0,'inherited proof accessors must not run');
+ }
+});
+
+test('an uninspected deep record graph cannot hide surviving invalid const facts',()=>{
+ const program=create(models[0]),[marker,proof]=removeMarkers(program,models[0].markers);proof.keyword='not-const';
+ let hidden={[marker]:proof};for(let index=0;index<257;index++)hidden={next:hidden};program.hidden=hidden;
+ for(const check of[()=>validateLinkedTypedProgram(program),()=>recheckLinkedTypedProgram(program),()=>encodeTypedProgramLinks(program),()=>emitRust(program),()=>emitJavaScript(program)])assert.throws(check);
+});
+
+test('actual source-free namespace facts are revalidated before either direct emitter',()=>{
+ const entry=models[2],mutations=[
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace=null;},
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace.result=['unknown'];},
+  program=>{program.declarations.get('nested.header').sourceTypeNamespace.parameters[0]=['bool'];},
+  program=>{program.declarations.get('nested.header').generated=true;},
+ ];
+ for(const mutate of mutations){const program=create(entry);mutate(program);assert.throws(()=>emitRust(program));assert.throws(()=>emitJavaScript(program));}
+ const program=create(entry),packet=encodeTypedProgramLinks(program),restored=decodeTypedProgramLinks(packet.network,packet.root);
+ assert.deepEqual(emitRust(restored),emitRust(program));assert.deepEqual(emitJavaScript(restored),emitJavaScript(program));
+});
+
+test('ordinary unselected callback metadata retains the existing direct-emitter fallback without observing accessors',()=>{
+ const packet=createTypedProgramLinks('fn keep(value:i32)->i32{value}fn main(){}','Rust'),program=decodeTypedProgramLinks(packet.network,packet.root),expected=[emitRust(program),emitJavaScript(program)];let calls=0;
+ program.hidden=function host(){};Object.defineProperty(program.hidden,'irrelevant',{get(){calls++;return false;}});
+ assert.deepEqual([emitRust(program),emitJavaScript(program)],expected);assert.equal(calls,0);
+ Object.defineProperty(program,'inferredExpressionTypes',{value:new WeakMap()});
+ const prototype={};Object.defineProperty(prototype,'irrelevant',{get(){calls++;return false;}});
+ program.unselectedMetadata=Object.create(prototype);
+ const nullRoot=Object.assign(Object.create(null),program);
+ for(const input of[program,nullRoot])assert.deepEqual([emitRust(input),emitJavaScript(input)],expected);
+ assert.equal(calls,0);
+});

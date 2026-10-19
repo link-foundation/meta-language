@@ -7,7 +7,10 @@ import test from 'node:test';
 import { GrammarBuilder as G, deserializeGrammar, serializeGrammar } from '../src/grammar.js';
 import { importAntlr } from '../src/grammar-importers/antlr.js';
 import { GrammarImportError } from '../src/grammar-importers/common.js';
+import { parseGrammarLinks, renderGrammarLinks } from '../src/grammar-links.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
+import { selectAntlrReferenceAssertion } from '../scripts/antlr-version-assertions.mjs';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const fixture = (file) => readFileSync(
   new URL(`../../rust/tests/fixtures/grammar/antlr/${file}`, import.meta.url),
@@ -79,7 +82,7 @@ test('lowers covering ANTLR constructs', () => {
   });
   assert.deepEqual(grammar.rule('item').expression, {
     kind: 'choice',
-    items: [G.any(), G.charClass([character(';')], true), G.charClass([character('x')], true)],
+    items: [G.any(), G.charClass([character(';')], true), G.seq(G.not(G.literal('x')), G.any())],
     ordered: false,
   });
 });
@@ -140,13 +143,34 @@ test('imported ANTLR grammar survives a serialization round trip', () => {
   assert.deepEqual(restored.normalized(), grammar.normalized());
 });
 
+test('covering ANTLR Links round trip retains every ordered lexer clause without its source', () => {
+  const grammar = importAntlr(fixture('covering.g4'));
+  const links = renderGrammarLinks(grammar);
+  const restored = parseGrammarLinks(links);
+  assert.deepEqual(JSON.parse(serializeGrammar(restored)), JSON.parse(serializeGrammar(grammar)));
+  assert.deepEqual(restored.ruleNames(), grammar.ruleNames());
+  assert.deepEqual(restored.declarations.lexers, grammar.declarations.lexers);
+  assert.equal(restored.declarations.lexers.length, 1);
+  assert.equal(restored.declarations.lexers[0].name, 'Covering');
+  assert.deepEqual(restored.declarations.lexers[0].expression.items.map(({kind}) => kind), [
+    'lexicalType', 'lexicalType', 'lexicalMode',
+    'lexicalOwner', 'lexicalOwner', 'lexicalOwner', 'lexicalObligation',
+    'lexicalLiteral', 'lexicalRule',
+    'lexicalRule', 'lexicalFragment', 'lexicalRule',
+    'lexicalObligation', 'lexicalObligation', 'lexicalRule',
+    'lexicalBinding', 'lexicalBinding', 'lexicalBinding', 'lexicalBinding',
+  ]);
+  assert.equal(renderGrammarLinks(restored), links);
+  assert.equal(renderGrammarLinks(parseGrammarLinks(renderGrammarLinks(restored))), links);
+});
+
 // Rendered rules and error messages recorded from the Rust importer by
 // experiments/antlr-parity.
 test('renders and rejects ANTLR sources exactly like the Rust importer', () => {
   const grammar = importAntlr(fixture('covering.g4'));
   assert.deepEqual(grammar.ruleNames().map((name) => renderGrammarRule(grammar.rule(name))), [
     'normal seq(capture("name", ref(ID)), capture("values", capture("non_greedy", repeat0(ref(item)))), ref(literalRange), ref(item))',
-    'normal choice(any, notClass(char(";")), notClass(char("x")))',
+    'normal choice(any, notClass(char(";")), seq(not(literal("x")), any))',
     'normal range("a", "z")',
     'token class(range("a", "z"), range("0", "9"), char("_"))',
     'silent class(range("0", "9"))',
@@ -235,8 +259,10 @@ test('left-recursive alternatives climb by precedence, with surrogate sets and n
   }
 });
 
-test('caseInsensitive options match either case, and rule preludes join the doc', async () => {
-  const grammar = importAntlr(fixture('case-insensitive.g4'));
+test('caseInsensitive options match either case, and rule preludes join the doc', async (context) => {
+  const versionApplicability = [selectAntlrReferenceAssertion()];
+  const source = fixture('case-insensitive.g4');
+  const grammar = importAntlr(source);
   assert.deepEqual(grammar.rule('ECHO').expression, G.literalInsensitive('echo'));
   assert.deepEqual(grammar.rule('WORD').expression, G.seq(
     G.charClass([range('a', 'c'), range('A', 'C')]),
@@ -245,7 +271,16 @@ test('caseInsensitive options match either case, and rule preludes join the doc'
   assert.deepEqual(grammar.rule('NAME').expression, G.repeat1(G.charClass([range('a', 'z')])));
   assert.equal(grammar.rule('TAGGED').doc, 'dropped returns [int count]; dropped locals [int indexBefore = -1]');
   const { compileGrammar } = await import('../src/index.js');
-  const parser = compileGrammar(grammar);
+  // ANTLR 4.13.2 options.md makes this combined grammar inherit its parser
+  // from Base. Its absent implementation cannot be assumed observationally
+  // equal to ANTLR's standard parser; keep the original source and refuse it.
+  assert.deepEqual(grammar.declarations.lexers[0].expression.items.filter(({ kind }) => kind === 'lexicalObligation'), [
+    { kind: 'lexicalObligation', name: '', category: 'option', source: ' superClass = Base; caseInsensitive = true; ' },
+  ]);
+  assert.throws(() => compileGrammar(grammar), /unresolved option:.*superClass = Base/u);
+  const caseOnly = importAntlr(source.replace('superClass = Base; ', ''));
+  assert.deepEqual(caseOnly.rules, grammar.rules);
+  const parser = compileGrammar(caseOnly);
   assert.equal(parser.parseTree('EcHo Bx_Z <abc>').ok, true);
   assert.equal(parser.parseTree('<ABC>').ok, false);
 
@@ -255,6 +290,11 @@ test('caseInsensitive options match either case, and rule preludes join the doc'
   ]) {
     assert.throws(() => importAntlr(source), (error) => error.message === message, source);
   }
+  recordIssue195Observations({
+    requirementId: 'I195-ASSERTION-EXPLICIT-VERSION-RANGES', suffix: 'antlr-inherited-options', runtime: 'tooling',
+    fixtureId: 'assertion-version-antlr-inherited-options-source', fixtureFile: 'js/tests/grammar-antlr.test.js',
+    assertions: ['antlrInheritedOptionsHaveApplicableVersionContext'], testName: context.name, versionApplicability,
+  });
 });
 
 test('a -> type(NAME) command lets a rule match where NAME does, in both runtimes', async () => {
@@ -273,4 +313,16 @@ test('a -> type(NAME) command lets a rule match where NAME does, in both runtime
   const parser = compileGrammar(grammar);
   assert.equal(parser.parseTree('ab 12 # note\ncd\n').ok, true);
   assert.equal(parser.parseTree('ab ; cd\n').ok, false);
+});
+
+
+test('braced Unicode literals and ranges retain scalar values', () => {
+  const grammar = importAntlr(fixture('braced-unicode.g4'));
+  assert.deepEqual(grammar.rule('DIGIT').expression, G.charRange('0', '9'));
+  assert.deepEqual(grammar.rule('EMOJI').expression, G.literal('😀'));
+  assert.deepEqual(grammar.rule('LIMIT').expression, G.literal(String.fromCodePoint(0x10ffff)));
+  assert.deepEqual(grammar.rule('NUL').expression, G.literal('\0'));
+  for (const escape of ['\\u{}', '\\u{D800}', '\\u{110000}', '\\u{1234567}', '\\u{12', '\\u{xyz}']) {
+    assert.throws(() => importAntlr("grammar Invalid; entry: '" + escape + "';"), /invalid braced unicode escape/u, escape);
+  }
 });

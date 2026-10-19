@@ -1,0 +1,1 @@
+Regenerate identity-library styles from exact retained CI feedback and the existing reviewed branch simplifier. Preserve raw applicability and general overlap deferral while removing the reported redundant clone and negative conditional. Native compilation remains CI-only.

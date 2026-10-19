@@ -2,12 +2,13 @@
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readProjectData, resolveProjectDataPath } from './project-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const manifestPath = path.join(root, 'parity', 'language-features.json');
 const manifestOnly = process.argv.includes('--manifest-only');
 
-const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+const manifest = readProjectData(manifestPath);
 const errors = [];
 
 if (!Array.isArray(manifest.operationFamilies) || manifest.operationFamilies.length === 0) {
@@ -95,7 +96,7 @@ for (const feature of manifest.features ?? []) {
     }
     for (const evidence of cell.evidence) {
       try {
-        await access(path.join(root, evidence));
+        await access(resolveProjectDataPath(path.join(root, evidence)));
       } catch {
         errors.push(`${feature.id} ${language} evidence does not exist: ${evidence}`);
       }

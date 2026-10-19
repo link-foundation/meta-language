@@ -2,12 +2,12 @@
 
 use super::{
     ASSIGNMENTS, COMPOUND, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token, TokenKind,
-    TranslationError, joined, node, span, unsupported,
+    TranslationError, accept_java_script_line_terminator, joined, node, span, unsupported,
 };
 use crate::translation::surface::BinaryOp;
 
 impl JavaScriptParser {
-    /// `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable.
+    /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();
         if self.cursor.is("{") || self.cursor.is("[") {
@@ -23,15 +23,23 @@ impl JavaScriptParser {
             reserved(&name)?;
             // The binding is in its temporal dead zone in its own initialiser.
             self.scope.tdz.insert(name.value.clone());
-            if self.cursor.eat("=").is_none() {
-                return Err(unsupported(
-                    &format!("let {} without a value", name.value),
-                    "an uninitialised let holds undefined, which is not a portable value; give it an initial value",
-                    Some(span(&start, &name)),
-                ));
-            }
-            let value = self.expr()?;
+            let value = if self.cursor.eat("=").is_some() {
+                self.expr()?
+            } else {
+                node(
+                    SNode::None {
+                        absence:
+                            crate::translation::optional_value_rules::read_optional_source_literal(
+                                "undefined",
+                                false,
+                            ),
+                    },
+                    span(&start, &name),
+                )
+            };
             self.declare_local(&name.value, true);
+            self.lexical
+                .binding(&name.value, Some(self.cursor.peek().start));
             statements.push(Stmt::Let {
                 name: name.value,
                 value,
@@ -70,6 +78,7 @@ impl JavaScriptParser {
             None => self.cursor.advance().value,
         };
         let place = self.to_here(&start);
+        self.lexical.read(&target, true, place);
         if self.scope.tdz.contains(&target.value) {
             return Err(unsupported(
                 &format!("assignment of {} before its declaration", target.value),
@@ -183,6 +192,10 @@ impl JavaScriptParser {
 
     /// `for (let i = 0n; i < n; i++) …`: the variables of its head belong to the loop.
     pub(super) fn for_statement(&mut self) -> Result<Stmt> {
+        self.with_lexical_scope(&[], 0, Self::for_statement_in_scope)
+    }
+
+    fn for_statement_in_scope(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         if self.cursor.is("await") {
             return Err(unsupported(
@@ -192,6 +205,16 @@ impl JavaScriptParser {
             ));
         }
         self.cursor.expect("(", Some("for"))?;
+        if (self.cursor.is("const") || self.cursor.is("let"))
+            && self.cursor.is_at("[", 1)
+            && self
+                .cursor
+                .tokens
+                .get(self.matching(self.cursor.index + 1) + 1)
+                .is_some_and(|token| token.value == "of")
+        {
+            return self.for_of(&start);
+        }
         let declared =
             usize::from(self.cursor.is("let") || self.cursor.is("const") || self.cursor.is("var"));
         if self.cursor.is_kind_at(TokenKind::Identifier, declared)
@@ -279,16 +302,49 @@ impl JavaScriptParser {
     /// the element at the index. The array is evaluated once, before the loop.
     fn for_of(&mut self, start: &Token) -> Result<Stmt> {
         let mutable = self.cursor.advance().value == "let";
-        let name = self.cursor.identifier(Some("for…of"))?;
-        reserved(&name)?;
-        self.cursor.advance();
-        let iterable = self.expr()?;
+        let bindings = if self.cursor.is("[") {
+            Some(self.read_array_binding()?)
+        } else {
+            None
+        };
+        let name = if bindings.is_none() {
+            Some(self.cursor.identifier(Some("for…of"))?)
+        } else {
+            None
+        };
+        if let Some(name) = &name {
+            reserved(name)?;
+        }
+        self.cursor.expect("of", Some("for…of"))?;
+        let value = if let Some(bindings) = &bindings {
+            self.array_binding_initializer(bindings)?
+        } else {
+            self.expr()?
+        };
+        let iterable_span = value.span;
+        let iterable = SExpr::new(
+            SNode::ForOfIterable {
+                object: Box::new(value),
+                ty: None,
+            },
+            iterable_span,
+        );
         self.cursor.expect(")", Some("for"))?;
         self.generated_count += 1;
         let values = format!("ml_values{}", self.generated_count);
         let index = format!("ml_index{}", self.generated_count);
         let outer = self.scope.clone();
-        self.declare_local(&name.value, mutable);
+        if let Some(bindings) = &bindings {
+            for binding in bindings {
+                self.declare_local(&binding.name, mutable);
+                self.lexical
+                    .binding(&binding.name, Some(self.cursor.peek().start));
+            }
+        } else if let Some(name) = &name {
+            self.declare_local(&name.value, mutable);
+            self.lexical
+                .binding(&name.value, Some(self.cursor.peek().start));
+        }
         let body = self.loop_body();
         self.scope = outer;
         let body = body?;
@@ -327,6 +383,8 @@ impl JavaScriptParser {
             SNode::Index {
                 object: Box::new(read(&values)),
                 index: Box::new(read(&index)),
+                optional: None,
+                proven_in_bounds: Some(true.into()),
             },
             place,
         );
@@ -337,19 +395,43 @@ impl JavaScriptParser {
             },
             place,
         );
-        let bind = if mutable {
-            Stmt::Let {
-                name: name.value,
+        let mut declarations = if let Some(bindings) = bindings {
+            let element_name = format!("ml_element{}", self.generated_count);
+            let mut declarations = vec![Stmt::Const {
+                name: element_name.clone(),
                 value: element,
                 span: place,
-            }
+            }];
+            declarations.extend(self.bind_array_elements(
+                bindings,
+                &read(&element_name),
+                mutable,
+                place,
+            ));
+            declarations
         } else {
-            Stmt::Const {
-                name: name.value,
-                value: element,
-                span: place,
-            }
+            let name = name
+                .expect("the ordinary for-of form has an actual lexical binder")
+                .value;
+            vec![if mutable {
+                Stmt::Let {
+                    name,
+                    value: element,
+                    span: place,
+                }
+            } else {
+                Stmt::Const {
+                    name,
+                    value: element,
+                    span: place,
+                }
+            }]
         };
+        declarations.push(Stmt::Block {
+            body,
+            inline: false,
+            span: place,
+        });
         Ok(Stmt::Block {
             body: vec![
                 Stmt::Const {
@@ -369,14 +451,7 @@ impl JavaScriptParser {
                         value: binary(BinaryOp::Add, read(&index), number("1")),
                         span: place,
                     }],
-                    body: vec![
-                        bind,
-                        Stmt::Block {
-                            body,
-                            inline: false,
-                            span: place,
-                        },
-                    ],
+                    body: declarations,
                     span: place,
                 },
             ],
@@ -390,8 +465,9 @@ impl JavaScriptParser {
         let place = span(&token, &token);
         let next = self.cursor.peek().start;
         // A line break after break or continue ends the statement, so a following name is not a label.
-        let newline =
-            token.end < next && self.source.units()[token.end..next].contains(&u16::from(b'\n'));
+        let newline = self.source.units()[token.end..next]
+            .iter()
+            .any(|unit| accept_java_script_line_terminator(f64::from(*unit)));
         if self.cursor.is_kind(TokenKind::Identifier)
             && !self.cursor.is("case")
             && !self.cursor.is("default")

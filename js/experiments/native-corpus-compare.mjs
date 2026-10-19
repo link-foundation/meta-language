@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Compares a native .lino grammar with the language's tree-sitter oracle on
 // the cases of upstream tree-sitter corpus files (test/corpus/*.txt), one
 // file and one case at a time. Each case is SAME (equal rows), DIFF (unequal
@@ -18,7 +19,7 @@ import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-gramma
 const [language, grammarPath, ...corpora] = process.argv.slice(2);
 const list = (name) => (process.env[name] ? process.env[name].split(',') : []);
 const show = new Set(list('SHOW'));
-const text = readFileSync(grammarPath, 'utf8');
+const text = readFileSync(resolveProjectDataPath(grammarPath), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: list('HIDDEN'), anonymous: list('ANONYMOUS'), extras: list('EXTRAS'), oracleKinds: nativeOracleKinds(text) };
 
@@ -26,7 +27,7 @@ export const corpusCases = corpusFileCases;
 
 const totals = {};
 for (const corpus of corpora) {
-  for (const { title, source } of corpusCases(readFileSync(corpus, 'utf8'))) {
+  for (const { title, source } of corpusCases(readFileSync(resolveProjectDataPath(corpus), 'utf8'))) {
     let kind;
     let detail = '';
     const started = performance.now();

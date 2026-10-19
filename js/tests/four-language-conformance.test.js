@@ -1,7 +1,10 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
+import { structuredDataRecordToLino } from '../src/structured-data-records.js';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 
@@ -25,13 +28,11 @@ import {
   translateProgram,
 } from '../src/index.js';
 
-const corpus = JSON.parse(
-  readFileSync(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url)),
-);
+const corpus = readProjectData(new URL('../../parity/fixtures/four-language-conformance.json', import.meta.url));
 const grammarInventoryBytes = readFileSync(
-  new URL('../../parity/language-grammar-inventory.json', import.meta.url),
+  resolveProjectDataPath(new URL('../../parity/language-grammar-inventory.json', import.meta.url)),
 );
-const grammarInventory = JSON.parse(grammarInventoryBytes);
+const grammarInventory = readProjectData(new URL('../../parity/language-grammar-inventory.json', import.meta.url));
 const grammarInventoryDigest = createHash('sha256').update(grammarInventoryBytes).digest('hex');
 
 async function recordNegativeCstObservation(language, assertionId) {
@@ -39,7 +40,7 @@ async function recordNegativeCstObservation(language, assertionId) {
   const slug = language.normalize('NFKD').toLowerCase()
     .replaceAll('+', '-plus').replaceAll('#', '-sharp')
     .replace(/[^a-z0-9]+/gu, '-').replace(/^-|-$/gu, '');
-  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, `${JSON.stringify({
+  await appendFile(process.env.ISSUE_195_OBSERVATION_FILE, structuredDataRecordToLino({
     testId: `i195-cst-${slug}-javascript-negative`,
     assertionId,
     fixtureId: `planned:cst-negative:${language}`,
@@ -48,7 +49,7 @@ async function recordNegativeCstObservation(language, assertionId) {
     commit: process.env.ISSUE_195_COMMIT,
     outcome: 'passed',
     testName: 'every JavaScript grammar inventory frontend retains and diagnoses prohibited NUL input',
-  })}\n`);
+  }));
 }
 
 test('four-language corpus produces lossless structured syntax', () => {

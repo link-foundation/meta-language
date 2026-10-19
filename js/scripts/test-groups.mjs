@@ -5,6 +5,7 @@
 //   node scripts/test-groups.mjs --check        every test file is in exactly one group
 //   node scripts/test-groups.mjs --list GROUP   print the files of GROUP
 //   node scripts/test-groups.mjs --run GROUP    run GROUP with node --test
+//     [--shard K/N] (or TEST_GROUP_SHARD=K/N) partitions files exactly once
 //
 // A new test file that no group claims fails --check (and every --run), so a
 // file can never silently drop out of CI.
@@ -18,15 +19,24 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
   grammar:
-    /^(?:grammar-|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|issue-195-merge-real-reconciliation$|unicode-input-|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+    /^(?!issue-195-grammar-(?:profile-|native-|declared-settling$))(?!error-recovery-|parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)(?:grammar-|native-tree-projection-memory$|native-concept-reuse-normalization$|lino-|links-notation$|pdf-grammar$|default-cst-|tree-sitter-node-kind$|issue-195-merge-real-reconciliation$|language-|natural-language$|regions$|issue-195-grammar-|issue-195-interchange-)/u,
+  'grammar-native':
+    /^(?:issue-195-grammar-native-(?!recovery$)|issue-195-grammar-declared-settling$|native-development-oracles$|native-text-grammars$)/u,
+  'grammar-recovery': /^(?:error-recovery-|issue-195-grammar-native-recovery$)/u,
+  'grammar-scaling':
+    /^(?:parse-scaling$|parser-memory$|issue-195-parse-memory-budget$|lino-grammar-scaling$|unicode-input-)/u,
+  'grammar-csharp': /^issue-195-grammar-profile-csharp$/u,
+  'grammar-elixir': /^issue-195-grammar-profile-elixir$/u,
+  'grammar-ruby': /^issue-195-grammar-profile-ruby$/u,
   translation:
-    /^(?:translation|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation$)/u,
+    /^(?!self-translation-report-artifacts$)(?:translation|typed-program-|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation(?:-|$))/u,
+  'report-artifacts': /^self-translation-report-artifacts$/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|foundation-models$|issue-195-concept-records$|issue-195-naming$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|concept-records-lazy$|concept-records-seed-index$|global-concept-(?:space|archive-parser)$|discovered-concept-links$|concept-views$|link-network-binary$|network-projection$|link-id-boundaries$|resource-description-graphs$|resource-description-ntriples$|formal-concept-definition$|formal-function-links$|shared-numeric-function-links$|foundation-models$|issue-195-concept-records$|issue-195-naming$|issue-195-naming-candidates$)/u,
   downstream:
-    /^(?:downstream-|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
+    /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
-    /^(?:cache-|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-inventory$|dependency-upgrades$|test-groups$|ci-workflow-structure$|export-parity$)/u,
+    /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-version-ranges$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$)/u,
 });
 
 export function testFiles(root = packageRoot) {
@@ -58,8 +68,18 @@ export function partitionProblems({ groups, unassigned, ambiguous }) {
   ];
 }
 
+export function partitionGroupFiles(files, shard = '1/1') {
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
+  const index = Number(match?.[1]), count = Number(match?.[2]);
+  if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
+    throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
+  }
+  return files.filter((_, offset) => offset % count === index - 1);
+}
+
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [mode, group] = process.argv.slice(2);
+  const [mode, group, ...options] = process.argv.slice(2);
+  if (options.length && (options.length !== 2 || options[0] !== '--shard')) throw new Error('only --shard K/N is accepted after the group');
   const partition = partitionTests(testFiles());
   const problems = partitionProblems(partition);
   if (problems.length > 0) {
@@ -70,7 +90,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const counts = Object.entries(partition.groups).map(([name, files]) => `${name} ${files.length}`);
     console.log(`JavaScript test groups cover every test file: ${counts.join(', ')}`);
   } else if ((mode === '--list' || mode === '--run') && group in partition.groups) {
-    const files = partition.groups[group].map((file) => path.join('tests', file));
+    const files = partitionGroupFiles(partition.groups[group], options[1] ?? process.env.TEST_GROUP_SHARD ?? '1/1')
+      .map((file) => path.join('tests', file));
     if (mode === '--list') {
       console.log(files.join('\n'));
     } else {

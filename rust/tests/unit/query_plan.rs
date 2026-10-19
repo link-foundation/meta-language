@@ -4,11 +4,11 @@ use meta_language::{
 };
 use serde_json::Value;
 
-const SQL_FIXTURES: &str = include_str!("../../../parity/fixtures/sql-query-plans.json");
-const GRAPHQL_FIXTURES: &str = include_str!("../../../parity/fixtures/graphql-query-plans.json");
+const SQL_FIXTURES: &str = include_str!("../../../parity/fixtures/sql-query-plans.lino");
+const GRAPHQL_FIXTURES: &str = include_str!("../../../parity/fixtures/graphql-query-plans.lino");
 
 fn fixtures(source: &str) -> Value {
-    serde_json::from_str(source).expect("query-plan fixtures are valid JSON")
+    super::project_data::read_project_data(source).expect("query-plan fixtures are valid JSON")
 }
 
 fn sql_registry(fixtures: &Value) -> SqlSchemaRegistry {

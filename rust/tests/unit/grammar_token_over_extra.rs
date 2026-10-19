@@ -15,8 +15,14 @@ use serde_json::Value;
 fn a_token_is_lexed_over_the_separator_or_silent_extra_its_text_also_matches() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/grammar-token-over-extra.json");
-    let fixture: Value =
-        serde_json::from_str(&fs::read_to_string(path).expect("fixture")).expect("fixture JSON");
+    let fixture: Value = super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("fixture"),
+    )
+    .expect("fixture JSON");
     let options = FeatureParseOptions::default();
     for case in fixture["cases"].as_array().expect("cases") {
         let name = case["name"].as_str().expect("name");

@@ -1,0 +1,1 @@
+Formal definition comparison now derives local binding identities from the validated program scope, including unused parameters and local bindings. Disconnected binding references cannot conceal public field names, and a shared record that also serves as a public type or property descriptor retains its observable name.

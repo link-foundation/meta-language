@@ -38,8 +38,17 @@ test('the crate package includes every file the Rust sources embed', () => {
       path.relative(rust, path.resolve(path.dirname(file), target)).split(path.sep).join('/'),
     ),
   );
-  assert.ok(embedded.includes('src/data/foundation-models.json'));
+  assert.ok(embedded.includes('src/data/foundation-models.lino'));
   assert.deepEqual(embedded.filter((file) => !include.some((pattern) => pattern.test(file))), []);
-  assert.ok(include.some((pattern) => pattern.test('src/lib.rs')) && include.some((pattern) => pattern.test('vendor/tree-sitter-rocq/src/parser.c.gz')));
+  assert.ok(include.some((pattern) => pattern.test('src/lib.rs')), 'the library entry point is packaged');
+assert.ok(include.some((pattern) => pattern.test('src/main.rs')), 'the CLI entry point is packaged');
+for (const developmentOnly of [
+  'vendor/tree-sitter-lean/src/parser.c.gz',
+  'vendor/tree-sitter-rocq/src/parser.c.gz',
+  'oracles/native-source-oracles/src/lib.rs',
+]) {
+  assert.ok(!include.some((pattern) => pattern.test(developmentOnly)),
+    `${developmentOnly} is a development-only oracle and must not ship in the production crate`);
+}
   assert.ok(!include.some((pattern) => pattern.test('docs/vision.md')), 'the include list stays tight');
 });

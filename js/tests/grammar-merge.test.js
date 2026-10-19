@@ -6,8 +6,9 @@
 // I195-MERGE-DETERMINISM, I195-MERGE-MEANING-AWARE-DEDUPLICATION,
 // I195-MERGE-BINDING-AWARE-RENAME and I195-MERGE-UNCERTAINTY-PRESERVED). The
 // Rust twin is rust/tests/unit/grammar_merge.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +33,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 
 const FIXTURE = 'parity/fixtures/grammar-merge.json';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const fixture = JSON.parse(readFileSync(path.join(root, FIXTURE), 'utf8'));
+const fixture = readProjectData(path.join(root, FIXTURE));
 
 function observe(requirementId, assertions, testName) {
   recordIssue195Observations({
@@ -344,7 +345,7 @@ test('malformed merge input is rejected', () => {
 });
 
 test('feature union expressions merge by their native listing over equivalent references', () => {
-  const features = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/grammar-merge-features.json'), 'utf8'));
+  const features = readProjectData(path.join(root, 'parity/fixtures/grammar-merge-features.json'));
   const result = mergeGrammars(features.sources.map(({ id, text }, precedence) => ({ id, language: features.language, precedence, grammar: parseNativeGrammar(text) })));
   assert.deepEqual(result.groups[0].decisions.map(({ kind, name, members, definition }) => ({ kind, name, members, definition })), features.decisions);
   // The merged grammar keeps each feature expression over the canonical names.

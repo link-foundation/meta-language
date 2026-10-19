@@ -7,8 +7,9 @@
 // indentation, long delimiter runs and many failing lines. Every input is
 // parsed at two sizes and the cost per byte compared: a linear parse keeps it
 // flat and a quadratic one multiplies it by the size ratio.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 
 import { LinkNetwork } from '../src/index.js';
@@ -16,7 +17,7 @@ import { LINO_MAX_DEPTH, parseLinoCst } from '../src/lino-grammar.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const MATRIX_FILE = 'parity/fixtures/lino-compatibility-matrix.json';
-const matrix = JSON.parse(readFileSync(new URL(`../../${MATRIX_FILE}`, import.meta.url), 'utf8'));
+const matrix = readProjectData(new URL(`../../${MATRIX_FILE}`, import.meta.url));
 
 // The large input holds SIZE_RATIO times as many units as the small one.
 const SIZE_RATIO = 8;

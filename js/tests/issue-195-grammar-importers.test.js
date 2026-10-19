@@ -4,8 +4,9 @@
 // parser module runs the corpus, the same-format emitter reproduces the
 // recorded text, and both re-import and serialization preserve the grammar.
 // The Rust twin is rust/tests/unit/issue_195_grammar_importers.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -34,7 +35,7 @@ import {
 } from './support/issue-195-observations.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
 // The requirement catalog names each importer; the fixture keys it by format.
 const formats = {

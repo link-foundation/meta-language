@@ -6,8 +6,12 @@
 // part and records the JavaScript observations. The Rust suite
 // (rust/tests/unit/issue_195_downstream_formal_ai_workloads.rs) reads the crate part.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { tmpdir } from 'node:os';
+import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   FORMAL_AI_PROBE_ASSERTIONS,
@@ -229,7 +233,7 @@ const liveSkip = !reportPath
     : false;
 
 test('the CI workload report holds every assertion for the installed npm package', { skip: liveSkip }, () => {
-  const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  const report = readProjectData(reportPath);
   assert.equal(report.requirementId, FORMAL_AI_WORKLOAD_REQUIREMENT);
   assert.equal(report.fixture, FORMAL_AI_WORKLOAD_FIXTURE);
   const { problems, observed } = validateFormalAiWorkloadReport(report, fixture, 'javascript');
@@ -311,6 +315,145 @@ test('the workload runner bounds the formal-ai cargo build and reports its progr
   assert.match(runner, /\] running for .*resources\(\).*last output/u);
   assert.match(runner, /os\.freemem\(\) >= MEMORY_FLOOR_BYTES/u);
   assert.match(runner, /process\.kill\(-child\.pid, 'SIGKILL'\)/u);
+
+  const selectorSource = /\nfunction formalAiCargoTargetDirectory\([^]*?\n\}\n/u.exec(runner)?.[0];
+  assert.ok(selectorSource, 'the explicit target selector is inspectable without starting workloads');
+  const selectTarget = new Function('path', 'lstatSync', 'realpathSync', `${selectorSource}\nreturn formalAiCargoTargetDirectory;`)(path, lstatSync, realpathSync);
+  const scratch = realpathSync(mkdtempSync(path.join(tmpdir(), 'meta-language-formal-ai-cache-control-')));
+  try {
+    const temporary = path.join(scratch, 'runner-temp'); mkdirSync(temporary);
+    const work = path.join(temporary, 'issue-195-formal-ai-workloads');
+    const owner = path.join(temporary, 'issue-195-formal-ai-build');
+    const target = path.join(owner, 'target');
+    const environment = { CI: 'true', GITHUB_ACTIONS: 'true', RUNNER_TEMP: temporary, CARGO_TARGET_DIR: '/unrelated', CARGO_BUILD_TARGET_DIR: '/also-unrelated' };
+    assert.equal(selectTarget(work, null, {}), path.join(work, 'formal-ai-target'));
+    assert.equal(selectTarget(work, null, environment), path.join(work, 'formal-ai-target'), 'ambient Cargo storage never selects a cache');
+    assert.equal(selectTarget(work, target, environment), target);
+    for (const changed of [ { CI: 'false' }, { GITHUB_ACTIONS: 'false' }, { RUNNER_TEMP: '' }, { RUNNER_TEMP: 'relative' }, { RUNNER_TEMP: temporary + path.sep + '.' } ]) {
+      assert.throws(() => selectTarget(work, target, { ...environment, ...changed }), /RUNNER_TEMP/u);
+    }
+    for (const requested of [undefined, '', 'relative', temporary, owner, target + path.sep + '..', path.join(scratch, 'other-target')]) {
+      assert.throws(() => selectTarget(work, requested, environment), /exact task-owned/u);
+    }
+    for (const overlapping of [temporary, owner, target, path.join(target, 'work')]) {
+      assert.throws(() => selectTarget(overlapping, target, environment), /must not contain/u);
+    }
+    const outside = path.join(scratch, 'outside'); mkdirSync(outside);
+    symlinkSync(outside, owner, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(() => selectTarget(work, target, environment), /symlink/u);
+    rmSync(owner); mkdirSync(owner);
+    symlinkSync(outside, target, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(() => selectTarget(work, target, environment), /symlink/u);
+    rmSync(target); writeFileSync(target, 'not a target directory');
+    assert.throws(() => selectTarget(work, target, environment), /non-directory/u);
+    rmSync(target); mkdirSync(target);
+    assert.equal(selectTarget(work, target, environment), target);
+  } finally { rmSync(scratch, { recursive: true, force: true }); }
+  assert.match(runner, /const cargoTargetDirectory = formalAiCargoTargetDirectory\(workDirectory, option\('--cargo-target-dir', null\)\);/u);
+  assert.match(runner, /const target = cargoTargetDirectory;/u);
+  assert.match(runner, /await rm\(workDirectory, \{ recursive: true, force: true \}\);/u);
+  assert.match(runner, /const cache = path\.join\(workDirectory, 'npm-cache'\);/u);
+  assert.match(runner, /const freshCache = !existsSync\(cache\);/u);
+  assert.match(runner, /'update', '-p', 'meta-language'/u);
+  assert.match(runner, /'metadata', '--format-version', '1'/u);
+  assert.match(runner, /await refreshSelfAstCensus\(formalAiDirectory, directory, configuration, environment\)/u);
+  assert.match(runner, /'test', '--no-fail-fast'/u);
+  assert.match(runner, /metaLanguagePackages\.length === 1/u);
+  assert.match(runner, /resolution\.manifestPath\?\.startsWith\(resolution\.unpackedDirectory\)/u);
+
+  const job = parseWorkflow(readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))
+    .find(entry => entry.id === 'formal-ai-workload-parts');
+  const names = job.steps.map(step => step.name);
+  const identify = job.steps.find(step => step.name === 'Identify the exact Formal AI build cache');
+  const restore = job.steps.find(step => step.name === 'Restore Formal AI build outputs');
+  const execute = job.steps.find(step => step.name === 'Run the link-assistant/formal-ai workloads on the exact artifacts');
+  const save = job.steps.find(step => step.name === 'Save Formal AI build outputs');
+  const cleanup = job.steps.find(step => step.name === 'Clean regenerable caches');
+  for (const step of [identify, restore, execute, save, cleanup]) assert.ok(step);
+  assert.ok(names.indexOf(identify.name) < names.indexOf(restore.name));
+  assert.ok(names.indexOf(restore.name) < names.indexOf(execute.name));
+  assert.ok(names.indexOf(execute.name) < names.indexOf(save.name));
+  assert.ok(names.indexOf(save.name) < names.indexOf(cleanup.name));
+  assert.match(identify.text, /runner\.os.*runner\.arch.*rust1\.99\.0-opt3-debug0-incremental0/u);
+  assert.match(identify.text, /hashFiles\('parity\/fixtures\/formal-ai-workloads\.lino'/u);
+  assert.match(identify.run, /sha256sum --check/u);
+  assert.match(identify.run, /compiler_identity="\$\(rustc -vV\)"/u);
+  assert.ok(identify.run.includes('$dependency_key-$candidate_digest'));
+  for (const step of [restore, save]) {
+    assert.match(step.text, /path: \|\n\s+\$\{\{ runner\.temp \}\}\/issue-195-formal-ai-build\/target\/debug\n/u);
+    assert.match(step.text, /target\/\.rustc_info\.json/u);
+    assert.match(step.text, /target\/CACHEDIR\.TAG/u);
+    assert.match(step.text, /key: \$\{\{ steps\.formal-ai-cache-key\.outputs\.key \}\}/u);
+    assert.doesNotMatch(step.text, /npm-cache|node_modules|crate-source|report\.lino|outputs\.lino|probe/u);
+  }
+  assert.match(restore.text, /restore-keys: \|\n\s+\$\{\{ steps\.formal-ai-cache-key\.outputs\.dependency_key \}\}-/u);
+  assert.doesNotMatch(execute.text, /cache-hit|\n\s+if:/u, 'cache hits can never skip exact candidate workloads');
+  assert.ok(execute.run.includes('--cargo-target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"'));
+  assert.ok(cleanup.run.includes('--target-dir "$RUNNER_TEMP/issue-195-formal-ai-build/target"'));
+  assert.ok(cleanup.run.startsWith('env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/clean-caches.mjs --event ci-teardown '));
+});
+
+test('the workload runner retains raw command output before exit and after spawn failure', async () => {
+  // Exercise each actual command runner with tiny JavaScript children. No downstream
+  // checkout, dependency installation, native compilation or workload runs here.
+  const fileSystem = await import('node:fs');
+  const promises = await import('node:fs/promises');
+  const childProcess = await import('node:child_process');
+  const operatingSystem = await import('node:os');
+  const timers = await import('node:timers/promises');
+  for (const script of ['run-formal-ai-workloads.mjs', 'run-rml-pr184-workloads.mjs']) {
+    const source = readFileSync(new URL(`../scripts/${script}`, import.meta.url), 'utf8');
+    const definition = /\nasync function run\([^]*?\n\}\n/u.exec(source)?.[0];
+    assert.ok(definition, 'the actual command runner is available without starting workloads');
+    const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-command-transcript-'));
+    const records = [];
+    const run = new Function('path', 'workDirectory', 'spawn', 'writeFile', 'appendFileSync', 'logs', 'childEnvironment', 'resources', 'os', 'HEARTBEAT_MS', 'MEMORY_FLOOR_BYTES', `${definition}\nreturn run;`)(
+      path, directory, childProcess.spawn, promises.writeFile, fileSystem.appendFileSync, records,
+      new Function('return process.env;'), new Function('return Promise.resolve("authored command control");'),
+      operatingSystem, 60_000, 0,
+    );
+    const released = path.join(directory, 'release');
+    const childSource = `const fs = require('node:fs');
+process.stdout.write(Buffer.from([0xcf]));
+const interval = setInterval(() => {
+  if (!fs.existsSync(process.argv[1])) return;
+  process.stdout.write(Buffer.from([0x80, 0xf0, 0x9f, 0x98, 0x80, 10]));
+  clearInterval(interval);
+}, 10);
+setTimeout(() => { clearInterval(interval); process.exitCode = 24; }, 5000).unref();`;
+    const pending = run('stream', process.execPath, ['-e', childSource, released]);
+    try {
+      try {
+        const transcript = path.join(directory, 'stream.log');
+        const deadline = Date.now() + 4_000;
+        while ((!existsSync(transcript) || readFileSync(transcript).at(-1) !== 0xcf) && Date.now() < deadline) {
+          await timers.setTimeout(10);
+        }
+        const partial = readFileSync(transcript);
+        assert.equal(partial.at(-1), 0xcf, 'the live log retains an incomplete UTF-8 scalar as its original byte');
+        assert.doesNotMatch(partial.toString('utf8'), /\nexit:/u, 'a running child has no invented exit');
+      } finally {
+        writeFileSync(released, 'finish');
+      }
+      const streamed = await pending;
+      assert.equal(streamed.code, 0);
+      assert.equal(streamed.stdout, 'π😀\n');
+      assert.equal(streamed.stderr, '');
+      assert.equal(streamed.combined, streamed.stdout);
+      assert.equal(readFileSync(streamed.log, 'utf8'), `command: ${process.execPath} -e ${childSource} ${released}\ncwd: ${directory}\n\n${streamed.combined}\nexit: 0\n`);
+      const failed = await run('failed', process.execPath, ['-e', 'process.stdout.write("output\\n"); process.stderr.write("problem\\n"); process.exitCode = 23;'], { allowFailure: true });
+      assert.equal(failed.code, 23);
+      assert.equal(failed.stdout, 'output\n');
+      assert.equal(failed.stderr, 'problem\n');
+      assert.equal(readFileSync(failed.log, 'utf8'), `command: ${records.at(-1).command}\ncwd: ${directory}\n\n${failed.combined}\nexit: 23\n`);
+      await assert.rejects(run('spawn-failure', path.join(directory, 'absent-command'), []), { code: 'ENOENT' });
+      assert.match(readFileSync(path.join(directory, 'spawn-failure.log'), 'utf8'), /command: [^]*\nspawn error: [^]*ENOENT/u);
+      assert.deepEqual(records.map(({ label, exit }) => [label, exit]), [['stream', 0], ['failed', 23]]);
+    } finally {
+      await Promise.allSettled([pending]);
+      rmSync(directory, { recursive: true, force: true });
+    }
+  }
 });
 
 // The memory guard killed the Rust workloads in grammar_projection_corpus_ratchet
@@ -337,4 +480,29 @@ test('the workload runner logs each Rust test with the lowest free memory while 
   assert.equal(lines.length, 2);
   assert.match(lines[0], /^\[rust-workloads\] test a::first: ok after \d+ s, lowest free memory 3\.0 GiB$/u);
   assert.match(lines[1], /^\[rust-workloads\] test a::second: FAILED after \d+ s, lowest free memory 6\.0 GiB$/u);
+});
+
+test('an ignored workload cannot supply installed artifact acceptance evidence',()=>{
+  // Run 38862173174, job 116854149833, head 61d3a766760306f3c0c2a93ef2d79450b465f242:
+  // 133 of 134 Rust workloads passed; this exhaustive round trip was ignored.
+  // Retained job log SHA-256: 167a73feb906fc8a0e921d049eccfccc7e5d8957e0761067a9866ca056464fc2.
+  for(const runtime of ['javascript','rust']){
+    const report=passingReport(),part=report[runtime==='javascript'?'npm':'crate'];
+    const file=runtime==='rust'?'rust/tests/unit/issue_558_source_links.rs':workloadFiles(fixture,runtime)[0];
+    assert.ok(workloadFiles(fixture,runtime).includes(file));
+    part.tests.push({file,name:'issue_558_source_links::exhaustive_whole_repo_round_trip_is_lossless',outcome:'skipped'});
+    part.counts=countOutcomes(part.tests);assert.equal(part.exit,0);
+    const result=validateFormalAiWorkloadReport(report,fixture,runtime);
+    assert.deepEqual(failing(result),['workloadsRunOnInstalledArtifacts']);
+    assert.ok(result.problems.workloadsRunOnInstalledArtifacts.some(problem=>problem.includes('exhaustive_whole_repo_round_trip_is_lossless was skipped')));
+  }
+});
+
+test('the workload runner includes ignored tests while retaining every original filter',()=>{
+  const runner=readFileSync(new URL('../scripts/run-formal-ai-workloads.mjs',import.meta.url),'utf8');
+  const declaration=/  const filters = ([^\n]+);/u.exec(runner)?.[1];assert.ok(declaration);
+  const filters=new Function('workloads',`return ${declaration};`)(fixture.workloads.filter(({kind,file})=>kind==='test'&&file.startsWith('rust/')));
+  assert.equal(filters.filter(value=>value==='--include-ignored').length,1);
+  assert.deepEqual(filters.filter(value=>value!=='--include-ignored'),[...new Set([...fixture.workloads.filter(({kind,file})=>kind==='test'&&file.startsWith('rust/')).map(({filter})=>filter),'issue_195_probe_'])]);
+  assert.ok(filters.every(value=>value==='--include-ignored'||!value.startsWith('--')));
 });

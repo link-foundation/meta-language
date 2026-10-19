@@ -13,6 +13,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 import {
   decodeProgramTranslation,
@@ -22,9 +23,10 @@ import {
   translateProgram,
 } from '../src/index.js';
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
+import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
 
 const root = new URL('../../', import.meta.url);
-const shared = JSON.parse(await readFile(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root), 'utf8'));
+const shared = readProjectData(new URL(ISSUE_195_FIXTURE_FILES.fourLanguage, root));
 const corpus = shared.translationCorpus;
 const corpusDirectory = new URL(`${corpus.directory}/`, root);
 const expectedBytes = await readFile(new URL(corpus.expectedOutput.file, corpusDirectory));
@@ -38,7 +40,8 @@ const ASSERTIONS = [
   'noUnsupportedDescriptor', 'noSilentWeakening',
 ];
 const TOOLS = { JavaScript: 'node', Rust: 'rustc', Lean: 'lean', Rocq: 'rocq' };
-// Acceptance runs must execute every pair; other runs skip pairs whose toolchain is absent.
+// Acceptance runs must execute every pair; other runs need explicit native
+// opt-in and skip pairs whose toolchain is absent.
 const toolchainRequired = Boolean(process.env.ISSUE_195_OBSERVATION_FILE);
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -52,6 +55,7 @@ function run(command, args, cwd) {
 
 const availability = new Map();
 function toolAvailable(language) {
+  if (language === 'Rust' && !nativeRustChecksEnabled()) return Promise.resolve(false);
   if (!availability.has(language)) {
     availability.set(language, run(TOOLS[language], ['--version']).then(({ ok }) => ok));
   }
@@ -194,7 +198,7 @@ for (const source of LANGUAGES) {
             // Untyped JavaScript has no type declaration; the data encoding stands for it.
             assert.ok(semantics.encodings.some(({ id }) => id === 'data'), mapping.target);
           } else if (target === 'JavaScript' && mapping.kind === 'constructor') {
-            assert.ok(code.includes(`$: '${lastSegment(mapping.target)}'`), `${target} tags ${mapping.target}`);
+            assert.ok(code.includes(`$: ${JSON.stringify(lastSegment(mapping.target))}`), `${target} tags ${mapping.target}`);
           } else {
             assert.ok(terms.has(lastSegment(mapping.target)), `${target} declares ${mapping.target}`);
           }

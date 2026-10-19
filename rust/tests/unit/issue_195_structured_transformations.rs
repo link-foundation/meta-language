@@ -15,7 +15,7 @@ use serde_json::Value;
 
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/four-language-conformance.lino");
 
 const ASSERTIONS: &[&str] = &[
     "publicApiUsed",
@@ -157,7 +157,8 @@ fn reload(
         .expect("fragment construction");
     let serialized = constructed.serialize_snapshot();
     drop(constructed);
-    let snapshot: Value = serde_json::from_str(&serialized).expect("snapshot JSON");
+    let snapshot: Value =
+        super::project_data::read_project_data(&serialized).expect("snapshot JSON");
     assert!(
         snapshot.get("source").is_none(),
         "snapshot holds no source buffer"
@@ -272,7 +273,8 @@ fn restore(
 }
 
 fn check_operation(operation: &str) {
-    let corpus: Value = serde_json::from_str(FIXTURE).expect("shared corpus is JSON");
+    let corpus: Value =
+        super::project_data::read_project_data(FIXTURE).expect("shared corpus is JSON");
     let programs = corpus["transformationPrograms"]
         .as_array()
         .expect("transformation programs");

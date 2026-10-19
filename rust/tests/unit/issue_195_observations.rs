@@ -13,6 +13,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 
+use meta_language::structured_data_records::structured_data_record_to_lino;
 use sha2::{Digest, Sha256};
 
 /// The shared four-language corpus: semantics, transformations, renames,
@@ -76,6 +77,8 @@ fn fixture_digest(journal: &mut Journal, fixture_file: &'static str) -> String {
             let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("..")
                 .join(fixture_file);
+            let path = super::project_data::resolve_project_data_path(path)
+                .expect("observation fixture storage resolves");
             let bytes = fs::read(&path)
                 .unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()));
             Sha256::digest(bytes)
@@ -132,8 +135,10 @@ pub fn record(observation: &Observation<'_>) {
                 "outcome": "passed",
                 "testName": observation.test_name,
             });
-            lines.push_str(&record.to_string());
-            lines.push('\n');
+            lines.push_str(
+                &structured_data_record_to_lino(&record)
+                    .expect("observation Links record serializes"),
+            );
         }
         drop(journal);
         lines

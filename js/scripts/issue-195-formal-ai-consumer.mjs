@@ -11,6 +11,7 @@
 // - issue-195-meta-language-probe.mjs: the probe writing the outputs both
 //   runtimes compare and the sharedConceptsReused and distinctionsPreserved checks.
 import { formalAiHelpers } from './issue-195-formal-ai-workload-probes.mjs';
+import { formalAiSemanticProjections } from './formal-ai-semantic-projections.mjs';
 
 /** The environment variable naming the inputs file the workload tests read. */
 export const JAVASCRIPT_INPUTS_VARIABLE = 'ISSUE_195_FORMAL_AI_INPUTS';
@@ -21,7 +22,8 @@ export const TEST_NAME_SEPARATOR = ' › ';
 /** The consumer module binding the helpers to the installed package. */
 export function consumerHelpersModule() {
   return `// Issue 195: formal-ai's data through the installed meta-language package.\n` +
-    `import * as api from 'meta-language';\n\nexport const helpers = (${formalAiHelpers.toString()})(api);\n`;
+    `import * as api from 'meta-language';\n\nexport const helpers = (${formalAiHelpers.toString()})(api);\n` +
+    `export const semanticProjections = (cases) => (${formalAiSemanticProjections.toString()})(api, cases);\n`;
 }
 
 /** The node:test workloads over formal-ai's data files. */
@@ -31,7 +33,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { helpers } from './formal-ai-helpers.mjs';
+import { helpers, semanticProjections } from './formal-ai-helpers.mjs';
 
 const inputs = JSON.parse(readFileSync(process.env.ISSUE_195_FORMAL_AI_INPUTS, 'utf8'));
 const files = inputs.dataFiles;
@@ -108,6 +110,12 @@ test(files.projectionRules + " › projects formal-ai's issue 1138 samples", () 
   assert.deepEqual(helpers.projectionFailures(inputs.projections, inputs.projectionLabels, inputs.ruleSetText), none);
 });
 
+test(files.projectionRules + ' › executes all six JavaScript TypeScript Rust numeric projection directions', async () => {
+  const observations = await semanticProjections(inputs.semanticProjections);
+  assert.equal(observations.length, 6);
+  assert.deepEqual(observations.flatMap(({ id, failures }) => failures.map((failure) => id + ': ' + failure)), none);
+});
+
 test(files.linkEditRules + ' › declares the three link-edit shapes', () => {
   assert.deepEqual(helpers.ruleShapes(inputs.linkEditRulesText).map(({ rule }) => rule),
     ['insert_member', 'replace_literal', 'rename_identifier']);
@@ -127,7 +135,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { helpers } from './formal-ai-helpers.mjs';
+import { helpers, semanticProjections } from './formal-ai-helpers.mjs';
 
 const inputs = JSON.parse(readFileSync(process.argv[3], 'utf8'));
 const packageUrl = import.meta.resolve('meta-language');
@@ -158,6 +166,8 @@ const sharedConceptsReused = assertion([
 
 const outputs = helpers.outputs(inputs);
 const distinctionsPreserved = assertion(helpers.distinctionChecks(inputs));
+const semanticProjectionObservations = await semanticProjections(inputs.semanticProjections);
 
-writeFileSync(process.argv[2], JSON.stringify({ packageUrl, outputs, sharedConceptsReused, distinctionsPreserved }, null, 2) + '\n');
+writeFileSync(process.argv[2], JSON.stringify({ packageUrl, outputs, sharedConceptsReused, distinctionsPreserved,
+  semanticProjectionObservations }, null, 2) + '\n');
 `;

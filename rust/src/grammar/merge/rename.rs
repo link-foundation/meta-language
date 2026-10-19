@@ -5,8 +5,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use super::normalize::quote;
 use super::{GrammarRenameError, GrammarRenameErrorKind, RenamedGrammar, RuleAlias};
 use crate::grammar::{
-    FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarMacro, GrammarRule,
-    GrammarScanner, Operation, PrecedenceEntry,
+    FeatureExpr, Grammar, GrammarDeclarations, GrammarExpr, GrammarLexer, GrammarMacro,
+    GrammarRule, GrammarScanner, Operation, PrecedenceEntry,
 };
 
 /// Renames one rule and every reference to it.
@@ -229,7 +229,142 @@ pub(super) fn map_declarations(
                 operations: map_operations(&scanner.operations, rename),
             })
             .collect(),
+        lexers: declarations
+            .lexers
+            .iter()
+            .map(|lexer| map_lexer(lexer, rename, &lexer.name))
+            .collect(),
     }
+}
+
+/// Copy source-local matcher definitions; only generated public-binding roles
+/// expose rule references to the ordinary capture-avoiding renaming operation.
+pub(super) fn map_lexer(
+    lexer: &GrammarLexer,
+    rename: &dyn Fn(&str) -> String,
+    name: &str,
+) -> GrammarLexer {
+    let mut expression = lexer.expression.clone();
+    if let GrammarExpr::Sequence(entries) = &mut expression {
+        for entry in entries {
+            if let GrammarExpr::Feature(feature) = entry {
+                let role =
+                    crate::grammar::feature_runtime::lexical_kernel::entry_form(feature.head());
+                if (role == 1 || role == 2)
+                    && let FeatureExpr::Form(form) = &mut **feature
+                    && let Some(index) = form.spec().iter().position(|(field, _)| *field == "item")
+                    && let Some(crate::grammar::FieldValue::Expression(item)) =
+                        form.fields.get_mut(index)
+                {
+                    *item = map_references(item, rename);
+                }
+            }
+        }
+    }
+    GrammarLexer {
+        name: name.to_owned(),
+        expression,
+    }
+}
+
+pub(super) fn lexer_scope<'a>(grammar: &'a Grammar, name: &str) -> &'a str {
+    for lexer in &grammar.declarations().lexers {
+        if let GrammarExpr::Sequence(entries) = &lexer.expression {
+            for entry in entries {
+                if let GrammarExpr::Feature(feature) = entry {
+                    let role =
+                        crate::grammar::feature_runtime::lexical_kernel::entry_form(feature.head());
+                    if (role == 1 || role == 2)
+                        && let FeatureExpr::Form(form) = &**feature
+                        && let Some(GrammarExpr::NonTerminal(target)) = form.expression("item")
+                        && target == name
+                    {
+                        return &lexer.name;
+                    }
+                }
+            }
+        }
+    }
+    ""
+}
+
+/// Materialize the existing source token binding before public names coalesce.
+pub(super) fn project_lexical_references(
+    grammar: &Grammar,
+    expr: &GrammarExpr,
+    source: &str,
+    rename: &dyn Fn(&str) -> String,
+) -> GrammarExpr {
+    fn project(
+        expr: &GrammarExpr,
+        bindings: &BTreeMap<String, (String, String)>,
+        rename: &dyn Fn(&str) -> String,
+    ) -> GrammarExpr {
+        if let GrammarExpr::NonTerminal(name) = expr
+            && let Some((family, token)) = bindings.get(name)
+        {
+            let elected =
+                GrammarExpr::feature(FeatureExpr::Form(crate::grammar::FeatureForm::new(
+                    "lexicalToken",
+                    vec![
+                        crate::grammar::FieldValue::Name(family.clone()),
+                        crate::grammar::FieldValue::Name(token.clone()),
+                    ],
+                )));
+            return GrammarExpr::feature(FeatureExpr::Form(crate::grammar::FeatureForm::new(
+                "alias",
+                vec![
+                    crate::grammar::FieldValue::Name(rename(name)),
+                    crate::grammar::FieldValue::Expression(elected),
+                ],
+            )));
+        }
+        let mut copy = expr.clone();
+        match &mut copy {
+            GrammarExpr::Optional(item)
+            | GrammarExpr::ZeroOrMore(item)
+            | GrammarExpr::OneOrMore(item)
+            | GrammarExpr::And(item)
+            | GrammarExpr::Not(item)
+            | GrammarExpr::Repeat { expr: item, .. }
+            | GrammarExpr::Capture { expr: item, .. } => **item = project(item, bindings, rename),
+            GrammarExpr::Sequence(items)
+            | GrammarExpr::Choice {
+                alternatives: items,
+                ..
+            } => {
+                for item in items {
+                    *item = project(item, bindings, rename);
+                }
+            }
+            GrammarExpr::Feature(feature) => {
+                feature.map_expressions(&mut |item| *item = project(item, bindings, rename));
+            }
+            _ => {}
+        }
+        copy
+    }
+    let mut bindings = BTreeMap::new();
+    for lexer in &grammar.declarations().lexers {
+        if let GrammarExpr::Sequence(entries) = &lexer.expression {
+            for entry in entries {
+                if let GrammarExpr::Feature(feature) = entry
+                    && crate::grammar::feature_runtime::lexical_kernel::entry_form(feature.head())
+                        == 2
+                    && let FeatureExpr::Form(form) = &**feature
+                    && let Some(GrammarExpr::NonTerminal(public)) = form.expression("item")
+                {
+                    bindings.entry(public.clone()).or_insert_with(|| {
+                        (
+                            format!("{source}::{}", lexer.name),
+                            form.text("name").unwrap_or_default().to_owned(),
+                        )
+                    });
+                }
+            }
+        }
+    }
+    project(expr, &bindings, rename)
 }
 
 /// Operations with every rule reference in their expressions renamed.

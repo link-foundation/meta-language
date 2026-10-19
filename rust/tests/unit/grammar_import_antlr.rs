@@ -143,10 +143,10 @@ fn lowers_covering_antlr_constructs() {
                     negated: true,
                     items: vec![CharClassItem::Char(';')],
                 },
-                GrammarExpr::CharClass {
-                    negated: true,
-                    items: vec![CharClassItem::Char('x')],
-                },
+                GrammarExpr::Sequence(vec![
+                    GrammarExpr::Not(Box::new(GrammarExpr::Terminal("x".to_owned()))),
+                    GrammarExpr::AnyChar,
+                ]),
             ],
         }
     );
@@ -433,10 +433,8 @@ fn left_recursive_alternatives_climb_by_precedence_with_surrogate_sets_and_numer
 fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
     use meta_language::{FeatureParseOptions, compile_feature_grammar};
 
-    let grammar = import_antlr(include_str!(
-        "../fixtures/grammar/antlr/case-insensitive.g4"
-    ))
-    .expect("imports");
+    let source = include_str!("../fixtures/grammar/antlr/case-insensitive.g4");
+    let grammar = import_antlr(source).expect("imports");
     let class = |items: Vec<CharClassItem>| GrammarExpr::CharClass {
         negated: false,
         items,
@@ -468,7 +466,34 @@ fn case_insensitive_options_match_either_case_and_rule_preludes_join_the_doc() {
         Some("dropped returns [int count]; dropped locals [int indexBefore = -1]")
     );
     let options = FeatureParseOptions::default();
-    let parser = compile_feature_grammar(&grammar, None, options.clone()).expect("compiles");
+    // ANTLR 4.13.2 options.md assigns Base as this combined grammar's parser
+    // superclass. Preserve the original context without assuming its absent
+    // implementation equals the standard parser.
+    let value: serde_json::Value = serde_json::from_str(
+        &meta_language::grammar::interchange::serialize_grammar(&grammar),
+    )
+    .expect("serialized grammar wire");
+    let obligations = value["declarations"]["lexers"][0]["expression"]["items"]
+        .as_array()
+        .expect("lexical entries")
+        .iter()
+        .filter(|entry| entry["kind"] == "lexicalObligation")
+        .collect::<Vec<_>>();
+    assert_eq!(obligations.len(), 1);
+    assert_eq!(obligations[0]["category"], "option");
+    assert_eq!(
+        obligations[0]["source"],
+        " superClass = Base; caseInsensitive = true; "
+    );
+    let error = compile_feature_grammar(&grammar, None, options.clone())
+        .expect_err("an unspecified superclass remains unresolved");
+    assert_eq!(error.reason, "operation");
+    assert!(error.message.contains("superClass = Base"));
+    let case_only = import_antlr(&source.replace("superClass = Base; ", ""))
+        .expect("caseInsensitive-only control imports");
+    assert_eq!(case_only.rules(), grammar.rules());
+    let parser = compile_feature_grammar(&case_only, None, options.clone())
+        .expect("caseInsensitive-only control compiles");
     let accepts = |text: &str| {
         parser
             .parse_tree(text.as_bytes(), &options)
@@ -542,4 +567,41 @@ fn type_commands_let_a_rule_match_where_the_type_does() {
     };
     assert!(accepts("ab 12 # note\ncd\n"));
     assert!(!accepts("ab ; cd\n"));
+}
+
+#[test]
+fn braced_unicode_literals_and_ranges_retain_scalar_values() {
+    let grammar =
+        import_antlr(include_str!("../fixtures/grammar/antlr/braced-unicode.g4")).unwrap();
+    assert_eq!(
+        grammar.rule("DIGIT").unwrap().expr(),
+        &GrammarExpr::CharRange('0', '9')
+    );
+    assert_eq!(
+        grammar.rule("EMOJI").unwrap().expr(),
+        &GrammarExpr::Terminal("😀".to_owned())
+    );
+    assert_eq!(
+        grammar.rule("LIMIT").unwrap().expr(),
+        &GrammarExpr::Terminal("\u{10ffff}".to_owned())
+    );
+    assert_eq!(
+        grammar.rule("NUL").unwrap().expr(),
+        &GrammarExpr::Terminal("\0".to_owned())
+    );
+    for escape in [
+        r"\u{}",
+        r"\u{D800}",
+        r"\u{110000}",
+        r"\u{1234567}",
+        r"\u{12",
+        r"\u{xyz}",
+    ] {
+        let source = format!("grammar Invalid; entry: '{escape}';");
+        let error = import_antlr(&source).unwrap_err();
+        assert!(
+            error.to_string().contains("invalid braced unicode escape"),
+            "{error}"
+        );
+    }
 }

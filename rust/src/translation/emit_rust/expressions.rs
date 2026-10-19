@@ -2,17 +2,172 @@
 
 use super::{
     BinaryOp, ByZero, Decimal, Effect, Expr, Flavor, LitValue, Node, Pattern, Prelude, Result,
-    Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, own,
-    rename_main, rounding_text, rust_string, snake, unsupported,
+    Rounding, RustEmitter, Semantics, Type, UnaryOp, block, comparison_operator, indent, is_copy,
+    own, rename_main, rounding_text, rust_string, snake, unsupported,
 };
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if self.program.source_language == crate::translation::Language::JavaScript
+            && matches!(&expr.node, Node::Ctor { frozen: true, .. })
+        {
+            return Err(unsupported(
+                "explicit data object freeze",
+                "this target needs a JavaScript property descriptor model to retain explicit constructor freezing",
+                expr.span,
+            ));
+        }
+        let stateful_receiver = match &expr.node {
+            Node::Index { array, .. }
+            | Node::OptionalIndex { array, .. }
+            | Node::Length { array } => array.ty.is_reference(),
+            Node::RecordField { object, .. }
+            | Node::TupleIndex { object, .. }
+            | Node::Method { object, .. }
+            | Node::CollectionItems { object, .. } => object.ty.is_reference(),
+            _ => false,
+        };
+        let reference_operation =
+            crate::translation::surface_reference_analysis_rules::read_surface_reference_emission_operation(
+                expr.kind(), stateful_receiver, expr.ty.is_reference(),
+            );
+        if !reference_operation.is_empty() {
+            return Err(unsupported(
+                &reference_operation,
+                &crate::translation::surface_reference_analysis_rules::read_surface_reference_emission_refusal(
+                    &reference_operation,
+                ),
+                expr.span,
+            ));
+        }
         match &expr.node {
+            Node::Record { entries } => self.record_value(entries),
+            Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),
-            Node::Var { name } => Ok(own(name, &expr.ty)),
+            Node::None { .. }
+            | Node::Some { .. }
+            | Node::FlattenOption { .. }
+            | Node::Coalesce { .. }
+            | Node::OptionalField { .. }
+            | Node::OptionalProject { .. }
+            | Node::NullishNumber { .. }
+            | Node::OptionalIndexNumber { .. }
+            | Node::OptionalText { .. }
+            | Node::OptionalTypeOf { .. }
+            | Node::Truthy { .. }
+            | Node::StrictEqual { .. }
+            | Node::UnwrapOption { .. }
+            | Node::OptionalPredicate { .. } => self.optional_expr(expr),
+
+            Node::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => {
+                if product_model.as_ref().is_some_and(|model| !crate::translation::typed_program_link_rules::accept_program_tuple_product_model(model, *frozen)) {
+                    return Err(unsupported("immutable tuple product model", "the declared immutable value product requires its retained frozen facet", expr.span));
+                }
+                let mut texts = Vec::with_capacity(items.len());
+                for item in items {
+                    texts.push(self.expr(item)?);
+                }
+                Ok(
+                    crate::translation::product_emission_rules::render_tuple_value(
+                        "Rust", &texts, *frozen,
+                    ),
+                )
+            }
+            Node::TupleIndex { .. } => {
+                let text = self.tuple_place(expr)?;
+                Ok(if is_copy(&expr.ty, None) {
+                    text
+                } else {
+                    format!("({text}).clone()")
+                })
+            }
+            Node::Var { name } => Ok(
+                if self.array_final_uses.contains(&std::ptr::from_ref(expr)) {
+                    name.clone()
+                } else {
+                    own(name, &expr.ty)
+                },
+            ),
+            Node::FunctionRef { func } => Ok(
+                crate::translation::callable_source_rules::render_callable_function_reference(
+                    "Rust",
+                    &(format!("crate::{}", self.state.reference(func, "::"))),
+                ),
+            ),
+            Node::Apply { func, args } => {
+                let function = self.expr(func)?;
+                let arguments = args
+                    .iter()
+                    .map(|argument| self.expr(argument))
+                    .collect::<Result<Vec<_>>>()?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_application(
+                        "Rust", &function, &arguments,
+                    ),
+                )
+            }
+            Node::Lambda { params, body } => self.callable_lambda(expr, params, body),
+            Node::CellAllocate { value } => {
+                let value = self.expr(value)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust",
+                        "cellAllocate",
+                        "",
+                        &value,
+                        "",
+                        "",
+                        "",
+                    ),
+                )
+            }
+            Node::CellRead { cell } => {
+                let cell = self.receiver(cell)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust", "cellRead", &cell, "", "", "", "",
+                    ),
+                )
+            }
+            Node::CellWrite { cell, value, body } => {
+                self.temporaries += 1;
+                let cell_name = format!("ml_cell{}", self.temporaries);
+                let value_name = format!("ml_value{}", self.temporaries);
+                let cell = self.expr(cell)?;
+                let value = self.expr(value)?;
+                let body = self.expr(body)?;
+                Ok(
+                    crate::translation::callable_source_rules::render_callable_cell_operation(
+                        "Rust",
+                        "cellWrite",
+                        &cell,
+                        &value,
+                        &body,
+                        &cell_name,
+                        &value_name,
+                    ),
+                )
+            }
+            Node::ReferenceAllocate { value } => {
+                let value = self.expr(value)?;
+                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+                    "Rust", "referenceAllocate", value, "",
+                ))
+            }
+            Node::ReferenceRead { reference } => {
+                self.temporaries += 1;
+                let temporary = format!("ml_reference_value{}", self.temporaries);
+                let value = self.receiver(reference)?;
+                Ok(crate::translation::surface_reference_analysis_rules::render_surface_reference_operation(
+                    "Rust", "referenceRead", value, &temporary,
+                ))
+            }
             Node::Print { text, body } => {
                 let text = self.expr(text)?;
                 let body = self.expr(body)?;
@@ -23,6 +178,39 @@ impl RustEmitter<'_> {
             }
             Node::OutNil | Node::OutCons { .. } => {
                 unreachable!("only the Lean and Rocq emitters thread output")
+            }
+            Node::Call { func, args } if self.borrowed_call_targets.is_some() => {
+                let signature = self
+                    .borrowed_call_targets
+                    .as_ref()
+                    .unwrap()
+                    .get(func)
+                    .cloned()
+                    .expect("the selected interface validates every actual callee");
+                let mut values = Vec::with_capacity(args.len());
+                for argument in args {
+                    values.push(self.expr(argument)?);
+                }
+                let names = values
+                    .iter()
+                    .map(|_| {
+                        self.borrowed_call_scope
+                            .as_mut()
+                            .expect("a direct call owns its hygienic function scope")
+                            .fresh(
+                                crate::translation::borrowed_call_interface::borrowed_call_policy()
+                                    ["argumentName"]
+                                    .as_str()
+                                    .unwrap(),
+                            )
+                    })
+                    .collect::<Vec<_>>();
+                let head = format!("crate::{}", self.state.reference(func, "::"));
+                Ok(
+                    crate::translation::borrowed_call_interface::render_rust_borrowed_call(
+                        &signature, &head, &values, &names,
+                    ),
+                )
             }
             Node::Call { func, args }
                 if self
@@ -63,7 +251,9 @@ impl RustEmitter<'_> {
                 }
                 Ok(format!("{head}({})", texts.join(", ")))
             }
-            Node::Ctor { data, ctor, args } => {
+            Node::Ctor {
+                data, ctor, args, ..
+            } => {
                 let program = self.program;
                 let entry = program.data(data);
                 let declared = entry
@@ -120,6 +310,34 @@ impl RustEmitter<'_> {
                 Ok(block(&format!("let {name} = {value};\n{body}")))
             }
             Node::Match { .. } => self.match_expr(expr),
+            Node::Method { .. } => self.primitive_method(expr),
+            Node::StringMap { op, string } => {
+                let object = self.receiver(string)?;
+                if self.utf16_strings {
+                    return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "map", &object, "", op));
+                }
+                Ok(
+                    crate::translation::frontend_rules::render_string_map_expression(
+                        "Rust", op, &object,
+                    ),
+                )
+            }
+            Node::StringTest { op, string, search } => {
+                let object = self.receiver(string)?;
+                if self.utf16_strings {
+                    let search = self.borrow(search)?;
+                    return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "test", &object, &search, op));
+                }
+                let search = match &search.node {
+                    Node::Lit { value } => rust_string(&value.text()),
+                    _ => format!("{}.as_str()", self.receiver(search)?),
+                };
+                Ok(
+                    crate::translation::frontend_rules::render_string_test_expression(
+                        "Rust", op, &object, &search,
+                    ),
+                )
+            }
             Node::ToString { arg, console } => {
                 match arg.ty {
                     Type::String => return self.expr(arg),
@@ -132,20 +350,50 @@ impl RustEmitter<'_> {
                     }
                     Type::Float => {
                         self.preludes.insert(Prelude::Number);
-                        let function = if *console { "js_console" } else { "js_number" };
-                        return Ok(format!("crate::ml_number::{function}({})", self.expr(arg)?));
+                        let function =
+                            crate::translation::primitive_value_rules::read_number_display_function(
+                                arg.ty.kind(),
+                                *console,
+                            );
+                        let text = format!("crate::ml_number::{function}({})", self.expr(arg)?);
+                        return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "text", &text, "", ""));
                     }
                     _ => {}
                 }
-                Ok(format!("{}.to_string()", self.receiver(arg)?))
+                let text = format!("{}.to_string()", self.receiver(arg)?);
+                Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "text", &text, "", ""))
             }
             Node::Cast { .. } => self.cast(expr),
             Node::Abort { message } => Ok(format!("panic!(\"{{}}\", {})", rust_string(message))),
-            Node::Array { .. } | Node::Append { .. } | Node::Index { .. } | Node::Length { .. } => {
-                self.array_expr(expr)
-            }
+            Node::Array { .. }
+            | Node::Set { .. }
+            | Node::Map { .. }
+            | Node::Append { .. }
+            | Node::Index { .. }
+            | Node::Length { .. }
+            | Node::OptionalIndex { .. }
+            | Node::StringPoints { .. }
+            | Node::CollectionItems { .. } => self.array_expr(expr),
             Node::Math { .. } => self.math(expr),
         }
+    }
+
+    fn tuple_place(&mut self, expr: &Expr) -> Result<String> {
+        let Node::TupleIndex { object, index } = &expr.node else {
+            unreachable!("a tuple projection place")
+        };
+        let text = match &object.node {
+            Node::TupleIndex { .. } => self.tuple_place(object)?,
+            Node::Var { name } => name.clone(),
+            _ => self.expr(object)?,
+        };
+        Ok(
+            crate::translation::product_emission_rules::render_tuple_projection(
+                "Rust",
+                &text,
+                &index.to_string(),
+            ),
+        )
     }
 
     pub(super) fn literal(&mut self, expr: &Expr, value: &LitValue) -> String {
@@ -175,7 +423,22 @@ impl RustEmitter<'_> {
                 rust_float(&text)
             }
             Type::Bool => text,
-            Type::String => format!("String::from({})", rust_string(&text)),
+            Type::String => {
+                crate::translation::primitive_method_rules::render_primitive_string_representation(
+                    self.utf16_strings,
+                    "literal",
+                    &(if self.utf16_strings {
+                        text.encode_utf16()
+                            .map(|unit| unit.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    } else {
+                        rust_string(&text)
+                    }),
+                    "",
+                    "",
+                )
+            }
             other => unreachable!("no Rust literal for {}", other.kind()),
         }
     }
@@ -208,11 +471,15 @@ impl RustEmitter<'_> {
         match op {
             BinaryOp::And => Ok(format!("({} && {})", self.expr(left)?, self.expr(right)?)),
             BinaryOp::Or => Ok(format!("({} || {})", self.expr(left)?, self.expr(right)?)),
-            BinaryOp::Concat => Ok(format!(
-                "format!(\"{{}}{{}}\", {}, {})",
-                self.receiver(left)?,
-                self.receiver(right)?
-            )),
+            BinaryOp::Concat => {
+                let left = self.receiver(left)?;
+                let right = if self.utf16_strings {
+                    self.borrow(right)?
+                } else {
+                    self.receiver(right)?
+                };
+                Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(self.utf16_strings, "concat", &left, &right, ""))
+            }
             BinaryOp::Eq
             | BinaryOp::Ne
             | BinaryOp::Lt

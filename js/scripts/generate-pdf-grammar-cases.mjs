@@ -12,10 +12,10 @@
 // booleans, {number}, {name} (with #XX escapes decoded), {string} and {hex}
 // (the text between the delimiters), {ref}, arrays, {dictionary: [[key,
 // value]...]} and {stream: [[key, value]...], data}. Text is UTF-8.
-import { readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 import {
   PDFArray, PDFBool, PDFDict, PDFHexString, PDFName, PDFNull, PDFNumber, PDFParser, PDFRawStream,
@@ -227,25 +227,26 @@ async function oracle(source) {
 }
 
 // The conformance sources of the language inventory are always cases.
-const inventory = JSON.parse(await readFile(join(root, 'parity/language-grammar-inventory.json'), 'utf8'));
+const inventory = readProjectData(join(root, 'parity/language-grammar-inventory.json'));
 const { source: inventorySource, recoverySource } = inventory.languages.find(({ name }) => name === 'PDF');
 const sources = [...new Set([inventorySource, recoverySource, ...HAND_WRITTEN, ...generated(400)])];
 const cases = [];
 for (const source of sources) cases.push({ source, objects: await oracle(source) });
-const expected = `${JSON.stringify({
+const expected = {
   schemaVersion: 1,
   oracle: `pdf-lib@${version} PDFParser.forBytesWithOptions(bytes, Infinity, true).parseDocument()`,
   cases,
-}, null, 1)}\n`;
+};
 
 if (process.argv.includes('--check')) {
-  const committed = await readFile(outputPath, 'utf8');
-  if (committed !== expected) {
+  try {
+    checkProjectData(outputPath, expected);
+  } catch {
     console.error(`${outputPath} is stale; run node js/scripts/generate-pdf-grammar-cases.mjs`);
     process.exit(1);
   }
   console.log(`pdf grammar cases: ${sources.length} cases match pdf-lib`);
 } else {
-  await writeFile(outputPath, expected);
+  writeProjectData(outputPath, expected);
   console.log(`wrote ${sources.length} cases to ${outputPath}`);
 }

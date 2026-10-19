@@ -1,0 +1,1 @@
+Focus on delivering first full grammars for JavaScript, Markdown, Rust, TypeScript and so on - we first fully support languages we use ourselves to make the best possible tools for example for translating our own code.

@@ -6,8 +6,8 @@ use serde_json::Value;
 
 #[test]
 fn shared_importer_corpus_parses_emits_and_round_trips() {
-    let fixture: Value = serde_json::from_str(include_str!(
-        "../../../parity/fixtures/grammar-importers.json"
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-importers.lino"
     ))
     .expect("shared importer fixture is JSON");
     let cases = fixture["cases"].as_array().expect("cases array");

@@ -9,6 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
 
 [[package]]
+name = "agda-layout-source-oracle"
+version = "1.3.3"
+dependencies = [
+ "cc",
+ "flate2",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -214,6 +223,15 @@ name = "clap_lex"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
+
+[[package]]
+name = "cmake-source-oracle"
+version = "0.7.5"
+dependencies = [
+ "cc",
+ "flate2",
+ "tree-sitter-language",
+]
 
 [[package]]
 name = "colorchoice"
@@ -1014,13 +1032,15 @@ dependencies = [
 name = "meta-language"
 version = "1.0.0"
 dependencies = [
- "cc",
+ "agda-layout-source-oracle",
  "clap",
+ "cmake-source-oracle",
  "doublets",
- "flate2",
+ "indexmap",
  "lindera",
  "lingua",
  "links-notation",
+ "native-source-oracles",
  "pest",
  "pest_derive",
  "pest_meta",
@@ -1123,6 +1143,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "native-source-oracles"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "flate2",
+ "tree-sitter-language",
 ]
 
 [[package]]

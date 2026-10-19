@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Compares the native TypeScript or TSX grammar (parity/grammars/native/typescript.lino,
 // tsx.lino; GRAMMAR=tsx picks TSX) with its tree-sitter-typescript oracle on
 // every case of the pinned upstream corpus the grammar runs
@@ -16,7 +17,7 @@ import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-gramma
 
 const grammar = process.env.GRAMMAR ?? 'typescript';
 const language = grammar === 'tsx' ? 'TSX' : 'TypeScript';
-const text = readFileSync(new URL(`../../parity/grammars/native/${grammar}.lino`, import.meta.url), 'utf8');
+const text = readFileSync(resolveProjectDataPath(new URL(`../../parity/grammars/native/${grammar}.lino`, import.meta.url)), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: [], anonymous: ['unnamed_token'], extras: ['comment', 'html_comment'], oracleKinds: nativeOracleKinds(text) };
 const show = new Set(process.env.SHOW ? process.env.SHOW.split(',') : []);

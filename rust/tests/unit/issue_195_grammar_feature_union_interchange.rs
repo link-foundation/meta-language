@@ -15,7 +15,7 @@ use serde_json::Value;
 
 use super::issue_195_observations::{Observation, record};
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-feature-union.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-feature-union.lino");
 
 fn text<'a>(value: &'a Value, key: &str) -> &'a str {
     value[key]
@@ -135,7 +135,8 @@ fn check_lowering(lowering: &Value) {
 
 #[test]
 fn merging_and_lowering_keep_the_feature_union_declarations_and_rule_fields() {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("the feature union fixture is JSON");
+    let fixture: Value =
+        super::project_data::read_project_data(FIXTURE).expect("the feature union fixture is JSON");
     let interchange = &fixture["interchange"];
     let merge = interchange["merge"].as_array().expect("merge cases");
     assert_ne!(merge.as_slice(), &[] as &[Value]);

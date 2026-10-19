@@ -12,7 +12,7 @@
 // conflicts are tree-sitter's, of the tokens' NFAs.
 import { MATCHES_DIFFERENT_STRING, MATCHES_SAME_STRING, firstCharacters, tokenConflicts } from './tree-sitter-token-conflicts.js';
 
-const unwrap = (node) => (node.type.startsWith('PREC') || node.type === 'FIELD' || node.type === 'ALIAS' || node.type === 'RESERVED' ? unwrap(node.content) : node);
+const unwrap = (node) => (node.type.startsWith('PREC') || node.type === 'FIELD' || node.type === 'ALIAS' || node.type === 'RESERVED' || node.type === 'NATIVE_PREFIX_EXCLUSION' ? unwrap(node.content) : node);
 const isLexical = (node) => ['STRING', 'PATTERN', 'TOKEN', 'IMMEDIATE_TOKEN'].includes(unwrap(node).type);
 
 /**
@@ -29,7 +29,9 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
   const nodes = new Map();
   const keyOf = (node, name = null) => {
     const key = tokenKey(node, name);
-    if (!nodes.has(key)) nodes.set(key, node);
+    let lexical = node;
+    while (lexical.type === 'NATIVE_PREFIX_EXCLUSION') lexical = lexical.content;
+    if (!nodes.has(key)) nodes.set(key, lexical);
     return key;
   };
   // FIRST sets of the syntactic rules, to a fixed point.
@@ -52,11 +54,12 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
         }
         return { keys, nullable: true };
       }
-      case 'CHOICE': {
+      case 'NATIVE_ORDERED_CHOICE': case 'CHOICE': {
         const owns = node.members.map(firstOf);
         return { keys: new Set(owns.flatMap((own) => [...own.keys])), nullable: owns.some((own) => own.nullable) };
       }
       case 'REPEAT': return { keys: firstOf(node.content).keys, nullable: true };
+      case 'NATIVE_LITERAL_BOUNDARY': case 'NATIVE_WORD_BOUNDARY': case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
       case 'REPEAT1': case 'PREC': case 'PREC_LEFT': case 'PREC_RIGHT': case 'PREC_DYNAMIC': case 'FIELD': case 'ALIAS': case 'RESERVED':
         return firstOf(node.content);
       default: return { keys: new Set(), nullable: true };
@@ -119,8 +122,9 @@ export function excludedKeywordTexts(grammar, word, candidates, tokenKey) {
         });
         return grew;
       }
-      case 'CHOICE': return node.members.map((member) => walk(member, follow, visit)).some(Boolean);
+      case 'NATIVE_ORDERED_CHOICE': case 'CHOICE': return node.members.map((member) => walk(member, follow, visit)).some(Boolean);
       case 'REPEAT': case 'REPEAT1': return walk(node.content, new Set([...firstOf(node.content).keys, ...follow]), visit);
+      case 'NATIVE_LITERAL_BOUNDARY': case 'NATIVE_WORD_BOUNDARY': case 'NATIVE_PREFIX_EXCLUSION': case 'NATIVE_KEYWORD_REQUIREMENT': case 'NATIVE_KEYWORD_EXCLUSION': case 'NATIVE_PATTERN_LOOKAHEAD': case 'NATIVE_KEYWORD_CONTEXT_VARIANT': case 'NATIVE_COMPLETE_CONTEXT_VARIANT': case 'NATIVE_OPTIONAL_SUFFIX_CONTEXT': case 'NATIVE_END_BOUNDARY':
       case 'PREC': case 'PREC_LEFT': case 'PREC_RIGHT': case 'PREC_DYNAMIC': case 'FIELD': case 'ALIAS': case 'RESERVED':
         return walk(node.content, follow, visit);
       default: return false;

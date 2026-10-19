@@ -1,6 +1,6 @@
 use std::sync::OnceLock;
 
-use regex::Regex;
+use serde_json::Value;
 
 use crate::builtin_grammar::{GrammarNode, propagate_errors};
 use crate::line_index::LineIndex;
@@ -9,8 +9,9 @@ use crate::natural_language::{annotate_natural_language, canonical_natural_langu
 use crate::pdf_grammar::parse_pdf_cst;
 use crate::tree_sitter_adapter::SpanOffset;
 use crate::{
-    ByteRange, LinkFlags, LinkId, LinkMetadata, LinkNetwork, LinkType, ParseConfiguration,
-    SourceSpan,
+    ByteRange, FeatureGrammarParser, FeatureParseOptions, LinkFlags, LinkId, LinkMetadata,
+    LinkNetwork, LinkType, ParseConfiguration, SourceSpan, SyntaxTree, compile_feature_grammar,
+    parse_grammar_links,
 };
 
 /// Built-in structured-text grammar selected for a language label.
@@ -210,137 +211,134 @@ fn insert_grammar_node(
     syntax
 }
 
-/// Parses plain text with the built-in line grammar: a `text_document` of
-/// lines holding the shared lexical nodes. Unbalanced parentheses make the
-/// document an `ERROR`-flagged root.
+/// Runs the generated native line grammar with shared lexical rules.
 pub fn parse_plain_text_cst(text: &str) -> GrammarNode {
-    let mut lines = Vec::new();
-    let mut start = 0;
-    for line in text.split_inclusive('\n') {
-        let end = start + line.len();
-        lines.push(GrammarNode::node(
-            "line",
-            start,
-            end,
-            lexical_nodes(text, start, end),
-        ));
-        start = end;
-    }
-    if start < text.len() || text.is_empty() {
-        lines.push(GrammarNode::node(
-            "line",
-            start,
-            text.len(),
-            lexical_nodes(text, start, text.len()),
-        ));
-    }
-    let mut root = GrammarNode::node("text_document", 0, text.len(), lines);
-    root.is_error = !balanced_parentheses(text);
-    propagate_errors(&mut root);
-    root
+    parse_native_text_cst(text, "plain")
 }
 
-/// Parses natural-language text with the built-in sentence grammar: a
-/// `natural_language_document` of sentences holding the shared lexical nodes.
+/// Runs the generated native sentence grammar with shared lexical rules.
 pub fn parse_natural_language_cst(text: &str) -> GrammarNode {
-    let sentences = sentence_ranges(text)
+    parse_native_text_cst(text, "natural")
+}
+
+fn text_grammar_metadata() -> &'static Value {
+    static METADATA: OnceLock<Value> = OnceLock::new();
+    METADATA.get_or_init(|| {
+        crate::structured_data_links::read_structured_data_lino(include_str!(
+            "data/native-text-metadata.lino"
+        ))
+        .expect("generated native text metadata is valid Links Notation")
+    })
+}
+
+fn text_grammar_parser() -> &'static FeatureGrammarParser {
+    static PARSER: OnceLock<FeatureGrammarParser> = OnceLock::new();
+    PARSER.get_or_init(|| {
+        let grammar = parse_grammar_links(include_str!("data/native-text-grammar.lino"))
+            .expect("generated native text grammar is valid Links Notation");
+        compile_feature_grammar(&grammar, None, FeatureParseOptions::default())
+            .expect("generated native text grammar compiles")
+    })
+}
+
+fn parse_native_text(text: &str, start_rule: &str) -> Option<SyntaxTree> {
+    let options = FeatureParseOptions {
+        start_rule: Some(start_rule.to_owned()),
+        ..FeatureParseOptions::default()
+    };
+    text_grammar_parser()
+        .parse_tree(text.as_bytes(), &options)
+        .ok()
+        .filter(|outcome| outcome.ok)
+        .and_then(|outcome| outcome.tree)
+}
+
+fn projected_term(kind: &str) -> &'static str {
+    text_grammar_metadata()["projection"][kind]["term"]
+        .as_str()
+        .expect("generated text kind has a projection")
+}
+
+fn parse_native_text_cst(text: &str, mode: &str) -> GrammarNode {
+    let metadata = text_grammar_metadata();
+    let start_rule = metadata["starts"][mode]
+        .as_str()
+        .expect("generated text grammar has this mode");
+    let term = projected_term(start_rule);
+    let Some(SyntaxTree::Node { children, .. }) = parse_native_text(text, start_rule) else {
+        let mut root = GrammarNode::node(
+            term,
+            0,
+            text.len(),
+            vec![GrammarNode::error(0, text.len(), Vec::new())],
+        );
+        propagate_errors(&mut root);
+        return root;
+    };
+    let regions = children
         .into_iter()
-        .map(|(start, end)| {
-            GrammarNode::node("sentence", start, end, lexical_nodes(text, start, end))
+        .filter_map(|region| {
+            let SyntaxTree::Node {
+                kind, start, end, ..
+            } = region
+            else {
+                return None;
+            };
+            Some(GrammarNode::node(
+                projected_term(&kind),
+                start,
+                end,
+                lexical_nodes(&text[start..end], start),
+            ))
         })
         .collect();
-    let mut root = GrammarNode::node("natural_language_document", 0, text.len(), sentences);
+    let mut root = GrammarNode::node(term, 0, text.len(), regions);
+    root.is_error = metadata["validation"][mode]
+        .as_array()
+        .expect("generated text validation rules are an array")
+        .iter()
+        .any(|rule| {
+            parse_native_text(text, rule.as_str().expect("validation rule is text")).is_none()
+        });
     propagate_errors(&mut root);
     root
 }
 
-/// The shared lexical nodes of `text[start..end]`: whitespace extras, words,
-/// punctuation and `ERROR` nodes for runs of control characters.
-fn lexical_nodes(text: &str, start: usize, end: usize) -> Vec<GrammarNode> {
-    lexical_pattern()
-        .find_iter(&text[start..end])
-        .map(|segment_match| {
-            let segment = segment_match.as_str();
-            let segment_start = start + segment_match.start();
-            let segment_end = start + segment_match.end();
-            if segment.chars().all(char::is_whitespace) {
-                GrammarNode::extra("whitespace", false, segment_start, segment_end)
-            } else if segment.chars().all(is_control_character) {
-                GrammarNode::error(segment_start, segment_end, Vec::new())
-            } else if word_pattern().is_match(segment) {
-                GrammarNode::node("word", segment_start, segment_end, Vec::new())
+fn lexical_nodes(text: &str, offset: usize) -> Vec<GrammarNode> {
+    let start_rule = text_grammar_metadata()["starts"]["lexical"]
+        .as_str()
+        .expect("generated text grammar has a lexical start");
+    let Some(SyntaxTree::Node { children, .. }) = parse_native_text(text, start_rule) else {
+        return vec![GrammarNode::error(offset, offset + text.len(), Vec::new())];
+    };
+    children
+        .into_iter()
+        .filter_map(|token| {
+            let SyntaxTree::Token {
+                kind: Some(kind),
+                start,
+                end,
+                ..
+            } = token
+            else {
+                return None;
+            };
+            let projection = &text_grammar_metadata()["projection"][&kind];
+            let start = offset + start;
+            let end = offset + end;
+            let term = projected_term(&kind);
+            if projection["error"].as_bool().unwrap_or(false) {
+                Some(GrammarNode::error(start, end, Vec::new()))
+            } else if projection["extra"].as_bool().unwrap_or(false) {
+                Some(GrammarNode::extra(
+                    term,
+                    projection["named"].as_bool().unwrap_or(true),
+                    start,
+                    end,
+                ))
             } else {
-                GrammarNode::node("punctuation", segment_start, segment_end, Vec::new())
+                Some(GrammarNode::node(term, start, end, Vec::new()))
             }
         })
         .collect()
-}
-
-// The built-in lexical grammar shared with the JavaScript runtime: maximal runs
-// of Unicode whitespace, of word characters, of control characters that are
-// not whitespace (which the grammar rejects), and of any other characters.
-const WORD_CHARACTERS: &str = r"\p{L}\p{N}\p{M}_'\-";
-const CONTROL_CHARACTERS: &str = r"\x00-\x08\x0E-\x1F\x7F-\x{84}\x{86}-\x{9F}";
-
-const fn is_control_character(character: char) -> bool {
-    matches!(
-        character,
-        '\u{0}'..='\u{8}' | '\u{E}'..='\u{1F}' | '\u{7F}'..='\u{84}' | '\u{86}'..='\u{9F}'
-    )
-}
-
-fn lexical_pattern() -> &'static Regex {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN.get_or_init(|| {
-        Regex::new(&format!(
-            r"\p{{White_Space}}+|[{WORD_CHARACTERS}]+|[{CONTROL_CHARACTERS}]+|[^\p{{White_Space}}{WORD_CHARACTERS}{CONTROL_CHARACTERS}]+"
-        ))
-        .expect("the built-in lexical grammar is a valid pattern")
-    })
-}
-
-fn word_pattern() -> &'static Regex {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN.get_or_init(|| {
-        Regex::new(&format!(r"^[{WORD_CHARACTERS}]+$")).expect("the built-in word pattern is valid")
-    })
-}
-
-// The built-in sentence grammar shared with the JavaScript runtime: a sentence
-// ends after a run of terminal punctuation, any closing punctuation or quotes,
-// and the whitespace that follows them.
-fn sentence_pattern() -> &'static Regex {
-    static PATTERN: OnceLock<Regex> = OnceLock::new();
-    PATTERN.get_or_init(|| {
-        Regex::new(
-            r"(?s).*?[.!?\x{0964}\x{3002}\x{061F}\x{06D4}\x{FF01}\x{FF1F}]+[\p{Pe}\p{Pf}\x{0022}\x{0027}]*\p{White_Space}*",
-        )
-        .expect("the built-in sentence grammar is a valid pattern")
-    })
-}
-
-fn sentence_ranges(text: &str) -> Vec<(usize, usize)> {
-    let mut ranges = Vec::new();
-    let mut start = 0;
-    for sentence in sentence_pattern().find_iter(text) {
-        ranges.push((sentence.start(), sentence.end()));
-        start = sentence.end();
-    }
-    if start < text.len() {
-        ranges.push((start, text.len()));
-    }
-    ranges
-}
-
-fn balanced_parentheses(text: &str) -> bool {
-    let mut depth = 0_usize;
-    for character in text.chars() {
-        match character {
-            '(' => depth += 1,
-            ')' if depth == 0 => return false,
-            ')' => depth -= 1,
-            _ => {}
-        }
-    }
-    depth == 0
 }

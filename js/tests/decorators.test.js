@@ -25,11 +25,12 @@ import {
   TranslationRuleSet,
 } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData } from '../scripts/project-data.mjs';
 
 const FIXTURE = 'parity/decorators/cases.json';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (name) => readFileSync(path.join(root, 'parity/decorators', name), 'utf8');
-const cases = JSON.parse(read('cases.json'));
+const cases = readProjectData(path.join(root, FIXTURE));
 const sets = { levels: DecoratorSet.fromLino(read('levels.lino')), composition: DecoratorSet.fromLino(read('composition.lino')) };
 const levels = sets.levels;
 const { hooks } = cases;

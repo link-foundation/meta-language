@@ -1,0 +1,105 @@
+--- a/src/scanner.c
++++ b/src/scanner.c
+@@ -39,10 +39,17 @@
+ 
+ #define QUEUE_RESIZE(queue, _cap)                                              \
+     do {                                                                       \
+-        void *tmp = realloc((queue).data, (_cap) * sizeof((queue).data[0]));   \
++        uint32_t count = (queue).tail - (queue).head;                          \
++        uint16_t *tmp = malloc((_cap) * sizeof((queue).data[0]));              \
+         assert(tmp != NULL);                                                   \
++        for (uint32_t index = 0; index < count; index++) {                     \
++            tmp[index] = (queue).data[((queue).head + index) % (queue).cap];   \
++        }                                                                      \
++        free((queue).data);                                                    \
+         (queue).data = tmp;                                                    \
+         (queue).cap = (_cap);                                                  \
++        (queue).head = 0;                                                      \
++        (queue).tail = count;                                                  \
+     } while (0)
+ 
+ #define QUEUE_GROW(queue, _cap)                                                \
+@@ -222,20 +229,29 @@
+ unsigned tree_sitter_agda_external_scanner_serialize(void *payload,
+                                                      char *buffer) {
+     Scanner *scanner = (Scanner *)payload;
+-
+-    if (scanner->indents.len * sizeof(uint16_t) + 1 >
++    uint32_t token_count = scanner->tokens.tail - scanner->tokens.head;
++    uint32_t indent_count = scanner->indents.len;
++    unsigned header_size = 3 * sizeof(uint32_t);
++    if (header_size + (indent_count + token_count) * sizeof(uint16_t) >
+         TREE_SITTER_SERIALIZATION_BUFFER_SIZE) {
+         return 0;
+     }
+-
+     unsigned size = 0;
+-
+-    buffer[size++] = (char)scanner->queued_dedent_count;
+-
++    memcpy(&buffer[size], &scanner->queued_dedent_count, sizeof(uint32_t));
++    size += sizeof(uint32_t);
++    memcpy(&buffer[size], &indent_count, sizeof(uint32_t));
++    size += sizeof(uint32_t);
++    memcpy(&buffer[size], &token_count, sizeof(uint32_t));
++    size += sizeof(uint32_t);
+     memcpy(&buffer[size], scanner->indents.data,
+-           scanner->indents.len * sizeof(uint16_t));
+-    size += (unsigned)(scanner->indents.len * sizeof(uint16_t));
+-
++           indent_count * sizeof(uint16_t));
++    size += indent_count * sizeof(uint16_t);
++    for (uint32_t index = 0; index < token_count; index++) {
++        uint16_t token = scanner->tokens.data[
++            (scanner->tokens.head + index) % scanner->tokens.cap];
++        memcpy(&buffer[size], &token, sizeof(uint16_t));
++        size += sizeof(uint16_t);
++    }
+     return size;
+ }
+ 
+@@ -246,25 +262,28 @@
+ 
+     scanner->queued_dedent_count = 0;
+     VEC_CLEAR(scanner->indents);
+-
++    QUEUE_CLEAR(scanner->tokens);
+     if (length == 0) {
+-        if (buffer == NULL) {
+-            VEC_PUSH(scanner->indents, 0);
+-        }
++        VEC_PUSH(scanner->indents, 0);
+         return;
+     }
+-
+-    scanner->queued_dedent_count = (uint8_t)buffer[0];
+-
+-    unsigned size = 1;
+-
+-    if (length > size) {
+-        VEC_GROW(scanner->indents,
+-                 (uint32_t)(length - size) / sizeof(uint16_t));
+-        scanner->indents.len = (length - size) / sizeof(uint16_t);
+-        memcpy(scanner->indents.data, &buffer[size],
+-               scanner->indents.len * sizeof(uint16_t));
+-        size += (unsigned)(scanner->indents.len * sizeof(uint16_t));
++    uint32_t indent_count, token_count;
++    unsigned size = 3 * sizeof(uint32_t);
++    assert(length >= size);
++    memcpy(&scanner->queued_dedent_count, buffer, sizeof(uint32_t));
++    memcpy(&indent_count, buffer + sizeof(uint32_t), sizeof(uint32_t));
++    memcpy(&token_count, buffer + 2 * sizeof(uint32_t), sizeof(uint32_t));
++    assert(length == size + (indent_count + token_count) * sizeof(uint16_t));
++    VEC_GROW(scanner->indents, indent_count);
++    scanner->indents.len = indent_count;
++    memcpy(scanner->indents.data, &buffer[size], indent_count * sizeof(uint16_t));
++    size += indent_count * sizeof(uint16_t);
++    for (uint32_t index = 0; index < token_count; index++) {
++        uint16_t token;
++        memcpy(&token, &buffer[size], sizeof(uint16_t));
++        size += sizeof(uint16_t);
++        assert(token <= DEDENT);
++        QUEUE_PUSH(scanner->tokens, token);
+     }
+ 
+     if (scanner->indents.len == 0) {

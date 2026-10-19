@@ -20,6 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
 
 import {
   AUDIT_DOCUMENT,
@@ -29,6 +30,7 @@ import {
   collectDependencies,
   compareAudits,
   refreshInventory,
+  reconcileLocalDeclarations,
   registryHttp,
   releaseResolvers,
   renderAuditDocument,
@@ -62,10 +64,18 @@ function cargoMetadata(manifest) {
   return metadata.get(manifest);
 }
 
-const readInventory = () => (existsSync(path.join(root, INVENTORY_FILE)) ? JSON.parse(readFileSync(path.join(root, INVENTORY_FILE), 'utf8')) : null);
+const readInventory = () => (existsSync(resolveProjectDataPath(path.join(root, INVENTORY_FILE))) ? readProjectData(path.join(root, INVENTORY_FILE)) : null);
 
 async function main(argv) {
   const collected = collectDependencies(root);
+  if (argv.includes('--refresh-declarations')) {
+    const previous = readInventory();
+    if (!previous) throw new Error('a registry audit is required before reconciling local declarations');
+    const inventory = reconcileLocalDeclarations(previous, collected);
+    writeProjectData(path.join(root, INVENTORY_FILE), inventory);
+    writeFileSync(path.join(root, AUDIT_DOCUMENT), renderAuditDocument(inventory));
+    console.log(`reconciled local declarations; registry audit date remains ${inventory.auditDate}`);
+  }
   if (argv.includes('--refresh')) {
     const today = new Date().toISOString().slice(0, 10);
     const inventory = await refreshInventory({
@@ -79,7 +89,7 @@ async function main(argv) {
         if (done % 50 === 0 || done === total) process.stderr.write(`resolved ${done}/${total}\n`);
       },
     });
-    writeFileSync(path.join(root, INVENTORY_FILE), `${JSON.stringify(inventory, null, 2)}\n`);
+    writeProjectData(path.join(root, INVENTORY_FILE), inventory);
     writeFileSync(path.join(root, AUDIT_DOCUMENT), renderAuditDocument(inventory));
     console.log(`wrote ${INVENTORY_FILE} and ${AUDIT_DOCUMENT} (${inventory.items.length} items, audit date ${inventory.auditDate})`);
   }
@@ -92,7 +102,7 @@ async function main(argv) {
   if (consumerIndex >= 0 && (!argv[consumerIndex + 1] || argv[consumerIndex + 1].startsWith('--'))) {
     throw new Error('--consumer-lock requires a clean consumer package-lock.json path');
   }
-  const npmConsumerLock = consumerIndex >= 0 ? JSON.parse(readFileSync(path.resolve(argv[consumerIndex + 1]), 'utf8')) : undefined;
+  const npmConsumerLock = consumerIndex >= 0 ? readProjectData(path.resolve(argv[consumerIndex + 1]), { format: 'json' }) : undefined;
   const delivery = argv.includes('--delivery');
   // The live comparison runs only when asked for: pull request checks compare
   // against the committed audit, and the scheduled refresh on main goes live.

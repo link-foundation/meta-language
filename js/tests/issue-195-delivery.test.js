@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -13,8 +15,8 @@ import {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const corpusPath = 'parity/fixtures/issue-195-evidence.json';
-const corpusBytes = await readFile(path.join(root, corpusPath));
-const corpus = JSON.parse(corpusBytes.toString('utf8'));
+const corpusBytes = await readFile(resolveProjectDataPath(path.join(root, corpusPath)));
+const corpus = readProjectData(path.join(root, corpusPath));
 const corpusSha256 = sha256(corpusBytes);
 const context = { corpus, corpusSha256, version: '9.9.9' };
 const expected = { npm: 'a'.repeat(64), crate: 'b'.repeat(64) };

@@ -1,0 +1,1 @@
+https://github.com/link-assistant/formal-ai/blob/main/docs/associative-tech-stack.md - double check we use this in our entire project, and github.com/link-foundation/meta-theory as phylosophycal and theorical foundation.

@@ -3,6 +3,7 @@
 /// Runtime helpers, declared in the order they are written to the file.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum Helper {
+    OwnedTextInput,
     NatSub,
     Fixed,
     Divide,
@@ -11,14 +12,23 @@ pub(super) enum Helper {
     Assert,
     Equal,
     ShowNumber,
+    ShowOptional,
     At,
     Forall,
     Domains,
 }
 
 impl Helper {
-    pub(super) const fn text(self) -> &'static str {
+    pub(super) fn text(self) -> &'static str {
         match self {
+            Self::OwnedTextInput => {
+                static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+                TEXT.get_or_init(crate::translation::rust::owned_local_state_rules::render_rust_owned_local_text_input)
+            }
+            Self::ShowOptional => {
+                static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+                TEXT.get_or_init(crate::translation::optional_value_rules::read_optional_java_script_text_prelude)
+            }
             Self::NatSub => {
                 "function ml_natSub(a, b) {
   return a > b ? a - b : 0n;

@@ -5,11 +5,12 @@ imports the same grammars as the Rust importer
 (`rust/src/grammar/import/lark.rs`) and rejects the same inputs with the same
 error messages, including UTF-8 byte offsets.
 
-`cases.json` is a list of `[name, source]` pairs: the Rust unit and integration
+`cases.lino` stores a list of `[name, source]` pairs as structured links: the Rust unit and integration
 test inputs plus edge cases for directives (`%ignore`, `%declare`, `%import`,
 `%override`), rule priorities and inline rules, templates, counted `~`
 repetition, string and character-class escapes, regex terminals, comments,
-CRLF line endings, Unicode whitespace and unexpected characters.
+CRLF line endings, Unicode whitespace and unexpected characters. The shared
+data loaders retain the former `cases.json` logical path as an alias.
 
 Both programs print, for every case, the source format, start rule, each
 distinct rule as `<kind> <expression>` in the runtime-neutral rendering used by
@@ -22,7 +23,7 @@ From the repository root:
 
 ```sh
 node experiments/run-rust-experiment.mjs experiments/lark-parity/render.rs \
-  experiments/lark-parity/cases.json > /tmp/lark-parity-rust.txt
+  experiments/lark-parity/cases.lino > /tmp/lark-parity-rust.txt
 node experiments/lark-parity/render.mjs > /tmp/lark-parity-js.txt
 diff -u /tmp/lark-parity-rust.txt /tmp/lark-parity-js.txt && echo 'Lark importers agree'
 ```

@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Requirement I195-GRAMMAR-NATIVE-RECOVERY: automatic error recovery in the
 // native executor. With `errorRecovery` a parse the grammar rejects is
 // repaired into a tree of ERROR and MISSING leaves, with no recovery rules in
@@ -13,10 +14,11 @@ import { NATIVE_GRAMMARS, fixturePath } from '../scripts/generate-native-grammar
 import { normalize, renderNetwork } from './support/cst-sexpression.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
+const readData = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const grammars = NATIVE_GRAMMARS.map((entry) => ({
   entry,
-  fixture: JSON.parse(read(fixturePath(entry))),
+  fixture: readData(fixturePath(entry)),
   parser: compileGrammar(parseGrammarLinks(read(entry.grammar))),
 }));
 const RECOVER = { errorRecovery: true };
@@ -48,24 +50,30 @@ function leafText(tree, source) {
 
 test('every native grammar repairs each fixture rejection into its recorded tree', (context) => {
   let repaired = 0;
+  const failures = [];
   for (const { entry, fixture, parser } of grammars) {
     assert.ok(fixture.rejections.length > 0, entry.id);
     for (const { source, recovered } of fixture.rejections) {
       const label = `${entry.id} ${JSON.stringify(source)}`;
-      const plain = parser.parseTree(source);
-      assert.equal(plain.ok, false, label);
-      assert.equal(plain.tree, null, label);
-      const outcome = parser.parseTree(source, RECOVER);
-      assert.equal(outcome.ok, false, label);
-      assert.equal(outcome.rejection.reason, 'recovered', label);
-      assert.equal(renderSyntaxTree(outcome.tree), recovered, label);
-      assert.equal(leafText(outcome.tree, source), source, label);
-      const accepted = parser.parseTree(source, { ...RECOVER, recovery: 'accept' });
-      assert.equal(accepted.ok, true, label);
-      assert.equal(renderSyntaxTree(accepted.tree), recovered, label);
-      repaired += 1;
+      try {
+        const plain = parser.parseTree(source);
+        assert.equal(plain.ok, false, label);
+        assert.equal(plain.tree, null, label);
+        const outcome = parser.parseTree(source, RECOVER);
+        assert.equal(outcome.ok, false, label);
+        assert.equal(outcome.rejection.reason, 'recovered', label);
+        assert.equal(renderSyntaxTree(outcome.tree), recovered, label);
+        assert.equal(leafText(outcome.tree, source), source, label);
+        const accepted = parser.parseTree(source, { ...RECOVER, recovery: 'accept' });
+        assert.equal(accepted.ok, true, label);
+        assert.equal(renderSyntaxTree(accepted.tree), recovered, label);
+        repaired += 1;
+      } catch (error) {
+        failures.push({ label, message: error.message, actual: error.actual, expected: error.expected });
+      }
     }
   }
+  assert.deepEqual(failures, [], JSON.stringify(failures));
   assert.ok(repaired >= 200, `${repaired} repaired rejections`);
   observe(['nativeRecoveryTreesMatchFixtures', 'nativeRecoveryTreesLossless', 'nativeRecoveryReportedAsRecovered'], context.name);
 });

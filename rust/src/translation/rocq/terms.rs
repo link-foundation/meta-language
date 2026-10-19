@@ -240,7 +240,7 @@ impl RocqParser {
             return Ok(SExpr::new(
                 SNode::Let {
                     name,
-                    ty,
+                    ty: ty.map(Into::into),
                     value: Box::new(value),
                     body: Box::new(body),
                 },
@@ -755,6 +755,7 @@ impl RocqParser {
                             unit: false,
                         },
                         span: ascribed_span,
+                        parenthesized: inner.parenthesized,
                         block: inner.block,
                         tag_test: None,
                     });

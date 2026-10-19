@@ -11,6 +11,39 @@
 use serde::{Deserialize, Serialize};
 
 use super::Span;
+use super::primitive_value_rules::accept_immutable_product_kind;
+use super::structured_type_rules::{
+    accept_optional_absence, accept_type_identity, merge_optional_absence,
+    render_portable_type_identity, wrap_portable_reference_identity,
+};
+
+fn default_absence() -> std::string::String {
+    "both".to_owned()
+}
+fn is_false(value: impl std::ops::Not<Output = bool>) -> bool {
+    !value
+}
+
+/// A present product model must be a string; null cannot erase its semantics.
+pub(crate) fn deserialize_tuple_product_model<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<std::string::String>, D::Error> {
+    std::string::String::deserialize(deserializer)
+        .map(Some)
+        .map_err(|error| {
+            <D::Error as serde::de::Error>::custom(format!("invalid tuple product model: {error}"))
+        })
+}
+
+/// One named field of a structural record.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TypeField {
+    /// The source field name.
+    pub name: std::string::String,
+    /// The field's recursively structured type.
+    #[serde(rename = "type")]
+    pub ty: Type,
+}
 
 /// A portable-core type, or a surface type reference before resolution.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -31,9 +64,59 @@ pub enum Type {
     Data {
         name: std::string::String,
     },
-    /// A JavaScript array, which the portable core reads and never mutates.
+    /// A JavaScript array, optionally retaining a shared reference identity.
     Array {
         element: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
+    },
+    /// A binding whose value lives in a shared reference cell.
+    Cell {
+        element: Box<Self>,
+    },
+    /// Absence retains the distinction between JavaScript null and undefined.
+    Option {
+        element: Box<Self>,
+        #[serde(default = "default_absence")]
+        absence: std::string::String,
+    },
+    /// A surface absence type; checked Links admission retains its old refusal.
+    Absence {
+        absence: std::string::String,
+    },
+    /// A positional product type; value nodes retain the explicit frozen facet.
+    Tuple {
+        elements: Vec<Self>,
+    },
+    /// Ordered source alternatives retain their separate child identities.
+    Union {
+        alternatives: Vec<Self>,
+    },
+    /// Named fields, whose declaration order does not affect type identity.
+    Record {
+        fields: Vec<TypeField>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        open: bool,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
+    },
+    /// An insertion-ordered mapping, optionally retaining a shared reference identity.
+    Map {
+        key: Box<Self>,
+        value: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
+    },
+    /// An insertion-ordered set, optionally retaining a shared reference identity.
+    Set {
+        element: Box<Self>,
+        #[serde(default, skip_serializing_if = "is_false")]
+        reference: bool,
+    },
+    /// The parameter and return types of a callable value.
+    Function {
+        params: Vec<Self>,
+        ret: Box<Self>,
     },
     /// A surface reference to a declared type, resolved by the checker.
     Named {
@@ -66,6 +149,23 @@ pub const fn fixed(bits: u32, signed: bool) -> Type {
 pub fn array(element: Type) -> Type {
     Type::Array {
         element: Box::new(element),
+        reference: false,
+    }
+}
+
+/// Constructs and flattens an optional type using the shared absence policy.
+#[must_use]
+pub fn option(element: Type, absence: impl Into<std::string::String>) -> Type {
+    let absence = absence.into();
+    match element {
+        Type::Option {
+            element,
+            absence: inner,
+        } => option(*element, merge_optional_absence(&inner, &absence)),
+        element => Type::Option {
+            element: Box::new(element),
+            absence,
+        },
     }
 }
 
@@ -75,15 +175,202 @@ pub fn data(name: impl Into<std::string::String>) -> Type {
 }
 
 impl Type {
+    /// Membership in the selected recursive scalar Copy product model.
+    #[must_use]
+    pub fn immutable_product_type(&self) -> bool {
+        accept_immutable_product_kind(self.kind())
+            && match self {
+                Self::Tuple { elements } => elements.iter().all(Self::immutable_product_type),
+                _ => true,
+            }
+    }
+
+    /// Immediate child types, in representation order.
+    #[must_use]
+    pub fn children(&self) -> Vec<&Self> {
+        match self {
+            Self::Array { element, .. }
+            | Self::Option { element, .. }
+            | Self::Set { element, .. }
+            | Self::Cell { element } => {
+                vec![element]
+            }
+            Self::Tuple { elements } => elements.iter().collect(),
+            Self::Union { alternatives } => alternatives.iter().collect(),
+            Self::Record { fields, .. } => fields.iter().map(|field| &field.ty).collect(),
+            Self::Map { key, value, .. } => vec![key, value],
+            Self::Function { params, ret } => {
+                params.iter().chain(std::iter::once(ret.as_ref())).collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    /// Adapts children through the host checker without duplicating type rules.
+    /// Record fields are put into their canonical UTF-16 name order.
+    ///
+    /// # Errors
+    /// Returns an error from the supplied child adapter.
+    pub fn map_children<E>(
+        &self,
+        mut map: impl FnMut(&Self) -> Result<Self, E>,
+    ) -> Result<Self, E> {
+        Ok(match self {
+            Self::Array { element, .. } => Self::Array {
+                element: Box::new(map(element)?),
+                reference: self.is_reference(),
+            },
+            Self::Cell { element } => Self::Cell {
+                element: Box::new(map(element)?),
+            },
+            Self::Option { element, absence } => Self::Option {
+                element: Box::new(map(element)?),
+                absence: absence.clone(),
+            },
+            Self::Set { element, .. } => Self::Set {
+                element: Box::new(map(element)?),
+                reference: self.is_reference(),
+            },
+            Self::Tuple { elements } => Self::Tuple {
+                elements: elements.iter().map(&mut map).collect::<Result<_, _>>()?,
+            },
+            Self::Union { alternatives } => Self::Union {
+                alternatives: alternatives
+                    .iter()
+                    .map(&mut map)
+                    .collect::<Result<_, _>>()?,
+            },
+            Self::Record { fields, open, .. } => {
+                let mut fields: Vec<_> = fields
+                    .iter()
+                    .map(|field| {
+                        Ok(TypeField {
+                            name: field.name.clone(),
+                            ty: map(&field.ty)?,
+                        })
+                    })
+                    .collect::<Result<_, E>>()?;
+                fields.sort_by(|first, second| {
+                    first.name.encode_utf16().cmp(second.name.encode_utf16())
+                });
+                Self::Record {
+                    fields,
+                    open: *open,
+                    reference: self.is_reference(),
+                }
+            }
+            Self::Map { key, value, .. } => Self::Map {
+                key: Box::new(map(key)?),
+                value: Box::new(map(value)?),
+                reference: self.is_reference(),
+            },
+            Self::Function { params, ret } => Self::Function {
+                params: params.iter().map(&mut map).collect::<Result<_, _>>()?,
+                ret: Box::new(map(ret)?),
+            },
+            other => other.clone(),
+        })
+    }
+
     /// The type's identity: `nat`, `i32`, `data:Tree`.
     #[must_use]
     pub fn key(&self) -> std::string::String {
+        let (detail, children) = match self {
+            Self::Fixed { bits, signed } => (
+                format!("{}{bits}", if *signed { 'i' } else { 'u' }),
+                Vec::new(),
+            ),
+            Self::Data { name } => (name.clone(), Vec::new()),
+            Self::Array { element, .. } | Self::Set { element, .. } | Self::Cell { element } => {
+                (std::string::String::new(), vec![element.key()])
+            }
+            Self::Option { element, absence } => {
+                let mut absence = absence.clone();
+                let mut current = element.as_ref();
+                while let Self::Option {
+                    element,
+                    absence: inner,
+                } = current
+                {
+                    absence = merge_optional_absence(inner, &absence);
+                    current = element;
+                }
+                (absence, vec![current.key()])
+            }
+            Self::Tuple { elements } => (
+                std::string::String::new(),
+                elements.iter().map(Self::key).collect(),
+            ),
+            Self::Union { alternatives } => (
+                std::string::String::new(),
+                alternatives.iter().map(Self::key).collect(),
+            ),
+            Self::Record { fields, open, .. } => {
+                let mut sorted: Vec<_> = fields.iter().collect();
+                sorted.sort_by(|first, second| {
+                    first.name.encode_utf16().cmp(second.name.encode_utf16())
+                });
+                let children = sorted
+                    .iter()
+                    .map(|field| {
+                        serde_json::to_string(&[field.name.clone(), field.ty.key()])
+                            .expect("string pairs serialize")
+                    })
+                    .collect();
+                (
+                    if *open {
+                        "open:".to_owned()
+                    } else {
+                        std::string::String::new()
+                    },
+                    children,
+                )
+            }
+            Self::Map { key, value, .. } => {
+                (std::string::String::new(), vec![key.key(), value.key()])
+            }
+            Self::Function { params, ret } => (ret.key(), params.iter().map(Self::key).collect()),
+            _ => (std::string::String::new(), Vec::new()),
+        };
+        wrap_portable_reference_identity(
+            &render_portable_type_identity(self.kind(), &detail, &children),
+            self.is_reference(),
+        )
+    }
+
+    /// Whether a structural value retains a shared mutable reference identity.
+    #[must_use]
+    pub const fn is_reference(&self) -> bool {
         match self {
-            Self::Fixed { bits, signed } => format!("{}{bits}", if *signed { 'i' } else { 'u' }),
-            Self::Data { name } => format!("data:{name}"),
-            Self::Array { element } => format!("array:{}", element.key()),
-            other => other.kind().to_owned(),
+            Self::Array { reference, .. }
+            | Self::Record { reference, .. }
+            | Self::Map { reference, .. }
+            | Self::Set { reference, .. } => *reference,
+            _ => false,
         }
+    }
+
+    /// Copy the host type while writing its existing structural identity field.
+    /// Selection of this representation belongs to the generated rules.
+    #[must_use]
+    pub fn with_reference(&self, reference: bool) -> Self {
+        let mut result = self.clone();
+        match &mut result {
+            Self::Array {
+                reference: value, ..
+            }
+            | Self::Record {
+                reference: value, ..
+            }
+            | Self::Map {
+                reference: value, ..
+            }
+            | Self::Set {
+                reference: value, ..
+            } => *value = reference,
+            _ => {}
+        }
+        result
     }
 
     /// The `kind` discriminant as the JavaScript runtime spells it.
@@ -99,6 +386,15 @@ impl Type {
             Self::Fixed { .. } => "fixed",
             Self::Data { .. } => "data",
             Self::Array { .. } => "array",
+            Self::Cell { .. } => "cell",
+            Self::Option { .. } => "option",
+            Self::Absence { .. } => "absence",
+            Self::Tuple { .. } => "tuple",
+            Self::Union { .. } => "union",
+            Self::Record { .. } => "record",
+            Self::Map { .. } => "map",
+            Self::Set { .. } => "set",
+            Self::Function { .. } => "function",
             Self::Named { .. } => "named",
             Self::Literal => "literal",
             Self::Hypothesis => "hypothesis",
@@ -108,7 +404,16 @@ impl Type {
 
     #[must_use]
     pub fn same(&self, other: &Self) -> bool {
-        self.key() == other.key()
+        accept_type_identity(&self.key(), &other.key())
+    }
+
+    /// Whether this optional type admits a particular absence case.
+    #[must_use]
+    pub fn accepts_absence(&self, actual: &str) -> bool {
+        match self {
+            Self::Option { absence, .. } => accept_optional_absence(absence, actual),
+            _ => false,
+        }
     }
 
     #[must_use]
@@ -142,7 +447,7 @@ impl Type {
     #[must_use]
     pub fn element(&self) -> Option<&Self> {
         match self {
-            Self::Array { element } => Some(element),
+            Self::Array { element, .. } => Some(element),
             _ => None,
         }
     }

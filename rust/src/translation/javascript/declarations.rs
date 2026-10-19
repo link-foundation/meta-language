@@ -1,8 +1,10 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
+use super::infer::infer_javascript_product_types;
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
 use super::math::global;
+use super::products::{has_javascript_products, validate_javascript_products};
 use super::{
     BOOL, FLOAT, Guard, HashSet, INT, JavaScriptParser, JsDoc, Language, NAT, ROOT, Result, SCtor,
     SData, SField, SFn, SItem, SMain, SModule, SParam, SProgram, STRING, ScanEnd, Scope, Span,
@@ -10,8 +12,15 @@ use super::{
     guarded_parameter, imperative, is_identifier_name, is_js_space, js_trim, jsdoc_tags, lower,
     lower_imperative, non_empty, span, statement_uses, tokenize, type_error, unsupported,
 };
-use crate::translation::frontend_rules::find_default_parameter_reference;
+use crate::translation::frontend_rules::{
+    find_default_parameter_reference, read_java_script_lexical_declaration_step,
+};
+use crate::translation::primitive_value_rules::accept_object_property_definition;
 use crate::translation::surface::SExpr;
+
+mod file;
+mod jsdoc;
+use jsdoc::{jsdoc_type, promised};
 
 /// How a function's body is written: a block, or an arrow's block or expression.
 #[derive(Clone, Copy)]
@@ -21,125 +30,6 @@ enum Body {
 }
 
 impl JavaScriptParser {
-    pub(super) fn file(mut self) -> Result<SProgram> {
-        let mut items = self.typedefs()?;
-        let mut effects = Vec::new();
-        if self.cursor.is_kind(TokenKind::String) && self.cursor.peek().value == "use strict" {
-            self.cursor.advance();
-            self.cursor.eat(";");
-        }
-        self.scope = Scope {
-            locals: HashSet::new(),
-            tdz: self.block_declarations(self.cursor.index, ScanEnd::File),
-            mutable: HashSet::new(),
-        };
-        self.async_names = self.async_declarations(self.cursor.index);
-        // Top-level statements that declare or assign variables, lowered together
-        // before the next statement that prints, binds a constant or asserts.
-        let mut pending = Vec::new();
-        while !self.cursor.at_end() {
-            let start = self.peek();
-            if self.cursor.is("import") {
-                self.import_declaration()?;
-                continue;
-            }
-            let exports_async =
-                |cursor: &TokenCursor| cursor.is("async") && cursor.is_at("function", 1);
-            if self.cursor.eat("export").is_some()
-                && !self.cursor.is("function")
-                && !self.cursor.is("const")
-                && !exports_async(&self.cursor)
-            {
-                return Err(unsupported(
-                    &format!("export {}", describe(self.cursor.peek())),
-                    "only function and const declarations are exported",
-                    Some(self.to_here(&start)),
-                ));
-            }
-            if self.cursor.is("async") && self.cursor.is_at("function", 1) {
-                self.cursor.advance();
-                items.push(SItem::Fn(self.function_declaration(&start, true)?));
-                continue;
-            }
-            if self.cursor.is("async") {
-                return Err(unsupported(
-                    "async function",
-                    "only async functions declared by name or bound to a top-level constant are portable",
-                    Some(self.to_here(&start)),
-                ));
-            }
-            if self.cursor.is("function") {
-                items.push(SItem::Fn(self.function_declaration(&start, false)?));
-                continue;
-            }
-            if self.cursor.is("const")
-                && self.cursor.is_kind_at(TokenKind::Identifier, 1)
-                && self.cursor.is_at("=", 2)
-                && self.starts_function(self.cursor.index + 3)
-            {
-                if !effects.is_empty() || !pending.is_empty() {
-                    let name = self.peek_at(1);
-                    return Err(unsupported(
-                        "function after a top-level statement",
-                        &format!(
-                            "the statements before const {} could call it before it is initialised; declare every function first",
-                            name.value
-                        ),
-                        Some(span(&start, &name)),
-                    ));
-                }
-                items.push(SItem::Fn(self.const_function(&start)?));
-                continue;
-            }
-            if self.cursor.is("const")
-                && self.cursor.is_kind_at(TokenKind::Identifier, 1)
-                && self.cursor.is_at("=", 2)
-                && self.cursor.is_at("{", 3)
-                && !(self.cursor.is_at("$", 4) && self.cursor.is_at(":", 5))
-            {
-                if !effects.is_empty() || !pending.is_empty() {
-                    let name = self.peek_at(1);
-                    return Err(unsupported(
-                        "namespace after a top-level statement",
-                        &format!(
-                            "the statements before const {} would run before it is initialised; declare every namespace first",
-                            name.value
-                        ),
-                        Some(span(&start, &name)),
-                    ));
-                }
-                items.push(SItem::Module(self.namespace(&start)?));
-                continue;
-            }
-            if self.starts_top_level_imperative() {
-                pending.push(self.top_level_statement()?);
-                continue;
-            }
-            self.flush(&mut pending, &mut effects)?;
-            effects.push(self.main_statement()?);
-        }
-        self.flush(&mut pending, &mut effects)?;
-        if let Some((name, place)) = self.unawaited.first() {
-            return Err(unsupported(
-                &format!("call of async function {name} without await"),
-                "the Promise it returns is outside the portable core; await it where it is called",
-                Some(*place),
-            ));
-        }
-        items.append(&mut self.generated);
-        infer_javascript_types(SProgram {
-            language: Language::JavaScript,
-            items,
-            main: Some(SMain {
-                effects,
-                span: Some(Span::new(0, self.source.len())),
-                sequential_async: self.sequential_async,
-            }),
-            imports: std::mem::take(&mut self.imports),
-            externals: std::mem::take(&mut self.externals),
-        })
-    }
-
     /// `@typedef {{ $: 'leaf' } | { $: 'node', left: Tree, value: bigint }} Tree`
     /// declares a data type: each alternative is a constructor named by its
     /// `$` tag, and its other properties are the constructor's fields.
@@ -157,6 +47,25 @@ impl JavaScriptParser {
                         Some(range),
                     ));
                 };
+                let units: Vec<u16> = text.encode_utf16().collect();
+                let tagged = units.iter().enumerate().any(|(index, unit)| {
+                    *unit == u16::from(b'$')
+                        && units[index + 1..].iter().find(|unit| !is_js_space(**unit))
+                            == Some(&u16::from(b':'))
+                });
+                if super::surface_rules::read_java_script_documentation_type_form(tagged) == "alias"
+                {
+                    if self.type_aliases.contains_key(&name)
+                        || self.data_types.iter().any(|data| data.name == name)
+                    {
+                        return Err(type_error(
+                            format!("duplicate @typedef {name}"),
+                            Some(range),
+                        ));
+                    }
+                    self.type_aliases.insert(name, text);
+                    continue;
+                }
                 let ctors = self.typedef_ctors(&text, &name, range)?;
                 if self.data_types.iter().any(|data| data.name == name) {
                     return Err(type_error(
@@ -169,12 +78,14 @@ impl JavaScriptParser {
                     ctors: ctors.clone(),
                     span: None,
                     generated: false,
+                    source_unit_clone_derivation: None,
                 });
                 items.push(SItem::Data(SData {
                     name,
                     ctors,
                     span: Some(range),
                     generated: false,
+                    source_unit_clone_derivation: None,
                 }));
             }
         }
@@ -284,9 +195,8 @@ impl JavaScriptParser {
         Ok(ctors)
     }
 
-    #[allow(clippy::unused_self)] // a method, as in the JavaScript frontend
     pub(super) fn ty(&self, text: &str, range: Span) -> Result<Type> {
-        jsdoc_type(text, range)
+        jsdoc_type(text, range, &self.type_aliases)
     }
 
     /// The `JSDoc` block directly before a declaration.
@@ -302,6 +212,7 @@ impl JavaScriptParser {
         };
         let range = Span::new(doc.start, doc.end);
         let mut params: Vec<(String, String)> = Vec::new();
+        let mut optional_params = HashSet::new();
         let mut returns = None;
         for tag in jsdoc_tags(doc)? {
             if tag.tag == "param" {
@@ -314,6 +225,9 @@ impl JavaScriptParser {
                 if params.iter().any(|(param, _)| *param == name) {
                     return Err(type_error(format!("duplicate @param {name}"), Some(range)));
                 }
+                if tag.optional {
+                    optional_params.insert(name.clone());
+                }
                 params.push((name, ty));
             } else if tag.tag == "returns" || tag.tag == "return" {
                 returns = tag.ty;
@@ -321,6 +235,7 @@ impl JavaScriptParser {
         }
         Ok(Some(JsDoc {
             params,
+            optional_params,
             returns,
             range,
         }))
@@ -465,17 +380,28 @@ impl JavaScriptParser {
             };
             token = next;
         }
-        let arrow = |at: usize| tokens.get(at).is_some_and(|token| token.value == "=>");
-        match token.kind {
-            TokenKind::Identifier => token.value == "function" || arrow(index + 1),
-            TokenKind::Punct => token.value == "(" && arrow(self.matching(index) + 1),
-            _ => false,
-        }
+        let kind = match token.kind {
+            TokenKind::Identifier => "identifier",
+            TokenKind::Punct => "punct",
+            _ => "",
+        };
+        let after_group = if token.kind == TokenKind::Punct && token.value == "(" {
+            tokens.get(self.matching(index) + 1)
+        } else {
+            None
+        };
+        super::surface_rules::accept_java_script_function_start(
+            kind,
+            &token.value,
+            tokens.get(index + 1).map_or("", |next| next.value.as_str()),
+            after_group.map_or("", |next| next.value.as_str()),
+        )
     }
 
     /// A parameter list after its `(`, through its `)`.
-    fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
+    pub(super) fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
         let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
+        let binding_names = self.parameter_binding_names();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -522,7 +448,11 @@ impl JavaScriptParser {
                         Some(token.span()),
                     ));
                 }
-                Some(self.expr()?)
+                let outer_tdz = self.scope.tdz.clone();
+                self.scope.tdz.extend(binding_names.iter().cloned());
+                let value = self.with_lexical_scope(&[], 2, Self::expr);
+                self.scope.tdz = outer_tdz;
+                Some(value?)
             } else if tokens
                 .last()
                 .is_some_and(|(_, default_value)| default_value.is_some())
@@ -564,18 +494,42 @@ impl JavaScriptParser {
         let mut params = Vec::new();
         for (token, default_value) in tokens {
             reserved(token)?;
+            let optional = default_value.is_none()
+                && doc
+                    .as_ref()
+                    .is_some_and(|doc| doc.optional_params.contains(&token.value));
             let text = doc.as_ref().and_then(|doc| {
                 doc.params
                     .iter()
                     .find(|(param, _)| *param == token.value)
                     .map(|(_, text)| (text.clone(), doc.range))
             });
+            let declared = text
+                .map(|(text, range)| self.ty(&text, range))
+                .transpose()?;
             params.push(SParam {
                 name: token.value.clone(),
-                default_value: default_value.clone(),
-                ty: text
-                    .map(|(text, range)| self.ty(&text, range))
-                    .transpose()?,
+                optional,
+                default_value: default_value.clone().or_else(|| {
+                    optional.then(|| {
+                        SExpr::new(
+                            super::SNode::None {
+                                absence: "undefined".to_owned(),
+                            },
+                            Some(span(token, token)),
+                        )
+                    })
+                }),
+                ty: declared.map(|declared| {
+                    if optional {
+                        Type::Option {
+                            element: Box::new(declared),
+                            absence: "undefined".to_owned(),
+                        }
+                    } else {
+                        declared
+                    }
+                }),
                 span: Some(span(token, token)),
                 guard: None,
                 rocq_type: None,
@@ -611,28 +565,106 @@ impl JavaScriptParser {
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top_level = std::mem::replace(&mut self.top_level, false);
-        let statements = match body {
-            Body::Arrow if !self.cursor.is("{") => {
-                let token = self.peek();
-                let expr = if is_async {
-                    self.awaited(Self::expr)
-                } else {
-                    self.expr()
-                };
-                expr.map(|expr| {
-                    vec![Stmt::Return {
-                        expr,
-                        span: self.to_here(&token),
-                    }]
-                })
+        if !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
+            let names = params
+                .iter()
+                .map(|param| param.name.clone())
+                .collect::<Vec<_>>();
+            let read = self.with_lexical_scope(&names, 2, |parser| {
+                parser.read_scalar_loop(&name, &params, is_async)
+            });
+            self.scope = outer;
+            self.in_async = outer_async;
+            self.jumps = outer_jumps;
+            self.top_level = outer_top_level;
+            let (body, proof) = read?;
+            return Ok(SFn {
+                semantic_ret: None,
+                name,
+                params,
+                ret,
+                body,
+                source_signature: None,
+                source_primitive_owners: None,
+                source_empty_option: None,
+                source_type_namespace: None,
+                source_loop: Some(Box::new(proof)),
+                source_local_state: None,
+                source_const_function: None,
+                source_diagnostic_attributes: None,
+                span: Some(self.read_complete_declaration_span(doc_token)?),
+                generated: false,
+                source_pure_unit: None,
+            });
+        }
+        let names = params
+            .iter()
+            .map(|param| param.name.clone())
+            .collect::<Vec<_>>();
+        let indexed_writes_before = self.indexed_reference_writes;
+        let statements = self.with_lexical_scope(&names, 2, |parser| {
+            for parameter in &params {
+                parser.lexical.tag_binding(
+                    &parameter.name,
+                    super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
+                );
             }
-            _ => self.block_statements(),
-        };
+            match body {
+                Body::Arrow if !parser.cursor.is("{") => {
+                    let token = parser.peek();
+                    let expr = if is_async {
+                        parser.awaited(Self::expr)
+                    } else {
+                        parser.expr()
+                    };
+                    expr.map(|expr| {
+                        vec![Stmt::Return {
+                            expr,
+                            span: parser.to_here(&token),
+                        }]
+                    })
+                }
+                _ => parser.block_statements(),
+            }
+        });
         self.scope = outer;
         self.in_async = outer_async;
         self.jumps = outer_jumps;
         self.top_level = outer_top_level;
-        let statements = statements?;
+        let mut statements = statements?;
+        super::callables::validate_closure_captures(&statements, self.reference_state.enabled)?;
+        // A forced reference context keeps the actual heap operations.
+        if !crate::translation::surface_raw_metadata_rules::select_surface_reference_semantics(
+            false,
+            self.reference_state.forced,
+            true,
+        ) {
+            if self.indexed_reference_writes != indexed_writes_before {
+                self.eliminated_owned_array_append_operations.extend(
+                    super::constructed_guarded_array_writes::lower_constructed_guarded_array_writes(
+                        &mut statements,
+                        &params,
+                        &mut self.generated_count,
+                    ),
+                );
+            }
+            self.eliminated_owned_array_append_operations.extend(
+                super::owned_array_append::lower_owned_array_appends(
+                    &mut statements,
+                    &params,
+                    &self.owned_array_readers,
+                ),
+            );
+            if self.indexed_reference_writes != indexed_writes_before {
+                self.eliminated_owned_array_append_operations.extend(
+                    super::guarded_private_array_writes::lower_guarded_private_array_writes(
+                        &mut statements,
+                        &params,
+                        &mut self.generated_count,
+                    ),
+                );
+            }
+        }
         // `if (n < 0n) throw …` as a leading statement makes `n` a natural number,
         // unless the body assigns it another value.
         let assigned = statement_uses(&statements).assigned;
@@ -659,21 +691,42 @@ impl JavaScriptParser {
             });
             index += 1;
         }
-        let place = self.to_here(name_token);
+        let place = self.read_complete_declaration_span(name_token)?;
         let tail = &statements[index..];
         let body = if imperative(tail) {
             lower_imperative(self, &name, &params, tail, place)?
         } else {
-            lower(tail, place)?
+            lower(tail, place, &mut self.generated_count)?
         };
-        Ok(SFn {
+        let declaration = SFn {
+            semantic_ret: None,
             name,
             params,
             ret,
+            source_signature: None,
+            source_primitive_owners: None,
+            source_empty_option: None,
+            source_type_namespace: None,
+            source_local_state: None,
+            source_const_function: None,
+            source_diagnostic_attributes: None,
+            source_loop: None,
             body,
-            span: Some(self.to_here(doc_token)),
+            span: Some(self.read_complete_declaration_span(doc_token)?),
             generated: false,
-        })
+            source_pure_unit: None,
+        };
+        if self.owned_array_reader_namespace == 0 {
+            self.owned_array_readers.insert(
+                declaration.name.clone(),
+                super::owned_array_append::read_owned_array_reader_parameters(
+                    &declaration,
+                    &self.owned_array_readers,
+                    &statements,
+                ),
+            );
+        }
+        Ok(declaration)
     }
 
     /// `const Name = { method(…) { … }, Nested: { … } };` is a module.
@@ -710,8 +763,23 @@ impl JavaScriptParser {
                 ));
             }
             self.cursor.advance();
-            if self.cursor.is("(") {
-                items.push(SItem::Fn(self.function_rest(&member, &member, false)?));
+            if !accept_object_property_definition(&member.value, false, self.cursor.is(":")) {
+                return Err(unsupported(
+                    "object prototype definition",
+                    "an uncomputed __proto__: entry is prototype-definition syntax rather than an own data property; the portable core does not represent object prototypes",
+                    Some(span(&member, &member)),
+                ));
+            }
+            if super::surface_rules::accept_java_script_namespace_method(
+                "identifier",
+                &self.cursor.peek().value,
+            ) {
+                self.function_names
+                    .insert(format!("{name}.{}", member.value));
+                self.owned_array_reader_namespace += 1;
+                let function = self.function_rest(&member, &member, false);
+                self.owned_array_reader_namespace -= 1;
+                items.push(SItem::Fn(function?));
             } else if self.cursor.eat(":").is_some() {
                 if self.cursor.is("{") {
                     items.push(SItem::Module(
@@ -740,50 +808,63 @@ impl JavaScriptParser {
     }
 
     /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
-    pub(super) fn block_declarations(&mut self, from: usize, end: ScanEnd) -> HashSet<String> {
+    pub(super) fn block_declarations(&mut self, from: usize, _end: ScanEnd) -> HashSet<String> {
         let mut names = HashSet::new();
         let saved = self.cursor.index;
         self.cursor.index = from;
-        let mut depth = 0_i64;
+        // Signed Number depth retains the shared parser's malformed-delimiter
+        // behavior without unsigned underflow. No token columns are copied.
+        let mut depth = 0.0;
+        let mut declaration = false;
         loop {
-            let done = match end {
-                ScanEnd::File => self.cursor.at_end(),
-                ScanEnd::Brace => self.cursor.is("}"),
-            };
-            if self.cursor.at_end() || (depth == 0 && done) {
-                break;
-            }
             let token = self.cursor.advance();
-            let punct = token.kind == TokenKind::Punct;
-            if punct && ["{", "(", "["].contains(&token.value.as_str()) {
-                depth += 1;
-            } else if punct && ["}", ")", "]"].contains(&token.value.as_str()) {
-                depth -= 1;
-            } else if depth == 0
-                && token.kind == TokenKind::Identifier
-                && (token.value == "const" || token.value == "let")
-            {
-                let c = &self.cursor;
-                if c.peek().kind == TokenKind::Identifier {
-                    names.insert(c.peek().value.clone());
-                } else if c.is("{") {
-                    let mut offset = 1;
-                    while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
-                        if c.peek_at(offset).kind == TokenKind::Identifier
-                            && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
-                        {
-                            names.insert(c.peek_at(offset).value.clone());
-                        }
-                        offset += 1;
+            let kind = match token.kind {
+                TokenKind::Punct => "punct",
+                TokenKind::Identifier => "identifier",
+                TokenKind::Eof => "eof",
+                _ => "other",
+            };
+            let step = crate::translation::frontend_rules::ml_array::number_index(
+                read_java_script_lexical_declaration_step(kind, &token.value, depth, declaration),
+            );
+            match step {
+                None => break,
+                Some(1) => depth += 1.0,
+                Some(2) => depth -= 1.0,
+                Some(3 | 4) => declaration = true,
+                Some(5) => declaration = false,
+                _ => {}
+            }
+            if !matches!(step, Some(3 | 4)) {
+                continue;
+            }
+            let binding_start = self.cursor.index;
+            let c = &self.cursor;
+            if c.peek().kind == TokenKind::Identifier {
+                names.insert(c.peek().value.clone());
+            } else if c.is("{") {
+                let mut offset = 1;
+                while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
+                    if c.peek_at(offset).kind == TokenKind::Identifier
+                        && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
+                    {
+                        names.insert(c.peek_at(offset).value.clone());
                     }
+                    offset += 1;
+                }
+            } else if c.is("[") {
+                for token in self.array_binding_names(c.index) {
+                    names.insert(token.value);
                 }
             }
+            self.cursor.index = binding_start;
         }
         self.cursor.index = saved;
         names
     }
 
     pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
+        self.lexical.binding(name, None);
         self.scope.locals.insert(name.to_owned());
         self.scope.tdz.remove(name);
         if mutable {
@@ -796,14 +877,18 @@ impl JavaScriptParser {
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
         self.cursor.expect("{", Some("block"))?;
         let mut tdz = self.scope.tdz.clone();
-        tdz.extend(self.block_declarations(self.cursor.index, ScanEnd::Brace));
+        let names = self
+            .block_declarations(self.cursor.index, ScanEnd::Brace)
+            .into_iter()
+            .collect::<Vec<_>>();
+        tdz.extend(names.iter().cloned());
         let inner = Scope {
             locals: self.scope.locals.clone(),
             tdz,
             mutable: self.scope.mutable.clone(),
         };
         let outer = std::mem::replace(&mut self.scope, inner);
-        let statements = self.block_body();
+        let statements = self.with_lexical_scope(&names, 0, Self::block_body);
         self.scope = outer;
         statements
     }
@@ -819,59 +904,4 @@ impl JavaScriptParser {
         self.cursor.expect("}", Some("block"))?;
         Ok(statements)
     }
-}
-
-/// `T` of an async function's `@returns {Promise<T>}`.
-fn promised(text: &str) -> Option<&str> {
-    js_trim(text)
-        .strip_prefix("Promise")
-        .map(js_trim)?
-        .strip_prefix('<')?
-        .strip_suffix('>')
-}
-
-/// The portable type a `JSDoc` type names.
-fn jsdoc_type(text: &str, range: Span) -> Result<Type> {
-    let name = js_trim(text);
-    match name {
-        "bigint" => return Ok(INT),
-        "boolean" => return Ok(BOOL),
-        "string" => return Ok(STRING),
-        "number" => return Ok(FLOAT),
-        _ => {}
-    }
-    if let Some(element) = name.strip_suffix("[]") {
-        return Ok(array(jsdoc_type(element, range)?));
-    }
-    let generic = name
-        .strip_prefix("Array<")
-        .or_else(|| name.strip_prefix("ReadonlyArray<"))
-        .and_then(|rest| rest.strip_suffix('>'))
-        .filter(|element| !element.is_empty());
-    if let Some(element) = generic {
-        return Ok(array(jsdoc_type(element, range)?));
-    }
-    let reserved = [
-        "object",
-        "any",
-        "unknown",
-        "void",
-        "undefined",
-        "null",
-        "Object",
-        "Function",
-        "Array",
-        "symbol",
-    ];
-    if !is_identifier_name(name) || reserved.contains(&name) {
-        return Err(unsupported(
-            &format!("JSDoc type {{{name}}}"),
-            "portable types are number, bigint, boolean, string, arrays T[] of them and @typedef data types",
-            Some(range),
-        ));
-    }
-    Ok(Type::Named {
-        path: vec![ROOT.to_owned(), name.to_owned()],
-        span: Some(range),
-    })
 }

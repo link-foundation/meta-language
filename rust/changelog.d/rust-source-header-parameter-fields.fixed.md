@@ -1,0 +1,1 @@
+Selected borrowed Rust source-header emission now checks the actual parameter field inventory and refuses optional parameter metadata without a separate interface proof. Ordinary emission remains unchanged.

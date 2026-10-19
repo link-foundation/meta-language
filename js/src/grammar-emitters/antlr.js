@@ -3,7 +3,10 @@
 // to the Rust `emit_antlr` for the same grammar.
 
 import { importAntlr } from '../grammar-importers/antlr.js';
-import { codePoint, decorateEmitted, emitReport, finishLines, unsupportedError } from './common.js';
+import { readLexerDeclaration } from '../grammar-runtime/lexer-election.js';
+import { renderLinksExpression } from '../grammar-links.js';
+import { acceptGrammarParserTokenNegation, readGrammarLexerCommandEmission, readGrammarLexerCommandPlan, readGrammarLexerEmissionIssue, readGrammarLexerEmissionDisposition } from '../translation/grammar-lexer-rules.js';
+import { GrammarEmitError, codePoint, decorateEmitted, emitReport, finishLines, unsupportedError } from './common.js';
 import {
   NamePlan,
   Precedence,
@@ -74,6 +77,8 @@ class AntlrEmitter {
     this.names = new NamePlan(grammar, LABEL, candidates, [], referenceCandidate, this.report);
     this.foreign = grammar.sourceFormat !== FORMAT;
     this.rule = '';
+    this.parserProduction = false;
+    this.lexicalEmission = sourceFreeLexerEmission(grammar, this.rules, this.names);
   }
 
   emit() {
@@ -107,7 +112,10 @@ class AntlrEmitter {
     this.rules.forEach((_rule, index) => {
       if (index !== effective) order.push(index);
     });
-    return order;
+    if (this.lexicalEmission === null) return order;
+    let lexical = 0;
+    return order.map((index) => isLexerKind(ruleKind(this.rules[index]))
+      ? this.lexicalEmission.order[lexical++] : index);
   }
 
   noteStart(order) {
@@ -125,6 +133,7 @@ class AntlrEmitter {
     const kind = ruleKind(rule);
     const name = this.names.ruleName(index);
     this.rule = name;
+    this.parserProduction = kind === 'normal';
     const lexer = isLexerKind(kind);
     this.noteKind(rule, kind, name);
 
@@ -135,10 +144,12 @@ class AntlrEmitter {
     }
     lines.push(...doc.comments);
 
-    const [body] = this.render(rule.expression);
+    const lexical = this.lexicalEmission?.rules.get(rule.name);
+    const [body] = this.render(lexical?.expression ?? rule.expression);
     let line = kind === 'silent' ? `fragment ${name} :` : `${name} :`;
     if (body !== '') line += ` ${body}`;
-    if (doc.command !== null) line += ` ${doc.command}`;
+    const command = doc.command ?? lexical?.command ?? null;
+    if (command !== null && command !== '') line += ` ${command}`;
     line += ' ;';
     lines.push(line);
 
@@ -237,6 +248,19 @@ class AntlrEmitter {
     const rendered = [];
     let index = 0;
     while (index < items.length) {
+      const prefix = items[index];
+      if (!this.foreign && this.parserProduction && prefix.kind === 'not' && items[index + 1]?.kind === 'any') {
+        const excluded = prefix.item;
+        const operands = excluded.kind === 'choice' ? excluded.items : [excluded];
+        const selected = acceptGrammarParserTokenNegation(true, operands.map(({ kind }) => kind),
+          operands.map((item) => item.kind === 'ref' ? this.names.resolve(item.name)
+            : item.value ?? (item.kind === 'not' ? item.item?.kind : '') ?? ''));
+        if (selected) {
+          rendered.push(this.renderNot(excluded));
+          index += 2;
+          continue;
+        }
+      }
       const set = this.foreign ? negatedLookaheadSet(FORMAT, items, index) : null;
       if (set !== null) {
         this.note('lowered negative lookahead followed by any character to a complemented set');
@@ -256,6 +280,7 @@ class AntlrEmitter {
   }
 
   renderNot(inner) {
+    if (!this.foreign && this.parserProduction && inner.kind === 'any') return ['EOF', Precedence.ATOM];
     if (inner.kind === 'charClass' && !inner.negated) {
       this.note('emitted negative lookahead over a character set as a complemented set');
     } else if (this.foreign) {
@@ -325,6 +350,74 @@ class AntlrEmitter {
     }
     return renderSet(negated, items);
   }
+}
+
+/**
+ * Recover executable commands only from a complete, unambiguous source-local
+ * default lexer. Unchanged doc-backed rules keep their historical path. The
+ * canonical public bodies can include applyRetypes aliases; when recovery is
+ * needed, the ordered local declarations are the actual lexer definitions.
+ */
+function sourceFreeLexerEmission(grammar, rules, names) {
+  if (grammar.sourceFormat !== FORMAT) return null;
+  const lexers = grammar.declarations.lexers ?? [];
+  const refuse = (reason) => { throw unsupportedError(FORMAT, `source-free lexical commands: ${reason}`); };
+  const commandOf = (entry) => {
+    const result = readGrammarLexerCommandEmission(entry.name, entry.type, entry.channel, entry.disposition,
+      (entry.action ?? []).map(({ operation }) => operation), (entry.action ?? []).map(({ mode }) => mode ?? ''));
+    if (result.length !== 1) refuse(`cannot replay the declaration of ${rustDebugString(entry.name)}`);
+    return result[0];
+  };
+  let needsCommandRecovery = false;
+  let needsSourceBody = false;
+  for (const lexer of lexers) {
+    if (lexer.expression?.kind !== 'seq') refuse('a lexer needs an ordered declaration list');
+    for (const entry of lexer.expression.items) {
+      if (entry.kind !== 'lexicalRule' && entry.kind !== 'lexicalFragment') continue;
+      const rule = grammar.rule(entry.name);
+      if (rule !== undefined && !entry.item) refuse('invalid lexical declaration descriptors');
+      if (rule !== undefined && renderLinksExpression(rule.expression) !== renderLinksExpression(entry.item)) needsSourceBody = true;
+      if (entry.kind !== 'lexicalRule') continue;
+      if (rule !== undefined && planDoc(ruleDoc(grammar, rule), true).command !== null) continue;
+      if (commandOf(entry) !== '') needsCommandRecovery = true;
+    }
+  }
+  if (!needsCommandRecovery && !needsSourceBody) return null;
+  let plans;
+  try {
+    plans = lexers.map((declaration) => readLexerDeclaration(declaration, refuse));
+  } catch (error) {
+    // Only descriptor validation is caught. Unsupported raw-doc grammars keep
+    // their previous explicitly lossy path; missing commands never do.
+    if (readGrammarLexerEmissionDisposition(needsCommandRecovery, 'invalid lexical declaration descriptors') === 0) return null;
+    if (error instanceof GrammarEmitError) throw error;
+    refuse('invalid lexical declaration descriptors');
+  }
+  const entries = lexers.flatMap((declaration) => declaration.expression.items);
+  const indices = new Map(rules.map((rule, index) => [rule.name, index]));
+  const locals = entries.filter((entry) => entry.kind === 'lexicalRule' || entry.kind === 'lexicalFragment');
+  const issue = readGrammarLexerEmissionIssue(lexers.length, plans.reduce((sum, plan) => sum + plan.obligations.length, 0),
+    plans.flatMap((plan) => [...plan.modes]), plans.flatMap((plan) => [...plan.channels]), plans.reduce((sum, plan) => sum + plan.types.size, 0),
+    entries.map(({ kind }) => kind), entries.map(({ name }) => name ?? ''), entries.map(({ mode }) => mode ?? ''),
+    entries.map(({ item }) => item?.kind === 'ref' ? item.name : ''),
+    entries.map(({ name }) => indices.has(name) ? ruleKind(rules[indices.get(name)]) : ''),
+    entries.map(({ name }) => indices.has(name) ? names.ruleName(indices.get(name)) : ''),
+    rules.map(({ name }) => name), rules.map(ruleKind), locals.flatMap(({ item }) => collectReferences(item)));
+  const disposition = readGrammarLexerEmissionDisposition(needsCommandRecovery, issue);
+  if (disposition === 0) return null;
+  if (disposition === 2) refuse(issue);
+  const selected = new Map();
+  const order = [];
+  for (const entry of locals) {
+    const index = indices.get(entry.name);
+    const command = entry.kind === 'lexicalRule' ? commandOf(entry) : '';
+    const original = planDoc(ruleDoc(grammar, rules[index]), true).command;
+    if (original !== null && JSON.stringify(readGrammarLexerCommandPlan(original, entry.name))
+      !== JSON.stringify(readGrammarLexerCommandPlan(command, entry.name))) refuse('rule documentation disagrees with its actual lexical declaration');
+    selected.set(entry.name, { expression: entry.item, command });
+    order.push(index);
+  }
+  return { rules: selected, order };
 }
 
 function isLexerKind(kind) {

@@ -7,10 +7,9 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import { evaluateMergeEnforcement, githubQuery, inspectMergeEnforcement, verifyEvaluatedCheckout } from '../scripts/issue-195-merge-enforcement.mjs';
+import { readProjectData } from '../scripts/project-data.mjs';
 
-const manifest = JSON.parse(await readFile(
-  new URL('../../parity/issue-195-requirements.json', import.meta.url), 'utf8',
-));
+const manifest = readProjectData(new URL('../../parity/issue-195-requirements.json', import.meta.url));
 const acceptanceWorkflow = await readFile(
   new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8',
 );
@@ -223,6 +222,28 @@ test('the merge-enforcement tooling and workflows need no ruleset credential', a
     '../../.github/workflows/ci.yml',
   ]) {
     assert.doesNotMatch(await readFile(new URL(file, import.meta.url), 'utf8'), /ISSUE_195_RULESET_TOKEN/, file);
+  }
+});
+
+test('a rejected checkout publishes a linked report without performing live inspection', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'issue-195-linked-merge-report-'));
+  const logical = path.join(directory, 'merge-enforcement.json');
+  try {
+    assert.throws(() => execFileSync(process.execPath, [
+      fileURLToPath(new URL('../scripts/check-issue-195-merge-enforcement.mjs', import.meta.url)),
+      '--commit', '0'.repeat(40), '--report', logical,
+    ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), (error) => {
+      assert.equal(error.status, 1);
+      assert.ok(error.stdout.includes(logical.replace(/\.json$/u, '.lino')));
+      return true;
+    });
+    const report = readProjectData(logical);
+    assert.deepEqual(report.checks, {});
+    assert.ok(report.errors.some(error => /checked-out commit/u.test(error)));
+    assert.deepEqual(report.notes, []);
+    await assert.rejects(readFile(logical, 'utf8'), { code: 'ENOENT' });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
 });
 

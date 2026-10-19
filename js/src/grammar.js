@@ -1,5 +1,6 @@
-import { compactDeclarations, RULE_ATTRIBUTES } from './grammar-feature-forms.js';
+import { compactDeclarations, RULE_ATTRIBUTES, checkGrammarSelectionIncludedRangeData } from './grammar-feature-forms.js';
 import { createGrammarParser } from './grammar-runtime.js';
+import { readGrammarLexerEntryForm } from './translation/grammar-lexer-rules.js';
 
 /**
  * An order-preserving, serializable grammar intermediate representation. The
@@ -63,6 +64,10 @@ export class Grammar {
     for (const rule of this.rules.values()) collectReferences(rule.expression, names);
     for (const extra of this.declarations.extras ?? []) collectReferences(extra, names);
     for (const macro of this.declarations.macros ?? []) collectReferences(macro.expression, names);
+    for (const lexer of this.declarations.lexers ?? []) for (const entry of lexer.expression.items ?? []) {
+      const role = readGrammarLexerEntryForm(entry.kind);
+      if (role === 1 || role === 2) collectReferences(entry.item, names);
+    }
     return [...names].sort();
   }
 
@@ -273,6 +278,8 @@ export function emitJavascriptParser(grammar) {
 }
 
 export function serializeGrammar(grammar) {
+  checkGrammarSelectionIncludedRangeData(grammar.declarations);
+  for (const rule of grammar.rules.values()) checkGrammarSelectionIncludedRangeData(rule);
   return `${JSON.stringify(grammar.normalized(), null, 2)}\n`;
 }
 
@@ -283,6 +290,7 @@ export function deserializeGrammar(source) {
   } catch (error) {
     throw new TypeError(`invalid serialized grammar JSON: ${error.message}`, { cause: error });
   }
+  checkGrammarSelectionIncludedRangeData(value);
   if (!value || value.schemaVersion !== 1 || !Array.isArray(value.rules)) {
     throw new TypeError('invalid serialized grammar document');
   }

@@ -20,6 +20,7 @@ use super::program::{
 use super::results::{ChildList, Children, Tree, TreeType};
 use super::walk::{first_meaningful, meaningful, same_tree};
 use crate::grammar::{PrecedenceEntry, RuleKind};
+use crate::translation::frontend_rules::accept_precedence_operand_head;
 use lead_sets::{first_of, first_sets, keyword_texts, literal_follow_sets};
 pub(super) use reductions::Reductions;
 use reductions::reduction_facts;
@@ -32,6 +33,7 @@ use reductions::reduction_facts;
 #[derive(Debug, Default)]
 pub(super) struct GrammarFacts {
     heads: HashMap<Name, HashSet<Name>>,
+    silent: HashSet<Name>,
     ranks: HashMap<Name, usize>,
     conflicts: Vec<HashSet<Name>>,
     /// The rules each rule takes directly as its last part, by rule name.
@@ -162,6 +164,11 @@ impl GrammarFacts {
             }
         }
         Self {
+            silent: rules
+                .iter()
+                .filter(|rule| rule.kind == RuleKind::Silent)
+                .map(|rule| rule.name.clone())
+                .collect(),
             heads,
             ranks,
             conflicts,
@@ -225,6 +232,50 @@ impl GrammarFacts {
                 keywords,
             }
         })
+    }
+
+    pub(super) fn is_silent(&self, name: Option<&Name>) -> bool {
+        name.is_some_and(|name| self.silent.contains(name))
+    }
+
+    /// The suffix shift inside a first operand, before its enclosing operator.
+    pub(super) fn operand_shift(
+        &self,
+        rule: Option<&Name>,
+        head: &Tree,
+        lookahead: &Lead,
+        orders: &[Vec<PrecedenceEntry>],
+    ) -> Option<PrecedenceTag> {
+        let rule = rule?;
+        let slots = self.heads.get(rule)?;
+        if !accept_precedence_operand_head(
+            slots.iter().any(|slot| {
+                let units = unit_closure(self, slot);
+                head.kind.as_ref().is_some_and(|name| units.contains(name))
+                    || head.rule.as_ref().is_some_and(|name| units.contains(name))
+            }),
+            head.reduced_to.iter().any(|name| slots.contains(name)),
+        ) {
+            return None;
+        }
+        let shifts: Vec<_> = slots
+            .iter()
+            .flat_map(|slot| shift_items(self, slot))
+            .filter(|(_, item)| item.rest.contains(lookahead))
+            .collect();
+        if shifts.iter().any(|(name, _)| *name == rule) {
+            return None;
+        }
+        shifts
+            .into_iter()
+            .map(|(_, item)| item.tag.clone())
+            .reduce(|best, tag| {
+                if compare_precedence(&tag, &best, orders) == Ordering::Greater {
+                    tag
+                } else {
+                    best
+                }
+            })
     }
 
     /// Whether a declared conflict names any of `names`.
@@ -300,7 +351,8 @@ pub(super) fn direct_edge(
             };
             direct_edge(item, side, owner, rules, found, Some(&tag));
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. }
         | Expr::Repeat { item, .. } => direct_edge(item, side, owner, rules, found, tag),
@@ -346,7 +398,8 @@ pub(super) fn edge_names(
                 edge_names(item, side, rules, names);
             }
         }
-        Expr::Capture { item, .. }
+        Expr::LexicalScope { item, .. }
+        | Expr::Capture { item, .. }
         | Expr::Precedence { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. }
@@ -641,6 +694,7 @@ fn rule_items<'e>(
         Expr::Repeat {
             item, max: Some(1), ..
         }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. }
         | Expr::Alias { item, .. } => rule_items(item, owner, tag, rest, rules, first, items),
@@ -666,6 +720,7 @@ fn whole_refs(expr: &Expr, rules: &[Rule], found: &mut Vec<Name>) {
             whole_refs(&items[0], rules, found);
         }
         Expr::Precedence { item, .. }
+        | Expr::LexicalScope { item, .. }
         | Expr::Capture { item, .. }
         | Expr::DynamicPrecedence { item, .. } => whole_refs(item, rules, found),
         _ => {}

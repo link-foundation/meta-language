@@ -1,0 +1,72 @@
+import { readProjectData } from '../scripts/project-data.mjs';
+import assert from 'node:assert/strict';
+
+import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
+import { translateProgram } from '../src/program-translation.js';
+import { referenceOperation } from '../src/translation/reference-model.js';
+import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition, readAbsentNumberValue, renderAbsentNumberExpression, readNumberDisplayRefusal, readNumberDisplayFunction, readScalarCellOperation, requireDataObjectFreeze } from '../src/translation/primitive-value-rules.js';
+import { checkProgram } from '../src/translation/check.js';
+import { parseJavaScript } from '../src/translation/javascript.js';
+
+const fixture = readProjectData(new URL('../../parity/fixtures/translation-primitive-values.json', import.meta.url));
+
+test('shared source admission distinguishes prototype definitions from actual data property forms', () => {
+  for (const entry of fixture.objectProperties) {
+    assert.equal(acceptObjectPropertyDefinition(entry.name, entry.computed, entry.colon), entry.accepted, JSON.stringify(entry));
+  }
+  for (const source of fixture.prototypeSources) {
+    assert.throws(() => checkProgram(parseJavaScript(source)), error => error.kind === 'unsupported' && error.details.construct === 'object prototype definition', source);
+  }
+  for (const entry of fixture.freezeOperands) assert.equal(acceptObjectFreezeOperand(entry.expression, entry.readonlyLiteral), entry.accepted, JSON.stringify(entry));
+  for (const entry of fixture.dataObjectFreeze) {
+    assert.equal(requireDataObjectFreeze(entry.language, entry.explicitFrozen), entry.frozen, JSON.stringify(entry));
+  }
+});
+
+test('absence conversion distinguishes arithmetic from missing array property selection', () => {
+  for (const entry of fixture.absences) {
+    assert.equal(readAbsentNumberValue(entry.operation, entry.absence), entry.value);
+    for (const [target, expression] of Object.entries(entry.expressions)) assert.equal(renderAbsentNumberExpression(target, entry.operation, entry.absence), expression, `${target}:${entry.operation}:${entry.absence}`);
+    const value = entry.absence === 'null' ? null : undefined;
+    const rendered = runInNewContext(entry.expressions.JavaScript);
+    if (entry.operation === 'arithmetic') assert.ok(Object.is(Number(value), rendered));
+    else assert.equal([7, 9][value], [7, 9][rendered]);
+  }
+  assert.equal(readAbsentNumberValue('unknown', 'null'), '');
+  assert.equal(readAbsentNumberValue('arithmetic', 'both'), '');
+  assert.equal(renderAbsentNumberExpression('unknown', 'arithmetic', 'null'), '');
+});
+
+test('shared scalar-cell selectors resolve executable linked operations', () => {
+  for (const entry of fixture.cells) {
+    assert.equal(readScalarCellOperation(entry.expression), entry.operation);
+    assert.equal(referenceOperation(readScalarCellOperation(entry.expression)).id, entry.operation);
+  }
+  assert.equal(readScalarCellOperation('unknown'), '');
+});
+
+test('both source-display paths refuse Rust f64 text while nonprinting arithmetic remains faithful', () => {
+  assert.equal(readNumberDisplayRefusal('Rust', 'float'), fixture.displayRefusal);
+  assert.equal(readNumberDisplayRefusal('JavaScript', 'float'), '');
+  assert.equal(readNumberDisplayRefusal('Rust', 'int'), '');
+  assert.equal(readNumberDisplayFunction('float', false), 'js_number');
+  assert.equal(readNumberDisplayFunction('float', true), 'js_console');
+  assert.equal(readNumberDisplayFunction('int', false), '');
+  for (const entry of fixture.rustFloatCases) {
+    const printed = `fn main() { println!("{}", ${entry.expression}); }`;
+    for (const target of ['JavaScript', 'Lean', 'Rocq']) {
+      const result = translateProgram(printed, 'Rust', target);
+      assert.equal(result.diagnostic?.kind, 'unsupported', `${entry.name}:${target}`);
+      assert.ok(result.diagnostic.message.startsWith(`Rust Float display: ${fixture.displayRefusal}`), `${entry.name}:${target}`);
+    }
+    const source = `pub fn value() -> f64 { ${entry.expression} } fn main() {}`;
+    const translated = translateProgram(source, 'Rust', 'JavaScript');
+    assert.equal(translated.diagnostic, null, entry.name);
+    const actual = runInNewContext(`${translated.code}\nvalue()`);
+    assert.equal(Object.is(actual, -0) ? '-0' : String(actual), entry.expected, entry.name);
+  }
+  const stringified = translateProgram('pub fn text(value: f64) -> String { value.to_string() } fn main() {}', 'Rust', 'JavaScript');
+  assert.equal(stringified.diagnostic?.kind, 'unsupported');
+  assert.ok(stringified.diagnostic.message.startsWith(`Rust Float display: ${fixture.displayRefusal}`));
+});

@@ -8,10 +8,18 @@ mod concept_ontology;
 mod concept_records;
 pub mod configuration;
 pub mod decorators;
+mod discovered_concept_links;
+mod discovered_concept_rules;
 pub mod document_formatting;
 mod docx_parser;
 mod embedded_region_parser;
+mod formal_concept_definition;
+mod formal_function_links;
+mod formal_function_rules;
 mod foundation_models;
+mod global_concept_identity_rules;
+mod global_concept_rules;
+mod global_concept_space;
 pub mod grammar;
 mod grammar_concepts;
 pub mod graphql_adapter;
@@ -25,6 +33,9 @@ pub mod language_support;
 mod line_index;
 pub mod link_flags;
 pub mod link_network;
+mod link_network_binary;
+mod link_network_binary_record_rules;
+mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
@@ -39,24 +50,36 @@ mod pdf_grammar;
 mod pdf_parser;
 pub mod program_representation;
 pub mod program_translation;
+pub mod project_data;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
+mod resource_description_graphs;
+mod resource_description_ntriples;
+mod resource_description_ntriples_rules;
+mod resource_description_rules;
 pub mod rust_codec;
 mod self_translation;
 mod semantic_translation;
 pub mod semantics;
+mod shared_numeric_function_links;
+mod shared_numeric_function_model;
+mod shared_numeric_function_rules;
 pub mod snapshots;
 pub mod source;
 mod source_generation;
 pub mod sql_adapter;
 pub mod storage;
+mod structured_data_link_rules;
+pub mod structured_data_links;
+pub mod structured_data_records;
 mod structured_text_parser;
 pub mod substitution;
 pub mod transform;
 pub mod translation;
 pub mod translation_rules;
+mod typed_program_links;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
@@ -72,8 +95,9 @@ pub use concept_distinctions::{
     grammar_precedence_concepts, source_meanings_in,
 };
 pub use concept_ontology::{
-    ConceptOntologyImportReport, ConceptOntologySeedReport, ConceptRecordSeedReport,
-    FORMER_CONCEPT_ID_VOCABULARY, FORMER_CONCEPT_IDS, current_concept_id,
+    ConceptOntologyImportReport, ConceptOntologySeedReport, ConceptRecordSeedReport, ConceptViews,
+    FORMER_CONCEPT_ID_VOCABULARY, FORMER_CONCEPT_IDS, create_concept_views, current_concept_id,
+    read_concept_ontology, read_concept_taxonomy,
 };
 pub use concept_records::{
     ConceptDistinction, ConceptRecord, ConceptRole, SourceAlias, concept_record, concept_records,
@@ -87,6 +111,10 @@ pub use decorators::{
     DECORATOR_LEVELS, Decorator, DecoratorAction, DecoratorError, DecoratorLevel, DecoratorRecord,
     DecoratorSet, decorator_record, record_field,
 };
+pub use discovered_concept_links::{
+    DiscoveredConceptGraph, DiscoveredConceptLinks, create_discovered_concept_links,
+    read_discovered_concept_links,
+};
 pub use document_formatting::{
     BlockNode, CROSS_FORMAT_CONCEPT_IDS, CROSS_FORMAT_CONCEPTS, DOCUMENT_FORMATS,
     DocumentFormatInstance, DocumentFormatMatch, DocumentFormattingSeedReport, FormattingDocument,
@@ -95,17 +123,29 @@ pub use document_formatting::{
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
 };
+pub use formal_concept_definition::{
+    FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
+    encode_formal_concept_definition, prove_formal_concept_equivalence,
+    read_formal_concept_definition, verify_formal_concept_equivalence,
+};
+pub use formal_function_links::{FormalFunctionSelector, encode_formal_function_definition};
 pub use foundation_models::{
     CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
     FoundationModel, FoundationProblem, FoundationRegister, LOGIC_FAMILIES, LanguageFoundation,
     check_foundation_models, foundation_correspondences, foundation_model, foundation_register,
     language_foundation_models,
 };
+pub use global_concept_rules::verify_global_concept_correspondence;
+pub use global_concept_space::{
+    GLOBAL_CONCEPT_PROOF_METHOD, GlobalConceptOptions, GlobalConceptSource,
+    GlobalConceptSpaceParser, create_global_concept_space, create_global_concept_space_parser,
+    global_concept_space_to_links, read_global_concept_space_links, translate_global_construct,
+};
 pub use grammar::feature_runtime::{
     Ambiguity, FeatureGrammarParser, FeatureParseOptions, GrammarParseError, GrammarResolver,
-    GrammarRuntimeError, LeafText, OperationValue, ParseOutcome, ParseRejection,
-    ParseWithGrammarError, SyntaxAttributes, SyntaxTree, compile_feature_grammar,
-    parse_with_grammar,
+    GrammarRuntimeError, GrammarSelection, GrammarSelectionAlternative, LeafText, OperationValue,
+    ParseOutcome, ParseRejection, ParseWithGrammarError, SyntaxAttributes, SyntaxTree,
+    check_grammar_selection_mapped_tree, compile_feature_grammar, parse_with_grammar,
 };
 pub use grammar::interchange::{
     GRAMMAR_LOWERING_FORMATS, GrammarLowering, GrammarLoweringEncoding, GrammarLoweringError,
@@ -177,7 +217,7 @@ pub use grammar::{
     GRAMMAR_ROUND_TRIP_MARKER, GrammarEmitFn, GrammarImportFn, GrammarRoundTrip,
     GrammarRoundTripError, GrammarRoundTripFailure, GrammarRoundTripFailureKind,
     GrammarRoundTripReport, GrammarRoundTripStage, GrammarRoundTripStatus,
-    check_grammar_round_trip, mutate_grammar_start_rule,
+    check_grammar_round_trip, mutate_grammar_start_rule, render_grammar_lexical_owner_comparison,
 };
 pub use grammar::{
     GrammarReverseConversion, GrammarReverseFailure, GrammarReverseFailureKind,
@@ -216,6 +256,9 @@ pub use language_support::{
 };
 pub use link_flags::LinkFlags;
 pub use link_network::{Link, LinkId, LinkMetadata, LinkNetwork, LinkType, NetworkProjection};
+pub use link_network_binary::{
+    BinaryLinksError, BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
+};
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
 pub use mixed_regions::{
@@ -245,6 +288,10 @@ pub use program_translation::{
     DecodedProgramTranslation, ProgramTranslation, ProgramTranslationError,
     decode_program_translation, read_translation_provenance, translate_program,
 };
+pub use project_data::{
+    ProjectDataFormat, read_project_data_file, read_project_data_file_with_format,
+    read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
+};
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -260,20 +307,32 @@ pub use query_plan::{
     QueryAuthorization, QueryComparisonOperator, QueryFilter, QueryOperation, QueryOrder,
     QueryPlan, QuerySortDirection, QuerySourceEvidence, QueryValue,
 };
+pub use resource_description_graphs::{
+    ResourceDescriptionLinks, decode_resource_description_graph,
+    decode_resource_description_graph_with_limit, import_resource_description_graph,
+    merge_resource_description_graphs, verify_resource_description_graph_witnesses,
+};
+pub use resource_description_ntriples::{
+    ResourceDescriptionNTriplesError, ResourceDescriptionNTriplesLinks,
+    ResourceDescriptionNTriplesOutput, emit_resource_description_ntriples,
+    import_resource_description_ntriples, read_resource_description_ntriples_source,
+};
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
 };
 pub use self_translation::{
-    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
-    SelfTranslationOptions, SelfTranslationSignature, self_translate, self_translate_decorated,
-    self_translate_with, self_translation_language, self_translation_signatures,
+    ErasedTypeScript, Erasure, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError,
+    SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature, erase_type_script,
+    project_type_script_typing, self_translate, self_translate_decorated, self_translate_with,
+    self_translation_language, self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,
     TranslationDiagnostic, TranslationObligation, TranslationProvenance,
 };
 pub use semantics::{ProbabilisticTruthValue, Probability, TruthValue};
+pub use shared_numeric_function_links::encode_shared_numeric_function_definition;
 pub use snapshots::{MutableNetworkSnapshot, NetworkSnapshot, StructuralDiff};
 pub use source::{ByteRange, Point, SourceSpan};
 pub use sql_adapter::{
@@ -283,6 +342,22 @@ pub use sql_adapter::{
 #[cfg(feature = "doublets")]
 pub use storage::DoubletsLinkStore;
 pub use storage::{EngineLinkStore, LinkStore, LinkStoreBackend, LinkStoreQuery, StorageError};
+pub use structured_data_links::{
+    StructuredDataLinks, StructuredDataLinksLimits, StructuredDataValue,
+    decode_structured_data_links, decode_structured_data_links_ordered,
+    decode_structured_data_links_ordered_with_limits, decode_structured_data_links_with_limits,
+    encode_structured_data_links, encode_structured_data_links_ordered, read_structured_data_lino,
+    read_structured_data_lino_ordered, read_structured_data_lino_ordered_with_limits,
+    read_structured_data_lino_with_limits, structured_data_to_lino,
+    structured_data_to_lino_ordered,
+};
+pub use structured_data_records::{
+    read_structured_data_records, read_structured_data_records_ordered,
+    read_structured_data_records_ordered_with_limits, read_structured_data_records_with_limits,
+    structured_data_record_to_lino, structured_data_record_to_lino_ordered,
+    structured_data_record_to_lino_ordered_with_namespace,
+    structured_data_record_to_lino_with_namespace,
+};
 pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
@@ -291,11 +366,36 @@ pub use transform::{
     QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,
     SourceTextPredicateHost, TextReplacement,
 };
+pub use translation::source_text_bytes::{
+    read_source_text_byte, read_source_text_byte_length, read_source_text_units,
+    slice_source_text_bytes,
+};
 pub use translation_rules::{
     TranslationRule, TranslationRuleRegistry, TranslationRuleSet, TranslationRuleSetLoadError,
     TranslationTemplate,
 };
 pub use tree_sitter_adapter::{GrammarNames, grammar_names};
+pub use typed_program_links::{
+    TypedProgramLinks, TypedProgramLinksEmission, TypedProgramLinksEmissionOptions,
+    TypedProgramLinksError, TypedProgramLinksLimits, create_typed_program_links,
+    create_typed_program_links_with_javascript_scalar_loop_model,
+    create_typed_program_links_with_rust_array_result_model,
+    create_typed_program_links_with_rust_completion_model,
+    create_typed_program_links_with_rust_const_function_model,
+    create_typed_program_links_with_rust_empty_option_source_model,
+    create_typed_program_links_with_rust_owned_local_state_model,
+    create_typed_program_links_with_rust_primitive_owner_model,
+    create_typed_program_links_with_rust_pure_unit_call_model,
+    create_typed_program_links_with_rust_runtime_shell_model,
+    create_typed_program_links_with_rust_scalar_loop_model,
+    create_typed_program_links_with_rust_source_models,
+    create_typed_program_links_with_rust_source_profiles,
+    create_typed_program_links_with_rust_source_signature_model,
+    create_typed_program_links_with_rust_type_namespace_model,
+    create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
+    emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
+    read_typed_program_binding_identities, typed_program_links_schema,
+};
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 
 mod native_grammar_parser;

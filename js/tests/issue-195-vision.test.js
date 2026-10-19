@@ -20,9 +20,11 @@ import {
   VISION_SPECIFICATION,
 } from '../scripts/issue-195-vision-requirements.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { readProjectData, readProjectFileBytes, resolveProjectDataPath } from '../scripts/project-data.mjs';
 
 const repositoryFile = (relative) => new URL(`../../${relative}`, import.meta.url);
-const read = (relative) => readFileSync(repositoryFile(relative), 'utf8');
+const read = (relative) => relative.endsWith('.json')
+  ? JSON.stringify(readProjectData(repositoryFile(relative))) : readProjectFileBytes(repositoryFile(relative)).toString('utf8');
 const vision = read(VISION_SPECIFICATION);
 const manifest = JSON.parse(read('parity/issue-195-requirements.json'));
 const register = JSON.parse(read('parity/issue-195-sources.json'));
@@ -89,7 +91,7 @@ test('docs/vision.md specifies every section of the repository-wide directive', 
   }
   // Every relative link of the vision resolves.
   for (const [, target] of vision.matchAll(/\]\((?!https?:|#)([^)#]+)(?:#[^)]*)?\)/gu)) {
-    assert.ok(existsSync(new URL(target, repositoryFile(VISION_SPECIFICATION))), `docs/vision.md links to existing ${target}`);
+    assert.ok(existsSync(resolveProjectDataPath(new URL(target, repositoryFile(VISION_SPECIFICATION)))), `docs/vision.md links to existing ${target}`);
   }
   observe('I195-VISION-SPECIFICATION', ['specificationCommitted', 'everyDirectiveSectionSpecified'],
     'docs/vision.md specifies every section of the repository-wide directive');
@@ -98,7 +100,9 @@ test('docs/vision.md specifies every section of the repository-wide directive', 
 test('the entry documents link to the vision and the subsystem documents defer to it', () => {
   assert.match(read('README.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative specification/u);
   assert.match(read('CONTRIBUTING.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative vision/u);
-  assert.match(read('AGENTS.md'), /\[`docs\/vision\.md`\]\(docs\/vision\.md\) is the authoritative vision/u);
+  const agentInstructions = read('AGENTS.md').replace(/\s+/gu, ' ');
+  assert.match(agentInstructions, /Read \[docs\/vision\.md\]\(docs\/vision\.md\) first\./u);
+  assert.match(agentInstructions, /It alone defines architecture/u);
   for (const [document, link] of [
     ['docs/grammar/architecture.md', '../vision.md'],
     ['docs/grammar/README.md', '../vision.md'],
@@ -158,6 +162,8 @@ test('the generated ledger presents universal claims only as finite evidence unl
   };
   const markdown = renderIssue195Markdown(manifest, report);
   assert.deepEqual(universalClaimProblems(manifest, markdown), []);
+  assert.ok(markdown.includes('](../parity/sources/global-concept-space-2026-10-12.txt)'),
+    'captured instruction links resolve relative to the generated document');
   assert.ok(markdown.includes(`| \`I195-INTERCHANGE-REVERSE-CONVERSION\` | grammar-interchange | ${FINITE_EVIDENCE_QUALIFIER} |`));
   assert.ok(markdown.includes('| `I195-CST-rust` | default-cst | PASS |'));
 
@@ -178,13 +184,15 @@ test('every ledger row traces to its specification, inventories, sources, CI and
   const registeredKeys = new Set(sourceKeyByUrl.values());
   const packageFor = { javascript: 'npm:meta-language', rust: 'crates.io:meta-language', tooling: 'repository tooling, not packaged', aggregate: 'acceptance gate, not packaged' };
   for (const row of manifest.atomicRequirements) {
+    assert.equal(row.critical, true, `${row.id} is a critical obligation`);
+    assert.equal(row.fullScopeReleaseBlocker, true, `${row.id} blocks an unverified full-scope release claim`);
     const { traceability } = row;
     assert.ok(traceability, `${row.id} has a traceability record`);
     const [file, anchor] = traceability.specification.split('#');
     assert.equal(file, VISION_SPECIFICATION);
     assert.ok(anchors.has(anchor), `${row.id} traces to the existing section ${anchor}`);
     assert.ok(traceability.inventories.length > 0, `${row.id} names its inventories`);
-    for (const inventory of traceability.inventories) assert.ok(existsSync(repositoryFile(inventory)), `${row.id} inventory ${inventory} exists`);
+    for (const inventory of traceability.inventories) assert.ok(existsSync(resolveProjectDataPath(repositoryFile(inventory))), `${row.id} inventory ${inventory} exists`);
     assert.ok(traceability.sources.includes(sourceKeyByUrl.get(row.source)), `${row.id} is covered by its own source`);
     for (const key of traceability.sources) assert.ok(registeredKeys.has(key), `${row.id} source ${key} is registered`);
     assert.ok(existsSync(repositoryFile(traceability.workflow)), `${row.id} workflow exists`);

@@ -1,0 +1,315 @@
+//! The generated Agda grammar is shared data; both runtimes execute it.
+use super::issue_195_native_grammar_rows::{
+    Rows, cases, leaves, oracle_agrees, oracle_rows, parse, parser, rebuilt, source, text,
+};
+use super::issue_195_observations::{Observation, record};
+use meta_language::{
+    FeatureParseOptions, LinkNetwork, ParseConfiguration, SyntaxTree, parse_grammar_links,
+    render_grammar_links,
+};
+use serde_json::Value;
+use sha2::{Digest, Sha256};
+
+const GRAMMAR: &str = include_str!("../../../parity/grammars/native/agda.lino");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/agda.lino");
+const CURRENT_NATIVE_FIXTURE: &str =
+    include_str!("../../../parity/fixtures/native-grammars/agda-current-native.lino");
+const CORPUS: &str = include_str!("../../../parity/fixtures/native-grammars/agda-corpus.lino");
+const CURRENT_ORACLE_PROFILE: &str =
+    include_str!("../../../parity/fixtures/native-grammars/agda-current-oracle-profile.lino");
+const CURRENT_ORACLE_UNIVERSE_WITNESS: &str =
+    include_str!("../../../parity/fixtures/agda-current-oracle-universe-ci.lino");
+
+fn sha256(bytes: impl AsRef<[u8]>) -> String {
+    Sha256::digest(bytes)
+        .iter()
+        .fold(String::with_capacity(64), |mut hexadecimal, byte| {
+            use std::fmt::Write as _;
+            write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+            hexadecimal
+        })
+}
+
+fn current_agda_oracle_fixture() -> Value {
+    let current: Value = super::project_data::read_project_data(CURRENT_ORACLE_PROFILE).unwrap();
+    let historical: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let native: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    assert_current_agda_fixture_history(&current, &historical, &native);
+    assert_current_agda_fixture_sources(&current["oracleProfile"]);
+    let profile = &current["oracleProfile"];
+    assert_eq!(profile["historicalFixture"]["bytes"], FIXTURE.len());
+    assert_eq!(profile["historicalFixture"]["sha256"], sha256(FIXTURE));
+    current
+}
+
+fn assert_current_agda_fixture_history(current: &Value, historical: &Value, native: &Value) {
+    let original_matches = historical["matches"].as_array().unwrap();
+    let original_divergences = historical["divergences"].as_array().unwrap();
+    let current_matches = current["matches"].as_array().unwrap();
+    assert_eq!(original_divergences.len(), 4);
+    assert_eq!(
+        current_matches.len(),
+        original_matches.len() + original_divergences.len()
+    );
+    assert_eq!(&current_matches[..original_matches.len()], original_matches);
+    assert_eq!(native["matches"], historical["matches"]);
+    let witness: Value =
+        super::project_data::read_project_data(CURRENT_ORACLE_UNIVERSE_WITNESS).unwrap();
+    assert_eq!(witness["historicalRows"], original_divergences[0]["rows"]);
+    assert_eq!(witness["source"], original_divergences[0]["source"]);
+    assert_eq!(witness["oracleSource"], current["oracleProfile"]["source"]);
+    assert_eq!(witness["nativeExecutionObserved"], false);
+    assert_eq!(
+        witness["oracleRows"],
+        current_matches[original_matches.len()]["rows"]
+    );
+    let native_divergences = native["divergences"].as_array().unwrap();
+    assert_eq!(native_divergences.len(), original_divergences.len());
+    for ((actual, original), native) in current_matches[original_matches.len()..]
+        .iter()
+        .zip(original_divergences)
+        .zip(native_divergences)
+    {
+        assert_eq!(actual["source"], original["source"]);
+        assert_eq!(native["source"], original["source"]);
+        assert_eq!(native["reason"], original["reason"]);
+        assert_eq!(actual["rows"], native["rows"]);
+    }
+    assert_eq!(current["rejections"], native["rejections"]);
+    let original_rejections = historical["rejections"].as_array().unwrap();
+    let native_rejections = native["rejections"].as_array().unwrap();
+    assert_eq!(native_rejections.len(), original_rejections.len());
+    for (actual, original) in native_rejections.iter().zip(original_rejections) {
+        assert_eq!(actual["source"], original["source"]);
+        assert_eq!(
+            actual["recovered"].as_str().unwrap().replacen(
+                "(set_universe \"Set\")",
+                "(qualified_identifier \"Set\")",
+                1
+            ),
+            original["recovered"].as_str().unwrap()
+        );
+    }
+    assert_eq!(current["divergences"], serde_json::json!([]));
+    assert_eq!(
+        current["oracleProfile"]["historicalDivergences"],
+        historical["divergences"]
+    );
+    assert_eq!(
+        current["oracleProfile"]["historicalRejections"],
+        historical["rejections"]
+    );
+}
+
+fn assert_current_agda_fixture_sources(profile: &Value) {
+    let manifest_bytes = include_str!("../../vendor/tree-sitter-agda-layout/source-manifest.lino");
+    let manifest: Value = super::project_data::read_project_data(manifest_bytes).unwrap();
+    let policy_bytes = include_str!("../../../parity/assertion-version-ranges.lino");
+    let policy: Value = super::project_data::read_project_data(policy_bytes).unwrap();
+    let assertion = policy["assertions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["id"] == "agda-corrected-layout-oracle")
+        .unwrap();
+    let expectations = assertion["expectations"].as_array().unwrap();
+    assert_eq!(expectations.len(), 1);
+    let expected = &expectations[0];
+    assert_eq!(expected["minimum"], "1.3.3");
+    assert_eq!(expected["maximum"], "1.3.3");
+    assert_eq!(expected["includeMinimum"], true);
+    assert_eq!(expected["includeMaximum"], true);
+    assert_eq!(profile["source"], expected["expected"]);
+    assert_eq!(profile["nativeGrammar"]["sha256"], sha256(GRAMMAR));
+    assert_eq!(
+        profile["nativeFixture"]["bytes"],
+        CURRENT_NATIVE_FIXTURE.len()
+    );
+    assert_eq!(
+        profile["nativeFixture"]["sha256"],
+        sha256(CURRENT_NATIVE_FIXTURE)
+    );
+    for field in [
+        "crate",
+        "revision",
+        "parserSha256",
+        "originalScannerSha256",
+        "scannerSha256",
+    ] {
+        assert_eq!(profile["source"][field], manifest[field]);
+    }
+    assert_eq!(profile["source"]["treeSitter"], manifest["treeSitterCli"]);
+    assert_eq!(
+        profile["source"]["sourceManifestSha256"],
+        sha256(manifest_bytes)
+    );
+    assert_eq!(
+        profile["source"]["patchSha256"],
+        sha256(include_str!(
+            "../../vendor/tree-sitter-agda-layout/layout-state.patch"
+        ))
+    );
+    assert_eq!(profile["applicabilityPolicySha256"], sha256(policy_bytes));
+}
+
+fn observe(assertions: &[&str], test_name: &str) {
+    record(&Observation {
+        requirement_id: "I195-GRAMMAR-NATIVE-AGDA",
+        suffix: "behavior",
+        fixture_id: "planned:repository-directive:i195-grammar-native-agda",
+        fixture_file: "parity/fixtures/native-grammars/agda.json",
+        assertions,
+        test_name,
+    });
+}
+
+#[test]
+fn native_agda_grammar_is_canonical_links_notation() {
+    let grammar = parse_grammar_links(GRAMMAR).unwrap();
+    assert_eq!(render_grammar_links(&grammar), GRAMMAR);
+    observe(
+        &["nativeAgdaGrammarIsCanonicalLinks"],
+        "native_agda_grammar_is_canonical_links_notation",
+    );
+}
+
+#[test]
+fn native_agda_focused_trees_match_oracle_and_preserve_every_byte() {
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    assert!(agda_layout_source_oracle::queue_growth_control());
+    let current = current_agda_oracle_fixture();
+    oracle_agrees(&agda_layout_source_oracle::LANGUAGE.into(), &current);
+    for case in cases(&fixture, "matches") {
+        let tree = parse(&parser, source(case)).expect("the native grammar accepts the source");
+        assert_eq!(
+            Value::Array(rows.rows(&tree, source(case))),
+            case["rows"],
+            "{:?}",
+            source(case)
+        );
+        assert_eq!(rebuilt(&tree), source(case));
+        let network = LinkNetwork::parse(
+            source(case),
+            fixture["language"].as_str().unwrap(),
+            ParseConfiguration::default(),
+        );
+        assert_eq!(network.reconstruct_text(), source(case));
+        assert!(
+            network
+                .parse_grammars()
+                .iter()
+                .any(|(_, grammar)| grammar.id == "native-agda")
+        );
+    }
+    observe(
+        &["nativeAgdaTreesMatchOracle", "nativeAgdaTreesLossless"],
+        "native_agda_focused_trees_match_oracle_and_preserve_every_byte",
+    );
+}
+
+#[test]
+fn native_agda_focused_invalid_sources_are_rejected_and_recovered_losslessly() {
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    let parser = parser(GRAMMAR);
+    for case in cases(&fixture, "rejections") {
+        assert!(parse(&parser, source(case)).is_none());
+        let outcome = parser
+            .parse_tree(
+                source(case).as_bytes(),
+                &FeatureParseOptions {
+                    error_recovery: Some(true),
+                    ..FeatureParseOptions::default()
+                },
+            )
+            .unwrap();
+        let tree = outcome.tree.unwrap();
+        assert!(!outcome.ok);
+        assert_eq!(tree.render(), case["recovered"].as_str().unwrap());
+        let recovered: String = leaves(&tree)
+            .into_iter()
+            .map(|leaf| match leaf {
+                SyntaxTree::Token { text: leaf, .. } | SyntaxTree::Error { text: leaf, .. } => {
+                    text(leaf)
+                }
+                SyntaxTree::Missing { start, end, .. } => {
+                    assert_eq!(start, end);
+                    ""
+                }
+                other => panic!("unexpected recovery leaf {other:?}"),
+            })
+            .collect();
+        assert_eq!(recovered, source(case));
+    }
+    observe(
+        &["nativeAgdaRejectsInvalidInput"],
+        "native_agda_focused_invalid_sources_are_rejected_and_recovered_losslessly",
+    );
+}
+
+// CI executes the upstream corpus; local checks select the focused tests.
+#[test]
+fn native_agda_upstream_corpus_matches_the_independent_oracle() {
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    let corpus: Value = super::project_data::read_project_data(CORPUS).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    let language = agda_layout_source_oracle::LANGUAGE.into();
+    let inputs = corpus["cases"].as_array().unwrap();
+    assert_ne!(inputs.as_slice(), &[] as &[Value]);
+    let mut failures = Vec::new();
+    for case in inputs {
+        let (expected, recovers) = oracle_rows(&language, source(case));
+        let outcome = parser.parse_tree(source(case).as_bytes(), &FeatureParseOptions::default());
+        let problem = match outcome {
+            Err(error) => Some(format!("executor: {error:?}")),
+            Ok(outcome) if recovers => outcome
+                .ok
+                .then(|| "native accepted oracle-invalid input".to_owned()),
+            Ok(outcome) if !outcome.ok => {
+                Some(format!("native rejection: {:?}", outcome.rejection))
+            }
+            Ok(outcome) if !outcome.ambiguities.is_empty() => {
+                Some("ambiguous native tree".to_owned())
+            }
+            Ok(outcome) => {
+                let tree = outcome.tree.unwrap();
+                if rows.rows(&tree, source(case)) != expected {
+                    Some("concrete tree differs from oracle".to_owned())
+                } else if rebuilt(&tree) != source(case) {
+                    Some("source reconstruction differs".to_owned())
+                } else {
+                    None
+                }
+            }
+        };
+        if let Some(problem) = problem {
+            failures.push(format!("{}: {}: {problem}", case["file"], case["title"]));
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    observe(
+        &["nativeAgdaUpstreamCorpusMatchesOracle"],
+        "native_agda_upstream_corpus_matches_the_independent_oracle",
+    );
+}
+
+#[test]
+fn native_agda_focused_layout_divergences_are_explicit_and_lossless() {
+    let fixture: Value = super::project_data::read_project_data(CURRENT_NATIVE_FIXTURE).unwrap();
+    let parser = parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    let divergent = cases(&fixture, "divergences");
+    assert_eq!(divergent.len(), 4);
+    for case in divergent {
+        assert_ne!(case["reason"].as_str().unwrap(), "");
+        let tree = parse(&parser, source(case)).expect("layout queue is preserved");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+    observe(
+        &["nativeAgdaDeclaredDivergencesLossless"],
+        "native_agda_focused_layout_divergences_are_explicit_and_lossless",
+    );
+}

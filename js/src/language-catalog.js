@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readRuntimeProjectData } from './project-data-loader.js';
 
 /**
  * Every registered language with its aliases, file extensions, and default
@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
  * js/scripts/build-language-catalog.mjs. The Rust runtime embeds the same file.
  */
 export const LANGUAGE_CATALOG = deepFreeze(
-  JSON.parse(await readFile(new URL('./data/language-catalog.json', import.meta.url), 'utf8')),
+  readRuntimeProjectData(new URL('./data/language-catalog.lino', import.meta.url)),
 );
 
 const BY_ALIAS = new Map();

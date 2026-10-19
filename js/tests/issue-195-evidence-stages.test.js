@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 import { buildIssue195Manifest, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
 import { buildEvidencePlan } from '../scripts/issue-195-evidence-plan.mjs';
@@ -71,7 +72,7 @@ test('the stages and the aggregate together produce exactly the evidence plan gr
   assert.throws(() => evidenceStages('pull-request'), /unknown issue-195 evidence checkpoint/);
   assert.throws(() => evidenceStage('pre-merge', 'everything'), /unknown pre-merge evidence stage everything/);
   assert.deepEqual(stageFiles('rust-suite'), {
-    record: 'work/stage-rust-suite.json', observations: 'work/stage-rust-suite.jsonl',
+    record: 'work/stage-rust-suite.lino', observations: 'work/stage-rust-suite-observations.lino',
   });
 });
 
@@ -197,10 +198,53 @@ test('the evidence commands run with bounded build parallelism unless the caller
   assert.doesNotMatch(runner, /Promise\.all\(\s*\[?\s*(?:run|produce)/u);
   // The Rust suite builds only the default features, and each JavaScript test group is its own process.
   assert.doesNotMatch(runner, /--all-features/u);
-  assert.match(runner, /'scripts\/test-groups\.mjs', '--run', group\]/u);
+  assert.match(read('js/scripts/issue-195-javascript-suite-partitions.mjs'), /'scripts\/test-groups\.mjs', '--run', group\]/u);
+  assert.match(runner, /javascriptSuiteCommandArguments\(group, shard\)/u);
   observe('I195-RESOURCE-BOUNDED-SEQUENTIAL-EVIDENCE',
     ['stagesRunSequentially', 'boundedBuildEnvironment', 'defaultFeaturesOnly', 'testGroupsRunSeparately'],
     'the evidence commands run with bounded build parallelism unless the caller set it');
+});
+
+test('the acceptance Rust command reuses only the checked fresh-merge test optimization', async () => {
+  const runner = read('js/scripts/run-issue-195-evidence.mjs');
+  const definition = runner.match(/^async function runRustSuite\(failures, selection = null\) \{[\s\S]*?^\}/mu)?.[0];
+  assert.ok(definition, 'the actual Rust-suite producer is inspected without running the evidence pipeline');
+  const calls = [];
+  const run = vm.runInNewContext(`(${definition})`, {
+    path, root, rustSuiteCommandArguments: (await import('../scripts/issue-195-rust-suite-partitions.mjs')).rustSuiteCommandArguments,
+    runCommand: async (...args) => { calls.push(args); return { ok: true }; },
+    bundle: record => record,
+  });
+  const failures = [];
+  await run(failures);
+  assert.deepEqual(failures, []);
+  assert.equal(calls.length, 1, 'the complete suite remains one Cargo command');
+  const [label, command, args, options] = structuredClone(calls[0]);
+  assert.equal(label, 'suite-rust');
+  assert.equal(command, 'cargo');
+  const { forwardOutput, ...originalOptions } = options;
+  assert.deepEqual(originalOptions, { allowFailure: true });
+  assert.equal(forwardOutput, true, 'only the complete Rust suite selects live redacted diagnostics');
+  const original = ['test', '--no-fail-fast', '--locked', '--manifest-path', path.join(root, 'rust/Cargo.toml'), '--tests'];
+  const settings = ['profile.test.package.meta-language.opt-level=3',
+    'profile.test.package.meta-language.debug-assertions=true',
+    'profile.test.package.meta-language.overflow-checks=true'];
+  const freshMerge = [...read('rust/scripts/simulate-fresh-merge.sh').matchAll(/--config '([^']+)'/gu)].map(match => match[1]);
+  assert.deepEqual(settings, freshMerge, 'reuse the existing package-specific test settings exactly');
+  const checkArguments = candidate => {
+    assert.deepEqual(candidate.slice(0, -2), [...original, ...settings.flatMap(setting => ['--config', setting])],
+      'retain default features, every test target, enabled debug/overflow checks and the original failure policy');
+    assert.deepEqual(candidate.slice(-2), ['--', '--nocapture'], 'the only new arguments expose actual panic diagnostics');
+  };
+  checkArguments(args);
+  assert.doesNotMatch(args.join(' '), /--release|--profile|--features|--all-features|--no-default-features|--skip|--ignored|debug-assertions=false|overflow-checks=false/u);
+  for (const counterfeit of [args.slice(0, -2), [...args.slice(0, -1), '--show-output'],
+    [...args.slice(0, -2), '--nocapture'], [...args, '--skip', 'slow'],
+    args.filter(value => value !== '--no-fail-fast'), args.map(value => value === '--tests' ? '--lib' : value),
+    args.map(value => value === 'profile.test.package.meta-language.opt-level=3' ? 'profile.test.package.meta-language.opt-level=0' : value),
+    [...args.slice(0, -2), '--no-default-features', '--', '--nocapture']]) {
+    assert.throws(() => checkArguments(counterfeit), assert.AssertionError);
+  }
 });
 
 test('declared toolchains must match exactly; tools a stage does not use are not required', () => {

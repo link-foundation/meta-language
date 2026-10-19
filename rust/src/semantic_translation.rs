@@ -13,8 +13,14 @@ use crate::translation::check::check_program;
 use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::{Assumption, Emitted, Encoding, IN_BOUNDS_READS, Mapping};
 use crate::translation::{
-    Span, emit_javascript::emit_javascript, emit_lean::emit_lean, emit_rocq::emit_rocq,
-    emit_rust::emit_rust, javascript::parse_javascript, lean::parse_lean, rocq::parse_rocq,
+    Span,
+    emit_javascript::emit_javascript,
+    emit_lean::emit_lean,
+    emit_rocq::emit_rocq,
+    emit_rust::{RustEmissionOptions, emit_rust_with_array_consumption},
+    javascript::parse_javascript,
+    lean::parse_lean,
+    rocq::parse_rocq,
     rust::parse_rust,
 };
 
@@ -119,7 +125,7 @@ pub fn emit(
         .and_then(|surface| check_program(&surface))
         .and_then(|program| match target_language {
             "JavaScript" => emit_javascript(&program),
-            "Rust" => emit_rust(&program),
+            "Rust" => emit_rust_with_array_consumption(&program, RustEmissionOptions::default()),
             "Lean" => emit_lean(&program),
             _ => emit_rocq(&program),
         });

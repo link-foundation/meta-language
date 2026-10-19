@@ -25,7 +25,7 @@ use serde_json::{Map, Value, json};
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/grammar-feature-union.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-feature-union.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-feature-union.lino");
 const VISION: &str = include_str!("../../../docs/vision.md");
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -40,7 +40,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("the feature union fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("the feature union fixture is JSON")
 }
 
 fn features(fixture: &Value) -> &[Value] {
@@ -750,7 +750,11 @@ fn external_scanners_and_semantic_actions_are_executable_link_definitions() {
                 directories.push(path);
                 continue;
             }
-            let source = std::fs::read_to_string(&path).expect("the source reads");
+            let source = std::fs::read_to_string(
+                super::project_data::resolve_project_data_path(&path)
+                    .expect("one project data storage format"),
+            )
+            .expect("the source reads");
             assert!(!host_code.is_match(&source), "{}", path.display());
             files += 1;
         }

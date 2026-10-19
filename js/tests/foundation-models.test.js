@@ -4,12 +4,15 @@
 // production source builds in a consumer's own foundation, and the check
 // rejects a hard-coded universal logic (requirement I195-VISION-FOUNDATION-NEUTRAL).
 // The Rust twin is rust/tests/unit/foundation_models.rs.
+import { readProjectData, resolveProjectDataPath, serializeProjectData, writeProjectData } from '../scripts/project-data.mjs';
+import { buildConceptRecords } from '../scripts/build-concept-records.mjs';
+
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
   CONSUMER_REGISTRIES,
@@ -31,7 +34,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const REQUIREMENT = 'I195-VISION-FOUNDATION-NEUTRAL';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LANGUAGES = ['JavaScript', 'Rust', 'Lean', 'Rocq'];
-const stages = JSON.parse(readFileSync(path.join(root, 'parity/fixtures/translation-stages.json'), 'utf8'));
+const stages = readProjectData(path.join(root, 'parity/fixtures/translation-stages.json'));
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -48,8 +51,8 @@ const kinds = (register) => checkFoundationModels(register).map(({ kind }) => ki
 const copy = () => structuredClone(FOUNDATION_MODELS);
 
 test('foundations are data: every family has distinct models and every language records its own', () => {
-  const register = readFileSync(path.join(root, FOUNDATION_REGISTER), 'utf8');
-  for (const file of FOUNDATION_MODEL_PATHS) assert.equal(readFileSync(path.join(root, file), 'utf8'), register, file);
+  const register = readFileSync(resolveProjectDataPath(path.join(root, FOUNDATION_REGISTER)), 'utf8');
+  for (const file of FOUNDATION_MODEL_PATHS) assert.equal(readFileSync(resolveProjectDataPath(path.join(root, file)), 'utf8'), register, file);
   assert.deepEqual(checkFoundationModels(FOUNDATION_MODELS), []);
   const families = FOUNDATION_MODELS.families.map(({ id }) => id);
   assert.deepEqual(families, ['integer-model', 'overflow-model', 'universe-model', 'effect-model', 'proof-system', 'logic-model']);
@@ -136,6 +139,30 @@ test('the check rejects a hard-coded universal logic and a consumer foundation b
 });
 
 test('no production source names a consumer\'s own foundation outside the consumer registries', () => {
+  // Execute the actual native boundary expressions with both host path APIs.
+  // Rust canonicalize() may supply a Windows verbatim path while Node's
+  // imported producer paths use ordinary drive or UNC paths.
+  const native = readFileSync(path.join(root, 'rust/tests/unit/foundation_models.rs'), 'utf8');
+  const rootExpression = native.match(/^const root = ([^\n]+);$/mu)?.[1];
+  const pathsExpression = native.match(/paths: (CONCEPT_RECORD_PATHS\.map\([^\n]+\)),/u)?.[1];
+  assert.ok(rootExpression);assert.ok(pathsExpression);
+  const readRoot = new Function('process', 'fileURLToPath', 'pathToFileURL', 'return ' + rootExpression + ';');
+  const project = new Function('CONCEPT_RECORD_PATHS', 'root', 'relative', 'return ' + pathsExpression + ';');
+  for (const [platform, base, windows] of [
+    [path.posix, '/workspace/meta-language', false],
+    [path.win32, 'C:\\workspace\\meta-language', true],
+    [path.win32, path.win32.toNamespacedPath('C:\\workspace\\meta-language'), true],
+    [path.win32, path.win32.toNamespacedPath('\\\\server\\share\\meta-language'), true],
+  ]) {
+    const normalized = readRoot({argv: ['node', base]},
+      file => fileURLToPath(file, {windows}), file => pathToFileURL(file, {windows}));
+    const paths = ['js/src/data/concept-records.lino', 'rust/src/data/concept-records.lino'];
+    const files = paths.map(file => platform.join(normalized, file));
+    assert.deepEqual(project(files, normalized, platform.relative), paths,
+      'the native audit and shared producer must agree on slash-separated source identities');
+    if (base !== normalized) assert.notDeepEqual(project(files, base, platform.relative), paths,
+      'the unchanged pre-normalization Windows root reproduces the actual path-transport mismatch');
+  }
   assert.deepEqual(consumerFoundationReferences(root), []);
   const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-foundations-'));
   try {
@@ -145,6 +172,44 @@ test('no production source names a consumer\'s own foundation outside the consum
     writeFileSync(path.join(directory, 'rust/src/parity.rs'), '// upstream: relative-meta-logic\n');
     assert.deepEqual(consumerFoundationReferences(directory).map(({ path: file, line }) => `${file}:${line}`), ['js/src/logic.js:1']);
     assert.ok(CONSUMER_REGISTRIES.includes('rust/src/parity.rs'));
+
+    // The actual CI regression was the stable identity of a command operation,
+    // carried as descriptive metadata rather than a built-in language foundation.
+    for (const name of ['js/scripts', 'js/src/data', 'rust/src/data', 'parity/naming']) {
+      mkdirSync(path.join(directory, name), { recursive: true });
+    }
+    writeFileSync(path.join(directory, 'js/scripts/workload-command.mjs'), 'export function run() { return []; }\n');
+    const commandRegister = { concepts: [{
+      id: 'repository.run-relative-meta-logic-workload-command', phrase: 'run consumer workload command',
+      role: 'operation', definition: 'Execute a selected command and preserve its output.', constraints: [],
+      sourceAliases: [{ source: 'js/scripts/workload-command.mjs', name: 'run' }], formerNames: [],
+    }] };
+    const canonicalPath = path.join(directory, 'parity/naming/canonical-concepts.lino');
+    const snapshots = ['js/src/data/concept-records.lino', 'rust/src/data/concept-records.lino'];
+    writeProjectData(canonicalPath, commandRegister);
+    for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(commandRegister), file));
+    assert.deepEqual(consumerFoundationReferences(directory).map(({ path: file }) => file), ['js/src/logic.js']);
+
+    for (const alter of [
+      value => { value.concepts[0].role = 'concept'; },
+      value => { value.concepts[0].sourceAliases = []; },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/src/logic.js'; },
+      value => { value.concepts[0].sourceAliases.push({ source: 'js/src/logic.js', name: 'logic' }); },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/scripts/absent.mjs'; },
+      value => { value.concepts[0].sourceAliases[0].source = 'js/scripts/../src/logic.js'; },
+    ]) {
+      const invalid = structuredClone(commandRegister); alter(invalid);
+      writeProjectData(canonicalPath, invalid);
+      for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(invalid), file));
+      const references = consumerFoundationReferences(directory);
+      assert.deepEqual(references.filter(({ path: file }) => snapshots.includes(file)).map(({ path: file }) => file).sort(), [...snapshots].sort(), 'both generated registries still refuse foundational concepts and non-tooling or missing owners');
+      assert.ok(references.some(({ path: file, line }) => file === 'js/src/logic.js' && line === 1), 'the original production-code rejection survives every metadata case');
+    }
+    writeProjectData(canonicalPath, commandRegister);
+    for (const file of snapshots) writeFileSync(path.join(directory, file), serializeProjectData(buildConceptRecords(commandRegister), file));
+    const altered = path.join(directory, snapshots[0]);
+    writeFileSync(altered, readFileSync(altered, 'utf8') + '\n');
+    assert.deepEqual(consumerFoundationReferences(directory).filter(({ path: file }) => snapshots.includes(file)).map(({ path: file }) => file), [snapshots[0]], 'even harmless drift cannot gain the generated-data allowance');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

@@ -11,6 +11,8 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readProjectData, readProjectFileBytes, writeProjectData } from './project-data.mjs';
+import { consumeWorkloadWireData } from './workload-wire-data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const corpusPath = path.resolve(option('--corpus', path.join(root, 'parity/fixtures/issue-195-evidence.json')));
@@ -18,8 +20,9 @@ const tarball = path.resolve(required('--npm-tarball'));
 const crate = path.resolve(required('--crate'));
 const workDirectory = path.resolve(required('--work-dir'));
 const output = path.resolve(required('--out'));
-const corpus = JSON.parse(await readFile(corpusPath, 'utf8'));
+const corpus = readProjectData(corpusPath);
 const platform = `${process.platform}-${process.arch}`;
+const corpusWirePath = path.join(workDirectory, 'consumer-inputs.wire.json');
 
 // Crates that open network connections; none may be a normal dependency of
 // the parse path the consumer exercises.
@@ -34,10 +37,13 @@ const logs = [];
 async function main() {
   await rm(workDirectory, { recursive: true, force: true });
   await mkdir(workDirectory, { recursive: true });
+  // The installed probe programs retain their JSON wire contract; their input
+  // is a temporary projection of the authenticated linked fixture.
+  await writeFile(corpusWirePath, `${JSON.stringify(corpus)}\n`);
   const report = {
     schemaVersion: 1,
     platform,
-    corpusSha256: sha256(await readFile(corpusPath)),
+    corpusSha256: sha256(readProjectFileBytes(corpusPath)),
     node: process.version,
     npm: await npmConsumer(),
     crate: await crateConsumer(),
@@ -45,7 +51,7 @@ async function main() {
   };
   report.agreement = agreement(report.npm.observations, report.crate.observations);
   await mkdir(path.dirname(output), { recursive: true });
-  await writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
+  writeProjectData(output, report);
   console.log(`issue-195 consumer: wrote ${platform} report to ${output}`);
 }
 
@@ -84,11 +90,11 @@ async function npmConsumer() {
   checksum.expectedIntegrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
   await writeFile(path.join(directory, 'deny-network.mjs'), DENY_NETWORK);
   await writeFile(path.join(directory, 'consumer.mjs'), NPM_CONSUMER);
-  const observationPath = path.join(directory, 'observations.json');
+  const observationPath = path.join(directory, 'observations.wire.json');
   await run('npm-consumer', process.execPath, [
-    '--import', './deny-network.mjs', 'consumer.mjs', corpusPath, observationPath,
+    '--import', './deny-network.mjs', 'consumer.mjs', corpusWirePath, observationPath,
   ], { cwd: directory, env: { ...environment, NODE_OPTIONS: '' } });
-  const observed = JSON.parse(await readFile(observationPath, 'utf8'));
+  const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   return {
     version: installedPackage.version,
     checksum,
@@ -163,13 +169,13 @@ async function crateConsumer() {
     'check', '--offline', '--quiet', '--example', 'private_path',
   ], { cwd: directory, env: offlineEnvironment, expectFailure: true });
   const privatePathRejected = /error\[E0603\]/u.test(privateCheck);
-  const observationPath = path.join(directory, 'observations.json');
+  const observationPath = path.join(directory, 'observations.wire.json');
   const binary = path.join(target, 'debug', `issue-195-crate-consumer${process.platform === 'win32' ? '.exe' : ''}`);
-  await run('crate-consumer', binary, [corpusPath, observationPath], {
+  await run('crate-consumer', binary, [corpusWirePath, observationPath], {
     cwd: directory,
     env: offlineEnvironment,
   });
-  const observed = JSON.parse(await readFile(observationPath, 'utf8'));
+  const observed = await consumeWorkloadWireData(observationPath, path.join(directory, 'observations.lino'));
   const sources = await rustSources(path.join(crateSource, 'src'));
   return {
     version,
@@ -535,4 +541,8 @@ fn main() {
 }
 `;
 
-await main();
+try {
+  await main();
+} finally {
+  await rm(corpusWirePath, { force: true });
+}

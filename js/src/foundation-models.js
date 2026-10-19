@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readRuntimeProjectData } from './project-data-loader.js';
 
 /**
  * The foundations meta-language knows, as data: integer, overflow, universe,
@@ -10,7 +10,7 @@ import { readFile } from 'node:fs/promises';
  * proof authority and relates it to these models through correspondences.
  */
 export const FOUNDATION_MODELS = deepFreeze(
-  JSON.parse(await readFile(new URL('./data/foundation-models.json', import.meta.url), 'utf8')),
+  readRuntimeProjectData(new URL('./data/foundation-models.lino', import.meta.url)),
 );
 
 /** The kinds of correspondence between two distinct models; none of them claims the models are the same. */

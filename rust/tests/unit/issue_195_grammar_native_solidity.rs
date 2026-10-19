@@ -21,7 +21,7 @@ use super::issue_195_native_grammar_rows::{Rows, cases, parse, rebuilt, source};
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/solidity.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/solidity.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/solidity.lino");
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/solidity.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -36,7 +36,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("the native Solidity fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("the native Solidity fixture is JSON")
 }
 
 fn parser() -> FeatureGrammarParser {
@@ -236,4 +236,25 @@ fn native_solidity_trees_keep_every_byte() {
         &["nativeSolidityTreesLossless"],
         "native Solidity trees keep every byte",
     );
+}
+
+#[test]
+fn native_solidity_authored_grouping_regressions_match_oracle() {
+    let fixture: Value = super::project_data::read_project_data(FIXTURE).unwrap();
+    let parser = super::issue_195_native_grammar_rows::parser(GRAMMAR);
+    let rows = Rows::new(&fixture);
+    for source in [
+        "contract Plant {function build() public { target = new Seed{value: 7}(4); }}\n",
+        "contract Math {function sum() public returns(int) {return 9+4-2;}}\n",
+        "contract Math {function sum() public returns(int) {return 9-4+2;}}\n",
+    ] {
+        let tree = parse(&parser, source).unwrap();
+        let (expected, errors) = super::issue_195_native_grammar_rows::oracle_rows(
+            &tree_sitter_solidity::LANGUAGE.into(),
+            source,
+        );
+        assert!(!errors);
+        assert_eq!(rows.rows(&tree, source), expected);
+        assert_eq!(rebuilt(&tree), source);
+    }
 }

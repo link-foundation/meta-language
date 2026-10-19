@@ -4,6 +4,8 @@
 // ERROR, MISSING and embedded-language nodes stay in the tree, so the tree
 // reproduces the input byte for byte.
 import { hexOf, quoteText, textOf } from './text.js';
+import { publicGrammarSelection } from './grammar-selection.js';
+import { projectGrammarSelectionSpan } from './selection-source-mapping.js';
 
 function withText(target, bytes, start, end) {
   const text = textOf(bytes, start, end);
@@ -16,7 +18,7 @@ function withText(target, bytes, start, end) {
 export function publicTree(node, bytes) {
   switch (node.type) {
     case 'node': {
-      const copy = { type: 'node', kind: node.kind };
+      const copy = { type: 'node', kind: node.projectionName ?? node.kind };
       if (node.field !== undefined) copy.field = node.field;
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end, children: node.children.map((child) => publicTree(child, bytes)) });
@@ -24,11 +26,12 @@ export function publicTree(node, bytes) {
       return copy;
     }
     case 'token': {
-      const copy = { type: 'token', kind: node.kind };
+      const copy = { type: 'token', kind: node.projectionAnonymous ? null : node.projectionName ?? node.kind };
       if (node.field !== undefined) copy.field = node.field;
       if (node.trivia) copy.trivia = true;
       Object.assign(copy, { start: node.start, end: node.end });
       if (node.attributes) copy.attributes = { ...node.attributes };
+      if (node.lexical) copy.lexical = { ...node.lexical };
       return withText(copy, bytes, node.start, node.end);
     }
     case 'error': {
@@ -41,8 +44,13 @@ export function publicTree(node, bytes) {
       if (node.literal) copy.literal = true;
       return copy;
     }
-    case 'embed':
-      return { type: 'embed', language: node.language, start: node.start, end: node.end, root: publicTree(node.root, bytes) };
+    case 'embed': {
+      const copy = { type: 'embed', language: node.language, start: node.start, end: node.end,
+        root: publicTree(node.root, node.selection?.sourceBytes ?? bytes) };
+      if (node.sourceChildren) copy.sourceChildren = node.sourceChildren.map(child => publicTree(child, bytes));
+      if (node.selection) copy.selection = publicGrammarSelection(node.selection, bytes, publicTree);
+      return copy;
+    }
     default: throw new TypeError(`unknown syntax tree node type ${node.type}`);
   }
 }
@@ -53,7 +61,20 @@ export function collectAmbiguities(node, program, found = []) {
     if (node.ambiguous && !program.conflicts.has(node.rule)) found.push({ rule: node.rule ?? node.kind, start: node.start, end: node.end });
     for (const child of node.children) collectAmbiguities(child, program, found);
   } else if (node.type === 'embed') {
-    collectAmbiguities(node.root, node.program, found);
+    if (node.selection?.ambiguous) found.push({ rule: 'any-grammar', start: node.start, end: node.end, languages: node.selection.candidates.filter(item => item.relation === 'accepted').map(item => item.language) });
+    for (const child of node.sourceChildren ?? []) collectAmbiguities(child, program, found);
+    const interpreted = node.selection?.sourceMapping ? [] : found;
+    collectAmbiguities(node.root, node.program, interpreted);
+    for (const alternative of node.selection?.alternatives ?? []) collectAmbiguities(alternative.root, alternative.program, interpreted);
+    if (node.selection?.sourceMapping) for (const item of interpreted) {
+      const cover = projectGrammarSelectionSpan(node.selection.sourceMapping, item.start, item.end);
+      found.push({ ...item, start: cover.start, end: cover.end,
+        source: item.source ?? node.selection.sourceMapping.output, sourceStart: item.sourceStart ?? item.start,
+        sourceEnd: item.sourceEnd ?? item.end, offsetSemantics: 'covering-source-spelling',
+        sourceRoute: [...(item.sourceRoute ?? []), { output: node.selection.sourceMapping.output,
+          outputStart: item.start, outputEnd: item.end, input: node.selection.sourceMapping.input,
+          inputStart: cover.start, inputEnd: cover.end, displayAnchor: cover.displayAnchor }] });
+    }
   }
   return found;
 }
@@ -61,6 +82,21 @@ export function collectAmbiguities(node, program, found = []) {
 /** The first ERROR or MISSING node of a public tree, in preorder. */
 export function firstRecovery(node) {
   if (node.type === 'error' || node.type === 'missing') return node;
+  if (node.sourceChildren) {
+    for (const child of node.sourceChildren) {
+      const physical = firstRecovery(child);
+      if (physical) return physical;
+    }
+    const derived = firstRecovery(node.root);
+    if (!derived) return null;
+    const cover = projectGrammarSelectionSpan(node.selection.sourceMapping, derived.start, derived.end);
+    return { ...derived, start: cover.start, end: cover.end,
+      source: derived.source ?? node.selection.sourceMapping.output, sourceStart: derived.sourceStart ?? derived.start,
+      sourceEnd: derived.sourceEnd ?? derived.end, offsetSemantics: 'covering-source-spelling',
+      sourceRoute: [...(derived.sourceRoute ?? []), { output: node.selection.sourceMapping.output,
+        outputStart: derived.start, outputEnd: derived.end, input: node.selection.sourceMapping.input,
+        inputStart: cover.start, inputEnd: cover.end, displayAnchor: cover.displayAnchor }] };
+  }
   for (const child of node.children ?? (node.root ? [node.root] : [])) {
     const found = firstRecovery(child);
     if (found) return found;
@@ -115,7 +151,10 @@ export function renderSyntaxTree(node) {
       if (node.kind === null) return `${prefix}(MISSING@${node.start})`;
       return `${prefix}(MISSING@${node.start} ${node.literal ? quoteText(node.kind) : renderName(node.kind)})`;
     }
-    case 'embed': return `${prefix}(EMBED ${renderName(node.language)}@${node.start}..${node.end} ${renderSyntaxTree(node.root)})`;
+    case 'embed': {
+      if (!node.sourceChildren) return `${prefix}(EMBED ${renderName(node.language)}@${node.start}..${node.end} ${renderSyntaxTree(node.root)})`;
+      return `${prefix}(EMBED ${renderName(node.language)}@${node.start}..${node.end} (SOURCE ${node.sourceChildren.map(renderSyntaxTree).join(' ')}) (DECODED ${node.selection.sourceMapping.output} ${renderSyntaxTree(node.root)}))`;
+    }
     default: throw new TypeError(`unknown syntax tree node type ${node.type}`);
   }
 }

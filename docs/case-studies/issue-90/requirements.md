@@ -2,7 +2,7 @@
 
 Every requirement extracted verbatim-in-intent from
 [issue #90](https://github.com/link-foundation/meta-language/issues/90) and its
-body (see [`raw-data/issue-90.json`](./raw-data/issue-90.json)). Status reflects
+body (see [`raw-data/issue-90.lino`](./raw-data/issue-90.lino)). Status reflects
 branch `issue-90-5532f0ba547e` / [PR #91](https://github.com/link-foundation/meta-language/pull/91).
 
 | ID | Requirement | Status | Evidence |

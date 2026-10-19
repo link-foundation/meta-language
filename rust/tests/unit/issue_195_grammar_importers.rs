@@ -19,7 +19,7 @@ use super::grammar_pipeline_support::compile_and_run_rust_parser_on_corpus;
 use super::grammar_render::render_rule;
 use super::issue_195_observations as observations;
 
-const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/grammar-importers.lino");
 
 const ASSERTIONS: &[&str] = &[
     "ordinaryPublicImportApi",
@@ -65,7 +65,8 @@ fn assert_membership(id: &str, grammar: &Grammar, accepts: &[String], rejects: &
 }
 
 fn check_importer(format: &str, importer: &str, import: Importer, emit: Emitter) {
-    let fixture: Value = serde_json::from_str(FIXTURE).expect("shared importer fixture is JSON");
+    let fixture: Value =
+        super::project_data::read_project_data(FIXTURE).expect("shared importer fixture is JSON");
     let cases = fixture["cases"]
         .as_array()
         .expect("cases array")

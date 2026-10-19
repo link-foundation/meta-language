@@ -1,0 +1,1 @@
+Current concept identity resolution now follows every former name in the shared concept records, including the reviewed Elixir and C# migrations, while preserving historical aliases and unknown identities.

@@ -17,6 +17,7 @@ use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use super::forking::{Lead, Reductions, lookahead_after, reduced_early};
+use super::lexical_cache_memory::LexicalCache;
 use super::lexing::is_keyword;
 use super::operations::{Abort, OpError, State, ValueMachine, evaluate_condition};
 use super::parting::ends_missing;
@@ -48,7 +49,7 @@ pub(super) type Retry<'r, 'c> =
 
 /// The evaluation frames a parse may nest before it is refused as too deep;
 /// the parse thread's stack holds this many with room to spare.
-const FRAME_LIMIT: usize = 20_000;
+pub(super) const FRAME_LIMIT: usize = 20_000;
 
 /// The repair cost of a MISSING leaf; an ERROR leaf costs the bytes it skips.
 const MISSING_COST: usize = 2;
@@ -79,6 +80,11 @@ pub(super) type RestKeys = Option<Rc<HashSet<Lead>>>;
 
 /// Interprets one program over `bytes[begin, end)`.
 pub(super) struct Executor<'c> {
+    pub(super) lexer_family: Name,
+    pub(super) lexer_workers: HashMap<Name, Box<Self>>,
+    pub(super) lexer_winners:
+        HashMap<(Name, usize, State), Option<Rc<super::lexical_election::LexicalWinner>>>,
+    pub(super) lexer_terminals: HashMap<(Name, Name, Option<Name>), usize>,
     pub(super) compiled: &'c Compiled,
     pub(super) program: &'c Program,
     /// The index of the program, by which the items a scanner's `expected`
@@ -109,6 +115,8 @@ pub(super) struct Executor<'c> {
     pub(super) owners: Option<HashMap<usize, usize>>,
     /// The rules at the edge of a kind's node facing an operator.
     pub(super) edge_memo: HashMap<(Name, Associativity), Rc<HashSet<usize>>>,
+    /// Whole-rule source contexts for the shared precedence regrouping test.
+    pub(super) precedence_context_memo: HashMap<usize, Rc<Vec<bool>>>,
     /// The reduction below a right operand's first part, by the address of
     /// the precedence's item, the operand's rule and the part's kind (see
     /// `shifts_below`).
@@ -126,6 +134,9 @@ pub(super) struct Executor<'c> {
     /// The scans of each scanner token at an offset, by the context offset
     /// too where the scanner asks what the parse expects.
     pub(super) scanner_memo: HashMap<ScanKey, Option<Rc<Scanned>>>,
+    /// Fixed lexical matches in quiet token context, by expression, offset and state.
+    pub(super) lexical_cache: Rc<LexicalCache>,
+    pub(super) lexical_cache_forms: HashMap<usize, bool>,
     /// The context offset of a scan inside a token or trivia: where the
     /// token's terminal or the trivia started (see `Expectations`).
     pub(super) scan_context: Option<usize>,
@@ -158,7 +169,7 @@ pub(super) struct Executor<'c> {
     pub(super) immediate_memo: HashMap<usize, Option<Rc<ImmediateLiterals>>>,
     /// The reach of each lexical expression's match from an offset, by the
     /// expression's address and the offset (see `prefix_reach`).
-    pub(super) prefix_reaches: HashMap<(usize, usize), usize>,
+    pub(super) prefix_reaches: HashMap<(usize, usize, State), usize>,
 }
 
 /// An element whose scan a repair point keeps (see `element_failed`): an
@@ -167,6 +178,7 @@ pub(super) struct Executor<'c> {
 pub(super) enum Element {
     At(usize),
     Scanner(Name),
+    Lexical(usize),
 }
 
 impl Element {
@@ -195,6 +207,10 @@ impl<'c> Executor<'c> {
             trivia: &program.trivia,
         });
         Self {
+            lexer_family: program.default_lexer.clone(),
+            lexer_workers: HashMap::new(),
+            lexer_winners: HashMap::new(),
+            lexer_terminals: HashMap::new(),
             compiled,
             program,
             program_index,
@@ -216,11 +232,14 @@ impl<'c> Executor<'c> {
             shift_memo: HashMap::new(),
             owners: None,
             edge_memo: HashMap::new(),
+            precedence_context_memo: HashMap::new(),
             below_memo: HashMap::new(),
             rest_memo: HashMap::new(),
             in_extra: InExtra::Outside,
             extra_start: usize::MAX,
             scanner_memo: HashMap::new(),
+            lexical_cache: Rc::new(LexicalCache::default()),
+            lexical_cache_forms: HashMap::new(),
             scan_context: None,
             embed_memo: HashMap::new(),
             farthest: begin,
@@ -250,6 +269,9 @@ impl<'c> Executor<'c> {
 
     /// Takes `count` memo cells of the parse's memory budget.
     pub(super) fn retain(&self, count: usize) -> Run<()> {
+        if !self.accepts_lexical_cache_reservation(count) {
+            self.release_lexical_caches();
+        }
         let cells = self.shared.cells.get() + count;
         self.shared.cells.set(cells);
         if cells > self.shared.memory_limit {
@@ -389,26 +411,7 @@ impl<'c> Executor<'c> {
         text_of(self.bytes, start, end).unwrap_or_default()
     }
 
-    /// Every result of `expr` at `position` in `state`.
-    pub(super) fn evaluate(
-        &mut self,
-        expr: &Expr,
-        position: usize,
-        state: &State,
-        in_token: bool,
-    ) -> Run<Vec<Res>> {
-        self.step()?;
-        let frames = self.shared.frames.get() + 1;
-        if frames > FRAME_LIMIT {
-            return Err(Abort::NestingTooDeep);
-        }
-        self.shared.frames.set(frames);
-        let results = self.evaluate_case(expr, position, state, in_token);
-        self.shared.frames.set(frames - 1);
-        results
-    }
-
-    fn evaluate_case(
+    pub(super) fn evaluate_case(
         &mut self,
         expr: &Expr,
         position: usize,
@@ -417,6 +420,12 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         match expr {
             Expr::Empty => Ok(vec![Res::new(position, state.clone(), no_children(), 0)]),
+            Expr::LexicalScope { name, owner, item } => {
+                self.evaluate_lexical_scope(name, owner, item, position, state, in_token)
+            }
+            Expr::LexicalToken { name, token } => {
+                self.evaluate_lexical_token(name, token, position, state)
+            }
             Expr::Terminal {
                 matcher,
                 expectation,
@@ -499,7 +508,7 @@ impl<'c> Executor<'c> {
                 let starts = if matches!(expr, Expr::Token(_)) {
                     let skipped = self.terminal_start(position, state, in_token)?;
                     if self.lexing.is_some() && !skipped.leaves.is_empty() {
-                        vec![self.token_before_extra(item, skipped, state)?]
+                        vec![self.token_before_extra(item, skipped)?]
                     } else {
                         vec![skipped]
                     }
@@ -538,7 +547,7 @@ impl<'c> Executor<'c> {
                 }
                 let lexed = (|| -> Run<()> {
                     for skipped in &starts {
-                        for result in self.token_leaf(item, skipped, state, in_token)? {
+                        for result in self.token_leaf(item, skipped, &skipped.state, in_token)? {
                             if let Some(keywords) = keywords {
                                 let call =
                                     self.call_stack.last().and_then(|frame| frame.borrow().call);
@@ -571,6 +580,7 @@ impl<'c> Executor<'c> {
                     return Ok(results);
                 }
                 let skipped = &starts[0];
+                let state = &skipped.state;
                 let (kind, literal) = missing_of(item);
                 self.element_failed(
                     skipped.end,
@@ -622,7 +632,16 @@ impl<'c> Executor<'c> {
                 };
                 Ok(vec![Res::new(position, state.clone(), children, 0)])
             }
-            Expr::Embed { language, item } => self.embed(language, item, position, state, in_token),
+            Expr::Embed {
+                language,
+                item,
+                selection,
+            } => match selection {
+                Some(descriptor) => {
+                    self.evaluate_grammar_selection(descriptor, item, position, state, in_token)
+                }
+                None => self.embed(language, item, position, state, in_token),
+            },
         }
     }
 
@@ -682,6 +701,7 @@ impl<'c> Executor<'c> {
         // could have been reduced (see `reduction_facts`), by the result's
         // children.
         let mut boundaries: HashMap<*const ChildList, usize> = HashMap::new();
+        let mut first_parts: HashMap<*const ChildList, bool> = HashMap::new();
         let mut current = vec![Res::new(position, state.clone(), no_children(), 0)];
         for (index, item) in items.iter().enumerate() {
             let mut next =
@@ -707,7 +727,20 @@ impl<'c> Executor<'c> {
                     if left.open && right.end > left.end {
                         continue;
                     }
+                    let right_single = keep.is_none()
+                        || right.children.iter().filter(|child| !child.trivia).count() == 1;
+                    let left_single = if index == 0 {
+                        right_single
+                    } else {
+                        first_parts
+                            .get(&Rc::as_ptr(&left.children))
+                            .copied()
+                            .unwrap_or(true)
+                    };
                     let mut joined = Res::join(left, right, in_token);
+                    if keep.is_some() {
+                        first_parts.insert(Rc::as_ptr(&joined.children), left_single);
+                    }
                     if let Some(split) = split
                         && index >= split.optional_from
                     {
@@ -733,7 +766,7 @@ impl<'c> Executor<'c> {
                     }
                     if last
                         && let Some(keep) = keep
-                        && !self.precedence_valid(keep, &joined)
+                        && !self.precedence_valid_edges(keep, &joined, left_single, right_single)
                     {
                         continue;
                     }
@@ -859,6 +892,7 @@ impl<'c> Executor<'c> {
             return Ok(results);
         }
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let mut cursor = start;
         while cursor < self.end {
@@ -892,6 +926,7 @@ impl<'c> Executor<'c> {
     ) -> Run<Vec<Res>> {
         let program_index = self.compiled.languages[&**language];
         let skipped = self.terminal_start(position, state, in_token)?;
+        let state = &skipped.state;
         let start = skipped.end;
         let regions = self.evaluate(item, start, state, true)?;
         let mut results = Vec::new();
@@ -900,23 +935,11 @@ impl<'c> Executor<'c> {
             let outcome = if let Some(outcome) = self.embed_memo.get(&key) {
                 outcome.clone()
             } else {
-                let nested_program = &self.compiled.programs[program_index];
-                let start_rule = nested_program
-                    .start
-                    .as_deref()
-                    .and_then(|name| nested_program.rule_index.get(name))
-                    .copied()
-                    .unwrap_or_default();
-                let mut nested = Executor::new(
-                    self.compiled,
-                    program_index,
-                    self.bytes,
-                    start,
-                    region.end,
-                    self.shared,
-                    self.max_depth.saturating_sub(self.depth),
-                );
-                let outcome = Rc::new(nested.run(start_rule)?);
+                let Some(outcome) =
+                    self.run_embedded_grammar(program_index, start, region.end, language)?
+                else {
+                    continue;
+                };
                 self.embed_memo.insert(key, outcome.clone());
                 outcome
             };

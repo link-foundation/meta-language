@@ -13,12 +13,21 @@ use super::surface::{BinaryOp, External, Flavor, Guard, Rounding, SImport, Unary
 use super::types::Type;
 use super::{Language, Span};
 
+mod declarations;
+mod record_entry;
+mod reference_type;
 mod rename;
+pub use record_entry::RecordEntry;
+mod nodes;
+pub use nodes::Node;
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde passes fields by reference
 const fn is_false(value: &bool) -> bool {
     !*value
 }
 
+pub use self::declarations::{
+    Ctor, DataDecl, Decl, Field, FnDecl, LambdaParam, Param, TheoremDecl,
+};
 pub use self::rename::*;
 
 /// Arithmetic semantics: exact on unbounded integers, checked (aborting)
@@ -62,13 +71,10 @@ impl LitValue {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expr {
-    #[serde(flatten)]
     pub node: Node,
-    #[serde(rename = "type")]
     pub ty: Type,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub span: Option<Span>,
 }
 
@@ -119,20 +125,65 @@ impl Expr {
         match &self.node {
             Node::Lit { .. }
             | Node::Unit
+            | Node::None { .. }
             | Node::Var { .. }
+            | Node::FunctionRef { .. }
             | Node::Abort { .. }
             | Node::OutNil => Vec::new(),
             Node::Call { args, .. }
             | Node::Ctor { args, .. }
             | Node::Array { items: args }
+            | Node::Tuple { items: args, .. }
             | Node::Math { args, .. } => args.iter().collect(),
+            Node::Apply { func, args } => {
+                std::iter::once(func.as_ref()).chain(args.iter()).collect()
+            }
+            Node::Lambda { body, .. } => vec![body],
             Node::Unary { arg, .. }
+            | Node::Set { items: arg }
+            | Node::Map { entries: arg }
+            | Node::Some { value: arg }
+            | Node::FlattenOption { value: arg }
+            | Node::OptionalField { object: arg, .. }
+            | Node::OptionalProject { object: arg, .. }
+            | Node::NullishNumber { arg }
+            | Node::OptionalText { arg, .. }
+            | Node::OptionalTypeOf { arg, .. }
+            | Node::Truthy { arg }
+            | Node::UnwrapOption { arg }
+            | Node::OptionalPredicate { arg, .. }
+            | Node::ReferenceAllocate { value: arg }
+            | Node::ReferenceRead { reference: arg }
+            | Node::CellAllocate { value: arg }
+            | Node::CellRead { cell: arg }
+            | Node::OptionalIndexNumber { arg }
+            | Node::StringPoints { object: arg }
+            | Node::CollectionItems { object: arg, .. }
+            | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
+            | Node::TupleIndex { object: arg, .. }
+            | Node::RecordField { object: arg, .. }
             | Node::Length { array: arg } => vec![arg],
-            Node::Binary { left, right, .. }
+            Node::Record { entries } => entries.iter().map(|entry| &entry.value).collect(),
+            Node::Method { object, args, .. } => std::iter::once(object.as_ref())
+                .chain(args.iter().flatten())
+                .collect(),
+            Node::StringTest {
+                string: left,
+                search: right,
+                ..
+            }
+            | Node::Binary { left, right, .. }
+            | Node::Coalesce { left, right }
+            | Node::StrictEqual { left, right, .. }
             | Node::Append { left, right }
             | Node::Index {
+                array: left,
+                index: right,
+                ..
+            }
+            | Node::OptionalIndex {
                 array: left,
                 index: right,
             } => vec![left, right],
@@ -142,6 +193,7 @@ impl Expr {
                 otherwise,
             } => vec![cond, then, otherwise],
             Node::Let { value, body, .. } => vec![value, body],
+            Node::CellWrite { cell, value, body } => vec![cell, value, body],
             Node::Print { text, body } => vec![text, body],
             Node::OutCons { head, tail } => vec![head, tail],
             Node::Match { scrutinee, cases } => {
@@ -158,7 +210,9 @@ impl Expr {
         let node = match &self.node {
             Node::Lit { .. }
             | Node::Unit
+            | Node::None { .. }
             | Node::Var { .. }
+            | Node::FunctionRef { .. }
             | Node::Abort { .. }
             | Node::OutNil => self.node.clone(),
             Node::Print { text, body } => {
@@ -174,18 +228,136 @@ impl Expr {
             Node::Array { items } => Node::Array {
                 items: items.iter().map(&mut *visit).collect(),
             },
+            Node::Set { items } => Node::Set {
+                items: Box::new(visit(items)),
+            },
+            Node::Map { entries } => Node::Map {
+                entries: Box::new(visit(entries)),
+            },
+            Node::Record { entries } => Node::Record {
+                entries: entries
+                    .iter()
+                    .map(|entry| RecordEntry {
+                        name: entry.name.clone(),
+                        value: visit(&entry.value),
+                    })
+                    .collect(),
+            },
+            Node::RecordField {
+                object,
+                field,
+                index,
+            } => Node::RecordField {
+                object: Box::new(visit(object)),
+                field: field.clone(),
+                index: *index,
+            },
+            Node::Tuple {
+                items,
+                frozen,
+                product_model,
+            } => Node::Tuple {
+                items: items.iter().map(&mut *visit).collect(),
+                frozen: *frozen,
+                product_model: product_model.clone(),
+            },
+            Node::TupleIndex { object, index } => Node::TupleIndex {
+                object: Box::new(visit(object)),
+                index: *index,
+            },
             Node::Append { left, right } => {
                 let left = Box::new(visit(left));
                 let right = Box::new(visit(right));
                 Node::Append { left, right }
             }
-            Node::Index { array, index } => {
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
                 let array = Box::new(visit(array));
                 let index = Box::new(visit(index));
-                Node::Index { array, index }
+                Node::Index {
+                    array,
+                    index,
+                    proven_in_bounds: *proven_in_bounds,
+                }
             }
+            Node::OptionalIndex { array, index } => Node::OptionalIndex {
+                array: Box::new(visit(array)),
+                index: Box::new(visit(index)),
+            },
+            Node::OptionalIndexNumber { arg } => Node::OptionalIndexNumber {
+                arg: Box::new(visit(arg)),
+            },
+            Node::Some { value } => Node::Some {
+                value: Box::new(visit(value)),
+            },
+            Node::FlattenOption { value } => Node::FlattenOption {
+                value: Box::new(visit(value)),
+            },
+            Node::Coalesce { left, right } => Node::Coalesce {
+                left: Box::new(visit(left)),
+                right: Box::new(visit(right)),
+            },
+            Node::OptionalField {
+                object,
+                field,
+                index,
+            } => Node::OptionalField {
+                object: Box::new(visit(object)),
+                field: field.clone(),
+                index: *index,
+            },
+            Node::OptionalProject { object, field } => Node::OptionalProject {
+                object: Box::new(visit(object)),
+                field: field.clone(),
+            },
+            Node::NullishNumber { arg } => Node::NullishNumber {
+                arg: Box::new(visit(arg)),
+            },
+            Node::OptionalText { arg, console } => Node::OptionalText {
+                arg: Box::new(visit(arg)),
+                console: *console,
+            },
+            Node::OptionalTypeOf { arg, present } => Node::OptionalTypeOf {
+                arg: Box::new(visit(arg)),
+                present: present.clone(),
+            },
+            Node::Truthy { arg } => Node::Truthy {
+                arg: Box::new(visit(arg)),
+            },
+            Node::StrictEqual {
+                left,
+                right,
+                negate,
+            } => Node::StrictEqual {
+                left: Box::new(visit(left)),
+                right: Box::new(visit(right)),
+                negate: *negate,
+            },
+            Node::UnwrapOption { arg } => Node::UnwrapOption {
+                arg: Box::new(visit(arg)),
+            },
+            Node::OptionalPredicate { arg, op } => Node::OptionalPredicate {
+                arg: Box::new(visit(arg)),
+                op: op.clone(),
+            },
+            Node::StringPoints { object } => Node::StringPoints {
+                object: Box::new(visit(object)),
+            },
+            Node::CollectionItems { object, op } => Node::CollectionItems {
+                object: Box::new(visit(object)),
+                op: op.clone(),
+            },
             Node::Length { array } => Node::Length {
                 array: Box::new(visit(array)),
+            },
+            Node::ReferenceAllocate { value } => Node::ReferenceAllocate {
+                value: Box::new(visit(value)),
+            },
+            Node::ReferenceRead { reference } => Node::ReferenceRead {
+                reference: Box::new(visit(reference)),
             },
             Node::Math { op, args } => Node::Math {
                 op: op.clone(),
@@ -195,15 +367,57 @@ impl Expr {
                 func: func.clone(),
                 args: args.iter().map(&mut *visit).collect(),
             },
-            Node::Ctor { data, ctor, args } => Node::Ctor {
+            Node::Apply { func, args } => Node::Apply {
+                func: Box::new(visit(func)),
+                args: args.iter().map(&mut *visit).collect(),
+            },
+            Node::Lambda { params, body } => Node::Lambda {
+                params: params.clone(),
+                body: Box::new(visit(body)),
+            },
+            Node::CellAllocate { value } => Node::CellAllocate {
+                value: Box::new(visit(value)),
+            },
+            Node::CellRead { cell } => Node::CellRead {
+                cell: Box::new(visit(cell)),
+            },
+            Node::CellWrite { cell, value, body } => Node::CellWrite {
+                cell: Box::new(visit(cell)),
+                value: Box::new(visit(value)),
+                body: Box::new(visit(body)),
+            },
+            Node::Ctor {
+                data,
+                ctor,
+                args,
+                frozen,
+            } => Node::Ctor {
                 data: data.clone(),
                 ctor: ctor.clone(),
                 args: args.iter().map(&mut *visit).collect(),
+                frozen: *frozen,
             },
             Node::Unary { op, arg, semantics } => Node::Unary {
                 op: *op,
                 arg: Box::new(visit(arg)),
                 semantics: *semantics,
+            },
+            Node::StringMap { op, string } => Node::StringMap {
+                op: op.clone(),
+                string: Box::new(visit(string)),
+            },
+            Node::Method { object, op, args } => Node::Method {
+                object: Box::new(visit(object)),
+                op: op.clone(),
+                args: args
+                    .iter()
+                    .map(|arg| arg.as_ref().map(&mut *visit))
+                    .collect(),
+            },
+            Node::StringTest { op, string, search } => Node::StringTest {
+                op: op.clone(),
+                string: Box::new(visit(string)),
+                search: Box::new(visit(search)),
             },
             Node::ToString { arg, console } => Node::ToString {
                 arg: Box::new(visit(arg)),
@@ -284,150 +498,6 @@ impl Expr {
             node,
             ty: self.ty.clone(),
             span: self.span,
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
-pub enum Node {
-    Lit {
-        value: LitValue,
-    },
-    Unit,
-    Var {
-        name: String,
-    },
-    Call {
-        #[serde(rename = "fn")]
-        func: String,
-        args: Vec<Expr>,
-    },
-    Ctor {
-        data: String,
-        ctor: String,
-        args: Vec<Expr>,
-    },
-    Unary {
-        op: UnaryOp,
-        arg: Box<Expr>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        semantics: Option<Semantics>,
-    },
-    Binary {
-        op: BinaryOp,
-        left: Box<Expr>,
-        right: Box<Expr>,
-        /// The operand type of comparisons and arithmetic.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        domain: Option<Type>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        semantics: Option<Semantics>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        rounding: Option<Rounding>,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        by_zero: Option<ByZero>,
-    },
-    If {
-        cond: Box<Expr>,
-        then: Box<Expr>,
-        #[serde(rename = "else")]
-        otherwise: Box<Expr>,
-    },
-    Let {
-        name: String,
-        value: Box<Expr>,
-        body: Box<Expr>,
-    },
-    Match {
-        scrutinee: Box<Expr>,
-        cases: Vec<Case>,
-    },
-    ToString {
-        arg: Box<Expr>,
-        /// `console.log` of a Number, which prints -0 as "-0" where `String(-0)` is "0".
-        #[serde(default, skip_serializing_if = "is_false")]
-        console: bool,
-    },
-    Cast {
-        arg: Box<Expr>,
-        from: Type,
-        to: Type,
-        flavor: Flavor,
-        /// The message of the guard a checked conversion to a parameter is.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        message: Option<String>,
-        /// The place of that guard among the callee's guards.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        order: Option<usize>,
-    },
-    Abort {
-        message: String,
-    },
-    /// Prints `text`, then is `body`.
-    Print {
-        text: Box<Expr>,
-        body: Box<Expr>,
-    },
-    /// A JavaScript array of `items`.
-    Array {
-        items: Vec<Expr>,
-    },
-    /// The elements of `left`, then those of `right`.
-    Append {
-        left: Box<Expr>,
-        right: Box<Expr>,
-    },
-    /// The element of `array` at `index`, a Number or an integer; a read
-    /// outside the array aborts.
-    Index {
-        array: Box<Expr>,
-        index: Box<Expr>,
-    },
-    /// The number of elements of `array`, as a Number or an integer.
-    Length {
-        array: Box<Expr>,
-    },
-    /// A `Math` or `Number` function of Numbers; `maxOf` and `minOf` fold
-    /// `max` and `min` over one array.
-    Math {
-        op: String,
-        args: Vec<Expr>,
-    },
-    /// No lines printed (see `output`).
-    OutNil,
-    /// The lines `tail` with `head` printed after them.
-    OutCons {
-        head: Box<Expr>,
-        tail: Box<Expr>,
-    },
-}
-
-impl Node {
-    #[must_use]
-    pub const fn kind(&self) -> &'static str {
-        match self {
-            Self::Lit { .. } => "lit",
-            Self::Unit => "unit",
-            Self::Var { .. } => "var",
-            Self::Call { .. } => "call",
-            Self::Ctor { .. } => "ctor",
-            Self::Unary { .. } => "unary",
-            Self::Binary { .. } => "binary",
-            Self::If { .. } => "if",
-            Self::Let { .. } => "let",
-            Self::Match { .. } => "match",
-            Self::ToString { .. } => "toString",
-            Self::Cast { .. } => "cast",
-            Self::Abort { .. } => "abort",
-            Self::Print { .. } => "print",
-            Self::Array { .. } => "array",
-            Self::Append { .. } => "append",
-            Self::Index { .. } => "index",
-            Self::Length { .. } => "length",
-            Self::Math { .. } => "math",
-            Self::OutNil => "outNil",
-            Self::OutCons { .. } => "outCons",
         }
     }
 }
@@ -596,138 +666,6 @@ pub struct Proof {
     pub source_language: Language,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Field {
-    pub name: String,
-    #[serde(rename = "type")]
-    pub ty: Type,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Ctor {
-    pub name: String,
-    pub fields: Vec<Field>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Param {
-    pub name: String,
-    #[serde(rename = "type")]
-    pub ty: Type,
-    /// A JavaScript parameter guarded to the naturals.
-    #[serde(default)]
-    pub guard: Option<Guard>,
-    #[serde(default, rename = "default")]
-    pub default_value: Option<super::surface::SExpr>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DataDecl {
-    pub name: String,
-    pub ctors: Vec<Ctor>,
-    #[serde(default)]
-    pub span: Option<Span>,
-    pub full_name: String,
-    pub module_path: Vec<String>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub generated: bool,
-    /// A pair of printed lines and a value (see `output`).
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub output: bool,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FnDecl {
-    pub name: String,
-    pub params: Vec<Param>,
-    pub ret: Type,
-    pub body: Expr,
-    #[serde(default)]
-    pub span: Option<Span>,
-    pub full_name: String,
-    pub module_path: Vec<String>,
-    pub recursive: bool,
-    /// The structurally decreasing parameter of a recursive function.
-    pub decreasing: Option<usize>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub mutual: bool,
-    /// A function the translator made up, such as a lifted loop.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub generated: bool,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TheoremDecl {
-    pub name: String,
-    pub binders: Vec<Binder>,
-    pub prop: Prop,
-    pub proof: Proof,
-    #[serde(default)]
-    pub span: Option<Span>,
-    pub full_name: String,
-    pub module_path: Vec<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "k", rename_all = "camelCase")]
-#[allow(clippy::large_enum_variant)] // programs hold a handful of declarations
-pub enum Decl {
-    Data(DataDecl),
-    Fn(FnDecl),
-    Theorem(TheoremDecl),
-}
-
-impl Decl {
-    #[must_use]
-    pub fn name(&self) -> &str {
-        match self {
-            Self::Data(decl) => &decl.name,
-            Self::Fn(decl) => &decl.name,
-            Self::Theorem(decl) => &decl.name,
-        }
-    }
-
-    #[must_use]
-    pub fn full_name(&self) -> &str {
-        match self {
-            Self::Data(decl) => &decl.full_name,
-            Self::Fn(decl) => &decl.full_name,
-            Self::Theorem(decl) => &decl.full_name,
-        }
-    }
-
-    #[must_use]
-    pub fn module_path(&self) -> &[String] {
-        match self {
-            Self::Data(decl) => &decl.module_path,
-            Self::Fn(decl) => &decl.module_path,
-            Self::Theorem(decl) => &decl.module_path,
-        }
-    }
-
-    #[must_use]
-    pub const fn span(&self) -> Option<Span> {
-        match self {
-            Self::Data(decl) => decl.span,
-            Self::Fn(decl) => decl.span,
-            Self::Theorem(decl) => decl.span,
-        }
-    }
-
-    /// `data`, `fn` or `theorem`.
-    #[must_use]
-    pub const fn kind(&self) -> &'static str {
-        match self {
-            Self::Data(_) => "data",
-            Self::Fn(_) => "fn",
-            Self::Theorem(_) => "theorem",
-        }
-    }
-}
-
 /// A program item: a declaration, named by its full name, or a module.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
@@ -754,6 +692,13 @@ pub enum Effect {
         span: Option<Span>,
     },
     Let {
+        /// Actual ordered owned Unit-call statement site.
+        #[serde(
+            default,
+            rename = "sourcePureUnitCall",
+            skip_serializing_if = "Option::is_none"
+        )]
+        source_pure_unit_call: Option<serde_json::Value>,
         name: String,
         value: Expr,
         #[serde(default, skip_serializing_if = "is_false")]
@@ -788,6 +733,13 @@ pub enum Effect {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Main {
+    /// Owned worker context for an independently selected complete runtime.
+    #[serde(
+        default,
+        rename = "sourceRuntimeWorker",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub source_runtime_worker: Option<serde_json::Value>,
     pub effects: Vec<Effect>,
     #[serde(default)]
     pub span: Option<Span>,
@@ -800,6 +752,15 @@ pub struct Main {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program {
+    /// Selected shared-reference representation; false retains its default omission.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub reference_semantics: bool,
+    /// Complete owned source runtime interpretation, separate from its pure core.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_runtime_shell: Option<serde_json::Value>,
+    /// Independently selected complete pure Unit program interpretation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_pure_unit_calls: Option<serde_json::Value>,
     pub schema_version: u32,
     pub source_language: Language,
     pub items: Vec<Item>,

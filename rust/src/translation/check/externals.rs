@@ -26,6 +26,7 @@ impl Checker {
                     .into_iter()
                     .map(|param| Param {
                         name: param.name,
+                        optional: false,
                         ty: param.ty,
                         guard: None,
                         default_value: None,

@@ -9,6 +9,10 @@ use super::{
 /// JavaScript runtime's depth-first key order, is rejected.
 pub(super) fn check_portable(node: &SExpr) -> Result<()> {
     let children: Vec<&SExpr> = match &node.node {
+        SNode::Method { object, args, .. } => std::iter::once(object.as_ref())
+            .chain(args.iter().flatten())
+            .collect(),
+        SNode::CopySlice { object } => vec![object],
         SNode::Cons { .. } | SNode::Nil | SNode::List { .. } => {
             return Err(unsupported(
                 "list value",
@@ -22,13 +26,18 @@ pub(super) fn check_portable(node: &SExpr) -> Result<()> {
             then,
             otherwise,
         } => vec![cond, then, otherwise],
+        SNode::StringTest { object, search, .. } => vec![object, search],
         SNode::Let { value, body, .. } => vec![value, body],
         SNode::Match { scrutinees, rows } => scrutinees
             .iter()
             .chain(rows.iter().map(|row| &row.body))
             .collect(),
         SNode::App { func, args } => std::iter::once(func.as_ref()).chain(args).collect(),
-        SNode::Unary { arg, .. } | SNode::Cast { arg, .. } | SNode::ToString { arg } => {
+        SNode::TypeOf { arg }
+        | SNode::Unary { arg, .. }
+        | SNode::Cast { arg, .. }
+        | SNode::StringMap { object: arg, .. }
+        | SNode::ToString { arg } => {
             vec![arg]
         }
         _ => Vec::new(),
@@ -60,10 +69,13 @@ pub(super) fn walk_output(node: SExpr, effects: &mut Vec<SEffect>) -> Result<()>
             check_portable(&value)?;
             effects.push(SEffect::Let {
                 name,
-                ty,
+                ty: ty.and_then(
+                    crate::translation::surface::SurfaceBindingTypeAnnotation::into_option,
+                ),
                 value: *value,
                 constant: false,
                 span: node_span,
+                source_pure_unit_call: None,
             });
             walk_output(*body, effects)
         }
@@ -109,6 +121,27 @@ pub(super) fn scope_expr(node: SExpr, ty: &Type) -> SExpr {
             negative,
             unit: false,
         },
+        SNode::Method { object, op, args } => SNode::Method {
+            object: visit(object),
+            op,
+            args: args
+                .into_iter()
+                .map(|arg| arg.map(|arg| scope_expr(arg, ty)))
+                .collect(),
+        },
+        SNode::CopySlice { object } => SNode::CopySlice {
+            object: visit(object),
+        },
+        SNode::StringMap { op, object } => SNode::StringMap {
+            op,
+            object: visit(object),
+        },
+        SNode::StringTest { op, object, search } => SNode::StringTest {
+            op,
+            object: visit(object),
+            search: visit(search),
+        },
+        SNode::TypeOf { arg } => SNode::TypeOf { arg: visit(arg) },
         SNode::Unary { op, arg } => SNode::Unary {
             op,
             arg: visit(arg),

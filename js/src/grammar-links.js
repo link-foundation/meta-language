@@ -43,7 +43,7 @@ import {
   settlingProblem,
 } from './grammar-feature-forms.js';
 import { ruleDoc } from './grammar-emitters/structural.js';
-import { GrammarImportError } from './grammar-importers.js';
+import { GrammarImportError } from './grammar-importers/common.js';
 
 const RULE_KINDS = new Set(['normal', 'atomic', 'silent', 'token']);
 const SOURCE_FORMATS = new Set(['meta-language', 'bnf', 'ebnf', 'abnf', 'peg', 'antlr', 'lark', 'gbnf', 'tree-sitter', 'inferred']);
@@ -143,6 +143,7 @@ export function renderDeclarationLinks(declarations) {
     lines.push(`(scanner ${percentEncodeLinksText(scanner.name)} ${renderNames('tokens', scanner.tokens)} `
       + `(${['operations', ...renderOperations(scanner.operations)].join(' ')}))`);
   }
+  for (const lexer of declarations.lexers ?? []) lines.push(`(lexer ${percentEncodeLinksText(lexer.name)} ${renderLinksExpression(lexer.expression)})`);
   return lines;
 }
 
@@ -417,6 +418,10 @@ function readDeclaration(head, args, declarations) {
         operations: operations(args[2], 'operations'),
       });
       return true;
+    case 'lexer':
+      arity(head, args, 2);
+      declarations.lexers.push({ name: decodedWord(args[0], 'a lexer name'), expression: parseLinksExpression(args[1]) });
+      return true;
     default: return false;
   }
 }
@@ -438,7 +443,7 @@ export function parseGrammarLinks(source) {
   let sourceFormat = null;
   let start = null;
   const declarations = {
-    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
+    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], lexers: [],
   };
   for (const field of headerArgs) {
     const [key, values] = parts(field);

@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // For each case of the pinned tree-sitter-lean corpus the oracle recovers
 // from, whether the native Lean grammar rejects it by default and repairs it
 // with error recovery: the fixture's rejections must be both.
@@ -10,7 +11,7 @@ import { corpusCases, grammarSourceOf } from '../scripts/import-native-grammars.
 import { oracleRecovers } from '../scripts/native-grammar-rows.mjs';
 
 const extra = process.argv.slice(2);
-const text = readFileSync(new URL('../../parity/grammars/native/lean.lino', import.meta.url), 'utf8');
+const text = readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/lean.lino', import.meta.url)), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const cases = [
   ...corpusCases(grammarSourceOf('native-lean')).filter(({ source }) => oracleRecovers(source, 'Lean')),

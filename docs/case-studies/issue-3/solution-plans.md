@@ -22,7 +22,7 @@
    crates as front-end adapters; the crate's novelty is the *unified links network*,
    not a new parser per language.
 2. **Try both when compatible, configure when conflicting** (konard,
-   `raw-data/issue-1-comments.json`, NFR-5): where two approaches coexist (e.g.
+   `raw-data/issue-1-comments.lino`, NFR-5): where two approaches coexist (e.g.
    name-driven *and* content-driven region detection), ship both; where they
    conflict (e.g. Rowan-style vs Roslyn-style trivia attachment), expose a
    configuration knob with a documented default.

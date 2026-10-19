@@ -1,0 +1,76 @@
+// Experimental whole-module source interpretation. A comment is trivia, never
+// proof authority; actual syntax and live owned targets determine every fact.
+import {readRuntimeProjectData} from '../../js/src/project-data-loader.js';
+import {checkOwnedProgramContainers} from '../../js/src/translation/owned-program-containers.js';
+import {checkProgram} from '../../js/src/translation/check.js';
+import {typeError,unsupported} from '../../js/src/translation/diagnostics.js';
+import {withParts} from '../../js/src/translation/emit-common.js';
+import {parseRust} from '../../js/src/translation/rust.js';
+import {checkRustRuntimeShell,RUST_RUNTIME_SHELL_POLICY} from '../../js/src/translation/rust-runtime-shell.js';
+import {emitRust} from '../../js/src/translation/emit-rust.js';
+import {encodeTypedProgramLinks,decodeTypedProgramLinks} from '../../js/src/typed-program-links.js';
+import {acceptSourceSpanOffset} from '../../js/src/source-span-rules.js';
+import {acceptGeneratedJavaScriptUnitCodeUnit,acceptGeneratedJavaScriptUnitContainer,acceptGeneratedJavaScriptUnitModel} from './rules.mjs';
+import {parseGeneratedJavaScriptUnit,readGeneratedJavaScriptUnitSyntax,readGeneratedJavaScriptUnitName,readGeneratedJavaScriptUnitTrivia} from './parser.mjs';
+export const GENERATED_JAVASCRIPT_UNIT_POLICY=readRuntimeProjectData(new URL('./data/policy.lino',import.meta.url));
+const policy=GENERATED_JAVASCRIPT_UNIT_POLICY;
+const own=(value,name)=>Object.hasOwn(value,name);
+const fail=detail=>{throw typeError('Generated JavaScript Unit proof: '+detail);};
+export function checkGeneratedJavaScriptUnitContainers(root){
+ const selected=checkOwnedProgramContainers(root,{acceptContainer:acceptGeneratedJavaScriptUnitContainer,fail,selectedFields:policy.containerMarkerFields});if(!selected)return false;
+ const active=new WeakSet(),seen=new WeakSet();let visits=0;
+ function visit(value,depth=0){if(value===null||typeof value!=='object'){if(['function','symbol','undefined'].includes(typeof value))fail('the owned module graph contains a non-data value');return;}if(active.has(value))fail('the owned module graph contains a structural cycle');if(seen.has(value))return;if(depth>256||++visits>100_000)fail('the owned module graph exceeds its resource limit');seen.add(value);active.add(value);for(const child of value instanceof Map?[...Map.prototype.entries.call(value)].flat():Object.values(value))visit(child,depth+1);active.delete(value);}visit(root);return true;
+}
+function fields(value,names,exact=true){if(!value||typeof value!=='object'||Array.isArray(value)||value instanceof Map||Object.keys(value).some(name=>!names.includes(name))||exact&&Object.keys(value).length!==names.length)fail('unrecognized or missing owned fields');}
+function interval(value,empty=false){fields(value,['start','end']);if(typeof value.start!=='number'||typeof value.end!=='number'||!acceptSourceSpanOffset(value.start,Object.is(value.start,-0))||!acceptSourceSpanOffset(value.end,Object.is(value.end,-0))||(empty?value.end<value.start:value.end<=value.start))fail('an actual source interval is malformed');}
+function equal(left,right,identities=new Set()){if(Object.is(left,right))return true;if(identities.has(right))return false;if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)!==Array.isArray(right))return Object.is(left,right);if(left instanceof Map||right instanceof Map){return left instanceof Map&&right instanceof Map&&left.size===right.size&&[...right].every(([name,value])=>left.has(name)&&equal(left.get(name),value,identities));}const names=Object.keys(right);return Object.keys(left).length===names.length&&names.every(name=>own(left,name)&&equal(left[name],right[name],identities));}
+function checkCst(proof,program){
+ if(!Array.isArray(proof.tokens)||!proof.tokens.length||proof.tokens.length>100_000||!Array.isArray(proof.gaps)||proof.gaps.length!==proof.tokens.length)fail('the complete module requires every owned token and intervening trivia interval');
+ const identities=new Set(proof.tokens),effects=new Set(program.main?.effects??[]);if(identities.size!==proof.tokens.length)fail('each actual token occurrence must retain its distinct identity');let end=0,previous=null;
+ for(const[index,token]of proof.tokens.entries()){
+  const roles=['declaration','binding','entryTarget'].filter(role=>own(token,role));if(roles.length>1||!['identifier','punct','string','eof'].includes(token.kind)||roles.length&&token.kind!=='identifier')fail('an actual token has an unrepresented lexical role');const role=roles[0];fields(token,role?['kind','raw',role,'span']:['kind','value','raw','span']);interval(token.span,token.kind==='eof');
+  const gap=proof.gaps[index];fields(gap,policy.fields.gap);interval(gap.span,true);if(gap.span.start!==end||gap.span.end!==token.span.start||!Array.isArray(gap.units)||gap.units.length!==gap.span.end-gap.span.start)fail('the complete CST has an omitted, overlapping or invented trivia interval');for(const unit of gap.units)if(typeof unit!=='number'||!acceptGeneratedJavaScriptUnitCodeUnit(unit,Object.is(unit,-0)))fail('an actual trivia code unit has a different scalar domain');if(readGeneratedJavaScriptUnitTrivia(gap.units,gap.span).lineCommentAtEnd&&token.kind!=='eof')fail('an actual next token cannot be swallowed by unterminated line-comment trivia');
+  if(typeof token.raw!=='string'||token.raw.length!==token.span.end-token.span.start||token.span.end>proof.span.end)fail('the actual token spelling lost its original source interval');
+  if(role){if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(token.raw))fail('a bound source occurrence must retain an actual identifier spelling');if(role==='declaration'&&(!token.declaration||program.declarations.get(token.declaration.fullName)!==token.declaration||!readGeneratedJavaScriptUnitName(token.raw,policy)))fail('a helper occurrence references an unowned declaration or source spelling');if(role==='binding'&&(!effects.has(token.binding)||!readGeneratedJavaScriptUnitName(token.raw,policy,true)))fail('a local occurrence references an unowned entry effect or source spelling');if(role==='entryTarget'&&(token.entryTarget!==program.main?.sourceGeneratedJavaScriptEntry||token.raw!==policy.entryName))fail('an entry occurrence references another definition');}
+  else if(typeof token.value!=='string'||token.kind!=='string'&&token.value!==token.raw)fail('the literal token value differs from its actual spelling');
+  if(previous?.kind==='identifier'&&token.kind==='identifier'&&gap.units.length===0)fail('distinct actual word tokens require an owned lexical separator');
+  if(token.kind==='eof'&&(index!==proof.tokens.length-1||token.value!==''||token.raw!==''||token.span.start!==proof.span.end||token.span.end!==proof.span.end))fail('the complete module has no actual final lexical boundary');end=token.span.end;previous=token;
+ }
+ if(proof.tokens.at(-1).kind!=='eof'||end!==proof.span.end)fail('the complete module has no final lexical boundary');return identities;
+}
+function checkCore(program,expected){
+ fields(program,policy.fields.program,false);if(program.schemaVersion!==1||program.sourceLanguage!==policy.language||!(program.declarations instanceof Map)||!Array.isArray(program.items)||['imports','externals'].some(name=>own(program,name)&&(!Array.isArray(program[name])||program[name].length))||['outputThreaded','abortsThreaded','referenceSemantics','utf16Strings'].some(name=>own(program,name)&&program[name]!==false))fail('the generated interpretation requires its actual closed JavaScript context');
+ fields(program.main,policy.fields.main);for(const effect of program.main.effects)fields(effect,policy.fields.effect);
+ for(const entry of program.declarations.values()){fields(entry,policy.fields.declaration,false);if(['mutual','generated'].some(name=>own(entry,name)&&entry[name]!==false))fail('the actual helper acquired an unproved recursive or generated context');}
+ const neutral=new Set(['sourceGeneratedJavaScriptUnit','imports','externals','outputThreaded','abortsThreaded','referenceSemantics','utf16Strings']);const value=Object.fromEntries(Object.entries(program).filter(([name])=>!neutral.has(name)));const normalized=structuredClone(value);delete normalized.main.sourceGeneratedJavaScriptEntry;for(const entry of normalized.declarations.values())for(const name of ['mutual','generated'])if(entry[name]===false)delete entry[name];
+ if(!equal(normalized,expected))fail('the real checked Unit program differs from the complete owned module syntax or targets');if(program.items.length!==program.declarations.size||new Set(program.items).size!==program.items.length||program.items.some(entry=>program.declarations.get(entry.fullName)!==entry))fail('the actual helper order does not own its declaration identities');
+}
+export function checkGeneratedJavaScriptUnit(program){
+ if(!checkGeneratedJavaScriptUnitContainers(program))return null;if(!own(program,'sourceGeneratedJavaScriptUnit'))fail('the actual generated entry lost its complete module interpretation');
+ const proof=program.sourceGeneratedJavaScriptUnit;fields(proof,policy.fields.proof);interval(proof.span,true);if(proof.model!==policy.model||proof.language!==policy.language||proof.observationModel!==policy.observationModel||proof.valueEncoding!==policy.valueEncoding||proof.span.start!==0)fail('the complete module interpretation or singleton Unit encoding is unknown');
+ if(!(program.declarations instanceof Map)||!Array.isArray(program.main?.effects))fail('the actual module has no owned declarations and entry effects');
+ const context=program.main.sourceGeneratedJavaScriptEntry;fields(context,policy.fields.entryContext);interval(context.span);if(context.model!==policy.model||context.observationModel!==policy.observationModel||context.valueEncoding!==policy.valueEncoding||context.name!==policy.entryName)fail('the actual entry has an unrepresented module or value context');
+ const identities=checkCst(proof,program),parsed=readGeneratedJavaScriptUnitSyntax(proof.tokens,proof.gaps,policy,{program});if(!equal(proof.operations,parsed.operations,identities))fail('the represented operations do not belong to the actual complete module tokens');if(!equal(context.span,parsed.surface.main.span))fail('the entry marker does not own the actual complete entry definition');
+ const expected=checkProgram(parsed.surface);checkCore(program,expected);for(const row of parsed.helperRows)if(!equal(row.name.declaration.span,row.node.span))fail('the helper header does not own its actual complete function');for(const[index,row]of parsed.statements.entries())if(row.name.binding!==program.main.effects[index]||!equal(row.name.binding.span,row.node.span))fail('the actual local binder does not own its ordered entry statement');return parsed;
+}
+export function captureGeneratedJavaScriptUnit(program,sourceProof){
+ checkGeneratedJavaScriptUnitContainers({sourceGeneratedJavaScriptUnit:sourceProof});const proof=structuredClone(sourceProof),parsed=readGeneratedJavaScriptUnitSyntax(proof.tokens,proof.gaps,policy);
+ const marker={model:policy.model,observationModel:policy.observationModel,valueEncoding:policy.valueEncoding,name:policy.entryName,span:program.main.span};program.main.sourceGeneratedJavaScriptEntry=marker;
+ const bind=(token,role,target)=>{delete token.value;token[role]=target;};for(const row of parsed.helperRows)bind(row.name,'declaration',program.declarations.get(row.name.value));for(const row of parsed.helperUses)bind(row.token,'declaration',row.target.declaration);for(const[index,row]of parsed.statements.entries())bind(row.name,'binding',program.main.effects[index]);for(const token of parsed.entryUses)bind(token,'entryTarget',marker);
+ const prepared=readGeneratedJavaScriptUnitSyntax(proof.tokens,proof.gaps,policy,{program});proof.operations=prepared.operations;program.sourceGeneratedJavaScriptUnit=proof;checkGeneratedJavaScriptUnit(program);return proof;
+}
+/** Private experimental factory until the explicit public selector is wired. */
+export function createGeneratedJavaScriptUnitLinks(source,{model=policy.model,provenance=null}={}){
+ if(!acceptGeneratedJavaScriptUnitModel(model)||model!==policy.model)throw unsupported('generated JavaScript Unit model','select '+policy.model);const parsed=parseGeneratedJavaScriptUnit(source,policy),program=checkProgram(parsed.surface);captureGeneratedJavaScriptUnit(program,parsed.proof);return encodeTypedProgramLinks(program,{provenance:{sourceProfile:{language:policy.language,javaScriptGeneratedUnitModel:model},userProvenance:provenance}});
+}
+function encoding(){return {id:'closed-generated-javascript-unit',statement:'the actual closed generated module uses '+policy.valueEncoding+' only for its proven singleton helper results and unused owned entry bindings; nullable options and observable result inspection are outside this encoding'};}
+function renderToken(token){return token.declaration?.name??token.binding?.name??token.entryTarget?.name??token.raw;}
+function renderWhole(program){const proof=program.sourceGeneratedJavaScriptUnit;return proof.tokens.map((token,index)=>proof.gaps[index].units.map(unit=>String.fromCharCode(unit)).join('')+renderToken(token)).join('');}
+export function emitGeneratedJavaScriptUnit(program,target){
+ const parsed=checkGeneratedJavaScriptUnit(program);if(!parsed)fail('the explicit generated module model is absent');if(target==='JavaScript')return withParts({language:'JavaScript',text:renderWhole(program),entry:policy.entryName,mappings:[...program.declarations.values()].map(entry=>({kind:'function',source:entry.fullName,target:entry.name,sourceSpan:{...entry.span}})),assumptions:[],encodings:[encoding()],theorems:[]},[],[]);
+ if(target!=='Rust')throw unsupported('generated JavaScript Unit target','only JavaScript and Rust have a checked closed Unit interpretation');
+ const emitted=emitRust(program),actual=checkProgram(parseRust(emitted.text,{runtimeShellModel:RUST_RUNTIME_SHELL_POLICY.model})),runtime=checkRustRuntimeShell(actual),mapping=new Map(emitted.mappings.filter(row=>row.kind==='function').map(row=>[row.source,row.target]));
+ const expectedNames=program.items.map(entry=>mapping.get(entry.fullName)),expectedCalls=program.main.effects.map(effect=>mapping.get(effect.value.fn));if(expectedNames.some(name=>!name)||!equal([...actual.declarations.keys()],expectedNames)||!equal(actual.main.effects.map(effect=>effect.value.fn),expectedCalls))fail('the actual complete Rust target has no checked owned helper/call correspondence');
+ emitted.assumptions.push(...RUST_RUNTIME_SHELL_POLICY.assumptions.map(row=>{const operation=runtime.single(row.operation);return {id:row.id,statement:row.meaning,details:['target artifact source operation '+operation.op+' at '+operation.span.start+'..'+operation.span.end]};}));emitted.encodings.unshift(encoding());emitted.encodings.push({id:'checked-generated-unit-rust-runtime-target',statement:'the actual entire emitted Rust target was re-read under '+RUST_RUNTIME_SHELL_POLICY.model+'; its successful runtime observation is conditional on the recorded target operation assumptions'});return emitted;
+}
+export function emitGeneratedJavaScriptUnitLinks(network,root,target){return emitGeneratedJavaScriptUnit(decodeTypedProgramLinks(network,root),target);}

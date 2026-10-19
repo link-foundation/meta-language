@@ -1,0 +1,1 @@
+- Preserve operator precedence across silent operand wrappers and chained optional member names in the shared grammar executors. Keep R line endings contextual, classify guarded identifiers without losing keyword boundaries, and distinguish whole binary expressions from operator tokens. Full corpus, delivery and release acceptance remain open.

@@ -33,13 +33,77 @@ impl RocqEmitter<'_> {
                 parts.push(format!("@nil {}", self.ty(element)?));
                 Ok(format!("({})", parts.join(" :: ")))
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                let (kind, key) = match &e.ty {
+                    super::Type::Set { element, .. } => ("set", element.as_ref()),
+                    super::Type::Map { key, .. } => ("map", key.as_ref()),
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                let value = crate::translation::collection_construction_rules::read_collection_construction_binding("Rocq", kind, "value");
+                let previous = crate::translation::collection_construction_rules::read_collection_construction_binding("Rocq", kind, "previous");
+                let equal = self.comparison(super::BinaryOp::Eq, key, &previous, &value)?;
+                let values = self.expr(items)?;
+                let element = match &e.ty {
+                    super::Type::Set { element, .. } => self.ty(element)?,
+                    super::Type::Map { key, value, .. } => {
+                        format!("({} * {})%type", self.ty(key)?, self.ty(value)?)
+                    }
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                Ok(crate::translation::collection_construction_rules::render_collection_construction(
+                    "Rocq", kind, key.kind(), &values, "", &element, &equal,
+                ))
+            }
             Node::Append { left, right } => Ok(format!(
                 "(List.app {} {})",
                 self.expr(left)?,
                 self.expr(right)?
             )),
-            Node::Index { array, index } => {
-                self.state.array_read();
+            Node::OptionalIndex { array, index } => {
+                let position = self.expr(index)?;
+                if index.ty.is_float() {
+                    self.helpers.insert(Helper::FloatIndex);
+                }
+                let values = self.expr(array)?;
+                Ok(
+                    crate::translation::array_value_rules::render_optional_array_read(
+                        "Rocq",
+                        index.ty.kind(),
+                        &values,
+                        &position,
+                    ),
+                )
+            }
+            Node::StringPoints { .. } => Err(crate::translation::diagnostics::unsupported(
+                "string iteration",
+                "this target needs a Unicode code-point iterator over its UTF-8 string encoding",
+                e.span,
+            )),
+            Node::CollectionItems { object, op } => {
+                let map = matches!(object.ty, super::Type::Map { .. });
+                let (key, item) = if op == "entries" {
+                    (String::new(), String::new())
+                } else {
+                    match &object.ty {
+                        super::Type::Map { key, value, .. } => (self.ty(key)?, self.ty(value)?),
+                        _ => (String::new(), String::new()),
+                    }
+                };
+                let value = self.expr(object)?;
+                Ok(
+                    crate::translation::array_value_rules::render_collection_iteration(
+                        "Rocq", map, op, &value, &key, &item,
+                    ),
+                )
+            }
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
+                if !proven_in_bounds {
+                    self.state.array_read();
+                }
                 self.helpers.insert(Helper::ListAt);
                 let mut text = self.expr(index)?;
                 if index.ty.is_float() {
@@ -55,6 +119,15 @@ impl RocqEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if array.ty == super::Type::String {
+                    self.floats();
+                    return Ok(
+                        crate::translation::frontend_rules::render_string_length_expression(
+                            "Rocq",
+                            &self.expr(array)?,
+                        ),
+                    );
+                }
                 let length = format!("(Z.of_nat (List.length {}))", self.expr(array)?);
                 if !e.ty.is_float() {
                     return Ok(length);

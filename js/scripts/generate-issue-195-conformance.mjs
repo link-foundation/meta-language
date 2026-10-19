@@ -32,6 +32,8 @@ import { normalize, parseCorpus, stripFields } from '../tests/support/cst-sexpre
 import { GRAMMAR_CACHE_ROOT } from '../../scripts/lib/cache-classes.mjs';
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
 import { grammarFile } from './grammar-files.mjs';
+import { checkProjectData, readProjectData } from './project-data.mjs';
+import { readFixtureSourceBytes, writeFixtureSourceData } from './fixture-source-bytes.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -282,21 +284,21 @@ function formatOracle(value) {
 }
 
 async function generate(work, treeSitter) {
-  const lock = JSON.parse(await readFile(lockPath, 'utf8'));
+  const lock = readProjectData(lockPath);
   const version = (await run(treeSitter, ['--version'])).stdout.trim();
   if (version !== lock.treeSitterCli) throw new Error(`${treeSitter} is ${version}; the grammar lock pins ${lock.treeSitterCli}`);
   const versions = await cargoLockVersions();
   const scratch = makeScratchDirectory('issue-195-conformance-');
   process.env.TREE_SITTER_LIBDIR = join(scratch, 'lib');
-  const cases = JSON.parse(await readFile(join(fixtureDir, 'cases.json'), 'utf8'));
-  const errorRecovery = JSON.parse(await readFile(join(fixtureDir, 'error-recovery.json'), 'utf8'));
+  const cases = readProjectData(join(fixtureDir, 'cases.json'));
+  const errorRecovery = readProjectData(join(fixtureDir, 'error-recovery.json'));
   const outputs = new Map();
   const manifest = {
     description: 'Provenance of the issue 195 four-language conformance fixtures: upstream tree-sitter corpora at the pinned grammar revisions, real-project files at pinned tags, and the oracle that produced every expected tree (the native tree-sitter CLI with the pinned grammars, independent of the meta-language runtimes).',
     generator: 'js/scripts/generate-issue-195-conformance.mjs',
     inputs: {
-      'cases.json': sha256(await readFile(join(fixtureDir, 'cases.json'))),
-      'error-recovery.json': sha256(await readFile(join(fixtureDir, 'error-recovery.json'))),
+      'cases.json': sha256(readFixtureSourceBytes(join(fixtureDir, 'cases.json'))),
+      'error-recovery.json': sha256(readFixtureSourceBytes(join(fixtureDir, 'error-recovery.json'))),
     },
     oracle: {
       tool: version,
@@ -352,8 +354,10 @@ async function generate(work, treeSitter) {
       const oracleCases = await languageCases(language, {
         treeSitter, directories, scratch, cases, errorRecovery, regionStart, files: { corpus, projects },
       });
-      const oracleText = formatOracle({ language: language.name, cases: oracleCases });
-      outputs.set(join(dir, 'oracle.json'), oracleText);
+      const oracle = { language: language.name, cases: oracleCases };
+      // Retain the original rendering solely as the protected provenance hash.
+      const oracleText = formatOracle(oracle);
+      outputs.set(join(dir, 'oracle.json'), { value: oracle, legacyText: oracleText });
       const counts = {};
       for (const entry of oracleCases) counts[entry.kind] = (counts[entry.kind] ?? 0) + 1;
       const upstream = {};
@@ -384,7 +388,7 @@ async function generate(work, treeSitter) {
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
-  outputs.set(join(fixtureDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  outputs.set(join(fixtureDir, 'manifest.json'), { value: manifest, legacyText: `${JSON.stringify(manifest, null, 2)}\n` });
   return outputs;
 }
 
@@ -398,6 +402,14 @@ async function main() {
   if (args.includes('--check')) {
     const stale = [];
     for (const [path, content] of outputs) {
+      if (content.value) {
+        try {
+          checkProjectData(path, content.value);
+          if (!readFixtureSourceBytes(path).equals(Buffer.from(content.legacyText))) stale.push(relative(path));
+        }
+        catch { stale.push(relative(path)); }
+        continue;
+      }
       const current = await readFile(path).catch(() => null);
       if (!current || !current.equals(Buffer.from(content))) stale.push(relative(path));
     }
@@ -409,6 +421,10 @@ async function main() {
     return;
   }
   for (const [path, content] of outputs) {
+    if (content.value) {
+      writeFixtureSourceData(path, content.value, content.legacyText);
+      continue;
+    }
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, content);
   }

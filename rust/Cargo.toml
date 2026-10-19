@@ -18,20 +18,90 @@ rust-version = "1.90"
 include = [
     "build.rs",
     "src/**/*.rs",
-    "src/data/semantic-lexicon.json",
-    "src/data/grammar-lock.json",
-    "src/data/language-catalog.json",
+    "src/data/semantic-lexicon.lino",
+    "src/data/grammar-lock.lino",
+    "src/data/language-catalog.lino",
     "src/data/native-grammars/*.lino",
-    "src/data/concept-records.json",
-    "src/data/foundation-models.json",
-    "src/data/language-trigrams.json",
-    "vendor/tree-sitter-rocq/**",
-    "vendor/tree-sitter-lean/**",
-    "vendor/tree-sitter-cmake/**",
+    "src/data/concept-records.lino",
+    "src/data/foundation-models.lino",
+    "src/data/native-text-metadata.lino",
+    "src/data/native-text-grammar.lino",
+    "src/data/typescript-erasure.lino",
+    "src/data/typescript-portable-typing.lino",
+    "src/data/reference-operations.lino",
+    "src/data/typed-program-links-schema.lino",
+    "src/data/array-values.lino",
+    "src/data/array-bindings.lino",
+    "src/data/array-from-rules.lino",
+    "src/data/array-callback-rules.lino",
+    "src/data/network-projection-rules.lino",
+    "src/data/program-number-projection-rules.lino",
+    "src/data/partial-callable-rules.lino",
+    "src/data/callable-source-rules.lino",
+    "src/data/callable-emission-rules.lino",
+    "src/data/grammar-lexer-rules.lino",
+    "src/data/grammar-rule-composition-rules.lino",
+    "src/data/grammar-selection-rules.lino",
+    "src/data/grammar-selection-included-range-rules.lino",
+    "src/data/grammar-selection-field-range-rules.lino",
+    "src/data/grammar-attribute-order-rules.lino",
+    "src/data/grammar-attribute-order-fixtures.lino",
+    "src/data/optional-rules.lino",
+    "src/data/parameter-default-rules.lino",
+    "src/data/record-emission.lino",
+    "src/data/record-values.lino",
+    "src/data/surface-raw-metadata.lino",
+    "src/data/surface-reference-analysis.lino",
+    "src/data/type-syntax.lino",
+    "src/data/record-type-syntax.lino",
+    "src/data/nullable-type-syntax.lino",
+    "src/data/owned-array-append.lino",
+    "src/data/self-translation-representation.lino",
+    "src/data/string-code-unit-template.lino",
+    "src/data/rust-cast-syntax.lino",
+    "src/data/formal-concept-models.lino",
+    "src/data/resource-description-schema.lino",
+    "src/data/resource-description-ntriples-profile.lino",
+    "src/data/link-network-binary-schema.lino",
+    "src/data/rust-source-signatures.lino",
+    "src/data/rust-type-namespace.lino",
+    "src/data/rust-read-only-queries.lino",
+    "src/data/rust-primitive-owners.lino",
+    "src/data/rust-borrowed-call-interface.lino",
+    "src/data/rust-scalar-loops.lino",
+    "src/data/rust-source-header-emission.lino",
+    "src/data/javascript-scoped-binding-emission.lino",
+    "src/data/rust-empty-options.lino",
+    "src/data/rust-pure-unit-calls.lino",
+    "src/data/rust-owned-local-state.lino",
+    "src/data/rust-owned-tuple-calls.lino",
+    "src/data/rust-const-functions.lino",
+    "src/data/rust-diagnostic-attributes.lino",
+    "src/data/rust-const-branches.lino",
+    "src/data/rust-runtime-shell.lino",
+    "src/data/rust-number-literals.lino",
+    "src/data/rust-cooked-string-escapes.lino",
+    "src/data/rust-unicode-escapes.lino",
+    "src/data/rust-source-whitespace.lino",
+    "src/data/rust-raw-string-literals.lino",
+    "src/data/javascript-line-terminators.lino",
+    "src/data/source-span.lino",
+    "src/data/source-text-byte-model.lino",
+    "src/data/program-numeric-metadata.lino",
+    "src/translation/rust/float-predicates.lino",
+    "src/translation/rust/completions.lino",
+    "src/translation/runtime/array-*.txt",
+    "src/data/language-trigrams.lino",
     "examples/**/*.rs",
     "README.md",
     "/LICENSE",
     "CHANGELOG.md",
+    "src/data/rust-character-rules.lino",
+    "src/data/rust-character-literals.lino",
+    "src/data/javascript-tag-context-rules.lino",
+    "src/data/collection-construction-rules.lino",
+    "src/data/guarded-private-array-write-rules.lino",
+    "src/data/guarded-private-array-write-program.lino",
 ]
 
 [lib]
@@ -50,6 +120,7 @@ harness = false
 [dependencies]
 clap = { version = "4.4", features = ["derive", "env"] }
 doublets = { version = "0.5.0", optional = true }
+indexmap = "=2.14.2"
 lindera = { version = "6.2.0", default-features = false, features = ["embed-jieba"], optional = true }
 lingua = { version = "1.8.0", default-features = false, features = [
     "arabic",
@@ -67,45 +138,25 @@ links-notation = { version = "0.22.0", default-features = false }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 platform-mem = { version = "0.3.0", optional = true }
-serde_json = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
 sha2 = "0.11"
 tree-sitter = "=0.27.0"
-tree-sitter-agda = "=1.3.3"
 tree-sitter-bash = "=0.25.1"
 tree-sitter-c-sharp = "=0.23.5"
-tree-sitter-cpp = "=0.23.4"
-tree-sitter-css = "=0.25.0"
-tree-sitter-dart = "=0.2.0"
 tree-sitter-elixir = "=0.3.5"
 tree-sitter-elm = "=5.9.4"
-tree-sitter-erlang = "=0.20.0"
-tree-sitter-groovy = "=0.1.2"
 tree-sitter-haskell = "=0.24.1"
-tree-sitter-hcl = "=1.1.0"
-tree-sitter-html = "=0.23.2"
 tree-sitter-kotlin-ng = "=1.1.0"
-tree-sitter-lua = "=0.5.0"
 tree-sitter-matlab = "=1.3.1"
 tree-sitter-md-025 = "=0.5.6"
-tree-sitter-nix = "=0.3.0"
 tree-sitter-ocaml = "=0.26.0"
-tree-sitter-odin = "=1.3.0"
-tree-sitter-pascal = "=0.10.2"
 ts-parser-perl = "=2.0.0"
 tree-sitter-php = "=0.24.2"
-tree-sitter-powershell = "=0.26.4"
-tree-sitter-python = "=0.25.0"
-tree-sitter-r = "=1.3.0"
 tree-sitter-ruby = "=0.23.1"
 tree-sitter-language = "0.1.8"
 tree-sitter-scala = "=0.26.2"
-tree-sitter-sequel = "=0.3.11"
 tree-sitter-swift = "=0.7.4"
-tree-sitter-toml-ng = "=0.7.0"
-tree-sitter-vb-dotnet = "=0.1.0"
-tree-sitter-xml = "=0.7.0"
 tree-sitter-yaml = "=0.7.2"
-tree-sitter-zig = "=1.1.2"
 unicode-bidi = "0.3.18"
 unicode-normalization = "0.1.25"
 unicode-segmentation = "1.13.3"
@@ -121,6 +172,28 @@ llm-assist = []
 no-default-features = true
 
 [dev-dependencies]
+agda-layout-source-oracle = { path = "oracles/agda-layout-source-oracle" }
+tree-sitter-agda = "=1.3.3"
+tree-sitter-html = "=0.23.2"
+tree-sitter-odin = "=1.3.0"
+tree-sitter-xml = "=0.7.0"
+tree-sitter-r = "=1.3.0"
+tree-sitter-hcl = "=1.1.0"
+native-source-oracles = { path = "oracles/native-source-oracles" }
+tree-sitter-python = "=0.25.0"
+tree-sitter-dart = "=0.2.0"
+tree-sitter-nix = "=0.3.0"
+cmake-source-oracle = { path = "oracles/cmake-source-oracle" }
+tree-sitter-cpp = "=0.23.4"
+tree-sitter-sequel = "=0.3.11"
+tree-sitter-groovy = "=0.1.2"
+tree-sitter-erlang = "=0.20.0"
+tree-sitter-powershell = "=0.26.4"
+tree-sitter-css = "=0.25.0"
+tree-sitter-toml-ng = "=0.7.0"
+tree-sitter-zig = "=1.1.2"
+tree-sitter-pascal = "=0.10.2"
+tree-sitter-vb-dotnet = "=0.1.0"
 links-notation = { version = "0.22.0", default-features = false }
 pest = "2.8.6"
 pest_derive = "2.8.6"
@@ -136,6 +209,7 @@ tree-sitter-java = "=0.23.5"
 tree-sitter-javascript = "=0.25.0"
 tree-sitter-json = "=0.24.8"
 tree-sitter-json5-orchard = "=0.1.0"
+tree-sitter-lua = "=0.5.0"
 tree-sitter-make = "=1.1.1"
 tree-sitter-proto = "=0.6.0"
 tree-sitter-racket = "=0.25.0"
@@ -144,10 +218,6 @@ tree-sitter-scheme = "=0.24.7"
 tree-sitter-solidity = "=1.2.13"
 tree-sitter-typescript = "=0.23.2"
 walkdir = "2"
-
-[build-dependencies]
-cc = "1.2"
-flate2 = "1"
 
 [lints.rust]
 unsafe_code = "deny"

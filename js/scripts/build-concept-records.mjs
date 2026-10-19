@@ -10,13 +10,16 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { readProjectData, serializeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const registerPath = join(root, 'parity/naming/canonical-concepts.json');
 export const CONCEPT_RECORD_PATHS = Object.freeze([
-  join(root, 'js/src/data/concept-records.json'),
-  join(root, 'rust/src/data/concept-records.json'),
+  join(root, 'js/src/data/concept-records.lino'),
+  join(root, 'rust/src/data/concept-records.lino'),
 ]);
+const metadataPath = join(root, 'js/src/data/concept-records-metadata.lino');
 
 const RECORD_FIELDS = Object.freeze([
   'id', 'phrase', 'role', 'definition', 'constraints', 'sourceAliases', 'formerNames', 'represents', 'distinctFrom',
@@ -59,13 +62,31 @@ export function formatConceptRecords(records) {
 }
 
 async function main() {
-  const register = JSON.parse(await readFile(registerPath, 'utf8'));
-  const text = formatConceptRecords(buildConceptRecords(register));
+  const register = readProjectData(registerPath);
+  const text = serializeProjectData(buildConceptRecords(register), CONCEPT_RECORD_PATHS[0]);
+  const distinctions = readProjectData(join(root, 'parity/required-concept-distinctions.json'));
+  const identities = new Set(register.concepts.map(({ id }) => id));
+  const pairs = new Set();
+  for (const { concepts, reason } of distinctions) {
+    if (!Array.isArray(concepts) || concepts.length !== 2 || concepts[0] === concepts[1] || concepts.some((id) => !identities.has(id)) || typeof reason !== 'string' || !reason.endsWith('.')) throw new TypeError('required distinctions need two recorded concepts and an explanatory sentence');
+    const pair = [...concepts].sort().join('\0');
+    if (pairs.has(pair)) throw new TypeError('required distinction pairs must be unique');
+    pairs.add(pair);
+  }
+  const generated = [
+    [metadataPath, serializeProjectData({
+      schemaVersion: 1, source: 'concept-records.lino', conceptCount: register.concepts.length,
+      sourceSha256: createHash('sha256').update(text).digest('hex'),
+    }, metadataPath)],
+    [join(root, 'js/src/data/required-concept-distinctions.lino'), serializeProjectData(distinctions, join(root, 'js/src/data/required-concept-distinctions.lino'))],
+    [join(root, 'rust/src/data/required-concept-distinctions.rs'), '&[\n' + distinctions.map(({ concepts, reason }) => '    RequiredDistinction {\n        concepts: [' + concepts.map((id) => JSON.stringify(id)).join(', ') + '],\n        reason: ' + JSON.stringify(reason) + ',\n    },').join('\n') + '\n]\n'],
+  ];
+  const outputs = [...CONCEPT_RECORD_PATHS.map((path) => [path, text]), ...generated];
   if (process.argv.includes('--check')) {
     const stale = [];
-    for (const path of CONCEPT_RECORD_PATHS) {
+    for (const [path, expected] of outputs) {
       const current = await readFile(path, 'utf8').catch(() => '');
-      if (current !== text) stale.push(path.slice(root.length + 1));
+      if (current !== expected) stale.push(path.slice(root.length + 1));
     }
     if (stale.length > 0) {
       console.error(`concept records are stale: ${stale.join(', ')}`);
@@ -75,7 +96,7 @@ async function main() {
     console.log(`concept records match the register for ${register.concepts.length} concepts`);
     return;
   }
-  await Promise.all(CONCEPT_RECORD_PATHS.map((path) => writeFile(path, text)));
+  await Promise.all(outputs.map(([path, text]) => writeFile(path, text)));
   console.log(`wrote the concept records for ${register.concepts.length} concepts`);
 }
 

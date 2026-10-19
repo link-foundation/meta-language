@@ -1,3 +1,4 @@
+import { resolveProjectDataPath } from '../scripts/project-data.mjs';
 // Compares the native JavaScript grammar (parity/grammars/native/javascript.lino)
 // with the tree-sitter-javascript oracle on every case of the pinned upstream
 // corpus (parity/grammars/sources/tree-sitter-javascript-*.corpus.json.gz),
@@ -13,7 +14,7 @@ import { nativeOracleKinds } from '../scripts/build-language-catalog.mjs';
 import { corpusCases, grammarSourceOf } from '../scripts/import-native-grammars.mjs';
 import { nativeRows, oracleRecovers, oracleRows } from '../scripts/native-grammar-rows.mjs';
 
-const text = readFileSync(new URL('../../parity/grammars/native/javascript.lino', import.meta.url), 'utf8');
+const text = readFileSync(resolveProjectDataPath(new URL('../../parity/grammars/native/javascript.lino', import.meta.url)), 'utf8');
 const compiled = compileGrammar(parseGrammarLinks(text));
 const options = { hidden: [], anonymous: ['unnamed_token'], extras: ['comment', 'html_comment'], oracleKinds: nativeOracleKinds(text) };
 const show = new Set(process.env.SHOW ? process.env.SHOW.split(',') : []);

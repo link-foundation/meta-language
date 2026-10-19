@@ -6,8 +6,9 @@
 // from correct ones (mutually reversing sequences, re-emitting a stale source)
 // are reported as broken. The Rust twin is
 // rust/tests/unit/issue_195_interchange_mutation_guards.rs.
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+
 import { test } from 'node:test';
 
 import {
@@ -30,7 +31,7 @@ import {
 import { ISSUE_195_FIXTURE_FILES, recordIssue195Observations } from './support/issue-195-observations.js';
 import { renderGrammarRule } from './support/render-grammar-expression.js';
 
-const corpus = JSON.parse(await readFile(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)));
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
 const pairs = {
   abnf: { importGrammar: importAbnf, emitGrammar: emitAbnf },

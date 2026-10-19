@@ -1,0 +1,1 @@
+Keep the historical raw graph artifact immutable while checking current automatic emission through a separately authenticated profile. Native CI retains the complete original fixture and archive coverage and records which profile actually ran; local source checks do not establish native execution.

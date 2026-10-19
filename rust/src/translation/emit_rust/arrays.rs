@@ -2,31 +2,17 @@
 
 use super::{Expr, Node, Prelude, Result, RustEmitter};
 
-pub(super) const ARRAY_PRELUDE: &str = r#"/// Reads of JavaScript arrays, which the portable core never mutates.
-pub mod ml_array {
-    /// The element at an index; a read outside the array, undefined in
-    /// JavaScript, aborts.
-    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
-        match index.and_then(|index| values.get(index)) {
-            Some(value) => value.clone(),
-            None => panic!("array index out of range"),
-        }
-    }
+// Generated from the JavaScript emitter; source adaptations are performed by
+// its normal pipeline before a runtime string reaches either host adapter.
+pub(super) const ARRAY_PRELUDE: &str = include_str!("../runtime/array-legacy.txt");
 
-    /// The index a Number names: a non-negative integer, -0 included.
-    pub fn number_index(index: f64) -> Option<usize> {
-        if index >= 0.0 && index.fract() == 0.0 && index < 9007199254740992.0 {
-            Some(index as usize)
-        } else {
-            None
-        }
+pub(super) const fn read_array_prelude(standard: bool) -> &'static str {
+    if standard {
+        include_str!("../runtime/array-standard.txt")
+    } else {
+        ARRAY_PRELUDE
     }
-
-    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
-        left.extend(right);
-        left
-    }
-}"#;
+}
 
 impl RustEmitter<'_> {
     /// An array literal, an append, an element read or a length.
@@ -35,7 +21,7 @@ impl RustEmitter<'_> {
             Node::Array { items } => {
                 if items.is_empty() {
                     let element = e.ty.element().expect("an array literal has an array type");
-                    return Ok(format!("Vec::<{}>::new()", self.ty(element)));
+                    return Ok(format!("Vec::<{}>::new()", self.ty(element)?));
                 }
                 let mut texts = Vec::with_capacity(items.len());
                 for item in items {
@@ -43,17 +29,87 @@ impl RustEmitter<'_> {
                 }
                 Ok(format!("vec![{}]", texts.join(", ")))
             }
+            Node::Set { items } | Node::Map { entries: items } => {
+                self.preludes.insert(Prelude::Array);
+                self.standard_array = true;
+                let (kind, key) = match &e.ty {
+                    super::Type::Set { element, .. } => ("set", element.as_ref()),
+                    super::Type::Map { key, .. } => ("map", key.as_ref()),
+                    _ => unreachable!("a collection constructor has its checked collection type"),
+                };
+                let values = self.expr(items)?;
+                Ok(crate::translation::collection_construction_rules::render_collection_construction(
+                    "Rust", kind, key.kind(), &values, "", "", "",
+                ))
+            }
             Node::Append { left, right } => {
                 self.preludes.insert(Prelude::Array);
+                if self
+                    .array_final_uses
+                    .contains(&std::ptr::from_ref(left.as_ref()))
+                {
+                    return Ok(format!(
+                        "{{ let (ml_append_right, ml_append_left) = ({}, {}); crate::ml_array::append(ml_append_left, ml_append_right) }}",
+                        self.expr(right)?,
+                        self.expr(left)?,
+                    ));
+                }
                 Ok(format!(
                     "crate::ml_array::append({}, {})",
                     self.expr(left)?,
                     self.expr(right)?
                 ))
             }
-            Node::Index { array, index } => {
+            Node::OptionalIndex { array, index } => {
                 self.preludes.insert(Prelude::Array);
-                self.state.array_read();
+                self.standard_array = true;
+                let position = if index.ty.is_float() {
+                    self.expr(index)?
+                } else {
+                    self.receiver(index)?
+                };
+                let values = self.borrow(array)?;
+                Ok(
+                    crate::translation::array_value_rules::render_optional_array_read(
+                        "Rust",
+                        index.ty.kind(),
+                        &values,
+                        &position,
+                    ),
+                )
+            }
+            Node::StringPoints { object } => {
+                let value = self.receiver(object)?;
+                Ok(
+                    crate::translation::array_value_rules::render_string_point_iteration(
+                        "Rust",
+                        self.utf16_strings,
+                        &value,
+                    ),
+                )
+            }
+            Node::CollectionItems { object, op } => {
+                let map = matches!(object.ty, super::Type::Map { .. });
+                let value = if op == "entries" && map || !map && op != "entries" {
+                    self.expr(object)?
+                } else {
+                    self.receiver(object)?
+                };
+                Ok(
+                    crate::translation::array_value_rules::render_collection_iteration(
+                        "Rust", map, op, &value, "", "",
+                    ),
+                )
+            }
+            Node::Index {
+                array,
+                index,
+                proven_in_bounds,
+            } => {
+                self.preludes.insert(Prelude::Array);
+                if !proven_in_bounds {
+                    self.state.array_read();
+                }
                 let index = if index.ty.is_float() {
                     format!("crate::ml_array::number_index({})", self.expr(index)?)
                 } else {
@@ -65,6 +121,18 @@ impl RustEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                if array.ty == super::Type::String {
+                    if self.utf16_strings {
+                        let value = self.receiver(array)?;
+                        return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "length", &value, "", ""));
+                    }
+                    return Ok(
+                        crate::translation::frontend_rules::render_string_length_expression(
+                            "Rust",
+                            &self.receiver(array)?,
+                        ),
+                    );
+                }
                 if e.ty.is_float() {
                     return Ok(format!("({}.len() as f64)", self.receiver(array)?));
                 }

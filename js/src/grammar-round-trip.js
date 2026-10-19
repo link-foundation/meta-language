@@ -9,6 +9,9 @@
 // rust/src/grammar/round_trip.rs.
 import { carryRuleDocs, Grammar, parseWithGrammar } from './grammar.js';
 import { normalizedRuleDefinition } from './grammar-merge.js';
+import { readGrammarLexerOwnerComparison } from './translation/grammar-lexer-rules.js';
+import { renderGrammarLinks } from './grammar-links.js';
+import { extendGrammarLexerLiteral } from './grammar-lexer-literal-extension.js';
 
 /** The literal alternative the guard adds to the start rule by default. */
 export const GRAMMAR_ROUND_TRIP_MARKER = 'round-trip-mutation';
@@ -33,7 +36,26 @@ export function mutateGrammarStartRule(grammar, marker = GRAMMAR_ROUND_TRIP_MARK
       expression: { kind: 'choice', items: alternatives, ordered: grammar.sourceFormat === 'peg' },
     });
   }
-  return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat, grammar.declarations), grammar);
+  const mutated = new Grammar(grammar.start, rules, grammar.sourceFormat, grammar.declarations);
+  const declarations = (grammar.declarations.lexers ?? []).length === 0 ? grammar.declarations
+    : { ...grammar.declarations, lexers: grammar.declarations.lexers.map((lexer) => extendGrammarLexerLiteral(mutated, lexer, start.name, marker)) };
+  return carryRuleDocs(new Grammar(grammar.start, rules, grammar.sourceFormat, declarations), grammar);
+}
+
+/** Full Links comparison view under checked original-owner alpha-renaming. */
+export function renderGrammarLexicalOwnerComparison(grammar) {
+  const lexers = (grammar.declarations.lexers ?? []).map((lexer) => {
+    const entries = lexer.expression.items;
+    const plan = readGrammarLexerOwnerComparison(entries.map(({ kind }) => kind), entries.map(({ name }) => name ?? ''),
+      entries.map(({ item }) => item?.kind === 'ref' && grammar.rule(item.name) ? item.name : ''));
+    if (plan[0] === -1) throw new TypeError(`nonbijective original parser owners in lexer ${lexer.name}`);
+    const replacements = new Map();
+    for (let index = 0; index < plan.length; index += 2) replacements.set(plan[index], entries[plan[index + 1]].item.name);
+    return { ...lexer, expression: { ...lexer.expression, items: entries.map((entry, index) =>
+      replacements.has(index) ? { ...entry, name: replacements.get(index) } : entry) } };
+  });
+  const declarations = lexers.length === 0 ? grammar.declarations : { ...grammar.declarations, lexers };
+  return renderGrammarLinks(carryRuleDocs(new Grammar(grammar.start, grammar.rules, grammar.sourceFormat, declarations), grammar));
 }
 
 /**

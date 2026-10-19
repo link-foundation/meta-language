@@ -9,6 +9,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { readProjectData } from '../scripts/project-data.mjs';
+import { readFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 
 import { checkDeliveredDependencies } from '../scripts/dependency-inventory.mjs';
 import { compareScopeBaseline, evaluateIssue195Acceptance } from '../scripts/issue-195-acceptance-lib.mjs';
@@ -33,7 +35,7 @@ import { recordIssue195Observations } from './support/issue-195-observations.js'
 const REQUIREMENT_ID = 'I195-ACCEPTANCE-GATE-MUTATIONS';
 const rootUrl = new URL('../../', import.meta.url);
 const root = fileURLToPath(rootUrl);
-const readJson = (relative) => JSON.parse(readFileSync(new URL(relative, rootUrl), 'utf8'));
+const readJson = (relative) => readProjectData(new URL(relative, rootUrl));
 const manifest = readJson('parity/issue-195-requirements.json');
 
 function record(assertion, testName) {
@@ -178,9 +180,9 @@ test('issue 195 dropping a source requirement fails the scope and source registe
 
 test('issue 195 weakening an oracle mapping fails the conformance oracle gate', () => {
   const fixtureRoot = new URL('parity/fixtures/issue-195-conformance/', rootUrl);
-  const read = (path) => readFileSync(new URL(path, fixtureRoot));
+  const read = (path) => readFixtureSourceBytes(new URL(path, fixtureRoot));
   const readRepository = (path) => readFileSync(new URL(path, rootUrl));
-  const conformance = JSON.parse(read('manifest.json'));
+  const conformance = readProjectData(new URL('manifest.json', fixtureRoot));
   const lock = readJson('js/src/vendor/grammars/grammar-lock.json');
   const problemsOf = (change) => {
     const candidate = structuredClone(conformance);

@@ -87,10 +87,7 @@ impl JavaScriptParser {
         let mut args = Vec::new();
         while !self.cursor.is(")") {
             let spread = self.cursor.eat("...").is_some();
-            args.push(SArrayItem {
-                spread,
-                value: self.expr()?,
-            });
+            args.push(SArrayItem::new(self.expr()?, spread));
             if self.cursor.eat(",").is_none() {
                 break;
             }

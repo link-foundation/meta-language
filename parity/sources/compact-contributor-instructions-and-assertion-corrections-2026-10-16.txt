@@ -1,0 +1,1 @@
+Also fix AGENTS.md and CLAUDE.md to be smaller, and don't be to strict on assertion, wrong assertions must be fixable if are wrong. And also we should make sure we use minimum number of words in these files, yet ask for all the same.

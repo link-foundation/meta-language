@@ -1,3 +1,4 @@
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from '../scripts/project-data.mjs';
 // Requirement I195-MERGE-QUALITY-EVIDENCE: the published comparison of every
 // native grammar with the pinned tree-sitter grammar it was merged from, on
 // the corpus of that grammar. This suite recomputes the
@@ -9,7 +10,9 @@
 // JavaScript native executor and oracle again. The Rust twin is
 // rust/tests/unit/issue_195_merge_quality_evidence.rs, with the measurement
 // in rust/tests/merge_quality.rs.
+
 import assert from 'node:assert/strict';
+import { sourceText } from '../scripts/import-native-grammars.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
@@ -25,7 +28,7 @@ import {
 } from '../scripts/build-merge-quality-evidence.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => readFileSync(resolveProjectDataPath(new URL(`../../${relative}`, import.meta.url)), 'utf8');
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -40,16 +43,25 @@ function observe(assertions, testName) {
 
 test('merge quality evidence: the JavaScript report equals the published report', (context) => {
   const report = mergeQualityReport();
-  assert.equal(formatMergeQuality(report), read(MERGE_QUALITY_FIXTURE));
+  assert.equal(serializeProjectData(JSON.parse(formatMergeQuality(report)), new URL(`../../${MERGE_QUALITY_FIXTURE}`, import.meta.url)), read(MERGE_QUALITY_FIXTURE));
   assert.deepEqual(report.grammars.map(({ grammar }) => grammar), nativeGrammarEntries().map(([id]) => id));
-  assert.equal(report.grammars.length, 21);
+  assert.equal(report.grammars.length, 43);
   for (const { grammar, sources, corpus, mergeReport, coverage, correctness, recovery } of report.grammars) {
     // Every grammar names the sources it merges: a URL, or a vendored copy.
     assert.ok(sources.length > 0, grammar);
     for (const source of sources) assert.ok(source.startsWith('https://') || existsSync(new URL(`../../${source}`, import.meta.url)), source);
     // A grammar the importer merges is checked on the upstream test corpus of
     // its source grammar at the pinned revision.
-    if (mergeReport !== null) assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.*corpus$/u, grammar);
+    if (mergeReport !== null) {
+      const fixture = readProjectData(new URL(`../../${report.grammars.find((entry) => entry.grammar === grammar).fixture}`, import.meta.url));
+      if (fixture.corpus?.format === 'source-files') {
+        assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.+$/u, grammar);
+        assert.equal(corpus, fixture.corpus.url);
+        const { files } = JSON.parse(sourceText(fixture.corpus));
+        assert.ok(Object.keys(files).length > 0, grammar);
+        assert.ok(Object.values(files).every((source) => typeof source === 'string'), grammar);
+      } else assert.match(corpus, /^https:\/\/github\.com\/.+\/tree\/[0-9a-f]{40}\/.*corpus$/u, grammar);
+    }
     assert.ok(coverage.exercisedRules > 0 && coverage.checkedKinds > 0, grammar);
     assert.ok(correctness.matches >= 30 && correctness.rows > correctness.matches, grammar);
     // Every rejection the oracle recovers from is repaired natively.
@@ -65,7 +77,7 @@ test('merge quality evidence: the JavaScript report equals the published report'
 
 test('merge quality evidence: the comparison is published with the measurements of both runtimes', (context) => {
   const report = mergeQualityReport();
-  const measurements = JSON.parse(read(MERGE_QUALITY_MEASUREMENTS));
+  const measurements = readProjectData(new URL(`../../${MERGE_QUALITY_MEASUREMENTS}`, import.meta.url));
   assert.deepEqual(measurements.grammars.map(({ grammar }) => grammar), report.grammars.map(({ grammar }) => grammar));
   for (const { grammar, javascript, rust } of measurements.grammars) {
     for (const side of ['native', 'oracle']) {

@@ -11,15 +11,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SCRATCH_MARKER } from './cache-classes.mjs';
+import { processIdentity } from './process-identity.mjs';
 
 const repositoryRoot = realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..'));
 
 /** Creates `<tmp>/<prefix>XXXXXX` with a scratch marker and returns its path. */
 export function makeScratchDirectory(prefix, label = prefix.replace(/-+$/u, '')) {
   const directory = mkdtempSync(path.join(os.tmpdir(), prefix));
+  // This established coordination protocol must remain readable by older
+  // cleanup processes while their scratch owners may still be alive.
   writeFileSync(
     path.join(directory, SCRATCH_MARKER),
-    `${JSON.stringify({ root: repositoryRoot, pid: process.pid, label, createdAt: new Date().toISOString() })}\n`,
+    `${JSON.stringify({ root: repositoryRoot, ...processIdentity(), label, createdAt: new Date().toISOString() })}\n`,
   );
   return directory;
 }

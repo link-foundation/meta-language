@@ -8,9 +8,12 @@
 // relation of clean trees, on inputs no fixture contains. Where a language parses with its
 // native grammar, a malformed case whose native recovery differs from tree-sitter's must
 // instead match its justified record in parity/fixtures/native-recovery.json.
+
+import { readProjectData } from '../scripts/project-data.mjs';
+import { readFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+
 import { test } from 'node:test';
 
 import { LinkNetwork } from '../src/index.js';
@@ -32,11 +35,11 @@ import { nativeRecovery } from './support/native-recovery.js';
 const MANIFEST_FILE = 'parity/fixtures/issue-195-generative/manifest.json';
 const fixtureRoot = new URL('../../parity/fixtures/issue-195-generative/', import.meta.url);
 const repositoryRoot = new URL('../../', import.meta.url);
-const read = (path) => readFileSync(new URL(path, fixtureRoot));
+const read = (path) => readFixtureSourceBytes(new URL(path, fixtureRoot));
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-const manifest = JSON.parse(read('manifest.json'));
-const reproducers = JSON.parse(read('reproducers.json'));
-const lock = JSON.parse(readFileSync(new URL('js/src/vendor/grammars/grammar-lock.json', repositoryRoot)));
+const manifest = readProjectData(new URL('manifest.json', fixtureRoot));
+const reproducers = readProjectData(new URL('reproducers.json', fixtureRoot));
+const lock = readProjectData(new URL('js/src/vendor/grammars/grammar-lock.json', repositoryRoot));
 const RUNTIME_SEED = process.env.ISSUE_195_GENERATIVE_SEED ?? manifest.seed;
 const RUNTIME_CASES = Number(process.env.ISSUE_195_GENERATIVE_CASES ?? 48);
 
@@ -75,11 +78,11 @@ test('the generative fixtures record their seed and oracle, and the seed regener
   assert.equal(manifest.oracle.tool, lock.treeSitterCli);
   assert.equal(manifest.inputs['reproducers.json'], sha256(read('reproducers.json')));
   assert.equal(manifest.inputs['issue-195-conformance/manifest.json'],
-    sha256(readFileSync(new URL('parity/fixtures/issue-195-conformance/manifest.json', repositoryRoot))));
+    sha256(readFixtureSourceBytes(new URL('parity/fixtures/issue-195-conformance/manifest.json', repositoryRoot))));
   assert.deepEqual(manifest.counts, COUNTS);
   for (const [language, details] of Object.entries(manifest.languages)) {
     assert.equal(sha256(read(details.file)), details.sha256, language);
-    const fixture = JSON.parse(read(details.file));
+    const fixture = readProjectData(new URL(details.file, fixtureRoot));
     assert.equal(fixture.seed, manifest.seed);
     const seeds = seedSources(language);
     assert.equal(seeds.length, details.seedSources, language);
@@ -120,7 +123,7 @@ test('the property checks reject a network that breaks them', () => {
 for (const [language, details] of Object.entries(manifest.languages)) {
   const testName = `${language} keeps the oracle trees and properties of its property, fuzz, metamorphic, edit-sequence and reproducer cases`;
   test(testName, () => {
-    const fixture = JSON.parse(read(details.file));
+    const fixture = readProjectData(new URL(details.file, fixtureRoot));
     assert.equal(fixture.language, language);
     const recovery = nativeRecovery('generative', language);
     const failures = [];

@@ -19,7 +19,7 @@ use super::issue_195_native_grammar_rows::{Rows, cases, leaves, parse, rebuilt, 
 use super::issue_195_observations::{Observation, record};
 
 const FIXTURE_FILE: &str = "parity/fixtures/native-grammars/rust.json";
-const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/rust.json");
+const FIXTURE: &str = include_str!("../../../parity/fixtures/native-grammars/rust.lino");
 const GRAMMAR: &str = include_str!("../../../parity/grammars/native/rust.lino");
 
 fn observe(assertions: &[&str], test_name: &str) {
@@ -34,7 +34,7 @@ fn observe(assertions: &[&str], test_name: &str) {
 }
 
 fn fixture() -> Value {
-    serde_json::from_str(FIXTURE).expect("the native Rust fixture is JSON")
+    super::project_data::read_project_data(FIXTURE).expect("the native Rust fixture is JSON")
 }
 
 fn parser() -> FeatureGrammarParser {
@@ -303,4 +303,44 @@ fn native_rust_trees_keep_every_byte() {
         &["nativeRustTreesLossless"],
         "native Rust trees keep every byte",
     );
+}
+
+#[test]
+fn source_prefixes_retain_their_own_precedence_and_oracle_fields() {
+    // These are source-grammar CST controls. Their operator shapes do not
+    // establish the compiler's semantic interpretation of Rust ranges.
+    let fixture: Value = super::project_data::read_project_data(include_str!(
+        "../../../parity/fixtures/grammar-prefix-operand-precedence.lino"
+    ))
+    .expect("the generated prefix operand fixture is Links Notation");
+    let parser = parser();
+    let rows = Rows::new(&fixture["projection"]);
+    for case in cases(&fixture, "cases") {
+        let outcome = parser
+            .parse_tree(source(case).as_bytes(), &FeatureParseOptions::default())
+            .expect("the bounded parse runs");
+        assert!(outcome.ok, "{:?}", source(case));
+        assert!(outcome.ambiguities.is_empty(), "{:?}", source(case));
+        let tree = outcome.tree.expect("an accepted source has a tree");
+        assert_eq!(Value::Array(rows.rows(&tree, source(case))), case["rows"]);
+        assert_eq!(rebuilt(&tree), source(case));
+    }
+    let parser = super::issue_195_native_grammar_rows::parser(
+        fixture["operandGrammar"]
+            .as_str()
+            .expect("the operand grammar"),
+    );
+    for source in fixture["operandSources"]
+        .as_array()
+        .expect("operand sources")
+    {
+        let source = source.as_str().expect("the source text");
+        let tree = parse(&parser, source).expect("the operand application is accepted");
+        let SyntaxTree::Node { kind, children, .. } = &tree else {
+            panic!("the assignment is a node");
+        };
+        assert_eq!(kind, "assignment");
+        assert!(matches!(&children[0], SyntaxTree::Node {kind, ..} if kind == "application"));
+        assert_eq!(rebuilt(&tree), source);
+    }
 }

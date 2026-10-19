@@ -10,6 +10,8 @@ import {
 } from './antlr-lexer.js';
 import { parseError, unsupportedError } from './common.js';
 import { decorateGrammar } from '../grammar-decorators.js';
+import { antlrLexerDeclarations, completeAntlrLexerBindings } from './antlr-lexer-plan.js';
+import { acceptGrammarParserTokenNegation } from '../translation/grammar-lexer-rules.js';
 
 const SEQUENCE_END = new Set(['pipe', 'semicolon', 'arrow', 'rparen', 'hash']);
 const SUFFIXES = {
@@ -48,6 +50,11 @@ class AntlrParser {
     // the current rule, which may override it.
     this.caseInsensitive = false;
     this.ruleCaseInsensitive = false;
+    this.parserProduction = false;
+    this.sections = [];
+    this.section = null;
+    this.mode = 'default';
+    this.obligations = [];
   }
 
   parseGrammar() {
@@ -58,27 +65,33 @@ class AntlrParser {
       if (this.parseHeader() || this.parseSkippedDirective()) continue;
       rules.push(this.parseRule());
     }
+    const lexers = antlrLexerDeclarations(this.sections, rules);
     applyRetypes(rules);
+    completeAntlrLexerBindings(lexers, rules);
 
     const startRule = rules.find((rule) => rule.kind === 'normal') ?? rules[0];
     if (!startRule) throw parseError(FORMAT, 'ANTLR grammar does not contain rules');
-    return buildGrammar(startRule.name, rules);
+    return buildGrammar(startRule.name, rules, lexers);
   }
 
   parseHeader() {
+    let kind = 'combined';
     if (this.checkKeyword('grammar')) {
       this.advance();
     } else if ((this.checkKeyword('lexer') || this.checkKeyword('parser')) &&
       this.checkNextKeyword('grammar')) {
-      this.advance();
+      kind = this.advance().value;
       this.advance();
     } else {
       return false;
     }
-    this.expectIdent('grammar name');
+    const name = this.expectIdent('grammar name');
     this.expectKind('semicolon', "';'");
     this.pendingComments = [];
     this.caseInsensitive = false;
+    this.section = { name, kind, tokenVocab: null, channels: [], types: [], modes: ['default'], imports: [], unsupportedOptions: [] };
+    this.sections.push(this.section);
+    this.mode = 'default';
     return true;
   }
 
@@ -88,7 +101,18 @@ class AntlrParser {
       if (this.peekKind() === 'action') {
         const options = this.advance().value;
         if (keyword === 'options') {
-          this.caseInsensitive = parseOptions(options).get('caseInsensitive') === 'true';
+          const parsed = parseOptions(options);
+          this.caseInsensitive = parsed.get('caseInsensitive') === 'true';
+          if (this.section) {
+            this.section.tokenVocab = parsed.get('tokenVocab') ?? null;
+            if ([...parsed.keys()].some((key) => key !== 'caseInsensitive' && key !== 'tokenVocab')) {
+              this.section.unsupportedOptions.push(options);
+            }
+          }
+        } else if (keyword === 'channels' && this.section) {
+          this.section.channels.push(...tokenizeAntlr(options).filter(({ kind }) => kind === 'ident').map(({ value }) => value));
+        } else if (keyword === 'tokens' && this.section) {
+          this.section.types.push(...tokenizeAntlr(options).filter(({ kind }) => kind === 'ident').map(({ value }) => value));
         }
         this.tryConsume('semicolon');
       } else {
@@ -97,8 +121,22 @@ class AntlrParser {
       this.pendingComments = [];
       return true;
     }
-    if (this.checkAnyKeyword(['import', 'mode'])) {
+    if (this.checkKeyword('mode')) {
       this.advance();
+      this.mode = this.expectIdent('lexer mode');
+      if (this.section && !this.section.modes.includes(this.mode)) this.section.modes.push(this.mode);
+      if (!this.tryConsume('semicolon')) {
+        if (this.isEnd()) throw errorAt(0, "expected ';' after directive");
+        this.expectKind('semicolon', "';'");
+      }
+      this.pendingComments = [];
+      return true;
+    }
+    if (this.checkKeyword('import')) {
+      this.advance();
+      const imported = [];
+      while (!this.isEnd() && this.peekKind() !== 'semicolon') imported.push(tokenText(this.advance()));
+      if (this.section) this.section.imports.push(imported.join(' '));
       this.skipUntilSemicolon();
       this.pendingComments = [];
       return true;
@@ -111,11 +149,14 @@ class AntlrParser {
     this.pendingComments = [];
     const fragment = this.tryConsumeKeyword('fragment');
     const name = this.expectIdent('rule name');
+    this.parserProduction = !fragment && !/^[A-Z]/.test(name);
     // A comment between the name and its ':' documents the rule too.
     this.collectComments();
     comments.push(...this.pendingComments);
     this.pendingComments = [];
     const notes = [];
+    this.obligations = this.section?.kind === 'parser'
+      ? this.section.unsupportedOptions.map((source) => ({ category: 'option', source })) : [];
     this.parseRulePrelude(notes);
     this.expectKind('colon', "':'");
 
@@ -128,7 +169,8 @@ class AntlrParser {
     else if (/^[A-Z]/.test(name)) kind = 'token';
     const channel = commandChannel(command);
     const retype = channel === null ? commandType(command) : null;
-    return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel, retype };
+    return { name, kind, expression, doc: ruleDoc(comments, notes, command), channel, retype,
+      section: this.section, mode: this.mode, command, obligations: this.obligations };
   }
 
   // `returns [...]`, `throws ...` and `locals [...]` declare target-language
@@ -234,9 +276,17 @@ class AntlrParser {
 
   parsePrefixed(notes) {
     this.skipInlineComments();
-    const expression = this.tryConsume('tilde')
-      ? negateExpression(this.parseAtom(notes))
-      : this.parseAtom(notes);
+    const negated = this.tryConsume('tilde');
+    const atom = this.parseAtom(notes);
+    const operands = atom.kind === 'choice' ? atom.items : [atom];
+    // In a parser, ~ consumes a whole elected token, just like its wildcard.
+    // Lexer complements retain their historical character-set lowering.
+    const tokenNegation = negated && acceptGrammarParserTokenNegation(this.parserProduction,
+      operands.map(({ kind }) => kind), operands.map((item) => item.name ?? item.value
+        ?? (item.kind === 'not' ? item.item?.kind : '') ?? ''));
+    const expression = !negated ? atom : tokenNegation
+      ? GrammarBuilder.seq(GrammarBuilder.not(atom), GrammarBuilder.any())
+      : negateExpression(atom);
     return this.parseSuffixes(expression);
   }
 
@@ -290,8 +340,10 @@ class AntlrParser {
   }
 
   parseAction(notes) {
-    this.advance();
-    notes.push(this.tryConsume('question') ? 'dropped predicate' : 'dropped action');
+    const source = this.advance().value;
+    const category = this.tryConsume('question') ? 'predicate' : 'action';
+    this.obligations.push({ category, source });
+    notes.push(`dropped ${category}`);
     return GrammarBuilder.empty();
   }
 
@@ -404,10 +456,10 @@ class AntlrParser {
 
 // Rust keeps rules in a list and resolves names to the first match; the
 // JavaScript grammar is keyed by name, so a repeated rule keeps its first body.
-function buildGrammar(start, rules) {
+function buildGrammar(start, rules, lexers) {
   const mapped = new Map();
   for (const rule of rules) if (!mapped.has(rule.name)) mapped.set(rule.name, rule);
-  const grammar = new Grammar(start, mapped, FORMAT);
+  const grammar = new Grammar(start, mapped, FORMAT, lexers.length > 0 ? { lexers } : null);
   for (const rule of mapped.values()) {
     if (rule.doc === null) continue;
     grammar.rules.set(rule.name, Object.freeze({ ...grammar.rules.get(rule.name), doc: rule.doc }));

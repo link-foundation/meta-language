@@ -100,12 +100,12 @@ issue #195.
 
 ## Conformance and boundaries
 
-[`parity/fixtures/four-language-conformance.json`](../parity/fixtures/four-language-conformance.json)
+[`parity/fixtures/four-language-conformance.lino`](../parity/fixtures/four-language-conformance.lino)
 is consumed by both runtime suites. It covers versions, editions, aliases,
 extensions, Unicode identifiers, exact reconstruction, syntax roots,
 identifier classification, comments, malformed input, regular expressions,
 template interpolation, and grammar diagnostics. The versioned
-[`language-grammar-inventory.json`](../parity/language-grammar-inventory.json)
+[`language-grammar-inventory.lino`](../parity/language-grammar-inventory.lino)
 additionally audits every known language target and tests all aliases currently
 marked as real-grammar paths. The parity manifest no longer exempts
 `language_parser` or `parser_registry` from the JavaScript implementation.

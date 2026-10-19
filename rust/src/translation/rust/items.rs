@@ -1,90 +1,55 @@
 //! Attributes, items, `use` trees, enums, types, functions, blocks and `main`.
 
+use super::array_rules::accept_rust_source_array_owner;
+use super::indirection_rules::accept_rust_source_box_owner;
+use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::{
-    ACCEPTED_DERIVES, ACCEPTED_LINTS, BOOL, Binding, ItemsEnd, Language, Options, RESERVED_ITEMS,
-    Result, RustParser, SComparison, SCtor, SData, SEffect, SExpr, SField, SFn, SItem, SMain,
-    SModule, SNode, SParam, SProgram, SProp, SPropNode, STRING, ShowStyle, Token, TokenKind,
-    TranslationError, Type, UNIT, UNSUPPORTED_TYPES, absolute, format, is_if_or_match, prop_of,
-    rust_fixed_type, span, unsupported,
+    FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison, SCtor,
+    SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
+    ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError, Type, absolute,
+    format, is_if_or_match, prop_of, span, unsupported,
 };
 
+mod attributes;
+mod constants;
+mod functions;
+mod product_bindings;
+mod source_headers;
+mod types;
+
 impl RustParser {
-    pub(super) fn file(mut self) -> Result<SProgram> {
+    pub(super) fn file(&mut self) -> Result<SProgram> {
         self.inner_attributes()?;
-        let items = self.items(&[], ItemsEnd::File)?;
+        let mut items = self.items(&[], ItemsEnd::File)?;
         let Some(main) = self.main.take() else {
             return Err(TranslationError::syntax(
                 "a Rust program needs fn main",
                 Some(self.cursor.peek().span()),
             ));
         };
+        if !self.primitive_owner_model.is_empty()
+            && (items.iter().any(|item| !matches!(item, SItem::Fn(_))) || !main.effects.is_empty())
+        {
+            return Err(unsupported(
+                "Rust primitive owner profile",
+                "only flat primitive leaf functions and an empty main are admitted",
+                None,
+            ));
+        }
+        self.finish_empty_option_source(&mut items, &main)?;
+        let source_pure_unit_calls = self.finish_pure_unit_source(&items, &main)?;
+        self.require_owned_local_program(&items, &main)?;
+        self.require_const_function_program(&items, &main)?;
         Ok(SProgram {
+            reference_semantics: None,
             language: Language::Rust,
             items,
             main: Some(main),
             imports: Vec::new(),
             externals: Vec::new(),
+            source_pure_unit_calls,
+            source_runtime_shell: None,
         })
-    }
-
-    pub(super) fn inner_attributes(&mut self) -> Result<()> {
-        while self.cursor.is("#") && self.cursor.is_at("!", 1) {
-            let start = self.cursor.advance();
-            self.cursor.advance();
-            self.attribute_body(&start)?;
-        }
-        Ok(())
-    }
-
-    pub(super) fn attributes(&mut self) -> Result<()> {
-        while self.cursor.is("#") && self.cursor.is_at("[", 1) {
-            let start = self.cursor.advance();
-            self.attribute_body(&start)?;
-        }
-        Ok(())
-    }
-
-    /// `#[derive(Clone, …)]` and lint attributes do not change behaviour.
-    pub(super) fn attribute_body(&mut self, start: &Token) -> Result<()> {
-        let c = &mut self.cursor;
-        c.expect("[", Some("attribute"))?;
-        let name = c.identifier(Some("attribute"))?.value;
-        if name == "derive" {
-            c.expect("(", Some("derive"))?;
-            while !c.is(")") {
-                let derived = c.identifier(Some("derive"))?;
-                if !ACCEPTED_DERIVES.contains(&derived.value.as_str()) {
-                    return Err(unsupported(
-                        &format!("derive({})", derived.value),
-                        "only derives that add no behaviour are portable",
-                        span(&derived, &derived),
-                    ));
-                }
-                if c.eat(",").is_none() {
-                    break;
-                }
-            }
-            c.expect(")", Some("derive"))?;
-        } else if ACCEPTED_LINTS.contains(&name.as_str()) {
-            let mut depth = 0_i64;
-            while !c.at_end() && (depth != 0 || !c.is("]")) {
-                if c.is("(") {
-                    depth += 1;
-                }
-                if c.is(")") {
-                    depth -= 1;
-                }
-                c.advance();
-            }
-        } else {
-            return Err(unsupported(
-                &format!("#[{name}]"),
-                "attributes that change compilation are outside the portable core",
-                span(start, c.peek()),
-            ));
-        }
-        c.expect("]", Some("attribute"))?;
-        Ok(())
     }
 
     pub(super) fn items(&mut self, path: &[String], end: ItemsEnd) -> Result<Vec<SItem>> {
@@ -97,10 +62,49 @@ impl RustParser {
             if done {
                 return Ok(items);
             }
-            self.attributes()?;
+            let first_attribute_index = self.cursor.index;
+            let mut diagnostic_attributes = Vec::new();
+            let derivations = self.attributes(Some(&mut diagnostic_attributes))?;
             let start = self.peek();
             self.module_path = path.to_vec();
+            self.pure_unit_item_context(path, &start)?;
+            self.const_function_visibility_guard()?;
             self.visibility()?;
+            self.const_function_item_guard(path, &start)?;
+            if !(diagnostic_attributes.is_empty()
+                || self.cursor.is("const") && self.cursor.is_at("fn", 1))
+            {
+                return Err(unsupported(
+                    "Rust const diagnostic attribute attachment",
+                    "the supported diagnostic prefix must belong to an actual const function",
+                    span(
+                        &self.cursor.tokens[first_attribute_index],
+                        self.cursor.peek(),
+                    ),
+                ));
+            }
+            if !self.const_function_model.is_empty()
+                && self.cursor.is("const")
+                && self.cursor.is_at("fn", 1)
+            {
+                let const_keyword_index = self.cursor.index;
+                self.const_function_keyword = Some(self.cursor.advance());
+                let mut function = self.function(path)?;
+                if !diagnostic_attributes.is_empty() {
+                    function.source_diagnostic_attributes =
+                        Some(Box::new(self.create_diagnostic_attribute_facet(
+                            first_attribute_index,
+                            const_keyword_index,
+                            &function,
+                            path,
+                        )?));
+                }
+                items.push(SItem::Fn(function));
+                continue;
+            }
+            self.empty_option_item_guard(path, &start)?;
+            self.require_unit_clone_attached_enum(&derivations, &start)?;
+            self.require_type_namespace_without_externals(&start)?;
             let c = &mut self.cursor;
             if c.is("mod") {
                 c.advance();
@@ -114,6 +118,8 @@ impl RustParser {
                 }
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
+                self.origins
+                    .declaration(&name, path, SourceDeclaration::Module)?;
                 let mut inner = path.to_vec();
                 inner.push(name.clone());
                 let module_items = self.items(&inner, ItemsEnd::Module)?;
@@ -125,16 +131,58 @@ impl RustParser {
                 }));
                 continue;
             }
+            if path.is_empty()
+                && c.is("extern")
+                && c.is_at("crate", 1)
+                && c.is_at("alloc", 2)
+                && c.is_at(";", 3)
+            {
+                if !self.local_value_state_model.is_empty() {
+                    return Err(unsupported(
+                        "Rust owned local state",
+                        "external crate declarations require a separate namespace interpretation",
+                        None,
+                    ));
+                }
+                if !self.crate_declarations.insert("alloc".to_owned()) {
+                    return Err(unsupported(
+                        "extern crate alloc",
+                        "each source crate declaration must be unique in its module",
+                        span(&start, &start),
+                    ));
+                }
+                for _ in 0..4 {
+                    c.advance();
+                }
+                self.origins
+                    .declaration("alloc", path, SourceDeclaration::ExternalCrate)?;
+                continue;
+            }
             if c.is("use") {
                 self.use_declaration(path)?;
                 continue;
             }
             if c.is("enum") {
-                items.push(self.enum_item()?);
+                items.push(self.enum_item(path, &derivations)?);
                 continue;
             }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
+                    if !self.const_function_model.is_empty() && self.empty_option_main_seen {
+                        return Err(unsupported(
+                            "Rust const function source",
+                            "the complete source must have one ordinary main declaration",
+                            span(&start, self.cursor.peek()),
+                        ));
+                    }
+                    if !self.pure_unit_call_model.is_empty() && self.empty_option_main_seen {
+                        return Err(unsupported(
+                            "Rust pure Unit-call source",
+                            "the complete source must have one owned main declaration",
+                            span(&start, self.cursor.peek()),
+                        ));
+                    }
+                    self.empty_option_main_guard(&start)?;
                     self.main = Some(self.main_fn()?);
                     continue;
                 }
@@ -186,6 +234,14 @@ impl RustParser {
     /// `use super::Tree;`, `use crate::a::{b, c as d};`: each imported name is
     /// an alias for its absolute path inside the importing module.
     pub(super) fn use_declaration(&mut self, path: &[String]) -> Result<()> {
+        if !self.local_value_state_model.is_empty() {
+            return Err(unsupported(
+                "Rust owned local state",
+                "imports require a separate actual owner and namespace interpretation",
+                None,
+            ));
+        }
+        self.require_type_namespace_without_imports()?;
         let start = self.cursor.advance();
         self.aliases.entry(path.join(".")).or_default();
         self.use_tree(&[], &start, path)?;
@@ -223,19 +279,72 @@ impl RustParser {
         if c.eat("::").is_some() {
             return self.use_tree(&full, start, path);
         }
-        if !["crate", "super", "self"].contains(&full[0].as_str()) {
+        let standard_box = full.len() > 1 && accept_rust_source_box_owner(&full.join("::"), false);
+        let standard_vector =
+            full.len() > 1 && accept_rust_source_array_owner(&full.join("::"), false);
+        let standard_string =
+            accept_rust_read_only_query_owner("string empty", "library", &full.join("::"));
+        let query_span = span(start, c.peek());
+        let standard_primitive = self
+            .read_standard_primitive_position(&full, path)?
+            .is_some();
+        let c = &mut self.cursor;
+        if !self.primitive_owner_model.is_empty() && !standard_primitive {
+            return Err(unsupported(
+                "Rust primitive owner import",
+                "only the two actual standard primitive reexports can be imported",
+                query_span,
+            ));
+        }
+        if !["crate", "super", "self"].contains(&full[0].as_str())
+            && !standard_box
+            && !standard_vector
+            && !standard_string
+            && !standard_primitive
+        {
             return Err(unsupported(
                 &format!("use {}", full.join("::")),
                 "only items of this crate can be imported; the standard library is outside the portable core",
                 span(start, c.peek()),
             ));
         }
+        if standard_box {
+            self.origins
+                .box_owner(&full, &full, path, span(start, c.peek()))?;
+        }
+        if standard_vector {
+            self.origins
+                .vector_owner(&full, &full, path, span(start, c.peek()))?;
+        }
         let alias = if c.eat("as").is_some() {
             c.identifier(Some("use alias"))?.value
         } else {
             segment
         };
-        let target = absolute(&full, path, span(start, c.peek()))?;
+        if !self.primitive_owner_model.is_empty()
+            && (!super::primitive_owners::accept_import_name(&alias)
+                || !self.primitive_import_names.insert(alias.clone()))
+        {
+            return Err(unsupported(
+                "Rust primitive owner alias",
+                "each import needs one distinct ASCII identifier outside the standard crate namespace",
+                span(start, c.peek()),
+            ));
+        }
+        let target = if standard_box || standard_vector || standard_string || standard_primitive {
+            full
+        } else {
+            absolute(&full, path, span(start, c.peek()))?
+        };
+        if standard_primitive
+            && !self
+                .primitive_imports
+                .iter()
+                .any(|record| record["name"].as_str() == Some(alias.as_str()))
+        {
+            self.primitive_imports
+                .push(serde_json::json!({"name":alias,"target":target}));
+        }
         self.aliases
             .entry(path.join("."))
             .or_default()
@@ -254,7 +363,11 @@ impl RustParser {
             )
     }
 
-    pub(super) fn enum_item(&mut self) -> Result<SItem> {
+    pub(super) fn enum_item(
+        &mut self,
+        path: &[String],
+        derivations: &[serde_json::Value],
+    ) -> Result<SItem> {
         let start = self.cursor.advance();
         let name = self.cursor.identifier(Some("enum"))?.value;
         if self.cursor.is("<") {
@@ -266,10 +379,20 @@ impl RustParser {
         }
         self.cursor.expect("{", Some("enum"))?;
         let mut ctors = Vec::new();
+        let owner = path
+            .iter()
+            .chain(std::iter::once(&name))
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(".");
+        self.origins
+            .declaration(&name, path, SourceDeclaration::Data)?;
         while !self.cursor.is("}") {
-            self.attributes()?;
+            let attributes = self.attributes(None)?;
+            self.require_unit_clone_attached_variant(&attributes)?;
             let variant = self.cursor.identifier(Some("variant"))?;
             let mut fields = Vec::new();
+            let mut source_fields = Vec::new();
             if self.cursor.eat("(").is_some() {
                 while !self.cursor.is(")") {
                     fields.push(SField {
@@ -278,6 +401,7 @@ impl RustParser {
                         rocq_type: None,
                         span: None,
                     });
+                    source_fields.push(self.origins.current_type.clone());
                     if self.cursor.eat(",").is_none() {
                         break;
                     }
@@ -296,6 +420,26 @@ impl RustParser {
                     span(&variant, self.cursor.peek()),
                 ));
             }
+            let mut constructor_path = path.to_vec();
+            constructor_path.push(name.clone());
+            let mut type_path = vec!["crate".to_owned()];
+            type_path.extend(constructor_path.iter().cloned());
+            self.origins.declaration(
+                &variant.value,
+                &constructor_path,
+                SourceDeclaration::Constructor {
+                    owner: owner.clone(),
+                    fields: source_fields,
+                    result: SourceOrigin::with_type(
+                        Type::Named {
+                            path: type_path,
+                            span: None,
+                        },
+                        &[],
+                        Vec::new(),
+                    ),
+                },
+            )?;
             ctors.push(SCtor {
                 name: variant.value,
                 fields,
@@ -305,91 +449,33 @@ impl RustParser {
             }
         }
         self.cursor.expect("}", Some("enum"))?;
-        Ok(SItem::Data(SData {
+        let mut declaration = SData {
             name,
             ctors,
             span: span(&start, self.cursor.peek()),
             generated: false,
-        }))
-    }
-
-    /// Types: machine integers, `bool`, `String`, `&str`, `()`, crate types,
-    /// and `&T`/`Box<T>`, which denote the value `T` since every portable value
-    /// is immutable.
-    pub(super) fn parse_type(&mut self) -> Result<Type> {
-        let token = self.peek();
-        if self.cursor.eat("&").is_some() {
-            if self.cursor.is("'") {
-                self.cursor.advance();
-                let lifetime = self.cursor.identifier(Some("lifetime"))?;
-                if lifetime.value != "static" {
-                    return Err(unsupported(
-                        "lifetime parameter",
-                        "only 'static references are portable",
-                        span(&token, &lifetime),
-                    ));
-                }
-            }
-            if self.cursor.is("mut") {
-                return Err(unsupported(
-                    "mutable reference",
-                    "mutation is outside the portable core",
-                    span(&token, self.cursor.peek()),
-                ));
-            }
-            if self.cursor.is("str") {
-                self.cursor.advance();
-                return Ok(STRING);
-            }
-            return self.parse_type();
+            source_unit_clone_derivation: None,
+        };
+        if !self.type_namespace_model.is_empty() {
+            let proof =
+                crate::translation::source_unit_clone_derivations::capture_unit_clone_derivation(
+                    derivations,
+                    &declaration,
+                    path,
+                )?;
+            self.origins.unit_clone_facts.insert(
+                owner,
+                (
+                    proof.clone(),
+                    declaration
+                        .ctors
+                        .iter()
+                        .all(|constructor| constructor.fields.is_empty()),
+                ),
+            );
+            declaration.source_unit_clone_derivation = proof.map(Box::new);
         }
-        if self.cursor.eat("(").is_some() {
-            if self.cursor.eat(")").is_some() {
-                return Ok(UNIT);
-            }
-            return Err(unsupported(
-                "tuple type",
-                "tuples are outside the portable core",
-                span(&token, self.cursor.peek()),
-            ));
-        }
-        let segments = self.path_segments("type")?;
-        let name = segments.join("::");
-        if name == "Box" {
-            self.cursor.expect("<", Some("Box"))?;
-            let inner = self.parse_type()?;
-            self.cursor.expect(">", Some("Box"))?;
-            return Ok(inner);
-        }
-        if self.cursor.is("<") {
-            return Err(unsupported(
-                &format!("type {name}<…>"),
-                "generic types are outside the portable core",
-                span(&token, self.cursor.peek()),
-            ));
-        }
-        if segments.len() == 1
-            && let Some(fixed) = rust_fixed_type(&name)
-        {
-            return Ok(fixed);
-        }
-        if name == "bool" {
-            return Ok(BOOL);
-        }
-        if name == "String" {
-            return Ok(STRING);
-        }
-        if UNSUPPORTED_TYPES.contains(&name.as_str()) {
-            return Err(unsupported(
-                &format!("Rust type {name}"),
-                "outside the portable core",
-                span(&token, &token),
-            ));
-        }
-        Ok(Type::Named {
-            path: self.resolve(&segments, &self.module_path),
-            span: span(&token, &token),
-        })
+        Ok(SItem::Data(declaration))
     }
 
     pub(super) fn path_segments(&mut self, context: &str) -> Result<Vec<String>> {
@@ -402,105 +488,17 @@ impl RustParser {
         Ok(segments)
     }
 
-    pub(super) fn function(&mut self, path: &[String]) -> Result<SFn> {
-        let start = self.cursor.advance();
-        let name = self.cursor.identifier(Some("fn"))?.value;
-        if self.cursor.is("<") {
-            return Err(unsupported(
-                "generic function",
-                "type parameters are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        self.cursor.expect("(", Some("fn"))?;
-        let mut params = Vec::new();
-        while !self.cursor.is(")") {
-            let param_token = self.peek();
-            if self.cursor.is("mut") {
-                return Err(unsupported(
-                    "mutable parameter",
-                    "mutation is outside the portable core",
-                    span(&param_token, &param_token),
-                ));
-            }
-            if self.cursor.is("self") || self.cursor.is("&") {
-                return Err(unsupported(
-                    "method",
-                    "methods are outside the Rust frontend; declare a free function",
-                    span(&param_token, &param_token),
-                ));
-            }
-            let param_name = self.cursor.identifier(Some("parameter"))?.value;
-            self.cursor.expect(":", Some("parameter"))?;
-            let ty = self.parse_type()?;
-            params.push(SParam {
-                name: param_name,
-                default_value: None,
-                ty: Some(ty),
-                span: span(&param_token, self.cursor.peek()),
-                guard: None,
-                rocq_type: None,
-            });
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor.expect(")", Some("fn"))?;
-        if self.cursor.eat("->").is_none() {
-            return Err(unsupported(
-                "function without a result",
-                &format!("{name} returns (); only value-returning functions are portable"),
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        let ret = self.parse_type()?;
-        if self.cursor.is("where") {
-            return Err(unsupported(
-                "where clause",
-                "trait bounds are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        let body = self.block(path)?;
-        Ok(SFn {
-            name,
-            params,
-            ret: Some(ret),
-            body,
-            span: span(&start, self.cursor.peek()),
-            generated: false,
-        })
-    }
-
-    /// `const N: T = e;` is a function without parameters.
-    pub(super) fn const_item(&mut self, path: &[String]) -> Result<SFn> {
-        let start = self.cursor.advance();
-        let name = self.cursor.identifier(Some("const"))?.value;
-        self.cursor.expect(":", Some("const"))?;
-        let ret = self.parse_type()?;
-        self.cursor.expect("=", Some("const"))?;
-        let body = self.expr(path, Options::default())?;
-        self.cursor.expect(";", Some("const"))?;
-        Ok(SFn {
-            name,
-            params: Vec::new(),
-            ret: Some(ret),
-            body,
-            span: span(&start, self.cursor.peek()),
-            generated: false,
-        })
-    }
-
     /// A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
     /// expression. Statements with effects are not values of the portable core.
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
         let open = self.cursor.expect("{", Some("block"))?;
+        let previous = self.origins.enter(None);
         let mut lets = Vec::new();
         let mut tail: Option<SExpr> = None;
         while !self.cursor.is("}") {
             let token = self.peek();
             if self.cursor.is("let") {
-                lets.push(self.let_statement(path)?);
+                lets.extend(self.let_statement(path)?);
                 continue;
             }
             if self.cursor.is("return") {
@@ -559,66 +557,27 @@ impl RustParser {
                 span(&open, &close),
             ));
         };
-        Ok(lets.into_iter().rev().fold(tail, |body, binding| {
+        let origin = self.origins.origin(&tail, path);
+        let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
                 SNode::Let {
                     name: binding.name,
-                    ty: binding.ty,
+                    ty: binding.ty.map(Into::into),
                     value: Box::new(binding.value),
                     body: Box::new(body),
                 },
                 binding.span,
             )
-        }))
-    }
-
-    pub(super) fn let_statement(&mut self, path: &[String]) -> Result<Binding> {
-        let start = self.cursor.advance();
-        if self.cursor.is("mut") {
-            return Err(unsupported(
-                "mutable binding",
-                "mutation is outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        if self.cursor.is("(") {
-            return Err(unsupported(
-                "destructuring let",
-                "tuples are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        let name = self.cursor.identifier(Some("let"))?.value;
-        let ty = if self.cursor.eat(":").is_some() {
-            Some(self.parse_type()?)
-        } else {
-            None
-        };
-        if self.cursor.eat("=").is_none() {
-            return Err(unsupported(
-                "uninitialised binding",
-                "every binding needs its value",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        let value = self.expr(path, Options::default())?;
-        if self.cursor.is("else") {
-            return Err(unsupported(
-                "let-else",
-                "refutable bindings are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        self.cursor.expect(";", Some("let"))?;
-        Ok(Binding {
-            name,
-            ty,
-            value,
-            span: span(&start, self.cursor.peek()),
-        })
+        });
+        self.origins.mark(&result, origin);
+        self.origins.scope = previous;
+        Ok(result)
     }
 
     pub(super) fn main_fn(&mut self) -> Result<SMain> {
+        if !self.pure_unit_call_model.is_empty() {
+            return self.pure_unit_main();
+        }
         let start = self.cursor.advance();
         self.cursor.expect("main", Some("fn main"))?;
         self.cursor.expect("(", Some("fn main"))?;
@@ -631,19 +590,23 @@ impl RustParser {
             ));
         }
         self.module_path = Vec::new();
+        let previous = self.origins.enter(Some(std::collections::HashMap::new()));
         self.cursor.expect("{", Some("fn main"))?;
         let mut effects = Vec::new();
         while !self.cursor.is("}") {
             let token = self.peek();
             if self.cursor.is("let") {
-                let binding = self.let_statement(&[])?;
-                effects.push(SEffect::Let {
-                    name: binding.name,
-                    ty: binding.ty,
-                    value: binding.value,
-                    constant: false,
-                    span: binding.span,
-                });
+                for binding in self.let_statement(&[])? {
+                    effects.push(SEffect::Let {
+                        name: binding.name,
+                        ty: binding.ty,
+                        value: binding.value,
+                        constant: false,
+                        span: binding.span,
+
+                        source_pure_unit_call: None,
+                    });
+                }
                 continue;
             }
             if token.kind == TokenKind::Macro {
@@ -657,11 +620,20 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
-        self.cursor.expect("}", Some("fn main"))?;
+        let close = self.cursor.expect("}", Some("fn main"))?;
+        self.origins.scope = previous;
         Ok(SMain {
             effects,
-            span: span(&start, self.cursor.peek()),
+            span: if self.empty_option_source_model.is_empty() {
+                span(&start, self.cursor.peek())
+            } else {
+                Some(super::Span {
+                    start: start.start,
+                    end: close.end,
+                })
+            },
             sequential_async: false,
+            source_runtime_worker: None,
         })
     }
 

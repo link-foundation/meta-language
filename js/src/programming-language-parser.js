@@ -1,7 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import { gunzipSync } from 'node:zlib';
 import { Parser as WebTreeSitterParser } from 'web-tree-sitter';
+import './tree-sitter-runtime.js';
 
 import { isToken } from './builtin-grammar.js';
 import { canonicalLanguageName, languageEntry } from './language-catalog.js';
@@ -13,6 +11,8 @@ import { ByteRange, LinkFlags, Point, SourceSpan } from './primitives.js';
 import { loadGrammarLanguage } from './grammar-tiering.js';
 import { isNativeGrammar, nativeAdapter, parseNative } from './native-grammar-parser.js';
 import { sourceBoundaries } from './source-boundaries.js';
+import { readCompressedGrammarAsset } from './grammar-asset-path.js';
+import { readRuntimeProjectData } from './project-data-loader.js';
 
 const encoder = new TextEncoder();
 const GRAMMAR_DIRECTORY = new URL('./vendor/grammars/', import.meta.url);
@@ -23,17 +23,13 @@ const GRAMMAR_DIRECTORY = new URL('./vendor/grammars/', import.meta.url);
  * JavaScript and Rust runtimes parse with byte-identical generated parsers.
  */
 export const GRAMMAR_LOCK = Object.freeze(
-  JSON.parse(await readFile(new URL('grammar-lock.json', GRAMMAR_DIRECTORY), 'utf8')),
+  readRuntimeProjectData(new URL('grammar-lock.json', GRAMMAR_DIRECTORY)),
 );
 
 // The runtime is web-tree-sitter's own build patched to read UTF-8 input (see
 // vendor/web-tree-sitter/runtime-lock.json). The published build reads UTF-16,
 // which doubles tree-sitter's per-byte error-recovery costs, so malformed input
 // recovered differently than in the native runtime, which parses UTF-8.
-await WebTreeSitterParser.init({
-  wasmBinary: gunzipSync(await readFile(new URL('./vendor/web-tree-sitter/web-tree-sitter.wasm.gz', import.meta.url))),
-});
-
 // Each grammar is compiled on its first use and kept for the process: every
 // loaded grammar stays in the runtime's WebAssembly memory, so loading all of
 // them up front cost every importer the memory of every grammar. See
@@ -46,7 +42,11 @@ function grammarLanguage(id) {
   if (!Object.hasOwn(GRAMMAR_LOCK.grammars, id) || GRAMMAR_LOCK.grammars[id].oracle) return undefined;
   let language = GRAMMARS.get(id);
   if (!language) {
-    const binary = gunzipSync(readFileSync(new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY)));
+    const binary = readCompressedGrammarAsset(
+      `js/src/vendor/grammars/${id}.wasm.gz`,
+      new URL(`${id}.wasm.gz`, GRAMMAR_DIRECTORY),
+      GRAMMAR_LOCK.grammars[id].wasmSha256,
+    );
     language = loadGrammarLanguage(binary);
     GRAMMARS.set(id, language);
   }

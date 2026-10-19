@@ -5,7 +5,7 @@ use super::{
     BOOL, BinaryOp, Binder, Checker, Comparison, Ctor, DataDecl, Decl, Effect, Entry, Env, Expr,
     Field, FnDecl, HashMap, Hints, INT, Item, Language, Main, NAT, Node, Param, Plan, Proof,
     ProofScope, Prop, Result, SEffect, SExpr, SItem, SMain, SProp, SPropNode, STRING, Scope,
-    ShowStyle, Span, TheoremDecl, TheoremHead, Type, UNIT, array, build_items, coerce, data, fixed,
+    ShowStyle, Span, TheoremDecl, TheoremHead, Type, UNIT, build_items, coerce, data, fixed,
     flatten, full, normalise_proof, plain_binary, text_lit, type_error, unsupported,
 };
 
@@ -31,7 +31,17 @@ impl Checker {
                 SItem::Data(data) => data.generated,
                 _ => false,
             };
-            if name.starts_with("ml_") && !generated {
+            if let SItem::Fn(function) = item
+                && function.source_loop.is_some()
+            {
+                super::super::source_loops::validate_source_loop_at(
+                    function,
+                    self.language.as_str(),
+                    &full_name,
+                )?;
+            }
+            let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
+            if name.starts_with("ml_") && !generated && !owned_loop {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -65,6 +75,10 @@ impl Checker {
                     span,
                     generated: data.generated,
                     output: false,
+                    source_unit_clone_derivation: data
+                        .source_unit_clone_derivation
+                        .as_deref()
+                        .cloned(),
                     full_name: full_name.clone(),
                     module_path,
                 }),
@@ -72,6 +86,8 @@ impl Checker {
                     name: name.clone(),
                     params: Vec::new(),
                     ret: UNIT,
+                    semantic_ret: None,
+                    annotated_ret: None,
                     body: Expr::new(Node::Unit, UNIT),
                     span,
                     generated: function.generated,
@@ -80,6 +96,18 @@ impl Checker {
                     recursive: false,
                     decreasing: None,
                     mutual: false,
+                    source_signature: None,
+                    source_primitive_owners: function.source_primitive_owners.clone(),
+                    source_empty_option: function.source_empty_option.as_deref().cloned(),
+                    source_type_namespace: function.source_type_namespace.as_deref().cloned(),
+                    source_loop: function.source_loop.as_deref().cloned(),
+                    source_pure_unit: function.source_pure_unit.as_deref().cloned(),
+                    source_local_state: function.source_local_state.as_deref().cloned(),
+                    source_const_function: function.source_const_function.as_deref().cloned(),
+                    source_diagnostic_attributes: function
+                        .source_diagnostic_attributes
+                        .as_deref()
+                        .cloned(),
                 }),
                 SItem::Theorem(theorem) => Decl::Theorem(TheoremDecl {
                     name: name.clone(),
@@ -169,16 +197,56 @@ impl Checker {
             for param in &item.params {
                 params.push(Param {
                     name: param.name.clone(),
+                    optional: param.optional,
                     ty: self.resolve_type(param.ty.as_ref(), path, item.span)?,
                     guard: param.guard.clone(),
                     default_value: param.default_value.clone(),
                 });
             }
-            let ret = self.resolve_type(item.ret.as_ref(), path, item.span)?;
+            let ret = self.resolve_type(
+                item.semantic_ret.as_ref().or(item.ret.as_ref()),
+                path,
+                item.span,
+            )?;
+            let annotated_ret = item
+                .semantic_ret
+                .as_ref()
+                .map(|_| self.resolve_type(item.ret.as_ref(), path, item.span))
+                .transpose()?;
+            let mut source_signature = item.source_signature.as_deref().cloned();
+            if let Some(signature) = source_signature.as_mut() {
+                for position in signature
+                    .parameters
+                    .iter_mut()
+                    .chain(std::iter::once(&mut signature.result))
+                {
+                    position.ty = self.resolve_type(Some(&position.ty), path, item.span)?;
+                }
+                super::super::source_signatures::validate_source_signature(
+                    signature,
+                    &params
+                        .iter()
+                        .map(|parameter| parameter.ty.clone())
+                        .collect::<Vec<_>>(),
+                    &ret,
+                    self.language.as_str(),
+                )?;
+            }
+            if let Some(annotation) = &annotated_ret
+                && !super::optional_values::annotation_compatible(&ret, annotation)
+            {
+                return Err(type_error(
+                    "the semantic return type must retain the annotated value types",
+                    item.span,
+                ));
+            }
             let name = full(path, &item.name);
             if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
+                entry.source_signature = source_signature;
                 entry.params = params;
                 entry.ret = ret;
+                entry.semantic_ret.clone_from(&item.semantic_ret);
+                entry.annotated_ret = annotated_ret;
             }
             self.signatures.insert(name);
         }
@@ -197,11 +265,29 @@ impl Checker {
                             .map(|param| (param.name.clone(), param.ty.clone()))
                             .collect(),
                         known: HashMap::new(),
+                        immutable_products: HashMap::new(),
                     };
                     let body = self.expr(&item.body, &env, path, Some(&ret), false)?;
                     let body = self.coerce(body, &ret, item.span)?;
                     if let Some(Decl::Fn(entry)) = self.decls.get_mut(&name) {
                         entry.body = body;
+                        if let Some(proof) = &entry.source_local_state {
+                            entry.source_local_state = Some(
+                                super::super::owned_local_state::prepare_owned_local_state_proof(
+                                    proof,
+                                    &entry.body,
+                                )?,
+                            );
+                        }
+                        if let Some(proof) = &entry.source_primitive_owners {
+                            entry.source_primitive_owners=Some(super::super::source_primitive_owners::prepare_primitive_owner_proof(proof,&entry.body)?);
+                        }
+                        if entry.source_loop.is_some() {
+                            super::super::source_loops::validate_source_loop(
+                                entry,
+                                self.language.as_str(),
+                            )?;
+                        }
                     }
                 }
                 SItem::Theorem(item) => {
@@ -219,6 +305,7 @@ impl Checker {
                             .map(|binder| (binder.name.clone(), binder.ty.clone()))
                             .collect(),
                         known: HashMap::new(),
+                        immutable_products: HashMap::new(),
                     };
                     let mut prop = self.prop(&item.prop, &env, path)?;
                     // `theorem t : ∀ n, P n` and `theorem t (n) : P n` state the same
@@ -265,8 +352,8 @@ impl Checker {
         let Some(ty) = ty else {
             return Err(type_error("missing type annotation", span));
         };
-        if let Some(element) = ty.element() {
-            return Ok(array(self.resolve_type(Some(element), path, span)?));
+        if !ty.children().is_empty() {
+            return ty.map_children(|child| self.resolve_type(Some(child), path, span));
         }
         let Type::Named {
             path: segments,
@@ -387,6 +474,7 @@ impl Checker {
                     value,
                     constant,
                     span,
+                    source_pure_unit_call,
                 } => {
                     let expected = match ty {
                         Some(ty) => Some(self.resolve_type(Some(ty), &[], *span)?),
@@ -396,12 +484,19 @@ impl Checker {
                     if let Some(expected) = &expected {
                         value = self.coerce(value, expected, *span)?;
                     }
+                    let immutable_product = matches!(value.ty, Type::Tuple { .. })
+                        && super::arrays::immutable_product_value(&value, &env.immutable_products);
                     env.bind_local(name, value.ty.clone());
+                    if immutable_product {
+                        env.immutable_products.insert(name.clone(), true);
+                    }
                     effects.push(Effect::Let {
                         name: name.clone(),
                         value,
                         constant: *constant,
                         span: *span,
+
+                        source_pure_unit_call: source_pure_unit_call.clone(),
                     });
                 }
                 SEffect::Assert { prop, span } => effects.push(Effect::Assert {
@@ -414,6 +509,7 @@ impl Checker {
             effects,
             span: main.span,
             sequential_async: main.sequential_async,
+            source_runtime_worker: main.source_runtime_worker.clone(),
         })
     }
 
@@ -425,6 +521,44 @@ impl Checker {
         style: ShowStyle,
     ) -> Result<Expr> {
         let value = self.expr(expr, env, path, None, false)?;
+        let refusal = crate::translation::primitive_value_rules::read_number_display_refusal(
+            self.language.as_str(),
+            value.ty.kind(),
+        );
+        if !refusal.is_empty() {
+            return Err(unsupported("Rust Float display", &refusal, expr.span));
+        }
+        if let Type::Option { element, .. } = &value.ty {
+            if !crate::translation::optional_value_rules::accept_optional_primitive_kind(
+                element.kind(),
+            ) {
+                return Err(unsupported(
+                    "output of nullable structured values",
+                    "this output needs its source structured-value formatter",
+                    expr.span,
+                ));
+            }
+            if style == ShowStyle::JsFormatFirst && **element == Type::String {
+                refuse_format(style, element, false, expr.span)?;
+            }
+            if matches!(
+                style,
+                ShowStyle::JsFormatNumber | ShowStyle::JsFormatInteger
+            ) {
+                return Err(unsupported(
+                    "numeric format of a nullable value",
+                    "the format directive converts each absent value before printing; this conversion needs its own operational formatter",
+                    expr.span,
+                ));
+            }
+            return Ok(Expr::new(
+                Node::OptionalText {
+                    arg: Box::new(value),
+                    console: style.is_console(),
+                },
+                STRING,
+            ));
+        }
         let bigint = matches!(value.ty, Type::Int | Type::Nat);
         refuse_format(style, &value.ty, bigint, expr.span)?;
         match value.ty {
@@ -533,6 +667,13 @@ impl Checker {
                     _ => BinaryOp::Ge,
                 };
                 let (left, right) = self.operands(&pair.left, &pair.right, env, path, prop.span)?;
+                if matches!(left.ty, Type::Tuple { .. }) {
+                    return Err(unsupported(
+                        "comparison of tuples",
+                        "tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements",
+                        prop.span,
+                    ));
+                }
                 if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {
                     return Err(type_error(
                         format!("ordering on {}", left.ty.key()),

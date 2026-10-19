@@ -44,8 +44,9 @@ fn repository_path(path: &str) -> PathBuf {
 }
 
 fn read(path: &str) -> Vec<u8> {
-    let path = repository_path("parity/fixtures/issue-195-conformance").join(path);
-    fs::read(&path).unwrap_or_else(|error| panic!("{} is readable: {error}", path.display()))
+    super::fixture_source_bytes::read_fixture_source_bytes(
+        repository_path("parity/fixtures/issue-195-conformance").join(path),
+    )
 }
 
 fn read_text(path: &str) -> String {
@@ -53,7 +54,11 @@ fn read_text(path: &str) -> String {
 }
 
 fn read_json(path: &str) -> Value {
-    serde_json::from_slice(&read(path)).expect("valid JSON fixture")
+    let path = repository_path("parity/fixtures/issue-195-conformance").join(path);
+    let actual =
+        super::project_data::resolve_project_data_path(path).expect("one fixture storage format");
+    super::project_data::read_project_data(&fs::read_to_string(actual).expect("fixture Links data"))
+        .expect("valid structured fixture")
 }
 
 fn sha256(bytes: impl AsRef<[u8]>) -> String {
@@ -187,10 +192,14 @@ fn region_problems(language: &str, entry: &Value, host: &Value) -> (Vec<String>,
 #[test]
 fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned_inputs() {
     let manifest = read_json("manifest.json");
-    let lock: Value = serde_json::from_slice(
-        &fs::read(repository_path("rust/src/data/grammar-lock.json")).expect("grammar lock"),
+    let lock_path = super::project_data::resolve_project_data_path(repository_path(
+        "rust/src/data/grammar-lock.json",
+    ))
+    .expect("one grammar lock storage format");
+    let lock: Value = super::project_data::read_project_data(
+        &fs::read_to_string(lock_path).expect("grammar lock"),
     )
-    .expect("grammar lock JSON");
+    .expect("grammar lock Links data");
     assert_eq!(manifest["oracle"]["tool"], lock["treeSitterCli"]);
     for input in ["cases.json", "error-recovery.json"] {
         assert_eq!(
@@ -209,7 +218,13 @@ fn issue_195_conformance_fixtures_record_their_provenance_and_match_their_pinned
         let revision = text(grammar, "revision");
         assert!(revision.len() == 40 && revision.bytes().all(|byte| byte.is_ascii_hexdigit()));
         assert_ne!(
-            fs::read(repository_path(text(grammar, "license"))).expect("grammar license"),
+            fs::read(
+                super::project_data::resolve_project_data_path(repository_path(text(
+                    grammar, "license"
+                )))
+                .expect("one project data storage format")
+            )
+            .expect("grammar license"),
             [] as [u8; 0]
         );
         assert_eq!(

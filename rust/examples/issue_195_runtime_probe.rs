@@ -1,15 +1,21 @@
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 
+use meta_language::project_data::{read_project_data_file, read_project_file_bytes};
+use meta_language::structured_data_records::structured_data_record_to_lino;
 use meta_language::{
     Link, LinkNetwork, LinkType, ParseConfiguration, ProgramConstructStatus, ProgramFact,
     ProgramProjectContext, ProgramRange, ProgramRepresentation, analyze_program, construct_program,
     decode_program_translation, translate_program,
 };
-use serde::Deserialize;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+
+#[path = "support/issue_195_probe_canonical.rs"]
+mod probe_canonical;
+#[path = "support/issue_195_probe_wire.rs"]
+mod probe_wire;
 
 fn main() {
     let corpus = corpus();
@@ -84,7 +90,7 @@ fn main() {
     let diagnostics = diagnostic_observations(&corpus);
 
     let fixture_digest =
-        Sha256::digest(fs::read(corpus_path()).expect("shared corpus is readable"))
+        Sha256::digest(read_project_file_bytes(corpus_path()).expect("shared corpus is readable"))
             .iter()
             .fold(String::with_capacity(64), |mut hex, byte| {
                 use std::fmt::Write as _;
@@ -105,17 +111,23 @@ fn main() {
         ("translations", translations),
     ];
 
-    // With an output path the probe writes one NDJSON record per section entry,
-    // so neither runtime holds the whole observation as one JSON string.
-    if let Some(path) = std::env::args_os().nth(1) {
+    // Wire modes use stdout; an artifact path selects inspectable LiNo storage.
+    let output = std::env::args_os().nth(1);
+    if output.as_deref() == Some(std::ffi::OsStr::new("--ndjson")) {
+        let stdout = std::io::stdout();
+        let mut out = BufWriter::new(stdout.lock());
+        probe_wire::write_runtime_probe_wire_records(&mut out, &fixture_digest, &sections)
+            .expect("probe wire records serialize");
+        out.flush().expect("probe output is writable");
+    } else if let Some(path) = output {
         let mut out = BufWriter::new(File::create(path).expect("probe output is writable"));
         let mut record = |section: &str, index: Value, value: &Value| {
-            serde_json::to_writer(
-                &mut out,
+            let frame = structured_data_record_to_lino(
                 &json!({ "section": section, "index": index, "value": value }),
             )
-            .expect("probe record serializes");
-            out.write_all(b"\n").expect("probe output is writable");
+            .expect("probe Links record serializes");
+            out.write_all(frame.as_bytes())
+                .expect("probe output is writable");
         };
         record("schemaVersion", Value::Null, &json!(1));
         record("fixtureDigest", Value::Null, &json!(fixture_digest));
@@ -145,8 +157,7 @@ fn corpus_path() -> PathBuf {
 }
 
 fn corpus() -> Value {
-    serde_json::from_str(&fs::read_to_string(corpus_path()).expect("shared corpus is readable"))
-        .expect("shared corpus is valid JSON")
+    read_project_data_file(corpus_path()).expect("shared corpus is inspectable project data")
 }
 
 /// Observations of the `language` grammar cases in `parity/fixtures/{fixture}`.
@@ -154,12 +165,8 @@ fn grammar_case_observations(language: &str, fixture: &str) -> Vec<Value> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures")
         .join(fixture);
-    let text = fs::read_to_string(path).expect("grammar cases are readable");
-    // The deep-nesting cases hold links nested further than serde_json's
-    // default recursion limit.
-    let mut deserializer = serde_json::Deserializer::from_str(&text);
-    deserializer.disable_recursion_limit();
-    let cases = Value::deserialize(&mut deserializer).expect("grammar cases are valid JSON");
+    let cases: Value =
+        read_project_data_file(path).expect("grammar cases are inspectable project data");
     cases["cases"]
         .as_array()
         .expect("grammar cases")
@@ -171,8 +178,7 @@ fn grammar_case_observations(language: &str, fixture: &str) -> Vec<Value> {
 fn inventory() -> Value {
     let path =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../parity/language-grammar-inventory.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("grammar inventory is readable"))
-        .expect("grammar inventory is valid JSON")
+    read_project_data_file(path).expect("grammar inventory is inspectable project data")
 }
 
 fn network_observation(language: &str, source: &str) -> Value {
@@ -355,7 +361,7 @@ fn node_signature(link: &Link) -> String {
         })
     });
     let flags = metadata.flags();
-    serde_json::to_string(&json!({
+    probe_canonical::serialize_canonical_observation(&json!({
         "type": match metadata.link_type() {
             Some(LinkType::Syntax) => "syntax",
             Some(LinkType::Token) => "token",
@@ -372,7 +378,6 @@ fn node_signature(link: &Link) -> String {
             "isExtra": flags.is_extra(),
         },
     }))
-    .expect("node signature serializes")
 }
 
 fn canonical_parent<'a>(network: &'a LinkNetwork, child: &Link) -> Option<&'a Link> {
@@ -517,9 +522,8 @@ fn diagnostic_observations(corpus: &Value) -> Vec<Value> {
         .collect()
 }
 
-fn sorted(mut values: Vec<Value>) -> Vec<Value> {
-    values.sort_by_key(ToString::to_string);
-    values
+fn sorted(values: Vec<Value>) -> Vec<Value> {
+    probe_canonical::sort_observation_values(values)
 }
 
 fn facts(values: &[ProgramFact]) -> Vec<Value> {

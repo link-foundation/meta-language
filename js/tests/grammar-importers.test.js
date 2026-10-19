@@ -1,3 +1,5 @@
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -15,9 +17,7 @@ import {
   serializeGrammar,
 } from '../src/index.js';
 
-const corpus = JSON.parse(
-  readFileSync(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url)),
-);
+const corpus = readProjectData(new URL('../../parity/fixtures/grammar-importers.json', import.meta.url));
 
 const importers = {
   abnf: importAbnf,
@@ -65,10 +65,10 @@ test('JavaScript imports every established Rust fixture for the five shared form
   for (const [format, files] of establishedFixtures) {
     const directory = format === 'pest' ? 'peg' : format.replace('-json', '');
     for (const file of files) {
-      const source = readFileSync(new URL(
+      const source = readFileSync(resolveProjectDataPath(new URL(
         `../../rust/tests/fixtures/grammar/${directory}/${file}`,
         import.meta.url,
-      ), 'utf8');
+      )), 'utf8');
       const grammar = importers[format](source);
       assert.ok(grammar.startRule(), `${format}/${file} has a start rule`);
       assert.equal(grammar.undefinedNonterminals().length, format === 'pest' ?

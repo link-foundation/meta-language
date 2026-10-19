@@ -1,0 +1,1 @@
+Keep JavaScript joined child chains lazy when a silent rule has multiple meaningful children, and construct action scratch nodes only for rules with actions. Preserve original tagging, outcomes, budgets and complete source requirements; full workload fit remains a CI check.

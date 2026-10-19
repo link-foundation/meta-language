@@ -10,8 +10,14 @@ use serde_json::Value;
 fn evidence() -> Value {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../parity/fixtures/issue-195-evidence.json");
-    serde_json::from_str(&fs::read_to_string(path).expect("shared evidence corpus is readable"))
-        .expect("shared evidence corpus is valid JSON")
+    super::project_data::read_project_data(
+        &fs::read_to_string(
+            super::project_data::resolve_project_data_path(path)
+                .expect("one project data storage format"),
+        )
+        .expect("shared evidence corpus is readable"),
+    )
+    .expect("shared evidence corpus is valid JSON")
 }
 
 #[test]

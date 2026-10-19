@@ -121,6 +121,7 @@ export function renderNativeGrammar(grammar) {
     lines.push(`scanner ${renderName(scanner.name)} tokens(${scanner.tokens.map(renderName).join(', ')}) `
       + `operations(${scanner.operations.map((operation) => renderOperation(operation, codec)).join(', ')})`);
   }
+  for (const lexer of declarations.lexers ?? []) lines.push(`lexer ${renderName(lexer.name)} = ${renderNativeExpression(lexer.expression)}`);
   for (const rule of grammar.rules.values()) {
     let line = `rule ${renderName(rule.name)}${parameters(rule.parameters)} = ${rule.kind} ${renderNativeExpression(rule.expression)}`;
     if (rule.channel !== undefined) line += ` channel(${renderName(rule.channel)})`;
@@ -189,7 +190,7 @@ export function parseNativeGrammar(source) {
   let startLine = 0;
   let sourceFormat = null;
   const declarations = {
-    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [],
+    matching: null, settling: null, imports: [], modes: [], extras: [], conflicts: [], precedences: [], macros: [], scanners: [], lexers: [],
   };
   for (const [index, text] of source.split('\n').entries()) {
     const line = index + 1;
@@ -236,6 +237,12 @@ export function parseNativeGrammar(source) {
       declarations.imports.push(cursor.name());
     } else if (directive === 'mode') {
       declarations.modes.push(cursor.name());
+    } else if (directive === 'lexer') {
+      const name = cursor.name();
+      cursor.skipSpaces();
+      cursor.expect('=');
+      cursor.skipSpaces();
+      declarations.lexers.push({ name, expression: cursor.expression() });
     } else if (directive === 'extra') {
       declarations.extras.push(cursor.expression());
     } else if (directive === 'conflict') {

@@ -5,6 +5,8 @@
 // negative inputs with their expected rejections and a grammar mutation that
 // changes the outcome. Everything here runs through the public package API;
 // docs/grammar/feature-union.md is the specification.
+import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -29,8 +31,8 @@ import { OPERATION_FORMS } from '../src/grammar-feature-forms.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 const repositoryRoot = new URL('../../', import.meta.url);
-const fixture = JSON.parse(readFileSync(new URL('parity/fixtures/grammar-feature-union.json', repositoryRoot), 'utf8'));
-const vision = readFileSync(new URL('docs/vision.md', repositoryRoot), 'utf8');
+const fixture = readProjectData(new URL('parity/fixtures/grammar-feature-union.json', repositoryRoot));
+const vision = readFileSync(resolveProjectDataPath(new URL('docs/vision.md', repositoryRoot)), 'utf8');
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -315,7 +317,7 @@ test('external scanners and semantic actions are executable link definitions', (
   // The executor interprets those links; it compiles no host code.
   const runtime = new URL('js/src/grammar-runtime/', repositoryRoot);
   for (const file of readdirSync(runtime)) {
-    const source = readFileSync(new URL(file, runtime), 'utf8');
+    const source = readFileSync(resolveProjectDataPath(new URL(file, runtime)), 'utf8');
     assert.doesNotMatch(source, /\beval\s*\(|new Function\s*\(|import\s*\(/u, file);
   }
   observe(['scannersAndActionsExecutableAsLinks'], context.name);
@@ -359,11 +361,11 @@ test('no JavaScript source module imports peggy, which is only a development dep
       const location = new URL(entry.name + (entry.isDirectory() ? '/' : ''), directory);
       if (entry.isDirectory()) pending.push(location);
       else if (/\.[cm]?js$/u.test(entry.name)) {
-        assert.doesNotMatch(readFileSync(location, 'utf8'), /from\s+['"]peggy['"]|require\(\s*['"]peggy['"]\s*\)/u, location.pathname);
+        assert.doesNotMatch(readFileSync(resolveProjectDataPath(location), 'utf8'), /from\s+['"]peggy['"]|require\(\s*['"]peggy['"]\s*\)/u, location.pathname);
       }
     }
   }
-  const manifest = JSON.parse(readFileSync(new URL('js/package.json', repositoryRoot), 'utf8'));
+  const manifest = readProjectData(new URL('js/package.json', repositoryRoot));
   assert.equal(manifest.dependencies.peggy, undefined);
   assert.equal(manifest.devDependencies.peggy, '5.1.0');
 });

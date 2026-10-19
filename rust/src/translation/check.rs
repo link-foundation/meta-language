@@ -26,13 +26,25 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
 
+mod array_bindings;
+mod array_callbacks;
+mod array_from;
 mod arrays;
+mod callables;
+mod collections;
+mod expectation;
 mod expressions;
 mod externals;
 mod items;
 mod matches;
 mod math;
+mod optional_values;
+mod primitive_methods;
+mod records;
 mod recursion;
+mod string_code_unit_template;
+mod strings;
+mod type_queries;
 pub use self::recursion::*;
 
 /// Checks a surface program into the portable core.
@@ -40,7 +52,61 @@ pub use self::recursion::*;
 /// # Errors
 /// On name, type and exhaustiveness errors, and on constructs outside the portable core.
 pub fn check_program(surface: &SProgram) -> Result<Program> {
+    super::source_diagnostic_attributes::validate_surface(surface)?;
+    super::source_unit_clone_derivations::validate_surface_unit_clone_derivations(surface)?;
     Checker::new(surface.language, surface.externals.clone()).program(surface)
+}
+
+/// Reuse checked pattern semantics at the source-free graph boundary.
+pub(crate) fn read_checked_match_pattern_bindings(
+    pattern: &Pattern,
+    ty: &Type,
+    declarations: &[Decl],
+) -> Result<Vec<Binder>> {
+    let surface = match pattern {
+        Pattern::Wild => SCasePattern::Wild,
+        Pattern::Bind { name } => SCasePattern::Bind { name: name.clone() },
+        Pattern::NatZero => SCasePattern::NatZero,
+        Pattern::NatSucc { name } => SCasePattern::NatSucc { name: name.clone() },
+        Pattern::Ctor { ctor, binds, .. } => SCasePattern::Ctor {
+            path: vec![ctor.clone()],
+            binds: binds.clone(),
+        },
+    };
+    let mut checker = Checker::new(Language::JavaScript, Vec::new());
+    checker.decls = declarations
+        .iter()
+        .map(|declaration| (declaration.full_name().to_owned(), declaration.clone()))
+        .collect();
+    let mut environment = Env::default();
+    let verified_pattern = checker.pattern(&surface, ty, &mut environment, None)?;
+    if verified_pattern != *pattern {
+        return Err(type_error(
+            "a checked pattern has inconsistent ownership",
+            None,
+        ));
+    }
+    let mut names = HashSet::new();
+    verified_pattern
+        .bound()
+        .into_iter()
+        .map(|name| {
+            if name.is_empty() || !names.insert(name) {
+                return Err(type_error(
+                    "a checked pattern binds the same name twice",
+                    None,
+                ));
+            }
+            let ty = environment
+                .vars
+                .get(name)
+                .ok_or_else(|| type_error("a checked pattern binding is unresolved", None))?;
+            Ok(Binder {
+                name: name.to_owned(),
+                ty: ty.clone(),
+            })
+        })
+        .collect()
 }
 
 /// Inserts the source language's implicit conversions, which only JavaScript has.
@@ -65,6 +131,69 @@ pub fn coerce(
             ty: ty.clone(),
             ..value
         });
+    }
+    let absence = match &value.node {
+        Node::None { absence } => absence.as_str(),
+        _ => "",
+    };
+    let same_element = matches!(ty, Type::Option { element, .. } if value.ty.same(element));
+    let optional = super::optional_value_rules::read_optional_coercion_operation(
+        language.as_str(),
+        ty.kind(),
+        value.ty.kind(),
+        value.kind(),
+        ty.accepts_absence(absence),
+        ty.accepts_absence("undefined"),
+        same_element,
+    );
+    match optional.as_str() {
+        "absence-error" => {
+            let Type::Option {
+                absence: expected, ..
+            } = ty
+            else {
+                unreachable!("the generated absence check requires Option")
+            };
+            return Err(type_error(
+                format!("expected {expected} absence but found {absence}"),
+                span,
+            ));
+        }
+        "none" => {
+            return Ok(Expr {
+                ty: ty.clone(),
+                ..value
+            });
+        }
+        "unit" | "discard-unit" => {
+            let absent = Expr::new(
+                Node::None {
+                    absence: "undefined".to_owned(),
+                },
+                ty.clone(),
+            );
+            return Ok(if optional == "unit" {
+                absent
+            } else {
+                Expr::new(
+                    Node::Let {
+                        name: "ml_discarded_unit".to_owned(),
+                        value: Box::new(value),
+                        body: Box::new(absent),
+                    },
+                    ty.clone(),
+                )
+            });
+        }
+        "some" => {
+            return Ok(Expr::new(
+                Node::Some {
+                    value: Box::new(value),
+                },
+                ty.clone(),
+            ));
+        }
+        _ => {}
     }
     if language == Language::JavaScript && value.ty == Type::Nat && *ty == Type::Int {
         return cast_to(value, &INT, Flavor::Exact, span);
@@ -167,6 +296,7 @@ struct Fact {
 struct Env {
     vars: HashMap<String, Type>,
     known: HashMap<String, Fact>,
+    immutable_products: HashMap<String, bool>,
 }
 
 impl Env {
@@ -177,6 +307,7 @@ impl Env {
     /// Binds a local, forgetting constructor facts the new binding shadows.
     fn bind_local(&mut self, name: &str, ty: Type) {
         self.vars.insert(name.to_owned(), ty);
+        self.immutable_products.remove(name);
         self.known.retain(|variable, fact| {
             variable != name && !fact.binds.iter().any(|bind| bind == name)
         });
@@ -205,7 +336,7 @@ enum NPat {
     Bind(String),
     Nat { succ: bool, args: Vec<Self> },
     Data { ctor: String, args: Vec<Self> },
-    Lit { value: SExpr, key: String },
+    Lit { value: Box<SExpr>, key: String },
 }
 
 impl NPat {
@@ -230,17 +361,13 @@ impl NPat {
 
     /// A natural literal pattern's value.
     fn nat_value(&self) -> Option<Decimal> {
-        match self {
-            Self::Lit {
-                value:
-                    SExpr {
-                        node: SNode::Num { value, .. },
-                        ..
-                    },
-                ..
-            } => Decimal::parse(value),
-            _ => None,
-        }
+        let Self::Lit { value, .. } = self else {
+            return None;
+        };
+        let SNode::Num { value, .. } = &value.node else {
+            return None;
+        };
+        Decimal::parse(value)
     }
 
     fn lit_key(&self) -> Option<&str> {
@@ -320,6 +447,7 @@ fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExp
 
 struct Checker {
     language: Language,
+    reference_semantics: bool,
     /// Declaration full names in declaration order.
     order: Vec<String>,
     decls: HashMap<String, Decl>,
@@ -337,6 +465,7 @@ impl Checker {
         modules.insert(String::new(), Scope::default());
         Self {
             language,
+            reference_semantics: false,
             order: Vec::new(),
             decls: HashMap::new(),
             signatures: HashSet::new(),
@@ -347,6 +476,16 @@ impl Checker {
     }
 
     fn program(mut self, surface: &SProgram) -> Result<Program> {
+        self.reference_semantics =
+            super::surface_raw_metadata_rules::select_surface_reference_semantics(
+                surface
+                    .reference_semantics
+                    .as_ref()
+                    .and_then(super::surface::SurfaceRawMetadata::as_boolean)
+                    .unwrap_or(false),
+                false,
+                false,
+            );
         self.declare(&surface.items, &[])?;
         let items = self.check_items(&surface.items)?;
         let main = match &surface.main {
@@ -364,7 +503,8 @@ impl Checker {
             .filter_map(|name| self.decls.remove(name))
             .collect();
         analyse_recursion(&mut declarations);
-        Ok(Program {
+        let mut program = Program {
+            reference_semantics: self.reference_semantics,
             schema_version: 1,
             source_language: self.language,
             items,
@@ -374,7 +514,21 @@ impl Checker {
             aborts_threaded: false,
             imports: surface.imports.clone(),
             externals: self.externals,
-        })
+            source_pure_unit_calls: surface.source_pure_unit_calls.clone(),
+            source_runtime_shell: surface.source_runtime_shell.clone(),
+        };
+        super::source_unit_clone_derivations::validate_source_unit_clone_derivations(&program)?;
+        super::source_primitive_owners::validate_source_primitive_owners(&program)?;
+        super::source_empty_options::validate_source_empty_options(&program)?;
+        super::source_type_namespaces::validate_source_type_namespaces(&program)?;
+        super::source_pure_unit_calls::validate_source_pure_unit_calls(&program)?;
+        super::owned_local_state::validate_owned_local_state(&program)?;
+        super::source_const_functions::validate_const_functions(&program)?;
+        if let Some(source) = &surface.source_runtime_shell {
+            super::runtime_shell::capture_program(&mut program, source)?;
+        }
+        super::runtime_shell::validate_program(&program)?;
+        Ok(program)
     }
 
     fn scope_mut(&mut self, path: &[String]) -> &mut Scope {

@@ -1,7 +1,8 @@
 //! `Math` and `Number` functions, whose arguments are Numbers.
 
 use super::{
-    BOOL, Checker, Env, Expr, FLOAT, Node, Result, SArrayItem, Span, array, type_error, unsupported,
+    BOOL, Checker, Env, Expr, FLOAT, Node, Result, SArrayItem, Span, Type, array, type_error,
+    unsupported,
 };
 
 /// The functions whose value is a boolean.
@@ -53,7 +54,19 @@ impl Checker {
         let args = args
             .iter()
             .map(|item| {
-                let arg = self.expr(&item.value, env, path, Some(&FLOAT), false)?;
+                let mut arg = self.expr(&item.value, env, path, Some(&FLOAT), false)?;
+                if matches!(arg.ty, Type::Option { .. }) {
+                    if PREDICATES.contains(&op) {
+                        return Ok(Expr::new(
+                            Node::OptionalPredicate {
+                                arg: Box::new(arg),
+                                op: op.to_owned(),
+                            },
+                            BOOL,
+                        ));
+                    }
+                    arg = self.number_value(arg, item.value.span.or(span))?;
+                }
                 if !arg.ty.is_float() {
                     return Err(type_error(
                         format!(
@@ -66,6 +79,12 @@ impl Checker {
                 Ok(arg)
             })
             .collect::<Result<Vec<_>>>()?;
+        if PREDICATES.contains(&op)
+            && let Some(value) = args.first()
+            && matches!(value.node, Node::OptionalPredicate { .. })
+        {
+            return Ok(value.clone());
+        }
         Ok(Expr::new(
             Node::Math {
                 op: op.to_owned(),

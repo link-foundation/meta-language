@@ -10,6 +10,9 @@ import test from 'node:test';
 import { REQUIRED_CATEGORIES, checkCategories } from '../../scripts/check-cache-policy.mjs';
 import { CACHE_CLASSES, CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
 import { acquireLease, diskUsage, dockerCommands, linuxProcesses, runCleanup, runningProcesses } from '../../scripts/lib/cache-cleanup.mjs';
+import { evidenceInventory, measureCacheCleanup } from '../scripts/issue-195-cache-evidence.mjs';
+import { readProjectData, writeProjectData } from '../scripts/project-data.mjs';
+import { readBootstrapStructuredDataRecords } from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {
   CLEAN_CACHES, REPOSITORY_ROOT, exitedPid, git, makeBase, makeCargoTarget, makeRepository, observeCacheCleanup,
   populateCaches, put, readJson, runScript, toolDirectory, trySymlink, worktreeState,
@@ -99,8 +102,8 @@ test('a full clean removes every cache class, reports its bytes, keeps evidence 
   assert.equal(report.afterBytes, 0);
   assert.equal(report.reclaimedBytes, report.beforeBytes - report.afterBytes);
   assert.equal(report.withinBudget, true);
-  const history = readFileSync(path.join(fixture.root, '.git/meta-language-cache/history.jsonl'), 'utf8').trim().split('\n');
-  assert.equal(JSON.parse(history.at(-1)).reclaimedBytes, report.reclaimedBytes);
+  const history = readBootstrapStructuredDataRecords(readFileSync(path.join(fixture.root, '.git/meta-language-cache/history.lino'), 'utf8'));
+  assert.equal(history.at(-1).reclaimedBytes, report.reclaimedBytes);
   observeCacheCleanup('I195-CACHE-CLEANUP-ENTRY-POINT', ['everyClassRemovedFromFixture', 'reportsBeforeAfterReclaimed'],
     'a full clean removes every cache class and reports its bytes');
 
@@ -138,6 +141,30 @@ test('cleanup keeps source, tracked and uncommitted files, evidence and paths ou
   assert.ok(existsSync(fixture.kept.foreignScratch), 'scratch of another worktree stays');
   assert.ok(existsSync(fixture.kept.unmarkedScratch), 'unmarked temporary directories stay');
   observeCacheCleanup('I195-CACHE-CLEANUP-SAFETY', ['evidencePreserved'], 'cleanup keeps every evidence file the gate reads');
+});
+
+test('measured cleanup preserves linked evidence and publishes its report through a logical JSON path', (t) => {
+  const fixture = makeRepository(makeBase(t));
+  const resultsDirectory = path.join(fixture.root, 'issue-195-results');
+  const record = writeProjectData(path.join(resultsDirectory, 'work', 'observations.json'), {
+    observed: ['actual fixture result'],
+  }, { format: 'lino' });
+  const original = readFileSync(record, 'utf8');
+  assert.equal(evidenceInventory(resultsDirectory).get('work/observations.lino'), Buffer.byteLength(original));
+  put(fixture.root, 'js/node_modules/.cache/entry', 2048);
+  const docker = fakeDocker(fixture.base);
+  const logical = path.join(resultsDirectory, 'artifacts', 'cache-cleanup.json');
+  const measurement = measureCacheCleanup({
+    root: fixture.root, resultsDirectory, reportPath: logical, env: docker.env,
+  });
+  assert.equal(existsSync(logical), false);
+  assert.equal(existsSync(logical.replace(/\.json$/u, '.lino')), true);
+  assert.deepEqual(readProjectData(logical), measurement);
+  assert.equal(readFileSync(record, 'utf8'), original);
+  assert.deepEqual(measurement.lostEvidence, []);
+  assert.equal(measurement.checks.evidencePreservedAfterCleanup, true);
+  assert.equal(measurement.checks.trackedStateUnchanged, true);
+  assert.ok(measurement.report.reclaimedBytes >= 2048);
 });
 
 test('cleanup rejects symlink escapes and path traversal', { skip: !POSIX }, (t) => {
@@ -463,7 +490,13 @@ test('pruning enforces the budget, keeping warm caches that fit', (t) => {
   assert.ok(generous.afterBytes > 0);
   observeCacheCleanup('I195-CACHE-CLEANUP-BUDGET', ['warmCacheKeptWithinBudget'], 'pruning keeps warm caches that fit the budget');
 
-  const budgetBytes = 128 * 1024;
+  // Allocated directory blocks differ between filesystems. Keep the same
+  // eviction oracle by setting the budget just above the measured remainder
+  // after the cheaper merge cache, rustdoc and release profile are removed.
+  const budgetBytes = generous.afterBytes
+    - diskUsage(path.dirname(fixture.caches.mergedGrammar))
+    - diskUsage(path.join(fixture.caches.rustTarget, 'doc'))
+    - diskUsage(path.join(fixture.caches.rustTarget, 'release')) + 1024;
   const tight = clean(fixture, { budgetMb: budgetBytes / (1024 * 1024) });
   assert.ok(tight.afterBytes <= budgetBytes, `${tight.afterBytes} <= ${budgetBytes}`);
   assert.equal(tight.withinBudget, true);

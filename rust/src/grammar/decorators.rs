@@ -1,19 +1,24 @@
 //! The grammar and syntax tree levels of [`DecoratorSet`].
 
-use super::feature_runtime::SyntaxTree;
+use super::feature_runtime::{LeafText, SyntaxTree};
 use super::merge::rename_grammar_rule;
 use super::{Grammar, GrammarFormat, RuleKind};
 use crate::decorators::{
-    DecoratorError, DecoratorLevel, DecoratorRecord, DecoratorSet, decorator_record, record_field,
+    DecoratorAction, DecoratorError, DecoratorLevel, DecoratorRecord, DecoratorSet,
+    decorator_record, record_field,
 };
+
+mod composition;
 
 /// The grammar the `importer` or `grammar-rule` decorators of `decorators`
 /// make of `grammar`.
 ///
-/// Each rule is shown as `{ name, kind, concept }`, with
+/// Each rule is shown as `{ name, kind, concept, composition }`, with
 /// `format` (the grammar's source format) added at the `importer` level.
 /// Setting `name` renames the rule and every reference to it, setting `kind`
-/// or `concept` changes the rule, and `drop` removes it. The rules are
+/// or `concept` changes the rule, and `drop` removes it. A nonempty composition
+/// is one closed any/all Links template with an empty insertion slot for the
+/// original expression. The rules are
 /// decorated in grammar order; a grammar without decorators of the level is
 /// returned unchanged.
 ///
@@ -31,7 +36,20 @@ pub fn decorate_grammar(
     }
     let mut renames = Vec::new();
     let mut rules = Vec::new();
+    let composition = decorators.for_level(level).any(|decorator| {
+        decorator.actions().iter().any(|action| match action {
+            DecoratorAction::Set { field, .. } | DecoratorAction::Replace { field, .. } => {
+                field == "composition"
+            }
+            DecoratorAction::Drop => false,
+        })
+    });
+    let tree_decorators =
+        decorators.has(DecoratorLevel::Executor) || decorators.has(DecoratorLevel::Recovery);
     for rule in grammar.rules() {
+        if composition {
+            composition::check_grammar_composition_rule_data(rule)?;
+        }
         let mut record = DecoratorRecord::new();
         record.insert("name".to_owned(), rule.name.clone());
         record.insert("kind".to_owned(), rule.kind.as_str().to_owned());
@@ -39,6 +57,7 @@ pub fn decorate_grammar(
             "concept".to_owned(),
             rule.concept.clone().unwrap_or_default(),
         );
+        record.insert("composition".to_owned(), String::new());
         if level == DecoratorLevel::Importer {
             let format = grammar.source_format().map_or("", GrammarFormat::as_str);
             record.insert("format".to_owned(), format.to_owned());
@@ -53,6 +72,11 @@ pub fn decorate_grammar(
         })?;
         let concept = record_field(&decorated, "concept");
         rule.concept = (!concept.is_empty()).then(|| concept.to_owned());
+        let source = record_field(&decorated, "composition");
+        if !source.is_empty() {
+            rule.expr =
+                composition::compose_grammar_rule_expression(&rule, source, kind, tree_decorators)?;
+        }
         let name = record_field(&decorated, "name");
         if name != rule.name {
             renames.push((rule.name.clone(), name.to_owned()));
@@ -97,7 +121,7 @@ pub fn decorate_syntax_tree(
     if !decorators.has(DecoratorLevel::Executor) && !decorators.has(DecoratorLevel::Recovery) {
         return Ok(tree.clone());
     }
-    let mut roots = visit(tree, decorators, source)?;
+    let mut roots = visit(tree, decorators, source, false)?;
     if roots.len() != 1 {
         return Err(DecoratorError::new(
             "a decorator dropped the root of the syntax tree",
@@ -110,9 +134,17 @@ fn visit(
     tree: &SyntaxTree,
     decorators: &DecoratorSet,
     source: &[u8],
+    decoded_text: bool,
 ) -> Result<Vec<SyntaxTree>, DecoratorError> {
-    let text_of = |start: usize, end: usize| {
-        String::from_utf8_lossy(source.get(start..end).unwrap_or_default()).into_owned()
+    let text_of = |text: &LeafText, start: usize, end: usize| {
+        if decoded_text {
+            match text {
+                LeafText::Text(text) => text.clone(),
+                LeafText::Hex(_) => String::new(),
+            }
+        } else {
+            String::from_utf8_lossy(source.get(start..end).unwrap_or_default()).into_owned()
+        }
     };
     let mut copy = tree.clone();
     match &mut copy {
@@ -129,7 +161,7 @@ fn visit(
             let decorated = decorators.decorate(DecoratorLevel::Executor, &record);
             let mut visited = Vec::new();
             for child in children.iter() {
-                visited.extend(visit(child, decorators, source)?);
+                visited.extend(visit(child, decorators, source, decoded_text)?);
             }
             let Some(decorated) = decorated else {
                 return Ok(visited);
@@ -143,13 +175,14 @@ fn visit(
             field,
             start,
             end,
+            text,
             ..
         } => {
             let mut record = DecoratorRecord::new();
             record.insert("type".to_owned(), "token".to_owned());
             record.insert("kind".to_owned(), kind.clone().unwrap_or_default());
             record.insert("field".to_owned(), field.clone().unwrap_or_default());
-            record.insert("text".to_owned(), text_of(*start, *end));
+            record.insert("text".to_owned(), text_of(text, *start, *end));
             let Some(decorated) = decorators.decorate(DecoratorLevel::Executor, &record) else {
                 return Err(DecoratorError::new(format!(
                     "a decorator dropped the token {}; the executor level keeps every token",
@@ -160,12 +193,16 @@ fn visit(
             *field = optional(record_field(&decorated, "field"));
         }
         SyntaxTree::Error {
-            start, end, reason, ..
+            start,
+            end,
+            reason,
+            text,
+            ..
         } => {
             let mut record = DecoratorRecord::new();
             record.insert("type".to_owned(), "error".to_owned());
             record.insert("reason".to_owned(), reason.clone().unwrap_or_default());
-            record.insert("text".to_owned(), text_of(*start, *end));
+            record.insert("text".to_owned(), text_of(text, *start, *end));
             let Some(decorated) = decorators.decorate(DecoratorLevel::Recovery, &record) else {
                 return Err(DecoratorError::new(
                     "a decorator dropped an ERROR node; only a MISSING node can be dropped",
@@ -182,14 +219,40 @@ fn visit(
             };
             *kind = optional(record_field(&decorated, "kind"));
         }
-        SyntaxTree::Embed { root, .. } => {
-            let mut roots = visit(root, decorators, source)?;
+        SyntaxTree::Embed {
+            root,
+            source_children,
+            selection,
+            ..
+        } => {
+            let mapped = source_children.is_some();
+            let mut roots = visit(root, decorators, source, decoded_text || mapped)?;
             if roots.len() != 1 {
-                return Err(DecoratorError::new(
-                    "a decorator dropped the root of an embedded tree",
-                ));
+                return Err(DecoratorError::new(if mapped {
+                    "a mapped grammar keeps one complete decoded CST root"
+                } else {
+                    "a decorator dropped the root of an embedded tree"
+                }));
             }
             **root = roots.remove(0);
+            if let Some(children) = source_children {
+                let mut physical = Vec::new();
+                for child in &*children {
+                    physical.extend(visit(child, decorators, source, decoded_text)?);
+                }
+                *children = physical;
+                if let Some(selection) = selection {
+                    for alternative in &mut selection.alternatives {
+                        let mut roots = visit(&alternative.root, decorators, source, true)?;
+                        if roots.len() != 1 {
+                            return Err(DecoratorError::new(
+                                "a mapped grammar witness keeps one complete decoded CST root",
+                            ));
+                        }
+                        *alternative.root = roots.remove(0);
+                    }
+                }
+            }
         }
     }
     Ok(vec![copy])

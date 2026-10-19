@@ -1,5 +1,6 @@
+import { readProjectData } from '../scripts/project-data.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+
 import test from 'node:test';
 
 import {
@@ -10,15 +11,20 @@ import {
   missingFeatures,
   renderMatrix,
   startingAt,
+  additionalGrammarTexts,
+  importAdditionalGrammar,
+  compareMergeDecisionReports,
+  createPipelineGlobalConceptSpace,
 } from '../scripts/run-grammar-bulk-pipeline.mjs';
 import { GRAMMAR_SOURCES } from '../scripts/build-vendored-grammars.mjs';
-import { compileGrammar, importAntlr } from '../src/index.js';
+import { readNativeGrammarProjection } from '../scripts/native-grammar-projection.mjs';
+import { compileGrammar, importAntlr, renderGrammarLinks, deserializeGrammar } from '../src/index.js';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 
 // The pipeline over all 57 languages runs in CI (the grammar-bulk-pipeline
 // job), which publishes the matrix; these tests check what it reads and
 // writes on a pinned source that needs no download.
-const read = (relative) => JSON.parse(readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8'));
+const read = (relative) => readProjectData(new URL(`../../${relative}`, import.meta.url));
 const inventory = read('parity/language-grammar-inventory.json');
 const pinned = read('parity/grammars/sources.json').sources;
 const v4 = read(GRAMMARS_V4_SOURCES);
@@ -43,8 +49,7 @@ test('every catalog language with a grammar has a pinned tree-sitter source and 
   );
   assert.ok(languages.length >= 57, `${languages.length} languages`);
   for (const { name, grammars, source } of languages) {
-    const id = grammars[0];
-    assert.ok(pinned.some(({ language }) => language === id) || GRAMMAR_SOURCES[id], `${name}: no pinned tree-sitter grammar ${id}`);
+    for (const id of grammars) assert.ok(pinned.some(({ language }) => language === id) || GRAMMAR_SOURCES[id], `${name}: no pinned tree-sitter grammar ${id}`);
     assert.equal(typeof source, 'string', `${name}: no sample source`);
   }
   const names = new Set(languages.map(({ name }) => name));
@@ -52,6 +57,42 @@ test('every catalog language with a grammar has a pinned tree-sitter source and 
     assert.ok(names.has(language), `grammars-v4 ${language} is no catalog language with a grammar`);
   }
   assert.match(v4.revision, /^[0-9a-f]{40}$/u);
+  for (const source of pinned) {
+    assert.equal(source.native, `native-${source.language}`, `${source.language}: pinned and fixture native identities`);
+  }
+  const prepared = read('parity/fixtures/native-grammars/ini.json');
+  const projection = readNativeGrammarProjection('native-ini', inventory);
+  assert.equal(projection.nativeGrammar, 'native-ini');
+  for (const field of ['hidden', 'anonymous', 'extras', 'oracleKinds']) {
+    assert.ok(Object.hasOwn(prepared, field), `INI fixture retains ${field}`);
+    assert.deepEqual(projection[field], prepared[field], `INI selected projection ${field}`);
+  }
+  // Selecting one projection must not inspect other grammars or use cached
+  // catalog names in place of the selected file's actual source names.
+  const selected = { grammar: 'selected.lino', hidden: ['padding'], anonymous: ['space'], extras: ['comment'], rootIncludesLeadingTrivia: true };
+  const available = { nativeGrammars: { 'native-selected': selected,
+    get 'native-unrelated'() { throw new Error('unrelated grammar metadata was inspected'); },
+  } };
+  const reads = [];
+  let text = '(grammar (start selected_root))\n'
+    + '(kind selected_alias (source-names (tree-sitter original_alias)))\n'
+    + '(rule selected_root normal (literal x) (source-names (tree-sitter original_root)))\n';
+  const readGrammar = file => { reads.push(file); return text; };
+  assert.deepEqual(readNativeGrammarProjection('native-selected', available, readGrammar), {
+    nativeGrammar: 'native-selected', hidden: ['padding'], anonymous: ['space'], extras: ['comment'],
+    oracleKinds: { selected_root: 'original_root', selected_alias: 'original_alias' }, rootIncludesLeadingTrivia: true,
+  });
+  assert.deepEqual(reads, ['selected.lino']);
+  assert.equal(readNativeGrammarProjection('native-selected', available, readGrammar).hidden, selected.hidden);
+  text = text.replace('original_root', 'updated_root');
+  assert.equal(readNativeGrammarProjection('native-selected', available, readGrammar).oracleKinds.selected_root, 'updated_root');
+  assert.deepEqual(reads, ['selected.lino', 'selected.lino', 'selected.lino']);
+  delete selected.rootIncludesLeadingTrivia;
+  assert.equal(Object.hasOwn(readNativeGrammarProjection('native-selected', available, readGrammar), 'rootIncludesLeadingTrivia'), false);
+  assert.throws(() => readNativeGrammarProjection('native-missing', available, readGrammar), TypeError);
+  assert.deepEqual(reads, ['selected.lino', 'selected.lino', 'selected.lino', 'selected.lino']);
+  text = '(grammar)\n(rule unfinished';
+  assert.throws(() => readNativeGrammarProjection('native-selected', available, readGrammar));
   observe(['everyCatalogLanguageImported'], 'bulk pipeline covers the catalog');
 });
 
@@ -150,4 +191,107 @@ test('a merge of several sources that shares no rule is listed as a concatenatio
   assert.deepEqual(missingFeatures(row({ rules: 7, sharedRules: 2 })), []);
   assert.deepEqual(missingFeatures(row({ sources: ['tree-sitter'], rules: 4, sharedRules: 0 })), []);
   observe(['missingFeaturesListed'], 'bulk matrix lists a concatenating merge');
+});
+
+test('the additional official Groovy source is pinned, licensed and read without a download', () => {
+  const [source] = additionalGrammarTexts('Groovy');
+  assert.equal(source.id, 'apache-groovy');
+  assert.equal(source.format, 'antlr');
+  assert.equal(source.license, 'Apache-2.0');
+  assert.match(source.revision, /^[0-9a-f]{40}$/u);
+  assert.equal(source.files.length, 2);
+  assert.ok(source.files.every(({ sha256, bytes }) => /^[0-9a-f]{64}$/u.test(sha256) && bytes > 0));
+  assert.match(source.text, /parser grammar GroovyParser/u);
+  assert.match(source.text, /lexer grammar GroovyLexer/u);
+  assert.ok(source.corpora.length > 0);
+});
+
+test('additional grammar formats become native executable rules and retain import failures', async () => {
+  const grammar = await importAdditionalGrammar({ id: 'official', format: 'bnf', entryPoint: 'document', text: '<document> ::= "official"\n' });
+  assert.ok(compileGrammar(grammar).parseTree('official').tree);
+  await assert.rejects(importAdditionalGrammar({ id: 'unknown', format: 'unavailable', text: '' }), /unsupported additional grammar format unavailable/u);
+  await assert.rejects(importAdditionalGrammar({ id: 'official', format: 'bnf', entryPoint: 'absent', text: '<document> ::= "official"\n' }), /no entry point absent/u);
+  const row = { treeSitter: { stage: 'done' }, additionalSources: [{ id: 'official', stage: 'import', error: 'untranslated action', undefinedRules: ['TOKEN'] }] };
+  assert.deepEqual(missingFeatures(row), [
+    { stage: 'additional official import', feature: 'undefined rules: TOKEN' },
+    { stage: 'additional official import', feature: 'untranslated action' },
+  ]);
+  const failing = await bulkLanguageRow({ name: 'Multiline option control', grammars: ['control'], source: 'x' }, () => {}, {
+    async loadTreeSitterSource() {
+      return { origin: 'synthetic plain-string control', text: JSON.stringify({ name: 'control', rules: { document: { type: 'STRING', value: 'x' } } }) };
+    },
+    async loadGrammarsV4() {
+      return { files: ['control/Control.g4'], entryPoint: 'start', text: "grammar Control; options {\n  superClass = UnresolvedBase;\r\n} start: A EOF; A: 'x';" };
+    },
+    loadAdditionalSources() { return []; },
+  });
+  assert.equal(failing.treeSitter.compiled, true);
+  assert.equal(failing.treeSitter.sample, 'accepted');
+  assert.equal(failing.grammarsV4.stage, 'compile');
+  assert.notEqual(failing.grammarsV4.compiled, true);
+  assert.match(failing.grammarsV4.error, /unresolved option:/u);
+  assert.ok(failing.grammarsV4.error.includes('\\n  superClass = UnresolvedBase;\\r\\n'));
+  assert.ok(failing.grammarsV4.error.length <= 300);
+  assert.doesNotMatch(failing.grammarsV4.error, /[\r\n]/u);
+  failing.missing = missingFeatures(failing);
+  assert.ok(failing.missing.some(({ stage, feature }) => stage === 'grammars-v4 compile' && feature === failing.grammarsV4.error));
+  const markdown = renderMatrix({
+    grammarsV4Revision: v4.revision, grammarsV4Notes: {}, languages: [failing],
+    summary: { treeSitterImported: 1, treeSitterCompiled: 1, treeSitterAccepted: 1, rowsMatch: 0, grammarsV4Imported: 1, grammarsV4Mapped: 1, grammarsV4Compiled: 0, grammarsV4Accepted: 0, merged: Number(failing.merge.stage === 'done'), mergedFromSeveral: Number(failing.merge.sources.length > 1), sharingRules: Number(failing.merge.sharedRules > 0), sharedRules: failing.merge.sharedRules ?? 0 },
+  });
+  assert.ok(markdown.split('\n').includes(`- grammars-v4 compile: ${failing.grammarsV4.error}`));
+  assert.ok(markdown.includes('\\n  superClass = UnresolvedBase;\\r\\n'));
+  assert.doesNotMatch(markdown, /\n  superClass = UnresolvedBase;/u);
+});
+
+test('decision reports explain every lost or changed shared correspondence', () => {
+  const decision = (members, basis, definition = 'normal:lit("x")') => ({ kind: 'reconciled', name: 'value', members, basis, definition });
+  const prior = { languages: [{ language: 'Example', treeSitter: { sha256: 'old' }, merge: {
+    sharedRules: 2, decisions: [decision(['a:value', 'b:value'], 'name-correspondence'), decision(['a:word', 'b:word'], 'name-correspondence')],
+  } }] };
+  const next = { languages: [{ language: 'Example', treeSitter: { sha256: 'new' }, merge: {
+    sharedRules: 1, decisions: [decision(['a:value', 'b:value'], 'structural-correspondence-up-to-lexical-roles'),
+      { kind: 'kept-unique', name: 'word', members: ['a:word'], concept: 'unknown-value' },
+      { kind: 'kept-unique', name: 'other-word', members: ['b:word'], concept: 'null-pointer' }],
+  } }] };
+  const [report] = compareMergeDecisionReports(prior, next);
+  assert.equal(report.baselineAvailable, true);
+  assert.equal(report.delta, -1);
+  assert.deepEqual(report.sourceHashes, { previous: ['old', null], current: ['new', null] });
+  assert.deepEqual(report.changes.map(({ kind }) => kind), ['changed-correspondence', 'removed-correspondence']);
+  assert.match(report.changes[1].reason, /explicit semantic concepts/u);
+  assert.equal(report.changes[1].currentMembers.length, 2);
+  assert.equal(compareMergeDecisionReports(null, next)[0].baselineAvailable, false);
+});
+
+test('an additional lexer retains tokens and skipped trivia when linked with its Yacc parser', async () => {
+  const grammar = await importAdditionalGrammar({
+    id: 'parser-with-lexer', format: 'yacc', entryPoint: 'document',
+    text: '%token NAME\n%start document\n%%\ndocument: NAME ;\n',
+    lexerText: '%option nodefault\n%%\n[a-z]+ { return NAME; }\n[ \\t\\n]+ ;\n%%\n',
+  });
+  assert.deepEqual(grammar.undefinedNonterminals(), []);
+  assert.ok(grammar.declarations.extras.length > 0);
+  const outcome = compileGrammar(grammar).parseTree('name \n');
+  assert.equal(outcome.ok, true);
+});
+
+test('the pipeline retains all serialized source origins and forwards only explicit formal premises', () => {
+  const fixture = read('parity/fixtures/global-concept-space.json');
+  const list = fixture.sources.map(({ grammar, ...source }) => ({ ...source, grammarLinks: renderGrammarLinks(deserializeGrammar(grammar)) }));
+  const options = { records: fixture.records, equivalences: fixture.equivalences };
+  const grounded = createPipelineGlobalConceptSpace(list, { ...options, formalDefinitions: fixture.formalDefinitions });
+  const expected = structuredClone(fixture.expectedSpace);
+  for (const source of expected.sources) {
+    const original = fixture.sources.find(entry => entry.id === source.id);
+    assert.ok(original);
+    if (original.grammar.sourceFormat != null) source.sourceFormat = original.grammar.sourceFormat;
+  }
+  assert.deepEqual(grounded, expected);
+  const unknown = createPipelineGlobalConceptSpace(list, options);
+  assert.equal(unknown.proofs.length, 0);
+  assert.deepEqual(unknown.formalDefinitions, {});
+  assert.equal(unknown.concepts.length, 6);
+  assert.equal(Object.keys(unknown.mappings).length, 6);
+  assert.equal(unknown.failures.length, 2);
 });

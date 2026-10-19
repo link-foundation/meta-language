@@ -22,6 +22,7 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 
 import { CONTAINER_LABEL } from '../../scripts/lib/cache-classes.mjs';
 import { makeScratchDirectory } from '../../scripts/lib/scratch.mjs';
+import { readProjectData, writeProjectData } from './project-data.mjs';
 
 const run = promisify(execFile);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -80,7 +81,7 @@ async function packageRuntime() {
 /** Verifies the vendored runtime against its lock and the installed package. */
 export async function checkRuntimeLock() {
   const problems = [];
-  const lock = JSON.parse(await readFile(lockPath, 'utf8'));
+  const lock = readProjectData(lockPath);
   const installed = await packageRuntime();
   for (const key of ['upstream', 'version', 'revision', 'emscripten', 'patch']) {
     if (lock[key] !== SOURCE[key]) problems.push(`lock ${key} is ${lock[key]}, the build pins ${SOURCE[key]}`);
@@ -122,6 +123,7 @@ async function main() {
     }
     await run('git', ['-C', checkout, 'apply', join(root, SOURCE.patch)]);
     const patched = await compile(checkout, join(work, 'patched'));
+    await mkdir(vendorDir, { recursive: true });
     await writeFile(join(vendorDir, 'web-tree-sitter.wasm.gz'), gzipSync(patched, { level: 9 }));
     await writeFile(join(vendorDir, 'LICENSE'), await readFile(join(checkout, 'LICENSE')));
     const lock = {
@@ -132,7 +134,7 @@ async function main() {
       wasmSha256: sha256(patched),
       license: 'LICENSE',
     };
-    await writeFile(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+    writeProjectData(lockPath, lock);
     console.log(`built the UTF-8 web-tree-sitter ${SOURCE.version} runtime (${lock.wasmSha256})`);
   } finally {
     await rm(work, { recursive: true, force: true });

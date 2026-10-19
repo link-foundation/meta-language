@@ -10,6 +10,8 @@
 //
 //   node js/scripts/import-native-grammars.mjs          # write the grammars, concepts and reports
 //   node js/scripts/import-native-grammars.mjs --check  # fail on drift
+//   node js/scripts/import-native-grammars.mjs --language agda [--check]
+//     # regenerate one language within the local resource budget
 //   node js/scripts/import-native-grammars.mjs --character-class-fixtures [--check]
 //     # bounded shared fixtures; the same importer compiles the catalog in CI
 //
@@ -22,6 +24,10 @@ import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 
 import { importTreeSitterNative, renderTreeSitterNative } from '../src/grammar-importers/tree-sitter-native.js';
+import { transformNativeSource } from './native-grammar-transforms.mjs';
+import { nativeScannerProfile } from './generate-native-scanner-profiles.mjs';
+import { readExternalGrammarAsset } from './external-grammar-cache.mjs';
+import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 export const GRAMMAR_SOURCES = 'parity/grammars/sources.json';
@@ -35,11 +41,11 @@ export const GENERATED = 'js/scripts/import-native-grammars.mjs generates this r
 const ONLY = /^Only the native .+ grammar defines this construct\.$/u;
 const CATALOG = 'js/src/data/language-catalog.json';
 
-const readJson = (file) => JSON.parse(readFileSync(join(root, file), 'utf8'));
+const readJson = (file) => readProjectData(join(root, file));
 
 /** The bytes of a pinned source (or corpus), checked against its recorded hash. */
 export function sourceText(entry) {
-  const bytes = gunzipSync(readFileSync(join(root, entry.file)));
+  const bytes = gunzipSync(readExternalGrammarAsset(entry.file));
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   if (sha256 !== entry.sha256) throw new Error(`${entry.file}: sha256 ${sha256}, the registry pins ${entry.sha256}`);
   return bytes.toString('utf8');
@@ -79,14 +85,14 @@ export function corpusFileCases(corpus) {
   const headerEnd = (index) => {
     if (!/^={3,}/u.test(lines[index] ?? '') || index + 1 >= lines.length) return -1;
     let close = index + 2;
-    while (/^:/u.test(lines[close] ?? '')) close += 1;
+    while (close < lines.length && (/^:/u.test(lines[close]) || /^\s*$/u.test(lines[close]))) close += 1;
     return /^={3,}/u.test(lines[close] ?? '') ? close + 1 : -1;
   };
   const cases = [];
   for (let index = 0; index < lines.length; index += 1) {
     const start = headerEnd(index);
     if (start < 0) continue;
-    const attributes = lines.slice(index + 2, start - 1).map((line) => line.slice(1).trim());
+    const attributes = lines.slice(index + 2, start - 1).filter((line) => /^:/u.test(line)).map((line) => line.slice(1).trim());
     let next = start;
     while (next < lines.length && headerEnd(next) < 0) next += 1;
     let divider = -1;
@@ -111,6 +117,7 @@ export function corpusFileCases(corpus) {
  */
 export function corpusCases(entry) {
   const { files } = JSON.parse(sourceText(entry.corpus));
+  if (entry.corpus.format === 'source-files') return Object.entries(files).map(([file, source]) => ({ file, title: file, source }));
   const wanted = entry.corpus.language;
   return Object.entries(files).flatMap(([file, corpus]) => corpusFileCases(corpus)
     .filter((item) => item.language === undefined || item.language === wanted)
@@ -144,11 +151,15 @@ export function ruleConcept(rule, decisions = {}) {
 
 /** Imports one source: the native grammar text, its rules with their concepts, and its report. */
 export function importSource(entry, expansions, decisions = {}) {
-  const grammar = JSON.parse(sourceText(entry));
+  const grammar = transformNativeSource(JSON.parse(sourceText(entry)), decisions.sourceTransforms);
+  const scanners = scannerText(entry);
+  if (decisions.scannerFamilies && scanners !== nativeScannerProfile(decisions.scannerFamilies)) {
+    throw new Error(`${entry.language}: pinned native scanner does not match its recorded family profile`);
+  }
   const imported = importTreeSitterNative(grammar, {
     nameOf: (name) => nativeName(name, expansions, decisions),
     wordRule: WORD_RULE,
-    scanners: scannerText(entry),
+    scanners,
     immediate: entry.scanner?.immediate ?? [],
   });
   const rules = imported.rules.map((rule) => ({ ...rule, concept: ruleConcept(rule, decisions) }));
@@ -194,12 +205,36 @@ function languageName(entry) {
  * shared where two or more name it, else only by its one language.
  */
 export function mergeConcepts(register, imports, decisions = {}) {
+  const legacyAliases = decisions.legacyAliases ?? {};
+  const formerNames = decisions.formerNames ?? {};
+  for (const table of [legacyAliases, formerNames]) {
+    if (!table || typeof table !== 'object' || Array.isArray(table)) throw new TypeError('legacy concept decisions need identity mappings');
+  }
+  for (const [id, aliases] of Object.entries(legacyAliases)) {
+    if (!id || !Array.isArray(aliases) || !aliases.length || aliases.some((alias) => !alias
+      || typeof alias.source !== 'string' || !alias.source.startsWith('native:')
+      || typeof alias.name !== 'string' || !alias.name
+      || Object.keys(alias).length !== 2)) throw new TypeError('legacy native aliases need a concept identity and exact source names');
+  }
+  for (const [id, names] of Object.entries(formerNames)) {
+    if (!id || !Array.isArray(names) || !names.length || names.some((name) => typeof name !== 'string' || !name || name === id)
+      || new Set(names).size !== names.length) throw new TypeError('former concept decisions need distinct retired identities');
+  }
   const sources = new Set(imports.map(({ entry }) => nativeSource(entry)));
+  // Keep existing identities and their stable order while rebuilding imported
+  // aliases. A temporarily empty generated record may be used again below:
+  // dropping it here would append it at the end on every regeneration, making
+  // an unchanged committed register fail --check whenever later records exist.
   const concepts = register.concepts
-    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }))
-    .filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0));
+    .map((record) => ({ ...record, sourceAliases: record.sourceAliases.filter(({ source }) => !sources.has(source)) }));
   const byId = new Map(concepts.map((record) => [record.id, record]));
   const former = new Map(concepts.flatMap((record) => record.formerNames.map((name) => [name, record.id])));
+  for (const [id, names] of Object.entries(formerNames)) {
+    for (const name of names) {
+      if (former.has(name) && former.get(name) !== id) throw new TypeError('a retired concept identity cannot name different concepts');
+      former.set(name, id);
+    }
+  }
   for (const { entry, rules } of imports) {
     for (const rule of rules) {
       // A former name stays retired: a rule that would revive it needs a reviewed decision.
@@ -221,22 +256,35 @@ export function mergeConcepts(register, imports, decisions = {}) {
           sourceAliases: [],
           formerNames: [],
         };
-        const distinct = decisions.distinctFrom?.[rule.concept];
-        if (distinct) record.distinctFrom = distinct;
         concepts.push(record);
         byId.set(record.id, record);
       }
+      if (Object.hasOwn(decisions.definitions ?? {}, rule.concept)) record.definition = decisions.definitions[rule.concept];
+      if (Object.hasOwn(decisions.distinctFrom ?? {}, rule.concept)) record.distinctFrom = decisions.distinctFrom[rule.concept];
       record.sourceAliases = sortAliases([...record.sourceAliases, alias]);
     }
   }
-  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), languageName(entry)]));
+  for (const id of new Set([...Object.keys(legacyAliases), ...Object.keys(formerNames)])) {
+    const record = byId.get(id);
+    if (!record) throw new TypeError(`legacy decisions name an unknown concept: ${id}`);
+    const aliases = new Map([...record.sourceAliases, ...(legacyAliases[id] ?? [])]
+      .map((alias) => [`${alias.source}\u0000${alias.name}`, alias]));
+    record.sourceAliases = sortAliases([...aliases.values()]);
+    record.formerNames = [...new Set([...record.formerNames, ...(formerNames[id] ?? [])])];
+  }
+  const names = new Map(imports.map(({ entry }) => [nativeSource(entry), entry.language.toLowerCase() === languageName(entry).toLowerCase() ? languageName(entry) : `${entry.language} (${languageName(entry)})`]));
   for (const record of concepts) {
     const native = new Set(record.sourceAliases.map(({ source }) => source).filter((source) => source.startsWith('native:')));
     if (![...native].some((source) => sources.has(source))) continue;
     const usage = native.size > 1 ? SHARED : `Only the native ${names.get([...native][0])} grammar defines this construct.`;
     record.constraints = [usage, ...record.constraints.filter((text) => text !== SHARED && !ONLY.test(text))];
   }
-  return { ...register, concepts };
+  // Prune only genuinely unreferenced generated records after all sources
+  // were re-imported; authored concepts and former names remain intact.
+  return {
+    ...register,
+    concepts: concepts.filter((record) => !(record.constraints.includes(GENERATED) && record.sourceAliases.length === 0)),
+  };
 }
 
 /** The merge report of one imported language. */
@@ -272,6 +320,7 @@ export function mergeReport(result, register, words) {
       generated: rules.filter((rule) => generated.has(rule.concept)).length,
     },
     ...(result.decisions?.conflicts?.length ? { decidedConflicts: result.decisions.conflicts } : {}),
+    ...(result.decisions?.sourceTransforms?.length ? { sourceTransforms: result.decisions.sourceTransforms } : {}),
     approximations: imported.report.approximations,
     unsupported: imported.report.unsupported,
   };
@@ -280,9 +329,9 @@ export function mergeReport(result, register, words) {
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
 
 /** Compiles the character-class corpus through the catalog's native importer. */
-export function importCharacterClassFixtures() {
+export function importCharacterClassFixtures({ structured = false } = {}) {
   const fixture = readJson('parity/fixtures/native-character-classes.json');
-  return [['parity/fixtures/native-character-class-grammars.json', json({
+  const value = {
     generatedBy: 'js/scripts/import-native-grammars.mjs --character-class-fixtures',
     cases: fixture.cases.map((entry) => {
       const { id, pattern } = entry;
@@ -290,28 +339,42 @@ export function importCharacterClassFixtures() {
       if (imported.report.unsupported.length > 0) throw new Error(`${id}: ${imported.report.unsupported.join('; ')}`);
       return { ...entry, grammar: renderTreeSitterNative(imported) };
     }),
-  })]];
+  };
+  return [['parity/fixtures/native-character-class-grammars.json', structured ? value : json(value)]];
 }
 
-/** Every file the pipeline produces, `[path, text]`. */
-export function importNativeGrammars() {
+/** Pipeline outputs; structured mode retains project-data collection identity. */
+export function importNativeGrammars(languages = null, { structured = false } = {}) {
   const registry = readJson(GRAMMAR_SOURCES);
   const naming = readJson(NAME_EXPANSIONS);
   const words = new Map(naming.words.map(({ word, replacement }) => [word, replacement]));
-  const imports = registry.sources.map((entry) => importSource(entry, words, naming.grammars[entry.language]));
+  if (languages !== null && (!Array.isArray(languages) || !languages.length
+    || languages.some((language) => !registry.sources.some((entry) => entry.language === language)))) {
+    throw new TypeError('select existing native grammar languages');
+  }
+  const selected = languages === null ? registry.sources : registry.sources.filter((entry) => languages.includes(entry.language));
+  const imports = selected.map((entry) => importSource(entry, words, naming.grammars[entry.language]));
   const register = mergeConcepts(readJson(CONCEPT_REGISTER), imports, naming.concepts);
   return [
     ...imports.map((result) => [`${NATIVE_DIRECTORY}/${result.entry.language}.lino`, result.text]),
-    ...imports.map((result) => [`${MERGE_REPORT_DIRECTORY}/${result.entry.language}.json`, json(mergeReport(result, register, words))]),
-    [CONCEPT_REGISTER, json(register)],
+    ...imports.map((result) => {
+      const report = mergeReport(result, register, words);
+      return [`${MERGE_REPORT_DIRECTORY}/${result.entry.language}.json`, structured ? report : json(report)];
+    }),
+    [CONCEPT_REGISTER, structured ? register : json(register)],
   ];
 }
 
 function main() {
-  const files = process.argv.includes('--character-class-fixtures') ? importCharacterClassFixtures() : importNativeGrammars();
+  const languageIndex = process.argv.indexOf('--language');
+  const languages = languageIndex < 0 ? null : [process.argv[languageIndex + 1]];
+  const files = process.argv.includes('--character-class-fixtures')
+    ? importCharacterClassFixtures({ structured: true })
+    : importNativeGrammars(languages, { structured: true });
   if (process.argv.includes('--check')) {
     const stale = files.filter(([file, text]) => {
       try {
+        if (file.endsWith('.json')) return !checkProjectData(join(root, file), text);
         return readFileSync(join(root, file), 'utf8') !== text;
       } catch {
         return true;
@@ -325,7 +388,10 @@ function main() {
     console.log(`imported native grammars match their pinned sources (${files.length} files)`);
     return;
   }
-  for (const [file, text] of files) writeFileSync(join(root, file), text);
+  for (const [file, text] of files) {
+    if (file.endsWith('.json')) writeProjectData(join(root, file), text);
+    else writeFileSync(join(root, file), text);
+  }
   console.log(`wrote ${files.length} files`);
 }
 

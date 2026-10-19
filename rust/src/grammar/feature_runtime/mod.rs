@@ -9,23 +9,35 @@
 //! result. docs/grammar/feature-union.md is the specification both
 //! runtimes follow.
 
+mod attributes;
 mod compile;
 mod executor;
+mod expectation_requests;
+mod field_range_source;
 mod forking;
+mod grammar_selection;
 mod joins;
 mod keyword_lexing;
+mod lexical_cache;
+mod lexical_cache_memory;
+mod lexical_election;
+pub(crate) mod lexical_kernel;
+mod lexical_plan;
 mod lexing;
 mod load;
+mod mapped_tree_validation;
 mod operations;
 mod ordering;
 mod parting;
 mod precedence;
+mod precedence_contexts;
 mod program;
 mod reducing;
 mod repetition;
 mod results;
 mod roots;
 mod rules;
+mod selection_source_mapping;
 mod separators;
 mod text;
 mod token_conflicts;
@@ -38,13 +50,16 @@ use std::collections::HashSet;
 use std::fmt;
 use std::rc::Rc;
 
+pub use grammar_selection::{GrammarSelection, GrammarSelectionAlternative};
 pub use load::GrammarRuntimeError;
+pub use mapped_tree_validation::check_grammar_selection_mapped_tree;
 pub use operations::OperationValue;
 pub use tree::{Ambiguity, LeafText, SyntaxAttributes, SyntaxTree};
 
 use super::Grammar;
 use super::decorators::{decorate_grammar, decorate_syntax_tree};
 use crate::decorators::{DecoratorError, DecoratorLevel, DecoratorSet};
+use crate::translation::grammar_selection_rules;
 use executor::Executor;
 use operations::Abort;
 use program::{Compiled, SettlingStep};
@@ -64,6 +79,10 @@ const PARSE_STACK: usize = 256 * 1024 * 1024;
 /// value the parser was compiled with, and then the default.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct FeatureParseOptions {
+    /// Explicit root grammar identity for a stored qualified invocation.
+    pub grammar_name: Option<String>,
+    /// Existing checked global concept space, including definitions and origins.
+    pub global_concept_space: Option<serde_json::Value>,
     /// The rule to parse from instead of the grammar's start rule.
     pub start_rule: Option<String>,
     /// The bound on nested rule calls (default 1000).
@@ -75,9 +94,10 @@ pub struct FeatureParseOptions {
     pub memo_limit: Option<usize>,
     /// The memory budget of the whole parse, its runs, repair rounds and
     /// embedded languages included, in memo cells: one per rule call recorded
-    /// and one per result such a call keeps, counted and never released
-    /// (default 2000000). A parse that needs more is rejected with
-    /// `memoryBudget` instead of growing.
+    /// and one per result such a call keeps, counted and never released.
+    /// Fixed lexical cache cells also count while retained; those optional
+    /// entries may be discarded to free space (default 2000000). A parse
+    /// whose rule cells need more is rejected with `memoryBudget`.
     pub memory_limit: Option<usize>,
     /// Whether a reported ambiguity rejects the input (default false).
     pub reject_ambiguity: Option<bool>,
@@ -98,6 +118,14 @@ pub struct FeatureParseOptions {
 impl FeatureParseOptions {
     fn over(&self, base: &Self) -> Self {
         Self {
+            grammar_name: self
+                .grammar_name
+                .clone()
+                .or_else(|| base.grammar_name.clone()),
+            global_concept_space: self
+                .global_concept_space
+                .clone()
+                .or_else(|| base.global_concept_space.clone()),
             start_rule: self.start_rule.clone().or_else(|| base.start_rule.clone()),
             max_depth: self.max_depth.or(base.max_depth),
             step_limit: self.step_limit.or(base.step_limit),
@@ -119,6 +147,10 @@ impl FeatureParseOptions {
 /// Why a parse rejects its input, and where.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParseRejection {
+    /// Precise unknown, unsupported mapping, origin or embedding-cycle records.
+    pub diagnostics: Option<Vec<serde_json::Value>>,
+    /// Mapped diagnostics cover source spellings rather than exact interior bytes.
+    pub offset_semantics: Option<String>,
     /// `syntax`, `nestingDepth`, `stepLimit`, `memoryBudget`, `recovered` or
     /// `ambiguity`.
     pub reason: &'static str,
@@ -137,6 +169,8 @@ pub struct ParseRejection {
 impl ParseRejection {
     const fn limited(reason: &'static str, limit: usize) -> Self {
         Self {
+            diagnostics: None,
+            offset_semantics: None,
             reason,
             offset: None,
             line: None,
@@ -149,6 +183,8 @@ impl ParseRejection {
     fn positioned(reason: &'static str, bytes: &[u8], offset: usize) -> Self {
         let (line, column) = text::line_and_column(bytes, offset);
         Self {
+            diagnostics: None,
+            offset_semantics: None,
             reason,
             offset: Some(offset),
             line: Some(line),
@@ -179,6 +215,10 @@ impl fmt::Display for ParseRejection {
             "nestingDepth" => write!(formatter, "the input nests deeper than {limit} rules"),
             "stepLimit" => write!(formatter, "the parse needed more than {limit} steps"),
             "memoryBudget" => write!(formatter, "the parse needed more than {limit} memo cells"),
+            "selection" => write!(
+                formatter,
+                "a mapped grammar result needs parseTree to retain its sourcePlanes"
+            ),
             "recovered" => write!(formatter, "the input needed error recovery{place}"),
             "ambiguity" => write!(formatter, "the input is ambiguous{place}"),
             reason => write!(formatter, "the input is rejected ({reason})"),
@@ -198,13 +238,15 @@ pub struct ParseOutcome {
     pub ambiguities: Vec<Ambiguity>,
     /// Why the input is rejected.
     pub rejection: Option<ParseRejection>,
+    /// Ordered source-plane definitions for an explicitly mapped parse.
+    pub source_planes: Option<Vec<serde_json::Value>>,
 }
 
 /// A source the grammar rejects.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrammarParseError {
-    /// The reason and position.
-    pub rejection: ParseRejection,
+    /// The reason and position, stored on the heap to keep returned errors small.
+    pub rejection: Box<ParseRejection>,
 }
 
 impl fmt::Display for GrammarParseError {
@@ -242,7 +284,7 @@ pub fn compile_feature_grammar(
     let decorated = decorate_grammar(grammar, &options.decorators, DecoratorLevel::GrammarRule)
         .map_err(decorator_error)?;
     Ok(FeatureGrammarParser {
-        compiled: load::load(&decorated, resolve_grammar)?,
+        compiled: load::load(&decorated, resolve_grammar, options.grammar_name.as_deref())?,
         options,
     })
 }
@@ -288,7 +330,7 @@ impl FeatureGrammarParser {
                             .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
                     },
                 )
-        });
+        })?;
         if let Some(tree) = &outcome.tree {
             outcome.tree = Some(
                 decorate_syntax_tree(tree, &options.decorators, source).map_err(decorator_error)?,
@@ -311,13 +353,24 @@ impl FeatureGrammarParser {
         let outcome = self
             .parse_tree(source, options)
             .map_err(|_| GrammarParseError {
-                rejection: ParseRejection::positioned("syntax", source, 0),
+                rejection: Box::new(ParseRejection::positioned("syntax", source, 0)),
             })?;
+        if outcome.ok && outcome.source_planes.is_some() {
+            let mut rejection = ParseRejection::positioned("selection", source, 0);
+            rejection.diagnostics = Some(vec![
+                serde_json::json!({"reason":"selection","start":0,"end":source.len(),
+                "detail":"a mapped grammar result needs parseTree to retain its sourcePlanes"}),
+            ]);
+            return Err(GrammarParseError {
+                rejection: Box::new(rejection),
+            });
+        }
         match (outcome.rejection, outcome.tree) {
             (None, Some(tree)) => Ok(tree),
             (rejection, _) => Err(GrammarParseError {
-                rejection: rejection
-                    .unwrap_or_else(|| ParseRejection::positioned("syntax", source, 0)),
+                rejection: Box::new(
+                    rejection.unwrap_or_else(|| ParseRejection::positioned("syntax", source, 0)),
+                ),
             }),
         }
     }
@@ -359,7 +412,16 @@ pub fn parse_with_grammar(
     compile_feature_grammar(grammar, None, options.clone())
         .map_err(ParseWithGrammarError::Runtime)?
         .parse(source, options)
-        .map_err(ParseWithGrammarError::Parse)
+        .map_err(|error| {
+            if error.rejection.reason == "selection" {
+                ParseWithGrammarError::Runtime(GrammarRuntimeError {
+                    reason: "selection",
+                    message: error.to_string(),
+                })
+            } else {
+                ParseWithGrammarError::Parse(error)
+            }
+        })
 }
 
 fn decorator_error(error: DecoratorError) -> GrammarRuntimeError {
@@ -419,7 +481,7 @@ fn parse_program(
     start_rule: usize,
     bytes: &[u8],
     options: &FeatureParseOptions,
-) -> ParseOutcome {
+) -> Result<ParseOutcome, GrammarRuntimeError> {
     let max_depth = options.max_depth.unwrap_or(DEFAULT_MAX_DEPTH);
     // Error recovery parses each repaired alternative too: twice the budget.
     let limit = options.step_limit.unwrap_or_else(|| {
@@ -430,11 +492,18 @@ fn parse_program(
                 1
             }
     });
-    let refused = |rejection, tree| ParseOutcome {
-        ok: false,
-        tree,
-        ambiguities: Vec::new(),
-        rejection: Some(rejection),
+    let selection_sources = Rc::new(RefCell::new(
+        selection_source_mapping::SourceRegistry::default(),
+    ));
+    let selection_mapping_failures = Rc::new(RefCell::new(Vec::new()));
+    let refused = |rejection, tree| {
+        Ok(ParseOutcome {
+            ok: false,
+            tree,
+            ambiguities: Vec::new(),
+            rejection: Some(rejection),
+            source_planes: selection_sources.borrow().definitions(),
+        })
     };
     // Under `(matching longest)` the input is parsed again while the tree
     // takes a token rule's leaf where a keyword a lexer prefers matched.
@@ -458,6 +527,11 @@ fn parse_program(
     // Every run and repair round takes its memo cells of the one budget.
     let memory_limit = options.memory_limit.unwrap_or(DEFAULT_MEMORY_LIMIT);
     let cells = Rc::new(Cell::new(0));
+    let lexical_caches = Rc::new(RefCell::new(Vec::new()));
+    let global_concept_space = options.global_concept_space.clone().map(Rc::new);
+    let selection_diagnostics = Rc::new(RefCell::new(Vec::new()));
+    let runtime_error = Rc::new(RefCell::new(None));
+    let last_steps = Cell::new(0);
     // Parses the whole input with a fresh executor. While a scanner's
     // `expected` was answered before the parse made the request it asks
     // about, the parse runs again with the requests so far (see
@@ -466,11 +540,18 @@ fn parse_program(
         let mut record = expectations.take();
         record.restart();
         let shared = Shared {
-            steps: Cell::new(0),
+            runtime_error: Rc::clone(&runtime_error),
+            global_concept_space: global_concept_space.clone(),
+            selection_diagnostics: Rc::clone(&selection_diagnostics),
+            active_embedded: Rc::new(RefCell::new(HashSet::new())),
+            selection_sources: Rc::clone(&selection_sources),
+            selection_mapping_failures: Rc::clone(&selection_mapping_failures),
+            steps: Rc::new(Cell::new(0)),
             limit,
-            frames: Cell::new(0),
+            frames: Rc::new(Cell::new(0)),
             memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
             cells: Rc::clone(&cells),
+            lexical_caches: Rc::clone(&lexical_caches),
             memory_limit,
             expectations: RefCell::new(record),
         };
@@ -486,7 +567,9 @@ fn parse_program(
             );
             executor.repair_points = points.cloned();
             executor.keywords = keywords.as_ref();
-            executor.run(start_rule)
+            let outcome = executor.run(start_rule);
+            last_steps.set(shared.steps.get());
+            outcome
         };
         let record = shared.expectations.into_inner();
         let stale = record.stale;
@@ -520,6 +603,12 @@ fn parse_program(
         break outcome;
     };
     let root = match outcome {
+        Err(Abort::Operation) => {
+            return Err(runtime_error
+                .borrow_mut()
+                .take()
+                .expect("operation abort retains its runtime error"));
+        }
         Err(Abort::StepLimit) => {
             return refused(ParseRejection::limited("stepLimit", limit), None);
         }
@@ -536,29 +625,124 @@ fn parse_program(
         Ok(Outcome::Failed {
             farthest, expected, ..
         }) => {
+            if let Some(rejection) =
+                grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
+            {
+                return refused(rejection, None);
+            }
+            if let Some(mut rejection) =
+                grammar_selection::mapping_rejection(&selection_mapping_failures.borrow(), bytes)
+            {
+                rejection.expected = Some(expected);
+                return refused(rejection, None);
+            }
             let mut rejection = ParseRejection::positioned("syntax", bytes, farthest);
             rejection.expected = Some(expected);
             return refused(rejection, None);
         }
         Ok(Outcome::Parsed(root)) => root,
     };
+    // Root qualification follows keyword settling and recovery, spending the
+    // final attempt's remaining steps and the same retained memory cells.
+    let root = if let Some(language) = options
+        .grammar_name
+        .as_deref()
+        .filter(|name| !name.is_empty() && global_concept_space.is_some())
+    {
+        let shared = Shared {
+            runtime_error: Rc::clone(&runtime_error),
+            global_concept_space,
+            selection_diagnostics: Rc::clone(&selection_diagnostics),
+            active_embedded: Rc::new(RefCell::new(HashSet::new())),
+            selection_sources: Rc::clone(&selection_sources),
+            selection_mapping_failures: Rc::clone(&selection_mapping_failures),
+            steps: Rc::new(Cell::new(last_steps.get())),
+            limit,
+            frames: Rc::new(Cell::new(0)),
+            memo_limit: options.memo_limit.unwrap_or(DEFAULT_MEMO_LIMIT),
+            cells: Rc::clone(&cells),
+            lexical_caches: Rc::clone(&lexical_caches),
+            memory_limit,
+            expectations: RefCell::new(Expectations::default()),
+        };
+        let executor = Executor::new(
+            compiled,
+            compiled.main,
+            bytes,
+            0,
+            bytes.len(),
+            &shared,
+            max_depth,
+        );
+        match executor.qualify_grammar_root(root, language) {
+            Ok(root) => root,
+            Err(Abort::Operation) => {
+                return Err(runtime_error
+                    .borrow_mut()
+                    .take()
+                    .expect("operation abort retains its runtime error"));
+            }
+            Err(Abort::StepLimit) => {
+                return refused(ParseRejection::limited("stepLimit", limit), None);
+            }
+            Err(Abort::MemoryBudget) => {
+                return refused(ParseRejection::limited("memoryBudget", memory_limit), None);
+            }
+            Err(Abort::NestingTooDeep) => {
+                return refused(
+                    ParseRejection::limited("nestingDepth", max_depth),
+                    Some(tree::error_tree(
+                        bytes,
+                        0,
+                        bytes.len(),
+                        Some("nestingDepth"),
+                    )),
+                );
+            }
+        }
+    } else {
+        root
+    };
+    let source_planes = selection_sources.borrow().definitions();
+    let publication_issue = crate::translation::grammar_rule_composition_rules::read_grammar_composition_publication_issue(
+        source_planes.is_some(),
+        options.decorators.has(DecoratorLevel::Executor)
+            || options.decorators.has(DecoratorLevel::Recovery),
+    );
+    if !publication_issue.is_empty() {
+        return Err(decorator_error(DecoratorError::new(publication_issue)));
+    }
     let tree = tree::public_tree(&root, bytes);
     let mut ambiguities = Vec::new();
     tree::collect_ambiguities(&root, compiled, compiled.main, &mut ambiguities);
     let recovered = tree
-        .first_recovery()
+        .recovery_diagnostic()?
         .filter(|_| options.accept_recovery != Some(true))
-        .map(|recovery| ParseRejection::positioned("recovered", bytes, recovery.start()));
-    let rejection = recovered.or_else(|| {
-        ambiguities
-            .first()
-            .filter(|_| options.reject_ambiguity == Some(true))
-            .map(|first| ParseRejection::positioned("ambiguity", bytes, first.start))
-    });
-    ParseOutcome {
+        .map(|recovery| {
+            let offset = recovery["start"]
+                .as_u64()
+                .and_then(|offset| usize::try_from(offset).ok())
+                .unwrap_or_default();
+            let mut rejection = ParseRejection::positioned("recovered", bytes, offset);
+            if recovery.get("source").is_some() {
+                rejection.offset_semantics = Some("covering-source-spelling".to_owned());
+                rejection.diagnostics = Some(vec![recovery]);
+            }
+            rejection
+        });
+    let rejection = grammar_selection::selection_rejection(&selection_diagnostics.borrow(), bytes)
+        .or(recovered)
+        .or_else(|| {
+            ambiguities
+                .first()
+                .filter(|_| options.reject_ambiguity == Some(true))
+                .map(|first| ParseRejection::positioned("ambiguity", bytes, first.start))
+        });
+    Ok(ParseOutcome {
         ok: rejection.is_none(),
         tree: Some(tree),
         ambiguities,
         rejection,
-    }
+        source_planes,
+    })
 }
