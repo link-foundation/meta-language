@@ -279,7 +279,7 @@ fn coverage_job_enforces_recorded_line_coverage_floor() {
         "coverage should shard the tests by the suites of the test job"
     );
     assert!(
-        coverage.contains("group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}"),
+        coverage.contains("group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}"),
         "coverage shards should not cancel each other"
     );
     assert!(
