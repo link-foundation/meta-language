@@ -166,6 +166,14 @@ constructor arity and match coverage before emission. The data, constructor and
 match projections reuse the existing surface checker and compare the complete
 rechecked semantic program. Shared decision data supplies reference roles,
 operand traversal, projection instructions and role-specific absent fields.
+Type records also distinguish serializer-owned neutral values from unknown
+fields. The actual native type declarations define five omitted false flags:
+array, record, map and set references, and record openness. A source-checked
+Links table supplies their decisions to JavaScript and automatically translated
+Rust. Explicit false and absence have the same type identity; true remains
+distinct. Other fields, values and record roles retain their existing validation.
+The schema extension authenticates each complete predecessor and keeps its
+original author, receipt, model and property order independently checkable.
 Owned function calls project through the actual declaration's rooted path,
 including root functions, while rechecking its name, qualified identity and
 module path. Caller-local bindings cannot capture a callee's default initializer
@@ -1749,9 +1757,19 @@ JavaScript parser results and independent constructed boundaries. Registered
 external oracle inputs remain authenticated temporary downloads. Native execution
 must precede any evidence claim. The finite candidate rejects depth limits above
 256; arbitrary-depth safety, physical container-alias equivalence, a paired public
-API and public default CST integration remain open. Neither production sources
-nor the existing generic codec's limits and number semantics change through this
-experiment.
+API and public default CST integration remain open. The existing generic codec's
+limits and number semantics remain unchanged.
+
+Diagnostic field order is observable in this transport. A source-derived Links
+decorator corrects two actual native diagnostic producers to match the existing
+JavaScript construction order, preserving every key, value expression and
+condition. Current production sources and authenticated historical sources are
+separate views with complete source inverses. The frozen CI overlay applies the
+same correction only after checking its original bytes and records that role
+explicitly; historical pins never become claims about current source. Dependency
+assertions select the exact locked JSON serializer patch and declared ordered-map
+feature, preserve their source hashes and report unsupported profiles. This
+finite correction does not establish the missing inverse transport.
 
 Its source-type inventory retains the complete original declarations and exact
 type CSTs before wire projection. A closed reference graph preserves recursive

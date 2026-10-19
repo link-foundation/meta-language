@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 183 | 182 | 1 | 0 |
+| Generators | 184 | 183 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -725,6 +725,7 @@ they are.
 | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-links-fixtures.mjs` | `js/scripts/generate-typed-program-links-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-program-neutral-default-fixtures.mjs` | `js/scripts/generate-typed-program-neutral-default-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `js/scripts/generate-typed-program-tuple-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
