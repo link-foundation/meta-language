@@ -478,6 +478,143 @@ fn character_parameters_retain_every_surrogate_unit_and_empty_out_of_range_resul
     );
 }
 
+#[test]
+fn relative_character_preserves_all_independent_utf16_positions_and_undefined_results() {
+    let fixture = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/string-relative-character-observations.lino"
+    ))
+    .unwrap();
+    let source = fixture["source"].as_str().unwrap();
+    let units = fixture["units"].as_array().unwrap();
+    let positions = fixture["positions"].as_array().unwrap();
+    let cases = fixture["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), units.len() * positions.len());
+    let mut expected = String::new();
+    for (index, row) in cases.iter().enumerate() {
+        assert_eq!(
+            row["text"].as_u64().unwrap(),
+            u64::try_from(index / positions.len()).unwrap()
+        );
+        assert_eq!(
+            row["position"].as_u64().unwrap(),
+            u64::try_from(index % positions.len()).unwrap()
+        );
+        if row["undefined"].as_bool().unwrap() {
+            assert!(row["units"].as_array().unwrap().is_empty());
+            expected.push_str("undefined\n");
+        } else {
+            let result = row["units"].as_array().unwrap();
+            assert_eq!(result.len(), 1);
+            writeln!(expected, "[{}]", result[0].as_u64().unwrap()).unwrap();
+        }
+    }
+    let driver = format!(
+        "for(const units of {}){{const text=String.fromCharCode(...units);for(const spelling of {}){{const value=relativeCharacter(text,Number(spelling));console.log(value===undefined?'undefined':'['+Array.from({{length:value.length}},(_,index)=>value.charCodeAt(index)).join(', ')+']');}}}}",
+        serde_json::to_string(units).unwrap(),
+        serde_json::to_string(positions).unwrap()
+    );
+    assert_eq!(javascript(&(source.to_owned() + &driver)), expected);
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let emitted = emit_rust(&program).unwrap();
+    let oracle = char_code_unit_oracle(source, false);
+    assert_eq!(emitted.text, oracle["rust"].as_str().unwrap());
+    assert_eq!(
+        javascript(&(emit_javascript(&program).unwrap().text + &driver)),
+        expected
+    );
+    let mut calls = String::new();
+    for input in units {
+        let input = input
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_u64().unwrap().to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        for spelling in positions {
+            let spelling = spelling.as_str().unwrap();
+            let position = match spelling {
+                "Infinity" => "f64::INFINITY".to_owned(),
+                "-Infinity" => "f64::NEG_INFINITY".to_owned(),
+                "NaN" => "f64::NAN".to_owned(),
+                value => format!("{value}f64"),
+            };
+            writeln!(calls,"match relative_character(crate::ml_string::Text::from_units(vec![{input}]),{position}){{Some(value)=>println!(\"{{:?}}\",value.0),None=>println!(\"undefined\")}}").unwrap();
+        }
+    }
+    let native = emitted.preludes.join("\n\n")
+        + "\n\n"
+        + &emitted.definitions.join("\n\n")
+        + "\nfn main(){\n"
+        + &calls
+        + "}\n";
+    assert_eq!(
+        rust(&native, "relative-character-independent-positions"),
+        expected
+    );
+    assert!(expected.contains("[55296]\n"));
+    assert!(expected.contains("[57343]\n"));
+    assert!(expected.contains("undefined\n"));
+}
+
+#[test]
+fn relative_character_keeps_default_order_complete_archives_and_lossless_source() {
+    let source = "/** @returns {string} */function receiver(){console.log('receiver');return 'ABC';}/** @returns {number} */function position(){console.log('position');return -1.9;}console.log(receiver().at(position()));console.log(receiver().at());console.log('%s %s %s','ABC'.at(undefined),'ABC'.at(null),'ABC'.at(NaN));console.log(''.at(0)===undefined,'ABC'.at(-4)===undefined);";
+    let expected = "receiver\nposition\nC\nreceiver\nA\nA A A\ntrue true\n";
+    assert_eq!(javascript(source), expected);
+    let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let javascript_code = emit_javascript(&program).unwrap().text;
+    let rust_code = emit_rust(&program).unwrap().text;
+    let oracle = char_code_unit_oracle(source, false);
+    assert_eq!(javascript_code, oracle["javascript"].as_str().unwrap());
+    assert_eq!(rust_code, oracle["rust"].as_str().unwrap());
+    assert_eq!(javascript(&javascript_code), expected);
+    assert_eq!(
+        rust(&rust_code, "relative-character-defaults-and-order"),
+        expected
+    );
+    let packet = create_typed_program_links(source, "JavaScript").unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert!(
+            !serde_json::to_string(&restored)
+                .unwrap()
+                .contains("\"op\":\"at\"")
+        );
+        for (language, code) in [("JavaScript", &javascript_code), ("Rust", &rust_code)] {
+            assert_eq!(
+                emit_typed_program_links(&network, packet.root, language)
+                    .unwrap()
+                    .code,
+                *code
+            );
+        }
+    }
+    let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
+    assert!(translated.items.iter().all(|item| item.status != "carried"));
+    assert_eq!(
+        meta_language::self_translate(&translated.code, "Rust", "JavaScript")
+            .unwrap()
+            .code,
+        source
+    );
+    for position in ["true", "false", "'1'", "{}", "[1]", "1n"] {
+        assert!(
+            parse_javascript(&format!("console.log('ABC'.at({position}));"))
+                .and_then(|surface| check_program(&surface))
+                .is_err()
+        );
+    }
+    assert!(check_program(&parse_javascript("console.log('ABC'.at(0,1));").unwrap()).is_err());
+}
+
 fn assert_unicode_order_fixture_observations(cases: &[serde_json::Value], observations: &str) {
     assert_eq!(cases.len(), 2916);
     let observed = observations.split_whitespace().collect::<Vec<_>>();

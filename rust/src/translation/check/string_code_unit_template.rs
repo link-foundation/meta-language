@@ -77,3 +77,29 @@ pub(super) fn character_expression(span: Option<Span>) -> Result<SExpr> {
         )
     })
 }
+
+pub(super) fn relative_character_expression(span: Option<Span>) -> Result<SExpr> {
+    static POLICY: OnceLock<Value> = OnceLock::new();
+    let policy = POLICY.get_or_init(|| {
+        crate::read_structured_data_lino(include_str!(
+            "../../data/string-relative-character-template.lino"
+        ))
+        .expect("the packaged relative character callable template is valid Links data")
+    });
+    if policy.get("schemaVersion").and_then(Value::as_u64) != Some(1)
+        || policy.get("model").and_then(Value::as_str)
+            != Some("portable UTF16 relative character lambda 1")
+        || policy.pointer("/template/k").and_then(Value::as_str) != Some("lambda")
+    {
+        return Err(type_error(
+            "the generated UTF-16 relative character template is malformed",
+            span,
+        ));
+    }
+    serde_json::from_value(instantiate(&policy["template"], span)).map_err(|_| {
+        type_error(
+            "the generated UTF-16 relative character template is not a representable expression",
+            span,
+        )
+    })
+}

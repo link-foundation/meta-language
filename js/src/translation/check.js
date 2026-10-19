@@ -21,7 +21,7 @@ import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation 
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
-import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes } from './callable-source.js';
+import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes, readCallableLambdaInference } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
@@ -676,13 +676,16 @@ class Checker {
       }
       case 'lambda': {
         const inner = new Map(env);
-        const params = readCallableParameterTypes(node.params, expected).map(({ parameter: param, type: selected, declared }) => {
+        const callable = readCallableLambdaInference(node, expected);
+        const params = callable.params.map(({ parameter: param, type: selected, declared }) => {
           const type = declared ? this.resolveType(selected, path, param.span) : selected;
           if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
           bindLocal(inner, param.name, type);
           return { ...param, type };
         });
-        const body = this.expr(node.body, inner, path, expected?.ret);
+        const result = callable.declaredRet ? this.resolveType(callable.ret, path, node.span) : callable.ret;
+        let body = this.expr(node.body, inner, path, result);
+        if (result) body = coerce(body, result, this.language, node.span);
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
@@ -952,6 +955,12 @@ class Checker {
       }
     }
     const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
+    if (lowering === 'relative-character-template') {
+      const signature = { kind: 'function', params: [STRING, FLOAT], ret: { kind: 'option', element: STRING, absence: 'undefined' } };
+      const fn = coerce(this.expr(createStringRelativeCharacterTemplateExpression(node.span), new Map(), path, signature),
+        signature, this.language, node.span);
+      return { k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span };
+    }
     if (lowering === 'code-unit-template' || lowering === 'character-template') {
       const character = lowering === 'character-template';
       const signature = { kind: 'function', params: [STRING, FLOAT], ret: character ? STRING : FLOAT };
@@ -1747,6 +1756,7 @@ class Checker {
 }
 
 import {createStringCharacterTemplateExpression} from './string-character-template.js';
+import {createStringRelativeCharacterTemplateExpression} from './string-relative-character-template.js';
 
 /** Arrays have a text, but not one the translation reproduces yet. */
 function arrayText(span) {

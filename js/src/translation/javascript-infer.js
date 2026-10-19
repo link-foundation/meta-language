@@ -27,6 +27,8 @@ import { acceptJavaScriptArrayTupleContext } from './product-source-rules.js';
 import { readJavaScriptMethodReceiverKind, readJavaScriptMethodArgumentKind,
   readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm,
   readJavaScriptEqualityInferenceStep } from './javascript-surface-rules.js';
+import {readPrimitiveMethodMinimumArguments,readPrimitiveMethodArgumentCount,
+  readPrimitiveMethodCheckedArgumentKind,readPrimitiveMethodCheckedResultForm} from './primitive-method-rules.js';
 
 const ROOT = 'crate';
 const LOGICAL = new Set(['and', 'or']);
@@ -1101,15 +1103,19 @@ class Inference {
       receiver = this.resolve(object);
     }
     if (receiver.kind === 'string') {
+      const primitive = readPrimitiveMethodMinimumArguments(receiver.kind, op) >= 0;
       args.forEach((arg, index) => {
-        const kind = readJavaScriptMethodArgumentKind(receiver.kind, op, index);
+        const kind = primitive && index < readPrimitiveMethodArgumentCount(receiver.kind, op)
+          ? readPrimitiveMethodCheckedArgumentKind(receiver.kind, op, index)
+          : readJavaScriptMethodArgumentKind(receiver.kind, op, index);
         if (kind === 'float') this.unify(arg, FLOAT, where);
         else if (kind === 'number-value') this.unify(this.numericValue(arg), FLOAT, where);
         else if (kind === 'string') this.unify(arg, STRING, where);
       });
-      const form = readJavaScriptStringMethodResultForm(op);
+      const form = primitive ? readPrimitiveMethodCheckedResultForm(receiver.kind, op) : readJavaScriptStringMethodResultForm(op);
       const output = form === 'bool' ? BOOL : form === 'float' ? FLOAT
         : form === 'optional-float' ? { kind: 'option', element: FLOAT, absence: 'undefined' }
+        : form === 'optional-string' ? { kind: 'option', element: STRING, absence: 'undefined' }
         : form === 'array-string' ? { kind: 'array', element: STRING } : STRING;
       this.unify(result, output, where);
       return true;

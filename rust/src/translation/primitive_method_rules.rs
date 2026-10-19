@@ -150,8 +150,9 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
     {
         1f64
     } else if receiver == "string" {
-        if (((operation == "split") || (operation == "slice")) || (operation == "charCodeAt"))
-            || (operation == "charAt")
+        if ((((operation == "split") || (operation == "slice")) || (operation == "charCodeAt"))
+            || (operation == "charAt"))
+            || (operation == "at")
         {
             0f64
         } else if (((((operation == "indexOf") || (operation == "lastIndexOf"))
@@ -185,9 +186,10 @@ pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) 
             -1f64
         }
     } else if receiver == "string" {
-        if (((operation == "repeat") || (operation == "codePointAt"))
+        if ((((operation == "repeat") || (operation == "codePointAt"))
             || (operation == "charCodeAt"))
-            || (operation == "charAt")
+            || (operation == "charAt"))
+            || (operation == "at")
         {
             1f64
         } else if (((((((operation == "split") || (operation == "slice"))
@@ -231,7 +233,7 @@ pub fn read_primitive_method_checked_argument_kind(
             String::from("float")
         }
     } else if receiver == "string" {
-        if (operation == "charCodeAt") || (operation == "charAt") {
+        if ((operation == "charCodeAt") || (operation == "charAt")) || (operation == "at") {
             String::from("number-value")
         } else if (((operation == "replace") || (operation == "replaceAll"))
             || ((index == 0f64)
@@ -261,7 +263,8 @@ pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index
     } else if ((receiver == "string") && (operation == "split")) && (index == 0f64) {
         String::from("absent")
     } else if (((((receiver == "string") && (operation == "split")) && (index == 1f64))
-        || (((receiver == "string") && ((operation == "charCodeAt") || (operation == "charAt")))
+        || (((receiver == "string")
+            && (((operation == "charCodeAt") || (operation == "charAt")) || (operation == "at")))
             && (index == 0f64)))
         || (((receiver == "string") || (receiver == "array")) && (operation == "slice")))
         || (((receiver == "string") && ((operation == "indexOf") || (operation == "lastIndexOf")))
@@ -289,7 +292,8 @@ pub fn read_primitive_method_default_value(receiver: &str, operation: &str, inde
         String::from("Infinity")
     } else if ((receiver == "string") && (operation == "split")) && (index == 1f64) {
         String::from("4294967295")
-    } else if ((receiver == "string") && ((operation == "charCodeAt") || (operation == "charAt")))
+    } else if ((receiver == "string")
+        && (((operation == "charCodeAt") || (operation == "charAt")) || (operation == "at")))
         && (index == 0f64)
     {
         String::from("0")
@@ -331,6 +335,8 @@ pub fn read_primitive_method_checked_result_form(receiver: &str, operation: &str
             String::from("float")
         } else if operation == "codePointAt" {
             String::from("optional-float")
+        } else if operation == "at" {
+            String::from("optional-string")
         } else {
             String::from("string")
         }
@@ -564,7 +570,9 @@ pub fn require_primitive_method_utf16(expression: &str, receiver: &str) -> bool 
 
 #[must_use]
 pub fn read_primitive_method_lowering_form(receiver: &str, operation: &str) -> String {
-    if (receiver == "string") && (operation == "charAt") {
+    if (receiver == "string") && (operation == "at") {
+        String::from("relative-character-template")
+    } else if (receiver == "string") && (operation == "charAt") {
         String::from("character-template")
     } else if (receiver == "string") && (operation == "charCodeAt") {
         String::from("code-unit-template")

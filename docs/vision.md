@@ -635,6 +635,20 @@ containing artifact descriptor. These facts supply no native execution evidence.
 The explicit string-order schema successor reuses its existing complete model,
 paired schema inverses and generated-source checks before the unchanged sixth
 schema closure. Old strict writers retain their exact original input boundary.
+Relative string character selection also uses one complete checked JavaScript
+definition packaged as a shared Links callable. Both checkers apply it to the
+separately evaluated receiver and numeric position, preserving UTF-16 units,
+negative positions and an explicit undefined result outside the string. The
+reviewed language range is ECMAScript 2022 through 2026. Other numeric conversions,
+custom builtins, extra arguments and the distinct array operation retain their
+own obligations. Ordinary method inference selects the existing shared primitive
+rules in both runtimes. Source-free callable rechecking selects and checks the
+actual explicit return annotation through the same generated callable plan used
+for inference; optional results cannot disappear during replay. Complete native
+behavior remains a CI obligation. A six-field provenance refresh retains all
+recorded native definitions and independently recovers the complete preceding
+artifact, source policy, register and loan receipt; it does not establish that
+current full regeneration or native execution succeeded.
 Scalar-loop snapshots use the same normal producers and full callable ranges.
 Their finite receipts independently check actual token boundaries and recover
 the complete preceding fixtures, retaining every original source, semantic

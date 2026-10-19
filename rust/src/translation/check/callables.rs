@@ -239,21 +239,21 @@ impl Checker {
                 .callable_reference(node, segments, path, expected)?
                 .ok_or_else(|| type_error("an actual function reference is required", node.span)),
             SNode::Lambda { params, body, .. } => {
-                let value = json!({"parameters":params,"expected":expected.value()});
+                let value = json!({"lambda":node,"expected":expected.value()});
                 let facts = create_surface_reference_facts(&value);
-                let plan = rules::plan_callable_parameter_types(
+                let plan = rules::plan_callable_lambda_inference(
                     &facts.forms,
                     &facts.texts,
                     &facts.starts,
                     &facts.counts,
                     &facts.labels,
                     &facts.targets,
-                    field(&facts, facts.root, "parameters"),
+                    field(&facts, facts.root, "lambda"),
                     field(&facts, facts.root, "expected"),
                 );
                 let mut inner = env.clone();
                 let mut parameters = Vec::new();
-                for (parameter, selection) in params.iter().zip(plan.as_chunks::<3>().0) {
+                for (parameter, selection) in params.iter().zip(plan[2..].as_chunks::<3>().0) {
                     let selected: Option<Type> = facts
                         .value(selection[1])
                         .filter(|value| !value.is_null())
@@ -291,8 +291,29 @@ impl Checker {
                         rocq_type: parameter.rocq_type.clone(),
                     });
                 }
-                let result = expected.result();
-                let body = self.expr(body, &inner, path, result, false)?;
+                let selected = facts
+                    .value(plan[0])
+                    .filter(|value| !value.is_null())
+                    .map(|value| {
+                        serde_json::from_value::<Type>(value.clone()).map_err(|error| {
+                            type_error(
+                                format!("a callable return annotation is malformed: {error}"),
+                                node.span,
+                            )
+                        })
+                    })
+                    .transpose()?;
+                let result = if plan[1].to_bits() == 1.0_f64.to_bits() {
+                    selected
+                        .map(|ty| self.resolve_type(Some(&ty), path, node.span))
+                        .transpose()?
+                } else {
+                    selected
+                };
+                let mut body = self.expr(body, &inner, path, result.as_ref(), false)?;
+                if let Some(result) = result.as_ref() {
+                    body = coerce(body, result, self.language, node.span, None)?;
+                }
                 let ty = callable_type(&parameters, &body.ty);
                 Ok(Expr::new(
                     Node::Lambda {

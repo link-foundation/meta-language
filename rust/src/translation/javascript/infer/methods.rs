@@ -296,17 +296,25 @@ impl Inference {
             }
         }
         if kind == "string" {
-            let result =
-                match read_java_script_string_method_result_form(&method.operation).as_str() {
-                    "bool" => Term::Known(BOOL),
-                    "float" => Term::Known(FLOAT),
-                    "array-string" => Term::Array(Box::new(Term::Known(STRING))),
-                    "optional-float" => self.declared(Some(&Type::Option {
-                        element: Box::new(FLOAT),
-                        absence: "undefined".to_owned(),
-                    })),
-                    _ => Term::Known(STRING),
-                };
+            let form = if crate::translation::primitive_method_rules::read_primitive_method_minimum_arguments(kind, &method.operation) >= 0.0 {
+                crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation)
+            } else {
+                read_java_script_string_method_result_form(&method.operation)
+            };
+            let result = match form.as_str() {
+                "bool" => Term::Known(BOOL),
+                "float" => Term::Known(FLOAT),
+                "array-string" => Term::Array(Box::new(Term::Known(STRING))),
+                "optional-float" => self.declared(Some(&Type::Option {
+                    element: Box::new(FLOAT),
+                    absence: "undefined".to_owned(),
+                })),
+                "optional-string" => self.declared(Some(&Type::Option {
+                    element: Box::new(STRING),
+                    absence: "undefined".to_owned(),
+                })),
+                _ => Term::Known(STRING),
+            };
             self.unify(&method.result, &result, method.place)?;
         } else {
             let form = crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation);

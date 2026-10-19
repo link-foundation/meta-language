@@ -160,6 +160,33 @@ impl Checker {
             }
         }
         let lowering = rules::read_primitive_method_lowering_form(receiver, operation);
+        if lowering == "relative-character-template" {
+            let result = Type::Option {
+                element: Box::new(STRING),
+                absence: "undefined".to_owned(),
+            };
+            let signature = Type::Function {
+                params: vec![STRING, FLOAT],
+                ret: Box::new(result.clone()),
+            };
+            let template = super::string_code_unit_template::relative_character_expression(span)?;
+            let function = self.expr(&template, &Env::default(), path, Some(&signature), false)?;
+            let function = self.coerce(function, &signature, span)?;
+            let arguments = std::iter::once(object)
+                .chain(values.into_iter().map(|value| {
+                    value.expect(
+                        "the generated relative character lowering supplies its numeric argument",
+                    )
+                }))
+                .collect();
+            return Ok(Expr::new(
+                Node::Apply {
+                    func: Box::new(function),
+                    args: arguments,
+                },
+                result,
+            ));
+        }
         if lowering == "code-unit-template" || lowering == "character-template" {
             let character = lowering == "character-template";
             let result = if character { STRING } else { FLOAT };
