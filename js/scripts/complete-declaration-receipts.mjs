@@ -1,6 +1,7 @@
 // Finite current receipts; historical artifacts and semantic output stay exact.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
 
@@ -151,14 +152,97 @@ function readCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
  return readHistoricalCompleteDeclarationDescriptorSuccessor(inverse,identity,previousRegister);
 }
 
+// This third finite edge records only the generated neutral type declaration.
+const typeNeutralDescriptorSuccessor = {
+  "identity": "raw consuming",
+  "previous": {
+    "file": "experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino",
+    "revision": "18a8e0a04bab43f6572be311ceb75c6596fdc147",
+    "bytes": 1814953,
+    "sha256": "95032ee3af3c0de10c6486aa1d76e4b4d315e34379cb5d081a47ae9cb35793e2"
+  },
+  "current": {
+    "file": "experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino",
+    "sourceRevision": "18a8e0a04bab43f6572be311ceb75c6596fdc147",
+    "bytes": 1814953,
+    "sha256": "103d9b46e25b75114d03ae87ecd3204dc3e0ae2eb047aec75402937cca976a63"
+  },
+  "sources": [
+    {
+      "file": "js/src/typed-program-link-rules.js",
+      "previous": {
+        "bytes": 18400,
+        "sha256": "9a109701a11fb6150e5302d79406f1601fc1fd20ac425b3b6c245bde40ae701f"
+      },
+      "current": {
+        "bytes": 18731,
+        "sha256": "2958d7e259db8c4ddce69b1d4e736da69f3ab343a53461de9ad13cfcce106b91"
+      }
+    }
+  ],
+  "changes": [
+    {
+      "path": [
+        "decisionSources",
+        "9",
+        "bytes"
+      ],
+      "before": 18400,
+      "after": 18731
+    },
+    {
+      "path": [
+        "decisionSources",
+        "9",
+        "sha256"
+      ],
+      "before": "9a109701a11fb6150e5302d79406f1601fc1fd20ac425b3b6c245bde40ae701f",
+      "after": "2958d7e259db8c4ddce69b1d4e736da69f3ab343a53461de9ad13cfcce106b91"
+    }
+  ],
+  "sourceExtension": {
+    "start": 8832,
+    "end": 9163,
+    "source": "/** @param {string} kind @param {string} field @returns {string} */\nexport function readProgramTypeNeutralFieldDefault(kind, field) {\n  if (((field === \"reference\") && ((kind === \"array\") || (kind === \"record\") || (kind === \"map\") || (kind === \"set\"))) || ((kind === \"record\" && field === \"open\"))) return \"false\";\n  return \"\";\n}\n\n"
+  }
+};
+
+function readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ if(!Object.hasOwn(register,'typeNeutralDescriptorSuccessors'))return readCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
+ const {typeNeutralDescriptorSuccessors,...previousRegister}=register;
+ const previousBytes=Buffer.from(structuredDataToLino(previousRegister));
+ assert.equal(previousBytes.length,82262,'the complete prior register byte count is unchanged');
+ assert.equal(digest(previousBytes),'35449016aca9b95e58fa0b27e172fe4b279ea5175b17cff88ce4137aa4c067bf',
+  'removing only the third edge restores every complete original register byte');
+ assert.deepEqual(typeNeutralDescriptorSuccessors,[typeNeutralDescriptorSuccessor],
+  'the third edge and its whole source insertion are independently pinned');
+ const edge=typeNeutralDescriptorSuccessors[0],bytes=Buffer.from(structuredDataToLino(artifact));
+ if(identity!==edge.identity||digest(bytes)!==edge.current.sha256)return readCompleteDeclarationDescriptorSuccessor(artifact,identity,previousRegister);
+ assert.equal(bytes.length,edge.current.bytes);
+ const source=edge.sources[0],current=readFileSync(new URL('../../'+source.file,import.meta.url));
+ assert.equal(current.length,source.current.bytes);assert.equal(digest(current),source.current.sha256);
+ const insertion=edge.sourceExtension;
+ assert.equal(current.subarray(insertion.start,insertion.end).toString('utf8'),insertion.source);
+ const previous=Buffer.concat([current.subarray(0,insertion.start),current.subarray(insertion.end)]);
+ assert.equal(previous.length,source.previous.bytes);assert.equal(digest(previous),source.previous.sha256,
+  'removing only the complete generated declaration restores the whole previous source');
+ const inverse=structuredClone(artifact);
+ assert.deepEqual(inverse.decisionSources[9],{file:source.file,...source.current});
+ inverse.decisionSources[9]={file:source.file,...source.previous};
+ const restored=Buffer.from(structuredDataToLino(inverse));
+ assert.equal(restored.length,edge.previous.bytes);assert.equal(digest(restored),edge.previous.sha256,
+  'only the two source descriptor fields change in the entire raw artifact');
+ return readCompleteDeclarationDescriptorSuccessor(inverse,identity,previousRegister);
+}
+
 /** The public standalone gate retains its cloned-data result and all checks. */
 export function restoreCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
- return readCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;
+ return readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;
 }
 
 /** Restore only a recorded source endpoint, archive receipt or source descriptor. */
 export function restoreCompleteDeclarationReceipt(artifact,identity,{register=readProjectData(COMPLETE_DECLARATION_RECEIPTS)}={}){
- const successor=readCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
+ const successor=readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
  artifact=successor.artifact;
  assert.equal(register.schemaVersion,1);
  const matches=register.receipts.filter(row=>row.identity===identity);

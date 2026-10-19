@@ -7,6 +7,7 @@ import {COMPLETE_DECLARATION_RECEIPTS,restoreCompleteDeclarationReceipt,restoreC
 import {readProjectData} from '../scripts/project-data.mjs';
 import {readStructuredDataLino,structuredDataToLino} from '../src/structured-data-links.js';
 import {tokenize} from '../src/translation/lexer.js';
+import {parseNative} from '../src/native-grammar-parser.js';
 
 const root=new URL('../../',import.meta.url),completeRegister=readProjectData(COMPLETE_DECLARATION_RECEIPTS);
 const register={...completeRegister,receipts:completeRegister.receipts.slice(0,2)};
@@ -99,7 +100,7 @@ test('the descriptor successor retains all four receipt rows and restores the co
  const completeRegister=readStructuredDataLino(execFileSync('git',['show','1a69d1b33be71ca7421eb8a7a2e4dba9b599ef26:parity/self-translation/complete-declaration-receipts.lino'],{cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
  const baseline='191f214903cc123cfb1566d82a90e18819be6b4d';
  const previousAdapter=execFileSync('git',['show',baseline+':js/scripts/complete-declaration-receipts.mjs'],{cwd:root,maxBuffer:1024*1024});
- let inverseAdapter=readFileSync(new URL('../scripts/complete-declaration-receipts.mjs',import.meta.url),'utf8');
+ let inverseAdapter=execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:js/scripts/complete-declaration-receipts.mjs'],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});
  const additionsStart=inverseAdapter.indexOf('// A source revision authenticates source descriptors;');
  const originalStart=inverseAdapter.indexOf('/** Restore only a recorded source endpoint, archive receipt or source descriptor. */');
  assert.ok(additionsStart>0&&originalStart>additionsStart);
@@ -190,6 +191,7 @@ test('descriptor successor admission refuses omitted edges altered policies and 
 });
 
 test('reference renderer descriptor refresh preserves complete raw output and every earlier receipt edge',()=>{
+ const completeRegister=readStructuredDataLino(execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:parity/self-translation/complete-declaration-receipts.lino'],{cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
  const edge=completeRegister.descriptorSuccessors[0],baseline='1a69d1b33be71ca7421eb8a7a2e4dba9b599ef26';
  assert.equal(completeRegister.descriptorSuccessors.length,1);
  assert.equal(edge.identity,'raw consuming');assert.equal(edge.sources.length,1);assert.equal(edge.changes.length,2);
@@ -198,7 +200,7 @@ test('reference renderer descriptor refresh preserves complete raw output and ev
  const {descriptorSuccessors,...previousRegister}=completeRegister;
  assert.deepEqual(Buffer.from(structuredDataToLino(previousRegister)),previousRegisterBytes);
  const beforeBytes=execFileSync('git',['show',baseline+':'+edge.previous.file],{cwd:root,maxBuffer:8*1024*1024});
- const before=readStructuredDataLino(beforeBytes.toString()),current=readProjectData(new URL(edge.current.file,root));
+ const before=readStructuredDataLino(beforeBytes.toString()),current=readStructuredDataLino(execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+edge.current.file],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}));
  assert.equal(beforeBytes.length,edge.previous.bytes);assert.equal(createHash('sha256').update(beforeBytes).digest('hex'),edge.previous.sha256);
  assert.equal(Buffer.byteLength(structuredDataToLino(current)),edge.current.bytes);
  assert.equal(createHash('sha256').update(structuredDataToLino(current)).digest('hex'),edge.current.sha256);
@@ -228,7 +230,7 @@ test('reference renderer descriptor refresh preserves complete raw output and ev
  assert.equal(createHash('sha256').update(restored).digest('hex'),source.previous.sha256);
  assert.deepEqual(Buffer.from(restored),execFileSync('git',['show',reviewed.sourceCommit+'^:'+source.file],{cwd:root,maxBuffer:1024*1024}));
  const borrowedFile='experiments/original-link-complete-table-projection/data/raw-borrowed-parameter-receipt.lino';
- const borrowed=readProjectData(new URL(borrowedFile,root));
+ const borrowed=readStructuredDataLino(execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+borrowedFile],{cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
  const oldBorrowedBytes=execFileSync('git',['show',baseline+':'+borrowedFile],{cwd:root,maxBuffer:2*1024*1024});
  const oldBorrowed=readStructuredDataLino(oldBorrowedBytes.toString());
  assert.deepEqual(borrowed.predecessor,{...oldBorrowed.predecessor,bytes:edge.current.bytes,sha256:edge.current.sha256});
@@ -236,7 +238,7 @@ test('reference renderer descriptor refresh preserves complete raw output and ev
  const borrowedInverse={...borrowed,predecessor:oldBorrowed.predecessor};
  assert.deepEqual(borrowedInverse,oldBorrowed);assert.deepEqual(Buffer.from(structuredDataToLino(borrowedInverse)),oldBorrowedBytes);
  const adapterBefore=execFileSync('git',['show',baseline+':js/scripts/complete-declaration-receipts.mjs'],{cwd:root,encoding:'utf8'});
- let adapter=readFileSync(new URL('../scripts/complete-declaration-receipts.mjs',import.meta.url),'utf8');
+ let adapter=execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:js/scripts/complete-declaration-receipts.mjs'],{cwd:root,encoding:'utf8',maxBuffer:1024*1024});
  const begin=adapter.indexOf('// This second finite edge authenticates source descriptors only.');
  const end=adapter.indexOf('/** The public standalone gate retains its cloned-data result and all checks. */',begin);
  assert.ok(begin>0&&end>begin);
@@ -251,7 +253,8 @@ test('reference renderer descriptor refresh preserves complete raw output and ev
 });
 
 test('reference renderer descriptor refresh refuses forged edges altered old registers and semantic artifact edits',()=>{
- const current=readProjectData(new URL(completeRegister.descriptorSuccessors[0].current.file,root));
+ const completeRegister=readStructuredDataLino(execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:parity/self-translation/complete-declaration-receipts.lino'],{cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
+ const current=readStructuredDataLino(execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+completeRegister.descriptorSuccessors[0].current.file],{cwd:root,encoding:'utf8',maxBuffer:8*1024*1024}));
  let refused=0;
  for(const mutate of [
   value=>{delete value.descriptorSuccessors;},value=>{value.descriptorSuccessors=[];},
@@ -280,4 +283,84 @@ test('reference renderer descriptor refresh refuses forged edges altered old reg
   assert.throws(()=>restoreCompleteDeclarationReceipt(changed,'raw consuming'),assert.AssertionError);refused+=1;
  }
  assert.equal(refused,24);
+});
+
+test('neutral type descriptor successor preserves every earlier artifact register reader and closed source declaration',()=>{
+ const baseline='18a8e0a04bab43f6572be311ceb75c6596fdc147',edge=completeRegister.typeNeutralDescriptorSuccessors[0];
+ assert.equal(completeRegister.typeNeutralDescriptorSuccessors.length,1);
+ assert.equal(edge.identity,'raw consuming');assert.equal(edge.sources.length,1);assert.equal(edge.changes.length,2);
+ assert.deepEqual(edge.changes.map(change=>change.path),[['decisionSources','9','bytes'],['decisionSources','9','sha256']]);
+ const previousRegisterBytes=execFileSync('git',['show',baseline+':parity/self-translation/complete-declaration-receipts.lino'],{cwd:root,maxBuffer:2*1024*1024});
+ const {typeNeutralDescriptorSuccessors,...previousRegister}=completeRegister;
+ assert.deepEqual(Buffer.from(structuredDataToLino(previousRegister)),previousRegisterBytes);
+ const previousBytes=execFileSync('git',['show',baseline+':'+edge.previous.file],{cwd:root,maxBuffer:8*1024*1024});
+ const previous=readStructuredDataLino(previousBytes.toString()),current=readProjectData(new URL(edge.current.file,root));
+ const inverse=structuredClone(current),source=edge.sources[0];
+ assert.deepEqual(inverse.decisionSources[9],{file:source.file,...source.current});
+ inverse.decisionSources[9]={file:source.file,...source.previous};
+ assert.deepEqual(inverse,previous);assert.deepEqual(Buffer.from(structuredDataToLino(inverse)),previousBytes);
+ assert.equal(previousBytes.length,edge.previous.bytes);assert.equal(createHash('sha256').update(previousBytes).digest('hex'),edge.previous.sha256);
+ const currentBytes=Buffer.from(structuredDataToLino(current));
+ assert.equal(currentBytes.length,edge.current.bytes);assert.equal(createHash('sha256').update(currentBytes).digest('hex'),edge.current.sha256);
+ assert.equal(current.definitionCount,106);assert.equal(current.owners.length,106);
+ for(const field of ['completeRust','owners','declarationNames','totals','assumptions','encodings','preludeHashes','replays','archive'])assert.deepEqual(current[field],previous[field]);
+ assert.deepEqual(restoreCompleteDeclarationReceipt(current,'raw consuming'),restoreCompleteDeclarationReceipt(previous,'raw consuming',{register:previousRegister}));
+ assert.deepEqual(restoreCompleteDeclarationDescriptorSuccessor(current,'raw consuming',completeRegister),restoreCompleteDeclarationDescriptorSuccessor(previous,'raw consuming',previousRegister));
+ const currentSource=readFileSync(new URL(source.file,root)),insertion=edge.sourceExtension;
+ assert.equal(currentSource.length,source.current.bytes);assert.equal(createHash('sha256').update(currentSource).digest('hex'),source.current.sha256);
+ assert.equal(currentSource.subarray(insertion.start,insertion.end).toString('utf8'),insertion.source);
+ const previousSource=Buffer.concat([currentSource.subarray(0,insertion.start),currentSource.subarray(insertion.end)]);
+ assert.equal(previousSource.length,source.previous.bytes);assert.equal(createHash('sha256').update(previousSource).digest('hex'),source.previous.sha256);
+ assert.deepEqual(previousSource,execFileSync('git',['show','06d96082^:'+source.file],{cwd:root,maxBuffer:1024*1024}));
+ const originalTree=parseNative('native-javascript',previousSource.toString('utf8')),currentTree=parseNative('native-javascript',currentSource.toString('utf8'));
+ assert.equal(originalTree.hasError,false);assert.equal(currentTree.hasError,false);
+ const originalNodes=originalTree.children.map(({node})=>({kind:node.term,source:previousSource.subarray(node.start,node.end).toString('utf8')}));
+ const remaining=currentTree.children.filter(({node})=>node.end<=insertion.start||node.start>=insertion.end)
+  .map(({node})=>({kind:node.term,source:currentSource.subarray(node.start,node.end).toString('utf8')}));
+ assert.deepEqual(remaining,originalNodes);assert.equal(originalNodes.length,47);
+ assert.equal(originalNodes.filter(node=>node.kind==='export_statement').length,23);
+ assert.equal(originalNodes.filter(node=>node.kind==='import_statement').length,0);
+ let reader=readFileSync(new URL('../scripts/complete-declaration-receipts.mjs',import.meta.url),'utf8');
+ const begin=reader.indexOf('// This third finite edge records only the generated neutral type declaration.');
+ const end=reader.indexOf('/** The public standalone gate retains its cloned-data result and all checks. */',begin);
+ assert.ok(begin>0&&end>begin);
+ reader=(reader.slice(0,begin)+reader.slice(end)).replace("import {readFileSync} from 'node:fs';\n",'')
+  .replace('return readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;','return readCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;')
+  .replace('const successor=readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register);','const successor=readCompleteDeclarationDescriptorSuccessor(artifact,identity,register);');
+ assert.deepEqual(Buffer.from(reader),execFileSync('git',['show',baseline+':js/scripts/complete-declaration-receipts.mjs'],{cwd:root,maxBuffer:1024*1024}),
+  'the complete previous reader and every strict assertion restore exactly');
+});
+
+test('neutral type descriptor successor refuses forged source insertions lost ancestors and semantic changes',()=>{
+ const current=readProjectData(new URL(completeRegister.typeNeutralDescriptorSuccessors[0].current.file,root));
+ let refused=0;
+ for(const mutate of [
+  value=>{delete value.typeNeutralDescriptorSuccessors;},value=>{value.typeNeutralDescriptorSuccessors=[];},
+  value=>{value.typeNeutralDescriptorSuccessors.push(structuredClone(value.typeNeutralDescriptorSuccessors[0]));},
+  value=>{value.descriptorSuccessors[0].current.sha256='0'.repeat(64);},value=>{value.successors[0].identity='changed';},
+  value=>{value.receipts[0].previous.bytes+=1;},value=>{value.typeNeutralDescriptorSuccessors[0].identity='changed';},
+  value=>{value.typeNeutralDescriptorSuccessors[0].current.sha256='0'.repeat(64);},
+  value=>{value.typeNeutralDescriptorSuccessors[0].previous.sha256='0'.repeat(64);},
+  value=>{value.typeNeutralDescriptorSuccessors[0].sourceExtension.source+=' ';},
+  value=>{value.typeNeutralDescriptorSuccessors[0].sourceExtension.start+=1;},
+  value=>{value.typeNeutralDescriptorSuccessors[0].sourceExtension.end-=1;},
+  value=>{value.typeNeutralDescriptorSuccessors[0].sources[0].file='unowned.js';},
+  value=>{value.typeNeutralDescriptorSuccessors[0].sources[0].current.bytes+=1;},
+  value=>{value.typeNeutralDescriptorSuccessors[0].changes.reverse();},
+  value=>{value.typeNeutralDescriptorSuccessors[0].changes[0].path=['completeRust'];},
+  value=>{value.extra='unreviewed';},
+ ]){
+  const changed=structuredClone(completeRegister);mutate(changed);
+  assert.throws(()=>restoreCompleteDeclarationReceipt(current,'raw consuming',{register:changed}),assert.AssertionError);refused+=1;
+ }
+ for(const mutate of [
+  value=>{value.decisionSources[9].file='unowned.js';},value=>{value.decisionSources[9].bytes+=1;},
+  value=>{value.decisionSources[9].sha256='0'.repeat(64);},value=>{value.decisionSources.reverse();},
+  value=>{value.completeRust+=' ';},value=>{value.owners.pop();},value=>{value.replays.reverse();},
+  value=>{value.archive.textBytes+=1;},value=>{value.extra='unreviewed';},
+ ]){
+  const changed=structuredClone(current);mutate(changed);
+  assert.throws(()=>restoreCompleteDeclarationReceipt(changed,'raw consuming'),assert.AssertionError);refused+=1;
+ }
+ assert.equal(refused,26);
 });
