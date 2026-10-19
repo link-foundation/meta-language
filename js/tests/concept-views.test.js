@@ -5,6 +5,9 @@ import { createConceptViews, readConceptOntology, readConceptTaxonomy } from '..
 import { LinkNetwork } from '../src/network.js';
 import { LinkMetadata } from '../src/primitives.js';
 import { readFormalConceptDefinition, proveFormalConceptEquivalence } from '../src/formal-concept-definition.js';
+import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
+import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { CRITICAL_CONVERSATION_REQUIREMENTS } from '../scripts/issue-195-conversation-requirements.mjs';
 
 const fixture = readProjectData(new URL('../../parity/fixtures/concept-views.lino', import.meta.url));
 const reload = value => ({ network: LinkNetwork.fromLino(value.links), root: value.root });
@@ -92,5 +95,73 @@ test('foreign membership, model and base graph edits cannot counterfeit views', 
     const { network, root } = reload(fixture.withBase); edit(network);
     assert.throws(() => readConceptOntology(network, root));
     assert.throws(() => readConceptTaxonomy(network, root));
+  }
+});
+
+test('public concept views retain independent memberships and every declared root through both source-free archives', async context => {
+  const publicApi = await import('../src/index.js');
+  assert.equal(publicApi.createConceptViews, createConceptViews);
+  assert.equal(publicApi.readConceptOntology, readConceptOntology);
+  assert.equal(publicApi.readConceptTaxonomy, readConceptTaxonomy);
+  const names = ['fixture.orphan.recursion', 'fixture.orphan.text', 'fixture.orphan.unknown', 'fixture.orphan.second-text'];
+  const expectedTraversal = [
+    [[names[0], names[1], names[2]], [names[1], names[2]]],
+    [[names[1], names[0], names[3]], [names[0], names[3]]],
+  ];
+  for (const [base, expected] of [[null, fixture.orphanOnly], [reload(fixture.base), fixture.withBase]]) {
+    const packet = publicApi.createConceptViews(base, structuredClone(fixture.options));
+    const archives = [packet.network.toLino(), encodeLinkNetworkBinary(packet.network)];
+    for (const archive of archives) {
+      const network = typeof archive === 'string' ? LinkNetwork.fromLino(archive) : decodeLinkNetworkBinary(archive);
+      assert.equal(network.toLino(), expected.links);
+      const views = [publicApi.readConceptOntology(network, packet.root), publicApi.readConceptTaxonomy(network, packet.root)];
+      assert.deepEqual(views, [expected.expectedOntology, expected.expectedTaxonomy]);
+      for (const [index, view] of views.entries()) {
+        const read = index === 0 ? publicApi.readConceptOntology : publicApi.readConceptTaxonomy;
+        for (const [position, root] of view.roots.entries()) {
+          assert.equal(network.link(root.link).metadata().term, 'concept view root');
+          const selected = read(network, packet.root, { selectedRoot: root.link });
+          assert.deepEqual(selected.selectedRoots, [root.link]);
+          assert.deepEqual(selected.reachable.map(id => view.concepts.find(concept => concept.link === id).identity), expectedTraversal[index][position]);
+          assert.deepEqual(selected.concepts, view.concepts, 'selection retains definitions and provenance outside the reachable subset');
+          if (root.typeModel !== null) assert.ok(network.link(root.typeModel), 'an explicit model is an actual archived link');
+        }
+        assert.deepEqual(view.relations.map(edge => edge.kind), index === 0 ? ['association', 'axiom'] : ['classification', 'subsumption']);
+        for (const edge of view.relations) {
+          assert.equal(network.link(edge.link).metadata().definition, edge.kind);
+          assert.ok(network.link(edge.model));
+        }
+        for (const name of names) {
+          const concept = view.concepts.find(concept => concept.identity === name);
+          assert.ok(concept);
+          assert.equal(views[1 - index].concepts.find(other => other.identity === name).link, concept.link);
+          assert.ok(concept.definitionRoots.length > 0 && concept.provenanceRoots.length > 0);
+          for (const id of [...concept.definitionRoots, ...concept.provenanceRoots]) assert.ok(network.link(id));
+          assert.deepEqual(concept.provenance, fixture.options.orphans.find(orphan => orphan.identity === name).provenance);
+        }
+      }
+    }
+  }
+  const options = structuredClone(fixture.options);
+  options.ontology = { members: names.slice(0, 2), roots: [{ identity: names[0] }], relations: [] };
+  options.taxonomy = { members: names.slice(1, 3), roots: [{ identity: names[1] }, { identity: names[2], typeModel: options.orphans[2].definition }], relations: [] };
+  const packet = publicApi.createConceptViews(null, options);
+  for (const network of [LinkNetwork.fromLino(packet.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]) {
+    const ontology = publicApi.readConceptOntology(network, packet.root), taxonomy = publicApi.readConceptTaxonomy(network, packet.root);
+    assert.deepEqual(ontology.concepts.map(concept => concept.identity), names.slice(0, 2));
+    assert.deepEqual(taxonomy.concepts.map(concept => concept.identity), names.slice(1, 3));
+    assert.equal(ontology.concepts[1].link, taxonomy.concepts[0].link);
+    assert.deepEqual(taxonomy.concepts[0], ontology.concepts[1]);
+    assert.equal(taxonomy.roots[0].typeModel, null);
+    assert.ok(network.link(taxonomy.roots[1].typeModel));
+    assert.deepEqual(taxonomy.relations, []);
+  }
+  for (const id of ['I195-ONTOLOGY-LIBRARY-ENTRYPOINT', 'I195-TAXONOMY-LIBRARY-ENTRYPOINT',
+    'I195-ONTOLOGY-TAXONOMY-MEMBERSHIP', 'I195-ONTOLOGY-TAXONOMY-RELATION-DISTINCTION',
+    'I195-ONTOLOGY-MULTIPLE-LINK-ROOTS', 'I195-TAXONOMY-MULTIPLE-LINK-ROOTS']) {
+    const row = CRITICAL_CONVERSATION_REQUIREMENTS.find(row => row.id === id);
+    assert.ok(row);assert.equal(row.additionalFixtures, undefined);
+    recordIssue195Observations({ requirementId: id, suffix: 'behavior', fixtureId: row.fixtureId,
+      fixtureFile: row.fixture, assertions: row.assertions, testName: context.name });
   }
 });

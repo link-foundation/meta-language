@@ -1080,6 +1080,12 @@ provenance links, including explicit orphan concepts. Ontology and taxonomy root
 are independently selectable; associations, axioms, classification and subsumption
 carry declared model links. These declarations preserve assumptions and do not
 establish arbitrary hierarchy or type entailment.
+Paired acceptance controls construct views with and without a grammar base,
+check both complete saved formats, and select every root against independent
+declared traversal expectations. Separate membership selections retain the same
+identity and definition where the views intersect, while allowing concepts to
+belong to only one view. A taxonomy root can also carry an explicit archived
+type model. Execution records follow all assertions; native records require CI.
 
 ### Links as fundamental entities and relationships
 
