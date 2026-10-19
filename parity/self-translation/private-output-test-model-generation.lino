@@ -25,7 +25,7 @@
 (25: 14 24 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (26: (meta: (t: semantic) (n: 1) (term: number%20value) (def: 34404) (lang: meta-language%20structured%20data)))
 (27: 17 26 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(28: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 3389a4a7c8ccd711257c81564c5a2d361d41322120d33ab5170bb143863f8078) (lang: meta-language%20structured%20data)))
+(28: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 09740223b2b8b4e6772092d6dbcc4a7a3b3f8bcb7ecba9db8b41055f8095d375) (lang: meta-language%20structured%20data)))
 (29: 20 28 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (30: 32 34 36 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (31: (meta: (t: semantic) (n: 1) (term: string%20value) (def: rust%2Fsrc%2Ftranslation%2Fgrammar_selection_rules.rs) (lang: meta-language%20structured%20data)))
