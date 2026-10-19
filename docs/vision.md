@@ -2307,6 +2307,14 @@ does not remove a requirement or turn unexecuted behavior into evidence.
 Contributor instructions stay concise: `AGENTS.md` holds the shared contract
 and `CLAUDE.md` refers to it without duplicating the rules.
 
+The correction control authenticates the original native array assertions,
+retains all nine original inputs and executes their current expectations with
+two added UTF-16 and absent-array-element boundaries. It retains all five
+genuine refusals and rejects altered input, historical source and expected
+output records before recording any correction observation. These tooling
+executions establish that concrete correction; native execution and unrelated
+corrections keep their separate evidence obligations.
+
 Version-sensitive assertions declare explicit applicable language or dependency
 version ranges. Select expectations using the actual active versions, retaining
 the selected range and version with observations. Preserve historical ranges

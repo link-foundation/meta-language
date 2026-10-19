@@ -115,6 +115,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/solo-continuation-2026-10-19.txt',
   continuousBulkCompletionRequest:
     'parity/sources/continuous-bulk-completion-2026-10-19.txt',
+  continueUnmetRequirementsDuringCiRequest:
+    'parity/sources/continue-unmet-requirements-during-ci-2026-10-19.txt',
 });
 
 // The rows the audit of c39470d0 lists as open work.

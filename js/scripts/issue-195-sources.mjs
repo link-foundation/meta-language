@@ -61,6 +61,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Direct correction that opening a continuation PR does not deliver the task; keep drafting all outstanding changes during CI and carry the complete scope through implementation and verification.',
     ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
   },
+  {
+    id: 'continue-unmet-requirements-during-ci-2026-10-19',
+    key: 'continueUnmetRequirementsDuringCiRequest',
+    title: 'Implement unmet requirements and repair CI during the next run',
+    role: 'Direct user continuation instruction to implement all unmet requirements and CI repairs while awaiting the next CI result; retain the complete scope and continue working during verification.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */
