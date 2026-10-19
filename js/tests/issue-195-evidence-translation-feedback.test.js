@@ -113,6 +113,7 @@ test('the real command-line merger preserves nested payload layout and rejects s
 });
 
 function assertInitialTranslationShards(text) {
+  text=restoreConformancePartitionHistory(text);
   const jobs = new Map(parseWorkflow(text).map(job => [job.id, job]));
   const tests = jobs.get('tests');
   const groups = /group: \[([^\]]+)\]/u.exec(tests.header)[1].split(', ');
@@ -204,3 +205,5 @@ test('omitted or duplicate initial shards, flattened feedback and a weakened fin
     assert.throws(() => assertInitialTranslationShards(changed), { name: 'AssertionError' });
   }
 });
+
+import {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';

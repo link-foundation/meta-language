@@ -9,6 +9,7 @@ const history=readProjectData(new URL('../../../parity/naming/platform-test-dead
 
 export function restorePlatformTestDeadlineHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreConformancePartitionHistory(source);
   for(const change of history.changes){
     if(!source.includes(change.marker)&&!source.includes(change.after))continue;
     assert.equal(source.split(change.after).length,2,'one complete current bounded deadline block is required');
@@ -17,3 +18,5 @@ export function restorePlatformTestDeadlineHistory(source) {
   }
   return source;
 }
+
+import {restoreConformancePartitionHistory} from './conformance-partition-history.js';

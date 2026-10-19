@@ -135,14 +135,38 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
     if (revision === first.receipt.refreshRevision && path === first.receipt.refreshPath) return Buffer.from('changed snapshot bytes');
     return execFileSync('git', ['show', `${revision}:${path}`], { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
   }), /snapshot differs from its immutable Git bytes/u);
+  // This immutable snapshot is also the source of the newest archived receipt.
+  // The original corruption therefore reaches its source authentication first.
+  const latestReceiptError = receipt.refreshRevision === '499513e0957a9626e3df565f61640fb238fe01ad'
+    ? /history receipt differs from its immutable Git bytes/u : /latest prior receipt/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === first.sourcePath) return Buffer.from('changed prior receipt bytes');
     return archivedBlob(revision, path);
+  }, receipt.refreshRevision), latestReceiptError);
+  // Retain a separate actual late-lookup corruption after the same immutable
+  // source was authenticated. Both ordered guards must still execute.
+  let latestReceiptReads = 0;
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === first.sourcePath && ++latestReceiptReads === 2) {
+      return Buffer.from('changed prior receipt bytes');
+    }
+    return archivedBlob(revision, path);
   }, receipt.refreshRevision), /latest prior receipt/u);
+  assert.equal(latestReceiptReads, 2);
+  const latestArchiveError = receipt.refreshRevision === '499513e0957a9626e3df565f61640fb238fe01ad'
+    ? /complete preceding archive/u : /committed archive/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === historyPath) return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
     return archivedBlob(revision, path);
+  }, receipt.refreshRevision), latestArchiveError);
+  let latestHistoryReads = 0;
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === historyPath && ++latestHistoryReads === 2) {
+      return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
+    }
+    return archivedBlob(revision, path);
   }, receipt.refreshRevision), /committed archive/u);
+  assert.equal(latestHistoryReads, 2);
   assert.throws(() => validateTranslationStageRefreshHistory({ schemaVersion: 1, receipts: history.receipts.slice(0, -1) },
     archivedBlob, receipt.refreshRevision), /receipt archive|latest prior receipt/u);
 });
