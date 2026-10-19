@@ -8,7 +8,8 @@ test('historical workflow comparison authenticates every current queue before re
   const history = readProjectData(new URL('../../parity/fixtures/verification-concurrency-history.lino', import.meta.url));
   let count = 0;
   for (const file of history.files) {
-    const actual = readFileSync(new URL('../../' + file.after.path, import.meta.url), 'utf8');
+    const raw = readFileSync(new URL('../../' + file.after.path, import.meta.url), 'utf8');
+    const actual = file.name === 'js.yml' ? raw : restoreWindowsLinkerLookupHistory(raw);
     const current = file.name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(actual)
       : file.name === 'ci.yml' ? restoreAggregateFailureReportHistory(actual) : restoreNativeTestProfileHistory(actual);
     assert.equal(current, file.after.source);
@@ -42,3 +43,5 @@ import { restoreGeneratedPackageOwnerHistory } from './support/generated-package
 import { restoreAggregateFailureReportHistory } from './support/aggregate-failure-history.js';
 
 import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
+
+import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';

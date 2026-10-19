@@ -2922,6 +2922,14 @@ and validates the native Windows linker after shell setup. Grammar-tool
 operation failures retain their source errors and causes instead of becoming
 syntax rejections. These diagnostic checks do not establish native success or
 resolve an unexplained process failure.
+The native child lookup may retry only the observed `ETIMEDOUT`, `SIGTERM`,
+null-status process result, with at most three identical ten-second attempts.
+Every successful lookup still validates its first resolved absolute linker
+path. Other failures and exhausted retries remain fatal, and retry diagnostics
+remain visible. Both Windows workflow owners share this exact script. Complete
+preceding sources and the actual failed preflight are retained in
+[`windows-linker-timeout-source-history.lino`](../parity/naming/windows-linker-timeout-source-history.lino);
+isolated script controls establish no successor Windows execution result.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,

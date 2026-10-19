@@ -21,7 +21,8 @@ test('actual native test optimization retains every target, logical scope, safet
   assert.equal(history.before,before);assert.equal(history.after,after);assert.equal(history.profile,profile);
   for(const path of ['.github/workflows/rust.yml','rust/tests/unit/ci-cd/workflow_release.rs']){
     const original=history.sources.find(source=>source.file===path);assert.ok(original);
-    const current=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+    const raw=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+    const current=path.endsWith('.yml')?restoreWindowsLinkerLookupHistory(raw):raw;
     assert.equal(current,original.sourceText.replace(before,after),'only the explicit checked package profile changes');
     assert.equal(restoreNativeTestProfileHistory(current),original.sourceText);
   }
@@ -30,7 +31,7 @@ test('actual native test optimization retains every target, logical scope, safet
     for(const setting of settings)assert.ok(source.includes(setting),'the same checked profile already exists in '+path);
   }
   const oldWorkflow=history.sources.find(source=>source.file==='.github/workflows/rust.yml').sourceText;
-  const current=readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8');
+  const current=restoreWindowsLinkerLookupHistory(readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8'));
   const oldJob=parseWorkflow(oldWorkflow).find(job=>job.id==='test'),job=parseWorkflow(current).find(job=>job.id==='test');
   assert.equal(job.header,oldJob.header,'all platforms, physical cells, prerequisites, conditions and original deadlines remain exact');
   assert.equal(job.steps.length,oldJob.steps.length);
@@ -58,7 +59,7 @@ test('actual native test optimization retains every target, logical scope, safet
 
 test('native test profile history refuses missing or weakened flags and exposes every unrelated workflow edit',()=>{
   const history=readProjectData(new URL('../../parity/naming/native-test-profile-source-history.lino',import.meta.url));
-  const source=readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8');
+  const source=restoreWindowsLinkerLookupHistory(readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8'));
   for(const [before,after]of [['opt-level=3','opt-level=0'],['debug-assertions=true','debug-assertions=false'],
     ['overflow-checks=true','overflow-checks=false'],['--all-features',''],['--no-fail-fast',''],['--tests --verbose','--verbose']]){
     assert.throws(()=>restoreNativeTestProfileHistory(source.replace(history.after,history.after.replace(before,after))));
@@ -69,3 +70,5 @@ test('native test profile history refuses missing or weakened flags and exposes 
   assert.equal(restoreNativeTestProfileHistory(source.replace('timeout-minutes: 15','timeout-minutes: 99')),
     original.replace('timeout-minutes: 15','timeout-minutes: 99'),'an unrelated gate edit survives the inverse and remains visible to original assertions');
 });
+
+import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';

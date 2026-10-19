@@ -9,7 +9,7 @@ import { restoreAggregateFailureReportHistory } from './support/aggregate-failur
 
 test('actual aggregate failures retain one gate error and raw metadata diagnostics without forged job names', () => {
   const evidence = readProjectData(new URL('../../parity/fixtures/aggregate-failure-history.lino', import.meta.url));
-  const current = readFileSync(new URL('../../' + evidence.path, import.meta.url), 'utf8');
+  const current = restoreWindowsLinkerLookupHistory(readFileSync(new URL('../../' + evidence.path, import.meta.url), 'utf8'));
   assert.equal(current, evidence.after.source);
   assert.equal(restoreAggregateFailureReportHistory(current), evidence.before.source);
   const before = parseWorkflow(evidence.before.source).find(job => job.id === 'acceptance');
@@ -73,3 +73,5 @@ test('actual aggregate failures retain one gate error and raw metadata diagnosti
     assert.throws(() => restoreAggregateFailureReportHistory(current.replace(evidence.stepAfter, change)));
   }
 });
+
+import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';

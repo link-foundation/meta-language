@@ -464,7 +464,12 @@ jobs:
           const {spawnSync} = require('node:child_process');
           const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
           if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
-          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          let resolved;
+          for (let attempt = 1; attempt <= 3; attempt += 1) {
+            resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+            if (resolved.error?.code !== 'ETIMEDOUT' || resolved.signal !== 'SIGTERM' || resolved.status !== null) break;
+            if (attempt < 3) console.error(`Retrying timed-out Windows linker lookup (${attempt}/3): ${resolved.error.message}`);
+          }
           if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
             throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
           }
