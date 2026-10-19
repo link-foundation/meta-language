@@ -1163,6 +1163,9 @@ Automatic grammar inference and discovery have the separately tracked
 modern primary research, concrete algorithms, pinned assumptions and independent
 accepted and rejected observations. The issue records scope; it is not inference
 implementation evidence.
+The issue-tracking control authenticates its complete registered source, four
+pinned research revisions and all ten acceptance paragraphs. The twelve separate
+implementation obligations remain independent of that tracking observation.
 The discovery integration adapter accepts explicit discovered grammar outputs
 and copies their actual recursive formal archives into the global concept graph.
 Reload preserves registered term lookups, rechecks identity certificates and

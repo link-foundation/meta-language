@@ -23,6 +23,9 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-GRAMMAR-INFERENCE-SEPARATE-ISSUE': [
+    'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-evidence-inference-tracking.test.js',
+  ],
   'I195-ASSERTION-EVIDENCE-BASED-CORRECTION': [
     'AGENTS.md', 'js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
     'js/tests/support/modern-javascript-array-parity.js', 'js/tests/issue-195-evidence-assertion-corrections.test.js',
@@ -54,6 +57,9 @@ const sourceTooling = {
 };
 
 const sourceToolingFixtures = {
+  'I195-GRAMMAR-INFERENCE-SEPARATE-ISSUE': [
+    { id: 'conversation-contract:grammarInferenceIssue', path: inferenceSource },
+  ],
   ...Object.fromEntries([
     'I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER',
   ].map(id => [id, [
