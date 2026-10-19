@@ -41,7 +41,7 @@ test('the Rust workflow checks all targets and features first and the compiling 
 });
 
 test('CI splits the Rust and JavaScript tests into matrix jobs with their own timeouts', () => {
-  const rust = job(read(`${WORKFLOWS}/rust.yml`), 'test');
+  const rust = job(restoreNativeTestProfileHistory(read(`${WORKFLOWS}/rust.yml`)), 'test');
   assert.match(rust, /suite: \[grammar, inference, generative, translation, remaining\]/u);
   assert.match(rust, /cargo test --no-fail-fast --all-features --tests --verbose -- \$SUITE_FILTERS/u);
   // The remaining suite skips every filter another suite runs, so each test runs in one job.
@@ -179,3 +179,5 @@ test('the cleanup wrapper is the documented way to run long local commands and b
 });
 
 import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';

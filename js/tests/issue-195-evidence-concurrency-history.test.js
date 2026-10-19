@@ -10,7 +10,7 @@ test('historical workflow comparison authenticates every current queue before re
   for (const file of history.files) {
     const actual = readFileSync(new URL('../../' + file.after.path, import.meta.url), 'utf8');
     const current = file.name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(actual)
-      : file.name === 'ci.yml' ? restoreAggregateFailureReportHistory(actual) : actual;
+      : file.name === 'ci.yml' ? restoreAggregateFailureReportHistory(actual) : restoreNativeTestProfileHistory(actual);
     assert.equal(current, file.after.source);
     assert.equal(restoreVerificationConcurrencyHistory(current, file.name), file.before.source);
     assert.throws(() => restoreVerificationConcurrencyHistory(file.before.source, file.name), /current queue identities/u);
@@ -40,3 +40,5 @@ test('historical workflow comparison authenticates every current queue before re
 import { restoreGeneratedPackageOwnerHistory } from './support/generated-package-owner-history.js';
 
 import { restoreAggregateFailureReportHistory } from './support/aggregate-failure-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';

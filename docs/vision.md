@@ -2868,6 +2868,16 @@ an exact negative; separate legal identifiers exercise the same actual emitted
 temporary-name collisions.
 
 The five native logical suites retain their original filters and Cargo commands.
+Their platform test command uses the same package-specific optimized test
+profile as fresh-merge and evidence execution: optimization level three, with
+debug assertions and overflow checks explicitly enabled. The exact native
+targets, all-feature selection, failure aggregation, physical assignments and
+deadlines remain unchanged. Actual unoptimized Windows and Ubuntu deadline
+diagnostics and complete preceding sources are retained in
+[`native-test-profile-source-history.lino`](../parity/naming/native-test-profile-source-history.lino).
+Independent controls inspect the raw current workflow and actual shell argument
+expansion; historical source inverses retain every preceding guard. Configuration
+checks establish no native timing or test outcome before CI execution.
 Grammar, translation and remaining tests retain their four-partition base on
 every original platform; inference and generative suites each keep one. Windows
 translation subdivides each base partition into two, using eight physical cells

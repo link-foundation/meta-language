@@ -286,7 +286,7 @@ test('exact-attempt admission requires every physical job and retains legitimate
 });
 
 test('supplemental physical cells preserve original native oracle, doctest and example owners and all deadlines', () => {
-  const source = restoreVerificationConcurrencyHistory(readFileSync(new URL('../../.github/workflows/rust.yml', import.meta.url), 'utf8'), 'rust.yml');
+  const source = restoreVerificationConcurrencyHistory(restoreNativeTestProfileHistory(readFileSync(new URL('../../.github/workflows/rust.yml', import.meta.url), 'utf8')), 'rust.yml');
   const jobs = new Map(parseWorkflow(source).map(job => [job.id, job]));
   const deadline = readStructuredDataLino(readFileSync(new URL('../../parity/fixtures/macos-translation-deadline-2026-10-18.lino', import.meta.url), 'utf8'));
   assert.equal(sha(deadline.currentWorkflowBefore.source), deadline.currentWorkflowBefore.sha256);
@@ -318,3 +318,5 @@ test('supplemental physical cells preserve original native oracle, doctest and e
 });
 
 import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';

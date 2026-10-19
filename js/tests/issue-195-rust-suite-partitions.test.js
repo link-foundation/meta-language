@@ -325,7 +325,7 @@ test('macOS translation subdivides all four old hash cells into eight complete c
     for(const name of children){assert.equal(seen.has(name),false);seen.add(name);}
   }
   assert.equal(seen.size,fixtureInventory.length,'all original test identities survive exactly once');
-  const workflow=restoreVerificationConcurrencyHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8'),'rust.yml');
+  const workflow=restoreVerificationConcurrencyHistory(restoreNativeTestProfileHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8')),'rust.yml');
   const job=parseWorkflow(workflow).find(job=>job.id==='test');assert.ok(job);
   const deadline=job.header.split('\n').find(line=>/^    timeout-minutes:/u.test(line)).trim();
   assert.ok(deadline==='timeout-minutes: 15'||deadline==="timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}",'macOS translation keeps the unchanged fifteen-minute branch');
@@ -381,3 +381,5 @@ test('macOS eight-cell native union rejects missing duplicate relabelled or redu
 });
 
 import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';

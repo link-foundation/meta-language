@@ -924,7 +924,7 @@ fn rust_test_suites_partition_the_tests_by_name() {
     );
     assert!(
         test.contains(
-            "cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS"
+            "cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS"
         )
     );
     for step in ["Run doc tests", "Check examples"] {

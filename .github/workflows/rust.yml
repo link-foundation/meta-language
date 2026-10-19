@@ -1149,7 +1149,7 @@ jobs:
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
         # The filters are word-split on purpose: they are separate arguments.
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS
 
       - name: Run complete Rust text value source observations
         if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}

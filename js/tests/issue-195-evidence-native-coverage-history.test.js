@@ -21,7 +21,7 @@ test('native coverage queue correction retains all original coverage assertions 
   const expected="group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}";
   assert.equal(history.previous,'group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}');
   assert.equal(history.current,expected);
-  const current=readFileSync(new URL('../../'+before.file,import.meta.url),'utf8');
+  const current=restoreNativeTestProfileHistory(readFileSync(new URL('../../'+before.file,import.meta.url),'utf8'));
   assert.equal(current,history.after.sourceText);
   assert.equal(before.sourceText.split(history.previous).length,2);
   assert.equal(current,before.sourceText.replace(history.previous,expected));
@@ -36,3 +36,5 @@ test('native coverage queue correction retains all original coverage assertions 
   assert.ok(report.header.includes('needs: [coverage]'));
   assert.ok(report.steps.some(step=>step.run.includes('node scripts/merge-lcov.mjs --output rust/lcov.info --fail-under-lines 84.30')));
 });
+
+import {restoreNativeTestProfileHistory} from './support/native-test-profile-history.js';
