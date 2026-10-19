@@ -2211,7 +2211,7 @@
 (2211: 2213 2215 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (2212: (meta: (t: semantic) (n: 1) (term: string%20value) (def: frontend-javascript%2Ffrontend-javascript-accept-string-param-compare) (lang: meta-language%20structured%20data)))
 (2213: 72 2212 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(2214: 77 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
+(2214: 77 83 84 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))
 (2215: 75 2214 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (2216: 2218 2220 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (2217: (meta: (t: semantic) (n: 1) (term: string%20value) (def: frontend-javascript%2Ffrontend-javascript-accept-windows-newlines) (lang: meta-language%20structured%20data)))

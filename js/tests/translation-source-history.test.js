@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
 
 const root = new URL('../../', import.meta.url);
 const policy = readProjectData(new URL('parity/self-translation/translation-source-history.lino', root));
@@ -21,7 +22,13 @@ test('reviewed source intervals restore every immutable original byte without re
     assert.equal(createHash('sha256').update(original).digest('hex'), row.previous.sha256);
     intervals += row.edits.length;
   }
-  assert.equal(intervals, 15);
+  assert.equal(intervals, 16);
+  const previous=readStructuredDataLino(execFileSync('git', ['show',
+    '6af83c50596d6d267c506539bf5d5d266bba2ee7:parity/self-translation/translation-source-history.lino'],
+    {cwd:root,encoding:'utf8',maxBuffer:2*1024*1024}));
+  assert.equal(previous.sources.reduce((sum,row)=>sum+row.edits.length,0),15);
+  assert.deepEqual(policy.sources.map(({file,revision,previous})=>({file,revision,previous})),
+    previous.sources.map(({file,revision,previous})=>({file,revision,previous})), 'every earlier immutable source profile remains exact');
 });
 
 test('source history refuses edits inside and outside approved intervals unknown owners and unregistered revisions', () => {

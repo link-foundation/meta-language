@@ -9,8 +9,10 @@ import {readStructuredDataLino,structuredDataToLino} from '../src/structured-dat
 import {tokenize} from '../src/translation/lexer.js';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
+import {readHistoricalTranslationSourceDescriptorRegister,projectHistoricalTranslationSourceDescriptorArtifact}
+ from '../scripts/current-translation-source-descriptors.mjs';
 
-const root=new URL('../../',import.meta.url),completeRegister=readProjectData(COMPLETE_DECLARATION_RECEIPTS);
+const root=new URL('../../',import.meta.url),completeRegister=readHistoricalTranslationSourceDescriptorRegister();
 const register={...completeRegister,receipts:completeRegister.receipts.slice(0,2)};
 
 test('current declaration receipts restore both complete immutable prior artifacts including every source owner',()=>{
@@ -296,7 +298,7 @@ test('neutral type descriptor successor preserves every earlier artifact registe
  const {typeNeutralDescriptorSuccessors,...previousRegister}=completeRegister;
  assert.deepEqual(Buffer.from(structuredDataToLino(previousRegister)),previousRegisterBytes);
  const previousBytes=execFileSync('git',['show',baseline+':'+edge.previous.file],{cwd:root,maxBuffer:8*1024*1024});
- const previous=readStructuredDataLino(previousBytes.toString()),current=readProjectData(new URL(edge.current.file,root));
+ const previous=readStructuredDataLino(previousBytes.toString()),current=projectHistoricalTranslationSourceDescriptorArtifact(readProjectData(new URL(edge.current.file,root)));
  const inverse=structuredClone(current),source=edge.sources[0];
  assert.deepEqual(inverse.decisionSources[9],{file:source.file,...source.current});
  inverse.decisionSources[9]={file:source.file,...source.previous};
@@ -336,7 +338,7 @@ test('neutral type descriptor successor preserves every earlier artifact registe
 });
 
 test('neutral type descriptor successor refuses forged source insertions lost ancestors and semantic changes',()=>{
- const current=readProjectData(new URL(completeRegister.typeNeutralDescriptorSuccessors[0].current.file,root));
+ const current=projectHistoricalTranslationSourceDescriptorArtifact(readProjectData(new URL(completeRegister.typeNeutralDescriptorSuccessors[0].current.file,root)));
  let refused=0;
  for(const mutate of [
   value=>{delete value.typeNeutralDescriptorSuccessors;},value=>{value.typeNeutralDescriptorSuccessors=[];},

@@ -11,7 +11,8 @@ import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES} from './raw-schema-third-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
-import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext} from './raw-schema-sixth-extension-closure.mjs';
+import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-program-schema-history.mjs';
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
@@ -235,7 +236,7 @@ export function verifyOriginalLinkRawNativeModel(read = readFileSync) {
         const sixthContext = readOriginalLinkRawSchemaSixthContext(read);
         assert.deepEqual(sixthContext.historicalSources, sourceDigests, 'every original producer binding remains exact');
         const sixthSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, read(new URL('../../' + file, import.meta.url))]));
-        const closure = verifyOriginalLinkRawSchemaSixthExtensionClosure({...sixthContext, thirdSources: authoredSources, fourthSources}, bytes,
+        const closure = verifyStringOrderSchemaSuccessor({...sixthContext, thirdSources: authoredSources, fourthSources}, bytes,
           readStructuredDataLino(sixthBytes.toString('utf8')), sixthSources);
         assert.equal(closure.baselineSha256, expected);
         return {file, sha256: actual, producerSha256: expected, schemaSourceClosure: closure, sourceClosureReceiptSha256: schemaClosureReceiptSha256};

@@ -184,6 +184,64 @@ export const reviewedOverlayProviderPolicy = {
         }
       ]
     },
+    {
+      "sourceCommit": "9f867bfac32f59a3341dabf54e8c0c02fbd83314",
+      "review": "Reviewed all five complete provider modules against 113a7747f799cbce5167167a783eb88427bd2825. Only JavaScript and Rust emitters changed: explicit shared UTF16 string order selects its actual native Text representation and target runtime, and top-level constant collection requires actual named declarations. Every complete contextual inverse restores the exact preceding source; the other three providers, all earlier revisions, historical overlays, exact hooks, raw owners, descriptors and saved LinkId requirements remain. Current behavior and native execution require their independent CI checks; this source review is not semantic equivalence or native evidence.",
+      "providers": [
+        {
+          "module": "typed-program-links.js",
+          "sourceSha256": "a0f46c4fdca3ed9bb729da7a701266bf8d7609ba142bc3009cd6eafe39983458"
+        },
+        {
+          "module": "typed-program-links-validation.js",
+          "sourceSha256": "0d6e3b6a2b9883ac4f50b4383fe07823cda091961e72922d21a8821ba86226e3"
+        },
+        {
+          "module": "typed-program-checked-projection.js",
+          "sourceSha256": "fb2636a04a45c38c5dda0d99c239eb6dc97f5d3d441245f6855fde22789e3691"
+        },
+        {
+          "module": "translation/emit-javascript.js",
+          "sourceSha256": "b9967bc6024d7967e1c429ffdc5171d32db30042354104164c64ef1ba155414d"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "sourceSha256": "7d8f61a0de6af13f0061fcd7efe75af746909fbd050d9e281e0db12014754bd0"
+        }
+      ],
+      "inverse": [
+        {
+          "module": "translation/emit-javascript.js",
+          "from": "import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';\nimport { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';\nimport {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';\n// JavaScript emitter. Every portable integer is a BigInt, so naturals and\n// integers stay unbounded and machine integers are range-checked exactly as\n// Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names\n// the constructor. Modules become object literals referenced by qualified\n// names. Theorems cannot be proved in JavaScript: each becomes an executable\n",
+          "to": "import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';\nimport { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';\n// JavaScript emitter. Every portable integer is a BigInt, so naturals and\n// integers stay unbounded and machine integers are range-checked exactly as\n// Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names\n// the constructor. Modules become object literals referenced by qualified\n// names. Theorems cannot be proved in JavaScript: each becomes an executable\n"
+        },
+        {
+          "module": "translation/emit-javascript.js",
+          "from": "        if (e.op === 'rustTrimStart') return `${string}.replace(/^\\\\p{White_Space}+/u, '')`;\n        if (e.op === 'rustTrimEnd') return `${string}.replace(/\\\\p{White_Space}+$/u, '')`;\n        return renderStringMapExpression('JavaScript', e.op, string);\n      }\n      case 'stringTest': {\n        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('JavaScript', e.op, this.expr(e.string), this.expr(e.search));\n        const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;\n        return renderStringTestExpression('JavaScript', e.op, string, this.expr(e.search));\n      }\n      case 'cast':\n        return this.cast(e);\n",
+          "to": "        if (e.op === 'rustTrimStart') return `${string}.replace(/^\\\\p{White_Space}+/u, '')`;\n        if (e.op === 'rustTrimEnd') return `${string}.replace(/\\\\p{White_Space}+$/u, '')`;\n        return renderStringMapExpression('JavaScript', e.op, string);\n      }\n      case 'stringTest': {\n        const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;\n        return renderStringTestExpression('JavaScript', e.op, string, this.expr(e.search));\n      }\n      case 'cast':\n        return this.cast(e);\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "import {rustEscape,rustString} from './rust-string-literals.js';\nimport {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';\nimport { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';\nimport {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';\n// Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer\n// the translation carries in its own prelude, so no value is ever narrowed;\n// machine integers stay Rust machine integers with checked arithmetic, which\n// panics exactly where the source aborts; a JavaScript Number is an `f64`,\n// printed by `ml_number::js_number` exactly as JavaScript prints it. Data types are enums whose\n",
+          "to": "import {rustEscape,rustString} from './rust-string-literals.js';\nimport {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';\nimport { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';\n// Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer\n// the translation carries in its own prelude, so no value is ever narrowed;\n// machine integers stay Rust machine integers with checked arithmetic, which\n// panics exactly where the source aborts; a JavaScript Number is an `f64`,\n// printed by `ml_number::js_number` exactly as JavaScript prints it. Data types are enums whose\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": " * for a program with declarations or other effects.\n */\nexport function emitRustConstants(program) {\n  const effects = program.main?.effects ?? [];\n  const effect = effects[0];\n  const legalName = typeof effect?.name === 'string' && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);\n  if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;\n  const state = new EmitState(program, 'Rust', snake, KEYWORDS, {\n    ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,\n  });\n  for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));\n",
+          "to": " * for a program with declarations or other effects.\n */\nexport function emitRustConstants(program) {\n  const effects = program.main?.effects ?? [];\n  const effect = effects[0];\n  const legalName = effect && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);\n  if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;\n  const state = new EmitState(program, 'Rust', snake, KEYWORDS, {\n    ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,\n  });\n  for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "    this.usesStandardArray = false;\n    this.usesMath = false;\n    this.usesOptional = false;\n    const needsUnits = (node) => {\n      if (!node || typeof node !== 'object') return false;\n      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;\n      if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;\n      return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));\n    };\n    this.utf16Strings = Boolean(program.utf16Strings) || [...program.declarations.values()].some(needsUnits) || needsUnits(program.main);\n    if (this.utf16Strings) this.state.encode('utf16-strings', 'strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8');\n",
+          "to": "    this.usesStandardArray = false;\n    this.usesMath = false;\n    this.usesOptional = false;\n    const needsUnits = (node) => {\n      if (!node || typeof node !== 'object') return false;\n      if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;\n      return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));\n    };\n    this.utf16Strings = Boolean(program.utf16Strings) || [...program.declarations.values()].some(needsUnits) || needsUnits(program.main);\n    if (this.utf16Strings) this.state.encode('utf16-strings', 'strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8');\n"
+        },
+        {
+          "module": "translation/emit-rust.js",
+          "from": "        if (this.utf16Strings) {\n          return renderPrimitiveStringRepresentation(true, 'map', this.receiver(e.string), '', e.op);\n        }\n        return renderStringMapExpression('Rust', e.op, this.receiver(e.string));\n      case 'stringTest': {\n        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('Rust', e.op, this.borrow(e.string), this.borrow(e.search));\n        if (this.utf16Strings) {\n          return renderPrimitiveStringRepresentation(true, 'test', this.receiver(e.string), this.borrow(e.search), e.op);\n        }\n        const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;\n        return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);\n",
+          "to": "        if (this.utf16Strings) {\n          return renderPrimitiveStringRepresentation(true, 'map', this.receiver(e.string), '', e.op);\n        }\n        return renderStringMapExpression('Rust', e.op, this.receiver(e.string));\n      case 'stringTest': {\n        if (this.utf16Strings) {\n          return renderPrimitiveStringRepresentation(true, 'test', this.receiver(e.string), this.borrow(e.search), e.op);\n        }\n        const search = e.search.k === 'lit' ? rustString(String(e.search.value)) : `${this.receiver(e.search)}.as_str()`;\n        return renderStringTestExpression('Rust', e.op, this.receiver(e.string), search);\n"
+        }
+      ]
+    },
   ],
 };
 
@@ -206,4 +264,28 @@ export function writeReviewedOverlayProviderPolicy(check) {
   const file = new URL('./data/provider-revisions.lino', import.meta.url);
   if (check) checkProjectData(file, reviewedOverlayProviderPolicy);
   else writeProjectData(file, reviewedOverlayProviderPolicy);
+}
+
+/** Restore only recorded complete source copies; unsupported history refuses. */
+export function restoreReviewedOverlayProviderSources({sourceCommit,...options}) {
+  const current=readReviewedOverlayProviderSources(options);
+  const revisions=reviewedOverlayProviderPolicy.revisions;
+  const targets=revisions.flatMap((row,index)=>row.sourceCommit===sourceCommit?[index]:[]);
+  if(targets.length!==1)throw new TypeError('one reviewed historical provider revision is required');
+  const target=targets[0],selected=revisions.indexOf(current.revision);
+  if(target>selected)throw new TypeError('a historical provider revision cannot select future sources');
+  const sources=new Map(current.sources);
+  for(let index=selected;index>target;index--){
+    const revision=revisions[index],previous=revisions[index-1];
+    if(!Array.isArray(revision.inverse))throw new TypeError('the selected provider history has no complete reviewed inverse');
+    for(const action of revision.inverse){
+      const text=sources.get(action.module);
+      if(typeof text!=='string'||!action.from||text.split(action.from).length!==2)throw new TypeError('the exact historical provider source interval changed');
+      sources.set(action.module,text.replace(action.from,()=>action.to));
+    }
+    for(const row of previous.providers)if(hash(sources.get(row.module))!==row.sourceSha256){
+      throw new TypeError('the complete historical provider source was not restored: '+row.module);
+    }
+  }
+  return{sources,revision:revisions[target]};
 }

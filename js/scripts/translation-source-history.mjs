@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 
 const historyFile = new URL('../../parity/self-translation/translation-source-history.lino', import.meta.url);
-const historyHash = '274ee7c45ecd03e59f15b6a927036f6e522dee97d6e4551526309eed2c8b7d85';
+const historyHash = '0d97c149fb8e5d8cdb3036631c5da0d873e46b97a2269f22874d582e506a853a';
 const digest = value => createHash('sha256').update(value).digest('hex');
 let history;
 

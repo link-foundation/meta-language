@@ -625,6 +625,16 @@ in the raw artifact; all 106 owners, archives and replay records remain exact.
 The whole preceding reader and register remain recoverable, and the loan receipt
 again changes only its containing artifact descriptor. This source-conservation
 proof leaves full generated output and archive execution checks in CI.
+The next descriptor edge retains the actual current inference and emitter
+sources, with a checked whole-source inverse for the preceding inference.
+It changes only thirteen provenance fields, preserves every emitted definition
+and archive, and rejoins the complete prior register before its strict checks.
+Historical controls select that exact predecessor; current causal controls
+verify the live source descriptors. The loan receipt again changes only its
+containing artifact descriptor. These facts supply no native execution evidence.
+The explicit string-order schema successor reuses its existing complete model,
+paired schema inverses and generated-source checks before the unchanged sixth
+schema closure. Old strict writers retain their exact original input boundary.
 Scalar-loop snapshots use the same normal producers and full callable ranges.
 Their finite receipts independently check actual token boundaries and recover
 the complete preceding fixtures, retaining every original source, semantic

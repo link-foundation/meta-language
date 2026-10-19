@@ -13,7 +13,7 @@ import { readProjectData } from '../scripts/project-data.mjs';
 
 test('CI file partitions preserve every original native, conformance and translation file exactly once', () => {
   const groups = partitionTests(testFiles()).groups;
-  for (const [name, count] of [['grammar', 3], ['grammar-native', 3], ['grammar-native', 6], ['conformance', 2], ['translation', 3]]) {
+  for (const [name, count] of [['grammar', 3], ['grammar-native', 3], ['grammar-native', 6], ['conformance', 2], ['conformance', 4], ['translation', 3]]) {
     const shards = Array.from({ length: count }, (_, index) => partitionGroupFiles(groups[name], `${index + 1}/${count}`));
     assert.ok(shards.every(files => files.length > 0));
     assert.equal(new Set(shards.flat()).size, groups[name].length);
@@ -69,6 +69,40 @@ test('every JavaScript test file is in exactly one test group', () => {
   assert.equal(Object.values(partition.groups).flat().length, files.length);
 });
 
+test('four conformance jobs preserve each original two-job partition under its unchanged deadline', async () => {
+  const capture = readProjectData(new URL('../../parity/fixtures/javascript-conformance-deadline-2026-10-20.lino', import.meta.url));
+  assert.equal(capture.runId, 39331179950); assert.equal(capture.jobId, 118329453701);
+  assert.equal(capture.oldCount, 2); assert.equal(capture.newCount, 4); assert.equal(capture.timeoutMinutes, 15);
+  for (const response of Object.values(capture.responses)) {
+    assert.equal(Buffer.byteLength(response.text), response.bytes);
+    assert.equal(createHash('sha256').update(response.text).digest('hex'), response.sha256);
+    assert.deepEqual(JSON.parse(response.text), response.data);
+  }
+  const job = capture.responses.job.data;
+  assert.equal(job.id, capture.jobId); assert.equal(job.run_id, capture.runId); assert.equal(job.head_sha, capture.head);
+  assert.equal(job.conclusion, 'cancelled');
+  assert.ok(Date.parse(job.completed_at) - Date.parse(job.started_at) >= 15 * 60 * 1000);
+  assert.equal(capture.responses.annotations.data.filter(row => row.message === 'The job has exceeded the maximum execution time of 15m0s').length, 1);
+  const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  assert.equal(createHash('sha256').update(workflow).digest('hex'), capture.change.currentSha256);
+  assert.equal(workflow.split(capture.change.after).length, 2);
+  const inverse = workflow.replace(capture.change.after, capture.change.before);
+  assert.equal(inverse, capture.workflow.text, 'only the complete two-to-four conformance matrix block changed');
+  assert.equal(Buffer.byteLength(inverse), capture.workflow.bytes);
+  assert.equal(createHash('sha256').update(inverse).digest('hex'), capture.workflow.sha256);
+  assert.deepEqual(Buffer.from(inverse), execFileSync('git', ['show', capture.head + ':' + capture.workflow.path],
+    {cwd: fileURLToPath(new URL('../../', import.meta.url)), maxBuffer: 128 * 1024}));
+  const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  package-checks:\n'));
+  assert.match(tests, /timeout-minutes: 15\n/u);
+  assert.deepEqual([...tests.matchAll(/\{group: conformance, partition: (\d+), shards: (\d+)\}/gu)]
+    .map(([, index, count]) => [Number(index), Number(count)]), [[1, 4], [2, 4], [3, 4], [4, 4]]);
+  const files = partitionTests(testFiles()).groups.conformance;
+  for (let index = 1; index <= 2; index++) {
+    assert.deepEqual([...partitionGroupFiles(files, `${index}/4`), ...partitionGroupFiles(files, `${index + 2}/4`)].sort(),
+      partitionGroupFiles(files, `${index}/2`));
+  }
+});
+
 test('the test group guard reports unassigned, ambiguous and empty groups', () => {
   const problems = partitionProblems(partitionTests(['grammar-a.test.js', 'unknown.test.js']));
   assert.ok(problems.includes('tests/unknown.test.js is in no test group of scripts/test-groups.mjs'));
@@ -121,7 +155,7 @@ test('the JavaScript workflow runs every test group and gates the package check 
   assert.match(tests, /timeout-minutes: 15\n/u);
   assert.match(tests, /fail-fast: false\n/u);
   assert.match(tests, /partition: \[1\]\n/u);
-  for (const [group, count] of [['grammar', 3], ['grammar-native', 6], ['conformance', 2], ['translation', 3]]) {
+  for (const [group, count] of [['grammar', 3], ['grammar-native', 6], ['conformance', 4], ['translation', 3]]) {
     for (let partition = 1; partition <= count; partition += 1) {
       assert.ok(tests.includes(`{group: ${group}, partition: ${partition}, shards: ${count}}`));
     }

@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {readProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
-import {readReviewedOverlayProviderSources,reviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
+import {readReviewedOverlayProviderSources,restoreReviewedOverlayProviderSources,reviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
 import {createCheckedModuleOverlay} from './overlay.mjs';
 import {parseJavaScript} from '../../js/src/translation/javascript.js';
 
@@ -174,15 +174,18 @@ test('callback renderer revision restores all preceding providers and the comple
 
 test('reference callback provider revision restores every preceding source and historical policy',()=>{
  const root=new URL('../../',import.meta.url),sourceRoot=new URL('../../js/src/',import.meta.url);
- const previous=reviewedOverlayProviderPolicy.revisions.find(row=>row.sourceCommit==='b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
- const current=reviewedOverlayProviderPolicy.revisions.at(-1);
+ const historicalPolicy=structuredClone(reviewedOverlayProviderPolicy);
+ assert.equal(historicalPolicy.revisions.pop().sourceCommit,'9f867bfac32f59a3341dabf54e8c0c02fbd83314');
+ const previous=historicalPolicy.revisions.find(row=>row.sourceCommit==='b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
+ const current=historicalPolicy.revisions.at(-1);
  assert.equal(current.sourceCommit,'113a7747f799cbce5167167a783eb88427bd2825');
  assert.equal(current.inverse.length,2);
  assert.deepEqual(current.providers.map(row=>row.module),previous.providers.map(row=>row.module));
  assert.deepEqual([...new Set(current.inverse.map(row=>row.module))],['translation/emit-rust.js']);
+ const restoredSources=restoreReviewedOverlayProviderSources({experiment:'rust-text-certificate-adapter',modules:current.providers.map(row=>row.module),sourceCommit:current.sourceCommit}).sources;
  const changed=[];
  for(const[index,row]of current.providers.entries()){
-  const bytes=readFileSync(new URL(row.module,sourceRoot));
+  const bytes=Buffer.from(restoredSources.get(row.module));
   assert.deepEqual(bytes,execFileSync('git',['show',current.sourceCommit+':js/src/'+row.module],{cwd:root}));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sourceSha256);
   const preceding=execFileSync('git',['show',previous.sourceCommit+':js/src/'+row.module],{cwd:root});
@@ -225,16 +228,24 @@ test('reference callback provider revision restores every preceding source and h
  assert.deepEqual(inverse,original,'all original cases, source inputs, expected values, traces, archives and target fields are recovered');
  assert.deepEqual(Buffer.from(serializeProjectData(inverse,new URL('../../'+fixtureFile,import.meta.url))),originalBytes,
   'the complete original canonical fixture bytes remain independently recoverable');
- const policy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ let policy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ const restoredPolicy=execFileSync('git',['show','9f867bfac32f59a3341dabf54e8c0c02fbd83314:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
+ const appended='    {\n      "sourceCommit": "9f867bfac32f59a3341dabf54e8c0c02fbd83314",\n';
+ const added=policy.indexOf(appended),close=policy.indexOf('\n  ],\n};',added);
+ assert.ok(added>0&&close>added);
+ policy=policy.slice(0,added)+policy.slice(close+1);
+ const helper=policy.indexOf('\n/** Restore only recorded complete source copies; unsupported history refuses. */');
+ assert.ok(helper>0);policy=policy.slice(0,helper);
+ assert.equal(policy,restoredPolicy,'only the new complete provider record and checked history reader were appended');
  const previousPolicy=execFileSync('git',['show','42023d402abd577ae935f2686eca3f39f5e0b9dd:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const marker='    {\n      "sourceCommit": "113a7747f799cbce5167167a783eb88427bd2825",\n';
  assert.equal(policy.split(marker).length,2);
  const start=policy.indexOf(marker),end=policy.indexOf('\n  ],\n};',start);assert.ok(end>start);
  assert.equal(policy.slice(0,start)+policy.slice(end+1),previousPolicy,'all earlier revisions and the entire admission reader stay byte exact');
- const withoutCurrent=structuredClone(reviewedOverlayProviderPolicy);withoutCurrent.revisions.pop();
+ const withoutCurrent=structuredClone(historicalPolicy);withoutCurrent.revisions.pop();
  const previousData=readStructuredDataLino(execFileSync('git',['show','42023d402abd577ae935f2686eca3f39f5e0b9dd:experiments/rust-text-certificate-adapter/data/provider-revisions.lino'],{cwd:root,encoding:'utf8'}));
  assert.deepEqual(withoutCurrent,previousData,'all prior policy records retain their original values and order');
- for(const historical of reviewedOverlayProviderPolicy.historicalOverlays){
+ for(const historical of historicalPolicy.historicalOverlays){
   const bytes=readFileSync(new URL('../'+historical.experiment+'/data/overlays.lino',import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);
  }

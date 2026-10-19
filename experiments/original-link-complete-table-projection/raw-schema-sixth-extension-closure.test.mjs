@@ -4,12 +4,12 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino,structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {extendTypedProgramSchemaFifthStage} from '../../js/scripts/extend-typed-program-schema-fifth-stage.mjs';
-import {checkTypedProgramSchemaFifthArchive} from '../../js/scripts/extend-typed-program-schema-sixth-stage.mjs';
+import {checkTypedProgramSchemaFifthArchive,readStringOrderSchemaPredecessor} from '../../js/scripts/check-typed-program-schema-history.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES,readOriginalLinkRawSchemaSixthContext,
   verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
 const root=new URL('../../',import.meta.url),input=readOriginalLinkRawSchemaSixthContext();
 const sixth=readStructuredDataLino(readFileSync(new URL('./data/raw-schema-sixth-extension-closure.lino',import.meta.url),'utf8'));
-const current=readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino',import.meta.url));
+const current=readStringOrderSchemaPredecessor();
 const schema=readStructuredDataLino(current.toString('utf8'));
 const sources=Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file=>[file,readFileSync(new URL(file,root))]));
 const repin=(changed,receipt)=>{const bytes=Buffer.from(structuredDataToLino(changed));receipt.current.bytes=bytes.length;receipt.current.sha256=createHash('sha256').update(bytes).digest('hex');return bytes;};
