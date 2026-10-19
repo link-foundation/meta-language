@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
+import {readStructuredDataLino,structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT, readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 import {prepareOriginalLinkRawBorrowedEmission, readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
 import {planOriginalLinkRawBorrowedNative} from './raw-native-observations.mjs';
@@ -20,6 +23,17 @@ test('raw immutable parameter loans retain the complete predecessor and every ch
   assert.equal(receipt.nativeCompilation,false);assert.equal(receipt.nativeExecution,false);
   assert.deepEqual(readOriginalLinkRawBorrowedProfile(stored.predecessor),profile);
   assert.deepEqual(readFileSync(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT),before);
+  // Regeneration may refresh the containing artifact descriptor only. Keep
+  // the complete earlier loan receipt, every style and emitted byte exact.
+  const file='experiments/original-link-complete-table-projection/data/raw-borrowed-parameter-receipt.lino';
+  const previousBytes=execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+file],
+    {cwd:new URL('../../',import.meta.url),maxBuffer:2*1024*1024});
+  const previous=readStructuredDataLino(previousBytes.toString('utf8'));
+  assert.deepEqual(receipt.predecessor,{...previous.predecessor,bytes:before.length,
+    sha256:createHash('sha256').update(before).digest('hex')});
+  const inverse={...receipt,predecessor:previous.predecessor};
+  assert.deepEqual(inverse,previous);
+  assert.deepEqual(Buffer.from(structuredDataToLino(inverse)),previousBytes);
 });
 
 test('raw immutable parameter loans reject changed predecessor bytes and actual mechanical decision sources', () => {
