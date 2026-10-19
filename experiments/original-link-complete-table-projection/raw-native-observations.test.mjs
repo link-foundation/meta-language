@@ -10,16 +10,16 @@ import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structu
 import {parseLinoStatements} from '../../js/src/lino-serialization.js';
 import {formatLinoReadings} from '../../js/src/lino-semantics.js';
 import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
-import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE} from './raw-emission-profiles.mjs';
 import './raw-emission-profiles.test.mjs';
 import './raw-consuming-emission.test.mjs';
 import './raw-borrowed-emission.test.mjs';
 
-const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaFifthExtensionClosure(
-  {...readOriginalLinkRawSchemaFifthContext(), receipt, historicalSources}, bytes,
-  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url), 'utf8')),
-  Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES.map(file => [file, readFileSync(new URL('../../' + file, import.meta.url))])));
+const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyOriginalLinkRawSchemaSixthExtensionClosure(
+  {...readOriginalLinkRawSchemaSixthContext(), receipt, historicalSources}, bytes,
+  readStructuredDataLino(readFileSync(new URL('./data/raw-schema-sixth-extension-closure.lino', import.meta.url), 'utf8')),
+  Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, readFileSync(new URL('../../' + file, import.meta.url))])));
 
 const schemaClosureFixture = () => ({
   receipt: readStructuredDataLino(readFileSync(new URL('./data/raw-schema-source-closure.lino', import.meta.url), 'utf8')),

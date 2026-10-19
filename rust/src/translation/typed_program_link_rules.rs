@@ -308,6 +308,19 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_program_type_neutral_field_default(kind: &str, field: &str) -> String {
+    if ((field == "reference")
+        && (((kind == "array" || kind == "record") || kind == "map") || kind == "set"))
+        || (kind == "record" && (field == "open"))
+    {
+        String::from("false")
+    } else {
+        String::new()
+    }
+}
+
 /// Read the corresponding decision of the shared typed program links schema.
 #[must_use]
 pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {

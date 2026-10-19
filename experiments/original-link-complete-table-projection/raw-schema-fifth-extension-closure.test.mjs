@@ -1,16 +1,24 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext,
   verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_EXTENSIONS} from './raw-schema-fifth-extension-policy.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
 const input = readOriginalLinkRawSchemaFifthContext();
 const fifth = readStructuredDataLino(readFileSync(new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url), 'utf8'));
-const currentBytes = readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url));
+let currentBytes = readFileSync(new URL('../../js/src/data/typed-program-links-schema.lino', import.meta.url));
+const sixthFile = new URL('./data/raw-schema-sixth-extension-closure.lino', import.meta.url);
+if (existsSync(sixthFile)) {
+  const sixth = readStructuredDataLino(readFileSync(sixthFile, 'utf8'));
+  const sixthSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+  verifyOriginalLinkRawSchemaSixthExtensionClosure(readOriginalLinkRawSchemaSixthContext(), currentBytes, sixth, sixthSources);
+  currentBytes = Buffer.from(sixth.previous.source, 'utf8');
+}
 const currentSchema = readStructuredDataLino(currentBytes.toString('utf8'));
 const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
 

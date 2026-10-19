@@ -15,6 +15,7 @@ import {verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
 
 const root = new URL('../../', import.meta.url), receiptFile = new URL('./data/raw-schema-source-closure.lino', import.meta.url);
 const oracleFile = new URL('./raw-native-observations.mjs', import.meta.url);
@@ -31,6 +32,17 @@ export function generateOriginalLinkRawSchemaSourceClosure({check = false, schem
   const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
   if (check) {
     const receipt = readProjectData(receiptFile);
+    const sixthFile = new URL('./data/raw-schema-sixth-extension-closure.lino', import.meta.url);
+    const sixthPin = /^const schemaSixthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1];
+    if (sixthPin) assert.ok(existsSync(sixthFile), 'a published sixth receipt cannot disappear');
+    if (existsSync(sixthFile)) {
+      const sixthBytes = readFileSync(sixthFile), sixth = readProjectData(sixthFile);
+      assert.equal(sha256(sixthBytes), sixthPin);
+      const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+      verifyOriginalLinkRawSchemaSixthExtensionClosure(readOriginalLinkRawSchemaSixthContext(), actualBytes, sixth, authoredSources);
+      checkProjectData(sixthFile, sixth);
+      actualBytes = Buffer.from(sixth.previous.source, 'utf8');
+    }
     const fifthFile = new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url);
     if (existsSync(fifthFile)) {
       const fifthBytes = readFileSync(fifthFile), fifth = readProjectData(fifthFile);

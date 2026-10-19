@@ -9,6 +9,7 @@ use crate::translation::typed_program_link_rules::{
     accept_program_reference_field, accept_program_schema_root, is_unsafe_program_field,
     read_program_container_kind, read_program_neutral_field_default,
     read_program_reference_source_field, read_program_scalar_kind,
+    read_program_type_neutral_field_default,
 };
 use crate::{LinkId, LinkNetwork, LinkType};
 use serde_json::{Map, Value, json};
@@ -410,8 +411,16 @@ fn reject_unknown_fields(original: &Value, normalized: &Value) -> Result<()> {
                 if let Some(normalized) = known.get(field) {
                     reject_unknown_fields(value, normalized)?;
                 } else {
-                    let neutral = match read_program_neutral_field_default(&context, field).as_str()
-                    {
+                    let default = read_program_neutral_field_default(&context, field);
+                    let default = if default.is_empty() && context.is_empty() {
+                        read_program_type_neutral_field_default(
+                            known.get("kind").and_then(Value::as_str).unwrap_or(""),
+                            field,
+                        )
+                    } else {
+                        default
+                    };
+                    let neutral = match default.as_str() {
                         "false" => value == &Value::Bool(false),
                         "null" => value.is_null(),
                         "empty-array" => value.as_array().is_some_and(Vec::is_empty),

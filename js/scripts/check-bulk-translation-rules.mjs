@@ -28,9 +28,9 @@ export const BULK_TRANSLATION_RULE_CHECKS = Object.freeze([
   ['generate-nullable-type-syntax-rules.mjs', '--native'],
   ['generate-callable-emission-rules.mjs', '--native'],
   ['generate-string-code-unit-template.mjs'],
-  // The live fifth gate authenticates every immutable fourth/predecessor byte.
-  // The frozen fourth CLI's strict boundary remains tested against its archive.
-  ['extend-typed-program-schema-fifth-stage.mjs'],
+  // The live sixth gate authenticates every immutable fifth/predecessor byte.
+  // The frozen fifth CLI's strict boundary remains tested against its archive.
+  ['extend-typed-program-schema-sixth-stage.mjs'],
   ['generate-grammar-selection-mapping-rules.mjs', '--native'],
   ['generate-grammar-selection-mapping-fixtures.mjs'],
   ['generate-rust-character-rules.mjs', '--native'],
@@ -44,6 +44,7 @@ export const BULK_TRANSLATION_RULE_CHECKS = Object.freeze([
   ['generate-array-callback-rules.mjs', '--native'],
   ['generate-array-callback-fixtures.mjs'],
   ['generate-grammar-selection-capture-profile.mjs'],
+  ['generate-typed-program-neutral-default-fixtures.mjs'],
 ].map(([name, ...arguments_]) => Object.freeze({ script: `js/scripts/${name}`, arguments: Object.freeze([...arguments_, '--check']) })));
 
 function invokeTranslationRuleCheck(command, arguments_, options) {

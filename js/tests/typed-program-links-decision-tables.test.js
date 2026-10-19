@@ -73,3 +73,20 @@ test('factored neutral defaults retain every context and field boundary', () => 
     assert.equal(rules.readProgramNeutralFieldDefault(context, field), expected, `${context}/${field}`);
   }
 });
+
+
+test('type-neutral defaults admit only the five actual omitted false facets and preserve old context decisions', () => {
+  const expected = {array: {reference: 'false'}, record: {open: 'false', reference: 'false'}, map: {reference: 'false'}, set: {reference: 'false'}};
+  assert.deepEqual(schema.neutralTypeFieldDefaults, expected);
+  const kinds = ['array', 'record', 'map', 'set', 'float', 'tuple', 'function', '', 'unregistered', 'expression:array', 'declaration:record'];
+  const fields = ['reference', 'open', 'frozen', 'span', 'unknown', '__proto__'];
+  for (const kind of kinds) for (const field of fields) {
+    const admitted = Object.hasOwn(expected, kind) && Object.hasOwn(expected[kind], field) ? expected[kind][field] : '';
+    assert.equal(rules.readProgramTypeNeutralFieldDefault(kind, field), admitted, `${kind}/${field}`);
+  }
+  for (const kind of ['array', 'record', 'map', 'set']) for (const field of ['reference', 'open']) {
+    assert.equal(rules.readProgramNeutralFieldDefault(`type:${kind}`, field), '');
+    assert.equal(rules.readProgramNeutralFieldDefault(`expression:${kind}`, field), '');
+    assert.equal(rules.readProgramNeutralFieldDefault(`declaration:${kind}`, field), '');
+  }
+});

@@ -8,6 +8,8 @@ import { tokenize } from '../src/translation/lexer.js';
 import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 import { applyCompleteExpressionParenthesisStyles, replaceRecordedLibraryBaseStyle } from './complete-expression-parenthesis-styles.mjs';
 import { flattenFamilyLibraryElseIf } from './portable-conditional-source-style.mjs';
+import { readPortableSourceParameterStyles, readPortableSourceLintStyles } from './portable-source-library-style.mjs';
+import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 
 if (process.argv.includes('--check') && process.argv.some(argument => argument.startsWith('--update-'))) throw new Error('freshness checks cannot update recorded styles');
 
@@ -70,6 +72,10 @@ const neutralFields = '/** @param {string} context @param {string} field @return
       [[`field === "span"`, `context === ${JSON.stringify(`expression:${kind}`)}`], '"null"']),
   ])
   + '\n  return "";\n}\n';
+const neutralTypeFields = '/** @param {string} kind @param {string} field @returns {string} */\nexport function readProgramTypeNeutralFieldDefault(kind, field) {\n'
+  + decisionRows(Object.entries(schema.neutralTypeFieldDefaults).flatMap(([kind, fields]) => Object.entries(fields).map(([field, value]) =>
+    [[`kind === ${JSON.stringify(kind)}`, `field === ${JSON.stringify(field)}`], JSON.stringify(value)])))
+  + '\n  return "";\n}\n';
 const source = '// Generated from data/typed-program-links-schema.json. Do not edit by hand.\n\n'
   + classify('readProgramContainerKind', schema.containers) + '\n'
   + '/** @param {string} kind @param {boolean} hasFields @returns {boolean} */\nexport function acceptProgramContainerFields(kind, hasFields) {\n'
@@ -84,6 +90,7 @@ const source = '// Generated from data/typed-program-links-schema.json. Do not e
   + referenceSource + '\n'
   + decide('readProgramReferenceTargetField', Object.fromEntries(Object.entries(referenceRoles).map(([label, role]) => [label, schema.referenceTargetFields[role]])), 'label') + '\n'
   + neutralFields + '\n'
+  + neutralTypeFields + '\n'
   + '/** @param {string} kind @param {string} field @returns {boolean} */\nexport function acceptProgramExpressionField(kind, field) {\n'
   + decisionRows(Object.entries(schema.expressionFields).map(([kind, fields]) => [`kind === ${JSON.stringify(kind)}`, fields.map(field => `field === ${JSON.stringify(field)}`).join(' || ')]))
   + '\n  return false;\n}\n\n'
@@ -160,7 +167,7 @@ if (process.argv.includes('--update-styles')) {
     }
     replace(line, expression);
   }
-  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_expression_entry_operand_field', 'read_program_declaration_type_projection_field', 'read_program_proposition_operand_fields', 'read_program_proposition_binding_form', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
+  for (const name of ['read_program_container_kind', 'accept_program_container_fields', 'accept_program_expression_field', 'accept_program_tuple_product_model', 'read_program_scalar_kind', 'read_program_reference_role', 'read_program_expression_projection', 'read_program_pattern_binding_form', 'read_program_expression_operand_fields', 'read_program_expression_entry_operand_field', 'read_program_declaration_type_projection_field', 'read_program_proposition_operand_fields', 'read_program_proposition_binding_form', 'read_program_reference_source_field', 'read_program_reference_target_field', 'read_program_neutral_field_default', 'read_program_type_neutral_field_default', 'accept_program_reference_field', 'is_unsafe_program_field', 'accept_program_schema_root', 'accept_program_machine_integer_width', 'accept_program_optional_absence', 'accept_program_expression_operation', 'accept_program_division_rounding']) {
     replace(`pub fn ${name}`, `/// Read the corresponding decision of the shared typed program links schema.\n#[must_use]\npub fn ${name}`);
   }
   // Keep deeply nested generated tails out of rustfmt, and store one
@@ -197,7 +204,34 @@ const format = (input) => {
 // A changed classifier no longer matches an older whole-module replacement.
 // Flatten its actual complete else-if blocks before rustfmt sees nested tails;
 // retain the exact reviewed input/output as an additional Links style record.
-const base = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+let base = styles.decorate('emitter', { format: 'Rust', source: raw }).source;
+// Only the new generated selector receives this additional source-derived ABI/documentation row.
+// Every older library record and all unrelated complete definitions remain byte-exact.
+{
+  const name = 'read_program_type_neutral_field_default';
+  const scope = 'typed-program-type-neutral-field-library';
+  const from = readSourceTextRustBlock(base, 'fn', name);
+  if (base.split(from).length !== 2) throw new Error('the new type-neutral selector needs one complete generated definition');
+  const loans = readPortableSourceParameterStyles(from, { publicNames: [name] });
+  const to = readPortableSourceLintStyles(loans.source).source;
+  const replay = document => new DecoratorSet(DecoratorSet.fromLino(document).decorators.filter(entry =>
+    entry.when.some(([field, value]) => field === 'scope' && value === scope)))
+    .decorate('emitter', { format: 'Rust', scope, source: from }).source;
+  let document = readFileSync(styleFile, 'utf8');
+  if (replay(document) !== to) {
+    if (!process.argv.includes('--update-type-neutral-styles')) throw new Error('new type-neutral source styles are stale; run --update-type-neutral-styles');
+    const id = 'typed-program-type-neutral-field-' + createHash('sha256').update(from + '\0' + to).digest('hex').slice(0, 16);
+    if (styles.decorators.some(entry => entry.id === id)) throw new Error('the recorded type-neutral source style must remain applicable');
+    const addition = new DecoratorSet([{ id, level: 'emitter', order: 2000,
+      when: [['format', 'Rust'], ['scope', scope]], actions: [{ op: 'replace', field: 'source', from, to }] }]).toLino();
+    document += (document.endsWith('\n') ? '' : '\n') + addition;
+    writeFileSync(styleFile, document); styles = DecoratorSet.fromLino(document);
+  }
+  const selected = replay(document);
+  if (selected !== to) throw new Error('the additional source-derived selector style must replay exactly');
+  base = base.replace(from, selected);
+}
+
 const scope = 'typed-program-pre-format';
 const flattened = flattenFamilyLibraryElseIf(base);
 const preFormatStyles = new DecoratorSet(styles.decorators.filter(({ when }) =>

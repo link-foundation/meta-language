@@ -125,6 +125,12 @@ export function readProgramNeutralFieldDefault(context, field) {
   return "";
 }
 
+/** @param {string} kind @param {string} field @returns {string} */
+export function readProgramTypeNeutralFieldDefault(kind, field) {
+  if (((field === "reference") && ((kind === "array") || (kind === "record") || (kind === "map") || (kind === "set"))) || ((kind === "record" && field === "open"))) return "false";
+  return "";
+}
+
 /** @param {string} kind @param {string} field @returns {boolean} */
 export function acceptProgramExpressionField(kind, field) {
   if ((kind === "tuple")) return field === "k" || field === "type" || field === "span" || field === "items" || field === "frozen" || field === "productModel";

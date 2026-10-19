@@ -14,6 +14,7 @@ import {ORIGINAL_LINK_RAW_SCHEMA_THIRD_SOURCE_FILES, verifyOriginalLinkRawSchema
 
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-fifth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from '../../experiments/original-link-complete-table-projection/raw-schema-sixth-extension-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
 const schemaFile = new URL('../src/data/typed-program-links-schema.lino', import.meta.url);
@@ -28,6 +29,17 @@ assert.equal(sha256(receiptBytes), ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT,
 const receipt = readStructuredDataLino(receiptBytes.toString('utf8'));
 const historicalSources = readOriginalLinkRawHistoricalSources(readFileSync(oracleFile, 'utf8'));
 let actualBytes = readFileSync(schemaFile);
+const sixthFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-sixth-extension-closure.lino', import.meta.url);
+const sixthPin = /^const schemaSixthExtensionReceiptSha256 = '([0-9a-f]{64})';$/mu.exec(readFileSync(oracleFile, 'utf8'))?.[1];
+if (sixthPin) assert.ok(existsSync(sixthFile), 'a published sixth receipt cannot disappear');
+if (existsSync(sixthFile)) {
+  const sixthBytes = readFileSync(sixthFile), sixth = readStructuredDataLino(sixthBytes.toString('utf8'));
+  assert.equal(sha256(sixthBytes), sixthPin);
+  const authoredSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, root))]));
+  verifyOriginalLinkRawSchemaSixthExtensionClosure(readOriginalLinkRawSchemaSixthContext(), actualBytes, sixth, authoredSources);
+  checkProjectData(sixthFile, sixth);
+  actualBytes = Buffer.from(sixth.previous.source, 'utf8');
+}
 const fifthFile = new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-fifth-extension-closure.lino', import.meta.url);
 if (existsSync(fifthFile)) {
   const fifthBytes = readFileSync(fifthFile), fifth = readStructuredDataLino(fifthBytes.toString('utf8'));

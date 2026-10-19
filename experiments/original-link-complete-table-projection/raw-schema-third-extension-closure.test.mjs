@@ -5,9 +5,10 @@ import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {extendTypedProgramSchemaThirdStage} from '../../js/scripts/extend-typed-program-schema-third-stage.mjs';
-import {checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-fifth-stage.mjs';
+import {checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-sixth-stage.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
+import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PROPERTIES, readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_PREDECESSOR_RECEIPT} from './raw-schema-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIRST_EXTENSION_RECEIPT, verifyOriginalLinkRawSchemaSecondExtensionClosure} from './raw-schema-second-extension-closure.mjs';
@@ -23,6 +24,13 @@ function fixture() {
   const thirdBytes = read('./data/raw-schema-third-extension-closure.lino');
   const fourthFile = new URL('./data/raw-schema-fourth-extension-closure.lino', import.meta.url);
   let bytes = read('../../js/src/data/typed-program-links-schema.lino');
+  const sixthFile = new URL('./data/raw-schema-sixth-extension-closure.lino', import.meta.url);
+  if (existsSync(sixthFile)) {
+    const sixth = readStructuredDataLino(readFileSync(sixthFile, 'utf8'));
+    const sixthSources = Object.fromEntries(ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES.map(file => [file, readFileSync(new URL(file, new URL('../../', import.meta.url)))]));
+    verifyOriginalLinkRawSchemaSixthExtensionClosure(readOriginalLinkRawSchemaSixthContext(), bytes, sixth, sixthSources);
+    bytes = Buffer.from(sixth.previous.source, 'utf8');
+  }
   const fifthFile = new URL('./data/raw-schema-fifth-extension-closure.lino', import.meta.url);
   if (existsSync(fifthFile)) {
     const fifth = readStructuredDataLino(readFileSync(fifthFile, 'utf8'));
