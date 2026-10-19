@@ -319,7 +319,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -393,7 +393,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -550,7 +550,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -622,7 +622,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -767,7 +767,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -860,7 +860,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -931,7 +931,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -996,7 +996,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1067,7 +1067,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1251,7 +1251,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1412,7 +1412,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1589,7 +1589,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1767,7 +1767,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1859,7 +1859,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1952,7 +1952,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 

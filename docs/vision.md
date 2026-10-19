@@ -2943,6 +2943,40 @@ remain visible. Both Windows workflow owners share this exact script. Complete
 preceding sources and the actual failed preflight are retained in
 [`windows-linker-timeout-source-history.lino`](../parity/naming/windows-linker-timeout-source-history.lino);
 isolated script controls establish no successor Windows execution result.
+
+Every existing major-24 CI setup selects Node 24.22.0 exactly, with its bundled
+npm 11.19.1, as recorded in the [official release metadata](https://nodejs.org/dist/index.json).
+This prevents different runner caches from selecting different patches within
+one logical evidence suite. The existing Node-22 report profile remains separate.
+Whole-source controls preserve every command, matrix cell and deadline; historical
+guard inputs have an authenticated patch-selection inverse. The complete
+JavaScript and native partition mergers retain their exact toolchain equality
+checks. Actual mixed-version records and failed aggregate diagnostics remain in
+[`ci-node-runtime-source-history.lino`](../parity/naming/ci-node-runtime-source-history.lino).
+Configuration checks supply no successor execution or full acceptance evidence.
+Dependency collection compares every supplied Node release coordinate: exact
+patch selectors use full-version comparison, moving minor selectors retain
+their minor comparison and moving majors retain their major comparison. The
+minimum-engine coverage profile remains explicit. A targeted registry update
+records its own observation date and source; it preserves the last complete
+audit date and every unrelated registry fact. Replacing a selector updates its
+actual dependency references and retains the full preceding inventory and
+collector in
+[`ci-node-dependency-source-history.lino`](../parity/naming/ci-node-dependency-source-history.lino).
+This does not substitute a one-source update for the complete dependency audit.
+Historical source inventories may use a generated placement over a complete
+destination file. The shared Links rule retains the original inventory/source
+namespace, exact destination bytes and hash, complete original constructor and
+every preceding placement. The generator refuses changed destinations or unknown
+constructor edits. Current source meanings retain their own qualified identities;
+a historical text view does not prove whole-program meaning equivalence.
+New local generators enter the normal dependency inventory without replacing
+earlier entries. Historical inventory assertions reconstruct their exact earlier
+projection only after independently checking the complete new entry; a separate
+current assertion checks the full live inventory and unchanged collector.
+Recorded whole-module corrections retain every original input and assertion.
+Current inventory witnesses identify actual current declarations explicitly;
+archived definitions keep separate identities and authenticated source copies.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,

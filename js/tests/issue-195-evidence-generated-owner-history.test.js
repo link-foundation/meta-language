@@ -8,7 +8,7 @@ import { restoreGeneratedPackageOwnerHistory } from './support/generated-package
 
 test('actual generated scheduling preserves every check once under both original deadlines after a measured timeout', () => {
   const evidence = readProjectData(new URL('../../parity/fixtures/generated-package-owner-history.lino', import.meta.url));
-  const current = readFileSync(new URL('../../' + evidence.path, import.meta.url), 'utf8');
+  const current = restoreCiNodeRuntimeHistory(readFileSync(new URL('../../' + evidence.path, import.meta.url), 'utf8'));
   assert.equal(current, evidence.after.source);
   assert.equal(restoreGeneratedPackageOwnerHistory(current), evidence.before.source);
   const before = parseWorkflow(evidence.before.source).find(job => job.id === 'package-checks');
@@ -56,3 +56,5 @@ test('actual generated scheduling preserves every check once under both original
   }
   assert.throws(() => restoreGeneratedPackageOwnerHistory(evidence.before.source));
 });
+
+import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';

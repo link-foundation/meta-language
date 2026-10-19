@@ -49,7 +49,7 @@ test('actual Windows linker timeout repair preserves complete workflow scope and
   assert.ok(history.capture.diagnosticLines.some(line=>line.includes('status=null, signal=SIGTERM, spawnSync where.exe ETIMEDOUT')));
   assert.ok(history.capture.diagnosticLines.some(line=>line.includes('41 passed; 0 failed')));
   for(const [file,identifier]of [['.github/workflows/rust.yml','test'],['.github/workflows/ci.yml','consumers']]){
-    const current=readFileSync(new URL('../../'+file,import.meta.url),'utf8');
+    const current=restoreCiNodeRuntimeHistory(readFileSync(new URL('../../'+file,import.meta.url),'utf8'));
     const original=history.sources.find(row=>row.file===file);assert.ok(original);
     assert.equal(current,original.sourceText.replace(history.before,history.after));
     assert.equal(restoreWindowsLinkerLookupHistory(current),original.sourceText);
@@ -92,7 +92,7 @@ test('actual Windows linker timeout repair preserves complete workflow scope and
 
 test('Windows linker source inverse refuses unbounded or weakened retries and retains unrelated workflow changes',()=>{
   const history=readProjectData(new URL('../../parity/naming/windows-linker-timeout-source-history.lino',import.meta.url));
-  const source=readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8');
+  const source=restoreCiNodeRuntimeHistory(readFileSync(new URL('../../.github/workflows/rust.yml',import.meta.url),'utf8'));
   for(const [before,after]of [['attempt <= 3','attempt <= 99'],["'ETIMEDOUT'","'EACCES'"],
     ["resolved.signal !== 'SIGTERM'",'false'],['resolved.status !== null','false'],['timeout: 10000','timeout: 0']]){
     assert.throws(()=>restoreWindowsLinkerLookupHistory(source.replace(history.after,history.after.replace(before,after))));
@@ -103,3 +103,5 @@ test('Windows linker source inverse refuses unbounded or weakened retries and re
   assert.equal(restoreWindowsLinkerLookupHistory(source.replace('timeout-minutes: 15','timeout-minutes: 99')),
     original.replace('timeout-minutes: 15','timeout-minutes: 99'));
 });
+
+import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';

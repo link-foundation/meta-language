@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 184 | 183 | 1 | 0 |
+| Generators | 185 | 184 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -731,6 +731,7 @@ they are.
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
+| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
 
 ## Toolchains and tools
 
@@ -741,7 +742,7 @@ they are.
 | `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
 | `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
 | `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24.22.0` | 24.22.0 (nodejs.org, newest LTS release (Krypton); observed 2026-10-19; other entries retain the 2026-10-06 full audit) | version | current |  |
 | `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
 | `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
 | `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |

@@ -20,7 +20,7 @@ import { recordIssue195DirectiveObservation as observe } from './support/issue-1
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
-const workflow = (name) => name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(read(`.github/workflows/${name}`)) : read(`.github/workflows/${name}`);
+const workflow = (name) => name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(read(`.github/workflows/${name}`)) : restoreCiNodeRuntimeHistory(read(`.github/workflows/${name}`));
 const jobs = (name) => new Map(parseWorkflow(workflow(name)).map((job) => [job.id, job]));
 const verificationDomain="${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}";
 
@@ -2994,3 +2994,5 @@ test('release queue assertion correction retains the complete failed input and e
 });
 
 import { restoreGeneratedPackageOwnerHistory } from './support/generated-package-owner-history.js';
+
+import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';

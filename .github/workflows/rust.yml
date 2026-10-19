@@ -206,7 +206,7 @@ jobs:
       - name: Setup Node.js for shared JavaScript reports
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
 
       - name: Cache cargo registry
         uses: actions/cache@v6
@@ -301,7 +301,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -365,7 +365,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -449,7 +449,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -528,7 +528,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1019,7 +1019,7 @@ jobs:
       - name: Setup Node.js for translated JavaScript tests
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1389,7 +1389,7 @@ jobs:
       - name: Setup Node.js for raw source observations
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1550,7 +1550,7 @@ jobs:
       - name: Setup Node.js for shared JavaScript reports
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 

@@ -357,7 +357,7 @@ function collectWorkflows(root, items) {
         name: 'node',
         declaredIn: file,
         pinned: match[1],
-        compare: floorTest ? 'floor' : 'major',
+        compare: readNodeRuntimeComparison(match[1], Boolean(floorTest)),
         source: { type: floorTest ? 'node-maintained' : 'node-lts' },
       });
     }
@@ -1361,3 +1361,5 @@ export function renderAuditDocument(inventory) {
   statusCache = null;
   return lines.join('\n');
 }
+
+import {readNodeRuntimeComparison} from './dependency-node-runtime.mjs';

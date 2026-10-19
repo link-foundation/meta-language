@@ -17,7 +17,7 @@ for (const value of [history.before, history.after]) {
 
 export function restoreGeneratedPackageOwnerHistory(source) {
   assert.equal(typeof source, 'string');
-  let original = source;
+  let original = source.includes('node-version: 24.22.0') ? restoreCiNodeRuntimeHistory(source) : source;
   for (const change of history.changes) {
     assert.equal(original.split(change.after).length, 2, 'each current complete check has exactly one admitted physical owner');
     assert.equal(original.includes(change.before), false, 'the obsolete complete owner cannot coexist with its replacement');
@@ -27,3 +27,5 @@ export function restoreGeneratedPackageOwnerHistory(source) {
   }
   return original;
 }
+
+import {restoreCiNodeRuntimeHistory} from './ci-node-runtime-history.js';
