@@ -2752,6 +2752,20 @@ translated body before restoration. Editing emitted code cannot restore obsolete
 source. This source-preservation metadata does not count carried items as
 executable translation or substitute for the complete CST contract.
 
+Owned native reconstruction can separately plan static string-reference
+selection from a caller-supplied existing registry. It authenticates the complete
+owned model and actual captured static reference type before reading occurrence
+values. Shared JavaScript selects one unique label with explicit entry and UTF-8
+byte bounds and generates every native control declaration. Duplicate labels,
+missing values, active inputs and exceeded budgets refuse. Native storage supplies
+compiler-checked existing static references and exact byte costs; it returns the
+selected reference rather than manufacturing a lifetime. The serialized plan
+retains source-qualified type and occurrence identities and revalidates against
+a separate registry. Independent lookup cases and native pointer/lifetime controls
+are distinct from complete native DTO reconstruction, original pointer provenance,
+JSON number origins and physical CST ownership, which remain required. Local
+source checks do not establish native execution.
+
 Everything is extensible with decorators: one decorator API for the importer,
 grammar rules, merge decisions, concept mappings, the executor and recovery,
 CST → AST, transformations, emitters and translation rules. Decorators compose

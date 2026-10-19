@@ -58,6 +58,7 @@ mod grammar_outcome_integer_rules;
 mod grammar_outcome_inverse_rules;
 mod grammar_outcome_preorder_rules;
 mod grammar_outcome_source_type_rules;
+mod grammar_outcome_static_borrows;
 mod grammar_parsing;
 mod grammar_render;
 mod grammar_round_trip_lexical_mutation;
