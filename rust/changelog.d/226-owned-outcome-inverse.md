@@ -6,3 +6,5 @@ add shared native CI controls. Native DTO and default CST integration remain ope
 Keep verification cancellation queues separate for merged pull requests and main
 runs while retaining every matrix cell, deadline and acceptance gate.
 Reuse the checked naming vocabulary to avoid a redundant full catalog load.
+Collect CI-only pointer-width and exact linked dependency-feature observations
+with explicit version bounds and complete original probe source preservation.

@@ -1822,6 +1822,19 @@ Native JSON representation facts, static-reference resolution, native DTO
 reconstruction and physical CST integration remain required. JavaScript controls
 do not prove native execution.
 
+The CI overlay derives an additive pointer-width observation inside the actual
+post-assertion probe report, retaining every original source byte through its
+inverse. Compiler feature selection binds the probe's verbose `rustc --extern`
+argument to exactly one actual Cargo compiler artifact, rather than combining
+different feature units of the same dependency. The receipt records complete
+stream hashes, selected artifact metadata and the executed primitive width.
+The current format profile selects Cargo and the actually invoked Rust compiler
+`>=1.90.0 <1.100.0` and the locked JSON
+dependency `>=1.0.151 <1.0.152`; uncovered versions and ambiguous bindings refuse.
+These observations require successful CI execution. Historical compiler logs and
+synthetic selectors establish source and transport controls only; number variant
+reconstruction and native DTO equality remain separate obligations.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,

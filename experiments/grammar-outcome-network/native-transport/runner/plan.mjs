@@ -11,6 +11,7 @@ import {buildIntegration} from '../bridge/generate.mjs';
 import {verifyPublication} from '../wire/publication.mjs';
 import {applyFrozenOutcomeProducerCorrection} from '../diagnostic-order/source-view.mjs';
 import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
+import {deriveOutcomeTargetProbe} from './compiler-profile.mjs';
 
 export const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const within=(root,file)=>{const path=relative(root,file);return path!==''&&!path.startsWith('..'+sep)&&path!=='..'&&!path.startsWith(sep);};
@@ -131,7 +132,8 @@ export async function createOverlayPlan({repository=fileURLToPath(new URL('../..
   verifyParentInverse(original,parent,receipt);assert.equal(sha256(child),receipt.child.sha256);
   const manifest=bytesAt(repository,'rust/Cargo.toml').toString('utf8');
   assert.ok(!/^\s*autotests\s*=\s*false\s*$/mu.test(manifest),'actual probe auto-discovery required');
+  const targetProbe=deriveOutcomeTargetProbe(bytesAt(probeDirectory,'native-outcome-probe.rs'));
   return {repository,candidateDirectory,probeDirectory,executionCommit,inventory:crateInventory(repository),receipt,parent,child,
-    probe:bytesAt(probeDirectory,'native-outcome-probe.rs'),policy,runnerPublication,publication,
+    probe:targetProbe.source,probeTargetObservation:targetProbe.receipt,policy,runnerPublication,publication,
     nativeOraclePolicy:runnerPublication.nativeOraclePolicy,producerCorrection};
 }

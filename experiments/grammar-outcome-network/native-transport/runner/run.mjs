@@ -9,6 +9,7 @@ import {overlayPolicy as policy} from './policy.mjs';
 import {bytesAt,crateInventory,createOverlayPlan,frozenSourceBytes,sha256,within} from './plan.mjs';
 import {checkRunnerPublication} from './generate-publication.mjs';
 import {verifyPublication} from '../wire/publication.mjs';
+import {readOutcomeCompilerProfile,readOutcomeCompilerInvocation} from './compiler-profile.mjs';
 
 /** Must run before ANY compiler command, including metadata/version queries,
  * before compiler scratch creation, and before injected process contracts.
@@ -118,7 +119,8 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     originalCandidatePins:policy.candidatePins,originalProbePins:policy.probePins,
     publication:plan.publication,runnerPublication:plan.runnerPublication.publication,
     runnerAdapterSources:plan.runnerPublication.newSources,
-    bridgeReceipt:plan.receipt,producerCorrection:plan.producerCorrection.receipt,nativeOraclePolicy:plan.nativeOraclePolicy,processes:[]};
+    bridgeReceipt:plan.receipt,producerCorrection:plan.producerCorrection.receipt,nativeOraclePolicy:plan.nativeOraclePolicy,
+    probeTargetObservation:plan.probeTargetObservation,processes:[]};
   let failure=null;
   const execute=async(command,args,timeout,label,env=environmentFor(work,environment))=>{
     requireNativeCI(plan,environment); // Also guards injected contract processes.
@@ -156,7 +158,7 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     const nativeEnvironment={...environmentFor(work,environment),META_LANGUAGE_B95_OUTCOME_FIXTURE:fixture,META_LANGUAGE_B95_OUTCOME_REPORT:report};
     const build=await execute('cargo',['test','--manifest-path',join(overlay,'rust/Cargo.toml'),'--locked','--offline',
       '--no-default-features','--jobs','1','--test',policy.testName,'--no-fail-fast','--no-run',
-      '--message-format=json-render-diagnostics'],policy.compilerTimeout,'compile',nativeEnvironment);
+      '--message-format=json-render-diagnostics','--verbose'],policy.compilerTimeout,'compile',nativeEnvironment);
     const targets=build.split(/\r?\n/u).filter(Boolean).map(line=>JSON.parse(line)).filter(item=>
       item.reason==='compiler-artifact'&&item.target?.name===policy.testName&&item.target.kind.includes('test')&&item.executable);
     assert.equal(targets.length,1,'one actual selected native test artifact');
@@ -166,6 +168,27 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     const nativeBytes=bytesAt(artifacts,'native-report.lino',8*1024*1024);
     const data=readProjectData(report);assert.ok(data&&typeof data==='object','actual native post-assertions linked report');
     receipt.nativeReport={bytes:nativeBytes.length,sha256:sha256(nativeBytes),path:report};
+    const actualProbe=bytesAt(overlay,'rust/tests/'+policy.testName+'.rs');
+    assert.deepEqual({bytes:actualProbe.length,sha256:sha256(actualProbe)},plan.probeTargetObservation.derived,'the executed probe source retains the complete derived observation');
+    const processText=(label,stream='stdout')=>{
+      const matches=receipt.processes.filter(row=>row.label===label);assert.equal(matches.length,1);
+      const record=matches[0].streams[stream],path=label+'.'+stream+'.log';
+      assert.equal(record.path,join(artifacts,path));assert.equal(record.truncated,false);
+      const bytes=bytesAt(artifacts,path,policy.maximumOutputBytes);
+      assert.equal(bytes.length,record.bytes);assert.equal(sha256(bytes),record.sha256);
+      return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+    };
+    const compilerDiagnostics=processText('compile','stderr');
+    const compilerInvocation=readOutcomeCompilerInvocation(compilerDiagnostics,policy.testName,join(overlay,'rust/tests',policy.testName+'.rs'));
+    // Rustup proxy dispatch depends on the invoked name; retain Cargo's path.
+    const selectedCompiler=compilerInvocation.arguments[0];assert.ok(lstatSync(realpathSync(selectedCompiler)).isFile());
+    await execute(selectedCompiler,['--version','--verbose'],10000,'selected-rustc-version');
+    receipt.compilerProfile=readOutcomeCompilerProfile({cargoVersion:processText('cargo-version'),rustcVersion:processText('selected-rustc-version'),
+      stdout:processText('compile'),stderr:compilerDiagnostics,
+      lockSource:new TextDecoder('utf-8',{fatal:true}).decode(bytesAt(overlay,'rust/Cargo.lock')),
+      probeName:policy.testName,manifestPath:join(overlay,'rust/Cargo.toml'),executable,usizeBits:data.targetUsizeBits});
+    const locked=plan.inventory.files.find(row=>row.path==='rust/Cargo.lock');assert.ok(locked);
+    assert.deepEqual(receipt.compilerProfile.inputs.lockSource,{bytes:locked.bytes,sha256:locked.sha256});
     // Even Cargo.lock and all dev-oracle/generated sources remain original in
     // the checkout. The two candidate source files exist only in the overlay.
     assert.deepEqual(crateInventory(plan.repository),plan.inventory,'production inputs remain unchanged');

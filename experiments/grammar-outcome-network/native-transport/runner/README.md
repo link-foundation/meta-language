@@ -37,3 +37,25 @@ versions, native report when produced and every process result after failures.
 This is finite baseline candidate evidence. It makes no claim about current
 production APIs, default CST transport, arbitrary depth, container identity or
 ledger obligations. See the [authoritative vision](../../../../docs/vision.md).
+
+## Compiler and target observations
+
+The source-only planner derives one additive `std::primitive::usize::BITS`
+observation in the existing post-assertion native report. Its source receipt
+restores the complete original probe exactly. It does not execute the constant
+locally or change any original case or assertion.
+
+Native CI retains verbose compiler diagnostics and binds the selected probe's
+actual `--extern serde_json=...` argument to its exact compiler-artifact record.
+The same locked package can have several feature units; their feature sets are
+never combined. The collector checks complete build output, original stream
+hashes, source and executable paths and explicit version bounds: Cargo and the
+actually selected Rust compiler
+`>=1.90.0 <1.100.0`, JSON dependency `>=1.0.151 <1.0.152`. Missing, ambiguous or
+uncovered profiles refuse.
+
+The retained historical compiler fixture comes from a failed native probe. Its
+two distinct dependency units and the synthetic selectors in JavaScript tests
+do not establish a current native observation. Only successful guarded CI
+execution supplies the new profile receipt. Original DTO reconstruction,
+native number variants and static-reference resolution remain required.
