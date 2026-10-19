@@ -130,7 +130,7 @@ function selectedPaths(context, options) {
 // A custom cache inside this worktree is a source-storage location until Git
 // explicitly ignores it. Outside-worktree scratch and Gitless workspaces keep
 // their existing behavior; the guard never adds or changes an ignore rule.
-function verifyCacheDirectory(context, paths) {
+function verifyCacheDirectory(context, paths, materialize = false) {
   let worktree;
   try {
     worktree = execFileSync('git', ['rev-parse', '--show-toplevel'], {
@@ -147,27 +147,32 @@ function verifyCacheDirectory(context, paths) {
   let existing = context.cacheRoot;
   while (!existsSync(existing)) { suffix.unshift(basename(existing)); existing = dirname(existing); }
   const cache = join(realpathSync(existing), ...suffix);
-  if (cache !== worktree && !cache.startsWith(`${worktree}${sep}`)) return;
+  const inside = cache === worktree || cache.startsWith(`${worktree}${sep}`);
+  if (!inside && !materialize) return;
   const location = relative(worktree, cache).split(sep).join('/');
   const probe = location ? `${location}/__meta_language_external_asset_probe__` : '__meta_language_external_asset_probe__';
-  const cachePaths = [probe, ...paths.map(path => location ? `${location}/${path}` : path)];
+  const cachePaths = inside ? [probe, ...paths.map(path => location ? `${location}/${path}` : path)] : [];
+  const project = relative(worktree, realpathSync(context.root)).split(sep).join('/');
+  const materializedPaths = materialize ? paths.map(path => project ? `${project}/${path}` : path) : [];
   let ignored;
   try {
     ignored = new Set(execFileSync('git', ['check-ignore', '--no-index', '-z', '--stdin'], {
-      cwd: worktree, encoding: 'utf8', input: cachePaths.join('\0') + '\0', stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: worktree, encoding: 'utf8', input: [...cachePaths, ...materializedPaths].join('\0') + '\0', stdio: ['pipe', 'pipe', 'pipe'],
     }).split('\0'));
   } catch (error) {
     if (error.status === 1) ignored = new Set();
     else throw error;
   }
   for (const file of cachePaths) if (!ignored.has(file)) throw new Error(`external grammar cache inside the worktree must be explicitly ignored by Git: ${file}`);
+  for (const file of materializedPaths) if (!ignored.has(file)) throw new Error(`external grammar materialized input must be explicitly ignored by Git: ${file}`);
   const tracked = new Set(execFileSync('git', ['ls-files', '-z'], {
     cwd: worktree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
   }).split('\0'));
-  for (const path of paths) {
+  for (const path of inside ? paths : []) {
     const file = location ? `${location}/${path}` : path;
     if (tracked.has(file)) throw new Error(`external grammar cache input must be untracked: ${file}`);
   }
+  for (const file of materializedPaths) if (tracked.has(file)) throw new Error(`external grammar materialized input must be untracked: ${file}`);
 }
 
 class GrammarDownloadResponseError extends Error {
@@ -278,7 +283,7 @@ export async function downloadExternalGrammarAssets(options = {}) {
   const paths = selectedPaths(context, options);
   const jobs = options.jobs ?? 4;
   if (!Number.isInteger(jobs) || jobs < 1 || jobs > 16) throw new Error('external grammar download jobs must be between 1 and 16');
-  verifyCacheDirectory(context, paths);
+  verifyCacheDirectory(context, paths, Boolean(options.materialize));
   let cursor = 0;
   const results = [];
   const failures = [];

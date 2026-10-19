@@ -2278,6 +2278,11 @@ Temporary acquisition retries recognized transport failures, timeouts and HTTP
 millisecond backoffs. Each attempt keeps its finite timeout and existing worker
 limit. Checksum, size, HTTPS and storage failures remain fatal; partial response
 bytes never become an authenticated cache or materialized asset.
+Before acquisition or cache replay, Git-backed materialization checks every
+selected destination against the actual worktree's ignore rules and tracked
+index. Nested project roots and outside-worktree caches retain this requirement;
+one rejected destination prevents the entire selected acquisition from starting.
+Cache-only acquisition and Gitless temporary workspaces retain their behavior.
 Prefer pinned original encoded downloads before reconstruction from raw source,
 preserving mirror order within each group. Reconstruction checks the raw decoded
 pins before compression and retains the exact encoded pins afterward. Different
