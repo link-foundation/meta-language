@@ -12,6 +12,7 @@ import {generateOwnedOutcomeInverseRules} from './generate-rules.mjs';
 import {generateOwnedOutcomeInverseFixtures} from './generate-fixtures.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {checkOwnedOutcomePreorder} from './preorder-rules.mjs';
 
 // Finish the fresh oracle process before retaining the complete source graph.
 const oracleFixture=generateOwnedOutcomeInverseFixtures({check:true});
@@ -275,4 +276,19 @@ test('every retained fourteen-case parser projection is either reconstructed com
     ['unknown-selection','reconstructed'],['invalid-utf8-byte','reconstructed'],['minimal','reconstructed'],
     ['all-native-variants','reconstructed'],['repeated-scalars','reconstructed']
   ]);
+});
+
+test('the shared preorder algorithm validates the complete owned occurrence graph of all fourteen original projections',()=>{
+  for(const row of oracleFixture.cases){
+    const encoded=encodeStructuredDataLinks(row.expected);
+    const model=reconstructOrdinaryOutcome(recursiveAuthority,encoded.network,encoded.root,settings);
+    const cost=preflightOrdinaryOutcome(recursiveAuthority,encoded.network,encoded.root,settings);
+    const offsets=[0],children=[];
+    for(const node of model.nodes){for(const child of node.children)children.push(child);offsets.push(children.length);}
+    const bounds=[cost.occurrences,Math.max(1,cost.edges),cost.maximumDepth];
+    assert.deepEqual(checkOwnedOutcomePreorder(offsets,children,...bounds),[0,cost.occurrences,cost.edges,cost.maximumDepth],row.id);
+    assert.equal(children.length,model.nodes.length-1,'owned occurrences retain a single-parent tree despite separate JSON alias links');
+    const changed=[...children];changed[0]=1;
+    assert.deepEqual(checkOwnedOutcomePreorder(offsets,changed,...bounds),[-4,0,0,0],row.id+': an ancestor cannot become an owned child');
+  }
 });

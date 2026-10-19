@@ -1828,6 +1828,23 @@ Native JSON representation facts, static-reference resolution, native DTO
 reconstruction and physical CST integration remain required. JavaScript controls
 do not prove native execution.
 
+Owned occurrence topology has a separate complete shared worklist algorithm.
+It checks the full ordered offset and child inventories, unique preorder
+ownership, reachability and node, edge and depth reservations. Both runtimes
+use the checked JavaScript translation, including every lifted control
+declaration; the native control functions retain actual loops. The worklist
+has explicit bounds and constructs no native DTO. Independent structural
+controls and the actual fourteen owned projection models exercise this layer.
+Native execution, source types, scalar representation and physical ownership
+remain independent checks.
+
+Implicit module reference selection respects the complete frontend's checked
+owned array rewrites before forcing reference representation from method syntax.
+Explicit reference requests and imported reference signatures retain their
+admission. A refused complete parse preserves lexical fallback. The complete
+worklist source exercises this translation path without carried items and with
+exact source restoration; native execution remains a CI requirement.
+
 The CI overlay derives an additive pointer-width observation inside the actual
 post-assertion probe report, retaining every original source byte through its
 inverse. Compiler feature selection binds the probe's verbose `rustc --extern`

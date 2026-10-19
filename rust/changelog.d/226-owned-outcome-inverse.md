@@ -13,3 +13,7 @@ all selectable roots, explicit root type models, and complete text and binary
 archive reloads. Native execution remains a CI check.
 Retain failed scheduled dependency audit findings and publish their actual outcome
 to repair pull requests while preserving required PR and delivery checks.
+Automatically translate the complete bounded occurrence-order worklist and add
+paired independent structure, deep-chain and actual owned-model controls.
+Respect checked owned array rewrites during implicit module reference selection,
+retaining explicit requests and exact bidirectional source restoration.

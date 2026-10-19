@@ -142,6 +142,12 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   let gap = '';
   const groups = groupItems(items, bytes);
   let references = referenceSemantics || (family(from) === 'JavaScript' && requiresReferenceSemantics(text));
+  if (!referenceSemantics && references && family(from) === 'JavaScript') {
+    // The complete frontend can prove an owned append rewrite and remove its
+    // reference trigger. Preserve lexical admission when that parse refuses.
+    try { references = parseJavaScript(text, { moduleDirectory }).referenceSemantics === true; }
+    catch (error) { if (!(error instanceof TranslationError)) throw error; }
+  }
   const pendingTypes = Object.values(imports).flat();
   const seenTypes = new Set();
   while (!references && pendingTypes.length) {

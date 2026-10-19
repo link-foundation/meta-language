@@ -129,3 +129,18 @@ complete JavaScript module; the shared independent cases run in native CI.
 node experiments/grammar-outcome-network/native-transport/inverse/generate-rules.mjs --check
 node experiments/grammar-outcome-network/native-transport/inverse/generate-fixtures.mjs --check
 ```
+
+The complete occurrence-order algorithm also translates automatically, retaining
+all seven checked declarations. Its three lifted control functions are actual
+Rust loops. A bounded linked worklist checks ordered offsets, unique parent
+occurrences, child order, reachable rows and node, edge and depth reservations.
+Controls cover 23 independently specified shapes, nonfinite refusals, a 2,048
+node chain and every complete owned model from the fourteen original projections.
+Native execution remains CI-only. Source types, scalars, JSON number variants,
+static borrows, actual DTO construction and physical CST integration remain
+separate obligations.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-preorder.mjs --check
+cd js && node --test tests/grammar-outcome-native-preorder.test.js
+```

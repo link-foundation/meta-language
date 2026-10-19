@@ -292,6 +292,13 @@ constant captures stay unbound: lazy initialization does not establish eager
 JavaScript initialization order or effects. The shared generated eligibility
 rule is used by both binders.
 
+Implicit module reference selection uses the complete frontend's checked owned
+array rewrites before forcing a reference representation from method syntax.
+Explicit reference requests and imported reference signatures still select that
+representation. A refused complete parse retains lexical admission. The complete
+owned outcome worklist exercises this path with zero carried items and exact
+source restoration; its native counterpart runs in CI.
+
 Whole-string `startsWith`, `endsWith` and `includes` predicates use shared
 generated decisions in both translators. Focused checks cover Unicode text,
 empty searches, missing matches, four-target emission parity and Rust method
