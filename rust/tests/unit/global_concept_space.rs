@@ -214,7 +214,10 @@ fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_
         shared["mappings"]["first:root"],
         shared["mappings"]["second:page"]
     );
-    assert_ne!(shared["proofs"].as_array().unwrap().as_slice(), []);
+    assert_ne!(
+        shared["proofs"].as_array().unwrap().as_slice(),
+        [] as [Value; 0]
+    );
     let links = global_concept_space_to_links(&shared).unwrap();
     assert!(links.contains("lexicalRule"));
     assert_eq!(
@@ -246,7 +249,10 @@ fn closed_global_context_retains_lexical_competition_modes_channels_actions_and_
             compared["mappings"]["first:root"],
             compared["mappings"]["second:page"]
         );
-        assert_eq!(compared["proofs"].as_array().unwrap().as_slice(), []);
+        assert_eq!(
+            compared["proofs"].as_array().unwrap().as_slice(),
+            [] as [Value; 0]
+        );
         assert_eq!(
             compared["failures"].as_array().unwrap().len(),
             options.equivalences.len()
