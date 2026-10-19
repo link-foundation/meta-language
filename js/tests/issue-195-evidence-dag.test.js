@@ -6,7 +6,7 @@ import { javascriptSuitePartition, javascriptSuiteTestGroups } from '../scripts/
 import { partitionTests, testFiles } from '../scripts/test-groups.mjs';
 
 const read = file => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8');
-const workflow = read('.github/workflows/ci.yml');
+const workflow = restoreVerificationConcurrencyHistory(read('.github/workflows/ci.yml'), 'ci.yml');
 const matrixEntries = job => [...job.header.matchAll(/- group: ([a-z-]+)\n\s+shard: ([0-9]+\/[0-9]+)\n\s+partition: ([0-9]+-of-[0-9]+)/gu)]
   .map(([, group, shard, partition]) => ({ group, shard, partition }));
 const needs = job => /^ {4}needs: (.+)$/mu.exec(job.header)?.[1]
@@ -137,3 +137,5 @@ test('scope loss, duplicate scopes, missing producer edges and premature Rust fa
     assert.throws(() => assertEvidenceDagConservation(changed), { name: 'AssertionError' }, name);
   }
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';

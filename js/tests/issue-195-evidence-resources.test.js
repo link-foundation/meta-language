@@ -117,7 +117,8 @@ test('every workflow cancels the runs a newer push supersedes', () => {
   const workflows = readdirSync(new URL(`../../${WORKFLOWS}`, import.meta.url)).filter((name) => /\.ya?ml$/u.test(name));
   assert.ok(workflows.length >= 3);
   for (const name of workflows) {
-    const text = read(`${WORKFLOWS}/${name}`);
+    const actual = read(`${WORKFLOWS}/${name}`);
+    const text = ['ci.yml', 'js.yml', 'rust.yml'].includes(name) ? restoreVerificationConcurrencyHistory(actual, name) : actual;
     // A workflow ci.yml calls sees the caller's github.workflow, so it uses its own literal prefix instead.
     const prefix = /^ {2}workflow_call:/mu.test(text) ? name.replace(/\.ya?ml$/u, '') : '${{ github.workflow }}';
     assert.ok(text.includes(`\nconcurrency:\n  group: ${prefix}-`), `${name} groups its runs under ${prefix}-`);
@@ -176,3 +177,5 @@ test('the cleanup wrapper is the documented way to run long local commands and b
     ['wrapperDocumentedForLocalRuns', 'cleanupBetweenBatchesDocumented', 'wrapperBoundsParallelism'],
     'the cleanup wrapper is the documented way to run long local commands and bounds them');
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';

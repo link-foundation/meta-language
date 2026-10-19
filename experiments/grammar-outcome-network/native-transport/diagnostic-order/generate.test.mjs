@@ -181,7 +181,8 @@ test('all permanent source changes are authored as exact inverse publication add
     ['wire/generate.mjs',authorWireSourceViewEdits],
     ['bridge/generate.mjs',authorBridgeSourceViewEdits],
     ['runner/plan.mjs',authorRunnerPlanSourceViewEdits],
-    ['runner/run.mjs',authorRunnerOverlaySourceViewEdits]
+    ['runner/run.mjs',source=>authorRunnerOverlayReceiptSourceViewEdits(source,
+      readProjectData(join(repository,'parity/naming/outcome-compiler-profile-source-history.lino')).sources.find(row=>row.file.endsWith('/runner/run.mjs')).sourceText)]
   ];
   for(const [path,author]of files) {
     const original=readFileSync(join(repository,'experiments/grammar-outcome-network/native-transport',path),'utf8');
@@ -239,3 +240,5 @@ test('dependency assertions select only the actual exact locked patch and full s
     assert.throws(()=>captureDiagnosticDependencyProfile(scratch),/uncovered/u);
   } finally {rmSync(scratch,{recursive:true,force:true});}
 });
+
+import {authorRunnerOverlayReceiptSourceViewEdits} from './publication-edits.mjs';

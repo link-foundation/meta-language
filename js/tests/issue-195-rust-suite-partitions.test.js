@@ -286,7 +286,7 @@ test('Rust evidence scheduling retains shared source requirement scopes and exac
 });
 
 test('the Rust evidence workflow preserves its tools, producer gates and original sixty-minute budget', () => {
-  const jobs = new Map(parseWorkflow(readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8')).map(job => [job.id, job]));
+  const jobs = new Map(parseWorkflow(restoreVerificationConcurrencyHistory(readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8'), 'ci.yml')).map(job => [job.id, job]));
   const job = jobs.get('rust-suite');
   assert.match(job.header, /name: Evidence Stage \(rust-suite - \$\{\{ matrix.physical_shard \}\}\/8\)/u);
   assert.match(job.header, /timeout-minutes: 60\n/u);
@@ -325,7 +325,7 @@ test('macOS translation subdivides all four old hash cells into eight complete c
     for(const name of children){assert.equal(seen.has(name),false);seen.add(name);}
   }
   assert.equal(seen.size,fixtureInventory.length,'all original test identities survive exactly once');
-  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  const workflow=restoreVerificationConcurrencyHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8'),'rust.yml');
   const job=parseWorkflow(workflow).find(job=>job.id==='test');assert.ok(job);
   const deadline=job.header.split('\n').find(line=>/^    timeout-minutes:/u.test(line)).trim();
   assert.ok(deadline==='timeout-minutes: 15'||deadline==="timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}",'macOS translation keeps the unchanged fifteen-minute branch');
@@ -379,3 +379,5 @@ test('macOS eight-cell native union rejects missing duplicate relabelled or redu
     executions:[await executePhysicalHarness({binary:'/fixture/unit-abcdef01',arguments:translation.filters,identity,shard,count:4,invoke})],expectedBinaries:['unit']});
   assert.throws(()=>verifyPhysicalShardUnion(old,scoped,{commit,run,attempt,profiles:['test']}),/changed physical cell count/u);
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';

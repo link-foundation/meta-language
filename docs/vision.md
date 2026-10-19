@@ -2373,6 +2373,13 @@ requirements are work to implement, not a reason for red CI. The gate
 self-test evaluates a fixture in which every pre-merge row passes and asserts
 that the aggregate is green, and no row requires its own aggregate to fail.
 
+Historical workflow conservation checks retain their complete original sources
+and assertions. An authenticated inverse may restore the recorded queue edits
+only after validating every actual current group, matrix coordinate and
+cancellation policy. Unrelated edits remain visible to the original guards;
+queue removal, changed dimensions and restored unsafe groups refuse. Current
+queue behavior is checked independently on the actual workflow source.
+
 A pull request check depends only on what exists before merge. State that
 exists only after merge runs on `main`:
 
