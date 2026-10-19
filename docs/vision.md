@@ -2396,6 +2396,16 @@ evidence, and add regression checks for the corrected behavior. A correction
 does not remove a requirement or turn unexecuted behavior into evidence.
 Contributor instructions stay concise: `AGENTS.md` holds the shared contract
 and `CLAUDE.md` refers to it without duplicating the rules.
+The instruction coverage fixture automatically captures the complete original
+and compact sources with immutable Git object certificates. Its reviewed
+correspondence covers all 25 original bullets and three surrounding instruction
+paragraphs, including the authorized assertion correction and added version
+bounds. The combined current files use 482 ASCII-whitespace words containing
+letters or digits, compared with 927 in the preceding `AGENTS.md`. Every clause
+and heading context remains checked after text or binary Links reload, without
+the original files, Git or network access. This verifies reviewed source
+coverage and measured concision, not arbitrary English equivalence or a
+globally optimal word count; these files and this vision remain authoritative.
 
 The correction control authenticates the original native array assertions,
 retains all nine original inputs and executes their current expectations with

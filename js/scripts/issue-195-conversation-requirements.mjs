@@ -23,6 +23,11 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE': [
+    'AGENTS.md', 'CLAUDE.md', 'js/scripts/contributor-instruction-coverage.mjs',
+    'js/scripts/generate-contributor-instruction-coverage.mjs',
+    'js/tests/issue-195-evidence-contributor-instructions.test.js',
+  ],
   'I195-GRAMMAR-INFERENCE-SEPARATE-ISSUE': [
     'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-evidence-inference-tracking.test.js',
   ],
