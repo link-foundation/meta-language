@@ -147,7 +147,7 @@ test('JavaScript workflow publishes to npm with trusted publishing provenance', 
   assert.equal(header.match(/\nconcurrency:\n/g).length, 1);
   assert.ok(
     header.includes(
-      "concurrency:\n  group: js-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}\n  cancel-in-progress: true\n",
+      "concurrency:\n  group: js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}\n  cancel-in-progress: true\n",
     ),
   );
 

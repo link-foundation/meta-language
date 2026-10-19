@@ -25,7 +25,7 @@ const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 const sourceTooling = {
   'I195-ASSERTION-EVIDENCE-BASED-CORRECTION': [
     'AGENTS.md', 'js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
-    'js/tests/support/modern-javascript-array-parity.js', 'js/tests/assertion-evidence-corrections.test.js',
+    'js/tests/support/modern-javascript-array-parity.js', 'js/tests/issue-195-evidence-assertion-corrections.test.js',
   ],
   'I195-CONVERSATION-VERBATIM-REGISTER': [
     'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-sources.test.js',

@@ -36,7 +36,7 @@ export const TEST_GROUPS = Object.freeze({
   downstream:
     /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
-    /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-(?:version-ranges|evidence-corrections)$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$)/u,
+    /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-version-ranges$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$)/u,
 });
 
 export function testFiles(root = packageRoot) {

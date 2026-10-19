@@ -4229,7 +4229,7 @@
 (4229: (meta: (t: semantic) (n: 1) (term: string%20value) (def: AGENTS.md) (lang: meta-language%20structured%20data)))
 (4230: (meta: (t: semantic) (n: 1) (term: string%20value) (def: js%2Fscripts%2Fgenerate-modern-javascript-array-parity-fixtures.mjs) (lang: meta-language%20structured%20data)))
 (4231: (meta: (t: semantic) (n: 1) (term: string%20value) (def: js%2Ftests%2Fsupport%2Fmodern-javascript-array-parity.js) (lang: meta-language%20structured%20data)))
-(4232: (meta: (t: semantic) (n: 1) (term: string%20value) (def: js%2Ftests%2Fassertion-evidence-corrections.test.js) (lang: meta-language%20structured%20data)))
+(4232: (meta: (t: semantic) (n: 1) (term: string%20value) (def: js%2Ftests%2Fissue-195-evidence-assertion-corrections.test.js) (lang: meta-language%20structured%20data)))
 (4233: 3875 4228 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (4234: 3877 4227 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (4235: 4236 (meta: (t: semantic) (n: 1) (term: array%20value) (lang: meta-language%20structured%20data)))

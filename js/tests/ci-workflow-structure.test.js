@@ -2969,3 +2969,26 @@ test('Windows linker preflight checks the first native child resolution and refu
     assert.deepEqual(result.output, []);
   }
 });
+
+test('release queue assertion correction retains the complete failed input and every publication safeguard', () => {
+  const evidence = readProjectData(path.join(root, 'parity/fixtures/package-release-concurrency-correction.lino'));
+  const digest = value => createHash('sha256').update(value).digest('hex');
+  assert.equal(evidence.run, 39274710187);assert.equal(evidence.job, 118135888518);
+  assert.equal(evidence.testedCommit, 'a6d2ffa00713fa20ba23fd90c586a2ea6b6fa584');
+  assert.equal(Buffer.byteLength(evidence.log.source), evidence.log.bytes);
+  assert.equal(evidence.log.sha256, '89e4a982bd81b95a33093af8987a83d5a60b468ecdd57853f32f2c274ad8425f');
+  assert.equal(digest(evidence.log.source), evidence.log.sha256);
+  assert.ok(evidence.log.source.includes('not ok 78 - JavaScript workflow publishes to npm with trusted publishing provenance'));
+  assert.ok(evidence.log.source.includes(evidence.testedCommit));
+  assert.equal(Buffer.byteLength(evidence.original.source), evidence.original.bytes);
+  assert.equal(digest(evidence.original.source), evidence.original.sha256);
+  const {before, after} = evidence.correction;
+  assert.equal(evidence.original.source.split(before).length, 2);
+  const current = read(evidence.original.path);
+  assert.equal(current, evidence.original.source.replace(before, after), 'only the wrong expected queue expression changes');
+  assert.equal(current.replace(after, before), evidence.original.source, 'every original assertion and input is retained');
+  assert.equal(digest(current), evidence.correction.proposedSha256);
+  assert.ok(workflow('js.yml').includes(after));
+  assert.ok(current.includes('npm publish --provenance'));
+  assert.ok(current.includes('cancel-in-progress:\\s+false'));
+});
