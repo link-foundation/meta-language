@@ -56,6 +56,7 @@ export function renderNativeConstructorStorage(inventory) {
   const byId=new Map(inventory.operations.map(row=>[row.sourceReference,row]));
   const files=new Map(),parts=[];
   const requireEmpty='require_empty_choice(choice)?; require_no_scalar(scalar)?;';
+  const borrowsScalar=operation=>operation.form==='reference'||(!operation.fields&&!operation.variants&&['bool','usize','i64'].includes(operation.storage.rust));
   const take=(reference)=>'take_child!(children, '+rustLiteral(reference)+', '+byId.get(reference).storage.carrier+(byId.get(reference).storage.boxed?', boxed':'')+')';
   const finish=(operation,value)=>'require_no_children(&mut children)?; Ok(NativeConstructorValue::'+operation.storage.carrier+'('+(operation.storage.boxed?'Box::new('+value+')':value)+'))';
   const constructFields=(operation,fields,constructor)=>{
@@ -65,7 +66,7 @@ export function renderNativeConstructorStorage(inventory) {
   for(let offset=0;offset<inventory.operations.length;offset+=24){
     const rows=inventory.operations.slice(offset,offset+24),number=parts.length,functions=[];
     for(let local=0;local<rows.length;local++){
-      const operation=rows[local],index=offset+local,extra=[];let body;
+      const operation=rows[local],index=offset+local,extra=[],borrowScalar=borrowsScalar(operation);let body;
       if(operation.variants){
         body=requireEmpty.replace('require_empty_choice(choice)?; ','')+'\nmatch choice {\n';
         for(let variantIndex=0;variantIndex<operation.variants.length;variantIndex++){
@@ -88,11 +89,11 @@ export function renderNativeConstructorStorage(inventory) {
       else if(['named','type_item','Box'].includes(operation.form)){
         const reference=operation.child??operation.arguments[0],value=operation.form==='Box'?'Box::new(value)':'value';
         body=requireEmpty+'\nlet value = '+take(reference)+';\n'+finish(operation,value);
-      }else if(operation.form==='reference')body='require_empty_choice(choice)?;\nlet text = '+take(operation.child)+';\nlet Some(NativeConstructorValue::ExistingStaticReference(value)) = scalar else { return Err(fail("an actual existing static reference is required")); };\nif value != text { return Err(fail("the existing static reference differs from its owned text")); }\n'+finish(operation,'value');
-      else body='require_empty_choice(choice)?;\nlet Some(NativeConstructorValue::'+operation.storage.carrier+'(value)) = scalar else { return Err(fail("wrong native scalar storage type")); };\n'+finish(operation,'value');
-      functions.push('fn construct_'+index+'(choice: &str, children: Vec<NativeConstructorSlot>, scalar: Option<NativeConstructorValue>) -> Result<NativeConstructorValue, String> {\n'+(operation.variants?'':'let mut children = children.into_iter();\n')+body+'\n}\n'+extra.join('\n'));
+      }else if(operation.form==='reference')body='require_empty_choice(choice)?;\nlet text = '+take(operation.child)+';\nlet Some(NativeConstructorValue::ExistingStaticReference(value)) = scalar else { return Err(fail("an actual existing static reference is required")); };\nlet value = *value;\nif value != text { return Err(fail("the existing static reference differs from its owned text")); }\n'+finish(operation,'value');
+      else body='require_empty_choice(choice)?;\nlet Some(NativeConstructorValue::'+operation.storage.carrier+'(value)) = scalar else { return Err(fail("wrong native scalar storage type")); };\n'+finish(operation,borrowScalar?'*value':'value');
+      functions.push('fn construct_'+index+'(choice: &str, children: Vec<NativeConstructorSlot>, scalar: Option<'+(borrowScalar?'&':'')+'NativeConstructorValue>) -> Result<NativeConstructorValue, String> {\n'+(operation.variants?'':'let mut children = children.into_iter();\n')+body+'\n}\n'+extra.join('\n'));
     }
-    const source='// Generated typed host constructors from complete actual source declarations.\nuse super::*;\npub(super) fn construct(index: usize, choice: &str, children: Vec<NativeConstructorSlot>, scalar: Option<NativeConstructorValue>) -> Result<NativeConstructorValue, String> {\nmatch index {\n'+rows.map((_,local)=>(offset+local)+' => construct_'+(offset+local)+'(choice, children, scalar),').join('\n')+'\n_ => Err(fail("invalid constructor partition")),\n}\n}\n'+functions.join('\n');
+    const source='// Generated typed host constructors from complete actual source declarations.\nuse super::*;\npub(super) fn construct(index: usize, choice: &str, children: Vec<NativeConstructorSlot>, scalar: Option<NativeConstructorValue>) -> Result<NativeConstructorValue, String> {\nmatch index {\n'+rows.map((operation,local)=>(offset+local)+' => construct_'+(offset+local)+'(choice, children, scalar'+(borrowsScalar(operation)?'.as_ref()':'')+'),').join('\n')+'\n_ => Err(fail("invalid constructor partition")),\n}\n}\n'+functions.join('\n');
     parts.push('part_'+number);files.set('part_'+number+'.rs',source);
   }
   const source=`// Generated typed host storage, not an owned-model validator or lifetime allocator.
@@ -117,7 +118,7 @@ pub struct NativeConstructorSlot {
 }
 fn fail(message: &str) -> String { format!("native source storage: {message}") }
 fn require_empty_choice(choice: &str) -> Result<(), String> { if choice.is_empty() { Ok(()) } else { Err(fail("unexpected constructor choice")) } }
-fn require_no_scalar(value: Option<NativeConstructorValue>) -> Result<(), String> { match value { None => Ok(()), Some(value) => { drop(value); Err(fail("unexpected scalar input")) } } }
+fn require_no_scalar(value: Option<NativeConstructorValue>) -> Result<(), String> { value.map_or(Ok(()), |value| { drop(value); Err(fail("unexpected scalar input")) }) }
 fn require_no_children(children: &mut std::vec::IntoIter<NativeConstructorSlot>) -> Result<(), String> { if children.next().is_none() { Ok(()) } else { Err(fail("extra source child")) } }
 macro_rules! take_child {
     ($children:expr, $source:expr, $variant:ident, boxed) => { *take_child!($children, $source, $variant) };

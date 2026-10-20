@@ -13,20 +13,20 @@ pub(super) fn construct(
         27 => construct_27(choice, children, scalar),
         28 => construct_28(choice, children, scalar),
         29 => construct_29(choice, children, scalar),
-        30 => construct_30(choice, children, scalar),
+        30 => construct_30(choice, children, scalar.as_ref()),
         31 => construct_31(choice, children, scalar),
         32 => construct_32(choice, children, scalar),
-        33 => construct_33(choice, children, scalar),
+        33 => construct_33(choice, children, scalar.as_ref()),
         34 => construct_34(choice, children, scalar),
-        35 => construct_35(choice, children, scalar),
+        35 => construct_35(choice, children, scalar.as_ref()),
         36 => construct_36(choice, children, scalar),
-        37 => construct_37(choice, children, scalar),
+        37 => construct_37(choice, children, scalar.as_ref()),
         38 => construct_38(choice, children, scalar),
         39 => construct_39(choice, children, scalar),
         40 => construct_40(choice, children, scalar),
         41 => construct_41(choice, children, scalar),
-        42 => construct_42(choice, children, scalar),
-        43 => construct_43(choice, children, scalar),
+        42 => construct_42(choice, children, scalar.as_ref()),
+        43 => construct_43(choice, children, scalar.as_ref()),
         44 => construct_44(choice, children, scalar),
         45 => construct_45(choice, children, scalar),
         46 => construct_46(choice, children, scalar),
@@ -153,7 +153,7 @@ fn construct_29(
 fn construct_30(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -165,6 +165,7 @@ fn construct_30(
     let Some(NativeConstructorValue::ExistingStaticReference(value)) = scalar else {
         return Err(fail("an actual existing static reference is required"));
     };
+    let value = *value;
     if value != text {
         return Err(fail(
             "the existing static reference differs from its owned text",
@@ -216,7 +217,7 @@ fn construct_32(
 fn construct_33(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -224,7 +225,7 @@ fn construct_33(
         return Err(fail("wrong native scalar storage type"));
     };
     require_no_children(&mut children)?;
-    Ok(NativeConstructorValue::Size(value))
+    Ok(NativeConstructorValue::Size(*value))
 }
 
 fn construct_34(
@@ -255,7 +256,7 @@ fn construct_34(
 fn construct_35(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -263,7 +264,7 @@ fn construct_35(
         return Err(fail("wrong native scalar storage type"));
     };
     require_no_children(&mut children)?;
-    Ok(NativeConstructorValue::Size(value))
+    Ok(NativeConstructorValue::Size(*value))
 }
 
 fn construct_36(
@@ -294,7 +295,7 @@ fn construct_36(
 fn construct_37(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -302,7 +303,7 @@ fn construct_37(
         return Err(fail("wrong native scalar storage type"));
     };
     require_no_children(&mut children)?;
-    Ok(NativeConstructorValue::Size(value))
+    Ok(NativeConstructorValue::Size(*value))
 }
 
 fn construct_38(
@@ -392,7 +393,7 @@ fn construct_41(
 fn construct_42(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -400,13 +401,13 @@ fn construct_42(
         return Err(fail("wrong native scalar storage type"));
     };
     require_no_children(&mut children)?;
-    Ok(NativeConstructorValue::Size(value))
+    Ok(NativeConstructorValue::Size(*value))
 }
 
 fn construct_43(
     choice: &str,
     children: Vec<NativeConstructorSlot>,
-    scalar: Option<NativeConstructorValue>,
+    scalar: Option<&NativeConstructorValue>,
 ) -> Result<NativeConstructorValue, String> {
     let mut children = children.into_iter();
     require_empty_choice(choice)?;
@@ -414,7 +415,7 @@ fn construct_43(
         return Err(fail("wrong native scalar storage type"));
     };
     require_no_children(&mut children)?;
-    Ok(NativeConstructorValue::Boolean(value))
+    Ok(NativeConstructorValue::Boolean(*value))
 }
 
 fn construct_44(

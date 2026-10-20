@@ -473,7 +473,7 @@ fn wire_leaf_text<S: OutcomeWireSink>(
             sink.object_field(object, "text", |sink, depth| sink.string(payload, depth))?;
         }
         meta_language::LeafText::Hex(payload) => {
-            sink.object_field(object, "text", |sink, depth| sink.null(depth))?;
+            sink.object_field(object, "text", OutcomeWireSink::null)?;
             sink.object_field(object, "hex", |sink, depth| sink.string(payload, depth))?;
         }
     }

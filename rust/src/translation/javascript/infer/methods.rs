@@ -1,8 +1,8 @@
 //! Actual method operand owners connected by generated JavaScript decisions.
 
 use super::{
-    BOOL, Env, FLOAT, HashMap, HashSet, Inference, Result, SEffect, SExpr, SItem, SNode, SProgram,
-    SProp, SPropNode, STRING, Span, Term, Type,
+    BOOL, Env, FLOAT, HashMap, HashSet, Inference, Rc, RefCell, Result, SEffect, SExpr, SItem,
+    SNode, SProgram, SProp, SPropNode, STRING, Span, Term, Type,
 };
 
 /// Replay actual solved receiver selections without rebuilding unrelated nodes.
@@ -322,6 +322,15 @@ impl Inference {
                 "bool" => Term::Known(BOOL),
                 "float" => Term::Known(FLOAT),
                 "string" => Term::Known(STRING),
+                "optional-element" => {
+                    let Term::Array(element) = &receiver else {
+                        unreachable!("the shared optional-element result has an array owner");
+                    };
+                    Term::Option {
+                        element: element.clone(),
+                        absence: Rc::new(RefCell::new("undefined".to_owned())),
+                    }
+                }
                 _ => receiver,
             };
             self.unify(&method.result, &result, method.place)?;

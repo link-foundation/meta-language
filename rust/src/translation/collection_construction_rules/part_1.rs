@@ -506,7 +506,7 @@ pub fn render_collection_construction(
                         values.to_owned()
                     };
                     format!(
-                        "self::ml_array::{}({values_3}, {comparator})",
+                        "crate::ml_array::{}({values_3}, {comparator})",
                         kind.to_owned()
                     )
                 }

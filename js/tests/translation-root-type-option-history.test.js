@@ -3,12 +3,13 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {generateRootTypeOptionHistory} from '../scripts/generate-root-type-option-history.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
+import {restoreNativeTestLintSource} from '../scripts/native-test-lint-source-history.mjs';
 
 const root=new URL('../../',import.meta.url);
 test('the native root-type compiler correction preserves every whole original source assertion and graph fixture',()=>{
   const history=generateRootTypeOptionHistory({check:true}),source=history.sources[0];
   verifyGitArtifactCertificate(source.certificate,Buffer.from(source.sourceText),{revision:history.revision,path:source.file});
-  let current=readFileSync(new URL(source.file,root),'utf8');
+  let current=restoreNativeTestLintSource(source.file,readFileSync(new URL(source.file,root),'utf8'));
   for(const action of [...history.actions].reverse()){
     assert.equal(current.split(action.to).length,2);current=current.replace(action.to,action.from);
   }

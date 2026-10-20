@@ -51,7 +51,7 @@ test('original JSON routing is distinct from host integer conversion and accesso
   assert.equal(original.split('serde_json::Value::Number(value) => sink.json_number(value, depth),').length,2);
   assert.equal(derived.split('serde_json::Value::Number(value) => sink.native_json_number(value, depth),').length,2);
   assert.equal(receipt.jsonVisitor.after.replace('sink.native_json_number(value, depth)','sink.json_number(value, depth)'),receipt.jsonVisitor.before);
-  assert.equal(original.replace(receipt.trait.before,receipt.trait.after).replace(receipt.jsonVisitor.before,receipt.jsonVisitor.after),
+  assert.equal(original.replace(receipt.trait.before,receipt.trait.after).replace(receipt.jsonVisitor.before,receipt.jsonVisitor.after).replace(receipt.callback.before,receipt.callback.after),
     derived.replaceAll('meta_language::','crate::'));
   for(const name of ['usize','i64','json_number']){
     const originalMethod=readSourceTextRustBlock(receipt.inputs.sink.originalCounter,'fn',name);

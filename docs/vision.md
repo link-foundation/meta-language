@@ -3072,6 +3072,29 @@ through the same shared state model.
 
 ## Continuous integration
 
+Native feedback from run `39372455987` distinguishes actual compiler diagnostics,
+fixture transport failures and translation defects. Current draft repairs retain
+the original numeric algorithms, all 3,660 decimal and 3,628 projection controls,
+and complete authenticated predecessor modules and fixtures as Links histories.
+Native fixture transport retains exact UTF-16 units, including lone surrogates.
+Generated module relocation changes lexical paths only; target-source string
+literals and comments retain their original bytes. Shared optional-array result
+decisions retain the receiver's actual element term in native inference.
+Recorded finite source views and ownership styles produce the native integer
+libraries automatically; their complete original JavaScript source stays exact.
+These source checks and JavaScript observations do not establish native execution.
+
+Frozen acquisition provenance and the active acquisition tool have separate
+authenticated identities. The unchanged frozen asset inventory supplies the
+distribution and decoded-input hashes; changing the downloader cannot replace
+either check. Version-sensitive relative-character self-translation expectations
+select the active package patch range and exact implementation source. They retain
+every original item and full source round trip. Carried top-level effects remain
+visible and complete translation remains an unmet obligation.
+The raw native consumer's ten-second execution bound remains unchanged after
+this run exceeded it while making progress. Its performance repair and every
+other failed CI check remain required before the next push.
+
 CI follows the same order as development. One workflow
 ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) runs the
 JavaScript workflow first and the Rust workflow after it: no Rust job starts

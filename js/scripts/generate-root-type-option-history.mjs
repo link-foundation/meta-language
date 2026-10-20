@@ -7,13 +7,14 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreNativeTestLintSource} from './native-test-lint-source-history.mjs';
 
 const root=new URL('../../',import.meta.url),revision='6fba3503a710325310e359995a1a77fcedf8011a';
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
 export function generateRootTypeOptionHistory({check=false}={}) {
   const file='rust/tests/unit/root_types.rs',original=captureGitArtifactCertificate(revision,file);
   verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
-  const sourceText=original.blob.toString('utf8'),current=readFileSync(new URL(file,root),'utf8');
+  const sourceText=original.blob.toString('utf8'),current=restoreNativeTestLintSource(file,readFileSync(new URL(file,root),'utf8'));
   const actions=[
     {from:'metadata.link_type(),\n            root_type_kind(declaration["type"].as_str().unwrap())',
       to:'metadata.link_type(),\n            Some(root_type_kind(declaration["type"].as_str().unwrap()))'},

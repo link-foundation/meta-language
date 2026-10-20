@@ -7,6 +7,7 @@ import {captureGitArtifactCertificate} from '../../../../js/scripts/capture-git-
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {readSourceTextRustBlock} from '../../../../js/scripts/source-text-byte-library-style.mjs';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {restoreNativeTestLintSource} from '../../../../js/scripts/native-test-lint-source-history.mjs';
 
 const root=new URL('../../../../',import.meta.url),revision='6fba3503a710325310e359995a1a77fcedf8011a';
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
@@ -25,7 +26,8 @@ export function generateStaticBorrowModuleHistory({check=false}={}) {
   ]){
     const original=captureGitArtifactCertificate(revision,file),sourceText=original.blob.toString('utf8');
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
-    const current=readFileSync(new URL(file,root),'utf8');let corrected=sourceText;
+    const actual=readFileSync(new URL(file,root),'utf8');
+    const current=file.endsWith('grammar_outcome_static_borrows.rs')?restoreNativeTestLintSource(file,actual):actual;let corrected=sourceText;
     for(const action of actions){assert.equal(corrected.split(action.from).length,2);corrected=corrected.replace(action.from,action.to);}
     assert.equal(corrected,current,'only the observed module ownership and literal spelling repairs are admitted');
     let inverse=current;for(const action of [...actions].reverse()){

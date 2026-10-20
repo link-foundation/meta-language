@@ -110,9 +110,9 @@ fn check_root_type_model(network: &LinkNetwork, data: &Value, row: &Value) {
     let roles = network
         .links()
         .filter(|link| link.metadata().term() == Some("declared type role"))
-        .collect::<Vec<_>>();
+        .count();
     assert_eq!(type_designations.len(), usize::from(typed));
-    assert_eq!(roles.len(), usize::from(typed));
+    assert_eq!(roles, usize::from(typed));
     if typed {
         assert_eq!(type_designations[0].id().as_u64(), 1);
         assert_eq!(root_type_references(network, 10), [1, 4]);

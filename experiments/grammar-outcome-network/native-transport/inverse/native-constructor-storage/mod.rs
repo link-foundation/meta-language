@@ -134,13 +134,10 @@ fn require_empty_choice(choice: &str) -> Result<(), String> {
     }
 }
 fn require_no_scalar(value: Option<NativeConstructorValue>) -> Result<(), String> {
-    match value {
-        None => Ok(()),
-        Some(value) => {
-            drop(value);
-            Err(fail("unexpected scalar input"))
-        }
-    }
+    value.map_or(Ok(()), |value| {
+        drop(value);
+        Err(fail("unexpected scalar input"))
+    })
 }
 fn require_no_children(
     children: &mut std::vec::IntoIter<NativeConstructorSlot>,

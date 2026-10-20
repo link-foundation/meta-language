@@ -222,7 +222,19 @@ fn every_public_rust_module_is_classified_in_the_manifest() {
 fn rust_evidence_paths_live_inside_the_rust_or_shared_trees() {
     // Guard against regressions where a manifest evidence path silently drops
     // the `rust/` prefix after the crate moved into the language folder.
-    let (_root, manifest) = manifest();
+    let (root, manifest) = manifest();
+    let native_adapter =
+        "experiments/grammar-outcome-network/native-transport/inverse/static-borrows.rs";
+    let native_owner =
+        fs::read_to_string(root.join("rust/tests/unit/grammar_outcome_static_borrows.rs"))
+            .expect("actual registered native owner");
+    let native_modules = fs::read_to_string(root.join("rust/tests/unit/mod.rs"))
+        .expect("actual native unit module inventory");
+    let registered_native_storage = native_owner.contains(&format!(
+        "#[path = \"../../../{native_adapter}\"]\nmod storage;"
+    )) && native_modules
+        .lines()
+        .any(|line| line == "mod grammar_outcome_static_borrows;");
 
     for feature in manifest["features"].as_array().expect("features array") {
         let id = feature["id"].as_str().expect("feature id");
@@ -249,8 +261,11 @@ fn rust_evidence_paths_live_inside_the_rust_or_shared_trees() {
                     .iter()
                     .any(|evidence| evidence.as_str() == Some(relative));
             assert!(
-                in_rust_tree || in_shared_tree || shared_experiment_data,
-                "{id} rust evidence {relative} must live under rust/ or a shared docs/parity tree, or be experiment Links data cited by both runtimes"
+                in_rust_tree
+                    || in_shared_tree
+                    || shared_experiment_data
+                    || relative == native_adapter && registered_native_storage,
+                "{id} rust evidence {relative} must cite native/shared source, shared experiment Links data, or the exact registered native storage module"
             );
         }
     }

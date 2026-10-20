@@ -70,6 +70,7 @@ fn generated_static_reference_selection_preserves_all_independent_cases_and_reso
 
 #[test]
 fn native_storage_returns_the_actual_existing_static_reference_without_allocating_a_new_lifetime() {
+    static LARGE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     let registry: &[&'static str] = &[
         "",
         "syntax",
@@ -116,7 +117,6 @@ fn native_storage_returns_the_actual_existing_static_reference_without_allocatin
             .unwrap_err()
             .contains("ambiguous")
     );
-    static LARGE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     let oversized: &'static str = LARGE.get_or_init(|| "x".repeat(1_048_577)).as_str();
     assert!(
         storage::resolve_owned_outcome_static_borrow("syntax", &[oversized])

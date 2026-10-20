@@ -136,7 +136,9 @@ export async function runOverlay(plan,{environment=process.env,spawnProcess=spaw
     // Acquire them only inside this owned overlay, never in production.
     const assetRequest=join(work,'native-oracle-assets-request.lino');
     const assetReceipt=join(artifacts,'native-oracle-assets-receipt.lino');
-    writeProjectData(assetRequest,plan.nativeOraclePolicy);
+    const activeProvisionerSource=bytesAt(plan.repository,plan.nativeOraclePolicy.provisioner.file);
+    const activeProvisioner={file:plan.nativeOraclePolicy.provisioner.file,bytes:activeProvisionerSource.length,sha256:sha256(activeProvisionerSource)};
+    writeProjectData(assetRequest,{...plan.nativeOraclePolicy,activeProvisioner});
     await execute(process.execPath,['--max-old-space-size=512',fileURLToPath(new URL('./provision-assets.mjs',import.meta.url)),
       '--repository',plan.repository,'--work',work,'--overlay',overlay,'--request',assetRequest,
       '--request-sha256',sha256(readFileSync(assetRequest)),'--receipt',assetReceipt],plan.nativeOraclePolicy.timeoutMs,'external-oracle-assets');

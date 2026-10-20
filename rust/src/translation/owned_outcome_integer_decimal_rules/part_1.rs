@@ -373,22 +373,7 @@ pub fn accept_owned_outcome_integer_decimal(
             false
         } else {
             {
-                let negative = ((std::rc::Rc::new(
-                    move |text_2: self::ml_string::Text, position: f64| -> self::ml_string::Text {
-                        {
-                            let index = if position.is_nan() {
-                                0f64
-                            } else {
-                                position.trunc()
-                            };
-                            if (index < 0f64) || (index >= (text_2.length())) {
-                                self::ml_string::Text::from_units(vec![])
-                            } else {
-                                text_2.slice(index, (index + 1f64))
-                            }
-                        }
-                    },
-                ))(text.clone(), 0f64))
+                let negative = (text.slice(0f64, (0f64 + 1f64)))
                     == (self::ml_string::Text::from_units(vec![45]));
                 {
                     let offset = if negative { 1f64 } else { 0f64 };
@@ -397,30 +382,11 @@ pub fn accept_owned_outcome_integer_decimal(
                             self::read_owned_outcome_integer_decimal_limit(negative, signed, width);
                         {
                             let digits = count - offset;
-                            if (((limit.length()) == 0f64) || (digits == 0f64))
-                                || (digits > (limit.length()))
-                            {
-                                false
-                            } else if (((std::rc::Rc::new(
-                                move |text_2: self::ml_string::Text,
-                                      position: f64|
-                                      -> self::ml_string::Text {
-                                    {
-                                        let index = if position.is_nan() {
-                                            0f64
-                                        } else {
-                                            position.trunc()
-                                        };
-                                        if (index < 0f64) || (index >= (text_2.length())) {
-                                            self::ml_string::Text::from_units(vec![])
-                                        } else {
-                                            text_2.slice(index, (index + 1f64))
-                                        }
-                                    }
-                                },
-                            ))(text.clone(), offset))
-                                == (self::ml_string::Text::from_units(vec![48])))
-                                && (negative || (digits > 1f64))
+                            if ((((limit.length()) == 0f64) || (digits == 0f64))
+                                || (digits > (limit.length())))
+                                || (((text.slice(offset, (offset + 1f64)))
+                                    == (self::ml_string::Text::from_units(vec![48])))
+                                    && (negative || (digits > 1f64)))
                             {
                                 false
                             } else {
@@ -481,27 +447,7 @@ pub fn ml_accept_owned_outcome_integer_decimal_loop1(
                 let digit = (self::ml_string::Text::from_units(vec![
                     48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
                 ]))
-                .index_of(
-                    &(std::rc::Rc::new(
-                        move |text_2: self::ml_string::Text,
-                              position: f64|
-                              -> self::ml_string::Text {
-                            {
-                                let index_2 = if position.is_nan() {
-                                    0f64
-                                } else {
-                                    position.trunc()
-                                };
-                                if (index_2 < 0f64) || (index_2 >= (text_2.length())) {
-                                    self::ml_string::Text::from_units(vec![])
-                                } else {
-                                    text_2.slice(index_2, (index_2 + 1f64))
-                                }
-                            }
-                        },
-                    ))(text.clone(), index),
-                    0f64,
-                );
+                .index_of(&text.slice(index, (index + 1f64)), 0f64);
                 if digit < 0f64 {
                     self::MlAcceptOwnedOutcomeIntegerDecimalLoop1Result::MlAcceptOwnedOutcomeIntegerDecimalLoop1Return(false)
                 } else {
@@ -510,18 +456,13 @@ pub fn ml_accept_owned_outcome_integer_decimal_loop1(
                             self::MlAcceptOwnedOutcomeIntegerDecimalJoin2::MlAcceptOwnedOutcomeIntegerDecimalJoin2Next(smaller, larger)
                         } else {
                             {
-                                let boundary = (self::ml_string::Text::from_units(vec![48, 49, 50, 51, 52, 53, 54, 55, 56, 57])).index_of(&(std::rc::Rc::new(move |text_2: self::ml_string::Text, position: f64| -> self::ml_string::Text { {
-                                    let index_2 = if position.is_nan() {
-                                        0f64
-                                    } else {
-                                        position.trunc()
-                                    };
-                                    if (index_2 < 0f64) || (index_2 >= (text_2.length())) {
-                                        self::ml_string::Text::from_units(vec![])
-                                    } else {
-                                        text_2.slice(index_2, (index_2 + 1f64))
-                                    }
-                                } }))(limit.clone(), (index - offset)), 0f64);
+                                let boundary = (self::ml_string::Text::from_units(vec![
+                                    48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+                                ]))
+                                .index_of(
+                                    &limit.slice((index - offset), ((index - offset) + 1f64)),
+                                    0f64,
+                                );
                                 {
                                     let smaller_3 =
                                         if digit < boundary { { true } } else { smaller };

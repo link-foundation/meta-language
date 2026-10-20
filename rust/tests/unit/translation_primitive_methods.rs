@@ -9,6 +9,7 @@ use meta_language::{
     BinaryLinksOptions, LinkNetwork, create_typed_program_links, decode_link_network_binary,
     decode_typed_program_links, emit_typed_program_links, encode_link_network_binary,
 };
+use sha2::{Digest, Sha256};
 use std::fmt::Write as _;
 use std::fs;
 use std::process::Command;
@@ -500,7 +501,10 @@ fn relative_character_preserves_all_independent_utf16_positions_and_undefined_re
             u64::try_from(index % positions.len()).unwrap()
         );
         if row["undefined"].as_bool().unwrap() {
-            assert!(row["units"].as_array().unwrap().is_empty());
+            assert_eq!(
+                row["units"].as_array().unwrap(),
+                &Vec::<serde_json::Value>::new()
+            );
             expected.push_str("undefined\n");
         } else {
             let result = row["units"].as_array().unwrap();
@@ -598,7 +602,73 @@ fn relative_character_keeps_default_order_complete_archives_and_lossless_source(
         }
     }
     let translated = meta_language::self_translate(source, "JavaScript", "Rust").unwrap();
-    assert!(translated.items.iter().all(|item| item.status != "carried"));
+    let current_javascript = meta_language::read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/relative-character-self-translation.lino"
+    ))
+    .unwrap();
+    assert_eq!(current_javascript["source"]["text"].as_str(), Some(source));
+    assert_eq!(
+        current_javascript["implementation"]["sha256"].as_str(),
+        Some(
+            format!(
+                "{:x}",
+                Sha256::digest(include_bytes!("../../../js/src/self-translation.js"))
+            )
+            .as_str()
+        ),
+        "the active JavaScript implementation selects the recorded item policy"
+    );
+    assert_eq!(
+        current_javascript["package"]["version"].as_str(),
+        Some(env!("CARGO_PKG_VERSION"))
+    );
+    assert_eq!(
+        current_javascript["package"]["sha256"].as_str(),
+        Some(
+            format!(
+                "{:x}",
+                Sha256::digest(include_bytes!("../../../js/package.json"))
+            )
+            .as_str()
+        )
+    );
+    let expectations = current_javascript["versionPolicy"]["expectations"]
+        .as_array()
+        .unwrap();
+    assert_eq!(expectations.len(), 1);
+    let selected = &expectations[0];
+    assert_eq!(
+        selected["minimum"].as_str(),
+        Some(env!("CARGO_PKG_VERSION"))
+    );
+    assert_eq!(selected["includeMinimum"].as_bool(), Some(true));
+    assert_eq!(selected["includeMaximum"].as_bool(), Some(false));
+    let coordinates = env!("CARGO_PKG_VERSION")
+        .split('.')
+        .map(|part| part.parse::<u64>().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(coordinates.len(), 3);
+    let maximum = format!(
+        "{}.{}.{}",
+        coordinates[0],
+        coordinates[1],
+        coordinates[2].checked_add(1).unwrap()
+    );
+    assert_eq!(selected["maximum"].as_str(), Some(maximum.as_str()));
+    assert_eq!(
+        translated
+            .items
+            .iter()
+            .map(|item| item.status.as_str())
+            .collect::<Vec<_>>(),
+        selected["expected"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_str().unwrap())
+            .collect::<Vec<_>>(),
+        "every declaration comment and effectful statement must match the current JavaScript decision"
+    );
     assert_eq!(
         meta_language::self_translate(&translated.code, "Rust", "JavaScript")
             .unwrap()

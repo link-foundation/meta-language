@@ -122,7 +122,18 @@ export function buildOriginalNativeNumberObservations() {
   const observedVisitor=jsonVisitor.replace(arm,arm.replace('sink.json_number','sink.native_json_number'));
   visitors=visitors.replace(jsonVisitor,observedVisitor);
   assert.equal(visitors.replace(extendedTrait,trait).replace(observedVisitor,jsonVisitor),packet.source,'the complete original all-nine-type visitor survives exact inverse');
+  const callback={before:'|sink, depth| sink.null(depth)',after:'OutcomeWireSink::null'};
+  assert.equal(visitors.split(callback.before).length,2,'one original forwarding-only null callback');
+  assert.ok(readSourceTextRustBlock(visitors,'fn','wire_leaf_text').includes('sink.object_field(object, "text", '+callback.before+')?;'));
+  const callbackEdit={start:visitors.indexOf(callback.before),end:visitors.indexOf(callback.before)+callback.before.length,from:callback.before,to:callback.after};
+  const originalVisitorContext=visitors;
+  visitors=visitors.replace(callback.before,callback.after);
   const relocation=replaceObservationSourceTokens(visitors,{crate:{names:packet.inventory.declarations.map(row=>row.name),prefix:'meta_language::'}});
+  relocation.edits.push(callbackEdit);
+  let restoredVisitorContext=relocation.source;
+  for(const edit of relocation.edits){assert.equal(restoredVisitorContext.slice(edit.start,edit.start+edit.to.length),edit.to);
+    restoredVisitorContext=restoredVisitorContext.slice(0,edit.start)+edit.from+restoredVisitorContext.slice(edit.start+edit.to.length);}
+  assert.equal(restoredVisitorContext,originalVisitorContext,'all original callback operands and every complete visitor byte survive the ordered inverse');
   const capture=`pub fn capture_original_json_number_observations(outcome: &ParseOutcome, limits: StructuredDataLinksLimits) -> Result<Vec<NativeJsonNumberObservation>, String> {
     // This new finite observation profile does not change any existing API.
     if limits.node_limit > 100_000 || limits.byte_limit > 16 * 1024 * 1024 {
@@ -159,7 +170,7 @@ ${sink.preflight}
     inputs:{sink,parent},sourceInventory:packet.inventory,wirePlan:packet.plan,
     author:{file:'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs',...pin(readFileSync(new URL(import.meta.url)))},
     byteRangeReader:{file:'js/scripts/native-source-byte-ranges.mjs',...pin(readFileSync(new URL('../../../../js/scripts/native-source-byte-ranges.mjs',import.meta.url)))},
-    originalVisitors:packet.source,trait:{before:trait,after:extendedTrait},jsonVisitor:{before:jsonVisitor,after:observedVisitor},
+    originalVisitors:packet.source,trait:{before:trait,after:extendedTrait},jsonVisitor:{before:jsonVisitor,after:observedVisitor},callback,
     observationDeclaration,observationMethod,storage:{...storage,after:observedStorage},inherent:renamedInherent,implementation:{...renamedImplementation,after:observedImplementation},
     relocation,rawModel:raw,outputs:outputs.map(({file,source})=>({file,...pin(source)})),
     limits:{nodeLimit:100000,byteLimit:16*1024*1024,depthLimit:256},

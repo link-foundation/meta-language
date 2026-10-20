@@ -7,7 +7,8 @@ import {parseJavaScript} from '../../../../js/src/translation/javascript.js';
 import {checkProgram} from '../../../../js/src/translation/check.js';
 import {emitRust} from '../../../../js/src/translation/emit-rust.js';
 import {writeRecordRuleLibrary} from '../../../../js/scripts/record-rule-library.mjs';
-import {readPortableLiteralOptionStyles} from '../../../../js/scripts/portable-literal-option-style.mjs';
+import {readPortableIntegerLibraryStyles} from '../../../../js/scripts/portable-integer-library-style.mjs';
+import {readPortableIntegerCharacterSourceView} from '../../../../js/scripts/portable-integer-character-source-style.mjs';
 import {writeProjectData,checkProjectData} from '../../../../js/scripts/project-data.mjs';
 
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -19,19 +20,22 @@ export function readOwnedOutcomeIntegerProjectionSource() {
   const declaration="import {acceptOwnedOutcomeIntegerDecimal} from './integer-decimal-rules.mjs';\n";
   assert.equal(original.split(declaration).length,2,'one exact explicit dependency import');
   const source=dependency+'\n'+original.replace(declaration,'');
+  const dependencyView=readPortableIntegerCharacterSourceView(dependencyFile,dependency),originalView=readPortableIntegerCharacterSourceView(sourceFile,original);
+  const loweredSource=dependencyView.source+'\n'+originalView.source.replace(declaration,'');
   return{source,inputs:[{file:dependencyFile,...pin(dependency),sourceText:dependency},
-    {file:sourceFile,...pin(original),sourceText:original}],assembly:{separator:'\n',removedImport:declaration},...pin(source)};
+    {file:sourceFile,...pin(original),sourceText:original}],assembly:{separator:'\n',removedImport:declaration},...pin(source),
+    loweredSource,sourceViews:[dependencyView.record,originalView.record]};
 }
 
 export function generateOwnedOutcomeIntegerProjections({check=false}={}) {
   const closure=readOwnedOutcomeIntegerProjectionSource();
-  const program=checkProgram(parseJavaScript(closure.source,{referenceSemantics:false}));
+  const program=checkProgram(parseJavaScript(closure.loweredSource,{referenceSemantics:false}));
   const declarations=[...program.declarations.keys()];
   assert.equal(declarations.filter(name=>name==='acceptOwnedOutcomeIntegerProjection').length,1);
   assert.ok(declarations.includes('acceptOwnedOutcomeIntegerDecimal'));
   const emitted=emitRust(program,{arrayConsumption:true});
   assert.equal(emitted.definitions.length,declarations.length,'every lifted control declaration remains');
-  const files=writeRecordRuleLibrary(emitted,'owned_outcome_integer_projection_rules',{check,sourceStyles:readPortableLiteralOptionStyles});
+  const files=writeRecordRuleLibrary(emitted,'owned_outcome_integer_projection_rules',{check,sourceStyles:readPortableIntegerLibraryStyles});
   const inputs=new Set(['','-0','00','01','-01','+1',' 1','1 ','1.0','1e0','NaN','Infinity','١','１','\ud800','9'.repeat(21)]);
   for(let exponent=0n;exponent<=65n;exponent++)for(const delta of [-3n,-2n,-1n,0n,1n,2n,3n]){
     const integer=(1n<<exponent)+delta;inputs.add(integer.toString());inputs.add((-integer).toString());

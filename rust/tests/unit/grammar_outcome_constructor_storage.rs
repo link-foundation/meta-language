@@ -52,7 +52,7 @@ fn instantiate_constructor_control(recipe: &Value) -> Result<NativeConstructorSl
 fn every_captured_native_constructor_branch_packs_actual_typed_source_values() {
     let controls = constructor_controls();
     let references = controls["sourceReferences"].as_array().unwrap();
-    assert!(!references.is_empty());
+    assert_ne!(references, &Vec::<Value>::new());
     assert_eq!(references.len(), storage::SOURCE_REFERENCES.len());
     for (expected, actual) in references.iter().zip(storage::SOURCE_REFERENCES) {
         assert_eq!(expected.as_str().unwrap(), *actual);
@@ -79,7 +79,7 @@ fn every_captured_native_constructor_branch_packs_actual_typed_source_values() {
                     .unwrap()
             );
             assert!(outcome.tree.is_none());
-            assert!(outcome.ambiguities.is_empty());
+            assert_eq!(outcome.ambiguities, Vec::<meta_language::Ambiguity>::new());
             assert!(outcome.rejection.is_none());
             assert!(outcome.source_planes.is_none());
         }

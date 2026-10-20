@@ -10,7 +10,7 @@ use meta_language::{
 };
 use serde_json::{Number, Value};
 
-fn original_number_limits() -> StructuredDataLinksLimits {
+const fn original_number_limits() -> StructuredDataLinksLimits {
     StructuredDataLinksLimits {
         node_limit: 100_000,
         byte_limit: 16 * 1024 * 1024,
@@ -162,7 +162,7 @@ fn recursive_original_number_fields_retain_distinct_occurrences_across_every_jso
                 .unwrap()
         })
         .collect::<Vec<_>>();
-    values.sort();
+    values.sort_unstable();
     assert_eq!(values, (1_u64..=10).collect::<Vec<_>>());
     assert!(
         facts
@@ -186,10 +186,9 @@ fn original_counting_limits_and_lossy_number_refusals_remain_before_observation_
         rejection: None,
         source_planes: None,
     };
-    assert!(
-        original::capture_original_json_number_observations(&empty, ordinary)
-            .unwrap()
-            .is_empty()
+    assert_eq!(
+        original::capture_original_json_number_observations(&empty, ordinary).unwrap(),
+        Vec::<original::NativeJsonNumberObservation>::new()
     );
     for limits in [
         StructuredDataLinksLimits {

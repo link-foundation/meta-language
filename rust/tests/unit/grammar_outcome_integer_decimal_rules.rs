@@ -7,15 +7,12 @@ fn accept_standard_integer_decimal(text: &str, signed: bool, width: u32) -> bool
         return false;
     }
     if signed {
-        match text.parse::<i64>() {
-            Ok(value) => value.to_string() == text,
-            Err(_) => false,
-        }
+        text.parse::<i64>()
+            .is_ok_and(|value| value.to_string() == text)
     } else {
-        match text.parse::<u64>() {
-            Ok(value) => value.to_string() == text && (width == 64 || value <= u64::from(u32::MAX)),
-            Err(_) => false,
-        }
+        text.parse::<u64>().is_ok_and(|value| {
+            value.to_string() == text && (width == 64 || u32::try_from(value).is_ok())
+        })
     }
 }
 
@@ -32,10 +29,10 @@ fn translated_exact_decimal_admission_preserves_native_integer_limits_and_origin
         let text = row["text"].as_str().unwrap();
         let signed = row["signed"].as_bool().unwrap();
         let width = row["width"].as_f64().unwrap();
-        let native_width = if width == 32.0 {
+        let native_width = if width.to_bits() == 32.0_f64.to_bits() {
             32
         } else {
-            assert_eq!(width, 64.0);
+            assert_eq!(width.to_bits(), 64.0_f64.to_bits());
             64
         };
         let expected = row["expected"].as_bool().unwrap();
@@ -70,10 +67,9 @@ fn translated_exact_decimal_admission_preserves_native_integer_limits_and_origin
                 signed,
                 width
             ));
-            assert!(
-                rules::read_owned_outcome_integer_decimal_limit(false, signed, width)
-                    .0
-                    .is_empty()
+            assert_eq!(
+                rules::read_owned_outcome_integer_decimal_limit(false, signed, width).0,
+                Vec::<u16>::new()
             );
         }
         for width in [32.0, 64.0] {

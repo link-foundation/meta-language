@@ -100,12 +100,23 @@ pub(super) fn publish_original_number_controls(observations: &[NativeJsonNumberO
     {offset:owner.node.end-1,text:'    publication::publish_original_number_controls(&actual).unwrap();\n'}];
   let derived=original.blob;
   for(const insertion of [...insertions].reverse())derived=Buffer.concat([derived.subarray(0,insertion.offset),Buffer.from(insertion.text),derived.subarray(insertion.offset)]);
+  const actions=[
+    {from:'fn original_number_limits()',to:'const fn original_number_limits()'},
+    {from:'values.sort();',to:'values.sort_unstable();'},
+    {from:'assert!(\n        original::capture_original_json_number_observations(&empty, ordinary)\n            .unwrap()\n            .is_empty()\n    );',
+      to:'assert_eq!(\n        original::capture_original_json_number_observations(&empty, ordinary).unwrap(),\n        Vec::<original::NativeJsonNumberObservation>::new()\n    );'},
+  ];
+  let corrected=derived.toString();for(const action of actions){assert.equal(corrected.split(action.from).length,2);corrected=corrected.replace(action.from,action.to);}
+  // Rustfmt can only change layout; the source actions and complete inverse
+  // retain the original independent inputs and empty-result assertion.
+  derived=Buffer.from(corrected);
   let inverse=derived;
+  for(const action of [...actions].reverse()){const text=inverse.toString();assert.equal(text.split(action.to).length,2);inverse=Buffer.from(text.replace(action.to,action.from));}
   for(let index=insertions.length-1;index>=0;index--){const insertion=insertions[index],offset=insertion.offset+insertions.slice(0,index).reduce((sum,row)=>sum+Buffer.byteLength(row.text),0);
     assert.equal(inverse.subarray(offset,offset+Buffer.byteLength(insertion.text)).toString(),insertion.text);
     inverse=Buffer.concat([inverse.subarray(0,offset),inverse.subarray(offset+Buffer.byteLength(insertion.text))]);}
   assert.ok(inverse.equals(original.blob),'every original assertion and test input survives the exact full module inverse');
-  const receipt={schemaVersion:1,revision,sources:[{file:testFile,commit:revision,...pin(original.blob),sourceText:original.blob.toString(),certificate:original.certificate,current:pin(derived),insertions}],
+  const receipt={schemaVersion:1,revision,sources:[{file:testFile,commit:revision,...pin(original.blob),sourceText:original.blob.toString(),certificate:original.certificate,current:pin(derived),insertions,actions}],
     input:{file:modelFile,...pin(model),sourceText:model.toString(),declaration:{name:declaration.name,start:declaration.node.start,end:declaration.node.end,
       sourceText:model.subarray(declaration.node.start,declaration.node.end).toString()},fields},
     outputs:[{file:outputFile,...pin(formatted)},{file:testFile,...pin(derived)}],

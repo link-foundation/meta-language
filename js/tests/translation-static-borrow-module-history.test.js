@@ -6,6 +6,7 @@ import {generateStaticBorrowModuleHistory} from '../../experiments/grammar-outco
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
 import {tokenize} from '../src/translation/lexer.js';
+import {restoreNativeTestLintSource} from '../scripts/native-test-lint-source-history.mjs';
 
 const root=new URL('../../',import.meta.url);
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -19,7 +20,8 @@ test('one native static rule owner retains the complete original storage body so
   const history=generateStaticBorrowModuleHistory({check:true});assert.equal(history.sources.length,2);
   for(const row of history.sources){
     verifyGitArtifactCertificate(row.certificate,Buffer.from(row.sourceText),{revision:history.revision,path:row.file});
-    const current=readFileSync(new URL(row.file,root),'utf8');assert.deepEqual(pin(current),row.current);
+    const actual=readFileSync(new URL(row.file,root),'utf8');
+    const current=row.file.endsWith('grammar_outcome_static_borrows.rs')?restoreNativeTestLintSource(row.file,actual):actual;assert.deepEqual(pin(current),row.current);
     let previous=current;
     for(const action of [...row.actions].reverse()){
       assert.equal(previous.split(action.to).length,2);previous=previous.replace(action.to,action.from);
@@ -32,7 +34,7 @@ test('one native static rule owner retains the complete original storage body so
 
 test('every complete static-borrow test input and assertion remains exact modulo value preserving separators',()=>{
   const history=generateStaticBorrowModuleHistory({check:true}),previous=history.sources.find(row=>row.file.endsWith('grammar_outcome_static_borrows.rs'));
-  const current=readFileSync(new URL(previous.file,root),'utf8');
+  const current=restoreNativeTestLintSource(previous.file,readFileSync(new URL(previous.file,root),'utf8'));
   for(const name of ['generated_static_reference_selection_preserves_all_independent_cases_and_resource_boundaries',
     'native_storage_returns_the_actual_existing_static_reference_without_allocating_a_new_lifetime']){
     assert.equal(normalizeNativeLiteralSeparators(readSourceTextRustBlock(current,'fn',name)),

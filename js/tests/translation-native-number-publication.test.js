@@ -48,6 +48,9 @@ test('complete original native assertions and source contexts survive the additi
   const original=receipt.sources[0];
   verifyGitArtifactCertificate(original.certificate,Buffer.from(original.sourceText),{revision:original.commit,path:original.file});
   let current=readFileSync(new URL(original.file,root));assert.deepEqual(pin(current),original.current);
+  for(const action of [...original.actions].reverse()){
+    const source=current.toString();assert.equal(source.split(action.to).length,2);current=Buffer.from(source.replace(action.to,action.from));
+  }
   for(let index=original.insertions.length-1;index>=0;index--){
     const insertion=original.insertions[index],offset=insertion.offset+original.insertions.slice(0,index).reduce((sum,row)=>sum+Buffer.byteLength(row.text),0);
     assert.equal(current.subarray(offset,offset+Buffer.byteLength(insertion.text)).toString(),insertion.text);
