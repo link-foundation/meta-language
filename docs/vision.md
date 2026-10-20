@@ -2910,6 +2910,17 @@ and observations after failures. Local controls check generation and refuse
 native execution before resolving a compiler; actual native results remain a CI
 obligation.
 
+The experimental concrete-origin readers recover the currently stored physical
+source from those linked trees without source files or parser state. Source and
+TypeScript-lowered planes are explicit. Shared scalar and physical-span decisions
+check field ownership, byte coverage, scalar text, cycles and resource limits.
+Both data decoding and tree traversal are iterative; depth defaults follow the
+active grammar executor. Byte reads preserve binary leaves, while text reads
+refuse invalid UTF-8. This operation reads origin data after semantic edits; it
+does not present that origin as current emitted code or certify grammar
+acceptance, derived mappings or semantic equivalence. Native implementation and
+public package integration remain required.
+
 Unary field and index updates retain their operand-free update representation.
 Type inference constrains the selected numeric slot for prefix and postfix
 increment and decrement without reading a nonexistent right operand. The
