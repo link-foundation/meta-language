@@ -2262,6 +2262,18 @@ Positive and negative fixtures include deliberately abbreviated, ambiguous and
 duplicate names. A letters-only regular expression or a hand-picked example list
 does not establish readability or semantic uniqueness.
 
+Source binding records are shared Links data in
+[`source-bindings.lino`](../parity/naming/source-bindings.lino), produced by
+`js/scripts/generate-naming-source-bindings.mjs`. The automatic migration retains
+every ordered record, source context, field and original module byte through an
+inverse checked against the original Git object certificate. Identical scalar
+strings share storage; equal independent containers retain separate identities.
+New bindings append after the authenticated original prefix. Unknown module edits
+and partially written migrations refuse, preserving their files for review.
+The original inventories, WordNet policy, positive and negative fixtures, aliases
+and gates remain mandatory. Data relocation establishes byte preservation, not
+equivalence between different concept definitions.
+
 ## Four-language semantics and translation
 
 JavaScript, Rust, Lean and Rocq have full representation and transformation, and
