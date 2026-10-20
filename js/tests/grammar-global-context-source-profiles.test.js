@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
+import {restoreGlobalGrammarContextSource} from '../../experiments/global-grammar-context-reuse/current-source.mjs';
 import {buildGlobalGrammarContextSourceProfiles,checkGlobalGrammarContextSourceProfiles} from '../../experiments/global-grammar-context-reuse/source-profiles.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {structuredDataToLino,encodeStructuredDataLinks} from '../src/structured-data-links.js';
@@ -22,7 +23,7 @@ test('candidate current context profiles preserve every frozen pin actual native
   assert.equal(packet.frozenOverlay.receipt.role,'frozen CI overlay');
   for(const row of packet.sources)assert.equal(Object.hasOwn(row,'observations'),false);
   for(const row of native.proof.declarations){
-    const bytes=readFileSync(new URL(native.file,root));assert.equal(bytes.subarray(row.start,row.end).toString(),row.source);
+    const bytes=Buffer.from(restoreGlobalGrammarContextSource(native.file,readFileSync(new URL(native.file,root),'utf8')).predecessor);assert.equal(bytes.subarray(row.start,row.end).toString(),row.source);
   }
   assert.deepEqual(checkGlobalGrammarContextSourceProfiles(packet),packet);
 });

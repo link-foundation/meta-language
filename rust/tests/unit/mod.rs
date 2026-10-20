@@ -170,6 +170,7 @@ mod parse_scaling;
 mod parser_registry;
 mod pdf_document;
 mod pdf_grammar;
+mod program_string_representation;
 mod project_data;
 mod project_data_files;
 mod query_algebra;

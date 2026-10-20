@@ -12,6 +12,7 @@ import {fileURLToPath} from 'node:url';
 import {parseNative} from '../../../../js/src/native-grammar-parser.js';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {outcomeWirePolicy} from '../wire/wire-policy.mjs';
+import {restoreGlobalGrammarContextSource} from '../../../global-grammar-context-reuse/current-source.mjs';
 import {serializeProjectData,writeProjectData,readProjectData} from '../../../../js/scripts/project-data.mjs';
 
 export const javascriptPath='js/src/grammar-runtime/grammar-selection.js';
@@ -246,8 +247,10 @@ export function deriveDiagnosticOrderDecorator(javascriptSource,nativeSource) {
 }
 
 export function captureDiagnosticOrderDecorator(root=repository,{archive}={}) {
-  const javascript=readFileSync(resolve(root,javascriptPath),'utf8'),native=readFileSync(resolve(root,nativePath),'utf8');
-  assert.equal(digest(javascript),outcomeWirePolicy.pins[javascriptPath],'current JS producer remains the unchanged original authority');
+  const javascriptView=restoreGlobalGrammarContextSource(javascriptPath,readFileSync(resolve(root,javascriptPath),'utf8'));
+  const javascript=javascriptView.predecessor,actualNative=readFileSync(resolve(root,nativePath),'utf8');
+  const native=digest(actualNative)===outcomeWirePolicy.pins[nativePath]?actualNative:restoreGlobalGrammarContextSource(nativePath,actualNative).predecessor;
+  assert.equal(digest(javascript),outcomeWirePolicy.pins[javascriptPath],'the entire original JS producer authority remains exact');
   if(digest(native)===outcomeWirePolicy.pins[nativePath])return deriveDiagnosticOrderDecorator(javascript,native);
   // Once production is corrected, regeneration still starts with the retained
   // original source archive, never by silently repinning the corrected file.
@@ -358,7 +361,9 @@ export function renderDiagnosticDecoratorModule(decorator) {
 export function buildDiagnosticPublication(root=repository,{archive}={}) {
   const result=captureDiagnosticOrderDecorator(root,{archive});
   const fixture=buildDiagnosticOrderFixtures(root,{archive:result.decorator});
-  return {...result,fixture,decoratorModule:renderDiagnosticDecoratorModule(result.decorator),
+  const native=readFileSync(resolve(root,nativePath),'utf8');
+  const productionNative=digest(native)===outcomeWirePolicy.pins[nativePath]?result.corrected:restoreGlobalGrammarContextSource(nativePath,native).current;
+  return {...result,productionNative,fixture,decoratorModule:renderDiagnosticDecoratorModule(result.decorator),
     boundary:'Generated expected data and exact source corrections only; no native execution observation.'};
 }
 
@@ -375,7 +380,7 @@ async function diagnosticPublicationMain() {
   const archive=existsSync(archiveFile)?readProjectData(archiveFile):undefined;
   const result=buildDiagnosticPublication(root,{archive});
   const generated=[
-    [nativePath,result.corrected],
+    [nativePath,result.productionNative],
     [diagnosticFixturePath,serializeProjectData(result.fixture,'fixture.lino')],
     [diagnosticDirectory+'/decorator.lino',serializeProjectData(result.decorator,'decorator.lino')],
     [diagnosticDirectory+'/decorator.mjs',result.decoratorModule]

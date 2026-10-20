@@ -7,6 +7,7 @@ import {captureGitArtifactCertificate} from '../../../../js/scripts/capture-git-
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {readProjectData,writeProjectData,checkProjectData,serializeProjectData} from '../../../../js/scripts/project-data.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
+import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
 
 const root=new URL('../../../../',import.meta.url);
 const sourceRevision='6f32c2924d6284e0a43130f225ed817450f1f2f8';
@@ -129,7 +130,7 @@ export function generateLibraryRelocationHistory({check=false}={}) {
   assert.ok(consumingChanges.length>0);const consumingText=serializeProjectData(consuming,consumingFile);
   const rows=[library,{...originalConsuming,identity:'raw consuming',current:pin(consumingText),changes:consumingChanges}];
   const sourceAdapters=['js/scripts/complete-declaration-receipts.mjs','js/scripts/current-translation-source-descriptors.mjs'].map(file=>{
-    const row=original(file,sourceRevision),actual=readFileSync(new URL(file,root),'utf8');
+    const row=original(file,sourceRevision),actual=restoreCurrentCiRepairSource(readFileSync(new URL(file,root),'utf8'),file);
     let start=0,end=row.sourceText.length,finish=actual.length;
     while(start<end&&start<finish&&row.sourceText[start]===actual[start])start++;
     while(end>start&&finish>start&&row.sourceText[end-1]===actual[finish-1]){end--;finish--;}
@@ -140,8 +141,11 @@ export function generateLibraryRelocationHistory({check=false}={}) {
   const policy={schemaVersion:1,sourceRevision,sources:rows,modules,sourceAdapters,
     boundary:'An exact native library string-literal correction and separately identified packaging provenance. Complete JavaScript algorithms checked definitions numeric controls archives and ABI remain unchanged. Source history is not native execution or a proof of general concept equivalence.'};
   const text=serializeProjectData(policy,historyFile),helperText=helper.replace('__POLICY_HASH__',pin(text).sha256);
-  const actual=readFileSync(new URL(consumingFile,root),'utf8');
-  if(check)assert.equal(actual,consumingText);else assert.ok(actual===originalConsuming.sourceText||actual===consumingText,'refuse unrelated consuming artifact edits');
+  const actual=readFileSync(new URL(consumingFile,root),'utf8'),historical=restoreCurrentCiRepairSource(actual,consumingFile);
+  if(check)assert.equal(historical,consumingText);else{
+    assert.equal(actual,historical,'a historical writer cannot replace a newer current artifact; use --check');
+    assert.ok(actual===originalConsuming.sourceText||actual===consumingText,'refuse unrelated consuming artifact edits');
+  }
   if(check){checkProjectData(new URL(historyFile,root),policy);assert.equal(readFileSync(new URL(helperFile,root),'utf8'),helperText);}
   else{writeFileSync(new URL(consumingFile,root),consumingText);writeProjectData(new URL(historyFile,root),policy);writeFileSync(new URL(helperFile,root),helperText);}
   return policy;

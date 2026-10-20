@@ -394,6 +394,7 @@ impl Executor<'_> {
                 ));
             }
         }
+        let mut context_matches: Option<bool> = None;
         let mut rules = Vec::new();
         for rule in &program.rules {
             let name = &*rule.name;
@@ -438,9 +439,16 @@ impl Executor<'_> {
                 self.charge_selection_value(&definition)?;
                 matches = stored_definition == &definition;
                 if matches {
-                    self.charge_selection_value(&source_context)?;
-                    self.charge_selection_value(&actual_context)?;
-                    matches = source_context == actual_context;
+                    matches = match context_matches {
+                        Some(value) => value,
+                        None => {
+                            self.charge_selection_value(&source_context)?;
+                            self.charge_selection_value(&actual_context)?;
+                            let value = source_context == actual_context;
+                            context_matches = Some(value);
+                            value
+                        }
+                    };
                 }
             }
             if space.is_some() && !matches {

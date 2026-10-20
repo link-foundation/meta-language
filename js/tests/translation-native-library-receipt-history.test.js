@@ -7,6 +7,8 @@ import {restoreNativeLibraryReceipt,readNativeLibraryReceiptProfile,restoreNativ
 import {restoreCompleteDeclarationReceipt} from '../scripts/complete-declaration-receipts.mjs';
 import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
 
 const root=new URL('../../',import.meta.url);
 
@@ -22,13 +24,15 @@ test('the corrected library literal retains every other native byte and both com
 test('actual packaging descriptors remain distinct while every complete historical gate still executes',()=>{
   const history=generateLibraryRelocationHistory({check:true});
   for(const row of history.sources){
-    const current=readProjectData(new URL(row.file,root)),restored=restoreNativeLibraryReceipt(current,row.identity);
+    const actual=readProjectData(new URL(row.file,root));
+    const current=readStructuredDataLino(restoreCurrentCiRepairSource(readFileSync(new URL(row.file,root),'utf8'),row.file)),restored=restoreNativeLibraryReceipt(current,row.identity);
     assert.equal(serializeProjectData(restored,row.file),row.sourceText);
     assert.deepEqual(readNativeLibraryReceiptProfile(row.identity),{file:row.file,...row.current});
     assert.notEqual(row.current.sha256,row.sha256);
     const original=restoreCompleteDeclarationReceipt(restored,row.identity);
     assert.deepEqual(restoreCompleteDeclarationReceipt(current,row.identity),original);
-    assert.equal(serializeProjectData(current,row.file),readFileSync(new URL(row.file,root),'utf8'));
+    assert.deepEqual(restoreCompleteDeclarationReceipt(actual,row.identity),original,'the complete actual successor also reaches every original gate');
+    assert.equal(serializeProjectData(actual,row.file),readFileSync(new URL(row.file,root),'utf8'));
   }
 });
 
@@ -50,7 +54,7 @@ test('changed algorithms unknown fields incomplete descriptors and unrelated nat
 test('complete current source adapters preserve every original historical assertion and reject unreviewed edits',()=>{
   const history=generateLibraryRelocationHistory({check:true});assert.equal(history.sourceAdapters.length,2);
   for(const row of history.sourceAdapters){
-    const current=readFileSync(new URL(row.file,root),'utf8');assert.equal(restoreNativeLibrarySource(current,row.file),row.sourceText);
+    const actual=readFileSync(new URL(row.file,root),'utf8'),current=restoreCurrentCiRepairSource(actual,row.file);assert.equal(restoreNativeLibrarySource(current,row.file),row.sourceText);
     verifyGitArtifactCertificate(row.certificate,Buffer.from(row.sourceText),{revision:row.commit,path:row.file});
   }
   const file='js/scripts/complete-declaration-receipts.mjs',source=readFileSync(new URL(file,root),'utf8'),revision='9f867bfac32f59a3341dabf54e8c0c02fbd83314';

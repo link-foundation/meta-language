@@ -63,6 +63,7 @@ mod primitive_method_rules;
 pub mod primitive_value_rules;
 pub mod product_emission_rules;
 pub(crate) mod program_number_projection_rules;
+mod program_string_representation_rules;
 pub mod proof;
 pub(crate) mod record_emission_rules;
 pub(crate) mod record_type_syntax_rules;

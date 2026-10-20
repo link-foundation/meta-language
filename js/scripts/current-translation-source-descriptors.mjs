@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
 import {restoreNativeLibraryReceipt} from './native-library-receipt-history.mjs';
+import {restoreProgramStringSourceDescriptorEdge} from './program-string-source-descriptors.mjs';
 
 const policyFile=new URL('../../parity/self-translation/current-translation-source-descriptors.lino',import.meta.url);
 const registerFile=new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
@@ -22,6 +23,7 @@ function readSourceDescriptorPolicy(){
 }
 
 export function restoreCurrentTranslationSourceDescriptors(artifact,identity,register){
+  ({artifact,register}=restoreProgramStringSourceDescriptorEdge(artifact,identity,register));
   if(!Object.hasOwn(register,'sourceDescriptorSuccessors'))return{artifact,register};
   const selected=readSourceDescriptorPolicy();
   assert.equal(Object.keys(register).at(-1),'sourceDescriptorSuccessors');
@@ -59,9 +61,11 @@ export function readHistoricalTranslationSourceDescriptorRegister(){
 }
 
 export function projectHistoricalTranslationSourceDescriptorArtifact(artifact){
+  let register=readProjectData(registerFile);
+  ({artifact,register}=restoreProgramStringSourceDescriptorEdge(artifact,'raw consuming',register));
   artifact=restoreNativeLibraryReceipt(artifact,'raw consuming');
   const selected=readSourceDescriptorPolicy(),bytes=Buffer.from(structuredDataToLino(artifact));
   assert.ok([selected.edge.current.sha256,selected.edge.previous.sha256].includes(hash(bytes)),
     'a historical descriptor view requires one complete registered artifact');
-  return restoreCurrentTranslationSourceDescriptors(artifact,selected.edge.identity,readProjectData(registerFile)).artifact;
+  return restoreCurrentTranslationSourceDescriptors(artifact,selected.edge.identity,register).artifact;
 }

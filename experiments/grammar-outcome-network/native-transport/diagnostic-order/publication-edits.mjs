@@ -34,6 +34,13 @@ export function authorWireSourceViewEdits(original,{adapterImport='../diagnostic
   ]);
 }
 
+export function authorCurrentWireSourceViewEdits(original) {
+  return author(original,[[
+    "from '../diagnostic-order/source-view.mjs';",
+    "from '../diagnostic-order/current-source-view.mjs';"
+  ]]);
+}
+
 export function authorBridgeSourceViewEdits(original) {
   return author(original,[[
     '      originalParentPin:outcomeWirePolicy.pins[parentPath],pins:packet.receipt.inputs},',

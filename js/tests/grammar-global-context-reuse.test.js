@@ -3,6 +3,7 @@ import {spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {generateGlobalGrammarContextReuse} from '../../experiments/global-grammar-context-reuse/generate.mjs';
+import {restoreGlobalGrammarContextSource} from '../../experiments/global-grammar-context-reuse/current-source.mjs';
 import {readGlobalGrammarContextProposal} from '../../experiments/global-grammar-context-reuse/proposal.mjs';
 import {parseNative} from '../src/native-grammar-parser.js';
 const root=new URL('../../',import.meta.url);
@@ -10,7 +11,7 @@ const root=new URL('../../',import.meta.url);
 test('complete context reuse source proposals retain original producers tests and exact source inverses',()=>{
   const packet=generateGlobalGrammarContextReuse({check:true});assert.equal(packet.sources.length,4);
   for(const row of packet.sources){
-    const proposed=readGlobalGrammarContextProposal(row.file);assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.sourceText);
+    const proposed=readGlobalGrammarContextProposal(row.file);assert.equal(restoreGlobalGrammarContextSource(row.file,readFileSync(new URL(row.file,root),'utf8')).predecessor,row.sourceText);
     assert.deepEqual(proposed.proposed,row.proposed);
     const tree=parseNative(row.file.endsWith('.rs')?'native-rust':'native-javascript',proposed.source);
     assert.equal(tree.hasError,false);assert.equal(tree.start,0);assert.equal(tree.end,Buffer.byteLength(proposed.source));

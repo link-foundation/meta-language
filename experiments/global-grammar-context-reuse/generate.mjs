@@ -68,7 +68,7 @@ export function generateGlobalGrammarContextReuse({check=false}={}) {
     let inverse=generated;for(const[before,after]of actions.toReversed()){assert.equal(inverse.split(after).length,2);inverse=inverse.replace(after,before);}
     assert.equal(inverse,sourceText,'every predecessor source and test byte survives');
     const path=new URL(file,root),actual=readFileSync(path,'utf8');
-    assert.equal(actual,sourceText,'the frozen repository producer stays unchanged; publish current source profiles together before adoption');
+    assert.ok(actual===sourceText||actual===generated,'only the complete certified predecessor or successor source is admitted');
     sources.push({file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,proposed:pin(generated),actions:actions.map(([before,after])=>({before,after}))});
   }
   const value={schemaVersion:1,revision,sources,scope:'one provenance invocation; no cross-invocation or cross-grammar cache',

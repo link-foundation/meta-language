@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
@@ -21,6 +22,7 @@ export function restoreContinuationHistoricalSource(source,file,profile) {
   const rows=history.sources.filter(row=>row.file===file&&row.profiles.includes(profile));
   assert.ok(rows.length<=1,'one complete historical input per profile');
   if(rows.length===0)return source;
+  source=restoreCurrentCiRepairSource(source,file);
   source=restoreNativeCompatibilitySourceHistory(file,source);
   const row=rows[0],actual=pin(source);
   if(actual.sha256!==row.current.sha256)return source;

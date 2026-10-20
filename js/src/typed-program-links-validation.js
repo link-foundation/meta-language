@@ -13,6 +13,7 @@ import {acceptProgramIntegralMetadata} from './program-numeric-metadata-rules.js
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
 import {checkRustOwnedLocalStateProof,checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
+import {acceptProgramStringRepresentationFlag} from './translation/program-string-representation-rules.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
 import { readCallableOwnedParameters } from './translation/callable-source.js';
@@ -39,6 +40,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
   if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
     || program.main.k !== undefined || program.main.p !== undefined || !Array.isArray(program.main.effects))) throw new TypeError('a linked main has an invalid effect-container role');
+  if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, Object.hasOwn(program, 'utf16Strings'))) throw new TypeError('a program string representation flag must be an explicit boolean');
   const active = new Set();
   const visited = new Set();
   function targetOf(node, role) {

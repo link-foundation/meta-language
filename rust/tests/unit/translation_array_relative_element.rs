@@ -90,6 +90,13 @@ fn relative_arrays_preserve_complete_original_programs_through_native_execution_
             expected
         );
         let native = emit_rust(&program).unwrap().text;
+        let consumed = meta_language::translation::emit_rust::emit_rust_with_array_consumption(
+            &program,
+            meta_language::translation::emit_rust::RustEmissionOptions::default(),
+        )
+        .unwrap()
+        .text;
+        assert_eq!(array_relative_native(&consumed, index), expected);
         assert_eq!(array_relative_native(&native, index), expected);
         let packet = create_typed_program_links(source, "JavaScript").unwrap();
         for network in [
@@ -111,7 +118,7 @@ fn relative_arrays_preserve_complete_original_programs_through_native_execution_
                 emit_typed_program_links(&network, packet.root, "Rust")
                     .unwrap()
                     .code,
-                native
+                consumed
             );
             assert_eq!(
                 array_relative_javascript(

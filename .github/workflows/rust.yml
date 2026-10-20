@@ -218,6 +218,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-fresh-merge-
 
+      - name: Restore successful native check dependencies for the simulated merge
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Simulate fresh merge with base branch
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
@@ -1359,6 +1368,8 @@ jobs:
           retention-days: 30
 
       - name: Retain authenticated native partition
+        id: native-partition-upload
+        continue-on-error: true
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
@@ -1366,6 +1377,16 @@ jobs:
           path: issue-195-artifacts/rust-physical-shards/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Retry authenticated native partition upload
+        if: ${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
 
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}
@@ -1603,6 +1624,9 @@ jobs:
         shell: bash
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
+          CARGO_PROFILE_TEST_OPT_LEVEL: 3
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: 'true'
         run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --no-fail-fast -- $SUITE_FILTERS
 
       - name: Upload the shard's coverage report

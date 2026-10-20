@@ -86,6 +86,7 @@ function readSelectionProvenance(executor, program, language, start, end) {
   executor.retain(program.rules.size);
   const space = executor.options.globalConceptSpace;
   const source = space?.sources.find(item => item.id === language);
+  let contextMatches;
   return {
     source: language, language: source?.language ?? language, edition: source?.edition ?? '',
     rules: [...program.rules].map(([name, rule]) => {
@@ -103,7 +104,7 @@ function readSelectionProvenance(executor, program, language, start, end) {
       actualContext.settling ??= program.settling.steps;
       const matches = stored && storedOrigin && storedOrigin.concept === (original?.concept ?? null)
         && canonicalSelectionDefinition(stored.definition, executor) === canonicalSelectionDefinition(definition, executor)
-        && canonicalSelectionDefinition(sourceContext, executor) === canonicalSelectionDefinition(actualContext, executor);
+        && (contextMatches ??= canonicalSelectionDefinition(sourceContext, executor) === canonicalSelectionDefinition(actualContext, executor));
       if (space && !matches) reportSelectionDiagnostic(executor, { reason: 'unprovedGrammarOrigin', language, start, end, rule: name });
       return { rule: name, origin, concept: matches ? concept.id : null,
         declaredConcept: rule.concept ?? null, sourceNames: (rule.sourceNames ?? []).map(item => ({ ...item })) };

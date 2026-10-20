@@ -53,3 +53,5 @@ rust/tests/unit/translation_arrays.rs text eol=lf
 # Native diagnostic assertions select the exact hashed dependency source profile.
 rust/Cargo.lock text eol=lf
 rust/Cargo.toml text eol=lf
+# Version-qualified translation fixtures authenticate the complete npm manifest.
+js/package.json text eol=lf

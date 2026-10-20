@@ -748,6 +748,12 @@ pub struct Main {
     pub sequential_async: bool,
 }
 
+fn read_present_program_string_representation<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<bool>, D::Error> {
+    bool::deserialize(deserializer).map(Some)
+}
+
 /// A checked portable-core program.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -755,6 +761,13 @@ pub struct Program {
     /// Selected shared-reference representation; false retains its default omission.
     #[serde(default, skip_serializing_if = "is_false")]
     pub reference_semantics: bool,
+    /// Explicit UTF-16 string encoding selection; absence and false stay distinct.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "read_present_program_string_representation"
+    )]
+    pub utf16_strings: Option<bool>,
     /// Complete owned source runtime interpretation, separate from its pure core.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_runtime_shell: Option<serde_json::Value>,

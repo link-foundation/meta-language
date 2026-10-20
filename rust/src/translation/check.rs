@@ -506,6 +506,7 @@ impl Checker {
         analyse_recursion(&mut declarations);
         let mut program = Program {
             reference_semantics: self.reference_semantics,
+            utf16_strings: None,
             schema_version: 1,
             source_language: self.language,
             items,

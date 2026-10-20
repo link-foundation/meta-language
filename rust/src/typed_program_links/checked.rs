@@ -353,7 +353,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
         source_runtime_shell: program.source_runtime_shell.clone(),
     };
-    let checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let mut checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    checked.utf16_strings = program.utf16_strings;
     if checked != *program {
         let retained_records =
             serde_json::to_value(program).map_err(|failure| error(failure.to_string()))?;

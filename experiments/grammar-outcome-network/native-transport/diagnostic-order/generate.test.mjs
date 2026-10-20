@@ -1,5 +1,7 @@
 // Source, value and publication controls; native execution belongs in CI.
 import test from 'node:test';
+import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
+import {restoreGlobalGrammarContextSource} from '../../../global-grammar-context-reuse/current-source.mjs';
 import {readOutcomeInventory} from '../wire/generate.mjs';
 import {authorWireSourceViewEdits,authorBridgeSourceViewEdits,authorRunnerPlanSourceViewEdits,authorRunnerOverlaySourceViewEdits,appendWirePublicationEdits} from './publication-edits.mjs';
 import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews,applyFrozenOutcomeProducerCorrection} from './source-view.mjs';
@@ -91,9 +93,9 @@ test('finite CST spread reader refuses changed local mutability, duplicate keys 
 });
 
 test('actual JavaScript unknown and unsupported candidate diagnostics keep their complete original ordered values',()=>{
-  const nativeBefore=readFileSync(repository+'/'+nativePath,'utf8');
+  const nativeBefore=readFileSync(repository+'/'+nativePath,'utf8'),javascriptBefore=readFileSync(repository+'/'+javascriptPath,'utf8');
   const approved=current();
-  assert.ok(nativeBefore===original(nativePath)||nativeBefore===approved.corrected,
+  assert.ok(nativeBefore===original(nativePath)||restoreGlobalGrammarContextSource(nativePath,nativeBefore).predecessor===approved.corrected,
     'the actual current source is the exact authenticated original or corrected producer');
   const fixture=grammarSelectionFixture();
   const linked=new Map(fixture.grammars.map(row=>[row.name,parseGrammarLinks(row.listing)]));
@@ -124,7 +126,8 @@ test('actual JavaScript unknown and unsupported candidate diagnostics keep their
     }
   }
   // Reading and constructing these controls must not change original inputs.
-  assert.equal(readFileSync(repository+'/'+javascriptPath,'utf8'),original(javascriptPath));
+  assert.equal(restoreGlobalGrammarContextSource(javascriptPath,javascriptBefore).predecessor,original(javascriptPath));
+  assert.equal(readFileSync(repository+'/'+javascriptPath,'utf8'),javascriptBefore);
   assert.equal(readFileSync(repository+'/'+nativePath,'utf8'),nativeBefore);
 });
 
@@ -134,7 +137,7 @@ test('original and current owners are separately authenticated and all selected 
   try {
     let total=0;
     for(const file of Object.keys(decorator.baselinePins)) {
-      const bytes=file===nativePath?Buffer.from(decorator.inputs.find(input=>input.path===nativePath).source):readFileSync(join(repository,file));
+      const bytes=[javascriptPath,nativePath].includes(file)?Buffer.from(decorator.inputs.find(input=>input.path===file).source):readFileSync(join(repository,file));
       total+=bytes.length;assert.ok(total<=2*1024*1024,'small selected source closure only');
       mkdirSync(dirname(join(scratch,file)),{recursive:true});writeFileSync(join(scratch,file),bytes);
     }
@@ -185,7 +188,8 @@ test('all permanent source changes are authored as exact inverse publication add
       readProjectData(join(repository,'parity/naming/outcome-compiler-profile-source-history.lino')).sources.find(row=>row.file.endsWith('/runner/run.mjs')).sourceText)]
   ];
   for(const [path,author]of files) {
-    const original=readFileSync(join(repository,'experiments/grammar-outcome-network/native-transport',path),'utf8');
+    const file='experiments/grammar-outcome-network/native-transport/'+path;
+    const original=restoreCurrentCiRepairSource(readFileSync(join(repository,file),'utf8'),file);
     const result=author(original);assert.notEqual(result.source,result.original);
     let inverse=result.source;
     for(const {from,to,count}of [...result.edits].reverse()) {
@@ -204,7 +208,8 @@ test('all permanent source changes are authored as exact inverse publication add
     assert.equal(replay.alreadyApplied,false);
     assert.equal(replay.source,installed.source);
     if(path.startsWith('wire/')||path.startsWith('bridge/')) {
-      const archive=readProjectData(join(repository,'experiments/grammar-outcome-network/native-transport/wire/original-authoring.lino'));
+      const archiveFile='experiments/grammar-outcome-network/native-transport/wire/original-authoring.lino';
+      const archive=readStructuredDataLino(restoreCurrentCiRepairSource(readFileSync(join(repository,archiveFile),'utf8'),archiveFile));
       const record=archive.records.find(record=>record.path===path);assert.ok(record,'actual retained normal Links source archive');
       const appended=appendWirePublicationEdits(record,author);
       assert.equal(appended.source,result.source);

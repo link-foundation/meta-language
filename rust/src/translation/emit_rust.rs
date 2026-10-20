@@ -581,7 +581,11 @@ fn emit_rust_context(
     let mut emitter = rust_emitter(program);
     emitter.array_consumption = array_consumption;
     emitter.utf16_strings =
-        utf16_strings || primitive_methods::program_requires_method_units(program);
+        super::program_string_representation_rules::select_program_string_representation(
+            program.utf16_strings.unwrap_or(false),
+            utf16_strings,
+            primitive_methods::program_requires_method_units(program),
+        );
     if emitter.utf16_strings {
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }

@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 203 | 202 | 1 | 0 |
+| Generators | 207 | 206 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -750,6 +750,10 @@ they are.
 | `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

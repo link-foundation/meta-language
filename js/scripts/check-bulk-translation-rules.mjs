@@ -68,7 +68,15 @@ export async function runBulkTranslationRuleChecks({ root = repository, checks =
         || check.arguments.some(value => !['--check', '--native'].includes(value))) {
         throw new Error('freshness checks require an explicit check-only source generator');
       }
-      const actual = await invoke(process.execPath, [path.join(root, check.script), ...check.arguments], { cwd: root, env: environment });
+      // The unchanged historical commands require their exact schema profile.
+      // Their loader validates the actual current model before selecting it;
+      // every original command, flag, assertion and serial gate is retained.
+      const historicalSchema = ['js/scripts/extend-typed-program-schema-second-stage.mjs',
+        'js/scripts/extend-typed-program-schema-sixth-stage.mjs'].includes(check.script);
+      const selectedEnvironment = historicalSchema ? { ...environment,
+        NODE_OPTIONS: [environment.NODE_OPTIONS, `--import=${new URL('./schema-command-source-loader.mjs', import.meta.url).href}`].filter(Boolean).join(' '),
+      } : environment;
+      const actual = await invoke(process.execPath, [path.join(root, check.script), ...check.arguments], { cwd: root, env: selectedEnvironment });
       if (actual.exitCode !== 0 || actual.signal !== null) throw new Error(`exit ${actual.exitCode}, signal ${actual.signal ?? 'none'}`);
     } catch (error) {
       const failure = { script: check.script, command, error: error.message };

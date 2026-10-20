@@ -129,6 +129,14 @@ Native evidence includes an experimental Rust source only when its exact path
 belongs to the actual registered native test module. A JavaScript driver or an
 unregistered Rust filename cannot supply that evidence.
 
+The current global grammar parser reuses its complete matching-context comparison
+once within each provenance invocation. Every production still checks its own
+complete definition and every original mismatch remains observable. The default
+budgets are unchanged. Certified predecessor and current source views retain
+all frozen diagnostic inputs, both producer identities, actual current type and
+import owners, and the complete diagnostic calls. A frozen CI overlay continues
+to use its separately authenticated producer rather than a new current source.
+
 Historical generators verify the complete inputs of their recorded revision.
 An exact current successor may supply that historical view only after its whole
 digest and certified byte inverse pass; current artifact gates remain separate.
@@ -212,6 +220,13 @@ Rust. Explicit false and absence have the same type identity; true remains
 distinct. Other fields, values and record roles retain their existing validation.
 The schema extension authenticates each complete predecessor and keeps its
 original author, receipt, model and property order independently checkable.
+The optional program field `utf16Strings` retains absence, explicit false and
+explicit true through both archives and complete semantic rechecking. A present
+value must be Boolean. Shared checked JavaScript decisions select the existing
+UTF-16 emitter when the program, explicit emitter profile or actual operations
+require it; native host fields and their strict Boolean reader are generated
+from recorded source adaptations. Encoding metadata does not replace checked
+types, bindings or string operations. Native execution remains a CI obligation.
 Owned function calls project through the actual declaration's rooted path,
 including root functions, while rechecking its name, qualified identity and
 module path. Caller-local bindings cannot capture a callee's default initializer
@@ -3554,6 +3569,19 @@ identified correction, so the native runtime remains independent of the oracle.
 
 ## Resource limits
 
+Native coverage uses Cargo's optimized test profile with debug assertions and
+overflow checks explicitly enabled. The complete instrumented commands, line
+coverage floor, partitions and fifteen-minute deadline remain mandatory. Fresh
+merge jobs may restore the successful native check dependency cache before
+executing their complete commands; a cache miss still runs normally. An artifact
+service finalization failure may trigger one upload retry of the identical
+complete native partition. The final upload must succeed and missing payloads
+remain errors. These execution policies do not establish successful native
+observations until the corrected commit actually runs in CI. Cargo's documented
+[profile controls](https://doc.rust-lang.org/cargo/reference/profiles.html)
+define these compiler options.
+
+
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
 
@@ -3631,6 +3659,13 @@ ownership decisions; its existing compatibility and safety assertions remain.
 The complete-table and raw-graph native oracles prepare and authenticate their
 whole generated sources, then finish the full Rust CST text and binary replays
 before constructing observation matrices and numeric transport dictionaries.
+The raw planner prepares the current, consuming and borrowed consuming sources
+and replays all three before retaining that shared matrix. A private planner
+cache keeps only complete profiles, source fingerprints and replay hashes, with
+exact plan ownership and fresh whole-source comparisons. Successor plans retain
+the original carrier, observations and premise objects. Neither a detached plan
+nor a caller-modified receipt can supply source replay evidence; no parser budget
+or input is removed. Full-workload memory fit still requires CI observations.
 Only immutable source texts, compact interface records and declaration identities
 leave source preparation; typed programs, emitter artifacts and replay graphs
 do not remain attached to the matrix. Canonical text replay feeds every record
@@ -3961,21 +3996,21 @@ unchanged default-budget acceptance for every qualified grammar. Bounded local
 JavaScript checks do not prove native execution, full grammar coverage or
 completion of the remaining requirements; native parity remains a CI check.
 
-An isolated context-reuse draft retains complete certified JavaScript/Rust host
-and test modules as reversible Links edits. It reuses a grammar context
-comparison only within one provenance invocation; every production still has
-its own definition check. An explicit private JavaScript loader runs all original
-archive controls plus the retained four priority samples at unchanged default
-budgets. Repository and frozen producer sources stay exact. Adoption requires
-current and frozen diagnostic source profiles, publication receipts, original
-controls and native execution to be reconciled together. The draft supplies no
-production parser change, native observation or general coverage claim.
-Its candidate source profiles preserve every frozen pin and distinguish the
-original producer, original diagnostic permutation, production predecessor and
-proposed source. They compare all nine complete JavaScript diagnostic calls and
-selected native type/import bytes and offsets. Exact text/binary replay and
-unknown-edit controls remain required; these facts do not prove predicate
-equivalence or turn a candidate into an observed current producer.
+The current parser installs the certified context-reuse JavaScript/Rust host
+and test sources as reversible Links edits. A matching-context comparison runs
+once per provenance invocation; every production keeps its own definition
+check. All original JavaScript archive controls and four retained C,
+JavaScript, Rust and TypeScript samples pass locally at unchanged default
+budgets. This extends the earlier explicit-budget archive checks. It establishes
+neither complete grammar coverage nor native execution.
+Current schema-two source views retain the complete schema-one predecessor,
+all thirteen frozen pins, nine unchanged diagnostic calls and the actual current
+native type/import bytes and offsets. Source-free text/binary replay and
+unknown-edit controls pass locally. Normal wire publication and the current
+diagnostic fixture admit the exact certified successors; frozen CI overlays
+keep their original diagnostic permutation. Native execution, semantic
+translation of all constructs and the remaining ledger requirements still need
+implementation and CI verification.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted

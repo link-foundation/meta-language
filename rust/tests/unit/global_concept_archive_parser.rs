@@ -781,4 +781,126 @@ fn one_archive_retains_four_priority_grammars_and_independent_concrete_rows() {
     }
 }
 
+#[test]
+fn four_priority_archived_grammar_samples_retain_complete_rows_with_default_budgets() {
+    let definitions = [
+        (
+            "native-c",
+            include_str!("../../../parity/fixtures/native-grammars/c.lino"),
+            include_str!("../../../parity/grammars/native/c.lino"),
+        ),
+        (
+            "native-javascript",
+            include_str!("../../../parity/fixtures/native-grammars/javascript.lino"),
+            include_str!("../../../parity/grammars/native/javascript.lino"),
+        ),
+        (
+            "native-rust",
+            include_str!("../../../parity/fixtures/native-grammars/rust.lino"),
+            include_str!("../../../parity/grammars/native/rust.lino"),
+        ),
+        (
+            "native-typescript",
+            include_str!("../../../parity/fixtures/native-grammars/typescript.lino"),
+            include_str!("../../../parity/grammars/native/typescript.lino"),
+        ),
+    ];
+    let fixtures = definitions
+        .iter()
+        .map(|(_, fixture, _)| super::project_data::read_project_data(fixture).unwrap())
+        .collect::<Vec<Value>>();
+    let samples = fixtures
+        .iter()
+        .map(|fixture| {
+            fixture["matches"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|case| {
+                    let source = case["source"].as_str().unwrap();
+                    !source.is_empty()
+                        && source.len() <= 64
+                        && case["rows"].as_array().unwrap().len() >= 4
+                })
+                .expect("an existing independent fixture supplies a bounded nontrivial CST")
+                .clone()
+        })
+        .collect::<Vec<_>>();
+    let sources = definitions
+        .iter()
+        .zip(&fixtures)
+        .map(|((id, _, listing), fixture)| GlobalConceptSource {
+            id: (*id).to_owned(),
+            language: fixture["language"].as_str().unwrap().to_owned(),
+            edition: String::new(),
+            grammar: parse_grammar_links(listing).unwrap(),
+        })
+        .collect::<Vec<_>>();
+    let space = create_global_concept_space(&sources, &archive_settings()).unwrap();
+    let limits = FeatureParseOptions::default();
+    let expected = sources
+        .iter()
+        .zip(&fixtures)
+        .zip(&samples)
+        .map(|((imported, fixture), sample)| {
+            let source = sample["source"].as_str().unwrap();
+            let ordinary =
+                compile_feature_grammar(&imported.grammar, None, FeatureParseOptions::default())
+                    .unwrap()
+                    .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+                    .unwrap();
+            assert!(ordinary.ok, "{}: {:?}", imported.id, ordinary.rejection);
+            assert_eq!(
+                json!(Rows::new(fixture).rows(ordinary.tree.as_ref().unwrap(), source)),
+                sample["rows"],
+                "{}",
+                imported.id
+            );
+            let qualified = compile_feature_grammar(
+                &imported.grammar,
+                None,
+                FeatureParseOptions {
+                    grammar_name: Some(imported.id.clone()),
+                    global_concept_space: Some(space.clone()),
+                    ..limits.clone()
+                },
+            )
+            .unwrap()
+            .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+            .unwrap();
+            assert!(qualified.ok, "{}: {:?}", imported.id, qualified.rejection);
+            qualified
+        })
+        .collect::<Vec<_>>();
+    let archive = global_concept_space_to_links(&space).unwrap();
+    let mappings = space["mappings"].clone();
+    drop(sources);
+    drop(space);
+    let restored = read_global_concept_space_links(&archive, &archive_settings()).unwrap();
+    assert_eq!(restored["mappings"], mappings);
+    assert_eq!(global_concept_space_to_links(&restored).unwrap(), archive);
+    for (((id, _, _), fixture), (sample, expected)) in definitions
+        .iter()
+        .zip(&fixtures)
+        .zip(samples.iter().zip(expected))
+    {
+        let source = sample["source"].as_str().unwrap();
+        let actual =
+            create_global_concept_space_parser(&archive, id, &archive_settings(), limits.clone())
+                .unwrap()
+                .parse_tree(source.as_bytes(), &FeatureParseOptions::default())
+                .unwrap();
+        assert_eq!(actual, expected, "{id}: the complete archived outcome");
+        let SyntaxTree::Embed { root, .. } = actual.tree.as_ref().unwrap() else {
+            panic!("the archive parser retains a qualified root for {id}")
+        };
+        assert_eq!(json!(Rows::new(fixture).rows(root, source)), sample["rows"]);
+        assert_eq!(
+            archived_tree_bytes(&tree_data(actual.tree.as_ref().unwrap())),
+            source.as_bytes(),
+            "{id}: every physical source byte"
+        );
+    }
+}
+
 include!("global_concept_archive_parser_formats.rs");
