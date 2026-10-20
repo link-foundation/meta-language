@@ -14,9 +14,10 @@ export function readOriginalLinkRawArchiveWorkerSources() {
 }
 
 /** Preserve ordering and execute every source even when a sibling fails. */
-export async function runOriginalLinkRawArchiveJobs(sources,invoke,concurrency) {
+export async function runOriginalLinkRawArchiveJobs(sources,invoke,concurrency,maximum=2) {
   assert.ok(Array.isArray(sources)&&sources.length>0&&sources.length<=3);
-  assert.equal(typeof invoke,'function');assert.ok(Number.isSafeInteger(concurrency)&&concurrency>=1&&concurrency<=2);
+  assert.equal(typeof invoke,'function');assert.ok(Number.isSafeInteger(maximum)&&maximum>=1&&maximum<=3);
+  assert.ok(Number.isSafeInteger(concurrency)&&concurrency>=1&&concurrency<=maximum);
   for(let index=0;index<sources.length;index++){
     assert.ok(Object.hasOwn(sources,index));const source=sources[index];
     assert.equal(typeof source,'string');assert.equal(source.isWellFormed(),true);assert.ok(Buffer.byteLength(source)<=1024*1024);
@@ -56,13 +57,22 @@ export function runOriginalLinkRawArchiveWorker(source,index,makeWorker=(...args
   });
 }
 
-/** Only CI runs complete archives. At most two one-GiB engine heaps run, and
- * low available memory, one CPU or a lower explicit job bound selects one. */
+/** Select three heaps only when actual capacity leaves room for the parent. */
+export function readOriginalLinkRawArchiveCapacity(processors,availableBytes,configured) {
+  assert.ok(Number.isSafeInteger(processors)&&processors>=1);
+  assert.ok(Number.isSafeInteger(availableBytes)&&availableBytes>=0);
+  assert.ok(configured===undefined||/^[1-9][0-9]*$/u.test(configured),'the source archive job bound is a positive integer');
+  const jobs=configured===undefined?3:Math.min(3,Number(configured));
+  const memory=availableBytes>=5*1024**3?3:availableBytes>=3*1024**3?2:1;
+  return Math.min(jobs,processors,memory);
+}
+
+/** Only CI runs complete archives. Each heap keeps its original one-GiB bound;
+ * actual memory, CPUs and explicit job bounds select one, two or three. */
 export async function replayOriginalLinkRawSourceArchives(sources,environment=process.env) {
   assert.equal(environment.CI,'true','complete source archive workers require CI=true');
-  const configured=environment.META_LANGUAGE_JOBS;
-  assert.ok(configured===undefined||/^[1-9][0-9]*$/u.test(configured),'the source archive job bound is a positive integer');
-  const jobs=configured===undefined?2:Math.min(2,Number(configured));
-  const concurrency=Math.min(jobs,availableParallelism(),freemem()>=3*1024**3?2:1);
-  return runOriginalLinkRawArchiveJobs(sources,runOriginalLinkRawArchiveWorker,concurrency);
+  const processors=availableParallelism(),availableBytes=freemem();
+  const concurrency=readOriginalLinkRawArchiveCapacity(processors,availableBytes,environment.META_LANGUAGE_JOBS);
+  process.stdout.write('Raw source archive capacity: workers='+concurrency+'; processors='+processors+'; freeBytes='+availableBytes+'; heapMiB=1024\n');
+  return runOriginalLinkRawArchiveJobs(sources,runOriginalLinkRawArchiveWorker,concurrency,3);
 }

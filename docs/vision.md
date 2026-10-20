@@ -3695,11 +3695,14 @@ The complete-table and raw-graph native oracles prepare and authenticate their
 whole generated sources, then finish the full Rust CST text and binary replays
 before constructing observation matrices and numeric transport dictionaries.
 The raw planner prepares the current, consuming and borrowed consuming sources
-and replays all three before retaining that shared matrix. In CI, at most two
+and replays all three before retaining that shared matrix. In CI, at most three
 JavaScript workers run those independent complete archives, each with the
 original one-GiB engine heap bound. Available memory, CPU capacity and an explicit
-lower job bound reduce concurrency. Each worker uses the same full CST and
-text/binary replay algorithm, isolates its executor diagnostics and must exit
+lower job bound reduce concurrency. Three workers require at least three CPUs
+and five GiB of available memory; two require three GiB. The original generic
+two-worker invocation profile retains its refusals. Actual selected capacity is
+reported rather than inferred from the runner label. Each worker uses the same
+full CST and text/binary replay algorithm, isolates its executor diagnostics and must exit
 successfully before its compact receipt is accepted. Every source still runs
 when another worker fails; failures block the matrix. All worker source files
 join the recorded transport provenance. Original commands, assertions, parser
@@ -3712,6 +3715,16 @@ exact plan ownership and fresh whole-source comparisons. Successor plans retain
 the original carrier, observations and premise objects. Neither a detached plan
 nor a caller-modified receipt can supply source replay evidence; no parser budget
 or input is removed. Full-workload memory fit still requires CI observations.
+Plan immutability reuses only object identities whose complete enumerable data
+descendants have already been frozen by that traversal. A shallow external
+freeze cannot substitute for this check. Accessors, proxies and their enclosing
+paths remain uncached, preserving the original getter effects and proxy trap
+order. Sparse arrays, ignored symbol/nonenumerable properties, functions and
+typed-array outcomes retain the authenticated predecessor's boundary. Complete
+input graphs remain present; no equal-looking value replaces another identity.
+Actual visits, reused identities and elapsed traversal time are diagnostic
+counters. The helper's complete source joins transport provenance. These small
+controls supply no full-workload performance or native execution evidence.
 Only immutable source texts, compact interface records and declaration identities
 leave source preparation; typed programs, emitter artifacts and replay graphs
 do not remain attached to the matrix. Canonical text replay feeds every record
