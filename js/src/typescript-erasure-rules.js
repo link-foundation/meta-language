@@ -26,3 +26,8 @@ export function renderErasedTypeScriptScalar(carriageReturn, lineFeed) {
 export function renderTypeScriptDocumentationPattern(pattern) {
   return pattern.replaceAll('*/', '*\\/');
 }
+
+/** @param {boolean} typeSpecifier @param {boolean} comma @param {boolean} afterTypeSpecifier @returns {boolean} */
+export function eraseTypeScriptNamedImport(typeSpecifier, comma, afterTypeSpecifier) {
+  return typeSpecifier || comma && afterTypeSpecifier;
+}

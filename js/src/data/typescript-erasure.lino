@@ -8,6 +8,7 @@
 (erasure-rule satisfies_expression suffix)
 (erasure-rule non_null_expression suffix)
 (erasure-rule type_assertion prefix)
+(erasure-rule named_imports import-list)
 (refusal-rule enum_declaration)
 (refusal-rule internal_module)
 (refusal-rule import_require_clause)

@@ -31,6 +31,14 @@ existing typed frontend. It does not establish support for arbitrary TypeScript
 types or runtime constructs, and does not retain the complete source provenance
 provided by `selfTranslate` and `self_translate`.
 
+Explicit type modifiers in mixed named imports erase through the same linked
+rules in both packages. Runtime specifiers and default imports remain, including
+an empty named import's module evaluation; whole `import type` statements erase
+completely. Original TypeScript, comments and byte spans remain in restoration
+provenance. This uses the explicit modifier behavior of
+[verbatim module syntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html);
+it does not infer whether an unmarked import is used only as a type.
+
 Supplemental documentation parameter patterns encode each literal comment
 terminator `*/` as the visible text `*\/`. The executable parameter pattern is
 unchanged. Internal projection records retain that original text and its UTF-8

@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {restoreNativeCompatibilitySourceHistory} from '../../../../js/scripts/native-compatibility-source-history.mjs';
 const root=new URL('../../../../',import.meta.url),revision='ab8881173efbb657ef139518b34de2ff910cdbe7';
 const sources=[
   "js/tests/support/ci-node-runtime-history.js",
@@ -19,15 +20,37 @@ const sources=[
 ];
 const fixtures=[".github/workflows/ci.yml"];
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
+/** Keep original naming owners separate from the expanded current source view. */
+export function generateEvidenceTranslationNamingHistory({check=false}={}) {
+  const revision='15745ffcd322c48bdd537ccb48a5f7c9deb96917';
+  const files=[
+    'experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs',
+    'js/scripts/evidence-translation-source-history.mjs',
+    'js/tests/issue-195-evidence-translation-partition-conservation.test.js',
+  ];
+  const sources=files.map(file=>{
+    const original=captureGitArtifactCertificate(revision,file);
+    verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
+    const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
+    return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,
+      current:pin(readFileSync(new URL(file,root)))};
+  });
+  const packet={schemaVersion:1,revision,sources,
+    boundary:'Original complete source definitions retain their Git membership and every byte. Expanded current source views have separately qualified identities. Source preservation establishes neither meaning equivalence nor native execution.'};
+  const output=new URL('parity/naming/evidence-translation-source-history.lino',root);
+  if(check)checkProjectData(output,packet);else writeProjectData(output,packet);
+  return packet;
+}
 /** Capture exact old modules and current digests; this proves preservation only. */
 export function generateEvidenceTranslationHistory({check=false}={}) {
+  generateEvidenceTranslationNamingHistory({check:true});
   const packets=[];
   for(const [kind,paths]of [['sources',sources],['fixtures',fixtures]]){
     const rows=paths.map(file=>{
       const original=captureGitArtifactCertificate(revision,file);
       verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
       const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
-      const current=readFileSync(new URL(file,root));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
+      const current=Buffer.from(restoreNativeCompatibilitySourceHistory(file,readFileSync(new URL(file,root),'utf8')));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
       return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,current:pin(current)};
     });
     const packet={schemaVersion:1,revision,sources:rows,
@@ -44,7 +67,12 @@ export function generateEvidenceTranslationHistory({check=false}={}) {
   return packets;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
-  assert.ok(process.argv.slice(2).every(value=>value==='--check'));
+  assert.ok(process.argv.slice(2).every(value=>['--check','--naming-only'].includes(value)));
+  if(process.argv.includes('--naming-only')){
+    generateEvidenceTranslationNamingHistory({check:process.argv.includes('--check')});
+    console.log('Retained three complete original naming source owners and current contexts.');
+  }else{
   const packets=generateEvidenceTranslationHistory({check:process.argv.includes('--check')});
   console.log('Authenticated '+packets.reduce((count,packet)=>count+packet.sources.length,0)+' complete predecessor files and current source digests.');
+  }
 }

@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { Parser } from 'links-notation';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { TranslationError } from './translation/diagnostics.js';
-import { eraseExportedDeclaration, eraseOptionalParameterMarker, retainFirstErasureChild, renderErasedTypeScriptScalar } from './typescript-erasure-rules.js';
+import { eraseExportedDeclaration, eraseOptionalParameterMarker, retainFirstErasureChild, renderErasedTypeScriptScalar, eraseTypeScriptNamedImport } from './typescript-erasure-rules.js';
 
 const definitions = new Parser().parse(readFileSync(new URL('./data/typescript-erasure.lino', import.meta.url), 'utf8'));
 const operations = new Map();
@@ -19,7 +19,7 @@ for (const definition of definitions) {
 
 export function requiresTypeScriptErasure(parsed) {
   function visit(node, parent = null) {
-    if (operations.has(node.term) || refusals.has(node.term) ||
+    if ((operations.has(node.term) && operations.get(node.term) !== 'import-list') || refusals.has(node.term) ||
       (node.term === '?' && parent?.term === 'optional_parameter') ||
       (node.term === 'type' && ['import_statement', 'import_specifier'].includes(parent?.term))) return true;
     return node.children.some((child) => visit(child, node));
@@ -40,6 +40,20 @@ export function eraseTypeScript(source, parsed = parseProgrammingLanguage(source
     if (refusals.has(node.term)) unsupported(node, 'this runtime construct needs explicit translation');
     const operation = operations.get(node.term);
     const range = node.span.byteRange;
+    if (operation === 'import-list') {
+      let afterTypeSpecifier = false;
+      for (const child of node.children) {
+        const specifier = child.term === 'import_specifier';
+        if (specifier) afterTypeSpecifier = child.children.some((part) => part.term === 'type');
+        if (eraseTypeScriptNamedImport(specifier && afterTypeSpecifier, child.term === ',', afterTypeSpecifier)) {
+          erase(child.span.byteRange.start, child.span.byteRange.end,
+            specifier ? 'type_import_specifier' : 'type_import_separator');
+          // Erasure never hides malformed descendants in a type specifier.
+          for (const part of child.children) visit(part, child);
+        } else visit(child, node);
+      }
+      return;
+    }
     if (operation === 'span' || operation === 'declaration') {
       const owner = eraseExportedDeclaration(operation, parent?.term === 'export_statement') ? parent : node;
       erase(owner.span.byteRange.start, owner.span.byteRange.end, node.term);

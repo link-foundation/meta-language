@@ -36,3 +36,13 @@ pub fn render_erased_type_script_scalar(carriage_return: bool, line_feed: bool) 
 pub fn render_type_script_documentation_pattern(pattern: &str) -> String {
     pattern.replace("*/", "*\\/")
 }
+
+/// Erase a type specifier and its following comma; retain runtime imports and evaluation.
+#[must_use]
+pub fn erase_type_script_named_import(
+    type_specifier: bool,
+    comma: bool,
+    after_type_specifier: bool,
+) -> bool {
+    type_specifier || comma && after_type_specifier
+}

@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 const archive=new URL('../../parity/self-translation/evidence-translation-source-fixtures-history.lino',import.meta.url);
 const archiveHash='c8d831147e7945fc5e7579e92cdce283418122419ba88a837138af9c2f7a9b7d';
 const codeArchive=new URL('../../parity/self-translation/evidence-translation-source-sources-history.lino',import.meta.url);
@@ -14,6 +15,7 @@ let history;
 /** An unregistered or unknown successor remains visible to the original guard. */
 export function restoreEvidenceTranslationSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreNativeCompatibilitySourceHistory(file,source);
   if(!history){
     assert.equal(digest(readFileSync(archive)),archiveHash);assert.equal(digest(readFileSync(codeArchive)),codeArchiveHash);
     history={sources:[...readProjectData(archive).sources,...readProjectData(codeArchive).sources]};

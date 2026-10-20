@@ -2915,6 +2915,19 @@ as shared Links data. Native execution remains subject to CI verification.
 TypeScript compile-time erasure selects native concrete-tree spans through
 shared linked erasure definitions. Its source annotations and type-only
 declarations remain provenance, including when no executable definitions remain.
+Named imports use the explicit type-modifier semantics described by
+[TypeScript's verbatim module syntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html).
+The shared `import-list` rule erases each type-only specifier and its following
+comma while retaining runtime imports, default bindings, remaining comments and
+line boundaries. An empty named import still evaluates its module; a whole
+`import type` statement does not. The decision is generated into Rust from the
+JavaScript source. A runtime binding spelled `type` remains a value. Targeted
+controls compare all ten import cases with Node's independent type-stripping
+API and actual isolated module evaluation under Node `>=22.15.0 <23.0.0` or
+`>=24.0.0 <25.0.0`; uncovered versions refuse. The earlier mixed-import fixture
+retains its original input and now expects executable output instead of the
+previous unsupported-operation diagnostic. Every prior fixture and refusal
+input remains; native output and span parity still require CI.
 Enums, namespaces and parameter properties retain carried obligations until
 their runtime behavior has faithful linked lowering. Projection probes strip
 restoration provenance before replay; source restoration alone cannot prove

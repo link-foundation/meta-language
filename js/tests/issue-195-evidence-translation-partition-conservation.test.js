@@ -9,6 +9,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {restoreEvidenceTranslationSourceHistory} from '../scripts/evidence-translation-source-history.mjs';
 import {generateEvidenceTranslationHistory} from '../../experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs';
+import {restoreNativeCompatibilitySourceHistory} from '../scripts/native-compatibility-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -28,7 +29,7 @@ test('six actual evidence translation scopes preserve every original workflow by
   const [sources,fixtures]=generateEvidenceTranslationHistory({check:true});
   assert.equal(sources.sources.length,8);assert.equal(fixtures.sources.length,1);
   for(const row of [...sources.sources,...fixtures.sources]){
-    assert.deepEqual(pin(readFileSync(new URL(row.file,root))),row.current);
+    assert.deepEqual(pin(restoreNativeCompatibilitySourceHistory(row.file,readFileSync(new URL(row.file,root),'utf8'))),row.current);
     verifyGitArtifactCertificate(row.certificate,Buffer.from(row.sourceText),{revision:row.commit,path:row.file});
     const current=readFileSync(new URL(row.file,root),'utf8');
     assert.equal(restoreEvidenceTranslationSourceHistory(row.file,current),row.sourceText);

@@ -1,7 +1,7 @@
 //! Host boundary for shared linked TypeScript erasure rules and native CST spans.
 use super::typescript_erasure_rules::{
-    erase_exported_declaration, erase_optional_parameter_marker, render_erased_type_script_scalar,
-    retain_first_erasure_child,
+    erase_exported_declaration, erase_optional_parameter_marker, erase_type_script_named_import,
+    render_erased_type_script_scalar, retain_first_erasure_child,
 };
 use crate::native_grammar_parser::{NativeNode, parse_native};
 use crate::translation::Span;
@@ -73,7 +73,9 @@ fn rules() -> &'static Rules {
 
 fn has_erasure(node: &NativeNode, parent: Option<&NativeNode>) -> bool {
     let (operations, refusals) = rules();
-    operations.contains_key(&node.term)
+    operations
+        .get(&node.term)
+        .is_some_and(|operation| operation != "import-list")
         || refusals.contains(&node.term)
         || erase_optional_parameter_marker(
             &node.term,
@@ -120,6 +122,37 @@ fn visit(
         ));
     }
     let operation = operations.get(&node.term).map(String::as_str);
+    if operation == Some("import-list") {
+        let mut after_type_specifier = false;
+        for (child, _) in &node.children {
+            let specifier = child.term == "import_specifier";
+            if specifier {
+                after_type_specifier = child.children.iter().any(|(part, _)| part.term == "type");
+            }
+            if erase_type_script_named_import(
+                specifier && after_type_specifier,
+                child.term == ",",
+                after_type_specifier,
+            ) {
+                erasures.push(Erasure {
+                    start: child.start,
+                    end: child.end,
+                    term: if specifier {
+                        "type_import_specifier"
+                    } else {
+                        "type_import_separator"
+                    }
+                    .to_owned(),
+                });
+                for (part, _) in &child.children {
+                    visit(part, Some(child), erasures)?;
+                }
+            } else {
+                visit(child, Some(node), erasures)?;
+            }
+        }
+        return Ok(());
+    }
     if let Some(operation @ ("span" | "declaration")) = operation {
         let owner = if erase_exported_declaration(
             operation,
@@ -193,8 +226,8 @@ fn visit(
 /// Erase compile time TypeScript forms using native concrete syntax spans.
 ///
 /// # Errors
-/// Returns a precise obligation for runtime constructs, malformed trees, mixed
-/// type imports or erased source that the native JavaScript grammar rejects.
+/// Returns a precise obligation for runtime constructs, malformed trees,
+/// unsupported import forms or source the native JavaScript grammar rejects.
 pub fn erase_type_script(source: &str) -> Result<ErasedTypeScript, TranslationError> {
     let root = parse_native("native-typescript", source);
     let mut erasures = Vec::new();
