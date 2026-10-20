@@ -63,7 +63,7 @@ impl JavaScriptParser {
         Err(self.fail_here("expected an expression"))
     }
 
-    /// `[a, ...xs, b]`: the elements in order, with the elements of each spread array in place.
+    /// `[a, ...xs, b]`: ordered values and the elements of each supported iterable.
     fn array_literal(&mut self) -> Result<SExpr> {
         let start = self.cursor.advance();
         let mut items = Vec::new();
@@ -77,7 +77,20 @@ impl JavaScriptParser {
                 ));
             }
             let spread = self.cursor.eat("...").is_some();
-            items.push(SArrayItem::new(self.expr()?, spread));
+            let value = self.expr()?;
+            let place = value.span;
+            let value = if spread {
+                SExpr::new(
+                    SNode::ForOfIterable {
+                        object: Box::new(value),
+                        ty: None,
+                    },
+                    place,
+                )
+            } else {
+                value
+            };
+            items.push(SArrayItem::new(value, spread));
             if self.cursor.eat(",").is_none() {
                 break;
             }

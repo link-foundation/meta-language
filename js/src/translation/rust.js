@@ -50,6 +50,7 @@ import {createRustDiagnosticAttributeFacet} from './rust-diagnostic-attributes.j
 import { acceptRustCastFollowingToken, readRustCastSyntaxMessage } from './rust-cast-syntax-rules.js';
 import { readRustCharacterExpressionType } from './rust-character-rules.js';
 import { readRustLiteralMatch } from './rust-literal-matches.js';
+import { readRustAsciiTextPredicate } from './rust-ascii-text-predicates.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -1044,6 +1045,8 @@ class RustParser {
           continue;
         }
         const method = c.identifier('method');
+        const ascii = readRustAsciiTextPredicate(this, value, method, path);
+        if (ascii) { value = ascii; continue; }
         if (!c.is('(')) throw unsupported('field access', `field ${method.value} is outside the portable core`, span(token, method));
         c.next();
         const args = [];

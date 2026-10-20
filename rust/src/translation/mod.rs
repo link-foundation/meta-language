@@ -16,6 +16,7 @@ pub(crate) mod array_binding_rules;
 pub(crate) mod array_callback_rules;
 pub(crate) mod array_from_rules;
 pub(crate) mod array_value_rules;
+pub(crate) mod ascii_text_predicate_rules;
 pub(crate) mod boolean_declaration_value_rules;
 pub(crate) mod borrowed_call_interface;
 pub(crate) mod borrowed_call_interface_rules;

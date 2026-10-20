@@ -2173,7 +2173,8 @@ class JavaScriptParser {
       if (c.is(',')) throw unsupported('array hole', 'a hole is an element that reads undefined, which is not a portable value', span(c.peek(), c.peek()));
       const spread = c.is('...');
       if (spread) c.next();
-      items.push({ spread, value: this.expr() });
+      const value = this.expr();
+      items.push({ spread, value: spread ? { k: 'forOfIterable', object: value, span: value.span } : value });
       if (!c.eat(',')) break;
     }
     c.expect(']', 'array literal');
