@@ -7,7 +7,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';
 
 const history=readProjectData(new URL('../../parity/naming/platform-test-deadline-source-history.lino',import.meta.url));
-const read=file=>readFileSync(new URL('../../'+file,import.meta.url),'utf8');
+const read=file=>restoreCiRepairSourceHistory(file,readFileSync(new URL('../../'+file,import.meta.url),'utf8'));
 
 test('actual cold platform deadlines retain every complete test cell and checked compiler argument',()=>{
   for(const row of history.sources){
@@ -74,3 +74,5 @@ test('platform deadline source controls retain every preceding guard and expose 
     assert.equal(restored,original,'every original complete assertion and input remains reconstructible');
   }
 });
+
+import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';

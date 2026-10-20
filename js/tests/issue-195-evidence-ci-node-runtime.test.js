@@ -66,7 +66,7 @@ test('actual mixed Node and npm evidence retains exact partition gates and pins 
 test('runtime patch source inverse refuses missing mixed repeated foreign and unsupported selections while exposing unrelated edits',()=>{
   const history=readProjectData(new URL('../../parity/naming/ci-node-runtime-source-history.lino',import.meta.url));
   for(const owner of history.owners){
-    const current=readFileSync(new URL('../../'+owner.file,import.meta.url),'utf8');
+    const current=restoreCiRepairSourceHistory(owner.file,readFileSync(new URL('../../'+owner.file,import.meta.url),'utf8'));
     for(const replacement of ['node-version: 24','node-version: 24.21.0','node-version: 24.22.1','node-version: 25','removed-version: 24.22.0']){
       assert.throws(()=>restoreCiNodeRuntimeHistory(current.replace('node-version: 24.22.0',replacement)));
     }
@@ -118,3 +118,5 @@ test('runtime pin adapters preserve all complete preceding workflow guard module
 });
 
 import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';
+
+import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';

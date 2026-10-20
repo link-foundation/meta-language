@@ -2872,6 +2872,22 @@ restoration provenance before replay; source restoration alone cannot prove
 semantic preservation. Native execution of the translated Rust remains a CI
 verification boundary.
 
+The experimental TypeScript semantic graph composes these existing typing rules
+with the checked JavaScript program adapter. The same Links network retains the
+complete original TypeScript concrete tree, complete lowered JavaScript concrete
+tree, annotation and erasure records, and editable semantic program. Text and
+binary reload need no original parser state. The program explicitly identifies
+its JavaScript semantic frontend and TypeScript import profile; origin records
+describe import time and do not certify later program edits. Unsupported runtime
+constructs, contradictory annotations and non-scalar source refuse. Finite
+numeric, alias and UTF-16 controls exercise both target emitters, including a
+semantic operation edit. Separate CI controls compile emitted Rust; the Rust
+package also reloads the exact committed graphs and executes its own Rust and
+JavaScript emissions. Those native observations identify the actual checkout,
+compiler, source bytes and results. This experimental composition does not yet
+provide a public TypeScript frontend, full construct coverage or global meaning
+equivalence.
+
 Unary field and index updates retain their operand-free update representation.
 Type inference constrains the selected numeric slot for prefix and postfix
 increment and decrement without reading a nonexistent right operand. The
@@ -3454,12 +3470,17 @@ The initial native grammar group uses six file partitions after
 [CI39125289901's captured deadline](../parity/fixtures/javascript-native-grammar-deadline-2026-10-18.lino).
 Each original three-way partition is exactly the union of two current
 partitions. The JavaScript job deadline remains fifteen minutes.
-Three initial translation partitions retain the fifteen-minute deadline. Each
+Six initial translation partitions retain the fifteen-minute deadline after
+run 39394008799 exhausted it while still progressing. Each
 transports feedback with a LiNo receipt of the exact commit, selected files and
 payload hashes. A required merge validates every partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores
 the original combined artifact name, paths and retention. An empty complete
 collection still fails. Acceptance retains its separate fifteen physical scopes.
+Capture and merge explicitly select six partitions; the transport's historical
+three-part API remains separately checked. Complete original workflow bytes stay
+authenticated for historical controls, and independent controls inspect the
+actual current six-way matrix, feedback cohort and native artifact uploads.
 
 A separate JavaScript test group checks these published reports after all
 report shards finish. It uses the producers' exact checkout and source hashes,
@@ -3477,6 +3498,14 @@ identified correction, so the native runtime remains independent of the oracle.
 
 Local sandboxes and CI runners have a few gigabytes of memory. The tooling
 keeps every run within that bound instead of relying on a larger machine.
+
+Live cleanup fixtures use the existing JavaScript runtime at their original
+fixture and tool paths, with the same lifetime and retention/removal assertions.
+Hard links avoid duplicating its binary; only a cross-device failure permits a
+copy. The fixture never changes permissions on a hard link. This also avoids
+depending on the dispatch behavior of a renamed system multicall utility.
+Dependency inventories and all other manifest inputs must finish changing before
+the final requirement-manifest refresh and freshness check.
 
 For the current task, the [latest continuation instruction](../parity/sources/solo-continuation-2026-10-19.txt)
 allows active subagents to finish slowly, then requires the coordinator to

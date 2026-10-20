@@ -5,6 +5,7 @@ import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {restoreRawLoanCertificateSource} from '../scripts/raw-loan-certificate-history.mjs';
 
 test('original raw loan receipt verification retains the same immutable Git anchors and every original source assertion',()=>{
   const history=readProjectData(new URL('../../parity/naming/raw-loan-git-certificate-source-history.lino',import.meta.url));
@@ -31,7 +32,9 @@ test('original raw loan receipt verification retains the same immutable Git anch
   const newRead="  const previousBytes=verifyGitArtifactCertificate(\n    readProjectData(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0-proof.lino',import.meta.url)),\n    readFileSync(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0.lino',import.meta.url)),\n    {revision:'18a8e0a04bab43f6572be311ceb75c6596fdc147',path:file});";
   const addition="\nimport {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';\n";
   assert.equal(before.sourceText.split(oldRead).length,2);
-  const current=readFileSync(new URL('../../'+before.file,import.meta.url),'utf8');
+  const actual=readFileSync(new URL('../../'+before.file,import.meta.url),'utf8');
+  const current=restoreRawLoanCertificateSource(actual);
+  assert.throws(()=>restoreRawLoanCertificateSource(actual+'\n# changed\n'),assert.AssertionError);
   assert.equal(current,before.sourceText.replace(oldRead,newRead)+addition,'every original input, complete predecessor comparison and native planning refusal remains byte exact');
   assert.equal(current.slice(0,-addition.length).replace(newRead,oldRead),before.sourceText);
   const changed=Buffer.from(stored);changed[0]^=1;

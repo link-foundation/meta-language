@@ -20,8 +20,12 @@ function commitIdentity(commit) {
   return commit;
 }
 
-function partitionFiles(root, shard) {
-  if (!new RegExp(`^[1-${PARTS}]/${PARTS}$`, 'u').test(shard ?? '')) throw new Error('feedback shard must be one of 1/3, 2/3, 3/3');
+function partitionFiles(root, shard, partitions = PARTS) {
+  const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard ?? '');
+  if (!Number.isSafeInteger(partitions) || partitions < 1 || !match || Number(match[2]) !== partitions) {
+    throw new Error(partitions === PARTS ? 'feedback shard must be one of 1/3, 2/3, 3/3'
+      : 'feedback shard must use the explicitly selected positive partition count');
+  }
   const groups = partitionTests(testFiles(path.join(root, 'js'))).groups;
   return partitionGroupFiles(groups.translation, shard).map(file => `js/tests/${file}`);
 }
@@ -75,10 +79,10 @@ function fingerprint(file) {
   return { bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 
-export function captureTranslationTestFeedbackPartition({ root = ROOT, outputDirectory, commit, shard }) {
+export function captureTranslationTestFeedbackPartition({ root = ROOT, outputDirectory, commit, shard, partitions = PARTS }) {
   root = realpathSync(root);
   commitIdentity(commit);
-  const files = partitionFiles(root, shard);
+  const files = partitionFiles(root, shard, partitions);
   const output = targetDirectory(root, outputDirectory);
   const payloads = [];
   for (const source of SOURCES) {
@@ -103,12 +107,13 @@ export function captureTranslationTestFeedbackPartition({ root = ROOT, outputDir
   return receipt;
 }
 
-export function mergeTranslationTestFeedbackPartitions({ root = ROOT, inputDirectory, outputDirectory, commit }) {
+export function mergeTranslationTestFeedbackPartitions({ root = ROOT, inputDirectory, outputDirectory, commit, partitions = PARTS }) {
   root = realpathSync(root);
   commitIdentity(commit);
   if (typeof inputDirectory !== 'string' || !inputDirectory) throw new Error('feedback input directory is required');
   const input = path.resolve(root, inputDirectory);
-  const expected = Array.from({ length: PARTS }, (_, index) => `translation-test-feedback-${commit}-${index + 1}-of-${PARTS}`);
+  partitionFiles(root, `1/${partitions}`, partitions);
+  const expected = Array.from({ length: partitions }, (_, index) => `translation-test-feedback-${commit}-${index + 1}-of-${partitions}`);
   assert.deepEqual(readdirSync(input).sort(), [...expected].sort(), 'feedback partitions must be present exactly once with no foreign parts');
   const payloads = new Map();
   for (const [index, name] of expected.entries()) {
@@ -118,10 +123,10 @@ export function mergeTranslationTestFeedbackPartitions({ root = ROOT, inputDirec
     const actualFiles = filesWithin(directory);
     const receipt = readProjectData(path.join(directory, RECEIPT), { format: 'lino' });
     assert.deepEqual(Object.keys(receipt).sort(), ['schemaVersion', 'kind', 'commit', 'group', 'shard', 'files', 'payloads'].sort(), 'unexpected feedback receipt fields');
-    const shard = `${index + 1}/${PARTS}`;
+    const shard = `${index + 1}/${partitions}`;
     assert.deepEqual([receipt.schemaVersion, receipt.kind, receipt.commit, receipt.group, receipt.shard],
       [1, KIND, commit, 'translation', shard], 'feedback partition provenance does not match this checkout');
-    assert.deepEqual(receipt.files, partitionFiles(root, shard), 'feedback partition file scope does not match this checkout');
+    assert.deepEqual(receipt.files, partitionFiles(root, shard, partitions), 'feedback partition file scope does not match this checkout');
     if (!Array.isArray(receipt.payloads)) throw new Error('feedback payload inventory must be a list');
     const seen = new Set();
     for (const payload of receipt.payloads) {
@@ -145,7 +150,7 @@ export function mergeTranslationTestFeedbackPartitions({ root = ROOT, inputDirec
     mkdirSync(path.dirname(destination), { recursive: true });
     copyFileSync(source, destination);
   }
-  return { commit, partitions: PARTS, files: [...payloads.keys()].sort() };
+  return { commit, partitions, files: [...payloads.keys()].sort() };
 }
 
 function main(argv) {
@@ -153,12 +158,14 @@ function main(argv) {
   const options = {};
   for (let index = 0; index < args.length; index += 2) {
     const key = args[index];
-    if (!['--root', '--out', '--commit', '--shard', '--inputs'].includes(key) || Object.hasOwn(options, key) || !args[index + 1]) {
-      throw new Error('feedback usage: capture --commit SHA --shard N/3 --out DIR; merge --commit SHA --inputs DIR --out DIR');
+    if (!['--root', '--out', '--commit', '--shard', '--inputs', '--partitions'].includes(key) || Object.hasOwn(options, key) || !args[index + 1]) {
+      throw new Error('feedback usage: capture --commit SHA --shard K/N --out DIR [--partitions N]; merge --commit SHA --inputs DIR --out DIR [--partitions N]');
     }
     options[key] = args[index + 1];
   }
-  const shared = { root: options['--root'] ?? ROOT, outputDirectory: options['--out'], commit: options['--commit'] };
+  if (options['--partitions'] !== undefined && !/^[1-9][0-9]*$/u.test(options['--partitions'])) throw new Error('feedback partition count must be a positive integer');
+  const shared = { root: options['--root'] ?? ROOT, outputDirectory: options['--out'], commit: options['--commit'],
+    partitions: options['--partitions'] === undefined ? PARTS : Number(options['--partitions']) };
   if (mode === 'capture' && !options['--inputs']) {
     const receipt = captureTranslationTestFeedbackPartition({ ...shared, shard: options['--shard'] });
     console.log(`translation feedback: captured ${receipt.payloads.length} files for ${receipt.shard} at ${receipt.commit}`);

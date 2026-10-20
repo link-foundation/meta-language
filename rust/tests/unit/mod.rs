@@ -254,6 +254,7 @@ mod translation_rust_type_namespace;
 mod translation_stages;
 mod translation_structured_types;
 mod translation_top_level_statements;
+mod translation_typescript_typed_graph;
 mod translation_void_functions;
 mod typed_program_algebraic;
 mod typed_program_links;

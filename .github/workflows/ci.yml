@@ -1025,6 +1025,10 @@ jobs:
           --results-dir issue-195-results
           --stage "$TARGET"
 
+      - name: Validate TypeScript graph Rust execution
+        if: ${{ !cancelled() }}
+        run: node experiments/typescript-typed-graph/run-native.mjs --results-dir issue-195-results
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs

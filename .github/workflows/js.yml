@@ -159,9 +159,12 @@ jobs:
           - {group: conformance, partition: 2, shards: 4}
           - {group: conformance, partition: 3, shards: 4}
           - {group: conformance, partition: 4, shards: 4}
-          - {group: translation, partition: 1, shards: 3}
-          - {group: translation, partition: 2, shards: 3}
-          - {group: translation, partition: 3, shards: 3}
+          - {group: translation, partition: 1, shards: 6}
+          - {group: translation, partition: 2, shards: 6}
+          - {group: translation, partition: 3, shards: 6}
+          - {group: translation, partition: 4, shards: 6}
+          - {group: translation, partition: 5, shards: 6}
+          - {group: translation, partition: 6, shards: 6}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -230,7 +233,7 @@ jobs:
           TRANSLATION_SHARD: ${{ matrix.partition }}/${{ matrix.shards }}
         run: >-
           node js/scripts/translation-test-feedback.mjs capture
-          --commit "$GITHUB_SHA" --shard "$TRANSLATION_SHARD"
+          --commit "$GITHUB_SHA" --shard "$TRANSLATION_SHARD" --partitions "${{ matrix.shards }}"
           --out "issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}"
 
       - name: Retain translation compiler feedback and native observations
@@ -282,7 +285,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
-          pattern: translation-test-feedback-${{ github.sha }}-*-of-3
+          pattern: translation-test-feedback-${{ github.sha }}-*-of-6
           path: .issue-195-work/translation-test-feedback/partitions
           merge-multiple: false
 
@@ -294,6 +297,7 @@ jobs:
         run: |
           mkdir -p .issue-195-work/translation-test-feedback
           node js/scripts/translation-test-feedback.mjs merge \
+            --partitions 6 \
             --commit "$GITHUB_SHA" \
             --inputs .issue-195-work/translation-test-feedback/partitions \
             --out .issue-195-work/translation-test-feedback/merged \

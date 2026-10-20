@@ -186,7 +186,7 @@ test('initial translation shards retain every file, native flag, original deadli
 });
 
 test('omitted or duplicate initial shards, flattened feedback and a weakened final gate fail conservation', () => {
-  const workflow = readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const workflow = restoreTranslationWorkflowHistory(readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));
   const row = '          - {group: translation, partition: 2, shards: 3}\n';
   const grammarRow = '          - {group: grammar, partition: 2, shards: 3}\n';
   const nativeRow = '          - {group: grammar-native, partition: 5, shards: 6}\n';
@@ -207,3 +207,4 @@ test('omitted or duplicate initial shards, flattened feedback and a weakened fin
 });
 
 import {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';
+import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';

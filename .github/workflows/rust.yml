@@ -223,6 +223,15 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: bash rust/scripts/simulate-fresh-merge.sh
 
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-fresh-merge-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Retain authenticated fresh merge partition
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -1340,6 +1349,15 @@ jobs:
           META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
         run: node js/scripts/rust-test-shards.mjs --finish
 
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Retain authenticated native partition
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -1600,6 +1618,15 @@ jobs:
         env:
           META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
         run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-coverage-ubuntu-latest-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Retain authenticated native partition
         if: ${{ !cancelled() }}
