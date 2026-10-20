@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreOwnCodebaseRawDescriptorEdge} from './own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 const policyFile='parity/self-translation/program-string-source-descriptors.lino';
 const policySha256='d404eef323e602b5f31dc88b0588d4a8a4ff5b23af98f82e0ee62540b6b39741';
@@ -21,6 +22,7 @@ function readProgramStringSourceDescriptorPolicy() {
  * only the two current source descriptor fields. Unknown artifacts stay visible
  * to the original strict gate rather than acquiring a historical identity. */
 export function restoreProgramStringSourceDescriptorEdge(artifact,identity,register) {
+  ({artifact,register}=restoreOwnCodebaseRawDescriptorEdge(artifact,identity,register));
   if(!Object.hasOwn(register,property))return{artifact,register};
   const selected=readProgramStringSourceDescriptorPolicy();assert.deepEqual(register[property],[selected.edge]);
   const bytes=Buffer.from(serializeProjectData(register,selected.register.file));assert.deepEqual(pin(bytes),selected.register.current);

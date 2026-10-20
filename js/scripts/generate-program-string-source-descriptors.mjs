@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData,writeProjectData,checkProjectData} from './project-data.mjs';
+import {restoreOwnCodebaseRawDescriptorText} from './own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url),revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const artifactFile='experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino';
 const registerFile='parity/self-translation/complete-declaration-receipts.lino';
@@ -37,7 +38,7 @@ export function generateProgramStringSourceDescriptors({check=false}={}) {
     boundary:'Only two current checked-program projection descriptor fields change. Every complete native definition, owner, archive, fixture, input/result and older receipt remains exact. The new register entry and borrowed predecessor descriptor have complete original byte inverses. Actual new-source generation and native execution remain mandatory independent checks.'};
   const writes=[[artifactFile,artifact.sourceText,currentText],[registerFile,register.sourceText,registerText],[loanFile,loan.sourceText,loanText]];
   for(const[file,old,text]of writes){
-    const path=new URL(file,root),actual=readFileSync(path,'utf8');assert.ok(actual===old||actual===text,'unknown provenance edits refuse: '+file);
+    const path=new URL(file,root),observed=readFileSync(path,'utf8'),actual=check?restoreOwnCodebaseRawDescriptorText(observed,file):observed;assert.ok(actual===old||actual===text,'unknown provenance edits refuse: '+file);
     if(check)assert.equal(actual,text);
   }
   if(check)checkProjectData(new URL(output,root),packet);else writeProjectData(new URL(output,root),packet);
