@@ -9,12 +9,15 @@ import { fileURLToPath } from 'node:url';
 
 import { loadWordNet } from './english-vocabulary.mjs';
 import { readProjectData } from './project-data.mjs';
-import { checkNamingFixtures, checkRepositoryNames, NAMING_FIXTURES } from './issue-195-naming.mjs';
+import { checkNamingFixtures, checkRepositoryNames, extractNameInventory, NAME_INVENTORIES, NAMING_FIXTURES } from './issue-195-naming.mjs';
+import { extractOwnCodebaseHistoricalNames } from './own-codebase-baseline-naming-history.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const wordnet = loadWordNet();
 const { fixtures } = readProjectData(path.join(root, NAMING_FIXTURES));
-const { problems, records, names, formers, vocabulary } = checkRepositoryNames(root, wordnet);
+const currentNames = extractNameInventory(root);
+const historicalNames = extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES);
+const { problems, records, names, formers, vocabulary } = checkRepositoryNames(root, wordnet, { names: [...currentNames, ...historicalNames] });
 problems.push(...checkNamingFixtures(fixtures, { wordnet, vocabulary }));
 if (problems.length > 0) {
   console.error(`naming check failed (${problems.length} problems):\n- ${problems.map((problem) => `[${problem.kind}] ${problem.message}`).join('\n- ')}`);
