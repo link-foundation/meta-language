@@ -8,6 +8,7 @@ import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino,readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {checkInventory,collectDependencies} from './dependency-inventory.mjs';
+import {restoreOwnCodebaseTestRegistrationTestSource} from './own-codebase-test-registration-history.mjs';
 
 const file=new URL('../../parity/fixtures/dependency-inventory-append-history.lino',import.meta.url);
 const inventoryRevision='9ac3038132953e6a220bba6f06a3e6147d39836f';
@@ -25,6 +26,7 @@ export function restoreNodeDependencyInventoryTestSource(source) {
   const original=history.test.source;
   let current=original;
   for(const edit of history.edits){assert.equal(current.split(edit.before).length,2);current=current.replace(edit.before,()=>edit.after);}
+  if(source!==original&&source!==current)source=restoreOwnCodebaseTestRegistrationTestSource(source);
   assert.ok(source===original||source===current,'only the complete original or reviewed inventory test source is admitted');
   return original;
 }
