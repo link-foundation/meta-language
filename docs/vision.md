@@ -3958,6 +3958,12 @@ budgets. Repository and frozen producer sources stay exact. Adoption requires
 current and frozen diagnostic source profiles, publication receipts, original
 controls and native execution to be reconciled together. The draft supplies no
 production parser change, native observation or general coverage claim.
+Its candidate source profiles preserve every frozen pin and distinguish the
+original producer, original diagnostic permutation, production predecessor and
+proposed source. They compare all nine complete JavaScript diagnostic calls and
+selected native type/import bytes and offsets. Exact text/binary replay and
+unknown-edit controls remain required; these facts do not prove predicate
+equivalence or turn a candidate into an observed current producer.
 
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
