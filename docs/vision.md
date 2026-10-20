@@ -2001,6 +2001,24 @@ provenance. Native fact production, complete DTO reconstruction and default CST
 integration remain required; these contracts do not change the owned model's
 unresolved manifest or count as completed reconstruction.
 
+The original-number observation prototype derives the complete borrowed visitor
+for all nine captured native DTO declarations and preserves the original
+allocation-free counter, formatter and integer projection validation. Its first
+complete preflight retains the original immutable values; a second borrowed pass
+records primitive Number predicates, exact integer decimals, floating bits and
+expanded wire occurrence positions. Only an original JSON Number uses this
+observation route. Host integer conversions retain their original operation.
+Recorded Links decorators and whole-source inverses describe the extension.
+The new isolated profile requires explicit limits of at most 100,000 occurrences,
+16 MiB scalar bytes and depth 256; existing codec defaults do not change.
+Independent controls retain signed/unsigned overlap, wide exact integers,
+negative zero and subnormals. Registered native tests cover every JSON-owning DTO
+field, recursion, equal independent occurrences and refusals. Local source and
+archive checks supply no native execution evidence. Selected compiler provenance,
+the correspondence from wire positions to owned source identities and complete
+DTO reconstruction remain required before integrating original observations
+with the supplied-number contract or public default CST path.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,

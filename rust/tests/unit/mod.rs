@@ -58,6 +58,7 @@ mod grammar_outcome_integer_projections;
 mod grammar_outcome_integer_rules;
 mod grammar_outcome_inverse_rules;
 mod grammar_outcome_number_kind_rules;
+mod grammar_outcome_original_numbers;
 mod grammar_outcome_preorder_rules;
 mod grammar_outcome_source_type_rules;
 mod grammar_outcome_static_borrows;
