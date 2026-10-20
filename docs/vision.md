@@ -1954,6 +1954,22 @@ These observations require successful CI execution. Historical compiler logs and
 synthetic selectors establish source and transport controls only; number variant
 reconstruction and native DTO equality remain separate obligations.
 
+Native number representation selection now has one complete JavaScript decision
+module and its automatically generated Rust library. Its explicit model covers
+`serde_json >=1.0.151 <1.0.152` without `arbitrary_precision`; unknown profiles
+and contradictory native predicates refuse. Positive integers may satisfy both
+signed and unsigned admission, and retain the unsigned representation. A separate
+adapter binds this selection to the exact checked compiler artifact and refuses
+its unsupported precision feature without combining unrelated feature units.
+The 160 declared-profile controls, lossless source round trip and source-free
+Links text/binary reloads establish selector behavior only. They do not capture
+an original native number, authenticate caller-supplied logs as a live execution,
+or reconstruct an owned DTO. Exact decimals, floating bits and source occurrence
+ownership must still be obtained before projection. Native execution remains CI
+work. Primitive Boolean source styles simplify only immutable primitive
+parameters under their actual types, retaining the complete generated owner and
+recorded inverse; unsupported expressions remain unchanged and shadowing refuses.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
