@@ -4,12 +4,14 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreRawOracleContractPartitionHistory} from './raw-oracle-contract-partition-history.mjs';
 const archiveHash='262cdbb79fdb8831799e5e5e255031c700c5b283a222c414c9277858fca289f1';
 let history;
 
 /** Preserve unknown edits; authenticate the whole reviewed grammar schedule. */
 export function restoreGrammarTestPartitionHistory(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreRawOracleContractPartitionHistory(source,path);
   if(!['.github/workflows/js.yml','.github/workflows/ci.yml','.github/workflows/rust.yml'].includes(path))return source;
   if(!history){
     const bytes=readFileSync(new URL('../../parity/self-translation/grammar-test-partition-history.lino',import.meta.url));

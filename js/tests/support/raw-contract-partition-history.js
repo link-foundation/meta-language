@@ -25,6 +25,7 @@ export function restoreRawContractPartitionHistory(source) {
 }
 
 export function restoreRawContractTestSource(source) {
+  source=restoreRawOracleContractPartitionHistory(source,'experiments/original-link-complete-table-projection/raw-native-observations.test.mjs');
   const {before,after}=history.testChange;
   const current=history.source.source.replace(before,()=>after);
   assert.ok(source===current||source===history.source.source,'only complete reviewed raw contract source is admitted');
@@ -33,3 +34,4 @@ export function restoreRawContractTestSource(source) {
 
 import {restoreToolingPartitionHistory} from './tooling-partition-history.js';
 import {restoreRawPlanningWorkflowHistory} from '../../scripts/raw-planning-workflow-history.mjs';
+import {restoreRawOracleContractPartitionHistory} from '../../scripts/raw-oracle-contract-partition-history.mjs';

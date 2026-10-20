@@ -3485,6 +3485,17 @@ invocation retain all original imports. Original assertions, commands, resource
 limits, ten-minute deadlines and aggregate prerequisites remain checked through
 exact source and workflow inverses. Splitting allocations does not establish
 successful full-workload timing until CI executes the changed schedule.
+The raw contract suite further separates eleven schema and consumer contracts
+from seven complete observation-plan contracts into two required ten-minute
+JavaScript cells. Explicit CI profiles register each original callback exactly
+once across those cells, without skipped tests; the schema cell does not build
+the full plan. Default invocation retains the whole suite, including its separate
+native contract. Complete original test-call bodies, order, commands and limits
+remain authenticated against their certified predecessor. Unknown profiles,
+missing or duplicate registrations and native admission in a JavaScript-only
+profile refuse. This follows CI 39489000471, which completed all three source
+archives and constructed its observation plan before the unchanged deadline.
+Successful timing and full native execution still require corrected-commit CI.
 The complete tooling test group likewise has four required physical cells after
 its measured fifteen-minute cancellation. The existing modulo file partitioner
 assigns every current test file exactly once; all commands, assertions, flags,

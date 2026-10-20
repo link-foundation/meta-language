@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 215 | 214 | 1 | 0 |
+| Generators | 216 | 215 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -762,6 +762,7 @@ they are.
 | `js/scripts/generate-grammar-test-partition-history.mjs` | `js/scripts/generate-grammar-test-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-receiver-parameters.mjs` | `js/scripts/generate-typescript-receiver-parameters.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

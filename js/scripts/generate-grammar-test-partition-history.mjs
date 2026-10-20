@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreRawOracleContractPartitionHistory} from './raw-oracle-contract-partition-history.mjs';
 
 /** Capture the complete three-to-six grammar test scheduling inverse. */
 export function generateGrammarTestPartitionHistory({check=false}={}) {
@@ -14,7 +15,7 @@ export function generateGrammarTestPartitionHistory({check=false}={}) {
   const rows=count=>Array.from({length:count},(_,index)=>
     '          - {group: grammar, partition: '+(index+1)+', shards: '+count+'}\n').join('');
   const before=rows(3),after=rows(6);assert.equal(source.split(before).length,2);
-  const expected=source.replace(before,after),actual=readFileSync(new URL(path,root),'utf8');
+  const expected=source.replace(before,after),actual=restoreRawOracleContractPartitionHistory(readFileSync(new URL(path,root),'utf8'),path);
   assert.equal(actual,expected,'only the complete grammar matrix may change');
   const start=Buffer.byteLength(source.slice(0,source.indexOf(before)));
   const value={schemaVersion:1,revision,path,source,certificate:original.certificate,

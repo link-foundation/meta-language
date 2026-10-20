@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
-import test from 'node:test';
+import registerRawContract from 'node:test';
+import {createOriginalLinkRawContractPartition} from './raw-contract-partitions.mjs';
+const rawContracts=createOriginalLinkRawContractPartition(registerRawContract);
+const test=(...argumentsList)=>rawContracts.test(...argumentsList);
 import {createSourceNativeObservationRunner} from '../source-native-observations.mjs';
 import {createOriginalLinkRawConsumerPacket, decodeOriginalLinkRawCarrierData, requireOriginalLinkRawPlanning, originalLinkRawNativeMode, planOriginalLinkRawNative, planOriginalLinkRawConsumingNative, planOriginalLinkRawBorrowedNative, runOriginalLinkRawNative, runOriginalLinkRawPlanningPhases, verifyOriginalLinkRawNativeModel} from './raw-native-observations.mjs';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
@@ -280,7 +283,7 @@ test('heavy raw planning refuses before fixture imports outside CI', async () =>
   assert.throws(() => originalLinkRawNativeMode({ORIGINAL_LINK_RAW_NATIVE: '1'}), /require CI=true/u);
 });
 
-if (process.env.CI === 'true') {
+if (process.env.CI === 'true' && rawContracts.runPlan) {
   const plan = await planOriginalLinkRawNative(), entry = plan.entries[0];
   const environment = {CI: 'true', ORIGINAL_LINK_RAW_NATIVE: '1', GITHUB_SHA: 'injected process contracts only'};
   const stream = entry.observations.map((row, index) => [index, row.resultBits.length, ...entry.carrier.vectors[entry.carrier.invocations[index].result].map(value => value.toString(16))].join(':')).join('\n') + '\n';
@@ -407,3 +410,4 @@ if (process.env.CI === 'true') {
     const file = fileURLToPath(new URL('../../issue-195-artifacts/original-link-raw-native-observations.lino', import.meta.url)); mkdirSync(dirname(file), {recursive: true}); writeProjectData(file, receipt);
   });
 }
+rawContracts.finish();

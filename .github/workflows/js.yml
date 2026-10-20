@@ -354,6 +354,8 @@ jobs:
             generated_slice: first
           - group: source-model-raw
             generated_slice: first
+          - group: source-model-raw-schema
+            generated_slice: first
           - group: source-model-raw-generation
             generated_slice: first
           - group: raw-emission-profiles
@@ -1217,6 +1219,18 @@ jobs:
           ORIGINAL_LINK_RAW_NATIVE: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-projection.test.mjs
 
+      - name: Run complete original link raw schema and consumer contracts
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-schema' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+          ORIGINAL_LINK_RAW_SEPARATE_SUITES: '1'
+          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
+
       - name: Run complete original link raw native oracle contracts
         if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
         working-directory: js
@@ -1226,6 +1240,7 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
           ORIGINAL_LINK_RAW_NATIVE: '0'
           ORIGINAL_LINK_RAW_SEPARATE_SUITES: '1'
+          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
       - name: Run complete raw emission profile contracts

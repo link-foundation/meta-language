@@ -5,10 +5,11 @@ import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {generateGrammarTestPartitionHistory} from '../scripts/generate-grammar-test-partition-history.mjs';
 import {restoreGrammarTestPartitionHistory} from '../scripts/grammar-test-partition-history.mjs';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
+import {restoreRawOracleContractPartitionHistory} from '../scripts/raw-oracle-contract-partition-history.mjs';
 
 test('six required grammar cells preserve every file exactly once and every complete previous command and deadline',()=>{
   const history=generateGrammarTestPartitionHistory({check:true});
-  const path='.github/workflows/js.yml',source=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const path='.github/workflows/js.yml',source=restoreRawOracleContractPartitionHistory(readFileSync(new URL('../../'+path,import.meta.url),'utf8'),path);
   assert.equal(restoreGrammarTestPartitionHistory(source,path),history.source);
   const before=parseWorkflow(history.source),after=parseWorkflow(source);
   assert.equal(after.length,before.length);
