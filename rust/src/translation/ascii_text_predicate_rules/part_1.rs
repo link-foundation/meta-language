@@ -594,7 +594,7 @@ pub fn accept_rust_const_function_offset(value: f64, negative_zero: bool) -> boo
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_const_function_interval(start: f64, end: f64, nonempty: bool) -> bool {
+pub const fn accept_rust_const_function_interval(start: f64, end: f64, nonempty: bool) -> bool {
     (start <= end) && (!nonempty || (start < end))
 }
 
@@ -770,7 +770,7 @@ pub fn accept_rust_const_function_name(name: &self::ml_string::Text) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_rust_const_function_finite_literal(value: f64) -> bool {
+pub const fn accept_rust_const_function_finite_literal(value: f64) -> bool {
     value.is_finite()
 }
 

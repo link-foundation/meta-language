@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { readSourceTextRustBlock } from './source-text-byte-library-style.mjs';
 import { tokenize } from '../src/translation/lexer.js';
+import { readAsciiTextPredicateLibraryStyles } from './ascii-text-predicate-library-style.mjs';
 
 const root = new URL('../../', import.meta.url);
 const sourcePath = 'js/src/translation/ascii-text-predicate-rules.js';
@@ -145,9 +146,21 @@ export async function generateAsciiTextPredicateRules({ check = false, native = 
       replays.push({ format, checkedNamedSourceInventory: checkedOwners(restored, inventory),
         emittedTextSha256: digest(replay.text) });
     }
-    const files = writeRecordRuleLibrary(emitted, 'ascii_text_predicate_rules', { check });
+    const files = writeRecordRuleLibrary(emitted, 'ascii_text_predicate_rules', {
+      check, sourceStyles: readAsciiTextPredicateLibraryStyles,
+    });
+    const librarySourceStyles = {
+      rustVersionRange: '>=1.90.0 <1.100.0',
+      references: ['https://doc.rust-lang.org/std/primitive.f64.html#method.is_finite'],
+      inputs: ['js/scripts/ascii-text-predicate-library-style.mjs',
+        'rust/src/translation/rust/const_function_rules.rs'].map(path => {
+        const source = readFileSync(new URL(path, root), 'utf8');
+        return { path, source, bytes: Buffer.byteLength(source), sourceSha256: digest(source) };
+      }),
+      boundary: 'Complete current style/reference source captures and two exact primitive qualification actions; no Git membership, runtime execution, or equivalence between distinct current source owners is inferred.',
+    };
     artifact = { schemaVersion: 1, model: policy.model, sourceClosure, inventory,
-      checkedNamedSourceInventory: owners, emitted, replays,
+      checkedNamedSourceInventory: owners, emitted, replays, librarySourceStyles,
       libraryInterface: libraryInterfaces(files, emitted, owners),
       files: files.map(file => ({ path: file.path ?? 'ascii_text_predicate_rules.rs',
         source: file.source, bytes: Buffer.byteLength(file.source), sourceSha256: digest(file.source) })),
