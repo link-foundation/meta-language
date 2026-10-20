@@ -2,6 +2,7 @@
 
 mod completion_panic;
 mod completions;
+mod literal_matches;
 
 use super::{
     Alias, Options, Result, RustParser, SArrayItem, SExpr, SNode, SPattern, SPatternNode, SRow,
@@ -15,6 +16,9 @@ impl RustParser {
         token: &Token,
         path: &[String],
     ) -> Result<SExpr> {
+        if token.value == "matches" {
+            return self.literal_match(token, path);
+        }
         let args = self.macro_arguments(token, path)?;
         let range = span(token, self.cursor.peek());
         match token.value.as_str() {

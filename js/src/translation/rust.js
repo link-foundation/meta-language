@@ -49,6 +49,7 @@ import {planRustDiagnosticAttribute} from './rust-diagnostic-attribute-rules.js'
 import {createRustDiagnosticAttributeFacet} from './rust-diagnostic-attributes.js';
 import { acceptRustCastFollowingToken, readRustCastSyntaxMessage } from './rust-cast-syntax-rules.js';
 import { readRustCharacterExpressionType } from './rust-character-rules.js';
+import { readRustLiteralMatch } from './rust-literal-matches.js';
 
 const ACCEPTED_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
 const ACCEPTED_LINTS = new Set(['allow', 'warn', 'deny', 'expect', 'must_use', 'inline']);
@@ -1321,6 +1322,7 @@ class RustParser {
   }
 
   expressionMacro(token, path) {
+    if (token.value === 'matches') return readRustLiteralMatch(this, token, path);
     const args = this.macroArguments(token, path);
     const range = span(token, this.cursor.peek());
     switch (token.value) {

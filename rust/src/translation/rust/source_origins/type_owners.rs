@@ -7,7 +7,7 @@ impl SourceOrigins {
         segments: &[String],
         path: &[String],
     ) -> Option<SourceLookup> {
-        self.lookup_filtered(segments, path, false)
+        self.lookup_filtered(segments, path, false, None)
     }
 
     pub(in super::super) fn lookup_type_owner(
@@ -15,7 +15,15 @@ impl SourceOrigins {
         segments: &[String],
         path: &[String],
     ) -> Option<SourceLookup> {
-        self.lookup_filtered(segments, path, true)
+        self.lookup_filtered(segments, path, true, None)
+    }
+
+    pub(in super::super) fn lookup_literal_match_owner(
+        &self,
+        segments: &[String],
+        path: &[String],
+    ) -> Option<SourceLookup> {
+        self.lookup_filtered(segments, path, false, Some(crate::translation::rust_literal_match_rules::accept_rust_literal_match_catalog_owner))
     }
 
     fn lookup_filtered(
@@ -23,6 +31,7 @@ impl SourceOrigins {
         segments: &[String],
         path: &[String],
         type_owner: bool,
+        catalog_owner: Option<fn(&str) -> bool>,
     ) -> Option<SourceLookup> {
         let mut names = segments.to_vec();
         let mut start = path.to_vec();
@@ -61,7 +70,7 @@ impl SourceOrigins {
                     SourceDeclaration::Constructor { .. } => "ctor",
                     SourceDeclaration::Function { .. } => "fn",
                 };
-                if !type_owner || crate::translation::source_signature_rules::accept_rust_source_signature_catalog_owner(kind) {
+                if (!type_owner || crate::translation::source_signature_rules::accept_rust_source_signature_catalog_owner(kind)) && catalog_owner.is_none_or(|accept| accept(kind)) {
                     return Some(SourceLookup { declaration: declaration.clone(), full_name });
                 }
             }
