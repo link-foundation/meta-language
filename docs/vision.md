@@ -2888,6 +2888,18 @@ compiler, source bytes and results. This experimental composition does not yet
 provide a public TypeScript frontend, full construct coverage or global meaning
 equivalence.
 
+The experimental concrete-program graph importer applies this origin-retention
+contract to JavaScript and Rust as well as TypeScript. Shared Links profiles
+select the actual shipped grammar and existing checked frontend; canonical names
+and their registered aliases produce the same graph. Complete concrete syntax
+is retained by default. Existing selected Rust models keep their own profile
+and nest the concrete origin without losing caller provenance. Explicit concrete
+parser limits preserve rejection behavior and cannot substitute another grammar
+or suppress syntax retention. Semantic operation edits change the emitted program
+while every original concrete byte stays available through text and binary
+reload. This remains an experimental composition of the supported frontend
+domains, with native execution and public package integration still required.
+
 Unary field and index updates retain their operand-free update representation.
 Type inference constrains the selected numeric slot for prefix and postfix
 increment and decrement without reading a nonexistent right operand. The

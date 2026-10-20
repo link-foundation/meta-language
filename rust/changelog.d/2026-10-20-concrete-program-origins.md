@@ -1,0 +1,1 @@
+Experimental program graphs retain complete JavaScript, Rust and TypeScript concrete syntax through Links reload and semantic edits. Existing Rust source-model provenance is preserved. Native verification and public package integration remain pending.

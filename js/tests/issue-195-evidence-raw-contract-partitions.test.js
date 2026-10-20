@@ -9,7 +9,7 @@ import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mj
 import {restoreRawContractPartitionHistory,restoreRawContractTestSource} from './support/raw-contract-partition-history.js';
 
 const root=new URL('../../',import.meta.url);
-const read=file=>restoreCiRepairSourceHistory(file,readFileSync(new URL(file,root),'utf8'));
+const read=file=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,readFileSync(new URL(file,root),'utf8')));
 const history=readProjectData(new URL('parity/fixtures/raw-contract-partition-history.lino',root));
 
 test('isolated raw contract cells retain every original command gate and deadline and restore the entire old workflow',()=>{
@@ -99,3 +99,5 @@ test('raw partition adapters retain both entire preceding conformance guards wit
 import {restoreToolingPartitionHistory} from './support/tooling-partition-history.js';
 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
+
+import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';

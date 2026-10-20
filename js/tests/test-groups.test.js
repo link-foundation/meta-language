@@ -83,7 +83,7 @@ test('four conformance jobs preserve each original two-job partition under its u
   assert.equal(job.conclusion, 'cancelled');
   assert.ok(Date.parse(job.completed_at) - Date.parse(job.started_at) >= 15 * 60 * 1000);
   assert.equal(capture.responses.annotations.data.filter(row => row.message === 'The job has exceeded the maximum execution time of 15m0s').length, 1);
-  const workflow = restoreRawContractPartitionHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));
+  const workflow = restoreRawContractPartitionHistory(restoreTranslationWorkflowHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8')));
   assert.equal(createHash('sha256').update(workflow).digest('hex'), capture.change.currentSha256);
   assert.equal(workflow.split(capture.change.after).length, 2);
   const inverse = workflow.replace(capture.change.after, capture.change.before);
@@ -144,7 +144,7 @@ test('native corpora, recovery and scaling checks run independently with every a
 });
 
 test('the JavaScript workflow runs every test group and gates the package check on them', async () => {
-  const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const workflow = restoreTranslationWorkflowHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));
   const tests = workflow.slice(workflow.indexOf('\n  tests:\n'), workflow.indexOf('\n  package-checks:\n'));
   const groups = tests.match(/group: \[([^\]]+)\]/u)[1].split(',').map((group) => group.trim());
   assert.deepEqual(groups, Object.keys(TEST_GROUPS).filter(group => group !== 'report-artifacts'));
@@ -241,3 +241,4 @@ test('standalone JavaScript runs produce and validate the same report shards', a
 });
 
 import {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';
+import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';

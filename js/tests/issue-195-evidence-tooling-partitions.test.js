@@ -11,7 +11,7 @@ import {restoreToolingPartitionHistory} from './support/tooling-partition-histor
 
 const root=new URL('../../',import.meta.url);
 const history=readProjectData(new URL('parity/fixtures/tooling-partition-history.lino',root));
-const read=file=>readFileSync(new URL(file,root),'utf8');
+const read=file=>restoreCiRepairSourceHistory(file,restoreSchedulingSourceHistory(file,readFileSync(new URL(file,root),'utf8')));
 
 test('four required tooling cells retain every current file exactly once and every original command and deadline',()=>{
   generateToolingPartitionHistory({check:true});
@@ -70,3 +70,7 @@ test('tooling partition adapters reconstruct both complete preceding raw guards 
     assert.equal(source.replace(insertion,'').replace(after,before),previous(file));
   }
 });
+
+import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
+
+import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';

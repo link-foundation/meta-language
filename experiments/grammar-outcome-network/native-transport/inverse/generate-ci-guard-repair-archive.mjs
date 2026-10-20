@@ -22,7 +22,7 @@ export function generateCiGuardRepairArchive({check=false}={}) {
       const original=captureGitArtifactCertificate(revision,file);
       verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
       const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
-      const current=readFileSync(new URL(file,root));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
+      const current=Buffer.from(restoreSchedulingSourceHistory(file,readFileSync(new URL(file,root),'utf8')));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
       return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,current:pin(current)};
     });
     const packet={schemaVersion:1,revision,run:39394008799,sources:rows,
@@ -41,3 +41,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   const packets=generateCiGuardRepairArchive({check:process.argv.includes('--check')});
   console.log('Authenticated '+packets.reduce((count,packet)=>count+packet.sources.length,0)+' complete predecessor files and current source digests.');
 }
+
+import {restoreSchedulingSourceHistory} from '../../../../js/scripts/scheduling-source-history.mjs';

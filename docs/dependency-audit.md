@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 199 | 198 | 1 | 0 |
+| Generators | 200 | 199 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -746,6 +746,7 @@ they are.
 | `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
