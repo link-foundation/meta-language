@@ -336,6 +336,10 @@ test('authentic frontend empty-string compiler styles preserve every other owner
   assert.equal(createHash('sha256').update(source).digest('hex'),
     '37033e27b97bc145b0d51b89016606e141d5962c0f423ee131202432a301dad3');
   const changed=correction.outputs.get(path),before=source.toString('utf8'),after=changed.toString('utf8');
+  const actual=readFileSync(new URL('../../'+relativePath,import.meta.url));
+  assert.equal(actual.length,changed.length,'the complete current source length matches the retained transaction before comparing all bytes');
+  assert.equal(createHash('sha256').update(actual).digest('hex'),createHash('sha256').update(changed).digest('hex'),
+    'the complete current source digest matches the retained transaction before comparing all bytes');
   assert.deepEqual(changed,readFileSync(new URL('../../'+relativePath,import.meta.url)),
     'the complete actual generated module equals the authentic offline transaction output');
   const oldOwner=readSourceTextRustBlock(before,'fn','read_type_query_result');

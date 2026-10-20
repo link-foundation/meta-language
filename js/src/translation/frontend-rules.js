@@ -713,3 +713,30 @@ export function readJavaScriptFieldSubstitutionPlan(bindingName, subject, valueK
   if (valueKind === 'name' && pathLength === 1 && valueName === subject) return 2;
   return 1;
 }
+
+/**
+ * Under the existing standard-array-iteration model, a fresh dense literal
+ * supplies every flat mutable binding without a missing element, default or
+ * rest operation. Freshness does not prove an unmodified ambient iterator.
+ * The host retains one initializer evaluation and passes each selected element
+ * to the existing let lowering. Other forms keep their original refusal.
+ * @param {string} valueKind @param {number} itemCount
+ * @param {number} bindingCount @param {boolean} plainBindings
+ * @param {boolean} hasSpread @returns {boolean}
+ */
+export function acceptJavaScriptMutableArrayBinding(valueKind, itemCount, bindingCount, plainBindings, hasSpread) {
+  return typeof itemCount === 'number' && valueKind === 'array'
+    && itemCount > 0 && itemCount <= 9007199254740991 && itemCount % 1 === 0
+    && itemCount === bindingCount && plainBindings && !hasSpread;
+}
+
+/**
+ * The first mutable literal-binding profile belongs to a function lexical
+ * owner. Discovery counts actual declarations in that owner; only its direct
+ * parameter owner can conflict. A nested block or for header may shadow it.
+ * @param {string} language @param {boolean} duplicateDeclarations
+ * @param {boolean} parameterConflict @param {boolean} topLevel @returns {boolean}
+ */
+export function acceptJavaScriptMutableArrayBindingOwner(language, duplicateDeclarations, parameterConflict, topLevel) {
+  return language === 'JavaScript' && !duplicateDeclarations && !parameterConflict && !topLevel;
+}

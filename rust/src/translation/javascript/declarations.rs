@@ -1,5 +1,7 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
+use std::collections::HashMap;
+
 use super::infer::infer_javascript_product_types;
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
@@ -604,6 +606,7 @@ impl JavaScriptParser {
         let indexed_writes_before = self.indexed_reference_writes;
         let statements = self.with_lexical_scope(&names, 2, |parser| {
             for parameter in &params {
+                parser.lexical.parameter(&parameter.name);
                 parser.lexical.tag_binding(
                     &parameter.name,
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
@@ -809,7 +812,19 @@ impl JavaScriptParser {
 
     /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
     pub(super) fn block_declarations(&mut self, from: usize, _end: ScanEnd) -> HashSet<String> {
+        self.block_declaration_counts(from).0
+    }
+
+    fn block_declaration_counts(
+        &mut self,
+        from: usize,
+    ) -> (HashSet<String>, HashMap<String, usize>) {
         let mut names = HashSet::new();
+        let mut counts = HashMap::new();
+        let mut collect = |name: String| {
+            names.insert(name.clone());
+            *counts.entry(name).or_insert(0) += 1;
+        };
         let saved = self.cursor.index;
         self.cursor.index = from;
         // Signed Number depth retains the shared parser's malformed-delimiter
@@ -841,26 +856,26 @@ impl JavaScriptParser {
             let binding_start = self.cursor.index;
             let c = &self.cursor;
             if c.peek().kind == TokenKind::Identifier {
-                names.insert(c.peek().value.clone());
+                collect(c.peek().value.clone());
             } else if c.is("{") {
                 let mut offset = 1;
                 while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
                     if c.peek_at(offset).kind == TokenKind::Identifier
                         && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
                     {
-                        names.insert(c.peek_at(offset).value.clone());
+                        collect(c.peek_at(offset).value.clone());
                     }
                     offset += 1;
                 }
             } else if c.is("[") {
                 for token in self.array_binding_names(c.index) {
-                    names.insert(token.value);
+                    collect(token.value);
                 }
             }
             self.cursor.index = binding_start;
         }
         self.cursor.index = saved;
-        names
+        (names, counts)
     }
 
     pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
@@ -877,10 +892,8 @@ impl JavaScriptParser {
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
         self.cursor.expect("{", Some("block"))?;
         let mut tdz = self.scope.tdz.clone();
-        let names = self
-            .block_declarations(self.cursor.index, ScanEnd::Brace)
-            .into_iter()
-            .collect::<Vec<_>>();
+        let (names, counts) = self.block_declaration_counts(self.cursor.index);
+        let names = names.into_iter().collect::<Vec<_>>();
         tdz.extend(names.iter().cloned());
         let inner = Scope {
             locals: self.scope.locals.clone(),
@@ -888,7 +901,10 @@ impl JavaScriptParser {
             mutable: self.scope.mutable.clone(),
         };
         let outer = std::mem::replace(&mut self.scope, inner);
-        let statements = self.with_lexical_scope(&names, 0, Self::block_body);
+        let statements = self.with_lexical_scope(&names, 0, |parser| {
+            parser.lexical.declaration_counts(counts);
+            parser.block_body()
+        });
         self.scope = outer;
         statements
     }

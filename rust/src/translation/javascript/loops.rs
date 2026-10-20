@@ -1,8 +1,9 @@
 //! `let`, assignments, `while`, `do … while`, `for`, `break` and `continue`.
 
 use super::{
-    ASSIGNMENTS, COMPOUND, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token, TokenKind,
-    TranslationError, accept_java_script_line_terminator, joined, node, span, unsupported,
+    ASSIGNMENTS, COMPOUND, HashSet, JavaScriptParser, Jumps, Result, SExpr, SNode, Stmt, Token,
+    TokenKind, TranslationError, accept_java_script_line_terminator, joined, node, span,
+    unsupported,
 };
 use crate::translation::surface::BinaryOp;
 
@@ -10,7 +11,7 @@ impl JavaScriptParser {
     /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();
-        if self.cursor.is("{") || self.cursor.is("[") {
+        if self.cursor.is("{") {
             return Err(unsupported(
                 "let destructuring",
                 "declare each binding with its own let",
@@ -18,9 +19,30 @@ impl JavaScriptParser {
             ));
         }
         let mut statements = Vec::new();
+        let mut names = HashSet::new();
         loop {
+            if self.cursor.is("[") {
+                statements.extend(self.mutable_array_declaration(&start, &mut names)?);
+                if self.cursor.eat(",").is_none() {
+                    return Ok(statements);
+                }
+                continue;
+            }
+            if self.cursor.is("{") {
+                return Err(unsupported(
+                    "let destructuring",
+                    "declare each binding with its own let",
+                    Some(self.to_here(&start)),
+                ));
+            }
             let name = self.cursor.identifier(Some("let"))?;
             reserved(&name)?;
+            if !names.insert(name.value.clone()) {
+                return Err(TranslationError::syntax(
+                    format!("duplicate lexical binding {}", name.value),
+                    Some(name.span()),
+                ));
+            }
             // The binding is in its temporal dead zone in its own initialiser.
             self.scope.tdz.insert(name.value.clone());
             let value = if self.cursor.eat("=").is_some() {

@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
@@ -123,7 +123,7 @@ class JavaScriptParser {
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
     // Parser-local origins survive early builtin normalization and body
     // lowering. They are validated before type inference, never emitted as IR.
-    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map() }];
+    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map(), declarationCounts: new Map(), parameters: new Set() }];
     this.lexicalScope = 0;
     this.lexicalReads = [];
     // Enclosing loops and switches, for `break` and `continue`.
@@ -642,6 +642,7 @@ class JavaScriptParser {
     }
     const indexedWritesBefore = this.indexedReferenceWrites;
     const statements = this.withLexicalScope(names, () => {
+      for (const parameter of params) this.lexicalParameter(parameter.name);
       for (const parameter of params) this.rememberTagBinding(parameter.name, { type: parameter.type });
       return statementsOf();
     }, 2);
@@ -767,9 +768,13 @@ class JavaScriptParser {
   }
 
   /** Every lexical declaration's names remain in their temporal dead zone until initialized. */
-  blockDeclarations(from) {
+  blockDeclarations(from, _end = null, counts = null) {
     const c = this.cursor;
     const names = new Set();
+    const collect = name => {
+      names.add(name);
+      if (counts) counts.set(name, (counts.get(name) ?? 0) + 1);
+    };
     const saved = c.index;
     c.index = from;
     let depth = 0;
@@ -783,13 +788,13 @@ class JavaScriptParser {
       else if (step === 5) declaration = false;
       if (step !== 3 && step !== 4) continue;
       declaration = true;
-      if (c.peek().kind === 'identifier') names.add(c.peek().value);
+      if (c.peek().kind === 'identifier') collect(c.peek().value);
       else if (c.is('[')) {
-        for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
+        for (const binding of arrayBindingNames(this, c.index)) collect(binding.value);
       }
       else if (c.is('{')) {
         for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
-          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
+          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) collect(c.peek(offset).value);
         }
       }
     }
@@ -801,11 +806,15 @@ class JavaScriptParser {
     const c = this.cursor;
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
-    const names = this.blockDeclarations(c.index);
+    const counts = new Map();
+    const names = this.blockDeclarations(c.index, null, counts);
     for (const name of names) tdz.add(name);
     this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
-      return this.withLexicalScope(names, parse);
+      return this.withLexicalScope(names, () => {
+        this.lexicalScopes[this.lexicalScope].declarationCounts = counts;
+        return parse();
+      });
     } finally {
       this.scope = outer;
     }
@@ -822,7 +831,7 @@ class JavaScriptParser {
   withLexicalScope(names, parse, boundary = 0) {
     const outer = this.lexicalScope;
     this.lexicalScope = this.lexicalScopes.length;
-    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });
+    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map(), declarationCounts: new Map(), parameters: new Set() });
     for (const name of names) this.lexicalBinding(name);
     try { return parse(); } finally { this.lexicalScope = outer; }
   }
@@ -830,6 +839,11 @@ class JavaScriptParser {
   lexicalBinding(name, initializedAt = -1) {
     const bindings = this.lexicalScopes[this.lexicalScope].bindings;
     if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);
+  }
+
+  lexicalParameter(name) {
+    this.lexicalScopes[this.lexicalScope].parameters.add(name);
+    this.lexicalBinding(name);
   }
 
   lexicalRead(token, assignment = false, where = span(token, token)) {
@@ -1017,11 +1031,51 @@ class JavaScriptParser {
   letDeclarations() {
     const c = this.cursor;
     const start = c.next();
-    if (c.is('{') || c.is('[')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
+    if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
     const statements = [];
+    const names = new Set();
     do {
+      if (c.is('[')) {
+        const pattern = c.peek();
+        const bindings = readArrayBinding(this);
+        if (!c.eat('=')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, pattern));
+        const value = readArrayBindingInitializer(this, bindings, () => this.expr());
+        const items = value.k === 'array' ? value.items : [];
+        const plain = bindings.every((binding, index) => binding.index === index && !binding.path
+          && !binding.rest && !Object.hasOwn(binding, 'defaultValue'));
+        if (!acceptJavaScriptMutableArrayBinding(value.k, items.length, bindings.length, plain,
+          items.some(item => item.spread))) {
+          throw unsupported('let destructuring', 'declare each binding with its own let', span(start, pattern));
+        }
+        const owner = this.lexicalScopes[this.lexicalScope];
+        const parent = this.lexicalScopes[owner.parent];
+        for (const binding of bindings) {
+          if (!acceptJavaScriptMutableArrayBindingOwner('JavaScript', (owner.declarationCounts.get(binding.name) ?? 0) > 1,
+            parent?.parameters.has(binding.name) === true, this.topLevel)) {
+            if (this.topLevel) throw unsupported('let destructuring', 'mutable literal bindings require a function-owned lexical scope', span(start, pattern));
+            throw new TranslationError('syntax', `duplicate lexical binding ${binding.name}`, binding.span);
+          }
+        }
+        const where = span(start, c.peek());
+        const name = `ml_binding${++this.generatedCount}`;
+        const object = { k: 'name', path: [name], span: where };
+        const declarations = bindArrayElements(bindings, object, 'let', where).map(statement => ({
+          ...statement, value: { ...statement.value, provenInBounds: true },
+        }));
+        statements.push({ s: 'const', name, value, span: where }, ...declarations);
+        for (const binding of bindings) {
+          if (names.has(binding.name)) throw new TranslationError('syntax', `duplicate lexical binding ${binding.name}`, binding.span);
+          names.add(binding.name);
+          this.declareLocal(binding.name, true);
+          this.lexicalBinding(binding.name, c.peek().start);
+        }
+        continue;
+      }
+      if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
       const name = c.identifier('let');
       reserved(name);
+      if (names.has(name.value)) throw new TranslationError('syntax', `duplicate lexical binding ${name.value}`, span(name, name));
+      names.add(name.value);
       // The binding is in its temporal dead zone in its own initialiser.
       this.scope.tdz.add(name.value);
       const value = c.eat('=') ? this.expr() : { k: 'none', absence: 'undefined', span: span(start, name) };
