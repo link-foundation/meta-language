@@ -183,7 +183,7 @@ fn native_type_script_receivers_match_all_shared_erasure_typing_and_translation_
                     native
                         .items
                         .iter()
-                        .all(|item| matches!(item.status.as_str(), "translated" | "comment")),
+                        .all(|item| matches!(item.status, "translated" | "comment")),
                     "{}",
                     case["id"]
                 );
