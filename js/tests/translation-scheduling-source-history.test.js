@@ -11,7 +11,7 @@ test('current scheduling repairs authenticate every actual source and preserve c
   const history=readProjectData(new URL('../../parity/self-translation/ci-39403403220-scheduling-sources-history.lino',import.meta.url));
   assert.equal(history.sources.length,6);
   for(const row of history.sources){
-    const current=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');
+    const current=restoreNativeGraphSourceHistory(row.file,readFileSync(new URL('../../'+row.file,import.meta.url),'utf8'));
     assert.equal(Buffer.byteLength(current),row.current.bytes);
     assert.equal(createHash('sha256').update(current).digest('hex'),row.current.sha256);
     assert.equal(restoreSchedulingSourceHistory(row.file,current),row.sourceText);
@@ -20,3 +20,5 @@ test('current scheduling repairs authenticate every actual source and preserve c
   }
   assert.equal(restoreSchedulingSourceHistory('unknown/source.js','visible unknown source'),'visible unknown source');
 });
+
+import {restoreNativeGraphSourceHistory} from '../scripts/native-graph-source-history.mjs';

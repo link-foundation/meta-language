@@ -194,6 +194,7 @@ mod structured_data_records;
 mod substitution;
 mod translation;
 mod translation_arrays;
+mod translation_concrete_program_graphs;
 mod translation_console_format;
 mod translation_constructor_tags;
 mod translation_defaults;

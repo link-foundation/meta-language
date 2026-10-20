@@ -12,7 +12,7 @@ test('all current CI source views retain certified complete predecessors and ref
   for(const name of ['check','guard']){
     const archive=readProjectData(new URL('../../parity/self-translation/ci-39394008799-'+name+'-sources-history.lino',import.meta.url));
     for(const row of archive.sources){
-      const source=restoreSchedulingSourceHistory(row.file,readFileSync(new URL('../../'+row.file,import.meta.url),'utf8'));
+      const source=restoreSchedulingSourceHistory(row.file,restoreNativeGraphSourceHistory(row.file,readFileSync(new URL('../../'+row.file,import.meta.url),'utf8')));
       assert.equal(createHash('sha256').update(source).digest('hex'),row.current.sha256);
       assert.equal(Buffer.byteLength(source),row.current.bytes);
       assert.equal(restoreCiRepairSourceHistory(row.file,source),row.sourceText);
@@ -26,3 +26,5 @@ test('all current CI source views retain certified complete predecessors and ref
 });
 
 import {restoreSchedulingSourceHistory} from '../scripts/scheduling-source-history.mjs';
+
+import {restoreNativeGraphSourceHistory} from '../scripts/native-graph-source-history.mjs';

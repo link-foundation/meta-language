@@ -2899,6 +2899,16 @@ or suppress syntax retention. Semantic operation edits change the emitted progra
 while every original concrete byte stays available through text and binary
 reload. This remains an experimental composition of the supported frontend
 domains, with native execution and public package integration still required.
+Five additional native graph inputs cover the three original frontends and
+JavaScript/Rust semantic edits. Their registered Rust unit and dependency-free
+process transport are generated mechanically from complete certified predecessor
+controls through explicit Links edits. Inverting those edits reconstructs the
+original consumer bodies. The native package reloads each graph, preserves its
+complete wire representation, emits both targets and compares actual executions
+with independent expected lines. Existing artifact uploads retain their sources
+and observations after failures. Local controls check generation and refuse
+native execution before resolving a compiler; actual native results remain a CI
+obligation.
 
 Unary field and index updates retain their operand-free update representation.
 Type inference constrains the selected numeric slot for prefix and postfix
