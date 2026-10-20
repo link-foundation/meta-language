@@ -3092,8 +3092,16 @@ select the active package patch range and exact implementation source. They reta
 every original item and full source round trip. Carried top-level effects remain
 visible and complete translation remains an unmet obligation.
 The raw native consumer's ten-second execution bound remains unchanged after
-this run exceeded it while making progress. Its performance repair and every
-other failed CI check remain required before the next push.
+this run exceeded it while making progress. A recorded finite source lowering
+now borrows 40 immutable primitive column locals across six readers. It retains
+all complete source owners, interfaces and original invocation/result controls;
+unknown source profiles refuse. Native execution and timing still require CI.
+The corrected library packaging has an independently authenticated source-history
+edge. It restores both complete prior receipts before their original gates,
+while checking the actual corrected module and retaining every emitted algorithm,
+archive and declaration. Historical source adapters likewise recheck complete
+current bytes before restoring their original assertions. These views establish
+source conservation and never supply native execution evidence.
 
 CI follows the same order as development. One workflow
 ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) runs the

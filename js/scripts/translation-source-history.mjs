@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
+import {restoreNativeLibrarySource} from './native-library-receipt-history.mjs';
 
 const historyFile = new URL('../../parity/self-translation/translation-source-history.lino', import.meta.url);
 const historyHash = '98b15162cdde0048ec44ee864f3ac5ace3cdd00cb4d5efd8a82335a4ef759a9d';
@@ -12,6 +13,7 @@ let history;
 export function restoreTranslationSourceHistory(source, file, revision) {
   assert.equal(typeof source, 'string', 'a complete source string is required');
   assert.ok(Buffer.byteLength(source) <= 1024 * 1024, 'bounded complete source required');
+  source=restoreNativeLibrarySource(source,file);
   if (!history) {
     const bytes = readFileSync(historyFile);
     assert.equal(digest(bytes), historyHash, 'the whole reviewed inverse policy remains exact');

@@ -9,6 +9,7 @@ import {readStructuredDataLino,structuredDataToLino} from '../src/structured-dat
 import {tokenize} from '../src/translation/lexer.js';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
+import {restoreNativeLibraryReceipt} from '../scripts/native-library-receipt-history.mjs';
 import {readHistoricalTranslationSourceDescriptorRegister,projectHistoricalTranslationSourceDescriptorArtifact}
  from '../scripts/current-translation-source-descriptors.mjs';
 
@@ -25,7 +26,13 @@ test('current declaration receipts restore both complete immutable prior artifac
   assert.deepEqual(restored,readStructuredDataLino(previous.toString()));
   assert.deepEqual(restoreCompleteDeclarationReceipt(restored,receipt.identity),restored);
   const semantic=receipt.identity==='raw consuming'?['completeRust','owners','declarationNames','totals','assumptions','encodings','preludeHashes','replays']:['sourceClosure','emittedTextBytes','emittedTextSha256','library'];
-  for(const field of semantic)assert.deepEqual(current[field],restored[field]);
+  const packagingView=restoreNativeLibraryReceipt(current,receipt.identity);
+  for(const field of semantic)assert.deepEqual(packagingView[field],restored[field]);
+  for(const field of semantic.filter(field=>field!=='library'))assert.deepEqual(current[field],packagingView[field]);
+  if(receipt.identity==='collection construction')for(const file of current.library.files){
+   const bytes=readFileSync(new URL('rust/src/translation/'+file.path,root));
+   assert.equal(bytes.length,file.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sourceSha256);
+  }
   assert.deepEqual(readFileSync(new URL(receipt.current.file,root)),Buffer.from(structuredDataToLino(current)));
  }
 });

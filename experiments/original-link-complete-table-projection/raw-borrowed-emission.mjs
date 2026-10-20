@@ -7,6 +7,7 @@ import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {tokenize} from '../../js/src/translation/lexer.js';
 import {readPortableSourceParameterStyles} from '../../js/scripts/portable-source-library-style.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT, readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {readOriginalRawColumnLoanStyles} from './raw-column-loan-styles.mjs';
 
 export const ORIGINAL_LINK_RAW_BORROWED_RECEIPT = new URL('./data/raw-borrowed-parameter-receipt.lino', import.meta.url);
 const root = new URL('../../', import.meta.url);
@@ -17,6 +18,7 @@ const decisions = [
   'js/scripts/portable-source-library-style.mjs',
   'js/scripts/source-text-byte-library-style.mjs',
   'js/src/translation/lexer.js',
+  'experiments/original-link-complete-table-projection/raw-column-loan-styles.mjs',
 ];
 const cloneCalls = source => {
   const tokens = tokenize(source, 'Rust').tokens;
@@ -34,7 +36,9 @@ export function prepareOriginalLinkRawBorrowedEmission(predecessor, {read = read
   const source = stored.completeRust;
   assert.deepEqual(descriptor(source), {bytes: predecessor.sourceBytes, sha256: predecessor.sourceSha256});
   const options = {ownedParameters: {check_original_link_raw_shape: ['columns']}};
-  const styled = readPortableSourceParameterStyles(source, options);
+  const parameters = readPortableSourceParameterStyles(source, options);
+  const columns = readOriginalRawColumnLoanStyles(parameters.source);
+  const styled = {source:columns.source,actions:[...parameters.actions,...columns.actions]};
   const names = text => [...text.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const header = text => text.split('\n').find(line => line.startsWith('pub fn check_original_link_raw_shape('));
   assert.equal(names(source).length, 62);
@@ -56,6 +60,7 @@ export function prepareOriginalLinkRawBorrowedEmission(predecessor, {read = read
     styles: styled.actions.map(action => ({name: names(action.from)[0],
       before: descriptor(action.from), after: descriptor(action.to)})),
     cloneCalls: {before: cloneCalls(source), after: cloneCalls(styled.source)},
+    columnLoans:columns.record,
     nativeCompilation: false, nativeExecution: false,
     boundary: 'Exact mechanical parameter styles and whole predecessor inverse; no native timing or execution claim.'};
   assert.ok(receipt.cloneCalls.after < receipt.cloneCalls.before);

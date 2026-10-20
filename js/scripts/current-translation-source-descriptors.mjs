@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
+import {restoreNativeLibraryReceipt} from './native-library-receipt-history.mjs';
 
 const policyFile=new URL('../../parity/self-translation/current-translation-source-descriptors.lino',import.meta.url);
 const registerFile=new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
@@ -58,6 +59,7 @@ export function readHistoricalTranslationSourceDescriptorRegister(){
 }
 
 export function projectHistoricalTranslationSourceDescriptorArtifact(artifact){
+  artifact=restoreNativeLibraryReceipt(artifact,'raw consuming');
   const selected=readSourceDescriptorPolicy(),bytes=Buffer.from(structuredDataToLino(artifact));
   assert.ok([selected.edge.current.sha256,selected.edge.previous.sha256].includes(hash(bytes)),
     'a historical descriptor view requires one complete registered artifact');

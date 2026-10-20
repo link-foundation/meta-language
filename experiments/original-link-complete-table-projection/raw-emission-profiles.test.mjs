@@ -7,6 +7,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
 import {restoreTranslationSourceHistory} from '../../js/scripts/translation-source-history.mjs';
+import {readNativeLibraryReceiptProfile} from '../../js/scripts/native-library-receipt-history.mjs';
 import { COMPLETE_DECLARATION_RECEIPTS, restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { LinkNetwork } from '../../js/src/network.js';
@@ -380,7 +381,7 @@ test('the archive receipt successor retains every original producer pin and comp
   assert.deepEqual(before.producerApplicability.sources, [ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[0],
     ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference,
     ...ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies]);
-  const currentDescriptor = readProjectData(COMPLETE_DECLARATION_RECEIPTS).receipts.find(row => row.identity === 'collection construction').current;
+  const currentDescriptor = readNativeLibraryReceiptProfile('collection construction');
   assert.deepEqual(after.producerApplicability.sources, before.producerApplicability.sources.map(row =>
     row.file === refresh.current.file ? currentDescriptor : row), 'actual current bytes have their actual descriptor');
   assert.deepEqual(before.producerApplicability.sourceClosure, after.producerApplicability.sourceClosure);

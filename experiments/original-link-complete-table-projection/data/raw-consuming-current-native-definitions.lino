@@ -302,7 +302,7 @@
 (302: 186 301 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (303: (meta: (t: semantic) (n: 1) (term: number%20value) (def: 233302) (lang: meta-language%20structured%20data)))
 (304: 22 303 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(305: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 0aabd771f2321b4a48f7f807754b33dbbb7ec7262ca98f3bfe812807bd9b4cfc) (lang: meta-language%20structured%20data)))
+(305: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 36dbd7ffcf25a403deab81f489eb9c3ff5e69cbf7f084ea8d9c34a279b2ae626) (lang: meta-language%20structured%20data)))
 (306: 25 305 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (307: 309 311 313 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (308: (meta: (t: semantic) (n: 1) (term: string%20value) (def: js%2Ftests%2Ftranslation-collection-construction.test.js) (lang: meta-language%20structured%20data)))

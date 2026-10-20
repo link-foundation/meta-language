@@ -6,6 +6,7 @@ import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
 import {restoreTranslationSourceHistory} from './translation-source-history.mjs';
 import {restoreCurrentTranslationSourceDescriptors} from './current-translation-source-descriptors.mjs';
+import {restoreNativeLibraryReceipt} from './native-library-receipt-history.mjs';
 
 export const COMPLETE_DECLARATION_RECEIPTS = new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -240,12 +241,14 @@ function readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity
 
 /** The public standalone gate retains its cloned-data result and all checks. */
 export function restoreCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ artifact=restoreNativeLibraryReceipt(artifact,identity);
  ({artifact,register}=restoreCurrentTranslationSourceDescriptors(artifact,identity,register));
  return readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;
 }
 
 /** Restore only a recorded source endpoint, archive receipt or source descriptor. */
 export function restoreCompleteDeclarationReceipt(artifact,identity,{register=readProjectData(COMPLETE_DECLARATION_RECEIPTS)}={}){
+ artifact=restoreNativeLibraryReceipt(artifact,identity);
  ({artifact,register}=restoreCurrentTranslationSourceDescriptors(artifact,identity,register));
  const successor=readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
  artifact=successor.artifact;
