@@ -29,7 +29,15 @@ export function generateSharedBooleanFunctionModel({check=false}={}) {
       'host stack exhaustion and machine resource limits are outside this abstract callable interpretation'],
   };
   assert.equal(Object.hasOwn(previous,'closed boolean function value'),false);
-  const value={...previous,'closed boolean function value':declaration};
+  const directDeclaration={...declaration,
+    interpretation:'closed partial callable value of an original owned Boolean function declaration',
+    entry:'the actual owned function declaration named by exactly one selected function declaration relation on the formal root',
+    sourceQualificationPremise:'JavaScript uses its ordinary checked Boolean declaration; Rust requires the unchanged complete original const predicate program and strict owned source proof before excluding const qualification from runtime callable observations',
+    archive:'the original complete checked typed-program root, declaration identities and source qualification graphs remain unchanged',
+    excludedObservations:[...declaration.excludedObservations,'compile-time admissibility of an original Rust const declaration'],
+  };
+  const value={...previous,'closed boolean function value':declaration,
+    'closed boolean function declaration value':directDeclaration};
   for(const runtime of ['js','rust']){
     const file=new URL('../../'+runtime+'/src/data/formal-concept-models.lino',import.meta.url);
     if(check)checkProjectData(file,value);else writeProjectData(file,value);

@@ -16,6 +16,11 @@ use crate::shared_numeric_function_rules::{
     accept_shared_numeric_unary, infer_shared_boolean_binary_domain,
 };
 use crate::structured_data_links::{StructuredDataValue, encode_structured_data_links_ordered};
+use crate::translation::boolean_declaration_value_rules::{
+    accept_boolean_declaration_value_context, accept_boolean_declaration_value_entry,
+    accept_boolean_declaration_value_selector,
+};
+use crate::translation::source_const_functions::validate_const_functions;
 use crate::typed_program_links::{
     decode_typed_program_links, label_of, typed_program_links_schema,
 };
@@ -23,6 +28,8 @@ use crate::{LinkId, LinkNetwork, LinkType};
 
 pub const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
 pub const SHARED_BOOLEAN_FUNCTION_MODEL: &str = "closed boolean function value";
+pub const BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL: &str =
+    "closed boolean function declaration value";
 
 fn fail(message: &str) -> String {
     format!("shared numeric function: {message}")
@@ -169,6 +176,7 @@ pub struct SharedNumericFunctionModel {
     pub language_label: String,
     literals: Vec<Relation>,
     pub signature_fields: Vec<(LinkId, String)>,
+    pub qualification_fields: Vec<(LinkId, String)>,
     pub entry_target: LinkId,
     pub declaration_ids: BTreeSet<LinkId>,
 }
@@ -178,14 +186,22 @@ pub fn read_shared_numeric_function_model(
     root: LinkId,
     canonical: bool,
 ) -> Result<SharedNumericFunctionModel, String> {
-    read_shared_function_value_model(network, root, canonical, false)
+    read_shared_function_value_model(network, root, canonical, false, None)
 }
 
 pub fn read_shared_boolean_function_model(
     network: &LinkNetwork,
     root: LinkId,
 ) -> Result<SharedNumericFunctionModel, String> {
-    read_shared_function_value_model(network, root, false, true)
+    read_shared_function_value_model(network, root, false, true, None)
+}
+
+pub fn read_boolean_function_declaration_value_model(
+    network: &LinkNetwork,
+    root: LinkId,
+    entry_declaration: LinkId,
+) -> Result<SharedNumericFunctionModel, String> {
+    read_shared_function_value_model(network, root, false, true, Some(entry_declaration))
 }
 
 fn read_shared_function_value_model(
@@ -193,6 +209,7 @@ fn read_shared_function_value_model(
     root: LinkId,
     canonical: bool,
     boolean_only: bool,
+    entry_declaration: Option<LinkId>,
 ) -> Result<SharedNumericFunctionModel, String> {
     let checked = decode_typed_program_links(network, root).map_err(|error| error.to_string())?;
     // Serialization exposes the same checked field names that JS traverses.
@@ -231,11 +248,54 @@ fn read_shared_function_value_model(
         .iter()
         .map(|value| string(&value["fullName"]))
         .collect();
+    let selected_name = if let Some(selected) = entry_declaration {
+        validate_const_functions(&checked).map_err(|error| error.to_string())?;
+        let const_proof = declarations
+            .iter()
+            .any(|entry| entry.get("sourceConstFunction").is_some());
+        if !accept_boolean_declaration_value_context(language, const_proof) {
+            return Err(fail(
+                "the direct declaration model requires JavaScript or the complete original Rust const proof",
+            ));
+        }
+        let directory = relation(&fields, body, &label_of("declarations"))
+            .ok_or_else(|| fail("missing declaration mapping"))?
+            .child;
+        let name = network
+            .link(directory)
+            .into_iter()
+            .flat_map(|link| link.references())
+            .find_map(|id| {
+                let pair = network.link(*id)?.references();
+                if pair.get(1).copied() != Some(selected) {
+                    return None;
+                }
+                pair.first().and_then(|name| definition(network, *name))
+            });
+        if !accept_boolean_declaration_value_selector(true, name.is_some()) {
+            return Err(fail(
+                "the selected identity is not an actual owned declaration",
+            ));
+        }
+        name.ok_or_else(|| fail("missing selected declaration name"))?
+    } else {
+        "selected_function_definition"
+    };
     let entry = declarations
         .iter()
-        .find(|value| value["fullName"] == "selected_function_definition")
+        .find(|value| value["fullName"] == selected_name)
         .ok_or_else(|| fail("a checked selected-function wrapper is required"))?;
-    if !accept_shared_numeric_entry(
+    if entry_declaration.is_some() {
+        if !accept_boolean_declaration_value_entry(
+            string(&entry["k"]),
+            nonempty(&entry["modulePath"]),
+            entry["generated"] == true,
+        ) {
+            return Err(fail(
+                "the selected value needs an original flat function declaration",
+            ));
+        }
+    } else if !accept_shared_numeric_entry(
         entry["generated"] == true,
         string(&entry["body"]["k"]),
         owned.contains(string(&entry["body"]["fn"])),
@@ -252,7 +312,9 @@ fn read_shared_function_value_model(
         }
         let signature = &declaration["sourceSignature"];
         if language == "Rust" {
-            if signature.is_null() && !std::ptr::eq(declaration, entry) {
+            if signature.is_null()
+                && (!std::ptr::eq(declaration, entry) || entry_declaration.is_some())
+            {
                 return Err(fail(
                     "a Rust function needs its owned source signature facet",
                 ));
@@ -429,51 +491,62 @@ fn read_shared_function_value_model(
                 })
         })
         .collect::<Result<_, _>>()?;
-    let entry_id = network
-        .link(directory)
-        .ok_or_else(|| fail("missing declaration mapping"))?
-        .references()
-        .iter()
-        .find_map(|id| {
-            let pair = network.link(*id)?.references();
-            if definition(network, *pair.first()?) == Some("selected_function_definition") {
-                pair.get(1).copied()
-            } else {
-                None
-            }
-        })
-        .ok_or_else(|| fail("missing selected wrapper identity"))?;
-    let child = |id, name: &str| {
-        relation(&fields, id, &label_of(name))
-            .map(|field| field.child)
-            .ok_or_else(|| fail("missing selected wrapper field"))
+    let target = if let Some(selected) = entry_declaration {
+        if !accept_boolean_declaration_value_selector(true, declaration_ids.contains(&selected)) {
+            return Err(fail(
+                "the selected identity is not an actual owned declaration",
+            ));
+        }
+        selected
+    } else {
+        let entry_id = network
+            .link(directory)
+            .ok_or_else(|| fail("missing declaration mapping"))?
+            .references()
+            .iter()
+            .find_map(|id| {
+                let pair = network.link(*id)?.references();
+                if definition(network, *pair.first()?) == Some("selected_function_definition") {
+                    pair.get(1).copied()
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| fail("missing selected wrapper identity"))?;
+        let child = |id, name: &str| {
+            relation(&fields, id, &label_of(name))
+                .map(|field| field.child)
+                .ok_or_else(|| fail("missing selected wrapper field"))
+        };
+        let entry_body = child(entry_id, "body")?;
+        let params_id = child(entry_id, "params")?;
+        let params = network
+            .link(params_id)
+            .ok_or_else(|| fail("missing selected wrapper parameters"))?
+            .references();
+        let args_id = child(entry_body, "args")?;
+        let args = network
+            .link(args_id)
+            .ok_or_else(|| fail("missing selected wrapper arguments"))?
+            .references();
+        let target = child(entry_body, string(&schema["references"]["declaration"]))?;
+        if target == entry_id
+            || args.len() != params.len()
+            || args.iter().zip(params).any(|(argument, parameter)| {
+                child(*argument, string(&schema["references"]["binding"])) != Ok(*parameter)
+            })
+        {
+            return Err(fail(
+                "the selected wrapper must pass each owned parameter to a distinct declared function",
+            ));
+        }
+        target
     };
-    let entry_body = child(entry_id, "body")?;
-    let params_id = child(entry_id, "params")?;
-    let params = network
-        .link(params_id)
-        .ok_or_else(|| fail("missing selected wrapper parameters"))?
-        .references();
-    let args_id = child(entry_body, "args")?;
-    let args = network
-        .link(args_id)
-        .ok_or_else(|| fail("missing selected wrapper arguments"))?
-        .references();
-    let target = child(entry_body, string(&schema["references"]["declaration"]))?;
-    if target == entry_id
-        || args.len() != params.len()
-        || args.iter().zip(params).any(|(argument, parameter)| {
-            child(*argument, string(&schema["references"]["binding"])) != Ok(*parameter)
-        })
-    {
-        return Err(fail(
-            "the selected wrapper must pass each owned parameter to a distinct declared function",
-        ));
-    }
     let mut seen = BTreeSet::new();
     let mut pending = vec![root];
     let mut literals = Vec::new();
     let mut signature_fields = Vec::new();
+    let mut qualification_fields = Vec::new();
     let mut at = 0;
     while at < pending.len() {
         if pending.len() > 100_000 {
@@ -528,6 +601,16 @@ fn read_shared_function_value_model(
             }
             signature_fields.push((id, signature.label.clone()));
         }
+        if entry_declaration.is_some()
+            && let Some(qualification) = relation(&fields, id, &label_of("sourceConstFunction"))
+        {
+            if !declaration_ids.contains(&id) {
+                return Err(fail(
+                    "a const qualification belongs only to its original owned declaration",
+                ));
+            }
+            qualification_fields.push((id, qualification.label.clone()));
+        }
         let kind = relation(&fields, id, &label_of("k"));
         let value = relation(&fields, id, &label_of("value"));
         if kind.is_some_and(|field| definition(network, field.child) == Some("lit"))
@@ -546,6 +629,7 @@ fn read_shared_function_value_model(
         language_label: source.label.clone(),
         literals,
         signature_fields,
+        qualification_fields,
         entry_target: target,
         declaration_ids,
     })

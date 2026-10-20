@@ -10,10 +10,12 @@ use serde_json::{Value, json};
 
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::shared_numeric_function_model::{
-    SHARED_BOOLEAN_FUNCTION_MODEL, SHARED_NUMERIC_FUNCTION_MODEL,
-    create_shared_numeric_function_meaning, read_shared_boolean_function_model,
+    BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL, SHARED_BOOLEAN_FUNCTION_MODEL,
+    SHARED_NUMERIC_FUNCTION_MODEL, create_shared_numeric_function_meaning,
+    read_boolean_function_declaration_value_model, read_shared_boolean_function_model,
     read_shared_numeric_function_model,
 };
+use crate::translation::boolean_declaration_value_rules::accept_boolean_declaration_value_selector;
 use crate::translation::ir::Program;
 use crate::typed_program_links::{
     emit_typed_program_links, encode_typed_program_links_with_provenance,
@@ -183,6 +185,7 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     if model == "checked typed program"
         || model == SHARED_NUMERIC_FUNCTION_MODEL
         || model == SHARED_BOOLEAN_FUNCTION_MODEL
+        || model == BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL
     {
         let bindings = read_typed_program_binding_identities(network, body)
             .map_err(|error| error.to_string())?;
@@ -204,9 +207,33 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         // by the checked scope walk. Unreachable relation links cannot mark
         // semantic field names or public declarations as lexical bindings.
         exclude_binding_names(network, body, &mut exclusions, &bindings)?;
-        if model == SHARED_NUMERIC_FUNCTION_MODEL || model == SHARED_BOOLEAN_FUNCTION_MODEL {
-            let boolean_value = model == SHARED_BOOLEAN_FUNCTION_MODEL;
-            let shared = if boolean_value {
+        if model == SHARED_NUMERIC_FUNCTION_MODEL
+            || model == SHARED_BOOLEAN_FUNCTION_MODEL
+            || model == BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL
+        {
+            let declaration_value = model == BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL;
+            let boolean_value = model == SHARED_BOOLEAN_FUNCTION_MODEL || declaration_value;
+            let shared = if declaration_value {
+                let entries = fields(network).remove(&value.root).unwrap_or_default();
+                let selectors: Vec<_> = entries
+                    .iter()
+                    .filter(|field| field.label == "selected function declaration")
+                    .collect();
+                if !accept_boolean_declaration_value_selector(selectors.len() == 1, true) {
+                    return Err(
+                        "the direct declaration basis requires exactly one owned entry selector"
+                            .to_owned(),
+                    );
+                }
+                let shared = read_boolean_function_declaration_value_model(
+                    network,
+                    body,
+                    selectors[0].child,
+                )?;
+                exclusions.insert((value.root, "selected function declaration".to_owned()));
+                exclusions.extend(shared.qualification_fields.iter().cloned());
+                shared
+            } else if boolean_value {
                 read_shared_boolean_function_model(network, body)?
             } else {
                 read_shared_numeric_function_model(network, body, false)?
@@ -254,6 +281,11 @@ pub fn encode_formal_concept_definition(
 ) -> Result<FormalConceptArchive, String> {
     let options = options.into();
     let model = options.model.as_str();
+    if model == BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL {
+        return Err(
+            "the direct declaration basis requires an actual owned entry selector".to_owned(),
+        );
+    }
     let declaration = models()
         .get(model)
         .ok_or("unsupported formal primitive model")?;
@@ -301,6 +333,35 @@ pub fn encode_formal_concept_definition(
     let result = FormalConceptArchive { network, root };
     checked(&result)?;
     Ok(result)
+}
+
+// Private graph constructor for the additive declaration-value entry API.
+// The public options type and original wrapper constructor remain unchanged.
+pub(crate) fn encode_formal_function_declaration_context(
+    network: &LinkNetwork,
+    typed_root: LinkId,
+    entry_declaration: LinkId,
+    provenance: Option<&Value>,
+) -> Result<FormalConceptArchive, String> {
+    let mut network = network.clone();
+    let model = BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL;
+    let declaration = models()
+        .get(model)
+        .ok_or("unsupported formal primitive model")?;
+    let declaration_root = data(&mut network, declaration)?;
+    let basis = network.insert_link(
+        [declaration_root],
+        metadata("formal primitive model", Some(model)),
+    );
+    let root = network.insert_link([typed_root, basis], metadata(ROOT, Some(SCHEMA)));
+    network.insert_field(root, "selected function declaration", entry_declaration);
+    if let Some(provenance) = provenance {
+        let provenance = data(&mut network, provenance)?;
+        network.insert_field(root, "provenance", provenance);
+    }
+    let archive = FormalConceptArchive { network, root };
+    checked(&archive)?;
+    Ok(archive)
 }
 
 /// Portable preparation for the generated closed-bijection verifier.

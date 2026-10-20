@@ -1,6 +1,6 @@
 // A function definition is its declared interface and actual recursive closure.
 // Public names, source-language context and primitive semantics stay meaningful.
-import { encodeFormalConceptDefinition } from './formal-concept-definition.js';
+import { encodeFormalConceptDefinition, encodeFormalFunctionDeclarationContext } from './formal-concept-definition.js';
 import { acceptFormalFunctionDeclaration, acceptFormalFunctionDependency, includeFormalFunctionRelation } from './formal-function-rules.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
 import { LinkNetwork } from './network.js';
@@ -126,4 +126,23 @@ export function encodeFormalFunctionDefinition(value, declaration, { provenance 
   redirectSignature(network, input.declarations.get(name), generated.network, prepared.declarations.get(entryName), redirects);
   const selectedProgram = importSelection(network, generated.network, generated.root, redirects);
   return encodeFormalConceptDefinition(selectedProgram, { provenance });
+}
+
+/**
+ * Select an original flat Boolean declaration as a callable value. The complete
+ * checked typed root and any strictly validated Rust const proof stay unchanged;
+ * only an explicit formal-root edge selects its actual owned identity.
+ */
+export function encodeFormalFunctionDeclarationValue(value, declaration, { provenance } = {}) {
+  const network = value?.network ?? (typeof value?.links === 'string' ? LinkNetwork.fromLino(value.links) : null);
+  if (!(network instanceof LinkNetwork)) fail('a checked linked program is required');
+  const root = LinkId.from(value.root);
+  encodeFormalConceptDefinition({ network, root });
+  const program = decodeTypedProgramLinks(network, root);
+  const input = directory(network, root, relations(network));
+  const name = typeof declaration === 'string' ? declaration
+    : [...input.declarations].find(([, id]) => key(id) === key(declaration))?.[0];
+  const chosen = program.declarations.get(name);
+  if (!chosen || !acceptFormalFunctionDeclaration(chosen.k)) fail('the selected identity is not an owned function declaration');
+  return encodeFormalFunctionDeclarationContext({ network, root }, input.declarations.get(name), { provenance });
 }
