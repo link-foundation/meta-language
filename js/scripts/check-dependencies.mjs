@@ -21,6 +21,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData, resolveProjectDataPath, writeProjectData } from './project-data.mjs';
+import {retainDependencyInventoryOrder} from './dependency-inventory-order.mjs';
 
 import {
   AUDIT_DOCUMENT,
@@ -71,7 +72,7 @@ async function main(argv) {
   if (argv.includes('--refresh-declarations')) {
     const previous = readInventory();
     if (!previous) throw new Error('a registry audit is required before reconciling local declarations');
-    const inventory = reconcileLocalDeclarations(previous, collected);
+    const inventory = retainDependencyInventoryOrder(previous, reconcileLocalDeclarations(previous, collected));
     writeProjectData(path.join(root, INVENTORY_FILE), inventory);
     writeFileSync(path.join(root, AUDIT_DOCUMENT), renderAuditDocument(inventory));
     console.log(`reconciled local declarations; registry audit date remains ${inventory.auditDate}`);

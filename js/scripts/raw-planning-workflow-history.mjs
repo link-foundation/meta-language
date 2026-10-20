@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreGrammarTestPartitionHistory} from './grammar-test-partition-history.mjs';
 const archive=new URL('../../parity/self-translation/raw-planning-workflow-history.lino',import.meta.url);
 const archiveHash='23e42299350a76de06cd2c986c8739c63f1213835c9f5cae59d11ed9bb950e46';
 let history;
@@ -11,6 +12,7 @@ let history;
 /** Preserve unknown changes for the original guard; authenticate only exact bytes. */
 export function restoreRawPlanningWorkflowHistory(source,file) {
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  source=restoreGrammarTestPartitionHistory(source,file);
   // Legacy guards identify one of these workflows by its complete digest.
   // The certificate below always authenticates the actual JavaScript owner.
   if(!['.github/workflows/js.yml','.github/workflows/ci.yml','.github/workflows/rust.yml'].includes(file))return source;

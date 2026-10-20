@@ -146,9 +146,12 @@ jobs:
           - {group: tooling, partition: 2, shards: 4}
           - {group: tooling, partition: 3, shards: 4}
           - {group: tooling, partition: 4, shards: 4}
-          - {group: grammar, partition: 1, shards: 3}
-          - {group: grammar, partition: 2, shards: 3}
-          - {group: grammar, partition: 3, shards: 3}
+          - {group: grammar, partition: 1, shards: 6}
+          - {group: grammar, partition: 2, shards: 6}
+          - {group: grammar, partition: 3, shards: 6}
+          - {group: grammar, partition: 4, shards: 6}
+          - {group: grammar, partition: 5, shards: 6}
+          - {group: grammar, partition: 6, shards: 6}
           - {group: grammar-native, partition: 1, shards: 6}
           - {group: grammar-native, partition: 2, shards: 6}
           - {group: grammar-native, partition: 3, shards: 6}

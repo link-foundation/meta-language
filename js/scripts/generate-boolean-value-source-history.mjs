@@ -1,7 +1,7 @@
 // Preserve every complete predecessor before giving changed owners new identities.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
@@ -29,6 +29,13 @@ export function generateBooleanValueSourceHistory({check=false}={}) {
     boundary:'Complete certified original source definitions remain independently recoverable. Current Boolean callable operations, exact-data read reuse and workflow adapters receive separate source-qualified identities. This archive supplies no blanket equality, native execution, corrected CI timing or requirement completion evidence.'};
   const file=new URL('parity/naming/boolean-value-source-history.lino',root);
   if(check)checkProjectData(file,value);else writeProjectData(file,value);
+  const reader=new URL('./boolean-value-source-history.mjs',import.meta.url);
+  const currentReader=readFileSync(reader,'utf8');
+  const archiveHash=createHash('sha256').update(readFileSync(file)).digest('hex');
+  const nextReader=currentReader.replace(/const sourceArchiveHash='(?:pending|[a-f0-9]{64})';/u,
+    "const sourceArchiveHash='"+archiveHash+"';");
+  if(check)assert.equal(currentReader,nextReader,'Boolean source guard archive pin');
+  else writeFileSync(reader,nextReader);
   return value;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){

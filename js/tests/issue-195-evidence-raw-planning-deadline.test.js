@@ -5,12 +5,13 @@ import {captureGitArtifactCertificate} from '../scripts/capture-git-artifact-cer
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {parseWorkflow} from '../../scripts/check-cache-policy.mjs';
 import {restoreRawPlanningWorkflowHistory} from '../scripts/raw-planning-workflow-history.mjs';
+import {restoreGrammarTestPartitionHistory} from '../scripts/grammar-test-partition-history.mjs';
 
 test('raw generation and complete replay retain every prior command and assertion in distinct required ten-minute jobs',()=>{
   const revision='76e27c44c5854a2cb547aea5cef06ea80adf729c',path='.github/workflows/js.yml';
   const original=captureGitArtifactCertificate(revision,path);
   verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path});
-  const before=original.blob.toString('utf8'),actual=readFileSync(new URL('../../'+path,import.meta.url),'utf8');
+  const before=original.blob.toString('utf8'),actual=restoreGrammarTestPartitionHistory(readFileSync(new URL('../../'+path,import.meta.url),'utf8'),path);
   const matrix='          - group: source-model-raw\n            generated_slice: first\n';
   assert.equal(before.split(matrix).length,2);
   let expected=before.replace(matrix,matrix+'          - group: source-model-raw-generation\n            generated_slice: first\n');

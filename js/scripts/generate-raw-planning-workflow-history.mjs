@@ -4,6 +4,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreGrammarTestPartitionHistory} from './grammar-test-partition-history.mjs';
 
 /** Record only the complete reviewed three-edit scheduling successor. */
 export function generateRawPlanningWorkflowHistory({check=false}={}) {
@@ -18,7 +19,7 @@ export function generateRawPlanningWorkflowHistory({check=false}={}) {
     assert.equal(step.split("matrix.group == 'source-model-raw'").length,2);
     expected=expected.slice(0,start)+step.replace("matrix.group == 'source-model-raw'","matrix.group == 'source-model-raw-generation'")+expected.slice(end);
   }
-  const actual=readFileSync(new URL(file,root));assert.equal(actual.toString(),expected);
+  const actual=Buffer.from(restoreGrammarTestPartitionHistory(readFileSync(new URL(file,root),'utf8'),file));assert.equal(actual.toString(),expected);
   let start=0,end=actual.length,oldEnd=original.blob.length;
   while(start<end&&start<oldEnd&&actual[start]===original.blob[start])start++;
   while(start>0&&(actual[start]&192)===128)start--;

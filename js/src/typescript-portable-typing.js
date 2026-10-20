@@ -39,6 +39,12 @@ export function projectTypeScriptTyping(source) {
         const name = parameter.children.find((child) => child.field === 'pattern' || child.field === 'name');
         if (annotation && name) {
           const annotationType = type(annotation);
+          if (name.term === 'this') {
+            if (annotationType !== 'void') throw new TranslationError('unsupported',
+              'TypeScript receiver type needs an explicit portable receiver interpretation', annotation.span.byteRange);
+            tags.push('@this {void}');
+            continue;
+          }
           const sourceText = text(name);
           const documentationText = renderTypeScriptDocumentationPattern(sourceText);
           parameterPatterns.push({ sourceText, documentationText, sourceSpan: { ...name.span.byteRange } });

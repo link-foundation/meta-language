@@ -2947,6 +2947,21 @@ API and actual isolated module evaluation under Node `>=22.15.0 <23.0.0` or
 retains its original input and now expects executable output instead of the
 previous unsupported-operation diagnostic. Every prior fixture and refusal
 input remains; native output and span parity still require CI.
+The shared `receiver-list` rule erases a first required annotated `this`
+parameter and its following comma from supported function and generator
+declarations and expressions. This compile-time parameter has no runtime argument,
+as described in [TypeScript's function receiver model](https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function).
+Both hosts inspect actual concrete parameter fields, reject malformed or
+unsupported receiver owners, and retain comments, line boundaries and complete
+source restoration. Shared Boolean admission and separator decisions generate
+Rust automatically; recorded native field adapters retain complete source inverses.
+Portable typing represents `this: void` separately from runtime parameters and
+refuses other receiver types until their interpretation is explicit. Independent
+Node controls cover runtime results and arity under the same bounded versions
+above, plus source-free text/binary CST reload. Unicode parameter typing remains
+an explicit portable frontend refusal; Unicode source comments and byte spans
+remain supported. Matching native outputs, runtime parity and complete receiver
+semantics still require CI and further implementation.
 Enums, namespaces and parameter properties retain carried obligations until
 their runtime behavior has faithful linked lowering. Projection probes strip
 restoration provenance before replay; source restoration alone cannot prove
@@ -3622,6 +3637,20 @@ corrections build in CI and keep their original source hashes and a separately
 identified correction, so the native runtime remains independent of the oracle.
 
 ## Resource limits
+
+Grammar test files run exactly once across six required JavaScript cells. Their
+commands, assertions, fail-fast setting and fifteen-minute deadline remain exact.
+The source history retains the complete preceding three-cell schedule and its
+certified inverse. This change follows CI 39489000471, whose first grammar cell
+passed all 335 tests before teardown reached GitHub's deadline. Corrected timing
+requires the next CI run.
+
+Offline dependency declaration refresh retains the previous ordered identities,
+updates facts from current declarations and appends new identities. It does not
+advance the registry audit date. The original 745-record prefix and the complete
+773-record predecessor remain independently reconstructible from certified Links
+sources; neither old facts nor current declaration checks are discarded to repair
+an order failure.
 
 Native coverage uses Cargo's optimized test profile with debug assertions and
 overflow checks explicitly enabled. The complete instrumented commands, line

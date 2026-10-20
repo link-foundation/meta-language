@@ -64,6 +64,13 @@ spelling, while its authoritative executable source remains distinct. Encoding
 the display does not establish semantic typing support for arbitrary destructured
 parameters; unsupported type annotations keep their existing source obligation.
 
+A supported TypeScript function's first annotated `this` parameter erases with
+its following comma, preserving runtime arity and source restoration. Portable
+Rust projection admits `this: void`; other receiver types retain a precise
+obligation. Methods, constructors and arrow receiver parameters remain outside
+this erasure profile. The [vision](vision.md#javascript-first-and-self-translation)
+records the interpretation and remaining boundaries.
+
 ## The output
 
 A translation starts with a header that records the source language and the

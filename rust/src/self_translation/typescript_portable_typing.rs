@@ -108,6 +108,17 @@ fn visit(
                         field(parameter, &["type"]),
                         field(parameter, &["pattern", "name"]),
                     ) {
+                        if name.term == "this" {
+                            if annotation_type(source, annotation)? != "void" {
+                                return Err(TranslationError::new(
+                                    ErrorKind::Unsupported,
+                                    "TypeScript receiver type needs an explicit portable receiver interpretation",
+                                    Some(Span::new(annotation.start, annotation.end)),
+                                ));
+                            }
+                            tags.push("@this {void}".to_owned());
+                            continue;
+                        }
                         let name =
                             render_type_script_documentation_pattern(&source[name.start..name.end]);
                         let name = if parameter.term == "optional_parameter" {

@@ -5,21 +5,23 @@ import { readFileSync } from 'node:fs';
 import { Parser } from 'links-notation';
 import { parseProgrammingLanguage } from './programming-language-parser.js';
 import { TranslationError } from './translation/diagnostics.js';
-import { eraseExportedDeclaration, eraseOptionalParameterMarker, retainFirstErasureChild, renderErasedTypeScriptScalar, eraseTypeScriptNamedImport } from './typescript-erasure-rules.js';
+import { eraseExportedDeclaration, eraseOptionalParameterMarker, retainFirstErasureChild, renderErasedTypeScriptScalar, eraseTypeScriptNamedImport, acceptTypeScriptReceiverParameter, eraseTypeScriptReceiverSeparator } from './typescript-erasure-rules.js';
 
 const definitions = new Parser().parse(readFileSync(new URL('./data/typescript-erasure.lino', import.meta.url), 'utf8'));
 const operations = new Map();
 const refusals = new Set();
+const receiverOwners = new Set();
 for (const definition of definitions) {
   const [kind, term, operation] = definition.values.map((value) => value.id);
   if (kind === 'erasure-rule') operations.set(term, operation);
   else if (kind === 'refusal-rule') refusals.add(term);
+  else if (kind === 'receiver-rule' && operation === 'owner') receiverOwners.add(term);
   else throw new Error(`unknown TypeScript erasure rule ${kind}`);
 }
 
 export function requiresTypeScriptErasure(parsed) {
   function visit(node, parent = null) {
-    if ((operations.has(node.term) && operations.get(node.term) !== 'import-list') || refusals.has(node.term) ||
+    if ((operations.has(node.term) && !['import-list', 'receiver-list'].includes(operations.get(node.term))) || refusals.has(node.term) ||
       (node.term === '?' && parent?.term === 'optional_parameter') ||
       (node.term === 'type' && ['import_statement', 'import_specifier'].includes(parent?.term))) return true;
     return node.children.some((child) => visit(child, node));
@@ -40,6 +42,35 @@ export function eraseTypeScript(source, parsed = parseProgrammingLanguage(source
     if (refusals.has(node.term)) unsupported(node, 'this runtime construct needs explicit translation');
     const operation = operations.get(node.term);
     const range = node.span.byteRange;
+    if (operation === 'receiver-list') {
+      let parameters = 0;
+      let afterReceiver = false;
+      for (const child of node.children) {
+        const parameter = child.term === 'required_parameter' || child.term === 'optional_parameter';
+        const pattern = child.children.find(part => part.field === 'pattern' || part.field === 'name');
+        if (pattern?.term === 'this') {
+          if (child.flags.hasError) unsupported(child, 'the native syntax tree contains an error');
+          const annotated = child.children.some(part => part.field === 'type');
+          const initialized = child.children.some(part => part.field === 'value' || part.term === '=');
+          if (!acceptTypeScriptReceiverParameter(parameters === 0, child.term === 'required_parameter',
+            annotated, initialized, receiverOwners.has(parent?.term))) {
+            unsupported(child, 'a receiver must be the first required annotated parameter of a supported function');
+          }
+          erase(child.span.byteRange.start, child.span.byteRange.end, 'this_parameter');
+          afterReceiver = true;
+          // Inspect the complete erased parameter before discarding its syntax.
+          for (const part of child.children) visit(part, child);
+        } else {
+          if (parameter) afterReceiver = false;
+          if (eraseTypeScriptReceiverSeparator(child.term === ',', afterReceiver)) {
+            erase(child.span.byteRange.start, child.span.byteRange.end, 'this_parameter_separator');
+            afterReceiver = false;
+          } else visit(child, node);
+        }
+        if (parameter) parameters += 1;
+      }
+      return;
+    }
     if (operation === 'import-list') {
       let afterTypeSpecifier = false;
       for (const child of node.children) {

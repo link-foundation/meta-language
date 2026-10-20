@@ -14,3 +14,8 @@
 (refusal-rule import_require_clause)
 (refusal-rule accessibility_modifier)
 (refusal-rule decorator)
+(erasure-rule formal_parameters receiver-list)
+(receiver-rule function_declaration owner)
+(receiver-rule function_expression owner)
+(receiver-rule generator_function_declaration owner)
+(receiver-rule generator_function owner)
