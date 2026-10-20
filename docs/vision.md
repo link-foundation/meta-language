@@ -2025,6 +2025,20 @@ the correspondence from wire positions to owned source identities and complete
 DTO reconstruction remain required before integrating original observations
 with the supplied-number contract or public default CST path.
 
+The experimental number correspondence rechecks the complete owned model and
+its independent wire projection, then follows the actual source field rules
+and paths to join each JSON number site to its expanded wire ordinal. Equal
+values, shared projected containers and host integer fields do not replace
+source occurrences. Raw primitive records pass descriptor checks before any
+supplied values are read. Exact signed/unsigned predicate overlap, both integer
+decimals, floating bits and the selected compiler contract remain checked.
+The complete result reloads from text and binary Links. Its finite route profile
+admits at most 100,000 owned nodes, one MiB per route and sixteen MiB of total
+route bytes; excessive routes refuse without reducing the original owned-model
+profile. This is a checked contract over supplied records, without attestation
+of their live origin. Native compiler provenance, runner publication and the
+complete native DTO/default CST path remain required.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
