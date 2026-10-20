@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {captureNativeOutcomeTypeInventory} from '../types/inventory.mjs';
 import {buildOrderedWirePlan} from '../wire/generate.mjs';
 import {serializeProjectData,writeProjectData} from '../../../../js/scripts/project-data.mjs';
+import {projectHistoricalOutcomeInventory} from '../../../grammar-context-source-metadata/historical-inventory.mjs';
 
 const repository=fileURLToPath(new URL('../../../../',import.meta.url));
 const copy=value=>structuredClone(value);
@@ -17,7 +18,8 @@ const memberIdentity=(owner,member)=>owner+'@'+member.span.start+':'+member.span
 /** Read the actual fixed source corpus; never authenticate a caller's inventory. */
 export function captureOrdinaryInversePlan(root=repository) {
   const capture=captureNativeOutcomeTypeInventory(root),graph=capture.derive();
-  const wirePlan=buildOrderedWirePlan(capture.sourceInventory);
+  graph.sourceInventory=projectHistoricalOutcomeInventory(capture.sourceInventory);
+  const wirePlan=buildOrderedWirePlan(graph.sourceInventory);
   const byIdentity=new Map(graph.nodes.map(node=>[node.identity,node]));
   const declarations=graph.roots.map(identity=>byIdentity.get(identity));
   assert.equal(declarations.length,9,'all original declarations remain present');

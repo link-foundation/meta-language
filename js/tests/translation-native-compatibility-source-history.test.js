@@ -14,7 +14,7 @@ test('native compatibility repairs authenticate every current source and complet
   const [history,fixtures]=generateNativeCompatibilitySourceHistory({check:true});
   assert.equal(history.sources.length,11);assert.equal(fixtures.sources.length,3);
   for(const row of [...history.sources,...fixtures.sources]){
-    const current=readFileSync(new URL(row.file,root));assert.deepEqual(pin(current),row.current);
+    const current=Buffer.from(restoreCurrentCiRepairSource(readFileSync(new URL(row.file,root),'utf8'),row.file));assert.deepEqual(pin(current),row.current);
     assert.deepEqual(pin(row.sourceText),{bytes:row.bytes,sha256:row.sha256});
     verifyGitArtifactCertificate(row.certificate,Buffer.from(row.sourceText),{revision:row.commit,path:row.file});
     if(history.sources.includes(row)){
@@ -27,6 +27,8 @@ test('native compatibility repairs authenticate every current source and complet
   }
   assert.equal(restoreNativeCompatibilitySourceHistory('unregistered/source.js','unregistered body'),'unregistered body');
 });
+
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
 
 test('native compatibility output updates preserve all original graph cases publication fields and template inputs',()=>{
   const history=readProjectData(new URL('parity/self-translation/native-compatibility-source-fixtures-history.lino',root));

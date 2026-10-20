@@ -23,7 +23,7 @@ function checkOriginalNumberSourceConservation(value) {
     assert.deepEqual(pin(input.sourceText),{bytes:input.bytes,sha256:input.sha256});
     for(const row of input.pieces??input.helpers)assert.equal(input.sourceText.slice(row.start,row.end),row.sourceText);
   }
-  assert.deepEqual(pin(readFileSync(new URL(value.author.file,root))),{bytes:value.author.bytes,sha256:value.author.sha256});
+  assert.deepEqual(pin(restoreCurrentCiRepairSource(readFileSync(new URL(value.author.file,root),'utf8'),value.author.file)),{bytes:value.author.bytes,sha256:value.author.sha256});
   assert.equal(value.sourceInventory.declarations.length,9);assert.equal(value.sourceInventory.pins.length,13);
   for(const row of value.outputs)assert.deepEqual(pin(readFileSync(new URL(row.file,root))),{bytes:row.bytes,sha256:row.sha256});
   assert.deepEqual(pin(format(value.rawModel)),{bytes:value.outputs[0].bytes,sha256:value.outputs[0].sha256});
@@ -34,6 +34,8 @@ function checkOriginalNumberSourceConservation(value) {
   assert.ok(value.rawModel.includes(counter));
   assert.equal(value.inputs.sink.pieces.map(row=>row.sourceText).join('\n\n'),value.inputs.sink.originalCounter);
 }
+
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
 
 test('original native number source generation retains every complete declaration counter and numeric validator',()=>{
   const generated=generateOriginalNativeNumberObservations({check:true});

@@ -15,6 +15,7 @@ import {checkProjectData,writeProjectData} from '../../../../js/scripts/project-
 import {buildOutcomePacket} from '../wire/generate.mjs';
 import {outcomeWireEvents} from '../wire/events.mjs';
 import {proposeParent} from '../bridge/generate.mjs';
+import {projectHistoricalOutcomeInventory} from '../../../grammar-context-source-metadata/historical-inventory.mjs';
 
 const root=new URL('../../../../',import.meta.url);
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
@@ -41,6 +42,7 @@ function replaceObservationSourceTokens(source,replacements) {
 
 function readOriginalNumberObservationSources() {
   const packet=buildOutcomePacket();
+  packet.inventory=projectHistoricalOutcomeInventory(packet.inventory);
   const sinkFile='experiments/grammar-outcome-network/native-transport/bridge/sinks.rs';
   const sinkBytes=readFileSync(new URL('../bridge/sinks.rs',import.meta.url));
   const sinkSource=readNativeSourceByteRange(sinkBytes,0,sinkBytes.length),parsed=readRustSourceItems(sinkBytes);
@@ -168,7 +170,7 @@ ${sink.preflight}
   return{outputs,decorators,receipt:{schemaVersion:1,
     boundary:'Original borrowed Number accessor facts and expanded wire occurrence positions only. Existing source numeric validation and counting remain exact. Native execution, selected compiler artifact provenance, correspondence to owned source node identities and complete DTO reconstruction remain separate requirements.',
     inputs:{sink,parent},sourceInventory:packet.inventory,wirePlan:packet.plan,
-    author:{file:'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs',...pin(readFileSync(new URL(import.meta.url)))},
+    author:{file:'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs',...pin(restoreCurrentCiRepairSource(readFileSync(new URL(import.meta.url),'utf8'),'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs'))},
     byteRangeReader:{file:'js/scripts/native-source-byte-ranges.mjs',...pin(readFileSync(new URL('../../../../js/scripts/native-source-byte-ranges.mjs',import.meta.url)))},
     originalVisitors:packet.source,trait:{before:trait,after:extendedTrait},jsonVisitor:{before:jsonVisitor,after:observedVisitor},callback,
     observationDeclaration,observationMethod,storage:{...storage,after:observedStorage},inherent:renamedInherent,implementation:{...renamedImplementation,after:observedImplementation},
@@ -176,6 +178,8 @@ ${sink.preflight}
     limits:{nodeLimit:100000,byteLimit:16*1024*1024,depthLimit:256},
     counterBoundary:'The complete original allocation-free preflight precedes observation construction. Primitive usize and i64 conversion calls retain json_number; only original serde_json::Value::Number uses native_json_number. Raw predicate and payload accessors execute before the unchanged projection validator.'}};
 }
+
+import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
 
 export function generateOriginalNativeNumberObservations({check=false}={}) {
   const lockSource=readFileSync(new URL('rust/Cargo.lock',root),'utf8'),packages=parseCargoLock(lockSource).filter(row=>row.name==='serde_json');

@@ -52,13 +52,17 @@ export function generateOriginalLinkSuccessorSourcePhases({check=false,apply=fal
   const second='  checkedPlans.add(plan);return plan;\n}\n\nfunction parseObservations';
   replace(second,second.replace('checkedPlans.add(plan);return plan;','checkedPlans.add(plan);successorSourceArchives.inherit(consumingPlan,plan);return plan;'));
   let inverse=source;for(const action of actions.toReversed()){assert.equal(inverse.split(action.after).length,2);inverse=inverse.replace(action.after,action.before);}assert.equal(inverse,original);
-  const actual=readFileSync(new URL(file,root),'utf8');assert.ok(actual===original||actual===source,'unknown producer edits refuse');
+  const currentSource=readFileSync(new URL(file,root),'utf8');
+  const actual=restoreGrammarContextMetadataHistory(currentSource,file);assert.ok(actual===original||actual===source,'unknown producer edits refuse');
+  assert.ok(!apply||currentSource===actual,'a historical source generator cannot overwrite its current successor');
   const packet={schemaVersion:1,revision,sources:[{file,commit:revision,sourceText:original,...pin(blob),certificate,actions,proposed:{...pin(source),source}}],
     boundary:'Every full current, consuming and borrowed-consumer source still parses without recovery and replays both original archive formats at unchanged limits. All three finish before the complete unchanged observation matrix is retained. Only compact private replay receipts survive; all original fixture identities, input/result bits, carrier objects, process checks, source interfaces and observation counts remain mandatory. Complete workload resource fit and native execution require CI.'};
   if(check)checkProjectData(output,packet);else writeProjectData(output,packet);
   if(apply)writeFileSync(new URL(file,root),source);
   return packet;
 }
+
+import {restoreGrammarContextMetadataHistory} from '../../js/scripts/grammar-context-metadata-history.mjs';
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>['--check','--apply'].includes(value)));
   generateOriginalLinkSuccessorSourcePhases({check:process.argv.includes('--check'),apply:process.argv.includes('--apply')});

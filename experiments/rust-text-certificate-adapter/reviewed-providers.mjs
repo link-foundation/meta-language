@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readProjectData, checkProjectData, writeProjectData } from '../../js/scripts/project-data.mjs';
+import {readProgramStringOverlayProviderRevision} from '../grammar-context-source-metadata/overlay-provider-revision.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 export const reviewedOverlayProviderPolicy = {
@@ -244,6 +245,8 @@ export const reviewedOverlayProviderPolicy = {
     },
   ],
 };
+
+reviewedOverlayProviderPolicy.revisions.push(readProgramStringOverlayProviderRevision(reviewedOverlayProviderPolicy.revisions.at(-1)));
 
 /** Read only one complete reviewed provider revision; a byte edit requires review. */
 export function readReviewedOverlayProviderSources({ experiment, modules, sourceRoot = new URL('../../js/src/', import.meta.url), readSource = module => readFileSync(new URL(module, sourceRoot), 'utf8') }) {

@@ -110,7 +110,7 @@ test('runtime pin adapters preserve all complete preceding workflow guard module
     let expected=original.sourceText;
     for(const [before,after]of view.edits){assert.equal(expected.split(before).length,2);expected=expected.replace(before,after);}
     expected+=view.addition;
-    const current=readFileSync(new URL('../../'+view.file,import.meta.url),'utf8');assert.equal(current,expected);
+    const current=restoreCurrentCiRepairSource(readFileSync(new URL('../../'+view.file,import.meta.url),'utf8'),view.file);assert.equal(current,expected);
     let restored=current.slice(0,-view.addition.length);
     for(const [before,after]of [...view.edits].reverse()){assert.equal(restored.split(after).length,2);restored=restored.replace(after,before);}
     assert.equal(restored,original.sourceText,'every original assertion and source context reconstructs exactly');
@@ -120,3 +120,5 @@ test('runtime pin adapters preserve all complete preceding workflow guard module
 import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';
 
 import {restoreCiRepairSourceHistory} from '../scripts/ci-repair-source-history.mjs';
+
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';

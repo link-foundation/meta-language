@@ -19,6 +19,7 @@ function arrayRelativeElementHistory() {
 }
 export function restoreArrayRelativeElementSource(source,file,currentOnly=false) {
   assert.equal(typeof source,'string');
+  source=restoreCurrentCiRepairSource(source,file);
   source=restoreContinuationHistoricalSource(source,file,'relative array');
   const row=arrayRelativeElementHistory().sources.find(row=>row.file===file);
   if(!row)return source;
@@ -33,6 +34,8 @@ export function restoreArrayRelativeElementSource(source,file,currentOnly=false)
   assert.equal(restored.length,row.bytes);assert.equal(digest(restored),row.sha256);assert.equal(restored.toString(),row.sourceText);
   return restored.toString();
 }
+
+import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 export function restoreArrayRelativeElementProjectData(value,file) {
   const row=arrayRelativeElementHistory().sources.find(row=>row.file===file);
   assert.ok(row&&row.role==='historical descriptor','a complete recorded descriptor source is required');

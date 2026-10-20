@@ -52,7 +52,7 @@ test('native graph registration preserves every original source guard and expose
   const history=readProjectData(new URL('../../parity/self-translation/concrete-program-native-source-sources-history.lino',import.meta.url));
   assert.equal(history.sources.length,4);
   for(const row of history.sources){
-    const actual=read(row.file);assert.equal(Buffer.byteLength(actual),row.current.bytes);
+    const actual=restoreCurrentCiRepairSource(read(row.file),row.file);assert.equal(Buffer.byteLength(actual),row.current.bytes);
     assert.equal(createHash('sha256').update(actual).digest('hex'),row.current.sha256);
     assert.equal(restoreNativeGraphSourceHistory(row.file,actual),row.sourceText);
     assert.equal(restoreNativeGraphSourceHistory(row.file,row.sourceText),row.sourceText);
@@ -60,6 +60,8 @@ test('native graph registration preserves every original source guard and expose
   }
   assert.equal(restoreNativeGraphSourceHistory('unknown/source.js','visible source'),'visible source');
 });
+
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
 
 test('the generated native transport refuses local execution before resolving a compiler or creating outputs',(t)=>{
   const directory=mkdtempSync(join(tmpdir(),'meta-language-concrete-native-guard-'));

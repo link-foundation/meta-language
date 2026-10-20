@@ -23,7 +23,7 @@ export function generateNativeGraphSourceHistory({check=false}={}) {
       const original=captureGitArtifactCertificate(revision,file);
       verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
       const sourceText=original.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),original.blob);
-      const current=readFileSync(new URL(file,root));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
+      const current=Buffer.from(restoreCurrentCiRepairSource(readFileSync(new URL(file,root),'utf8'),file));assert.deepEqual(Buffer.from(current.toString('utf8')),current);
       return{file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,current:pin(current)};
     });
     const packet={schemaVersion:1,revision,sources:rows,
@@ -37,6 +37,8 @@ export function generateNativeGraphSourceHistory({check=false}={}) {
   if(check)assert.equal(source,expected);else writeFileSync(helper,expected);
   return packets;
 }
+
+import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>value==='--check'));
   const packets=generateNativeGraphSourceHistory({check:process.argv.includes('--check')});

@@ -12,6 +12,7 @@ let history;
 /** An unregistered or unknown successor remains visible to the original guard. */
 export function restoreNativeCompatibilitySourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreCurrentCiRepairSource(source,file);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
   const actual=digest(source);
@@ -22,3 +23,5 @@ export function restoreNativeCompatibilitySourceHistory(file,source) {
   if(actual===row.sha256)assert.equal(source,row.sourceText);
   return row.sourceText;
 }
+
+import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';

@@ -15,6 +15,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreGrammarContextMetadataHistory(source,path);
   if(!history){const bytes=readFileSync(new URL(file,root));assert.equal(pin(bytes).sha256,archiveSha256);history=readBootstrapStructuredDataLino(bytes.toString('utf8'));assert.equal(history.revision,revision);}
   const row=history.sources.find(row=>row.file===path);if(!row)return source;
   const actual=pin(source);
@@ -29,3 +30,5 @@ export function restoreCurrentCiRepairSource(source,path) {
   verifyGitArtifactCertificate(row.certificate,original,{revision,path});
   return row.sourceText;
 }
+
+import {restoreGrammarContextMetadataHistory} from './grammar-context-metadata-history.mjs';

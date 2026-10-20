@@ -155,6 +155,18 @@ refuses to overwrite a newer current artifact. Native packaging, primitive
 column loans and source-only callback changes therefore retain the original
 receipts and every assertion without replacing the current implementation.
 
+Private inverse-model and numeric-observation fixtures retain their explicitly
+recorded complete source inventory. The current grammar-context source profile
+is fully validated before projecting its complete authenticated predecessor for
+those historical controls. Current wire publication keeps the full current
+profile. Every original parser case, graph limit, native constructor, numeric
+validator and expected output remains exact; a source fingerprint refresh never
+replaces those expectations. Current overlay providers include the strict
+optional Boolean string-representation flag and its preservation during whole
+semantic rechecking. Their complete current and preceding Git objects and exact
+module inverses extend the existing provider chain without changing earlier
+revisions or historical overlays.
+
 Incremental import validates that historical identities and origin aliases are
 unique before reusing them. It reserves every historical identity before
 allocating new current classes. A restored origin whose old identity is still
@@ -3670,7 +3682,18 @@ The complete-table and raw-graph native oracles prepare and authenticate their
 whole generated sources, then finish the full Rust CST text and binary replays
 before constructing observation matrices and numeric transport dictionaries.
 The raw planner prepares the current, consuming and borrowed consuming sources
-and replays all three before retaining that shared matrix. A private planner
+and replays all three before retaining that shared matrix. In CI, at most two
+JavaScript workers run those independent complete archives, each with the
+original one-GiB engine heap bound. Available memory, CPU capacity and an explicit
+lower job bound reduce concurrency. Each worker uses the same full CST and
+text/binary replay algorithm, isolates its executor diagnostics and must exit
+successfully before its compact receipt is accepted. Every source still runs
+when another worker fails; failures block the matrix. All worker source files
+join the recorded transport provenance. Original commands, assertions, parser
+limits and the ten-minute package deadline stay mandatory. Node's
+[worker resource controls](https://nodejs.org/download/release/v22.15.0/docs/api/worker_threads.html#new-workerfilename-options)
+define the engine bounds; actual large-workload timing remains a CI check.
+A private planner
 cache keeps only complete profiles, source fingerprints and replay hashes, with
 exact plan ownership and fresh whole-source comparisons. Successor plans retain
 the original carrier, observations and premise objects. Neither a detached plan

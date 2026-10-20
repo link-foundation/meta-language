@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {readProjectData,writeProjectData,checkProjectData} from '../../../../js/scripts/project-data.mjs';
+import {checkGrammarContextMetadataPredecessor} from '../../../grammar-context-source-metadata/generate.mjs';
 
 export function generateOwnedOutcomeInverseFixtures({check=false}={}) {
   const directory=mkdtempSync(join(tmpdir(),'meta-language-inverse-fixtures-'));
@@ -18,7 +19,14 @@ export function generateOwnedOutcomeInverseFixtures({check=false}={}) {
   const fixture=readProjectData(output);
   assert.equal(fixture.cases.length,14,'every original parser and constructed boundary input remains');
   const target=new URL('./projection-fixtures.lino',import.meta.url);
-  if(check)checkProjectData(target,fixture);else writeProjectData(target,fixture);
+  if(check){
+    // Keep the original oracle fixture immutable. Only the authenticated
+    // producer metadata has a historical view; every full case stays exact.
+    const previous=readProjectData(target);
+    const historical=checkGrammarContextMetadataPredecessor(
+      'experiments/grammar-outcome-network/native-transport/inverse/projection-fixtures.lino',fixture,previous);
+    checkProjectData(target,historical);
+  }else writeProjectData(target,fixture);
   rmSync(directory,{recursive:true});
   return fixture;
 }

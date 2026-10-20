@@ -44,7 +44,7 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 /** The diff is computed on exact bytes, retaining UTF-8 boundary integrity. */
 export function generateCurrentCiRepairSourceHistory({check=false}={}) {
   const sources=sourceFiles.map(file=>{
-    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=readFileSync(new URL(file,root));
+    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=Buffer.from(restoreGrammarContextMetadataHistory(readFileSync(new URL(file,root),'utf8'),file));
     assert.deepEqual(Buffer.from(blob.toString('utf8')),blob);assert.deepEqual(Buffer.from(current.toString('utf8')),current);
     let start=0,oldEnd=blob.length,end=current.length;
     while(start<oldEnd&&start<end&&blob[start]===current[start])start++;
@@ -66,6 +66,8 @@ export function generateCurrentCiRepairSourceHistory({check=false}={}) {
   if(check)assert.equal(source,expected);else writeFileSync(path,expected);
   return packet;
 }
+
+import {restoreGrammarContextMetadataHistory} from './grammar-context-metadata-history.mjs';
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>value==='--check'));
   const packet=generateCurrentCiRepairSourceHistory({check:process.argv.includes('--check')});

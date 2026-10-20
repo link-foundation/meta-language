@@ -16,6 +16,7 @@ import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-pro
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {createOriginalLinkSuccessorSourceArchives,readOriginalLinkSuccessorArchiveSource} from './successor-source-archives.mjs';
+import {replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
@@ -179,7 +180,7 @@ const frozenNative = {
 const observedInterface = ['pub', 'fn', 'check_original_link_raw_shape', '(', 'root_high', ':', 'f64', ',', 'root_low', ':', 'f64', ',', 'columns', ':', 'Vec', '<', 'Vec', '<', 'f64', '>', '>', ')', '->', 'Vec', '<', 'f64', '>', '{'];
 const checkedPlans = new WeakSet();
 const successorSourceArchives=createOriginalLinkSuccessorSourceArchives();
-const readRawSourceTransports=()=>[readCanonicalArchiveTransportSource(),readOriginalLinkSuccessorArchiveSource()];
+const readRawSourceTransports=()=>[readCanonicalArchiveTransportSource(),readOriginalLinkSuccessorArchiveSource(),...readOriginalLinkRawArchiveWorkerSources()];
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const maximumProtocolBytes = 1024 * 1024, maximumConsumerBytes = 4 * 1024 * 1024;
 const blockWidth = 256;
@@ -299,6 +300,13 @@ function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBina
   assert.equal(textReplay, source); assert.equal(binaryReplay, source);
   // The large temporary source graphs are not retained in the observation plan.
   return {sourceSha256: sha256(source), textReplaySha256: sha256(textReplay), binaryReplaySha256: sha256(binaryReplay)};
+}
+
+/** The worker uses this same complete source algorithm, without native tools. */
+export async function replayOriginalLinkRawRustSource(source) {
+  assert.equal(process.env.CI,'true','complete source archives require CI=true');
+  const{LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary}=await import('../../js/src/index.js');
+  return archiveCompleteRustSource(source,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);
 }
 
 function nativeInterface(source, tokenize) {
@@ -581,13 +589,15 @@ export async function planOriginalLinkRawNative(environment = process.env, {emis
     const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
     return[{source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile}];
   })():[];
-  let sourceToken;
+  const sources=[preparedSource.source,...successorSources.map(row=>row.source)];
+  const receipts=await replayOriginalLinkRawSourceArchives(sources,environment);
+  const replay=source=>{const index=sources.indexOf(source);assert.ok(index>=0);return receipts[index];};
+  const sourceToken=emissionProfile==='current'
+    ?successorSourceArchives.prepare({source:preparedSource.source,profile:preparedSource.emissionProfile},successorSources,replay):null;
   return runOriginalLinkRawPlanningPhases({
     prepareSource: () => preparedSource,
     replaySource: source => {
-      const replay=source=>archiveCompleteRustSource(source,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);
       if(emissionProfile==='historical')return replay(source);
-      sourceToken=successorSourceArchives.prepare({source,profile:preparedSource.emissionProfile},successorSources,replay);
       return successorSourceArchives.currentReceipt(sourceToken,source,preparedSource.emissionProfile);
     },
     buildMatrix: (prepared, receipt) => {

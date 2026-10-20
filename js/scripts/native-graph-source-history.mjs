@@ -11,6 +11,7 @@ let history;
 
 export function restoreNativeGraphSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreCurrentCiRepairSource(source,file);
   source=restoreEvidenceTranslationSourceHistory(file,source);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
@@ -24,3 +25,5 @@ export function restoreNativeGraphSourceHistory(file,source) {
 }
 
 import {restoreEvidenceTranslationSourceHistory} from './evidence-translation-source-history.mjs';
+
+import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';

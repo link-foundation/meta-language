@@ -175,6 +175,7 @@ test('callback renderer revision restores all preceding providers and the comple
 test('reference callback provider revision restores every preceding source and historical policy',()=>{
  const root=new URL('../../',import.meta.url),sourceRoot=new URL('../../js/src/',import.meta.url);
  const historicalPolicy=structuredClone(reviewedOverlayProviderPolicy);
+ assert.equal(historicalPolicy.revisions.pop().sourceCommit,'478fb5873ddfd6ab7e4c4b6849654e2c2cef3fa8');
  assert.equal(historicalPolicy.revisions.pop().sourceCommit,'9f867bfac32f59a3341dabf54e8c0c02fbd83314');
  const previous=historicalPolicy.revisions.find(row=>row.sourceCommit==='b4b92d47ee0a186dbe3920c1844eb907afe56aeb');
  const current=historicalPolicy.revisions.at(-1);
@@ -228,7 +229,7 @@ test('reference callback provider revision restores every preceding source and h
  assert.deepEqual(inverse,original,'all original cases, source inputs, expected values, traces, archives and target fields are recovered');
  assert.deepEqual(Buffer.from(serializeProjectData(inverse,new URL('../../'+fixtureFile,import.meta.url))),originalBytes,
   'the complete original canonical fixture bytes remain independently recoverable');
- let policy=readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8');
+ let policy=restoreCurrentCiRepairSource(readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8'),'experiments/rust-text-certificate-adapter/reviewed-providers.mjs');
  const restoredPolicy=execFileSync('git',['show','9f867bfac32f59a3341dabf54e8c0c02fbd83314:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const appended='    {\n      "sourceCommit": "9f867bfac32f59a3341dabf54e8c0c02fbd83314",\n';
  const added=policy.indexOf(appended),close=policy.indexOf('\n  ],\n};',added);
@@ -250,3 +251,5 @@ test('reference callback provider revision restores every preceding source and h
   assert.equal(createHash('sha256').update(bytes).digest('hex'),historical.sourceSha256);
  }
 });
+
+import {restoreCurrentCiRepairSource} from '../../js/scripts/current-ci-repair-source-history.mjs';

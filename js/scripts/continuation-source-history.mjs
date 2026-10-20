@@ -21,7 +21,8 @@ export function restoreContinuationHistoricalSource(source,file,profile) {
   }
   const rows=history.sources.filter(row=>row.file===file&&row.profiles.includes(profile));
   assert.ok(rows.length<=1,'one complete historical input per profile');
-  if(rows.length===0)return source;
+  if(rows.length===0)return ['relative array','original number source ranges'].includes(profile)
+    ?restoreCurrentCiRepairSource(source,file):source;
   source=restoreCurrentCiRepairSource(source,file);
   source=restoreNativeCompatibilitySourceHistory(file,source);
   const row=rows[0],actual=pin(source);
