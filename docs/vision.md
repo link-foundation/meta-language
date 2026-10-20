@@ -1151,6 +1151,15 @@ explicit selected model. These controls supply no project-wide formal meaning
 equivalence, physical consistency or new logical axiom. Native execution remains
 a CI requirement.
 
+Optional type-root controls construct both untyped and explicitly typed roots
+through the same public graph operations. The type role, root membership,
+selected model and foundation premise are inspectable links; text and binary
+reload preserve both complete choices. A doublet vertex self-loop introduces no
+universe-membership relationship, universal self-typing axiom or proof logic.
+Metadata alone cannot replace the explicit role and premise links in these
+models. Corruptions of the model selection, premise, role or metadata fail the
+complete graph oracle. Native execution remains a CI requirement.
+
 The user's fractal and wave analogy is captured verbatim in the hashed
 conversation sources as modelling motivation and a hypothesis. Physical claims
 about waves and particles, mathematical self-similarity and absence of logical

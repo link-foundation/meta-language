@@ -192,6 +192,11 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT': {
+    javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
+      'js/tests/issue-195-evidence-root-types.test.js'],
+    rust: ['rust/src/link_network.rs', 'rust/src/link_network_binary.rs', 'rust/tests/unit/root_types.rs'],
+  },
   ...Object.fromEntries([
     'I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
     'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION',
@@ -237,6 +242,9 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     ...(['I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
       'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION'].includes(id) ? {
       additionalFixtures: [{ id: 'link-foundation-behavior', path: 'parity/fixtures/link-foundation-behavior.lino' }],
+    } : {}),
+    ...(id === 'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT' ? {
+      additionalFixtures: [{ id: 'root-type-behavior', path: 'parity/fixtures/root-type-behavior.lino' }],
     } : {}),
     specification, area,
     ...(tooling ? { tooling: dataTooling[id]?.tooling ?? sourceTooling[id] ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),

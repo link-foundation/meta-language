@@ -323,6 +323,7 @@ mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;
 mod link_foundation;
+mod root_types;
 mod translation_callable_expected_context;
 mod translation_complete_declaration_ranges;
 mod translation_guarded_private_array_writes;
