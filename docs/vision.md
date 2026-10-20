@@ -1255,6 +1255,15 @@ The current implementation priority maximizes Rust ↔ editable meta-language an
 JavaScript ↔ editable meta-language translation, reusing the same algorithms
 across multiple real JavaScript and Rust projects. RDF, OWL, dynamic extension,
 formal definitions and every earlier language remain required scope.
+The critical-delivery tooling checks every current obligation's critical and
+full-scope blocker flags, then tests a complete synthetic success control before
+negative exact-commit, fixture/assertion coverage and scope-reduction controls at
+every checkpoint. Synthetic gate inputs are never recorded as language behavior.
+The original conversation fixture receives execution observations only after all
+three declared assertions pass. Adding an implementation entry point does not
+make the row pass without its exact-commit CI observations. The complete original
+conversation module remains independently Git-certified with an exact byte
+inverse; no inherited obligation or gate is replaced.
 The authorized bulk workflow obtains the latest repository refs, uses the
 maximum useful independent agent delegation, commits every contributor's owned
 work, and reserves pushing for one coordinator. That coordinator verifies prior

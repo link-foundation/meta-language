@@ -23,6 +23,10 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-CONVERSATION-CRITICAL-DELIVERY': [
+    'js/scripts/issue-195-requirements.mjs', 'js/scripts/issue-195-acceptance-lib.mjs',
+    'js/tests/issue-195-evidence-critical-delivery.test.js',
+  ],
   'I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE': [
     'AGENTS.md', 'CLAUDE.md', 'js/scripts/contributor-instruction-coverage.mjs',
     'js/scripts/generate-contributor-instruction-coverage.mjs',
