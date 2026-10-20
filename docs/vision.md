@@ -2909,14 +2909,20 @@ with independent expected lines. Existing artifact uploads retain their sources
 and observations after failures. Local controls check generation and refuse
 native execution before resolving a compiler; actual native results remain a CI
 obligation.
+Generated source digests encode each SHA-256 byte explicitly, retaining the
+same lowercase hexadecimal identity across digest container implementations.
+Historical controls keep certified predecessor modules; actual execution receipts
+continue to hash the current source bytes.
 
 The experimental concrete-origin readers recover the currently stored physical
 source from those linked trees without source files or parser state. Source and
 TypeScript-lowered planes are explicit. Shared scalar and physical-span decisions
 check field ownership, byte coverage, scalar text, cycles and resource limits.
-Both data decoding and tree traversal are iterative; depth defaults follow the
-active grammar executor. Byte reads preserve binary leaves, while text reads
-refuse invalid UTF-8. This operation reads origin data after semantic edits; it
+Physical traversal is iterative, with depth defaults from the active grammar
+executor. It follows physical fields only, leaving recursive concept definitions
+untouched. Child-reference budgets are checked before copying or visiting those
+children. Byte reads preserve binary leaves, while text reads refuse invalid
+UTF-8. This operation reads origin data after semantic edits; it
 does not present that origin as current emitted code or certify grammar
 acceptance, derived mappings or semantic equivalence. Native implementation and
 public package integration remain required.

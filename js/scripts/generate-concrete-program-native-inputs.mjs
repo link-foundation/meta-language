@@ -40,6 +40,8 @@ export function generateConcreteProgramNativeTemplate({check=false}={}) {
     ['native TypeScript graph execution:','native concrete program graph execution:',1],
     ['    let artifacts = repository.join("issue-195-artifacts/typescript-typed-graph-native/concrete-program-graphs");',
       '    let artifacts = repository\n        .join("issue-195-artifacts/typescript-typed-graph-native/concrete-program-graphs");',1],
+    ["    let digest = format!(\"{:x}\", Sha256::digest(source.as_bytes()));","    let digest =\n        Sha256::digest(source.as_bytes())\n            .iter()\n            .fold(String::new(), |mut hexadecimal, byte| {\n                write!(hexadecimal, \"{byte:02x}\").expect(\"writing into a String succeeds\");\n                hexadecimal\n            });",1],
+    ["        let digest = format!(\"{:x}\", Sha256::digest(code.as_bytes()));","        let digest =\n            Sha256::digest(code.as_bytes())\n                .iter()\n                .fold(String::new(), |mut hexadecimal, byte| {\n                    write!(hexadecimal, \"{byte:02x}\").expect(\"writing into a String succeeds\");\n                    hexadecimal\n                });",1],
   ].map(([before,after,occurrences])=>({before,after,occurrences}));
   const javascriptChanges=[
     ['../../parity/fixtures/typescript-typed-graph/manifest.lino',

@@ -2,10 +2,17 @@
 use super::original::NativeJsonNumberObservation;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use std::fmt::Write as _;
 use std::io::Write as _;
 
 fn source_pin(bytes: &[u8]) -> Value {
-    json!({"bytes": bytes.len(), "sha256": format!("{:x}", Sha256::digest(bytes))})
+    let digest = Sha256::digest(bytes)
+        .iter()
+        .fold(String::new(), |mut hexadecimal, byte| {
+            write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+            hexadecimal
+        });
+    json!({"bytes": bytes.len(), "sha256": digest})
 }
 
 pub(super) fn publish_original_number_controls(

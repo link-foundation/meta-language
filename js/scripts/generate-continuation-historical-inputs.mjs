@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readProjectData,checkProjectData,writeProjectData} from './project-data.mjs';
@@ -29,7 +30,7 @@ export function generateContinuationHistoricalInputs({check=false}={}) {
   include(rangeHistory.previousReceipt.file,'original number source ranges',rangeHistory.currentReceipt);
   const sources=[];
   for(const [file,{profiles:roles,expected}]of profiles){
-    const actual=readFileSync(new URL(file,root),'utf8');
+    const actual=restoreNativeCompatibilitySourceHistory(file,readFileSync(new URL(file,root),'utf8'));
     if(pin(actual).sha256===expected.sha256)continue;
     const original=captureGitArtifactCertificate(revision,file),sourceText=original.blob.toString('utf8');
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});

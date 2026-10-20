@@ -107,3 +107,24 @@ test('deep linked origins use the active executor depth and iterative decoding w
   assert.equal(readConcreteProgramOriginText(restored,packet.root).text,packet.source);
   assert.throws(()=>readConcreteProgramOrigin(restored,packet.root,{maxTreeDepth:Math.floor(nesting/2)}),/tree resource limit/u);
 });
+
+test('physical origin reads preserve recursive concept metadata without expanding it',()=>{
+  const packet=originalPacket(),network=LinkNetwork.fromLino(packet.network.toLino());
+  const tree=network.fieldRelations().find(row=>row.label==='tree')?.child;assert.ok(tree);
+  network.insertFieldRelation(tree,'concept definition',tree);
+  const restored=LinkNetwork.fromLino(network.toLino()),before=restored.toLino();
+  assert.equal(readConcreteProgramOriginText(restored,packet.root).text,packet.source);
+  assert.equal(restored.toLino(),before,'concept relationships remain unchanged');
+});
+
+test('oversized child lists refuse before copying their references or reading a child',()=>{
+  const packet=originalPacket(),network=LinkNetwork.fromLino(packet.network.toLino());
+  const tree=network.fieldRelations().find(row=>row.label==='tree')?.child;assert.ok(tree);
+  const children=field(network,tree,'children');assert.ok(children);
+  const array=network.link(children),child=array.references()[0];assert.ok(child);
+  array.setReferences(Array.from({length:2000},()=>child));
+  array.references=()=>{throw new Error('the unadmitted child list must not be copied');};
+  const link=network.link.bind(network);
+  network.link=id=>{if(id.equals(child))throw new Error('an unadmitted child must not be read');return link(id);};
+  assert.throws(()=>readConcreteProgramOrigin(network,packet.root,{maxReadNodes:100}),/child reference resource limit/u);
+});

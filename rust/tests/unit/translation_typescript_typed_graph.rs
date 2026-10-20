@@ -21,7 +21,13 @@ fn check_type_script_graph(index: usize) {
     assert_eq!(cases.len(), 4);
     let case = &cases[index];
     let source = fs::read_to_string(repository.join(case["path"].as_str().unwrap())).unwrap();
-    let digest = format!("{:x}", Sha256::digest(source.as_bytes()));
+    let digest =
+        Sha256::digest(source.as_bytes())
+            .iter()
+            .fold(String::new(), |mut hexadecimal, byte| {
+                write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+                hexadecimal
+            });
     assert_eq!(case["sha256"].as_str(), Some(digest.as_str()));
     let network = LinkNetwork::from_lino(&source).unwrap();
     let complete_graph = network.to_lino();
@@ -70,7 +76,13 @@ fn check_type_script_graph(index: usize) {
     for ((target, file, code), observed) in outputs.iter().zip(records) {
         assert_eq!(observed["target"].as_str(), Some(*target));
         assert_eq!(fs::read_to_string(file).unwrap(), *code);
-        let digest = format!("{:x}", Sha256::digest(code.as_bytes()));
+        let digest =
+            Sha256::digest(code.as_bytes())
+                .iter()
+                .fold(String::new(), |mut hexadecimal, byte| {
+                    write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+                    hexadecimal
+                });
         assert_eq!(observed["source"]["sha256"].as_str(), Some(digest.as_str()));
         assert_eq!(
             observed["execution"]["stdoutHex"].as_str(),

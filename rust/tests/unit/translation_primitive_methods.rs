@@ -610,11 +610,13 @@ fn relative_character_keeps_default_order_complete_archives_and_lossless_source(
     assert_eq!(
         current_javascript["implementation"]["sha256"].as_str(),
         Some(
-            format!(
-                "{:x}",
-                Sha256::digest(include_bytes!("../../../js/src/self-translation.js"))
-            )
-            .as_str()
+            Sha256::digest(include_bytes!("../../../js/src/self-translation.js"))
+                .iter()
+                .fold(String::new(), |mut hexadecimal, byte| {
+                    write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+                    hexadecimal
+                })
+                .as_str()
         ),
         "the active JavaScript implementation selects the recorded item policy"
     );
@@ -625,11 +627,13 @@ fn relative_character_keeps_default_order_complete_archives_and_lossless_source(
     assert_eq!(
         current_javascript["package"]["sha256"].as_str(),
         Some(
-            format!(
-                "{:x}",
-                Sha256::digest(include_bytes!("../../../js/package.json"))
-            )
-            .as_str()
+            Sha256::digest(include_bytes!("../../../js/package.json"))
+                .iter()
+                .fold(String::new(), |mut hexadecimal, byte| {
+                    write!(hexadecimal, "{byte:02x}").expect("writing into a String succeeds");
+                    hexadecimal
+                })
+                .as_str()
         )
     );
     let expectations = current_javascript["versionPolicy"]["expectations"]
@@ -659,7 +663,7 @@ fn relative_character_keeps_default_order_complete_archives_and_lossless_source(
         translated
             .items
             .iter()
-            .map(|item| item.status.as_str())
+            .map(|item| item.status)
             .collect::<Vec<_>>(),
         selected["expected"]
             .as_array()
