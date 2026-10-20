@@ -2663,6 +2663,29 @@ rebinding. Aliases, captures, unknown arguments, observed append results,
 rebinding and nested indexed writes retain their obligations. These copying
 representations make no linear-time claim; native behavior requires CI.
 
+Relative array selection uses a complete JavaScript source lambda, checked and
+stored as paired Links templates. Both host adapters specialize only the actual
+array parameter and returned element type, then check the whole closed body.
+Numeric conversion, negative indices, bounds and undefined results remain source
+operations; receiver and position execute once in order. Numeric, string,
+Boolean and nullable element programs have independent Node observations and
+registered native CI execution through both archive formats. Mutation, sparse
+properties, accessors and other unrepresented conversions retain their explicit
+obligations. The old unsupported-array input is preserved with corrected standard
+behavior, while whole Git-certified predecessor sources and all historical
+assertions remain recoverable. Only two current checker provenance fields change
+in the frozen native artifact; all recorded native definitions and replays remain
+exact. Current gates check current descriptors and historical views check their
+own complete predecessors. Native execution remains a CI requirement.
+
+Generated libraries can group contiguous primitive Boolean operands into an
+explicit tuple carrier to satisfy the native parameter lint. The source author
+retains the whole decision body and original bindings; a recorded caller author
+retains every argument expression and its evaluation order. Certified whole
+predecessor sources and independent body and source inverses accompany the
+correspondence. This changes the internal library ABI, keeps the checked source
+algorithm intact and disables no lint. Native validation remains CI work.
+
 The port is done by meta-language itself. A self-translation tool, a library
 API and a CLI command in both packages, reads JavaScript or TypeScript into
 meta-language links and writes Rust, and reads Rust and writes JavaScript or

@@ -24,6 +24,8 @@ export function restoreTranslationSourceHistory(source, file, revision) {
   const entry = entries[0];
   let bytes = Buffer.from(source);
   assert.equal(bytes.toString('utf8'), source, 'complete source retains valid UTF8');
+  source = restoreArrayRelativeElementSource(source, file, true);
+  bytes = Buffer.from(source);
   const successor = history.relativeCharacterSourceSuccessors?.find(row => row.file === file && digest(bytes) === row.current.sha256);
   if (successor) {
     assert.equal(successor.revision, '9ac3038132953e6a220bba6f06a3e6147d39836f');
@@ -61,3 +63,5 @@ export function restoreTranslationSourceHistory(source, file, revision) {
   assert.equal(bytes.toString('utf8'), entry.previous.sourceText);
   return bytes.toString('utf8');
 }
+
+import {restoreArrayRelativeElementSource} from './array-relative-element-history.mjs';

@@ -160,6 +160,36 @@ impl Checker {
             }
         }
         let lowering = rules::read_primitive_method_lowering_form(receiver, operation);
+        if lowering == "relative-element-template" {
+            let Type::Array { element, .. } = &object.ty else {
+                unreachable!("the generated relative element lowering has an array receiver");
+            };
+            let result = Type::Option {
+                element: element.clone(),
+                absence: "undefined".to_owned(),
+            };
+            let signature = Type::Function {
+                params: vec![object.ty.clone(), FLOAT],
+                ret: Box::new(result.clone()),
+            };
+            let template = super::array_relative_element_template::expression(&object.ty, span)?;
+            let function = self.expr(&template, &Env::default(), path, Some(&signature), false)?;
+            let function = self.coerce(function, &signature, span)?;
+            let arguments = std::iter::once(object)
+                .chain(values.into_iter().map(|value| {
+                    value.expect(
+                        "the generated relative element lowering supplies its numeric argument",
+                    )
+                }))
+                .collect();
+            return Ok(super::optional_values::flatten_option(Expr::new(
+                Node::Apply {
+                    func: Box::new(function),
+                    args: arguments,
+                },
+                result,
+            )));
+        }
         if lowering == "relative-character-template" {
             let result = Type::Option {
                 element: Box::new(STRING),

@@ -143,7 +143,9 @@ pub fn read_primitive_copy_slice_form(kind: &str) -> String {
 
 #[must_use]
 pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) -> f64 {
-    if (receiver == "array") && ((operation == "slice") || (operation == "join")) {
+    if (receiver == "array")
+        && (((operation == "slice") || (operation == "join")) || (operation == "at"))
+    {
         0f64
     } else if (receiver == "array")
         && (((operation == "includes") || (operation == "indexOf")) || (operation == "lastIndexOf"))
@@ -175,7 +177,7 @@ pub fn read_primitive_method_minimum_arguments(receiver: &str, operation: &str) 
 #[must_use]
 pub fn read_primitive_method_maximum_arguments(receiver: &str, operation: &str) -> f64 {
     if receiver == "array" {
-        if operation == "join" {
+        if (operation == "join") || (operation == "at") {
             1f64
         } else if (((operation == "slice") || (operation == "includes"))
             || (operation == "indexOf"))
@@ -220,7 +222,9 @@ pub fn read_primitive_method_checked_argument_kind(
     operation: &str,
     index: f64,
 ) -> String {
-    if (receiver == "array") && (operation == "join") {
+    if (receiver == "array") && (operation == "at") {
+        String::from("number-value")
+    } else if (receiver == "array") && (operation == "join") {
         String::from("string")
     } else if (receiver == "array") && (operation == "slice") {
         String::from("float")
@@ -252,7 +256,9 @@ pub fn read_primitive_method_checked_argument_kind(
 
 #[must_use]
 pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index: f64) -> String {
-    if (receiver == "array") && (operation == "join") {
+    if (receiver == "array") && (operation == "at") {
+        String::from("float")
+    } else if (receiver == "array") && (operation == "join") {
         String::from("string")
     } else if ((receiver == "array")
         && (((operation == "includes") || (operation == "indexOf"))
@@ -282,7 +288,9 @@ pub fn read_primitive_method_default_form(receiver: &str, operation: &str, index
 
 #[must_use]
 pub fn read_primitive_method_default_value(receiver: &str, operation: &str, index: f64) -> String {
-    if (receiver == "array") && (operation == "join") {
+    if (receiver == "array") && (operation == "at") {
+        String::from("0")
+    } else if (receiver == "array") && (operation == "join") {
         String::from(",")
     } else if ((receiver == "array") && ((operation == "includes") || (operation == "indexOf")))
         && (index == 1f64)
@@ -318,7 +326,9 @@ pub fn read_primitive_method_default_value(receiver: &str, operation: &str, inde
 
 #[must_use]
 pub fn read_primitive_method_checked_result_form(receiver: &str, operation: &str) -> String {
-    if (receiver == "array") && (operation == "join") {
+    if (receiver == "array") && (operation == "at") {
+        String::from("optional-element")
+    } else if (receiver == "array") && (operation == "join") {
         String::from("string")
     } else if (receiver == "array") && (operation == "slice") {
         String::from("receiver")
@@ -570,7 +580,9 @@ pub fn require_primitive_method_utf16(expression: &str, receiver: &str) -> bool 
 
 #[must_use]
 pub fn read_primitive_method_lowering_form(receiver: &str, operation: &str) -> String {
-    if (receiver == "string") && (operation == "at") {
+    if (receiver == "array") && (operation == "at") {
+        String::from("relative-element-template")
+    } else if (receiver == "string") && (operation == "at") {
         String::from("relative-character-template")
     } else if (receiver == "string") && (operation == "charAt") {
         String::from("character-template")

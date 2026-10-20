@@ -19,10 +19,12 @@ fn translated_number_kind_selection_preserves_every_declared_profile_control() {
             rules::read_owned_outcome_native_number_kind(
                 row["profileAvailable"].as_bool().unwrap(),
                 row["version"].as_str().unwrap(),
-                row["arbitraryPrecision"].as_bool().unwrap(),
-                row["signed"].as_bool().unwrap(),
-                row["unsigned"].as_bool().unwrap(),
-                row["floating"].as_bool().unwrap(),
+                (
+                    row["arbitraryPrecision"].as_bool().unwrap(),
+                    row["signed"].as_bool().unwrap(),
+                    row["unsigned"].as_bool().unwrap(),
+                    row["floating"].as_bool().unwrap()
+                ),
             ),
             row["expected"].as_str().unwrap(),
             "complete declared profile: {row}"

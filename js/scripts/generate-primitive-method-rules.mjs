@@ -43,3 +43,6 @@ import {generateNumberPredicateRules} from './number-predicate-generation.mjs';
 
 import {generateStringRelativeCharacterTemplate} from './generate-string-relative-character-template.mjs';
 generateStringRelativeCharacterTemplate(process.argv.includes('--check'));
+
+import {generateArrayRelativeElementTemplate} from './generate-array-relative-element-template.mjs';
+generateArrayRelativeElementTemplate(process.argv.includes('--check'));

@@ -348,20 +348,22 @@ fn translate_module(
         translate_binding_groups(&groups, source, from, to, decorators, &outs, utf16_strings);
     let layout_envelope =
         crate::translation::self_translation_layout_rules::require_self_translation_layout_envelope(
-            source.contains('\r'),
-            results
-                .first()
-                .and_then(|(group, _)| group.items.first())
-                .map_or(source.len(), |item| item.start)
-                > 0,
-            !matches!(
-                results.last().map_or(source, |(group, _)| group.after),
-                "" | "\n"
+            (
+                source.contains('\r'),
+                results
+                    .first()
+                    .and_then(|(group, _)| group.items.first())
+                    .map_or(source.len(), |item| item.start)
+                    > 0,
+                !matches!(
+                    results.last().map_or(source, |(group, _)| group.after),
+                    "" | "\n"
+                ),
+                results
+                    .iter()
+                    .take(results.len().saturating_sub(1))
+                    .any(|(group, _)| group.after != breaks(group.after)),
             ),
-            results
-                .iter()
-                .take(results.len().saturating_sub(1))
-                .any(|(group, _)| group.after != breaks(group.after)),
         );
     let exported_names: HashSet<&str> = scans
         .iter()

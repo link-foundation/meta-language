@@ -15,7 +15,7 @@ export function generateOwnedOutcomeNumberKindRules({check=false}={}) {
   const declarations=['readOwnedOutcomeNativeNumberKind'];
   assert.deepEqual([...program.declarations.keys()],declarations);
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.definitions.length,1);
-  const files=writeRecordRuleLibrary(emitted,'owned_outcome_number_kind_rules',{check,sourceStyles:source=>readTypedBooleanParameterStyles(source,'read_owned_outcome_native_number_kind')});
+  const files=writeRecordRuleLibrary(emitted,'owned_outcome_number_kind_rules',{check,sourceStyles:source=>{const primitive=readTypedBooleanParameterStyles(source,'read_owned_outcome_native_number_kind');const packed=readBooleanParameterTupleStyle(primitive.source,'read_owned_outcome_native_number_kind');return{source:packed.source,actions:[...primitive.actions,...packed.actions]};}});
   // Independent exhaustive predicate table from the pinned dependency source.
   const meanings=['','floating point','unsigned integer','','signed integer','','unsigned integer',''];
   const cases=[];
@@ -40,3 +40,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   const result=generateOwnedOutcomeNumberKindRules({check:process.argv[2]==='--check'});
   console.log('Translated complete native number predicate selection against '+result.fixture.cases.length+' independent bounded-profile controls.');
 }
+
+import {readBooleanParameterTupleStyle} from '../../../../js/scripts/boolean-parameter-tuple-style.mjs';

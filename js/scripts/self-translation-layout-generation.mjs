@@ -10,5 +10,7 @@ export function generateSelfTranslationLayoutRules({check=false}={}) {
   const program=checkProgram(parseJavaScript(source,{referenceSemantics:false}));
   assert.deepEqual([...program.declarations.keys()],['requireSelfTranslationLayoutEnvelope']);
   const emitted=emitRust(program,{arrayConsumption:true});assert.equal(emitted.preludes.length,0);
-  return writeRecordRuleLibrary(emitted,'self_translation_layout_rules',{check});
+  return writeRecordRuleLibrary(emitted,'self_translation_layout_rules',{check,sourceStyles:source=>readBooleanParameterTupleStyle(source,'require_self_translation_layout_envelope')});
 }
+
+import {readBooleanParameterTupleStyle} from './boolean-parameter-tuple-style.mjs';

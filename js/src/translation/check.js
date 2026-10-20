@@ -955,6 +955,13 @@ class Checker {
       }
     }
     const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
+    if (lowering === 'relative-element-template') {
+      const result = { kind: 'option', element: object.type.element, absence: 'undefined' };
+      const signature = { kind: 'function', params: [object.type, FLOAT], ret: result };
+      const fn = coerce(this.expr(createArrayRelativeElementTemplateExpression(object.type, node.span), new Map(), path, signature),
+        signature, this.language, node.span);
+      return flattenOption({ k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span });
+    }
     if (lowering === 'relative-character-template') {
       const signature = { kind: 'function', params: [STRING, FLOAT], ret: { kind: 'option', element: STRING, absence: 'undefined' } };
       const fn = coerce(this.expr(createStringRelativeCharacterTemplateExpression(node.span), new Map(), path, signature),
@@ -1065,7 +1072,7 @@ class Checker {
       if (node.op === 'indexOf' || node.op === 'lastIndexOf' || node.op === 'includes') {
         return this.primitiveMethod(node, object, env, path);
       }
-      if (node.op === 'join') return this.primitiveMethod(node, object, env, path);
+      if (node.op === 'join' || node.op === 'at') return this.primitiveMethod(node, object, env, path);
     }
     throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked operation on ${typeKey(object.type)}`, node.span);
   }
@@ -2194,3 +2201,5 @@ function decreasesOn(expr, fn, index, name, subterms) {
       return true;
   }
 }
+
+import {createArrayRelativeElementTemplateExpression} from './array-relative-element-template.js';

@@ -58,9 +58,11 @@ function collision(text,position,Math,Number){const readStringRelativeCharacter=
   assert.throws(()=>checkProgram(parseJavaScript("console.log('ABC'.at(0,1));")),/expects 0 to 1 arguments/u);
   assert.throws(()=>checkProgram(parseJavaScript('/** @returns {string} */function wrong(){return "".at(0);}')));
   const array='/** @param {number[]} values @returns {number|undefined} */function last(values){return values.at(-1);}';
-  // Before this extension the inferencer recognized array at, but its checker
-  // refused the actual operation. Retain that exact input and boundary.
-  assert.throws(()=>checkProgram(parseJavaScript(array)),/has no checked operation on array/u);
+  // Keep the original array input. The complete relative-array source lambda
+  // now implements its ECMAScript 2022 behavior; retain the old source in history.
+  const arrayRead=runInNewContext(emitJavaScript(checkProgram(parseJavaScript(array))).text+';last;');
+  assert.equal(arrayRead([1,2,3]),[1,2,3].at(-1));
+  assert.equal(arrayRead([]),[].at(-1));
 });
 
 test('relative character complete linked archives recheck and retain source free target behavior',()=>{
@@ -114,7 +116,7 @@ test('relative character source history retains every whole preceding policy mod
   assert.ok(Buffer.from(serializeProjectData(previous,file)).equals(original));
   assert.equal(relativeCharacterSourceSuccessors.length,2);
   for(const row of relativeCharacterSourceSuccessors){
-    const bytes=readFileSync(new URL(row.file,root));
+    const bytes=Buffer.from(restoreArrayRelativeElementSource(readFileSync(new URL(row.file,root),'utf8'),row.file));
     assert.equal(bytes.length,row.current.bytes);
     assert.equal(createHash('sha256').update(bytes).digest('hex'),row.current.sha256);
     let restored=bytes,limit=bytes.length;
@@ -141,20 +143,22 @@ test('relative character provenance refresh preserves all recorded definitions a
     assert.ok(bytes.equals(original(descriptor.file)));
   };
   assert.equal(receipt.changes.length,6);
-  const artifact=readProjectData(new URL(receipt.currentArtifact.file,root)),previous=structuredClone(artifact);
+  const artifact=restoreArrayRelativeElementProjectData(readProjectData(new URL(receipt.currentArtifact.file,root)),receipt.currentArtifact.file),previous=structuredClone(artifact);
   for(const change of receipt.changes){
     assert.equal(change.path.length>1,true);assert.ok(['bytes','sha256'].includes(change.path.at(-1)));
     let owner=previous;for(const key of change.path.slice(0,-1))owner=owner[key];
     assert.equal(owner[change.path.at(-1)],change.after);owner[change.path.at(-1)]=change.before;
   }
   assertOriginal(previous,receipt.previousArtifact);
-  const policy=readProjectData(new URL(receipt.previousPolicy.file,root)),oldPolicy=receipt.previousPolicy.value;
+  const policy=restoreArrayRelativeElementProjectData(readProjectData(new URL(receipt.previousPolicy.file,root)),receipt.previousPolicy.file),oldPolicy=receipt.previousPolicy.value;
   assertOriginal(oldPolicy,receipt.previousPolicy);
   const inverse=structuredClone(policy);inverse.edge.current=oldPolicy.edge.current;inverse.edge.changes=oldPolicy.edge.changes;
   assert.deepEqual(inverse,oldPolicy);
   assert.deepEqual(policy.edge.changes.map(({kind,path,before})=>({kind,path,before})),oldPolicy.edge.changes.map(({kind,path,before})=>({kind,path,before})));
-  const register=readProjectData(new URL(receipt.previousRegister.file,root));
+  const register=restoreArrayRelativeElementProjectData(readProjectData(new URL(receipt.previousRegister.file,root)),receipt.previousRegister.file);
   register.sourceDescriptorSuccessors=[oldPolicy.edge];assertOriginal(register,receipt.previousRegister);
-  const loan=readProjectData(new URL(receipt.previousLoan.file,root));
+  const loan=restoreArrayRelativeElementProjectData(readProjectData(new URL(receipt.previousLoan.file,root)),receipt.previousLoan.file);
   loan.predecessor=receipt.previousLoan.predecessor;assertOriginal(loan,receipt.previousLoan);
 });
+
+import {restoreArrayRelativeElementSource,restoreArrayRelativeElementProjectData} from '../scripts/array-relative-element-history.mjs';

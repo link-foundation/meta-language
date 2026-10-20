@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 192 | 191 | 1 | 0 |
+| Generators | 195 | 194 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 89 | 0 | 0 | 89 |
+| Published artifact contents | 90 | 0 | 0 | 90 |
 
 ## JavaScript engines
 
@@ -739,6 +739,9 @@ they are.
 | `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -896,6 +899,7 @@ they are.
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

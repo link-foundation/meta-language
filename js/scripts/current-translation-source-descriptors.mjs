@@ -7,7 +7,7 @@ import {structuredDataToLino} from '../src/structured-data-links.js';
 
 const policyFile=new URL('../../parity/self-translation/current-translation-source-descriptors.lino',import.meta.url);
 const registerFile=new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
-const policyHash='3120111d1b173d1b7f19652a187d8d8af0d985c9d102fc7efc6d5c64ced0209a';
+const policyHash='d3176c78b86a441a8f7d8cb3b33125c58066698f6054194ec2c8fe1db8cd1a36';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 let policy;
 

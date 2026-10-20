@@ -663,19 +663,19 @@ fn explicit_unicode_order_matches_every_shared_case_and_every_single_code_unit()
     assert_unicode_order_fixture_observations(cases, &expected);
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
     assert!(
-        meta_language::translation::emit_lean(&program)
+        meta_language::translation::emit_lean::emit_lean(&program)
             .unwrap_err()
             .reason
             .contains("UTF-16 operational string encoding for lexical comparison")
     );
     assert!(
-        meta_language::translation::emit_rocq(&program)
+        meta_language::translation::emit_rocq::emit_rocq(&program)
             .unwrap_err()
             .reason
             .contains("UTF-16 operational string encoding for lexical comparison")
     );
     let native_source = "fn before(left: String,right: String)->bool {left<right} fn main() {}";
-    let refusal = meta_language::translation::parse_rust(native_source)
+    let refusal = meta_language::translation::rust::parse_rust(native_source)
         .and_then(|surface| check_program(&surface))
         .unwrap_err();
     assert!(refusal.reason.contains("ordering on string"));
