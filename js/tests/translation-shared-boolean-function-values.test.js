@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {restoreCiLintSource} from '../scripts/ci-39496927203-lint-source-history.mjs';
 import test from 'node:test';
 import vm from 'node:vm';
 import {readProjectData} from '../scripts/project-data.mjs';
@@ -22,6 +24,8 @@ const select=(source,language,name,options={})=>{
 };
 
 test('actual Boolean library owners and every prepared recursive definition retain source-free text and binary proofs',()=>{
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../../parity/fixtures/shared-boolean-function-definitions.lino',import.meta.url))).digest('hex'),
+    '01184f0076da3905c869a7a339c5b46d985f068546e199b79e468aa5219af092','the entire original twelve-case historical corpus remains byte exact');
   generateSharedBooleanFunctionModel({check:true});generateSharedBooleanFunctionFixtures({check:true});
   for(const row of fixture.cases){
     const value=archive(row),before=value.network.toLino();
@@ -32,7 +36,8 @@ test('actual Boolean library owners and every prepared recursive definition reta
     }
     assert.equal(value.network.toLino(),before,'the actual archive is never rewritten into its meaning view');
     if(row.provenance){
-      assert.equal(readFileSync(new URL('../../'+row.provenance.file,import.meta.url),'utf8'),row.provenance.completeSource);
+      assert.equal(restoreCiLintSource(readFileSync(new URL('../../'+row.provenance.file,import.meta.url),'utf8'),row.provenance.file),row.provenance.completeSource,
+        'the original complete source is the certified historical view, not a claim about current source bytes');
       assert.equal(Buffer.from(row.provenance.completeSource).subarray(row.provenance.selected.start,row.provenance.selected.end).toString(),row.provenance.selected.source);
       assert.equal(row.source,row.provenance.selected.source+row.provenance.harness);
       assert.ok(row.provenance.completeConcreteSyntax.children.length>1);

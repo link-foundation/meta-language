@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreCiLintSource} from './ci-39496927203-lint-source-history.mjs';
 import {parseProgrammingLanguage} from '../src/programming-language-parser.js';
 import {createTypedProgramLinks} from '../src/typed-program-links.js';
 import {encodeFormalFunctionDefinition} from '../src/formal-function-links.js';
@@ -18,7 +19,7 @@ export function generateSharedBooleanFunctionFixtures({check=false}={}) {
     ['js/src/typescript-erasure-rules.js','JavaScript','eraseTypeScriptNamedImport'],
     ['rust/src/self_translation/typescript_erasure_rules.rs','Rust','erase_type_script_named_import'],
   ]){
-    const source=readFileSync(new URL(file,root),'utf8'),bytes=Buffer.from(source);
+    const source=restoreCiLintSource(readFileSync(new URL(file,root),'utf8'),file),bytes=Buffer.from(source);
     const parsed=parseProgrammingLanguage(source,language);
     assert.equal(parsed.tree.flags.hasError,false);
     const owners=parsed.tree.children.filter(owner=>{

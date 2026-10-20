@@ -245,6 +245,41 @@ fn boolean_callable_values_preserve_actual_owners_and_recursive_source_free_proo
         "../../../parity/fixtures/shared-boolean-function-definitions.lino"
     ))
     .unwrap();
+    // Keep the old corpus tied to its exact certified historical native view.
+    let historical_context = std::process::Command::new("node")
+        .current_dir(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())
+        .args(["--input-type=module", "-e", concat!(
+            "import{readFileSync}from'node:fs';",
+            "import{restoreCiLintSource}from'./js/scripts/ci-39496927203-lint-source-history.mjs';",
+            "const file='rust/src/self_translation/typescript_erasure_rules.rs';",
+            "const current=readFileSync(file,'utf8');process.stdout.write(JSON.stringify({current,historical:restoreCiLintSource(current,file)}));"
+        )]).output().unwrap();
+    assert!(
+        historical_context.status.success(),
+        "{}",
+        String::from_utf8_lossy(&historical_context.stderr)
+    );
+    let historical_context: Value = serde_json::from_slice(&historical_context.stdout).unwrap();
+    let native_case = data["cases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|case| {
+            case["provenance"]["file"] == "rust/src/self_translation/typescript_erasure_rules.rs"
+        })
+        .unwrap();
+    assert_eq!(
+        historical_context["historical"],
+        native_case["provenance"]["completeSource"]
+    );
+    assert_eq!(
+        historical_context["current"],
+        include_str!("../../src/self_translation/typescript_erasure_rules.rs")
+    );
+    assert_ne!(
+        historical_context["historical"],
+        historical_context["current"]
+    );
     for case in data["cases"].as_array().unwrap() {
         let network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
         let root = LinkId::from_u64(case["programRoot"].as_u64().unwrap());
@@ -305,4 +340,182 @@ fn boolean_callable_values_preserve_actual_owners_and_recursive_source_free_proo
         prove_formal_concept_equivalence(&archive(&data["cases"][8]), &archive(&data["cases"][10]))
             .is_none()
     );
+}
+
+#[test]
+fn current_boolean_declarations_keep_actual_const_owners_truths_and_both_archives() {
+    use meta_language::{
+        BinaryLinksOptions, ParseConfiguration, decode_link_network_binary,
+        emit_typed_program_links, encode_formal_function_declaration_value,
+        encode_link_network_binary,
+    };
+    let data = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/shared-boolean-function-definitions-current.lino"
+    ))
+    .unwrap();
+    assert_eq!(data["model"], "closed boolean function declaration value");
+    assert_eq!(data["cases"].as_array().unwrap().len(), 2);
+    for case in data["cases"].as_array().unwrap() {
+        let source = if case["language"] == "Rust" {
+            include_str!("../../src/self_translation/typescript_erasure_rules.rs")
+        } else {
+            include_str!("../../../js/src/typescript-erasure-rules.js")
+        };
+        assert_eq!(
+            source,
+            case["provenance"]["completeSource"].as_str().unwrap()
+        );
+        let concrete = LinkNetwork::parse(
+            source,
+            case["language"].as_str().unwrap(),
+            ParseConfiguration::default(),
+        );
+        assert!(concrete.verify_full_match(None).is_clean());
+        assert_eq!(concrete.reconstruct_text(), source);
+        for restored in [
+            LinkNetwork::from_lino(&concrete.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&concrete, BinaryLinksOptions::default()).unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            assert_eq!(restored.reconstruct_text(), source);
+        }
+        let network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["programRoot"].as_u64().unwrap());
+        let before = network.to_lino();
+        let selected = encode_formal_function_declaration_value(
+            &network,
+            root,
+            FormalFunctionSelector::Name(case["declaration"].as_str().unwrap()),
+            None,
+        )
+        .unwrap();
+        assert_eq!(network.to_lino(), before);
+        assert_eq!(
+            selected.network.link(selected.root).unwrap().references()[0],
+            root
+        );
+        for link in network.links() {
+            let retained = selected.network.link(link.id()).unwrap();
+            assert_eq!(retained.references(), link.references());
+            assert_eq!(retained.metadata(), link.metadata());
+        }
+        let identities = selected
+            .network
+            .links()
+            .filter_map(|link| {
+                let [parent, label, child] = link.references() else {
+                    return None;
+                };
+                (*parent == selected.root
+                    && selected.network.link(*label).unwrap().metadata().term()
+                        == Some("selected function declaration"))
+                .then_some(*child)
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            identities,
+            vec![LinkId::from_u64(case["declarationId"].as_u64().unwrap())]
+        );
+        assert_eq!(
+            read_formal_concept_definition(&selected.to_json()).unwrap(),
+            case["expected"]
+        );
+        for graph in [
+            LinkNetwork::from_lino(&selected.network.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&selected.network, BinaryLinksOptions::default())
+                    .unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            let actual = FormalConceptArchive {
+                network: graph,
+                root: selected.root,
+            };
+            assert_eq!(
+                read_formal_concept_definition(&actual.to_json()).unwrap(),
+                case["expected"]
+            );
+            let checked = decode_typed_program_links(&actual.network, root).unwrap();
+            assert!(
+                !checked
+                    .declarations
+                    .iter()
+                    .any(|entry| entry.full_name() == "selected_function_definition")
+            );
+            let checked = serde_json::to_value(checked).unwrap();
+            let declaration = checked["declarations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|entry| entry["fullName"] == case["declaration"])
+                .unwrap();
+            if case["language"] == "Rust" {
+                assert_eq!(
+                    declaration["sourceConstFunction"],
+                    case["sourceConstFunction"]
+                );
+            } else {
+                assert!(declaration.get("sourceConstFunction").is_none());
+            }
+            let javascript = emit_typed_program_links(&actual.network, root, "JavaScript")
+                .unwrap()
+                .code;
+            assert_eq!(
+                javascript,
+                case["emissions"]["JavaScript"].as_str().unwrap()
+            );
+            assert_eq!(
+                emit_typed_program_links(&actual.network, root, "Rust")
+                    .unwrap()
+                    .code,
+                case["emissions"]["Rust"].as_str().unwrap()
+            );
+            let mut script = javascript;
+            script.push_str(&format!(
+                "\nconsole.log(JSON.stringify({}.map(args=>{}(...args))));",
+                case["inputs"],
+                case["declaration"].as_str().unwrap()
+            ));
+            let output = std::process::Command::new("node")
+                .args(["--input-type=module", "-e", &script])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let results: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(results, case["expectedValues"]);
+            assert_eq!(
+                results,
+                json!([false, false, false, true, true, true, true, true])
+            );
+        }
+    }
+    let first = archive(&data["cases"][0]);
+    let second = archive(&data["cases"][1]);
+    let proof = prove_formal_concept_equivalence(&first, &second).unwrap();
+    for graph in [
+        LinkNetwork::from_lino(&proof.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&proof.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        assert!(verify_formal_concept_equivalence(
+            &first,
+            &second,
+            &FormalConceptArchive {
+                network: graph,
+                root: proof.root
+            }
+        ));
+    }
 }
