@@ -1,6 +1,6 @@
 //! Typed host storage only; shared JavaScript owns selection and admission.
 #[path = "../../../../rust/src/translation/owned_outcome_static_borrow_rules.rs"]
-mod rules;
+pub(super) mod rules;
 
 pub fn resolve_owned_outcome_static_borrow(
     text: &str,

@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {readRustSourceItems} from '../../../../js/scripts/generate-private-output-test-model.mjs';
 import {readSourceTextRustBlock} from '../../../../js/scripts/source-text-byte-library-style.mjs';
+import {readNativeSourceByteRange} from '../../../../js/scripts/native-source-byte-ranges.mjs';
 import {parseCargoLock} from '../../../../js/scripts/dependency-inventory.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {DecoratorSet} from '../../../../js/src/decorators.js';
@@ -41,18 +42,20 @@ function replaceObservationSourceTokens(source,replacements) {
 function readOriginalNumberObservationSources() {
   const packet=buildOutcomePacket();
   const sinkFile='experiments/grammar-outcome-network/native-transport/bridge/sinks.rs';
-  const sinkSource=readFileSync(new URL('../bridge/sinks.rs',import.meta.url),'utf8'),parsed=readRustSourceItems(Buffer.from(sinkSource));
+  const sinkBytes=readFileSync(new URL('../bridge/sinks.rs',import.meta.url));
+  const sinkSource=readNativeSourceByteRange(sinkBytes,0,sinkBytes.length),parsed=readRustSourceItems(sinkBytes);
   const pieces=parsed.items.filter(item=>['next_depth','CountArray','CountSink'].includes(item.name)
     ||item.kind==='impl_item'&&parsed.text(parsed.field(item.node,'type'))==='CountSink')
-    .map(item=>({kind:item.kind,name:item.name,sourceText:sinkSource.slice(item.start,item.end),start:item.start,end:item.end}));
+    .map(item=>({kind:item.kind,name:item.name,sourceText:readNativeSourceByteRange(sinkBytes,item.start,item.end),start:item.start,end:item.end}));
   assert.equal(pieces.length,5,'complete original depth helper, two storage declarations and both counter implementations');
   assert.equal(pieces.filter(row=>row.kind==='impl_item').length,2);
   const originalCounter=pieces.map(row=>row.sourceText).join('\n\n');
-  const parentFile='rust/src/structured_data_links.rs',parent=readFileSync(new URL(parentFile,root),'utf8');
-  const proposal=proposeParent(parent),parentItems=readRustSourceItems(Buffer.from(parent));
+  const parentFile='rust/src/structured_data_links.rs',parentBytes=readFileSync(new URL(parentFile,root));
+  const parent=readNativeSourceByteRange(parentBytes,0,parentBytes.length);
+  const proposal=proposeParent(parent),parentItems=readRustSourceItems(parentBytes);
   const helpers=['fail','write_number'].map(name=>{
     const found=parentItems.items.filter(item=>item.kind==='function_item'&&item.name===name);assert.equal(found.length,1);
-    return{name,sourceText:parent.slice(found[0].start,found[0].end),start:found[0].start,end:found[0].end};
+    return{name,sourceText:readNativeSourceByteRange(parentBytes,found[0].start,found[0].end),start:found[0].start,end:found[0].end};
   });
   const originalEntry=readSourceTextRustBlock(sinkSource,'fn','encode_grammar_parse_outcome_links');
   const preflightStart=originalEntry.indexOf('\n    if limits.node_limit'),preflightEnd=originalEntry.indexOf('\n    let mut sink = DirectSink::new(limits);');
@@ -155,6 +158,7 @@ ${sink.preflight}
     boundary:'Original borrowed Number accessor facts and expanded wire occurrence positions only. Existing source numeric validation and counting remain exact. Native execution, selected compiler artifact provenance, correspondence to owned source node identities and complete DTO reconstruction remain separate requirements.',
     inputs:{sink,parent},sourceInventory:packet.inventory,wirePlan:packet.plan,
     author:{file:'experiments/grammar-outcome-network/native-transport/inverse/generate-original-number-observations.mjs',...pin(readFileSync(new URL(import.meta.url)))},
+    byteRangeReader:{file:'js/scripts/native-source-byte-ranges.mjs',...pin(readFileSync(new URL('../../../../js/scripts/native-source-byte-ranges.mjs',import.meta.url)))},
     originalVisitors:packet.source,trait:{before:trait,after:extendedTrait},jsonVisitor:{before:jsonVisitor,after:observedVisitor},
     observationDeclaration,observationMethod,storage:{...storage,after:observedStorage},inherent:renamedInherent,implementation:{...renamedImplementation,after:observedImplementation},
     relocation,rawModel:raw,outputs:outputs.map(({file,source})=>({file,...pin(source)})),

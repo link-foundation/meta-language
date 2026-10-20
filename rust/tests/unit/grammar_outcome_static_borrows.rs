@@ -1,8 +1,7 @@
 //! Existing caller references retain their real compiler-enforced lifetime in CI.
-#[path = "../../src/translation/owned_outcome_static_borrow_rules.rs"]
-mod rules;
 #[path = "../../../experiments/grammar-outcome-network/native-transport/inverse/static-borrows.rs"]
 mod storage;
+use storage::rules;
 
 #[test]
 fn generated_static_reference_selection_preserves_all_independent_cases_and_resource_boundaries() {
@@ -53,9 +52,9 @@ fn generated_static_reference_selection_preserves_all_independent_cases_and_reso
     }
     for (entries, bytes, expected) in [
         (0.0, 0.0, true),
-        (128.0, 1048576.0, true),
+        (128.0, 1_048_576.0, true),
         (129.0, 0.0, false),
-        (0.0, 1048577.0, false),
+        (0.0, 1_048_577.0, false),
         (-1.0, 0.0, false),
         (0.5, 0.0, false),
         (0.0, 0.5, false),
@@ -118,7 +117,7 @@ fn native_storage_returns_the_actual_existing_static_reference_without_allocatin
             .contains("ambiguous")
     );
     static LARGE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-    let oversized: &'static str = LARGE.get_or_init(|| "x".repeat(1048577)).as_str();
+    let oversized: &'static str = LARGE.get_or_init(|| "x".repeat(1_048_577)).as_str();
     assert!(
         storage::resolve_owned_outcome_static_borrow("syntax", &[oversized])
             .unwrap_err()

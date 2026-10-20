@@ -93,7 +93,7 @@ fn check_root_type_model(network: &LinkNetwork, data: &Value, row: &Value) {
         let metadata = network.link(LinkId::from_u64(id)).unwrap().metadata();
         assert_eq!(
             metadata.link_type(),
-            root_type_kind(declaration["type"].as_str().unwrap())
+            Some(root_type_kind(declaration["type"].as_str().unwrap()))
         );
         assert_eq!(metadata.term(), declaration["term"].as_str());
         assert_eq!(metadata.language(), data["language"].as_str());
@@ -103,18 +103,18 @@ fn check_root_type_model(network: &LinkNetwork, data: &Value, row: &Value) {
     assert_eq!(root_type_references(network, 6), [2, 5]);
     assert_eq!(root_type_references(network, 8), [1, 7]);
     assert_eq!(network.find_term("selected root").unwrap().as_u64(), 1);
-    let types = network
+    let type_designations = network
         .links()
-        .filter(|link| link.metadata().link_type() == LinkType::Type)
+        .filter(|link| link.metadata().link_type() == Some(LinkType::Type))
         .collect::<Vec<_>>();
     let roles = network
         .links()
         .filter(|link| link.metadata().term() == Some("declared type role"))
         .collect::<Vec<_>>();
-    assert_eq!(types.len(), usize::from(typed));
+    assert_eq!(type_designations.len(), usize::from(typed));
     assert_eq!(roles.len(), usize::from(typed));
     if typed {
-        assert_eq!(types[0].id().as_u64(), 1);
+        assert_eq!(type_designations[0].id().as_u64(), 1);
         assert_eq!(root_type_references(network, 10), [1, 4]);
         assert!(root_type_references(network, 9).contains(&10));
     }

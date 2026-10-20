@@ -2009,6 +2009,12 @@ records primitive Number predicates, exact integer decimals, floating bits and
 expanded wire occurrence positions. Only an original JSON Number uses this
 observation route. Host integer conversions retain their original operation.
 Recorded Links decorators and whole-source inverses describe the extension.
+Native CST intervals select UTF-8 bytes from a fully validated passive source
+buffer. Both endpoints must be scalar boundaries; invalid surrounding bytes,
+shared buffers, proxies and out-of-budget sources refuse before selection.
+Unicode source remains exact without normalization. The complete preceding
+author and receipt retain independent Git membership certificates and exact
+byte inverses; generated native algorithms and numeric controls remain unchanged.
 The new isolated profile requires explicit limits of at most 100,000 occurrences,
 16 MiB scalar bytes and depth 256; existing codec defaults do not change.
 Independent controls retain signed/unsigned overlap, wide exact integers,
