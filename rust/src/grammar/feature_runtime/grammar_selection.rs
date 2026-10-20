@@ -439,15 +439,14 @@ impl Executor<'_> {
                 self.charge_selection_value(&definition)?;
                 matches = stored_definition == &definition;
                 if matches {
-                    matches = match context_matches {
-                        Some(value) => value,
-                        None => {
-                            self.charge_selection_value(&source_context)?;
-                            self.charge_selection_value(&actual_context)?;
-                            let value = source_context == actual_context;
-                            context_matches = Some(value);
-                            value
-                        }
+                    matches = if let Some(value) = context_matches {
+                        value
+                    } else {
+                        self.charge_selection_value(&source_context)?;
+                        self.charge_selection_value(&actual_context)?;
+                        let value = source_context == actual_context;
+                        context_matches = Some(value);
+                        value
                     };
                 }
             }

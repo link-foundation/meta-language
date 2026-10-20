@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCiLintSource} from './ci-39496927203-lint-source-history.mjs';
 
 /** Rebuild complete receiver erasure hosts from certified predecessor sources. */
 export function generateTypeScriptReceiverParameters({check=false}={}) {
@@ -31,9 +32,10 @@ export function generateTypeScriptReceiverParameters({check=false}={}) {
       inverse=inverse.slice(0,edit.start)+edit.removed+inverse.slice(edit.start+edit.inserted.length);
     }
     assert.equal(inverse,row.source);
-    const file=new URL(row.path,root),current=readFileSync(file,'utf8');
+    const file=new URL(row.path,root),actual=readFileSync(file,'utf8');
+    const current=restoreCiLintSource(actual,row.path);
     if(check)assert.equal(current,generated,row.path);
-    else {assert.ok(current===row.source||current===generated,'unknown current source '+row.path);writeFileSync(file,generated);}
+    else {assert.ok(current===row.source||current===generated,'unknown current source '+row.path);if(actual===current)writeFileSync(file,generated);}
   }
   return archive;
 }

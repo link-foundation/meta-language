@@ -39,7 +39,7 @@ pub fn render_type_script_documentation_pattern(pattern: &str) -> String {
 
 /// Erase a type specifier and its following comma; retain runtime imports and evaluation.
 #[must_use]
-pub fn erase_type_script_named_import(
+pub const fn erase_type_script_named_import(
     type_specifier: bool,
     comma: bool,
     after_type_specifier: bool,
@@ -49,7 +49,7 @@ pub fn erase_type_script_named_import(
 
 /// Read the shared compile-time receiver parameter decision.
 #[must_use]
-pub fn accept_type_script_receiver_parameter(
+pub const fn accept_type_script_receiver_parameter(
     parameter_flags: (bool, bool, bool, bool, bool),
 ) -> bool {
     let (first, required, annotated, initialized, owner) = parameter_flags;
@@ -58,6 +58,6 @@ pub fn accept_type_script_receiver_parameter(
 
 /// Read the shared compile-time receiver parameter decision.
 #[must_use]
-pub fn erase_type_script_receiver_separator(comma: bool, after_receiver: bool) -> bool {
+pub const fn erase_type_script_receiver_separator(comma: bool, after_receiver: bool) -> bool {
     comma && after_receiver
 }

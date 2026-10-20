@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
+import {restoreCiLintSource,readCiLintSourceReceipt} from '../../js/scripts/ci-39496927203-lint-source-history.mjs';
 
 export const GLOBAL_GRAMMAR_CONTEXT_SOURCE_PROFILE=Object.freeze({
   revision:'bd939f8df9dd6156b7208a4d22843ba7e59a3c46',
@@ -54,15 +55,17 @@ export function readGlobalGrammarContextSourcePair(file) {
 export function restoreGlobalGrammarContextSource(file,source) {
   assert.equal(typeof source,'string');assert.ok(Buffer.byteLength(source)<=131072);
   const pair=readGlobalGrammarContextSourcePair(file),current=pin(source);
+  const prior=restoreCiLintSource(source,file);
   if(source===pair.predecessor.source)return{file,predecessor:source,current:source,changed:false,receipt:null};
-  assert.equal(source,pair.successor.source,'unknown current context source edits refuse');
-  let inverse=source;
+  assert.equal(prior,pair.successor.source,'unknown current context source edits refuse');
+  let inverse=prior;
   for(const action of pair.actions.toReversed()){assert.equal(inverse.split(action.after).length,2);inverse=inverse.replace(action.after,action.before);}
   assert.equal(inverse,pair.predecessor.source);
   return{file,predecessor:inverse,current:source,changed:true,receipt:{
     schemaVersion:1,profile:'complete global grammar context source successor 1',file,revision:pair.revision,
     recipe:{path:GLOBAL_GRAMMAR_CONTEXT_SOURCE_PROFILE.path,sha256:GLOBAL_GRAMMAR_CONTEXT_SOURCE_PROFILE.sha256},
     predecessor:pin(inverse),current,inverseVerified:true,
+    ...(prior!==source?{sourceSuccessor:readCiLintSourceReceipt(source,file)}:{}),
     boundary:'Exact current-to-predecessor source conservation only; no frozen producer repin, predicate equivalence or native execution observation.'}};
 }
 

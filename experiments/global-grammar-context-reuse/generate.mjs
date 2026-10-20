@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {restoreCiLintSource} from '../../js/scripts/ci-39496927203-lint-source-history.mjs';
 import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
 import {checkProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
@@ -67,7 +68,7 @@ export function generateGlobalGrammarContextReuse({check=false}={}) {
     for(const [before,after]of actions){assert.equal(generated.split(before).length,2,file+': exact complete edit context');generated=generated.replace(before,after);}
     let inverse=generated;for(const[before,after]of actions.toReversed()){assert.equal(inverse.split(after).length,2);inverse=inverse.replace(after,before);}
     assert.equal(inverse,sourceText,'every predecessor source and test byte survives');
-    const path=new URL(file,root),actual=readFileSync(path,'utf8');
+    const path=new URL(file,root),actual=restoreCiLintSource(readFileSync(path,'utf8'),file);
     assert.ok(actual===sourceText||actual===generated,'only the complete certified predecessor or successor source is admitted');
     sources.push({file,commit:revision,...pin(original.blob),sourceText,certificate:original.certificate,proposed:pin(generated),actions:actions.map(([before,after])=>({before,after}))});
   }
