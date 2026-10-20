@@ -3140,6 +3140,11 @@ invocation retain all original imports. Original assertions, commands, resource
 limits, ten-minute deadlines and aggregate prerequisites remain checked through
 exact source and workflow inverses. Splitting allocations does not establish
 successful full-workload timing until CI executes the changed schedule.
+The complete tooling test group likewise has four required physical cells after
+its measured fifteen-minute cancellation. The existing modulo file partitioner
+assigns every current test file exactly once; all commands, assertions, flags,
+deadlines and aggregate prerequisites remain intact. Historical workflow checks
+recover their exact original inputs through a separate checked matrix inverse.
 An exact native checked-program mismatch keeps its original rejection and adds
 a bounded first differing field path. Declaration-list archive failures retain
 their actual original input in the failure message. Neither diagnostic accepts,

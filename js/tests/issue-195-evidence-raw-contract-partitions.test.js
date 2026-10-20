@@ -14,7 +14,7 @@ const history=readProjectData(new URL('parity/fixtures/raw-contract-partition-hi
 
 test('isolated raw contract cells retain every original command gate and deadline and restore the entire old workflow',()=>{
   generateRawContractPartitionHistory({check:true});
-  const workflow=read('.github/workflows/js.yml');
+  const workflow=restoreToolingPartitionHistory(read('.github/workflows/js.yml'));
   assert.equal(restoreRawContractPartitionHistory(workflow),history.workflow.source);
   verifyGitArtifactCertificate(history.workflow.certificate,Buffer.from(history.workflow.source),{
     revision:history.revision,path:'.github/workflows/js.yml'});
@@ -95,3 +95,5 @@ test('raw partition adapters retain both entire preceding conformance guards wit
     assert.equal(source.replace(insertion,'').replace(after,before),previous(file));
   }
 });
+
+import {restoreToolingPartitionHistory} from './support/tooling-partition-history.js';

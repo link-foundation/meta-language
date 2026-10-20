@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 190 | 189 | 1 | 0 |
+| Generators | 191 | 190 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -737,6 +737,7 @@ they are.
 | `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

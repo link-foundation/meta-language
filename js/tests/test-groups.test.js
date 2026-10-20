@@ -83,7 +83,7 @@ test('four conformance jobs preserve each original two-job partition under its u
   assert.equal(job.conclusion, 'cancelled');
   assert.ok(Date.parse(job.completed_at) - Date.parse(job.started_at) >= 15 * 60 * 1000);
   assert.equal(capture.responses.annotations.data.filter(row => row.message === 'The job has exceeded the maximum execution time of 15m0s').length, 1);
-  const workflow = await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8');
+  const workflow = restoreRawContractPartitionHistory(await readFile(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));
   assert.equal(createHash('sha256').update(workflow).digest('hex'), capture.change.currentSha256);
   assert.equal(workflow.split(capture.change.after).length, 2);
   const inverse = workflow.replace(capture.change.after, capture.change.before);
@@ -239,3 +239,5 @@ test('standalone JavaScript runs produce and validate the same report shards', a
   assert.match(download.text, /pattern: self-translation-report-\$\{\{ github.sha \}\}-\*/u);
   assert.doesNotMatch(download.text, /merge-multiple: true/u);
 });
+
+import {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';

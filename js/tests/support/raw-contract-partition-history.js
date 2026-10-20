@@ -10,6 +10,7 @@ const history=readProjectData(file);
 /** Invert only complete recorded scheduling changes; unrelated edits stay visible. */
 export function restoreRawContractPartitionHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreToolingPartitionHistory(source);
   if(!source.startsWith('name: JavaScript\n'))return source;
   for(const change of history.changes){
     if(source.includes(change.after)){
@@ -28,3 +29,5 @@ export function restoreRawContractTestSource(source) {
   assert.ok(source===current||source===history.source.source,'only complete reviewed raw contract source is admitted');
   return history.source.source;
 }
+
+import {restoreToolingPartitionHistory} from './tooling-partition-history.js';

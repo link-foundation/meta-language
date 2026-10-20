@@ -142,6 +142,10 @@ jobs:
         group: [grammar, grammar-native, grammar-recovery, grammar-scaling, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
         partition: [1]
         include:
+          - {group: tooling, partition: 1, shards: 4}
+          - {group: tooling, partition: 2, shards: 4}
+          - {group: tooling, partition: 3, shards: 4}
+          - {group: tooling, partition: 4, shards: 4}
           - {group: grammar, partition: 1, shards: 3}
           - {group: grammar, partition: 2, shards: 3}
           - {group: grammar, partition: 3, shards: 3}
