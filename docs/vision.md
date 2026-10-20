@@ -1979,6 +1979,28 @@ work. Primitive Boolean source styles simplify only immutable primitive
 parameters under their actual types, retaining the complete generated owner and
 recorded inverse; unsupported expressions remain unchanged and shadowing refuses.
 
+Exact native integer projection admission also uses a complete JavaScript
+algorithm and its unchanged canonical-decimal dependency. Bounded decimal digit
+division identifies the lowest and highest nonzero binary positions before
+admitting a binary64 value. Range, lost low bits, a different projected value,
+negative zero and uncovered widths refuse. Both complete source modules and
+their one exact import correspondence remain in the generated Links fixture;
+every lifted native control declaration is retained. Independent BigInt boundary
+and seeded controls, exact source restoration and both typed archive encodings
+check this layer. Native execution remains a CI requirement.
+
+The experimental number-contract adapter first validates the complete owned
+source model and selected compiler artifact, then binds one explicit supplied
+fact to every unresolved JSON number occurrence in its original order. Integer
+payloads retain their exact decimal and floating payloads retain their exact
+bits; equal projections cannot erase distinct declared native variants. Missing,
+foreign, rounded or changed contracts and active inputs refuse. The complete
+selection reloads from text and binary Links. Supplied facts and historical
+compiler contracts do not establish original-object capture or live execution
+provenance. Native fact production, complete DTO reconstruction and default CST
+integration remain required; these contracts do not change the owned model's
+unresolved manifest or count as completed reconstruction.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,
