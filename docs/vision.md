@@ -1140,6 +1140,17 @@ beginning and end refer to that same link; the self-reference and the chosen
 model remain explicit. Recursive composition preserves shared references and
 cycles across representation levels.
 
+Paired foundation controls use the existing public link constructors to build
+an explicit nineteen-link model: a doublet vertex, its selected model, three
+role declarations sharing one identity, two linked root selections and a shared
+motif with a mutual cycle. Complete text and binary archives retain every link,
+endpoint, metadata field and term registration without the original network.
+Independent endpoint, role, root and cycle corruptions fail the same checks.
+The interned-point API retains its unary profile; doublet vertices use the
+explicit selected model. These controls supply no project-wide formal meaning
+equivalence, physical consistency or new logical axiom. Native execution remains
+a CI requirement.
+
 The user's fractal and wave analogy is captured verbatim in the hashed
 conversation sources as modelling motivation and a hypothesis. Physical claims
 about waves and particles, mathematical self-similarity and absence of logical

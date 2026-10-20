@@ -192,6 +192,14 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  ...Object.fromEntries([
+    'I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
+    'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION',
+  ].map(id => [id, {
+    javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
+      'js/tests/issue-195-evidence-link-foundation.test.js'],
+    rust: ['rust/src/link_network.rs', 'rust/src/link_network_binary.rs', 'rust/tests/unit/link_foundation.rs'],
+  }])),
   ...Object.fromEntries(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].map(id => [id, {
     javascript: ['js/src/program-translation.js', 'js/src/translation/array-value-rules.js', 'js/src/translation/frontend-rules.js',
       'js/tests/translation-arrays.test.js', 'js/tests/support/modern-javascript-array-parity.js'],
@@ -225,6 +233,10 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     } : {}),
     ...(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].includes(id) ? {
       additionalFixtures: [{ id: 'modern-javascript-array-parity-programs', path: 'parity/fixtures/modern-javascript-array-parity.lino' }],
+    } : {}),
+    ...(['I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
+      'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION'].includes(id) ? {
+      additionalFixtures: [{ id: 'link-foundation-behavior', path: 'parity/fixtures/link-foundation-behavior.lino' }],
     } : {}),
     specification, area,
     ...(tooling ? { tooling: dataTooling[id]?.tooling ?? sourceTooling[id] ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),
