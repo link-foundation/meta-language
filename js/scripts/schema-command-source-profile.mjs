@@ -9,7 +9,7 @@ export const SCHEMA_COMMAND_SOURCE_PROFILE=Object.freeze({
   archive:'parity/self-translation/schema-command-source-profile.lino',
   sourceGate:'js/scripts/check-bulk-translation-rules.mjs',
   files:Object.freeze(['js/scripts/extend-typed-program-schema-second-stage.mjs','js/scripts/extend-typed-program-schema-sixth-stage.mjs']),
-  nodeRange:'>=24.0.0 <25.0.0',
+  nodeRange:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',
 });
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});

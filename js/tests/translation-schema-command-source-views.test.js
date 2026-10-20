@@ -7,8 +7,19 @@ import test from 'node:test';
 import {SCHEMA_COMMAND_SOURCE_PROFILE,readSchemaCommandSourceProfile,renderSchemaCommandSourceView,deriveSchemaCommandSourceView} from '../scripts/schema-command-source-profile.mjs';
 import {generateSchemaCommandSourceProfile} from '../scripts/generate-schema-command-source-profile.mjs';
 import {BULK_TRANSLATION_RULE_CHECKS,runBulkTranslationRuleChecks} from '../scripts/check-bulk-translation-rules.mjs';
+import {satisfies} from '../scripts/semver-range.mjs';
+import {generateCiRuntimeSourceProfiles} from '../../experiments/ci-runtime-source-profiles/generate.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const pin=bytes=>createHash('sha256').update(bytes).digest('hex');
+
+test('schema source loaders admit the declared synchronous hook runtime ranges and expose uncovered versions',()=>{
+  for(const[version,expected]of [['22.14.9',false],['22.15.0',true],['22.22.0',true],['23.0.0',false],['24.0.0',true],['24.18.0',true],['24.22.0',true],['25.0.0',false]]){
+    assert.equal(satisfies(version,SCHEMA_COMMAND_SOURCE_PROFILE.nodeRange,'npm'),expected,version);
+  }
+  assert.equal(satisfies(process.versions.node,SCHEMA_COMMAND_SOURCE_PROFILE.nodeRange,'npm'),true,'the active runtime must be covered');
+  assert.match(readFileSync(new URL('../scripts/schema-command-source-loader.mjs',import.meta.url),'utf8'),/uncovered schema command source-loader Node\.js version/u);
+  generateCiRuntimeSourceProfiles({check:true});
+});
 
 test('schema source adapters retain both complete original commands certificates and every assertion through exact Links recipes',()=>{
   const packet=generateSchemaCommandSourceProfile({check:true});assert.equal(packet.sources.length,2);assert.equal(packet.gateSources.length,1);

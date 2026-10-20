@@ -22,7 +22,7 @@ export function generateProgramStringRepresentationRules({check=false}={}) {
   }
   const policy={schemaVersion:1,model:'explicit program Unicode code unit string representation 1',
     field:'utf16Strings',nativeField:'utf16_strings',presence:'absent or an explicit boolean; false remains present',
-    nodeRange:'>=24.0.0 <25.0.0',source,archive:{root:encoded.root.asU64().toString(),text,binaryHex:Buffer.from(binary).toString('hex')},
+    nodeRange:'>=22.0.0 <23.0.0 || >=24.0.0 <25.0.0',source,archive:{root:encoded.root.asU64().toString(),text,binaryHex:Buffer.from(binary).toString('hex')},
     declarations:[...program.declarations.keys()],boundary:'Shared boolean admission and encoding selection only. Existing target emitters provide all string operations. Host adapters preserve field presence and strict booleans; no native execution is inferred.'};
   const path=new URL('../../parity/self-translation/program-string-representation-rules.lino',import.meta.url);
   if(check)checkProjectData(path,policy);else writeProjectData(path,policy);

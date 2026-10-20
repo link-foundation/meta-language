@@ -137,6 +137,16 @@ all frozen diagnostic inputs, both producer identities, actual current type and
 import owners, and the complete diagnostic calls. A frozen CI overlay continues
 to use its separately authenticated producer rather than a new current source.
 
+Canonical native unit sources and the version-qualified npm manifest retain LF
+checkout bytes on every supported platform. Exact native-module registration
+checks therefore inspect the same bytes on Windows as on other runners. The
+check-only synchronous source hooks select Node.js `>=22.15.0 <23.0.0` or
+`>=24.0.0 <25.0.0`; uncovered versions refuse. The lower bound follows the
+[Node.js synchronous hook API](https://nodejs.org/download/release/v22.15.0/docs/api/module.html#moduleregisterhooksoptions).
+The source models retain their complete preceding version profiles and Git
+membership as Links data. Local controls exercise the active Node 24 runtime;
+Node 22 execution and native Windows behavior still require CI.
+
 Historical generators verify the complete inputs of their recorded revision.
 An exact current successor may supply that historical view only after its whole
 digest and certified byte inverse pass; current artifact gates remain separate.

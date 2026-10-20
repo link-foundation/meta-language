@@ -15,7 +15,7 @@
 (15: (meta: (t: semantic) (n: 1) (term: string%20value) (def: absent%20or%20an%20explicit%20boolean%3B%20false%20remains%20present) (lang: meta-language%20structured%20data)))
 (16: 14 15 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (17: (meta: (t: semantic) (n: 1) (term: string%20value) (def: nodeRange) (lang: meta-language%20structured%20data)))
-(18: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %3E%3D24.0.0%20%3C25.0.0) (lang: meta-language%20structured%20data)))
+(18: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %3E%3D22.0.0%20%3C23.0.0%20%7C%7C%20%3E%3D24.0.0%20%3C25.0.0) (lang: meta-language%20structured%20data)))
 (19: 17 18 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (20: (meta: (t: semantic) (n: 1) (term: string%20value) (def: source) (lang: meta-language%20structured%20data)))
 (21: (meta: (t: semantic) (n: 1) (term: string%20value) (def: %2F%2F%20Shared%20admission%20and%20selection%20of%20an%20explicit%20program%20string%20representation.%0A%2F%2A%2A%20%40param%20%7Bstring%7D%20kind%20%40param%20%7Bboolean%7D%20present%20%40returns%20%7Bboolean%7D%20%2A%2F%0Aexport%20function%20acceptProgramStringRepresentationFlag%28kind%2C%20present%29%20%7B%0A%20%20return%20%21present%20%7C%7C%20kind%20%3D%3D%3D%20%27boolean%27%3B%0A%7D%0A%0A%2F%2A%2A%20%40param%20%7Bboolean%7D%20program%20%40param%20%7Bboolean%7D%20explicit%20%40param%20%7Bboolean%7D%20required%20%40returns%20%7Bboolean%7D%20%2A%2F%0Aexport%20function%20selectProgramStringRepresentation%28program%2C%20explicit%2C%20required%29%20%7B%0A%20%20return%20program%20%7C%7C%20explicit%20%7C%7C%20required%3B%0A%7D%0A) (lang: meta-language%20structured%20data)))

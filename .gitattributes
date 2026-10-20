@@ -27,6 +27,7 @@ docs/vision.md text eol=lf
 # self-translation and decorator corpora are compared byte for byte; Windows checkouts
 # must not add CRs. The vendored grammars keep their upstream bytes.
 rust/src/** text=auto eol=lf
+rust/tests/unit/** text=auto eol=lf
 js/src/** text=auto eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
