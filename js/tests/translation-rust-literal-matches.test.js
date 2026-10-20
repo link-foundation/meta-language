@@ -188,3 +188,23 @@ test('certified complete native hosts replay offline and refuse damaged predeces
   damage(value => { value.additions[1].path = 'rust/tests/unit/unregistered.rs'; });
   damage(value => { value.registrations[1].declaration = 'mod unregistered;'; });
 });
+
+
+test('literal matches preserves actual macro alias ownership in every module while function names use their separate namespace', () => {
+  const examples = [
+    'use crate::foreign::matches;fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}',
+    'fn selected(value:&str)->bool{matches!(value,"a")}use crate::foreign::matches;fn main(){}',
+    'use crate::foreign::other as matches;fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}',
+    'mod nested{use crate::foreign::matches;fn selected(value:&str)->bool{matches!(value,"a")}}fn main(){}',
+    'mod nested{fn selected(value:&str)->bool{matches!(value,"a")}use crate::foreign::other as matches;}fn main(){}',
+  ];
+  for (const source of examples) assert.throws(() => checkProgram(parseRust(source)), /Rust literal matches!/u, source);
+  const source = 'fn matches(_value:&str)->bool{false}fn selected(value:&str)->bool{matches!(value,"a")}fn main(){}';
+  const checked = checkProgram(parseRust(source));
+  assert.deepEqual(evaluate(emitJavaScript(checked).text, 'selected', ['a', 'b']), [true, false]);
+  const packet = createTypedProgramLinks(source, 'Rust');
+  for (const network of reloads(packet.network)) {
+    const restored = recheckLinkedTypedProgram(decodeTypedProgramLinks(network, packet.root), { wholeProgram: true });
+    assert.deepEqual(evaluate(emitJavaScript(restored).text, 'selected', ['a', 'b']), [true, false]);
+  }
+});

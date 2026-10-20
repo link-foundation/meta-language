@@ -53,6 +53,8 @@ impl RustParser {
         let origin = self.origins.origin(&receiver, path);
         let spelling = vec!["str".to_owned()];
         let resolved = self.resolve(&spelling, &origin.path);
+        let macro_spelling = vec![token.value.clone()];
+        let macro_aliased = self.resolve(&macro_spelling, path) != macro_spelling;
         let shadowed = self
             .origins
             .lookup_literal_match_owner(&spelling, &origin.path)
@@ -61,7 +63,8 @@ impl RustParser {
                 .origins
                 .lookup_literal_match_owner(&resolved, &origin.path)
                 .is_some()
-            || resolved.join("::") != "str";
+            || resolved.join("::") != "str"
+            || macro_aliased;
         if (origin.proven || !self.origins.collecting)
             && !accept_rust_literal_match_receiver(
                 origin.ty.as_ref().map_or("", Type::kind),

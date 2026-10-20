@@ -293,3 +293,35 @@ fn unsupported_patterns_and_source_owners_preserve_explicit_refusals_and_const_b
         );
     }
 }
+
+#[test]
+fn imported_matches_macro_names_refuse_in_actual_module_scope_and_function_names_remain_separate() {
+    for source in [
+        "use crate::foreign::matches;fn selected(value:&str)->bool{matches!(value,\"a\")}fn main(){}",
+        "fn selected(value:&str)->bool{matches!(value,\"a\")}use crate::foreign::matches;fn main(){}",
+        "use crate::foreign::other as matches;fn selected(value:&str)->bool{matches!(value,\"a\")}fn main(){}",
+        "mod nested{use crate::foreign::matches;fn selected(value:&str)->bool{matches!(value,\"a\")}}fn main(){}",
+        "mod nested{fn selected(value:&str)->bool{matches!(value,\"a\")}use crate::foreign::other as matches;}fn main(){}",
+    ] {
+        let error = parse_rust(source)
+            .and_then(|surface| check_program(&surface))
+            .unwrap_err();
+        assert_eq!(error.kind, ErrorKind::Unsupported, "{source}: {error}");
+        assert!(
+            error.to_string().contains("Rust literal matches!"),
+            "{source}: {error}"
+        );
+    }
+    let source = "fn matches(_value:&str)->bool{false}fn selected(value:&str)->bool{matches!(value,\"a\")}fn main(){println!(\"{}\",selected(\"a\"));println!(\"{}\",selected(\"b\"));}";
+    let expected = "true\nfalse\n";
+    observe(source, expected, true);
+    let packet = create_typed_program_links(source, "Rust").unwrap();
+    for network in archives(&packet.network) {
+        for target in ["Rust", "JavaScript"] {
+            let code = emit_typed_program_links(&network, packet.root, target)
+                .unwrap()
+                .code;
+            observe(&code, expected, target == "Rust");
+        }
+    }
+}

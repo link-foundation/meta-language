@@ -18,9 +18,11 @@ export function readRustLiteralMatch(parser, token, path) {
   const range = { start: token.start, end: c.tokens[plan[0] - 1].end };
   const origin = parser.origins.origin(receiver, path);
   const resolved = parser.resolve(['str'], origin.path);
+  const macroOwner = parser.resolve([token.value], path);
+  const macroAliased = macroOwner.join('::') !== token.value;
   const shadowed = [parser.origins.lookup(['str'], origin.path, ['data']),
     parser.origins.lookup(resolved, origin.path, ['data'])]
-    .some(owner => acceptRustLiteralMatchCatalogOwner(owner?.k ?? '')) || resolved.join('::') !== 'str';
+    .some(owner => acceptRustLiteralMatchCatalogOwner(owner?.k ?? '')) || resolved.join('::') !== 'str' || macroAliased;
   if ((origin.proven || !parser.origins.collecting) && !acceptRustLiteralMatchReceiver(origin.type?.kind ?? '',
     origin.textSourceModel ?? '', origin.proven, origin.wrappers.join('|'), shadowed)) {
     throw unsupported('Rust literal matches! receiver',
