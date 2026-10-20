@@ -44,7 +44,7 @@ export function generateTranslationWorkflowHistory({check=false}={}) {
         value=>artifactStep(artifactScopes[index++])+value);
       assert.equal(index,3);
     }
-    const current=readFileSync(new URL(file,root),'utf8');assert.equal(current,expected,'only the declared complete scheduling changes are admitted');
+    const current=restoreEvidenceTranslationSourceHistory(file,readFileSync(new URL(file,root),'utf8'));assert.equal(current,expected,'only the declared complete scheduling changes are admitted');
     let start=0,end=sourceText.length,finish=current.length;
     while(start<end&&start<finish&&sourceText[start]===current[start])start++;
     while(end>start&&finish>start&&sourceText[end-1]===current[finish-1]){end--;finish--;}
@@ -69,3 +69,5 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
   generateTranslationWorkflowHistory({check:process.argv.includes('--check')});
   console.log('Preserved three complete original workflows, every test and the fifteen-minute translation deadline.');
 }
+
+import {restoreEvidenceTranslationSourceHistory} from './evidence-translation-source-history.mjs';

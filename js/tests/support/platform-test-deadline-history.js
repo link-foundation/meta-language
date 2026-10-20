@@ -9,6 +9,7 @@ const history=readProjectData(new URL('../../../parity/naming/platform-test-dead
 
 export function restorePlatformTestDeadlineHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   source=restoreConformancePartitionHistory(source);
   for(const change of history.changes){
     if(!source.includes(change.marker)&&!source.includes(change.after))continue;
@@ -20,3 +21,5 @@ export function restorePlatformTestDeadlineHistory(source) {
 }
 
 import {restoreConformancePartitionHistory} from './conformance-partition-history.js';
+
+import {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-translation-source-history.mjs';

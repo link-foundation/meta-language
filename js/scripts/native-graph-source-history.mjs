@@ -11,6 +11,7 @@ let history;
 
 export function restoreNativeGraphSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreEvidenceTranslationSourceHistory(file,source);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
   const actual=digest(source);
@@ -21,3 +22,5 @@ export function restoreNativeGraphSourceHistory(file,source) {
   if(actual===row.sha256)assert.equal(source,row.sourceText);
   return row.sourceText;
 }
+
+import {restoreEvidenceTranslationSourceHistory} from './evidence-translation-source-history.mjs';

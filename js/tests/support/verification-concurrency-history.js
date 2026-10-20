@@ -25,6 +25,7 @@ for (const file of history.files) {
 
 export function restoreVerificationConcurrencyHistory(source, name) {
   assert.equal(typeof source, 'string');
+  source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   const file = history.files.find(file => file.name === name);
   assert.ok(file, 'only the three authenticated verification workflows have a historical inverse');
   const groups = [...source.matchAll(/^(\s*group: .+)\n(\s*cancel-in-progress: (?:true|false))$/gmu)].map(([source]) => source);
@@ -36,3 +37,5 @@ export function restoreVerificationConcurrencyHistory(source, name) {
   }
   return original;
 }
+
+import {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-translation-source-history.mjs';

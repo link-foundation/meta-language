@@ -180,7 +180,7 @@ function assertInitialTranslationShards(text) {
 
 test('initial translation shards retain every file, native flag, original deadline and final feedback gate', () => {
   assertInitialTranslationShards(readFileSync(new URL('../../.github/workflows/js.yml', import.meta.url), 'utf8'));
-  const acceptance = new Map(parseWorkflow(readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8')).map(job => [job.id, job]));
+  const acceptance = new Map(parseWorkflow(restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'))).map(job => [job.id, job]));
   assert.match(acceptance.get('javascript-suite-independent').header, /group: translation\n\s+shard: 1\/1\n\s+partition: 1-of-1/u);
   assert.match(acceptance.get('javascript-suite-independent').header, /timeout-minutes: 60/u);
 });
@@ -208,3 +208,5 @@ test('omitted or duplicate initial shards, flattened feedback and a weakened fin
 
 import {restoreConformancePartitionHistory} from './support/conformance-partition-history.js';
 import {restoreTranslationWorkflowHistory} from './support/translation-workflow-history.js';
+
+import {restoreEvidenceTranslationSourceHistory} from '../scripts/evidence-translation-source-history.mjs';

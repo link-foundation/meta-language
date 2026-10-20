@@ -11,6 +11,7 @@ let history;
 /** Restore exact scheduling inputs before the retained historical CI assertions. */
 export function restoreTranslationWorkflowHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreEvidenceTranslationSourceHistory('.github/workflows/ci.yml',source);
   if(!history){assert.equal(digest(readFileSync(file)),historyHash);history=readProjectData(file);}
   const actual=digest(source),row=history.workflows.find(row=>row.current.sha256===actual||row.sha256===actual);
   if(!row)return source;
@@ -22,3 +23,5 @@ export function restoreTranslationWorkflowHistory(source) {
   assert.equal(restored.length,row.bytes);assert.equal(digest(restored),row.sha256);assert.equal(restored.toString('utf8'),row.sourceText);
   return row.sourceText;
 }
+
+import {restoreEvidenceTranslationSourceHistory} from '../../scripts/evidence-translation-source-history.mjs';

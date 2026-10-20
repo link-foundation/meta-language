@@ -14,6 +14,7 @@ let rows;
 /** Unknown edits never inherit authenticated historical source membership. */
 export function restoreCiRepairSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreEvidenceTranslationSourceHistory(file,source);
   if(!rows){
     rows=[];
     for(const archive of archives){
@@ -32,3 +33,5 @@ export function restoreCiRepairSourceHistory(file,source) {
   if(actual===row.sha256)assert.equal(source,row.sourceText);
   return row.sourceText;
 }
+
+import {restoreEvidenceTranslationSourceHistory} from './evidence-translation-source-history.mjs';

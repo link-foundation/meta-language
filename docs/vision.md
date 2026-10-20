@@ -3515,7 +3515,14 @@ transports feedback with a LiNo receipt of the exact commit, selected files and
 payload hashes. A required merge validates every partition, permits an empty
 individual partition, rejects missing, stale or conflicting inputs, and restores
 the original combined artifact name, paths and retention. An empty complete
-collection still fails. Acceptance retains its separate fifteen physical scopes.
+collection still fails. Acceptance keeps its separate evidence records, with
+six translation partitions and twenty total physical scopes. Every current test
+file must occur exactly once in the complete scope union before the logical
+suite can supply evidence. Missing, mixed, stale, failed or altered partitions
+refuse. Original sixty-minute evidence deadlines, compiler checks, commands,
+artifact paths, toolchain pins and all other workflow bytes remain unchanged.
+Historical guard views retain the certified original fifteen-scope workflow;
+independent current controls check the complete six-partition workflow inverse.
 Capture and merge explicitly select six partitions; the transport's historical
 three-part API remains separately checked. Complete original workflow bytes stay
 authenticated for historical controls, and independent controls inspect the
