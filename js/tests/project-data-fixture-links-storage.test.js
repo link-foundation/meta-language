@@ -4,7 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from '../scripts/project-data.mjs';
+import { verifyGitArtifactCertificate } from '../scripts/git-object-certificate.mjs';
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
@@ -25,6 +26,24 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
     assert.equal(existsSync(file), false, `${logicalPath} has one authoritative Links representation`);
     assert.ok(resolveProjectDataPath(file).endsWith('.lino'), logicalPath);
     let protectedValue = readProjectData(file);
+    if (logicalPath === 'parity/fixtures/typescript-erasure.json') {
+      const history = readProjectData(new URL('../../parity/fixtures/typescript-named-import-expectation-history.lino', import.meta.url));
+      assert.equal(history.path, logicalPath.replace(/\.json$/u, '.lino'));
+      assert.equal(hash(readFileSync(resolveProjectDataPath(file))), history.currentSha256,
+        'the complete current fixture must match its independently checked extension');
+      assert.equal(history.originalCases.length, 13);
+      assert.equal(history.appended.length, 8);
+      assert.deepEqual(protectedValue.cases.map(row => row.id),
+        [...history.originalCases.map(row => row.id), ...history.appended]);
+      for (const original of history.originalCases) {
+        assert.equal(protectedValue.cases.find(row => row.id === original.id)?.source, original.source);
+      }
+      protectedValue = { ...protectedValue, cases: protectedValue.cases.slice(0, 13)
+        .map(row => row.id === history.previousCase.id ? history.previousCase : row) };
+      verifyGitArtifactCertificate(history.certificate, Buffer.from(serializeProjectData(protectedValue, history.path)), {
+        revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917', path: 'parity/fixtures/typescript-erasure.lino',
+      });
+    }
     const freshness = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath));
     const refresh = freshness?.providerReceiptRefresh;
     if (refresh || freshness?.translationStageRefresh || freshness?.antlrLexerDeclarationRefresh) {

@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 207 | 206 | 1 | 0 |
+| Generators | 211 | 210 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -570,16 +570,27 @@ they are.
 | `js/scripts/generate-array-callback-fixtures.mjs` | `js/scripts/generate-array-callback-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-callback-rules.mjs` | `js/scripts/generate-array-callback-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-from-rules.mjs` | `js/scripts/generate-array-from-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-array-value-rules.mjs` | `js/scripts/generate-array-value-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-assertion-version-policy.mjs` | `js/scripts/generate-assertion-version-policy.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-value-source-history.mjs` | `js/scripts/generate-boolean-value-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-builtin-cst-expectations.mjs` | `js/scripts/generate-builtin-cst-expectations.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-callable-emission-rules.mjs` | `js/scripts/generate-callable-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-callable-source-rules.mjs` | `js/scripts/generate-callable-source-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-collection-construction-rules.mjs` | `js/scripts/generate-collection-construction-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-fixture.mjs` | `js/scripts/generate-concept-view-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-concept-view-rules.mjs` | `js/scripts/generate-concept-view-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-csharp-pattern-fixture.mjs` | `js/scripts/generate-csharp-pattern-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-default-cst-expectations.mjs` | `js/scripts/generate-default-cst-expectations.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-fixture.mjs` | `js/scripts/generate-discovered-concept-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-discovered-concept-rules.mjs` | `js/scripts/generate-discovered-concept-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-elm-candidate-fixtures.mjs` | `js/scripts/generate-elm-candidate-fixtures.mjs` | `script` |  | derived | current |  |
@@ -616,17 +627,20 @@ they are.
 | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `js/scripts/generate-javascript-scoped-binding-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-surface-rules.mjs` | `js/scripts/generate-javascript-surface-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-javascript-tag-context-rules.mjs` | `js/scripts/generate-javascript-tag-context-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `js/scripts/generate-link-network-binary-buffer-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-fixtures.mjs` | `js/scripts/generate-link-network-binary-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-record-rules.mjs` | `js/scripts/generate-link-network-binary-record-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-link-network-binary-rules.mjs` | `js/scripts/generate-link-network-binary-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-lino-grammar-cases.mjs` | `js/scripts/generate-lino-grammar-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-modern-javascript-array-parity-fixtures.mjs` | `js/scripts/generate-modern-javascript-array-parity-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-grammar-fixtures.mjs` | `js/scripts/generate-native-grammar-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-recovery.mjs` | `js/scripts/generate-native-recovery.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `js/scripts/generate-native-scanner-profile-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-scanner-profiles.mjs` | `js/scripts/generate-native-scanner-profiles.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-network-projection-rules.mjs` | `js/scripts/generate-network-projection-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
 | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `js/scripts/generate-nullable-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-optional-rules.mjs` | `js/scripts/generate-optional-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-owned-array-append-rules.mjs` | `js/scripts/generate-owned-array-append-rules.mjs` | `script` |  | derived | current |  |
@@ -641,7 +655,11 @@ they are.
 | `js/scripts/generate-product-unit-fixture.mjs` | `js/scripts/generate-product-unit-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-program-number-projection-rules.mjs` | `js/scripts/generate-program-number-projection-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `js/scripts/generate-program-numeric-metadata-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-project-data-tooling-fixture.mjs` | `js/scripts/generate-project-data-tooling-fixture.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-planning-workflow-history.mjs` | `js/scripts/generate-raw-planning-workflow-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-emission-rules.mjs` | `js/scripts/generate-record-emission-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-type-syntax-rules.mjs` | `js/scripts/generate-record-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-record-value-rules.mjs` | `js/scripts/generate-record-value-rules.mjs` | `script` |  | derived | current |  |
@@ -650,6 +668,8 @@ they are.
 | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `js/scripts/generate-resource-description-ntriples-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `js/scripts/generate-resource-description-ntriples-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-resource-description-rules.mjs` | `js/scripts/generate-resource-description-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `js/scripts/generate-ruby-expression-syntax-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `js/scripts/generate-ruby-heredoc-fixture.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `js/scripts/generate-ruby-literal-ci-regressions.mjs` | `script` |  | derived | current |  |
@@ -702,9 +722,12 @@ they are.
 | `js/scripts/generate-rust-type-namespace-rules.mjs` | `js/scripts/generate-rust-type-namespace-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `js/scripts/generate-rust-unicode-escape-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-scalar-loop-rules.mjs` | `js/scripts/generate-scalar-loop-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-cases.mjs` | `js/scripts/generate-self-translation-cases.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-report.mjs` | `js/scripts/generate-self-translation-report.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-self-translation-representation.mjs` | `js/scripts/generate-self-translation-representation.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-model.mjs` | `js/scripts/generate-shared-boolean-function-model.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `js/scripts/generate-shared-numeric-function-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-numeric-function-rules.mjs` | `js/scripts/generate-shared-numeric-function-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-source-span-fixtures.mjs` | `js/scripts/generate-source-span-fixtures.mjs` | `script` |  | derived | current |  |
@@ -713,6 +736,7 @@ they are.
 | `js/scripts/generate-source-text-byte-rules.mjs` | `js/scripts/generate-source-text-byte-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-stateful-extra-fixtures.mjs` | `js/scripts/generate-stateful-extra-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-string-code-unit-template.mjs` | `js/scripts/generate-string-code-unit-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-link-rules.mjs` | `js/scripts/generate-structured-data-link-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-data-migration-revisions.mjs` | `js/scripts/generate-structured-data-migration-revisions.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-structured-scanner-fixtures.mjs` | `js/scripts/generate-structured-scanner-fixtures.mjs` | `script` |  | derived | current |  |
@@ -720,7 +744,9 @@ they are.
 | `js/scripts/generate-structured-type-rules.mjs` | `js/scripts/generate-structured-type-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-surface-raw-metadata-rules.mjs` | `js/scripts/generate-surface-raw-metadata-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-surface-reference-analysis-rules.mjs` | `js/scripts/generate-surface-reference-analysis-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `js/scripts/generate-translation-stage-refresh-receipt.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-type-syntax-rules.mjs` | `js/scripts/generate-type-syntax-rules.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `js/scripts/generate-typed-program-algebraic-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-program-link-rules.mjs` | `js/scripts/generate-typed-program-link-rules.mjs` | `script` |  | derived | current |  |
@@ -730,30 +756,8 @@ they are.
 | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `js/scripts/generate-typescript-documentation-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
-| `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
-| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
-| `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
-| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
+| `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -831,6 +835,7 @@ they are.
 | `src/data/array-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-callback-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-from-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/array-values.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-emission-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/callable-source-rules.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -899,6 +904,7 @@ they are.
 | `src/data/source-span.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/source-text-byte-model.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-code-unit-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/surface-raw-metadata.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/surface-reference-analysis.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/type-syntax.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
@@ -910,8 +916,6 @@ they are.
 | `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
-| `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
-| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

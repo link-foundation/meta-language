@@ -132,3 +132,23 @@ pub fn accept_shared_numeric_source_type(
         && !qualified
         && (kind == "float" && owner_path == "f64" || kind == "bool" && owner_path == "bool")
 }
+
+/// Read a closed Boolean callable interpretation decision.
+#[must_use]
+pub fn accept_shared_boolean_type_shape(kind: &str, single_field: bool) -> bool {
+    kind == "bool" && single_field
+}
+
+/// Read a closed Boolean callable interpretation decision.
+#[must_use]
+pub fn accept_shared_boolean_binary(operation: &str, domain: &str, semantics: &str) -> bool {
+    (operation == "and" || operation == "or" || operation == "eq" || operation == "ne")
+        && domain == "bool"
+        && semantics.is_empty()
+}
+
+/// Read a closed Boolean callable interpretation decision.
+#[must_use]
+pub fn infer_shared_boolean_binary_domain(operation: &str) -> bool {
+    operation == "and" || operation == "or"
+}

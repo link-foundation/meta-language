@@ -1132,6 +1132,25 @@ types, effects, defaults, source interpretations and counterfeit premises retain
 their refusals. Qualified source-header emission and reimport, cross-ABI
 behavior, complete effects and resource equivalence, and formal definitions for
 every catalog concept require separate evidence.
+The separate opt-in `closed boolean function value` model observes the selected
+callable rather than its public namespace. It admits only primitive Boolean
+parameters, results and intermediate values, Boolean literals, negation,
+conjunction, disjunction, equality, local bindings, conditionals and closed
+recursive calls. Conjunction and disjunction preserve short-circuit evaluation,
+including a recursive operand that is not reached. Its meaning root is the
+actual owned target of the checked ordered entry wrapper. Declaration spellings
+remain in the original archive as origin aliases; parameter order, actual
+binding and recursive target identities, operators and the complete primitive
+premise remain meaningful. Every Rust function retains its owned direct-Boolean
+source signature. Numbers, strings, references, defaults, guards, effects and
+captured interpretations refuse. The JavaScript interpretation assumes callers
+supply the declared Boolean arguments; this is no untyped whole-module or public
+namespace equivalence. The prior models and their original refusals remain.
+Shared JavaScript admission decisions generate Rust automatically. Prepared
+definitions include the actual named-import erasure declarations, complete
+module concrete syntax and an explicit empty-main Rust checking harness.
+Source-free text/binary proof controls and independently authored truth values
+run in JavaScript; native execution and matching certificates require CI.
 Formal relation comparison also validates the actual label self-points and
 anonymous relation edges under their declared interpretation. Matching spelling
 cannot hide a different namespace, definition or identity premise.
@@ -3908,6 +3927,25 @@ loads the complete immutable reviewed producer with its original helper export.
 The binary oracle retains all thirteen original source bindings and hashes;
 the producer itself retains its frozen bytes. Existing concept aliases remain
 decodable, with additive bindings for the private helper and live adapter.
+
+Large ordinary structured-data reads may retain one private decoded snapshot
+for exact current Links text between eight and forty-eight MiB. Every read still
+loads and compares the complete current text, and every caller receives fresh
+owned data with its original internal sharing. Decoder limits always execute
+through the original uncached boundary when explicitly supplied. Malformed or
+changed text cannot inherit a prior value, even with unchanged size and file
+timestamps. Other files retain ordinary reads. The independent canonical decoder
+checks the actual complete concept register in a bounded control; this does not
+establish corrected CI timing.
+
+Raw projection generation and its complete projection suite run in their own
+required JavaScript package cell. The full source/CST/archive replay and native
+oracle contracts retain their separate original cell. Both keep the existing
+ten-minute deadline, exact commands, inputs, native flags and failure predicates;
+all cells are aggregate prerequisites. A certified immediate workflow inverse
+composes before earlier historical scheduling views, preserving every older
+partition and source assertion. No new deadline success is inferred from the
+scheduling change.
 
 - CI runs a fast `cargo check` of all targets and features first; the jobs that
   compile and test need it, so a compile error fails once.

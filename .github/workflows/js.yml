@@ -351,6 +351,8 @@ jobs:
             generated_slice: first
           - group: source-model-raw
             generated_slice: first
+          - group: source-model-raw-generation
+            generated_slice: first
           - group: raw-emission-profiles
             generated_slice: first
           - group: raw-consuming-emission
@@ -1198,12 +1200,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs
 
       - name: Check complete original link raw projection native generation
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
         working-directory: js
         run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw-current-emission.mjs --native --check
 
       - name: Run complete original link raw projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
         working-directory: js
         env:
           CI: 'true'

@@ -7,12 +7,13 @@ use regex::Regex;
 use serde_json::Value;
 
 use crate::shared_numeric_function_rules::{
-    accept_shared_numeric_binary, accept_shared_numeric_context,
-    accept_shared_numeric_context_flag, accept_shared_numeric_declaration,
-    accept_shared_numeric_entry, accept_shared_numeric_expression_shape,
-    accept_shared_numeric_literal, accept_shared_numeric_parameter,
-    accept_shared_numeric_source_signature, accept_shared_numeric_source_type,
-    accept_shared_numeric_type_shape, accept_shared_numeric_unary,
+    accept_shared_boolean_binary, accept_shared_boolean_type_shape, accept_shared_numeric_binary,
+    accept_shared_numeric_context, accept_shared_numeric_context_flag,
+    accept_shared_numeric_declaration, accept_shared_numeric_entry,
+    accept_shared_numeric_expression_shape, accept_shared_numeric_literal,
+    accept_shared_numeric_parameter, accept_shared_numeric_source_signature,
+    accept_shared_numeric_source_type, accept_shared_numeric_type_shape,
+    accept_shared_numeric_unary, infer_shared_boolean_binary_domain,
 };
 use crate::structured_data_links::{StructuredDataValue, encode_structured_data_links_ordered};
 use crate::typed_program_links::{
@@ -21,6 +22,7 @@ use crate::typed_program_links::{
 use crate::{LinkId, LinkNetwork, LinkType};
 
 pub const SHARED_NUMERIC_FUNCTION_MODEL: &str = "closed binary floating point function";
+pub const SHARED_BOOLEAN_FUNCTION_MODEL: &str = "closed boolean function value";
 
 fn fail(message: &str) -> String {
     format!("shared numeric function: {message}")
@@ -34,7 +36,15 @@ fn present(value: &Value) -> bool {
 fn nonempty(value: &Value) -> bool {
     value.as_array().is_some_and(|value| !value.is_empty())
 }
-fn value_type(value: &Value) -> Result<(), String> {
+fn value_type(value: &Value, boolean_only: bool) -> Result<(), String> {
+    if boolean_only
+        && !accept_shared_boolean_type_shape(
+            string(&value["kind"]),
+            value.as_object().is_some_and(|value| value.len() == 1),
+        )
+    {
+        return Err(fail("only Boolean values belong to the callable model"));
+    }
     let count = value.as_object().map_or(0, serde_json::Map::len);
     if !accept_shared_numeric_type_shape(string(&value["kind"]), count == 1) {
         return Err(fail("only Boolean and binary64 value types are admitted"));
@@ -159,12 +169,30 @@ pub struct SharedNumericFunctionModel {
     pub language_label: String,
     literals: Vec<Relation>,
     pub signature_fields: Vec<(LinkId, String)>,
+    pub entry_target: LinkId,
+    pub declaration_ids: BTreeSet<LinkId>,
 }
 
 pub fn read_shared_numeric_function_model(
     network: &LinkNetwork,
     root: LinkId,
     canonical: bool,
+) -> Result<SharedNumericFunctionModel, String> {
+    read_shared_function_value_model(network, root, canonical, false)
+}
+
+pub fn read_shared_boolean_function_model(
+    network: &LinkNetwork,
+    root: LinkId,
+) -> Result<SharedNumericFunctionModel, String> {
+    read_shared_function_value_model(network, root, false, true)
+}
+
+fn read_shared_function_value_model(
+    network: &LinkNetwork,
+    root: LinkId,
+    canonical: bool,
+    boolean_only: bool,
 ) -> Result<SharedNumericFunctionModel, String> {
     let checked = decode_typed_program_links(network, root).map_err(|error| error.to_string())?;
     // Serialization exposes the same checked field names that JS traverses.
@@ -251,7 +279,7 @@ pub fn read_shared_numeric_function_model(
                     .zip(parameters.iter().map(|parameter| &parameter["type"]))
                     .chain(std::iter::once((&signature["result"], &declaration["ret"])))
                 {
-                    value_type(&descriptor["type"])?;
+                    value_type(&descriptor["type"], boolean_only)?;
                     let path = descriptor["owner"]["path"]
                         .as_array()
                         .ok_or_else(|| fail("missing source owner path"))?;
@@ -281,12 +309,12 @@ pub fn read_shared_numeric_function_model(
                 "a foreign source signature is outside the JavaScript value premise",
             ));
         }
-        value_type(&declaration["ret"])?;
+        value_type(&declaration["ret"], boolean_only)?;
         for parameter in declaration["params"]
             .as_array()
             .ok_or_else(|| fail("missing parameters"))?
         {
-            value_type(&parameter["type"])?;
+            value_type(&parameter["type"], boolean_only)?;
             if !accept_shared_numeric_parameter(
                 present(&parameter["guard"]),
                 present(&parameter["default"]),
@@ -305,7 +333,7 @@ pub fn read_shared_numeric_function_model(
         }
         let node = expressions[at];
         at += 1;
-        value_type(&node["type"])?;
+        value_type(&node["type"], boolean_only)?;
         let kind = string(&node["k"]);
         if !accept_shared_numeric_expression_shape(
             kind,
@@ -343,10 +371,23 @@ pub fn read_shared_numeric_function_model(
                 expressions.push(&node["arg"]);
             }
             "binary" => {
-                value_type(&node["domain"])?;
-                if !accept_shared_numeric_binary(
+                let domain = if node["domain"].is_null()
+                    && boolean_only
+                    && infer_shared_boolean_binary_domain(string(&node["op"]))
+                {
+                    &node["type"]
+                } else {
+                    &node["domain"]
+                };
+                value_type(domain, boolean_only)?;
+                let accept = if boolean_only {
+                    accept_shared_boolean_binary
+                } else {
+                    accept_shared_numeric_binary
+                };
+                if !accept(
                     string(&node["op"]),
-                    string(&node["domain"]["kind"]),
+                    string(&domain["kind"]),
                     string(&node["semantics"]),
                 ) {
                     return Err(fail("unsupported binary primitive"));
@@ -460,7 +501,12 @@ pub fn read_shared_numeric_function_model(
                 let type_kind = relation(&fields, field.child, &label_of("kind"))
                     .and_then(|field| definition(network, field.child))
                     .unwrap_or("");
-                if !accept_shared_numeric_type_shape(type_kind, type_fields.len() == 1) {
+                let accept = if boolean_only {
+                    accept_shared_boolean_type_shape
+                } else {
+                    accept_shared_numeric_type_shape
+                };
+                if !accept(type_kind, type_fields.len() == 1) {
                     return Err(fail("only Boolean and binary64 value types are admitted"));
                 }
             }
@@ -500,6 +546,8 @@ pub fn read_shared_numeric_function_model(
         language_label: source.label.clone(),
         literals,
         signature_fields,
+        entry_target: target,
+        declaration_ids,
     })
 }
 

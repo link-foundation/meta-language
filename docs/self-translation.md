@@ -39,6 +39,22 @@ provenance. This uses the explicit modifier behavior of
 [verbatim module syntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html);
 it does not infer whether an unmarked import is used only as a type.
 
+An owned function in an existing checked program can also opt into the closed
+Boolean callable model. Select its complete recursive closure first:
+
+```js
+const selected = encodeFormalFunctionDefinition(linkedProgram, declarationName);
+const programRoot = selected.network.link(selected.root).references()[0];
+const definition = encodeFormalConceptDefinition(
+  { network: selected.network, root: programRoot },
+  { model: 'closed boolean function value' },
+);
+```
+
+This retains the original linked program and source context. The explicit
+Boolean argument contract and its separate namespace observation are described
+in the [authoritative vision](vision.md#recursive-formal-concept-definitions).
+
 Supplemental documentation parameter patterns encode each literal comment
 terminator `*/` as the visible text `*\/`. The executable parameter pattern is
 unchanged. Internal projection records retain that original text and its UTF-8

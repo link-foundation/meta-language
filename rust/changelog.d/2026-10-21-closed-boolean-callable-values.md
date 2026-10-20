@@ -1,0 +1,3 @@
+Added an explicit `closed boolean function value` formal model for checked JavaScript and Rust functions, including short-circuit operations and closed recursion. Callable proofs retain source names and full origin data while comparing actual owned binding graphs under a Boolean argument contract. Existing source-interface and numeric models retain their boundaries.
+
+TypeScript fixture checks retain the complete original import corpus alongside the implemented named-import extension. Large structured-data reads reuse one exact-text snapshot with fresh caller-owned values, and CI gives raw generation/projection and complete CST replay separate required jobs under the existing deadlines.

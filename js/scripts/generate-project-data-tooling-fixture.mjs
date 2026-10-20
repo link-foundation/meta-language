@@ -40,6 +40,8 @@ export const projectDataToolingContract = Object.freeze({
     { logicalPaths: ['parity/fixtures/grammar-importers.json'],
       antlrLexerDeclarationRefresh: true,
       command: ['node', 'js/scripts/generate-antlr-reverse-fixture.mjs', '--check'] },
+    { logicalPaths: ['parity/fixtures/typescript-erasure.json'],
+      command: ['node', 'js/scripts/generate-typescript-erasure-fixtures.mjs', '--check'] },
   ],
   protectedScopeBaselines: ['950efbee452da0853e272d841445eb85caa2d81f',
     '33ef0fd779316f56084652cde036872f26bda0c5',

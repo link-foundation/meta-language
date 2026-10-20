@@ -10,6 +10,7 @@ const history=readProjectData(file);
 /** Invert only complete recorded scheduling changes; unrelated edits stay visible. */
 export function restoreRawContractPartitionHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreRawPlanningWorkflowHistory(source,'.github/workflows/js.yml');
   source=restoreToolingPartitionHistory(source);
   if(!source.startsWith('name: JavaScript\n'))return source;
   for(const change of history.changes){
@@ -31,3 +32,4 @@ export function restoreRawContractTestSource(source) {
 }
 
 import {restoreToolingPartitionHistory} from './tooling-partition-history.js';
+import {restoreRawPlanningWorkflowHistory} from '../../scripts/raw-planning-workflow-history.mjs';

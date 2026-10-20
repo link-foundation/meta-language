@@ -1,23 +1,34 @@
 // The profile guard is separate from formal graph comparison. Language is
 // irrelevant only to this closed value interpretation, never by default.
 import { decodeTypedProgramLinks, TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
-import { acceptSharedNumericSourceSignature, acceptSharedNumericSourceType, acceptSharedNumericTypeShape, acceptSharedNumericContext, acceptSharedNumericContextFlag, acceptSharedNumericDeclaration, acceptSharedNumericParameter, acceptSharedNumericEntry, acceptSharedNumericExpressionShape, acceptSharedNumericLiteral, acceptSharedNumericUnary, acceptSharedNumericBinary } from './shared-numeric-function-rules.js';
+import { acceptSharedBooleanTypeShape, acceptSharedBooleanBinary, inferSharedBooleanBinaryDomain, acceptSharedNumericSourceSignature, acceptSharedNumericSourceType, acceptSharedNumericTypeShape, acceptSharedNumericContext, acceptSharedNumericContextFlag, acceptSharedNumericDeclaration, acceptSharedNumericParameter, acceptSharedNumericEntry, acceptSharedNumericExpressionShape, acceptSharedNumericLiteral, acceptSharedNumericUnary, acceptSharedNumericBinary } from './shared-numeric-function-rules.js';
 import { LinkNetwork } from './network.js';
 import { LinkId } from './primitives.js';
 import { readRuntimeProjectData } from './project-data-loader.js';
 
 export const SHARED_NUMERIC_FUNCTION_MODEL = 'closed binary floating point function';
+export const SHARED_BOOLEAN_FUNCTION_MODEL = 'closed boolean function value';
 const key = id => LinkId.from(id).asU64();
 const fail = message => { throw new TypeError(`shared numeric function: ${message}`); };
 const modelDeclaration = readRuntimeProjectData(new URL('./data/formal-concept-models.lino', import.meta.url))[SHARED_NUMERIC_FUNCTION_MODEL];
 const numericText = new RegExp(modelDeclaration.numericLiteralPattern, 'u');
 const canonicalNumber = value => Object.is(value, -0) ? '-0' : String(value);
-function type(type) {
+function type(type, booleanOnly = false) {
+  if (booleanOnly && (!type || !acceptSharedBooleanTypeShape(type.kind, Object.keys(type).length === 1))) fail('only Boolean values belong to the callable model');
   if (!type || !acceptSharedNumericTypeShape(type.kind, Object.keys(type).length === 1)) fail('only Boolean and binary64 value types are admitted');
 }
 
 /** Validate all observable operations before excluding a language premise. */
 export function readSharedNumericFunctionModel(network, root, { canonical = false } = {}) {
+  return readSharedFunctionValueModel(network, root, canonical, false);
+}
+
+/** Validate the distinct Boolean callable model without admitting numeric values. */
+export function readSharedBooleanFunctionModel(network, root) {
+  return readSharedFunctionValueModel(network, root, false, true);
+}
+
+function readSharedFunctionValueModel(network, root, canonical, booleanOnly) {
   const program = decodeTypedProgramLinks(network, root);
   if (!acceptSharedNumericContext(program.sourceLanguage, Boolean(program.externals?.length || program.imports?.length || program.main?.effects?.length
     || ['outputThreaded', 'abortsThreaded', 'referenceSemantics', 'utf16Strings'].some(name => !acceptSharedNumericContextFlag(Object.hasOwn(program, name), typeof program[name] === 'boolean', program[name] === false))))) fail('effects, imports and reference interpretations are outside the model');
@@ -33,14 +44,14 @@ export function readSharedNumericFunctionModel(network, root, { canonical = fals
       if (signature) {
         if (!acceptSharedNumericSourceSignature(signature.model, signature.language, signature.parameters?.length === declaration.params.length, Boolean(signature.lifetimeBindings?.length))) fail('a Rust source signature has an unsupported model or layout');
         for (const [descriptor, expected] of [...signature.parameters.map((value, index) => [value, declaration.params[index].type]), [signature.result, declaration.ret]]) {
-          type(descriptor.type);
+          type(descriptor.type, booleanOnly);
           if (descriptor.type.kind !== expected.kind || !acceptSharedNumericSourceType(descriptor.type.kind, descriptor.owner.kind, descriptor.owner.path.length === 1 ? descriptor.owner.path[0] : '', Boolean(descriptor.wrappers.length || descriptor.lifetimes.length || descriptor.owner.arguments.length))) fail('a Rust source signature requires direct primitive f64 or Boolean values');
         }
       }
     } else if (declaration.sourceSignature !== undefined) fail('a foreign source signature is outside the JavaScript value premise');
-    type(declaration.ret);
+    type(declaration.ret, booleanOnly);
     for (const parameter of declaration.params) {
-      type(parameter.type);
+      type(parameter.type, booleanOnly);
       if (!acceptSharedNumericParameter(parameter.guard != null, parameter.default != null)) fail('guarded and default parameters need a separate interpretation');
     }
     expressions.push(declaration.body);
@@ -50,7 +61,7 @@ export function readSharedNumericFunctionModel(network, root, { canonical = fals
     if (!node || typeof node !== 'object') fail('missing checked expression');
     if (visited.has(node)) continue;
     if (at > 100000) fail('expression resource limit exceeded');
-    visited.add(node); type(node.type);
+    visited.add(node); type(node.type, booleanOnly);
     if (!acceptSharedNumericExpressionShape(node.k, node.rounding != null || node.byZero != null)) fail('an operation has no shared numeric interpretation');
     if (node.k === 'lit') {
       const decimal = typeof node.value === 'string' && numericText.exec(node.value)?.[0] === node.value;
@@ -59,8 +70,10 @@ export function readSharedNumericFunctionModel(network, root, { canonical = fals
       if (!acceptSharedNumericUnary(node.op, node.type.kind, node.semantics ?? '')) fail('unsupported unary primitive');
       expressions.push(node.arg);
     } else if (node.k === 'binary') {
-      type(node.domain);
-      if (!acceptSharedNumericBinary(node.op, node.domain.kind, node.semantics ?? '')) fail('unsupported binary primitive');
+      const domain = node.domain ?? (booleanOnly && inferSharedBooleanBinaryDomain(node.op) ? node.type : null);
+      type(domain, booleanOnly);
+      const accept = booleanOnly ? acceptSharedBooleanBinary : acceptSharedNumericBinary;
+      if (!accept(node.op, domain.kind, node.semantics ?? '')) fail('unsupported binary primitive');
       expressions.push(node.left, node.right);
     } else if (node.k === 'let') expressions.push(node.value, node.body);
     else if (node.k === 'if') expressions.push(node.cond, node.then, node.else);
@@ -98,7 +111,8 @@ export function readSharedNumericFunctionModel(network, root, { canonical = fals
       if (['type', 'domain', 'return type'].includes(relation.label)) {
         const typeFields = fields.get(key(relation.child)) ?? [];
         const typeKind = typeFields.find(field => field.label === 'kind');
-        if (!acceptSharedNumericTypeShape(typeKind ? network.link(typeKind.child).metadata().definition : '', typeFields.length === 1)) fail('only Boolean and binary64 value types are admitted');
+        const accept = booleanOnly ? acceptSharedBooleanTypeShape : acceptSharedNumericTypeShape;
+        if (!accept(typeKind ? network.link(typeKind.child).metadata().definition : '', typeFields.length === 1)) fail('only Boolean and binary64 value types are admitted');
       }
     }
     const signature = relations.find(relation => relation.label === TYPED_PROGRAM_LINKS_SCHEMA.fields.sourceSignature);
@@ -110,7 +124,7 @@ export function readSharedNumericFunctionModel(network, root, { canonical = fals
     const literal = relations.find(relation => relation.label === (TYPED_PROGRAM_LINKS_SCHEMA.fields.value ?? 'value'));
     if (kind && literal && network.link(kind.child).metadata().definition === 'lit' && network.link(literal.child).metadata().term === TYPED_PROGRAM_LINKS_SCHEMA.scalars.string) literals.push(literal);
   }
-  return { sourceLanguage: program.sourceLanguage, languageParent: body, languageLabel: sourceLanguage.label, literals, signatureFields };
+  return { sourceLanguage: program.sourceLanguage, languageParent: body, languageLabel: sourceLanguage.label, literals, signatureFields, entryTarget, declarationIds };
 }
 
 /** Read normalized numeric values while preserving all actual literal text. */

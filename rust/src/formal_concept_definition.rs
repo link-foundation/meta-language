@@ -10,7 +10,8 @@ use serde_json::{Value, json};
 
 use crate::link_network::{LinkId, LinkMetadata, LinkNetwork, LinkType};
 use crate::shared_numeric_function_model::{
-    SHARED_NUMERIC_FUNCTION_MODEL, create_shared_numeric_function_meaning,
+    SHARED_BOOLEAN_FUNCTION_MODEL, SHARED_NUMERIC_FUNCTION_MODEL,
+    create_shared_numeric_function_meaning, read_shared_boolean_function_model,
     read_shared_numeric_function_model,
 };
 use crate::translation::ir::Program;
@@ -179,7 +180,10 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
     }
     let mut exclusions = BTreeSet::from([(value.root, "provenance".to_owned())]);
     let mut meaning = None;
-    if model == "checked typed program" || model == SHARED_NUMERIC_FUNCTION_MODEL {
+    if model == "checked typed program"
+        || model == SHARED_NUMERIC_FUNCTION_MODEL
+        || model == SHARED_BOOLEAN_FUNCTION_MODEL
+    {
         let bindings = read_typed_program_binding_identities(network, body)
             .map_err(|error| error.to_string())?;
         // Supported operations must have both actual target interpretations.
@@ -200,9 +204,27 @@ fn checked(value: &FormalConceptArchive) -> Result<Checked, String> {
         // by the checked scope walk. Unreachable relation links cannot mark
         // semantic field names or public declarations as lexical bindings.
         exclude_binding_names(network, body, &mut exclusions, &bindings)?;
-        if model == SHARED_NUMERIC_FUNCTION_MODEL {
-            let shared = read_shared_numeric_function_model(network, body, false)?;
-            meaning = Some(create_shared_numeric_function_meaning(network, &shared)?);
+        if model == SHARED_NUMERIC_FUNCTION_MODEL || model == SHARED_BOOLEAN_FUNCTION_MODEL {
+            let boolean_value = model == SHARED_BOOLEAN_FUNCTION_MODEL;
+            let shared = if boolean_value {
+                read_shared_boolean_function_model(network, body)?
+            } else {
+                read_shared_numeric_function_model(network, body, false)?
+            };
+            let mut view = create_shared_numeric_function_meaning(network, &shared)?;
+            if boolean_value {
+                // The explicit callable observation retains names in the archive.
+                for id in &shared.declaration_ids {
+                    exclusions.insert((*id, "name".to_owned()));
+                    exclusions.insert((*id, "full name".to_owned()));
+                }
+                let mut references = wrapper.references().to_vec();
+                references[0] = shared.entry_target;
+                if !view.set_references(value.root, &references) {
+                    return Err("missing Boolean callable meaning root".to_owned());
+                }
+            }
+            meaning = Some(view);
             exclusions.extend(shared.signature_fields);
             exclusions.insert((shared.language_parent, shared.language_label));
         }
@@ -235,35 +257,37 @@ pub fn encode_formal_concept_definition(
     let declaration = models()
         .get(model)
         .ok_or("unsupported formal primitive model")?;
-    let (mut network, body) =
-        if model == "checked typed program" || model == SHARED_NUMERIC_FUNCTION_MODEL {
-            match value {
-                FormalConceptDefinitionInput::Program(program) => {
-                    let archive = encode_typed_program_links_with_provenance(
-                        program,
-                        options.provenance.as_ref(),
-                    )
-                    .map_err(|error| error.to_string())?;
-                    (archive.network, archive.root)
-                }
-                FormalConceptDefinitionInput::LinkedProgram { network, root } => {
-                    (network.clone(), root)
-                }
-                FormalConceptDefinitionInput::Declaration(_) => {
-                    return Err("a checked model needs a typed operational program".to_owned());
-                }
+    let (mut network, body) = if model == "checked typed program"
+        || model == SHARED_NUMERIC_FUNCTION_MODEL
+        || model == SHARED_BOOLEAN_FUNCTION_MODEL
+    {
+        match value {
+            FormalConceptDefinitionInput::Program(program) => {
+                let archive = encode_typed_program_links_with_provenance(
+                    program,
+                    options.provenance.as_ref(),
+                )
+                .map_err(|error| error.to_string())?;
+                (archive.network, archive.root)
             }
-        } else {
-            let FormalConceptDefinitionInput::Declaration(value) = value else {
-                return Err("a source primitive has no declared formal interpretation".to_owned());
-            };
-            if value.is_some_and(|value| value != declaration) {
-                return Err("a source primitive has no declared formal interpretation".to_owned());
+            FormalConceptDefinitionInput::LinkedProgram { network, root } => {
+                (network.clone(), root)
             }
-            let mut network = LinkNetwork::new();
-            let body = data(&mut network, declaration)?;
-            (network, body)
+            FormalConceptDefinitionInput::Declaration(_) => {
+                return Err("a checked model needs a typed operational program".to_owned());
+            }
+        }
+    } else {
+        let FormalConceptDefinitionInput::Declaration(value) = value else {
+            return Err("a source primitive has no declared formal interpretation".to_owned());
         };
+        if value.is_some_and(|value| value != declaration) {
+            return Err("a source primitive has no declared formal interpretation".to_owned());
+        }
+        let mut network = LinkNetwork::new();
+        let body = data(&mut network, declaration)?;
+        (network, body)
+    };
     let declaration_root = data(&mut network, declaration)?;
     let basis = network.insert_link(
         [declaration_root],

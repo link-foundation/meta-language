@@ -234,3 +234,75 @@ fn ieee_value_views_keep_original_text_ties_and_zero_signs() {
     assert!(prove_formal_concept_equivalence(&values[0], &values[2]).is_none());
     assert!(prove_formal_concept_equivalence(&values[3], &values[4]).is_none());
 }
+
+#[test]
+fn boolean_callable_values_preserve_actual_owners_and_recursive_source_free_proofs() {
+    use meta_language::{
+        FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
+        encode_formal_concept_definition, encode_formal_function_definition,
+    };
+    let data = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/shared-boolean-function-definitions.lino"
+    ))
+    .unwrap();
+    for case in data["cases"].as_array().unwrap() {
+        let network = LinkNetwork::from_lino(case["links"].as_str().unwrap()).unwrap();
+        let root = LinkId::from_u64(case["programRoot"].as_u64().unwrap());
+        let selected = encode_formal_function_definition(
+            &network,
+            root,
+            FormalFunctionSelector::Name(case["declaration"].as_str().unwrap()),
+            None,
+        )
+        .unwrap();
+        let typed_root = selected.network.link(selected.root).unwrap().references()[0];
+        let definition = encode_formal_concept_definition(
+            FormalConceptDefinitionInput::LinkedProgram {
+                network: &selected.network,
+                root: typed_root,
+            },
+            FormalConceptDefinitionOptions::from("closed boolean function value"),
+        )
+        .unwrap();
+        let before = definition.network.to_lino();
+        assert_eq!(
+            read_formal_concept_definition(&definition.to_json()).unwrap(),
+            case["expected"]
+        );
+        assert_eq!(definition.network.to_lino(), before);
+        let restored = FormalConceptArchive {
+            network: LinkNetwork::from_lino(&before).unwrap(),
+            root: definition.root,
+        };
+        assert_eq!(
+            read_formal_concept_definition(&restored.to_json()).unwrap(),
+            case["expected"]
+        );
+        let checked = decode_typed_program_links(&definition.network, typed_root).unwrap();
+        assert_eq!(
+            checked.source_language.as_str(),
+            case["language"].as_str().unwrap()
+        );
+    }
+    for pair in data["equivalent"].as_array().unwrap() {
+        let first = &data["cases"][usize::try_from(pair[0].as_u64().unwrap()).unwrap()];
+        let second = &data["cases"][usize::try_from(pair[1].as_u64().unwrap()).unwrap()];
+        let one = archive(first);
+        let two = archive(second);
+        let proof = prove_formal_concept_equivalence(&one, &two).unwrap();
+        let restored = FormalConceptArchive {
+            network: LinkNetwork::from_lino(&proof.network.to_lino()).unwrap(),
+            root: proof.root,
+        };
+        assert!(verify_formal_concept_equivalence(&one, &two, &restored));
+        let conservative =
+            |case: &Value| archive(&json!({"links":case["links"],"root":case["conservativeRoot"]}));
+        assert!(
+            prove_formal_concept_equivalence(&conservative(first), &conservative(second)).is_none()
+        );
+    }
+    assert!(
+        prove_formal_concept_equivalence(&archive(&data["cases"][8]), &archive(&data["cases"][10]))
+            .is_none()
+    );
+}

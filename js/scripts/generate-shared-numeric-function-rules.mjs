@@ -74,6 +74,9 @@ if (process.argv.includes('--update-styles')) {
   for (const name of ['accept_shared_numeric_type', 'accept_shared_numeric_expression', 'accept_shared_numeric_unary', 'accept_shared_numeric_binary', 'accept_shared_numeric_type_shape', 'accept_shared_numeric_context', 'accept_shared_numeric_declaration', 'accept_shared_numeric_parameter', 'accept_shared_numeric_entry', 'accept_shared_numeric_expression_shape', 'accept_shared_numeric_literal', 'accept_shared_numeric_context_flag', 'accept_shared_numeric_source_signature', 'accept_shared_numeric_source_type']) {
     replace(`pub fn ${name}(`, `/// Read a shared formal function graph decision.\n#[must_use]\npub fn ${name}(`);
   }
+  for (const name of ['accept_shared_boolean_type_shape', 'accept_shared_boolean_binary', 'infer_shared_boolean_binary_domain']) {
+    replace(`pub fn ${name}(`, `/// Read a closed Boolean callable interpretation decision.\n#[must_use]\npub fn ${name}(`);
+  }
   for (const line of styled.split('\n')) {
     const condition = /^(\s*(?:\} else )?if )(.+)( \{)$/u.exec(line);
     const tail = /^\s+([^{}]+)$/u.exec(line);

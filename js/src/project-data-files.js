@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { readStructuredDataLino, structuredDataToLino } from './structured-data-links.js';
 
+// One large ordinary-data snapshot avoids repeatedly constructing its complete
+// temporary LinkNetwork. Exact current text is still read and compared; each
+// caller owns a fresh clone, preserving its original shared values.
+// Small files and custom decoder limits retain the original uncached boundary.
+let largeDataSnapshot;
+
 function pathString(file) {
   if (file instanceof URL) return fileURLToPath(file);
   if (typeof file !== 'string' || !file) throw new TypeError('project data needs a file path or URL');
@@ -39,7 +45,19 @@ export function readProjectData(file, { format = 'auto', limits } = {}) {
   const actual = resolveProjectDataPath(file, { format });
   const text = readFileSync(actual, 'utf8');
   const encoding = selectedFormat(actual, format);
-  if (encoding === 'lino') return readStructuredDataLino(text, limits);
+  if (encoding === 'lino') {
+    const cacheable = limits === undefined && text.length >= 8 * 1024 * 1024
+      && Buffer.byteLength(text) <= 48 * 1024 * 1024;
+    if (!cacheable) return readStructuredDataLino(text, limits);
+    if (largeDataSnapshot?.file === actual && largeDataSnapshot.text === text) {
+      return structuredClone(largeDataSnapshot.value);
+    }
+    // Release the previous private snapshot before constructing another graph.
+    largeDataSnapshot = undefined;
+    const value = readStructuredDataLino(text);
+    largeDataSnapshot = { file: actual, text, value };
+    return structuredClone(value);
+  }
   if (encoding === 'json') return JSON.parse(text);
   throw new TypeError(`project data has an unsupported storage extension: ${actual}`);
 }

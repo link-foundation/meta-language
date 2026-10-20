@@ -47,3 +47,13 @@ export function acceptSharedNumericSourceSignature(model, language, matchingLayo
 export function acceptSharedNumericSourceType(kind, ownerKind, ownerPath, qualified) {
   return ownerKind === 'primitive' && !qualified && (kind === 'float' && ownerPath === 'f64' || kind === 'bool' && ownerPath === 'bool');
 }
+
+/** @param {string} kind @param {boolean} singleField @returns {boolean} */
+export function acceptSharedBooleanTypeShape(kind, singleField) { return kind === 'bool' && singleField; }
+/** @param {string} operation @param {string} domain @param {string} semantics @returns {boolean} */
+export function acceptSharedBooleanBinary(operation, domain, semantics) {
+  return (operation === 'and' || operation === 'or' || operation === 'eq' || operation === 'ne')
+    && domain === 'bool' && semantics === '';
+}
+/** @param {string} operation @returns {boolean} */
+export function inferSharedBooleanBinaryDomain(operation) { return operation === 'and' || operation === 'or'; }
