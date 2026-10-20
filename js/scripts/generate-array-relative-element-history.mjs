@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {checkProjectData,serializeProjectData,writeProjectData} from './project-data.mjs';
+import {restoreContinuationHistoricalSource} from './continuation-source-history.mjs';
 
 const revision='25e6361f2e31e09f98f78b3c973f242bdf88e31c';
 const root=new URL('../../',import.meta.url);
@@ -29,14 +30,17 @@ const sourceFiles=['js/src/translation/check.js','js/src/translation/primitive-m
   'rust/tests/unit/grammar_outcome_number_kind_rules.rs',...descriptors];
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:digest(value)});
+const historicalSource=file=>restoreContinuationHistoricalSource(readFileSync(new URL(file,root),'utf8'),file,'relative array');
 
 export function generateArrayRelativeElementHistory({check=false}={}) {
+  assert.ok(check||historicalSource(artifactFile)===readFileSync(new URL(artifactFile,root),'utf8'),
+    'a historical generator cannot overwrite a newer current artifact; use --check');
   const originals=new Map(sourceFiles.map(file=>{const {certificate,blob}=captureGitArtifactCertificate(revision,file);return[file,{certificate,source:blob.toString('utf8')}];}));
   const original=file=>readStructuredDataLino(originals.get(file).source);
   const artifact=original(artifactFile),previous=original(artifactFile),policy=original(policyFile),register=original(registerFile),loan=original(loanFile);
   const changes=[];
   const refresh=(row,path)=>{
-    const current=pin(readFileSync(new URL(row.file,root)));
+    const current=pin(historicalSource(row.file));
     for(const field of ['bytes','sha256'])if(row[field]!==current[field]){changes.push({path:[...path,field],before:row[field],after:current[field]});row[field]=current[field];}
   };
   artifact.decisionSources.forEach((row,index)=>refresh(row,['decisionSources',String(index)]));
@@ -52,12 +56,15 @@ export function generateArrayRelativeElementHistory({check=false}={}) {
   assert.equal(policy.edge.changes.length,13);
   register.sourceDescriptorSuccessors=[policy.edge];Object.assign(loan.predecessor,pin(artifactText));
   const descriptorValues=new Map([[artifactFile,artifact],[policyFile,policy],[registerFile,register],[loanFile,loan]]);
-  for(const [file,value]of descriptorValues){if(check)checkProjectData(new URL(file,root),value);else writeProjectData(new URL(file,root),value);}
-  const helperFile=new URL('js/scripts/current-translation-source-descriptors.mjs',root),helper=readFileSync(helperFile,'utf8');
-  const expected=helper.replace(/const policyHash='[a-f0-9]{64}';/u,"const policyHash='"+digest(readFileSync(new URL(policyFile,root)))+"';");
+  for(const [file,value]of descriptorValues){
+    if(check)assert.equal(historicalSource(file),serializeProjectData(value,file),'every complete historical descriptor byte remains exact');
+    else writeProjectData(new URL(file,root),value);
+  }
+  const helperFile=new URL('js/scripts/current-translation-source-descriptors.mjs',root),helper=historicalSource('js/scripts/current-translation-source-descriptors.mjs');
+  const expected=helper.replace(/const policyHash='[a-f0-9]{64}';/u,"const policyHash='"+digest(historicalSource(policyFile))+"';");
   if(check)assert.equal(helper,expected);else writeFileSync(helperFile,expected);
   const sources=sourceFiles.map(file=>{
-    const {source:sourceText,certificate}=originals.get(file),current=readFileSync(new URL(file,root),'utf8');
+    const {source:sourceText,certificate}=originals.get(file),current=historicalSource(file);
     let start=0,end=sourceText.length,finish=current.length;
     while(start<end&&start<finish&&sourceText[start]===current[start])start++;
     while(end>start&&finish>start&&sourceText[end-1]===current[finish-1]){end--;finish--;}

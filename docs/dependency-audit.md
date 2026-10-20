@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 196 | 195 | 1 | 0 |
+| Generators | 197 | 196 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -743,6 +743,7 @@ they are.
 | `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

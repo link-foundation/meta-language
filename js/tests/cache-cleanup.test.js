@@ -266,7 +266,10 @@ test('cleanup keeps a target whose built binary is still running', { skip: !POSI
   const binary = path.join(fixture.caches.rustTarget, 'debug/deps/unit-fixture');
   copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), binary);
   chmodSync(binary, 0o755);
-  const running = spawn(binary, ['30'], { stdio: 'ignore' });
+  // Linux procfs retains the actual executable path independently of argv0,
+  // so a copied uutils binary can retain its sleep dispatch name. Other
+  // platforms keep the original executable spelling used by their ps probe.
+  const running = spawn(binary, ['30'], { ...(process.platform === 'linux' ? { argv0: 'sleep' } : {}), stdio: 'ignore' });
   const exited = new Promise((resolve) => running.once('exit', resolve));
   t.after(() => running.kill('SIGKILL'));
   const deadline = Date.now() + 10000;
@@ -329,7 +332,7 @@ test('cleanup keeps the target of a Cargo process running in its workspace', { s
   const cargo = path.join(tools, 'cargo');
   copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), cargo);
   chmodSync(cargo, 0o755);
-  const running = spawn(cargo, ['30'], { cwd: path.dirname(fixture.caches.rustTarget), stdio: 'ignore' });
+  const running = spawn(cargo, ['30'], { argv0: 'sleep', cwd: path.dirname(fixture.caches.rustTarget), stdio: 'ignore' });
   const exited = new Promise((resolve) => running.once('exit', resolve));
   t.after(() => running.kill('SIGKILL'));
   const deadline = Date.now() + 10000;

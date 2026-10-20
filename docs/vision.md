@@ -129,6 +129,14 @@ Native evidence includes an experimental Rust source only when its exact path
 belongs to the actual registered native test module. A JavaScript driver or an
 unregistered Rust filename cannot supply that evidence.
 
+Historical generators verify the complete inputs of their recorded revision.
+An exact current successor may supply that historical view only after its whole
+digest and certified byte inverse pass; current artifact gates remain separate.
+Unknown edits receive no historical authentication. A historical generator
+refuses to overwrite a newer current artifact. Native packaging, primitive
+column loans and source-only callback changes therefore retain the original
+receipts and every assertion without replacing the current implementation.
+
 Incremental import validates that historical identities and origin aliases are
 unique before reusing them. It reserves every historical identity before
 allocating new current classes. A restored origin whose old identity is still
@@ -3522,6 +3530,14 @@ still admits the project's ignored caches and stopped temporary scratch with
 an exact matching ownership marker, while retaining the existing source,
 evidence, active-task and other-worktree checks. It disables container cleanup
 and automatic low-disk escalation and records `project-owned-only` in the receipt.
+
+Linux cleanup walks process ancestry entirely in the PID namespace of the
+mounted procfs. It excludes ancestors before translating known process IDs to
+the caller's namespace. This preserves running test and Cargo processes when
+an outer procfs is visible and numeric IDs collide between namespaces; foreign
+namespace processes remain in the safety inventory. Malformed namespace status
+rows never supply translated identifiers. The existing live-process, target
+ownership, lease and lock protections remain required.
 The original custom-target interface remains available for separately verified
 ownership decisions; its existing compatibility and safety assertions remain.
 
