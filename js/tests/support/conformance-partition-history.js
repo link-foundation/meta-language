@@ -13,6 +13,7 @@ assert.equal(createHash('sha256').update(history.workflow.text).digest('hex'),hi
 /** Restore exactly the reviewed matrix block; every unrelated edit stays visible. */
 export function restoreConformancePartitionHistory(source) {
   assert.equal(typeof source,'string');
+  source=restoreRawContractPartitionHistory(source);
   if(!source.startsWith('name: JavaScript\n'))return source;
   const {before,after}=history.change;
   if(source.includes(after)){
@@ -26,3 +27,5 @@ export function restoreConformancePartitionHistory(source) {
   assert.equal([...source.matchAll(/\{group: conformance,/gu)].length,history.oldCount);
   return source;
 }
+
+import {restoreRawContractPartitionHistory} from './raw-contract-partition-history.js';

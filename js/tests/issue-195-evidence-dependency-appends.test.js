@@ -23,12 +23,14 @@ test('every current dependency declaration remains checked while the complete or
   assert.equal(structuredDataToLino(original),history.inventory.source);
   assert.deepEqual(readNodeDependencyInventoryOriginalView(),original);
   const ids=new Set(original.items.map(row=>row.id));
-  assert.deepEqual(inventory.items.slice(original.items.length).map(row=>row.name).sort(),[
+  const appended=inventory.items.slice(original.items.length);
+  assert.deepEqual(appended.map(row=>row.id).sort(),declared.filter(row=>!ids.has(row.id)).map(row=>row.id).sort());
+  for(const name of [
     'js/scripts/generate-string-relative-character-template.mjs',
     'js/scripts/generate-contributor-instruction-coverage.mjs',
     'js/scripts/generate-dependency-inventory-append-history.mjs',
     'src/data/string-relative-character-template.lino',
-  ].sort());
+  ])assert.equal(appended.filter(row=>row.name===name).length,1);
   for(const row of inventory.items.slice(original.items.length)){
     assert.equal(ids.has(row.id),false);
     assert.equal(declared.filter(item=>item.id===row.id).length,1);

@@ -15,7 +15,7 @@
 (15: (meta: (t: semantic) (n: 1) (term: string%20value) (def: sha256%20of%20the%20exact%20UTF-8%20GitHub%20REST%20body%20or%20captured%20direct-instruction%20file%20bytes) (lang: meta-language%20structured%20data)))
 (16: 14 15 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (17: (meta: (t: semantic) (n: 1) (term: string%20value) (def: reconciledAt) (lang: meta-language%20structured%20data)))
-(18: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2026-10-19) (lang: meta-language%20structured%20data)))
+(18: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2026-10-20) (lang: meta-language%20structured%20data)))
 (19: 17 18 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (20: (meta: (t: semantic) (n: 1) (term: string%20value) (def: classificationRule) (lang: meta-language%20structured%20data)))
 (21: (meta: (t: semantic) (n: 1) (term: string%20value) (def: Every%20tracked%20discussion%20comment%20is%20a%20requirement%20source%2C%20a%20status%20report%2C%20or%20recognized%20automation%20output%3B%20direct%20conversation%20instructions%20are%20captured%20verbatim%20and%20hash-checked%20from%20committed%20files.) (lang: meta-language%20structured%20data)))

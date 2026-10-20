@@ -13,9 +13,16 @@ import {readOriginalLinkRawHistoricalSources} from './raw-schema-source-closure.
 import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext} from './raw-schema-sixth-extension-closure.mjs';
 import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-program-schema-history.mjs';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE} from './raw-emission-profiles.mjs';
-import './raw-emission-profiles.test.mjs';
-import './raw-consuming-emission.test.mjs';
-import './raw-borrowed-emission.test.mjs';
+const separateRawContractSuites=process.env.ORIGINAL_LINK_RAW_SEPARATE_SUITES;
+if(separateRawContractSuites!==undefined){
+  assert.equal(separateRawContractSuites,'1');
+  assert.equal(process.env.CI,'true');
+  assert.equal(process.env.ORIGINAL_LINK_RAW_NATIVE,'0');
+}else{
+  await import('./raw-emission-profiles.test.mjs');
+  await import('./raw-consuming-emission.test.mjs');
+  await import('./raw-borrowed-emission.test.mjs');
+}
 
 const verifyOriginalLinkRawSchemaSourceClosure = (receipt, bytes, historicalSources) => verifyStringOrderSchemaSuccessor(
   {...readOriginalLinkRawSchemaSixthContext(), receipt, historicalSources}, bytes,

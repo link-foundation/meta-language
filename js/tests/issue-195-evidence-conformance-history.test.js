@@ -10,7 +10,7 @@ const root=new URL('../../',import.meta.url);
 const fixture=readProjectData(new URL('parity/fixtures/javascript-conformance-deadline-2026-10-20.lino',root));
 
 test('historical conformance selection restores every preceding workflow byte under the original deadline',()=>{
-  const source=readFileSync(new URL('.github/workflows/js.yml',root),'utf8');
+  const source=restoreRawContractPartitionHistory(readFileSync(new URL('.github/workflows/js.yml',root),'utf8'));
   assert.equal(createHash('sha256').update(source).digest('hex'),fixture.change.currentSha256);
   const previous=restoreConformancePartitionHistory(source);
   assert.equal(previous,fixture.workflow.text);
@@ -47,3 +47,5 @@ test('conformance adapters retain both complete original guard modules and every
     assert.ok(Buffer.from(previous).equals(execFileSync('git',['show',revision+':'+file],{cwd:root,maxBuffer:128*1024})));
   }
 });
+
+import {restoreRawContractPartitionHistory} from './support/raw-contract-partition-history.js';
