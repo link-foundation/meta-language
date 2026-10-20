@@ -95,6 +95,12 @@ const sha256 = (text) => createHash('sha256').update(Buffer.from(text, 'utf8')).
  * the crate, and `options.imports` maps an import specifier to the signatures
  * {@link selfTranslationSignatures} gives for that module, which bind the
  * imported names the same way.
+ *
+ * Report tooling can opt into `retainDiagnostics: true` to retain the actual
+ * TranslationError kind, reason, message, span and details on carried items.
+ * The diagnostic also records the complete source group's UTF-8 byte range;
+ * the original frontend span is retained without coordinate conversion.
+ * This does not change emitted code or ordinary item fields.
  */
 export function selfTranslate(source, sourceLanguage, targetLanguage, options = {}) {
   return translateModule(source, sourceLanguage, targetLanguage, options).translation;
@@ -115,7 +121,7 @@ export function selfTranslationSignatures(source, language, options = {}) {
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false } = {}, signaturesOnly = false) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
@@ -171,15 +177,16 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
     }
   }
   const { outs, scans } = family(to) === 'Rust'
-    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation, referenceSemantics: references || undefined })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined })), scans: [] };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation, referenceSemantics: references || undefined });
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [] };
+  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics });
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature => exportedNames.has(signature.name)) : []);
   if (signaturesOnly) return { signatures };
   for (const { group, out } of results) {
     for (const prelude of out.preludes ?? []) if (!preludes.includes(prelude)) preludes.push(prelude);
-    for (const { term, start, end } of group.items) recorded.push({ term, start, end, status: out.status, reason: out.reason ?? null });
+    for (const { term, start, end } of group.items) recorded.push({ term, start, end, status: out.status, reason: out.reason ?? null,
+      ...(out.diagnostic ? { diagnostic: out.diagnostic } : {}) });
     if (out.code !== null) {
       blocks.push(`${blocks.length ? breaks(gap) : ''}${out.code}`);
       gap = group.after;
@@ -240,7 +247,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
  * name that a cycle of items leaves untranslated stays unbound, so its
  * callers are carried with the checker's diagnostic.
  */
-function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings, referenceSemantics }) {
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings, referenceSemantics, retainDiagnostics }) {
   const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
   const owners = new Map();
   scans.forEach((scan, index) => {
@@ -253,7 +260,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
     if (outs[index] || visiting.has(index)) return;
     const scan = scans[index];
     if (!scan) {
-      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings, referenceSemantics });
+      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings, referenceSemantics, retainDiagnostics });
       return;
     }
     visiting.add(index);
@@ -275,7 +282,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
         if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.push(signature);
       }
     }
-    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings, referenceSemantics });
+    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings, referenceSemantics, retainDiagnostics });
     visiting.delete(index);
   };
   groups.forEach((_, index) => visit(index));
@@ -554,7 +561,12 @@ function translateGroup(group, from, to, decorators, context = {}) {
     signatures = program.imports ? context.externals : declaredSignatures(program, constants);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
-    return carry(text, term, from, from === 'TypeScript' ? error.reason : error.kind);
+    const carried = carry(text, term, from, from === 'TypeScript' ? error.reason : error.kind);
+    if (context.retainDiagnostics === true) carried.diagnostic = {
+      kind: error.kind, reason: error.reason, message: error.message, span: error.span, details: error.details,
+      sourceRange: { start: group.items[0].start, end: group.items.at(-1).end },
+    };
+    return carried;
   }
   if (emitted.definitions.length === 0) return carry(text, term, from, 'no definition');
   const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);

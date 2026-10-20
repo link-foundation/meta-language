@@ -8,6 +8,7 @@
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
 //     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
+//     [--replay-plan selected-blockers.lino]
 //
 // The whole tree takes over an hour on one runner, so CI splits it: `--shard
 // K/N` measures the K-th of N shards, which hold about the same number of
@@ -21,10 +22,10 @@
 // module is measured twice, by the generic translation and by the translation
 // with the shared emitter decorators (docs/decorators.md), so the report shows
 // how much of the difference the decorators close.
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { dirname, join, posix, resolve } from 'node:path';
+import { dirname, join, posix, relative, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { isMainThread } from 'node:worker_threads';
@@ -35,6 +36,7 @@ import { parseProgrammingLanguage } from '../src/programming-language-parser.js'
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
+import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -51,9 +53,25 @@ function option(name) {
   return index === -1 ? null : process.argv[index + 1];
 }
 
-function modules() {
+function modules(replayPlan) {
+  const replay = option('--replay-plan');
+  if (replay) {
+    assert.ok(!option('--modules') && !option('--shard'), '--replay-plan cannot silently narrow --modules or --shard');
+    return validateSelfTranslationReplayPlan(replayPlan ?? readProjectData(replay), listSourceModules(), module => {
+      const file = realpathSync(join(root, module));
+      const path = relative(realpathSync(root), file).split(sep).join('/');
+      requireReportSourcePath(path);
+      return readFileSync(file);
+    });
+  }
   const listed = option('--modules');
-  if (listed) return listed.split(',').map((file) => posix.join('js/src', file));
+  if (listed) {
+    const catalog = new Set(listSourceModules());
+    const selected = listed.split(',').map(file => requireReportSourcePath(`js/src/${file}`));
+    assert.equal(new Set(selected).size, selected.length, 'duplicate selected report module');
+    for (const module of selected) assert.ok(catalog.has(module), `selected report source is missing: ${module}`);
+    return selected;
+  }
   return listSourceModules();
 }
 
@@ -83,15 +101,15 @@ function shardOf(files, index, count) {
   return shards[index - 1].sort();
 }
 
-function selectedModules() {
+function selectedModules(replayPlan) {
   const shard = option('--shard');
-  if (!shard) return modules();
+  if (!shard) return modules(replayPlan);
   const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
   if (!match || Number(match[1]) > Number(match[2])) {
     console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
     process.exit(2);
   }
-  return shardOf(modules(), Number(match[1]), Number(match[2]));
+  return shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */
@@ -315,19 +333,21 @@ export function measureSelfTranslationModule(module, decorators, context) {
   const rust = counterpart(module);
   const source = readFileSync(join(root, module), 'utf8');
   const started = performance.now();
-  const translation = selfTranslate(source, 'JavaScript', 'Rust', context);
+  const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, retainDiagnostics: true });
   const coverage = checkedCoverage(source, translation);
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
   const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
   const generic = compareRustDefinitions(translation.code, handWritten);
-  let decorated = { ...generic, coverage };
+  const retained = { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items };
+  let decorated = { ...generic, coverage, translation: retained };
   if (decorators.size > 0) {
-    const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators });
-    decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation) };
+    const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators, retainDiagnostics: true });
+    decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation),
+      translation: { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items } };
   }
   const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
-  return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, decorated };
+  return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, translation: retained, decorated };
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
@@ -411,6 +431,10 @@ function verifyPublishedReports(directory, commit) {
     assert.deepEqual(report.failures, [], `${file}: failed modules`);
     assert.deepEqual(report.decorators, decorators, `${file}: decorators`);
     assert.ok(Array.isArray(report.modules), `${file}: module rows`);
+    if (report.inventory !== undefined) {
+      assert.deepEqual(report.sourceCatalog, [...expected], `${file}: complete source catalog`);
+      assert.deepEqual(report.blockers, rankSelfTranslationBlockers([report]), `${file}: retained blocker inventory`);
+    }
     const markdown = readFileSync(join(dirname(file), 'self-translation-report.md'), 'utf8');
     for (const row of report.modules) {
       assert.ok(expected.has(row.module), `${file}: unknown module ${row.module}`);
@@ -447,13 +471,23 @@ async function main() {
   }
   const outDir = option('--out-dir');
   if (!outDir) {
-    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js] [--decorators file.lino] [--shard K/N] [--list]');
+    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js | --replay-plan plan.lino] [--decorators file.lino] [--shard K/N] [--list]');
     process.exit(2);
   }
   const decoratorsText = readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8');
   const decorators = DecoratorSet.fromLino(decoratorsText);
   const rows = [];
   const failures = [];
+  const replay = option('--replay-plan') ? readProjectData(option('--replay-plan')) : null;
+  if (replay?.origin?.decorators !== null && replay?.origin?.decorators !== undefined) {
+    assert.deepEqual(decorators.ids(), replay.origin.decorators, 'replay decorator selections differ');
+  }
+  const selected = selectedModules(replay);
+  const inventory = selected.map(module => {
+    const rust = counterpart(module);
+    return { module, rust, sourceSha256: hash(readFileSync(join(root, module))),
+      rustSha256: rust ? hash(readFileSync(join(root, rust))) : null };
+  });
   const context = createModuleContext((module) => {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
@@ -472,7 +506,7 @@ async function main() {
     }
   };
   try {
-    for (const module of selectedModules()) {
+    for (const module of selected) {
       const started = performance.now();
       console.error(`self-translation report: resolving ${module}`);
       try {
@@ -491,13 +525,21 @@ async function main() {
     await finish();
   } finally { await worker?.close(); }
   mkdirSync(outDir, { recursive: true });
-  const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '');
-  writeFileSync(join(outDir, 'self-translation-report.md'), report);
-  writeProjectData(join(outDir, 'self-translation-report.lino'), {
+  const data = {
     schemaVersion: 1,
     commit: process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
     decorators: decorators.ids(), modules: rows, failures,
-  });
+    sourceCatalog: listSourceModules(), inventory,
+    ...(replay ? { replay } : {}),
+  };
+  data.blockers = rankSelfTranslationBlockers([data]);
+  const display = value => String(value).replaceAll('|', '\\|').replaceAll('\r', '\\r').replaceAll('\n', '\\n');
+  const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '')
+    + `\n## Ranked translation blockers\n\n${data.blockers.inventory.length} selected modules; ${data.blockers.unreportedModules.length} other catalog modules are outside this report. Grouping is diagnostic analysis, not successful translation evidence.\n\n`
+    + '| affected modules | carried bytes | measurement | exact reason | replay group key |\n| ---: | ---: | --- | --- | --- |\n'
+    + data.blockers.groups.map(group => `| ${group.moduleCount} | ${group.sourceBytes} | ${group.mode} | ${display(group.reason)} | ${group.key} |`).join('\n') + '\n';
+  writeFileSync(join(outDir, 'self-translation-report.md'), report);
+  writeProjectData(join(outDir, 'self-translation-report.lino'), data);
   // Refused modules are listed in the report; the tests hold self-translation to its contract.
   console.log(report);
 }
