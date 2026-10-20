@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 216 | 215 | 1 | 0 |
+| Generators | 225 | 224 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -763,6 +763,15 @@ they are.
 | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-receiver-parameters.mjs` | `js/scripts/generate-typescript-receiver-parameters.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-hosts.mjs` | `js/scripts/generate-rust-literal-match-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-rules.mjs` | `js/scripts/generate-rust-literal-match-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-rules.mjs` | `js/scripts/generate-boolean-declaration-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

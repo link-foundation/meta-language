@@ -68,6 +68,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Direct user continuation instruction to implement all unmet requirements and CI repairs while awaiting the next CI result; retain the complete scope and continue working during verification.',
     ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
   },
+  {
+    id: 'automation-first-own-codebase-baseline-2026-10-21',
+    key: 'automationFirstOwnCodebaseBaselineRequest',
+    title: 'Automate high coverage work and prioritize complete JavaScript Rust translation of this codebase',
+    role: 'Direct user priority for automation and twenty percent resource investment toward eighty percent results, up to three subagents in the current phase, and full JavaScript and Rust parsing, emission and bidirectional own-codebase translation as the baseline before the remaining capabilities.',
+    ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-WORKFLOW-THREE-SUBAGENT-CURRENT-PHASE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */

@@ -125,6 +125,12 @@ Historical source guards authenticate the complete current module before
 inverting recorded, disjoint byte intervals and checking every predecessor byte.
 Original source hashes, receipt edges, assertions and refusal cases stay exact;
 current translation behavior uses current imports and independent controls.
+Naming extraction retains every actual current source name. Two historical
+inventory views may additionally recover names from complete independently
+certified predecessors, with explicit revision and archive provenance. Current
+modules and the additive driver must match their complete reviewed source pins;
+unknown successors refuse. Every unchanged naming policy, coverage assertion
+and positive or negative fixture still applies to the combined inventory.
 Native evidence includes an experimental Rust source only when its exact path
 belongs to the actual registered native test module. A JavaScript driver or an
 unregistered Rust filename cannot supply that evidence.
@@ -137,8 +143,8 @@ all frozen diagnostic inputs, both producer identities, actual current type and
 import owners, and the complete diagnostic calls. A frozen CI overlay continues
 to use its separately authenticated producer rather than a new current source.
 
-Canonical native unit sources and the version-qualified npm manifest retain LF
-checkout bytes on every supported platform. Exact native-module registration
+Canonical native, JavaScript tooling and test sources, captured requirements
+and the version-qualified npm manifest retain LF checkout bytes on every supported platform. Exact native-module registration
 checks therefore inspect the same bytes on Windows as on other runners. The
 check-only synchronous source hooks select Node.js `>=22.15.0 <23.0.0` or
 `>=24.0.0 <25.0.0`; uncovered versions refuse. The lower bound follows the
@@ -1151,6 +1157,16 @@ definitions include the actual named-import erasure declarations, complete
 module concrete syntax and an explicit empty-main Rust checking harness.
 Source-free text/binary proof controls and independently authored truth values
 run in JavaScript; native execution and matching certificates require CI.
+A separate `closed boolean function declaration value` basis selects an actual
+owned function through a `selected function declaration` link on the formal
+root. It retains the original checked program, declaration identities, source
+signatures and const proofs. A source proof must never be copied onto a renamed
+generated wrapper. The original strict Rust const interpretation validates the
+original program before the new value basis can omit its source qualification
+from mathematical comparison. The actual archive and native emission retain
+that qualification. The old wrapper basis, source-qualified meanings, fixtures
+and refusal boundaries remain independently checked. This direct entry does
+not admit arbitrary const calls, compile-time evaluation or broader input types.
 Formal relation comparison also validates the actual label self-points and
 anonymous relation edges under their declared interpretation. Matching spelling
 cannot hide a different namespace, definition or identity premise.
@@ -1319,6 +1335,18 @@ The current implementation priority maximizes Rust ↔ editable meta-language an
 JavaScript ↔ editable meta-language translation, reusing the same algorithms
 across multiple real JavaScript and Rust projects. RDF, OWL, dynamic extension,
 formal definitions and every earlier language remain required scope.
+The [automation-first baseline instruction](../parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt)
+makes complete JavaScript and Rust parsing, source emission and translation in
+both directions for this repository the first end-to-end baseline. Concrete
+syntax remains the default; faithful reconstruction and executable semantic
+translation remain separate checks. Other languages and capabilities follow
+this baseline without losing any recorded obligation. Reuse the existing
+self-translation inventory, checked source contexts, workers and reports.
+Group actual failures by their retained causes, preserve every affected source
+and range, and prioritize general fixes that cover many real declarations with
+few changes. The requested twenty-percent effort for eighty-percent results is
+an optimization target: report measured coverage and resource use rather than
+assuming that ratio. Unsupported constructs remain explicit.
 The critical-delivery tooling checks every current obligation's critical and
 full-scope blocker flags, then tests a complete synthetic success control before
 negative exact-commit, fixture/assertion coverage and scope-reduction controls at
@@ -3599,6 +3627,11 @@ Report import resolution checks every candidate callable and avoids resolving
 dependencies of classes and forwarded names that the current source binder
 cannot bind. Every source module still receives its complete measurement and
 byte-coverage check.
+The same report passes retain exact carried-item diagnostics and source ranges.
+Grouping ranks distinct affected modules, retains the complete denominator and
+exposes missing diagnostics in historical reports. Selected replay uses the
+existing workers with pinned sources; it does not add a translation pass or
+establish successful execution.
 Import and export candidate discovery uses the shared lexer, retaining opaque
 literals and nested scopes. Unsupported lexical identifiers or syntax use the
 original grammar scan. Every candidate signature still requires checked
@@ -3687,13 +3720,15 @@ depending on the dispatch behavior of a renamed system multicall utility.
 Dependency inventories and all other manifest inputs must finish changing before
 the final requirement-manifest refresh and freshness check.
 
-For the current task, the [latest continuation instruction](../parity/sources/solo-continuation-2026-10-19.txt)
-allows active subagents to finish slowly, then requires the coordinator to
-continue alone, without starting or reactivating agents. This supersedes the
-earlier [two-subagent allowance](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt)
-for this continuation; it does not establish a permanent project-wide cap.
-Existing ownership, bounded local checks and the restriction of native
-compilation and expensive workloads to CI remain intact.
+For the current task, the [latest instruction](../parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt)
+authorizes up to three subagents for useful independent work. It follows the
+completed [solo continuation phase](../parity/sources/solo-continuation-2026-10-19.txt)
+and earlier [two-subagent allowance](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt).
+These are successive task phases, not a permanent project-wide cap. Keep source
+ownership disjoint, serialize resource-heavy local checks and Git index writes,
+and integrate shared metadata once per complete batch. One coordinator pushes
+only after the preceding CI finishes and its errors have concrete repairs.
+Native compilation and expensive workloads remain exclusive to CI.
 
 Canonical Links Notation writing combines bounded groups of complete statements
 before assembling the final text. This bounds temporary string construction while

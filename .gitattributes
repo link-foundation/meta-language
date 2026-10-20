@@ -29,6 +29,10 @@ docs/vision.md text eol=lf
 rust/src/** text=auto eol=lf
 rust/tests/unit/** text=auto eol=lf
 js/src/** text=auto eol=lf
+# Tooling and test modules also carry complete source identity hashes.
+js/scripts/*.mjs text eol=lf
+js/tests/*.test.js text eol=lf
+parity/sources/*.txt text eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
 parity/decorators/** text=auto eol=lf

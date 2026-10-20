@@ -187,7 +187,7 @@ number of source bytes, and `--list` prints a shard's modules. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
 JavaScript tests. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
-The JSON records the observed commit and the SHA-256 hashes of each module and
+The Links report records the observed commit and the SHA-256 hashes of each module and
 its Rust counterpart. Both acceptance suites download all eight shards and run
 `--verify-reports <directory> --commit <sha>` before recording the per-module
 report assertion. Verification rejects missing or duplicate modules, stale
@@ -203,6 +203,26 @@ the providers' checked translated-export signatures and each module's directory
 to both measurements. It caches source reads, signatures and dependency contexts
 within a shard. Missing providers, unsupported exports and unresolved cycles
 retain the translator's carried-item diagnostics.
+
+The same measurements retain each item's exact range, concrete syntax term and
+actual translation error. Report-only diagnostic capture preserves the ordinary
+library output and adds no translation pass. Analyze existing shard artifacts
+without translating their source again:
+
+```sh
+node js/scripts/self-translation-report-blockers.mjs --report shard-1.lino --report shard-2.lino --out blockers.lino
+node js/scripts/self-translation-report-blockers.mjs --report shard-1.lino --report shard-2.lino --group GROUP_KEY --out replay.lino
+node js/scripts/generate-self-translation-report.mjs --replay-plan replay.lino --out-dir selected-report
+```
+
+Groups rank distinct affected modules before carried source bytes and retain
+every original failure and range. Older reports expose missing diagnostics
+explicitly. A replay plan keeps its original commit, source hashes, diagnostics
+and denominator; the existing worker measures only its selected unchanged
+sources and records the current translator commit separately. Changed sources,
+missing modules or incompatible language/mode selections refuse. This report
+runner measures JavaScript to Rust; its ranking is not reverse translation or
+successful execution evidence.
 
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for

@@ -652,4 +652,17 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
   ]
 ], true),
   ...ASSERTION_POLICY_CONVERSATION_REQUIREMENTS,
+  ...rows('automationFirstOwnCodebaseBaselineRequest', 'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'automated high coverage development with few actions',
+      'Use as much automation as possible and prioritize general changes that cover many requirements and actual source constructs with the least actions and resources, targeting twenty percent effort for eighty percent results. Reuse existing source inventories, checked contexts, translation workers and reports. Retain every individual failure, source range and unresolved obligation; measured coverage and resource observations are required before claiming the target ratio.',
+      ['existingAutomationReused', 'actualSourceFailuresGroupedWithoutLoss', 'highCoverageChangesPrioritized', 'resourceAndCoverageClaimsRequireObservations']],
+    ['I195-WORKFLOW-THREE-SUBAGENT-CURRENT-PHASE', 'up to three subagents for the current parallel implementation phase',
+      'The current user instruction authorizes at most three subagents to speed useful independent work after the historical coordinator-only phase. Preserve clear source ownership, contributor commits, bounded resource use and one push coordinator; resource-heavy local checks and Git index writes remain serialized. Earlier phase instructions and all project obligations remain recorded.',
+      ['activeSubagentCountAtMostThree', 'independentSourceOwnershipPreserved', 'contributorCommitsAndSinglePushRetained', 'localHeavyChecksSerialized']],
+  ], true),
+  ...rows('automationFirstOwnCodebaseBaselineRequest', 'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt', 'critical-conversation-requirements', 'translation-priority', [
+    ['I195-TRANSLATION-OWN-CODEBASE-BASELINE', 'complete JavaScript Rust parsing emission and bidirectional translation as the first own-codebase baseline',
+      'Deliver full JavaScript and Rust parsing and source emission, with complete concrete syntax by default, and translation between both languages for the real project codebase as the most critical end-to-end baseline. Validate complete source inventories, lossless source reconstruction and executable semantics independently; carried original source, registration or declarations do not establish semantic translation. Complete the remaining languages and capabilities after this baseline while preserving every inherited requirement.',
+      ['javascriptRustCompleteParsingAndEmissionPrioritized', 'realOwnSourceInventoryExercised', 'bidirectionalExecutableTranslationChecked', 'defaultConcreteSyntaxAndLosslessSourceRetained', 'remainingScopePreserved']],
+  ]),
 ]);

@@ -15,7 +15,7 @@ import { selfTranslate } from '../src/self-translation.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from '../src/translation/array-binding-policy.js';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
-import { javaScriptMutableArrayBindingStyleId, readJavaScriptMutableArrayBindingStyles } from '../scripts/generate-javascript-mutable-array-bindings.mjs';
+import { generateJavaScriptMutableArrayBindings, javaScriptMutableArrayBindingStyleId, readJavaScriptMutableArrayBindingStyles } from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import { formatProductRuleSource } from '../scripts/product-rule-style-corrections.mjs';
 import { readRustLibraryItems } from '../scripts/rust-library-packaging.mjs';
 
@@ -190,6 +190,7 @@ test('mutable literal bindings retain the standard iterator assumption and refus
 });
 
 test('mutable array decision styles borrow only their actual complete generated owner', () => {
+  generateJavaScriptMutableArrayBindings({ check: true });
   const source = readFileSync(new URL('../src/translation/frontend-rules.js', import.meta.url), 'utf8');
   const emitted = emitRust(checkProgram(parseJavaScript(source)));
   const decorators = DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino', import.meta.url), 'utf8'));

@@ -128,7 +128,10 @@ pub use formal_concept_definition::{
     encode_formal_concept_definition, prove_formal_concept_equivalence,
     read_formal_concept_definition, verify_formal_concept_equivalence,
 };
-pub use formal_function_links::{FormalFunctionSelector, encode_formal_function_definition};
+pub use formal_function_links::{
+    FormalFunctionSelector, encode_formal_function_declaration_value,
+    encode_formal_function_definition,
+};
 pub use foundation_models::{
     CORRESPONDENCE_KINDS, FoundationCorrespondence, FoundationDistinction, FoundationFamily,
     FoundationModel, FoundationProblem, FoundationRegister, LOGIC_FAMILIES, LanguageFoundation,

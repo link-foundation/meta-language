@@ -2008,6 +2008,12 @@ export function encodeFormalFunctionDefinition(
   declaration: FormalFunctionSelector,
   options?: { provenance?: unknown },
 ): FormalConceptArchive;
+/** Selects an actual owned Boolean declaration while preserving its original source proof. */
+export function encodeFormalFunctionDeclarationValue(
+  value: TypedProgramLinks | PortableFormalConceptArchive,
+  declaration: FormalFunctionSelector,
+  options?: { provenance?: unknown },
+): FormalConceptArchive;
 /** Selects a closed Number/Boolean function under an explicit shared value model. */
 export function encodeSharedNumericFunctionDefinition(
   value: TypedProgramLinks | PortableFormalConceptArchive,
