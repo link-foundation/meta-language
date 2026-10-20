@@ -3949,6 +3949,16 @@ unchanged default-budget acceptance for every qualified grammar. Bounded local
 JavaScript checks do not prove native execution, full grammar coverage or
 completion of the remaining requirements; native parity remains a CI check.
 
+An isolated context-reuse draft retains complete certified JavaScript/Rust host
+and test modules as reversible Links edits. It reuses a grammar context
+comparison only within one provenance invocation; every production still has
+its own definition check. An explicit private JavaScript loader runs all original
+archive controls plus the retained four priority samples at unchanged default
+budgets. Repository and frozen producer sources stay exact. Adoption requires
+current and frozen diagnostic source profiles, publication receipts, original
+controls and native execution to be reconciled together. The draft supplies no
+production parser change, native observation or general coverage claim.
+
 Self-translation preserves carriage-return sources through a serialized source
 envelope guarded by the original byte length and digest and the complete emitted
 body digest. The shared JavaScript decision is generated into Rust; each host
