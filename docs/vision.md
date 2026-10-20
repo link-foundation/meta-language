@@ -2064,6 +2064,12 @@ number payloads refuse. Supplied matching logs remain a transport contract;
 authentic CI origin, the existing complete physical union, selected compiler
 feature units and full native model/default CST reconstruction remain required.
 No synthetic transport control is published as a ledger observation.
+After a successful actual physical execution, the runner reads its exact retained
+receipt and complete logs with bounded fatal UTF-8 decoding, then writes the
+checked Links value alongside them as an observation log. The artifact cannot
+overwrite a previous result. It adds no receipt entry or nested physical cell;
+the existing raw-output hashes and complete seal admission remain unchanged.
+Other profiles and unselected tests retain their original execution paths.
 
 The experimental typed-storage generator derives every constructor from all nine
 captured native declarations and 120 independently qualified source type

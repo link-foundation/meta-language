@@ -3,10 +3,11 @@
 // logical filters, native status codes and complete output remain observable.
 import {createHash, randomUUID} from 'node:crypto';
 import {spawn, spawnSync} from 'node:child_process';
-import {appendFileSync, closeSync, mkdirSync, openSync, readFileSync, readdirSync, writeFileSync, writeSync} from 'node:fs';
+import {appendFileSync, closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, writeFileSync, writeSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readStructuredDataLino, structuredDataToLino} from '../src/structured-data-links.js';
+import {readNativeNumberControlPublication} from '../../experiments/grammar-outcome-network/native-transport/inverse/number-publication.mjs';
 
 const repository = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const script = fileURLToPath(import.meta.url);
@@ -237,6 +238,35 @@ async function invokeNative(binary, arguments_, listing, logPrefix) {
   } finally {for (const file of files) closeSync(file);}
 }
 
+function readNativePublicationText(filename) {
+  const descriptor = openSync(filename, 'r');
+  try {
+    const info = fstatSync(descriptor);
+    requireValue(info.isFile() && info.size <= 16 * 1024 * 1024, 'native publication text resource limit');
+    const buffer = Buffer.alloc(info.size);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const count = readSync(descriptor, buffer, offset, buffer.length - offset, null);
+      requireValue(count > 0, 'incomplete retained native publication text');offset += count;
+    }
+    requireValue(readSync(descriptor, Buffer.alloc(1), 0, 1, null) === 0, 'changed retained native publication text length');
+    return new TextDecoder('utf-8', {fatal: true, ignoreBOM: true}).decode(buffer);
+  } finally {closeSync(descriptor);}
+}
+
+export function retainNativeNumberPublication(directory, name, receipt) {
+  const testName = 'grammar_outcome_original_numbers::original_borrowed_number_predicates_payloads_and_wire_positions_match_every_independent_control';
+  if (receipt.identity.profile !== 'evidence' || !receipt.selected.some(row => row.name === testName)) return false;
+  requireValue(typeof name === 'string' && /^[0-9a-f]{24}$/u.test(name), 'invalid native publication artifact identity');
+  const prefix = path.join(directory, name);
+  const receiptSource = readNativePublicationText(prefix + '.lino');
+  const report = readNativeNumberControlPublication(readNativePublicationText(prefix + '.stderr.log'),
+    readNativePublicationText(prefix + '.stdout.log'), receiptSource, encoded(receipt.identity));
+  requireValue(JSON.stringify(readStructuredDataLino(receiptSource)) === JSON.stringify(receipt), 'the actual retained native execution receipt changed');
+  writeFileSync(prefix + '.original-number-publication.lino.log', encoded(report), {flag: 'wx'});
+  return true;
+}
+
 async function runHarness(binary, arguments_) {
   const current = context();
   mkdirSync(current.directory, {recursive: true});
@@ -255,6 +285,7 @@ async function runHarness(binary, arguments_) {
   writeReceipt(current.directory, name, receipt);
   if (receipt.exitCode !== 0 || receipt.signal !== null) return receipt.exitCode ?? 1;
   verifyHarnessExecution(receipt);
+  retainNativeNumberPublication(current.directory, name, receipt);
   return receipt.exitCode;
 }
 
