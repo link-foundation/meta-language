@@ -2048,6 +2048,23 @@ profile. This is a checked contract over supplied records, without attestation
 of their live origin. Native compiler provenance, runner publication and the
 complete native DTO/default CST path remain required.
 
+The current native control test publishes all seven fields directly from each
+original borrowed number observation after its unchanged independent assertions.
+The publisher is generated from the actual observation declaration, and emits
+one bounded namespaced Links record on locked standard error only in the actual
+CI evidence profile. It records the executed commit/run/attempt, actual pointer
+width and compiler-embedded byte hashes of the test, observer, visitor, publisher,
+control fixture and lock file. The complete original test module has an
+authenticated Git certificate and an exact additive source inverse.
+The retained-log reader checks the complete standard output/error hashes,
+recomputes every native outcome, verifies the successful physical receipt and
+selected test, and compares every original primitive control. Stale identities,
+source changes, duplicate/incomplete records, ignored/failed tests and changed
+number payloads refuse. Supplied matching logs remain a transport contract;
+authentic CI origin, the existing complete physical union, selected compiler
+feature units and full native model/default CST reconstruction remain required.
+No synthetic transport control is published as a ledger observation.
+
 The experimental typed-storage generator derives every constructor from all nine
 captured native declarations and 120 independently qualified source type
 occurrences. Shared Links instructions retain each original field, variant,

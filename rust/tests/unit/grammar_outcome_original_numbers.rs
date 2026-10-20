@@ -1,6 +1,8 @@
 //! Original native Number observations execute only in CI.
 #[path = "native_json_number_observation_model.rs"]
 mod original;
+#[path = "native_json_number_publication.rs"]
+mod publication;
 
 use meta_language::{
     Ambiguity, GrammarSelection, GrammarSelectionAlternative, LeafText, ParseOutcome,
@@ -95,6 +97,7 @@ fn original_borrowed_number_predicates_payloads_and_wire_positions_match_every_i
             .windows(2)
             .all(|pair| pair[0].wire_occurrence < pair[1].wire_occurrence)
     );
+    publication::publish_original_number_controls(&actual).unwrap();
 }
 
 #[test]
