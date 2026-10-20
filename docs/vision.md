@@ -2048,6 +2048,21 @@ profile. This is a checked contract over supplied records, without attestation
 of their live origin. Native compiler provenance, runner publication and the
 complete native DTO/default CST path remain required.
 
+The experimental typed-storage generator derives every constructor from all nine
+captured native declarations and 120 independently qualified source type
+occurrences. Shared Links instructions retain each original field, variant,
+child type, alias, option and container. Native packing consumes actual typed
+values; it preserves an original JSON Number and a caller-supplied existing
+static reference without guessing either from its projected value. Reusing a
+native storage carrier does not merge source concepts. Missing, foreign,
+reordered and extra children, invalid variant choices and duplicate map keys
+refuse. Generated source bindings are checked against the complete instructions,
+including a field-swap mutation. Declared records and variants use boxed carriers;
+collections, source boxes and primitives retain their direct native storage.
+These are host adapters, without a complete owned-model validator, recursive
+JSON decoder, live compiler attestation or public default CST integration.
+Those remain required before claiming a complete inverse.
+
 ## Grammar import, conversion and reverse conversion
 
 Both runtime packages provide public APIs and command-line tools to import,

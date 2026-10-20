@@ -53,6 +53,7 @@ mod grammar_merge;
 mod grammar_native_ruby_expression_syntax;
 mod grammar_native_ruby_literal_ci;
 mod grammar_native_ruby_patterns;
+mod grammar_outcome_constructor_storage;
 mod grammar_outcome_integer_decimal_rules;
 mod grammar_outcome_integer_projections;
 mod grammar_outcome_integer_rules;
