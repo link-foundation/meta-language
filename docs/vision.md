@@ -2905,6 +2905,16 @@ in the frozen native artifact; all recorded native definitions and replays remai
 exact. Current gates check current descriptors and historical views check their
 own complete predecessors. Native execution remains a CI requirement.
 
+Known array iterables preserve their original inferred element owner before
+normalization. A common Number or BigInt element owner joined with null and
+undefined retains its optional type regardless of order or an intervening spread. The
+shared iterable selector supplies the array decision in both runtimes; native
+transport reuses the existing optional-element binding update. Original complete
+programs and independent output expectations remain controls through both Links
+codecs. Historical descriptor readers invert only the complete certified source
+successors in their explicit profile; current parsing and inference use current
+sources. Unknown iterable owners retain their existing checks and diagnostics.
+
 Generated libraries can group contiguous primitive Boolean operands into an
 explicit tuple carrier to satisfy the native parameter lint. The source author
 retains the whole decision body and original bindings; a recorded caller author

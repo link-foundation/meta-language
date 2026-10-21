@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 230 | 229 | 1 | 0 |
+| Generators | 233 | 232 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -777,6 +777,9 @@ they are.
 | `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-host-registration-history.mjs` | `js/scripts/generate-program-string-host-registration-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-frontend-source-history.mjs` | `js/scripts/generate-relative-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-frozen-source-history.mjs` | `js/scripts/generate-tooling-frozen-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
