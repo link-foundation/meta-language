@@ -6,6 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCurrentOwnCodebaseRawSource,restoreCurrentOwnCodebaseRawText,restoreCurrentOwnCodebaseRawEdge} from './current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 const policy={
   "schemaVersion": 1,
@@ -227,17 +228,18 @@ function restoreText(source,file,packet){
 }
 
 /** Historical checks get the whole certified predecessor; old writers cannot overwrite successors. */
-export function restoreOwnCodebaseRawDescriptorText(source,file){return restoreText(source,file,loadPacket());}
-export function restoreOwnCodebaseRawDescriptorData(value,file){return readStructuredDataLino(restoreText(serializeProjectData(value,file),file,loadPacket()));}
+export function restoreOwnCodebaseRawDescriptorText(source,file){return restoreText(restoreCurrentOwnCodebaseRawText(source,file),file,loadPacket());}
+export function restoreOwnCodebaseRawDescriptorData(value,file){return readStructuredDataLino(restoreText(restoreCurrentOwnCodebaseRawText(serializeProjectData(value,file),file),file,loadPacket()));}
 
 /** Remove only the finite new register edge before the unchanged strict historical chain. */
 export function restoreOwnCodebaseRawDescriptorEdge(artifact,identity,register){
+  ({artifact,register}=restoreCurrentOwnCodebaseRawEdge(artifact,identity,register));
   if(!Object.hasOwn(register,policy.property))return{artifact,register};
   const packet=loadPacket();
   const previousRegister=readStructuredDataLino(restoreText(serializeProjectData(register,policy.registerFile),policy.registerFile,packet));
   if(identity!=='raw consuming'||artifact===null)return{artifact,register:previousRegister};
   const source=serializeProjectData(artifact,policy.artifactFile);
   if(pin(source).sha256!==packet.edge.current.sha256)return{artifact,register:previousRegister};
-  assert.deepEqual(pin(readFileSync(new URL(policy.sourceFile,root))),policy.sourceOwner.current,'actual current frontend source remains independently pinned');
+  assert.deepEqual(pin(Buffer.from(restoreCurrentOwnCodebaseRawSource(readFileSync(new URL(policy.sourceFile,root),'utf8'),policy.sourceFile))),policy.sourceOwner.current,'the exact historical frontend view remains independently pinned; the successor checks live bytes');
   return{artifact:readStructuredDataLino(restoreText(source,policy.artifactFile,packet)),register:previousRegister};
 }

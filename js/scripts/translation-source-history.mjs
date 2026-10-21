@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {restoreNativeLibrarySource} from './native-library-receipt-history.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
+import {restoreCurrentOwnCodebaseRawSource} from './current-own-codebase-raw-source-descriptors.mjs';
 
 const historyFile = new URL('../../parity/self-translation/translation-source-history.lino', import.meta.url);
 const historyHash = '98b15162cdde0048ec44ee864f3ac5ace3cdd00cb4d5efd8a82335a4ef759a9d';
@@ -26,6 +27,8 @@ export function restoreTranslationSourceHistory(source, file, revision) {
   const entries = history.sources.filter(row => row.file === file && row.revision === revision);
   assert.equal(entries.length, 1, 'one exact recorded source and predecessor revision are required');
   const entry = entries[0];
+  if(file==='js/src/typed-program-link-rules.js')
+    source=restoreCurrentOwnCodebaseRawSource(source,file,true);
   let bytes = Buffer.from(source);
   assert.equal(bytes.toString('utf8'), source, 'complete source retains valid UTF8');
   source = restoreArrayRelativeElementSource(source, file, true);

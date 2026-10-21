@@ -6,6 +6,7 @@ import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs'
 import {generateOwnCodebaseRawSourceDescriptors} from '../scripts/generate-own-codebase-raw-source-descriptors.mjs';
 import {readOwnCodebaseRawDescriptorPacket,readOwnCodebaseRawDescriptorPolicy,deriveOwnCodebaseRawDescriptorSource,verifyOwnCodebaseRawDescriptorPacket,restoreOwnCodebaseRawDescriptorEdge,restoreOwnCodebaseRawDescriptorText,restoreOwnCodebaseRawDescriptorData} from '../scripts/own-codebase-raw-source-descriptors.mjs';
 import {restoreCompleteDeclarationReceipt} from '../scripts/complete-declaration-receipts.mjs';
+import {restoreCurrentOwnCodebaseRawSource,restoreCurrentOwnCodebaseRawData} from '../scripts/current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
@@ -15,7 +16,7 @@ test('current frontend provenance keeps every original artifact source archive a
   assert.equal(packet.edge.source.artifactPrevious.bytes,130416);
   assert.deepEqual(packet.edge.source.checkedPrevious,{revision:packet.revision,...policy.sourceOwner.predecessor});
   const source=deriveOwnCodebaseRawDescriptorSource(policy.sourceOwner,packet.sourceOwner.sourceText);
-  assert.equal(source,readFileSync(new URL(policy.sourceFile,root),'utf8'));assert.deepEqual(pin(source),policy.sourceOwner.current);
+  assert.equal(source,restoreCurrentOwnCodebaseRawSource(readFileSync(new URL(policy.sourceFile,root),'utf8'),policy.sourceFile));assert.deepEqual(pin(source),policy.sourceOwner.current);
   for(const [index,row]of packet.adapters.entries())assert.equal(deriveOwnCodebaseRawDescriptorSource(policy.adapters[index],row.sourceText),readFileSync(new URL(row.file,root),'utf8'));
   const artifact=readProjectData(new URL(packet.artifact.file,root)),register=readProjectData(new URL(packet.register.file,root));
   const before=serializeProjectData(artifact,packet.artifact.file),restored=restoreOwnCodebaseRawDescriptorEdge(artifact,'raw consuming',register);
@@ -23,7 +24,7 @@ test('current frontend provenance keeps every original artifact source archive a
   assert.equal(serializeProjectData(restored.register,packet.register.file),packet.register.sourceText);
   assert.equal(serializeProjectData(artifact,packet.artifact.file),before,'the caller graph is unchanged');
   for(const field of ['completeRust','owners','declarationNames','totals','assumptions','encodings','mappings','preludeHashes','replays','archive'])assert.deepEqual(artifact[field],restored.artifact[field],field);
-  const loan=readProjectData(new URL(packet.loan.file,root));assert.deepEqual({bytes:loan.predecessor.bytes,sha256:loan.predecessor.sha256},packet.edge.current);
+  const loan=restoreCurrentOwnCodebaseRawData(readProjectData(new URL(packet.loan.file,root)),packet.loan.file);assert.deepEqual({bytes:loan.predecessor.bytes,sha256:loan.predecessor.sha256},packet.edge.current);
   assert.equal(serializeProjectData(restoreOwnCodebaseRawDescriptorData(loan,packet.loan.file),packet.loan.file),packet.loan.sourceText);
   for(const row of [packet.artifact,packet.register,packet.loan])assert.equal(restoreOwnCodebaseRawDescriptorText(readFileSync(new URL(row.file,root),'utf8'),row.file),row.sourceText);
   assert.doesNotThrow(()=>restoreCompleteDeclarationReceipt(artifact,'raw consuming',{register}));
