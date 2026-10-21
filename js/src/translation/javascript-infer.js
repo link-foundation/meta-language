@@ -907,6 +907,12 @@ class Inference {
         return this.expr(node.object, env, expected);
       case 'forOfIterable': {
         const object = this.expr(node.object, env);
+        // Keep the original array term and its optional-element owner. The
+        // existing shared iterable plan already forwards known arrays unchanged.
+        if (readArrayFromIterableType(this.resolve(object))?.form === 0) {
+          this.collections.set(node, object);
+          return object;
+        }
         const result = { kind: 'array', element: this.fresh() };
         this.iterables.push({ object, result, where: node.span });
         this.collections.set(node, result);

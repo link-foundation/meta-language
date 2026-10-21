@@ -142,3 +142,102 @@ fn emitted_array_from_mapping_runs_with_original_javascript_observations() {
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, observe(source));
 }
+
+#[test]
+fn original_nullable_array_source_preserves_all_elements_before_and_after_iterable_normalization() {
+    let node = run(Command::new("node").args(["-p", "process.versions.node"]));
+    assert!(node.ok, "{}", node.stderr);
+    let node_version = node.stdout.trim();
+    let mut node_parts = node_version.split('.');
+    let node_major = node_parts.next().unwrap().parse::<u32>().unwrap();
+    let node_minor = node_parts.next().unwrap().parse::<u32>().unwrap();
+    assert!(
+        node_major == 22 && node_minor >= 15 || node_major == 24,
+        "uncovered Node version {node_version}; supported >=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
+    );
+    let rust = run(Command::new("rustc").arg("--version"));
+    assert!(rust.ok, "{}", rust.stderr);
+    let rust_version = rust.stdout.split_whitespace().nth(1).unwrap();
+    let mut rust_parts = rust_version.split('.');
+    let rust_major = rust_parts.next().unwrap().parse::<u32>().unwrap();
+    let rust_minor = rust_parts.next().unwrap().parse::<u32>().unwrap();
+    assert!(
+        rust_major == 1 && (90..100).contains(&rust_minor),
+        "uncovered Rust version {rust_version}; supported >=1.90.0 <1.100.0"
+    );
+    let source = "function numberFirst() { return [1, null, undefined, -0].join('|'); }
+function absenceFirst() { return [null, undefined, 1, -0].join('|'); }
+function spreadAbsence() { return [1, ...[null, undefined], -0].join('|'); }
+function nullableBigints() { return [1n, null, 3n].join('|'); }
+console.log(numberFirst());
+console.log(absenceFirst());
+console.log(spreadAbsence());
+console.log(nullableBigints());";
+    let expected = "1|||0\n||1|0\n1|||0\n1||3\n";
+    assert_eq!(observe(source), expected);
+    let original = javascript_contract(source);
+    let surface = parse_javascript(source).unwrap();
+    assert_eq!(serde_json::to_value(&surface).unwrap(), original["surface"]);
+    let program = check_program(&surface).unwrap();
+    encode_typed_program_links(&program).unwrap();
+    assert_eq!(observe(&emit_javascript(&program).unwrap().text), expected);
+    assert_eq!(
+        observe(original["codes"]["JavaScript"]["code"].as_str().unwrap()),
+        expected
+    );
+    let expected_rust = original["codes"]["Rust"]["code"].as_str().unwrap();
+    assert_eq!(emit_rust(&program).unwrap().text, expected_rust);
+    let packet = create_typed_program_links(source, "JavaScript").unwrap();
+    let directory = TemporaryDirectory::new("nullable-spread-archives");
+    for (format, network) in [
+        (
+            "text",
+            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        ),
+        (
+            "binary",
+            decode_link_network_binary(
+                &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())
+                    .unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ),
+    ] {
+        let decoded = decode_typed_program_links(&network, packet.root).unwrap();
+        encode_typed_program_links(&decoded).unwrap();
+        assert_eq!(decoded, program, "{format}: complete checked program");
+        let javascript = emit_typed_program_links(&network, packet.root, "JavaScript")
+            .unwrap()
+            .code;
+        assert_eq!(
+            observe(&javascript),
+            expected,
+            "{format}: complete emitted JavaScript"
+        );
+        let rust = emit_typed_program_links(&network, packet.root, "Rust")
+            .unwrap()
+            .code;
+        assert_eq!(
+            rust, expected_rust,
+            "{format}: every JavaScript/native emitted Rust byte"
+        );
+        let file = directory.0.join(format!("program_{format}.rs"));
+        let executable = directory
+            .0
+            .join(format!("program_{format}{}", std::env::consts::EXE_SUFFIX));
+        fs::write(&file, &rust).unwrap();
+        let compiled = run(Command::new("rustc")
+            .args(["--edition=2024"])
+            .arg(&file)
+            .arg("-o")
+            .arg(&executable));
+        assert!(compiled.ok, "{format}: {}", compiled.stderr);
+        let observed = run(&mut Command::new(&executable));
+        assert!(observed.ok, "{format}: {}", observed.stderr);
+        assert_eq!(
+            observed.stdout, expected,
+            "{format}: independent original fixture output"
+        );
+    }
+}
