@@ -3,11 +3,12 @@ import {fileURLToPath} from 'node:url';
 import {writeProjectData,checkProjectData} from '../../js/scripts/project-data.mjs';
 import {DecoratorSet} from '../../js/src/decorators.js';
 import {rustTextCertificateAdapterPolicy,rustTextCertificateIdentityTransport} from './policy.mjs';
-import {readReviewedOverlayProviderSources,writeReviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
+import {readReviewedOverlayProviderSources,restoreReviewedOverlayProviderSources,writeReviewedOverlayProviderPolicy} from './reviewed-providers.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const importLine=path=>"import {checkOwnedRustTextCertificate,emitOwnedRustTextCertificate,decodeRustTextCertificateFacet} from '"+path+"';";
-export function rustTextCertificateOverlayRecords(){
- const {sources,revision}=readReviewedOverlayProviderSources({experiment:'rust-text-certificate-adapter',modules:rustTextCertificateAdapterPolicy.modules});
+export function rustTextCertificateOverlayRecords({sourceCommit}={}){
+ const options={experiment:'rust-text-certificate-adapter',modules:rustTextCertificateAdapterPolicy.modules};
+ const {sources,revision}=sourceCommit===undefined?readReviewedOverlayProviderSources(options):restoreReviewedOverlayProviderSources({...options,sourceCommit});
  const changes=new Map([...sources].map(([module,source])=>[module,[{from:source.split('\n')[0],to:importLine(module.startsWith('translation/')?'../rust-text-certificate-adapter.js':'./rust-text-certificate-adapter.js')+'\n'+source.split('\n')[0]}]]));
  const add=(module,from,to)=>changes.get(module).push({from,to});
  add('typed-program-links.js','  return { network, root };','  decodeRustTextCertificateFacet(network, root);\n  return { network, root };');
