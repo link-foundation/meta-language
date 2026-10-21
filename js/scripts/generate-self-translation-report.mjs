@@ -37,6 +37,7 @@ import { selfTranslate, selfTranslationSignatures } from '../src/self-translatio
 import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
+import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -426,6 +427,7 @@ function verifyPublishedReports(directory, commit) {
   assert.ok(files.length > 0, 'no published self-translation reports');
   for (const file of files) {
     const report = readProjectData(file);
+    if(report.phaseSummary!==undefined)assert.deepEqual(report.phaseSummary,summarizeRetainedSelfTranslationPhases([report]),`${file}: retained phase summary`);
     assert.equal(report.schemaVersion, 1, `${file}: report schema`);
     assert.equal(report.commit, commit, `${file}: report commit`);
     assert.deepEqual(report.failures, [], `${file}: failed modules`);
@@ -533,11 +535,13 @@ async function main() {
     ...(replay ? { replay } : {}),
   };
   data.blockers = rankSelfTranslationBlockers([data]);
+  data.phaseSummary = summarizeRetainedSelfTranslationPhases([data]);
   const display = value => String(value).replaceAll('|', '\\|').replaceAll('\r', '\\r').replaceAll('\n', '\\n');
   const report = markdown(rows) + (failures.length ? `\n## Modules the self-translation refused\n\n${failures.map(({ module, error }) => `- ${module}: ${error}`).join('\n')}\n` : '')
     + `\n## Ranked translation blockers\n\n${data.blockers.inventory.length} selected modules; ${data.blockers.unreportedModules.length} other catalog modules are outside this report. Grouping is diagnostic analysis, not successful translation evidence.\n\n`
     + '| affected modules | carried bytes | measurement | exact reason | replay group key |\n| ---: | ---: | --- | --- | --- |\n'
-    + data.blockers.groups.map(group => `| ${group.moduleCount} | ${group.sourceBytes} | ${group.mode} | ${display(group.reason)} | ${group.key} |`).join('\n') + '\n';
+    + data.blockers.groups.map(group => `| ${group.moduleCount} | ${group.sourceBytes} | ${group.mode} | ${display(group.reason)} | ${group.key} |`).join('\n') + '\n'
+    + retainedSelfTranslationPhaseMarkdown(data.phaseSummary);
   writeFileSync(join(outDir, 'self-translation-report.md'), report);
   writeProjectData(join(outDir, 'self-translation-report.lino'), data);
   // Refused modules are listed in the report; the tests hold self-translation to its contract.
