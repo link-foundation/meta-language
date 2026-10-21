@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
+import {restoreCriticalDeliveryConversationSource} from '../../js/scripts/tooling-frozen-source-history.mjs';
 import {checkProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
 
 const root=new URL('../../',import.meta.url),revision='e5d0ff8265bcd3136cffd42d53942c2e4b4eb2ea';
@@ -12,7 +13,7 @@ const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').up
 export function generateCriticalDeliverySourceHistory({check=false}={}) {
   const file='js/scripts/issue-195-conversation-requirements.mjs',original=captureGitArtifactCertificate(revision,file);
   verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
-  const sourceText=original.blob.toString('utf8'),current=readFileSync(new URL(file,root),'utf8');
+  const sourceText=original.blob.toString('utf8'),current=restoreCriticalDeliveryConversationSource(readFileSync(new URL(file,root),'utf8'));
   const addition="  'I195-CONVERSATION-CRITICAL-DELIVERY': [\n    'js/scripts/issue-195-requirements.mjs', 'js/scripts/issue-195-acceptance-lib.mjs',\n    'js/tests/issue-195-evidence-critical-delivery.test.js',\n  ],\n";
   const anchor='const sourceTooling = {\n';assert.equal(sourceText.split(anchor).length,2);
   assert.equal(current,sourceText.replace(anchor,anchor+addition),'only the executable tooling entry point appends');

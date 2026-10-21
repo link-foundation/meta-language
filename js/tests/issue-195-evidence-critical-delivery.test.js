@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import test from 'node:test';
 import {buildIssue195Manifest,compareScopeBaseline,evaluateIssue195Acceptance} from '../scripts/issue-195-acceptance-lib.mjs';
 import {generateCriticalDeliverySourceHistory} from '../../experiments/critical-delivery/generate-source-history.mjs';
+import {restoreCriticalDeliveryConversationSource} from '../scripts/tooling-frozen-source-history.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {recordIssue195Observations} from './support/issue-195-observations.js';
@@ -87,7 +88,7 @@ test('every inherited obligation remains critical while missing exact evidence a
   const sources=readProjectData(new URL('parity/issue-195-sources.lino',root));
   assert.ok(sources.requirementSources.some(source=>source.url===fixtureFile&&source.sha256===manifest.fixtureCatalog[fixtureId].sha256));
   checkCriticalDeliveryGateControls(manifest);
-  const history=generateCriticalDeliverySourceHistory({check:true}),previous=history.sources[0],current=readFileSync(new URL(previous.file,root),'utf8');
+  const history=generateCriticalDeliverySourceHistory({check:true}),previous=history.sources[0],current=restoreCriticalDeliveryConversationSource(readFileSync(new URL(previous.file,root),'utf8'));
   verifyGitArtifactCertificate(previous.certificate,Buffer.from(previous.sourceText),{revision:history.revision,path:previous.file});
   assert.equal(current.replace(history.addition,''),previous.sourceText);
   assert.throws(()=>verifyGitArtifactCertificate(previous.certificate,Buffer.from(previous.sourceText+'\n'),{revision:history.revision,path:previous.file}));

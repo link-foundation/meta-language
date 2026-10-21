@@ -1,6 +1,7 @@
 // Source, value and publication controls; native execution belongs in CI.
 import test from 'node:test';
 import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
+import {outcomeCrateRootPath,readOutcomeCrateRootSourcePair} from './crate-root-source-view.mjs';
 import {restoreGlobalGrammarContextSource} from '../../../global-grammar-context-reuse/current-source.mjs';
 import {readOutcomeInventory} from '../wire/generate.mjs';
 import {authorWireSourceViewEdits,authorBridgeSourceViewEdits,authorRunnerPlanSourceViewEdits,authorRunnerOverlaySourceViewEdits,appendWirePublicationEdits} from './publication-edits.mjs';
@@ -137,7 +138,9 @@ test('original and current owners are separately authenticated and all selected 
   try {
     let total=0;
     for(const file of Object.keys(decorator.baselinePins)) {
-      const bytes=[javascriptPath,nativePath].includes(file)?Buffer.from(decorator.inputs.find(input=>input.path===file).source):readFileSync(join(repository,file));
+      // This original permutation fixture retains its complete original crate root.
+      const bytes=file===outcomeCrateRootPath?Buffer.from(readOutcomeCrateRootSourcePair().predecessor.source):
+        [javascriptPath,nativePath].includes(file)?Buffer.from(decorator.inputs.find(input=>input.path===file).source):readFileSync(join(repository,file));
       total+=bytes.length;assert.ok(total<=2*1024*1024,'small selected source closure only');
       mkdirSync(dirname(join(scratch,file)),{recursive:true});writeFileSync(join(scratch,file),bytes);
     }

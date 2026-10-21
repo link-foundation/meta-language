@@ -8,6 +8,7 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {checkProjectData,serializeProjectData,writeProjectData} from './project-data.mjs';
 import {restoreContinuationHistoricalSource} from './continuation-source-history.mjs';
+import {restoreRelativeArrayFrontendDescriptorSource} from './relative-array-frontend-source-history.mjs';
 
 const revision='25e6361f2e31e09f98f78b3c973f242bdf88e31c';
 const root=new URL('../../',import.meta.url);
@@ -30,7 +31,7 @@ const sourceFiles=['js/src/translation/check.js','js/src/translation/primitive-m
   'rust/tests/unit/grammar_outcome_number_kind_rules.rs',...descriptors];
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:digest(value)});
-const historicalSource=file=>restoreContinuationHistoricalSource(readFileSync(new URL(file,root),'utf8'),file,'relative array');
+const historicalSource=file=>restoreRelativeArrayFrontendDescriptorSource(restoreContinuationHistoricalSource(readFileSync(new URL(file,root),'utf8'),file,'relative array'),file,'relative array');
 
 export function generateArrayRelativeElementHistory({check=false}={}) {
   assert.ok(check||historicalSource(artifactFile)===readFileSync(new URL(artifactFile,root),'utf8'),

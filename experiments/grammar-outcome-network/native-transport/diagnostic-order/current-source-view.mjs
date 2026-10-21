@@ -8,6 +8,7 @@ import {restoreGlobalGrammarContextSource,checkGlobalGrammarContextSourceReceipt
 import {outcomeWirePolicy} from '../wire/wire-policy.mjs';
 import {deriveDiagnosticOrderDecorator,applyDiagnosticOrderDecorator,readJavaScriptDiagnosticOrders,javascriptPath,nativePath} from './generate.mjs';
 import {finalizeOutcomeSourceViews as finalizePredecessorSourceViews,checkOutcomeSourceViews as checkPredecessorSourceViews,applyFrozenOutcomeProducerCorrection} from './source-view.mjs';
+import {outcomeCrateRootPath,restoreOutcomeCrateRootSource,finalizeOutcomeCrateRootSourceView} from './crate-root-source-view.mjs';
 export {applyFrozenOutcomeProducerCorrection};
 
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -32,9 +33,14 @@ function authenticateCurrentContextDecorator(decorator) {
  * original source profile. Every other historical source pin stays exact. */
 export function captureOutcomeSourceViews(root,decorator) {
   const checked=authenticateCurrentContextDecorator(decorator),historical=new Map();
-  const pins=[],currentPins=[],adaptations=[],contextSuccessors=[];
+  const pins=[],currentPins=[],adaptations=[],contextSuccessors=[],crateRootSuccessors=[];
   for(const[file,expected]of Object.entries(outcomeWirePolicy.pins)){
     const actual=readFileSync(resolve(root,file)),actualPin=pin(actual);let predecessor=actual;
+    if(actualPin.sha256!==expected&&file===outcomeCrateRootPath){
+      const current=restoreOutcomeCrateRootSource(file,actual.toString('utf8'));
+      predecessor=Buffer.from(current.predecessor);
+      if(current.changed)crateRootSuccessors.push({file,predecessorSource:current.predecessor,currentSource:current.current,receipt:current.receipt});
+    }
     if(actualPin.sha256!==expected&&[javascriptPath,nativePath].includes(file)){
       const context=restoreGlobalGrammarContextSource(file,actual.toString('utf8'));
       predecessor=Buffer.from(context.predecessor);
@@ -52,7 +58,7 @@ export function captureOutcomeSourceViews(root,decorator) {
     assert.equal(pin(original).sha256,expected,'all thirteen original source pins stay exact');
     historical.set(file,original);pins.push({file,...pin(original)});currentPins.push({file,...pin(predecessor)});
   }
-  return{historical,pins,currentPins,adaptations,contextSuccessors};
+  return{historical,pins,currentPins,adaptations,contextSuccessors,crateRootSuccessors};
 }
 
 function currentContextOwnerProof(successor,predecessorCapture,inputs,declarations) {
@@ -84,7 +90,7 @@ function currentContextOwnerProof(successor,predecessorCapture,inputs,declaratio
 /** Schema two retains the complete schema-one predecessor and adds distinct
  * current bytes, receipts and actual CST owner proofs. Frozen overlay output
  * remains the original diagnostic permutation rather than the new producer. */
-export function finalizeOutcomeSourceViews(capture,inputs,declarations) {
+function finalizeContextSourceViews(capture,inputs,declarations) {
   const predecessorView=finalizePredecessorSourceViews(capture,inputs,declarations);
   if(!capture.contextSuccessors?.length)return predecessorView;
   const currentPins=copy(predecessorView.currentPins),successors=[];
@@ -103,7 +109,7 @@ export function finalizeOutcomeSourceViews(capture,inputs,declarations) {
 
 /** Historical archives keep their exact original validator. Current archives
  * must reproduce both complete profiles and every current owner proof. */
-export function checkOutcomeSourceViews(inventory,decorator) {
+function checkContextSourceViews(inventory,decorator) {
   const view=inventory.sourceViews;
   if(view?.schemaVersion===1)return checkPredecessorSourceViews(inventory,decorator);
   assert.equal(view?.schemaVersion,2);authenticateCurrentContextDecorator(decorator);
@@ -113,7 +119,24 @@ export function checkOutcomeSourceViews(inventory,decorator) {
   assert.equal(new Set(view.successors.map(row=>row.file)).size,view.successors.length);
   const capture={pins:predecessor.historicalPins,currentPins:predecessor.currentPins,adaptations:predecessor.adaptations,
     contextSuccessors:view.successors.map(({file,predecessorSource,currentSource,receipt})=>({file,predecessorSource,currentSource,receipt}))};
-  const expected=finalizeOutcomeSourceViews(capture,inventory.inputs,inventory.declarations);
+  const expected=finalizeContextSourceViews(capture,inventory.inputs,inventory.declarations);
   assert.equal(canonical(view),canonical(expected),'complete original and current context source conservation');
+  return copy(expected);
+}
+
+
+/** The crate-root successor wraps the complete preceding context profile; no original gate is broadened. */
+export function finalizeOutcomeSourceViews(capture,inputs,declarations) {
+  const predecessor=finalizeContextSourceViews(capture,inputs,declarations),successors=capture.crateRootSuccessors??[];
+  assert.ok(Array.isArray(successors)&&successors.length<=1);
+  return successors.length?finalizeOutcomeCrateRootSourceView(predecessor,successors[0]):predecessor;
+}
+
+export function checkOutcomeSourceViews(inventory,decorator) {
+  const view=inventory.sourceViews;
+  if(view?.schemaVersion!==3)return checkContextSourceViews(inventory,decorator);
+  const predecessor=checkContextSourceViews({...inventory,sourceViews:view.predecessorView},decorator);
+  const expected=finalizeOutcomeCrateRootSourceView(predecessor,view.crateRootSuccessor);
+  assert.equal(canonical(view),canonical(expected),'complete original context and current crate-root source conservation');
   return copy(expected);
 }

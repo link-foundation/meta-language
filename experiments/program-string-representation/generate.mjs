@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
+import {restoreProgramStringHostRegistrationSource} from '../../js/scripts/program-string-host-registration-history.mjs';
 import {readSourceTextRustBlock} from '../../js/scripts/source-text-byte-library-style.mjs';
 import {formatProductRuleSource} from '../../js/scripts/product-rule-style-corrections.mjs';
 import {readProjectData,checkProjectData,writeProjectData} from '../../js/scripts/project-data.mjs';
@@ -67,7 +68,7 @@ export function generateProgramStringRepresentationHosts({check=false,apply=fals
     let inverse=source;
     for(const action of steps.toReversed()){assert.equal(inverse.split(action.after).length,2);inverse=inverse.replace(action.after,action.before);}
     assert.equal(inverse,sourceText);verifyGitArtifactCertificate(certificate,Buffer.from(inverse),{revision,path:file});
-    const actual=readFileSync(new URL(file,root),'utf8');assert.ok(actual===sourceText||actual===source,file+': unknown host edits refuse');
+    const actual=restoreProgramStringHostRegistrationSource(readFileSync(new URL(file,root),'utf8'),file);assert.ok(actual===sourceText||actual===source,file+': unknown host edits refuse');
     return{file,commit:revision,sourceText,...pin(blob),certificate,actions:steps,proposed:{...pin(source),source}};
   });
   const rules=readProjectData(new URL('parity/self-translation/program-string-representation-rules.lino',root));

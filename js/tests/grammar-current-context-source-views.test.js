@@ -6,12 +6,15 @@ import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import {GLOBAL_GRAMMAR_CONTEXT_SOURCE_PROFILE,readGlobalGrammarContextSourcePair,restoreGlobalGrammarContextSource,checkGlobalGrammarContextSourceReceipt} from '../../experiments/global-grammar-context-reuse/current-source.mjs';
 import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews,applyFrozenOutcomeProducerCorrection} from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/current-source-view.mjs';
+import {OUTCOME_CRATE_ROOT_SOURCE_PROFILE,verifyOutcomeCrateRootSourcePacket,finalizeOutcomeCrateRootSourceView,outcomeCrateRootPath,readOutcomeCrateRootSourcePair,restoreOutcomeCrateRootSource,checkOutcomeCrateRootSourceReceipt} from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/crate-root-source-view.mjs';
 import {diagnosticOrderDecorator} from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/decorator.mjs';
 import {javascriptPath,nativePath} from '../../experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs';
 import {readOutcomeInventory} from '../../experiments/grammar-outcome-network/native-transport/wire/generate.mjs';
 import {structuredDataToLino,encodeStructuredDataLinks} from '../src/structured-data-links.js';
 import {decodeStructuredDataLinks} from '../src/structured-data-graph.js';
 import {LinkNetwork} from '../src/network.js';
+import {readProjectData} from '../scripts/project-data.mjs';
+import {outcomeWirePolicy} from '../../experiments/grammar-outcome-network/native-transport/wire/wire-policy.mjs';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 let candidate;
@@ -22,7 +25,9 @@ function currentContextInventory() {
   try{
     let size=0;
     for(const file of Object.keys(diagnosticOrderDecorator.baselinePins)){
-      const bytes=[javascriptPath,nativePath].includes(file)?Buffer.from(readGlobalGrammarContextSourcePair(file).successor.source):readFileSync(join(root,file));
+      // This fixture retains the complete original two-successor source profile.
+      const bytes=file===outcomeCrateRootPath?Buffer.from(readOutcomeCrateRootSourcePair().predecessor.source):
+        [javascriptPath,nativePath].includes(file)?Buffer.from(readGlobalGrammarContextSourcePair(file).successor.source):readFileSync(join(root,file));
       size+=bytes.length;assert.ok(size<=2*1024*1024);
       mkdirSync(dirname(join(scratch,file)),{recursive:true});writeFileSync(join(scratch,file),bytes);
     }
@@ -91,4 +96,89 @@ test('current source views refuse changed frozen labels missing owners forged re
   const returned=checkOutcomeSourceViews(inventory,diagnosticOrderDecorator);returned.successors[0].receipt.current.sha256='0'.repeat(64);
   assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),inventory.sourceViews);
   assert.throws(()=>checkOutcomeSourceViews({...inventory,sourceViews:returned},diagnosticOrderDecorator));
+});
+
+
+test('current crate root retains complete certified predecessors actual export owners and original context profiles',()=>{
+  const pair=readOutcomeCrateRootSourcePair(),original=restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.predecessor.source);
+  assert.equal(original.changed,false);assert.equal(original.receipt,null);
+  const current=restoreOutcomeCrateRootSource(outcomeCrateRootPath,readFileSync(join(root,outcomeCrateRootPath),'utf8'));
+  assert.equal(current.changed,true);assert.equal(current.predecessor,pair.predecessor.source);assert.equal(current.current,pair.successor.source);
+  assert.deepEqual(checkOutcomeCrateRootSourceReceipt(outcomeCrateRootPath,current.current,current.receipt),current.receipt);
+  const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
+  assert.equal(view.schemaVersion,3);assert.equal(view.predecessorView.schemaVersion,2);
+  assert.equal(view.predecessorView.successors.length,2);assert.equal(view.predecessorView.predecessorView.schemaVersion,1);
+  assert.equal(view.historicalPins.length,13);assert.equal(view.currentPins.length,13);assert.deepEqual(view.historicalPins,inventory.pins);
+  const before=view.predecessorView.currentPins.find(row=>row.file===outcomeCrateRootPath),after=view.currentPins.find(row=>row.file===outcomeCrateRootPath);
+  assert.deepEqual({bytes:before.bytes,sha256:before.sha256},{bytes:pair.predecessor.bytes,sha256:pair.predecessor.sha256});
+  assert.deepEqual({bytes:after.bytes,sha256:after.sha256},{bytes:pair.successor.bytes,sha256:pair.successor.sha256});
+  const proof=view.crateRootSuccessor.currentSourceProof;
+  assert.equal(proof.predecessor.rootReexport.source,proof.current.rootReexport.source);
+  assert.deepEqual(proof.current.selectedOwners.map(({name,source})=>({name,source})),proof.predecessor.selectedOwners.map(({name,source})=>({name,source})));
+  assert.ok(proof.current.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')));
+  assert.equal(proof.predecessor.reexports.some(row=>row.source.includes('encode_formal_function_declaration_value')),false);
+  assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
+  assert.deepEqual(checkOutcomeSourceViews({...inventory,sourceViews:view.predecessorView},diagnosticOrderDecorator),view.predecessorView);
+  const encoded=encodeStructuredDataLinks(view),network=LinkNetwork.fromLino(structuredDataToLino(view));
+  for(const graph of [network,decodeLinkNetworkBinary(encodeLinkNetworkBinary(network))]){
+    const restored=decodeStructuredDataLinks(graph,encoded.root);assert.deepEqual(restored,view);
+    assert.deepEqual(checkOutcomeSourceViews({...inventory,sourceViews:restored},diagnosticOrderDecorator),view);
+  }
+});
+
+test('crate-root source succession refuses arbitrary files edits forged whole pins lost owners and caller mutations',()=>{
+  const packet=readProjectData(join(root,OUTCOME_CRATE_ROOT_SOURCE_PROFILE.recipe));
+  assert.equal(verifyOutcomeCrateRootSourcePacket(packet).successor.source,readOutcomeCrateRootSourcePair().successor.source);
+  for(const mutate of [
+    value=>{value.source.current.sha256='0'.repeat(64);},
+    value=>{value.source.certificate.revision='0'.repeat(40);},
+    value=>{value.source.bytes++;},
+    value=>{value.source.edit.insertText+=' changed';},
+    value=>{value.unregistered=true;},
+  ]){const value=structuredClone(packet);mutate(value);assert.throws(()=>verifyOutcomeCrateRootSourcePacket(value));}
+  const pair=readOutcomeCrateRootSourcePair();
+  assert.throws(()=>restoreOutcomeCrateRootSource('unknown/source.rs',pair.successor.source));
+  assert.throws(()=>restoreOutcomeCrateRootSource(outcomeCrateRootPath,pair.successor.source+'\n'));
+  assert.throws(()=>restoreOutcomeCrateRootSource(outcomeCrateRootPath,'x'.repeat(131073)));
+  pair.predecessor.source+=' changed';assert.notDeepEqual(readOutcomeCrateRootSourcePair(),pair);
+  const inventory=readOutcomeInventory(root);
+  for(const mutate of [
+    value=>{value.sourceViews.currentPins.find(row=>row.file===outcomeCrateRootPath).sha256='0'.repeat(64);},
+    value=>{value.sourceViews.historicalPins[0].sha256='0'.repeat(64);},
+    value=>{value.sourceViews.predecessorView.successors.pop();},
+    value=>{value.sourceViews.crateRootSuccessor.file='unregistered/source.rs';},
+    value=>{value.sourceViews.crateRootSuccessor.currentSource+='\n';},
+    value=>{value.sourceViews.crateRootSuccessor.predecessorSource+='\n';},
+    value=>{value.sourceViews.crateRootSuccessor.receipt.recipe.sha256='0'.repeat(64);},
+    value=>{value.sourceViews.crateRootSuccessor.receipt.current.bytes++;},
+    value=>{value.sourceViews.crateRootSuccessor.currentSourceProof.current.rootReexport.span.start++;},
+    value=>{value.sourceViews.crateRootSuccessor.currentSourceProof.current.selectedOwners.pop();},
+    value=>{value.sourceViews.crateRootSuccessor.currentSourceProof.current.reexports.pop();},
+    value=>{value.sourceViews.crateRootSuccessor.unregistered=true;},
+  ]){const value=structuredClone(inventory);mutate(value);assert.throws(()=>checkOutcomeSourceViews(value,diagnosticOrderDecorator));}
+  const returned=checkOutcomeSourceViews(inventory,diagnosticOrderDecorator);returned.crateRootSuccessor.currentSourceProof.current.reexports=[];
+  assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),inventory.sourceViews);
+  assert.throws(()=>checkOutcomeSourceViews({...inventory,sourceViews:returned},diagnosticOrderDecorator));
+});
+
+
+test('complete crate-root proof reuse remains detached and authenticates every consumed policy owner',()=>{
+  const inventory=readOutcomeInventory(root),view=inventory.sourceViews;
+  const derive=()=>finalizeOutcomeCrateRootSourceView(view.predecessorView,view.crateRootSuccessor);
+  assert.deepEqual(derive(),view);
+  const changed=derive();changed.crateRootSuccessor.currentSourceProof.current.reexports=[];
+  changed.crateRootSuccessor.currentSourceProof.predecessor.selectedOwners[0].source+=' changed';
+  assert.deepEqual(derive(),view,'caller-owned current and predecessor proof mutations never change a reused proof');
+  const originalRoot=outcomeWirePolicy.rootReexport;
+  try{
+    outcomeWirePolicy.rootReexport='pub use unregistered_grammar_transport_owner::UnknownOwner;';
+    assert.throws(derive,'complete unchanged source cannot reuse a proof under a different selected root owner');
+  }finally{outcomeWirePolicy.rootReexport=originalRoot;}
+  const originalSources=outcomeWirePolicy.sources;
+  try{
+    outcomeWirePolicy.sources=structuredClone(originalSources);
+    outcomeWirePolicy.sources[0].names.push('UnregisteredGrammarTransportOwner');
+    assert.throws(derive,'complete unchanged source cannot reuse a proof with an additional consumed policy owner');
+  }finally{outcomeWirePolicy.sources=originalSources;}
+  assert.deepEqual(derive(),view);assert.deepEqual(checkOutcomeSourceViews(inventory,diagnosticOrderDecorator),view);
 });

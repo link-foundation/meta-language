@@ -16,6 +16,7 @@ import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
+import {readFrozenToolingTestGroups} from '../scripts/tooling-frozen-source-history.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -203,7 +204,8 @@ test('Rust jobs preserve all prior deadlines and the exact published matrix exce
 });
 
 test('the cancellation investigation joins tooling without changing any prior file assignment', () => {
-  const addition = '|ci-cancellation-investigation$', source = TEST_GROUPS.tooling.source;
+  const historicalRegistration = readFrozenToolingTestGroups();
+  const addition = '|ci-cancellation-investigation$', source = historicalRegistration.groups.tooling.source;
   assert.equal(source.split(addition).length, 2);
   const rocqStem = 'ci-rocq-toolchain-cache', rocqAddition = `|${rocqStem}$`;
   assert.equal(source.split(rocqAddition).length, 2, 'B67 adds exactly one literal Rocq cache alternative');
@@ -234,14 +236,21 @@ test('the cancellation investigation joins tooling without changing any prior fi
   const files = testFiles(), partition = partitionTests(files);
   assert.deepEqual(partition.unassigned, []);assert.deepEqual(partition.ambiguous, []);
   assert.equal(Object.values(partition.groups).flat().length, files.length);
+  for (const registration of historicalRegistration.registrations) {
+    assert.ok(files.includes(registration.file), 'each later registered test is an actual discovered file');
+    const actual = partitionTests([registration.file]);
+    assert.deepEqual(actual.unassigned, []);assert.deepEqual(actual.ambiguous, []);
+    assert.deepEqual(actual.groups[registration.group], [registration.file]);
+  }
   assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');
   assert.deepEqual(partitionTests([`${rocqStem}.test.js`]).groups.tooling, [`${rocqStem}.test.js`],
     'the exact new Rocq file is uniquely assigned to tooling');
   for (const file of files) {
-    const before = Object.entries(TEST_GROUPS).filter(([name, pattern]) =>
+    const before = Object.entries(historicalRegistration.groups).filter(([name, pattern]) =>
       (name === 'tooling' ? originalTooling : pattern).test(file.replace(/\.test\.js$/u, ''))).map(([name]) => name);
     const after = Object.entries(partition.groups).filter(([, members]) => members.includes(file)).map(([name]) => name);
-    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : before, file);
+    const registered = historicalRegistration.registrations.find(row => row.file === file);
+    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : registered ? [registered.group] : before, file);
   }
   assert.deepEqual(partitionTests(['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']).unassigned,
     ['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']);
