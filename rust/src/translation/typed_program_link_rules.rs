@@ -248,7 +248,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
     } else if context == "effect:let" && field == "constant" {
         String::from("false")
     } else if field == "span"
-        && ((((((((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
+        && (((((((((((((((((((((((((((((((((((((((((((((((((((((context == "effect:let"
             || context == "declaration:module")
             || context == "effect:print")
             || context == "expression:lit")
@@ -301,6 +301,7 @@ pub fn read_program_neutral_field_default(context: &str, field: &str) -> String 
             || (context == "expression:optionalTypeOf"))
             || (context == "expression:set"))
             || (context == "expression:map"))
+            || (context == "expression:collectionSize"))
     {
         String::from("null")
     } else {
@@ -349,6 +350,8 @@ pub fn accept_program_expression_field(kind: &str, field: &str) -> bool {
     } else if kind == "optionalProject" {
         (((field == "k" || field == "object") || field == "field") || field == "type")
             || field == "span"
+    } else if kind == "collectionSize" {
+        ((field == "k" || field == "object") || field == "type") || field == "span"
     } else {
         false
     }
@@ -493,6 +496,8 @@ pub fn read_program_expression_projection(term: &str) -> String {
         String::from("set")
     } else if term == "map" {
         String::from("map")
+    } else if term == "collectionSize" {
+        String::from("collectionSize")
     } else {
         String::new()
     }

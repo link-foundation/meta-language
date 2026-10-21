@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData,writeProjectData,checkProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {restoreCollectionSizeProjectionSchema} from './collection-size-projection-schema.mjs';
 import {STRING_PRELUDE} from '../src/translation/string-runtime.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -26,7 +27,7 @@ export function generateStringOrderRules({check=false}={}) {
   }
   for(const file of ['js/src/data/typed-program-links-schema.lino','rust/src/data/typed-program-links-schema.lino']){
     const current=readProjectData(new URL(file,root));assert.deepEqual(current,schema);
-    const inverse=structuredClone(current);delete inverse.stringOrderModel;
+    const inverse=readStructuredDataLino(restoreCollectionSizeProjectionSchema(readFileSync(new URL(file,root)),file));delete inverse.stringOrderModel;
     assert.deepEqual(inverse.expressionOperations.stringTest.splice(-4),model.relations.map(row=>row.operation));
     const original=history.sources.find(row=>row.file===file);assert.ok(original);
     assert.deepEqual(inverse,readStructuredDataLino(original.sourceText));

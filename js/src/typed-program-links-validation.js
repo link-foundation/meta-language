@@ -139,8 +139,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (!node || typeof node !== 'object') return;
     visit();
     if (node.k !== undefined && node.p !== undefined) throw new TypeError('a linked record has conflicting expression and proposition roles');
-    if (['tuple', 'tupleIndex'].includes(node.k)
-      && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
+    if (acceptProgramExpressionField(node.k ?? '', 'k')
+      && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError(
+        ['tuple', 'tupleIndex'].includes(node.k) ? 'a linked tuple expression has an unrecognized projection field'
+          : 'a linked expression contains an unrecognized semantic field');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
