@@ -7,7 +7,7 @@ import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
-const archiveSha256='50f4bf031c714466b64491a424c1654b62652ea9e0cbfe68af7cb9e1a8ff2bdc';
+const archiveSha256='ff5e43d4531d6a4ffee5b2d704c9c9af26ec3fdc43c2e2260adfc314aa45b4ec';
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;

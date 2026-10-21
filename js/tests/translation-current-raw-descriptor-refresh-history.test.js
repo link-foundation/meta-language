@@ -15,6 +15,10 @@ import {CURRENT_RAW_PREDECESSOR_ARCHIVE,CURRENT_RAW_PREDECESSOR_PIN,
   readCurrentRawPredecessorOutputs,verifyCurrentRawPredecessorHistory,
   acceptCurrentRawPredecessorOutput,acceptCurrentRawPredecessorPacketSource} from '../scripts/current-own-codebase-raw-source-history.mjs';
 import {generateCurrentRawPredecessorHistory} from '../scripts/generate-current-own-codebase-raw-source-history.mjs';
+import {ADDITIONAL_CURRENT_RAW_PREDECESSOR_REVISION,ADDITIONAL_CURRENT_RAW_PREDECESSOR_PIN,
+  readAdditionalCurrentRawPredecessorHistory,readAdditionalCurrentRawPredecessorPacket,readAdditionalCurrentRawPredecessorOutputs,
+  deriveAdditionalCurrentRawPredecessor,verifyAdditionalCurrentRawPredecessorHistory} from '../scripts/current-raw-descriptor-cohort.mjs';
+import {generateAdditionalCurrentRawPredecessorHistory} from '../scripts/generate-current-raw-descriptor-cohort.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 const fields=['completeRust','owners','declarationNames','totals','assumptions','encodings','mappings','preludeHashes','replays','archive'];
 
@@ -107,4 +111,35 @@ test('both normal authors remain repeatable without overwriting any prior packet
   assert.deepEqual(generateCurrentRawPredecessorHistory({check:true}),readCurrentRawPredecessorHistory());
   assert.deepEqual(generateCurrentOwnCodebaseRawSourceDescriptors({check:true}),readCurrentOwnCodebaseRawDescriptorPacket());
   paths.forEach((file,index)=>assert.deepEqual(read(file),before[index],file));
+});
+
+
+test('the independently committed899 source cohort adds only exact whole write preimages without replacing8d or current authority',()=>{
+  const history=generateAdditionalCurrentRawPredecessorHistory({check:true});
+  assert.equal(history.revision,ADDITIONAL_CURRENT_RAW_PREDECESSOR_REVISION);
+  assert.deepEqual(history.base,{revision:'8d77e476d097448eb381ebe03e2aa173402bc03d',...CURRENT_RAW_PREDECESSOR_PIN});
+  const derived=deriveAdditionalCurrentRawPredecessor(history),packet=readAdditionalCurrentRawPredecessorPacket();
+  assert.deepEqual(packet,derived.packet);assert.deepEqual(pinCurrentRawPredecessorSource(derived.source),ADDITIONAL_CURRENT_RAW_PREDECESSOR_PIN);
+  assert.equal(packet.sources[0].current.bytes,137999);
+  assert.equal(packet.sources[0].current.sha256,'430fdbc64021979db05dc72a089118d11843b92ffc979f3ecba451bd58628cfd');
+  assert.equal(readCurrentRawPredecessorPacket().sources[0].current.bytes,136201);
+  assert.equal(acceptCurrentRawPredecessorPacketSource(derived.source),true);
+  assert.equal(acceptCurrentRawPredecessorPacketSource(derived.source+' '),false);
+  for(const row of readAdditionalCurrentRawPredecessorOutputs()){
+    assert.equal(acceptCurrentRawPredecessorOutput(row.source,row.file),true);
+    assert.equal(acceptCurrentRawPredecessorOutput(row.source+' ',row.file),false);
+    assert.equal(acceptCurrentRawPredecessorOutput(row.source,'unknown.lino'),false);
+  }
+  const detached=readAdditionalCurrentRawPredecessorPacket();detached.edge.changes.reverse();
+  assert.deepEqual(readAdditionalCurrentRawPredecessorPacket().edge,packet.edge);
+  assert.equal(packet.edge.changes.length,10);assert.equal(packet.sources.length,3);
+});
+
+test('additional899 membership refuses coherent source substitutions altered output authority and unknown fields',()=>{
+  const mutations=[history=>{history.revision='0'.repeat(40);},history=>{history.packet.sha256='0'.repeat(64);},
+    history=>{history.base.sha256='0'.repeat(64);},history=>{history.sources.reverse();},history=>{history.outputs.reverse();},
+    history=>{history.sources[0].current.sourceText+=' ';},history=>{history.sources[0].edits[0].currentText+=' ';},
+    history=>{history.outputs[0].certificate.path='unknown.lino';},history=>{history.outputs[0].sha256='0'.repeat(64);},
+    history=>{history.extra='unknown';}];
+  for(const mutate of mutations){const history=readAdditionalCurrentRawPredecessorHistory();mutate(history);assert.throws(()=>verifyAdditionalCurrentRawPredecessorHistory(history),assert.AssertionError);}
 });

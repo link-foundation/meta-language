@@ -230,7 +230,9 @@ test('reference callback provider revision restores every preceding source and h
  assert.deepEqual(inverse,original,'all original cases, source inputs, expected values, traces, archives and target fields are recovered');
  assert.deepEqual(Buffer.from(serializeProjectData(inverse,new URL('../../'+fixtureFile,import.meta.url))),originalBytes,
   'the complete original canonical fixture bytes remain independently recoverable');
- let policy=restoreCurrentCiRepairSource(restoreReviewedOverlayProviderHostSource(readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8'),'experiments/rust-text-certificate-adapter/reviewed-providers.mjs'),'experiments/rust-text-certificate-adapter/reviewed-providers.mjs');
+ // The outer current-source view authenticates the physical host before an
+ // older provider epoch is projected; reversing these views loses its pin.
+ let policy=restoreReviewedOverlayProviderHostSource(restoreCurrentCiRepairSource(readFileSync(new URL('./reviewed-providers.mjs',import.meta.url),'utf8'),'experiments/rust-text-certificate-adapter/reviewed-providers.mjs'),'experiments/rust-text-certificate-adapter/reviewed-providers.mjs');
  const restoredPolicy=execFileSync('git',['show','9f867bfac32f59a3341dabf54e8c0c02fbd83314:experiments/rust-text-certificate-adapter/reviewed-providers.mjs'],{cwd:root,encoding:'utf8'});
  const appended='    {\n      "sourceCommit": "9f867bfac32f59a3341dabf54e8c0c02fbd83314",\n';
  const added=policy.indexOf(appended),close=policy.indexOf('\n  ],\n};',added);

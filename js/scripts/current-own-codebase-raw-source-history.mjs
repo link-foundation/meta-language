@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {acceptAdditionalCurrentRawPredecessorOutput,acceptAdditionalCurrentRawPredecessorPacketSource} from './current-raw-descriptor-cohort.mjs';
 import {readCurrentOwnCodebaseRawDescriptorPolicy,verifyCurrentOwnCodebaseRawDescriptorStructure,
   deriveCurrentOwnCodebaseRawDescriptorOutputs} from './current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
@@ -66,11 +67,12 @@ export function readCurrentRawPredecessorOutputs(){return structuredClone(load()
  * No other path or even one unreviewed byte obtains this admission. */
 export function acceptCurrentRawPredecessorOutput(source,file){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
-  return load().outputs.some(row=>row.file===file&&row.source===source);
+  return load().outputs.some(row=>row.file===file&&row.source===source)||acceptAdditionalCurrentRawPredecessorOutput(source,file);
 }
 
 export function acceptCurrentRawPredecessorPacketSource(source){
   assert.equal(typeof source,'string');load();
   const bytes=Buffer.from(source);return bytes.length===CURRENT_RAW_PREDECESSOR_PIN.bytes
-    &&pinCurrentRawPredecessorSource(bytes).sha256===CURRENT_RAW_PREDECESSOR_PIN.sha256;
+    &&pinCurrentRawPredecessorSource(bytes).sha256===CURRENT_RAW_PREDECESSOR_PIN.sha256
+    ||acceptAdditionalCurrentRawPredecessorPacketSource(source);
 }

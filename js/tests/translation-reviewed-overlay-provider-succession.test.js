@@ -6,7 +6,9 @@ import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs'
 import {reviewedOverlayProviderPolicy,readReviewedOverlayProviderSources,restoreReviewedOverlayProviderSources}
   from '../../experiments/rust-text-certificate-adapter/reviewed-providers.mjs';
 import {readReviewedOverlayProviderSuccession,verifyReviewedOverlayProviderSuccession,
-  restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource}
+  restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource,
+  OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,deriveReviewedOverlayProviderPolicy,
+  verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource}
   from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 import {generateReviewedOverlayProviderSuccession} from '../../experiments/rust-text-certificate-adapter/generate-provider-succession.mjs';
 import {rustTextCertificateOverlayRecords} from '../../experiments/rust-text-certificate-adapter/generate.mjs';
@@ -23,12 +25,13 @@ test('reviewed overlay source assertions select covered active Node versions',()
 
 test('actual five-provider profiles have one exact reviewed revision and complete committed inverses',()=>{
   const packet=readReviewedOverlayProviderSuccession(),current=reviewedOverlayProviderPolicy.revisions.at(-1),modules=current.providers.map(row=>row.module);
-  assert.equal(current.sourceCommit,'8ef026a395ebbbc415f948777f7f6f7e082a572e');
-  assert.deepEqual(packet.profiles.map(row=>row.inverse.map(action=>action.module)),[['typed-program-links-validation.js'],['translation/emit-javascript.js']]);
+  assert.equal(packet.profiles[1].sourceCommit,'8ef026a395ebbbc415f948777f7f6f7e082a572e');
+  assert.deepEqual(current,packet.profiles.at(-1));
+  assert.deepEqual(packet.profiles.slice(0,2).map(row=>row.inverse.map(action=>action.module)),[['typed-program-links-validation.js'],['translation/emit-javascript.js']]);
   for(const experiment of ['rust-text-certificate-adapter','rust-raw-binding-certificate-adapter']){
     const actual=readReviewedOverlayProviderSources({experiment,modules});assert.equal(actual.revision,current);
     for(const row of current.providers)assert.equal(hash(read('js/src/'+row.module)),row.sourceSha256);
-    for(const sourceCommit of ['8d77e476d097448eb381ebe03e2aa173402bc03d',packet.previousSourceCommit]){
+    for(const sourceCommit of [...packet.profiles.slice(0,-1).map(row=>row.sourceCommit),packet.previousSourceCommit]){
       const restored=restoreReviewedOverlayProviderSources({experiment,modules,sourceCommit});
       for(const row of restored.revision.providers)assert.equal(hash(restored.sources.get(row.module)),row.sourceSha256);
     }
@@ -89,4 +92,44 @@ test('normal source review refreshes only current receipts and retains both immu
   assert.deepEqual(packet,readReviewedOverlayProviderSuccession());
   paths.forEach((path,index)=>assert.deepEqual(read(path),before[index]));
   assert.deepEqual(readProjectData(new URL('experiments/rust-text-certificate-adapter/data/provider-revisions.lino',root)),reviewedOverlayProviderPolicy);
+});
+
+
+test('a real appended source epoch preserves the complete original packet policy receipts and exact only-emitter source inverse',async()=>{
+  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.length,3);
+  const current=packet.profiles.at(-1),review=OVERLAY_PROVIDER_APPEND_REVIEW;
+  assert.equal(current.previousSourceCommit,packet.profiles[1].sourceCommit);
+  assert.equal(current.epoch.reviewKind,review.kind);assert.equal(current.review,review.review);
+  assert.deepEqual(current.inverse.map(row=>row.module),['translation/emit-rust.js']);
+  const prefix={...packet,profiles:packet.profiles.slice(0,2)},source=serializeProjectData(prefix,'parity/self-translation/reviewed-overlay-provider-succession.lino');
+  assert.deepEqual({bytes:Buffer.byteLength(source),sha256:hash(source)},OVERLAY_PROVIDER_ORIGINAL_PACKET,
+    'dropping only the verified suffix reconstructs every original packet byte');
+  assert.equal(Object.hasOwn(current.epoch.predecessorPacket,'source'),false,'no duplicate whole packet snapshot is stored');
+  assert.deepEqual(deriveReviewedOverlayProviderPolicy(prefix).revisions.slice(-2),prefix.profiles);
+  verifyReviewedOverlayProviderSuccessionHistory(prefix);
+  for(const row of current.certificates){
+    assert.equal(read('js/src/'+row.module).toString('utf8'),row.current.source);
+    const restored=restoreReviewedOverlayProviderModuleSource(row.current.source,'js/src/'+row.module);
+    const original=packet.profiles[0].certificates.find(value=>value.module===row.module);
+    assert.equal(restored,original.current.source,'the explicit historical module view reaches exact8d');
+    assert.equal(restoreReviewedOverlayProviderModuleSource(row.current.source+'\n','js/src/'+row.module),row.current.source+'\n',
+      'unknown source remains visible to its original historical guard');
+  }
+  const changed=current.certificates.find(row=>row.module===review.module);
+  assert.equal(hash(changed.previous.source),review.previousSha256);
+  assert.equal(hash(changed.current.source),review.currentSha256);assert.equal(Buffer.byteLength(changed.current.source),review.currentBytes);
+  for(const mutate of [
+    value=>{value.profiles[2].epoch.predecessorPacket.sha256='0'.repeat(64);},
+    value=>{value.profiles[2].epoch.predecessorPacket.certificate.path='unregistered.lino';},
+    value=>{value.profiles[2].epoch.predecessorPacket.source='invented copied history';},
+    value=>{value.profiles[2].epoch.predecessorOutputs[1].sha256='0'.repeat(64);},
+    value=>{value.profiles[2].epoch.predecessorOutputs.reverse();},
+    value=>{value.profiles[2].epoch.reviewKind='arbitrary provider changes';},
+    value=>{value.profiles[2].review+=' unreviewed';},
+    value=>{value.profiles[2].inverse[0].to+='\n';},
+    value=>{value.profiles[2].certificates[0].current.source+='\n';},
+    value=>{value.profiles.push(structuredClone(value.profiles[2]));},
+  ]){const altered=structuredClone(packet);mutate(altered);assert.throws(()=>verifyReviewedOverlayProviderSuccession(altered),assert.AssertionError);}
+  await assert.rejects(()=>generateReviewedOverlayProviderSuccession({check:true,revision:current.sourceCommit}),assert.AssertionError,
+    'check-only authoring cannot append or invoke source capture');
 });

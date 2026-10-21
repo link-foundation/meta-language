@@ -9,6 +9,8 @@ import {readHistoricalTranslationSourceDescriptorRegister,projectHistoricalTrans
   from '../scripts/current-translation-source-descriptors.mjs';
 import {readOriginalLinkRawEmissionProducerSources} from '../../experiments/original-link-complete-table-projection/raw-emission-profiles.mjs';
 import {verifyOriginalLinkRawEmissionProducerApplicability} from '../../experiments/original-link-complete-table-projection/raw-emission-producer-applicability.mjs';
+import {restoreRawConsumingSnapshotSource,readRawConsumingSnapshotSourceProfile,verifyRawConsumingSnapshotSourceStructure,RAW_CONSUMING_SNAPSHOT_FILES} from '../scripts/raw-consuming-snapshot-source-profile.mjs';
+import {generateRawConsumingSnapshotSourceProfile} from '../scripts/generate-raw-consuming-snapshot-source-profile.mjs';
 
 const root=new URL('../../',import.meta.url);
 const policy=readProjectData(new URL('parity/self-translation/current-translation-source-descriptors.lino',root));
@@ -25,7 +27,9 @@ test('current descriptor provenance restores the entire prior artifact and regis
   }
   assert.equal(artifact.definitionCount,106);
   for(const row of artifact.decisionSources){
-    const bytes=readFileSync(new URL(row.file,root));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);
+    // The immutable artifact names its own source epoch. The scoped adapter
+    // authenticates complete physical successors before exposing that epoch.
+    const physical=readFileSync(new URL(row.file,root)),bytes=restoreRawConsumingSnapshotSource(physical,row.file);assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);
   }
   const register=readHistoricalTranslationSourceDescriptorRegister();
   const registerFile='parity/self-translation/complete-declaration-receipts.lino';
@@ -48,4 +52,30 @@ test('causal source applicability retains actual current inference bytes and its
   assert.equal(proof.sourceHistory.current,proof.sources.find(row=>row.file===proof.sourceHistory.current.file));
   const changed={...sources,[proof.sourceHistory.current.file]:Buffer.concat([sources[proof.sourceHistory.current.file],Buffer.from('\n')])};
   assert.throws(()=>verifyOriginalLinkRawEmissionProducerApplicability(changed),assert.AssertionError);
+});
+
+
+test('snapshot source freshness preserves actual current inputs and rejects unknown source authority',()=>{
+  const packet=generateRawConsumingSnapshotSourceProfile({check:true});
+  assert.deepEqual(packet,readRawConsumingSnapshotSourceProfile());
+  assert.equal(packet.sources.length,5);
+  for(const[index,row]of packet.sources.entries()){
+    const physical=readFileSync(new URL(row.file,root));
+    assert.equal(physical.toString('utf8'),row.source);
+    assert.deepEqual({bytes:physical.length,sha256:hash(physical)},{bytes:row.bytes,sha256:row.sha256});
+    const original=restoreRawConsumingSnapshotSource(physical,row.file),expected=RAW_CONSUMING_SNAPSHOT_FILES[index];
+    assert.deepEqual({bytes:original.length,sha256:hash(original)},{bytes:expected.bytes,sha256:expected.sha256});
+    if(row.file!=='js/src/translation/check.js')assert.notEqual(hash(physical),hash(original),'actual successor identity is retained separately: '+row.file);
+    const unknown=Buffer.concat([physical,Buffer.from(' ')]);
+    assert.throws(()=>restoreRawConsumingSnapshotSource(unknown,row.file),assert.AssertionError);
+    assert.equal(restoreRawConsumingSnapshotSource(unknown,row.file,true),unknown,'unknown historical input remains visible to its strict original guard');
+    for(const mutate of [value=>{value.sources[index].source+=' ';},value=>{value.sources[index].sha256='0'.repeat(64);},
+      value=>{value.sources[index].edit.removed+=' ';},value=>{value.sources[index].extra='unknown';}]){
+      const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyRawConsumingSnapshotSourceStructure(changed),assert.AssertionError);
+    }
+  }
+  const bytes=Buffer.from('unrelated source');
+  assert.equal(restoreRawConsumingSnapshotSource(bytes,'unrelated/source.js'),bytes);
+  const changed=structuredClone(packet);changed.previous[0].source+=' ';
+  assert.throws(()=>verifyRawConsumingSnapshotSourceStructure(changed),assert.AssertionError);
 });

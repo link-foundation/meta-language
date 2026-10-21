@@ -9,7 +9,10 @@ import {restoreRelativeArrayFrontendDescriptorSource} from '../scripts/relative-
 import {restoreArrayRelativeElementSource} from '../scripts/array-relative-element-history.mjs';
 import {RELATIVE_ARRAY_CURRENT_SOURCE_PROFILE,RELATIVE_ARRAY_OWNED_RULE_SOURCE,RELATIVE_ARRAY_OWNED_RULE_OUTPUT,
   pinRelativeArrayCurrentSource,readRelativeArrayOwnedRuleSourceHistory,verifyRelativeArrayOwnedRuleSourceHistory,
-  restoreRelativeArrayCurrentSourceView} from '../scripts/relative-array-current-source-views.mjs';
+  restoreRelativeArrayCurrentSourceView,restoreRelativeArrayOwnedRuleBaselinePacket,
+  RELATIVE_ARRAY_OWNED_RULE_BASELINE,RELATIVE_ARRAY_OWNED_RULE_BASELINE_PACKET} from '../scripts/relative-array-current-source-views.mjs';
+import {serializeProjectData} from '../scripts/project-data.mjs';
+import {RAW_CONSUMING_SNAPSHOT_FILES} from '../scripts/raw-consuming-snapshot-source-profile.mjs';
 import {generateRelativeArrayOwnedRuleSourceHistory} from '../scripts/generate-relative-array-owned-rule-source-history.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 const targets=[
@@ -31,7 +34,12 @@ test('three complete actual source owners recover their independent original rel
     assert.equal(read(file).toString('utf8'),current,'runtime source remains current');
   }
   const checker='js/src/translation/check.js',current=read(checker).toString('utf8');
-  assert.equal(restoreRelativeArrayCurrentSourceView(current,checker,RELATIVE_ARRAY_CURRENT_SOURCE_PROFILE),current,'the intended original two checker descriptor changes remain visible');
+  // The Boolean projection adds a later checker arm. Its certified8d view
+  // retains the original two descriptor changes without attributing later bytes to8d.
+  const original=restoreRelativeArrayCurrentSourceView(current,checker,RELATIVE_ARRAY_CURRENT_SOURCE_PROFILE);
+  const expected=RAW_CONSUMING_SNAPSHOT_FILES.find(row=>row.file===checker);
+  assert.deepEqual(pinRelativeArrayCurrentSource(original),{bytes:expected.bytes,sha256:expected.sha256},'the intended original two checker descriptor changes remain visible');
+  assert.notEqual(original,current);
 });
 test('unknown sources profiles and paths cannot acquire a historical owner',()=>{
   for(const[file]of targets){
@@ -70,4 +78,13 @@ test('the complete whole-source proof survives both Links codecs without changin
     'parity/self-translation/current-own-codebase-raw-source-descriptors.lino','parity/self-translation/reviewed-overlay-provider-succession.lino',RELATIVE_ARRAY_OWNED_RULE_OUTPUT];
   const before=files.map(read);assert.deepEqual(generateRelativeArrayOwnedRuleSourceHistory({check:true}),value);
   files.forEach((file,index)=>assert.ok(read(file).equals(before[index]),file));
+});
+
+test('appended scoped-borrow rules retain every complete original owned-rule packet byte',()=>{
+  const packet=readRelativeArrayOwnedRuleSourceHistory(),original=restoreRelativeArrayOwnedRuleBaselinePacket(packet);
+  assert.deepEqual(pinRelativeArrayCurrentSource(original.current.source),RELATIVE_ARRAY_OWNED_RULE_BASELINE);
+  assert.deepEqual(pinRelativeArrayCurrentSource(serializeProjectData(original,RELATIVE_ARRAY_OWNED_RULE_OUTPUT)),RELATIVE_ARRAY_OWNED_RULE_BASELINE_PACKET);
+  assert.ok(packet.current.source.startsWith(original.current.source));
+  const changed=structuredClone(packet);changed.current.source='!'+changed.current.source.slice(1);
+  assert.throws(()=>restoreRelativeArrayOwnedRuleBaselinePacket(changed),assert.AssertionError);
 });

@@ -1,12 +1,15 @@
 // Normal, finite source review author. All source identities are real commits.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readFileSync,writeFileSync} from 'node:fs';
+import {existsSync,readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {checkProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
+import {OVERLAY_PROVIDER_APPEND_REVIEW,readReviewedOverlayProviderSuccessionHistory,
+ verifyReviewedOverlayProviderSuccessionHistory,verifyCurrentReviewedOverlayProviderSources,
+ deriveReviewedOverlayProviderPolicy,deriveReviewedOverlayProviderReceipts} from './provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
 const previous='478fb5873ddfd6ab7e4c4b6849654e2c2cef3fa8';
 const revisions=['8d77e476d097448eb381ebe03e2aa173402bc03d','8ef026a395ebbbc415f948777f7f6f7e082a572e'];
@@ -24,7 +27,9 @@ const hostEdits=[
   {from:'reviewedOverlayProviderPolicy.revisions.push(readProgramStringOverlayProviderRevision(reviewedOverlayProviderPolicy.revisions.at(-1)));\n',to:'reviewedOverlayProviderPolicy.revisions.push(readProgramStringOverlayProviderRevision(reviewedOverlayProviderPolicy.revisions.at(-1)));\nreviewedOverlayProviderPolicy.revisions.push(...readReviewedOverlayProviderSuccessors(reviewedOverlayProviderPolicy.revisions.at(-1)));\n'},
 ];
 
-export async function generateReviewedOverlayProviderSuccession({check=false}={}){
+export async function generateReviewedOverlayProviderSuccession({check=false,revision}={}){
+  if(existsSync(new URL(output,root)))return updateReviewedOverlayProviderSuccession({check,revision});
+  assert.equal(revision,undefined,'an append requires the complete original normal-author packet');
   const cache=new Map();
   const capture=(revision,file)=>{
     const key=revision+':'+file;
@@ -103,8 +108,81 @@ export async function generateReviewedOverlayProviderSuccession({check=false}={}
   return packet;
 }
 
+// The existing two-profile bootstrap above stays intact. Normal successor
+// authoring consumes its pinned complete history and appends a real Git epoch;
+// --check reads only stored certificates and never invokes Git.
+export async function updateReviewedOverlayProviderSuccession({check=false,revision}={}){
+  assert.ok(!check||revision===undefined,'check-only mode cannot append a revision');
+  const original=readReviewedOverlayProviderSuccessionHistory();
+  const previousBytes=readFileSync(new URL(output,root));
+  assert.equal(previousBytes.toString('utf8'),serializeProjectData(original,output),'the complete input packet is canonical');
+  let packet=original;
+  const outputs=profile=>[{file:policyFile,source:serializeProjectData(deriveReviewedOverlayProviderPolicy(profile),policyFile)},
+    ...deriveReviewedOverlayProviderReceipts(profile)];
+  if(revision!==undefined){
+    assert.match(revision,/^[a-f0-9]{40}$/u,'supply one complete actual committed source epoch');
+    assert.equal(original.profiles.some(row=>row.sourceCommit===revision),false,'a committed epoch is appended once');
+    const review=OVERLAY_PROVIDER_APPEND_REVIEW,last=original.profiles.at(-1);
+    assert.equal(last.sourceCommit,review.previous,'this review applies to the exact preceding provider profile');
+    const capture=file=>{
+      const{blob,certificate}=captureGitArtifactCertificate(revision,file);
+      assert.equal(Buffer.from(blob.toString('utf8')).equals(blob),true);
+      verifyGitArtifactCertificate(certificate,blob,{revision,path:file});
+      assert.equal(readFileSync(new URL(file,root)).equals(blob),true,'every captured actual file belongs to the real epoch: '+file);
+      return{revision,file,...pin(blob),source:blob.toString('utf8'),certificate};
+    };
+    const preceding=capture(output);assert.equal(preceding.source,previousBytes.toString('utf8'));
+    const priorOutputs=outputs(original).map(row=>{const actual=capture(row.file);assert.equal(actual.source,row.source);return actual;});
+    const providers=[],certificates=[],inverse=[];
+    for(const module of modules){
+      const current=capture('js/src/'+module),previous=last.certificates.find(row=>row.module===module).current;
+      providers.push({module,sourceSha256:current.sha256});
+      certificates.push({module,previous:structuredClone(previous),current:{revision,source:current.source,certificate:current.certificate}});
+      if(current.source!==previous.source)inverse.push({module,from:current.source,to:previous.source});
+    }
+    assert.deepEqual(inverse.map(row=>row.module),[review.module],'only the complete reviewed optional-emission-metadata provider changes');
+    const metadata=row=>({revision:row.revision,file:row.file,bytes:row.bytes,sha256:row.sha256,certificate:row.certificate});
+    const profile={sourceCommit:revision,previousSourceCommit:last.sourceCommit,review:review.review,providers,inverse,certificates,
+      epoch:{reviewKind:review.kind,predecessorPacket:metadata(preceding),predecessorOutputs:priorOutputs.map(metadata)}};
+    packet={...original,profiles:[...original.profiles,profile]};
+    verifyReviewedOverlayProviderSuccessionHistory(packet);verifyCurrentReviewedOverlayProviderSources(packet);
+    // The prior complete packet/three receipts are independently certified at
+    // this real commit but never duplicated as a new multi-megabyte snapshot.
+    const currentOutputs=outputs(packet),helperPath=new URL(helperFile,root),helper=readFileSync(helperPath,'utf8');
+    const pattern=/const packetSha256='[a-f0-9]{64}';/u;assert.equal(helper.split(pattern).length,2);
+    const source=serializeProjectData(packet,output),updated=helper.replace(pattern,"const packetSha256='"+hash(source)+"';");
+    writeProjectData(new URL(output,root),packet);assert.equal(readFileSync(new URL(output,root),'utf8'),source);
+    writeFileSync(helperPath,updated);
+    for(const row of currentOutputs)writeFileSync(new URL(row.file,root),row.source);
+    // Do not import the current reader in this author process: its already
+    // loaded module correctly retains the preceding in-memory source epoch.
+    // Fresh --check/normal model writers verify the new physical profile.
+    return packet;
+  }
+  verifyCurrentReviewedOverlayProviderSources(packet);
+  const currentOutputs=outputs(packet);
+  for(const row of currentOutputs){
+    const actual=readFileSync(new URL(row.file,root),'utf8');
+    const known=[packet.historicalOutputs.find(old=>old.file===row.file).source];
+    for(let length=1;length<=packet.profiles.length;length++)known.push(outputs({...packet,profiles:packet.profiles.slice(0,length)}).find(value=>value.file===row.file).source);
+    assert.ok(known.includes(actual),'unknown complete current policy/receipt bytes refuse normal authoring: '+row.file);
+    if(check)assert.equal(actual,row.source);else writeFileSync(new URL(row.file,root),row.source);
+  }
+  const{rustTextCertificateOverlayRecords}=await import('./generate.mjs');
+  const{rawBindingCertificateOverlayRecords}=await import('../rust-raw-binding-certificate-adapter/generate-overlay.mjs');
+  for(const[index,author]of [rustTextCertificateOverlayRecords,rawBindingCertificateOverlayRecords].entries())
+    assert.equal(serializeProjectData(author(),receipts[index]),currentOutputs[index+1].source,'independent normal recipe author agrees with the actual current provider');
+  return packet;
+}
+
 if(process.argv[1]===fileURLToPath(import.meta.url)){
-  assert.ok(process.argv.slice(2).every(argument=>argument==='--check'));
-  const packet=await generateReviewedOverlayProviderSuccession({check:process.argv.includes('--check')});
+  const args=process.argv.slice(2);let check=false,revision;
+  for(const argument of args){
+    if(argument==='--check'){assert.equal(check,false);check=true;}
+    else if(argument.startsWith('--revision=')){assert.equal(revision,undefined);revision=argument.slice('--revision='.length);}
+    else assert.fail('use --check or --revision=<actual committed source epoch>');
+  }
+  assert.ok(!check||revision===undefined);
+  const packet=await generateReviewedOverlayProviderSuccession({check,revision});
   console.log(JSON.stringify({revisions:packet.profiles.map(row=>row.sourceCommit),providers:5,currentReceipts:2,nativeCompilation:false,nativeExecution:false}));
 }
