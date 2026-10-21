@@ -103,3 +103,11 @@ export function readBootstrapStructuredDataRecords(source, options = {}) {
   }
   return values;
 }
+
+/** Opt-in inspection of the same completely validated canonical graph. Existing
+ * readers, their exact bodies, and default resource limits remain unchanged. */
+export function inspectBootstrapStructuredDataLino(source, options = {}) {
+  textLimit(source, options);
+  if (!source.endsWith('\n')) fail('incomplete canonical document');
+  return graph(source, null, options);
+}

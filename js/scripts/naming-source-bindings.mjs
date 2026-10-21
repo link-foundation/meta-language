@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {readProjectData} from './project-data.mjs';
-import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {readProfiledNamingSourceBindingDocument} from './naming-source-binding-codec-profile.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 
 export const NAMING_SOURCE_BINDING_STORAGE=Object.freeze({
@@ -79,7 +79,7 @@ function copyNamingSourceBindingValues(value,seen=new WeakMap(),strings=null) {
 export function readNamingSourceBindings() {
   if(!cachedBindings){
     const specification=NAMING_SOURCE_BINDING_STORAGE;
-    const rows=readBootstrapStructuredDataLino(readFileSync(new URL(specification.data,root),'utf8'));
+    const rows=readProfiledNamingSourceBindingDocument();
     const migration=readProjectData(new URL(specification.migration,root));
     verifyNamingSourceBindingData(rows,migration,readFileSync(new URL(specification.module,root)));
     // Detach scalar substrings from the complete serialized input. Only strings
