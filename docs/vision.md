@@ -2409,10 +2409,37 @@ only after checking all complete original bodies together and rechecking each
 member with the actual verified peers and target mappings. Temporary fabricated
 headers cannot supply a proof. Ordinary and recursive paths require an actual
 known module scope and a unique binding owner. An inert empty class still owns
-its name; wider module forms require the real complete-module check. Unknown
-scope cannot select standard builtins by spelling. Current admission excludes
-generated auxiliary declarations and wider function profiles until their full
-composition is implemented.
+its name. A separate source-derived concrete-syntax proof may admit a single
+constant function initializer or a named class containing only deferred plain
+methods and constructors. It checks complete syntax, exact names and unique
+owners; heritage, decorators, fields, static or computed members and eager
+initializers receive no such proof. Deferred class bodies remain untranslated.
+Other wider module forms require the real complete-module check. Unknown
+scope cannot select standard builtins by spelling. Generated auxiliary
+composition requires an independent closed profile: every complete function or
+data helper must belong to exactly one original source declaration, preserve
+its checked reference closure and ordered layout, and match a complete original
+member recheck. Every function, data and constructor mapping must be covered.
+Publication selects complete owned blocks from one coherent whole-group
+emission, retaining its actual namespace and original source provenance; it
+never renames helper bodies or invents successful empty peers. Output carriers,
+nested namespaces, wider function profiles and changed textual decorators need
+their own complete composition proof. The original flat admission and all its
+refusals remain separate and exact.
+
+Fresh local arrays may be borrowed by an actual parser-owned iteration block.
+The borrow closes only at that block's complete lexical boundary. Append during
+an active borrow, ordinary aliases, closure captures and unknown calls retain
+their escape refusals. Shared decisions generate both runtimes; temporary
+iterator names alone never establish ownership.
+
+Semantic replay reconstructs Boolean conversion through the existing checker
+and its shared source-language/type policy. Projection instructions are shared
+Links data. The complete independently rechecked program must equal the original
+checked representation; extra conditional or negation wrappers cannot stand in
+for that conversion. Source literal support and UTF-16 parameter representation
+remain separate contracts: preserving a lone surrogate supplied as a parameter
+does not establish support for a lone-surrogate source escape.
 
 Fresh local arrays may retain their inspected owner across a self-slice
 assignment only after traversing the complete right-hand side and retaining all

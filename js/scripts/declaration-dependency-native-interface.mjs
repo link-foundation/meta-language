@@ -47,7 +47,7 @@ function readActualDecisionHeader(row,files){
 /** Pure normal-author transport derivation. No source algorithm is replaced.
  * Caller writes/checks the returned source only after normal JS native generation. */
 export function deriveDeclarationDependencyNativeInterface(files,libraryInterface){
-  const decisions=['acceptDeclarationDependencyFacts','readDeclarationDependencyComponents','acceptRecursiveDeclarationGroup','acceptRecursiveDeclarationPublication','acceptDeclarationModuleScope','acceptDeclarationSignatureBinding'];
+  const decisions=['acceptDeclarationDependencyFacts','readDeclarationDependencyComponents','acceptRecursiveDeclarationGroup','acceptRecursiveDeclarationPublication','acceptDeclarationModuleScope','acceptDeclarationSignatureBinding','readRecursiveDeclarationSourceOwners','acceptRecursiveDeclarationAuxiliaryClosure','acceptRecursiveDeclarationAuxiliaryCorrespondence','acceptRecursiveDeclarationOwnedEmission','acceptRecursiveDeclarationOwnedPublication','readDeclarationDeferredBinding','acceptDeclarationDeferredModuleScope'];
   for(const source of decisions)assert.equal(libraryInterface.filter(row=>row.source===source).length,1,'one actual shared decision owner: '+source);
   const scopeHeader=readActualDecisionHeader(libraryInterface.find(row=>row.source==='acceptDeclarationModuleScope'),files);
   if(scopeHeader.parameters[0]?.includes('ml_string::Text'))readActualTextConstructor(files);
@@ -57,6 +57,13 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
     ['acceptRecursiveDeclarationPublication','accept_publication',[['members','number'],['declarations','number'],['signatures','number'],['flat','boolean'],['emitted','boolean'],['matching','boolean']],'bool'],
     ['acceptDeclarationModuleScope','accept_module_scope',[['forms','texts'],['complete_checked','boolean']],'bool'],
     ['acceptDeclarationSignatureBinding','accept_signature_binding',[['scope_known','boolean'],['owner_count','number']],'bool'],
+    ['readRecursiveDeclarationSourceOwners','read_source_owners',[['root_starts','numbers'],['root_ends','numbers'],['declaration_starts','numbers'],['declaration_ends','numbers'],['roles','numbers']],'Vec<f64>'],
+    ['acceptRecursiveDeclarationAuxiliaryClosure','accept_auxiliary_closure',[['owners','numbers'],['roles','numbers'],['starts','numbers'],['counts','numbers'],['targets','numbers']],'bool'],
+    ['acceptRecursiveDeclarationAuxiliaryCorrespondence','accept_auxiliary_correspondence',[['whole','numbers'],['member','numbers']],'bool'],
+    ['acceptRecursiveDeclarationOwnedEmission','accept_owned_emission',[['roles','numbers'],['constructor_counts','numbers'],['blocks','numbers'],['mappings','numbers'],['forbidden_targets','numbers']],'bool'],
+    ['acceptRecursiveDeclarationOwnedPublication','accept_owned_publication',[['members','number'],['declarations','number'],['signatures','number'],['completed','number'],['proofs','numbers']],'bool'],
+    ['readDeclarationDeferredBinding','read_deferred_binding',[['terms','texts'],['fields','texts'],['parents','numbers'],['starts','numbers'],['ends','numbers'],['texts','texts'],['errors','numbers'],['source_bytes','number']],'Vec<f64>'],
+    ['acceptDeclarationDeferredModuleScope','accept_deferred_module_scope',[['forms','texts']],'bool'],
   ];
   const definitions=[];
   for(const[source,name,parameters,result]of specifications){
@@ -71,10 +78,10 @@ export function deriveDeclarationDependencyNativeInterface(files,libraryInterfac
       }else if(kind==='texts'){
         declarations.push(parameter+': &[&str]');
         assert.ok(['&[String]','Vec<String>','&[self::ml_string::Text]','Vec<self::ml_string::Text>'].includes(type),'unknown actual string array owner/loan refuses');
-        conversion=type.includes('ml_string::Text')
-          ?'    let forms = forms.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
-          :'    let forms = forms.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
-        arguments_.push(type.startsWith('&')?'&forms':'forms');
+        conversion+=type.includes('ml_string::Text')
+          ?'    let '+parameter+' = '+parameter+'.iter().map(|value| rules::ml_string::Text::from_text(value)).collect::<Vec<_>>();\n'
+          :'    let '+parameter+' = '+parameter+'.iter().map(|value| (*value).to_owned()).collect::<Vec<_>>();\n';
+        arguments_.push(type.startsWith('&')?'&'+parameter:parameter);
       }else{
         const primitive=kind==='number'?'f64':'bool';assert.equal(type,primitive,'unknown primitive ABI refuses');declarations.push(parameter+': '+primitive);arguments_.push(parameter);
       }

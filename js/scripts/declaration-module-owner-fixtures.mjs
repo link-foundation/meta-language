@@ -70,5 +70,46 @@ export function readDeclarationModuleOwnerFixtures() {
       calls: ['selected(7)', 'independent(7)'], rustCalls: ['selected(7f64)', 'independent(7f64)'], expectedLines: '8\n8\n', semanticCodecs: false,
       sourceMode: 'Module', sourceProbe: 'selected(7)===8', sourceProbeExpected: true,
     },
+    {
+      id: 'actual-deferred-class-collection-owner', language: 'JavaScript',
+      source: 'class Map { constructor(){this.size=17;} }\nfunction selected(){return new Map().size;}\nfunction independent(value){return value+1;}\n',
+      functionStatuses: ['carried','translated'], signatures: [],
+      calls: ['independent(7)'], rustCalls: ['independent(7f64)'], expectedLines: '8\n', semanticCodecs: false,
+      sourceMode: 'Module', sourceProbe: 'selected()===17 && new Map().constructor===Map', sourceProbeExpected: true,
+    },
   ]);
+}
+
+// Separate additive profile; all original fixture rows and source inputs stay.
+export function readDeclarationDeferredModuleFixtures() {
+  const first = 'export function first(value){return value+1;}\n';
+  const last = 'export function second(value){return first(value);}\nexport function independent(value){return value+1;}\n';
+  const opaque = 'class Opaque { constructor(value){this.value=value;} }\n';
+  const examples = [
+    ['ordinary-arrow-value', 'const halve=(value)=>value/2;\n', 2, 'halve'],
+    ['ordinary-function-value', 'const halve=function(value){return value/2;};\n', 2, 'halve'],
+    ['ordinary-named-function-value', 'const halve=function inner(value){return value/2;};\n', 2, 'halve'],
+    ['deferred-constructor-assignment', 'class Box { constructor(value){this.value=value;} }\n', 1, 'Box'],
+    ['deferred-ordinary-method-body', 'class Deferred { constructor(){throw new Error("not called");} method(value){return value;} }\n', 1, 'Deferred'],
+  ].map(([id,bindingSource,bindingKind,bindingName])=>({id,language:'JavaScript',sourceMode:'Module',bindingSource,bindingKind,bindingName,
+    source:first+bindingSource+last,signatures:['first','second','independent'],functionStatuses:['translated','translated','translated'],
+    calls:['first(7)','second(7)','independent(7)'],rustCalls:['first(7f64)','second(7f64)','independent(7f64)'],expectedLines:'8\n8\n8\n'}));
+  const refused = [
+    ['heritage-evaluation', 'class Deferred extends (first=0,Object) {}\n'],
+    ['static-block-evaluation', 'class Deferred { static { first=0; } }\n'],
+    ['static-field-evaluation', 'class Deferred { static value=(first=0); }\n'],
+    ['computed-method-evaluation', 'class Deferred { [(first=0,"method")](){} }\n'],
+    ['instance-field-profile-boundary', 'class Deferred { value=1; }\n'],
+    ['static-method-profile-boundary', 'class Deferred { static method(){} }\n'],
+    ['binding-list-profile-boundary', 'const halve=(value)=>value/2,other=(value)=>value;\n'],
+    ['destructured-binding-profile-boundary', 'const {halve}={halve:0};\n'],
+    ['mutable-binding-profile-boundary', 'let halve=(value)=>value/2;\n'],
+    ['var-binding-profile-boundary', 'var halve=(value)=>value/2;\n'],
+    ['module-assignment', 'first=0;\n'],
+    ['module-eval', 'eval("first=0");\n'],
+    ['eager-function-call-initializer', 'const halve=(()=>{first=0;return 1;})();\n'],
+  ].map(([id,bindingSource])=>({id,language:'JavaScript',sourceMode:'Module',bindingSource,bindingKind:0,bindingName:'',
+    source:first+opaque+bindingSource+last,signatures:[],functionStatuses:['translated','carried','translated'],
+    calls:['independent(7)'],rustCalls:['independent(7f64)'],expectedLines:'8\n'}));
+  return examples.concat(refused);
 }

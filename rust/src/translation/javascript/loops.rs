@@ -454,6 +454,8 @@ impl JavaScriptParser {
             inline: false,
             span: place,
         });
+        self.owned_array_iteration_sources
+            .insert((place, values.clone(), index.clone()));
         Ok(Stmt::Block {
             body: vec![
                 Stmt::Const {

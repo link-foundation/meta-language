@@ -675,6 +675,7 @@ impl JavaScriptParser {
                     &mut statements,
                     &params,
                     &self.owned_array_readers,
+                    &self.owned_array_iteration_sources,
                 ),
             );
             if self.indexed_reference_writes != indexed_writes_before {

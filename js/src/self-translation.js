@@ -8,6 +8,7 @@
 // source byte for byte.
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import {planOwnedRecursiveDeclarationPublication} from './translation/recursive-declaration-ownership.js';
 
 import { decoratorSet } from './decorators.js';
 import { decorateEmitted } from './grammar-emitters/common.js';
@@ -27,9 +28,10 @@ import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
+import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
   acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
-  acceptDeclarationSignatureBinding } from './translation/declaration-dependency-rules.js';
+  acceptDeclarationSignatureBinding, acceptDeclarationDeferredModuleScope } from './translation/declaration-dependency-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -371,8 +373,10 @@ function readDeclarationModuleScope(groups, scans, from, to, decorators, context
     : scans[index]?.functionDeclaration ? 'named function declaration'
     : scans[index]?.imports ? 'named import'
     : scans[index]?.emptyClassDeclaration ? 'empty class declaration'
+    : scans[index]?.deferredBinding?.kind === 1 ? 'deferred named class declaration'
+    : scans[index]?.deferredBinding?.kind === 2 ? 'deferred function value binding'
     : literalGroups.has(group) ? 'primitive literal binding' : 'unknown module form');
-  if (acceptDeclarationModuleScope(forms, false)) return true;
+  if (acceptDeclarationModuleScope(forms, false) || acceptDeclarationDeferredModuleScope(forms)) return true;
   if (typeof context.moduleSource !== 'string') return false;
   try {
     const source = from === 'TypeScript' ? projectTypeScriptTyping(context.moduleSource).code : context.moduleSource;
@@ -402,7 +406,9 @@ function translateRecursiveDeclarationGroup(members, groups, scans, from, to, de
     && new Set(declarations.map(entry => entry.name)).size === names.length
     && signatures.every(signature => signature.k === 'fn' && names.includes(signature.name))
     && new Set(signatures.map(signature => signature.name)).size === names.length;
-  if (!acceptRecursiveDeclarationPublication(names.length, declarations.length, signatures.length, flat, true, true)) return null;
+  if (!acceptRecursiveDeclarationPublication(names.length, declarations.length, signatures.length, flat, true, true)) {
+    return translateOwnedRecursiveDeclarationGroup(members, groups, scans, from, to, decorators, context, checked);
+  }
   const wholeTargets = checked.emitted.mappings.filter(mapping => mapping.kind === 'function' && names.includes(mapping.source));
   if (wholeTargets.length !== names.length || new Set(wholeTargets.map(mapping => mapping.target)).size !== names.length) return null;
   const completed = new Map();
@@ -424,6 +430,39 @@ function translateRecursiveDeclarationGroup(members, groups, scans, from, to, de
     completed.set(member, out);
   }
   return completed.size === members.length ? completed : null;
+}
+
+// Auxiliary admission keeps the original flat publication rule unchanged.
+// Every published complete block comes from one coherent WHOLE emission.
+function translateOwnedRecursiveDeclarationGroup(members, groups, scans, from, to, decorators, context, wholeCapture) {
+  if (from !== 'JavaScript' || to !== 'Rust') return null;
+  const names = members.map(member => scans[member].declares);
+  const sources = members.map(member => groups[member].text);
+  const signatures = wholeCapture.signatures ?? [];
+  const captures = [];
+  for (let owner = 0; owner < members.length; owner += 1) {
+    const peers = signatures.filter(signature => signature.name !== names[owner]);
+    const capture = {};
+    const original = translateGroup(groups[members[owner]], from, to, decorators,
+      {...context, externals: [...context.externals, ...peers]}, capture);
+    if (original.status !== 'translated') return null;
+    captures.push(capture);
+  }
+  const plan = planOwnedRecursiveDeclarationPublication(names, sources, wholeCapture, captures, context.moduleScopeKnown);
+  if (plan === null) return null;
+  const staged = new Map();
+  for (let owner = 0; owner < members.length; owner += 1) {
+    const member = members[owner], group = groups[member];
+    const definitions = plan.indices[owner].map(index => wholeCapture.emitted.definitions[index]);
+    // No empty successful peer, sliced source, helper rename or fake header.
+    const record = {};
+    const out = recordTranslatedDefinitions(group.text, group.term, from, to, decorators,
+      definitions, wholeCapture.emitted.preludes,
+      signatures.filter(signature => signature.name === names[owner]), record);
+    if (out.status !== 'translated' || record.undecorated !== true) return null;
+    staged.set(member, out);
+  }
+  return staged.size === members.length ? staged : null;
 }
 
 /**
@@ -450,6 +489,10 @@ function scanItem(text) {
   let functionDeclaration = false;
   let emptyClassDeclaration = null;
   let imports = null;
+  const deferredCandidate = word(index, 'class') || word(index, 'const') && at(index + 1).kind === 'identifier'
+    && at(index + 2).value === '=' && (word(index + 3, 'function') || at(index + 3).value === '('
+      || at(index + 3).kind === 'identifier' && at(index + 4).value === '=>');
+  const deferredBinding = deferredCandidate ? readDeferredDeclarationBinding(text) : null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
     index += 1;
@@ -458,18 +501,21 @@ function scanItem(text) {
     declares = at(index + 1).value;
     ordinary = !isAsync;
     functionDeclaration = true;
-  } else if (word(index, 'class') && at(index + 1).kind === 'identifier'
-    && at(index + 2).kind === 'punct' && at(index + 2).value === '{'
-    && at(index + 3).kind === 'punct' && at(index + 3).value === '}'
-    && at(index + 4).kind === 'eof') {
-    // Exact actual token ranges prove an inert empty named class definition.
-    // The real class stays carried. No inheritance, method, field, static
-    // block, computed key, decorator or other eager expression is omitted.
-    // Comments are already retained by the concrete source and skipped only
-    // by the ordinary tokenizer; they cannot add an executable class member.
+  } else if (word(index, 'class') && at(index + 1).kind === 'identifier') {
+    // Count the actual class owner even when a wider class form refuses.
     declares = at(index + 1).value;
-    emptyClassDeclaration = { start: at(index).start, end: at(index + 3).end,
-      nameStart: at(index + 1).start, nameEnd: at(index + 1).end };
+    if (at(index + 2).kind === 'punct' && at(index + 2).value === '{'
+      && at(index + 3).kind === 'punct' && at(index + 3).value === '}'
+      && at(index + 4).kind === 'eof') {
+      // Exact actual token ranges prove an inert empty named class definition.
+      // The real class stays carried. No inheritance, method, field, static
+      // block, computed key, decorator or other eager expression is omitted.
+      // Comments are already retained by the concrete source and skipped only
+      // by the ordinary tokenizer; they cannot add an executable class member.
+      declares = at(index + 1).value;
+      emptyClassDeclaration = { start: at(index).start, end: at(index + 3).end,
+        nameStart: at(index + 1).start, nameEnd: at(index + 1).end };
+    }
   } else if (word(index, 'const') && at(index + 1).kind === 'identifier' && at(index + 2).value === '=') {
     declares = at(index + 1).value;
     isAsync = word(index + 3, 'async');
@@ -487,7 +533,8 @@ function scanItem(text) {
     if (at(next).value === '}' && word(next + 1, 'from') && at(next + 2).kind === 'string') imports = { specifier: at(next + 2).value, names };
   }
   const mentions = [...new Set(tokens.filter((token) => token.kind === 'identifier').map((token) => token.value))];
-  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, mentions, imports };
+  if (deferredBinding && deferredBinding.name !== declares) return null;
+  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, mentions, imports };
 }
 
 /**
@@ -713,7 +760,7 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
     // A top-level constant is a Rust constant; other top-level statements run once, as a program.
     const constants = family(to) === 'Rust' ? emitRustConstants(program) : null;
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
-    emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program, family(to) === 'Rust' ? {arrayConsumption: true} : {});
+    emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program, family(to) === 'Rust' ? {arrayConsumption: true, recordDefinitionOwnership: capture !== null} : {});
     signatures = program.imports ? context.externals : declaredSignatures(program, constants);
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
@@ -725,16 +772,24 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
     return carried;
   }
   if (emitted.definitions.length === 0) return carry(text, term, from, 'no definition');
+  if (capture !== null) {
+    capture.program = program; capture.emitted = emitted; capture.signatures = signatures;
+    capture.source = text; capture.sourceLanguage = from;
+  }
+  return recordTranslatedDefinitions(text, term, from, to, decorators, emitted.definitions, emitted.preludes, signatures, capture);
+}
+
+function recordTranslatedDefinitions(text, term, from, to, decorators, definitions, preludes, signatures, capture = null) {
   const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);
-  const generic = emitted.definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
+  const generic = definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
   const code = decorateEmitted(to, { source: generic }, decorators).source;
   if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
-  const count = emitted.definitions.length;
-  if (capture !== null) { capture.program = program; capture.emitted = emitted; }
+  if (capture !== null) capture.undecorated = code === generic;
+  const count = definitions.length;
   const marker = `${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`;
   return {
     code: [marker, ...text.split(/\r?\n/u).map(sourceLine), code].join('\n'),
-    preludes: emitted.preludes,
+    preludes,
     status: 'translated',
     signatures,
   };

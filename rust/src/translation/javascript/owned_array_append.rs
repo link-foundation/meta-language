@@ -7,7 +7,26 @@ use crate::translation::owned_array_append_rules as rules;
 use serde_json::Value;
 
 pub(super) type Readers = HashMap<String, HashSet<usize>>;
-type Scope = HashMap<String, Option<usize>>;
+pub(super) type IterationSources = HashSet<(Span, String, String)>;
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Owner {
+    Allocation(usize),
+    Iteration(usize),
+}
+impl Owner {
+    const fn allocation(self) -> usize {
+        match self {
+            Self::Allocation(at) | Self::Iteration(at) => at,
+        }
+    }
+    const fn owned(self) -> Option<usize> {
+        match self {
+            Self::Allocation(at) => Some(at),
+            Self::Iteration(_) => None,
+        }
+    }
+}
+type Scope = HashMap<String, Option<Owner>>;
 
 #[derive(Clone, Copy, Default)]
 struct Use<'a> {
@@ -139,6 +158,20 @@ fn names(
                     "iteration-receiver"
                 },
                 operation: if kind == "copySlice" { "slice" } else { "" },
+                ..ordinary
+            },
+            parameter,
+            record,
+        );
+        return;
+    }
+    if kind == "length" {
+        names(
+            &value["object"],
+            readers,
+            locals,
+            Use {
+                context: "length-receiver",
                 ..ordinary
             },
             parameter,
@@ -354,6 +387,7 @@ struct Allocation {
     name: String,
     loops: Vec<f64>,
     escapes: Vec<Escape>,
+    borrows: Vec<(f64, Option<f64>)>,
 }
 
 struct Append {
@@ -399,17 +433,45 @@ impl Occurrences {
             None,
             &mut |name, allowed| {
                 if !allowed && let Some(Some(allocation)) = scope.get(name) {
-                    self.escape(*allocation, loops);
+                    self.escape(allocation.allocation(), loops);
                 }
             },
         );
     }
 
     /// Source statements supply lexical owners, actual loop ancestry and occurrence order.
-    fn list(&mut self, statements: &[Stmt], scope: &mut Scope, loops: &[f64], readers: &Readers) {
+    fn list(
+        &mut self,
+        statements: &[Stmt],
+        scope: &mut Scope,
+        loops: &[f64],
+        readers: &Readers,
+        iterations: &IterationSources,
+        iteration: Option<*const Stmt>,
+    ) {
+        let mut closing = Vec::new();
         for statement in statements {
             match statement {
                 Stmt::Const { name, value, .. } | Stmt::Let { name, value, .. } => {
+                    if iteration == Some(std::ptr::from_ref(statement))
+                        && let SNode::ForOfIterable { object, .. } = &value.node
+                        && let Some(allocation) = object
+                            .simple_name()
+                            .and_then(|name| scope.get(name))
+                            .copied()
+                            .flatten()
+                            .and_then(Owner::owned)
+                    {
+                        if !rules::accept_owned_array_read("iteration-receiver", "", false) {
+                            self.escape(allocation, loops);
+                        }
+                        let start = self.advance();
+                        let at = self.allocations[allocation].borrows.len();
+                        self.allocations[allocation].borrows.push((start, None));
+                        closing.push((allocation, at));
+                        scope.insert(name.clone(), Some(Owner::Iteration(allocation)));
+                        continue;
+                    }
                     self.read(value, scope, loops, readers);
                     let allocation = if matches!(value.node, SNode::Array { .. }) {
                         let id = self.allocations.len();
@@ -417,9 +479,10 @@ impl Occurrences {
                             name: name.clone(),
                             loops: loops.to_vec(),
                             escapes: Vec::new(),
+                            borrows: Vec::new(),
                         });
                         self.advance();
-                        Some(id)
+                        Some(Owner::Allocation(id))
                     } else {
                         None
                     };
@@ -429,11 +492,16 @@ impl Occurrences {
                     let SNode::Method { object, args, op } = &expr.node else {
                         unreachable!("the generated shape names an actual source method")
                     };
-                    let allocation = object
+                    let owner = object
                         .simple_name()
                         .and_then(|name| scope.get(name))
                         .copied()
                         .flatten();
+                    if matches!(owner, Some(Owner::Iteration(_))) {
+                        self.read(expr, scope, loops, readers);
+                        continue;
+                    }
+                    let allocation = owner.and_then(Owner::owned);
                     for argument in args.iter().flatten() {
                         self.read(argument, scope, loops, readers);
                     }
@@ -468,21 +536,73 @@ impl Occurrences {
                 }
                 Stmt::Assign { name, value, .. } => {
                     self.read(value, scope, loops, readers);
-                    if let Some(Some(allocation)) = scope.get(name)
-                        && !self_slice_rebinding(name, value, scope, *allocation)
-                    {
-                        self.escape(*allocation, loops);
+                    if let Some(Some(owner)) = scope.get(name) {
+                        let allocation = owner.allocation();
+                        if owner.owned().is_none()
+                            || !self_slice_rebinding(name, value, scope, allocation)
+                        {
+                            self.escape(allocation, loops);
+                        }
                     }
                 }
                 Stmt::Return { .. }
                 | Stmt::Throw { .. }
                 | Stmt::Break { .. }
                 | Stmt::Continue { .. } => break,
-                Stmt::Block { body, inline, .. } => {
+                Stmt::Block { body, inline, span } => {
+                    let mut binding = None;
+                    if let [first, next] = body.as_slice()
+                        && let Stmt::Const {
+                            name,
+                            value,
+                            span: binding_span,
+                        } = first
+                        && let Stmt::For {
+                            init,
+                            span: loop_span,
+                            ..
+                        } = next
+                        && let Some(Stmt::Let { name: index, .. }) = init.first()
+                    {
+                        let receiver = match &value.node {
+                            SNode::ForOfIterable { object, .. } => Some(object.as_ref()),
+                            _ => None,
+                        };
+                        let path = receiver.and_then(SExpr::simple_name);
+                        let allocation = path
+                            .and_then(|name| scope.get(name))
+                            .copied()
+                            .flatten()
+                            .and_then(Owner::owned);
+                        let parser_owned = binding_span == span
+                            && loop_span == span
+                            && iterations.contains(&(*span, name.clone(), index.clone()));
+                        if rules::accept_owned_array_iteration_borrow_shape(
+                            "block",
+                            *inline,
+                            number(body.len()),
+                            "const",
+                            value.node.kind(),
+                            receiver.map_or("", |object| object.node.kind()),
+                            number(usize::from(path.is_some())),
+                            "for",
+                            parser_owned,
+                            allocation.is_some(),
+                        ) {
+                            binding = Some(std::ptr::from_ref(first));
+                        }
+                    }
                     if *inline {
-                        self.list(body, scope, loops, readers);
+                        self.list(body, scope, loops, readers, iterations, binding);
                     } else {
-                        self.list(body, &mut scope.clone(), loops, readers);
+                        self.list(
+                            body,
+                            &mut scope.clone(),
+                            loops,
+                            readers,
+                            iterations,
+                            binding,
+                        );
                     }
                 }
                 Stmt::If {
@@ -492,9 +612,16 @@ impl Occurrences {
                     ..
                 } => {
                     self.read(cond, scope, loops, readers);
-                    self.list(then, &mut scope.clone(), loops, readers);
+                    self.list(then, &mut scope.clone(), loops, readers, iterations, None);
                     if let Some(otherwise) = otherwise {
-                        self.list(otherwise, &mut scope.clone(), loops, readers);
+                        self.list(
+                            otherwise,
+                            &mut scope.clone(),
+                            loops,
+                            readers,
+                            iterations,
+                            None,
+                        );
                     }
                 }
                 Stmt::While { cond, body, .. } | Stmt::DoWhile { cond, body, .. } => {
@@ -503,7 +630,7 @@ impl Occurrences {
                     self.next_loop += 1;
                     let mut inner = scope.clone();
                     self.read(cond, &inner, &nested, readers);
-                    self.list(body, &mut inner, &nested, readers);
+                    self.list(body, &mut inner, &nested, readers, iterations, None);
                 }
                 Stmt::For {
                     init,
@@ -516,12 +643,12 @@ impl Occurrences {
                     nested.push(number(self.next_loop));
                     self.next_loop += 1;
                     let mut inner = scope.clone();
-                    self.list(init, &mut inner, &nested, readers);
+                    self.list(init, &mut inner, &nested, readers, iterations, None);
                     if let Some(cond) = cond {
                         self.read(cond, &inner, &nested, readers);
                     }
-                    self.list(body, &mut inner, &nested, readers);
-                    self.list(update, &mut inner, &nested, readers);
+                    self.list(body, &mut inner, &nested, readers, iterations, None);
+                    self.list(update, &mut inner, &nested, readers, iterations, None);
                 }
                 Stmt::Switch(switch) => {
                     self.read(&switch.scrutinee, scope, loops, readers);
@@ -531,7 +658,14 @@ impl Occurrences {
                                 self.read(value, scope, loops, readers);
                             }
                         }
-                        self.list(&clause.body, &mut scope.clone(), loops, readers);
+                        self.list(
+                            &clause.body,
+                            &mut scope.clone(),
+                            loops,
+                            readers,
+                            iterations,
+                            None,
+                        );
                     }
                 }
                 Stmt::Expr { expr, .. } | Stmt::Print { expr, .. } => {
@@ -539,6 +673,10 @@ impl Occurrences {
                 }
                 Stmt::Empty => {}
             }
+        }
+        for (allocation, at) in closing {
+            let end = self.advance();
+            self.allocations[allocation].borrows[at].1 = Some(end);
         }
     }
 }
@@ -554,9 +692,9 @@ fn self_slice_rebinding(name: &str, value: &SExpr, scope: &Scope, allocation: us
         Some(SNode::Name { path }) => path.len(),
         _ => 0,
     };
-    let same_owner = object
-        .and_then(SExpr::simple_name)
-        .is_some_and(|receiver| receiver == name && scope.get(receiver) == Some(&Some(allocation)));
+    let same_owner = object.and_then(SExpr::simple_name).is_some_and(|receiver| {
+        receiver == name && scope.get(receiver) == Some(&Some(Owner::Allocation(allocation)))
+    });
     rules::accept_owned_array_self_slice_rebinding(
         value.node.kind(),
         operation,
@@ -597,13 +735,14 @@ pub(super) fn lower_owned_array_appends(
     statements: &mut [Stmt],
     parameters: &[SParam],
     readers: &Readers,
+    iterations: &IterationSources,
 ) -> Vec<Span> {
     let mut occurrences = Occurrences::default();
     let mut scope = parameters
         .iter()
         .map(|parameter| (parameter.name.clone(), None))
         .collect();
-    occurrences.list(statements, &mut scope, &[], readers);
+    occurrences.list(statements, &mut scope, &[], readers, iterations, None);
     let mut selected = HashMap::new();
     let mut operations = Vec::new();
     for append in &occurrences.appends {
@@ -618,6 +757,19 @@ pub(super) fn lower_owned_array_appends(
             loops.extend(&escape.loops);
             positions.push(escape.position);
         }
+        let borrow_starts = allocation
+            .borrows
+            .iter()
+            .map(|(start, _)| *start)
+            .collect::<Vec<_>>();
+        let Some(borrow_ends) = allocation
+            .borrows
+            .iter()
+            .map(|(_, end)| *end)
+            .collect::<Option<Vec<_>>>()
+        else {
+            continue;
+        };
         if rules::accept_owned_array_append_uses(
             &allocation.loops,
             &append.loops,
@@ -626,6 +778,10 @@ pub(super) fn lower_owned_array_appends(
             &counts,
             &positions,
             append.position,
+        ) && rules::accept_owned_array_borrowed_append(
+            append.position,
+            &borrow_starts,
+            &borrow_ends,
         ) {
             selected.insert(append.statement, allocation.name.clone());
             operations.extend(append.operation_span);

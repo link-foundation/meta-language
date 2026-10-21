@@ -5,6 +5,8 @@ import {selfTranslate,selfTranslationSignatures} from '../src/self-translation.j
 import {acceptDeclarationSignatureBinding,acceptDeclarationModuleScope} from '../src/translation/declaration-dependency-rules.js';
 import {readOrdinaryDeclarationModuleFixtures,ordinaryModuleOwnerSource} from '../scripts/declaration-dependency-fixtures.mjs';
 import {LinkNetwork} from '../src/network.js';
+import {readDeferredDeclarationBinding} from '../src/translation/deferred-declaration-scope.js';
+import {readDeclarationDeferredModuleFixtures} from '../scripts/declaration-module-owner-fixtures.mjs';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 
 function versions(){
@@ -93,4 +95,42 @@ test('the exact retained report signature oracle still avoids constructing anoth
   try{LinkNetwork.parse=()=>{throw new Error('signature discovery constructed a source graph');};actual=selfTranslationSignatures(fixture.source,'JavaScript');}
   finally{LinkNetwork.parse=original;}
   assert.deepEqual(actual,[{k:'fn',name:'count',params:[],ret:{kind:'float'}},{k:'const',name:'limit',type:{kind:'float'},literal:true}]);
+});
+
+test('actual deferred class and const function definitions retain ordinary sibling signatures without executing bodies',async()=>{
+  versions();
+  for(const fixture of readDeclarationDeferredModuleFixtures()){
+    const binding=readDeferredDeclarationBinding(fixture.bindingSource);
+    if(fixture.bindingKind===0)assert.equal(binding,null,fixture.id);
+    else{
+      assert.equal(binding.kind,fixture.bindingKind,fixture.id);assert.equal(binding.name,fixture.bindingName,fixture.id);
+      const bytes=Buffer.from(fixture.bindingSource);assert.equal(bytes.subarray(binding.nameRange.start,binding.nameRange.end).toString(),fixture.bindingName);
+    }
+    const raw=await import('data:text/javascript;base64,'+Buffer.from(fixture.source).toString('base64'));
+    const lines=fixture.calls.map(call=>{const match=/^(\w+)\((\d+)\)$/u.exec(call);assert.ok(match);return String(raw[match[1]](Number(match[2])));}).join('\n')+'\n';
+    assert.equal(lines,fixture.expectedLines,fixture.id);
+    const actual=selfTranslate(fixture.source,'JavaScript','Rust');
+    assert.deepEqual(actual.items.filter(item=>item.term==='export_statement'||item.term==='function_declaration').map(item=>item.status),fixture.functionStatuses,fixture.id);
+    assert.deepEqual(selfTranslationSignatures(fixture.source,'JavaScript').map(signature=>signature.name),fixture.signatures,fixture.id);
+    assert.equal(selfTranslate(actual.code,'Rust','JavaScript').code,fixture.source,fixture.id);
+    for(const network of [LinkNetwork.fromLino(LinkNetwork.parse(fixture.source,'JavaScript').toLino()),
+      decodeLinkNetworkBinary(encodeLinkNetworkBinary(LinkNetwork.parse(fixture.source,'JavaScript')))])assert.equal(network.reconstructText(),fixture.source);
+  }
+});
+
+test('deferred definition facts refuse incomplete syntax duplicate constructors and unsafe or unknown headers',()=>{
+  versions();
+  for(const source of ['class Box { constructor( }','class Box { constructor(){} constructor(){} }',
+    'class Box { constructor(value,value){} }','class Box { async method(){} }',
+    'class Box { get value(){return 1;} }','class Box { ["method"](){} }',
+    '@decorate class Box {}','export default class Box {}','const halve=async(value)=>value/2;',
+    'const halve=(value,value)=>value;','const halve=({value})=>value;','const halve=(value=1)=>value;']){
+    assert.equal(readDeferredDeclarationBinding(source),null,source);
+  }
+  const source='class Map { constructor(){this.size=17;} }\nfunction selected(){return new Map().size;}\nfunction independent(value){return value+1;}\n';
+  assert.equal(runInNewContext(source+'\nselected();'),17);
+  const actual=selfTranslate(source,'JavaScript','Rust');
+  assert.deepEqual(actual.items.filter(item=>item.term==='function_declaration').map(item=>item.status),['carried','translated']);
+  assert.doesNotMatch(actual.code,/pub fn selected\(/u);
+  assert.equal(selfTranslate(actual.code,'Rust','JavaScript').code,source);
 });

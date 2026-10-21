@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreTruthyProjectionHistoricalSource} from './truthy-projection-schema.mjs';
 export const COLLECTION_SIZE_PROJECTION_SCHEMA_POLICY=Object.freeze({
  revision:'7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3',
  files:Object.freeze(['js/src/data/typed-program-links-schema.lino','rust/src/data/typed-program-links-schema.lino']),
@@ -92,6 +93,7 @@ export function restoreCollectionSizeProjectionSchema(bytes,file) {
  assert.ok(Buffer.isBuffer(bytes)&&bytes.length<=256*1024);const source=bytes.toString('utf8');assert.equal(Buffer.from(source).equals(bytes),true);
  if(pin(bytes).sha256===policy.predecessor.sha256){assert.deepEqual(pin(bytes),policy.predecessor);return source;}
  if(!sourcePair)sourcePair=verifyCollectionSizeProjectionSchemaPacket(readCollectionSizeProjectionSchemaPacket());
- assert.equal(source,sourcePair.current,'unknown complete current schema changes refuse historical source authority');
+ const historical=restoreTruthyProjectionHistoricalSource(bytes,file);
+ assert.equal(historical,sourcePair.current,'unknown complete current schema changes refuse historical source authority');
  return sourcePair.predecessor;
 }

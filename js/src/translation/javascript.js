@@ -113,6 +113,8 @@ class JavaScriptParser {
     this.referenceSemanticsOverride = referenceSemantics;
     this.referenceSemanticsForced = false;
     this.eliminatedOwnedArrayAppendOperations = [];
+    // Private source construction identities; never serialized into surface/IR.
+    this.ownedArrayIterationBlocks = new WeakMap();
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
@@ -689,7 +691,7 @@ class JavaScriptParser {
           this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
         }
       }
-      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
+      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders, this.ownedArrayIterationBlocks)) {
         if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
       }
       // This observed parse count avoids building duplicate fact columns when
@@ -1327,7 +1329,7 @@ class JavaScriptParser {
     const read = (local) => ({ k: 'name', path: [local], span: where });
     const element = { k: 'index', object: read(values), index: read(index), provenInBounds: true, span: where };
     const declarations = bindings ? [{ s: 'const', name: `ml_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`ml_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
-    return {
+    const sourceBlock = {
       s: 'block',
       body: [
         { s: 'const', name: values, value: iterable, span: where },
@@ -1342,6 +1344,8 @@ class JavaScriptParser {
       ],
       span: where,
     };
+    this.ownedArrayIterationBlocks.set(sourceBlock, {binding: sourceBlock.body[0], loop: sourceBlock.body[1], value: iterable, span: where});
+    return sourceBlock;
   }
 
   jumpStatement() {

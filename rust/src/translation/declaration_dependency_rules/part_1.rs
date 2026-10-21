@@ -1,12 +1,31 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
+use super::MlAcceptDeclarationDependencyFactsLoop4Result;
+use super::MlAcceptDeclarationDependencyFactsLoop5Result;
 use super::MlAcceptDeclarationModuleScopeLoop20Result;
+use super::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop26Result;
+use super::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop27Result;
+use super::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop28Result;
+use super::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop29Result;
+use super::MlContainsDeclarationDependencyLoop2Result;
 use super::MlReadDeclarationDependencyComponentsLoop12Result;
+use super::MlReadRecursiveDeclarationSourceOwnersLoop21Result;
+use super::MlReadRecursiveDeclarationSourceOwnersLoop22Result;
+use super::ml_accept_declaration_dependency_facts_loop4;
+use super::ml_accept_declaration_dependency_facts_loop5;
 use super::ml_accept_declaration_module_scope_loop20;
+use super::ml_accept_recursive_declaration_auxiliary_closure_loop26;
+use super::ml_accept_recursive_declaration_auxiliary_closure_loop27;
+use super::ml_accept_recursive_declaration_auxiliary_closure_loop28;
+use super::ml_accept_recursive_declaration_auxiliary_closure_loop29;
+use super::ml_contains_declaration_dependency_loop2;
+use super::ml_read_declaration_dependency_components_loop7;
 use super::ml_read_declaration_dependency_components_loop8;
 use super::ml_read_declaration_dependency_components_loop11;
 use super::ml_read_declaration_dependency_components_loop12;
 use super::ml_read_declaration_dependency_components_loop13;
+use super::ml_read_recursive_declaration_source_owners_loop21;
+use super::ml_read_recursive_declaration_source_owners_loop22;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -733,151 +752,152 @@ pub fn accept_declaration_signature_binding(scope_known: bool, owner_count: f64)
     scope_known && (owner_count == 1f64)
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlContainsDeclarationDependencyLoop2Result {
-    MlContainsDeclarationDependencyLoop2Done,
-    MlContainsDeclarationDependencyLoop2Return(bool),
-}
-
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_contains_declaration_dependency_loop2(
-    mut value: f64,
-    ml_values1: &[f64],
-    mut ml_index1: self::ml::Big,
-) -> self::MlContainsDeclarationDependencyLoop2Result {
-    loop {
-        return if ml_index1 < (self::ml::Big::from_u128(ml_values1.len() as u128)) {
+pub fn read_recursive_declaration_source_owners(
+    root_starts: &[f64],
+    root_ends: &[f64],
+    declaration_starts: &[f64],
+    declaration_ends: &[f64],
+    roles: &[f64],
+) -> Vec<f64> {
+    if ((((root_starts.len() as f64) < 1f64)
+        || ((root_starts.len() as f64) != (root_ends.len() as f64)))
+        || ((declaration_starts.len() as f64) != (declaration_ends.len() as f64)))
+        || ((declaration_starts.len() as f64) != (roles.len() as f64))
+    {
+        Vec::<f64>::new()
+    } else {
+        {
+            let previous_end = -1f64;
             {
-                let previous = self::ml_array::at(ml_values1, ml_index1.to_index());
-                if previous == value {
-                    self::MlContainsDeclarationDependencyLoop2Result::MlContainsDeclarationDependencyLoop2Return(true)
-                } else {
-                    {
-                        let ml_index1_2 = ml_index1.add(&self::ml::Big::from_i128(1));
-                        {
-                            ml_index1 = ml_index1_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlContainsDeclarationDependencyLoop2Result::MlContainsDeclarationDependencyLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptDeclarationDependencyFactsLoop5Result {
-    MlAcceptDeclarationDependencyFactsLoop5Done,
-    MlAcceptDeclarationDependencyFactsLoop5Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_declaration_dependency_facts_loop5(
-    starts: &[f64],
-    ml_values3: &[f64],
-    mut ml_index3: self::ml::Big,
-) -> self::MlAcceptDeclarationDependencyFactsLoop5Result {
-    loop {
-        return if ml_index3 < (self::ml::Big::from_u128(ml_values3.len() as u128)) {
-            {
-                let target = self::ml_array::at(ml_values3, ml_index3.to_index());
-                if !((target >= 0f64) && (target < (starts.len() as f64)))
-                    || ((target % 1f64) != 0f64)
+                let root = 0f64;
                 {
-                    self::MlAcceptDeclarationDependencyFactsLoop5Result::MlAcceptDeclarationDependencyFactsLoop5Return(false)
-                } else {
-                    {
-                        let ml_index3_2 = ml_index3.add(&self::ml::Big::from_i128(1));
-                        {
-                            ml_index3 = ml_index3_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptDeclarationDependencyFactsLoop5Result::MlAcceptDeclarationDependencyFactsLoop5Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlAcceptDeclarationDependencyFactsLoop4Result {
-    MlAcceptDeclarationDependencyFactsLoop4Done(f64),
-    MlAcceptDeclarationDependencyFactsLoop4Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_declaration_dependency_facts_loop4(
-    starts: &[f64],
-    counts: &[f64],
-    targets: &[f64],
-    mut offset: f64,
-    mut node: f64,
-) -> self::MlAcceptDeclarationDependencyFactsLoop4Result {
-    loop {
-        return if node < (starts.len() as f64) {
-            {
-                let start = self::read_required_number_fact(starts, node);
-                {
-                    let count = self::read_required_number_fact(counts, node);
-                    if (((start != offset) || (count < 0f64)) || ((count % 1f64) != 0f64))
-                        || (count > ((targets.len() as f64) - offset))
-                    {
-                        self::MlAcceptDeclarationDependencyFactsLoop4Result::MlAcceptDeclarationDependencyFactsLoop4Return(false)
-                    } else {
-                        {
-                            let offset_2 = offset + count;
+                    let ml_s6 = self::ml_read_recursive_declaration_source_owners_loop21(
+                        root_starts,
+                        root_ends,
+                        previous_end,
+                        root,
+                    );
+                    match ml_s6 {
+                        self::MlReadRecursiveDeclarationSourceOwnersLoop21Result::MlReadRecursiveDeclarationSourceOwnersLoop21Done => {
                             {
-                                let node_2 = node + 1f64;
+                                let owners = Vec::<f64>::new();
                                 {
-                                    (offset, node) = (offset_2, node_2);
-                                    continue;
+                                    let roots = Vec::<f64>::new();
+                                    {
+                                        let declaration = 0f64;
+                                        {
+                                            let ml_s7 = self::ml_read_recursive_declaration_source_owners_loop22(root_starts, root_ends, declaration_starts, declaration_ends, roles, owners, roots, declaration);
+                                            match ml_s7 {
+                                                self::MlReadRecursiveDeclarationSourceOwnersLoop22Result::MlReadRecursiveDeclarationSourceOwnersLoop22Done(owners_2, roots_2) => {
+                                                    if (roots_2.len() as f64) == (root_starts.len() as f64) {
+                                                        owners_2
+                                                    } else {
+                                                        Vec::<f64>::new()
+                                                    }
+                                                }
+                                                self::MlReadRecursiveDeclarationSourceOwnersLoop22Result::MlReadRecursiveDeclarationSourceOwnersLoop22Return(ml_result22) => {
+                                                    ml_result22
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptDeclarationDependencyFactsLoop4Result::MlAcceptDeclarationDependencyFactsLoop4Done(offset)
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_declaration_dependency_components_loop7(
-    starts: &[f64],
-    mut visited: Vec<f64>,
-    mut node: f64,
-) -> Vec<f64> {
-    loop {
-        if node < (starts.len() as f64) {
-            {
-                let visited_2 = {
-                    let (ml_append_right, ml_append_left) = (vec![0f64], visited);
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                {
-                    let node_2 = node + 1f64;
-                    {
-                        (visited, node) = (visited_2, node_2);
-                        continue;
+                        self::MlReadRecursiveDeclarationSourceOwnersLoop21Result::MlReadRecursiveDeclarationSourceOwnersLoop21Return(ml_result24) => {
+                            ml_result24
+                        }
                     }
                 }
             }
         }
-        return { visited };
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadDeclarationDependencyComponentsLoop9Result {
-    MlReadDeclarationDependencyComponentsLoop9Done(Vec<f64>, Vec<f64>),
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_recursive_declaration_auxiliary_closure(
+    owners: &[f64],
+    roles: &[f64],
+    starts: &[f64],
+    counts: &[f64],
+    targets: &[f64],
+) -> bool {
+    if (((owners.len() as f64) != (roles.len() as f64))
+        || ((owners.len() as f64) != (starts.len() as f64)))
+        || !(self::accept_declaration_dependency_facts(starts, counts, targets))
+    {
+        false
+    } else {
+        {
+            let root_owners = Vec::<f64>::new();
+            {
+                let declaration = 0f64;
+                {
+                    let ml_s8 = self::ml_accept_recursive_declaration_auxiliary_closure_loop26(
+                        owners,
+                        roles,
+                        root_owners,
+                        declaration,
+                    );
+                    match ml_s8 {
+                        self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop26Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop26Done(root_owners_2) => {
+                            if (root_owners_2.len() as f64) < 1f64 {
+                                false
+                            } else {
+                                {
+                                    let ml_values25 = owners.to_vec();
+                                    {
+                                        let ml_index25 = self::ml::Big::from_i128(0);
+                                        {
+                                            let ml_s9 = self::ml_accept_recursive_declaration_auxiliary_closure_loop27(&(root_owners_2), &(ml_values25), ml_index25);
+                                            match ml_s9 {
+                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop27Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop27Done => {
+                                                    {
+                                                        let source = 0f64;
+                                                        {
+                                                            let ml_s10 = self::ml_accept_recursive_declaration_auxiliary_closure_loop28(owners, roles, starts, counts, targets, source);
+                                                            match ml_s10 {
+                                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop28Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop28Done => {
+                                                                    {
+                                                                        let root = 0f64;
+                                                                        {
+                                                                            let ml_s11 = self::ml_accept_recursive_declaration_auxiliary_closure_loop29(owners, roles, starts, counts, targets, root);
+                                                                            match ml_s11 {
+                                                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop29Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop29Done => {
+                                                                                    true
+                                                                                }
+                                                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop29Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop29Return(ml_result29) => {
+                                                                                    ml_result29
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop28Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop28Return(ml_result32) => {
+                                                                    ml_result32
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop27Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop27Return(ml_result33) => {
+                                                    ml_result33
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        self::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop26Result::MlAcceptRecursiveDeclarationAuxiliaryClosureLoop26Return(ml_result33_2) => {
+                            ml_result33_2
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

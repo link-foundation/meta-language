@@ -364,3 +364,51 @@ fn inspected_scalar_iteration_admits_self_copy_while_live_iteration_still_escape
     assert_eq!(observe(live), "1,2,3\n");
     refuses(live);
 }
+
+#[test]
+fn actual_completed_string_iteration_borrows_keep_source_semantics_and_live_alias_refusals() {
+    self_slice_versions();
+    let policy = self_slice_policy();
+    let mut source = String::new();
+    let mut expected = String::new();
+    for fixture in policy["scopedIterationFixtures"].as_array().unwrap() {
+        let original = fixture["source"].as_str().unwrap();
+        let output = fixture["expected"].as_str().unwrap();
+        assert_eq!(observe(original), output, "{}", fixture["id"]);
+        replay(original, output);
+        source.push_str(original);
+        source.push('\n');
+        expected.push_str(output);
+    }
+    let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
+    let native = emit_rust(&program).unwrap().text;
+    let directory =
+        super::issue_195_translation_pairs::TemporaryDirectory::new("owned-array-scoped-iteration");
+    let input = directory.0.join("program.rs");
+    let binary = directory
+        .0
+        .join(format!("program{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&input, native).unwrap();
+    let mut compiler = Command::new("rustc");
+    compiler.args(["--edition", "2024"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        compiler.arg("-C").arg(format!("linker={linker}"));
+    }
+    let compiled =
+        super::issue_195_translation_pairs::run(compiler.arg(&input).arg("-o").arg(&binary));
+    assert!(compiled.ok, "{}", compiled.stderr);
+    let executed = super::issue_195_translation_pairs::run(&mut Command::new(binary));
+    assert!(executed.ok, "{}", executed.stderr);
+    assert_eq!(executed.stdout, expected);
+    for fixture in policy["scopedIterationRefusals"].as_array().unwrap() {
+        let original = fixture["source"].as_str().unwrap();
+        assert_eq!(
+            observe(original),
+            fixture["expected"].as_str().unwrap(),
+            "{}",
+            fixture["id"]
+        );
+        refuses(original);
+    }
+}

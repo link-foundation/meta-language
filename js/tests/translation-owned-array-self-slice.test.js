@@ -10,9 +10,9 @@ import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-ne
 import { encodeTypedProgramLinks, decodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 import { readOwnedArrayAppendProofs } from '../src/translation/owned-array-append.js';
-import { acceptOwnedArraySelfSliceRebinding } from '../src/translation/owned-array-append-rules.js';
+import { acceptOwnedArraySelfSliceRebinding, acceptOwnedArrayIterationBorrowShape, acceptOwnedArrayBorrowedAppend } from '../src/translation/owned-array-append-rules.js';
 import { generateOwnedArrayAppendRules, readOwnedArrayAppendSourceModule,
-  readOwnedArraySelfSliceFixtures, readOwnedArraySelfSliceRefusals } from '../scripts/generate-owned-array-append-rules.mjs';
+  readOwnedArraySelfSliceFixtures, readOwnedArraySelfSliceRefusals, readOwnedArrayScopedIterationFixtures, readOwnedArrayScopedIterationRefusals } from '../scripts/generate-owned-array-append-rules.mjs';
 
 const check = source => checkProgram(parseJavaScript(source, { referenceSemantics: false }));
 function versions() {
@@ -132,4 +132,41 @@ test('normal ownership author retains the complete closure and the new shared de
     assert.equal(decision('method','slice','name',1,false,2), false);
     assert.equal(emitRust(checked,{arrayConsumption:true}).text, output.text);
   }
+});
+
+test('only actual parser-owned completed iteration borrows permit later string appends',()=>{
+  versions();
+  for(const fixture of readOwnedArrayScopedIterationFixtures()){
+    assert.equal(observe(fixture.source),fixture.expected,fixture.id+' independent original');
+    const program=check(fixture.source),native=emitRust(program,{arrayConsumption:true}).text;
+    assert.match(native,/crate::ml_array::append\(/u,fixture.id);
+    const packet=encodeTypedProgramLinks(program);
+    for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+      const replay=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});
+      assert.equal(observe(emitJavaScript(replay).text),fixture.expected,fixture.id);
+      assert.equal(emitRust(replay,{arrayConsumption:true}).text,native,fixture.id);
+    }
+  }
+  for(const fixture of readOwnedArrayScopedIterationRefusals()){
+    assert.equal(observe(fixture.source),fixture.expected,fixture.id+' independent original');
+    assert.throws(()=>check(fixture.source),undefined,fixture.id);
+  }
+});
+
+test('iteration borrow shape and source intervals preserve live aliases and exact closed-block boundaries',()=>{
+  versions();
+  const shape=['block',false,2,'const','forOfIterable','name',1,'for',true,true];
+  assert.equal(acceptOwnedArrayIterationBorrowShape(...shape),true);
+  for(const[index,value]of [[0,'expr'],[1,true],[2,1],[3,'let'],[4,'name'],[5,'field'],[6,2],[7,'while'],[8,false],[9,false]]){
+    const changed=[...shape];changed[index]=value;assert.equal(acceptOwnedArrayIterationBorrowShape(...changed),false);
+  }
+  assert.equal(acceptOwnedArrayBorrowedAppend(3,[1],[3]),true);
+  for(const position of [1,2])assert.equal(acceptOwnedArrayBorrowedAppend(position,[1],[3]),false);
+  assert.equal(acceptOwnedArrayBorrowedAppend(4,[1,2],[3,4]),true);
+  assert.equal(acceptOwnedArrayBorrowedAppend(3,[1,2],[3,4]),false);
+  for(const facts of [[1,[0],[]],[1,[0],[0]],[1,[0],[NaN]],[NaN,[],[]],[1,[0.5],[2]]])assert.equal(acceptOwnedArrayBorrowedAppend(...facts),false);
+  // Similar source statement shape has no parser construction identity.
+  const fake={s:'block',span:{start:0,end:1},body:[{s:'const',name:'iterator',value:{k:'forOfIterable',object:name('values')}},
+    {s:'for',init:[],cond:{k:'bool',value:false},update:[],body:[]}]};
+  assert.equal(readOwnedArrayAppendProofs([allocation(),fake,append()]).length,0);
 });

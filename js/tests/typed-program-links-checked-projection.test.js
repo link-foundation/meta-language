@@ -18,6 +18,7 @@ import { COLLECTION_SIZE_PROJECTION_SCHEMA_POLICY, COLLECTION_SIZE_PROJECTION_SC
   deriveCollectionSizeProjectionFixtureSource, deriveCollectionSizeProjectionValidationSource, readCollectionSizeProjectionSchemaPacket,
   verifyCollectionSizeProjectionSchemaPacket, restoreCollectionSizeProjectionSchema } from '../scripts/collection-size-projection-schema.mjs';
 import { generateCollectionSizeProjectionSchema } from '../scripts/generate-collection-size-projection-schema.mjs';
+import { restoreTruthyProjectionHistoricalSource } from '../scripts/truthy-projection-schema.mjs';
 
 const floating = { kind: 'float' };
 const boolean = { kind: 'bool' };
@@ -219,7 +220,8 @@ test('collection size shared schema successor retains every original byte owner 
   assert.equal(deriveCollectionSizeProjectionSchema(proof.predecessor), proof.current);
   assert.deepEqual(packet.extensions, COLLECTION_SIZE_PROJECTION_SCHEMA_ENTRIES);
   for (const file of COLLECTION_SIZE_PROJECTION_SCHEMA_POLICY.files) {
-    const actual = readFileSync(new URL('../../' + file, import.meta.url));
+    const physical = readFileSync(new URL('../../' + file, import.meta.url));
+    const actual = Buffer.from(restoreTruthyProjectionHistoricalSource(physical, file));
     assert.equal(actual.toString('utf8'), proof.current);
     assert.equal(restoreCollectionSizeProjectionSchema(actual, file), proof.predecessor);
     assert.equal(restoreCollectionSizeProjectionSchema(Buffer.from(proof.predecessor), file), proof.predecessor);
@@ -230,7 +232,10 @@ test('collection size shared schema successor retains every original byte owner 
       ? deriveCollectionSizeProjectionFixtureSource(owner.source)
       : owner.file === 'js/src/typed-program-links-validation.js' ? deriveCollectionSizeProjectionValidationSource(owner.source) : owner.source;
     assert.deepEqual(pin(current), owner.current);
-    assert.equal(readFileSync(new URL('../../' + owner.file, import.meta.url), 'utf8'), current);
+    const physical = readFileSync(new URL('../../' + owner.file, import.meta.url));
+    const historical = owner.file === 'js/src/translation/check.js'
+      ? restoreTruthyProjectionHistoricalSource(physical, owner.file) : physical.toString('utf8');
+    assert.equal(historical, current);
   }
   const original = packet.owners.find(owner => owner.file === 'js/scripts/generate-typed-program-links-fixtures.mjs');
   const fixtureSource = readFileSync(new URL('../../' + original.file, import.meta.url), 'utf8');

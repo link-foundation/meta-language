@@ -1,5 +1,5 @@
 //! Host facts and checked atomic publication. Generated rules alone schedule components.
-use super::super::emission::check_and_emit_item;
+use super::super::emission::{check_and_emit_item, check_and_emit_item_with_ownership};
 use super::super::{Context, GroupKind, Translated, project_type_script_typing, translate_group};
 use super::dependency_rules;
 use super::{Binder, Scan, Visit, accept_signature};
@@ -117,13 +117,29 @@ impl Binder<'_, '_> {
                 {
                     "empty class declaration"
                 }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.deferred_binding == Some(1)) =>
+                {
+                    "deferred named class declaration"
+                }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.deferred_binding == Some(2)) =>
+                {
+                    "deferred function value binding"
+                }
                 GroupKind::Item { .. } if literal_groups.contains(&index) => {
                     "primitive literal binding"
                 }
                 _ => "unknown module form",
             })
             .collect::<Vec<_>>();
-        if dependency_rules::accept_module_scope(&forms, false) {
+        if dependency_rules::accept_module_scope(&forms, false)
+            || dependency_rules::accept_deferred_module_scope(&forms)
+        {
             return true;
         }
         let mut externals = Vec::new();
@@ -271,8 +287,14 @@ impl Binder<'_, '_> {
             utf16_strings: self.utf16_strings,
             module_binding_scope: Some(Self::module_binding_scope(state)),
         };
-        let whole =
-            check_and_emit_item(&source, self.from, self.to, &context, &HashMap::new()).ok()??;
+        let whole = check_and_emit_item_with_ownership(
+            &source,
+            self.from,
+            self.to,
+            &context,
+            &HashMap::new(),
+        )
+        .ok()??;
         let declarations = &whole.program.declarations;
         let signatures = &whole.signatures;
         let flat=whole.program.main.as_ref().is_none_or(|main|main.effects.is_empty())&&whole.program.imports.is_empty()
@@ -292,7 +314,7 @@ impl Binder<'_, '_> {
             emitted,
             true,
         ) {
-            return None;
+            return self.check_owned_recursive_members(state, members, externals, &whole);
         }
         let targets = whole
             .emitted

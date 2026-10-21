@@ -300,3 +300,298 @@ fn raw_wrapper_ownership_extensions_are_refused_after_source_free_reload() {
         assert!(emit_typed_program_links(&saved, packet.root, target).is_err());
     }
 }
+
+// CI-only native consumer of the same normally authored Boolean-conversion inputs.
+fn truthy_projection_versions() {
+    for (tool, rust) in [("rustc", true), ("node", false)] {
+        let result = super::issue_195_translation_pairs::run(Command::new(tool).arg("--version"));
+        assert!(result.ok, "{}", result.stderr);
+        let version = if rust {
+            result.stdout.split_whitespace().nth(1).unwrap()
+        } else {
+            result.stdout.trim().trim_start_matches('v')
+        };
+        let mut parts = version.split('.');
+        let major = parts.next().unwrap().parse::<u32>().unwrap();
+        let minor = parts.next().unwrap().parse::<u32>().unwrap();
+        assert!(
+            if rust {
+                major == 1 && (90..100).contains(&minor)
+            } else {
+                major == 22 && minor >= 15 || major == 24
+            },
+            "uncovered {tool} version {version}"
+        );
+    }
+}
+
+#[test]
+fn source_boolean_conversions_recheck_exactly_through_both_archives_and_execute_in_native_ci() {
+    use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+    truthy_projection_versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/truthy-projection.lino"
+    ))
+    .unwrap();
+    assert_eq!(fixture["assertionVersions"]["Rust"], ">=1.90.0 <1.100.0");
+    assert_eq!(
+        fixture["assertionVersions"]["Node"],
+        ">=22.15.0 <23.0.0 || >=24.0.0 <25.0.0"
+    );
+    for case in fixture["cases"].as_array().unwrap() {
+        let source = case["source"].as_str().unwrap();
+        let expected: Vec<String> = serde_json::from_value(case["expected"].clone()).unwrap();
+        assert_eq!(observe(source), expected);
+        let hash =
+            Sha256::digest(source.as_bytes())
+                .iter()
+                .fold(String::new(), |mut value, byte| {
+                    use std::fmt::Write as _;
+                    write!(value, "{byte:02x}").unwrap();
+                    value
+                });
+        assert_eq!(hash, case["sourceSha256"].as_str().unwrap());
+        let mut actual = meta_language::translation::check::check_program(
+            &meta_language::translation::javascript::parse_javascript(source).unwrap(),
+        )
+        .unwrap();
+        actual.utf16_strings = Some(true);
+        let root = LinkId::from_u64(case["archive"]["root"].as_str().unwrap().parse().unwrap());
+        let text = case["archive"]["text"].as_str().unwrap();
+        let hex = case["archive"]["binaryHex"].as_str().unwrap();
+        let bytes: Vec<u8> = (0..hex.len())
+            .step_by(2)
+            .map(|at| u8::from_str_radix(&hex[at..at + 2], 16).unwrap())
+            .collect();
+        let mut rust_source = None;
+        for network in [
+            LinkNetwork::from_lino(text).unwrap(),
+            decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap(),
+        ] {
+            let restored = decode_typed_program_links(&network, root).unwrap();
+            assert_eq!(
+                restored, actual,
+                "{} complete actual native checked IR",
+                case["id"]
+            );
+            let saved = encode_typed_program_links(&restored).unwrap();
+            for again in archives(&saved) {
+                assert_eq!(
+                    decode_typed_program_links(&again, saved.root).unwrap(),
+                    restored
+                );
+            }
+            assert_eq!(
+                observe(
+                    &emit_typed_program_links(&network, root, "JavaScript")
+                        .unwrap()
+                        .code
+                ),
+                expected
+            );
+            let emitted = emit_typed_program_links(&network, root, "Rust")
+                .unwrap()
+                .code;
+            if let Some(previous) = &rust_source {
+                assert_eq!(previous, &emitted);
+            }
+            rust_source = Some(emitted);
+        }
+        let directory = TemporaryDirectory::new("truthy-projection");
+        let file = directory.0.join("actual.rs");
+        let binary = directory
+            .0
+            .join(format!("actual{}", std::env::consts::EXE_SUFFIX));
+        std::fs::write(&file, rust_source.unwrap()).unwrap();
+        let mut command = Command::new("rustc");
+        command.args(["--edition", "2024"]);
+        #[cfg(windows)]
+        if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+            command.arg("-C").arg(format!("linker={linker}"));
+        }
+        let compiled = run(command.arg(&file).arg("-o").arg(&binary));
+        assert!(compiled.ok, "{}\n{}", compiled.stdout, compiled.stderr);
+        let observed = run(&mut Command::new(binary));
+        assert!(observed.ok, "{}", observed.stderr);
+        assert_eq!(
+            observed
+                .stdout
+                .lines()
+                .map(str::to_owned)
+                .collect::<Vec<_>>(),
+            expected
+        );
+    }
+}
+
+#[test]
+fn original_lone_literal_refusal_and_complete_string_parameter_keep_all_original_values_in_native_ci()
+ {
+    use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+    use meta_language::translation::{
+        check::check_program,
+        emit_rust::{RustEmissionOptions, emit_rust_with_array_consumption},
+        javascript::parse_javascript,
+    };
+    use std::fmt::Write as _;
+    truthy_projection_versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/truthy-projection.lino"
+    ))
+    .unwrap();
+    let literal = &fixture["literalBoundary"];
+    let source = literal["source"].as_str().unwrap();
+    let expected: Vec<String> = serde_json::from_value(literal["expected"].clone()).unwrap();
+    assert_eq!(observe(source), expected);
+    let failure = parse_javascript(source).unwrap_err();
+    assert_eq!(
+        failure.kind.as_str(),
+        literal["expectedRefusal"]["kind"].as_str().unwrap()
+    );
+    assert!(
+        failure
+            .reason
+            .contains(literal["expectedRefusal"]["reason"].as_str().unwrap())
+    );
+    assert_eq!(
+        failure.span.unwrap().start as u64,
+        literal["expectedRefusal"]["start"].as_u64().unwrap()
+    );
+    let host = &fixture["hostParameter"];
+    let host_source = host["source"].as_str().unwrap();
+    assert_eq!(
+        host_source,
+        source.split('\n').next().unwrap(),
+        "the complete original function body is unchanged"
+    );
+    let values = host["values"].as_array().unwrap();
+    let host_expected: Vec<String> = values
+        .iter()
+        .map(|value| value["expected"].as_bool().unwrap().to_string())
+        .collect();
+    assert_eq!(
+        &host_expected[..6],
+        expected.as_slice(),
+        "every original literal oracle has the same UTF16 host argument"
+    );
+    let units: Vec<Vec<u16>> = values
+        .iter()
+        .map(|value| {
+            value["units"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|unit| u16::try_from(unit.as_u64().unwrap()).unwrap())
+                .collect()
+        })
+        .collect();
+    assert_eq!(
+        &units[..6],
+        &[
+            vec![],
+            vec![48],
+            vec![102, 97, 108, 115, 101],
+            vec![0],
+            vec![55296],
+            vec![55357, 56832]
+        ]
+    );
+    let calls = format!(
+        "\nfor(const units of {})console.log(probe(String.fromCharCode(...units)));",
+        serde_json::to_string(&units).unwrap()
+    );
+    assert_eq!(observe(&format!("{host_source}{calls}")), host_expected);
+    let mut actual = check_program(&parse_javascript(host_source).unwrap()).unwrap();
+    actual.utf16_strings = Some(true);
+    let root = LinkId::from_u64(host["archive"]["root"].as_str().unwrap().parse().unwrap());
+    let hex = host["archive"]["binaryHex"].as_str().unwrap();
+    let bytes: Vec<u8> = (0..hex.len())
+        .step_by(2)
+        .map(|at| u8::from_str_radix(&hex[at..at + 2], 16).unwrap())
+        .collect();
+    let mut complete_rust = None;
+    for network in [
+        LinkNetwork::from_lino(host["archive"]["text"].as_str().unwrap()).unwrap(),
+        decode_link_network_binary(&bytes, BinaryLinksOptions::default()).unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, root).unwrap();
+        assert_eq!(restored, actual);
+        assert_eq!(restored.utf16_strings, Some(true));
+        let saved = encode_typed_program_links(&restored).unwrap();
+        for again in archives(&saved) {
+            assert_eq!(
+                decode_typed_program_links(&again, saved.root).unwrap(),
+                restored
+            );
+        }
+        assert_eq!(
+            observe(&format!(
+                "{}{calls}",
+                emit_typed_program_links(&network, root, "JavaScript")
+                    .unwrap()
+                    .code
+            )),
+            host_expected
+        );
+        let emitted =
+            emit_rust_with_array_consumption(&restored, RustEmissionOptions::default()).unwrap();
+        let mapping: Vec<_> = emitted
+            .mappings
+            .iter()
+            .filter(|mapping| mapping.kind == "function" && mapping.source == "probe")
+            .collect();
+        assert_eq!(
+            mapping.len(),
+            1,
+            "the actual normal emitter owns the tested function target"
+        );
+        let target = &mapping[0].target;
+        let mut main = "fn main(){\n".to_owned();
+        for value in &units {
+            writeln!(
+                main,
+                "println!(\"{{}}\", {target}(crate::ml_string::Text::from_units(vec!{value:?}))); "
+            )
+            .unwrap();
+        }
+        main.push_str("}\n");
+        // Use every complete actual normal library block and its actual
+        // prelude; only the independent host calls replace the empty driver.
+        let complete = emitted
+            .preludes
+            .iter()
+            .chain(emitted.definitions.iter())
+            .cloned()
+            .chain(std::iter::once(main))
+            .collect::<Vec<_>>()
+            .join("\n\n");
+        if let Some(previous) = &complete_rust {
+            assert_eq!(previous, &complete);
+        }
+        complete_rust = Some(complete);
+    }
+    let directory = TemporaryDirectory::new("truthy-utf16-host");
+    let file = directory.0.join("actual.rs");
+    let binary = directory
+        .0
+        .join(format!("actual{}", std::env::consts::EXE_SUFFIX));
+    std::fs::write(&file, complete_rust.unwrap()).unwrap();
+    let mut command = Command::new("rustc");
+    command.args(["--edition", "2024"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        command.arg("-C").arg(format!("linker={linker}"));
+    }
+    let compiled = run(command.arg(&file).arg("-o").arg(&binary));
+    assert!(compiled.ok, "{}\n{}", compiled.stdout, compiled.stderr);
+    let observed = run(&mut Command::new(binary));
+    assert!(observed.ok, "{}", observed.stderr);
+    assert_eq!(
+        observed
+            .stdout
+            .lines()
+            .map(str::to_owned)
+            .collect::<Vec<_>>(),
+        host_expected
+    );
+}

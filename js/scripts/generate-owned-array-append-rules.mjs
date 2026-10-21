@@ -57,9 +57,11 @@ export async function generateOwnedArrayAppendRules({ check = false, native = fa
     source: 'js/src/translation/owned-array-append-rules.js',
     sourceSha256: hash(source),
     decisions: ['acceptOwnedArrayAppendShape', 'acceptOwnedArrayRemovalShape', 'readOwnedArrayRemovalSliceBounds', 'acceptOwnedArrayRead', 'acceptOwnedArrayReaderResult',
-      'acceptOwnedArrayAppendUses', 'acceptOwnedArrayFinalUse', 'acceptOwnedArraySelfSliceRebinding'],
+      'acceptOwnedArrayAppendUses', 'acceptOwnedArrayFinalUse', 'acceptOwnedArraySelfSliceRebinding',
+      'acceptOwnedArrayIterationBorrowShape', 'acceptOwnedArrayBorrowedAppend'],
     assertionVersions: {Node: '>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0', Rust: '>=1.90.0 <1.100.0'},
     selfSliceFixtures: readOwnedArraySelfSliceFixtures(), selfSliceRefusals: readOwnedArraySelfSliceRefusals(),
+    scopedIterationFixtures: readOwnedArrayScopedIterationFixtures(), scopedIterationRefusals: readOwnedArrayScopedIterationRefusals(),
     sourceClosure: { source: closure, sourceSha256: hash(closure), removedImport: requiredImport,
       inputs: [{ path: 'js/src/translation/owned-array-append-rules.js', sourceSha256: hash(source) },
         { path: 'js/src/translation/fact-column-rules.js', sourceSha256: hash(facts) }] },
@@ -86,4 +88,23 @@ export async function generateOwnedArrayAppendRules({ check = false, native = fa
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await generateOwnedArrayAppendRules({ check: process.argv.includes('--check'), native: process.argv.includes('--native') });
   console.log('Owned array construction: actual fresh allocations, escape relations and final lexical consumption');
+}
+
+export function readOwnedArrayScopedIterationFixtures() {
+  return [
+    {id:'readonly-string-iteration-before-append',source:'/** @param {string[]} texts @returns {boolean} */ function uniqueNames(texts){let names=[];for(const text of texts){for(const name of names)if(name===text)return false;names.push(text);}return true;}\nconsole.log(uniqueNames(["a","b"]),uniqueNames(["a","a"]),uniqueNames([]));',expected:'true false true\n'},
+    {id:'completed-iteration-break-before-append',source:'/** @param {string[]} texts @returns {string} */ function collectNames(texts){let names=[];for(const text of texts){for(const name of names){if(name===text)break;}names.push(text);}return names.join(",");}\nconsole.log(collectNames(["a","a","b"]));',expected:'a,a,b\n'},
+  ];
+}
+
+export function readOwnedArrayScopedIterationRefusals() {
+  const before='/** @param {string[]} texts @returns {boolean} */ function uniqueNames(texts){let names=[];for(const text of texts){';
+  const after='for(const name of names)if(name===text)return false;names.push(text);}return true;}\nconsole.log(uniqueNames(["a","b"]),uniqueNames(["a","a"]),uniqueNames([]));';
+  return [
+    {id:'ordinary-alias-remains-live',source:before+'const alias=names;'+after,expected:'true false true\n'},
+    {id:'captured-owner-remains-escaped',source:before+'const capture=()=>names;'+after,expected:'true false true\n'},
+    {id:'unknown-reader-keeps-escape',source:'/** @param {string[]} values @returns {number} */ function inspect(values){const alias=values;return alias.length;}\n'+before+'inspect(names);'+after,expected:'true false true\n'},
+    {id:'active-live-string-iteration',source:'function liveNames(){let names=["a"];for(const name of names){if(names.length<3)names.push(name+"a");}return names.join(",");}\nconsole.log(liveNames());',expected:'a,aa,aaa\n'},
+    {id:'nested-active-iteration',source:'function nestedNames(){let names=["a"];for(const first of names){for(const second of names){if(names.length<2)names.push(second+first);}}return names.join(",");}\nconsole.log(nestedNames());',expected:'a,aa\n'},
+  ];
 }

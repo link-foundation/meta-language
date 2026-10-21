@@ -6,7 +6,8 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { readDeclarationDependencyModuleFixtures, readOrdinaryDeclarationModuleFixtures, ordinaryModuleOwnerSource } from './declaration-dependency-fixtures.mjs';
-import { readDeclarationModuleOwnerFixtures, readDeclarationSpecialGlobalSources, declarationSpecialGlobalInventory } from './declaration-module-owner-fixtures.mjs';
+import {readOwnedRecursiveSourceFixtures} from './declaration-owned-auxiliary-fixtures.mjs';
+import { readDeclarationModuleOwnerFixtures, readDeclarationDeferredModuleFixtures, readDeclarationSpecialGlobalSources, declarationSpecialGlobalInventory } from './declaration-module-owner-fixtures.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 import { deriveDeclarationDependencyNativeInterface } from './declaration-dependency-native-interface.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
@@ -16,37 +17,49 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 const sourcePath = 'js/src/translation/declaration-dependency-rules.js';
 const factPath = 'js/src/translation/fact-column-rules.js';
 const boundary = "import { readRequiredNumberFact } from './fact-column-rules.js';\n";
+const deferredBoundary = "import { readRequiredTextFact } from './fact-column-rules.js';\n";
 const decisions = ['acceptDeclarationDependencyFacts', 'readDeclarationDependencyComponents',
-  'acceptRecursiveDeclarationGroup', 'acceptRecursiveDeclarationPublication', 'acceptDeclarationModuleScope', 'acceptDeclarationSignatureBinding'];
+  'acceptRecursiveDeclarationGroup', 'acceptRecursiveDeclarationPublication', 'acceptDeclarationModuleScope', 'acceptDeclarationSignatureBinding',
+  'readRecursiveDeclarationSourceOwners', 'acceptRecursiveDeclarationAuxiliaryClosure',
+  'acceptRecursiveDeclarationAuxiliaryCorrespondence', 'acceptRecursiveDeclarationOwnedEmission',
+  'acceptRecursiveDeclarationOwnedPublication', 'readDeclarationDeferredBinding', 'acceptDeclarationDeferredModuleScope'];
 
 export function readDeclarationDependencySourceClosure() {
   const source = readFileSync(new URL(sourcePath, root), 'utf8');
   const facts = readFileSync(new URL(factPath, root), 'utf8');
   assert.equal(source.split(boundary).length, 2, 'one actual complete fact-column import');
   const start = source.indexOf(boundary), end = start + boundary.length;
-  const body = source.slice(0, start) + source.slice(end);
+  const firstBody = source.slice(0, start) + source.slice(end);
+  assert.equal(firstBody.split(deferredBoundary).length, 2, 'one complete additive deferred-fact import');
+  const deferredStart = source.indexOf(deferredBoundary), deferredEnd = deferredStart + deferredBoundary.length;
+  const body = firstBody.replace(deferredBoundary, '');
   assert.doesNotMatch(body, /^\s*import\b/mu, 'no unknown import is dropped');
   const combined = facts + '\n\n' + body;
   return { source: combined, bytes: Buffer.byteLength(combined), sourceSha256: digest(combined), inputs: [
     { path: factPath, source: facts, bytes: Buffer.byteLength(facts), sourceSha256: digest(facts), removedImports: [] },
     { path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256: digest(source),
-      removedImports: [{ start, end, source: boundary, coordinateUnit: 'UTF-16 code units' }] },
+      removedImports: [{ start, end, source: boundary, coordinateUnit: 'UTF-16 code units' },
+        {start: deferredStart, end: deferredEnd, source: deferredBoundary, coordinateUnit: 'UTF-16 code units'}] },
   ] };
 }
 
 export async function generateDeclarationDependencyRules({ check = false, native = false } = {}) {
   const closure = readDeclarationDependencySourceClosure();
   assert.deepEqual([...closure.inputs[1].source.matchAll(/^export function (\w+)\(/gmu)].map(match => match[1]), decisions);
-  const policy = { schemaVersion: 1, model: 'atomic checked recursive declaration groups 1', sourcePath, decisions,
+  const policy = { schemaVersion: 1, model: 'atomic checked recursive declaration groups with owned complete emission 2', sourcePath, decisions,
     sourceClosure: closure,
     moduleFixtures: readDeclarationDependencyModuleFixtures(),
+    ownedAuxiliaryFixtures: readOwnedRecursiveSourceFixtures(),
     ordinaryModuleFixtures: readOrdinaryDeclarationModuleFixtures(),
     ordinaryModuleOwnerSource,
     moduleOwnerFixtures: readDeclarationModuleOwnerFixtures(),
+    deferredModuleFixtures: readDeclarationDeferredModuleFixtures(),
     specialGlobalSources: readDeclarationSpecialGlobalSources(),
     specialGlobalInventory: declarationSpecialGlobalInventory,
     assertionVersions: { Node: '>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0', Rust: '>=1.90.0 <1.100.0' },
     interpretation: 'Dense source-group dependency candidates determine scheduling only. Every original body is checked together before signatures are obtained; every original member is rechecked and emitted with those actual peer signatures. Only the final complete batch publishes. The ordinary binder remains the fallback, without provisional peer signatures. Ordinary dependency and public/importable signatures additionally require actual certified module scope and exactly one actual binding owner; isolated outputs alone do not prove those module bindings.',
+    auxiliaryBoundary: 'The separate auxiliary profile accepts JavaScript to Rust only. Complete source-owned loop/join fn and non-output data helpers must have one original root, closed checked references, complete actual block/mapping/constructor coverage, corresponding independent original-member captures, identical root interfaces, no external target collision, and safe actual module scope. Published bytes are complete blocks from the single original whole-group emission. No generated helper name or body is rewritten. Changed decorators, nested namespaces, source defaults/options/guards, output/abort carriers and unsupported reference/type profiles refuse. The original six decisions and flat oracle remain exact.',
+    deferredScopeBoundary: 'Separate actual-CST rules admit one ordinary const function value initializer or one named class containing only plain deferred methods/constructors, without heritage, fields, static/computed/decorated members or initializer effects. Exact actual names participate in uniqueness and builtin-shadow ownership. These scope facts do not translate class bodies or change the original six decisions. Unknown module evaluation still requires the complete original checker route.',
     boundary: 'Both new atomic groups and legacy partial-scope retries require an actually known module surface: actual named function/import groups, comments, and pure primitive literals certified by the existing complete literal proof. A wider form requires the existing parser/checker to check the complete original module with actual translated import signatures. Unknown bindings, writes or evaluation are never omitted. New atomic admission additionally requires ordinary synchronous hoisted named function declarations with unique actual owners, flat checked declarations, complete member signatures, and matching per-member target mappings. Constructor errors and other unsupported constructs remain obligations. Exact empty named class declarations with no inheritance or members are inert module-form facts only; their actual class names participate in ownership counts while class translation stays unsupported. Duplicate actual owners refuse before either module-scope proof route. Unknown module context cannot certify ordinary/public binding signatures; preserved isolated item outputs make no whole-module behavior claim.' };
   for (const path of ['js/src/translation/data/declaration-dependency-rules.lino', 'rust/src/data/declaration-dependency-rules.lino']) {
     if (check) checkProjectData(new URL(path, root), policy); else writeProjectData(new URL(path, root), policy);

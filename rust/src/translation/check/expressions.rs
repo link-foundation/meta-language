@@ -152,6 +152,10 @@ impl Checker {
             | SNode::None { .. } => {
                 self.check_literal_expression(node, env, path, context, allow_literal)
             }
+            SNode::BooleanValue { arg } => {
+                let value = self.expr(arg, env, path, None, false)?;
+                self.boolean_value(value, span)
+            }
             SNode::NumberValue { arg } => {
                 let value = self.expr(arg, env, path, None, false)?;
                 let value = self.number_value(value, span)?;

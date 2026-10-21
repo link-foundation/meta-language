@@ -355,6 +355,60 @@ pub fn accept_owned_array_final_use(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn accept_owned_array_iteration_borrow_shape(
+    block: &str,
+    inline: bool,
+    statements: f64,
+    binding: &str,
+    expression: &str,
+    receiver: &str,
+    path_length: f64,
+    following: &str,
+    parser_owned: bool,
+    fresh: bool,
+) -> bool {
+    (((((((((block == "block") && !inline) && (statements == 2f64)) && (binding == "const"))
+        && (expression == "forOfIterable"))
+        && (receiver == "name"))
+        && (path_length == 1f64))
+        && (following == "for"))
+        && parser_owned)
+        && fresh
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_owned_array_borrowed_append(position: f64, starts: &[f64], ends: &[f64]) -> bool {
+    if !((position >= 0f64) && ((position % 1f64) == 0f64))
+        || ((starts.len() as f64) != (ends.len() as f64))
+    {
+        false
+    } else {
+        {
+            let at = 0f64;
+            {
+                let ml_s3 =
+                    self::ml_accept_owned_array_borrowed_append_loop8(position, starts, ends, at);
+                match ml_s3 {
+                    self::MlAcceptOwnedArrayBorrowedAppendLoop8Result::MlAcceptOwnedArrayBorrowedAppendLoop8Done => {
+                        true
+                    }
+                    self::MlAcceptOwnedArrayBorrowedAppendLoop8Result::MlAcceptOwnedArrayBorrowedAppendLoop8Return(ml_result8) => {
+                        ml_result8
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptOwnedArrayAppendUsesLoop1Result {
     MlAcceptOwnedArrayAppendUsesLoop1Done,
@@ -528,14 +582,14 @@ pub fn ml_accept_owned_array_append_uses_loop1(
                         {
                             let edge = start;
                             {
-                                let ml_s3 = self::ml_accept_owned_array_append_uses_loop2(
+                                let ml_s4 = self::ml_accept_owned_array_append_uses_loop2(
                                     allocation_loops,
                                     append_loops,
                                     escape_loops,
                                     end,
                                     edge,
                                 );
-                                match ml_s3 {
+                                match ml_s4 {
                                     self::MlAcceptOwnedArrayAppendUsesLoop2Result::MlAcceptOwnedArrayAppendUsesLoop2Done => {
                                         {
                                             let escape_2 = escape + 1f64;
@@ -696,6 +750,51 @@ pub fn ml_accept_owned_array_final_use_loop6(
             }
         } else {
             self::MlAcceptOwnedArrayFinalUseLoop6Result::MlAcceptOwnedArrayFinalUseLoop6Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptOwnedArrayBorrowedAppendLoop8Result {
+    MlAcceptOwnedArrayBorrowedAppendLoop8Done,
+    MlAcceptOwnedArrayBorrowedAppendLoop8Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_owned_array_borrowed_append_loop8(
+    mut position: f64,
+    starts: &[f64],
+    ends: &[f64],
+    mut at: f64,
+) -> self::MlAcceptOwnedArrayBorrowedAppendLoop8Result {
+    loop {
+        return if at < (starts.len() as f64) {
+            {
+                let start = self::read_required_number_fact(starts, at);
+                {
+                    let end = self::read_required_number_fact(ends, at);
+                    if ((((start >= 0f64) && ((start % 1f64) == 0f64)) && (end > start))
+                        && ((end % 1f64) == 0f64))
+                    {
+                        if (start <= position) && (position < end) {
+                            self::MlAcceptOwnedArrayBorrowedAppendLoop8Result::MlAcceptOwnedArrayBorrowedAppendLoop8Return(false)
+                        } else {
+                            {
+                                let at_2 = at + 1f64;
+                                {
+                                    at = at_2;
+                                    continue;
+                                }
+                            }
+                        }
+                    } else {
+                        self::MlAcceptOwnedArrayBorrowedAppendLoop8Result::MlAcceptOwnedArrayBorrowedAppendLoop8Return(false)
+                    }
+                }
+            }
+        } else {
+            self::MlAcceptOwnedArrayBorrowedAppendLoop8Result::MlAcceptOwnedArrayBorrowedAppendLoop8Done
         };
     }
 }

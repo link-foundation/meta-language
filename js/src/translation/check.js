@@ -690,6 +690,8 @@ class Checker {
       }
       case 'method':
         return this.method(node, env, path, expected);
+      case 'booleanValue':
+        return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':
         return coerce(this.numberValue(this.expr(node.arg, env, path, undefined), node.span), FLOAT, this.language, node.span);
       case 'none':

@@ -32,6 +32,9 @@ pub(super) struct CheckedItem {
     pub(super) program: Program,
     pub(super) emitted: Emitted,
     pub(super) signatures: Vec<External>,
+    pub(super) definition_ownership: Option<crate::translation::emit_rust::DefinitionOwnership>,
+    pub(super) source: String,
+    pub(super) source_language: String,
 }
 
 pub(super) fn check_and_emit_item(
@@ -40,6 +43,27 @@ pub(super) fn check_and_emit_item(
     to: &str,
     context: &Context,
     literal_bindings: &HashMap<String, SExpr>,
+) -> Result<Option<CheckedItem>, TranslationError> {
+    check_and_emit_item_profile(text, from, to, context, literal_bindings, false)
+}
+
+pub(super) fn check_and_emit_item_with_ownership(
+    text: &str,
+    from: &str,
+    to: &str,
+    context: &Context,
+    literal_bindings: &HashMap<String, SExpr>,
+) -> Result<Option<CheckedItem>, TranslationError> {
+    check_and_emit_item_profile(text, from, to, context, literal_bindings, true)
+}
+
+fn check_and_emit_item_profile(
+    text: &str,
+    from: &str,
+    to: &str,
+    context: &Context,
+    literal_bindings: &HashMap<String, SExpr>,
+    record_ownership: bool,
 ) -> Result<Option<CheckedItem>, TranslationError> {
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
@@ -84,18 +108,30 @@ pub(super) fn check_and_emit_item(
     {
         return Ok(None);
     }
-    let emitted = match constants {
-        Some(emitted) => emitted,
+    let (emitted, definition_ownership) = match constants {
+        Some(emitted) => (emitted, None),
         None if family(to) == "Rust" && context.utf16_strings => {
             match super::representation::validate(&program)? {
-                Some(emitted) => emitted,
-                None => emit_rust_with_representation(&program, true)?,
+                Some(emitted) => (emitted, None),
+                None if record_ownership => {
+                    crate::translation::emit_rust::emit_rust_with_definition_ownership(
+                        &program, true,
+                    )?
+                }
+                None => (emit_rust_with_representation(&program, true)?, None),
             }
         }
-        None if family(to) == "Rust" => {
-            emit_rust_with_representation(&program, context.utf16_strings)?
+        None if family(to) == "Rust" && record_ownership => {
+            crate::translation::emit_rust::emit_rust_with_definition_ownership(
+                &program,
+                context.utf16_strings,
+            )?
         }
-        None => emit_javascript(&program)?,
+        None if family(to) == "Rust" => (
+            emit_rust_with_representation(&program, context.utf16_strings)?,
+            None,
+        ),
+        None => (emit_javascript(&program)?, None),
     };
     let signatures = if program.imports.is_empty() {
         declared_signatures(&program, is_constant)
@@ -106,5 +142,8 @@ pub(super) fn check_and_emit_item(
         program,
         emitted,
         signatures,
+        definition_ownership,
+        source: text.to_owned(),
+        source_language: from.to_owned(),
     }))
 }

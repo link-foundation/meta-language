@@ -39,6 +39,10 @@ pub enum SNode {
         #[serde(rename = "type")]
         ty: Type,
     },
+    /// Internal reconstruction of the checked source Boolean conversion.
+    BooleanValue {
+        arg: Box<SExpr>,
+    },
     /// Internal reconstruction of the represented JavaScript numeric conversion.
     NumberValue {
         arg: Box<SExpr>,
@@ -329,6 +333,7 @@ impl SNode {
             Self::Unit => "unit",
             Self::None { .. } => "none",
             Self::Some { .. } => "some",
+            Self::BooleanValue { .. } => "booleanValue",
             Self::NumberValue { .. } => "numberValue",
             Self::ReferencePayload { .. } => "referencePayload",
             Self::FlattenOption { .. } => "flattenOption",

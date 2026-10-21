@@ -7,7 +7,9 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+mod deferred_scope;
 mod dependency_rules;
+mod owned_recursive_emission;
 mod recursive_groups;
 
 use super::{Context, Group, GroupKind, Translated, translate_group};
@@ -36,6 +38,8 @@ pub(super) struct Scan {
     function_declaration: bool,
     // Actual UTF-16 class and name ranges, present only for the exact empty form.
     empty_class_declaration: Option<[usize; 4]>,
+    // Certified complete actual CST: 1=class definition, 2=const function value.
+    deferred_binding: Option<u8>,
     mentions: Vec<String>,
     imports: Option<ImportScan>,
 }
@@ -58,6 +62,18 @@ fn scan_item(text: &str) -> Option<Scan> {
     let mut function_declaration = false;
     let mut empty_class_declaration = None;
     let mut imports = None;
+    let deferred_candidate = word(index, "class")
+        || word(index, "const")
+            && kind(index + 1, TokenKind::Identifier)
+            && value(index + 2, "=")
+            && (word(index + 3, "function")
+                || value(index + 3, "(")
+                || kind(index + 3, TokenKind::Identifier) && value(index + 4, "=>"));
+    let deferred = if deferred_candidate {
+        deferred_scope::read_binding(text)
+    } else {
+        None
+    };
     if word(index, "async") && word(index + 1, "function") {
         is_async = true;
         index += 1;
@@ -65,19 +81,22 @@ fn scan_item(text: &str) -> Option<Scan> {
     if word(index, "function") && kind(index + 1, TokenKind::Identifier) {
         declares = Some(name(index + 1));
         function_declaration = true;
-    } else if word(index, "class")
-        && kind(index + 1, TokenKind::Identifier)
-        && kind(index + 2, TokenKind::Punct)
-        && value(index + 2, "{")
-        && kind(index + 3, TokenKind::Punct)
-        && value(index + 3, "}")
-        && kind(index + 4, TokenKind::Eof)
-    {
-        let class = at(index)?;
-        let class_name = at(index + 1)?;
-        let close = at(index + 3)?;
-        declares = Some(class_name.value.clone());
-        empty_class_declaration = Some([class.start, close.end, class_name.start, class_name.end]);
+    } else if word(index, "class") && kind(index + 1, TokenKind::Identifier) {
+        // Reserve the actual named owner even for a class whose scope form refuses.
+        declares = Some(name(index + 1));
+        if kind(index + 2, TokenKind::Punct)
+            && value(index + 2, "{")
+            && kind(index + 3, TokenKind::Punct)
+            && value(index + 3, "}")
+            && kind(index + 4, TokenKind::Eof)
+        {
+            let class = at(index)?;
+            let class_name = at(index + 1)?;
+            let close = at(index + 3)?;
+            declares = Some(class_name.value.clone());
+            empty_class_declaration =
+                Some([class.start, close.end, class_name.start, class_name.end]);
+        }
     } else if word(index, "const")
         && kind(index + 1, TokenKind::Identifier)
         && value(index + 2, "=")
@@ -118,12 +137,18 @@ fn scan_item(text: &str) -> Option<Scan> {
             mentions.push(token.value.clone());
         }
     }
+    if let Some((_, name)) = &deferred
+        && declares.as_ref() != Some(name)
+    {
+        return None;
+    }
     Some(Scan {
         declares,
         exported,
         is_async,
         function_declaration,
         empty_class_declaration,
+        deferred_binding: deferred.map(|(kind, _)| kind),
         mentions,
         imports,
     })
