@@ -2915,6 +2915,15 @@ codecs. Historical descriptor readers invert only the complete certified source
 successors in their explicit profile; current parsing and inference use current
 sources. Unknown iterable owners retain their existing checks and diagnostics.
 
+Required object parameters retain one logical argument and ordered field reads,
+using existing parameter, field and binding concepts. Shared source decisions
+select the initial synchronous named-declaration profile and its exact lexical
+owners; both runtime adapters consume their automatically translated plans.
+Defaults, mutable bindings, nested patterns and wider callable profiles retain
+separate obligations. Built-in operations require their actual unshadowed
+owners, and non-simple parameter lists retain strict-directive early errors.
+Generated source and codec replay do not establish native execution.
+
 Generated libraries can group contiguous primitive Boolean operands into an
 explicit tuple carrier to satisfy the native parameter lint. The source author
 retains the whole decision body and original bindings; a recorded caller author
