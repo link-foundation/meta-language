@@ -5,9 +5,10 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
-import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {checkProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
+import {acceptCurrentRawPredecessorOutput,acceptCurrentRawPredecessorPacketSource} from './current-own-codebase-raw-source-history.mjs';
 import {readCurrentOwnCodebaseRawDescriptorPolicy,deriveCurrentOwnCodebaseRawDescriptorSource,
-  deriveCurrentOwnCodebaseRawDescriptorOutputs,verifyCurrentOwnCodebaseRawDescriptorPacket} from './current-own-codebase-raw-source-descriptors.mjs';
+  deriveCurrentOwnCodebaseRawDescriptorOutputs,verifyCurrentOwnCodebaseRawDescriptorRefresh} from './current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 const helper='js/scripts/current-own-codebase-raw-source-descriptors.mjs';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
@@ -70,13 +71,15 @@ export function generateCurrentOwnCodebaseRawSourceDescriptors({check=false}={})
     boundary:'One additive provenance edge updates three actual source descriptors and both logical inference-proof descriptor paths. Complete emitted definitions, archives, fixtures, mappings, prior receipts and policies retain exact whole-byte inverses. This supplies no semantic-equivalence or native-execution evidence.'};
   const result=deriveCurrentOwnCodebaseRawDescriptorOutputs(packet);packet.edge=result.edge;
   for(const row of[artifact,register,loan])row.current=pin(result.outputs.find(output=>output.file===row.file).source);
-  verifyCurrentOwnCodebaseRawDescriptorPacket(packet);
+  verifyCurrentOwnCodebaseRawDescriptorRefresh(packet);
   const writes=[...result.outputs.map(row=>({...row,previous:[artifact,register,loan].find(input=>input.file===row.file).sourceText})),
     ...adapters.map(row=>({file:row.file,source:deriveCurrentOwnCodebaseRawDescriptorSource(row),previous:row.sourceText}))];
   // Validate every input before the first write, and keep repeated authors exact.
-  for(const row of writes){const actual=readFileSync(new URL(row.file,root),'utf8');assert.ok(actual===row.previous||actual===row.source,'unreviewed whole input: '+row.file);if(check)assert.equal(actual,row.source);}
+  for(const row of writes){const actual=readFileSync(new URL(row.file,root),'utf8');assert.ok(actual===row.previous||actual===row.source||acceptCurrentRawPredecessorOutput(actual,row.file),'unreviewed whole input: '+row.file);if(check)assert.equal(actual,row.source);}
   const helperPath=new URL(helper,root),source=readFileSync(helperPath,'utf8'),pattern=/^const policySha256='(?:PENDING|[a-f0-9]{64})';$/mu;
   assert.equal(source.split(pattern).length,2);
+  const packetSource=readFileSync(new URL(policy.output,root),'utf8');
+  assert.ok(acceptCurrentRawPredecessorPacketSource(packetSource)||packetSource===serializeProjectData(packet,policy.output),'an unknown current packet is never overwritten');
   if(check)checkProjectData(new URL(policy.output,root),packet);else writeProjectData(new URL(policy.output,root),packet);
   const expected=source.replace(pattern,"const policySha256='"+pin(readFileSync(new URL(policy.output,root))).sha256+"';");
   if(check)assert.equal(source,expected);else{for(const row of writes)writeFileSync(new URL(row.file,root),row.source);writeFileSync(helperPath,expected);}

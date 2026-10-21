@@ -6,8 +6,9 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {readCurrentRawPredecessorHistory,readCurrentRawPredecessorPacket} from './current-own-codebase-raw-source-history.mjs';
 const root=new URL('../../',import.meta.url);
-const policySha256='c70826340739bdda2eef7e306271109c017efaf624a2a85239a4f57897cd55d5';
+const policySha256='db6a903d036aced419f35c1c09652b0115f4fc650358f06a31f3c7b190b16d66';
 const revision='a8a789afb0ed569340d9079279f534f0bf7c4e72';
 const property='currentOwnCodebaseRawSourceDescriptorSuccessors';
 const output='parity/self-translation/current-own-codebase-raw-source-descriptors.lino';
@@ -108,6 +109,13 @@ export function verifyCurrentOwnCodebaseRawDescriptorPacket(packet){
   // readers never admit PENDING (load independently checks the whole digest).
   // A later caller cannot coherently replace current pins or source intervals.
   if(policySha256!=='PENDING')assert.equal(pin(serializeProjectData(packet,output)).sha256,policySha256,'the entire reviewed current packet stays exact');
+  const result=verifyCurrentOwnCodebaseRawDescriptorStructure(packet);
+  readCurrentRawPredecessorHistory();
+  return result;
+}
+
+/** Certificate/structure proof only. This does not grant current-packet identity. */
+export function verifyCurrentOwnCodebaseRawDescriptorStructure(packet){
   exactKeys(packet,['schemaVersion','model','revision','artifact','register','loan','sources','adapters','inferenceDescriptorAlias','edge','boundary']);
   const policy=readCurrentOwnCodebaseRawDescriptorPolicy();for(const key of ['schemaVersion','model','revision'])assert.equal(packet[key],policy[key]);
   assert.deepEqual(packet.sources.map(row=>row.file),sourcePaths);assert.deepEqual(packet.adapters.map(row=>row.file),adapterPaths);
@@ -121,6 +129,29 @@ export function verifyCurrentOwnCodebaseRawDescriptorPacket(packet){
   for(const row of [...packet.sources,...packet.adapters])deriveCurrentOwnCodebaseRawDescriptorSource(row);
   const result=deriveCurrentOwnCodebaseRawDescriptorOutputs(packet);assert.deepEqual(packet.edge,result.edge);
   for(const row of result.outputs){const capture=rows.find(input=>input.file===row.file);assert.deepEqual(capture.current,pin(row.source));}
+  return packet;
+}
+
+/** Normal author admission for one new current view, retaining all old versions.
+ * Installed readers still require their independent whole packet digest above. */
+export function verifyCurrentOwnCodebaseRawDescriptorRefresh(packet){
+  verifyCurrentOwnCodebaseRawDescriptorStructure(packet);
+  const previous=readCurrentRawPredecessorPacket();
+  for(const field of ['schemaVersion','model','revision','inferenceDescriptorAlias','boundary'])assert.deepEqual(packet[field],previous[field]);
+  for(const role of ['artifact','register','loan']){
+    const current={...packet[role]},old={...previous[role]};delete current.current;delete old.current;
+    assert.deepEqual(current,old,'every complete original source and certificate stays exact: '+role);
+  }
+  for(const[index,row]of packet.sources.entries()){
+    const current={...row},old={...previous.sources[index]};delete current.current;delete current.edits;delete old.current;delete old.edits;
+    assert.deepEqual(current,old,'each complete A8 source and artifact descriptor remains unchanged');
+    exactKeys(row.current,['bytes','sha256','sourceText']);
+    for(const interval of row.edits)exactKeys(interval,['start','end','previousText','currentStart','currentEnd','currentText']);
+    assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.current.sourceText,'normal refresh uses exact actual current source bytes');
+  }
+  assert.deepEqual(packet.adapters,previous.adapters,'the complete three original adapter recipes remain exact');
+  for(const row of packet.adapters)assert.equal(readFileSync(new URL(row.file,root),'utf8'),deriveCurrentOwnCodebaseRawDescriptorSource(row));
+  assert.equal(packet.edge.changes.length,previous.edge.changes.length,'all ten logical descriptor fields remain represented');
   return packet;
 }
 
