@@ -24,13 +24,13 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request cancels that pull request's older runs. Push,
-# release and dispatch runs each get their own group, so a release is never
-# cancelled; the write jobs also share the release queue below. The group has
+# Pull request numbers identify update queues, including a late merged run.
+# Push, release and dispatch verification runs use their own run id in every
+# job; write jobs retain the shared release queue below. The group has
 # its own literal prefix: called from ci.yml, github.workflow names the caller,
 # and a group equal to the caller's would deadlock with it.
 concurrency:
-  group: js-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-tests-${{ matrix.group }}-${{ matrix.partition }}
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-tests-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -142,20 +142,32 @@ jobs:
         group: [grammar, grammar-native, grammar-recovery, grammar-scaling, grammar-csharp, grammar-elixir, grammar-ruby, translation, conformance, downstream, tooling]
         partition: [1]
         include:
-          - {group: grammar, partition: 1, shards: 3}
-          - {group: grammar, partition: 2, shards: 3}
-          - {group: grammar, partition: 3, shards: 3}
+          - {group: tooling, partition: 1, shards: 4}
+          - {group: tooling, partition: 2, shards: 4}
+          - {group: tooling, partition: 3, shards: 4}
+          - {group: tooling, partition: 4, shards: 4}
+          - {group: grammar, partition: 1, shards: 6}
+          - {group: grammar, partition: 2, shards: 6}
+          - {group: grammar, partition: 3, shards: 6}
+          - {group: grammar, partition: 4, shards: 6}
+          - {group: grammar, partition: 5, shards: 6}
+          - {group: grammar, partition: 6, shards: 6}
           - {group: grammar-native, partition: 1, shards: 6}
           - {group: grammar-native, partition: 2, shards: 6}
           - {group: grammar-native, partition: 3, shards: 6}
           - {group: grammar-native, partition: 4, shards: 6}
           - {group: grammar-native, partition: 5, shards: 6}
           - {group: grammar-native, partition: 6, shards: 6}
-          - {group: conformance, partition: 1, shards: 2}
-          - {group: conformance, partition: 2, shards: 2}
-          - {group: translation, partition: 1, shards: 3}
-          - {group: translation, partition: 2, shards: 3}
-          - {group: translation, partition: 3, shards: 3}
+          - {group: conformance, partition: 1, shards: 4}
+          - {group: conformance, partition: 2, shards: 4}
+          - {group: conformance, partition: 3, shards: 4}
+          - {group: conformance, partition: 4, shards: 4}
+          - {group: translation, partition: 1, shards: 6}
+          - {group: translation, partition: 2, shards: 6}
+          - {group: translation, partition: 3, shards: 6}
+          - {group: translation, partition: 4, shards: 6}
+          - {group: translation, partition: 5, shards: 6}
+          - {group: translation, partition: 6, shards: 6}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -224,7 +236,7 @@ jobs:
           TRANSLATION_SHARD: ${{ matrix.partition }}/${{ matrix.shards }}
         run: >-
           node js/scripts/translation-test-feedback.mjs capture
-          --commit "$GITHUB_SHA" --shard "$TRANSLATION_SHARD"
+          --commit "$GITHUB_SHA" --shard "$TRANSLATION_SHARD" --partitions "${{ matrix.shards }}"
           --out "issue-195-artifacts/translation-test-feedback/${{ matrix.partition }}-of-${{ matrix.shards }}"
 
       - name: Retain translation compiler feedback and native observations
@@ -256,7 +268,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: check-js-${{ github.ref }}-translation-test-feedback
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-translation-test-feedback
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -276,7 +288,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
-          pattern: translation-test-feedback-${{ github.sha }}-*-of-3
+          pattern: translation-test-feedback-${{ github.sha }}-*-of-6
           path: .issue-195-work/translation-test-feedback/partitions
           merge-multiple: false
 
@@ -288,6 +300,7 @@ jobs:
         run: |
           mkdir -p .issue-195-work/translation-test-feedback
           node js/scripts/translation-test-feedback.mjs merge \
+            --partitions 6 \
             --commit "$GITHUB_SHA" \
             --inputs .issue-195-work/translation-test-feedback/partitions \
             --out .issue-195-work/translation-test-feedback/merged \
@@ -325,7 +338,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -340,6 +353,16 @@ jobs:
           - group: binary-candidates
             generated_slice: first
           - group: source-model-raw
+            generated_slice: first
+          - group: source-model-raw-schema
+            generated_slice: first
+          - group: source-model-raw-generation
+            generated_slice: first
+          - group: raw-emission-profiles
+            generated_slice: first
+          - group: raw-consuming-emission
+            generated_slice: first
+          - group: raw-borrowed-emission
             generated_slice: first
     steps:
       - uses: actions/checkout@v7
@@ -1182,12 +1205,12 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test --test-concurrency=1 ../experiments/binary-metadata-buffer/native-observations.test.mjs
 
       - name: Check complete original link raw projection native generation
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
         working-directory: js
         run: node --max-old-space-size=1024 ../experiments/original-link-complete-table-projection/generate-raw-current-emission.mjs --native --check
 
       - name: Run complete original link raw projection checks
-        if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-generation' }}
         working-directory: js
         env:
           CI: 'true'
@@ -1195,6 +1218,18 @@ jobs:
           SELF_TRANSLATION_CHECK_RUST: '0'
           ORIGINAL_LINK_RAW_NATIVE: '0'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-projection.test.mjs
+
+      - name: Run complete original link raw schema and consumer contracts
+        if: ${{ !cancelled() && matrix.group == 'source-model-raw-schema' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+          ORIGINAL_LINK_RAW_SEPARATE_SUITES: '1'
+          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'schema'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
 
       - name: Run complete original link raw native oracle contracts
         if: ${{ !cancelled() && matrix.group == 'source-model-raw' }}
@@ -1204,7 +1239,39 @@ jobs:
           TRANSLATION_CHECK_RUST: '0'
           SELF_TRANSLATION_CHECK_RUST: '0'
           ORIGINAL_LINK_RAW_NATIVE: '0'
+          ORIGINAL_LINK_RAW_SEPARATE_SUITES: '1'
+          ORIGINAL_LINK_RAW_CONTRACT_PARTITION: 'plan'
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-native-observations.test.mjs
+
+      - name: Run complete raw emission profile contracts
+        if: ${{ !cancelled() && matrix.group == 'raw-emission-profiles' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-emission-profiles.test.mjs
+
+      - name: Run complete raw consuming emission contracts
+        if: ${{ !cancelled() && matrix.group == 'raw-consuming-emission' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-consuming-emission.test.mjs
+
+      - name: Run complete raw borrowed emission contracts
+        if: ${{ !cancelled() && matrix.group == 'raw-borrowed-emission' }}
+        working-directory: js
+        env:
+          CI: 'true'
+          TRANSLATION_CHECK_RUST: '0'
+          SELF_TRANSLATION_CHECK_RUST: '0'
+          ORIGINAL_LINK_RAW_NATIVE: '0'
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node --max-old-space-size=1024 --test --test-concurrency=1 ../experiments/original-link-complete-table-projection/raw-borrowed-emission.test.mjs
 
       - name: Check generated whole Rust runtime shell rules
         if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
@@ -1341,7 +1408,7 @@ jobs:
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-text-units.test.mjs
 
       - name: Run Rust owned local container checks
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         working-directory: js
         run: node ../scripts/with-cache-cleanup.mjs --event test -- node --test ../experiments/rust-owned-local-container.test.mjs
 
@@ -1398,11 +1465,11 @@ jobs:
         run: node js/scripts/generate-shared-numeric-function-fixtures.mjs --check
 
       - name: Check strict public declaration consumers
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         run: node js/scripts/check-public-declaration-contracts.mjs --compiler js/node_modules/.bin/tsc
 
       - name: Authenticate reviewed generated-stage migration refreshes
-        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'second' }}
+        if: ${{ !cancelled() && matrix.group == 'generated' && matrix.generated_slice == 'first' }}
         run: node js/scripts/generate-translation-stage-refresh-receipt.mjs --check
 
       - name: Check the generated Rust source product rules against JavaScript
@@ -1498,7 +1565,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: check-js-${{ github.ref }}-javascript-test
+      group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-test
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1619,7 +1686,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           registry-url: 'https://registry.npmjs.org'
 
       - name: Update npm for trusted publishing

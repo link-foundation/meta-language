@@ -1,0 +1,1 @@
+What do you mean open? It must be fully delivered, and all undrafted changes must be fully drafted, so we check them as fast as possible. So we don't just wait for CI/CD to finish.

@@ -687,6 +687,10 @@ impl Inference {
                 self.unify(&search_type, &Term::Known(STRING), expr.span)?;
                 Ok(Term::Known(BOOL))
             }
+            SNode::ArrayIsArray { arg } => {
+                self.expr(arg, env)?;
+                Ok(Term::Known(BOOL))
+            }
             SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))
@@ -720,6 +724,21 @@ impl Inference {
                         element.clone()
                     };
                     self.unify(&value, &want, item.value.span.or(expr.span))?;
+                    // Match the existing expected-array optional owner update.
+                    let contained = if item.spread {
+                        match self.resolve(&value) {
+                            Term::Array(element) => Some(*element),
+                            _ => None,
+                        }
+                    } else {
+                        Some(self.resolve(&value))
+                    };
+                    if let Some(contained) = contained
+                        && matches!(self.resolve(&contained), Term::Option { .. })
+                        && let Term::Var(variable) = &element
+                    {
+                        self.bindings[*variable] = Some(self.resolve(&contained));
+                    }
                 }
                 Ok(Term::Array(Box::new(element)))
             }
@@ -749,7 +768,7 @@ impl Inference {
                         | Term::Function { .. }
                         | Term::Cell(_) => false,
                     };
-                    if unknown {
+                    if unknown && crate::translation::number_predicate_rules::read_number_predicate_argument_form("JavaScript", op, "", "").is_empty() {
                         let want = if item.spread {
                             Term::Array(Box::new(Term::Known(FLOAT)))
                         } else {
@@ -767,6 +786,12 @@ impl Inference {
             }
             SNode::ForOfIterable { object, .. } => {
                 let object = self.expr(object, env)?;
+                let actual = self.resolve(&object);
+                if self.array_from_iterable_is_array(&actual) {
+                    self.collections
+                        .insert(std::ptr::from_ref(expr), (object.clone(), expr.span));
+                    return Ok(object);
+                }
                 let result = Term::Array(Box::new(self.fresh(false)));
                 self.iterables.push(IterableOf {
                     object,

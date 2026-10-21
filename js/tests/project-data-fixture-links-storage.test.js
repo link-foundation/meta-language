@@ -4,11 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { readProjectData, resolveProjectDataPath } from '../scripts/project-data.mjs';
+import { readProjectData, resolveProjectDataPath, serializeProjectData } from '../scripts/project-data.mjs';
+import { verifyGitArtifactCertificate } from '../scripts/git-object-certificate.mjs';
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
-import { retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
+import { captureTranslationStageRefreshHistory, retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
 import { structuredDataToLino } from '../src/structured-data-links.js';
 
 const root = new URL('../../', import.meta.url);
@@ -25,6 +26,24 @@ test('fixture Links data preserves every original ordered decoded baseline', () 
     assert.equal(existsSync(file), false, `${logicalPath} has one authoritative Links representation`);
     assert.ok(resolveProjectDataPath(file).endsWith('.lino'), logicalPath);
     let protectedValue = readProjectData(file);
+    if (logicalPath === 'parity/fixtures/typescript-erasure.json') {
+      const history = readProjectData(new URL('../../parity/fixtures/typescript-named-import-expectation-history.lino', import.meta.url));
+      assert.equal(history.path, logicalPath.replace(/\.json$/u, '.lino'));
+      assert.equal(hash(readFileSync(resolveProjectDataPath(file))), history.currentSha256,
+        'the complete current fixture must match its independently checked extension');
+      assert.equal(history.originalCases.length, 13);
+      assert.equal(history.appended.length, 8);
+      assert.deepEqual(protectedValue.cases.map(row => row.id),
+        [...history.originalCases.map(row => row.id), ...history.appended]);
+      for (const original of history.originalCases) {
+        assert.equal(protectedValue.cases.find(row => row.id === original.id)?.source, original.source);
+      }
+      protectedValue = { ...protectedValue, cases: protectedValue.cases.slice(0, 13)
+        .map(row => row.id === history.previousCase.id ? history.previousCase : row) };
+      verifyGitArtifactCertificate(history.certificate, Buffer.from(serializeProjectData(protectedValue, history.path)), {
+        revision: '15745ffcd322c48bdd537ccb48a5f7c9deb96917', path: 'parity/fixtures/typescript-erasure.lino',
+      });
+    }
     const freshness = contract.currentFreshnessChecks.find(check => check.logicalPaths.includes(logicalPath));
     const refresh = freshness?.providerReceiptRefresh;
     if (refresh || freshness?.translationStageRefresh || freshness?.antlrLexerDeclarationRefresh) {
@@ -76,7 +95,7 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
     { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
   assert.equal(hash(originalBytes), receipt.originalSha256);
   assert.equal(hash(refreshBytes), receipt.refreshSha256);
-  assert.deepEqual(readFileSync(new URL(receipt.refreshPath, root)), refreshBytes,
+  assert.ok(readFileSync(new URL(receipt.refreshPath, root)).equals(refreshBytes),
     'a later generated snapshot needs its own authenticated immutable receipt');
 
   const historical = JSON.parse(originalBytes.toString('utf8'));
@@ -97,6 +116,19 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
       ? execFileSync('git', ['show', `${revision}:${path}`], options) : null;
   };
   const priorReceipts = validateTranslationStageRefreshHistory(history, archivedBlob, receipt.refreshRevision);
+  assert.deepEqual(captureTranslationStageRefreshHistory(receipt.refreshRevision, archivedBlob), history,
+    'the complete archive is derived deterministically from the committed predecessor inputs');
+  const committedHistory = readStructuredDataLino(archivedBlob(receipt.refreshRevision, historyPath).toString('utf8'));
+  assert.deepEqual(history.receipts.slice(0, -1), committedHistory.receipts,
+    'every original ordered receipt entry stays exact before the single appended snapshot entry');
+  assert.equal(history.receipts.at(-1).sourceCommit, receipt.refreshRevision);
+  assert.throws(() => captureTranslationStageRefreshHistory(receipt.refreshRevision, (revision, path) =>
+    revision === receipt.refreshRevision && path === historyPath ? null : archivedBlob(revision, path)),
+  /complete committed history and receipt/u);
+  assert.throws(() => captureTranslationStageRefreshHistory(receipt.refreshRevision, (revision, path) =>
+    revision === priorReceipts[0].refreshRevision && path === priorReceipts[0].refreshPath
+      ? Buffer.from('changed snapshot bytes') : archivedBlob(revision, path)),
+  /snapshot differs from its immutable Git bytes/u);
   assert.equal(priorReceipts[0].refreshRevision, '62ff1b8b05ab049c51736b06780bab8274ab45cf',
     'the original immutable refresh receipt remains inspectable and authenticated');
   for (const prior of priorReceipts) {
@@ -135,14 +167,39 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
     if (revision === first.receipt.refreshRevision && path === first.receipt.refreshPath) return Buffer.from('changed snapshot bytes');
     return execFileSync('git', ['show', `${revision}:${path}`], { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
   }), /snapshot differs from its immutable Git bytes/u);
+  // This immutable snapshot is also the source of the newest archived receipt.
+  // The original corruption therefore reaches its source authentication first.
+  const archivedSnapshot = history.receipts.some(entry => entry.sourceCommit === receipt.refreshRevision);
+  const latestReceiptError = archivedSnapshot
+    ? /history receipt differs from its immutable Git bytes/u : /latest prior receipt/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === first.sourcePath) return Buffer.from('changed prior receipt bytes');
     return archivedBlob(revision, path);
+  }, receipt.refreshRevision), latestReceiptError);
+  // Retain a separate actual late-lookup corruption after the same immutable
+  // source was authenticated. Both ordered guards must still execute.
+  let latestReceiptReads = 0;
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === first.sourcePath && ++latestReceiptReads === 2) {
+      return Buffer.from('changed prior receipt bytes');
+    }
+    return archivedBlob(revision, path);
   }, receipt.refreshRevision), /latest prior receipt/u);
+  assert.equal(latestReceiptReads, 2);
+  const latestArchiveError = archivedSnapshot
+    ? /complete preceding archive/u : /committed archive/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === historyPath) return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
     return archivedBlob(revision, path);
+  }, receipt.refreshRevision), latestArchiveError);
+  let latestHistoryReads = 0;
+  assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
+    if (revision === receipt.refreshRevision && path === historyPath && ++latestHistoryReads === 2) {
+      return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
+    }
+    return archivedBlob(revision, path);
   }, receipt.refreshRevision), /committed archive/u);
+  assert.equal(latestHistoryReads, 2);
   assert.throws(() => validateTranslationStageRefreshHistory({ schemaVersion: 1, receipts: history.receipts.slice(0, -1) },
     archivedBlob, receipt.refreshRevision), /receipt archive|latest prior receipt/u);
 });

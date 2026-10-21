@@ -152,6 +152,10 @@ impl Checker {
             | SNode::None { .. } => {
                 self.check_literal_expression(node, env, path, context, allow_literal)
             }
+            SNode::BooleanValue { arg } => {
+                let value = self.expr(arg, env, path, None, false)?;
+                self.boolean_value(value, span)
+            }
             SNode::NumberValue { arg } => {
                 let value = self.expr(arg, env, path, None, false)?;
                 let value = self.number_value(value, span)?;
@@ -181,6 +185,39 @@ impl Checker {
                 self.record_source_field(object, field, env, path, span)
             }
             SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
+            SNode::ArrayIsArray { arg } => {
+                let value = self.expr(arg, env, path, None, false)?;
+                let kind = value.ty.kind();
+                let element = match &value.ty {
+                    Type::Option { element, .. } => element.kind(),
+                    _ => "",
+                };
+                let plan = crate::translation::array_classification_rules::read_java_script_array_classification_plan(kind, element);
+                let name = self.fresh_name("ml_array_test");
+                let body = match plan.as_slice() {
+                    [false, false] => Expr::lit(BOOL, LitValue::Bool(false)),
+                    [true, false] => Expr::lit(BOOL, LitValue::Bool(true)),
+                    [true, true] => {
+                        self.boolean_value(Expr::var(name.clone(), value.ty.clone()), span)?
+                    }
+                    _ => {
+                        return Err(unsupported(
+                            "Array.isArray operand",
+                            "the checked value needs a closed represented kind or a flat optional array/tuple; unknown union/proxy domains need an explicit operational model",
+                            span,
+                        ));
+                    }
+                };
+                Ok(Expr::new(
+                    Node::Let {
+                        name,
+                        value: Box::new(value),
+                        body: Box::new(body),
+                    },
+                    BOOL,
+                ))
+            }
+
             SNode::Unary {
                 op: UnaryOp::Not,
                 arg,
@@ -475,7 +512,20 @@ impl Checker {
                         span,
                     ));
                 }
-                let mut value = self.tuple_literal(items, *frozen, span, env, path, expected)?;
+                let context = match expected {
+                    Some(ty @ Type::Option { element, .. })
+                        if accept_java_script_optional_tuple_context(
+                            self.language.as_str(),
+                            node.node.kind(),
+                            ty.kind(),
+                            element.kind(),
+                        ) =>
+                    {
+                        Some(element.as_ref())
+                    }
+                    _ => expected,
+                };
+                let mut value = self.tuple_literal(items, *frozen, span, env, path, context)?;
                 if let Node::Tuple {
                     product_model: checked_model,
                     ..
@@ -566,6 +616,13 @@ impl Checker {
                     }
                 }
                 let (left, right) = self.operands(left, right, env, path, span)?;
+                if self.language == Language::JavaScript && crate::translation::reference_identity_rules::accept_reference_identity_comparison(
+                    op_name(op), left.ty.kind(), right.ty.kind(),
+                    left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
+                ) {
+                    let domain = left.ty.clone();
+                    return Ok(Expr::new(binary_node(op, Box::new(left), Box::new(right), Some(domain), None, None, None), BOOL));
+                }
                 if matches!(left.ty, Type::Tuple { .. }) {
                     return Err(unsupported(
                         "comparison of tuples",
@@ -585,6 +642,22 @@ impl Checker {
                         "comparison of arrays",
                         "=== of two arrays compares which array each is, which a value translation does not keep; compare their elements",
                         span,
+                    ));
+                }
+                let string_order =
+                    crate::translation::string_order_rules::read_string_order_operation(
+                        self.language.as_str(),
+                        op_name(op),
+                        if left.ty == STRING { "string" } else { "" },
+                    );
+                if !string_order.is_empty() {
+                    return Ok(Expr::new(
+                        Node::StringTest {
+                            op: string_order,
+                            string: Box::new(left),
+                            search: Box::new(right),
+                        },
+                        BOOL,
                     ));
                 }
                 if !matches!(op, BinaryOp::Eq | BinaryOp::Ne) && !left.ty.is_ordered() {

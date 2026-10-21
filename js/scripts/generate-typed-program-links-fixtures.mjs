@@ -21,6 +21,8 @@ const inputs = [
   ['rust-exact-cast', 'Rust', 'fn widen(value:i32)->i64{value as i64}fn main(){println!("{}",widen(2));}', ['2']],
   ['javascript-abort-branch', 'JavaScript', 'function f(value){if(value<0){throw new Error("negative");}return value;}console.log(f(2));', ['2']],
   ['javascript-operation-string-data', 'JavaScript', 'console.log("sqrt((globalThis.injectionObserved=true,9))||Math.sqrt");', ['sqrt((globalThis.injectionObserved=true,9))||Math.sqrt']],
+  ["javascript-set-size","JavaScript","/** @param {Set<number>} values */ function count(values){return values.size;}console.log(count(new Set([1,1,2])));",["2"]],
+  ["javascript-map-size","JavaScript","/** @param {Map<string,number>} values */ function count(values){return values.size;}console.log(count(new Map([[\"second\",2],[\"first\",1],[\"second\",3]])));",["2"]],
 ];
 
 function execute(code) {

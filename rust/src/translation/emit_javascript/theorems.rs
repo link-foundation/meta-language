@@ -2,13 +2,14 @@
 
 use super::super::ir::{Prop, TheoremDecl, rename_theorem};
 use super::{
-    Decl, Helper, JavaScriptEmitter, Result, TheoremCheck, Type, ctor_object, ident, json_string,
+    Decl, Helper, JavaScriptEmitter, Result, TheoremCheck, Type, ctor_object, json_string,
     malformed,
 };
 
 impl JavaScriptEmitter<'_> {
     pub(super) fn theorem(&mut self, entry: &Decl, theorem: &TheoremDecl) -> Result<String> {
-        let (binders, prop, _) = rename_theorem(theorem, &ident, &self.state.local_reserved());
+        let (binders, prop, _) =
+            rename_theorem(theorem, &self.state.ident, &self.state.local_reserved());
         let name = self.state.local_name(&theorem.full_name).to_owned();
         self.state.map(entry, &name);
         self.state

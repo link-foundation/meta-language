@@ -347,9 +347,13 @@ export function linuxProcesses(procRoot = '/proc') {
     if (cwd === EXITING) continue;
     const namespace = attempt(() => readlinkSync(path.join(entry, 'ns/pid')));
     const status = namespace && namespace === ownNamespace ? attempt(() => readFileSync(path.join(entry, 'status'), 'utf8')) : null;
-    const namespacePids = status?.match(/^NSpid:\s+([\d\s]+)$/mu)?.[1].trim().split(/\s+/u);
+    const namespacePids = status?.match(/^NSpid:[\t ]+(\d+(?:[\t ]+\d+)*)[\t ]*$/mu)?.[1].split(/[\t ]+/u);
     processes.push({
-      pid: namespacePids ? Number(namespacePids.at(-1)) : Number(name),
+      // Keep stat's parent and child coordinates in the procfs mount's PID
+      // namespace until ancestor exclusion finishes. NSpid is in the caller's
+      // namespace only for processes whose namespace matches /proc/self.
+      pid: Number(name),
+      ...(namespacePids ? { namespacePid: Number(namespacePids.at(-1)) } : {}),
       ppid: Number(processState(stat).split(' ')[1]),
       executable: attempt(() => readlinkSync(path.join(entry, 'exe')).replace(/ \(deleted\)$/u, '')),
       cwd,
@@ -359,6 +363,19 @@ export function linuxProcesses(procRoot = '/proc') {
     });
   }
   return processes;
+}
+
+/** Exclude ancestors in one PID namespace, then expose known caller PID values. */
+export function excludeProcessAncestors(processes, ownPid, parentPid) {
+  const entries = new Map(processes.map(entry => [entry.pid, entry]));
+  const ancestors = new Set();
+  for (let pid = ownPid; pid > 0 && !ancestors.has(pid); pid = entries.get(pid)?.ppid ?? (pid === ownPid ? parentPid : 0)) {
+    ancestors.add(pid);
+  }
+  return processes.filter(({ pid }) => !ancestors.has(pid)).map(({ namespacePid, ...entry }) => ({
+    ...entry, pid: namespacePid ?? entry.pid,
+    ppid: entries.get(entry.ppid)?.namespacePid ?? entry.ppid,
+  }));
 }
 
 /** Processes from `ps` or PowerShell: whole command lines, but no working directories. */
@@ -405,9 +422,18 @@ function listedProcesses() {
 export function runningProcesses() {
   let probe = 'unavailable';
   let processes = [];
+  let ownPid = process.pid;
+  let parentPid = process.ppid;
   if (process.platform === 'linux' && existsSync('/proc/self/stat')) {
     probe = 'proc';
     processes = linuxProcesses();
+    // /proc may have been mounted by an outer namespace. Its self symlink,
+    // numeric directories and stat parent fields all use that mount's IDs.
+    const mountedPid = attempt(() => readlinkSync('/proc/self'));
+    if (mountedPid && /^\d+$/u.test(mountedPid)) {
+      ownPid = Number(mountedPid);
+      parentPid = 0;
+    }
   } else {
     const listed = listedProcesses();
     if (listed) {
@@ -416,12 +442,7 @@ export function runningProcesses() {
     }
   }
   // The cleanup itself, and whatever started it, may name the paths it cleans.
-  const parents = new Map(processes.map(({ pid, ppid }) => [pid, ppid]));
-  const ancestors = new Set();
-  for (let pid = process.pid; pid > 0 && !ancestors.has(pid); pid = parents.get(pid) ?? (pid === process.pid ? process.ppid : 0)) {
-    ancestors.add(pid);
-  }
-  return { probe, processes: processes.filter(({ pid }) => !ancestors.has(pid)) };
+  return { probe, processes: excludeProcessAncestors(processes, ownPid, parentPid) };
 }
 
 /** Whether `text` names `directory` or a path inside it. */

@@ -7,6 +7,11 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+mod deferred_scope;
+mod dependency_rules;
+mod owned_recursive_emission;
+mod recursive_groups;
+
 use super::{Context, Group, GroupKind, Translated, translate_group};
 use crate::decorators::DecoratorSet;
 use crate::translation::Language;
@@ -29,6 +34,12 @@ pub(super) struct Scan {
     pub(super) declares: Option<String>,
     pub(super) exported: bool,
     is_async: bool,
+    // Ordinary is the actual named declaration branch together with !is_async.
+    function_declaration: bool,
+    // Actual UTF-16 class and name ranges, present only for the exact empty form.
+    empty_class_declaration: Option<[usize; 4]>,
+    // Certified complete actual CST: 1=class definition, 2=const function value.
+    deferred_binding: Option<u8>,
     mentions: Vec<String>,
     imports: Option<ImportScan>,
 }
@@ -48,13 +59,44 @@ fn scan_item(text: &str) -> Option<Scan> {
     let mut index = usize::from(exported);
     let mut declares = None;
     let mut is_async = false;
+    let mut function_declaration = false;
+    let mut empty_class_declaration = None;
     let mut imports = None;
+    let deferred_candidate = word(index, "class")
+        || word(index, "const")
+            && kind(index + 1, TokenKind::Identifier)
+            && value(index + 2, "=")
+            && (word(index + 3, "function")
+                || value(index + 3, "(")
+                || kind(index + 3, TokenKind::Identifier) && value(index + 4, "=>"));
+    let deferred = if deferred_candidate {
+        deferred_scope::read_binding(text)
+    } else {
+        None
+    };
     if word(index, "async") && word(index + 1, "function") {
         is_async = true;
         index += 1;
     }
     if word(index, "function") && kind(index + 1, TokenKind::Identifier) {
         declares = Some(name(index + 1));
+        function_declaration = true;
+    } else if word(index, "class") && kind(index + 1, TokenKind::Identifier) {
+        // Reserve the actual named owner even for a class whose scope form refuses.
+        declares = Some(name(index + 1));
+        if kind(index + 2, TokenKind::Punct)
+            && value(index + 2, "{")
+            && kind(index + 3, TokenKind::Punct)
+            && value(index + 3, "}")
+            && kind(index + 4, TokenKind::Eof)
+        {
+            let class = at(index)?;
+            let class_name = at(index + 1)?;
+            let close = at(index + 3)?;
+            declares = Some(class_name.value.clone());
+            empty_class_declaration =
+                Some([class.start, close.end, class_name.start, class_name.end]);
+        }
     } else if word(index, "const")
         && kind(index + 1, TokenKind::Identifier)
         && value(index + 2, "=")
@@ -95,10 +137,18 @@ fn scan_item(text: &str) -> Option<Scan> {
             mentions.push(token.value.clone());
         }
     }
+    if let Some((_, name)) = &deferred
+        && declares.as_ref() != Some(name)
+    {
+        return None;
+    }
     Some(Scan {
         declares,
         exported,
         is_async,
+        function_declaration,
+        empty_class_declaration,
+        deferred_binding: deferred.map(|(kind, _)| kind),
         mentions,
         imports,
     })
@@ -171,6 +221,7 @@ fn portable(ty: &Type) -> bool {
 /// callers are carried with the checker's diagnostic.
 pub(super) struct Binder<'g, 'a> {
     pub(super) groups: &'g [Group<'a>],
+    pub(super) source: &'g str,
     pub(super) from: &'g str,
     pub(super) to: &'g str,
     pub(super) decorators: &'g DecoratorSet,
@@ -179,9 +230,29 @@ pub(super) struct Binder<'g, 'a> {
     pub(super) utf16_strings: bool,
 }
 
+pub(super) struct ModuleSignatureContext {
+    pub(super) module_scope_known: bool,
+    pub(super) owner_counts: HashMap<String, usize>,
+    pub(super) module_binding_names: Vec<String>,
+}
+
+impl ModuleSignatureContext {
+    pub(super) fn accept_signature_binding(&self, name: &str) -> bool {
+        accept_signature_binding(
+            self.module_scope_known,
+            self.owner_counts.get(name).copied().unwrap_or(0),
+        )
+    }
+}
+
+fn accept_signature_binding(scope_known: bool, owner_count: usize) -> bool {
+    recursive_groups::source_number(owner_count)
+        .is_some_and(|count| dependency_rules::accept_signature_binding(scope_known, count))
+}
+
 impl Binder<'_, '_> {
     /// The translation of every group, with what each item scan found.
-    pub(super) fn translate(&self) -> (Vec<Translated>, Vec<Option<Scan>>) {
+    pub(super) fn translate(&self) -> (Vec<Translated>, Vec<Option<Scan>>, ModuleSignatureContext) {
         let scans: Vec<Option<Scan>> = self
             .groups
             .iter()
@@ -196,22 +267,48 @@ impl Binder<'_, '_> {
             })
             .collect();
         let mut owners: HashMap<String, usize> = HashMap::new();
+        let mut owner_counts: HashMap<String, usize> = HashMap::new();
+        let mut module_binding_names = Vec::new();
         for (index, scan) in scans.iter().enumerate() {
             let Some(scan) = scan else { continue };
             if let Some(imports) = &scan.imports {
                 for (_, local) in &imports.names {
+                    if !owners.contains_key(local) {
+                        module_binding_names.push(local.clone());
+                    }
+                    *owner_counts.entry(local.clone()).or_default() += 1;
                     owners.entry(local.clone()).or_insert(index);
                 }
             } else if let Some(name) = &scan.declares {
+                if !owners.contains_key(name) {
+                    module_binding_names.push(name.clone());
+                }
+                *owner_counts.entry(name.clone()).or_default() += 1;
                 owners.entry(name.clone()).or_insert(index);
             }
         }
+        let components = recursive_groups::read_components(&scans, &owners);
         let mut state = Visit {
             scans,
             owners,
+            owner_counts,
+            module_binding_names,
+            components,
+            attempted: HashSet::new(),
+            module_scope_known: false,
             outs: (0..self.groups.len()).map(|_| None).collect(),
             visiting: HashSet::new(),
         };
+        // Import leaves obtain only their ordinary actual translated signatures.
+        for index in 0..self.groups.len() {
+            if state.scans[index]
+                .as_ref()
+                .is_some_and(|scan| scan.imports.is_some())
+            {
+                self.visit(&mut state, index);
+            }
+        }
+        state.module_scope_known = self.module_scope_known(&state);
         for index in 0..self.groups.len() {
             self.visit(&mut state, index);
         }
@@ -220,11 +317,22 @@ impl Binder<'_, '_> {
             .into_iter()
             .map(|out| out.expect("every group is visited"))
             .collect();
-        (outs, state.scans)
+        (
+            outs,
+            state.scans,
+            ModuleSignatureContext {
+                module_scope_known: state.module_scope_known,
+                owner_counts: state.owner_counts,
+                module_binding_names: state.module_binding_names,
+            },
+        )
     }
 
     fn visit(&self, state: &mut Visit, index: usize) {
         if state.outs[index].is_some() || state.visiting.contains(&index) {
+            return;
+        }
+        if self.try_recursive_group(state, index) {
             return;
         }
         let group = &self.groups[index];
@@ -236,6 +344,7 @@ impl Binder<'_, '_> {
                 self.decorators,
                 &Context {
                     utf16_strings: self.utf16_strings,
+                    module_binding_scope: Some(Self::module_binding_scope(state)),
                     ..Context::default()
                 },
             ));
@@ -261,7 +370,12 @@ impl Binder<'_, '_> {
                 let Some(&owner) = state.owners.get(name) else {
                     continue;
                 };
-                if owner == index {
+                if owner == index
+                    || !accept_signature_binding(
+                        state.module_scope_known,
+                        state.owner_counts.get(name).copied().unwrap_or(0),
+                    )
+                {
                     continue;
                 }
                 self.visit(state, owner);
@@ -290,6 +404,7 @@ impl Binder<'_, '_> {
                 module_directory: Some(self.module_directory.to_vec()),
             },
             utf16_strings: self.utf16_strings,
+            module_binding_scope: Some(Self::module_binding_scope(state)),
         };
         state.outs[index] = Some(translate_group(
             group,
@@ -306,6 +421,11 @@ impl Binder<'_, '_> {
 struct Visit {
     scans: Vec<Option<Scan>>,
     owners: HashMap<String, usize>,
+    owner_counts: HashMap<String, usize>,
+    module_binding_names: Vec<String>,
+    components: Option<recursive_groups::Components>,
+    attempted: HashSet<usize>,
+    module_scope_known: bool,
     outs: Vec<Option<Translated>>,
     visiting: HashSet<usize>,
 }

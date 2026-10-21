@@ -246,12 +246,12 @@ pub fn render_optional_array_read(
     } else if target == "Rust" {
         {
             let index = if kind == "float" {
-                format!("self::ml_array::number_index({})", position.to_owned())
+                format!("crate::ml_array::number_index({})", position.to_owned())
             } else {
                 format!("{}.to_index()", position.to_owned())
             };
             format!(
-                "self::ml_array::optional_at({}, {index})",
+                "crate::ml_array::optional_at({}, {index})",
                 values.to_owned()
             )
         }

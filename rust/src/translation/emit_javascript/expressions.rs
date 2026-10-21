@@ -107,6 +107,30 @@ impl JavaScriptEmitter<'_> {
                 unreachable!("only the Lean and Rocq emitters thread output")
             }
             Node::Call { func, args } => {
+                if let Some(external) = self.program.external(func) {
+                    let kind = match external {
+                        crate::translation::surface::External::Function { .. } => "fn",
+                        crate::translation::surface::External::Constant { .. } => "const",
+                    };
+                    let args = self.exprs(args)?.join(", ");
+                    use crate::translation::external_emission_rules::{
+                        ml_string::Text, render_java_script_external_call,
+                    };
+                    let rendered = render_java_script_external_call(
+                        &Text::from_text(kind),
+                        &Text::from_text(func),
+                        &Text::from_text(&args),
+                    )
+                    .to_string();
+                    if rendered.is_empty() {
+                        return Err(super::unsupported(
+                            "JavaScript external call",
+                            "this checked external binding has no supported target operation",
+                            None,
+                        ));
+                    }
+                    return Ok(rendered);
+                }
                 let target = self.state.reference(func, ".");
                 let args = self.exprs(args)?;
                 Ok(format!("{target}({})", args.join(", ")))
@@ -216,6 +240,21 @@ impl JavaScriptEmitter<'_> {
                 )
             }
             Node::StringTest { op, string, search } => {
+                if crate::translation::string_order_rules::require_string_order_units(
+                    "stringTest",
+                    op,
+                ) {
+                    let left = self.expr(string)?;
+                    let right = self.expr(search)?;
+                    return Ok(
+                        crate::translation::string_order_rules::render_string_order_expression(
+                            "JavaScript",
+                            op,
+                            &left,
+                            &right,
+                        ),
+                    );
+                }
                 let value = self.expr(string)?;
                 let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
                     value

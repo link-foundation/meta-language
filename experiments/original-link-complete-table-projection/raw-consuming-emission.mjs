@@ -12,6 +12,7 @@ import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emis
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH} from './raw-emission-producer-applicability.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
+import {rawConsumingSnapshotSourceReader} from '../../js/scripts/raw-consuming-snapshot-source-profile.mjs';
 
 export const ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT = new URL('./data/raw-consuming-native-definitions.lino',import.meta.url);
 export const ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT = new URL('./data/raw-consuming-current-native-definitions.lino',import.meta.url);
@@ -87,7 +88,7 @@ const totals = owners => ({cloneCalls:owners.reduce((sum,owner)=>sum+owner.clone
 
 /** Restore only the recorded provenance changes and authenticate the entire original artifact. */
 export function verifyOriginalLinkRawConsumingConservation(artifact,read=readFileSync) {
-  assert.deepEqual(artifact.decisionSources,decisionSources(read),'actual final-use decision sources changed');
+  assert.deepEqual(artifact.decisionSources,decisionSources(rawConsumingSnapshotSourceReader(read)),'actual final-use decision sources changed');
   artifact=restoreCompleteDeclarationReceipt(artifact,'raw consuming');
   const successor=ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR, originalBytes=read(ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT);
   assert.equal(originalBytes.length,successor.original.bytes,'the original consuming artifact byte count is immutable');
@@ -140,7 +141,7 @@ export function readOriginalLinkRawConsumingProfile(currentProfile,read=readFile
   assert.equal(artifact.version,1);assert.equal(artifact.profile,'consuming');
   assert.deepEqual(artifact.options,{arrayConsumption:true});
   assert.deepEqual(artifact.predecessor,currentProfile);
-  assert.deepEqual(artifact.decisionSources,decisionSources(read),'actual final-use decision sources changed');
+  assert.deepEqual(artifact.decisionSources,decisionSources(rawConsumingSnapshotSourceReader(read)),'actual final-use decision sources changed');
   assert.equal(artifact.nativeCompilation,false);assert.equal(artifact.nativeExecution,false);
   assert.equal(artifact.definitionCount,106);assert.equal(artifact.owners.length,106);
   assert.deepEqual(artifact.declarationNames,currentProfile.declarationNames);
@@ -245,13 +246,20 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     nativeCompilation:false,nativeExecution:false,
     boundary:'Whole checked source, all106owners and both complete source-free typed archives. Tokenized clone/append sites observe emitted syntax only; the existing emitter performs its actual checked final-use decisions. No internal proof-node inventory, native timing or completion claim.',
     predecessorConservation:structuredClone(ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR)};
-  verifyOriginalLinkRawConsumingConservation(artifact);
-  if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,artifact);
-  return {artifact,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
+  // Retain the real producer's physical metadata separately. Only the frozen
+  // snapshot comparison gets certified source identities; every emitted value
+  // and both complete source-free archive replays above remain actual/current.
+  const currentArtifact=artifact;
+  const currentDecisionSources=decisionSources(readFileSync);
+  assert.deepEqual(currentArtifact.decisionSources,currentDecisionSources,'actual current producer decision sources changed');
+  const snapshotArtifact={...currentArtifact,decisionSources:decisionSources(rawConsumingSnapshotSourceReader(readFileSync))};
+  verifyOriginalLinkRawConsumingConservation(snapshotArtifact);
+  if(check)checkProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,snapshotArtifact);
+  return {artifact:snapshotArtifact,currentArtifact,currentDecisionSources,rust:emitted,profile:{profile:'consuming',sourceBytes:artifact.sourceBytes,sourceSha256:artifact.sourceSha256,
     historicalSourceSha256:predecessor.historicalSourceSha256,currentSourceSha256:predecessor.currentSourceSha256,
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
-    proof:{artifactSha256:sha256(structuredDataToLino(artifact)),predecessor,
-      predecessorConservation:artifact.predecessorConservation,decisionSources:artifact.decisionSources,
+    proof:{artifactSha256:sha256(structuredDataToLino(snapshotArtifact)),predecessor,
+      predecessorConservation:snapshotArtifact.predecessorConservation,decisionSources:snapshotArtifact.decisionSources,
       options:artifact.options,archive:artifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}}};
 }

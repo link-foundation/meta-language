@@ -71,8 +71,16 @@ if (updateTypeQueryStyles) {
   const previous = readFileSync(decoratorsPath, 'utf8').split('\n')
     .filter(line => !line.startsWith('(decorator ' + frontendTypeQueryNativeStyleId + ' ')).join('\n');
   writeFileSync(decoratorsPath, previous + (previous.endsWith('\n') ? '\n' : '\n\n') + new DecoratorSet([typeQueryStyles]).toLino());
-  const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
-  final = { stdout: formatProductRuleSource(styled) };
+  // Formatting can expose a later recorded whole-source action (for example
+  // the retained empty-string spelling after an else-if loan style). Close the
+  // same bounded normal pipeline before requiring its original idempotence.
+  for (let round = 0; round < 10; round += 1) {
+    const styled = decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source;
+    const next = { stdout: formatProductRuleSource(styled) };
+    if (next.stdout === final.stdout) break;
+    final = next;
+    if (round === 9) throw new Error('current frontend type-query styles do not converge');
+  }
   if (decorators.decorate('emitter', { format: 'Rust', scope: 'formatted-module', source: final.stdout }).source !== final.stdout) {
     throw new Error('current frontend type-query styles do not converge');
   }

@@ -53,6 +53,17 @@ impl Inference {
     }
 
     pub(super) fn array_from_iterable_element(&mut self, object: &Term) -> Option<Term> {
+        self.array_from_iterable_selection(object)
+            .map(|(_, element)| element)
+    }
+
+    /// Form zero is the unchanged array owner selected by the generated plan.
+    pub(super) fn array_from_iterable_is_array(&mut self, object: &Term) -> bool {
+        self.array_from_iterable_selection(object)
+            .is_some_and(|(form, _)| form == 0)
+    }
+
+    fn array_from_iterable_selection(&mut self, object: &Term) -> Option<(usize, Term)> {
         let object = match object {
             Term::Known(ty) => self.declared(Some(ty)),
             term => term.clone(),
@@ -67,12 +78,12 @@ impl Inference {
             facts.position(0),
         );
         match plan.first().and_then(|code| number_index(*code)) {
-            Some(0 | 2) => Some(endpoint(&facts, plan[1])),
-            Some(1) => Some(Term::Known(STRING)),
-            Some(3) => Some(Term::Tuple(vec![
-                endpoint(&facts, plan[1]),
-                endpoint(&facts, plan[2]),
-            ])),
+            Some(form @ (0 | 2)) => Some((form, endpoint(&facts, plan[1]))),
+            Some(1) => Some((1, Term::Known(STRING))),
+            Some(3) => Some((
+                3,
+                Term::Tuple(vec![endpoint(&facts, plan[1]), endpoint(&facts, plan[2])]),
+            )),
             _ => None,
         }
     }

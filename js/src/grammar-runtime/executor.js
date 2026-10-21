@@ -31,7 +31,7 @@ import { lexerObligationsFor } from './lexer-election.js';
 import { acceptGrammarLexerMode, acceptGrammarLexerTrivia, acceptGrammarLexerExpectedToken, readGrammarLexerTriviaIdentity } from '../translation/grammar-lexer-rules.js';
 import { GrammarRuntimeError } from './load.js';
 import { evaluateGrammarSelection, runEmbeddedGrammar } from './grammar-selection.js';
-import { sameGrammarOutput, sameGrammarTree } from './tree-equality.js';
+import { sameGrammarOutputChildren, sameGrammarMeaningfulChildren, sameGrammarTreeChildren } from './tree-equality.js';
 
 /** Thrown when the rule nesting exceeds `maxDepth`; the driver turns it into an `ERROR` root. */
 export class NestingTooDeep extends Error {}
@@ -171,7 +171,7 @@ function addResult(results, result, tokens = null, settling = ALL_SETTLING) {
   // experiments/native-order-trace.mjs): every decided pair and its order.
   globalThis.__orderTrace?.push([result, existing, order]);
   if (order > 0) results.set(key, result);
-  else if (order === 0 && settling.ambiguity && existing.cost === 0 && !existing.ambiguous && !sameOutput(result.children, existing.children)) {
+  else if (order === 0 && settling.ambiguity && existing.cost === 0 && !existing.ambiguous && !sameGrammarOutputChildren(result, existing, readChildSequence)) {
     // A trace, off unless a probe sets the array (see
     // experiments/native-rust-ambiguity-pair.mjs): the two results it ties.
     globalThis.__ambiguityPairs?.push([result, existing]);
@@ -184,7 +184,7 @@ function addResult(results, result, tokens = null, settling = ALL_SETTLING) {
 // `+.` in a token tree, one run of `(precedence 0 right (repeat1 ...))` or two,
 // both flattened by the silent rule) are one parse, not an ambiguity.
 function sameOutput(a, b) {
-  return sameGrammarOutput(a, b);
+  return sameGrammarOutputChildren({ children: a }, { children: b }, readChildSequence);
 }
 
 // Which of two results over the same text has the tokens a lexer prefers:
@@ -1067,22 +1067,29 @@ function comparePrecedence(a, b, orders) {
 // `extraReduction`). 1 when `result` is kept, -1 when `existing` is, 0 when
 // neither.
 function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
-  const left = [[result.children, 0, null]];
-  const right = [[existing.children, 0, null]];
+  // The original child index and parent remain available to sibling-lookahead
+  // decisions. Only traversal is lazy; no result or reduction is pruned.
+  const frame = (value, parent = null) => {
+    const part = partOf(value);
+    return [part, 0, parent, walkChildParts(part), null];
+  };
+  const left = [frame(result)];
+  const right = [frame(existing)];
+  const skip = (stack) => {
+    const top = stack[stack.length - 1];
+    top[1] += 1;
+    top[4] = null;
+  };
   const peek = (stack) => {
     while (stack.length > 0) {
       const top = stack[stack.length - 1];
-      if (top[1] < top[0].length) {
-        const child = top[0][top[1]];
-        if (!isTrivia(child)) return child;
-        top[1] += 1;
-      } else {
-        stack.pop();
-      }
+      const next = top[4] ??= top[3].next();
+      if (next.done) stack.pop();
+      else if (isTrivia(next.value)) skip(stack);
+      else return next.value;
     }
     return null;
   };
-  const skip = (stack) => { stack[stack.length - 1][1] += 1; };
   // Whether the leaves next in the two are children of one kind of node at
   // one offset, so that no reduction above them parts the two first.
   const sameParent = (one, other) => {
@@ -1091,7 +1098,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
   };
   const enter = (stack, node) => {
     skip(stack);
-    stack.push([node.children, 0, node]);
+    stack.push(frame(node, node));
   };
   for (;;) {
     const a = peek(left);
@@ -1162,7 +1169,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         // shifted it (Lean's `f a.b`, a projection of the application `f a`
         // and a `tactic_apply` of `f` to `a.b`): they part there, on that
         // token, before either is reduced.
-        const [x, y] = [leftmostChain(a).at(-1).children.find((child) => !isTrivia(child)), leftmostChain(b).at(-1).children.find((child) => !isTrivia(child))];
+        const [x, y] = [firstMeaningfulChild(partOf(leftmostChain(a).at(-1))), firstMeaningfulChild(partOf(leftmostChain(b).at(-1)))];
         const lone = x?.type === 'token' && y?.type === 'token' && x.alone !== y.alone ? (x.alone ? -loneReduction(b, x, orders) : loneReduction(a, y, orders)) : 0;
         if (lone !== 0) return lone;
         // When their parses forked at a declared conflict, tree-sitter
@@ -1179,7 +1186,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
         // shifts (Solidity's `revert(x);`, whose `x` a `call_argument` of
         // `revert_arguments` reduces on `)` where a `parenthesized_expression`
         // of level 2 shifts it).
-        const inside = shiftOrder({ children: a.children, dynamic: result.dynamic }, { children: b.children, dynamic: existing.dynamic }, orders, grammar, bytes, owner);
+        const inside = shiftOrder(shareChildren({ dynamic: result.dynamic }, a), shareChildren({ dynamic: existing.dynamic }, b), orders, grammar, bytes, owner);
         if (inside !== 0) return inside;
         const [closeA, closeB] = [closingReduction(a), closingReduction(b)];
         const apart = !samePrecedence(closeA, closeB);
@@ -1209,7 +1216,7 @@ function shiftOrder(result, existing, orders, grammar, bytes, owner = null) {
 // `element_value_pair` `v = 1`, whose `1` the silent `_element_value` of
 // precedence 2 reduced, while the pair itself is reduced with none).
 function closingReduction(node) {
-  const last = node.children.findLast((child) => !isTrivia(child));
+  const last = lastMeaningfulChild(partOf(node));
   if (last?.type === 'token') return last.reduced ?? last.precedence ?? null;
   return last?.type === 'node' ? last.closes ?? null : null;
 }
@@ -1272,7 +1279,7 @@ function silentParting(a, b, stack) {
   const reduced = a.reduced ?? a.precedence;
   if (!reduced?.rule || b.precedence || b.reduced) return 0;
   const [siblings, index] = stack[stack.length - 1];
-  for (const child of siblings.slice(index + 1)) {
+  for (const child of walkChildPartsFrom(siblings, index + 1)) {
     if (isTrivia(child)) continue;
     const closes = child.type === 'node' ? child.closes : child.reduced ?? child.precedence;
     if (!closes) continue;
@@ -1304,7 +1311,7 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
   let parent = a;
   const chain = [a];
   for (;;) {
-    const first = parent.children.find((child) => !isTrivia(child));
+    const first = firstMeaningfulChild(partOf(parent));
     if (!first) return 0;
     if (sameTree(first, b)) {
       chain.push(first);
@@ -1315,8 +1322,8 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
     chain.push(first);
   }
   const [siblings, index, container] = stack[stack.length - 1];
-  const next = siblings.slice(index).filter((child) => !isTrivia(child));
-  const own = parent.children.filter((child) => !isTrivia(child));
+  const next = [...walkChildPartsFrom(siblings, index)].filter((child) => !isTrivia(child));
+  const own = [...readChildSequence(parent, true).values()];
   const other = container ? container.precedence ?? unranked(container.rule) : owner ?? unranked();
   if (own.length > next.length || own.some((child, at) => !sameTree(child, next[at]))) {
     // Where the other result goes on past `b` in a node of its own (Lean's
@@ -1335,7 +1342,7 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
     // tokens, and the conflict is at its end, where `a`'s result reduces
     // `parent` and the other shifts on: the reduced node's associativity
     // decides on equal levels.
-    if (next.length === 2 && sameOutput(own.slice(1), theirs.children.filter((child) => !isTrivia(child)))) {
+    if (next.length === 2 && sameOutput(own.slice(1), [...readChildSequence(theirs, true).values()])) {
       const reduced = reduction(parent);
       const order = comparePrecedence(reduced, other, orders);
       if (order !== 0) return order;
@@ -1382,13 +1389,16 @@ function extraReduction(a, b, stack, orders, owner = null, grammar = null) {
 // (`<- chan T`'s 6 over the 0 of `chan T`). `stack` holds `a`'s siblings.
 // 1 when `a`'s result is kept, -1 when `b`'s is, 0 when neither.
 function endingReduction(a, b, stack, orders) {
-  if (a.type !== 'token' || b.type !== 'node' || !sameTree(leftmostChain(b).at(-1).children.find((child) => !isTrivia(child)) ?? b, a)) return 0;
+  if (a.type !== 'token' || b.type !== 'node' || !sameTree(firstMeaningfulChild(partOf(leftmostChain(b).at(-1))) ?? b, a)) return 0;
   const [siblings, index] = stack[stack.length - 1];
-  const sibling = siblings.slice(index + 1).find((child) => child.type === 'node' && !isTrivia(child));
+  let sibling;
+  for (const child of walkChildPartsFrom(siblings, index + 1)) {
+    if (child.type === 'node' && !isTrivia(child)) { sibling = child; break; }
+  }
   if (sibling?.type !== 'node' || sibling.end !== b.end) return 0;
   const rightmost = (node) => {
     const chain = [];
-    for (let current = node; current?.type === 'node'; current = current.children.findLast((child) => !isTrivia(child))) chain.push(current);
+    for (let current = node; current?.type === 'node'; current = lastMeaningfulChild(partOf(current))) chain.push(current);
     return chain;
   };
   const [mine, theirs] = [rightmost(sibling), rightmost(b)];
@@ -1645,6 +1655,43 @@ function* walkChildParts(children, backward = false) {
   }
 }
 
+// Start at an exact original direct-child index. Stored part lengths skip
+// whole prefixes without copying them or populating a chain's flat cache.
+function* walkChildPartsFrom(children, from) {
+  const pending = [[children, from]];
+  while (pending.length > 0) {
+    const [part, start] = pending.pop();
+    if (Array.isArray(part)) {
+      for (let index = start; index < part.length; index += 1) yield part[index];
+    } else if (part.left != null && part.right != null) {
+      const length = part.left.length;
+      if (start < length) pending.push([part.right, 0], [part.left, start]);
+      else pending.push([part.right, start - length]);
+    } else if (part.flat) pending.push([part.flat, start]);
+  }
+}
+
+function readChildSequence(owner, meaningful = false) {
+  const part = partOf(owner);
+  // The same already materialized array is the original identity shortcut.
+  const identity = !Array.isArray(part) && Array.isArray(part.flat) ? part.flat : part;
+  return { identity, get length() {
+    // Identity is compared before this getter. Exact shared outputs need no
+    // predicate walk, matching the original same-array fast path.
+    if (!meaningful) return part.length;
+    let length = 0;
+    for (const child of walkChildParts(part)) if (meaningful === 'truthy-trivia' ? !child.trivia : !isTrivia(child)) length += 1;
+    return length;
+  }, *values() {
+    for (const child of walkChildParts(part)) if (!meaningful || (meaningful === 'truthy-trivia' ? !child.trivia : !isTrivia(child))) yield child;
+  } };
+}
+
+function lastMeaningfulChild(children) {
+  for (const child of walkChildParts(children, true)) if (!isTrivia(child)) return child;
+  return undefined;
+}
+
 function firstMeaningfulChild(children) {
   for (const child of walkChildParts(children)) if (!isTrivia(child)) return child;
   return undefined;
@@ -1848,22 +1895,19 @@ function sameTokens(a, b) {
 // two leftmost chains compared node by node share their subtrees, which
 // would otherwise be compared again for every pair above them.
 function sameTree(a, b, memo) {
-  return sameGrammarTree(a, b, memo);
+  return sameGrammarTreeChildren(a, b, memo, readChildSequence);
 }
 
 // Whether two child lists are the same trees over the same text.
 function sameChildren(a, b) {
-  if (a === b) return true;
-  const first = a.filter((child) => !isTrivia(child));
-  const second = b.filter((child) => !isTrivia(child));
-  return first.length === second.length && first.every((child, index) => sameTree(child, second[index]));
+  return sameGrammarMeaningfulChildren(a, b, readChildSequence);
 }
 
 // The nodes along the leftmost chain of a node: itself, then its first
 // meaningful child while that is a node.
 function leftmostChain(node) {
   const chain = [];
-  for (let current = node; current?.type === 'node'; current = current.children.find((child) => !isTrivia(child))) chain.push(current);
+  for (let current = node; current?.type === 'node'; current = firstMeaningfulChild(partOf(current))) chain.push(current);
   return chain;
 }
 
@@ -3998,7 +4042,7 @@ export class Executor {
       for (const result of this.ruleBody(rule, position, state, inToken)) {
         const key = resultKey(result);
         const existing = merged.get(key);
-        if (existing && sameChildren(existing.children, result.children)) {
+        if (existing && sameChildren(existing, result)) {
           merged.set(key, result);
           continue;
         }

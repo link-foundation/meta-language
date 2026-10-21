@@ -31,6 +31,30 @@ existing typed frontend. It does not establish support for arbitrary TypeScript
 types or runtime constructs, and does not retain the complete source provenance
 provided by `selfTranslate` and `self_translate`.
 
+Explicit type modifiers in mixed named imports erase through the same linked
+rules in both packages. Runtime specifiers and default imports remain, including
+an empty named import's module evaluation; whole `import type` statements erase
+completely. Original TypeScript, comments and byte spans remain in restoration
+provenance. This uses the explicit modifier behavior of
+[verbatim module syntax](https://www.typescriptlang.org/tsconfig/verbatimModuleSyntax.html);
+it does not infer whether an unmarked import is used only as a type.
+
+An owned function in an existing checked program can also opt into the closed
+Boolean callable model. Select its complete recursive closure first:
+
+```js
+const selected = encodeFormalFunctionDefinition(linkedProgram, declarationName);
+const programRoot = selected.network.link(selected.root).references()[0];
+const definition = encodeFormalConceptDefinition(
+  { network: selected.network, root: programRoot },
+  { model: 'closed boolean function value' },
+);
+```
+
+This retains the original linked program and source context. The explicit
+Boolean argument contract and its separate namespace observation are described
+in the [authoritative vision](vision.md#recursive-formal-concept-definitions).
+
 Supplemental documentation parameter patterns encode each literal comment
 terminator `*/` as the visible text `*\/`. The executable parameter pattern is
 unchanged. Internal projection records retain that original text and its UTF-8
@@ -39,6 +63,13 @@ inverse claim: a pre-existing escaped slash can have the same documentation
 spelling, while its authoritative executable source remains distinct. Encoding
 the display does not establish semantic typing support for arbitrary destructured
 parameters; unsupported type annotations keep their existing source obligation.
+
+A supported TypeScript function's first annotated `this` parameter erases with
+its following comma, preserving runtime arity and source restoration. Portable
+Rust projection admits `this: void`; other receiver types retain a precise
+obligation. Methods, constructors and arrow receiver parameters remain outside
+this erasure profile. The [vision](vision.md#javascript-first-and-self-translation)
+records the interpretation and remaining boundaries.
 
 ## The output
 
@@ -156,7 +187,7 @@ number of source bytes, and `--list` prints a shard's modules. CI's
 `Self-Translation Report` jobs in `ci.yml` run eight shards beside the
 JavaScript tests. Each shard publishes its part of the report in
 its job summary and as a `self-translation-report-<sha>-<shard>` artifact.
-The JSON records the observed commit and the SHA-256 hashes of each module and
+The Links report records the observed commit and the SHA-256 hashes of each module and
 its Rust counterpart. Both acceptance suites download all eight shards and run
 `--verify-reports <directory> --commit <sha>` before recording the per-module
 report assertion. Verification rejects missing or duplicate modules, stale
@@ -172,6 +203,26 @@ the providers' checked translated-export signatures and each module's directory
 to both measurements. It caches source reads, signatures and dependency contexts
 within a shard. Missing providers, unsupported exports and unresolved cycles
 retain the translator's carried-item diagnostics.
+
+The same measurements retain each item's exact range, concrete syntax term and
+actual translation error. Report-only diagnostic capture preserves the ordinary
+library output and adds no translation pass. Analyze existing shard artifacts
+without translating their source again:
+
+```sh
+node js/scripts/self-translation-report-blockers.mjs --report shard-1.lino --report shard-2.lino --out blockers.lino
+node js/scripts/self-translation-report-blockers.mjs --report shard-1.lino --report shard-2.lino --group GROUP_KEY --out replay.lino
+node js/scripts/generate-self-translation-report.mjs --replay-plan replay.lino --out-dir selected-report
+```
+
+Groups rank distinct affected modules before carried source bytes and retain
+every original failure and range. Older reports expose missing diagnostics
+explicitly. A replay plan keeps its original commit, source hashes, diagnostics
+and denominator; the existing worker measures only its selected unchanged
+sources and records the current translator commit separately. Changed sources,
+missing modules or incompatible language/mode selections refuse. This report
+runner measures JavaScript to Rust; its ranking is not reverse translation or
+successful execution evidence.
 
 Decorators edit emitted lines; they cannot add what the translator carries
 untranslated (imports, classes, exports the emitters do not cover), so for
@@ -292,6 +343,19 @@ constant captures stay unbound: lazy initialization does not establish eager
 JavaScript initialization order or effects. The shared generated eligibility
 rule is used by both binders.
 
+Implicit module reference selection uses the complete frontend's checked owned
+array rewrites before forcing a reference representation from method syntax.
+Explicit reference requests and imported reference signatures still select that
+representation. A refused complete parse retains lexical admission. The complete
+owned outcome worklist exercises this path with zero carried items and exact
+source restoration; its native counterpart runs in CI.
+
+The complete source-type edge validator also exercises this path. All sixteen
+declarations translate together and restore the original JavaScript bytes.
+Seven native control declarations remain iterative. The shared schema retains
+every captured source owner, field and variant; structural edge admission stays
+separate from scalar semantics, actual native ownership and execution evidence.
+
 Whole-string `startsWith`, `endsWith` and `includes` predicates use shared
 generated decisions in both translators. Focused checks cover Unicode text,
 empty searches, missing matches, four-target emission parity and Rust method
@@ -309,14 +373,18 @@ Type queries also accept reads of eligible captured primitive literal constants.
 The checked reference is identified from its external constant signature; source
 calls and unsafe captures keep their existing refusals.
 
-Sources containing carriage returns also retain an escaped JSON source envelope
-in the translation header. Restoring that envelope requires matching the source
+Sources containing carriage returns, a leading prefix, a noncanonical trailing
+suffix or inter-item gaps that emitted separators cannot reproduce retain an
+escaped JSON source envelope in the translation header. Restoring that envelope requires matching the source
 language, UTF-8 byte length and source digest, and the digest of the complete
 translated body, including preludes and layout. This preserves CRLF, mixed line
 endings, leading and trailing whitespace and Unicode separators when the
 translation is unedited. An edited body or damaged envelope falls back to the
 ordinary per-item provenance rules; it cannot restore the stale envelope.
-The restoration decision is generated from the JavaScript frontend module.
+The restoration gate is generated from the JavaScript frontend module. A
+complete shared JavaScript rule also generates the native layout selection.
+The envelope preserves source bytes; carried items still require executable
+translation support.
 
 Dense immutable arrays also support zero-argument `slice()`, one-array
 `Array.from()` without a mapper, and homogeneous `Array.of()` construction.

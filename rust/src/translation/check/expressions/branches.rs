@@ -131,12 +131,10 @@ impl Checker {
                 let cond = self.boolean_value(checked, span)?;
                 let mut then_expr =
                     self.expr_with_context(then, env, path, context, allow_literal)?;
-                let else_expected = if then_expr.ty.is_literal() {
-                    expected.cloned()
-                } else {
-                    Some(then_expr.ty.clone())
-                };
-                let else_context = if then_expr.ty.is_literal() {
+                let else_expected = expected
+                    .cloned()
+                    .or_else(|| (!then_expr.ty.is_literal()).then(|| then_expr.ty.clone()));
+                let else_context = if expected.is_some() || then_expr.ty.is_literal() {
                     context
                 } else {
                     ExpectedType::Concrete(else_expected.as_ref())

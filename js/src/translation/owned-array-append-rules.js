@@ -21,7 +21,7 @@ export function readOwnedArrayRemovalSliceBounds() {
 
 /** @param {string} context @param {string} operation @param {boolean} reader @returns {boolean} */
 export function acceptOwnedArrayRead(context, operation, reader) {
-  if (context === 'index-receiver' || context === 'length-receiver') return true;
+  if (context === 'index-receiver' || context === 'length-receiver' || context === 'iteration-receiver') return true;
   if (context === 'argument') return reader;
   return context === 'method-receiver' && (operation === 'slice' || operation === 'includes'
     || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'join');
@@ -64,6 +64,22 @@ export function acceptOwnedArrayAppendUses(allocationLoops, appendLoops, escapeL
 }
 
 /**
+ * A complete RHS read walk must still record every actual unsafe use before
+ * this shape can omit the assignment escape. Existing escapes are retained.
+ * This decision never creates an owner or blesses a parameter/foreign array.
+ * @param {string} expression @param {string} operation @param {string} receiver
+ * @param {number} pathLength @param {boolean} sameOwner
+ * @param {number} argumentsCount @returns {boolean}
+ */
+export function acceptOwnedArraySelfSliceRebinding(expression, operation, receiver, pathLength, sameOwner, argumentsCount) {
+  if (expression === 'copySlice') return operation === '' && receiver === 'name'
+    && pathLength === 1 && sameOwner && argumentsCount === 0;
+  return expression === 'method' && operation === 'slice' && receiver === 'name'
+    && pathLength === 1 && sameOwner
+    && (argumentsCount === 0 || argumentsCount === 1 || argumentsCount === 2);
+}
+
+/**
  * A consuming array use may move its actual lexical value only when no
  * reachable continuation reads that same binding. Edges describe evaluation
  * order; alternatives join their actual continuation rather than each other.
@@ -87,6 +103,32 @@ export function acceptOwnedArrayFinalUse(position, bindings, starts, counts, suc
     const nextStart = readRequiredNumberFact(starts, event);
     const nextEnd = nextStart + readRequiredNumberFact(counts, event);
     for (let edge = nextStart; edge < nextEnd; edge += 1) pending.push(readRequiredNumberFact(successors, edge));
+  }
+  return true;
+}
+
+/** A parser-owned closed lexical for-of block supplies the exact source
+ * declaration and loop identities. Ordinary aliases supply no such owner.
+ * @param {string} block @param {boolean} inline @param {number} statements
+ * @param {string} binding @param {string} expression @param {string} receiver
+ * @param {number} pathLength @param {string} following
+ * @param {boolean} parserOwned @param {boolean} fresh @returns {boolean} */
+export function acceptOwnedArrayIterationBorrowShape(block, inline, statements, binding, expression, receiver, pathLength, following, parserOwned, fresh) {
+  return block === 'block' && !inline && statements === 2 && binding === 'const'
+    && expression === 'forOfIterable' && receiver === 'name' && pathLength === 1
+    && following === 'for' && parserOwned && fresh;
+}
+
+/** Scoped borrows end only when their actual closed source block leaves.
+ * Every unknown alias/capture/call remains a permanent ordinary escape.
+ * @param {number} position @param {number[]} starts @param {number[]} ends
+ * @returns {boolean} */
+export function acceptOwnedArrayBorrowedAppend(position, starts, ends) {
+  if (!(position >= 0 && position % 1 === 0) || starts.length !== ends.length) return false;
+  for (let at = 0; at < starts.length; at += 1) {
+    const start = readRequiredNumberFact(starts, at), end = readRequiredNumberFact(ends, at);
+    if (!(start >= 0 && start % 1 === 0 && end > start && end % 1 === 0)) return false;
+    if (start <= position && position < end) return false;
   }
   return true;
 }

@@ -12,6 +12,35 @@ const factsFile = new URL('../src/translation/fact-column-rules.js', import.meta
 const requiredImport = "import { readRequiredNumberFact } from './fact-column-rules.js';\n";
 const hash = source => createHash('sha256').update(source).digest('hex');
 
+// Complete original inputs. Values are independent source-oracle expectations;
+// normal generation stores this inventory as Links for both runtime tests.
+export function readOwnedArraySelfSliceFixtures() {
+  const declarations = [
+    ['one bound', '/** @returns {string} */ function selfSliceOne(){let values=[1,2,3];values=values.slice(1);values.push(4);return values.join(",");}', 'selfSliceOne()', '2,3,4\n'],
+    ['no bounds', '/** @returns {string} */ function selfSliceAll(){let values=[1];values=values.slice();values.push(2);return values.join(",");}', 'selfSliceAll()', '1,2\n'],
+    ['stack loop', '/** @returns {string} */ function selfSliceStack(){let values=[1];for(let index=0;index<4;index+=1){const next=values[values.length-1]??0;values=values.slice(0,values.length-1);values.push(next+1);}return values.join(",");}', 'selfSliceStack()', '5\n'],
+    ['branch join', '/** @returns {string} */ function selfSliceBranch(){let values=[1,2,3];for(let index=0;index<3;index+=1){if(index%2===0){values=values.slice(1);}else{values=values.slice(0,values.length-1);}values.push(index+4);}return values.join(",");}', 'selfSliceBranch()', '3,5,6\n'],
+    ['nested loops', '/** @returns {string} */ function selfSliceNested(){let values=[0];for(let outer=0;outer<3;outer+=1){for(let inner=0;inner<3;inner+=1){values=values.slice(1);values.push(outer*10+inner);}}return values.join(",");}', 'selfSliceNested()', '22\n'],
+    ['lexical shadow', '/** @returns {string} */ function selfSliceShadow(){let values=[1];{let values=[9,8];values=values.slice(1);values.push(7);}values.push(2);return values.join(",");}', 'selfSliceShadow()', '1,2\n'],
+    ['bound effects exactly once', '/** @param {number} value @returns {number} */ function selfSliceBound(value){console.log("bound",value);return value;}\n/** @returns {string} */ function selfSliceEffects(){let values=[1,2,3];values=values.slice(selfSliceBound(1),selfSliceBound(3));values.push(4);return values.join(",");}', 'selfSliceEffects()', 'bound 1\nbound 3\n2,3,4\n'],
+  ];
+  return declarations.map(([id, source, call, expected]) => ({ id, source: source + '\nconsole.log(' + call + ');', expected }));
+}
+
+export function readOwnedArraySelfSliceRefusals() {
+  return [
+    ['prior alias', 'const alias=values;values=values.slice(1);values.push(4);return alias.join(",")+"|"+values.join(",");', '1,2,3|2,3,4\n'],
+    ['later loop alias', 'for(let index=0;index<2;index+=1){values=values.slice(1);values.push(index+4);const alias=values;}return values.join(",");', '3,4,5\n'],
+    ['foreign assignment', 'const other=[8];values=other;values.push(4);return other.join(",");', '8,4\n'],
+    ['foreign slice', 'const other=[8,9];values=other.slice(1);values.push(4);return values.join(",");', '9,4\n'],
+    ['concat remains outside profile', 'values=values.concat([4]);values.push(5);return values.join(",");', '1,2,3,4,5\n'],
+    ['identity observation', 'const same=values===values;values=values.slice(1);values.push(4);return same;', 'true\n'],
+    ['captured owner', 'const capture=()=>values;values=values.slice(capture().length);values.push(4);return values.join(",");', '4\n'],
+    ['escaping bound argument', 'values=values.slice(selfSliceObserve(values));values.push(4);return values.join(",");', '4\n'],
+  ].map(([id, body, expected]) => ({ id,
+    source: '/** @param {number[]} input @returns {number} */ function selfSliceObserve(input){const alias=input;return alias.length;}\nfunction selfSliceRefusal(){let values=[1,2,3];' + body + '}\nconsole.log(selfSliceRefusal());', expected }));
+}
+
 export function readOwnedArrayAppendSourceModule() {
   const source = readFileSync(sourceFile, 'utf8');
   assert.equal(source.split(requiredImport).length, 2, 'one actual required-column module edge is resolved');
@@ -28,11 +57,15 @@ export async function generateOwnedArrayAppendRules({ check = false, native = fa
     source: 'js/src/translation/owned-array-append-rules.js',
     sourceSha256: hash(source),
     decisions: ['acceptOwnedArrayAppendShape', 'acceptOwnedArrayRemovalShape', 'readOwnedArrayRemovalSliceBounds', 'acceptOwnedArrayRead', 'acceptOwnedArrayReaderResult',
-      'acceptOwnedArrayAppendUses', 'acceptOwnedArrayFinalUse'],
+      'acceptOwnedArrayAppendUses', 'acceptOwnedArrayFinalUse', 'acceptOwnedArraySelfSliceRebinding',
+      'acceptOwnedArrayIterationBorrowShape', 'acceptOwnedArrayBorrowedAppend'],
+    assertionVersions: {Node: '>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0', Rust: '>=1.90.0 <1.100.0'},
+    selfSliceFixtures: readOwnedArraySelfSliceFixtures(), selfSliceRefusals: readOwnedArraySelfSliceRefusals(),
+    scopedIterationFixtures: readOwnedArrayScopedIterationFixtures(), scopedIterationRefusals: readOwnedArrayScopedIterationRefusals(),
     sourceClosure: { source: closure, sourceSha256: hash(closure), removedImport: requiredImport,
       inputs: [{ path: 'js/src/translation/owned-array-append-rules.js', sourceSha256: hash(source) },
         { path: 'js/src/translation/fact-column-rules.js', sourceSha256: hash(facts) }] },
-    boundary: 'Only actual fresh source allocations with no earlier or loop-carried escape lower to immutable array value rebinding. A native storage move additionally requires no reachable later read of the same actual renamed binding. Links reload retains ordinary immutable value semantics.',
+    boundary: 'An exact self-slice assignment (zero to two arguments) may retain its current fresh lexical owner only after the complete RHS read traversal; every existing escape remains. Other assignments remain escapes. Only actual fresh source allocations with no earlier or loop-carried escape lower to immutable array value rebinding. A native storage move additionally requires no reachable later read of the same actual renamed binding. Links reload retains ordinary immutable value semantics.',
   };
   for (const file of [new URL('../src/translation/data/owned-array-append.lino', import.meta.url),
     new URL('../../rust/src/data/owned-array-append.lino', import.meta.url)]) {
@@ -55,4 +88,23 @@ export async function generateOwnedArrayAppendRules({ check = false, native = fa
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await generateOwnedArrayAppendRules({ check: process.argv.includes('--check'), native: process.argv.includes('--native') });
   console.log('Owned array construction: actual fresh allocations, escape relations and final lexical consumption');
+}
+
+export function readOwnedArrayScopedIterationFixtures() {
+  return [
+    {id:'readonly-string-iteration-before-append',source:'/** @param {string[]} texts @returns {boolean} */ function uniqueNames(texts){let names=[];for(const text of texts){for(const name of names)if(name===text)return false;names.push(text);}return true;}\nconsole.log(uniqueNames(["a","b"]),uniqueNames(["a","a"]),uniqueNames([]));',expected:'true false true\n'},
+    {id:'completed-iteration-break-before-append',source:'/** @param {string[]} texts @returns {string} */ function collectNames(texts){let names=[];for(const text of texts){for(const name of names){if(name===text)break;}names.push(text);}return names.join(",");}\nconsole.log(collectNames(["a","a","b"]));',expected:'a,a,b\n'},
+  ];
+}
+
+export function readOwnedArrayScopedIterationRefusals() {
+  const before='/** @param {string[]} texts @returns {boolean} */ function uniqueNames(texts){let names=[];for(const text of texts){';
+  const after='for(const name of names)if(name===text)return false;names.push(text);}return true;}\nconsole.log(uniqueNames(["a","b"]),uniqueNames(["a","a"]),uniqueNames([]));';
+  return [
+    {id:'ordinary-alias-remains-live',source:before+'const alias=names;'+after,expected:'true false true\n'},
+    {id:'captured-owner-remains-escaped',source:before+'const capture=()=>names;'+after,expected:'true false true\n'},
+    {id:'unknown-reader-keeps-escape',source:'/** @param {string[]} values @returns {number} */ function inspect(values){const alias=values;return alias.length;}\n'+before+'inspect(names);'+after,expected:'true false true\n'},
+    {id:'active-live-string-iteration',source:'function liveNames(){let names=["a"];for(const name of names){if(names.length<3)names.push(name+"a");}return names.join(",");}\nconsole.log(liveNames());',expected:'a,aa,aaa\n'},
+    {id:'nested-active-iteration',source:'function nestedNames(){let names=["a"];for(const first of names){for(const second of names){if(names.length<2)names.push(second+first);}}return names.join(",");}\nconsole.log(nestedNames());',expected:'a,aa\n'},
+  ];
 }

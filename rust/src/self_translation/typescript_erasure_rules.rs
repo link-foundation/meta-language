@@ -36,3 +36,28 @@ pub fn render_erased_type_script_scalar(carriage_return: bool, line_feed: bool) 
 pub fn render_type_script_documentation_pattern(pattern: &str) -> String {
     pattern.replace("*/", "*\\/")
 }
+
+/// Erase a type specifier and its following comma; retain runtime imports and evaluation.
+#[must_use]
+pub const fn erase_type_script_named_import(
+    type_specifier: bool,
+    comma: bool,
+    after_type_specifier: bool,
+) -> bool {
+    type_specifier || comma && after_type_specifier
+}
+
+/// Read the shared compile-time receiver parameter decision.
+#[must_use]
+pub const fn accept_type_script_receiver_parameter(
+    parameter_flags: (bool, bool, bool, bool, bool),
+) -> bool {
+    let (first, required, annotated, initialized, owner) = parameter_flags;
+    first && required && annotated && !initialized && owner
+}
+
+/// Read the shared compile-time receiver parameter decision.
+#[must_use]
+pub const fn erase_type_script_receiver_separator(comma: bool, after_receiver: bool) -> bool {
+    comma && after_receiver
+}

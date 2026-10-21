@@ -8,8 +8,12 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {readStructuredDataLino,structuredDataToLino} from '../src/structured-data-links.js';
 import {tokenize} from '../src/translation/lexer.js';
 import {parseNative} from '../src/native-grammar-parser.js';
+import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
+import {restoreNativeLibraryReceipt} from '../scripts/native-library-receipt-history.mjs';
+import {readHistoricalTranslationSourceDescriptorRegister,projectHistoricalTranslationSourceDescriptorArtifact}
+ from '../scripts/current-translation-source-descriptors.mjs';
 
-const root=new URL('../../',import.meta.url),completeRegister=readProjectData(COMPLETE_DECLARATION_RECEIPTS);
+const root=new URL('../../',import.meta.url),completeRegister=readHistoricalTranslationSourceDescriptorRegister();
 const register={...completeRegister,receipts:completeRegister.receipts.slice(0,2)};
 
 test('current declaration receipts restore both complete immutable prior artifacts including every source owner',()=>{
@@ -22,7 +26,13 @@ test('current declaration receipts restore both complete immutable prior artifac
   assert.deepEqual(restored,readStructuredDataLino(previous.toString()));
   assert.deepEqual(restoreCompleteDeclarationReceipt(restored,receipt.identity),restored);
   const semantic=receipt.identity==='raw consuming'?['completeRust','owners','declarationNames','totals','assumptions','encodings','preludeHashes','replays']:['sourceClosure','emittedTextBytes','emittedTextSha256','library'];
-  for(const field of semantic)assert.deepEqual(current[field],restored[field]);
+  const packagingView=restoreNativeLibraryReceipt(current,receipt.identity);
+  for(const field of semantic)assert.deepEqual(packagingView[field],restored[field]);
+  for(const field of semantic.filter(field=>field!=='library'))assert.deepEqual(current[field],packagingView[field]);
+  if(receipt.identity==='collection construction')for(const file of current.library.files){
+   const bytes=readFileSync(new URL('rust/src/translation/'+file.path,root));
+   assert.equal(bytes.length,file.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),file.sourceSha256);
+  }
   assert.deepEqual(readFileSync(new URL(receipt.current.file,root)),Buffer.from(structuredDataToLino(current)));
  }
 });
@@ -215,7 +225,8 @@ test('reference renderer descriptor refresh preserves complete raw output and ev
  assert.deepEqual(restoreCompleteDeclarationReceipt(current,'raw consuming'),restoreCompleteDeclarationReceipt(before,'raw consuming',{register:previousRegister}));
  assert.deepEqual(restoreCompleteDeclarationDescriptorSuccessor(current,'raw consuming',completeRegister),
   restoreCompleteDeclarationDescriptorSuccessor(before,'raw consuming',previousRegister));
- const source=edge.sources[0],sourceBytes=readFileSync(new URL(source.file,root));
+ const source=edge.sources[0],sourceBytes=Buffer.from(restoreTranslationSourceHistory(
+  readFileSync(new URL(source.file,root),'utf8'),source.file,'81107a5945651f17c962e4bb81fb560f96c65ccd'));
  assert.equal(sourceBytes.length,source.current.bytes);assert.equal(createHash('sha256').update(sourceBytes).digest('hex'),source.current.sha256);
  assert.deepEqual(sourceBytes,execFileSync('git',['show',edge.current.sourceRevision+':'+source.file],{cwd:root,maxBuffer:1024*1024}));
  const reviewed=readProjectData(new URL('../../experiments/rust-text-certificate-adapter/data/provider-revisions.lino',import.meta.url))
@@ -294,7 +305,7 @@ test('neutral type descriptor successor preserves every earlier artifact registe
  const {typeNeutralDescriptorSuccessors,...previousRegister}=completeRegister;
  assert.deepEqual(Buffer.from(structuredDataToLino(previousRegister)),previousRegisterBytes);
  const previousBytes=execFileSync('git',['show',baseline+':'+edge.previous.file],{cwd:root,maxBuffer:8*1024*1024});
- const previous=readStructuredDataLino(previousBytes.toString()),current=readProjectData(new URL(edge.current.file,root));
+ const previous=readStructuredDataLino(previousBytes.toString()),current=projectHistoricalTranslationSourceDescriptorArtifact(readProjectData(new URL(edge.current.file,root)));
  const inverse=structuredClone(current),source=edge.sources[0];
  assert.deepEqual(inverse.decisionSources[9],{file:source.file,...source.current});
  inverse.decisionSources[9]={file:source.file,...source.previous};
@@ -306,7 +317,8 @@ test('neutral type descriptor successor preserves every earlier artifact registe
  for(const field of ['completeRust','owners','declarationNames','totals','assumptions','encodings','preludeHashes','replays','archive'])assert.deepEqual(current[field],previous[field]);
  assert.deepEqual(restoreCompleteDeclarationReceipt(current,'raw consuming'),restoreCompleteDeclarationReceipt(previous,'raw consuming',{register:previousRegister}));
  assert.deepEqual(restoreCompleteDeclarationDescriptorSuccessor(current,'raw consuming',completeRegister),restoreCompleteDeclarationDescriptorSuccessor(previous,'raw consuming',previousRegister));
- const currentSource=readFileSync(new URL(source.file,root)),insertion=edge.sourceExtension;
+ const currentSource=Buffer.from(restoreTranslationSourceHistory(
+  readFileSync(new URL(source.file,root),'utf8'),source.file,'2b9fd0df45757bf70a69deea6ab97d969cf6a25d')),insertion=edge.sourceExtension;
  assert.equal(currentSource.length,source.current.bytes);assert.equal(createHash('sha256').update(currentSource).digest('hex'),source.current.sha256);
  assert.equal(currentSource.subarray(insertion.start,insertion.end).toString('utf8'),insertion.source);
  const previousSource=Buffer.concat([currentSource.subarray(0,insertion.start),currentSource.subarray(insertion.end)]);
@@ -320,7 +332,8 @@ test('neutral type descriptor successor preserves every earlier artifact registe
  assert.deepEqual(remaining,originalNodes);assert.equal(originalNodes.length,47);
  assert.equal(originalNodes.filter(node=>node.kind==='export_statement').length,23);
  assert.equal(originalNodes.filter(node=>node.kind==='import_statement').length,0);
- let reader=readFileSync(new URL('../scripts/complete-declaration-receipts.mjs',import.meta.url),'utf8');
+ let reader=restoreTranslationSourceHistory(readFileSync(new URL('../scripts/complete-declaration-receipts.mjs',import.meta.url),'utf8'),
+  'js/scripts/complete-declaration-receipts.mjs','9f867bfac32f59a3341dabf54e8c0c02fbd83314');
  const begin=reader.indexOf('// This third finite edge records only the generated neutral type declaration.');
  const end=reader.indexOf('/** The public standalone gate retains its cloned-data result and all checks. */',begin);
  assert.ok(begin>0&&end>begin);
@@ -332,7 +345,7 @@ test('neutral type descriptor successor preserves every earlier artifact registe
 });
 
 test('neutral type descriptor successor refuses forged source insertions lost ancestors and semantic changes',()=>{
- const current=readProjectData(new URL(completeRegister.typeNeutralDescriptorSuccessors[0].current.file,root));
+ const current=projectHistoricalTranslationSourceDescriptorArtifact(readProjectData(new URL(completeRegister.typeNeutralDescriptorSuccessors[0].current.file,root)));
  let refused=0;
  for(const mutate of [
   value=>{delete value.typeNeutralDescriptorSuccessors;},value=>{value.typeNeutralDescriptorSuccessors=[];},

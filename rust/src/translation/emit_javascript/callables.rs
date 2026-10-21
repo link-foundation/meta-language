@@ -8,7 +8,11 @@ impl JavaScriptEmitter<'_> {
             Node::FunctionRef { func } => Ok(
                 crate::translation::callable_source_rules::render_callable_function_reference(
                     "JavaScript",
-                    &(self.state.reference(func, ".")),
+                    &(if self.program.external(func).is_some() {
+                        func.clone()
+                    } else {
+                        self.state.reference(func, ".")
+                    }),
                 ),
             ),
             Node::Apply { func, args } => {

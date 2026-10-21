@@ -118,6 +118,7 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
         | SNode::ReferencePayload { value: object, .. }
         | SNode::CellRead { cell: object }
         | SNode::TypeOf { arg: object }
+        | SNode::ArrayIsArray { arg: object }
         | SNode::Unary { arg: object, .. }
         | SNode::StringMap { object, .. }
         | SNode::ToString { arg: object }
@@ -533,6 +534,9 @@ impl<'a> Facts<'a> {
                 self.projections.push(Projection { node, object });
                 self.edge(id, object, potential);
             }
+            SNode::ArrayIsArray { arg } => {
+                self.expression(arg, env, context);
+            }
             SNode::Print { expr, body, .. } => {
                 let printed = self.expression(expr, env, context);
                 self.uses.push(Use {
@@ -784,6 +788,7 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
             | SNode::ReferencePayload { value: object, .. }
             | SNode::CellRead { cell: object }
             | SNode::TypeOf { arg: object }
+            | SNode::ArrayIsArray { arg: object }
             | SNode::Unary { arg: object, .. }
             | SNode::StringMap { object, .. }
             | SNode::ToString { arg: object }

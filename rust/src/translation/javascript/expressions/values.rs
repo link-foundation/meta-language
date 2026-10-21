@@ -63,7 +63,7 @@ impl JavaScriptParser {
         Err(self.fail_here("expected an expression"))
     }
 
-    /// `[a, ...xs, b]`: the elements in order, with the elements of each spread array in place.
+    /// `[a, ...xs, b]`: ordered values and the elements of each supported iterable.
     fn array_literal(&mut self) -> Result<SExpr> {
         let start = self.cursor.advance();
         let mut items = Vec::new();
@@ -77,7 +77,20 @@ impl JavaScriptParser {
                 ));
             }
             let spread = self.cursor.eat("...").is_some();
-            items.push(SArrayItem::new(self.expr()?, spread));
+            let value = self.expr()?;
+            let place = value.span;
+            let value = if spread {
+                SExpr::new(
+                    SNode::ForOfIterable {
+                        object: Box::new(value),
+                        ty: None,
+                    },
+                    place,
+                )
+            } else {
+                value
+            };
+            items.push(SArrayItem::new(value, spread));
             if self.cursor.eat(",").is_none() {
                 break;
             }
@@ -228,6 +241,13 @@ impl JavaScriptParser {
                 .iter()
                 .any(|external| external.name() == token.value);
         if !declared && (token.value == "NaN" || token.value == "Infinity") {
+            if !self.has_standard_builtin_owner(&token) {
+                return Err(unsupported(
+                    "unproved standard global owner",
+                    "the original module scope does not prove this special global binding",
+                    Some(token.span()),
+                ));
+            }
             self.cursor.advance();
             return Ok(node(
                 SNode::Num {
@@ -237,6 +257,13 @@ impl JavaScriptParser {
                     unit: false,
                 },
                 span(&token, &token),
+            ));
+        }
+        if token.value == "undefined" && !declared && !self.has_standard_builtin_owner(&token) {
+            return Err(unsupported(
+                "unproved standard global owner",
+                "the original module scope does not prove this special global binding",
+                Some(token.span()),
             ));
         }
         let absent = crate::translation::optional_value_rules::read_optional_source_literal(
@@ -265,6 +292,13 @@ impl JavaScriptParser {
                     &format!("new {}", constructor.value),
                     &super::super::surface_rules::read_java_script_construction_obligation(),
                     Some(self.to_here(&token)),
+                ));
+            }
+            if !self.has_standard_builtin_owner(&constructor) {
+                return Err(unsupported(
+                    "shadowed standard collection owner",
+                    "a local, module or supplied context constructor cannot be replaced with the standard Map or Set constructor",
+                    Some(constructor.span()),
                 ));
             }
             let place = self.to_here(&token);
@@ -373,21 +407,39 @@ impl JavaScriptParser {
         }
         let mut args = self.arguments(&name)?;
         let called = self.to_here(&token);
-        if name == "Array.from" {
+        if name == "Array.from" && self.has_standard_builtin_owner(&token) {
             return Ok(node(SNode::ArrayFrom { args, ty: None }, called));
         }
+        if name == "Array.isArray" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
+            return Ok(node(
+                SNode::ArrayIsArray {
+                    arg: Box::new(args.remove(0)),
+                },
+                called,
+            ));
+        }
         let array_form = crate::translation::frontend_rules::read_array_method_form(&name);
-        if array_form == "copy-from" || array_form == "construct" {
+        if (array_form == "copy-from" || array_form == "construct")
+            && self.has_standard_builtin_owner(&token)
+        {
             return Self::array_method_expression(&array_form, args, None, called);
         }
-        if name == "String" && args.len() == 1 {
+        if name == "String" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
             let arg = args.remove(0);
             return Ok(node(SNode::ToString { arg: Box::new(arg) }, called));
         }
-        if name == "Object.freeze" && args.len() == 1 {
+        if name == "Object.freeze" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
             return self.freeze_object_argument(args.remove(0), called);
         }
-        if GLOBALS.contains(&segments[0].as_str()) || name == "String" {
+        if (GLOBALS.contains(&segments[0].as_str()) || name == "String")
+            && !self.function_names.contains(&segments[0])
+            && !self.global_binding_names.contains(&segments[0])
+            && !self.literal_bindings.contains_key(&segments[0])
+            && !self
+                .externals
+                .iter()
+                .any(|external| external.name() == segments[0].as_str())
+        {
             return Err(unsupported(
                 &name,
                 "the JavaScript standard library is outside the portable core",

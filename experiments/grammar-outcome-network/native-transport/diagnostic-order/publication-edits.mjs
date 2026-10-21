@@ -34,6 +34,13 @@ export function authorWireSourceViewEdits(original,{adapterImport='../diagnostic
   ]);
 }
 
+export function authorCurrentWireSourceViewEdits(original) {
+  return author(original,[[
+    "from '../diagnostic-order/source-view.mjs';",
+    "from '../diagnostic-order/current-source-view.mjs';"
+  ]]);
+}
+
 export function authorBridgeSourceViewEdits(original) {
   return author(original,[[
     '      originalParentPin:outcomeWirePolicy.pins[parentPath],pins:packet.receipt.inputs},',
@@ -86,4 +93,22 @@ export function appendWirePublicationEdits(record,addition) {
   for(const {from,to,count}of [...updated.edits].reverse()){assert.equal(inverse.split(to).length-1,count);inverse=inverse.split(to).join(from);}
   assert.equal(inverse,record.original,'all historical and new publication changes have one complete source inverse');
   return {record:updated,source:result.source};
+}
+
+/** Reuse the complete original recipe while retaining independently published
+ * receipt fields added after it. The old author remains available unchanged.
+ */
+export function authorRunnerOverlayReceiptSourceViewEdits(original,historicalRunner) {
+  assert.equal(digest(historicalRunner),'a584080a3b4f281c1b239ce81ffa8cd5ab135f9449700aa26d88c4e164b7415e','the complete original compiler-profile predecessor');
+  const previous=authorRunnerOverlaySourceViewEdits(historicalRunner);
+  assert.equal(previous.edits.length,2,'the complete historical producer correction recipe');
+  const tail='processes:[]};';
+  const changes=previous.edits.map(({from,to,count},index)=>{
+    assert.equal(count,1);
+    if(index===0)return[from,to];
+    assert.ok(from.endsWith(tail)&&to.endsWith(tail),'only the unchanged terminal receipt field is outside the member insertion');
+    assert.equal(from.split(tail).length,2);assert.equal(to.split(tail).length,2);
+    return[from.slice(0,-tail.length),to.slice(0,-tail.length)];
+  });
+  return author(original,changes);
 }

@@ -16,16 +16,88 @@ import { parseWorkflow } from '../../scripts/check-cache-policy.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 import { lineCoverage, mergeLcov, renderLcov } from '../../scripts/merge-lcov.mjs';
 import { partitionGroupFiles, partitionTests, testFiles, TEST_GROUPS } from '../scripts/test-groups.mjs';
+import {readFrozenToolingTestGroups} from '../scripts/tooling-frozen-source-history.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8');
-const workflow = (name) => read(`.github/workflows/${name}`);
+const workflow = (name) => name === 'js.yml' ? restoreGeneratedPackageOwnerHistory(read(`.github/workflows/${name}`)) : restoreCiNodeRuntimeHistory(read(`.github/workflows/${name}`));
 const jobs = (name) => new Map(parseWorkflow(workflow(name)).map((job) => [job.id, job]));
+const verificationDomain="${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}";
 
-test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {
+test('main dependency refresh retains failed live findings and delivers their outcome to repair pull requests', async () => {
+  const {mkdirSync, writeFileSync} = await import('node:fs');
+  const text = workflow('dependency-refresh.yml'), job = jobs('dependency-refresh.yml').get('refresh');
+  assert.deepEqual(triggers(text).sort(), ['schedule', 'workflow_dispatch']);
+  assert.match(condition(job), /github\.ref == 'refs\/heads\/main'/u);
+  const audit = job.steps.find(step => step.name === 'Refresh the dependency audit from the registries');
+  const retain = job.steps.find(step => step.name === 'Retain the live dependency report');
+  const summary = job.steps.find(step => step.name === 'Report the live audit outcome');
+  const publish = job.steps.find(step => step.name === 'Open or update the refresh pull request');
+  assert.match(audit.text, /id: audit/u);assert.match(audit.text, /continue-on-error: true/u);
+  assert.equal(job.steps.filter(step => /continue-on-error:/u.test(step.text)).length, 1);
+  assert.ok(retain.afterFailure && summary.afterFailure);
+  for (const file of ['js/dependency-refresh.log', 'parity/dependency-inventory.lino', 'docs/dependency-audit.md']) assert.ok(retain.text.includes(file));
+  assert.match(retain.text, /if-no-files-found: error/u);
+  for (const step of [summary, publish]) assert.ok(step.text.includes('AUDIT_OUTCOME: ${{ steps.audit.outcome }}'));
+  assert.doesNotMatch(publish.text, /continue-on-error/u);
+  assert.match(job.header, /group: dependency-refresh-\$\{\{ github\.repository \}\}-write\n\s+cancel-in-progress: false/u);
+  const script = step => step.run.replace(/^\|\s*\n/u, '').replace(/^ {10}/gmu, '');
+  for (const step of [audit, summary, publish]) {
+    const syntax = spawnSync('bash', ['-n', '-c', script(step)], {encoding: 'utf8'});
+    assert.equal(syntax.status, 0, syntax.stderr);
+  }
+  const directory = mkdtempSync(path.join(tmpdir(), 'meta-language-live-audit-contract-'));
+  try {
+    const failure = spawnSync('bash', ['-e', '-o', 'pipefail', '-c',
+      "npm() { printf '23 dependency inventory problem(s)\\n' >&2; return 1; }\n" + script(audit)],
+    {cwd: directory, encoding: 'utf8'});
+    assert.equal(failure.status, 1, 'the real audit command keeps its failure status under pipefail');
+    assert.equal(readFileSync(path.join(directory, 'dependency-refresh.log'), 'utf8'), '23 dependency inventory problem(s)\n');
+    const stub = `git() {
+      if [ "$1" = diff ]; then return 1; fi
+      printf '%s\\n' "$*" >> "$CALLS"
+    }
+    gh() {
+      if [ "$1 $2" = 'pr list' ]; then printf '%s' "$EXISTING"; return 0; fi
+      printf '%s\\n' "$*" >> "$CALLS"
+      while [ "$#" -gt 0 ]; do
+        if [ "$1" = --body-file ]; then cp "$2" "$CAPTURED_BODY"; return 0; fi
+        shift
+      done
+      return 1
+    }
+    `;
+    for (const outcome of ['success', 'failure']) for (const existing of ['', '227']) {
+      const selected = path.join(directory, outcome + (existing || '-new'));mkdirSync(selected);
+      const calls = path.join(selected, 'calls.log'), body = path.join(selected, 'captured.md'), report = path.join(selected, 'summary.md');
+      const environment = {...process.env, AUDIT_OUTCOME: outcome, EXISTING: existing, RUNNER_TEMP: selected,
+        BRANCH: 'automation/dependency-refresh', CALLS: calls, CAPTURED_BODY: body, GITHUB_STEP_SUMMARY: report};
+      writeFileSync(calls, '');
+      const note = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', script(summary)], {cwd: selected, env: environment, encoding: 'utf8'});
+      assert.equal(note.status, 0, note.stderr);
+      assert.ok(readFileSync(report, 'utf8').includes('**' + outcome + '**'));
+      assert.equal(note.stdout.includes('::warning::'), outcome === 'failure');
+      const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', stub + script(publish)], {cwd: selected, env: environment, encoding: 'utf8'});
+      assert.equal(result.status, 0, result.stderr);
+      assert.ok(readFileSync(body, 'utf8').includes('Live audit outcome: **' + outcome + '**'));
+      assert.match(readFileSync(body, 'utf8'), /Required offline PR checks and current-dependency delivery gates remain unchanged/u);
+      const invocations = readFileSync(calls, 'utf8');
+      assert.ok(invocations.includes(existing ? 'pr edit 227 --body-file ' : 'pr create --base main --head automation/dependency-refresh'));
+      assert.ok(invocations.includes('push --force origin automation/dependency-refresh'));
+    }
+  } finally {rmSync(directory, {recursive: true, force: true});}
+});
+
+test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', async () => {
   const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));
-  const sources = [fixture.contract, ...fixture.sourceProfiles,
+  const {buildModernArrayParityFixture}=await import('../scripts/generate-modern-javascript-array-parity-fixtures.mjs');
+  assert.deepEqual(fixture,buildModernArrayParityFixture({historicalSource:fixture.historicalNative.source}),
+    'the normal source inverse checks every original profile byte and the complete prior fixture');
+  const sources = [fixture.contract, ...fixture.sourceProfiles.map(source=>{
+    const current=fixture.identityCorrection.sourceEpochs.find(row=>row.path===source.path);
+    assert.ok(current,'each original source path retains its complete current checkout profile');return current;
+  }),
     {path: 'rust/Cargo.lock'}, {path: 'rust/Cargo.toml'}];
   for (const source of sources) {
     const original = spawnSync('git', ['cat-file', 'blob', `HEAD:${source.path}`],
@@ -36,7 +108,7 @@ test('modern array provenance keeps exact checkout bytes with automatic Windows 
     assert.equal(checkout.status, 0, String(checkout.stderr));
     assert.deepEqual(checkout.stdout, original.stdout, `${source.path}: checkout retains every published byte`);
     let input = checkout.stdout;
-    if (source !== fixture.contract) {
+    if (source !== fixture.contract && !fixture.identityCorrection.sourceEpochs.includes(source)) {
       const marker = Buffer.from('\n// BEGIN modern JavaScript array parity observations\n');
       const end = input.indexOf(marker);
       if (end >= 0) input = input.subarray(0, end);
@@ -138,7 +210,8 @@ test('Rust jobs preserve all prior deadlines and the exact published matrix exce
 });
 
 test('the cancellation investigation joins tooling without changing any prior file assignment', () => {
-  const addition = '|ci-cancellation-investigation$', source = TEST_GROUPS.tooling.source;
+  const historicalRegistration = readFrozenToolingTestGroups();
+  const addition = '|ci-cancellation-investigation$', source = historicalRegistration.groups.tooling.source;
   assert.equal(source.split(addition).length, 2);
   const rocqStem = 'ci-rocq-toolchain-cache', rocqAddition = `|${rocqStem}$`;
   assert.equal(source.split(rocqAddition).length, 2, 'B67 adds exactly one literal Rocq cache alternative');
@@ -169,14 +242,21 @@ test('the cancellation investigation joins tooling without changing any prior fi
   const files = testFiles(), partition = partitionTests(files);
   assert.deepEqual(partition.unassigned, []);assert.deepEqual(partition.ambiguous, []);
   assert.equal(Object.values(partition.groups).flat().length, files.length);
+  for (const registration of historicalRegistration.registrations) {
+    assert.ok(files.includes(registration.file), 'each later registered test is an actual discovered file');
+    const actual = partitionTests([registration.file]);
+    assert.deepEqual(actual.unassigned, []);assert.deepEqual(actual.ambiguous, []);
+    assert.deepEqual(actual.groups[registration.group], [registration.file]);
+  }
   assert.ok(files.includes(`${rocqStem}.test.js`), 'the new Rocq controls are an actual discovered test file');
   assert.deepEqual(partitionTests([`${rocqStem}.test.js`]).groups.tooling, [`${rocqStem}.test.js`],
     'the exact new Rocq file is uniquely assigned to tooling');
   for (const file of files) {
-    const before = Object.entries(TEST_GROUPS).filter(([name, pattern]) =>
+    const before = Object.entries(historicalRegistration.groups).filter(([name, pattern]) =>
       (name === 'tooling' ? originalTooling : pattern).test(file.replace(/\.test\.js$/u, ''))).map(([name]) => name);
     const after = Object.entries(partition.groups).filter(([, members]) => members.includes(file)).map(([name]) => name);
-    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : before, file);
+    const registered = historicalRegistration.registrations.find(row => row.file === file);
+    assert.deepEqual(after, ['ci-cancellation-investigation', ...laterAdditions, rocqStem].some(stem => file === `${stem}.test.js`) ? ['tooling'] : registered ? [registered.group] : before, file);
   }
   assert.deepEqual(partitionTests(['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']).unassigned,
     ['ci-cancellation-investigation-extra.test.js', 'ci-cancellation-investigationx.test.js']);
@@ -326,6 +406,37 @@ test('js.yml and rust.yml are called by ci.yml and have no push or pull_request 
     'js.yml and rust.yml start only when ci.yml calls them');
 });
 
+test('verification concurrency separates merged pull requests, pushes and standalone runs without cancelling sibling cells', () => {
+  const domain=verificationDomain;
+  const contexts=[
+    {event:'push',ref:'refs/heads/main',run:39221979958},
+    {event:'pull_request',ref:'refs/heads/main',number:201,run:39222035006},
+    {event:'pull_request',ref:'refs/pull/201/merge',number:201,run:39211740972},
+    {event:'pull_request',ref:'refs/pull/226/merge',number:226,run:39235574933},
+    {event:'workflow_dispatch',ref:'refs/heads/main',run:39222035007},
+    {event:'release',ref:'refs/tags/v1.0.0',run:39222035008},
+    {event:'push',ref:'refs/heads/main',run:39221979959}
+  ];
+  let count=0;
+  for(const name of ['ci.yml','js.yml','rust.yml']) {
+    const groups=[...workflow(name).matchAll(/^\s*group: (.+)\n\s*cancel-in-progress: (true|false)$/gmu)];
+    assert.ok(groups.length>1,name);
+    for(const [,group,cancel] of groups) {
+      if(group==='release-${{ github.repository }}-main-write') {assert.equal(cancel,'false');continue;}
+      count++;
+      assert.equal(cancel,'true');assert.ok(group.includes(domain),`${name}: ${group}`);
+      const physical=context=>group.replace(domain,context.event==='pull_request'?`pull-${context.number}`:String(context.run));
+      const identities=contexts.map(physical);
+      assert.equal(identities[1],identities[2],'a merged reference retains its PR queue');
+      assert.equal(new Set(identities).size,contexts.length-1,'only updates of the same PR share a cancellation queue');
+      for(const suffix of ['${{ matrix.group }}','${{ matrix.partition }}','${{ matrix.generated_slice }}','${{ matrix.physical_shard }}','${{ matrix.os }}','${{ matrix.target }}']) {
+        if(group.includes(suffix))assert.notEqual(physical(contexts[1]).replace(suffix,'first'),physical(contexts[1]).replace(suffix,'second'));
+      }
+    }
+  }
+  assert.equal(count,36,'all existing verification groups are covered');
+});
+
 test('every cargo test command in the workflows and the scripts they call uses --no-fail-fast', () => {
   const files = [
     '.github/workflows/ci.yml',
@@ -438,7 +549,7 @@ test('the JavaScript evidence matrix retains every group and file once with disj
   for (const suite of suites) {
     assert.match(suite.header, /timeout-minutes: 60\n/u);
     assert.match(suite.header, /fail-fast: false\n/u);
-    assert.match(suite.header, /group: issue-195-stage-\$\{\{ github.ref \}\}-javascript-suite-\$\{\{ matrix.group \}\}-\$\{\{ matrix.partition \}\}/u);
+    assert.ok(suite.header.includes('group: issue-195-stage-'+verificationDomain+'-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}'));
     const execute = suite.steps.find(step => step.name === 'Produce the stage evidence');
     assert.match(execute.text, /JAVASCRIPT_GROUP: \$\{\{ matrix.group \}\}/u);
     assert.match(execute.text, /JAVASCRIPT_SHARD: \$\{\{ matrix.shard \}\}/u);
@@ -1479,7 +1590,7 @@ function checkGeneratedPackageSlices(parsed) {
   const concurrencyGroups = [...checks.header.matchAll(/^ {6}group: (.+)$/gmu)].map(match => match[1]);
   assert.equal(concurrencyGroups.length, 1);
   const concurrency = concurrencyGroups[0];
-  assert.equal(concurrency, 'check-js-${{ github.ref }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}',
+  assert.equal(concurrency, "check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}-${{ matrix.generated_slice }}",
     'both generated runners require independent concurrency identities');
   const physicalNames = cells.map(cell => concurrency
     .replace('${{ matrix.group }}', cell.group).replace('${{ matrix.generated_slice }}', cell.generated_slice));
@@ -2087,7 +2198,11 @@ function checkOriginalLinkRawNativeJob(parsed) {
   assert.equal(job.steps.indexOf(diagnostics[0]), job.steps.findIndex(step => step.name === 'Retain complete original link raw observations') + 1);
   assert.equal(job.steps.at(-1).name, 'Clean raw source observation caches');
   const originalSteps = job.steps.filter(step => step.name !== ORIGINAL_LINK_RAW_DIAGNOSTICS);
-  assert.equal(packageStepSignature({text: job.header + originalSteps.map(step => step.text).join('')}, true),
+  const originalGroup='      group: rust-${{ github.ref }}-original-link-raw-observations';
+  const correctedGroup='      group: rust-'+verificationDomain+'-original-link-raw-observations';
+  assert.equal(job.header.split(correctedGroup).length,2,'the observed main/PR concurrency collision has exactly one source correction');
+  const originalHeader=job.header.replace(correctedGroup,originalGroup);
+  assert.equal(packageStepSignature({text: originalHeader + originalSteps.map(step => step.text).join('')}, true),
     '35e9be5d27a7b6bdc0b730fb0a7b8c38a2485b491ccc2cd9eec4889e89889291',
     'the raw oracle retains its complete setup, bounds, source command, native switch, receipt and cleanup');
   return job;
@@ -2416,7 +2531,7 @@ test('package partitions conserve every original check, condition and artifact o
     'all five published partitions remain required in their original order');
   assert.deepEqual(groups, PACKAGE_GROUPS);
   assert.match(checks.header, /fail-fast: false/u);
-  assert.match(checks.header, /group: check-js-\$\{\{ github.ref \}\}-javascript-package-checks-\$\{\{ matrix.group \}\}/u);
+  assert.ok(checks.header.includes("group: check-js-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-package-checks-${{ matrix.group }}"));
   assert.deepEqual(needs(checks), ['tests', 'report-assertions']);
   assert.match(condition(checks), /!cancelled\(\)/u);
   for (const id of ['package-checks', 'test']) {
@@ -2869,3 +2984,30 @@ test('Windows linker preflight checks the first native child resolution and refu
     assert.deepEqual(result.output, []);
   }
 });
+
+test('release queue assertion correction retains the complete failed input and every publication safeguard', () => {
+  const evidence = readProjectData(path.join(root, 'parity/fixtures/package-release-concurrency-correction.lino'));
+  const digest = value => createHash('sha256').update(value).digest('hex');
+  assert.equal(evidence.run, 39274710187);assert.equal(evidence.job, 118135888518);
+  assert.equal(evidence.testedCommit, 'a6d2ffa00713fa20ba23fd90c586a2ea6b6fa584');
+  assert.equal(Buffer.byteLength(evidence.log.source), evidence.log.bytes);
+  assert.equal(evidence.log.sha256, '89e4a982bd81b95a33093af8987a83d5a60b468ecdd57853f32f2c274ad8425f');
+  assert.equal(digest(evidence.log.source), evidence.log.sha256);
+  assert.ok(evidence.log.source.includes('not ok 78 - JavaScript workflow publishes to npm with trusted publishing provenance'));
+  assert.ok(evidence.log.source.includes(evidence.testedCommit));
+  assert.equal(Buffer.byteLength(evidence.original.source), evidence.original.bytes);
+  assert.equal(digest(evidence.original.source), evidence.original.sha256);
+  const {before, after} = evidence.correction;
+  assert.equal(evidence.original.source.split(before).length, 2);
+  const current = read(evidence.original.path);
+  assert.equal(current, evidence.original.source.replace(before, after), 'only the wrong expected queue expression changes');
+  assert.equal(current.replace(after, before), evidence.original.source, 'every original assertion and input is retained');
+  assert.equal(digest(current), evidence.correction.proposedSha256);
+  assert.ok(workflow('js.yml').includes(after));
+  assert.ok(current.includes('npm publish --provenance'));
+  assert.ok(current.includes('cancel-in-progress:\\s+false'));
+});
+
+import { restoreGeneratedPackageOwnerHistory } from './support/generated-package-owner-history.js';
+
+import {restoreCiNodeRuntimeHistory} from './support/ci-node-runtime-history.js';

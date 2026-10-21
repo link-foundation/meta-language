@@ -23,6 +23,22 @@ const versionBoundedAssertionsSource = 'parity/sources/version-bounded-assertion
 const inferenceSource = 'parity/sources/grammar-inference-issue-224.txt';
 
 const sourceTooling = {
+  'I195-CONVERSATION-CRITICAL-DELIVERY': [
+    'js/scripts/issue-195-requirements.mjs', 'js/scripts/issue-195-acceptance-lib.mjs',
+    'js/tests/issue-195-evidence-critical-delivery.test.js',
+  ],
+  'I195-CONTRIBUTOR-INSTRUCTIONS-CONCISE': [
+    'AGENTS.md', 'CLAUDE.md', 'js/scripts/contributor-instruction-coverage.mjs',
+    'js/scripts/generate-contributor-instruction-coverage.mjs',
+    'js/tests/issue-195-evidence-contributor-instructions.test.js',
+  ],
+  'I195-GRAMMAR-INFERENCE-SEPARATE-ISSUE': [
+    'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-evidence-inference-tracking.test.js',
+  ],
+  'I195-ASSERTION-EVIDENCE-BASED-CORRECTION': [
+    'AGENTS.md', 'js/scripts/generate-modern-javascript-array-parity-fixtures.mjs',
+    'js/tests/support/modern-javascript-array-parity.js', 'js/tests/issue-195-evidence-assertion-corrections.test.js',
+  ],
   'I195-CONVERSATION-VERBATIM-REGISTER': [
     'js/scripts/issue-195-sources.mjs', 'js/tests/issue-195-sources.test.js',
   ],
@@ -50,6 +66,9 @@ const sourceTooling = {
 };
 
 const sourceToolingFixtures = {
+  'I195-GRAMMAR-INFERENCE-SEPARATE-ISSUE': [
+    { id: 'conversation-contract:grammarInferenceIssue', path: inferenceSource },
+  ],
   ...Object.fromEntries([
     'I195-ASSERTION-EXPLICIT-VERSION-RANGES', 'I195-ASSERTION-VERSION-COVERAGE', 'I195-ASSERTION-LANGUAGE-EDITION-ORDER',
   ].map(id => [id, [
@@ -177,6 +196,19 @@ const dataToolingFixtures = {
 };
 
 const runtimeEntryPoints = {
+  'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT': {
+    javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
+      'js/tests/issue-195-evidence-root-types.test.js'],
+    rust: ['rust/src/link_network.rs', 'rust/src/link_network_binary.rs', 'rust/tests/unit/root_types.rs'],
+  },
+  ...Object.fromEntries([
+    'I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
+    'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION',
+  ].map(id => [id, {
+    javascript: ['js/src/network.js', 'js/src/primitives.js', 'js/src/link-network-binary.js',
+      'js/tests/issue-195-evidence-link-foundation.test.js'],
+    rust: ['rust/src/link_network.rs', 'rust/src/link_network_binary.rs', 'rust/tests/unit/link_foundation.rs'],
+  }])),
   ...Object.fromEntries(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].map(id => [id, {
     javascript: ['js/src/program-translation.js', 'js/src/translation/array-value-rules.js', 'js/src/translation/frontend-rules.js',
       'js/tests/translation-arrays.test.js', 'js/tests/support/modern-javascript-array-parity.js'],
@@ -210,6 +242,13 @@ function rows(sourceKey, fixture, specification, area, declarations, tooling = f
     } : {}),
     ...(["I195-PARITY-MODERN-JAVASCRIPT-ARRAY-BEHAVIOR","I195-PARITY-OBSOLETE-NATIVE-EXPECTATIONS"].includes(id) ? {
       additionalFixtures: [{ id: 'modern-javascript-array-parity-programs', path: 'parity/fixtures/modern-javascript-array-parity.lino' }],
+    } : {}),
+    ...(['I195-LINK-FOUNDATION-SELF-LOOP-VERTEX', 'I195-LINK-FOUNDATION-MULTIPLE-ROLES',
+      'I195-LINK-FOUNDATION-RECURSIVE-COMPOSITION'].includes(id) ? {
+      additionalFixtures: [{ id: 'link-foundation-behavior', path: 'parity/fixtures/link-foundation-behavior.lino' }],
+    } : {}),
+    ...(id === 'I195-LINK-FOUNDATION-OPTIONAL-TYPE-ROOT' ? {
+      additionalFixtures: [{ id: 'root-type-behavior', path: 'parity/fixtures/root-type-behavior.lino' }],
     } : {}),
     specification, area,
     ...(tooling ? { tooling: dataTooling[id]?.tooling ?? sourceTooling[id] ?? null } : (runtimeEntryPoints[id] ?? { javascript: null, rust: null })),
@@ -613,4 +652,17 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
   ]
 ], true),
   ...ASSERTION_POLICY_CONVERSATION_REQUIREMENTS,
+  ...rows('automationFirstOwnCodebaseBaselineRequest', 'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'automated high coverage development with few actions',
+      'Use as much automation as possible and prioritize general changes that cover many requirements and actual source constructs with the least actions and resources, targeting twenty percent effort for eighty percent results. Reuse existing source inventories, checked contexts, translation workers and reports. Retain every individual failure, source range and unresolved obligation; measured coverage and resource observations are required before claiming the target ratio.',
+      ['existingAutomationReused', 'actualSourceFailuresGroupedWithoutLoss', 'highCoverageChangesPrioritized', 'resourceAndCoverageClaimsRequireObservations']],
+    ['I195-WORKFLOW-THREE-SUBAGENT-CURRENT-PHASE', 'up to three subagents for the current parallel implementation phase',
+      'The current user instruction authorizes at most three subagents to speed useful independent work after the historical coordinator-only phase. Preserve clear source ownership, contributor commits, bounded resource use and one push coordinator; resource-heavy local checks and Git index writes remain serialized. Earlier phase instructions and all project obligations remain recorded.',
+      ['activeSubagentCountAtMostThree', 'independentSourceOwnershipPreserved', 'contributorCommitsAndSinglePushRetained', 'localHeavyChecksSerialized']],
+  ], true),
+  ...rows('automationFirstOwnCodebaseBaselineRequest', 'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt', 'critical-conversation-requirements', 'translation-priority', [
+    ['I195-TRANSLATION-OWN-CODEBASE-BASELINE', 'complete JavaScript Rust parsing emission and bidirectional translation as the first own-codebase baseline',
+      'Deliver full JavaScript and Rust parsing and source emission, with complete concrete syntax by default, and translation between both languages for the real project codebase as the most critical end-to-end baseline. Validate complete source inventories, lossless source reconstruction and executable semantics independently; carried original source, registration or declarations do not establish semantic translation. Complete the remaining languages and capabilities after this baseline while preserving every inherited requirement.',
+      ['javascriptRustCompleteParsingAndEmissionPrioritized', 'realOwnSourceInventoryExercised', 'bidirectionalExecutableTranslationChecked', 'defaultConcreteSyntaxAndLosslessSourceRetained', 'remainingScopePreserved']],
+  ]),
 ]);

@@ -32,3 +32,17 @@ const text = '// Generated from js/src/translation/primitive-method-rules.js. Do
 if (process.argv.includes('--check')) {
   if (readFileSync(target, 'utf8') !== text) throw new Error('native primitive-method decisions are stale');
 } else writeFileSync(target, text);
+
+await generateStringOrderRules({check:process.argv.includes('--check')});
+
+import {generateStringOrderRules} from './string-order-generation.mjs';
+
+await generateNumberPredicateRules({check:process.argv.includes('--check')});
+
+import {generateNumberPredicateRules} from './number-predicate-generation.mjs';
+
+import {generateStringRelativeCharacterTemplate} from './generate-string-relative-character-template.mjs';
+generateStringRelativeCharacterTemplate(process.argv.includes('--check'));
+
+import {generateArrayRelativeElementTemplate} from './generate-array-relative-element-template.mjs';
+generateArrayRelativeElementTemplate(process.argv.includes('--check'));

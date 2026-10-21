@@ -481,7 +481,14 @@ pub fn inspect_surface_reference_expression(
                     } else {
                         {
                             let signature = crate::translation::surface_reference_analysis_rules::find_surface_reference_signature(columns, rows, size, program, &(crate::translation::surface_reference_analysis_rules::read_surface_reference_path(columns, rows, size, path)));
-                            vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature, "type")), 0f64]
+                            {
+                                let parameters = crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature, "params");
+                                if (((crate::translation::surface_reference_analysis_rules::read_surface_reference_kind(columns, rows, size, signature)) == "fn") && (parameters >= 0f64)) && ((crate::translation::surface_reference_analysis_rules::read_required_number_fact(rows, (size + parameters))) == 0f64) {
+                                    vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature, "ret")), 0f64]
+                                } else {
+                                    vec![crate::translation::surface_reference_analysis_rules::read_surface_reference_type(columns, crate::translation::surface_reference_analysis_rules::read_surface_reference_field(columns, rows, size, signature, "type")), 0f64]
+                                }
+                            }
                         }
                     }
                 }

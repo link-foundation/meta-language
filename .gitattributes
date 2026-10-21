@@ -27,7 +27,12 @@ docs/vision.md text eol=lf
 # self-translation and decorator corpora are compared byte for byte; Windows checkouts
 # must not add CRs. The vendored grammars keep their upstream bytes.
 rust/src/** text=auto eol=lf
+rust/tests/unit/** text=auto eol=lf
 js/src/** text=auto eol=lf
+# Tooling and test modules also carry complete source identity hashes.
+js/scripts/*.mjs text eol=lf
+js/tests/*.test.js text eol=lf
+parity/sources/*.txt text eol=lf
 js/src/vendor/** -text
 parity/self-translation/** text=auto eol=lf
 parity/decorators/** text=auto eol=lf
@@ -53,3 +58,5 @@ rust/tests/unit/translation_arrays.rs text eol=lf
 # Native diagnostic assertions select the exact hashed dependency source profile.
 rust/Cargo.lock text eol=lf
 rust/Cargo.toml text eol=lf
+# Version-qualified translation fixtures authenticate the complete npm manifest.
+js/package.json text eol=lf

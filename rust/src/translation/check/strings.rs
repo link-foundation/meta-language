@@ -30,6 +30,16 @@ impl Checker {
             unreachable!("string predicate dispatch")
         };
         let span = node.span;
+        if !crate::translation::typed_program_link_rules::accept_program_expression_operation(
+            "stringTest",
+            op,
+        ) {
+            return Err(unsupported(
+                "string test operation",
+                "the declared string operation has no checked model",
+                span,
+            ));
+        }
         let string = self.expr(object, env, path, None, true)?;
         if string.ty != STRING {
             return Err(unsupported(

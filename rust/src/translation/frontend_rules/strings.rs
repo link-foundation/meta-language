@@ -477,3 +477,31 @@ pub fn read_java_script_field_substitution_plan(
         1f64
     }
 }
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn accept_java_script_mutable_array_binding(
+    value_kind: &str,
+    item_count: f64,
+    binding_count: f64,
+    plain_bindings: bool,
+    has_spread: bool,
+) -> bool {
+    ((((((value_kind == "array") && (item_count > 0f64))
+        && (item_count <= 9_007_199_254_740_991f64))
+        && ((item_count % 1f64) == 0f64))
+        && ((item_count).partial_cmp(&(binding_count)) == Some(std::cmp::Ordering::Equal)))
+        && plain_bindings)
+        && !has_spread
+}
+
+/// Execute the complete checked source algorithm.
+#[must_use]
+pub fn accept_java_script_mutable_array_binding_owner(
+    language: &str,
+    duplicate_declarations: bool,
+    parameter_conflict: bool,
+    top_level: bool,
+) -> bool {
+    (((language == "JavaScript") && !duplicate_declarations) && !parameter_conflict) && !top_level
+}

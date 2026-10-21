@@ -1,0 +1,1 @@
+Experimental readers recover stored concrete source bytes or text from reloaded program graphs, including the TypeScript lowered plane. Origin reads remain distinct from emission of edited semantics; native implementation and public integration are pending.

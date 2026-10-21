@@ -21,6 +21,7 @@ import { caseDecorators, readSelfTranslationCorpus } from '../scripts/generate-s
 import { recordIssue195Observations } from './support/issue-195-observations.js';
 import { compileRustTranslation } from './support/self-translation-rust.js';
 import { nativeRustChecksEnabled } from './support/native-rust-checks.js';
+import { selectVersionedAssertion } from '../scripts/assertion-version-ranges.mjs';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
@@ -272,7 +273,18 @@ test('sibling cycles and supported callbacks translate while unsupported sibling
   const rust = emittedRust(translation);
   assert.match(rust, /pub fn opaque\(x: f64\) -> Option<f64>/u);
   assert.match(rust, /pub fn caller\(x: f64\) -> f64/u);
-  assert.match(rust, /crate::opaque\(x\)/u);
+  // Both normal emitters resolve actual module externals by their reserved
+  // local target (emit-rust.js::external / emit_rust/externals.rs::external_call).
+  // The former crate:: expectation predates that checked external binding.
+  const externalCall = selectVersionedAssertion({
+    id: 'sibling-external-call-target', subject: 'meta-language',
+    comparison: {kind: 'release', precision: 3},
+    expectations: [{id: 'actual-module-external', minimum: '1.0.0', maximum: '1.0.1',
+      includeMinimum: true, includeMaximum: false, expected: 'opaque(x)',
+      evidence: 'The actual JavaScript and native Rust external emitters use the reserved module-local target; original caller input and behavior remain exact.'}],
+  }, JSON.parse(readFileSync(path.join(root, 'js/package.json'), 'utf8')).version);
+  assert.ok(rust.includes(externalCall.expected));
+  assert.doesNotMatch(rust, /crate::opaque\(x\)/u);
   assert.match(rust, /pub fn is_even\(/u);
   assert.match(rust, /pub fn is_odd\(/u);
   const runnable = `${source}\nconsole.log(isEven(0n), isEven(4n), isOdd(5n), isEven(5n), caller(0), caller(1), caller(-1));`;

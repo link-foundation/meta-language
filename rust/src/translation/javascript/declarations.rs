@@ -1,5 +1,7 @@
 //! Files, imports, `JSDoc` typedefs, functions, namespaces and blocks.
 
+use std::collections::HashMap;
+
 use super::infer::infer_javascript_product_types;
 use super::infer::infer_javascript_types;
 use super::loops::reserved;
@@ -23,10 +25,11 @@ mod jsdoc;
 use jsdoc::{jsdoc_type, promised};
 
 /// How a function's body is written: a block, or an arrow's block or expression.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum Body {
     Block,
     Arrow,
+    RecordParameters(Box<super::record_parameters::RecordParameters>),
 }
 
 impl JavaScriptParser {
@@ -253,7 +256,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("function"))?;
         global(&name)?;
-        self.function_rest(start, &name, is_async)
+        self.function_rest(start, &name, is_async, true)
     }
 
     /// Parameters and body of a function or method; `doc_token` is where its `JSDoc` ends.
@@ -262,9 +265,22 @@ impl JavaScriptParser {
         doc_token: &Token,
         name_token: &Token,
         is_async: bool,
+        named_record_parameters: bool,
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
+        if named_record_parameters
+            && let Some(records) = self.read_named_record_parameters(doc.as_ref(), is_async)?
+        {
+            return self.function_body(
+                doc_token,
+                name_token,
+                doc,
+                &[],
+                Body::RecordParameters(Box::new(records)),
+                is_async,
+            );
+        }
         let tokens = self.parameters(&name_token.value)?;
         self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
     }
@@ -491,7 +507,11 @@ impl JavaScriptParser {
             self.sequential_async = true;
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
-        let mut params = Vec::new();
+        let records = match &body {
+            Body::RecordParameters(records) => Some(records.as_ref()),
+            _ => None,
+        };
+        let mut params = records.map_or_else(Vec::new, |records| records.parameters.clone());
         for (token, default_value) in tokens {
             reserved(token)?;
             let optional = default_value.is_none()
@@ -565,7 +585,7 @@ impl JavaScriptParser {
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top_level = std::mem::replace(&mut self.top_level, false);
-        if !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
+        if records.is_none() && !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
             let names = params
                 .iter()
                 .map(|param| param.name.clone())
@@ -604,12 +624,13 @@ impl JavaScriptParser {
         let indexed_writes_before = self.indexed_reference_writes;
         let statements = self.with_lexical_scope(&names, 2, |parser| {
             for parameter in &params {
+                parser.lexical.parameter(&parameter.name);
                 parser.lexical.tag_binding(
                     &parameter.name,
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
                 );
             }
-            match body {
+            match &body {
                 Body::Arrow if !parser.cursor.is("{") => {
                     let token = parser.peek();
                     let expr = if is_async {
@@ -624,6 +645,7 @@ impl JavaScriptParser {
                         }]
                     })
                 }
+                Body::RecordParameters(records) => parser.read_named_record_parameter_body(records),
                 _ => parser.block_statements(),
             }
         });
@@ -653,6 +675,7 @@ impl JavaScriptParser {
                     &mut statements,
                     &params,
                     &self.owned_array_readers,
+                    &self.owned_array_iteration_sources,
                 ),
             );
             if self.indexed_reference_writes != indexed_writes_before {
@@ -777,7 +800,7 @@ impl JavaScriptParser {
                 self.function_names
                     .insert(format!("{name}.{}", member.value));
                 self.owned_array_reader_namespace += 1;
-                let function = self.function_rest(&member, &member, false);
+                let function = self.function_rest(&member, &member, false, false);
                 self.owned_array_reader_namespace -= 1;
                 items.push(SItem::Fn(function?));
             } else if self.cursor.eat(":").is_some() {
@@ -809,7 +832,19 @@ impl JavaScriptParser {
 
     /// Names a block declares with `const` or `let`, which are in their temporal dead zone until declared.
     pub(super) fn block_declarations(&mut self, from: usize, _end: ScanEnd) -> HashSet<String> {
+        self.block_declaration_counts(from).0
+    }
+
+    fn block_declaration_counts(
+        &mut self,
+        from: usize,
+    ) -> (HashSet<String>, HashMap<String, usize>) {
         let mut names = HashSet::new();
+        let mut counts = HashMap::new();
+        let mut collect = |name: String| {
+            names.insert(name.clone());
+            *counts.entry(name).or_insert(0) += 1;
+        };
         let saved = self.cursor.index;
         self.cursor.index = from;
         // Signed Number depth retains the shared parser's malformed-delimiter
@@ -841,26 +876,26 @@ impl JavaScriptParser {
             let binding_start = self.cursor.index;
             let c = &self.cursor;
             if c.peek().kind == TokenKind::Identifier {
-                names.insert(c.peek().value.clone());
+                collect(c.peek().value.clone());
             } else if c.is("{") {
                 let mut offset = 1;
                 while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
                     if c.peek_at(offset).kind == TokenKind::Identifier
                         && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
                     {
-                        names.insert(c.peek_at(offset).value.clone());
+                        collect(c.peek_at(offset).value.clone());
                     }
                     offset += 1;
                 }
             } else if c.is("[") {
                 for token in self.array_binding_names(c.index) {
-                    names.insert(token.value);
+                    collect(token.value);
                 }
             }
             self.cursor.index = binding_start;
         }
         self.cursor.index = saved;
-        names
+        (names, counts)
     }
 
     pub(super) fn declare_local(&mut self, name: &str, mutable: bool) {
@@ -877,10 +912,8 @@ impl JavaScriptParser {
     pub(super) fn block_statements(&mut self) -> Result<Vec<Stmt>> {
         self.cursor.expect("{", Some("block"))?;
         let mut tdz = self.scope.tdz.clone();
-        let names = self
-            .block_declarations(self.cursor.index, ScanEnd::Brace)
-            .into_iter()
-            .collect::<Vec<_>>();
+        let (names, counts) = self.block_declaration_counts(self.cursor.index);
+        let names = names.into_iter().collect::<Vec<_>>();
         tdz.extend(names.iter().cloned());
         let inner = Scope {
             locals: self.scope.locals.clone(),
@@ -888,7 +921,10 @@ impl JavaScriptParser {
             mutable: self.scope.mutable.clone(),
         };
         let outer = std::mem::replace(&mut self.scope, inner);
-        let statements = self.with_lexical_scope(&names, 0, Self::block_body);
+        let statements = self.with_lexical_scope(&names, 0, |parser| {
+            parser.lexical.declaration_counts(counts);
+            parser.block_body()
+        });
         self.scope = outer;
         statements
     }

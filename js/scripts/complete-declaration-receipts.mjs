@@ -4,6 +4,10 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {structuredDataToLino} from '../src/structured-data-links.js';
+import {restoreTranslationSourceHistory} from './translation-source-history.mjs';
+import {restoreCurrentTranslationSourceDescriptors} from './current-translation-source-descriptors.mjs';
+import {restoreNativeLibraryReceipt} from './native-library-receipt-history.mjs';
+import {restoreProgramStringSourceDescriptorEdge} from './program-string-source-descriptors.mjs';
 
 export const COMPLETE_DECLARATION_RECEIPTS = new URL('../../parity/self-translation/complete-declaration-receipts.lino',import.meta.url);
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -219,7 +223,8 @@ function readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity
  const edge=typeNeutralDescriptorSuccessors[0],bytes=Buffer.from(structuredDataToLino(artifact));
  if(identity!==edge.identity||digest(bytes)!==edge.current.sha256)return readCompleteDeclarationDescriptorSuccessor(artifact,identity,previousRegister);
  assert.equal(bytes.length,edge.current.bytes);
- const source=edge.sources[0],current=readFileSync(new URL('../../'+source.file,import.meta.url));
+ const source=edge.sources[0],current=Buffer.from(restoreTranslationSourceHistory(
+  readFileSync(new URL('../../'+source.file,import.meta.url),'utf8'),source.file,'2b9fd0df45757bf70a69deea6ab97d969cf6a25d'));
  assert.equal(current.length,source.current.bytes);assert.equal(digest(current),source.current.sha256);
  const insertion=edge.sourceExtension;
  assert.equal(current.subarray(insertion.start,insertion.end).toString('utf8'),insertion.source);
@@ -237,11 +242,17 @@ function readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity
 
 /** The public standalone gate retains its cloned-data result and all checks. */
 export function restoreCompleteDeclarationDescriptorSuccessor(artifact,identity,register){
+ ({artifact,register}=restoreProgramStringSourceDescriptorEdge(artifact,identity,register));
+ artifact=restoreNativeLibraryReceipt(artifact,identity);
+ ({artifact,register}=restoreCurrentTranslationSourceDescriptors(artifact,identity,register));
  return readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register).artifact;
 }
 
 /** Restore only a recorded source endpoint, archive receipt or source descriptor. */
 export function restoreCompleteDeclarationReceipt(artifact,identity,{register=readProjectData(COMPLETE_DECLARATION_RECEIPTS)}={}){
+ ({artifact,register}=restoreProgramStringSourceDescriptorEdge(artifact,identity,register));
+ artifact=restoreNativeLibraryReceipt(artifact,identity);
+ ({artifact,register}=restoreCurrentTranslationSourceDescriptors(artifact,identity,register));
  const successor=readTypeNeutralCompleteDeclarationDescriptorSuccessor(artifact,identity,register);
  artifact=successor.artifact;
  assert.equal(register.schemaVersion,1);

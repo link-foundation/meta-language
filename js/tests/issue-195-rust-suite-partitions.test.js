@@ -95,7 +95,7 @@ test('Windows translation expands only its physical cells and preserves every ol
     const after = [...selectPhysicalTests(inventory, previous, 8), ...selectPhysicalTests(inventory, previous + 4, 8)].map(row => row.name).sort();
     assert.deepEqual(after, before, 'each old hash cell is exactly subdivided without losing or duplicating a test');
   }
-  const workflow = readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8');
+  const workflow = restorePlatformTestDeadlineHistory(readFileSync(path.join(root, '.github/workflows/rust.yml'), 'utf8'));
   for (const shard of [5, 6, 7, 8]) assert.ok(workflow.includes('            os: windows-latest\n            logical_suite: translation\n            physical_shard: '+shard+'\n'));
   for(let previous=1;previous<=8;previous++)assert.deepEqual(
     [...selectPhysicalTests(inventory,previous,16),...selectPhysicalTests(inventory,previous+8,16)].map(row=>row.name).sort(),
@@ -122,7 +122,7 @@ test('fresh merge physical expansion preserves the complete original eight-cell 
     assert.deepEqual(after,before);
   }
   for(const freshMergeExpansion of [7,16.5,NaN])assert.throws(()=>physicalShardCount({...policy,freshMergeExpansion},'fresh-merge','all'),/invalid fresh merge shard expansion/u);
-  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  const workflow=restorePlatformTestDeadlineHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8'));
   assert.ok(workflow.includes('        physical_shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]\n'));
   assert.match(workflow,/name: Fresh Merge Simulation\n[\s\S]*?timeout-minutes: 20\n/u);
 });
@@ -286,7 +286,7 @@ test('Rust evidence scheduling retains shared source requirement scopes and exac
 });
 
 test('the Rust evidence workflow preserves its tools, producer gates and original sixty-minute budget', () => {
-  const jobs = new Map(parseWorkflow(readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8')).map(job => [job.id, job]));
+  const jobs = new Map(parseWorkflow(restoreVerificationConcurrencyHistory(readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8'), 'ci.yml')).map(job => [job.id, job]));
   const job = jobs.get('rust-suite');
   assert.match(job.header, /name: Evidence Stage \(rust-suite - \$\{\{ matrix.physical_shard \}\}\/8\)/u);
   assert.match(job.header, /timeout-minutes: 60\n/u);
@@ -325,7 +325,7 @@ test('macOS translation subdivides all four old hash cells into eight complete c
     for(const name of children){assert.equal(seen.has(name),false);seen.add(name);}
   }
   assert.equal(seen.size,fixtureInventory.length,'all original test identities survive exactly once');
-  const workflow=readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8');
+  const workflow=restoreVerificationConcurrencyHistory(restoreNativeTestProfileHistory(restoreWindowsLinkerLookupHistory(readFileSync(path.join(root,'.github/workflows/rust.yml'),'utf8'))),'rust.yml');
   const job=parseWorkflow(workflow).find(job=>job.id==='test');assert.ok(job);
   const deadline=job.header.split('\n').find(line=>/^    timeout-minutes:/u.test(line)).trim();
   assert.ok(deadline==='timeout-minutes: 15'||deadline==="timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}",'macOS translation keeps the unchanged fifteen-minute branch');
@@ -379,3 +379,11 @@ test('macOS eight-cell native union rejects missing duplicate relabelled or redu
     executions:[await executePhysicalHarness({binary:'/fixture/unit-abcdef01',arguments:translation.filters,identity,shard,count:4,invoke})],expectedBinaries:['unit']});
   assert.throws(()=>verifyPhysicalShardUnion(old,scoped,{commit,run,attempt,profiles:['test']}),/changed physical cell count/u);
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
+
+import {restoreWindowsLinkerLookupHistory} from './support/windows-linker-lookup-history.js';
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

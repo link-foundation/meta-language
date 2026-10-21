@@ -66,11 +66,11 @@ function partitionWorkflowProblems(workflow, runner, transport) {
 }
 
 test('Formal AI execution partitions preserve source-only canonical merging all JavaScript barriers and exact public artifacts', () => {
-  assert.deepEqual(partitionWorkflowProblems(read('.github/workflows/ci.yml'), read('js/scripts/run-formal-ai-workloads.mjs'), read('js/scripts/formal-ai-partition-bundles.mjs')), []);
+  assert.deepEqual(partitionWorkflowProblems(restoreVerificationConcurrencyHistory(read('.github/workflows/ci.yml'), 'ci.yml'), read('js/scripts/run-formal-ai-workloads.mjs'), read('js/scripts/formal-ai-partition-bundles.mjs')), []);
 });
 
 test('Formal AI workflow refuses lost producers mixed artifacts overwritten scopes cache skipping and early native execution', () => {
-  const workflow = read('.github/workflows/ci.yml');
+  const workflow = restoreVerificationConcurrencyHistory(read('.github/workflows/ci.yml'), 'ci.yml');
   const runner = read('js/scripts/run-formal-ai-workloads.mjs');
   const transport = read('js/scripts/formal-ai-partition-bundles.mjs');
   for (const [name, change] of [
@@ -96,3 +96,5 @@ test('Formal AI partition adoption preserves every byte of the existing complete
     '0a6d06b129255286be21e30be4d95a9f6bebe4cfbaca9fbc34f5bae4dadb3162');
   assert.match(source.subarray(12317).toString('utf8'), /export function formalAiWorkloadPartitionGroundingProblems/u);
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';

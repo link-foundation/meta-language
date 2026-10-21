@@ -13,8 +13,10 @@ import {acceptProgramIntegralMetadata} from './program-numeric-metadata-rules.js
 import {checkRustScalarLoopProof} from './translation/rust-scalar-loops.js';
 import {checkRustPrimitiveOwnerProof} from './translation/rust-primitive-owners.js';
 import {checkRustOwnedLocalStateProof,checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
+import {acceptProgramStringRepresentationFlag} from './translation/program-string-representation-rules.js';
 // Validate the source-free checked IR boundary before any target emission.
 import { fixedBounds, sameType } from './translation/types.js';
+import {readReferenceIdentityComparisonError} from './translation/reference-identity-rules.js';
 import { readCallableOwnedParameters } from './translation/callable-source.js';
 import { checkLinkedMatchCoverage } from './translation/check.js';
 import { acceptLinkedTextConversionKind, readNumberDisplayRefusal, readTuplePosition } from './translation/primitive-value-rules.js';
@@ -39,6 +41,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     || !(program.declarations instanceof Map) || !Array.isArray(program.items)) throw new TypeError('the linked value is not a checked typed program');
   if (program.main != null && (typeof program.main !== 'object' || Array.isArray(program.main)
     || program.main.k !== undefined || program.main.p !== undefined || !Array.isArray(program.main.effects))) throw new TypeError('a linked main has an invalid effect-container role');
+  if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, Object.hasOwn(program, 'utf16Strings'))) throw new TypeError('a program string representation flag must be an explicit boolean');
   const active = new Set();
   const visited = new Set();
   function targetOf(node, role) {
@@ -137,8 +140,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     if (!node || typeof node !== 'object') return;
     visit();
     if (node.k !== undefined && node.p !== undefined) throw new TypeError('a linked record has conflicting expression and proposition roles');
-    if (['tuple', 'tupleIndex'].includes(node.k)
-      && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
+    if (acceptProgramExpressionField(node.k ?? '', 'k')
+      && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError(
+        ['tuple', 'tupleIndex'].includes(node.k) ? 'a linked tuple expression has an unrecognized projection field'
+          : 'a linked expression contains an unrecognized semantic field');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
@@ -327,6 +332,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (node.rounding !== undefined && !acceptProgramDivisionRounding(node.rounding)) throw new TypeError('a linked division has an unsupported rounding policy');
       same(node.left.type, node.right.type, 'binary operand types');
       if (node.domain) same(node.domain, node.left.type, 'binary operation domain');
+      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), node.domain !== undefined, node.domain?.reference === true, node.domain !== undefined && sameType(node.domain, node.left.type));
+      if (referenceError) throw new TypeError(referenceError);
       const comparison = ['eq', 'ne', 'lt', 'le', 'gt', 'ge'].includes(node.op);
       if (comparison && node.type.kind !== 'bool') throw new TypeError('a linked comparison does not return a boolean');
       if (['add', 'sub', 'mul', 'div', 'rem'].includes(node.op)) {

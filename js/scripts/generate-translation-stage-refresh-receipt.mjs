@@ -7,17 +7,18 @@ import { resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
-import { checkProjectData, readProjectData, writeProjectData } from './project-data.mjs';
+import { checkProjectData, writeProjectData } from './project-data.mjs';
 import { normalizeMigrationTranslationStages } from './validate-structured-data-migration.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const originalRevision = '2b2a72a74e4ba74a2dda9bd55edc02086c50eb68';
-const refreshRevision = 'dea10df15d5c38d2e22b4c0750c03467ef7503d9';
+const refreshRevision = 'c5b0834f200ce122d93e57dbd9d2a959eb9d9d67';
 const originalPath = 'parity/fixtures/translation-stages.json';
 const refreshPath = 'parity/fixtures/translation-stages.lino';
 const receiptPath = 'parity/fixtures/translation-stage-refresh-receipt.lino';
 const historyPath = 'parity/fixtures/translation-stage-refresh-history.lino';
 const destination = new URL('../../parity/fixtures/translation-stage-refresh-receipt.lino', import.meta.url);
+const historyDestination = new URL('../../parity/fixtures/translation-stage-refresh-history.lino', import.meta.url);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const blob = (revision, path) => execFileSync('git', ['show', `${revision}:${path}`], {
   cwd: root, maxBuffer: 16 * 1024 * 1024, timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'],
@@ -103,9 +104,30 @@ export function retainTranslationStageRefreshScopes(receipts, refreshes) {
   return [...retained].map(([program, stages]) => ({ program, stages }));
 }
 
+// The committed snapshot owns both predecessor inputs. Repeated author/check
+// calls derive the same archive instead of appending from mutable output bytes.
+export function captureTranslationStageRefreshHistory(snapshotRevision, loadBlob = optionalBlob) {
+  if (typeof snapshotRevision !== 'string' || !/^[0-9a-f]{40}$/u.test(snapshotRevision)) {
+    throw new Error('stage refresh history needs an immutable snapshot revision');
+  }
+  const priorHistoryBytes = loadBlob(snapshotRevision, historyPath);
+  const priorReceiptBytes = loadBlob(snapshotRevision, receiptPath);
+  if (!priorHistoryBytes || !priorReceiptBytes) {
+    throw new Error('stage refresh successor needs its complete committed history and receipt');
+  }
+  const priorHistory = readStructuredDataLino(priorHistoryBytes.toString('utf8'));
+  validateTranslationStageRefreshHistory(priorHistory, loadBlob);
+  const history = { schemaVersion: 1, receipts: [...priorHistory.receipts, {
+    sourceCommit: snapshotRevision, sourcePath: receiptPath, sourceSha256: hash(priorReceiptBytes),
+    receipt: readStructuredDataLino(priorReceiptBytes.toString('utf8')),
+  }] };
+  validateTranslationStageRefreshHistory(history, loadBlob, snapshotRevision);
+  return history;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.slice(2).some(argument => argument !== '--check')) throw new Error('usage: generate-translation-stage-refresh-receipt.mjs [--check]');
-  const history = readProjectData(new URL('../../' + historyPath, import.meta.url));
+  const history = captureTranslationStageRefreshHistory(refreshRevision);
   const receipts = validateTranslationStageRefreshHistory(history, optionalBlob, refreshRevision);
   const originalBytes = blob(originalRevision, originalPath);
   const refreshBytes = blob(refreshRevision, refreshPath);
@@ -126,7 +148,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   normalizeMigrationTranslationStages(historical, current, refreshes);
   const receipt = { schemaVersion: 1, originalRevision, originalPath,
     originalSha256: hash(originalBytes), refreshRevision, refreshPath, refreshSha256: hash(refreshBytes), refreshes };
-  if (process.argv.includes('--check')) checkProjectData(destination, receipt);
-  else writeProjectData(destination, receipt);
+  if (process.argv.includes('--check')) {
+    checkProjectData(historyDestination, history);
+    checkProjectData(destination, receipt);
+  } else {
+    writeProjectData(historyDestination, history);
+    writeProjectData(destination, receipt);
+  }
   console.log(`authenticated ${refreshes.length} generated-stage refresh identities; source metadata unchanged`);
 }

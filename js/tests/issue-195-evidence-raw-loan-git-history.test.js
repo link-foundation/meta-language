@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import test from 'node:test';
+import {readProjectData} from '../scripts/project-data.mjs';
+import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {restoreRawLoanCertificateSource} from '../scripts/raw-loan-certificate-history.mjs';
+
+test('original raw loan receipt verification retains the same immutable Git anchors and every original source assertion',()=>{
+  const history=readProjectData(new URL('../../parity/naming/raw-loan-git-certificate-source-history.lino',import.meta.url));
+  assert.equal(history.sources.length,1);const before=history.sources[0];
+  assert.equal(Buffer.byteLength(before.sourceText),before.bytes);
+  assert.equal(createHash('sha256').update(before.sourceText).digest('hex'),before.sha256);
+  assert.equal(history.capture.job,118178403402);
+  assert.equal(Buffer.byteLength(history.capture.log.source),145744);
+  assert.equal(createHash('sha256').update(history.capture.log.source).digest('hex'),
+    '4948637367da2109484c4a871f570e9ced17f57836e1167fe29ceb51ca3e8ebe');
+  assert.ok(history.capture.log.source.includes("but not in '18a8e0a04bab43f6572be311ceb75c6596fdc147'"));
+  const revision='18a8e0a04bab43f6572be311ceb75c6596fdc147';
+  const path='experiments/original-link-complete-table-projection/data/raw-borrowed-parameter-receipt.lino';
+  assert.equal(history.original.revision,revision);assert.equal(history.original.path,path);
+  const certificate=readProjectData(new URL('../../'+history.certificateFile,import.meta.url));
+  const stored=readFileSync(new URL('../../'+history.blobFile,import.meta.url));
+  const verified=verifyGitArtifactCertificate(certificate,stored,{revision,path});
+  assert.equal(verified.length,136210);assert.equal(certificate.blob.objectId,'015016c653d0c9d9ad322cbd0a8fb41e66bc3c5a');
+  assert.deepEqual(verified,stored);
+  const original=readStructuredDataLino(verified.toString('utf8'));
+  assert.equal(original.definitionCount,106);assert.equal(original.styles.length,59);
+  assert.deepEqual(original.cloneCalls,{before:746,after:396});
+  const oldRead="  const previousBytes=execFileSync('git',['show','18a8e0a04bab43f6572be311ceb75c6596fdc147:'+file],\n    {cwd:new URL('../../',import.meta.url),maxBuffer:2*1024*1024});";
+  const newRead="  const previousBytes=verifyGitArtifactCertificate(\n    readProjectData(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0-proof.lino',import.meta.url)),\n    readFileSync(new URL('../../parity/fixtures/historical/git-raw-borrowed-18a8e0a0.lino',import.meta.url)),\n    {revision:'18a8e0a04bab43f6572be311ceb75c6596fdc147',path:file});";
+  const addition="\nimport {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';\n";
+  assert.equal(before.sourceText.split(oldRead).length,2);
+  const actual=readFileSync(new URL('../../'+before.file,import.meta.url),'utf8');
+  const current=restoreRawLoanCertificateSource(actual);
+  assert.throws(()=>restoreRawLoanCertificateSource(actual+'\n# changed\n'),assert.AssertionError);
+  assert.equal(current,before.sourceText.replace(oldRead,newRead)+addition,'every original input, complete predecessor comparison and native planning refusal remains byte exact');
+  assert.equal(current.slice(0,-addition.length).replace(newRead,oldRead),before.sourceText);
+  const changed=Buffer.from(stored);changed[0]^=1;
+  assert.throws(()=>verifyGitArtifactCertificate(certificate,changed,{revision,path}));
+  assert.throws(()=>verifyGitArtifactCertificate(certificate,stored,{revision:'0'.repeat(40),path}));
+});

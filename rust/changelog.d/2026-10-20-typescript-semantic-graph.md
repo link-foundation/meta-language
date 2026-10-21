@@ -1,0 +1,1 @@
+Experimental TypeScript program graphs retain original and lowered concrete syntax with editable checked semantics through Links text and binary reload. CI controls exercise both Rust-package target emitters against shared graph inputs; complete TypeScript coverage and native verification remain required.

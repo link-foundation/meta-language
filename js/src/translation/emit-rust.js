@@ -1,6 +1,7 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
+import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // Rust emitter. Naturals and integers are `ml::Big`, an unbounded integer
 // the translation carries in its own prelude, so no value is ever narrowed;
 // machine integers stay Rust machine integers with checked arithmetic, which
@@ -28,7 +29,8 @@ import { readOwnedArrayFinalUses } from './owned-array-moves.js';
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import { typeError, unsupported } from './diagnostics.js';
 import { renderCollectionConstruction } from './collection-construction-rules.js';
-import { typeKey } from './types.js';
+import { sameType, typeKey } from './types.js';
+import {acceptReferenceIdentityComparison, readReferenceIdentityComparisonError, renderReferenceIdentityComparison} from './reference-identity-rules.js';
 import { Scope, renameFunction, renameMain, renameTheorem, tailLoop } from './ir.js';
 import { EmitState, typeContains, withParts } from './emit-common.js';
 import { STRING_PRELUDE } from './string-runtime.js';
@@ -659,12 +661,18 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true).file();
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
 function externalName(kind, name) {
   return kind === 'fn' ? snake(name) : name;
+}
+
+/** Actual normal emitter target identities, shared by optional ownership checks. */
+export function readRustExternalTargets(program) {
+  const externals = new Map((program.externals ?? []).filter(({name}) => !program.declarations.has(name)).map(entry => [entry.name, entry]));
+  return [...externals.values()].map(entry => ({source: entry.name, kind: entry.k, target: externalName(entry.k, entry.name)}));
 }
 
 /**
@@ -677,7 +685,7 @@ function externalName(kind, name) {
 export function emitRustConstants(program) {
   const effects = program.main?.effects ?? [];
   const effect = effects[0];
-  const legalName = effect && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
+  const legalName = typeof effect?.name === 'string' && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
   if (!acceptConstantEmission(effect?.constant ?? false, effects.length, program.declarations.size, legalName ?? false)) return null;
   const state = new EmitState(program, 'Rust', snake, KEYWORDS, {
     ctorStyle: 'data', typeName: camel, valueName: snake, ctorName: camel, moduleSegment: snake, typeSpace: true, modulesShareTypeSpace: true,
@@ -699,9 +707,10 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false) {
     this.program = program;
     this.state = state;
+    this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
     this.sourceHeaders = sourceHeaders;
     this.borrowedCallTargets = borrowedCallTargets;
     // Historical low-level profiles keep copies; ordinary source and Links
@@ -709,6 +718,7 @@ class RustEmitter {
     this.arrayConsumption = arrayConsumption;
     // The other items of the module the program calls or reads, which it does not declare.
     this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
+    if (this.definitionOwnership !== null) this.definitionOwnership.externalTargets = readRustExternalTargets(program);
     this.temporaries = 0;
     this.theoremChecks = [];
     this.usesBig = false;
@@ -719,6 +729,7 @@ class RustEmitter {
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
+      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -769,7 +780,7 @@ class RustEmitter {
       encodings: this.state.encodingList(),
       theorems: this.state.theorems,
       entry: main ? 'main' : null,
-    }, preludes, body);
+    }, preludes, body, this.definitionOwnership);
   }
 
   /**
@@ -799,7 +810,18 @@ class RustEmitter {
   }
 
   moduleBody(node, path) {
-    const blocks = node.items.map((entry) => this.declaration(entry));
+    const blocks = node.items.map((entry, index) => {
+      const mappingStart = this.state.mappings.length;
+      const definition = this.declaration(entry);
+      if (this.definitionOwnership !== null && path.length === 0) {
+        this.definitionOwnership.blocks.push({source: entry.fullName, kind: entry.k,
+          definitionIndex: (this.program.imports?.length ?? 0) + index,
+          definition, sourceSpan: entry.span ? {...entry.span} : null,
+          mappingStart, mappingEnd: this.state.mappings.length,
+          targets: this.state.mappings.slice(mappingStart).map(mapping => mapping.target)});
+      }
+      return definition;
+    });
     for (const [segment, child] of node.modules) {
       const inner = this.moduleBody(child, [...path, segment]);
       blocks.push(`pub mod ${this.state.moduleName([...path, segment])} {\n${indent(inner.join('\n\n'), 1)}\n}`);
@@ -1334,6 +1356,7 @@ class RustEmitter {
         }
         return renderStringMapExpression('Rust', e.op, this.receiver(e.string));
       case 'stringTest': {
+        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('Rust', e.op, this.borrow(e.string), this.borrow(e.search));
         if (this.utf16Strings) {
           return renderPrimitiveStringRepresentation(true, 'test', this.receiver(e.string), this.borrow(e.search), e.op);
         }
@@ -1445,6 +1468,12 @@ class RustEmitter {
   }
 
   binary(e) {
+    const sameDomain = sameType(e.left.type, e.right.type);
+    const refusal = readReferenceIdentityComparisonError(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain, e.domain !== undefined, e.domain?.reference === true, e.domain !== undefined && sameType(e.domain, e.left.type));
+    if (refusal) throw unsupported('reference comparison', refusal, e.span);
+    if (acceptReferenceIdentityComparison(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain)) {
+      return renderReferenceIdentityComparison(e.op, this.borrow(e.left), this.borrow(e.right));
+    }
     switch (e.op) {
       case 'and':
         return `(${this.expr(e.left)} && ${this.expr(e.right)})`;

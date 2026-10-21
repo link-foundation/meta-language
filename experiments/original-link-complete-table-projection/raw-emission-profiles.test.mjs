@@ -6,6 +6,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readProjectData } from '../../js/scripts/project-data.mjs';
+import {restoreTranslationSourceHistory} from '../../js/scripts/translation-source-history.mjs';
+import {readNativeLibraryReceiptProfile} from '../../js/scripts/native-library-receipt-history.mjs';
 import { COMPLETE_DECLARATION_RECEIPTS, restoreCompleteDeclarationReceipt } from '../../js/scripts/complete-declaration-receipts.mjs';
 import { readStructuredDataLino, structuredDataToLino } from '../../js/src/structured-data-links.js';
 import { LinkNetwork } from '../../js/src/network.js';
@@ -44,6 +46,14 @@ function rawEmissionFixture() {
     producerSources: Object.fromEntries(Object.entries(originalRawEmissionInputs.producerSources)
       .map(([file, bytes]) => [file, Buffer.from(bytes)])),
   };
+}
+
+function rawEmissionHistoricalInferenceFixture() {
+  const input = rawEmissionFixture();
+  const file = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference.file;
+  input.producerSources[file] = Buffer.from(restoreTranslationSourceHistory(input.producerSources[file].toString('utf8'),
+    file, '81107a5945651f17c962e4bb81fb560f96c65ccd'));
+  return input;
 }
 
 function reviseRawEmissionSourceSummary(input) {
@@ -223,7 +233,8 @@ test('a coalesced Number captured by a lifted loop preserves absent reads NaN an
 
 function originalRawProducerSnapshots(input) {
   const revision = ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY;
-  const current = input.producerSources[revision.inference.file].toString('utf8');
+  const current = restoreTranslationSourceHistory(input.producerSources[revision.inference.file].toString('utf8'),
+    revision.inference.file, '81107a5945651f17c962e4bb81fb560f96c65ccd');
   assert.equal(current.split(revision.addedImport).length, 2);
   assert.equal(current.split(revision.currentBranches).length, 2);
   const original = current.replace(revision.addedImport, '').replace(revision.currentBranches, () => revision.originalBranches);
@@ -353,7 +364,9 @@ function originalRawArchiveReceiptInput(input) {
 }
 
 test('the archive receipt successor retains every original producer pin and complete raw emission artifact', () => {
-  const current = rawEmissionFixture(), refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
+  // The original fourteen-producer assertion owns the exact extraction source;
+  // current inference provenance is exercised separately on all live inputs.
+  const current = rawEmissionHistoricalInferenceFixture(), refresh = ORIGINAL_LINK_RAW_COLLECTION_ARCHIVE_RECEIPT_REFRESH;
   const historical = originalRawArchiveReceiptInput(current);
   const before = verifyOriginalLinkRawEmissionProfile(historical);
   const after = verifyOriginalLinkRawEmissionProfile(current);
@@ -368,7 +381,7 @@ test('the archive receipt successor retains every original producer pin and comp
   assert.deepEqual(before.producerApplicability.sources, [ORIGINAL_LINK_RAW_EMISSION_PRODUCERS[0],
     ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.inference,
     ...ORIGINAL_LINK_RAW_COLLECTION_EXTRACTION_APPLICABILITY.dependencies]);
-  const currentDescriptor = readProjectData(COMPLETE_DECLARATION_RECEIPTS).receipts.find(row => row.identity === 'collection construction').current;
+  const currentDescriptor = readNativeLibraryReceiptProfile('collection construction');
   assert.deepEqual(after.producerApplicability.sources, before.producerApplicability.sources.map(row =>
     row.file === refresh.current.file ? currentDescriptor : row), 'actual current bytes have their actual descriptor');
   assert.deepEqual(before.producerApplicability.sourceClosure, after.producerApplicability.sourceClosure);

@@ -4,6 +4,7 @@
 // checked against WordNet 3.1, and a mutation that introduces an abbreviation,
 // an ambiguity, a semantic duplicate or an unrecorded name fails the gate.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
@@ -22,6 +23,7 @@ import {
   nameProblems,
 } from '../scripts/issue-195-naming.mjs';
 import { recordIssue195Observations } from './support/issue-195-observations.js';
+import { extractOwnCodebaseHistoricalNames, readOwnCodebaseHistoricalNamingPolicy } from '../scripts/own-codebase-baseline-naming-history.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -29,7 +31,10 @@ const wordnet = loadWordNet();
 const registers = loadNamingRegisters(root);
 const context = { wordnet, vocabulary: registers.vocabulary };
 const { fixtures } = readProjectData(new URL(`../../${NAMING_FIXTURES}`, import.meta.url));
-const repository = checkRepositoryNames(root, wordnet);
+// Use the same complete current plus certified historical source inventory as the normal naming driver.
+const currentNames = extractNameInventory(root);
+const historicalNames = extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES);
+const repository = checkRepositoryNames(root, wordnet, { names: [...currentNames, ...historicalNames] });
 
 function observe(assertions, testName) {
   recordIssue195Observations({
@@ -46,7 +51,7 @@ function observe(assertions, testName) {
 const record = (id) => structuredClone(repository.records.find((candidate) => candidate.id === id));
 const kindsOf = (problems) => [...new Set(problems.map((problem) => problem.kind))].sort();
 // The problems of the repository with records or source names mutated in memory.
-const mutated = (override) => checkRepositoryNames(root, wordnet, override).problems;
+const mutated = (override) => checkRepositoryNames(root, wordnet, { names: repository.names, ...override }).problems;
 
 test('the vocabulary is WordNet 3.1 plus registered technical terms, not a letter pattern', () => {
   assert.equal(wordnet.source, 'WordNet 3.1 (wordnet-db)');
@@ -166,4 +171,41 @@ test('every name the sources define has a concept record and every record is use
   const stillUsed = mutated({ names: [...repository.names, { inventory: 'grammar constructs', file: 'rust/src/grammar/fidelity.rs', name: 'blockquote', record: 'grammar.blockquote' }] });
   assert.match(stillUsed.map((problem) => problem.message).join('\n'), /still uses blockquote, a former name of block-quote/u);
   observe(['fullInventoryCovered'], 'every name the sources define has a concept record and every record is used');
+});
+
+
+test('the normal naming source profile retains every actual current name and both complete certified historical owners', () => {
+  const policy = readOwnCodebaseHistoricalNamingPolicy();
+  assert.equal(policy.views.length, 2);
+  assert.equal(historicalNames.slice(0,2).length,2,'both original certified owners remain first');
+  assert.equal(historicalNames.length,2+policy.additionalSourceViews.views.reduce((count,view)=>count+view.names.length,0));
+  assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
+  assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
+  for (const view of policy.views) {
+    const actual = readFileSync(new URL(`../../${view.file}`, import.meta.url));
+    assert.equal(actual.length, view.current.bytes);
+    assert.equal(createHash('sha256').update(actual).digest('hex'), view.current.sha256,
+      `${view.file} retains its complete independently pinned actual current source`);
+    const rows = historicalNames.filter((row) => row.inventory === view.inventory && row.file === view.file);
+    assert.deepEqual(rows.map(({ name, record }) => ({ name, record })), view.names);
+    for (const row of rows) {
+      assert.equal(row.sourceView.kind, 'complete certified historical source');
+      assert.equal(row.sourceView.revision, policy.revision);
+      assert.equal(row.sourceView.path, view.file);
+      assert.ok(row.sourceView.bytes > 0);
+      assert.match(row.sourceView.sha256, /^[a-f0-9]{64}$/u);
+      assert.equal(currentNames.some((current) => current.inventory === row.inventory && current.file === row.file && current.name === row.name), false,
+        'a certified historical owner is kept separate from actual current source names');
+    }
+  }
+  for(const view of policy.additionalSourceViews.views){
+    const source=policy.additionalSourceViews.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
+    const rows=historicalNames.filter(row=>row.inventory===view.inventory&&row.file===view.file&&row.sourceView.revision===view.revision);
+    assert.deepEqual(rows.map(({name,record})=>({name,record})),view.names);
+    for(const row of rows){assert.equal(row.sourceView.revision,view.revision);assert.equal(row.sourceView.sha256,source.predecessor.sha256);assert.equal(row.sourceView.bytes,source.predecessor.bytes);}
+  }
+  const changed = structuredClone(historicalNames); changed[0].sourceView.path = 'unregistered/source.rs';
+  assert.notDeepEqual(changed, historicalNames);
+  assert.deepEqual(extractOwnCodebaseHistoricalNames(root, NAME_INVENTORIES), historicalNames,
+    'caller mutations cannot change independently verified complete original source membership');
 });

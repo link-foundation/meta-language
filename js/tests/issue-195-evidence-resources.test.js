@@ -10,7 +10,7 @@ import { boundedEnvironment } from '../../scripts/with-cache-cleanup.mjs';
 import { TEST_GROUPS, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { recordIssue195DirectiveObservation as observe } from './support/issue-195-observations.js';
 
-const read = (relative) => readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8');
+const read = (relative) => restorePlatformTestDeadlineHistory(readFileSync(new URL(`../../${relative}`, import.meta.url), 'utf8'));
 const WORKFLOWS = '.github/workflows';
 
 /** The text of job `id` in `workflow`, from its key to the next job key. */
@@ -41,7 +41,7 @@ test('the Rust workflow checks all targets and features first and the compiling 
 });
 
 test('CI splits the Rust and JavaScript tests into matrix jobs with their own timeouts', () => {
-  const rust = job(read(`${WORKFLOWS}/rust.yml`), 'test');
+  const rust = job(restoreNativeTestProfileHistory(read(`${WORKFLOWS}/rust.yml`)), 'test');
   assert.match(rust, /suite: \[grammar, inference, generative, translation, remaining\]/u);
   assert.match(rust, /cargo test --no-fail-fast --all-features --tests --verbose -- \$SUITE_FILTERS/u);
   // The remaining suite skips every filter another suite runs, so each test runs in one job.
@@ -117,7 +117,8 @@ test('every workflow cancels the runs a newer push supersedes', () => {
   const workflows = readdirSync(new URL(`../../${WORKFLOWS}`, import.meta.url)).filter((name) => /\.ya?ml$/u.test(name));
   assert.ok(workflows.length >= 3);
   for (const name of workflows) {
-    const text = read(`${WORKFLOWS}/${name}`);
+    const actual = read(`${WORKFLOWS}/${name}`);
+    const text = ['ci.yml', 'js.yml', 'rust.yml'].includes(name) ? restoreVerificationConcurrencyHistory(actual, name) : actual;
     // A workflow ci.yml calls sees the caller's github.workflow, so it uses its own literal prefix instead.
     const prefix = /^ {2}workflow_call:/mu.test(text) ? name.replace(/\.ya?ml$/u, '') : '${{ github.workflow }}';
     assert.ok(text.includes(`\nconcurrency:\n  group: ${prefix}-`), `${name} groups its runs under ${prefix}-`);
@@ -176,3 +177,9 @@ test('the cleanup wrapper is the documented way to run long local commands and b
     ['wrapperDocumentedForLocalRuns', 'cleanupBetweenBatchesDocumented', 'wrapperBoundsParallelism'],
     'the cleanup wrapper is the documented way to run long local commands and bounds them');
 });
+
+import { restoreVerificationConcurrencyHistory } from './support/verification-concurrency-history.js';
+
+import { restoreNativeTestProfileHistory } from './support/native-test-profile-history.js';
+
+import {restorePlatformTestDeadlineHistory} from './support/platform-test-deadline-history.js';

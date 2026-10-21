@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 184 | 183 | 1 | 0 |
+| Generators | 254 | 253 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 88 | 0 | 0 | 88 |
+| Published artifact contents | 91 | 0 | 0 | 91 |
 
 ## JavaScript engines
 
@@ -731,6 +731,76 @@ they are.
 | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `js/scripts/generate-typescript-erasure-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typescript-erasure-rules.mjs` | `js/scripts/generate-typescript-erasure-rules.mjs` | `script` |  | derived | current |  |
 | `rust/scripts/build-site.rs` | `rust/scripts/build-site.rs` | `script` |  | derived | current |  |
+| `js/scripts/generate-node-dependency-test-placement.mjs` | `js/scripts/generate-node-dependency-test-placement.mjs` | `script` | (undefined; local source placement generation uses the recorded Node runtime) | derived | current |  |
+| `js/scripts/generate-array-relative-element-history.mjs` | `js/scripts/generate-array-relative-element-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-relative-element-template.mjs` | `js/scripts/generate-array-relative-element-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-parameter-tuples.mjs` | `js/scripts/generate-boolean-parameter-tuples.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-value-source-history.mjs` | `js/scripts/generate-boolean-value-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `js/scripts/generate-concrete-program-graph-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-native-inputs.mjs` | `js/scripts/generate-concrete-program-native-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `js/scripts/generate-concrete-program-origin-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-continuation-historical-inputs.mjs` | `js/scripts/generate-continuation-historical-inputs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-contributor-instruction-coverage.mjs` | `js/scripts/generate-contributor-instruction-coverage.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-ci-repair-source-history.mjs` | `js/scripts/generate-current-ci-repair-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-inventory-append-history.mjs` | `js/scripts/generate-dependency-inventory-append-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-link-foundation-fixtures.mjs` | `js/scripts/generate-link-foundation-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-bindings.mjs` | `js/scripts/generate-naming-source-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-representation-rules.mjs` | `js/scripts/generate-program-string-representation-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-source-descriptors.mjs` | `js/scripts/generate-program-string-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-contract-partition-history.mjs` | `js/scripts/generate-raw-contract-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-planning-workflow-history.mjs` | `js/scripts/generate-raw-planning-workflow-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-fixtures.mjs` | `js/scripts/generate-root-type-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-root-type-option-history.mjs` | `js/scripts/generate-root-type-option-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-schema-command-source-profile.mjs` | `js/scripts/generate-schema-command-source-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-shared-boolean-function-model.mjs` | `js/scripts/generate-shared-boolean-function-model.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-string-relative-character-template.mjs` | `js/scripts/generate-string-relative-character-template.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-partition-history.mjs` | `js/scripts/generate-tooling-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-translation-workflow-history.mjs` | `js/scripts/generate-translation-workflow-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `js/scripts/generate-typescript-typed-graph-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-dependency-inventory-order-history.mjs` | `js/scripts/generate-dependency-inventory-order-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-test-partition-history.mjs` | `js/scripts/generate-grammar-test-partition-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-receiver-fixtures.mjs` | `js/scripts/generate-typescript-receiver-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typescript-receiver-parameters.mjs` | `js/scripts/generate-typescript-receiver-parameters.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `js/scripts/generate-raw-oracle-contract-partitions.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `js/scripts/generate-javascript-mutable-array-bindings.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-hosts.mjs` | `js/scripts/generate-rust-literal-match-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-rust-literal-match-rules.mjs` | `js/scripts/generate-rust-literal-match-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `js/scripts/generate-boolean-declaration-value-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-boolean-declaration-value-rules.mjs` | `js/scripts/generate-boolean-declaration-value-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `js/scripts/generate-ci-39496927203-lint-dependency-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `js/scripts/generate-ci-39496927203-lint-repairs.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `js/scripts/generate-current-shared-boolean-function-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `js/scripts/generate-own-codebase-baseline-naming-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-rules.mjs` | `js/scripts/generate-ascii-text-predicate-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `js/scripts/generate-own-codebase-test-registration-sources.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `js/scripts/generate-ascii-text-predicate-host-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `js/scripts/generate-ascii-text-predicate-hosts.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-program-string-host-registration-history.mjs` | `js/scripts/generate-program-string-host-registration-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-frontend-source-history.mjs` | `js/scripts/generate-relative-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-tooling-frozen-source-history.mjs` | `js/scripts/generate-tooling-frozen-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-collection-size-projection-schema.mjs` | `js/scripts/generate-collection-size-projection-schema.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `js/scripts/generate-current-own-codebase-raw-source-descriptors.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-record-parameter-rules.mjs` | `js/scripts/generate-javascript-record-parameter-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-required-field-native-host-succession.mjs` | `js/scripts/generate-required-field-native-host-succession.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-native-host-source-history.mjs` | `js/scripts/generate-current-native-host-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-declaration-dependency-rules.mjs` | `js/scripts/generate-declaration-dependency-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-external-emission-rules.mjs` | `js/scripts/generate-external-emission-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-current-frontend-history.mjs` | `js/scripts/generate-relative-array-current-frontend-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `js/scripts/generate-current-own-codebase-raw-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `js/scripts/generate-relative-array-owned-rule-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-truthy-projection-schema.mjs` | `js/scripts/generate-truthy-projection-schema.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-array-classification-rules.mjs` | `js/scripts/generate-array-classification-rules.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-identifier-models.mjs` | `js/scripts/generate-javascript-identifier-models.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `js/scripts/generate-javascript-mutable-array-frontend-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-reference-identity-rules.mjs` | `js/scripts/generate-reference-identity-rules.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -741,7 +811,7 @@ they are.
 | `elan` |  | `.github/workflows/ci.yml` | `v4.2.4` | v4.2.4 (GitHub release, leanprover/elan) | version | current |  |
 | `lean` |  | `.github/workflows/ci.yml`, `experiments/issue-195-projects/lean/lean-toolchain`, `lean-toolchain` | `v4.34.1` | v4.34.1 (GitHub release, leanprover/lean4) | version | current |  |
 | `node` |  | `.github/workflows/ci.yml`, `.github/workflows/js.yml` | `22` | 22 (nodejs/Release schedule, oldest maintained LTS line (maintained: 22, 24)) | floor | current |  |
-| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24` | 24.21.0 (nodejs.org, newest LTS release (Krypton)) | major | current |  |
+| `node` |  | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `24.22.0` | 24.22.0 (nodejs.org, newest LTS release (Krypton); observed 2026-10-19; other entries retain the 2026-10-06 full audit) | version | current |  |
 | `npm` |  | `.github/workflows/js.yml` | `12` | 12.2.0 (npm registry, npm latest) | major | current |  |
 | `ocaml` |  | `.github/workflows/ci.yml` | `5.4` | 5.5.1 (GitHub release, ocaml/ocaml) | minor | behind | Held by ocamlfind 1.9.8, the newest ocamlfind release in opam-repository, which requires OCaml <5.5.0; rocq-runtime 9.3.0 needs ocamlfind (>=1.9.1), so the Rocq acceptance job builds with the newest OCaml it admits and moves when ocamlfind admits a newer line. |
 | `pre-commit/pre-commit-hooks` |  | `.pre-commit-config.yaml` | `v6.0.0` | v6.0.0 (GitHub release, pre-commit/pre-commit-hooks) | version | current |  |
@@ -766,7 +836,7 @@ they are.
 | `actions/deploy-pages` | `.github/workflows/rust.yml` | `v5` | v5.0.1 (GitHub release, actions/deploy-pages) | major | current |  |
 | `actions/download-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v8` | v8.0.1 (GitHub release, actions/download-artifact) | major | current |  |
 | `actions/setup-node` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.0 (GitHub release, actions/setup-node) | major | current |  |
-| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
+| `actions/upload-artifact` | `.github/workflows/ci.yml`, `.github/workflows/dependency-refresh.yml`, `.github/workflows/js.yml`, `.github/workflows/rust.yml` | `v7` | v7.0.1 (GitHub release, actions/upload-artifact) | major | current |  |
 | `actions/upload-pages-artifact` | `.github/workflows/rust.yml` | `v5` | v5.0.0 (GitHub release, actions/upload-pages-artifact) | major | current |  |
 | `codecov/codecov-action` | `.github/workflows/rust.yml` | `v7` | v7.1.1 (GitHub release, codecov/codecov-action) | major | current |  |
 | `docker/build-push-action` | `.github/workflows/rust.yml` | `v7` | v7.4.0 (GitHub release, docker/build-push-action) | major | current |  |
@@ -887,6 +957,9 @@ they are.
 | `src/translation/rust/float-predicates.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `README.md` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
+| `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

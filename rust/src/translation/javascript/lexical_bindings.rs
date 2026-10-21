@@ -4,7 +4,7 @@ use super::callables::{number, position};
 use super::tag_context::TagReceiverFact;
 use super::{JavaScriptParser, Result, Span, Token, unsupported};
 use crate::translation::{callable_source_rules, frontend_rules};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 struct Frame {
@@ -12,6 +12,8 @@ struct Frame {
     boundary: u8,
     bindings: Vec<(String, Option<usize>)>,
     tag_bindings: HashMap<String, TagReceiverFact>,
+    declaration_counts: HashMap<String, usize>,
+    parameters: HashSet<String>,
 }
 
 struct Read {
@@ -39,6 +41,40 @@ impl Default for Trace {
 }
 
 impl Trace {
+    pub(super) const fn read_count(&self) -> usize {
+        self.reads.len()
+    }
+
+    /// Actual assignment observations; the shared profile decides admission.
+    pub(super) fn assigned_names_since(&self, start: usize) -> impl Iterator<Item = &str> {
+        self.reads[start..]
+            .iter()
+            .filter(|read| read.assignment)
+            .map(|read| read.name.as_str())
+    }
+
+    pub(super) fn declaration_counts(&mut self, counts: HashMap<String, usize>) {
+        self.frames[self.current].declaration_counts = counts;
+    }
+
+    pub(super) fn duplicate_declaration(&self, name: &str) -> bool {
+        self.frames[self.current]
+            .declaration_counts
+            .get(name)
+            .is_some_and(|count| *count > 1)
+    }
+
+    pub(super) fn parameter(&mut self, name: &str) {
+        self.frames[self.current].parameters.insert(name.to_owned());
+        self.binding(name, None);
+    }
+
+    pub(super) fn parent_parameter(&self, name: &str) -> bool {
+        self.frames[self.current]
+            .parent
+            .is_some_and(|parent| self.frames[parent].parameters.contains(name))
+    }
+
     pub(super) fn tag_binding(&mut self, name: &str, fact: TagReceiverFact) {
         self.frames[self.current]
             .tag_bindings
@@ -188,8 +224,7 @@ impl JavaScriptParser {
         self.lexical.frames.push(Frame {
             parent: Some(outer),
             boundary,
-            bindings: Vec::new(),
-            tag_bindings: HashMap::new(),
+            ..Frame::default()
         });
         for name in names {
             self.lexical.binding(name, None);

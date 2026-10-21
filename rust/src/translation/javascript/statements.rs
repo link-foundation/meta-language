@@ -332,6 +332,13 @@ impl JavaScriptParser {
                 Some(span(&kind, &kind)),
             ));
         }
+        if !self.has_standard_builtin_owner(&kind) {
+            return Err(unsupported(
+                "shadowed standard error owner",
+                "the actual lexical/module/context error constructor must be the standard unshadowed intrinsic",
+                Some(kind.span()),
+            ));
+        }
         self.cursor.expect("(", Some("throw"))?;
         let message = if self.cursor.is(")") {
             String::new()
@@ -720,6 +727,13 @@ impl JavaScriptParser {
     fn console_call(&mut self) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
         self.lexical.read(&start, false, start.span());
+        if !self.has_standard_builtin_owner(&start) {
+            return Err(unsupported(
+                "shadowed standard console owner",
+                "a local, module or supplied context console binding cannot be replaced with standard output",
+                Some(start.span()),
+            ));
+        }
         self.cursor.expect(".", Some("console"))?;
         let method = self.cursor.identifier(Some("console"))?;
         if method.value != "log" {

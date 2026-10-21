@@ -331,7 +331,7 @@ impl JavaScriptParser {
             })
             .collect::<Vec<_>>();
         for parameter in &params {
-            self.lexical.binding(&parameter.name, None);
+            self.lexical.parameter(&parameter.name);
         }
         let outer = std::mem::replace(&mut self.scope, scope);
         let outer_jumps = std::mem::take(&mut self.jumps);

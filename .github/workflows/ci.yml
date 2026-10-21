@@ -21,11 +21,11 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request cancels that pull request's older run; push runs
-# are grouped by their own run id, so a release on main is never cancelled.
+# Pull request numbers keep cancellation queues stable after merge. Every other
+# verification run and its jobs use their own run id; main runs cannot collide.
 # The called workflows use their own literal js- and rust- prefixes.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -311,7 +311,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-candidates-${{ github.ref }}
+      group: issue-195-candidates-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -319,7 +319,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -381,7 +381,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     concurrency:
-      group: issue-195-consumer-${{ github.ref }}-${{ matrix.os }}
+      group: issue-195-consumer-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.os }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -393,7 +393,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -464,7 +464,12 @@ jobs:
           const {spawnSync} = require('node:child_process');
           const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
           if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
-          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          let resolved;
+          for (let attempt = 1; attempt <= 3; attempt += 1) {
+            resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+            if (resolved.error?.code !== 'ETIMEDOUT' || resolved.signal !== 'SIGTERM' || resolved.status !== null) break;
+            if (attempt < 3) console.error(`Retrying timed-out Windows linker lookup (${attempt}/3): ${resolved.error.message}`);
+          }
           if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
             throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
           }
@@ -537,7 +542,7 @@ jobs:
     # theory-network.test.mjs alone takes minutes, and the Rust workloads build RML from scratch.
     timeout-minutes: 90
     concurrency:
-      group: issue-195-rml-workloads-${{ github.ref }}
+      group: issue-195-rml-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -545,7 +550,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -609,7 +614,7 @@ jobs:
     # Every candidate runs fresh consumers; the optional target cache reuses build outputs only.
     timeout-minutes: 120
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}-${{ matrix.partition }}
+      group: issue-195-formal-ai-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -617,7 +622,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -754,7 +759,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: issue-195-formal-ai-workloads-${{ github.ref }}
+      group: issue-195-formal-ai-workloads-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -762,7 +767,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -847,7 +852,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-runtime-parity-${{ github.ref }}
+      group: issue-195-stage-runtime-parity-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -855,7 +860,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -918,7 +923,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-javascript
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -926,7 +931,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -983,7 +988,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-rust
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-rust
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -991,7 +996,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1019,6 +1024,10 @@ jobs:
           --commit "$GITHUB_SHA"
           --results-dir issue-195-results
           --stage "$TARGET"
+
+      - name: Validate TypeScript graph Rust execution
+        if: ${{ !cancelled() }}
+        run: node experiments/typescript-typed-graph/run-native.mjs --results-dir issue-195-results
 
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
@@ -1050,7 +1059,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-native-${{ github.ref }}-${{ matrix.target }}
+      group: issue-195-stage-native-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-${{ matrix.target }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -1062,7 +1071,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1221,8 +1230,23 @@ jobs:
             shard: 1/1
             partition: 1-of-1
           - group: translation
-            shard: 1/1
-            partition: 1-of-1
+            shard: 1/6
+            partition: 1-of-6
+          - group: translation
+            shard: 2/6
+            partition: 2-of-6
+          - group: translation
+            shard: 3/6
+            partition: 3-of-6
+          - group: translation
+            shard: 4/6
+            partition: 4-of-6
+          - group: translation
+            shard: 5/6
+            partition: 5-of-6
+          - group: translation
+            shard: 6/6
+            partition: 6-of-6
           - group: report-artifacts
             shard: 1/1
             partition: 1-of-1
@@ -1236,7 +1260,7 @@ jobs:
             shard: 1/1
             partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1246,7 +1270,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1397,7 +1421,7 @@ jobs:
             shard: 1/1
             partition: 1-of-1
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-javascript-suite-${{ matrix.group }}-${{ matrix.partition }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1407,7 +1431,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1571,7 +1595,7 @@ jobs:
       matrix:
         physical_shard: [1, 2, 3, 4, 5, 6, 7, 8]
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-rust-suite-${{ matrix.physical_shard }}
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-rust-suite-${{ matrix.physical_shard }}
       cancel-in-progress: true
     env:
       META_LANGUAGE_SHARD_PROFILE: evidence
@@ -1584,7 +1608,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1754,7 +1778,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-stage-${{ github.ref }}-delivery
+      group: issue-195-stage-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-delivery
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1762,7 +1786,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1846,7 +1870,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-post-merge-${{ github.ref }}
+      group: issue-195-post-merge-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -1854,7 +1878,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1912,7 +1936,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: issue-195-acceptance-${{ github.ref }}
+      group: issue-195-acceptance-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
       cancel-in-progress: true
     # When a JavaScript job failed, no acceptance stage ran: the first step
     # reports that as one gate error naming the failed JavaScript jobs, not one
@@ -1927,8 +1951,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$JAVASCRIPT_RESULT" = failure ] || [ "$JAVASCRIPT_RESULT" = cancelled ] || [ "$REPORTS_RESULT" = failure ] || [ "$REPORTS_RESULT" = cancelled ]; then
-            failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
-              --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name' 2>/dev/null | paste -sd ',' - | sed 's/,/, /g')
+            if failed=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" --paginate \
+              --jq '.jobs[] | select(.name | startswith("JavaScript / ")) | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out") | .name'); then
+              failed=$(printf '%s\n' "$failed" | paste -sd ',' - | sed 's/,/, /g')
+            else
+              printf '%s\n' 'GitHub failed-job metadata is unavailable; raw response follows:' "$failed" >&2
+              failed=''
+            fi
             echo "::error::${failed:-The JavaScript workflow and report assertions} finished as '${JAVASCRIPT_RESULT}/${REPORTS_RESULT}'; the acceptance stages run only after every JavaScript job passes, so none of them ran"
           else
             echo "::error::Delivery Candidates finished as '${CANDIDATES_RESULT}'; the Full Requirements Aggregate cannot pass without them"
@@ -1942,7 +1971,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 

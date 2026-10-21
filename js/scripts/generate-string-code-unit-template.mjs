@@ -49,8 +49,11 @@ export function readStringCodeUnitTemplateGeneration() {
     inputDomain: 'A primitive string and evaluated Number index; method checking supplies omitted zero and represented nullable numeric conversion. Boolean, String and object conversion require a separate ToNumber interpretation.',
     evaluation: 'Check this closed lambda under only its two formal binders, then apply it to the separately checked receiver and index once in original order. No actual operand is substituted into the template body.',
     reverseBoundary: 'The resulting checked graph uses existing Lambda, Apply, Let, Math, Slice and CodePointAt operations. Generated Rust runtime source still requires its own source interpretation and is never admitted by a helper name.',
+    character: readStringCharacterTemplateGeneration(),
   };
 }
+
+import {readStringCharacterTemplateGeneration} from './string-character-template-generation.mjs';
 
 export function generateStringCodeUnitTemplate(check = false) {
   const policy = readStringCodeUnitTemplateGeneration();

@@ -133,6 +133,7 @@ export async function generateSelfTranslationRepresentationNative(check = false,
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  generateSelfTranslationLayoutRules({check});
   if (process.argv.includes('--native')) {
     console.log('Native shared representation rules: ' + Buffer.byteLength(await generateSelfTranslationRepresentationNative(check, process.argv.includes('--update-styles'), process.argv.includes('--update-complete-expression-styles'))) + ' bytes');
   } else {
@@ -140,3 +141,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`Shared self-translation representation: ${policy.memberNames.length} retained members; exact prelude ${Buffer.byteLength(policy.prelude)} bytes`);
   }
 }
+
+import {generateSelfTranslationLayoutRules} from './self-translation-layout-generation.mjs';

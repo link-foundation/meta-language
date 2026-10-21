@@ -6,7 +6,8 @@ import { LinkId, LinkMetadata, LinkType } from './primitives.js';
 import { decodeTypedProgramLinks, encodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
 import { verifyGlobalConceptCorrespondence } from './global-concept-rules.js';
 import { acceptFormalRelationEdgeIdentity, acceptFormalRelationIdentity, acceptFormalRelationLabelIdentity } from './formal-relation-rules.js';
-import { readSharedNumericFunctionModel, createSharedNumericFunctionMeaning, SHARED_NUMERIC_FUNCTION_MODEL } from './shared-numeric-function-model.js';
+import { readSharedNumericFunctionModel, readSharedBooleanFunctionModel, readBooleanFunctionDeclarationValueModel, createSharedNumericFunctionMeaning, SHARED_NUMERIC_FUNCTION_MODEL, SHARED_BOOLEAN_FUNCTION_MODEL, BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL } from './shared-numeric-function-model.js';
+import { acceptBooleanDeclarationValueSelector } from './boolean-declaration-value-rules.js';
 
 const LANGUAGE = 'meta-language formal definition';
 const SCHEMA = '1';
@@ -184,7 +185,7 @@ function checked(value) {
   if (!correspondence(graph(network, modelLink.references()[0]), graph(expected, expectedRoot))) throw new TypeError('the formal primitive model differs from its supported declaration');
   const exclusions = new Set([`${key(root)}:provenance`]);
   let meaning = network;
-  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL) {
+  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL || model === SHARED_BOOLEAN_FUNCTION_MODEL || model === BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL) {
     decodeTypedProgramLinks(network, body);
     // Both emitters interpret this exact checked model. An unsupported IR
     // construct is an unknown formal basis, even if its host data is alike.
@@ -194,11 +195,29 @@ function checked(value) {
       if (relation.label === 'source span' || key(relation.parent) === key(body) && relation.label === 'provenance') exclusions.add(`${key(relation.parent)}:${relation.label}`);
     }
     bindingExclusions(network, body, exclusions, readTypedProgramBindingIdentities(network, body));
-    if (model === SHARED_NUMERIC_FUNCTION_MODEL) {
-      const profile = readSharedNumericFunctionModel(network, body);
+    if (model === SHARED_NUMERIC_FUNCTION_MODEL || model === SHARED_BOOLEAN_FUNCTION_MODEL || model === BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL) {
+      const declarationValue = model === BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL;
+      const booleanValue = model === SHARED_BOOLEAN_FUNCTION_MODEL || declarationValue;
+      let profile;
+      if (declarationValue) {
+        const selectors = (fields(network).get(key(root)) ?? []).filter(field => field.label === 'selected function declaration');
+        if (!acceptBooleanDeclarationValueSelector(selectors.length === 1, true)) throw new TypeError('the direct declaration basis requires exactly one owned entry selector');
+        profile = readBooleanFunctionDeclarationValueModel(network, body, selectors[0].child);
+        exclusions.add(`${key(root)}:selected function declaration`);
+        for (const field of profile.qualificationFields) exclusions.add(`${key(field.parent)}:${field.label}`);
+      } else profile = booleanValue ? readSharedBooleanFunctionModel(network, body) : readSharedNumericFunctionModel(network, body);
       exclusions.add(`${key(profile.languageParent)}:${profile.languageLabel}`);
       for (const field of profile.signatureFields) exclusions.add(`${key(field.parent)}:${field.label}`);
       meaning = createSharedNumericFunctionMeaning(network, profile);
+      if (booleanValue) {
+        // This explicitly observes a callable value, rather than its namespace.
+        // The actual archive keeps all names and its original typed root.
+        for (const id of profile.declarationIds) {
+          exclusions.add(`${id}:name`); exclusions.add(`${id}:full name`);
+        }
+        const references = meaning.link(root).references(); references[0] = profile.entryTarget;
+        meaning.link(root).setReferences(references);
+      }
     }
   } else {
     const expectedBody = data(expected, MODELS[model]);
@@ -209,10 +228,11 @@ function checked(value) {
 
 /** Copy a checked operational definition and its supported primitive basis. */
 export function encodeFormalConceptDefinition(value, { model = 'checked typed program', provenance } = {}) {
+  if (model === BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL) throw new TypeError('the direct declaration basis requires an actual owned entry selector');
   if (!Object.hasOwn(MODELS, model)) throw new TypeError('unsupported formal primitive model');
   let network;
   let body;
-  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL) {
+  if (model === 'checked typed program' || model === SHARED_NUMERIC_FUNCTION_MODEL || model === SHARED_BOOLEAN_FUNCTION_MODEL) {
     const input = value?.network || value?.links ? archive(value) : encodeTypedProgramLinks(value);
     network = LinkNetwork.fromLino(input.network.toLino());
     body = input.root;
@@ -223,6 +243,21 @@ export function encodeFormalConceptDefinition(value, { model = 'checked typed pr
   }
   const basis = network.insertLink([data(network, MODELS[model])], metadata('formal primitive model', model));
   const root = network.insertLink([body, basis], metadata(ROOT, SCHEMA));
+  if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', data(network, provenance));
+  const result = { network, root };
+  checked(result);
+  return result;
+}
+
+// Internal graph constructor used by the additive declaration-value API. The
+// public typed-program options and the original wrapper constructor stay intact.
+export function encodeFormalFunctionDeclarationContext(value, entryDeclaration, { provenance } = {}) {
+  const input = archive(value);
+  const network = LinkNetwork.fromLino(input.network.toLino());
+  const model = BOOLEAN_FUNCTION_DECLARATION_VALUE_MODEL;
+  const basis = network.insertLink([data(network, MODELS[model])], metadata('formal primitive model', model));
+  const root = network.insertLink([input.root, basis], metadata(ROOT, SCHEMA));
+  network.insertFieldRelation(root, 'selected function declaration', LinkId.from(entryDeclaration));
   if (provenance !== undefined) network.insertFieldRelation(root, 'provenance', data(network, provenance));
   const result = { network, root };
   checked(result);

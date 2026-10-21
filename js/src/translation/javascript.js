@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan } from './frontend-rules.js';
+import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
 import { readCallableReferenceConstruct, readCallableReferenceObligation, readCallableSurfaceConstructor } from './callable-source-rules.js';
@@ -20,10 +20,13 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
+import { markSharedReferenceTypes } from './javascript-cells.js';
 import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from './surface-raw-metadata-rules.js';
 import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 import { validateJavaScriptProducts } from './javascript-products.js';
+import { readNamedJavaScriptRecordParameters, readNamedJavaScriptRecordParameterBody } from './javascript-record-parameters.js';
+import { acceptJavaScriptStandardBuiltinOwner } from './javascript-record-parameter-rules.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
@@ -93,8 +96,16 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '' } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true } = {}) {
     this.source = source;
+    if (typeof moduleScopeKnown !== 'boolean' || !Array.isArray(moduleBindingNames)
+      || moduleBindingNames.length > 100_000) {
+      throw unsupported('JavaScript module binding context', 'known actual outer binding names and an explicit Boolean scope fact are required');
+    }
+    for (const name of moduleBindingNames) if (typeof name !== 'string' || name.length === 0) {
+      throw unsupported('JavaScript module binding context', 'actual outer binding names must be nonempty strings without sparse slots');
+    }
+    this.moduleScopeKnown = moduleScopeKnown;
     this.scalarLoopModel = scalarLoopModel;
     this.readonlyModuleConstants = readonlyModuleConstants;
     this.readonlyConstantInitializer = false;
@@ -103,12 +114,21 @@ class JavaScriptParser {
     this.referenceSemanticsOverride = referenceSemantics;
     this.referenceSemanticsForced = false;
     this.eliminatedOwnedArrayAppendOperations = [];
+    // Private source construction identities; never serialized into surface/IR.
+    this.ownedArrayIterationBlocks = new WeakMap();
     // The other items of the module an item may call and read, by name.
     this.externals = new Map(externals.map((external) => [external.name, external]));
     this.moduleDirectory = moduleDirectory;
     this.imports = [];
     this.cursor = new TokenCursor(tokens, 'JavaScript');
     this.literalBindings = literalBindings;
+    // This private parser owns its tokenize result; no parser operation
+    // mutates these token records. Reserve all module/import/context names
+    // once, then retain generated logical argument names in the same Set.
+    this.recordParameterTokenOwner = tokens;
+    this.recordParameterNames = new Set([...this.externals.keys(), ...literalBindings.keys()]);
+    this.recordParameterOrdinal = 0;
+    for (const token of tokens) if (token.kind === 'identifier') this.recordParameterNames.add(token.value);
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
@@ -123,7 +143,7 @@ class JavaScriptParser {
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
     // Parser-local origins survive early builtin normalization and body
     // lowering. They are validated before type inference, never emitted as IR.
-    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map() }];
+    this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map(), declarationCounts: new Map(), parameters: new Set() }];
     this.lexicalScope = 0;
     this.lexicalReads = [];
     // Enclosing loops and switches, for `break` and `continue`.
@@ -146,7 +166,18 @@ class JavaScriptParser {
     this.unawaited = [];
     this.sequentialAsync = false;
     this.exportedNames = new Set();
-    this.moduleBindings = new Set([...this.externals.keys(), ...this.literalBindings.keys()]);
+    this.moduleBindings = new Set([...moduleBindingNames, ...this.externals.keys(), ...this.literalBindings.keys()]);
+  }
+
+  // Current lexical values resolve before special-global normalization. Known
+  // outer names are actual source facts, never invented typed declarations.
+  // Unknown module surfaces cannot prove that omitted binders/effects leave
+  // a special intrinsic available; this does not invent a complete name list.
+  acceptStandardBuiltinOwner(name) {
+    return acceptJavaScriptStandardBuiltinOwner(name, !this.moduleScopeKnown
+      || this.scope.locals.has(name) || this.scope.tdz.has(name)
+      || this.moduleBindings.has(name) || this.externals.has(name)
+      || this.literalBindings.has(name) || this.functionNames.has(name));
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -285,7 +316,11 @@ class JavaScriptParser {
     const inferred = inferJavaScriptTypes(program);
     finishJavaScriptScalarLoops(inferred);
     validateJavaScriptProducts(inferred, this.exportedNames);
-    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) inferred.referenceSemantics = true;
+    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) {
+      const selected = inferred.referenceSemantics !== true;
+      inferred.referenceSemantics = true;
+      if (selected) return markSharedReferenceTypes(inferred);
+    }
     return inferred;
   }
 
@@ -502,16 +537,18 @@ class JavaScriptParser {
     if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
     const name = c.identifier('function');
     global(name);
-    return this.functionRest(start, name, isAsync);
+    return this.functionRest(start, name, isAsync, true);
   }
 
   /** Parameters and body of a function or method; `docToken` is where its JSDoc ends. */
-  functionRest(docToken, nameToken, isAsync = false) {
+  functionRest(docToken, nameToken, isAsync = false, namedRecordParameters = false) {
     const c = this.cursor;
     const doc = this.jsdocFor(docToken);
     c.expect('(', nameToken.value);
-    const tokens = this.parameters(nameToken.value);
-    return this.functionBody(docToken, nameToken, doc, tokens, () => this.blockStatements(), isAsync);
+    const records = namedRecordParameters ? readNamedJavaScriptRecordParameters(this, doc, isAsync) : null;
+    const tokens = records ? [] : this.parameters(nameToken.value);
+    const body = () => records ? readNamedJavaScriptRecordParameterBody(this, records, () => this.blockStatements()) : this.blockStatements();
+    return this.functionBody(docToken, nameToken, doc, tokens, body, isAsync, records?.parameters ?? null);
   }
 
   /**
@@ -601,12 +638,14 @@ class JavaScriptParser {
    * parameters' scope. An async function is the function its body computes,
    * and its JSDoc may declare the result as `Promise<T>`.
    */
-  functionBody(docToken, nameToken, doc, tokens, statementsOf, isAsync = false) {
+  functionBody(docToken, nameToken, doc, tokens, statementsOf, isAsync = false, logicalParameters = null) {
     const c = this.cursor;
     const name = nameToken.value;
     if (isAsync) this.sequentialAsync = true;
     // A type JSDoc does not declare is inferred once the whole program is read.
-    const params = tokens.map((token) => {
+    // Existing SParam records can own a lowered logical pattern argument;
+    // their spans are origins, not assertions of source identifier spelling.
+    const params = logicalParameters ?? tokens.map((token) => {
       reserved(token);
       const text = doc?.params.get(token.value);
       const optional = doc?.optionalParams.has(token.value) && !token.defaultValue;
@@ -634,7 +673,9 @@ class JavaScriptParser {
     this.topLevel = false;
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
-    if (this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
+    // Record entry bindings must execute before the original body. The old
+    // scalar-loop shortcut skips statementsOf(), so it cannot own this route.
+    if (logicalParameters === null && this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
       let loop;
       try { loop = this.withLexicalScope(names, () => readJavaScriptScalarLoop(this, name, params, isAsync), 2); }
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
@@ -642,6 +683,7 @@ class JavaScriptParser {
     }
     const indexedWritesBefore = this.indexedReferenceWrites;
     const statements = this.withLexicalScope(names, () => {
+      for (const parameter of params) this.lexicalParameter(parameter.name);
       for (const parameter of params) this.rememberTagBinding(parameter.name, { type: parameter.type });
       return statementsOf();
     }, 2);
@@ -654,7 +696,7 @@ class JavaScriptParser {
           this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
         }
       }
-      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders)) {
+      for (const proof of lowerOwnedArrayAppends(statements, params, this.ownedArrayReaders, this.ownedArrayIterationBlocks)) {
         if (proof.operationSpan) this.eliminatedOwnedArrayAppendOperations.push(proof.operationSpan);
       }
       // This observed parse count avoids building duplicate fact columns when
@@ -767,9 +809,13 @@ class JavaScriptParser {
   }
 
   /** Every lexical declaration's names remain in their temporal dead zone until initialized. */
-  blockDeclarations(from) {
+  blockDeclarations(from, _end = null, counts = null) {
     const c = this.cursor;
     const names = new Set();
+    const collect = name => {
+      names.add(name);
+      if (counts) counts.set(name, (counts.get(name) ?? 0) + 1);
+    };
     const saved = c.index;
     c.index = from;
     let depth = 0;
@@ -783,13 +829,13 @@ class JavaScriptParser {
       else if (step === 5) declaration = false;
       if (step !== 3 && step !== 4) continue;
       declaration = true;
-      if (c.peek().kind === 'identifier') names.add(c.peek().value);
+      if (c.peek().kind === 'identifier') collect(c.peek().value);
       else if (c.is('[')) {
-        for (const binding of arrayBindingNames(this, c.index)) names.add(binding.value);
+        for (const binding of arrayBindingNames(this, c.index)) collect(binding.value);
       }
       else if (c.is('{')) {
         for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
-          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) names.add(c.peek(offset).value);
+          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) collect(c.peek(offset).value);
         }
       }
     }
@@ -801,11 +847,15 @@ class JavaScriptParser {
     const c = this.cursor;
     const outer = this.scope;
     const tdz = new Set(outer.tdz);
-    const names = this.blockDeclarations(c.index);
+    const counts = new Map();
+    const names = this.blockDeclarations(c.index, null, counts);
     for (const name of names) tdz.add(name);
     this.scope = { locals: new Set(outer.locals), tdz, mutable: new Set(outer.mutable) };
     try {
-      return this.withLexicalScope(names, parse);
+      return this.withLexicalScope(names, () => {
+        this.lexicalScopes[this.lexicalScope].declarationCounts = counts;
+        return parse();
+      });
     } finally {
       this.scope = outer;
     }
@@ -822,7 +872,7 @@ class JavaScriptParser {
   withLexicalScope(names, parse, boundary = 0) {
     const outer = this.lexicalScope;
     this.lexicalScope = this.lexicalScopes.length;
-    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map() });
+    this.lexicalScopes.push({ parent: outer, boundary, bindings: new Map(), declarationCounts: new Map(), parameters: new Set() });
     for (const name of names) this.lexicalBinding(name);
     try { return parse(); } finally { this.lexicalScope = outer; }
   }
@@ -830,6 +880,11 @@ class JavaScriptParser {
   lexicalBinding(name, initializedAt = -1) {
     const bindings = this.lexicalScopes[this.lexicalScope].bindings;
     if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);
+  }
+
+  lexicalParameter(name) {
+    this.lexicalScopes[this.lexicalScope].parameters.add(name);
+    this.lexicalBinding(name);
   }
 
   lexicalRead(token, assignment = false, where = span(token, token)) {
@@ -1017,11 +1072,51 @@ class JavaScriptParser {
   letDeclarations() {
     const c = this.cursor;
     const start = c.next();
-    if (c.is('{') || c.is('[')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
+    if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
     const statements = [];
+    const names = new Set();
     do {
+      if (c.is('[')) {
+        const pattern = c.peek();
+        const bindings = readArrayBinding(this);
+        if (!c.eat('=')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, pattern));
+        const value = readArrayBindingInitializer(this, bindings, () => this.expr());
+        const items = value.k === 'array' ? value.items : [];
+        const plain = bindings.every((binding, index) => binding.index === index && !binding.path
+          && !binding.rest && !Object.hasOwn(binding, 'defaultValue'));
+        if (!acceptJavaScriptMutableArrayBinding(value.k, items.length, bindings.length, plain,
+          items.some(item => item.spread))) {
+          throw unsupported('let destructuring', 'declare each binding with its own let', span(start, pattern));
+        }
+        const owner = this.lexicalScopes[this.lexicalScope];
+        const parent = this.lexicalScopes[owner.parent];
+        for (const binding of bindings) {
+          if (!acceptJavaScriptMutableArrayBindingOwner('JavaScript', (owner.declarationCounts.get(binding.name) ?? 0) > 1,
+            parent?.parameters.has(binding.name) === true, this.topLevel)) {
+            if (this.topLevel) throw unsupported('let destructuring', 'mutable literal bindings require a function-owned lexical scope', span(start, pattern));
+            throw new TranslationError('syntax', `duplicate lexical binding ${binding.name}`, binding.span);
+          }
+        }
+        const where = span(start, c.peek());
+        const name = `ml_binding${++this.generatedCount}`;
+        const object = { k: 'name', path: [name], span: where };
+        const declarations = bindArrayElements(bindings, object, 'let', where).map(statement => ({
+          ...statement, value: { ...statement.value, provenInBounds: true },
+        }));
+        statements.push({ s: 'const', name, value, span: where }, ...declarations);
+        for (const binding of bindings) {
+          if (names.has(binding.name)) throw new TranslationError('syntax', `duplicate lexical binding ${binding.name}`, binding.span);
+          names.add(binding.name);
+          this.declareLocal(binding.name, true);
+          this.lexicalBinding(binding.name, c.peek().start);
+        }
+        continue;
+      }
+      if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
       const name = c.identifier('let');
       reserved(name);
+      if (names.has(name.value)) throw new TranslationError('syntax', `duplicate lexical binding ${name.value}`, span(name, name));
+      names.add(name.value);
       // The binding is in its temporal dead zone in its own initialiser.
       this.scope.tdz.add(name.value);
       const value = c.eat('=') ? this.expr() : { k: 'none', absence: 'undefined', span: span(start, name) };
@@ -1239,7 +1334,7 @@ class JavaScriptParser {
     const read = (local) => ({ k: 'name', path: [local], span: where });
     const element = { k: 'index', object: read(values), index: read(index), provenInBounds: true, span: where };
     const declarations = bindings ? [{ s: 'const', name: `ml_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`ml_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
-    return {
+    const sourceBlock = {
       s: 'block',
       body: [
         { s: 'const', name: values, value: iterable, span: where },
@@ -1254,6 +1349,8 @@ class JavaScriptParser {
       ],
       span: where,
     };
+    this.ownedArrayIterationBlocks.set(sourceBlock, {binding: sourceBlock.body[0], loop: sourceBlock.body[1], value: iterable, span: where});
+    return sourceBlock;
   }
 
   jumpStatement() {
@@ -1279,6 +1376,8 @@ class JavaScriptParser {
     const kind = c.identifier('throw');
     this.lexicalRead(kind);
     if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));
+    if (!this.acceptStandardBuiltinOwner(kind.value)) throw unsupported('shadowed standard error owner',
+      'the actual lexical/module/context error constructor must be the standard unshadowed intrinsic', kind);
     c.expect('(', 'throw');
     let message = '';
     if (!c.is(')')) {
@@ -1450,6 +1549,8 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     this.lexicalRead(start);
+    if (!this.acceptStandardBuiltinOwner(start.value)) throw unsupported('shadowed standard console owner',
+      'a local, module or supplied context console binding cannot be replaced with standard output', start);
     c.expect('.', 'console');
     const method = c.identifier('console');
     if (method.value !== 'log') {
@@ -2119,7 +2220,8 @@ class JavaScriptParser {
       if (c.is(',')) throw unsupported('array hole', 'a hole is an element that reads undefined, which is not a portable value', span(c.peek(), c.peek()));
       const spread = c.is('...');
       if (spread) c.next();
-      items.push({ spread, value: this.expr() });
+      const value = this.expr();
+      items.push({ spread, value: spread ? { k: 'forOfIterable', object: value, span: value.span } : value });
       if (!c.eat(',')) break;
     }
     c.expect(']', 'array literal');
@@ -2271,8 +2373,13 @@ class JavaScriptParser {
     const boundGlobal = this.moduleBindings.has(token.value) || this.externals.has(token.value) || this.literalBindings.has(token.value) || this.functionNames.has(token.value);
     if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; a mutable module binding requires module-capture representation, and neither can be replaced with the built-in constant', span(token, token));
     if (!boundGlobal && (token.value === 'NaN' || token.value === 'Infinity')) {
+      if (!this.acceptStandardBuiltinOwner(token.value)) throw unsupported('unproved standard global owner',
+        'the original module scope does not prove this special global binding', token);
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
+    }
+    if (token.value === 'undefined' && !boundGlobal && !this.acceptStandardBuiltinOwner(token.value)) {
+      throw unsupported('unproved standard global owner', 'the original module scope does not prove this special global binding', token);
     }
     const absent = readOptionalSourceLiteral(token.value, boundGlobal);
     if (absent) { c.next(); return { k: 'none', absence: absent, span: span(token, token) }; }
@@ -2283,6 +2390,8 @@ class JavaScriptParser {
       const args = c.is('(') ? this.arguments(constructor.value) : [];
       const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
       if (collection !== '') {
+        if (!this.acceptStandardBuiltinOwner(constructor.value)) throw unsupported('shadowed standard collection owner',
+          'a local, module or supplied context constructor cannot be replaced with the standard Map or Set constructor', constructor);
         const items = args[0] ?? { k: 'array', items: [], span: span(token, c.peek()) };
         return { k: collection, [collection === 'set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
       }
@@ -2305,11 +2414,14 @@ class JavaScriptParser {
     }
     const name = segments.join('.');
     const where = span(token, c.peek());
+    const standardOwner = this.acceptStandardBuiltinOwner(segments[0]);
     if (Object.hasOwn(CONSTANTS, name) && !c.is('(')) {
+      if (!standardOwner) throw unsupported('shadowed standard constant owner',
+        'an actual lexical/module/context owner cannot be replaced with the standard numeric constant', token);
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    if (Object.hasOwn(MATH, name) && c.is('(')) {
+    if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);
       return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };
     }
@@ -2320,15 +2432,15 @@ class JavaScriptParser {
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
-    if (name === 'Array.from') return { k: 'arrayFrom', args, span: called };
-    if (name === 'Array.isArray' && args.length === 1) return { k: 'arrayIsArray', arg: args[0], span: called };
-    const arrayForm = readArrayMethodForm(name);
+    if (name === 'Array.from' && standardOwner) return { k: 'arrayFrom', args, span: called };
+    if (name === 'Array.isArray' && args.length === 1 && standardOwner) return { k: 'arrayIsArray', arg: args[0], span: called };
+    const arrayForm = standardOwner ? readArrayMethodForm(name) : '';
     if (arrayForm === 'copy-from' || arrayForm === 'construct') {
       if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
       return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
     }
-    if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
-    if (name === 'Object.freeze' && args.length === 1) {
+    if (name === 'String' && args.length === 1 && standardOwner) return { k: 'toString', arg: args[0], span: called };
+    if (name === 'Object.freeze' && args.length === 1 && standardOwner) {
       if (this.functionNames.has('Object') || this.externals.has('Object')) throw unsupported('shadowed Object.freeze', 'immutable products require the actual unshadowed Object.freeze built-in', called);
       const value = args[0];
       const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
@@ -2344,7 +2456,7 @@ class JavaScriptParser {
         'freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented', called);
       return { ...value, ...(value.k === 'ctorObject' && { frozen: true }), span: called };
     }
-    if (GLOBALS.has(segments[0]) || name === 'String') {
+    if ((GLOBALS.has(segments[0]) || name === 'String') && !boundGlobal) {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }
     if (segments.length === 1 && this.asyncNames.has(name)) this.unawaited.push({ name, span: called });

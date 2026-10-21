@@ -203,7 +203,8 @@ fn five_actual_complete_modules_replay_four_times_with_checked_execution_and_ind
                 emit_javascript_with_options(
                     &program,
                     JavaScriptEmissionOptions {
-                        scoped_binding_model: data["model"].as_str()
+                        scoped_binding_model: data["model"].as_str(),
+                        identifier_model: None
                     }
                 )
                 .unwrap()
@@ -337,7 +338,8 @@ fn counterfeit_loop_source_scope_or_slot_cannot_authorize_snapshot_preservation(
             emit_javascript_with_options(
                 &program,
                 JavaScriptEmissionOptions {
-                    scoped_binding_model: data["model"].as_str()
+                    scoped_binding_model: data["model"].as_str(),
+                    identifier_model: None
                 }
             )
             .is_err()
@@ -446,7 +448,8 @@ fn the_exact_empty_optional_shape_does_not_admit_other_elements_tags_or_some_val
             emit_javascript_with_options(
                 &program,
                 JavaScriptEmissionOptions {
-                    scoped_binding_model: data["model"].as_str()
+                    scoped_binding_model: data["model"].as_str(),
+                    identifier_model: None
                 }
             )
             .is_err()

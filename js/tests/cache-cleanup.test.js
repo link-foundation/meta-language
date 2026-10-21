@@ -20,6 +20,7 @@ import {
 
 const POSIX = process.platform !== 'win32';
 const quiet = { docker: false, preflight: false };
+import {copyRuntimeProcessFixture} from './support/cache-process-runtime.js';
 
 function fixtureWithCaches(t) {
   const fixture = makeRepository(makeBase(t));
@@ -264,9 +265,8 @@ test('cleanup keeps the outputs of active builds', async (t) => {
 test('cleanup keeps a target whose built binary is still running', { skip: !POSIX }, async (t) => {
   const fixture = fixtureWithCaches(t);
   const binary = path.join(fixture.caches.rustTarget, 'debug/deps/unit-fixture');
-  copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), binary);
-  chmodSync(binary, 0o755);
-  const running = spawn(binary, ['30'], { stdio: 'ignore' });
+  copyRuntimeProcessFixture(binary);
+  const running = spawn(binary, ['--max-old-space-size=16', '-e', 'setTimeout(() => {}, Number(process.argv[1]) * 1000)', '30'], { stdio: 'ignore' });
   const exited = new Promise((resolve) => running.once('exit', resolve));
   t.after(() => running.kill('SIGKILL'));
   const deadline = Date.now() + 10000;
@@ -327,9 +327,8 @@ test('cleanup keeps the target of a Cargo process running in its workspace', { s
   const fixture = fixtureWithCaches(t);
   const tools = mkdtempSync(path.join(fixture.base, 'tools-'));
   const cargo = path.join(tools, 'cargo');
-  copyFileSync(spawnSync('sh', ['-c', 'command -v sleep'], { encoding: 'utf8' }).stdout.trim(), cargo);
-  chmodSync(cargo, 0o755);
-  const running = spawn(cargo, ['30'], { cwd: path.dirname(fixture.caches.rustTarget), stdio: 'ignore' });
+  copyRuntimeProcessFixture(cargo);
+  const running = spawn(cargo, ['--max-old-space-size=16', '-e', 'setTimeout(() => {}, Number(process.argv[1]) * 1000)', '30'], { cwd: path.dirname(fixture.caches.rustTarget), stdio: 'ignore' });
   const exited = new Promise((resolve) => running.once('exit', resolve));
   t.after(() => running.kill('SIGKILL'));
   const deadline = Date.now() + 10000;

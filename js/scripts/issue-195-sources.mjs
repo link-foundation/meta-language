@@ -20,7 +20,7 @@ export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
 export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -52,6 +52,34 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     key: 'soloContinuationRequest',
     title: 'Finish existing agent work and continue only as coordinator',
     role: 'Latest user direction to let active subagents finish slowly, then continue implementation and CI follow-up alone without starting or reactivating agents.',
+    ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
+  {
+    id: 'continuous-bulk-completion-2026-10-19',
+    key: 'continuousBulkCompletionRequest',
+    title: 'Fully draft and deliver the authorized scope while CI executes',
+    role: 'Direct correction that opening a continuation PR does not deliver the task; keep drafting all outstanding changes during CI and carry the complete scope through implementation and verification.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
+  {
+    id: 'continue-unmet-requirements-during-ci-2026-10-19',
+    key: 'continueUnmetRequirementsDuringCiRequest',
+    title: 'Implement unmet requirements and repair CI during the next run',
+    role: 'Direct user continuation instruction to implement all unmet requirements and CI repairs while awaiting the next CI result; retain the complete scope and continue working during verification.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
+  {
+    id: 'automation-first-own-codebase-baseline-2026-10-21',
+    key: 'automationFirstOwnCodebaseBaselineRequest',
+    title: 'Automate high coverage work and prioritize complete JavaScript Rust translation of this codebase',
+    role: 'Direct user priority for automation and twenty percent resource investment toward eighty percent results, up to three subagents in the current phase, and full JavaScript and Rust parsing, emission and bidirectional own-codebase translation as the baseline before the remaining capabilities.',
+    ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-WORKFLOW-THREE-SUBAGENT-CURRENT-PHASE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
+  },
+  {
+    id: 'solo-continuation-2026-10-21',
+    key: 'latestSoloContinuationRequest',
+    title: 'Finish all existing agents and continue the current phase alone',
+    role: 'Latest direct user instruction supersedes the earlier three-agent allowance for this task phase: allow existing agents to finish and continue as coordinator without spawning or reactivating agents.',
     ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
   },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));

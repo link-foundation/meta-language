@@ -29,6 +29,7 @@ mod arrays;
 mod callables;
 mod expressions;
 mod helpers;
+mod identifier_model;
 mod math;
 mod names;
 mod optional_values;
@@ -107,6 +108,8 @@ pub fn emit_javascript(program: &Program) -> Result<Emitted> {
 pub struct JavaScriptEmissionOptions<'a> {
     /// Canonical aliases for owned local binding records.
     pub scoped_binding_model: Option<&'a str>,
+    /// Optional ordinary spelling of owned identifiers through the shared renderer.
+    pub identifier_model: Option<&'a str>,
 }
 
 /// Emit using a selected scoped binding interpretation.
@@ -117,6 +120,14 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    let target_identifier = identifier_model::select(options.identifier_model)?;
+    if options.identifier_model.is_some() && options.scoped_binding_model.is_some() {
+        return Err(unsupported(
+            "JavaScript identifier model composition",
+            "the original narrow scoped-binding model requires a separate composition proof",
+            None,
+        ));
+    }
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     let runtime = super::runtime_shell::validate_program(program)?;
     if runtime.is_some() && options.scoped_binding_model.is_some() {
@@ -132,13 +143,28 @@ pub fn emit_javascript_with_options(
     super::owned_local_state::validate_owned_local_state(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     let mut reserved = KEYWORDS.to_vec();
+    for external in &program.externals {
+        if program.external(external.name()).is_none() {
+            continue;
+        }
+        if !super::external_emission_rules::accept_java_script_external_binding(
+            &super::external_emission_rules::ml_string::Text::from_text(external.name()),
+        ) {
+            return Err(unsupported(
+                "JavaScript external binding",
+                "this provider name needs an explicit legal target binding alias",
+                None,
+            ));
+        }
+        reserved.push(external.name());
+    }
     if program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_local_state.is_some())) {
         reserved.push("ml_ownedTextInput");
     }
     let state = EmitState::new(
         program,
         Language::JavaScript,
-        ident,
+        target_identifier,
         &reserved,
         EmitOptions {
             modules_share_term_space: true,
@@ -327,9 +353,9 @@ impl<'p> JavaScriptEmitter<'p> {
         };
         let local = |name: &str| {
             if self.scoped_bindings {
-                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, preserve))
+                (self.state.ident)(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, preserve))
             } else {
-                ident(name)
+                (self.state.ident)(name)
             }
         };
         // The revalidated closed loop has no global declaration reads: its
@@ -732,9 +758,9 @@ impl<'p> JavaScriptEmitter<'p> {
         }
         let local = |name: &str| {
             if self.scoped_bindings {
-                ident(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, false))
+                (self.state.ident)(&super::scoped_binding_emission_rules::render_java_script_scoped_binding_identifier(name, false))
             } else {
-                ident(name)
+                (self.state.ident)(name)
             }
         };
         let effects = rename_main(main, &local, &self.state.local_reserved());

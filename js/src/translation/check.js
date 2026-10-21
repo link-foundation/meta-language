@@ -10,7 +10,9 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
+import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
@@ -21,7 +23,7 @@ import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation 
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
-import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes } from './callable-source.js';
+import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes, readCallableLambdaInference } from './callable-source.js';
 import { acceptCallableFunctionReference, readCallableApplicationError, readCallableCellError, requireCallableComputedApplication } from './callable-source-rules.js';
 import { checkRustSourceSignature } from './rust-source-signatures.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './rust-type-namespace.js';
@@ -44,7 +46,9 @@ import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPr
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
   readPrimitiveMethodLoweringForm, readPrimitiveMethodArgumentObligationFeature } from './primitive-method-rules.js';
-import { acceptProgramTupleProductModel } from '../typed-program-link-rules.js';
+import { acceptProgramTupleProductModel, acceptProgramExpressionOperation } from '../typed-program-link-rules.js';
+import {readStringOrderOperation} from './string-order-rules.js';
+import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {
   BOOL, FLOAT, INT, NAT, STRING, UNIT, array, data, fixedBounds, immutableProductType, isFloat, isNatural, isNumeric, sameType, tuple, typeKey,
 } from './types.js';
@@ -585,17 +589,18 @@ class Checker {
         return this.arrayLiteral(node, env, path, expected);
       }
       case 'tuple': {
+        const context = acceptJavaScriptOptionalTupleContext(this.language, node.k, expected?.kind ?? '', expected?.element?.kind ?? '') ? expected.element : expected;
         if (node.frozen !== undefined && typeof node.frozen !== 'boolean') throw typeError('tuple frozen facet must be a boolean', node.span);
         if (node.productModel !== undefined && !acceptProgramTupleProductModel(node.productModel, node.frozen === true)) throw typeError('unknown or contradictory tuple product model', node.span);
         if (node.frozen && node.items.length === 0) throw unsupported('empty immutable tuple product', 'an empty positional product is distinct from a unit value and needs its own target encoding', node.span);
-        if (expected && expected.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(expected)} is expected`, node.span);
-        if (expected && node.items.length !== expected.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
+        if (context && context.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(context)} is expected`, node.span);
+        if (context && node.items.length !== context.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
         const items = node.items.map((item, index) => {
-          const want = expected?.elements[index];
+          const want = context?.elements[index];
           const value = this.expr(item, env, path, want);
           return want ? coerce(value, want, this.language, item.span ?? node.span) : value;
         });
-        const type = expected ?? tuple(items.map(item => item.type));
+        const type = context ?? tuple(items.map(item => item.type));
         if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item, env.get(PRODUCT_VALUES))))) {
           throw unsupported('immutable tuple product', 'every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product', node.span);
         }
@@ -669,22 +674,31 @@ class Checker {
       }
       case 'arrayIsArray': {
         const value = this.expr(node.arg, env, path, undefined);
-        const body = literal(BOOL, value.type.kind === 'array' || value.type.kind === 'tuple');
-        return { k: 'let', name: this.freshName('ml_array_test'), value, body, type: BOOL };
+        const plan = readJavaScriptArrayClassificationPlan(value.type.kind, value.type.element?.kind ?? '');
+        if (plan.length !== 2 || !plan[0] && plan[1]) throw unsupported('Array.isArray operand',
+          'the checked value needs a closed represented kind or a flat optional array/tuple; unknown union/proxy domains need an explicit operational model', node.span);
+        const name = this.freshName('ml_array_test');
+        const body = plan[1] ? this.booleanValue({ k: 'var', name, type: value.type }, node.span) : literal(BOOL, plan[0]);
+        return { k: 'let', name, value, body, type: BOOL };
       }
       case 'lambda': {
         const inner = new Map(env);
-        const params = readCallableParameterTypes(node.params, expected).map(({ parameter: param, type: selected, declared }) => {
+        const callable = readCallableLambdaInference(node, expected);
+        const params = callable.params.map(({ parameter: param, type: selected, declared }) => {
           const type = declared ? this.resolveType(selected, path, param.span) : selected;
           if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
           bindLocal(inner, param.name, type);
           return { ...param, type };
         });
-        const body = this.expr(node.body, inner, path, expected?.ret);
+        const result = callable.declaredRet ? this.resolveType(callable.ret, path, node.span) : callable.ret;
+        let body = this.expr(node.body, inner, path, result);
+        if (result) body = coerce(body, result, this.language, node.span);
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
         return this.method(node, env, path, expected);
+      case 'booleanValue':
+        return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':
         return coerce(this.numberValue(this.expr(node.arg, env, path, undefined), node.span), FLOAT, this.language, node.span);
       case 'none':
@@ -791,7 +805,7 @@ class Checker {
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
         let then = this.expr(node.then, env, path, expected, allowLiteral);
-        let otherwise = this.expr(node.else, env, path, then.type.kind === 'literal' ? expected : then.type, allowLiteral);
+        let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
         if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
         if (then.type.kind === 'literal') {
           then = this.expr(node.then, env, path, this.defaultNumber());
@@ -814,6 +828,7 @@ class Checker {
       case 'match1':
         return this.match(node, env, path, expected, allowLiteral);
       case 'stringTest': {
+        if (!acceptProgramExpressionOperation('stringTest', node.op)) throw unsupported('string test operation', 'the declared string operation has no checked model', node.span);
         const string = this.expr(node.object, env, path, undefined);
         if (string.type.kind !== 'string') {
           throw unsupported(`method call .${node.op}()`, `.${node.op}() is portable on strings, not on ${typeKey(string.type)}`, node.span);
@@ -948,9 +963,25 @@ class Checker {
           type, this.language, argument.span ?? node.span));
       }
     }
-    if (readPrimitiveMethodLoweringForm(receiver, node.op) === 'code-unit-template') {
-      const signature = { kind: 'function', params: [STRING, FLOAT], ret: FLOAT };
-      const fn = coerce(this.expr(createStringCodeUnitTemplateExpression(node.span), new Map(), path, signature),
+    const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
+    if (lowering === 'relative-element-template') {
+      const result = { kind: 'option', element: object.type.element, absence: 'undefined' };
+      const signature = { kind: 'function', params: [object.type, FLOAT], ret: result };
+      const fn = coerce(this.expr(createArrayRelativeElementTemplateExpression(object.type, node.span), new Map(), path, signature),
+        signature, this.language, node.span);
+      return flattenOption({ k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span });
+    }
+    if (lowering === 'relative-character-template') {
+      const signature = { kind: 'function', params: [STRING, FLOAT], ret: { kind: 'option', element: STRING, absence: 'undefined' } };
+      const fn = coerce(this.expr(createStringRelativeCharacterTemplateExpression(node.span), new Map(), path, signature),
+        signature, this.language, node.span);
+      return { k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span };
+    }
+    if (lowering === 'code-unit-template' || lowering === 'character-template') {
+      const character = lowering === 'character-template';
+      const signature = { kind: 'function', params: [STRING, FLOAT], ret: character ? STRING : FLOAT };
+      const template = character ? createStringCharacterTemplateExpression(node.span) : createStringCodeUnitTemplateExpression(node.span);
+      const fn = coerce(this.expr(template, new Map(), path, signature),
         signature, this.language, node.span);
       return { k: 'apply', fn, args: [object, ...values], type: fn.type.ret, span: node.span };
     }
@@ -1050,7 +1081,7 @@ class Checker {
       if (node.op === 'indexOf' || node.op === 'lastIndexOf' || node.op === 'includes') {
         return this.primitiveMethod(node, object, env, path);
       }
-      if (node.op === 'join') return this.primitiveMethod(node, object, env, path);
+      if (node.op === 'join' || node.op === 'at') return this.primitiveMethod(node, object, env, path);
     }
     throw unsupported(`method call .${node.op}()`, `.${node.op}() has no checked operation on ${typeKey(object.type)}`, node.span);
   }
@@ -1101,6 +1132,24 @@ class Checker {
     }
     const spread = node.args.find((item) => item.spread);
     if (spread) throw unsupported('spread argument', `pass ${node.name} its argument`, spread.value.span ?? node.span);
+    if (readNumberPredicateArgumentForm(this.language, node.op, '', '')) {
+      const args = node.args.map(({ value }) => this.expr(value, env, path, undefined));
+      if (args.length === 0) return { k: 'lit', value: false, type: BOOL };
+      const first = args[0];
+      const form = readNumberPredicateArgumentForm(this.language, node.op, first.type.kind, first.type.kind === 'option' ? first.type.element.kind : '');
+      if (form === 'unsupported') throw typeError(`${node.name} of ${typeKey(first.type)}; it takes Numbers, and converts or rejects anything else`, node.args[0].value.span ?? node.span);
+      if (args.length === 1 && form === 'number') return { k: 'math', op: node.op, args, type: BOOL };
+      if (args.length === 1 && form === 'optional-number') return { k: 'optionalPredicate', op: node.op, arg: first, type: BOOL };
+      const name = this.freshName('ml_number_predicate');
+      const bound = { k: 'var', name, type: first.type };
+      let body = form === 'number' ? { k: 'math', op: node.op, args: [bound], type: BOOL }
+        : form === 'optional-number' ? { k: 'optionalPredicate', op: node.op, arg: bound, type: BOOL }
+        : { k: 'lit', value: false, type: BOOL };
+      for (let index = args.length - 1; index >= 0; index--) {
+        body = { k: 'let', name: index === 0 ? name : this.freshName('ml_number_predicate_unused'), value: args[index], body, type: BOOL };
+      }
+      return body;
+    }
     if (!variadic && node.args.length !== 1) {
       throw unsupported(`${node.name} with ${node.args.length} arguments`, `${node.name} takes one Number`, node.span);
     }
@@ -1164,6 +1213,9 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
+        return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
+      }
       if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', node.span);
       if (left.type.kind === 'data' || left.type.kind === 'unit') {
         throw unsupported('structural equality of data values', 'comparisons of data values are not in the portable core', node.span);
@@ -1171,6 +1223,8 @@ class Checker {
       if (left.type.kind === 'array') {
         throw unsupported('comparison of arrays', '=== of two arrays compares which array each is, which a value translation does not keep; compare their elements', node.span);
       }
+      const stringOrder = readStringOrderOperation(this.language, op, left.type.kind);
+      if (stringOrder) return { k: 'stringTest', op: stringOrder, string: left, search: right, type: BOOL, span: node.span };
       if (op !== 'eq' && op !== 'ne' && !isOrdered(left.type)) throw typeError(`ordering on ${typeKey(left.type)}`, node.span);
       return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
     }
@@ -1720,6 +1774,9 @@ class Checker {
   }
 }
 
+import {createStringCharacterTemplateExpression} from './string-character-template.js';
+import {createStringRelativeCharacterTemplateExpression} from './string-relative-character-template.js';
+
 /** Arrays have a text, but not one the translation reproduces yet. */
 function arrayText(span) {
   return unsupported('text of an array', 'console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one', span);
@@ -2156,3 +2213,5 @@ function decreasesOn(expr, fn, index, name, subterms) {
       return true;
   }
 }
+
+import {createArrayRelativeElementTemplateExpression} from './array-relative-element-template.js';

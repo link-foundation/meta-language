@@ -48,6 +48,7 @@ mod object_properties;
 mod owned_array_append;
 mod product_source_rules;
 mod products;
+mod record_parameters;
 mod reference_analysis;
 mod scalar_loops;
 mod statements;
@@ -174,17 +175,54 @@ pub fn parse_javascript_in(source: &str, context: &ModuleContext) -> Result<SPro
     parse_javascript_bound_in(source, context, &HashMap::new(), false)
 }
 
+#[derive(Clone)]
+pub(crate) struct ModuleBindingScope {
+    pub(crate) names: Vec<String>,
+    pub(crate) known: bool,
+}
+
 pub(crate) fn parse_javascript_bound_in(
     source: &str,
     context: &ModuleContext,
     literal_bindings: &HashMap<String, SExpr>,
     readonly_module_constants: bool,
 ) -> Result<SProgram> {
+    parse_javascript_bound_in_with_module_scope(
+        source,
+        context,
+        literal_bindings,
+        readonly_module_constants,
+        None,
+    )
+}
+
+pub(crate) fn parse_javascript_bound_in_with_module_scope(
+    source: &str,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
+    readonly_module_constants: bool,
+    module_scope: Option<&ModuleBindingScope>,
+) -> Result<SProgram> {
+    if module_scope.is_some_and(|scope| {
+        scope.names.len() > 100_000 || scope.names.iter().any(String::is_empty)
+    }) {
+        return Err(unsupported(
+            "JavaScript module binding context",
+            "actual outer binding names must be nonempty strings within the declared transport bound",
+            None,
+        ));
+    }
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
     parser.literal_bindings.clone_from(literal_bindings);
     parser.readonly_constants.module = readonly_module_constants;
     parser.externals.clone_from(&context.externals);
+    parser.module_binding_scope = module_scope.cloned();
+    if let Some(scope) = module_scope {
+        parser
+            .global_binding_names
+            .extend(scope.names.iter().cloned());
+    }
     parser
         .module_directory
         .clone_from(&context.module_directory);
@@ -404,9 +442,14 @@ struct JavaScriptParser {
     exported_names: HashSet<String>,
     function_names: HashSet<String>,
     owned_array_readers: owned_array_append::Readers,
+    owned_array_iteration_sources: owned_array_append::IterationSources,
     owned_array_reader_namespace: usize,
     nested_product_bindings: HashSet<Span>,
     global_binding_names: HashSet<String>,
+    module_binding_scope: Option<ModuleBindingScope>,
+    /// Whole actual token/context names, initialized after context installation.
+    record_parameter_names: Option<HashSet<String>>,
+    record_parameter_ordinal: u64,
 }
 
 impl JavaScriptParser {
@@ -449,9 +492,13 @@ impl JavaScriptParser {
             exported_names: HashSet::new(),
             function_names: HashSet::new(),
             owned_array_readers: HashMap::new(),
+            owned_array_iteration_sources: HashSet::new(),
             owned_array_reader_namespace: 0,
             nested_product_bindings: HashSet::new(),
             global_binding_names: HashSet::new(),
+            module_binding_scope: None,
+            record_parameter_names: None,
+            record_parameter_ordinal: 0,
         }
     }
 

@@ -29,6 +29,7 @@ use super::{Language, Span};
 mod array_bindings;
 mod array_callbacks;
 mod array_from;
+mod array_relative_element_template;
 mod arrays;
 mod callables;
 mod collections;
@@ -505,6 +506,7 @@ impl Checker {
         analyse_recursion(&mut declarations);
         let mut program = Program {
             reference_semantics: self.reference_semantics,
+            utf16_strings: None,
             schema_version: 1,
             source_language: self.language,
             items,

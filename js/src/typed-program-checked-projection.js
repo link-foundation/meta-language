@@ -1,4 +1,5 @@
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
+import {acceptProgramStringRepresentationFlag} from './translation/program-string-representation-rules.js';
 // Rebuild a linked product program through the existing Surface checker.
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
@@ -112,6 +113,10 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
   };
   const checked = checkProgram(surface);
+  if (Object.hasOwn(program, 'utf16Strings')) {
+    if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, true)) throw new TypeError('a program string representation flag must be an explicit boolean');
+    checked.utf16Strings = program.utf16Strings;
+  }
   const compared = new WeakMap();
   let comparisons = 0;
   function readRecordContext(value) {

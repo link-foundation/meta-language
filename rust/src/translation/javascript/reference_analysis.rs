@@ -109,15 +109,23 @@ pub(super) fn has_structural_identity(program: &SProgram) -> Result<bool> {
     ))
 }
 
-/// Late identity selection changes the program flag at the same boundary as
-/// JavaScript; it does not retroactively mark inferred type objects.
+/// A newly selected late identity model marks the actual inferred types through
+/// the same shared metadata rule used by early selection.
 pub(super) fn select_structural_reference_semantics(program: &mut SProgram) -> Result<()> {
     if crate::translation::surface_raw_metadata_rules::select_surface_reference_semantics(
         false,
         has_structural_identity(program)?,
         true,
     ) {
+        let selected = !program
+            .reference_semantics
+            .as_ref()
+            .and_then(super::super::surface::SurfaceRawMetadata::as_boolean)
+            .unwrap_or(false);
         program.reference_semantics = Some(true.into());
+        if selected {
+            mark_shared_reference_types(program, &mut HashMap::new())?;
+        }
     }
     Ok(())
 }

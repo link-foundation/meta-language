@@ -368,3 +368,137 @@ fn const_lists_preserve_temporal_dead_zones_duplicate_and_empty_pattern_refusals
         );
     }
 }
+
+#[test]
+fn mutable_dense_literal_bindings_keep_order_scope_and_complete_archives() {
+    for (source, expected) in [
+        (
+            "function selected(first, second) {\n  let [more, less] = [false, false];\n  if (first > 0) more = true;\n  if (second > 0) less = true;\n  return more === less ? 0 : more ? 1 : -1;\n}\nconsole.log(selected(1,0), selected(0,1), selected(1,1), selected(0,0));",
+            json!({"lines":["1 -1 0 0"],"error":null}),
+        ),
+        (
+            "function mark(value) { console.log(value); return value; }\nfunction selected(seed) {\n  let first = seed, [left, right] = [mark(first), mark(first + 1)], last = right;\n  left += last;\n  right = left + 1;\n  return left + right;\n}\nconsole.log(selected(2));",
+            json!({"lines":["2","3","11"],"error":null}),
+        ),
+        (
+            "function stop() { console.log('stop'); throw new Error('halt'); }\nfunction later() { console.log('later'); return 2; }\nfunction selected() { let [first, second] = [stop(), later()]; return first + second; }\nconsole.log(selected());",
+            json!({"lines":["stop"],"error":{"name":"Error","message":"halt"}}),
+        ),
+        (
+            "function selected() {\n  let total = 0;\n  for (let [index, limit] = [0, 4]; index < limit; index++) total += index;\n  let [left, right] = [2, 3];\n  { let [left, right] = [7, 8]; left++; console.log(left, right); }\n  right += total;\n  return left + right;\n}\nconsole.log(selected());",
+            json!({"lines":["8 8","11"],"error":null}),
+        ),
+        (
+            "function selected() { let [left, right] = [-0, Infinity]; left = 1 / left; return left + right; }\nconsole.log(selected());",
+            json!({"lines":["NaN"],"error":null}),
+        ),
+    ] {
+        require_declaration_list_equivalent(source, &expected);
+    }
+}
+
+#[test]
+fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
+    let original = "function f(n) { let [a] = n; return a; }";
+    assert_eq!(
+        parse_javascript(original).unwrap_err().message(),
+        "let destructuring: declare each binding with its own let at 16..20"
+    );
+    for binding in [
+        "[first]=values",
+        "[first,second]=[1]",
+        "[first]=[1,2]",
+        "[first=2]=[1]",
+        "[...first]=[1]",
+        "[[first]]=[[1]]",
+        "[,first]=[1,2]",
+        "[first]=[...values]",
+        "{first}={first:1}",
+    ] {
+        let source = format!("function selected(values){{let {binding};return 0;}}");
+        let error = parse_javascript(&source).unwrap_err();
+        assert!(
+            error.message().contains("let destructuring"),
+            "{source}: {error:?}"
+        );
+    }
+    for source in [
+        "function selected(){let [first,second]=[second,1];return first;}",
+        "function selected(){const first=9;{let [first,second]=[first,1];return second;}}",
+        "function selected(){console.log(first);let [first,second]=[1,2];return second;}",
+        "function selected(){let first=second,[second,last]=[1,2];return first;}",
+    ] {
+        let error = parse_javascript(source).unwrap_err();
+        assert!(
+            error.message().contains("temporal dead zone"),
+            "{source}: {error:?}"
+        );
+    }
+    for source in [
+        "function selected(){let [first,first]=[1,2];return first;}",
+        "function selected(){let first=1,[first]=[2];return first;}",
+        "function selected(){let [first]=[1],first=2;return first;}",
+    ] {
+        let error = parse_javascript(source).unwrap_err();
+        assert!(
+            error
+                .message()
+                .contains("distinct admitted lexical identifier")
+                || error.message().contains("duplicate lexical binding"),
+            "{source}: {error:?}"
+        );
+    }
+    let changed = "function selected(){let [left,right]=[1,2];return left+right;}Array.prototype[Symbol.iterator]=()=>({next:()=>({value:9,done:false})});console.log(selected());";
+    assert!(
+        parse_javascript(changed)
+            .and_then(|surface| check_program(&surface))
+            .is_err()
+    );
+}
+
+#[test]
+fn mutable_literal_binding_owners_preserve_shadows_and_refuse_redeclarations() {
+    for (source, expected) in [
+        (
+            "function selected(left) {\n  for (let [left,right]=[1,2];left<right;left++) console.log(left,right);\n  return left;\n}\nconsole.log(selected(9));",
+            json!({"lines":["1 2","9"],"error":null}),
+        ),
+        (
+            "function selected() {\n  let [left,right]=[10,20];\n  for(let [left,right]=[0,2];left<right;left++) {\n    let [left,right]=[3,4];console.log(left,right);\n  }\n  return left+right;\n}\nconsole.log(selected());",
+            json!({"lines":["3 4","3 4","30"],"error":null}),
+        ),
+        (
+            "function selected(){const apply=left=>{{let [left,right]=[2,3];return left+right;}};return apply(9);}\nconsole.log(selected());",
+            json!({"lines":["5"],"error":null}),
+        ),
+    ] {
+        require_declaration_list_equivalent(source, &expected);
+    }
+    for source in [
+        "function selected(){let left=9;let [left,right]=[1,2];return right;}",
+        "function selected(){let [left,right]=[1,2];let left=9;return right;}",
+        "function selected(){const left=9;let [left,right]=[1,2];return right;}",
+        "function selected(){let [left,right]=[1,2];const left=9;return right;}",
+        "function selected(){const [left]=[9];let [left,right]=[1,2];return right;}",
+        "function selected(){let [left,right]=[1,2];const {value:left}={value:9};return right;}",
+        "function selected(left){let [left,right]=[1,2];return right;}",
+        "function selected(){const apply=left=>{let [left,right]=[1,2];return right;};return apply(9);}",
+        "function selected(){const apply=function(left){let [left,right]=[1,2];return right;};return apply(9);}",
+    ] {
+        require_declaration_list_refusal(source, "duplicate lexical binding left");
+        let output = Command::new("node").args([
+            "--input-type=module", "-e",
+            "import {Script} from 'node:vm';try{new Script(process.argv[1]);process.stdout.write('accepted');}catch(error){process.stdout.write(error.name);}", source,
+        ]).output().unwrap();
+        assert!(output.status.success());
+        assert_eq!(
+            String::from_utf8(output.stdout).unwrap(),
+            "SyntaxError",
+            "{source}"
+        );
+    }
+    require_declaration_list_refusal(
+        "let [left,right]=[1,2];console.log(left+right);",
+        "mutable literal bindings require a function-owned lexical scope",
+    );
+}

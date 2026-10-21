@@ -39,9 +39,9 @@ mod scope;
 mod typescript_erasure;
 mod typescript_erasure_rules;
 mod typescript_portable_typing;
-use scope::translate_binding_groups;
+use scope::{BindingScopeContext, translate_binding_groups};
 
-use self::binding::Binder;
+use self::binding::{Binder, ModuleSignatureContext};
 use typescript_erasure::requires_type_script_erasure;
 pub use typescript_erasure::{ErasedTypeScript, Erasure, erase_type_script};
 pub use typescript_portable_typing::project_type_script_typing;
@@ -315,9 +315,10 @@ fn translate_module(
     let mut recorded = Vec::new();
     let mut gap = String::new();
     let groups = group_items(&items, source);
-    let (outs, scans) = if family(to) == "Rust" {
+    let (outs, scans, signature_context) = if family(to) == "Rust" {
         Binder {
             groups: &groups,
+            source,
             from,
             to,
             decorators,
@@ -342,10 +343,49 @@ fn translate_module(
                 )
             })
             .collect();
-        (outs, Vec::new())
+        (
+            outs,
+            Vec::new(),
+            ModuleSignatureContext {
+                module_scope_known: true,
+                owner_counts: HashMap::new(),
+                module_binding_names: Vec::new(),
+            },
+        )
     };
-    let results =
-        translate_binding_groups(&groups, source, from, to, decorators, &outs, utf16_strings);
+    let module_scope_known = signature_context.module_scope_known;
+    let results = translate_binding_groups(
+        &groups,
+        source,
+        from,
+        to,
+        decorators,
+        &outs,
+        BindingScopeContext {
+            utf16_strings,
+            module_scope_known,
+            module_binding_names: signature_context.module_binding_names.clone(),
+        },
+    );
+    let layout_envelope =
+        crate::translation::self_translation_layout_rules::require_self_translation_layout_envelope(
+            (
+                source.contains('\r'),
+                results
+                    .first()
+                    .and_then(|(group, _)| group.items.first())
+                    .map_or(source.len(), |item| item.start)
+                    > 0,
+                !matches!(
+                    results.last().map_or(source, |(group, _)| group.after),
+                    "" | "\n"
+                ),
+                results
+                    .iter()
+                    .take(results.len().saturating_sub(1))
+                    .any(|(group, _)| group.after != breaks(group.after)),
+            ),
+        );
     let exported_names: HashSet<&str> = scans
         .iter()
         .flatten()
@@ -358,7 +398,10 @@ fn translate_module(
         .flat_map(|(_, out)| {
             out.signatures
                 .iter()
-                .filter(|signature| exported_names.contains(signature.name()))
+                .filter(|signature| {
+                    exported_names.contains(signature.name())
+                        && signature_context.accept_signature_binding(signature.name())
+                })
                 .cloned()
         })
         .collect();
@@ -487,7 +530,7 @@ fn translate_module(
         lines.push(PRELUDE_END.to_owned());
         lines.push(String::new());
     }
-    if source.contains('\r') {
+    if layout_envelope {
         let tail = format!("\n{}\n{body}", lines[1..].join("\n"));
         let original = serde_json::to_string(source)
             .expect("source text serializes")

@@ -26,3 +26,18 @@ export function renderErasedTypeScriptScalar(carriageReturn, lineFeed) {
 export function renderTypeScriptDocumentationPattern(pattern) {
   return pattern.replaceAll('*/', '*\\/');
 }
+
+/** @param {boolean} typeSpecifier @param {boolean} comma @param {boolean} afterTypeSpecifier @returns {boolean} */
+export function eraseTypeScriptNamedImport(typeSpecifier, comma, afterTypeSpecifier) {
+  return typeSpecifier || comma && afterTypeSpecifier;
+}
+
+/** @param {boolean} first @param {boolean} required @param {boolean} annotated @param {boolean} initialized @param {boolean} owner @returns {boolean} */
+export function acceptTypeScriptReceiverParameter(first, required, annotated, initialized, owner) {
+  return first && required && annotated && !initialized && owner;
+}
+
+/** @param {boolean} comma @param {boolean} afterReceiver @returns {boolean} */
+export function eraseTypeScriptReceiverSeparator(comma, afterReceiver) {
+  return comma && afterReceiver;
+}

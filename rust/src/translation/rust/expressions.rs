@@ -1,5 +1,6 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
+mod ascii_text_predicates;
 mod control;
 mod read_only_queries;
 
@@ -296,6 +297,10 @@ impl RustParser {
                     continue;
                 }
                 let method = self.cursor.identifier(Some("method"))?;
+                if let Some(ascii) = self.read_ascii_text_predicate(&value, &method, path)? {
+                    value = ascii;
+                    continue;
+                }
                 if !self.cursor.is("(") {
                     return Err(unsupported(
                         "field access",

@@ -713,7 +713,8 @@ pub fn accept_java_script_optional_tuple_context(
     expected_kind: &str,
     present_kind: &str,
 ) -> bool {
-    (((language == "JavaScript") && (source_kind == "array")) && (expected_kind == "option"))
+    (((language == "JavaScript") && ((source_kind == "array") || (source_kind == "tuple")))
+        && (expected_kind == "option"))
         && (present_kind == "tuple")
 }
 

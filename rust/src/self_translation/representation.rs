@@ -19,6 +19,7 @@ use super::representation_rules::{
 pub(super) struct Context {
     pub(super) module: ModuleContext,
     pub(super) utf16_strings: bool,
+    pub(super) module_binding_scope: Option<crate::translation::javascript::ModuleBindingScope>,
 }
 
 fn policy() -> &'static Value {

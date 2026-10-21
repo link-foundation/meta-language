@@ -15,7 +15,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
-use super::Language;
 use super::decimal::Decimal;
 use super::diagnostics::{Result, unsupported};
 use super::emit_common::{CtorStyle, EmitOptions, EmitState, Emitted};
@@ -28,6 +27,7 @@ use super::ir::{
 };
 use super::surface::{BinaryOp, External, Flavor, Rounding, SImport, UnaryOp};
 use super::types::Type;
+use super::{Language, Span};
 
 mod array_moves;
 mod arrays;
@@ -565,6 +565,47 @@ fn emit_rust_context(
     utf16_strings: bool,
     array_consumption: bool,
 ) -> Result<Emitted> {
+    emit_rust_context_owned(program, options, utf16_strings, array_consumption, false)
+        .map(|(emitted, _)| emitted)
+}
+
+pub(crate) fn emit_rust_with_definition_ownership(
+    program: &Program,
+    utf16_strings: bool,
+) -> Result<(Emitted, Option<DefinitionOwnership>)> {
+    emit_rust_context_owned(
+        program,
+        RustEmissionOptions::default(),
+        utf16_strings,
+        true,
+        true,
+    )
+}
+
+/// Actual ordered external targets selected by this normal Rust emitter.
+pub(crate) fn read_rust_external_targets(program: &Program) -> Vec<OwnedExternalTarget> {
+    program
+        .externals
+        .iter()
+        .filter(|external| program.declaration(external.name()).is_none())
+        .map(|external| OwnedExternalTarget {
+            source: external.name().to_owned(),
+            kind: match external {
+                External::Function { .. } => "fn",
+                External::Constant { .. } => "const",
+            },
+            target: external_name(external, external.name()),
+        })
+        .collect()
+}
+
+fn emit_rust_context_owned(
+    program: &Program,
+    options: RustEmissionOptions<'_>,
+    utf16_strings: bool,
+    array_consumption: bool,
+    record_ownership: bool,
+) -> Result<(Emitted, Option<DefinitionOwnership>)> {
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -576,12 +617,22 @@ fn emit_rust_context(
                 None,
             ));
         }
-        return super::runtime_shell::emit_rust(program, &runtime);
+        return super::runtime_shell::emit_rust(program, &runtime).map(|emitted| (emitted, None));
     }
     let mut emitter = rust_emitter(program);
+    if record_ownership {
+        emitter.definition_ownership = Some(DefinitionOwnership {
+            blocks: Vec::new(),
+            external_targets: read_rust_external_targets(program),
+        });
+    }
     emitter.array_consumption = array_consumption;
     emitter.utf16_strings =
-        utf16_strings || primitive_methods::program_requires_method_units(program);
+        super::program_string_representation_rules::select_program_string_representation(
+            program.utf16_strings.unwrap_or(false),
+            utf16_strings,
+            primitive_methods::program_requires_method_units(program),
+        );
     if emitter.utf16_strings {
         emitter.state.encode("utf16-strings", "strings are sequences of UTF-16 code units, retaining isolated surrogates and JavaScript offsets; output replaces isolated surrogates as Node writes UTF-8");
     }
@@ -596,7 +647,7 @@ fn emit_rust_context(
                 super::source_header_emission::read_rust_source_header_emission(program, model)?;
         }
     }
-    emitter.file()
+    emitter.file_owned()
 }
 
 /// The Rust emitter of `program`, with every name of the module's other items
@@ -636,6 +687,7 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
         standard_array: false,
         array_final_uses: BTreeSet::new(),
         array_consumption: false,
+        definition_ownership: None,
     }
 }
 
@@ -742,9 +794,35 @@ enum Prelude {
     Optional,
 }
 
+/// Optional internal records captured during normal complete block emission.
+/// Not part of Emitted or its serialized/public contract.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct DefinitionOwnership {
+    pub(crate) blocks: Vec<OwnedDefinitionBlock>,
+    pub(crate) external_targets: Vec<OwnedExternalTarget>,
+}
+#[derive(Clone, Debug)]
+pub(crate) struct OwnedDefinitionBlock {
+    pub(crate) source: String,
+    pub(crate) kind: &'static str,
+    pub(crate) source_span: Option<Span>,
+    pub(crate) definition_index: usize,
+    pub(crate) definition: String,
+    pub(crate) mapping_start: usize,
+    pub(crate) mapping_end: usize,
+    pub(crate) targets: Vec<String>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct OwnedExternalTarget {
+    pub(crate) source: String,
+    pub(crate) kind: &'static str,
+    pub(crate) target: String,
+}
+
 struct RustEmitter<'p> {
     program: &'p Program,
     state: EmitState<'p>,
+    definition_ownership: Option<DefinitionOwnership>,
     temporaries: usize,
     theorem_checks: Vec<TheoremCheck>,
     /// The generated modules the program uses.

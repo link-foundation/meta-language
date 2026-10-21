@@ -1,5 +1,6 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
+import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
 // integers stay unbounded and machine integers are range-checked exactly as
 // Rust checks them; a Number stays a Number. Data values are plain objects whose `$` property names
@@ -31,6 +32,8 @@ import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rus
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
+import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
+import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 
 const KEYWORDS = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
@@ -115,6 +118,8 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
+  if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');
   validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
@@ -122,17 +127,23 @@ export function emitJavaScript(program, options = {}) {
   checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const reserved = new Set(KEYWORDS);
+  const externals = new Map((program.externals ?? []).filter(external => !program.declarations.has(external.name)).map(external => [external.name, external]));
+  for (const name of externals.keys()) {
+    if (!acceptJavaScriptExternalBinding(name)) throw unsupported('JavaScript external binding', 'this provider name needs an explicit legal target binding alias');
+    reserved.add(name);
+  }
   if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
-  const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
+  const state = new EmitState(program, 'JavaScript', targetIdentifier, reserved, { modulesShareTermSpace: true, typeSpace: true });
   recordRustRuntimeShellAssumptions(state,runtimeShell);
-  return new JavaScriptEmitter(program, state, scopedBindings).file();
+  return new JavaScriptEmitter(program, state, scopedBindings, externals).file();
 }
 
 class JavaScriptEmitter {
-  constructor(program, state, scopedBindings = null) {
+  constructor(program, state, scopedBindings = null, externals = new Map()) {
     this.program = program;
     this.state = state;
     this.scopedBindings = scopedBindings;
+    this.externals = externals;
     this.helpers = new Set();
     this.temporaries = 0;
     this.theoremChecks = [];
@@ -212,7 +223,7 @@ class JavaScriptEmitter {
   }
 
   fn(entry) {
-    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, entry)) : ident;
+    const local = this.scopedBindings ? name => this.state.ident(this.scopedBindings(name, entry)) : this.state.ident;
     // A revalidated closed loop reads only its locals, Math and its own tail
     // continuation, which becomes writes/continue before JavaScript emission.
     const reserved = this.scopedBindings && !reserveJavaScriptScopedBindingDeclarationNames(entry.sourceLoop !== undefined)
@@ -261,7 +272,7 @@ class JavaScriptEmitter {
   }
 
   theorem(entry) {
-    const { binders, prop } = renameTheorem(entry, ident, this.state.localReserved());
+    const { binders, prop } = renameTheorem(entry, this.state.ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     this.state.theorem(entry, name, { closedGoal: binders.length === 0, discharge: 'source-kernel', check: 'bounded' });
@@ -442,9 +453,14 @@ class JavaScriptEmitter {
       case 'var':
         return e.name;
       case 'call':
+        if (this.externals.has(e.fn)) {
+          const source = renderJavaScriptExternalCall(this.externals.get(e.fn).k, e.fn, e.args.map(arg => this.expr(arg)).join(', '));
+          if (!source) throw unsupported('JavaScript external call', 'the checked provider kind and argument shape need a supported target binding');
+          return source;
+        }
         return `${this.state.ref(e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'functionRef':
-        return renderCallableFunctionReference('JavaScript', this.state.ref(e.fn));
+        return renderCallableFunctionReference('JavaScript', this.externals.has(e.fn) ? e.fn : this.state.ref(e.fn));
       case 'apply':
         return renderCallableApplication('JavaScript', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
       case 'lambda':
@@ -544,6 +560,7 @@ class JavaScriptEmitter {
         return renderStringMapExpression('JavaScript', e.op, string);
       }
       case 'stringTest': {
+        if (requireStringOrderUnits('stringTest', e.op)) return renderStringOrderExpression('JavaScript', e.op, this.expr(e.string), this.expr(e.search));
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
         return renderStringTestExpression('JavaScript', e.op, string, this.expr(e.search));
       }
@@ -665,7 +682,7 @@ class JavaScriptEmitter {
   }
 
   main(main) {
-    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, main)) : ident;
+    const local = this.scopedBindings ? name => this.state.ident(this.scopedBindings(name, main)) : this.state.ident;
     const { effects } = renameMain(main, local, this.state.localReserved());
     const lines = [];
     let assertion = 0;

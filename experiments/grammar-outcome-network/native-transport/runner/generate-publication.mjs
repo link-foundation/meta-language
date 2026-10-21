@@ -18,7 +18,7 @@ const originalPins={
   'runner.test.mjs':'10db6b9e540a15fb4c7e49961762ca2f1c275db0eb9aa94d706d25ea492d5635',
   'README.md':'0e9eca40a2d1de5f175a1c156a7f5233da18b3fd03857ed8dbaf4004cbc56d29',
 };
-const newSourceFiles=['generate-publication.mjs','provision-assets.mjs','release-restored-target.mjs','teardown.mjs'];
+const newSourceFiles=['generate-publication.mjs','provision-assets.mjs','release-restored-target.mjs','teardown.mjs','compiler-profile.mjs'];
 const hash=value=>createHash('sha256').update(value).digest('hex');
 
 export function nativeOraclePolicy(baseCommit,repository=resolve(directory,'../../../..')) {

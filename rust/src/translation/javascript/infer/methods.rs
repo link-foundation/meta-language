@@ -1,8 +1,8 @@
 //! Actual method operand owners connected by generated JavaScript decisions.
 
 use super::{
-    BOOL, Env, FLOAT, HashMap, HashSet, Inference, Result, SEffect, SExpr, SItem, SNode, SProgram,
-    SProp, SPropNode, STRING, Span, Term, Type,
+    BOOL, Env, FLOAT, HashMap, HashSet, Inference, Rc, RefCell, Result, SEffect, SExpr, SItem,
+    SNode, SProgram, SProp, SPropNode, STRING, Span, Term, Type,
 };
 
 /// Replay actual solved receiver selections without rebuilding unrelated nodes.
@@ -296,17 +296,25 @@ impl Inference {
             }
         }
         if kind == "string" {
-            let result =
-                match read_java_script_string_method_result_form(&method.operation).as_str() {
-                    "bool" => Term::Known(BOOL),
-                    "float" => Term::Known(FLOAT),
-                    "array-string" => Term::Array(Box::new(Term::Known(STRING))),
-                    "optional-float" => self.declared(Some(&Type::Option {
-                        element: Box::new(FLOAT),
-                        absence: "undefined".to_owned(),
-                    })),
-                    _ => Term::Known(STRING),
-                };
+            let form = if crate::translation::primitive_method_rules::read_primitive_method_minimum_arguments(kind, &method.operation) >= 0.0 {
+                crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation)
+            } else {
+                read_java_script_string_method_result_form(&method.operation)
+            };
+            let result = match form.as_str() {
+                "bool" => Term::Known(BOOL),
+                "float" => Term::Known(FLOAT),
+                "array-string" => Term::Array(Box::new(Term::Known(STRING))),
+                "optional-float" => self.declared(Some(&Type::Option {
+                    element: Box::new(FLOAT),
+                    absence: "undefined".to_owned(),
+                })),
+                "optional-string" => self.declared(Some(&Type::Option {
+                    element: Box::new(STRING),
+                    absence: "undefined".to_owned(),
+                })),
+                _ => Term::Known(STRING),
+            };
             self.unify(&method.result, &result, method.place)?;
         } else {
             let form = crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation);
@@ -314,6 +322,15 @@ impl Inference {
                 "bool" => Term::Known(BOOL),
                 "float" => Term::Known(FLOAT),
                 "string" => Term::Known(STRING),
+                "optional-element" => {
+                    let Term::Array(element) = &receiver else {
+                        unreachable!("the shared optional-element result has an array owner");
+                    };
+                    Term::Option {
+                        element: element.clone(),
+                        absence: Rc::new(RefCell::new("undefined".to_owned())),
+                    }
+                }
                 _ => receiver,
             };
             self.unify(&method.result, &result, method.place)?;

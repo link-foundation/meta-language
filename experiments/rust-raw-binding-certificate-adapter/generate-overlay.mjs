@@ -4,12 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { DecoratorSet } from '../../js/src/decorators.js';
 import { writeProjectData, checkProjectData } from '../../js/scripts/project-data.mjs';
 import { rawBindingCertificatePolicy } from './generate-rules.mjs';
-import { readReviewedOverlayProviderSources, writeReviewedOverlayProviderPolicy } from '../rust-text-certificate-adapter/reviewed-providers.mjs';
+import { readReviewedOverlayProviderSources, restoreReviewedOverlayProviderSources, writeReviewedOverlayProviderPolicy } from '../rust-text-certificate-adapter/reviewed-providers.mjs';
 
 const hash = source => createHash('sha256').update(source).digest('hex');
 const modules = ['typed-program-links.js', 'typed-program-links-validation.js', 'typed-program-checked-projection.js', 'translation/emit-javascript.js', 'translation/emit-rust.js'];
-export function rawBindingCertificateOverlayRecords() {
-  const { sources, revision } = readReviewedOverlayProviderSources({ experiment: 'rust-raw-binding-certificate-adapter', modules });
+export function rawBindingCertificateOverlayRecords({sourceCommit} = {}) {
+  const options = { experiment: 'rust-raw-binding-certificate-adapter', modules };
+  const { sources, revision } = sourceCommit === undefined ? readReviewedOverlayProviderSources(options) : restoreReviewedOverlayProviderSources({...options, sourceCommit});
   const changes = new Map([...sources].map(([module, source]) => [module, [{
     from: source.split('\n')[0],
     to: "import { readRustRawBindingCertificate, captureRustRawBindingCertificate, decorateRustRawBindingCertificateEmission, emitRustRawBindingCertificate } from '"

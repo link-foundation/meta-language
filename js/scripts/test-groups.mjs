@@ -9,12 +9,89 @@
 //
 // A new test file that no group claims fails --check (and every --run), so a
 // file can never silently drop out of CI.
-import { spawnSync } from 'node:child_process';
-import { readdirSync } from 'node:fs';
+import { spawnSync,execFileSync } from 'node:child_process';
+import { readdirSync,readFileSync } from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {readProjectData,writeProjectData} from './project-data.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
+const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
+
+/** Largest observed workload first; source changes use a byte-size estimate.
+ * Timing samples only choose owners. They never establish test completion. */
+export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
+ assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
+ assert.equal(new Set(files).size,files.length,'workload source identities are unique');
+ const measured=costs??readProjectData(schedulingFile);
+ assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
+ assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
+ assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
+ const known=new Map();
+ for(const row of measured.entries){
+  assert.deepEqual(Object.keys(row).sort(),['bytes','file','milliseconds','sha256']);
+  assert.ok(typeof row.file==='string'&&!known.has(row.file));assert.match(row.sha256,/^[a-f0-9]{64}$/u);
+  assert.ok(Number.isSafeInteger(row.bytes)&&row.bytes>0&&Number.isSafeInteger(row.milliseconds)&&row.milliseconds>0);
+  known.set(row.file,row);
+ }
+ const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
+ assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
+ const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
+ const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
+  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
+  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
+ workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
+ const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
+ for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
+ assert.deepEqual(shards.flat().sort(),[...files].sort(),'every entire workload has exactly one owner');
+ return shards.map(shard=>shard.sort());
+}
+
+/** Reproduce advisory cost samples from complete retained GitHub job logs. */
+export function captureMeasuredWorkloadCosts(directory){
+ const jobs=JSON.parse(readFileSync(path.join(directory,'jobs-final.json'),'utf8')).jobs;
+ const run=JSON.parse(readFileSync(path.join(directory,'run-current.json'),'utf8'));
+ assert.equal(run.id,39615628279);assert.equal(run.head_sha,schedulingRevision);
+ const original=file=>execFileSync('git',['--no-replace-objects','show',schedulingRevision+':'+file],{cwd:path.join(packageRoot,'..'),maxBuffer:2*1024*1024,timeout:15000});
+ const titles=new Map();for(const name of partitionTests(testFiles()).groups.grammar){
+  const file='js/tests/'+name;let source;try{source=original(file).toString('utf8');}catch{continue;}
+  for(const match of source.matchAll(/\btest\(\s*(['"])([^\n]*?)\1\s*,/gu)){
+   if(titles.has(match[2])&&titles.get(match[2])!==file)titles.set(match[2],null);else titles.set(match[2],file);
+  }
+ }
+ const costs=new Map(),logs=[];
+ for(const job of jobs.filter(row=>/^Self-Translation Report \(\d+\/8\)$/u.test(row.name)||/Tests \(grammar, /u.test(row.name))){
+  const address=path.join(directory,'job-'+job.id+'-small.txt'),bytes=readFileSync(address);
+  const receipt=JSON.parse(readFileSync(path.join(directory,'job-'+job.id+'-small-receipt.json'),'utf8'));
+  assert.equal(schedulingDigest(bytes),receipt.sha256);assert.equal(bytes.length,receipt.selectedBytes);
+  const range=/^bytes 0-(\d+)\/(\d+)$/u.exec(receipt.contentRange);
+  assert.ok(range&&Number(range[1])+1===Number(range[2])||receipt.status===200&&receipt.fetchedBytes===receipt.selectedBytes&&bytes.length<262144,'cost capture requires the complete bounded log');
+  logs.push({job:job.id,name:job.name,bytes:bytes.length,sha256:receipt.sha256});
+  let previous=null,title=null;
+  for(const line of bytes.toString('utf8').split('\n')){
+   const timestamp=Date.parse(line.slice(0,28));
+   if(job.name.startsWith('Self-Translation Report (')){
+    if(previous===null&&line.includes('self-translation report: resolving js/'))previous=timestamp;
+    const match=/self-translation report: recorded (js\/src\/[^ ]+\.js) \(/u.exec(line);
+    if(match){assert.ok(Number.isFinite(timestamp)&&previous!==null);assert.ok(!costs.has(match[1]));costs.set(match[1],Math.max(1,Math.round(timestamp-previous)));previous=timestamp;}
+   }else{
+    const match=/# Subtest: (.*)$/u.exec(line);if(match)title=match[1];
+    const duration=/\bduration_ms: ([0-9.]+)/u.exec(line);
+    if(duration&&title){const file=titles.get(title);if(file)costs.set(file,(costs.get(file)??0)+Math.max(1,Math.round(Number(duration[1]))));title=null;}
+   }
+  }
+ }
+ const entries=[...costs].sort(([a],[b])=>a.localeCompare(b)).map(([file,milliseconds])=>{const bytes=original(file);return{file,bytes:bytes.length,sha256:schedulingDigest(bytes),milliseconds};});
+ assert.equal(logs.length,14);assert.ok(entries.filter(row=>row.file.startsWith('js/src/')).length>300);
+ assert.ok(entries.find(row=>row.file==='js/tests/issue-195-interchange-api-cli.test.js').milliseconds>=262000);
+ const packet={schemaVersion:1,model:'observed CI workload scheduling costs 1',run:39615628279,revision:schedulingRevision,logs,entries,
+  boundary:'Advisory elapsed-time samples from complete bounded CI logs. Recorded-module intervals include overlapped import resolution; test samples include only uniquely named literal test groups. Missing or changed source bytes use a size estimate. Every current complete module and test remains mandatory exactly once under unchanged job counts, commands and deadlines. Timing samples are not requirement observations or forecasts of passing CI.'};
+ writeProjectData(schedulingFile,packet);return packet;
+}
 
 /** Test groups, each a pattern over the test file name without `.test.js`. */
 export const TEST_GROUPS = Object.freeze({
@@ -32,11 +109,11 @@ export const TEST_GROUPS = Object.freeze({
     /^(?!self-translation-report-artifacts$)(?:translation|typed-program-|typescript-erasure$|issue-195-translation-|issue-195-binding-rename$|issue-195-structured-transformations$|issue-195-faithful-behavior$|issue-195-semantics-proof-preservation$|issue-195-project-semantics$|self-translation(?:-|$))/u,
   'report-artifacts': /^self-translation-report-artifacts$/u,
   conformance:
-    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|concept-records-lazy$|concept-records-seed-index$|global-concept-(?:space|archive-parser)$|discovered-concept-links$|concept-views$|link-network-binary$|network-projection$|link-id-boundaries$|resource-description-graphs$|resource-description-ntriples$|formal-concept-definition$|formal-function-links$|shared-numeric-function-links$|foundation-models$|issue-195-concept-records$|issue-195-naming$|issue-195-naming-candidates$)/u,
+    /^(?:four-language-conformance$|issue-195-conformance$|issue-195-generative$|parity$|issue-195-runtime-parity-evidence$|core$|structured-data-(?:links|records)$|decorators$|access$|query-|graphql-adapter$|concept-distinctions$|concept-records-lazy$|concept-records-seed-index$|global-concept-(?:space|archive-parser)$|discovered-concept-links$|concept-views$|link-network-binary$|network-projection$|link-id-boundaries$|resource-description-graphs$|resource-description-ntriples$|formal-concept-definition$|formal-function-links$|formal-function-declaration-values$|boolean-declaration-value-hosts$|shared-numeric-function-links$|foundation-models$|issue-195-concept-records$|issue-195-naming$|issue-195-naming-candidates$)/u,
   downstream:
     /^(?:downstream-|formal-ai-semantic-projections$|issue-195-downstream-|issue-195-rml-|issue-195-formal-ai-|issue-195-delivery$|issue-195-dependency-current-stable-delivery$|dependency-delivery$|crate-package-include$|package-release$|prepare-npm-auth$)/u,
   tooling:
-    /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-version-ranges$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$)/u,
+    /^(?:cache-|project-data(?:-|$)|external-grammar-|assertion-version-ranges$|issue-195-rust-suite-partitions$|issue-195-(?:observation-links|record-storage|report-storage)$|issue-195-self-translation-report$|issue-195-associative-stack-sources$|issue-195-meta-theory-sources$|issue-195-acceptance|issue-195-evidence|issue-195-sources$|issue-195-documentation$|issue-195-vision$|issue-195-merge-enforcement$|issue-195-merge-quality-evidence$|dependency-(?:inventory|upgrades|downloaded-grammar-assets)$|test-groups$|ci-workflow-structure$|ci-cancellation-investigation$|ci-rocq-toolchain-cache$|export-parity$|own-codebase-baseline-naming-history$)/u,
 });
 
 export function testFiles(root = packageRoot) {
@@ -74,10 +151,18 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
+  // Only the measured general-grammar cohort changes owners. Native and
+  // historical modulo cohorts retain their independent exact partition rules.
+  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   return files.filter((_, offset) => offset % count === index - 1);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if(process.argv[2]==='--capture-costs'){
+    assert.equal(process.argv.length,4);const result=captureMeasuredWorkloadCosts(process.argv[3]);
+    console.log('Captured '+result.entries.length+' advisory source-bound costs from '+result.logs.length+' complete CI job logs.');
+    process.exit(0);
+  }
   const [mode, group, ...options] = process.argv.slice(2);
   if (options.length && (options.length !== 2 || options[0] !== '--shard')) throw new Error('only --shard K/N is accepted after the group');
   const partition = partitionTests(testFiles());

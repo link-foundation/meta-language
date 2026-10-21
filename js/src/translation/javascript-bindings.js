@@ -24,6 +24,7 @@ export function readClosure(parser, method = false) {
   const parameterError = readCallableClosureParameterError(names, tokens.map(token => Boolean(token.defaultValue)));
   if (parameterError === 'duplicate closure parameter') throw typeError(parameterError, start);
   if (parameterError === 'closure parameter default') throw unsupported(parameterError, 'a function value needs a callable default-argument signature', start);
+  for (const name of names) parser.lexicalParameter(name);
   const params = constructCallableSurfaceParameters(tokens);
   const outer = parser.scope;
   const outerJumps = parser.jumps;

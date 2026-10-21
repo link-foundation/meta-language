@@ -94,3 +94,83 @@ Use the same generator with an explicit `--output-dir` for scratch output.
 Target widths, JSON representation profiles, static-reference resolution and
 original native DTO reconstruction remain unresolved. This source inventory
 does not supply a paired decoder or native execution evidence.
+
+The `inverse/` JavaScript draft reconstructs an owned source-typed occurrence
+graph for ordinary outcomes, independently validates that graph, then derives
+the existing forward visitor's controls. Every ordered event must match the
+original projection. It retains all nine declarations and thirteen source pins,
+distinguishes absent options from present null, preserves map order and integer
+bits, and records unresolved static borrows. It checks exact and one-below limits
+before construction. Plans and models use Links Notation; controls also check
+the existing text and binary reload paths.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate.mjs --check
+cd js && node --test tests/grammar-outcome-native-inverse.test.js
+```
+
+Use `--write` for normal plan regeneration. This ordinary profile explicitly
+refuses Embed and non-null opaque JSON. Actual native DTO reconstruction,
+effective JSON number profiles, static-reference resolution and physical
+ownership remain required. These JavaScript controls do not establish native
+execution or complete default CST integration.
+
+The separate recursive projection profile also reconstructs nested Embed and
+all JSON projection kinds. Its Number rows retain exact binary64 bits, including
+negative zero, plus an independently checked manifest of unresolved native
+number variants. Explicit JSON alias links preserve shared source mappings while
+keeping independent equal containers distinct. Validation compares complete
+earlier subtrees and every nested alias edge and refuses ancestor cycles.
+The ordinary profile retains all original refusals. All four
+portable admission and descriptor decisions are automatically translated as a
+complete JavaScript module; the shared independent cases run in native CI.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-rules.mjs --check
+node experiments/grammar-outcome-network/native-transport/inverse/generate-fixtures.mjs --check
+```
+
+The complete occurrence-order algorithm also translates automatically, retaining
+all seven checked declarations. Its three lifted control functions are actual
+Rust loops. A bounded linked worklist checks ordered offsets, unique parent
+occurrences, child order, reachable rows and node, edge and depth reservations.
+Controls cover 23 independently specified shapes, nonfinite refusals, a 2,048
+node chain and every complete owned model from the fourteen original projections.
+Native execution remains CI-only. Source types, scalars, JSON number variants,
+static borrows, actual DTO construction and physical CST integration remain
+separate obligations.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-preorder.mjs --check
+cd js && node --test tests/grammar-outcome-native-preorder.test.js
+```
+
+The complete source-type edge algorithm translates all sixteen declarations.
+Its seven lifted loops check source identities, exact fixed fields, option
+presence, repeated children, ordered map pairs, variant ownership and recursive
+JSON children. The numeric schema derives from the complete captured source
+plan; it is never its own authority. The JavaScript adapter validates the whole
+owned model before extracting columns. Independent controls cover 33 shapes,
+all fourteen original projections, every nonfinite column and an 8,192-node
+chain. Matching Rust tests run only in CI. Root/scalar admission, native JSON
+number origins, static borrows, actual DTO construction and physical CST
+integration remain separate work.
+
+Integer value admission also uses a complete automatically translated decision.
+Its 1,688 shared finite observations come from executing the exact authenticated
+original BigInt source, including both pointer widths, signed bounds, immediate
+binary64 endpoint predecessors, subnormal inputs and negative zero. Separate
+nonfinite and invalid-width controls refuse. JavaScript retains original input
+classification, decimal reconstruction and exact bit encoding. Native tests run
+only in CI; this step does not construct a native DTO or recover erased JSON
+number origins.
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-integers.mjs --check
+cd js && node --test tests/grammar-outcome-native-integers.test.js
+```
+
+```sh
+node experiments/grammar-outcome-network/native-transport/inverse/generate-source-types.mjs --check
+cd js && node --test tests/grammar-outcome-native-source-types.test.js
+```

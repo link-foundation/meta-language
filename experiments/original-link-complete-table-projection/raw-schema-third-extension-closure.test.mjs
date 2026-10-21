@@ -5,7 +5,7 @@ import {existsSync, readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readStructuredDataLino, structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {extendTypedProgramSchemaThirdStage} from '../../js/scripts/extend-typed-program-schema-third-stage.mjs';
-import {checkTypedProgramSchemaThirdArchive} from '../../js/scripts/extend-typed-program-schema-sixth-stage.mjs';
+import {checkTypedProgramSchemaThirdArchive} from '../../js/scripts/check-typed-program-schema-history.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FOURTH_SOURCE_FILES, readOriginalLinkRawSchemaFourthContext, verifyOriginalLinkRawSchemaFourthExtensionClosure} from './raw-schema-fourth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_FIFTH_SOURCE_FILES, readOriginalLinkRawSchemaFifthContext, verifyOriginalLinkRawSchemaFifthExtensionClosure} from './raw-schema-fifth-extension-closure.mjs';
 import {ORIGINAL_LINK_RAW_SCHEMA_SIXTH_SOURCE_FILES, readOriginalLinkRawSchemaSixthContext, verifyOriginalLinkRawSchemaSixthExtensionClosure} from './raw-schema-sixth-extension-closure.mjs';

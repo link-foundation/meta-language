@@ -103,8 +103,8 @@ fn infer_javascript_types_with_observations(
     let mut inferred = inferred.into_iter();
     fill_functions(&mut program.items, &mut inferred);
     fill_fields(&mut program.items, &inference);
-    if !arrays.is_empty() {
-        fill_arrays(&mut program, &arrays);
+    if !arrays.is_empty() || !expression_types.is_empty() {
+        fill_arrays(&mut program, &arrays, &expression_types);
     }
     super::methods::fill_methods(
         &mut program,

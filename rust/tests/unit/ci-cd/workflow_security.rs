@@ -146,8 +146,14 @@ fn workflows_separate_cancellable_checks_from_serialized_writes() {
         } else {
             "${{ github.workflow }}-".to_owned()
         };
+        let pull_request_identity = match path.file_name().unwrap().to_str().unwrap() {
+            "ci.yml" | "js.yml" | "rust.yml" => {
+                "format('pull-{0}', github.event.pull_request.number)"
+            }
+            _ => "github.ref",
+        };
         let pull_request_only = format!(
-            "\nconcurrency:\n  group: {prefix}${{{{ github.event_name == 'pull_request' && github.ref || github.run_id }}}}\n  cancel-in-progress: true\n"
+            "\nconcurrency:\n  group: {prefix}${{{{ github.event_name == 'pull_request' && {pull_request_identity} || github.run_id }}}}\n  cancel-in-progress: true\n"
         );
         assert_eq!(
             header.matches("\nconcurrency:\n").count(),

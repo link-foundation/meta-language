@@ -7,9 +7,17 @@ use crate::decorators::DecoratorSet;
 use crate::translation::frontend_rules::{
     accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
 };
-use crate::translation::javascript::{ModuleContext, parse_javascript_bound_in};
+use crate::translation::javascript::{
+    ModuleBindingScope, ModuleContext, parse_javascript_bound_in_with_module_scope,
+};
 use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
+
+pub(super) struct BindingScopeContext {
+    pub(super) utf16_strings: bool,
+    pub(super) module_scope_known: bool,
+    pub(super) module_binding_names: Vec<String>,
+}
 
 // Only the collection/provenance adapter is host code; run boundaries and
 // retry eligibility use the same JavaScript-generated frontend decisions.
@@ -20,11 +28,34 @@ pub(super) fn translate_binding_groups<'a>(
     to: &str,
     decorators: &DecoratorSet,
     initial: &[Translated],
-    utf16_strings: bool,
+    context: BindingScopeContext,
 ) -> Vec<(Group<'a>, Translated)> {
+    let BindingScopeContext {
+        utf16_strings,
+        module_scope_known,
+        module_binding_names,
+    } = context;
+    let module_scope = ModuleBindingScope {
+        names: module_binding_names,
+        known: module_scope_known,
+    };
     let bind = family(from) == "JavaScript" && family(to) == "Rust";
-    let (literals, literal_groups) =
-        collect_literal_bindings(groups, bind, from, to, decorators, utf16_strings);
+    if bind && !module_scope_known {
+        return groups
+            .iter()
+            .cloned()
+            .zip(initial.iter().cloned())
+            .collect();
+    }
+    let (literals, literal_groups) = collect_literal_bindings(
+        groups,
+        bind,
+        from,
+        to,
+        decorators,
+        utf16_strings,
+        Some(&module_scope),
+    );
     let terms: Vec<String> = groups
         .iter()
         .enumerate()
@@ -82,6 +113,7 @@ pub(super) fn translate_binding_groups<'a>(
                 decorators,
                 &Context {
                     utf16_strings,
+                    module_binding_scope: Some(module_scope.clone()),
                     ..Context::default()
                 },
                 &literals,
@@ -138,6 +170,7 @@ pub(super) fn translate_binding_groups<'a>(
             decorators,
             &Context {
                 utf16_strings,
+                module_binding_scope: Some(module_scope.clone()),
                 ..Context::default()
             },
             &literals,
@@ -149,13 +182,14 @@ pub(super) fn translate_binding_groups<'a>(
     results
 }
 
-fn collect_literal_bindings(
+pub(super) fn collect_literal_bindings(
     groups: &[Group<'_>],
     bind: bool,
     from: &str,
     to: &str,
     decorators: &DecoratorSet,
     utf16_strings: bool,
+    module_scope: Option<&ModuleBindingScope>,
 ) -> (HashMap<String, SExpr>, HashSet<usize>) {
     let mut literals = HashMap::new();
     let mut literal_groups = HashSet::new();
@@ -170,11 +204,12 @@ fn collect_literal_bindings(
                 Some(Err(_)) => continue,
                 None => text,
             };
-            let Ok(parsed) = parse_javascript_bound_in(
+            let Ok(parsed) = parse_javascript_bound_in_with_module_scope(
                 source,
                 &ModuleContext::default(),
                 &HashMap::new(),
                 family(to) == "Rust",
+                module_scope,
             ) else {
                 continue;
             };
@@ -210,6 +245,7 @@ fn collect_literal_bindings(
                     decorators,
                     &Context {
                         utf16_strings,
+                        module_binding_scope: module_scope.cloned(),
                         ..Context::default()
                     },
                 )

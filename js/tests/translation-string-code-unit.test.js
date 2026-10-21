@@ -278,6 +278,7 @@ test('historical code unit templates preserve complete metadata and agree throug
     assert.deepEqual(current[field].span, { start: 227, end: 462 });
     expectedCurrent[field].span.end = 462;
   }
+  expectedCurrent.character = readStringCharacterTemplateGeneration();
   assert.deepEqual(current, expectedCurrent,
     'every source, declaration, operation, binder, type and metadata field is retained except the three prior body endpoints and four complete owner endpoints');
   const caller = parseJavaScript(source, { referenceSemantics: false }).items[0].body;
@@ -305,3 +306,5 @@ test('historical code unit templates preserve complete metadata and agree throug
   }
   assert.deepEqual(historical.template.body.span, { start: 282, end: 349 }, 'the historical template was not rewritten');
 });
+
+import {readStringCharacterTemplateGeneration} from '../scripts/string-character-template-generation.mjs';

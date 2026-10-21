@@ -9,7 +9,7 @@ import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {writeProjectData} from '../../../../js/scripts/project-data.mjs';
 import {outcomeWirePolicy as policy,repository} from './wire-policy.mjs';
 import {explicitOutputDirectory} from './output.mjs';
-import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews} from '../diagnostic-order/source-view.mjs';
+import {captureOutcomeSourceViews,finalizeOutcomeSourceViews,checkOutcomeSourceViews} from '../diagnostic-order/current-source-view.mjs';
 import {diagnosticOrderDecorator} from '../diagnostic-order/decorator.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');

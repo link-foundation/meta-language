@@ -40,13 +40,13 @@ on:
 permissions:
   contents: read
 
-# A newer push to a pull request cancels the run of its older head. Push,
+# Pull request numbers identify update queues, including a late merged run. Push,
 # release and dispatch runs are grouped by their own run id, so they never
 # cancel each other; their write jobs queue in the release write group. The
 # group has its own literal prefix: called from ci.yml, github.workflow names
 # the caller, and a group equal to the caller's would deadlock with it.
 concurrency:
-  group: rust-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-detect-changes
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-detect-changes
       cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-changelog
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-changelog
       cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-version-check
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-version-check
       cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
@@ -161,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-secrets-scan
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-secrets-scan
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: rust-${{ github.ref }}-fresh-merge-${{ matrix.physical_shard }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-fresh-merge-${{ matrix.physical_shard }}
       cancel-in-progress: true
     needs: [detect-changes, check]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true' && needs.check.result == 'success'
@@ -206,7 +206,7 @@ jobs:
       - name: Setup Node.js for shared JavaScript reports
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
 
       - name: Cache cargo registry
         uses: actions/cache@v6
@@ -218,10 +218,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-fresh-merge-
 
+      - name: Restore successful native check dependencies for the simulated merge
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            rust/target
+          key: ${{ runner.os }}-cargo-check-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Simulate fresh merge with base branch
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: bash rust/scripts/simulate-fresh-merge.sh
+
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-fresh-merge-ubuntu-latest-all-${{ matrix.physical_shard }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Retain authenticated fresh merge partition
         if: ${{ !cancelled() }}
@@ -238,7 +256,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     concurrency:
-      group: rust-${{ github.ref }}-cargo-lock
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-cargo-lock
       cancel-in-progress: true
     needs: [detect-changes]
     defaults:
@@ -276,7 +294,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-check
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-check
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -301,7 +319,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -365,7 +383,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -420,7 +438,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
-      group: rust-${{ github.ref }}-msrv
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-msrv
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -449,7 +467,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -493,7 +511,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-lint
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-lint
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     defaults:
@@ -528,7 +546,7 @@ jobs:
       - name: Setup Node.js for independent grammar sources
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -631,11 +649,11 @@ jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.logical_suite || matrix.suite }})
     runs-on: ${{ matrix.os }}
-    # Cold Windows grammar builds exhausted the 15-minute job deadline while
-    # tests were still running. Preserve every test and bound this job at 30.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}
+    # Cold platform builds and complete test cells exhausted fifteen minutes.
+    # Retain every test and compiler safety check within a bounded thirty minutes.
+    timeout-minutes: 30
     concurrency:
-      group: rust-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-test-${{ matrix.os }}-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     defaults:
@@ -1019,7 +1037,7 @@ jobs:
       - name: Setup Node.js for translated JavaScript tests
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1132,7 +1150,12 @@ jobs:
           const {spawnSync} = require('node:child_process');
           const expected = process.env.CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER;
           if (!expected || !path.win32.isAbsolute(expected)) throw new Error('A validated absolute MSVC linker path is required');
-          const resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+          let resolved;
+          for (let attempt = 1; attempt <= 3; attempt += 1) {
+            resolved = spawnSync('where.exe', ['link.exe'], {encoding: 'utf8', timeout: 10000, maxBuffer: 65536, windowsHide: true});
+            if (resolved.error?.code !== 'ETIMEDOUT' || resolved.signal !== 'SIGTERM' || resolved.status !== null) break;
+            if (attempt < 3) console.error(`Retrying timed-out Windows linker lookup (${attempt}/3): ${resolved.error.message}`);
+          }
           if (resolved.error || resolved.status !== 0 || resolved.signal !== null || typeof resolved.stdout !== 'string') {
             throw new Error(`Windows linker lookup failed: status=${resolved.status}, signal=${resolved.signal}, ${resolved.error?.message ?? resolved.stderr}`, {cause: resolved.error});
           }
@@ -1149,7 +1172,7 @@ jobs:
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
         # The filters are word-split on purpose: they are separate arguments.
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS
 
       - name: Run complete Rust text value source observations
         if: ${{ !cancelled() && matrix.suite == 'translation' && matrix.os == 'ubuntu-latest' }}
@@ -1335,7 +1358,18 @@ jobs:
           META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
         run: node js/scripts/rust-test-shards.mjs --finish
 
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Retain authenticated native partition
+        id: native-partition-upload
+        continue-on-error: true
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
@@ -1343,6 +1377,16 @@ jobs:
           path: issue-195-artifacts/rust-physical-shards/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Retry authenticated native partition upload
+        if: ${{ !cancelled() && steps.native-partition-upload.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rust-physical-test-${{ matrix.os }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/rust-physical-shards/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
 
       - name: Remove the temporary external grammar inputs
         if: ${{ !cancelled() }}
@@ -1359,7 +1403,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-original-link-raw-observations
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-original-link-raw-observations
       cancel-in-progress: true
     needs: [detect-changes, changelog, cargo-lock, check]
     if: |
@@ -1384,7 +1428,7 @@ jobs:
       - name: Setup Node.js for raw source observations
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1433,7 +1477,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
-      group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}
       cancel-in-progress: true
     needs: [detect-changes, cargo-lock, check]
     defaults:
@@ -1545,7 +1589,7 @@ jobs:
       - name: Setup Node.js for shared JavaScript reports
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.22.0
           cache: npm
           cache-dependency-path: js/package-lock.json
 
@@ -1580,6 +1624,9 @@ jobs:
         shell: bash
         env:
           SUITE_FILTERS: ${{ matrix.filters }}
+          CARGO_PROFILE_TEST_OPT_LEVEL: 3
+          CARGO_PROFILE_TEST_DEBUG_ASSERTIONS: 'true'
+          CARGO_PROFILE_TEST_OVERFLOW_CHECKS: 'true'
         run: node ../scripts/with-cache-cleanup.mjs --event coverage --protect lcov.info -- cargo llvm-cov --all-features --lcov --output-path lcov.info --no-fail-fast -- $SUITE_FILTERS
 
       - name: Upload the shard's coverage report
@@ -1595,6 +1642,15 @@ jobs:
         env:
           META_LANGUAGE_SHARD_RESULT: ${{ job.status }}
         run: node js/scripts/rust-test-shards.mjs --finish
+
+      - name: Retain TypeScript graph native observations
+        if: ${{ !cancelled() && hashFiles('issue-195-artifacts/typescript-typed-graph-native/**') != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: typescript-typed-graph-coverage-ubuntu-latest-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}-${{ github.sha }}
+          path: issue-195-artifacts/typescript-typed-graph-native/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Retain authenticated native partition
         if: ${{ !cancelled() }}
@@ -1620,7 +1676,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-coverage-report
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-report
       cancel-in-progress: true
     needs: [coverage]
     env:
@@ -1658,7 +1714,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: rust-${{ github.ref }}-build
+      group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-build
       cancel-in-progress: true
     needs: [lint, test]
     defaults:

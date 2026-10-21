@@ -46,13 +46,13 @@ function sameGrammarSelectionMetadata(first, second, fields, recursive) {
   return recursive(first, second);
 }
 
-function sameGrammarEmbedding(first, second, fullMemo) {
+function sameGrammarEmbedding(first, second, fullMemo, readChildren) {
   if (Object.hasOwn(first, 'sourceChildren') !== Object.hasOwn(second, 'sourceChildren')) return false;
   if (first.sourceChildren) {
     if (first.sourceChildren.length !== second.sourceChildren.length
-        || !first.sourceChildren.every((child, index) => sameGrammarTreeWith(child, second.sourceChildren[index], true, fullMemo, fullMemo))) return false;
+        || !first.sourceChildren.every((child, index) => sameGrammarTreeWith(child, second.sourceChildren[index], true, fullMemo, fullMemo, readChildren))) return false;
   }
-  if (!sameGrammarTreeWith(first.root, second.root, true, fullMemo, fullMemo)) return false;
+  if (!sameGrammarTreeWith(first.root, second.root, true, fullMemo, fullMemo, readChildren)) return false;
   if (Object.hasOwn(first, 'selection') !== Object.hasOwn(second, 'selection')) return false;
   return sameGrammarSelectionMetadata(first.selection, second.selection, selectionFields, (own, other) => {
     if (Object.hasOwn(own, 'alternatives') !== Object.hasOwn(other, 'alternatives')) return false;
@@ -60,11 +60,13 @@ function sameGrammarEmbedding(first, second, fullMemo) {
     if (alternatives === peers) return true;
     if (!Array.isArray(alternatives) || !Array.isArray(peers) || alternatives.length !== peers.length) return false;
     return alternatives.every((alternative, index) => sameGrammarSelectionMetadata(alternative, peers[index], alternativeFields,
-      (a, b) => sameGrammarTreeWith(a.root, b.root, true, fullMemo, fullMemo)));
+      (a, b) => sameGrammarTreeWith(a.root, b.root, true, fullMemo, fullMemo, readChildren)));
   });
 }
 
-function sameGrammarTreeWith(first, second, output, memo, fullMemo) {
+// The optional child reader changes storage traversal only. Public array APIs
+// keep their original path; parser-owned chains reuse the same equality plans.
+function sameGrammarTreeWith(first, second, output, memo, fullMemo, readChildren) {
   if (first === second) return true;
   if (!first || !second || first.type !== second.type) return false;
   const plan = grammarTreeEqualityPlan(first.type, output);
@@ -72,8 +74,12 @@ function sameGrammarTreeWith(first, second, output, memo, fullMemo) {
   const known = memo?.get(first)?.get(second);
   if (known !== undefined) return known;
   let same = true;
-  if (plan.recursion === 'full-embedding') same = sameGrammarEmbedding(first, second, fullMemo ?? new Map());
-  else if (plan.recursion !== 'leaf') {
+  if (plan.recursion === 'full-embedding') same = sameGrammarEmbedding(first, second, fullMemo ?? new Map(), readChildren);
+  else if (plan.recursion !== 'leaf' && readChildren) {
+    const meaningful = plan.recursion === 'meaningful-children' ? 'truthy-trivia' : false;
+    same = sameGrammarChildSequences(readChildren(first, meaningful), readChildren(second, meaningful),
+      (child, peer) => sameGrammarTreeWith(child, peer, output, memo, fullMemo, readChildren));
+  } else if (plan.recursion !== 'leaf') {
     const children = node => plan.recursion === 'meaningful-children' ? node.children.filter(child => !child.trivia) : node.children;
     const own = children(first), other = children(second);
     same = own.length === other.length && own.every((child, index) => sameGrammarTreeWith(child, other[index], output, memo, fullMemo));
@@ -95,4 +101,36 @@ export function sameGrammarOutput(first, second) {
 /** Historic structural node equality with complete concrete embedding equality. */
 export function sameGrammarTree(first, second, memo) {
   return sameGrammarTreeWith(first, second, false, memo);
+}
+
+
+// Readers provide exact dense parser child sequences without forcing a cached
+// flattened array. Length precedes recursion, as in the original array path.
+function sameGrammarChildSequences(first, second, compare) {
+  if (first.identity === second.identity) return true;
+  if (first.length !== second.length) return false;
+  const peers = second.values();
+  for (const child of first.values()) {
+    const peer = peers.next();
+    if (peer.done || !compare(child, peer.value)) return false;
+  }
+  return peers.next().done;
+}
+
+/** Complete parser-owned output, retaining the ordinary full equality rules. */
+export function sameGrammarOutputChildren(first, second, readChildren) {
+  const memo = new Map();
+  return sameGrammarChildSequences(readChildren(first, false), readChildren(second, false),
+    (child, peer) => sameGrammarTreeWith(child, peer, true, memo, memo, readChildren));
+}
+
+/** Historical structural equality over the parser's meaningful direct children. */
+export function sameGrammarMeaningfulChildren(first, second, readChildren) {
+  return sameGrammarChildSequences(readChildren(first, true), readChildren(second, true),
+    (child, peer) => sameGrammarTreeWith(child, peer, false, undefined, undefined, readChildren));
+}
+
+/** The same structural node comparison with the parser's complete child reader. */
+export function sameGrammarTreeChildren(first, second, memo, readChildren) {
+  return sameGrammarTreeWith(first, second, false, memo, undefined, readChildren);
 }

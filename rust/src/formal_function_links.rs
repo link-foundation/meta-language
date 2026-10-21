@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::formal_concept_definition::{
     FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
-    encode_formal_concept_definition,
+    encode_formal_concept_definition, encode_formal_function_declaration_context,
 };
 use crate::formal_function_rules::{
     accept_formal_function_declaration, accept_formal_function_dependency,
@@ -427,4 +427,46 @@ pub fn encode_formal_function_definition(
             ..FormalConceptDefinitionOptions::default()
         },
     )
+}
+
+/// Select an original Boolean function without creating a new source-qualified item.
+///
+/// The complete typed root, owned declaration identities and strict Rust const
+/// proofs remain in the archive. A separate supported basis interprets its entry.
+///
+/// # Errors
+/// Refuses foreign selectors, non-Boolean or non-flat declarations, effects,
+/// imports and Rust entries without the complete original const proof.
+pub fn encode_formal_function_declaration_value(
+    network: &LinkNetwork,
+    root: LinkId,
+    selector: FormalFunctionSelector<'_>,
+    provenance: Option<&Value>,
+) -> Result<FormalConceptArchive, String> {
+    encode_formal_concept_definition(
+        FormalConceptDefinitionInput::LinkedProgram { network, root },
+        FormalConceptDefinitionOptions::default(),
+    )?;
+    let program = decode_typed_program_links(network, root).map_err(|error| error.to_string())?;
+    let (_, declarations) = directory(network, root, &relations(network))?;
+    let selected = match selector {
+        FormalFunctionSelector::Name(name) => declarations.get(name).copied(),
+        FormalFunctionSelector::Identity(id) => {
+            declarations.values().find(|value| **value == id).copied()
+        }
+    }
+    .ok_or_else(|| fail("the selected identity is not an owned function declaration"))?;
+    let name = declarations
+        .iter()
+        .find(|(_, id)| **id == selected)
+        .map(|(name, _)| name)
+        .ok_or_else(|| fail("missing selected declaration name"))?;
+    if !program.declarations.iter().any(|declaration| {
+        declaration.full_name() == name.as_str() && matches!(declaration, Decl::Fn(_))
+    }) {
+        return Err(fail(
+            "the selected identity is not an owned function declaration",
+        ));
+    }
+    encode_formal_function_declaration_context(network, root, selected, provenance)
 }

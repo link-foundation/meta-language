@@ -170,14 +170,14 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("native-grammar-outcome-experiment", 20),
     ]) {
         let job = job_block(&workflow, job_name);
-        // Physical shards retain their logical suite for the published Windows
-        // grammar exception; every other cell keeps fifteen minutes.
+        // Cold platform test builds retain all original logical suites and tests
+        // with the same bounded thirty-minute deadline for every physical cell.
         let expected = if job_name == "test" {
             assert!(job.contains("        os: [ubuntu-latest, macos-latest, windows-latest]\n"));
             assert!(job.contains(
                 "        suite: [grammar, inference, generative, translation, remaining]\n"
             ));
-            "    timeout-minutes: ${{ matrix.os == 'windows-latest' && (matrix.logical_suite || matrix.suite) == 'grammar' && 30 || 15 }}\n".to_owned()
+            "    timeout-minutes: 30\n".to_owned()
         } else {
             format!("    timeout-minutes: {timeout_minutes}\n")
         };
@@ -279,7 +279,7 @@ fn coverage_job_enforces_recorded_line_coverage_floor() {
         "coverage should shard the tests by the suites of the test job"
     );
     assert!(
-        coverage.contains("group: rust-${{ github.ref }}-coverage-${{ matrix.suite }}"),
+        coverage.contains("group: rust-${{ github.event_name == 'pull_request' && format('pull-{0}', github.event.pull_request.number) || github.run_id }}-coverage-${{ matrix.suite }}-${{ matrix.logical_suite || matrix.suite }}-${{ matrix.physical_shard || 1 }}"),
         "coverage shards should not cancel each other"
     );
     assert!(
@@ -924,7 +924,7 @@ fn rust_test_suites_partition_the_tests_by_name() {
     );
     assert!(
         test.contains(
-            "cargo test --no-fail-fast --all-features --tests --verbose -- $SUITE_FILTERS"
+            "cargo test --no-fail-fast --all-features --tests --verbose --config 'profile.test.package.meta-language.opt-level=3' --config 'profile.test.package.meta-language.debug-assertions=true' --config 'profile.test.package.meta-language.overflow-checks=true' -- $SUITE_FILTERS"
         )
     );
     for step in ["Run doc tests", "Check examples"] {

@@ -1,4 +1,5 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
+import {readStringOrderRefusal} from './string-order-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -547,6 +548,8 @@ class LeanEmitter {
       case 'stringMap':
         throw unsupported(`.${e.op}()`, readStringMapRefusal('Lean', e.op), e.span);
       case 'stringTest': {
+        const refusal = readStringOrderRefusal('Lean', e.op);
+        if (refusal) throw unsupported('string comparison', refusal, e.span);
         const string = this.expr(e.string, depth);
         const search = this.expr(e.search, depth);
         const helper = readStringTestHelper('Lean', e.op);

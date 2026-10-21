@@ -18,6 +18,7 @@ import {formatProductRuleSource} from '../scripts/product-rule-style-corrections
 import {simplifyRustOptionIdentityMatches} from '../scripts/reviewed-rust-branch-styles.mjs';
 import {readRustLibraryItems} from '../scripts/rust-library-packaging.mjs';
 import {readSourceTextRustBlock} from '../scripts/source-text-byte-library-style.mjs';
+import {readMutableArrayFrontendSourceHistory} from '../scripts/javascript-mutable-array-frontend-source-history.mjs';
 
 test('scalar declaration styles borrow actual token strings and preserve all other source owners',()=>{
   const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
@@ -144,7 +145,10 @@ test('frontend lexical election retains declaration order, bounded columns, spar
 });
 
 test('current frontend type-query styles append two source-derived owners while retaining the original three style actions',()=>{
-  const input=readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8');
+  // The retained two-action record owns this complete Git-certified source.
+  // The new tuple context has its own append and current generation controls.
+  assert.equal(readMutableArrayFrontendSourceHistory().current.source,readFileSync(new URL('../src/translation/frontend-rules.js',import.meta.url),'utf8'));
+  const input=readMutableArrayFrontendSourceHistory().previous.source;
   const emitted=emitRust(checkProgram(parseJavaScript(input)));
   const decorators=DecoratorSet.fromLino(readFileSync(new URL('../../parity/self-translation/frontend-rules-decorators.lino',import.meta.url),'utf8'));
   const historical=decorators.decorators.find(definition=>definition.id===frontendRuleNativeStyleId);
@@ -178,6 +182,11 @@ test('current frontend type-query styles append two source-derived owners while 
   const recorded=decorators.decorators.find(definition=>definition.id===frontendTypeQueryNativeStyleId);
   assert.ok(recorded,'the dedicated updater records the additive styles separately from every historical row');
   assert.deepEqual(recorded.actions,actions);
+  const current=decorators.decorators.find(definition=>definition.id==='reviewed-frontend-frozen-tuple-context-styles');
+  assert.ok(current);assert.equal(current.actions.length,1);
+  assert.deepEqual(readFrontendTypeQueryStyleCorrections([actions[0].from,current.actions[0].from].join('\n\n')),[actions[0],...current.actions],
+    'the current expanded tuple owner is independently derived beside the unchanged type-query owner');
+  assert.deepEqual(literals(current.actions[0].to),literals(current.actions[0].from));
 });
 
 test('temporal-binding styles borrow the complete actual column family and preserve every historical owner',()=>{
@@ -336,8 +345,18 @@ test('authentic frontend empty-string compiler styles preserve every other owner
   assert.equal(createHash('sha256').update(source).digest('hex'),
     '37033e27b97bc145b0d51b89016606e141d5962c0f423ee131202432a301dad3');
   const changed=correction.outputs.get(path),before=source.toString('utf8'),after=changed.toString('utf8');
-  assert.deepEqual(changed,readFileSync(new URL('../../'+relativePath,import.meta.url)),
-    'the complete actual generated module equals the authentic offline transaction output');
+  // Select the exact full predecessor for the authentic compiler transaction.
+  // The current normal generator independently checks the expanded tuple rule.
+  assert.equal(createHash('sha256').update(readFileSync(new URL('../../'+relativePath,import.meta.url))).digest('hex'),
+    "3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7",'the entire actual optional-tuple successor is independently pinned');
+  const actual=Buffer.from(readFileSync(new URL('../../'+relativePath,import.meta.url),'utf8').replace(
+    "pub fn accept_java_script_optional_tuple_context(\n    language: &str,\n    source_kind: &str,\n    expected_kind: &str,\n    present_kind: &str,\n) -> bool {\n    (((language == \"JavaScript\") && ((source_kind == \"array\") || (source_kind == \"tuple\")))\n        && (expected_kind == \"option\"))\n        && (present_kind == \"tuple\")\n}",
+    "pub fn accept_java_script_optional_tuple_context(\n    language: &str,\n    source_kind: &str,\n    expected_kind: &str,\n    present_kind: &str,\n) -> bool {\n    (((language == \"JavaScript\") && (source_kind == \"array\")) && (expected_kind == \"option\"))\n        && (present_kind == \"tuple\")\n}"));
+  assert.equal(actual.length,changed.length,'the complete current source length matches the retained transaction before comparing all bytes');
+  assert.equal(createHash('sha256').update(actual).digest('hex'),createHash('sha256').update(changed).digest('hex'),
+    'the complete current source digest matches the retained transaction before comparing all bytes');
+  assert.deepEqual(changed,actual,
+    'the complete historical generated module view equals the authentic offline transaction output');
   const oldOwner=readSourceTextRustBlock(before,'fn','read_type_query_result');
   const newOwner=readSourceTextRustBlock(after,'fn','read_type_query_result');
   assert.equal(oldOwner.split('String::from("")').length,2);

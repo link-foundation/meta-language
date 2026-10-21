@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 use std::sync::OnceLock;
 
 use super::{
-    HashSet, JavaScriptParser, Result, SExpr, SNode, Span, Stmt, Token, TokenKind, node,
-    unsupported,
+    HashSet, JavaScriptParser, Result, SExpr, SNode, Span, Stmt, Token, TokenKind,
+    TranslationError, node, unsupported,
 };
 use crate::translation::array_binding_rules::{self as rules, ml_string::Text};
 use crate::translation::frontend_rules::ml_array::number_index;
@@ -229,6 +229,118 @@ impl JavaScriptParser {
             if mutable { Stmt::Let { name: binding.name, value, span: whole } }
             else { Stmt::Const { name: binding.name, value, span: whole } }
         }).collect()
+    }
+
+    /// Transport the exact dense literal proof from the generated shared rule.
+    pub(super) fn mutable_array_declaration(
+        &mut self,
+        start: &Token,
+        names: &mut HashSet<String>,
+    ) -> Result<Vec<Stmt>> {
+        let pattern = self.peek();
+        let bindings = self.read_array_binding()?;
+        if self.cursor.eat("=").is_none() {
+            return Err(unsupported(
+                "let destructuring",
+                "declare each binding with its own let",
+                Some(super::span(start, &pattern)),
+            ));
+        }
+        let value = self.array_binding_initializer(&bindings)?;
+        let items = match &value.node {
+            SNode::Array { items, .. } => items.as_slice(),
+            _ => &[],
+        };
+        let plain = bindings.iter().enumerate().all(|(index, binding)| {
+            binding.path.len() == 1
+                && binding.path[0] == index
+                && !binding.rest
+                && binding.default_value.is_none()
+        });
+        let value_kind = if matches!(&value.node, SNode::Array { .. }) {
+            "array"
+        } else {
+            ""
+        };
+        let item_count = serde_json::Number::from(items.len())
+            .as_f64()
+            .expect("an actual parsed array count is a Number");
+        let binding_count = serde_json::Number::from(bindings.len())
+            .as_f64()
+            .expect("an actual parsed binding count is a Number");
+        if !crate::translation::frontend_rules::accept_java_script_mutable_array_binding(
+            value_kind,
+            item_count,
+            binding_count,
+            plain,
+            items.iter().any(|item| item.spread),
+        ) {
+            return Err(unsupported(
+                "let destructuring",
+                "declare each binding with its own let",
+                Some(super::span(start, &pattern)),
+            ));
+        }
+        for binding in &bindings {
+            if !crate::translation::frontend_rules::accept_java_script_mutable_array_binding_owner(
+                "JavaScript",
+                self.lexical.duplicate_declaration(&binding.name),
+                self.lexical.parent_parameter(&binding.name),
+                self.top_level,
+            ) {
+                if self.top_level {
+                    return Err(unsupported(
+                        "let destructuring",
+                        "mutable literal bindings require a function-owned lexical scope",
+                        Some(super::span(start, &pattern)),
+                    ));
+                }
+                return Err(TranslationError::syntax(
+                    format!("duplicate lexical binding {}", binding.name),
+                    Some(binding.span),
+                ));
+            }
+        }
+        let whole = self.to_here(start);
+        self.generated_count += 1;
+        let name = format!("ml_binding{}", self.generated_count);
+        let object = node(
+            SNode::Name {
+                path: vec![name.clone()],
+            },
+            whole,
+        );
+        for binding in &bindings {
+            if !names.insert(binding.name.clone()) {
+                return Err(TranslationError::syntax(
+                    format!("duplicate lexical binding {}", binding.name),
+                    Some(binding.span),
+                ));
+            }
+            self.declare_local(&binding.name, true);
+            self.lexical
+                .binding(&binding.name, Some(self.cursor.peek().start));
+        }
+        let mut declarations = self.bind_array_elements(bindings, &object, true, whole);
+        for declaration in &mut declarations {
+            let Stmt::Let { value, .. } = declaration else {
+                unreachable!("mutable element transport retains the actual let constructor");
+            };
+            let SNode::Index {
+                proven_in_bounds, ..
+            } = &mut value.node
+            else {
+                unreachable!("the shared plain binding plan selects only direct indices");
+            };
+            *proven_in_bounds = Some(true.into());
+        }
+        let mut statements = vec![Stmt::Const {
+            name,
+            value,
+            span: whole,
+        }];
+        statements.extend(declarations);
+        Ok(statements)
     }
 
     pub(super) fn array_destructuring(&mut self, start: &Token) -> Result<Stmt> {

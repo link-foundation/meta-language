@@ -537,7 +537,7 @@ export function mergeFamilyLibraryIdenticalBranches(source, {context = source, c
 }
 
 /** Retain both blocks when a statement-position then cannot reach its else. */
-export function removeFamilyLibraryDivergentElse(source) {
+export function removeFamilyLibraryDivergentElse(source, {divergentMatches = false} = {}) {
   const {tokens, matching, opaque} = readFamilyLibraryTokens(source), edits = [];
   const diverges = initial => {
     let open = initial;
@@ -562,6 +562,24 @@ export function removeFamilyLibraryDivergentElse(source) {
         continue;
       }
       if (opaque.has(start) || tokens[start].kind !== 'identifier') return false;
+      if (divergentMatches && tokens[start].value === 'match'
+        && tokens[start + 1]?.kind === 'identifier' && tokens[start + 2]?.value === '{'
+        && matching.get(start + 2) === end) {
+        let at = start + 3, arms = 0;
+        while (at < end) {
+          let arrow = at;
+          while (arrow < end && tokens[arrow].value !== '=>') {
+            if (opaque.has(arrow) || tokens[arrow].value === 'if') return false;
+            arrow = matching.get(arrow) > arrow ? matching.get(arrow) + 1 : arrow + 1;
+          }
+          if (arrow === at || tokens[arrow + 1]?.value !== '{' || !diverges(arrow + 1)) return false;
+          const close = matching.get(arrow + 1);if (close === undefined || close >= end) return false;
+          at = close + 1;arms += 1;
+          if (tokens[at]?.value === ',') at += 1;
+          else if (at !== end) return false;
+        }
+        return arms > 0 && at === end;
+      }
       if (tokens[start].value === 'return') return true;
       if (tokens[start].value === 'continue') return start === end;
       return tokens[start].value === 'break' && tokens[start + 1]?.value !== "'";
