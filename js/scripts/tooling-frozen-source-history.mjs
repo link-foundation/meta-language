@@ -15,6 +15,11 @@ export const CURRENT_CONVERSATION_SOURCE={path:'js/scripts/issue-195-conversatio
   sha256:'fa1bda21f330724dce2bda4d068fbb7758e0dcb45d4494044171138721e088f2'};
 const policyPath='parity/self-translation/tooling-frozen-source-history.lino';
 const policySha256='83bbc27757f467f73c70f8dad5074c70a46414455a4602f6c25b48879017cf47';
+const hostSuccessorPath='parity/self-translation/tooling-frozen-host-successors.lino';
+const hostSuccessorRevision='8f2f6c483ec32a3ffc17afec694463965dc7551d';
+const hostSuccessorFiles=['js/tests/ci-workflow-structure.test.js','js/tests/test-groups.test.js','rust/Cargo.toml'];
+const hostPredecessorRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+let hostSuccessorSnapshot;
 export const toolingFrozenSourcePin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());};
 
@@ -109,7 +114,35 @@ export function readCriticalDeliveryAppend(previous,current){
   return{start,source,ids};
 }
 
-export function verifyToolingFrozenSourceHistory(packet){
+export function verifyToolingFrozenSourceHistory(packet,{hostSuccessors=false}={}){
+  if(hostSuccessors){
+    exactKeys(packet,['schemaVersion','model','revision','sources','boundary']);
+    assert.equal(packet.schemaVersion,1);assert.equal(packet.model,'certified tooling host successors 1');
+    assert.equal(packet.revision,hostSuccessorRevision);assert.equal(typeof packet.boundary,'string');
+    assert.ok(Array.isArray(packet.sources));assert.deepEqual(packet.sources.map(row=>row.path),hostSuccessorFiles);
+    const oldBytes=readFileSync(new URL(policyPath,root));assert.equal(toolingFrozenSourcePin(oldBytes).sha256,policySha256);
+    const predecessors=verifyToolingFrozenSourceHistory(readBootstrapStructuredDataLino(oldBytes.toString('utf8')));
+    return packet.sources.map(row=>{
+      exactKeys(row,['path','source','bytes','sha256','certificate','previous','edit']);
+      assert.deepEqual(toolingFrozenSourcePin(row.source),{bytes:row.bytes,sha256:row.sha256});
+      verifyGitArtifactCertificate(row.certificate,Buffer.from(row.source),{revision:hostSuccessorRevision,path:row.path});
+      exactKeys(row.previous,['revision','source','bytes','sha256','certificate']);
+      const previous=row.previous.source;
+      assert.equal(row.previous.revision,hostPredecessorRevision);
+      assert.deepEqual(toolingFrozenSourcePin(previous),{bytes:row.previous.bytes,sha256:row.previous.sha256});
+      verifyGitArtifactCertificate(row.previous.certificate,Buffer.from(previous),{revision:hostPredecessorRevision,path:row.path});
+      const existing=predecessors.find(candidate=>candidate.path===row.path);
+      if(existing)assert.equal(previous,existing.current);
+      exactKeys(row.edit,['start','removed','inserted']);
+      const {start,removed,inserted}=row.edit;
+      assert.ok(Number.isSafeInteger(start)&&start>=0);assert.equal(typeof removed,'string');assert.equal(typeof inserted,'string');
+      assert.ok(removed.length||inserted.length);assert.equal(previous.slice(start,start+removed.length),removed);
+      assert.equal(previous.slice(0,start)+inserted+previous.slice(start+removed.length),row.source);
+      assert.equal(row.source.slice(start,start+inserted.length),inserted);
+      assert.equal(row.source.slice(0,start)+removed+row.source.slice(start+inserted.length),previous);
+      return{path:row.path,previous,current:row.source};
+    });
+  }
   exactKeys(packet,['schemaVersion','model','revision','coordinateUnit','criticalHistory','conversation','hosts','boundary']);
   assert.equal(packet.schemaVersion,1);assert.equal(packet.model,'composed CI tooling historical scope 1');
   assert.equal(packet.revision,TOOLING_FROZEN_SOURCE_REVISION);assert.equal(packet.coordinateUnit,'UTF-16 code units');
@@ -135,24 +168,51 @@ export function verifyToolingFrozenSourceHistory(packet){
   return outputs;
 }
 
-export function readToolingFrozenSourceHistory(){
+export function readToolingFrozenSourceHistory({hostSuccessors=false}={}){
+  if(hostSuccessors){
+    return structuredClone(readToolingHostSuccessorSnapshot().packet);
+  }
   const bytes=readFileSync(new URL(policyPath,root));assert.equal(toolingFrozenSourcePin(bytes).sha256,policySha256);
   const packet=readBootstrapStructuredDataLino(bytes.toString('utf8'));
-  for(const row of verifyToolingFrozenSourceHistory(packet))assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.current);
+  for(const row of verifyToolingFrozenSourceHistory(packet))assert.equal(restoreToolingHostSuccessor(readFileSync(new URL(row.path,root),'utf8'),row.path),row.current);
   return packet;
 }
 
 /** Compose only the three complete source hosts already authenticated by
  * this packet. A selected unknown successor cannot acquire an older guard view. */
-export function restoreToolingFrozenHostSource(source,file){
+export function restoreToolingFrozenHostSource(source,file,{hostSuccessorsOnly=false,preserveUnknownSource=false}={}){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  if(hostSuccessorsOnly)return restoreToolingHostSuccessor(source,file,preserveUnknownSource);
   if(!TOOLING_FROZEN_HOSTS.some(row=>row.path===file))return source;
   const packet=readToolingFrozenSourceHistory(),row=packet.hosts.find(candidate=>candidate.path===file);
   assert.ok(row);if(source===row.source)return source;
+  source=restoreToolingHostSuccessor(source,file);
   assert.deepEqual(toolingFrozenSourcePin(source),row.current,'an unknown tooling host successor has no complete historical source authority');
   const expected=TOOLING_FROZEN_HOSTS.find(candidate=>candidate.path===file);
   assert.equal(source,replayToolingFrozenHostChanges(row.source,expected.changes).source);
   return row.source;
+}
+
+function restoreToolingHostSuccessor(source,file,preserveUnknownSource=false){
+  if(!hostSuccessorFiles.includes(file))return source;
+  const row=readToolingHostSuccessorSnapshot().views.find(candidate=>candidate.path===file);
+  if(source===row.previous)return source;
+  // Earlier guards still authenticate their own complete older epochs. An
+  // unrecognized input gains no authority and remains visible to that guard.
+  if(preserveUnknownSource&&source!==row.current)return source;
+  assert.equal(source,row.current,'an unknown complete tooling host has no historical source authority');
+  return row.previous;
+}
+
+function readToolingHostSuccessorSnapshot(){
+  const bytes=readFileSync(new URL(hostSuccessorPath,root));
+  // A dependency mutation remains visible even when the successor is cached.
+  assert.equal(toolingFrozenSourcePin(readFileSync(new URL(policyPath,root))).sha256,policySha256);
+  if(hostSuccessorSnapshot?.bytes.equals(bytes))return hostSuccessorSnapshot;
+  hostSuccessorSnapshot=undefined;
+  const text=bytes.toString('utf8');assert.deepEqual(Buffer.from(text),bytes);
+  const packet=readBootstrapStructuredDataLino(text),views=verifyToolingFrozenSourceHistory(packet,{hostSuccessors:true});
+  hostSuccessorSnapshot={bytes,packet,views};return hostSuccessorSnapshot;
 }
 
 /** Only the complete certified current source gets its older source view;

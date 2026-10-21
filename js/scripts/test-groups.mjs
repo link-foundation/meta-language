@@ -20,6 +20,8 @@ import {readProjectData,writeProjectData} from './project-data.mjs';
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const schedulingFile=new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url);
 const schedulingRevision='8bc0ef9725388c7927acf1854870bf46f5e365be';
+const integrationSchedulingFile=new URL('../../parity/fixtures/ci-39644810104-workload-costs.lino',import.meta.url);
+const integrationSchedulingRevision='8f2f6c483ec32a3ffc17afec694463965dc7551d';
 const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 
 /** Largest observed workload first; source changes use a byte-size estimate.
@@ -27,23 +29,27 @@ const schedulingDigest=value=>createHash('sha256').update(value).digest('hex');
 export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  assert.ok(Number.isSafeInteger(count)&&count>0&&count<=files.length);
  assert.equal(new Set(files).size,files.length,'workload source identities are unique');
- const measured=costs??readProjectData(schedulingFile);
- assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
- assert.equal(measured.run,39615628279);assert.equal(measured.revision,schedulingRevision);
- assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
+ const measurements=costs?[costs]:[readProjectData(integrationSchedulingFile),readProjectData(schedulingFile)];
  const known=new Map();
+ for(const measured of measurements){
+ assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
+ assert.ok(measured.run===39615628279&&measured.revision===schedulingRevision
+   ||measured.run===39644810104&&measured.revision===integrationSchedulingRevision,'a scheduling sample has its actual source commit');
+ assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
+ const seen=new Set();
  for(const row of measured.entries){
   assert.deepEqual(Object.keys(row).sort(),['bytes','file','milliseconds','sha256']);
-  assert.ok(typeof row.file==='string'&&!known.has(row.file));assert.match(row.sha256,/^[a-f0-9]{64}$/u);
+  assert.ok(typeof row.file==='string'&&!seen.has(row.file));seen.add(row.file);assert.match(row.sha256,/^[a-f0-9]{64}$/u);
   assert.ok(Number.isSafeInteger(row.bytes)&&row.bytes>0&&Number.isSafeInteger(row.milliseconds)&&row.milliseconds>0);
-  known.set(row.file,row);
+  if(!known.has(row.file))known.set(row.file,[]);known.get(row.file).push(row);
  }
- const rates=measured.entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
+ }
+ const rates=measurements[0].entries.map(row=>row.milliseconds/row.bytes).sort((a,b)=>a-b);
  assert.ok(rates.length>0);const rate=rates[Math.floor(rates.length/2)];
  const read=readSource??(file=>readFileSync(path.join(packageRoot,'..',file)));
- const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),row=known.get(file);
-  const exact=row&&row.bytes===bytes.length&&row.sha256===schedulingDigest(bytes);
-  return {file,milliseconds:exact?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
+ const workloads=files.map(file=>{const bytes=Buffer.from(read(file)),sha256=schedulingDigest(bytes);
+  const row=known.get(file)?.find(candidate=>candidate.bytes===bytes.length&&candidate.sha256===sha256);
+  return {file,milliseconds:row?row.milliseconds:Math.max(1,Math.ceil(bytes.length*rate))};});
  workloads.sort((a,b)=>b.milliseconds-a.milliseconds||a.file.localeCompare(b.file));
  const loads=Array(count).fill(0),shards=Array.from({length:count},()=>[]);
  for(const row of workloads){const owner=loads.indexOf(Math.min(...loads));loads[owner]+=row.milliseconds;shards[owner].push(row.file);}
@@ -55,16 +61,20 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
 export function captureMeasuredWorkloadCosts(directory){
  const jobs=JSON.parse(readFileSync(path.join(directory,'jobs-final.json'),'utf8')).jobs;
  const run=JSON.parse(readFileSync(path.join(directory,'run-current.json'),'utf8'));
- assert.equal(run.id,39615628279);assert.equal(run.head_sha,schedulingRevision);
- const original=file=>execFileSync('git',['--no-replace-objects','show',schedulingRevision+':'+file],{cwd:path.join(packageRoot,'..'),maxBuffer:2*1024*1024,timeout:15000});
- const titles=new Map();for(const name of partitionTests(testFiles()).groups.grammar){
+ assert.ok(run.id===39615628279&&run.head_sha===schedulingRevision
+   ||run.id===39644810104&&run.head_sha===integrationSchedulingRevision);
+ const original=file=>execFileSync('git',['--no-replace-objects','show',run.head_sha+':'+file],{cwd:path.join(packageRoot,'..'),maxBuffer:2*1024*1024,timeout:15000});
+ const groups=partitionTests(testFiles()).groups;
+ const titles=new Map();for(const name of [...groups.grammar,...(run.id===39644810104?groups.translation:[])]){
   const file='js/tests/'+name;let source;try{source=original(file).toString('utf8');}catch{continue;}
   for(const match of source.matchAll(/\btest\(\s*(['"])([^\n]*?)\1\s*,/gu)){
    if(titles.has(match[2])&&titles.get(match[2])!==file)titles.set(match[2],null);else titles.set(match[2],file);
   }
  }
  const costs=new Map(),logs=[];
- for(const job of jobs.filter(row=>/^Self-Translation Report \(\d+\/8\)$/u.test(row.name)||/Tests \(grammar, /u.test(row.name))){
+ for(const job of jobs.filter(row=>/^Self-Translation Report \(\d+\/8\)$/u.test(row.name)||/Tests \(grammar, /u.test(row.name)
+   ||run.id===39644810104&&/Tests \(translation, /u.test(row.name))){
+  assert.equal(job.status,'completed','costs come from completed job logs, including partial progress before a recorded deadline');
   const address=path.join(directory,'job-'+job.id+'-small.txt'),bytes=readFileSync(address);
   const receipt=JSON.parse(readFileSync(path.join(directory,'job-'+job.id+'-small-receipt.json'),'utf8'));
   assert.equal(schedulingDigest(bytes),receipt.sha256);assert.equal(bytes.length,receipt.selectedBytes);
@@ -79,18 +89,19 @@ export function captureMeasuredWorkloadCosts(directory){
     const match=/self-translation report: recorded (js\/src\/[^ ]+\.js) \(/u.exec(line);
     if(match){assert.ok(Number.isFinite(timestamp)&&previous!==null);assert.ok(!costs.has(match[1]));costs.set(match[1],Math.max(1,Math.round(timestamp-previous)));previous=timestamp;}
    }else{
-    const match=/# Subtest: (.*)$/u.exec(line);if(match)title=match[1];
-    const duration=/\bduration_ms: ([0-9.]+)/u.exec(line);
+    const text=line.replace(/^[0-9T:.Z-]+ /u,'');
+    const match=/^# Subtest: (.*)$/u.exec(text);if(match)title=match[1];
+    const duration=/^\s*duration_ms: ([0-9.]+)$/u.exec(text);
     if(duration&&title){const file=titles.get(title);if(file)costs.set(file,(costs.get(file)??0)+Math.max(1,Math.round(Number(duration[1]))));title=null;}
    }
   }
  }
  const entries=[...costs].sort(([a],[b])=>a.localeCompare(b)).map(([file,milliseconds])=>{const bytes=original(file);return{file,bytes:bytes.length,sha256:schedulingDigest(bytes),milliseconds};});
- assert.equal(logs.length,14);assert.ok(entries.filter(row=>row.file.startsWith('js/src/')).length>300);
+ assert.equal(logs.length,run.id===39644810104?20:14);assert.ok(entries.filter(row=>row.file.startsWith('js/src/')).length>300);
  assert.ok(entries.find(row=>row.file==='js/tests/issue-195-interchange-api-cli.test.js').milliseconds>=262000);
- const packet={schemaVersion:1,model:'observed CI workload scheduling costs 1',run:39615628279,revision:schedulingRevision,logs,entries,
+ const packet={schemaVersion:1,model:'observed CI workload scheduling costs 1',run:run.id,revision:run.head_sha,logs,entries,
   boundary:'Advisory elapsed-time samples from complete bounded CI logs. Recorded-module intervals include overlapped import resolution; test samples include only uniquely named literal test groups. Missing or changed source bytes use a size estimate. Every current complete module and test remains mandatory exactly once under unchanged job counts, commands and deadlines. Timing samples are not requirement observations or forecasts of passing CI.'};
- writeProjectData(schedulingFile,packet);return packet;
+ writeProjectData(run.id===39615628279?schedulingFile:integrationSchedulingFile,packet);return packet;
 }
 
 /** Test groups, each a pattern over the test file name without `.test.js`. */
@@ -151,9 +162,9 @@ export function partitionGroupFiles(files, shard = '1/1') {
   if (!Number.isSafeInteger(index) || !Number.isSafeInteger(count) || index > count || count > files.length) {
     throw new Error('test group shard needs K/N with 1 <= K <= N <= the number of files');
   }
-  // Only the measured general-grammar cohort changes owners. Native and
+  // Only the measured general-grammar and six-cell translation cohorts change owners. Native and
   // historical modulo cohorts retain their independent exact partition rules.
-  if(count===6&&files.includes('issue-195-interchange-api-cli.test.js'))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
+  if(count===6&&(files.includes('issue-195-interchange-api-cli.test.js')||files.includes('translation-scheduling-source-history.test.js')))return partitionMeasuredWorkloads(files.map(file=>'js/tests/'+file),count)[index-1].map(file=>file.slice(9));
   return files.filter((_, offset) => offset % count === index - 1);
 }
 

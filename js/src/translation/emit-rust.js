@@ -1469,7 +1469,8 @@ class RustEmitter {
 
   binary(e) {
     const sameDomain = sameType(e.left.type, e.right.type);
-    const refusal = readReferenceIdentityComparisonError(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain, e.domain !== undefined, e.domain?.reference === true, e.domain !== undefined && sameType(e.domain, e.left.type));
+    const domainPresent = e.domain !== undefined && e.domain !== null;
+    const refusal = readReferenceIdentityComparisonError(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain, domainPresent, e.domain?.reference === true, domainPresent && sameType(e.domain, e.left.type));
     if (refusal) throw unsupported('reference comparison', refusal, e.span);
     if (acceptReferenceIdentityComparison(e.op, e.left.type.kind, e.right.type.kind, e.left.type.reference === true, e.right.type.reference === true, sameDomain)) {
       return renderReferenceIdentityComparison(e.op, this.borrow(e.left), this.borrow(e.right));

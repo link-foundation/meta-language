@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
+import {restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const archiveSha256='5b50046591ff194808c3d151e3a41df7de1c677230995f3e7356e498a7f161c6';
@@ -16,6 +17,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreToolingFrozenHostSource(source,path,{hostSuccessorsOnly:true,preserveUnknownSource:true});
   source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);

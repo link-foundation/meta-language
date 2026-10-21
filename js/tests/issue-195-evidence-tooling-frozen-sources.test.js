@@ -105,10 +105,17 @@ test('the complete source proof reloads through both Links codecs without changi
 
 test('complete certified tooling host predecessors compose with old guards while unknown selected source successors refuse',()=>{
   const history=readToolingFrozenSourceHistory();
+  const successors=readToolingFrozenSourceHistory({hostSuccessors:true});
+  const views=verifyToolingFrozenSourceHistory(successors,{hostSuccessors:true});
   for(const row of history.hosts){
     const current=read(row.path).toString('utf8'),previous=row.source;
     assert.notEqual(current,previous);
-    assert.deepEqual(toolingFrozenSourcePin(current),row.current);
+    const successor=successors.sources.find(candidate=>candidate.path===row.path);
+    if(successor){
+      assert.deepEqual(toolingFrozenSourcePin(current),{bytes:successor.bytes,sha256:successor.sha256});
+      const view=views.find(candidate=>candidate.path===row.path);
+      assert.equal(current,view.current);assert.deepEqual(toolingFrozenSourcePin(view.previous),row.current);
+    }else assert.deepEqual(toolingFrozenSourcePin(current),row.current);
     assert.equal(restoreToolingFrozenHostSource(current,row.path),previous);
     assert.equal(restoreToolingFrozenHostSource(previous,row.path),previous);
     for(const source of [current+'\n',previous+'\n',current.replace('import assert','import alteredAssert')]){
@@ -121,6 +128,37 @@ test('complete certified tooling host predecessors compose with old guards while
   }
   const detached=readToolingFrozenSourceHistory();detached.hosts[0].source='caller mutation';
   const original=history.hosts[0];assert.equal(restoreToolingFrozenHostSource(read(original.path).toString('utf8'),original.path),original.source);
+});
+
+test('the certified workflow host successor retains the whole original inverse and refuses altered source authority',()=>{
+  const history=readToolingFrozenSourceHistory({hostSuccessors:true});
+  assert.deepEqual(generateToolingFrozenSourceHistory({hostSuccessors:true,check:true}),history);
+  const [view]=verifyToolingFrozenSourceHistory(history,{hostSuccessors:true});
+  const prior=readToolingFrozenSourceHistory().hosts.find(row=>row.path===view.path);
+  assert.deepEqual(toolingFrozenSourcePin(view.previous),prior.current);
+  assert.equal(view.current,read(view.path).toString('utf8'));
+  assert.equal(restoreToolingFrozenHostSource(view.previous,view.path),prior.source);
+  assert.equal(restoreToolingFrozenHostSource(view.current,view.path),prior.source);
+  for(const source of verifyToolingFrozenSourceHistory(history,{hostSuccessors:true})){
+    assert.equal(restoreToolingFrozenHostSource(source.current,source.path,{hostSuccessorsOnly:true}),source.previous);
+    assert.equal(restoreToolingFrozenHostSource(source.previous,source.path,{hostSuccessorsOnly:true}),source.previous);
+    assert.throws(()=>restoreToolingFrozenHostSource(source.current+'\n',source.path,{hostSuccessorsOnly:true}));
+  }
+  for(const mutate of [
+    value=>{value.revision='0'.repeat(40);},value=>{value.sources=[];},
+    value=>{value.sources.push(structuredClone(value.sources[0]));},
+    value=>{value.sources[0].path='unregistered.js';},
+    value=>{const row=value.sources[0];row.source+='\n';Object.assign(row,toolingFrozenSourcePin(row.source));},
+    value=>{value.sources[0].certificate.path='unregistered.js';},
+    value=>{value.sources[0].certificate.revision='0'.repeat(40);},
+    value=>{value.sources[0].previous.sha256='0'.repeat(64);},
+    value=>{value.sources[0].edit.start++;},
+    value=>{value.sources[0].edit.removed+='\n';},
+    value=>{value.sources[0].edit.inserted+='\n';},
+    value=>{value.futureSourcePermission=true;},
+  ]){const changed=structuredClone(history);mutate(changed);assert.throws(()=>verifyToolingFrozenSourceHistory(changed,{hostSuccessors:true}));}
+  assert.throws(()=>restoreToolingFrozenHostSource(view.current+'\n',view.path));
+  assert.throws(()=>generateToolingFrozenSourceHistory({hostSuccessors:true,apply:true}));
 });
 
 test('normal capture leaves the current classifier requirements and old critical source history untouched',()=>{

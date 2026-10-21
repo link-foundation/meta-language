@@ -42,15 +42,20 @@ export function generateOwnCodebaseHistoricalNamingSources({check=false}={}){
 /** Append only independently derived historical names; current extraction stays separate. */
 export async function generateAdditionalOwnCodebaseHistoricalNamingSources({check=false}={}){
   const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',baseline='8bc0ef9725388c7927acf1854870bf46f5e365be';
+  const integration='8f2f6c483ec32a3ffc17afec694463965dc7551d';
   const file='parity/naming/array-identity-historical-inventories.lino';
   let sources,stored;
   if(check){stored=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;sources=stored.sources;}
   else{
     const originalFiles=['js/src/translation/javascript-infer.js','js/tests/translation-frontend-rules.test.js',
       'rust/tests/unit/translation_surface_reference_analysis.rs','js/scripts/own-codebase-baseline-naming-history.mjs'];
-    const changed=execFileSync('git',['diff',baseline,'--name-only'],{cwd:root,encoding:'utf8'}).trim().split('\n')
-      .filter(path=>/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/.+\.(?:js|mjs|rs)$/u.test(path));
-    const selections=[...originalFiles.map(path=>({path,revision})),...changed.map(path=>({path,revision:baseline}))];
+    const changedAt=selected=>{
+      const known=new Set(execFileSync('git',['ls-tree','-r','--name-only',selected],{cwd:root,encoding:'utf8',maxBuffer:1024*1024}).trim().split('\n'));
+      return execFileSync('git',['diff',selected,'--name-only'],{cwd:root,encoding:'utf8'}).trim().split('\n')
+        .filter(path=>known.has(path)&&/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/.+\.(?:js|mjs|rs)$/u.test(path));
+    };
+    const selections=[...originalFiles.map(path=>({path,revision})),...changedAt(baseline).map(path=>({path,revision:baseline})),
+      ...changedAt(integration).map(path=>({path,revision:integration}))];
     sources=selections.map(({path,revision})=>{
       globalThis.gc?.();
       const {blob,certificate}=captureGitArtifactCertificate(revision,path);

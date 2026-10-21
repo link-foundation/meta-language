@@ -2368,6 +2368,14 @@ Positive and negative fixtures include deliberately abbreviated, ambiguous and
 duplicate names. A letters-only regular expression or a hand-picked example list
 does not establish readability or semantic uniqueness.
 
+The technical vocabulary supplements WordNet only with defined, sourced terms.
+The unabbreviated nouns `codebase` and `frontend` follow the primary definitions
+in [The Twelve-Factor App](https://12factor.net/codebase) and the
+[Clang manual](https://clang.llvm.org/docs/UsersManual.html#terminology).
+Their normal Links author retains every preceding vocabulary and fixture byte;
+positive names and misspellings exercise the existing gate. Canonical identities,
+source bindings, abbreviation rules and WordNet 3.1 remain unchanged.
+
 Source binding records are shared Links data in
 [`source-bindings.lino`](../parity/naming/source-bindings.lino), produced by
 `js/scripts/generate-naming-source-bindings.mjs`. The automatic migration retains
@@ -3873,6 +3881,23 @@ native and historical modulo partitions keep their existing ownership rules.
 Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.
+
+The twenty complete report, grammar and translation job logs of CI 39644810104 add a
+second source-bound timing cohort. The newest matching complete source wins;
+an older matching source remains available when the newer cohort has no sample.
+Only the eight report cells, six general grammar cells and six translation
+cells use these costs.
+Other report geometries retain their original byte-balance contract. No required
+job, complete module, assertion or deadline is removed or relaxed. GitHub's
+thirty-minute report deadline remains mandatory, including checkout time.
+The cancelled fifth report completed only part of its assigned source inventory;
+its partial progress never supplies a complete report or passing observation.
+
+Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
+8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical
+tooling and scheduling guards select only those exact byte inverses. Current
+checkout provenance, current measured scheduling and their new controls execute
+separately. Unknown source successors still refuse.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;

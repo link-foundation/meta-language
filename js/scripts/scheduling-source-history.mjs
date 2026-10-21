@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
 const archive=new URL('../../parity/self-translation/ci-39403403220-scheduling-sources-history.lino',import.meta.url);
 const archiveHash='f346442b7cc9fb187c434c901c429955c91ac8c7cbc3dd299159a2068334bacc';
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -11,6 +12,7 @@ let history;
 
 export function restoreSchedulingSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreToolingFrozenHostSource(source,file,{hostSuccessorsOnly:true,preserveUnknownSource:true});
   source=restoreCurrentCiRepairSource(source,file);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}
   const row=history.sources.find(row=>row.file===file);if(!row)return source;
