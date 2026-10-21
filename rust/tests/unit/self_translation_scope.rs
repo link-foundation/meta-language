@@ -81,7 +81,7 @@ process.stdout.write(structuredDataToLino({javascript,original,actual}));
             externals,
             module_directory: None,
         };
-        let program = check_program(parse_javascript_in(&source, &context).unwrap()).unwrap();
+        let program = check_program(&parse_javascript_in(&source, &context).unwrap()).unwrap();
         let emitted = emit_javascript(&program).unwrap();
         let observation = run(Command::new("node").current_dir(root).args([
             "--input-type=module",
