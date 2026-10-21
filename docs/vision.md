@@ -2395,6 +2395,38 @@ Normal JavaScript is accepted; users are not asked to rewrite it into an
 annotated sublanguage. The contract of each version is in
 [`docs/four-language-contracts.md`](four-language-contracts.md).
 
+The immediate delivery priority is complete JavaScript and Rust CST parsing,
+lossless emission and bidirectional translation of this repository's actual
+complete sources. CST remains the default; AST is an explicit projection. Work
+should automate shared transformations that cover many real declarations before
+expanding unrelated language profiles. This ordering leaves every other critical
+requirement binding. Carried source, item counts and generated Rust alone do not
+establish whole-module semantic translation or native execution.
+
+Declaration dependencies use one shared source algorithm to partition actual
+module bindings into recursive groups. A group publishes signatures atomically
+only after checking all complete original bodies together and rechecking each
+member with the actual verified peers and target mappings. Temporary fabricated
+headers cannot supply a proof. Ordinary and recursive paths require an actual
+known module scope and a unique binding owner. An inert empty class still owns
+its name; wider module forms require the real complete-module check. Unknown
+scope cannot select standard builtins by spelling. Current admission excludes
+generated auxiliary declarations and wider function profiles until their full
+composition is implemented.
+
+Fresh local arrays may retain their inspected owner across a self-slice
+assignment only after traversing the complete right-hand side and retaining all
+earlier and later escape facts. Scalar reader summaries may inspect a complete
+read-only iteration. Direct live iteration over a construction remains an alias
+and refuses the immutable value lowering. Ordered bound effects and every
+retained refusal remain independently checked. External JavaScript function and
+constant bindings keep the actual provider's target name; target allocation
+reserves that name, calls remain calls and constant reads remain reads. The
+initial external-name profile admits strict ASCII binding identifiers; other
+names require an explicit supported alias. These decisions are drafted in
+JavaScript, automatically translated to Rust and exercised through both Links
+codecs; Rust compilation and execution remain CI-only.
+
 Translations preserve genuine semantic outcomes, including errors, aborts,
 overflow and effects. Where a target has no native concept, the translation uses
 a faithful operational encoding and runtime. Proof preservation is separate from
