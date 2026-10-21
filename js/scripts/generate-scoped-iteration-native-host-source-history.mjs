@@ -4,7 +4,8 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
-import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_OUTPUT,pinScopedIterationNativeSource,
+import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_OUTPUT,SCOPED_ITERATION_NATIVE_PREDECESSOR_REVISION,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinScopedIterationNativeSource,deriveScopedIterationNativeLoopSource,
   deriveScopedIterationNativeHostSource,verifyScopedIterationNativeHostSourceHistory} from './scoped-iteration-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url),helper='js/scripts/scoped-iteration-native-host-source-history.mjs';
 export function generateScopedIterationNativeHostSourceHistory({check=false}={}){
@@ -16,10 +17,19 @@ export function generateScopedIterationNativeHostSourceHistory({check=false}={})
   };
   const previous=capture(specification.previousRevision),current=capture(specification.revision);
   assert.equal(readFileSync(new URL(specification.file,root),'utf8'),current.source,'author refuses an unrecorded live native successor');
-  const packet={schemaVersion:1,model:'scoped iteration native historical source 1',file:specification.file,
+  const declaration={schemaVersion:1,model:'scoped iteration native historical source 1',file:specification.file,
     previousRevision:specification.previousRevision,revision:specification.revision,coordinateUnit:'UTF-16 code units',
     previous,current,edits:deriveScopedIterationNativeHostSource(previous.source,current.source),
     boundary:'One actual parser-owned iteration-source transport argument is retained in current runtime bytes. Both complete committed source epochs and every old source byte are independently authenticated before the unchanged required-field historical guard. Unknown paths, readers and successors remain visible; no native execution or semantic-equivalence claim.'};
+  const saved=captureGitArtifactCertificate(SCOPED_ITERATION_NATIVE_PREDECESSOR_REVISION,SCOPED_ITERATION_NATIVE_OUTPUT);
+  const originalPacket=readBootstrapStructuredDataLino(saved.blob.toString('utf8'));
+  assert.deepEqual(declaration,originalPacket,'all existing declaration source facts and controls remain unchanged');
+  const loop=SCOPED_ITERATION_NATIVE_LOOP_SOURCE;
+  const captureLoop=revision=>{const {blob,certificate}=captureGitArtifactCertificate(revision,loop.file);const source=blob.toString('utf8');assert.deepEqual(Buffer.from(source),blob);return{source,...pinScopedIterationNativeSource(blob),certificate};};
+  const loopPrevious=captureLoop(loop.previousRevision),loopCurrent=captureLoop(loop.revision);
+  assert.equal(readFileSync(new URL(loop.file,root),'utf8'),loopCurrent.source,'unknown actual loop source refuses');
+  const packet={...originalPacket,predecessor:{revision:SCOPED_ITERATION_NATIVE_PREDECESSOR_REVISION,...pinScopedIterationNativeSource(saved.blob),certificate:saved.certificate},
+    additionalSources:[{file:loop.file,previousRevision:loop.previousRevision,revision:loop.revision,coordinateUnit:'UTF-16 code units',previous:loopPrevious,current:loopCurrent,edits:deriveScopedIterationNativeLoopSource(loopPrevious.source,loopCurrent.source)}]};
   verifyScopedIterationNativeHostSourceHistory(packet);
   const output=new URL(SCOPED_ITERATION_NATIVE_OUTPUT,root);
   if(check)checkProjectData(output,packet);else writeProjectData(output,packet);
@@ -32,5 +42,5 @@ export function generateScopedIterationNativeHostSourceHistory({check=false}={})
 if(process.argv[1]===fileURLToPath(import.meta.url)){
   assert.ok(process.argv.slice(2).every(value=>value==='--check'));
   generateScopedIterationNativeHostSourceHistory({check:process.argv.includes('--check')});
-  console.log('Authenticated one complete scoped-iteration native source inverse; runtime files remain current.');
+  console.log('Authenticated two complete scoped-iteration native source inverses; runtime files remain current.');
 }

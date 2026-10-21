@@ -8,8 +8,10 @@ import {readRequiredFieldNativeHostSuccession} from '../scripts/required-field-n
 import {readCurrentNativeHostSourceHistory,restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
 import {generateBooleanParameterTuples} from '../scripts/generate-boolean-parameter-tuples.mjs';
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
-import {SCOPED_ITERATION_NATIVE_SOURCE,pinScopedIterationNativeSource,readScopedIterationNativeHostSourceHistory,
+import {SCOPED_ITERATION_NATIVE_SOURCE,SCOPED_ITERATION_NATIVE_LOOP_SOURCE,pinScopedIterationNativeSource,readScopedIterationNativeHostSourceHistory,
   verifyScopedIterationNativeHostSourceHistory,restoreScopedIterationNativeHostSource} from '../scripts/scoped-iteration-native-host-source-history.mjs';
+import {readProjectData,serializeProjectData} from '../scripts/project-data.mjs';
+import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javascript-mutable-array-bindings.mjs';
 import {generateScopedIterationNativeHostSourceHistory} from '../scripts/generate-scoped-iteration-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root));
 
@@ -62,4 +64,26 @@ test('normal source authors and the default historical tuple writer preserve eve
   generateBooleanParameterTuples({check:true});
   generateBooleanParameterTuples();
   files.forEach((file,index)=>assert.deepEqual(read(file),before[index],file));
+});
+
+
+test('the additional loop source preserves its original mutable-array host and the complete first declaration packet',()=>{
+  const packet=readScopedIterationNativeHostSourceHistory(),row=packet.additionalSources[0],file=SCOPED_ITERATION_NATIVE_LOOP_SOURCE.file;
+  assert.equal(row.current.source,read(file).toString('utf8'));assert.equal(row.current.bytes-row.previous.bytes,104);
+  const {predecessor,additionalSources,...original}=packet;
+  assert.deepEqual(pinScopedIterationNativeSource(serializeProjectData(original,'history.lino')),{bytes:predecessor.bytes,sha256:predecessor.sha256},'the entire committed first packet remains byte exact');
+  const hosts=readProjectData(new URL('../../parity/self-translation/javascript-mutable-array-binding-hosts.lino',import.meta.url)),host=hosts.hosts.find(owner=>owner.path===file);assert.ok(host);
+  let expected=host.source;for(const edit of host.edits){assert.equal(expected.slice(edit.start,edit.start+edit.removed.length),edit.removed);expected=expected.slice(0,edit.start)+edit.inserted+expected.slice(edit.start+edit.removed.length);}
+  assert.equal(row.previous.source,expected,'the additional inverse reaches the exact original whole host proposal');
+  assert.equal(restoreScopedIterationNativeHostSource(row.current.source,file,'mutable array binding host'),expected);
+  for(const reader of['required field native host','ASCII character host','program string registration',''])assert.equal(restoreScopedIterationNativeHostSource(row.current.source,file,reader),row.current.source);
+  for(const path of['unregistered.rs',packet.file,'Rust/src/translation/javascript/loops.rs'])assert.equal(restoreScopedIterationNativeHostSource(row.current.source,path,'mutable array binding host'),row.current.source);
+  for(const source of[row.current.source+'\n',row.current.source.slice(1),row.previous.source])assert.equal(restoreScopedIterationNativeHostSource(source,file,'mutable array binding host'),source);
+  for(const edit of[value=>{value.additionalSources[0].current.certificate.path=packet.file;},value=>{value.additionalSources[0].edits[0].start+=1;},value=>{value.additionalSources.push(structuredClone(value.additionalSources[0]));},value=>{value.predecessor.revision='0'.repeat(40);}]){const changed=structuredClone(packet);edit(changed);assert.throws(()=>verifyScopedIterationNativeHostSourceHistory(changed),assert.AssertionError);}
+});
+
+test('both mutable-array historical author modes preserve the complete current loop and original six-host packet',()=>{
+  const file=SCOPED_ITERATION_NATIVE_LOOP_SOURCE.file,artifact='parity/self-translation/javascript-mutable-array-binding-hosts.lino',before=[read(file),read(artifact)];
+  generateJavaScriptMutableArrayBindings({check:true});generateJavaScriptMutableArrayBindings();
+  assert.deepEqual(read(file),before[0]);assert.deepEqual(read(artifact),before[1]);
 });

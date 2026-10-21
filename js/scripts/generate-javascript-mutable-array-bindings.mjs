@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {restoreScopedIterationNativeHostSource} from './scoped-iteration-native-host-source-history.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { readRustLibraryItems } from './rust-library-packaging.mjs';
@@ -134,7 +135,7 @@ export function generateJavaScriptMutableArrayBindings({ check = false } = {}) {
     }
     assert.equal(inverse, row.source, 'the complete original module and context remain recoverable');
     const file = new URL(row.path, root), physical = readFileSync(file, 'utf8');
-    const current = restoreRequiredFieldNativeHostSource(physical, row.path, 'mutable array binding host');
+    const current = restoreRequiredFieldNativeHostSource(restoreScopedIterationNativeHostSource(physical, row.path, 'mutable array binding host'), row.path, 'mutable array binding host');
     if (check) assert.equal(current, generated, row.path);
     else assert.ok(current === row.source || current === generated, 'unknown current source ' + row.path);
     return { file, generated, protectedSource: current !== physical };
