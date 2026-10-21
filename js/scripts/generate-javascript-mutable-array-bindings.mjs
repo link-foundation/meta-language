@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
+import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { readRustLibraryItems } from './rust-library-packaging.mjs';
@@ -132,12 +133,15 @@ export function generateJavaScriptMutableArrayBindings({ check = false } = {}) {
       inverse = inverse.slice(0, edit.start) + edit.removed + inverse.slice(edit.start + edit.inserted.length);
     }
     assert.equal(inverse, row.source, 'the complete original module and context remain recoverable');
-    const file = new URL(row.path, root), current = readFileSync(file, 'utf8');
+    const file = new URL(row.path, root), physical = readFileSync(file, 'utf8');
+    const current = restoreRequiredFieldNativeHostSource(physical, row.path, 'mutable array binding host');
     if (check) assert.equal(current, generated, row.path);
     else assert.ok(current === row.source || current === generated, 'unknown current source ' + row.path);
-    return { file, generated };
+    return { file, generated, protectedSource: current !== physical };
   });
-  if (!check) for (const { file, generated } of outputs) writeFileSync(file, generated);
+  if (!check) for (const { file, generated, protectedSource } of outputs) {
+    if (!protectedSource) writeFileSync(file, generated);
+  }
   return archive;
 }
 

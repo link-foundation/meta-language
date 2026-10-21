@@ -8,6 +8,7 @@ import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRA
   PROGRAM_STRING_HOST_PRODUCER,PROGRAM_STRING_REGISTRATION_CHANGES,PROGRAM_STRING_REGISTRATIONS,
   PROGRAM_STRING_HOST_PRODUCER_CHANGES,programStringHostRegistrationPin,replayProgramStringRegistrationChanges,
   verifyProgramStringHostRegistrationHistory} from './program-string-host-registration-history.mjs';
+import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 const root=new URL('../../',import.meta.url);
 const output='parity/self-translation/program-string-host-registration-history.lino';
 const helper='js/scripts/program-string-host-registration-history.mjs';
@@ -26,7 +27,7 @@ export function generateProgramStringHostRegistrationHistory({check=false}={}){
     const source=captured.blob.toString('utf8');assert.deepEqual(Buffer.from(source),captured.blob);
     const replay=replayProgramStringRegistrationChanges(row.proposed.source,specification.changes);
     assert.equal(source,replay.source,'only the finite registration additions belong to this committed successor');
-    assert.equal(readFileSync(new URL(specification.path,root),'utf8'),source,'actual current source must still equal the certified committed source');
+    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path,root),'utf8'),specification.path,'program string registration'),source,'actual current source must still equal the certified committed source');
     return{path:specification.path,predecessor:{source:row.proposed.source,...programStringHostRegistrationPin(row.proposed.source)},
       current:{source,...programStringHostRegistrationPin(source),certificate:captured.certificate},edits:replay.edits};
   });

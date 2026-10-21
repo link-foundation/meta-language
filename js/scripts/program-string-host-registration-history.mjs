@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource} from './collection-size-projection-schema.mjs';
 
 const root=new URL('../../',import.meta.url);
 export const PROGRAM_STRING_REGISTRATION_REVISION='7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3';
@@ -107,7 +109,7 @@ export function verifyProgramStringHostRegistrationHistory(packet){
     assert.deepEqual(programStringHostRegistrationPin(row.current.source),specification.current);
     assert.deepEqual({bytes:row.current.bytes,sha256:row.current.sha256},specification.current);
     verifyGitArtifactCertificate(row.current.certificate,Buffer.from(row.current.source),{revision:PROGRAM_STRING_REGISTRATION_REVISION,path:row.path});
-    assert.equal(readFileSync(new URL(row.path,root),'utf8'),row.current.source,'the actual current module root retains every authenticated registration and byte');
+    assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(new URL(row.path,root),'utf8'),row.path,'program string registration'),row.current.source,'the actual current module root retains every authenticated registration and byte');
     result.set(row.path,{previous:row.predecessor.source,current:row.current.source});
   }
   assert.equal(packet.registrations.length,PROGRAM_STRING_REGISTRATIONS.length);
@@ -125,6 +127,13 @@ export function verifyProgramStringHostRegistrationHistory(packet){
 /** Unknown successors remain visible to the old strict host assertion. */
 export function restoreProgramStringHostRegistrationSource(source,path){
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  if(path==='js/src/typed-program-links-validation.js'){
+    const packet=readCollectionSizeProjectionSchemaPacket(),owner=packet.owners.find(row=>row.file===path);assert.ok(owner);
+    const current=deriveCollectionSizeProjectionValidationSource(owner.source);
+    if(source!==current)return source;
+    assert.deepEqual(programStringHostRegistrationPin(source),owner.current);return owner.source;
+  }
+  source=restoreRequiredFieldNativeHostSource(source,path,'program string registration');
   const selected=PROGRAM_STRING_REGISTRATION_CHANGES.find(row=>row.path===path);
   if(!selected||programStringHostRegistrationPin(source).sha256!==selected.current.sha256)return source;
   assert.deepEqual(programStringHostRegistrationPin(source),selected.current);

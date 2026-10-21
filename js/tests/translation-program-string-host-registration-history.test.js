@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {generateProgramStringHostRegistrationHistory} from '../scripts/generate-program-string-host-registration-history.mjs';
+import {restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
 import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRAM_STRING_HOST_ARCHIVE,
   PROGRAM_STRING_REGISTRATION_CHANGES,PROGRAM_STRING_REGISTRATIONS,programStringHostRegistrationPin,
   replayProgramStringRegistrationChanges,verifyProgramStringHostRegistrationHistory,
@@ -28,7 +29,7 @@ test('two complete certified current roots recover every original proposal byte 
   for(const specification of PROGRAM_STRING_REGISTRATION_CHANGES){
     const pair=pairs.get(specification.path),row=original.sources.find(row=>row.file===specification.path);
     assert.equal(pair.previous,row.proposed.source);
-    assert.equal(pair.current,readFileSync(new URL(specification.path,root),'utf8'));
+    assert.equal(pair.current,restoreRequiredFieldNativeHostSource(readFileSync(new URL(specification.path,root),'utf8'),specification.path,'program string registration'));
     assert.equal(restoreProgramStringHostRegistrationSource(pair.current,specification.path),row.proposed.source);
     assert.equal(replayProgramStringRegistrationChanges(row.sourceText,row.actions).source,row.proposed.source);
   }
@@ -37,7 +38,7 @@ test('two complete certified current roots recover every original proposal byte 
     assert.ok(readFileSync(new URL(registration.path,root)).length>0);
   }
   for(const row of original.sources.filter(row=>!pairs.has(row.file))){
-    assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.proposed.source,'the seven other complete host proposals remain exact');
+    assert.equal(restoreProgramStringHostRegistrationSource(readFileSync(new URL(row.file,root),'utf8'),row.file),row.proposed.source,'the seven other complete host proposals remain exact');
   }
   assert.deepEqual(readFileSync(new URL(PROGRAM_STRING_HOST_ARCHIVE.path,root)),bytes,'the historical artifact is unchanged');
 });

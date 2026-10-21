@@ -5,6 +5,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readProjectData } from './project-data.mjs';
 import { ASCII_HOST_REGISTRATIONS, asciiHostPin, verifyAsciiTextPredicateHosts } from './ascii-text-predicate-host-history.mjs';
+import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 
 const root = new URL('../../', import.meta.url);
 
@@ -20,15 +21,19 @@ export function generateAsciiTextPredicateHosts({ check = false } = {}) {
     assert.equal(readFileSync(new URL(row.path, root), 'utf8').split(row.declaration).length, 2,
       row.path + ' actually registers the generated module and native unit source');
   }
+  const protectedSources = new Set();
   for (const row of files) {
     const file = new URL(row.path, root);
-    if (check) assert.equal(readFileSync(file, 'utf8'), row.source, row.path);
+    if (check) assert.equal(restoreRequiredFieldNativeHostSource(readFileSync(file, 'utf8'), row.path, 'ASCII character host'), row.source, row.path);
     else if (existsSync(file)) {
-      const actual = readFileSync(file, 'utf8');
+      const physical = readFileSync(file, 'utf8');
+      const actual = restoreRequiredFieldNativeHostSource(physical, row.path, 'ASCII character host');
       assert.ok(actual === row.source || actual === row.predecessor, 'unknown current source must not be overwritten: ' + row.path);
+      if (actual !== physical) protectedSources.add(row.path);
     }
   }
   if (!check) for (const row of files) {
+    if (protectedSources.has(row.path)) continue;
     const file = fileURLToPath(new URL(row.path, root));
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, row.source);
