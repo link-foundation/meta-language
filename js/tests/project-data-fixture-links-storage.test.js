@@ -9,7 +9,7 @@ import { verifyGitArtifactCertificate } from '../scripts/git-object-certificate.
 import { createFixtureSourceLayout, readFixtureSourceBytes, renderFixtureSourceBytes } from '../scripts/fixture-source-bytes.mjs';
 import { readStructuredDataLino } from '../src/structured-data-links.js';
 import { normalizeMigrationProviderReceipts, normalizeMigrationTranslationStages, normalizeMigrationAntlrLexerDeclarations } from '../scripts/validate-structured-data-migration.mjs';
-import { retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
+import { captureTranslationStageRefreshHistory, retainTranslationStageRefreshScopes, validateTranslationStageRefreshHistory } from '../scripts/generate-translation-stage-refresh-receipt.mjs';
 import { structuredDataToLino } from '../src/structured-data-links.js';
 
 const root = new URL('../../', import.meta.url);
@@ -116,6 +116,19 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
       ? execFileSync('git', ['show', `${revision}:${path}`], options) : null;
   };
   const priorReceipts = validateTranslationStageRefreshHistory(history, archivedBlob, receipt.refreshRevision);
+  assert.deepEqual(captureTranslationStageRefreshHistory(receipt.refreshRevision, archivedBlob), history,
+    'the complete archive is derived deterministically from the committed predecessor inputs');
+  const committedHistory = readStructuredDataLino(archivedBlob(receipt.refreshRevision, historyPath).toString('utf8'));
+  assert.deepEqual(history.receipts.slice(0, -1), committedHistory.receipts,
+    'every original ordered receipt entry stays exact before the single appended snapshot entry');
+  assert.equal(history.receipts.at(-1).sourceCommit, receipt.refreshRevision);
+  assert.throws(() => captureTranslationStageRefreshHistory(receipt.refreshRevision, (revision, path) =>
+    revision === receipt.refreshRevision && path === historyPath ? null : archivedBlob(revision, path)),
+  /complete committed history and receipt/u);
+  assert.throws(() => captureTranslationStageRefreshHistory(receipt.refreshRevision, (revision, path) =>
+    revision === priorReceipts[0].refreshRevision && path === priorReceipts[0].refreshPath
+      ? Buffer.from('changed snapshot bytes') : archivedBlob(revision, path)),
+  /snapshot differs from its immutable Git bytes/u);
   assert.equal(priorReceipts[0].refreshRevision, '62ff1b8b05ab049c51736b06780bab8274ab45cf',
     'the original immutable refresh receipt remains inspectable and authenticated');
   for (const prior of priorReceipts) {
