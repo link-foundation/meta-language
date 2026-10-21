@@ -25,6 +25,7 @@ pub(crate) mod callable_source_rules;
 pub mod check;
 pub(crate) mod collection_construction_rules;
 pub mod decimal;
+pub(crate) mod declaration_dependency_rules;
 pub mod diagnostics;
 pub(crate) mod embedded_region_rules;
 pub mod emit_common;

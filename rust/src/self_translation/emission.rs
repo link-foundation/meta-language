@@ -9,7 +9,8 @@ use crate::translation::diagnostics::TranslationError;
 use crate::translation::emit_common::Emitted;
 use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{emit_rust_constants, emit_rust_with_representation};
-use crate::translation::javascript::parse_javascript_bound_in;
+use crate::translation::ir::Program;
+use crate::translation::javascript::parse_javascript_bound_in_with_module_scope;
 use crate::translation::rust::parse_rust;
 use crate::translation::surface::{External, SExpr};
 
@@ -22,6 +23,24 @@ pub(super) fn emit_item(
     context: &Context,
     literal_bindings: &HashMap<String, SExpr>,
 ) -> Result<Option<(Emitted, Vec<External>)>, TranslationError> {
+    check_and_emit_item(text, from, to, context, literal_bindings)
+        .map(|item| item.map(|item| (item.emitted, item.signatures)))
+}
+
+/// The exact program and emission already produced by the normal item path.
+pub(super) struct CheckedItem {
+    pub(super) program: Program,
+    pub(super) emitted: Emitted,
+    pub(super) signatures: Vec<External>,
+}
+
+pub(super) fn check_and_emit_item(
+    text: &str,
+    from: &str,
+    to: &str,
+    context: &Context,
+    literal_bindings: &HashMap<String, SExpr>,
+) -> Result<Option<CheckedItem>, TranslationError> {
     let surface = if family(from) == "Rust" {
         // The Rust frontend reads a program, so an item alone gets an empty main.
         if RUST_MAIN.is_match(text) {
@@ -31,18 +50,20 @@ pub(super) fn emit_item(
         }
     } else {
         if from == "TypeScript" {
-            parse_javascript_bound_in(
+            parse_javascript_bound_in_with_module_scope(
                 &project_type_script_typing(text)?,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
+                context.module_binding_scope.as_ref(),
             )?
         } else {
-            parse_javascript_bound_in(
+            parse_javascript_bound_in_with_module_scope(
                 text,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
+                context.module_binding_scope.as_ref(),
             )?
         }
     };
@@ -81,5 +102,9 @@ pub(super) fn emit_item(
     } else {
         context.module.externals.clone()
     };
-    Ok(Some((emitted, signatures)))
+    Ok(Some(CheckedItem {
+        program,
+        emitted,
+        signatures,
+    }))
 }

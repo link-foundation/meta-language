@@ -116,7 +116,12 @@ export function acceptJavaScriptRecordParameterProfile(context, asynchronous, do
 /** Builtin spelling alone cannot replace an actual local/module/context owner.
  * @param {string} name @param {boolean} shadowed @returns {boolean} */
 export function acceptJavaScriptStandardBuiltinOwner(name, shadowed) {
-  return (name === 'Map' || name === 'Set' || name === 'console') && !shadowed;
+  return (name === 'Map' || name === 'Set' || name === 'console'
+    || name === 'Math' || name === 'Number' || name === 'Array'
+    || name === 'Object' || name === 'String' || name === 'Error'
+    || name === 'RangeError' || name === 'TypeError' || name === 'NaN'
+    || name === 'Infinity' || name === 'undefined' || name === 'isFinite'
+    || name === 'isNaN') && !shadowed;
 }
 
 /** Actual bounded body token facts, including the closing brace. A strict

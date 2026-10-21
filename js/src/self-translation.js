@@ -7,6 +7,7 @@
 // provenance, so translating an unedited translation back restores the
 // source byte for byte.
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 
 import { decoratorSet } from './decorators.js';
 import { decorateEmitted } from './grammar-emitters/common.js';
@@ -26,6 +27,9 @@ import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
+import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
+  acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
+  acceptDeclarationSignatureBinding } from './translation/declaration-dependency-rules.js';
 
 /** The languages self-translation reads and writes. */
 export const SELF_TRANSLATION_LANGUAGES = Object.freeze(['JavaScript', 'TypeScript', 'Rust']);
@@ -176,12 +180,16 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
       } catch (error) { if (!(error instanceof TranslationError)) throw error; }
     }
   }
-  const { outs, scans } = family(to) === 'Rust'
-    ? translateBound(groups, from, to, set, { moduleDirectory, imports, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [] };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics });
+  const { outs, scans, moduleScopeKnown, ownerCounts } = family(to) === 'Rust'
+    ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
+  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics });
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
-  const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature => exportedNames.has(signature.name)) : []);
+  // An isolated item proof does not certify its actual mutable module binding.
+  // Public/importable signatures need the same complete scope and unique owner
+  // facts as an ordinary dependency edge. Preserve isolated item output below.
+  const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature =>
+    exportedNames.has(signature.name) && acceptDeclarationSignatureBinding(moduleScopeKnown, ownerCounts.get(signature.name) ?? 0)) : []);
   if (signaturesOnly) return { signatures };
   for (const { group, out } of results) {
     for (const prelude of out.preludes ?? []) if (!preludes.includes(prelude)) preludes.push(prelude);
@@ -242,25 +250,77 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
 }
 
 /**
- * Translates the groups of a JavaScript module into Rust, each item after the
- * items it names, with the signatures of the ones that translated bound. A
- * name that a cycle of items leaves untranslated stays unbound, so its
- * callers are carried with the checker's diagnostic.
+ * Translates ordinary recursive declaration components as atomic checked
+ * scopes before publishing their actual signatures. Other items retain the
+ * dependency binder: only signatures of already translated dependencies bind.
+ * A failed component supplies no provisional peers to the ordinary fallback.
  */
-function translateBound(groups, from, to, decorators, { moduleDirectory, imports, utf16Strings, referenceSemantics, retainDiagnostics }) {
+function translateBound(groups, from, to, decorators, { moduleDirectory, imports, moduleSource, utf16Strings, referenceSemantics, retainDiagnostics }) {
   const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
   const owners = new Map();
+  const ownerCounts = new Map();
   scans.forEach((scan, index) => {
     const names = scan?.imports ? scan.imports.names.map(({ local }) => local) : scan?.declares ? [scan.declares] : [];
-    for (const name of names) if (!owners.has(name)) owners.set(name, index);
+    for (const name of names) {
+      ownerCounts.set(name, (ownerCounts.get(name) ?? 0) + 1);
+      if (!owners.has(name)) owners.set(name, index);
+    }
   });
+  // These are conservative token dependency candidates, never a semantic
+  // substitute for checking every complete body and its lexical ownership.
+  const starts = [], counts = [], targets = [];
+  for (const scan of scans) {
+    starts.push(targets.length);
+    if (scan && !scan.imports) for (const name of scan.mentions) {
+      if (owners.has(name)) targets.push(owners.get(name));
+    }
+    counts.push(targets.length - starts.at(-1));
+  }
+  const leaders = readDeclarationDependencyComponents(starts, counts, targets);
+  const components = new Map();
+  leaders.forEach((leader, index) => {
+    if (!components.has(leader)) components.set(leader, []);
+    components.get(leader).push(index);
+  });
+  const attempted = new Set();
+  const moduleBindingNames = [...owners.keys()];
   const outs = new Array(groups.length);
   const visiting = new Set();
+  let moduleScopeKnown = false;
   const visit = (index) => {
     if (outs[index] || visiting.has(index)) return;
+    const leader = leaders[index], members = components.get(leader);
+    if (!attempted.has(leader) && acceptRecursiveDeclarationGroup(members.length,
+      members.every(member => scans[member]?.ordinary === true),
+      moduleScopeKnown && members.every(member => ownerCounts.get(scans[member]?.declares) === 1))) {
+      attempted.add(leader);
+      const memberSet = new Set(members);
+      for (const member of members) visiting.add(member);
+      const externals = new Map();
+      for (const member of members) for (const name of scans[member].mentions) {
+        const owner = owners.get(name);
+        if (owner === undefined || memberSet.has(owner)
+          || !acceptDeclarationSignatureBinding(moduleScopeKnown, ownerCounts.get(name) ?? 0)) continue;
+        visit(owner);
+        if (outs[owner]?.status !== 'translated' || scans[owner]?.async) continue;
+        const signature = outs[owner].signatures?.find(candidate => candidate.name === name);
+        if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.set(name, signature);
+      }
+      const completed = translateRecursiveDeclarationGroup(members, groups, scans, from, to, decorators,
+        { externals: [...externals.values()], moduleDirectory, moduleBindingNames, moduleScopeKnown, utf16Strings, referenceSemantics, retainDiagnostics });
+      for (const member of members) visiting.delete(member);
+      if (completed !== null) {
+        // No checked peer signature or member output is visible until every
+        // original body, signature and native mapping in this batch passes.
+        for (const [member, out] of completed) outs[member] = out;
+        return;
+      }
+      // Keep the ordinary dependency binder's original independent proofs
+      // and refusals; no candidate peer signatures enter this fallback.
+    }
     const scan = scans[index];
     if (!scan) {
-      outs[index] = translateGroup(groups[index], from, to, decorators, { utf16Strings, referenceSemantics, retainDiagnostics });
+      outs[index] = translateGroup(groups[index], from, to, decorators, { moduleBindingNames, moduleScopeKnown, utf16Strings, referenceSemantics, retainDiagnostics });
       return;
     }
     visiting.add(index);
@@ -275,18 +335,95 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
     } else {
       for (const name of scan.mentions) {
         const owner = owners.get(name);
-        if (owner === undefined || owner === index) continue;
+        if (owner === undefined || owner === index
+          || !acceptDeclarationSignatureBinding(moduleScopeKnown, ownerCounts.get(name) ?? 0)) continue;
         visit(owner);
         if (outs[owner]?.status !== 'translated' || scans[owner].async) continue;
         const signature = outs[owner].signatures.find((candidate) => candidate.name === name);
         if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.push(signature);
       }
     }
-    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, utf16Strings, referenceSemantics, retainDiagnostics });
+    outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, moduleBindingNames, moduleScopeKnown, utf16Strings, referenceSemantics, retainDiagnostics });
     visiting.delete(index);
   };
+  // Named imports are dependency leaves. Only their actual normal translated
+  // signatures are available to the optional complete-module safety proof.
+  for (let index = 0; index < scans.length; index += 1) if (scans[index]?.imports) visit(index);
+  const imported = outs.flatMap((out, index) => scans[index]?.imports && out?.status === 'translated' ? out.signatures ?? [] : []);
+  moduleScopeKnown = readDeclarationModuleScope(groups, scans, from, to, decorators,
+    { moduleDirectory, moduleSource, externals: imported, referenceSemantics, ownerCounts, moduleBindingNames });
   groups.forEach((_, index) => visit(index));
-  return { outs, scans };
+  return { outs, scans, moduleScopeKnown, ownerCounts };
+}
+
+function readDeclarationModuleScope(groups, scans, from, to, decorators, context) {
+  // These counts come from every actual binding in the cheap admitted forms:
+  // one named function/class, named import locals, or one certified literal.
+  // Unknown forms still require the real complete-module check below. A
+  // duplicate cannot be made unique by omitting another declaration or effect.
+  for (const count of context.ownerCounts.values()) {
+    if (!acceptDeclarationSignatureBinding(true, count)) return false;
+  }
+  const { literalGroups } = collectLiteralBindings(groups, true, from, to, decorators,
+    { moduleBindingNames: context.moduleBindingNames });
+  const forms = groups.map((group, index) => group.kind === 'comment' ? 'comment'
+    : group.kind !== 'item' || group.term === 'ERROR' ? 'unknown module form'
+    : scans[index]?.functionDeclaration ? 'named function declaration'
+    : scans[index]?.imports ? 'named import'
+    : scans[index]?.emptyClassDeclaration ? 'empty class declaration'
+    : literalGroups.has(group) ? 'primitive literal binding' : 'unknown module form');
+  if (acceptDeclarationModuleScope(forms, false)) return true;
+  if (typeof context.moduleSource !== 'string') return false;
+  try {
+    const source = from === 'TypeScript' ? projectTypeScriptTyping(context.moduleSource).code : context.moduleSource;
+    // Check the real complete module, including every initializer/effect and
+    // body. No joined subset, placeholder, fake peer signature or execution.
+    checkProgram(parseJavaScript(source, { externals: context.externals, moduleDirectory: context.moduleDirectory,
+      referenceSemantics: context.referenceSemantics, readonlyModuleConstants: true }));
+    return acceptDeclarationModuleScope(forms, true);
+  } catch (error) {
+    if (!(error instanceof TranslationError)) throw error;
+    return false;
+  }
+}
+
+function translateRecursiveDeclarationGroup(members, groups, scans, from, to, decorators, context) {
+  const names = members.map(member => scans[member].declares);
+  const source = members.map(member => groups[member].text).join('\n\n');
+  const combined = { ...groups[members[0]], text: source,
+    items: members.flatMap(member => groups[member].items), after: groups[members.at(-1)].after };
+  const checked = {};
+  const whole = translateGroup(combined, from, to, decorators, context, checked);
+  if (whole.status !== 'translated') return null;
+  const declarations = [...checked.program.declarations.values()];
+  const signatures = whole.signatures ?? [];
+  const flat = checked.program.main.effects.length === 0 && !checked.program.imports?.length
+    && declarations.every(entry => entry.k === 'fn' && entry.modulePath.length === 0 && !entry.generated && names.includes(entry.name))
+    && new Set(declarations.map(entry => entry.name)).size === names.length
+    && signatures.every(signature => signature.k === 'fn' && names.includes(signature.name))
+    && new Set(signatures.map(signature => signature.name)).size === names.length;
+  if (!acceptRecursiveDeclarationPublication(names.length, declarations.length, signatures.length, flat, true, true)) return null;
+  const wholeTargets = checked.emitted.mappings.filter(mapping => mapping.kind === 'function' && names.includes(mapping.source));
+  if (wholeTargets.length !== names.length || new Set(wholeTargets.map(mapping => mapping.target)).size !== names.length) return null;
+  const completed = new Map();
+  for (const member of members) {
+    const name = scans[member].declares;
+    const peers = signatures.filter(signature => signature.name !== name);
+    const capture = {};
+    const out = translateGroup(groups[member], from, to, decorators,
+      { ...context, externals: [...context.externals, ...peers] }, capture);
+    if (out.status !== 'translated') return null;
+    const own = out.signatures?.filter(signature => signature.name === name) ?? [];
+    const expected = signatures.filter(signature => signature.name === name);
+    const actualTargets = capture.emitted.mappings.filter(mapping => mapping.kind === 'function');
+    const target = wholeTargets.find(mapping => mapping.source === name);
+    const matching = isDeepStrictEqual(own, expected)
+      && capture.program.declarations.size === 1 && actualTargets.length === 1
+      && actualTargets[0].source === name && actualTargets[0].target === target?.target;
+    if (!acceptRecursiveDeclarationPublication(names.length, declarations.length, signatures.length, flat, true, matching)) return null;
+    completed.set(member, out);
+  }
+  return completed.size === members.length ? completed : null;
 }
 
 /**
@@ -309,6 +446,9 @@ function scanItem(text) {
   let index = exported ? 1 : 0;
   let declares = null;
   let isAsync = false;
+  let ordinary = false;
+  let functionDeclaration = false;
+  let emptyClassDeclaration = null;
   let imports = null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
@@ -316,6 +456,20 @@ function scanItem(text) {
   }
   if (word(index, 'function') && at(index + 1).kind === 'identifier') {
     declares = at(index + 1).value;
+    ordinary = !isAsync;
+    functionDeclaration = true;
+  } else if (word(index, 'class') && at(index + 1).kind === 'identifier'
+    && at(index + 2).kind === 'punct' && at(index + 2).value === '{'
+    && at(index + 3).kind === 'punct' && at(index + 3).value === '}'
+    && at(index + 4).kind === 'eof') {
+    // Exact actual token ranges prove an inert empty named class definition.
+    // The real class stays carried. No inheritance, method, field, static
+    // block, computed key, decorator or other eager expression is omitted.
+    // Comments are already retained by the concrete source and skipped only
+    // by the ordinary tokenizer; they cannot add an executable class member.
+    declares = at(index + 1).value;
+    emptyClassDeclaration = { start: at(index).start, end: at(index + 3).end,
+      nameStart: at(index + 1).start, nameEnd: at(index + 1).end };
   } else if (word(index, 'const') && at(index + 1).kind === 'identifier' && at(index + 2).value === '=') {
     declares = at(index + 1).value;
     isAsync = word(index + 3, 'async');
@@ -333,7 +487,7 @@ function scanItem(text) {
     if (at(next).value === '}' && word(next + 1, 'from') && at(next + 2).kind === 'string') imports = { specifier: at(next + 2).value, names };
   }
   const mentions = [...new Set(tokens.filter((token) => token.kind === 'identifier').map((token) => token.value))];
-  return { declares, exported, async: isAsync, mentions, imports };
+  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, mentions, imports };
 }
 
 /**
@@ -476,7 +630,8 @@ const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE
 // per-item decisions, so a carried sibling is never represented by a stub.
 function translateBindingGroups(groups, bytes, from, to, decorators, initial, context) {
   const bind = family(from) === 'JavaScript' && family(to) === 'Rust';
-  const { literals, literalGroups } = collectLiteralBindings(groups, bind, from, to, decorators);
+  if (bind && context.moduleScopeKnown === false) return groups.map((group, index) => ({ group, out: initial[index] }));
+  const { literals, literalGroups } = collectLiteralBindings(groups, bind, from, to, decorators, context);
   const terms = groups.map((group) => group.kind === 'item' && !literalGroups.has(group) ? group.term : '');
   const results = [];
   for (let index = 0; index < groups.length;) {
@@ -502,17 +657,17 @@ function translateBindingGroups(groups, bytes, from, to, decorators, initial, co
   return results;
 }
 
-function collectLiteralBindings(groups, bind, from, to, decorators) {
+function collectLiteralBindings(groups, bind, from, to, decorators, context = {}) {
   const literals = new Map();
   const literalGroups = new Set();
   if (bind) for (const group of groups) {
     if (group.kind !== 'item') continue;
     try {
-      const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text, { readonlyModuleConstants: family(to) === 'Rust' });
+      const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text, { ...context, readonlyModuleConstants: family(to) === 'Rust' });
       const effects = parsed.main.effects;
       const effect = effects[0];
       if (effect && acceptLiteralBinding(effect.value?.k ?? '', effect.constant ?? false, effects.length, parsed.items.length)) {
-        if (translateGroup(group, from, to, decorators).status !== 'translated') continue;
+        if (translateGroup(group, from, to, decorators, context).status !== 'translated') continue;
         literals.set(effect.name, effect.value);
         literalGroups.add(group);
       }
@@ -521,7 +676,7 @@ function collectLiteralBindings(groups, bind, from, to, decorators) {
   return { literals, literalGroups };
 }
 
-function translateGroup(group, from, to, decorators, context = {}) {
+function translateGroup(group, from, to, decorators, context = {}, capture = null) {
   if (group.kind === 'provenance') return { code: null, status: 'provenance' };
   if (group.kind === 'carried') {
     if (family(group.language) === family(to)) return { code: group.lines.join('\n'), status: 'restored' };
@@ -537,6 +692,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
   }
   let emitted;
   let signatures;
+  let program;
   try {
     if (from === 'TypeScript' && to === 'JavaScript') {
       const erased = eraseTypeScript(text);
@@ -550,7 +706,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
       };
     }
     // The Rust frontend reads a program, so an item alone gets an empty main.
-    const program = checkProgram(family(from) === 'Rust'
+    program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
       : parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(text).code : text, { ...context, readonlyModuleConstants: family(to) === 'Rust' }));
     if (context.utf16Strings) program.utf16Strings = true;
@@ -574,6 +730,7 @@ function translateGroup(group, from, to, decorators, context = {}) {
   const code = decorateEmitted(to, { source: generic }, decorators).source;
   if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
   const count = emitted.definitions.length;
+  if (capture !== null) { capture.program = program; capture.emitted = emitted; }
   const marker = `${TRANSLATED}${from} ${term} items=${count} sha256=${sha256(code)}`;
   return {
     code: [marker, ...text.split(/\r?\n/u).map(sourceLine), code].join('\n'),

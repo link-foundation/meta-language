@@ -55,7 +55,15 @@ impl JavaScriptParser {
     /// global path `name` that `token` starts; `None` for any other path.
     pub(super) fn math(&mut self, token: &Token, name: &str) -> Result<Option<SExpr>> {
         let called = self.cursor.is("(");
+        let standard_owner = self.has_standard_builtin_owner(token);
         if let Some(value) = lookup(&CONSTANTS, name).filter(|_| !called) {
+            if !standard_owner {
+                return Err(unsupported(
+                    "shadowed standard constant owner",
+                    "an actual lexical/module/context owner cannot be replaced with the standard numeric constant",
+                    Some(token.span()),
+                ));
+            }
             let negative = value.starts_with('-');
             return Ok(Some(node(
                 SNode::Num {
@@ -67,7 +75,7 @@ impl JavaScriptParser {
                 self.to_here(token),
             )));
         }
-        let Some(op) = lookup(&MATH, name).filter(|_| called) else {
+        let Some(op) = lookup(&MATH, name).filter(|_| called && standard_owner) else {
             return Ok(None);
         };
         let args = self.spread_arguments(name)?;

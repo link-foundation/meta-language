@@ -332,6 +332,13 @@ impl JavaScriptParser {
                 Some(span(&kind, &kind)),
             ));
         }
+        if !self.has_standard_builtin_owner(&kind) {
+            return Err(unsupported(
+                "shadowed standard error owner",
+                "the actual lexical/module/context error constructor must be the standard unshadowed intrinsic",
+                Some(kind.span()),
+            ));
+        }
         self.cursor.expect("(", Some("throw"))?;
         let message = if self.cursor.is(")") {
             String::new()

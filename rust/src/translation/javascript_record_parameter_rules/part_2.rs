@@ -5,6 +5,7 @@ use super::MlPlanJavaScriptRecordParametersLoop11Result;
 use super::accept_java_script_array_binding_name;
 use super::ml_accept_java_script_record_parameter_binding_loop10;
 use super::ml_array;
+use super::ml_find_java_script_record_parameter_pattern_loop9;
 use super::ml_find_java_script_record_parameter_strict_directive_loop15;
 use super::ml_math;
 use super::ml_plan_java_script_record_parameters_loop11;
@@ -251,9 +252,40 @@ pub fn accept_java_script_standard_builtin_owner(
     name: &self::ml_string::Text,
     shadowed: bool,
 ) -> bool {
-    ((((*name) == (self::ml_string::Text::from_units(vec![77, 97, 112])))
+    (((((((((((((((((*name)
+        == (self::ml_string::Text::from_units(vec![77, 97, 112])))
         || ((*name) == (self::ml_string::Text::from_units(vec![83, 101, 116]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![99, 111, 110, 115, 111, 108, 101]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![
+                99, 111, 110, 115, 111, 108, 101,
+            ]))))
+        || ((*name) == (self::ml_string::Text::from_units(vec![77, 97, 116, 104]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![78, 117, 109, 98, 101, 114]))))
+        || ((*name) == (self::ml_string::Text::from_units(vec![65, 114, 114, 97, 121]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![79, 98, 106, 101, 99, 116]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![83, 116, 114, 105, 110, 103]))))
+        || ((*name) == (self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![
+                82, 97, 110, 103, 101, 69, 114, 114, 111, 114,
+            ]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![
+                84, 121, 112, 101, 69, 114, 114, 111, 114,
+            ]))))
+        || ((*name) == (self::ml_string::Text::from_units(vec![78, 97, 78]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![73, 110, 102, 105, 110, 105, 116, 121]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![
+                117, 110, 100, 101, 102, 105, 110, 101, 100,
+            ]))))
+        || ((*name)
+            == (self::ml_string::Text::from_units(vec![105, 115, 70, 105, 110, 105, 116, 101]))))
+        || ((*name) == (self::ml_string::Text::from_units(vec![105, 115, 78, 97, 78]))))
         && !shadowed
 }
 
@@ -747,139 +779,4 @@ if ml_library_inequality_1 {
 pub enum MlFindJavaScriptRecordParameterPatternLoop9Result {
     MlFindJavaScriptRecordParameterPatternLoop9Done,
     MlFindJavaScriptRecordParameterPatternLoop9Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_find_java_script_record_parameter_pattern_loop9(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    mut depth: f64,
-    mut binding: bool,
-    mut at: f64,
-) -> self::MlFindJavaScriptRecordParameterPatternLoop9Result {
-    loop {
-        return if at < (kinds.len() as f64) {
-            {
-                let kind = self::read_required_text_fact(kinds, at);
-                if kind == (self::ml_string::Text::from_units(vec![101, 111, 102])) {
-                    self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Return(-1f64)
-                } else {
-                    if kind != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) {
-                        {
-                            let binding_3 = if depth == 0f64 { { false } } else { binding };
-                            {
-                                let at_2 = at + 1f64;
-                                {
-                                    (binding, at) = (binding_3, at_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    {
-                        {
-                            let value = self::read_required_text_fact(values, at);
-                            if (depth == 0f64)
-                                && (value == (self::ml_string::Text::from_units(vec![41])))
-                            {
-                                self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Return(-1f64)
-                            } else if ((depth == 0f64) && binding)
-                                && (value == (self::ml_string::Text::from_units(vec![123])))
-                            {
-                                self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Return(at)
-                            } else {
-                                if ((value == (self::ml_string::Text::from_units(vec![40])))
-                                    || (value == (self::ml_string::Text::from_units(vec![91]))))
-                                    || (value == (self::ml_string::Text::from_units(vec![123])))
-                                {
-                                    {
-                                        let depth_2 = depth + 1f64;
-                                        {
-                                            let binding_4 = false;
-                                            {
-                                                let at_3 = at + 1f64;
-                                                {
-                                                    (depth, binding, at) =
-                                                        (depth_2, binding_4, at_3);
-                                                    continue;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                {
-                                    if ((value == (self::ml_string::Text::from_units(vec![41])))
-                                        || (value == (self::ml_string::Text::from_units(vec![93]))))
-                                        || (value == (self::ml_string::Text::from_units(vec![125])))
-                                    {
-                                        {
-                                            let depth_3 = depth - 1f64;
-                                            if depth_3 < 0f64 {
-                                                self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Return(-1f64)
-                                            } else {
-                                                {
-                                                    let at_4 = at + 1f64;
-                                                    {
-                                                        (depth, at) = (depth_3, at_4);
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        if (depth == 0f64)
-                                            && (value
-                                                == (self::ml_string::Text::from_units(vec![44])))
-                                        {
-                                            {
-                                                let binding_5 = true;
-                                                {
-                                                    let at_5 = at + 1f64;
-                                                    {
-                                                        (binding, at) = (binding_5, at_5);
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        {
-                                            if (depth == 0f64)
-                                                && (value
-                                                    != (self::ml_string::Text::from_units(vec![
-                                                        44,
-                                                    ])))
-                                            {
-                                                {
-                                                    let binding_6 = false;
-                                                    {
-                                                        let at_6 = at + 1f64;
-                                                        {
-                                                            (binding, at) = (binding_6, at_6);
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            {
-                                                {
-                                                    let at_7 = at + 1f64;
-                                                    {
-                                                        at = at_7;
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Done
-        };
-    }
 }

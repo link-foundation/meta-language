@@ -184,6 +184,7 @@ mod rust_codec;
 mod rust_const_branch_functions;
 mod self_description;
 mod self_translation;
+mod self_translation_recursive_declaration_groups;
 mod self_translation_scope;
 mod shared_numeric_function_links;
 mod source_generation;

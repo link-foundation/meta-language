@@ -95,8 +95,16 @@ export function parseJavaScript(source, context = {}) {
 }
 
 class JavaScriptParser {
-  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '' } = {}) {
+  constructor(source, tokens, comments, { externals = [], moduleDirectory = null, literalBindings = new Map(), referenceSemantics, readonlyModuleConstants = false, scalarLoopModel = '', moduleBindingNames = [], moduleScopeKnown = true } = {}) {
     this.source = source;
+    if (typeof moduleScopeKnown !== 'boolean' || !Array.isArray(moduleBindingNames)
+      || moduleBindingNames.length > 100_000) {
+      throw unsupported('JavaScript module binding context', 'known actual outer binding names and an explicit Boolean scope fact are required');
+    }
+    for (const name of moduleBindingNames) if (typeof name !== 'string' || name.length === 0) {
+      throw unsupported('JavaScript module binding context', 'actual outer binding names must be nonempty strings without sparse slots');
+    }
+    this.moduleScopeKnown = moduleScopeKnown;
     this.scalarLoopModel = scalarLoopModel;
     this.readonlyModuleConstants = readonlyModuleConstants;
     this.readonlyConstantInitializer = false;
@@ -155,7 +163,18 @@ class JavaScriptParser {
     this.unawaited = [];
     this.sequentialAsync = false;
     this.exportedNames = new Set();
-    this.moduleBindings = new Set([...this.externals.keys(), ...this.literalBindings.keys()]);
+    this.moduleBindings = new Set([...moduleBindingNames, ...this.externals.keys(), ...this.literalBindings.keys()]);
+  }
+
+  // Current lexical values resolve before special-global normalization. Known
+  // outer names are actual source facts, never invented typed declarations.
+  // Unknown module surfaces cannot prove that omitted binders/effects leave
+  // a special intrinsic available; this does not invent a complete name list.
+  acceptStandardBuiltinOwner(name) {
+    return acceptJavaScriptStandardBuiltinOwner(name, !this.moduleScopeKnown
+      || this.scope.locals.has(name) || this.scope.tdz.has(name)
+      || this.moduleBindings.has(name) || this.externals.has(name)
+      || this.literalBindings.has(name) || this.functionNames.has(name));
   }
 
   fail(message, token = this.cursor.peek()) {
@@ -1348,6 +1367,8 @@ class JavaScriptParser {
     const kind = c.identifier('throw');
     this.lexicalRead(kind);
     if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));
+    if (!this.acceptStandardBuiltinOwner(kind.value)) throw unsupported('shadowed standard error owner',
+      'the actual lexical/module/context error constructor must be the standard unshadowed intrinsic', kind);
     c.expect('(', 'throw');
     let message = '';
     if (!c.is(')')) {
@@ -1519,9 +1540,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     this.lexicalRead(start);
-    if (!acceptJavaScriptStandardBuiltinOwner(start.value, this.scope.locals.has(start.value) || this.scope.tdz.has(start.value)
-      || this.moduleBindings.has(start.value) || this.externals.has(start.value) || this.literalBindings.has(start.value)
-      || this.functionNames.has(start.value))) throw unsupported('shadowed standard console owner',
+    if (!this.acceptStandardBuiltinOwner(start.value)) throw unsupported('shadowed standard console owner',
       'a local, module or supplied context console binding cannot be replaced with standard output', start);
     c.expect('.', 'console');
     const method = c.identifier('console');
@@ -2345,8 +2364,13 @@ class JavaScriptParser {
     const boundGlobal = this.moduleBindings.has(token.value) || this.externals.has(token.value) || this.literalBindings.has(token.value) || this.functionNames.has(token.value);
     if (['NaN', 'Infinity', 'undefined'].includes(token.value) && boundGlobal && !this.externals.has(token.value) && !this.literalBindings.has(token.value) && !this.functionNames.has(token.value)) throw unsupported(`global binding ${token.value}`, 'a delayed function read needs an owned module binding; a mutable module binding requires module-capture representation, and neither can be replaced with the built-in constant', span(token, token));
     if (!boundGlobal && (token.value === 'NaN' || token.value === 'Infinity')) {
+      if (!this.acceptStandardBuiltinOwner(token.value)) throw unsupported('unproved standard global owner',
+        'the original module scope does not prove this special global binding', token);
       c.next();
       return { k: 'num', value: token.value, type: FLOAT, span: span(token, token) };
+    }
+    if (token.value === 'undefined' && !boundGlobal && !this.acceptStandardBuiltinOwner(token.value)) {
+      throw unsupported('unproved standard global owner', 'the original module scope does not prove this special global binding', token);
     }
     const absent = readOptionalSourceLiteral(token.value, boundGlobal);
     if (absent) { c.next(); return { k: 'none', absence: absent, span: span(token, token) }; }
@@ -2357,9 +2381,7 @@ class JavaScriptParser {
       const args = c.is('(') ? this.arguments(constructor.value) : [];
       const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
       if (collection !== '') {
-        if (!acceptJavaScriptStandardBuiltinOwner(constructor.value, this.scope.locals.has(constructor.value) || this.scope.tdz.has(constructor.value)
-          || this.moduleBindings.has(constructor.value) || this.externals.has(constructor.value) || this.literalBindings.has(constructor.value)
-          || this.functionNames.has(constructor.value))) throw unsupported('shadowed standard collection owner',
+        if (!this.acceptStandardBuiltinOwner(constructor.value)) throw unsupported('shadowed standard collection owner',
           'a local, module or supplied context constructor cannot be replaced with the standard Map or Set constructor', constructor);
         const items = args[0] ?? { k: 'array', items: [], span: span(token, c.peek()) };
         return { k: collection, [collection === 'set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
@@ -2383,11 +2405,14 @@ class JavaScriptParser {
     }
     const name = segments.join('.');
     const where = span(token, c.peek());
+    const standardOwner = this.acceptStandardBuiltinOwner(segments[0]);
     if (Object.hasOwn(CONSTANTS, name) && !c.is('(')) {
+      if (!standardOwner) throw unsupported('shadowed standard constant owner',
+        'an actual lexical/module/context owner cannot be replaced with the standard numeric constant', token);
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    if (Object.hasOwn(MATH, name) && c.is('(')) {
+    if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);
       return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };
     }
@@ -2398,15 +2423,15 @@ class JavaScriptParser {
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
-    if (name === 'Array.from') return { k: 'arrayFrom', args, span: called };
-    if (name === 'Array.isArray' && args.length === 1) return { k: 'arrayIsArray', arg: args[0], span: called };
-    const arrayForm = readArrayMethodForm(name);
+    if (name === 'Array.from' && standardOwner) return { k: 'arrayFrom', args, span: called };
+    if (name === 'Array.isArray' && args.length === 1 && standardOwner) return { k: 'arrayIsArray', arg: args[0], span: called };
+    const arrayForm = standardOwner ? readArrayMethodForm(name) : '';
     if (arrayForm === 'copy-from' || arrayForm === 'construct') {
       if (!acceptArrayMethodArguments(arrayForm, args.length > 0, args.length === 1)) throw unsupported(`${name}() with ${args.length} arguments`, 'array copying takes one array and no mapping function', called);
       return { k: 'array', items: args.map(value => ({ spread: arrayForm === 'copy-from', value })), span: called };
     }
-    if (name === 'String' && args.length === 1) return { k: 'toString', arg: args[0], span: called };
-    if (name === 'Object.freeze' && args.length === 1) {
+    if (name === 'String' && args.length === 1 && standardOwner) return { k: 'toString', arg: args[0], span: called };
+    if (name === 'Object.freeze' && args.length === 1 && standardOwner) {
       if (this.functionNames.has('Object') || this.externals.has('Object')) throw unsupported('shadowed Object.freeze', 'immutable products require the actual unshadowed Object.freeze built-in', called);
       const value = args[0];
       const literalArray = (item) => ['num', 'bool', 'str', 'none'].includes(item.k)
@@ -2422,7 +2447,7 @@ class JavaScriptParser {
         'freezing this value needs an explicit property-descriptor operation; only direct tagged objects and readonly literal module constants are represented', called);
       return { ...value, ...(value.k === 'ctorObject' && { frozen: true }), span: called };
     }
-    if (GLOBALS.has(segments[0]) || name === 'String') {
+    if ((GLOBALS.has(segments[0]) || name === 'String') && !boundGlobal) {
       throw unsupported(name, 'the JavaScript standard library is outside the portable core', called);
     }
     if (segments.length === 1 && this.asyncNames.has(name)) this.unawaited.push({ name, span: called });

@@ -105,7 +105,11 @@ impl Plan<'_> {
 impl JavaScriptParser {
     pub(super) fn has_standard_builtin_owner(&self, token: &Token) -> bool {
         let name = &token.value;
-        let shadowed = self.scope.locals.contains(name)
+        let shadowed = self
+            .module_binding_scope
+            .as_ref()
+            .is_some_and(|scope| !scope.known)
+            || self.scope.locals.contains(name)
             || self.scope.tdz.contains(name)
             || self.global_binding_names.contains(name)
             || self
@@ -289,6 +293,7 @@ impl JavaScriptParser {
                 .map(|token| token.value.clone())
                 .chain(self.externals.iter().map(|item| item.name().to_owned()))
                 .chain(self.literal_bindings.keys().cloned())
+                .chain(self.global_binding_names.iter().cloned())
                 .collect();
             self.record_parameter_names = Some(names);
         }
