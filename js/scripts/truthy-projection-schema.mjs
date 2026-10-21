@@ -95,6 +95,7 @@ export const inspectedTruthyPreimages = freezeTruthyProjectionData([
 
 export const TRUTHY_PROJECTION_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const TRUTHY_PROJECTION_OUTPUT='parity/self-translation/truthy-projection-schema.lino';
+export const TRUTHY_PROJECTION_HOST_SUCCESSORS='parity/self-translation/truthy-projection-host-successors.lino';
 export const TRUTHY_PROJECTION_ENTRIES=freezeTruthyProjectionData({
  expressionProjections:{truthy:{construct:'booleanValue',fields:[['arg','expression','arg']]}},
  expressionFields:{truthy:['k','arg','type','span']},
@@ -155,15 +156,52 @@ export function readTruthyProjectionSchemaPacket() {
  return verifyTruthyProjectionSchemaPacket(readProjectData(new URL(TRUTHY_PROJECTION_OUTPUT,root)));
 }
 
+// This view belongs only to the old Boolean-projection source author. Both
+// complete source epochs have independent Git membership; runtime callers keep
+// the actual checker. The original projection packet remains byte-for-byte.
+export function verifyTruthyProjectionHostSuccessors(packet) {
+ assert.deepEqual(Object.keys(packet).sort(),['boundary','model','previousRevision','revision','schemaVersion','sources']);
+ assert.equal(packet.schemaVersion,1);assert.equal(packet.model,'Boolean projection checker source succession 1');
+ assert.equal(packet.previousRevision,'6ffff3b2dc530a5f24c128dadf877f3fa106932b');
+ assert.equal(packet.revision,'3fe3a9f9decfa6431b5b0718729a5d123b5f236b');
+ assert.equal(packet.boundary,'Only complete certified checker sources receive the original Boolean projection source view. Runtime semantics and the immutable original projection packet remain unchanged; unknown source bytes refuse.');
+ assert.deepEqual(packet.sources.map(row=>row.file),['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs']);
+ const original=readTruthyProjectionSchemaPacket();
+ for(const row of packet.sources){
+  assert.deepEqual(Object.keys(row).sort(),['current','edit','file','previous']);
+  for(const [epoch,revision]of[['previous',packet.previousRevision],['current',packet.revision]]){
+   const source=row[epoch];assert.deepEqual(Object.keys(source).sort(),['bytes','certificate','sha256','source']);
+   assert.deepEqual(pinTruthyProjectionSource(source.source),{bytes:source.bytes,sha256:source.sha256});
+   verifyGitArtifactCertificate(source.certificate,Buffer.from(source.source),{revision,path:row.file});
+  }
+  assert.equal(row.previous.source,original.sources.find(source=>source.file===row.file).current.source);
+  const {start,removed,inserted}=row.edit;assert.deepEqual(Object.keys(row.edit).sort(),['inserted','removed','start']);
+  assert.ok(Number.isSafeInteger(start)&&start>=0);assert.equal(typeof removed,'string');assert.equal(typeof inserted,'string');
+  assert.equal(row.previous.source.slice(start,start+removed.length),removed);
+  assert.equal(row.previous.source.slice(0,start)+inserted+row.previous.source.slice(start+removed.length),row.current.source);
+  assert.equal(row.current.source.slice(0,start)+removed+row.current.source.slice(start+inserted.length),row.previous.source,'every complete old checker byte survives');
+ }
+ return packet;
+}
+
+export function restoreTruthyProjectionHostSource(source,file) {
+ assert.equal(typeof source,'string');
+ if(!['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs'].includes(file))return source;
+ const packet=verifyTruthyProjectionHostSuccessors(readProjectData(new URL(TRUTHY_PROJECTION_HOST_SUCCESSORS,root)));
+ const row=packet.sources.find(value=>value.file===file);
+ return source===row.current.source?row.previous.source:source;
+}
+
 // Explicit historical readers only. Runtime schema/checkers always use actual
 // current bytes; unknown complete schema or host successors still refuse.
 export function restoreTruthyProjectionHistoricalSource(bytes,file) {
  assert.ok(Buffer.isBuffer(bytes)&&bytes.length<=256*1024);
  const expected=inspectedTruthyPreimages.find(row=>row.file===file);assert.ok(expected,'closed five-source historical view');
- const text=bytes.toString('utf8');assert.equal(Buffer.from(text).equals(bytes),true);
+ const physical=bytes.toString('utf8');assert.equal(Buffer.from(physical).equals(bytes),true);
+ const text=restoreTruthyProjectionHostSource(physical,file);
  if(pinTruthyProjectionSource(bytes).sha256===expected.sha256){assert.equal(bytes.length,expected.bytes);return text;}
  const packet=readTruthyProjectionSchemaPacket(),row=packet.sources.find(row=>row.file===file);
  assert.equal(text,row.current.source,'unknown complete current source refuses historical authority');
- assert.deepEqual(pinTruthyProjectionSource(bytes),{bytes:row.current.bytes,sha256:row.current.sha256});
+ assert.deepEqual(pinTruthyProjectionSource(text),{bytes:row.current.bytes,sha256:row.current.sha256});
  return row.previous.source;
 }

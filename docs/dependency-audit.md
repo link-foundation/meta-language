@@ -72,7 +72,7 @@ they are.
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 90 | 0 | 0 | 90 |
+| Published artifact contents | 91 | 0 | 0 | 91 |
 
 ## JavaScript engines
 
@@ -959,6 +959,7 @@ they are.
 | `src` | `npm` | `js/package.json` | `files` |  | unversioned | not applicable |  |
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

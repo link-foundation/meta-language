@@ -41,8 +41,8 @@ const policy={
         }
       ],
       "current": {
-        "bytes": 27054,
-        "sha256": "47fd20dc2024dad545c4a88df2b8d2fbfa757187c28c4e2ae0af4d63b3b6c75c"
+        "bytes": 29042,
+        "sha256": "b4204db7b19552ecb8a730c6859f61851ce5586da016b67c59adfbba06c9d0a7"
       }
     }
   ],
@@ -71,9 +71,38 @@ const policy={
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:digest(bytes)});
 function exactKeys(value,keys){assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());}
+let additionalSnapshot,originalSnapshot;
 
 /** Return a detached copy; callers cannot change the trusted source anchors. */
-export function readOwnCodebaseHistoricalNamingPolicy(){return structuredClone(policy);}
+export function readOwnCodebaseHistoricalNamingPolicy(){
+  const text=readFileSync(new URL('../../parity/naming/array-identity-historical-inventories.lino',import.meta.url),'utf8');
+  if(additionalSnapshot?.text===text)return{...structuredClone(policy),additionalSourceViews:structuredClone(additionalSnapshot.value)};
+  additionalSnapshot=undefined;
+  const additional=readBootstrapStructuredDataLino(text);
+  exactKeys(additional,['schemaVersion','model','revision','sources','views','boundary']);
+  assert.equal(additional.schemaVersion,1);assert.equal(additional.model,'array identity historical naming inventories 1');
+  assert.equal(additional.revision,'6ffff3b2dc530a5f24c128dadf877f3fa106932b');
+  assert.ok(Array.isArray(additional.sources)&&additional.sources.length>=4);
+  assert.equal(new Set(additional.sources.map(row=>row.file+'@'+row.predecessor.revision)).size,additional.sources.length);
+  for(const row of additional.sources){
+    exactKeys(row,['file','predecessor','current']);exactKeys(row.predecessor,['revision','source','bytes','sha256','certificate']);
+    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
+    assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be'].includes(row.predecessor.revision));
+    exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
+    assert.deepEqual(pin(row.predecessor.source),{bytes:row.predecessor.bytes,sha256:row.predecessor.sha256});
+    verifyGitArtifactCertificate(row.predecessor.certificate,Buffer.from(row.predecessor.source),{revision:row.predecessor.revision,path:row.file});
+    assert.ok(Number.isSafeInteger(row.current.bytes)&&row.current.bytes>0);assert.match(row.current.sha256,/^[a-f0-9]{64}$/u);
+    // Selection authenticates the caller's actual root below. Reading immutable
+    // policy must not select unrelated files from this checkout as authority.
+  }
+  for(const view of additional.views){
+    exactKeys(view,['inventory','file','revision','names']);assert.ok(additional.sources.some(row=>row.file===view.file&&row.predecessor.revision===view.revision));
+    assert.equal(typeof view.inventory,'string');assert.ok(Array.isArray(view.names)&&view.names.length>0);
+    for(const row of view.names){exactKeys(row,['name','record']);assert.equal(typeof row.name,'string');assert.equal(typeof row.record,'string');}
+  }
+  additionalSnapshot={text,value:structuredClone(additional)};
+  return{...structuredClone(policy),additionalSourceViews:additional};
+}
 
 /** Validate the compact complete source projection without loading the large archive. */
 export function verifyOwnCodebaseHistoricalNamingSources(history){
@@ -106,7 +135,9 @@ export function verifyOwnCodebaseHistoricalNamingSources(history){
 /** Bootstrap decoding avoids retaining a second full graph in the normal check. */
 export function readOwnCodebaseHistoricalNamingSources(){
   const file=new URL('../../parity/naming/own-codebase-baseline-naming-history.lino',import.meta.url);
-  return verifyOwnCodebaseHistoricalNamingSources(readBootstrapStructuredDataLino(readFileSync(file,'utf8')));
+  const text=readFileSync(file,'utf8');
+  if(originalSnapshot?.text!==text){originalSnapshot=undefined;originalSnapshot={text,value:verifyOwnCodebaseHistoricalNamingSources(readBootstrapStructuredDataLino(text))};}
+  return structuredClone(originalSnapshot.value);
 }
 
 /** Supplement only two original inventories after authenticating current modules. */
@@ -125,6 +156,25 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
       bytes:view.predecessor.bytes,sha256:view.predecessor.sha256,
       archive:'parity/naming/own-codebase-baseline-naming-history.lino',
       boundary:'Historical definitions keep their original identities. Every actual current inventory row is retained separately; changed source owners have distinct qualified records.'}})));
+  }
+  const additional=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+  for(const view of additional.views){
+    const source=additional.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
+    const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));
+    if(entries.length===0)continue;
+    assert.equal(entries.length,1,'the same actual extractor owns the additional historical names');
+    assert.deepEqual(pin(readFileSync(resolve(root,view.file))),source.current,'the selected root retains every complete actual source byte');
+    const entry=entries[0],found=[...new Set(entry.extract(source.predecessor.source,view.file))]
+      .map(name=>({name,record:entry.recordOf(name)}));
+    const current=new Set(entry.extract(readFileSync(resolve(root,view.file),'utf8'),view.file));
+    for(const row of view.names){
+      assert.ok(found.some(candidate=>candidate.name===row.name&&candidate.record===row.record),'an unchanged extractor must derive each original name and identity');
+      assert.equal(current.has(row.name),false,'actual current names stay in the separate current inventory');
+      names.push({inventory:view.inventory,file:view.file,...row,sourceView:{
+        kind:'complete certified historical source',revision:view.revision,path:view.file,
+        bytes:source.predecessor.bytes,sha256:source.predecessor.sha256,
+        archive:'parity/naming/array-identity-historical-inventories.lino',boundary:additional.boundary}});
+    }
   }
   return names;
 }

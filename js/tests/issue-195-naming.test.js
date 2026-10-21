@@ -177,7 +177,8 @@ test('every name the sources define has a concept record and every record is use
 test('the normal naming source profile retains every actual current name and both complete certified historical owners', () => {
   const policy = readOwnCodebaseHistoricalNamingPolicy();
   assert.equal(policy.views.length, 2);
-  assert.equal(historicalNames.length, 2);
+  assert.equal(historicalNames.slice(0,2).length,2,'both original certified owners remain first');
+  assert.equal(historicalNames.length,2+policy.additionalSourceViews.views.reduce((count,view)=>count+view.names.length,0));
   assert.deepEqual(repository.names, [...currentNames, ...historicalNames]);
   assert.deepEqual(repository.names.slice(0, currentNames.length), currentNames);
   for (const view of policy.views) {
@@ -196,6 +197,12 @@ test('the normal naming source profile retains every actual current name and bot
       assert.equal(currentNames.some((current) => current.inventory === row.inventory && current.file === row.file && current.name === row.name), false,
         'a certified historical owner is kept separate from actual current source names');
     }
+  }
+  for(const view of policy.additionalSourceViews.views){
+    const source=policy.additionalSourceViews.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
+    const rows=historicalNames.filter(row=>row.inventory===view.inventory&&row.file===view.file&&row.sourceView.revision===view.revision);
+    assert.deepEqual(rows.map(({name,record})=>({name,record})),view.names);
+    for(const row of rows){assert.equal(row.sourceView.revision,view.revision);assert.equal(row.sourceView.sha256,source.predecessor.sha256);assert.equal(row.sourceView.bytes,source.predecessor.bytes);}
   }
   const changed = structuredClone(historicalNames); changed[0].sourceView.path = 'unregistered/source.rs';
   assert.notDeepEqual(changed, historicalNames);

@@ -7,7 +7,7 @@ import {captureGitArtifactCertificate} from '../../js/scripts/capture-git-artifa
 import {verifyGitArtifactCertificate} from '../../js/scripts/git-object-certificate.mjs';
 import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {checkProjectData,writeProjectData,serializeProjectData} from '../../js/scripts/project-data.mjs';
-import {OVERLAY_PROVIDER_APPEND_REVIEW,readReviewedOverlayProviderSuccessionHistory,
+import {OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,readReviewedOverlayProviderSuccessionHistory,
  verifyReviewedOverlayProviderSuccessionHistory,verifyCurrentReviewedOverlayProviderSources,
  deriveReviewedOverlayProviderPolicy,deriveReviewedOverlayProviderReceipts} from './provider-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -122,7 +122,8 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
   if(revision!==undefined){
     assert.match(revision,/^[a-f0-9]{40}$/u,'supply one complete actual committed source epoch');
     assert.equal(original.profiles.some(row=>row.sourceCommit===revision),false,'a committed epoch is appended once');
-    const review=OVERLAY_PROVIDER_APPEND_REVIEW,last=original.profiles.at(-1);
+    const last=original.profiles.at(-1);
+    const review=last.sourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
     assert.equal(last.sourceCommit,review.previous,'this review applies to the exact preceding provider profile');
     const capture=file=>{
       const{blob,certificate}=captureGitArtifactCertificate(revision,file);
@@ -140,7 +141,7 @@ export async function updateReviewedOverlayProviderSuccession({check=false,revis
       certificates.push({module,previous:structuredClone(previous),current:{revision,source:current.source,certificate:current.certificate}});
       if(current.source!==previous.source)inverse.push({module,from:current.source,to:previous.source});
     }
-    assert.deepEqual(inverse.map(row=>row.module),[review.module],'only the complete reviewed optional-emission-metadata provider changes');
+    assert.deepEqual(inverse.map(row=>row.module),(review.modules??[review]).map(row=>row.module),'only the complete individually reviewed source providers change');
     const metadata=row=>({revision:row.revision,file:row.file,bytes:row.bytes,sha256:row.sha256,certificate:row.certificate});
     const profile={sourceCommit:revision,previousSourceCommit:last.sourceCommit,review:review.review,providers,inverse,certificates,
       epoch:{reviewKind:review.kind,predecessorPacket:metadata(preceding),predecessorOutputs:priorOutputs.map(metadata)}};

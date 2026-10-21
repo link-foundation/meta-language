@@ -13,6 +13,8 @@ import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {generateRelativeArrayFrontendSourceHistory} from '../scripts/generate-relative-array-frontend-source-history.mjs';
 import {restoreRelativeArrayCurrentFrontendSource} from '../scripts/relative-array-current-frontend-history.mjs';
+import {restoreReferenceIdentityHistoricalSource} from '../scripts/reference-identity-source-history.mjs';
+import {readCurrentOwnCodebaseRawDescriptorPacket} from '../scripts/current-own-codebase-raw-source-descriptors.mjs';
 import {RELATIVE_ARRAY_FRONTEND_PROFILE,RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,replayRelativeArrayNullableInference,relativeArrayFrontendPin,readAuthenticatedCurrentRelativeArrayFrontend,
   verifyRelativeArrayFrontendSourceHistory,readRelativeArrayFrontendSourceHistory,
   restoreRelativeArrayFrontendDescriptorSource} from '../scripts/relative-array-frontend-source-history.mjs';
@@ -102,12 +104,17 @@ test('the complete compact projection retains both source codecs and original tw
 
 test('one certified nullable inference successor restores both historical descriptor scopes and refuses unknown owners or source successors',()=>{
   const history=readRelativeArrayFrontendSourceHistory(),owner=RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE;
-  const current=read(owner.path).toString('utf8'),previous=history.nullableInference.sourceText;
+  const physical=read(owner.path).toString('utf8'),previous=history.nullableInference.sourceText;
+  const active=readCurrentOwnCodebaseRawDescriptorPacket().sources.find(row=>row.file===owner.path).current;
+  assert.deepEqual(relativeArrayFrontendPin(physical),{bytes:active.bytes,sha256:active.sha256});assert.equal(physical,active.sourceText);
+  const current=restoreReferenceIdentityHistoricalSource(physical,owner.path,'relative array inference');
+  assert.notEqual(physical,current,'the current optional-tuple source keeps its own complete authority');
   assert.deepEqual(relativeArrayFrontendPin(previous),owner.previous);
   assert.deepEqual(relativeArrayFrontendPin(current),owner.current);
   assert.equal(replayRelativeArrayNullableInference(previous).source,current);
   assert.notEqual(current,previous);
   for(const source of [current,previous])assert.equal(restoreRelativeArrayFrontendDescriptorSource(source,owner.path,RELATIVE_ARRAY_FRONTEND_PROFILE),previous);
+  assert.equal(restoreRelativeArrayFrontendDescriptorSource(physical,owner.path,RELATIVE_ARRAY_FRONTEND_PROFILE),previous);
   for(const profile of ['', 'original number source ranges','relative character','current behavior']){
     assert.equal(restoreRelativeArrayFrontendDescriptorSource(current,owner.path,profile),current);
     assert.equal(restoreRelativeArrayFrontendDescriptorSource(current+'\n',owner.path,profile),current+'\n');

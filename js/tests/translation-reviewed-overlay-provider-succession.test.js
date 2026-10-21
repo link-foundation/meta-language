@@ -7,7 +7,7 @@ import {reviewedOverlayProviderPolicy,readReviewedOverlayProviderSources,restore
   from '../../experiments/rust-text-certificate-adapter/reviewed-providers.mjs';
 import {readReviewedOverlayProviderSuccession,verifyReviewedOverlayProviderSuccession,
   restoreReviewedOverlayProviderPolicy,restoreReviewedOverlayProviderReceiptSource,
-  OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,deriveReviewedOverlayProviderPolicy,
+  OVERLAY_PROVIDER_ORIGINAL_PACKET,OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,deriveReviewedOverlayProviderPolicy,
   verifyReviewedOverlayProviderSuccessionHistory,restoreReviewedOverlayProviderModuleSource}
   from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
 import {generateReviewedOverlayProviderSuccession} from '../../experiments/rust-text-certificate-adapter/generate-provider-succession.mjs';
@@ -96,8 +96,8 @@ test('normal source review refreshes only current receipts and retains both immu
 
 
 test('a real appended source epoch preserves the complete original packet policy receipts and exact only-emitter source inverse',async()=>{
-  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.length,3);
-  const current=packet.profiles.at(-1),review=OVERLAY_PROVIDER_APPEND_REVIEW;
+  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.slice(0,3).length,3);
+  const current=packet.profiles[2],review=OVERLAY_PROVIDER_APPEND_REVIEW;
   assert.equal(current.previousSourceCommit,packet.profiles[1].sourceCommit);
   assert.equal(current.epoch.reviewKind,review.kind);assert.equal(current.review,review.review);
   assert.deepEqual(current.inverse.map(row=>row.module),['translation/emit-rust.js']);
@@ -108,7 +108,7 @@ test('a real appended source epoch preserves the complete original packet policy
   assert.deepEqual(deriveReviewedOverlayProviderPolicy(prefix).revisions.slice(-2),prefix.profiles);
   verifyReviewedOverlayProviderSuccessionHistory(prefix);
   for(const row of current.certificates){
-    assert.equal(read('js/src/'+row.module).toString('utf8'),row.current.source);
+    assert.equal(restoreReviewedOverlayProviderModuleSource(read('js/src/'+row.module).toString('utf8'),'js/src/'+row.module,current.sourceCommit),row.current.source);
     const restored=restoreReviewedOverlayProviderModuleSource(row.current.source,'js/src/'+row.module);
     const original=packet.profiles[0].certificates.find(value=>value.module===row.module);
     assert.equal(restored,original.current.source,'the explicit historical module view reaches exact8d');
@@ -132,4 +132,32 @@ test('a real appended source epoch preserves the complete original packet policy
   ]){const altered=structuredClone(packet);mutate(altered);assert.throws(()=>verifyReviewedOverlayProviderSuccession(altered),assert.AssertionError);}
   await assert.rejects(()=>generateReviewedOverlayProviderSuccession({check:true,revision:current.sourceCommit}),assert.AssertionError,
     'check-only authoring cannot append or invoke source capture');
+});
+
+
+test('the reference and identifier provider epoch retains every preceding packet and all three complete source inverses',()=>{
+  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.length,4);
+  const profile=packet.profiles[3],review=OVERLAY_PROVIDER_REFERENCE_REVIEW;
+  assert.equal(profile.sourceCommit,'8bc0ef9725388c7927acf1854870bf46f5e365be');
+  assert.equal(profile.previousSourceCommit,packet.profiles[2].sourceCommit);
+  assert.equal(profile.epoch.reviewKind,review.kind);assert.equal(profile.review,review.review);
+  assert.deepEqual(profile.inverse.map(row=>row.module),review.modules.map(row=>row.module));
+  const before={...packet,profiles:packet.profiles.slice(0,3)};
+  assert.equal(hash(serializeProjectData(before,'parity/self-translation/reviewed-overlay-provider-succession.lino')),profile.epoch.predecessorPacket.sha256);
+  verifyReviewedOverlayProviderSuccessionHistory(before);
+  for(const owner of review.modules){
+    const row=profile.certificates.find(row=>row.module===owner.module);assert.ok(row);
+    assert.equal(hash(row.previous.source),owner.previousSha256);assert.equal(hash(row.current.source),owner.currentSha256);
+    assert.equal(Buffer.byteLength(row.current.source),owner.currentBytes);
+    assert.equal(read('js/src/'+row.module).toString('utf8'),row.current.source);
+    assert.equal(restoreReviewedOverlayProviderModuleSource(row.current.source,'js/src/'+row.module,profile.previousSourceCommit),row.previous.source);
+  }
+  for(const change of [
+    value=>{value.profiles[3].inverse.pop();},
+    value=>{value.profiles[3].epoch.predecessorPacket.sha256='0'.repeat(64);},
+    value=>{value.profiles[3].epoch.predecessorOutputs[0].certificate.path='unregistered.lino';},
+    value=>{value.profiles[3].certificates[1].current.source+=' ';},
+    value=>{value.profiles[3].review+=' changed';},
+  ]){const changed=structuredClone(packet);change(changed);assert.throws(()=>verifyReviewedOverlayProviderSuccession(changed));}
+  assert.throws(()=>restoreReviewedOverlayProviderModuleSource(profile.certificates[0].current.source,'js/src/typed-program-links.js','0'.repeat(40)));
 });

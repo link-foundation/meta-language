@@ -11,8 +11,8 @@
 //     [--replay-plan selected-blockers.lino]
 //
 // The whole tree takes over an hour on one runner, so CI splits it: `--shard
-// K/N` measures the K-th of N shards, which hold about the same number of
-// source bytes each. `--list` prints the modules it would measure and stops.
+// K/N` measures the K-th of N shards, balanced with source-bound CI timings
+// and byte-size estimates for changed sources. `--list` lists its modules.
 //
 // For each module the report lists its top-level items by status, the Rust
 // functions the translation writes, how many of them the hand-written Rust
@@ -38,6 +38,7 @@ import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
+import {partitionMeasuredWorkloads} from './test-groups.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -86,20 +87,10 @@ function listSourceModules() {
 }
 
 /**
- * The K-th of `count` shards of `files`: each file goes, largest first, to the
- * shard with the fewest bytes so far, so the shards take about as long.
+ * The K-th measured-cost shard; every complete current source appears once.
  */
 function shardOf(files, index, count) {
-  const loads = Array(count).fill(0);
-  const shards = Array.from({ length: count }, () => []);
-  const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));
-  sized.sort((a, b) => b.size - a.size || a.file.localeCompare(b.file));
-  for (const { file, size } of sized) {
-    const target = loads.indexOf(Math.min(...loads));
-    loads[target] += size;
-    shards[target].push(file);
-  }
-  return shards[index - 1].sort();
+  return partitionMeasuredWorkloads(files,count)[index-1];
 }
 
 function selectedModules(replayPlan) {

@@ -125,12 +125,18 @@ Historical source guards authenticate the complete current module before
 inverting recorded, disjoint byte intervals and checking every predecessor byte.
 Original source hashes, receipt edges, assertions and refusal cases stay exact;
 current translation behavior uses current imports and independent controls.
-Naming extraction retains every actual current source name. Two historical
+Naming extraction retains every actual current source name. Scoped historical
 inventory views may additionally recover names from complete independently
 certified predecessors, with explicit revision and archive provenance. Current
 modules and the additive driver must match their complete reviewed source pins;
 unknown successors refuse. Every unchanged naming policy, coverage assertion
 and positive or negative fixture still applies to the combined inventory.
+The original two views remain separate from additive profiles. Each additional
+row carries its own certified source revision and archive provenance; its
+unchanged inventory extractor must derive the original name and identity.
+Complete current source hashes bind the selected checkout, including copied
+roots. A source certificate preserves a historical definition without assigning
+its meaning to a changed current declaration.
 Native evidence includes an experimental Rust source only when its exact path
 belongs to the actual registered native test module. A JavaScript driver or an
 unregistered Rust filename cannot supply that evidence.
@@ -3846,8 +3852,10 @@ depending on the dispatch behavior of a renamed system multicall utility.
 Dependency inventories and all other manifest inputs must finish changing before
 the final requirement-manifest refresh and freshness check.
 
-For the current task, the [latest instruction](../parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt)
-authorizes up to three subagents for useful independent work. It follows the
+For the current task, the [latest instruction](../parity/sources/solo-continuation-2026-10-21.txt)
+requires existing agents to finish and the coordinator to continue alone without
+spawning or reactivating agents. It follows the
+[three-agent automation phase](../parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt), the
 completed [solo continuation phase](../parity/sources/solo-continuation-2026-10-19.txt)
 and earlier [two-subagent allowance](../parity/sources/two-subagent-continuation-limit-2026-10-18.txt).
 These are successive task phases, not a permanent project-wide cap. Keep source
@@ -3855,6 +3863,30 @@ ownership disjoint, serialize resource-heavy local checks and Git index writes,
 and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
+
+Report modules retain eight required jobs; general grammar tests retain six.
+Their complete current source inventories are scheduled using source-bound
+elapsed-time samples captured automatically from the fourteen complete report
+and grammar job logs of CI 39615628279. Missing or changed sources receive a
+size estimate. All modules and test files still execute exactly once, and
+native and historical modulo partitions keep their existing ownership rules.
+Job counts, commands, coverage assertions and deadlines remain unchanged.
+These samples and scheduling estimates establish no requirement observation;
+only the next CI execution can confirm actual timing and results.
+
+Repeated historical naming reads reuse one authenticated immutable snapshot.
+Every packet read checks its complete serialized input before lookup;
+snapshot reuse requires equal complete serialized text, and changed
+text runs every source-certificate check again. Callers receive detached copies,
+and selecting a historical name still checks the complete actual source in the
+requested root. Raw descriptor selection privately reuses the already checked
+current descriptor packet. These caches retain no failure and change no source
+scope, assertion, output or resource ceiling.
+
+Historical inventory generation finishes Git object capture before loading the
+complete naming inventory. Git pack buffers and the decoded binding graph use
+separate memory lifetimes. Full certificate, extraction, freshness and byte
+inverse checks remain required under the same local resource limits.
 
 Self-translation reuses each source group's existing declaration scan when
 classifying primitive literal bindings. A proven named function cannot satisfy

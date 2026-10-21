@@ -28,7 +28,8 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
  currentBytes:79595,currentSha256:'e4d5f0f5b4a5f51d24dd240ebb35ae0c0231c66ac7b7b3bc2b72f51906bf7bcb',
  review:'Reviewed the complete Rust emitter successor against8ef026a395ebbbc415f948777f7f6f7e082a572e: optional nonserialized definition-ownership capture records actual complete emitted blocks/source spans/mapping intervals/targets, and a thin external-target reader uses the actual normal emitter naming path. Default output, complete original function bodies, source mappings and exact decorator actions retain their existing independent tests. Only this complete79595-byte source is admitted by this review; its full source inverse restores every predecessor byte. This is source succession and review, not semantic equivalence, native compilation or execution evidence.',
 });
-const packetSha256='3808a81f940b0544466da91c084ac74842ff6bc4bfd4aae32fd61070904f43e2';
+export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
+const packetSha256='5657e1cc9cda5c71717c245fe43a562dda8bc7a3811d352603acee5d26be7913';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
@@ -165,11 +166,13 @@ export function restoreReviewedOverlayProviderHostSource(source,file){
 }
 
 /** Only an explicitly historical caller uses this exact checkpoint→8d view. */
-export function restoreReviewedOverlayProviderModuleSource(source,file){
+export function restoreReviewedOverlayProviderModuleSource(source,file,sourceCommit=null){
   if(!file.startsWith('js/src/'))return source;
   const module=file.slice('js/src/'.length),packet=readReviewedOverlayProviderSuccession();
+  const target=sourceCommit===null?0:packet.profiles.findIndex(row=>row.sourceCommit===sourceCommit);
+  assert.ok(target>=0,'one actual certified source epoch selects the historical view');
   let historical=source;
-  for(const profile of packet.profiles.slice(1).toReversed()){
+  for(const profile of packet.profiles.slice(target+1).toReversed()){
     const row=profile.certificates.find(row=>row.module===module);
     if(row&&historical===row.current.source)historical=row.previous.source;
   }
@@ -184,13 +187,17 @@ export function deriveReviewedOverlayProviderPolicy(packet){
 }
 
 function verifyReviewedOverlayProviderEpoch(packet,index){
-  const profile=packet.profiles[index],epoch=profile.epoch,review=OVERLAY_PROVIDER_APPEND_REVIEW;
+  const profile=packet.profiles[index],epoch=profile.epoch;
+  const review=profile.previousSourceCommit===OVERLAY_PROVIDER_APPEND_REVIEW.previous?OVERLAY_PROVIDER_APPEND_REVIEW:OVERLAY_PROVIDER_REFERENCE_REVIEW;
+  const reviewed=review.modules??[review];
   exactKeys(epoch,['reviewKind','predecessorPacket','predecessorOutputs']);
   assert.equal(epoch.reviewKind,review.kind);assert.equal(profile.previousSourceCommit,review.previous);
-  assert.equal(profile.review,review.review);assert.deepEqual(profile.inverse.map(row=>row.module),[review.module]);
-  const changed=profile.certificates.find(row=>row.module===review.module);assert.ok(changed);
-  assert.equal(hash(changed.previous.source),review.previousSha256);
-  assert.deepEqual(pin(changed.current.source),{bytes:review.currentBytes,sha256:review.currentSha256});
+  assert.equal(profile.review,review.review);assert.deepEqual(profile.inverse.map(row=>row.module),reviewed.map(row=>row.module));
+  for(const owner of reviewed){
+    const changed=profile.certificates.find(row=>row.module===owner.module);assert.ok(changed);
+    assert.equal(hash(changed.previous.source),owner.previousSha256);
+    assert.deepEqual(pin(changed.current.source),{bytes:owner.currentBytes,sha256:owner.currentSha256});
+  }
   const prefix={...packet,profiles:packet.profiles.slice(0,index)};
   const oldPacket=serializeProjectData(prefix,OVERLAY_PROVIDER_SUCCESSOR_OUTPUT);
   const before=epoch.predecessorPacket;

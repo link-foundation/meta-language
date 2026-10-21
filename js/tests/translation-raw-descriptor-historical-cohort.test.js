@@ -9,30 +9,37 @@ import {RAW_DESCRIPTOR_HISTORICAL_FILE,RAW_DESCRIPTOR_HISTORICAL_ARCHIVE,RAW_DES
   RAW_DESCRIPTOR_BORROWED_FILE,RAW_DESCRIPTOR_BORROWED_PREVIOUS,RAW_DESCRIPTOR_BORROWED_CURRENT,
   RAW_DESCRIPTOR_CONTINUATION_ARCHIVE,RAW_DESCRIPTOR_CONTINUATION_ARCHIVE_PIN,readRawDescriptorBorrowedAuthority,
   pinRawDescriptorHistoricalSource,readRawDescriptorHistoricalAuthority,readRawDescriptorHistoricalCohort,
-  verifyRawDescriptorHistoricalCohort,restoreRawDescriptorHistoricalSource} from '../scripts/raw-descriptor-historical-cohort.mjs';
+  verifyRawDescriptorHistoricalCohort,restoreRawDescriptorHistoricalSource,restoreRawDescriptorCohortSource} from '../scripts/raw-descriptor-historical-cohort.mjs';
+import {readCurrentOwnCodebaseRawDescriptorPacket} from '../scripts/current-own-codebase-raw-source-descriptors.mjs';
 import {generateRawDescriptorHistoricalCohort} from '../scripts/generate-raw-descriptor-historical-cohort.mjs';
 const root=new URL('../../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8');
 
 test('the complete physical descriptor keeps both independently pinned historical identities and every native definition',()=>{
   const[major,minor]=process.versions.node.split('.').map(Number);
   assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 || >=24 <25 required');
-  const source=read(RAW_DESCRIPTOR_HISTORICAL_FILE),old=readRawDescriptorHistoricalAuthority();
+  const physical=read(RAW_DESCRIPTOR_HISTORICAL_FILE),current=readCurrentOwnCodebaseRawDescriptorPacket();
+  assert.deepEqual(pinRawDescriptorHistoricalSource(physical),current.artifact.current);
+  const source=restoreRawDescriptorCohortSource(physical,RAW_DESCRIPTOR_HISTORICAL_FILE),old=readRawDescriptorHistoricalAuthority();
   assert.deepEqual(pinRawDescriptorHistoricalSource(source),RAW_DESCRIPTOR_HISTORICAL_CURRENT);
   const previous=restoreRawDescriptorHistoricalSource(source,RAW_DESCRIPTOR_HISTORICAL_FILE,'relative array');
   const relocation=restoreRawDescriptorHistoricalSource(source,RAW_DESCRIPTOR_HISTORICAL_FILE,'native library relocation');
   assert.equal(previous,old.sourceText);assert.deepEqual(pinRawDescriptorHistoricalSource(previous),RAW_DESCRIPTOR_HISTORICAL_PREVIOUS);
   assert.deepEqual(pinRawDescriptorHistoricalSource(relocation),RAW_DESCRIPTOR_HISTORICAL_RELOCATION);
-  const before=readStructuredDataLino(previous),actual=readStructuredDataLino(source),packaged=readStructuredDataLino(relocation);
+  const before=readStructuredDataLino(previous),actual=readStructuredDataLino(source),packaged=readStructuredDataLino(relocation),live=readStructuredDataLino(physical);
   for(const field of ['completeRust','owners','declarationNames','totals','assumptions','encodings','mappings','preludeHashes','replays','archive']){
     assert.deepEqual(actual[field],before[field],field);assert.deepEqual(packaged[field],before[field],field);
+    assert.deepEqual(live[field],before[field],field);
   }
   for(const value of[before,actual,packaged])assert.equal(value.predecessor.proof.producerApplicability.sources[1],value.predecessor.proof.producerApplicability.sourceHistory.current);
   assert.equal(before.decisionSources[2].bytes,62588);assert.equal(actual.decisionSources[2].bytes,62902);
+  assert.equal(live.decisionSources[2].bytes,current.sources[1].current.bytes);
   assert.equal(packaged.predecessor.proof.producerApplicability.sources[12].sha256,'36dbd7ffcf25a403deab81f489eb9c3ff5e69cbf7f084ea8d9c34a279b2ae626');
 });
 
 test('the frozen continuation reader receives exactly its two original whole successor inputs',()=>{
-  const raw=read(RAW_DESCRIPTOR_HISTORICAL_FILE),borrowed=read(RAW_DESCRIPTOR_BORROWED_FILE);
+  const raw=read(RAW_DESCRIPTOR_HISTORICAL_FILE),physical=read(RAW_DESCRIPTOR_BORROWED_FILE),current=readCurrentOwnCodebaseRawDescriptorPacket();
+  assert.deepEqual(pinRawDescriptorHistoricalSource(physical),current.loan.current);
+  const borrowed=restoreRawDescriptorCohortSource(physical,RAW_DESCRIPTOR_BORROWED_FILE);
   assert.deepEqual(pinRawDescriptorHistoricalSource(restoreRawDescriptorHistoricalSource(raw,RAW_DESCRIPTOR_HISTORICAL_FILE,'continuation historical input')),RAW_DESCRIPTOR_HISTORICAL_RELOCATION);
   assert.deepEqual(pinRawDescriptorHistoricalSource(borrowed),RAW_DESCRIPTOR_BORROWED_CURRENT);
   const previous=restoreRawDescriptorHistoricalSource(borrowed,RAW_DESCRIPTOR_BORROWED_FILE,'continuation historical input');

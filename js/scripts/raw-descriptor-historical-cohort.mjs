@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {readCurrentOwnCodebaseRawDescriptorPacket,restoreCurrentOwnCodebaseRawText} from './current-own-codebase-raw-source-descriptors.mjs';
 const root=new URL('../../',import.meta.url);
 export const RAW_DESCRIPTOR_HISTORICAL_FILE='experiments/original-link-complete-table-projection/data/raw-consuming-current-native-definitions.lino';
 export const RAW_DESCRIPTOR_HISTORICAL_OUTPUT='parity/self-translation/raw-descriptor-historical-cohort.lino';
@@ -35,7 +36,7 @@ const scalarFacts=[
   [484,'fb2636a04a45c38c5dda0d99c239eb6dc97f5d3d441245f6855fde22789e3691','5d224a630dbb3d55582648a888482144331e2bad31d67a2fe05d4cb34ca601da'],
 ];
 const line=(id,value)=>'('+id+': (meta: (t: semantic) (n: 1) (term: '+(typeof value==='number'?'number':'string')+'%20value) (def: '+String(value)+') (lang: meta-language%20structured%20data)))';
-let authority,borrowedAuthority,retained;
+let authority,borrowedAuthority,retained,currentDescriptorAuthority;
 
 /** The complete old payload and its certificate already belong to this archive. */
 export function readRawDescriptorHistoricalAuthority(){
@@ -189,8 +190,35 @@ export function readRawDescriptorHistoricalCohort(){
 }
 
 /** Exact known physical bytes are selected before older intermediary views. */
+export function restoreRawDescriptorCohortSource(source,file){
+  assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  if([RAW_DESCRIPTOR_HISTORICAL_FILE,RAW_DESCRIPTOR_BORROWED_FILE].includes(file)){
+    const current=currentDescriptorAuthority??=readCurrentOwnCodebaseRawDescriptorPacket(),row=file===RAW_DESCRIPTOR_HISTORICAL_FILE?current.artifact:current.loan;
+    if(pinRawDescriptorHistoricalSource(source).sha256===row.current.sha256){
+      // The existing normal author authenticates every physical byte and its
+      // complete A8 inverse. Only these recorded scalar metadata facts differ
+      // from the independently certified C33 cohort; every other byte stays.
+      restoreCurrentOwnCodebaseRawText(source,file);readRawDescriptorHistoricalCohort();
+      if(file===RAW_DESCRIPTOR_HISTORICAL_FILE){
+        for(const[id,index,key]of [[228,1,'bytes'],[230,1,'sha256'],[418,0,'bytes'],[420,0,'sha256'],[468,2,'bytes'],[470,2,'sha256']]){
+          const from=line(id,current.sources[index].current[key]),to=line(id,scalarFacts.find(row=>row[0]===id)[2]);
+          assert.equal(source.split(from).length,2,'one actual complete descriptor scalar interval');source=source.replace(from,()=>to);
+        }
+        assert.equal(source,retained.current,'every other current descriptor and semantic archive byte remains exact');
+      }else{
+        const from=line(24,current.edge.current.sha256),to=line(24,RAW_DESCRIPTOR_HISTORICAL_CURRENT.sha256);
+        assert.equal(source.split(from).length,2);source=source.replace(from,()=>to);
+        assert.equal(source,retained.borrowedCurrent,'the complete old loan receipt differs only in its predecessor digest');
+      }
+    }
+  }
+  return source;
+}
+
 export function restoreRawDescriptorHistoricalSource(source,file,profile){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof profile,'string');
+  if(file===RAW_DESCRIPTOR_HISTORICAL_FILE&&['relative array','native library relocation','continuation historical input'].includes(profile)
+    ||file===RAW_DESCRIPTOR_BORROWED_FILE&&profile==='continuation historical input')source=restoreRawDescriptorCohortSource(source,file);
   if(file===RAW_DESCRIPTOR_BORROWED_FILE&&profile==='continuation historical input'){
     if(pinRawDescriptorHistoricalSource(source).sha256!==RAW_DESCRIPTOR_BORROWED_CURRENT.sha256)return source;
     assert.deepEqual(pinRawDescriptorHistoricalSource(source),RAW_DESCRIPTOR_BORROWED_CURRENT);

@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-import { TEST_GROUPS, partitionGroupFiles, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
+import { TEST_GROUPS, partitionGroupFiles, partitionMeasuredWorkloads, partitionProblems, partitionTests, testFiles } from '../scripts/test-groups.mjs';
 import { readProjectData } from '../scripts/project-data.mjs';
 
 test('CI file partitions preserve every original native, conformance and translation file exactly once', () => {
@@ -20,6 +20,38 @@ test('CI file partitions preserve every original native, conformance and transla
     assert.deepEqual(shards.flat().sort(), groups[name]);
   }
   for (const shard of ['0/3', '4/3', '1/0', '1/999', '1.5/3', '1/2x']) assert.throws(() => partitionGroupFiles(['a', 'b', 'c'], shard), /test group shard/u);
+});
+
+test('measured workload scheduling balances complete sources and rejects duplicate owners or malformed costs',()=>{
+  const sources=new Map([['slow-a.js','a'],['slow-b.js','b'],['fast-a.js','c'],['fast-b.js','d']]);
+  const entries=[300,290,10,10].map((milliseconds,index)=>{const [file,source]=[...sources][index];return{file,bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex'),milliseconds};});
+  const costs={schemaVersion:1,model:'observed CI workload scheduling costs 1',run:39615628279,revision:'8bc0ef9725388c7927acf1854870bf46f5e365be',entries};
+  const files=[...sources.keys()],options={costs,readSource:file=>sources.get(file)};
+  const shards=partitionMeasuredWorkloads(files,2,options);
+  assert.deepEqual(shards.flat().sort(),files.sort());
+  assert.notEqual(shards.findIndex(shard=>shard.includes('slow-a.js')),shards.findIndex(shard=>shard.includes('slow-b.js')));
+  const load=shard=>shard.reduce((sum,file)=>sum+entries.find(row=>row.file===file).milliseconds,0);
+  assert.ok(Math.abs(load(shards[0])-load(shards[1]))<=10);
+  assert.deepEqual(partitionMeasuredWorkloads([...files].reverse(),2,options),shards,'source traversal order cannot change owners');
+  for(const count of[0,1.5,5])assert.throws(()=>partitionMeasuredWorkloads(files,count,options));
+  assert.throws(()=>partitionMeasuredWorkloads([...files,files[0]],2,options));
+  for(const change of[value=>{value.entries[0].milliseconds=-1;},value=>{value.entries.push(value.entries[0]);},value=>{value.revision='0'.repeat(40);}]){
+    const changed=structuredClone(costs);change(changed);assert.throws(()=>partitionMeasuredWorkloads(files,2,{...options,costs:changed}));
+  }
+  sources.set('slow-a.js','changed source');
+  const stale=structuredClone(costs);stale.entries[0].milliseconds=900000000;
+  const current=partitionMeasuredWorkloads(files,2,options),changed=partitionMeasuredWorkloads(files,2,{...options,costs:stale});
+  assert.deepEqual(changed,current,'a stale source pin cannot assign its historical expensive cost to changed bytes');
+});
+
+test('six measured grammar cells retain the entire catalog exactly once under the existing deadline',()=>{
+  const files=partitionTests(testFiles()).groups.grammar;
+  const shards=Array.from({length:6},(_,index)=>partitionGroupFiles(files,`${index+1}/6`));
+  assert.equal(new Set(shards.flat()).size,files.length);assert.deepEqual(shards.flat().sort(),files);
+  assert.equal(shards.filter(shard=>shard.includes('issue-195-interchange-api-cli.test.js')).length,1);
+  const costs=readProjectData(new URL('../../parity/fixtures/ci-39615628279-workload-costs.lino',import.meta.url));
+  assert.equal(costs.logs.length,14);assert.ok(costs.entries.filter(row=>row.file.startsWith('js/src/')).length>300);
+  assert.ok(costs.entries.find(row=>row.file==='js/tests/issue-195-interchange-api-cli.test.js').milliseconds>=262000);
 });
 
 test('six JavaScript native grammar partitions conserve each historical partition after the recorded automatic deadline', async () => {

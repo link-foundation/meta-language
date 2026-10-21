@@ -14,7 +14,7 @@ test('reviewed current overlays retain all five actual providers and complete hi
   const modules=current.providers.map(row=>row.module);
   const root=new URL('../../',import.meta.url);
   for(const experiment of ['rust-text-certificate-adapter','rust-raw-binding-certificate-adapter']){
-    const readSource=module=>restoreCurrentCiRepairSource(restoreReviewedOverlayProviderModuleSource(readFileSync(new URL('js/src/'+module,root),'utf8'),'js/src/'+module),'js/src/'+module);
+    const readSource=module=>restoreReviewedOverlayProviderModuleSource(restoreCurrentCiRepairSource(readFileSync(new URL('js/src/'+module,root),'utf8'),'js/src/'+module),'js/src/'+module);
     const actual=readReviewedOverlayProviderSources({experiment,modules,readSource});assert.equal(actual.revision,current);
     const previous=restoreReviewedOverlayProviderSources({experiment,modules,readSource,sourceCommit:'113a7747f799cbce5167167a783eb88427bd2825'});
     assert.equal(previous.sources.size,5);

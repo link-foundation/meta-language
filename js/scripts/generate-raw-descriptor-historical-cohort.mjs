@@ -9,16 +9,16 @@ import {RAW_DESCRIPTOR_HISTORICAL_FILE,RAW_DESCRIPTOR_HISTORICAL_OUTPUT,RAW_DESC
   RAW_DESCRIPTOR_HISTORICAL_CURRENT,RAW_DESCRIPTOR_BORROWED_FILE,RAW_DESCRIPTOR_BORROWED_PREVIOUS,RAW_DESCRIPTOR_BORROWED_CURRENT,
   RAW_DESCRIPTOR_CONTINUATION_ARCHIVE,RAW_DESCRIPTOR_CONTINUATION_ARCHIVE_PIN,readRawDescriptorBorrowedAuthority,deriveRawDescriptorBorrowedChange,
   pinRawDescriptorHistoricalSource,readRawDescriptorHistoricalAuthority,
-  deriveRawDescriptorHistoricalChanges,verifyRawDescriptorHistoricalCohort} from './raw-descriptor-historical-cohort.mjs';
+  deriveRawDescriptorHistoricalChanges,verifyRawDescriptorHistoricalCohort,restoreRawDescriptorCohortSource} from './raw-descriptor-historical-cohort.mjs';
 const root=new URL('../../',import.meta.url);
 export function generateRawDescriptorHistoricalCohort({check=false}={}){
   const old=readRawDescriptorHistoricalAuthority(),{blob,certificate}=captureGitArtifactCertificate(RAW_DESCRIPTOR_HISTORICAL_REVISION,RAW_DESCRIPTOR_HISTORICAL_FILE);
   const current=blob.toString('utf8');assert.deepEqual(Buffer.from(current),blob);
   assert.deepEqual(pinRawDescriptorHistoricalSource(blob),RAW_DESCRIPTOR_HISTORICAL_CURRENT);
-  assert.deepEqual(readFileSync(new URL(RAW_DESCRIPTOR_HISTORICAL_FILE,root)),blob,'unknown live descriptors require another reviewed source epoch');
+  assert.deepEqual(Buffer.from(restoreRawDescriptorCohortSource(readFileSync(new URL(RAW_DESCRIPTOR_HISTORICAL_FILE,root),'utf8'),RAW_DESCRIPTOR_HISTORICAL_FILE)),blob,'unknown live descriptors require another reviewed source epoch');
   const borrowed=captureGitArtifactCertificate(RAW_DESCRIPTOR_HISTORICAL_REVISION,RAW_DESCRIPTOR_BORROWED_FILE),borrowedCurrent=borrowed.blob.toString('utf8');
   assert.deepEqual(Buffer.from(borrowedCurrent),borrowed.blob);assert.deepEqual(pinRawDescriptorHistoricalSource(borrowed.blob),RAW_DESCRIPTOR_BORROWED_CURRENT);
-  assert.deepEqual(readFileSync(new URL(RAW_DESCRIPTOR_BORROWED_FILE,root)),borrowed.blob,'unknown borrowed receipt successors refuse');
+  assert.deepEqual(Buffer.from(restoreRawDescriptorCohortSource(readFileSync(new URL(RAW_DESCRIPTOR_BORROWED_FILE,root),'utf8'),RAW_DESCRIPTOR_BORROWED_FILE)),borrowed.blob,'unknown borrowed receipt successors refuse');
   const borrowedPrevious=readRawDescriptorBorrowedAuthority().source;
   const packet={schemaVersion:1,model:'raw descriptor historical cohort 1',file:RAW_DESCRIPTOR_HISTORICAL_FILE,revision:RAW_DESCRIPTOR_HISTORICAL_REVISION,
     archive:{file:RAW_DESCRIPTOR_HISTORICAL_ARCHIVE,...RAW_DESCRIPTOR_HISTORICAL_ARCHIVE_PIN,identity:'raw consuming'},

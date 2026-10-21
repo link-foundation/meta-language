@@ -75,6 +75,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Direct user priority for automation and twenty percent resource investment toward eighty percent results, up to three subagents in the current phase, and full JavaScript and Rust parsing, emission and bidirectional own-codebase translation as the baseline before the remaining capabilities.',
     ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-WORKFLOW-THREE-SUBAGENT-CURRENT-PHASE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
   },
+  {
+    id: 'solo-continuation-2026-10-21',
+    key: 'latestSoloContinuationRequest',
+    title: 'Finish all existing agents and continue the current phase alone',
+    role: 'Latest direct user instruction supersedes the earlier three-agent allowance for this task phase: allow existing agents to finish and continue as coordinator without spawning or reactivating agents.',
+    ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */

@@ -29,6 +29,7 @@ include = [
     "src/data/typescript-erasure.lino",
     "src/data/typescript-portable-typing.lino",
     "src/data/reference-operations.lino",
+    "src/data/javascript-identifier-models.lino",
     "src/data/typed-program-links-schema.lino",
     "src/data/array-values.lino",
     "src/data/array-bindings.lino",

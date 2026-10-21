@@ -7,6 +7,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreRelativeArrayCurrentFrontendSource} from './relative-array-current-frontend-history.mjs';
 import {restoreRelativeArrayCurrentSourceView} from './relative-array-current-source-views.mjs';
+import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
 import {readOwnCodebaseRawDescriptorPolicy,readOwnCodebaseRawDescriptorPacket,
   deriveOwnCodebaseRawDescriptorSource} from './own-codebase-raw-source-descriptors.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy} from './own-codebase-baseline-naming-history.mjs';
@@ -125,7 +126,7 @@ export function readRelativeArrayFrontendSourceHistory(){
     cachedHistory=readBootstrapStructuredDataLino(bytes.toString('utf8'));
     const verified=verifyRelativeArrayFrontendSourceHistory(cachedHistory);
     assert.equal(readFileSync(new URL(RELATIVE_ARRAY_FRONTEND_HOST.path,root),'utf8'),verified.host,'only the exact two scoped host edits are admitted');
-    assert.equal(readFileSync(new URL(RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path,root),'utf8'),verified.currentInference,'the actual nullable-array successor retains its separate current runtime source');
+    assert.equal(restoreReferenceIdentityHistoricalSource(readFileSync(new URL(RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path,root),'utf8'),RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path,'relative array inference'),verified.currentInference,'the actual nullable-array successor retains its separate current runtime source');
   }
   return structuredClone(cachedHistory);
 }
@@ -139,6 +140,7 @@ export function restoreRelativeArrayFrontendDescriptorSource(source,file,profile
   const policy=readOwnCodebaseRawDescriptorPolicy();
   if(profile!==RELATIVE_ARRAY_FRONTEND_PROFILE)return source;
   if(file===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path){
+    source=restoreReferenceIdentityHistoricalSource(source,file,'relative array inference');
     const history=readRelativeArrayFrontendSourceHistory(),previous=history.nullableInference.sourceText;
     if(source===previous)return source;
     assert.deepEqual(relativeArrayFrontendPin(source),RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.current,'an unknown nullable-inference successor has no relative-array historical authority');

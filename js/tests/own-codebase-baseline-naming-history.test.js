@@ -29,11 +29,17 @@ test('historical naming retains complete certified definitions and every indepen
   assert.deepEqual(history,before,'extractors cannot replace the retained original source or current pins');
   const changed=readOwnCodebaseHistoricalNamingPolicy();changed.views[0].current.sha256='0'.repeat(64);
   assert.deepEqual(readOwnCodebaseHistoricalNamingPolicy().views,before.views.map(({predecessor,...view})=>view));
+  const additional=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews,retained=structuredClone(additional);
+  additional.sources[0].predecessor.source+='caller mutation';additional.views.length=0;
+  assert.deepEqual(readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews,retained,'cached policy values remain detached from callers');
+  history.views[0].predecessor.source+='caller mutation';
+  assert.deepEqual(readOwnCodebaseHistoricalNamingSources(),before,'the full-input hash guard and original certificate snapshot survive caller mutation');
 });
 
 test('unknown whole current naming sources and driver bytes cannot borrow historical authority',()=>{
   const history=readOwnCodebaseHistoricalNamingSources(),scratch=mkdtempSync(join(tmpdir(),'meta-language-own-naming-'));
-  const files=[...history.views.map(view=>view.file),history.driver.file];
+  const files=[...history.views.map(view=>view.file),history.driver.file,
+    ...readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews.views.map(row=>row.file)];
   try{
     for(const file of files){const destination=join(scratch,file);mkdirSync(dirname(destination),{recursive:true});writeFileSync(destination,readFileSync(join(root,file)));}
     const expected=extractOwnCodebaseHistoricalNames(root,NAME_INVENTORIES,history);

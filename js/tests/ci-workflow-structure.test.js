@@ -89,9 +89,15 @@ test('main dependency refresh retains failed live findings and delivers their ou
   } finally {rmSync(directory, {recursive: true, force: true});}
 });
 
-test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', () => {
+test('modern array provenance keeps exact checkout bytes with automatic Windows line endings enabled', async () => {
   const fixture = readProjectData(path.join(root, 'parity/fixtures/modern-javascript-array-parity.lino'));
-  const sources = [fixture.contract, ...fixture.sourceProfiles,
+  const {buildModernArrayParityFixture}=await import('../scripts/generate-modern-javascript-array-parity-fixtures.mjs');
+  assert.deepEqual(fixture,buildModernArrayParityFixture({historicalSource:fixture.historicalNative.source}),
+    'the normal source inverse checks every original profile byte and the complete prior fixture');
+  const sources = [fixture.contract, ...fixture.sourceProfiles.map(source=>{
+    const current=fixture.identityCorrection.sourceEpochs.find(row=>row.path===source.path);
+    assert.ok(current,'each original source path retains its complete current checkout profile');return current;
+  }),
     {path: 'rust/Cargo.lock'}, {path: 'rust/Cargo.toml'}];
   for (const source of sources) {
     const original = spawnSync('git', ['cat-file', 'blob', `HEAD:${source.path}`],
@@ -102,7 +108,7 @@ test('modern array provenance keeps exact checkout bytes with automatic Windows 
     assert.equal(checkout.status, 0, String(checkout.stderr));
     assert.deepEqual(checkout.stdout, original.stdout, `${source.path}: checkout retains every published byte`);
     let input = checkout.stdout;
-    if (source !== fixture.contract) {
+    if (source !== fixture.contract && !fixture.identityCorrection.sourceEpochs.includes(source)) {
       const marker = Buffer.from('\n// BEGIN modern JavaScript array parity observations\n');
       const end = input.indexOf(marker);
       if (end >= 0) input = input.subarray(0, end);

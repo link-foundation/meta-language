@@ -37,6 +37,14 @@ export function deriveReferenceIdentityValidationSource(previous){return deriveW
 /** Live runtime/codec/checker use never invokes this scoped historical adapter. */
 export function restoreReferenceIdentityHistoricalSource(source,file,scope){
  assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof scope,'string');
+  // This finite whole-source successor adds inferred optional-tuple syntax.
+  // Restore its exact predecessor before the existing independently certified
+  // nullable-array source chain; unknown source bytes retain the old refusal.
+  if(scope==='relative array inference'&&file==='js/src/translation/javascript-infer.js'&&pin(source).sha256==="746c02a3f5de1ecce0c5a3e7ba36c2caf535f21cc1fbb6223264ab6bc680c59f"){
+    assert.equal(source.split("    for (const [node] of this.expressionTerms) {\n      const value = node.k === 'let' && !node.type ? this.expressionTypes.get(node.value) : null;\n      if (value?.kind === 'option' && value.element.kind === 'tuple') node.type = value;\n    }\n").length,2);
+    source=source.replace("    for (const [node] of this.expressionTerms) {\n      const value = node.k === 'let' && !node.type ? this.expressionTypes.get(node.value) : null;\n      if (value?.kind === 'option' && value.element.kind === 'tuple') node.type = value;\n    }\n",'');
+    assert.equal(pin(source).sha256,"f87fa8dcb3362165869d8f4678fd014f13c057eee92243d1489297613c66972d");
+  }
  if(file===validator&&['collection size projection','program string registration'].includes(scope)){
   const owner=originalOwner(file),previous=deriveCollectionSizeProjectionValidationSource(owner.source);
   assert.deepEqual(pin(previous),owner.current);

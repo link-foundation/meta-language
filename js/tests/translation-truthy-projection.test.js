@@ -12,9 +12,10 @@ import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
 import {TRUTHY_PROJECTION_CASES,TRUTHY_PROJECTION_CHECKED_CASES,TRUTHY_PROJECTION_LITERAL_INPUT,
  TRUTHY_PROJECTION_HOST_PARAMETER_SOURCE,TRUTHY_PROJECTION_HOST_PARAMETER_VALUES} from '../scripts/truthy-projection-fixtures.mjs';
-import {generateTruthyProjectionSchema} from '../scripts/generate-truthy-projection-schema.mjs';
+import {generateTruthyProjectionSchema,generateTruthyProjectionHostSuccessors} from '../scripts/generate-truthy-projection-schema.mjs';
 import {deriveTruthyProjectionSchema,verifyTruthyProjectionSchemaPacket,
- restoreTruthyProjectionHistoricalSource,readTruthyProjectionSchemaPacket} from '../scripts/truthy-projection-schema.mjs';
+ restoreTruthyProjectionHistoricalSource,readTruthyProjectionSchemaPacket,
+ restoreTruthyProjectionHostSource,verifyTruthyProjectionHostSuccessors} from '../scripts/truthy-projection-schema.mjs';
 import {restoreCollectionSizeProjectionSchema,readCollectionSizeProjectionSchemaPacket,
  verifyCollectionSizeProjectionSchemaPacket} from '../scripts/collection-size-projection-schema.mjs';
 
@@ -105,7 +106,7 @@ test('normal Boolean projection successor preserves every complete predecessor a
  const collection=readCollectionSizeProjectionSchemaPacket(),old=verifyCollectionSizeProjectionSchemaPacket(collection);
  assert.equal(deriveTruthyProjectionSchema(proof.sources[0].previous.source),proof.sources[0].current.source);
  for(const row of proof.sources){
-  const bytes=readFileSync(new URL('../../'+row.file,import.meta.url));assert.equal(bytes.toString('utf8'),row.current.source);
+  const bytes=readFileSync(new URL('../../'+row.file,import.meta.url));assert.equal(restoreTruthyProjectionHostSource(bytes.toString('utf8'),row.file),row.current.source);
   assert.equal(restoreTruthyProjectionHistoricalSource(bytes,row.file),row.previous.source);
   assert.equal(restoreTruthyProjectionHistoricalSource(Buffer.from(row.previous.source),row.file),row.previous.source);
   assert.throws(()=>restoreTruthyProjectionHistoricalSource(Buffer.concat([bytes,Buffer.from('\n')]),row.file));
@@ -126,4 +127,25 @@ test('normal Boolean projection successor preserves every complete predecessor a
  ]){const changed=structuredClone(packet);change(changed);assert.throws(()=>verifyTruthyProjectionSchemaPacket(changed));}
  assert.equal(createHash('sha256').update(proof.sources[0].previous.source).digest('hex'),'d34bf62c4fd6114e5cdaa8a78558de01b83d373175185ee6a94b56114b80599f');
  assert.deepEqual(readTruthyProjectionSchemaPacket(),packet,'readers return independently checked complete data');
+});
+
+test('the complete current Boolean checker successors preserve the old packet and refuse forged source authority',()=>{
+ const packet=generateTruthyProjectionHostSuccessors({check:true});
+ for(const row of packet.sources){
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  assert.equal(restoreTruthyProjectionHostSource(actual,row.file),row.previous.source);
+  assert.equal(restoreTruthyProjectionHostSource(actual+'\n',row.file),actual+'\n');
+  assert.equal(restoreTruthyProjectionHostSource(actual,'unregistered/source.js'),actual);
+ }
+ for(const change of[
+  value=>{value.sources[0].current.source+='\n';},
+  value=>{value.sources[0].previous.source+='\n';},
+  value=>{value.sources[1].edit.start++;},
+  value=>{value.sources[1].current.certificate.blob.sha256='0'.repeat(64);},
+  value=>{value.revision='0'.repeat(40);},
+  value=>{value.unregisteredAuthority=true;},
+ ]){const changed=structuredClone(packet);change(changed);assert.throws(()=>verifyTruthyProjectionHostSuccessors(changed));}
+ // The old writer must never downgrade the runtime checker to its historical
+ // source view, even when check mode can authenticate that view.
+ assert.throws(()=>generateTruthyProjectionSchema(),/unknown actual source refuses/u);
 });

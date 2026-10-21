@@ -40,7 +40,23 @@ function numberBits(value){assert.equal(typeof value,'number');const bytes=Buffe
 function bitsNumber(value){assert.match(value,/^[0-9a-f]{16}$/u);return Buffer.from(value,'hex').readDoubleBE();}
 export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
  return Object.entries(digests).map(([file,expected])=>{
-  const actualBytes=read(new URL(file,root)),actualSha256=sha256(actualBytes);let modelBytes=actualBytes,ownerRevision;
+  const physicalBytes=read(new URL(file,root));let actualBytes=physicalBytes,sourceSuccession;
+  if(file==='rust/src/translation/frontend_rules.rs'&&sha256(physicalBytes)==='3c9be49f013c6ed1d3e8f2c5a9235236160f6eed4cc3e60b27b415ef5d7d55e7'){
+   assert.equal(physicalBytes.length,43982);
+   const physical=physicalBytes.toString('utf8'),current=readSourceTextRustBlock(physical,'fn','accept_java_script_optional_tuple_context');
+   const receipt=read(new URL('experiments/binary-metadata-buffer/frontend-owner-string-construction-revision.lino',root));
+   assert.equal(sha256(receipt),'434c61e21c16876f6ea5910a146fee3bfeaa019a79ba95005f2e83490bbcdcac');
+   const retained=readStructuredDataLino(receipt.toString('utf8'));
+   assert.equal(sha256(retained.current.source),'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d');
+   const previous=readSourceTextRustBlock(retained.current.source,'fn','accept_java_script_optional_tuple_context');
+   assert.equal(physical.split(current).length,2);actualBytes=Buffer.from(physical.replace(current,()=>previous));
+   assert.equal(sha256(actualBytes),'bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d');
+   assert.equal(actualBytes.length,43944);
+   assert.equal(readSourceTextRustBlock(physical,'mod','ml_array'),readSourceTextRustBlock(actualBytes.toString('utf8'),'mod','ml_array'),'the entire compiled provider is unchanged');
+   assert.equal(actualBytes.toString('utf8').replace(previous,()=>current),physical,'the complete actual successor is recoverable');
+   sourceSuccession={revision:'3fe3a9f9decfa6431b5b0718729a5d123b5f236b',actualSourceBytes:physicalBytes.length,actualSourceSha256:sha256(physicalBytes),historicalSourceSha256:sha256(actualBytes)};
+  }
+  const actualSha256=sha256(actualBytes);let modelBytes=actualBytes,ownerRevision;
   const refusal='the frozen binary candidate model changed: '+file;
   if(file==='rust/src/translation/frontend_rules.rs'&&actualSha256!==expected){
    assert.ok(actualSha256==='37033e27b97bc145b0d51b89016606e141d5962c0f423ee131202432a301dad3'||actualSha256==='bbf032af0422fd7252da32e090c065d3e4c9c4c8d88a284a4a15c02c1884a71d',refusal);
@@ -97,7 +113,7 @@ export function verifyBinaryMetadataBufferNativeModel(read=readFileSync){
    }
   }
   const actual=sha256(modelBytes);assert.equal(actual,expected,refusal);
-  return{file,sha256:actual,...(ownerRevision?{ownerRevision}:{})};
+  return{file,sha256:actual,...(ownerRevision?{ownerRevision}:{}),...(sourceSuccession?{sourceSuccession}:{})};
  });
 }
 export function binaryMetadataBufferNativeMode(environment=process.env){if(environment.BINARY_METADATA_BUFFER_NATIVE!=='1')return false;if(environment.CI!=='true')throw new TypeError('BINARY_METADATA_BUFFER_NATIVE=1 requires CI=true; native compilation is forbidden locally');return true;}

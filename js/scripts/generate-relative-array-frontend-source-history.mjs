@@ -9,6 +9,7 @@ import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy} from './own-codebase-baseline-naming-history.mjs';
 import {readOwnCodebaseRawDescriptorPolicy} from './own-codebase-raw-source-descriptors.mjs';
 import {restoreRelativeArrayCurrentFrontendSource} from './relative-array-current-frontend-history.mjs';
+import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
 import {RELATIVE_ARRAY_FRONTEND_PROFILE,RELATIVE_ARRAY_FRONTEND_HOST,relativeArrayFrontendPin,
   replayRelativeArrayFrontendHost,readAuthenticatedCurrentRelativeArrayFrontend,
   verifyRelativeArrayFrontendSourceHistory,RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,replayRelativeArrayNullableInference} from './relative-array-frontend-source-history.mjs';
@@ -31,7 +32,7 @@ export function generateRelativeArrayFrontendSourceHistory({check=false,apply=fa
   const inferenceCapture=captureGitArtifactCertificate(inferenceOwner.revision,inferenceOwner.path);
   const inferenceSource=inferenceCapture.blob.toString('utf8');assert.deepEqual(Buffer.from(inferenceSource),inferenceCapture.blob);
   const inferenceReplay=replayRelativeArrayNullableInference(inferenceSource);
-  assert.equal(readFileSync(new URL(inferenceOwner.path,root),'utf8'),inferenceReplay.source,'capture refuses unknown nullable-array source successors');
+  assert.equal(restoreReferenceIdentityHistoricalSource(readFileSync(new URL(inferenceOwner.path,root),'utf8'),inferenceOwner.path,'relative array inference'),inferenceReplay.source,'capture refuses unknown nullable-array source successors');
   const captured=captureGitArtifactCertificate(RELATIVE_ARRAY_FRONTEND_HOST.revision,RELATIVE_ARRAY_FRONTEND_HOST.path);
   const sourceText=captured.blob.toString('utf8');assert.deepEqual(Buffer.from(sourceText),captured.blob);
   const replay=replayRelativeArrayFrontendHost(sourceText);
