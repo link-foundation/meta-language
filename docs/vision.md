@@ -3384,6 +3384,8 @@ archive and declaration. Historical source adapters likewise recheck complete
 current bytes before restoring their original assertions. These views establish
 source conservation and never supply native execution evidence.
 
+Historical translation readers select an explicit source profile before older receipt inverses. One compact Links cohort authenticates complete committed raw descriptor epochs while reusing their existing certified archives. Array history recovers its original complete artifact; library relocation and continuation history retain the separately authenticated native packaging edge. Shared scalar facts preserve every logical alias. The first scoped-iteration declaration packet and the additional loop source each retain complete source memberships and byte inverses. Current parser and emitter files remain active. Every original receipt, producer assertion and strict whole-byte gate remains required; unknown readers or changed source bytes stay visible to those gates. These source views establish provenance conservation and supply no native execution or semantic-equivalence evidence.
+
 CI follows the same order as development. One workflow
 ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) runs the
 JavaScript workflow first and the Rust workflow after it: no Rust job starts
@@ -3717,6 +3719,13 @@ for every JavaScript source module, with the commit and hashes of both runtime
 sources. Both acceptance suites verify the complete published reports before
 recording the per-module difference assertion; a small local report test alone
 cannot supply that evidence.
+Each measurement may reuse extracted Rust function definitions for at most three
+exact parser input strings across its generic, decorated and native comparisons.
+Every comparison still runs. The row retains only function names and source
+text, clears them on every exit and never caches a failed read or a CST. Distinct
+source bytes require independent parsing. Full reports retain every module,
+counterpart, coverage assertion and their existing CI deadline; timing success
+requires a new CI observation.
 Report import resolution checks every candidate callable and avoids resolving
 dependencies of classes and forwarded names that the current source binder
 cannot bind. Every source module still receives its complete measurement and
@@ -4117,6 +4126,15 @@ changed text cannot inherit a prior value, even with unchanged size and file
 timestamps. Other files retain ordinary reads. The independent canonical decoder
 checks the actual complete concept register in a bounded control; this does not
 establish corrected CI timing.
+
+The naming source-binding register has a separate generated Links codec profile.
+Its loader authenticates the complete current document before admitting at most
+192 MiB of expanded scalar bytes. Physical input remains bounded by 128 MiB,
+with one million nodes and depth 256. The profile records exact source bytes,
+digest, row count and validated expansion costs; changed or stale inputs refuse.
+The normal author preserves previous profile epochs and runs after binding
+generation. General decoder defaults and the complete original naming-source
+migration checks remain required.
 
 Raw projection generation and its complete projection suite run in their own
 required JavaScript package cell. The full source/CST/archive replay and native

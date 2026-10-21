@@ -4,14 +4,42 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
+import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
-import {readProjectData,checkProjectData,writeProjectData} from './project-data.mjs';
+import {readProjectData,checkProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
+import {restoreRawConsumingSnapshotSource} from './raw-consuming-snapshot-source-profile.mjs';
+import {restoreProgramStringSourceDescriptorEdge} from './program-string-source-descriptors.mjs';
 
 const root=new URL('../../',import.meta.url),revision='d1232503fb38246f7e28f5d414c882a70944b38b';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const arrayHistory=readProjectData(new URL('parity/self-translation/array-relative-element-history.lino',root));
 const rangeHistory=readProjectData(new URL('parity/self-translation/original-number-source-range-history.lino',root));
+
+/** These two current inputs have separate authenticated source/descriptor
+ * successors. Reuse those complete inverses before selecting this author's
+ * original cohort; every actual current gate remains separate and unchanged. */
+export function restoreContinuationHistoricalAuthorInput(source,file){
+  assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
+  if(['js/src/translation/check.js','parity/self-translation/complete-declaration-receipts.lino'].includes(file)){
+    let historical;
+    if(file==='js/src/translation/check.js')historical=restoreRawConsumingSnapshotSource(Buffer.from(source),file,true).toString('utf8');
+    else{
+      const value=readStructuredDataLino(source);
+      assert.equal(serializeProjectData(value,file),source,'the complete selected register spelling must be canonical before its original whole-byte gates');
+      historical=serializeProjectData(restoreProgramStringSourceDescriptorEdge(null,'historical register',value).register,file);
+    }
+    const row=arrayHistory.sources.find(row=>row.file===file);assert.ok(row);
+    if(historical!==source||pin(source).sha256===row.current.sha256){
+      assert.deepEqual(pin(historical),row.current,'the entire independently selected historical author input must retain its original identity');
+      return historical;
+    }
+    source=historical;
+  }
+  return restoreNativeCompatibilitySourceHistory(file,source);
+}
 
 /** Freeze exact predecessor views; no current artifact or implementation is rewritten. */
 export function generateContinuationHistoricalInputs({check=false}={}) {
@@ -30,7 +58,7 @@ export function generateContinuationHistoricalInputs({check=false}={}) {
   include(rangeHistory.previousReceipt.file,'original number source ranges',rangeHistory.currentReceipt);
   const sources=[];
   for(const [file,{profiles:roles,expected}]of profiles){
-    const actual=restoreNativeCompatibilitySourceHistory(file,readFileSync(new URL(file,root),'utf8'));
+    const actual=restoreContinuationHistoricalAuthorInput(readFileSync(new URL(file,root),'utf8'),file);
     if(pin(actual).sha256===expected.sha256)continue;
     const original=captureGitArtifactCertificate(revision,file),sourceText=original.blob.toString('utf8');
     verifyGitArtifactCertificate(original.certificate,original.blob,{revision,path:file});
