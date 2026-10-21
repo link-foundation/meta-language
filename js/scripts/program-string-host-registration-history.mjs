@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
+import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource} from './collection-size-projection-schema.mjs';
 
 const root=new URL('../../',import.meta.url);
@@ -127,6 +128,19 @@ export function verifyProgramStringHostRegistrationHistory(packet){
 /** Unknown successors remain visible to the old strict host assertion. */
 export function restoreProgramStringHostRegistrationSource(source,path){
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  if(path==='rust/src/translation/emit_rust.rs'){
+    // Reuse the existing complete current-source certificate/inverse, then
+    // replay the immutable host proposal. Actual runtime source stays current.
+    const previous=restoreCurrentCiRepairSource(source,path);
+    if(previous===source)return source;
+    const owner=originalHosts().value.sources.find(row=>row.file===path);assert.ok(owner);
+    assert.equal(owner.commit,PROGRAM_STRING_HOST_REVISION);assert.equal(previous,owner.sourceText);
+    verifyGitArtifactCertificate(owner.certificate,Buffer.from(previous),{revision:PROGRAM_STRING_HOST_REVISION,path});
+    const replay=replayProgramStringRegistrationChanges(previous,owner.actions);
+    assert.equal(replay.source,owner.proposed.source);
+    assert.deepEqual(programStringHostRegistrationPin(replay.source),{bytes:owner.proposed.bytes,sha256:owner.proposed.sha256});
+    return replay.source;
+  }
   if(path==='js/src/typed-program-links-validation.js'){
     const packet=readCollectionSizeProjectionSchemaPacket(),owner=packet.owners.find(row=>row.file===path);assert.ok(owner);
     const current=deriveCollectionSizeProjectionValidationSource(owner.source);

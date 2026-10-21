@@ -5,6 +5,8 @@ import test from 'node:test';
 import {readProjectData} from '../scripts/project-data.mjs';
 import {generateProgramStringHostRegistrationHistory} from '../scripts/generate-program-string-host-registration-history.mjs';
 import {restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
+import {restoreCurrentCiRepairSource} from '../scripts/current-ci-repair-source-history.mjs';
+import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {PROGRAM_STRING_REGISTRATION_REVISION,PROGRAM_STRING_HOST_REVISION,PROGRAM_STRING_HOST_ARCHIVE,
   PROGRAM_STRING_REGISTRATION_CHANGES,PROGRAM_STRING_REGISTRATIONS,programStringHostRegistrationPin,
   replayProgramStringRegistrationChanges,verifyProgramStringHostRegistrationHistory,
@@ -95,4 +97,32 @@ test('normal capture reproduces the exact source succession and leaves the compl
   const packet=generateProgramStringHostRegistrationHistory({check:true});
   assert.deepEqual(packet,policy());
   assert.deepEqual(readFileSync(new URL(PROGRAM_STRING_HOST_ARCHIVE.path,root)),before);
+});
+
+
+test('the complete current native emitter reuses its certified source inverse and the unchanged original host proposal',()=>{
+  const path='rust/src/translation/emit_rust.rs',artifact=new URL(PROGRAM_STRING_HOST_ARCHIVE.path,root),before=readFileSync(artifact);
+  const hosts=readProjectData(artifact),owner=hosts.sources.find(row=>row.file===path);assert.ok(owner);
+  const actual=readFileSync(new URL(path,root),'utf8');
+  assert.notEqual(actual,owner.sourceText,'the test exercises the actual complete successor');assert.notEqual(actual,owner.proposed.source);
+  const predecessor=restoreCurrentCiRepairSource(actual,path);assert.equal(predecessor,owner.sourceText);
+  verifyGitArtifactCertificate(owner.certificate,Buffer.from(predecessor),{revision:PROGRAM_STRING_HOST_REVISION,path});
+  const proposed=replayProgramStringRegistrationChanges(predecessor,owner.actions).source;
+  assert.equal(proposed,owner.proposed.source);
+  assert.deepEqual(programStringHostRegistrationPin(proposed),{bytes:owner.proposed.bytes,sha256:owner.proposed.sha256});
+  assert.equal(restoreProgramStringHostRegistrationSource(actual,path),proposed,'the original seven-other-host strict equality remains applicable');
+  assert.equal(readFileSync(new URL(path,root),'utf8'),actual,'the actual runtime emitter is never replaced');
+  assert.deepEqual(readFileSync(artifact),before,'all nine complete host rows and their original assertions remain unchanged');
+});
+
+test('the native emitter source view preserves both historical inputs and refuses unknown complete successors or paths',()=>{
+  const path='rust/src/translation/emit_rust.rs',owner=readProjectData(new URL(PROGRAM_STRING_HOST_ARCHIVE.path,root)).sources.find(row=>row.file===path),actual=readFileSync(new URL(path,root),'utf8');
+  assert.ok(owner);
+  for(const source of[owner.sourceText,owner.proposed.source])assert.equal(restoreProgramStringHostRegistrationSource(source,path),source,'both original input branches keep exact identity');
+  for(const source of[actual+'\n',actual+'\n// unknown native emitter successor\n',actual.replace('utf16_strings','unknown_string_representation')]){
+    assert.notEqual(source,actual);assert.equal(restoreCurrentCiRepairSource(source,path),source);
+    assert.equal(restoreProgramStringHostRegistrationSource(source,path),source);
+    assert.ok(source!==owner.sourceText&&source!==owner.proposed.source,'the original producer must still refuse this input');
+  }
+  for(const other of['rust/src/translation/unregistered_emitter.rs','unregistered.rs'])assert.equal(restoreProgramStringHostRegistrationSource(actual,other),actual);
 });
