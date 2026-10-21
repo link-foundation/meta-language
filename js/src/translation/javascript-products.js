@@ -127,6 +127,9 @@ export function validateJavaScriptProducts(program, exportedNames = new Set()) {
         edge(id, object, type?.kind === 'tuple');
         return id;
       }
+      case 'arrayIsArray':
+        expression(node.arg, env, context);
+        return id;
       case 'functionValue':
         functionValues.push({ node, fn: signature(node.path, context) });
         return id;

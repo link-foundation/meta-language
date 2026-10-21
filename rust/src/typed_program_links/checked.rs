@@ -85,6 +85,19 @@ fn validate_type_records(
             ));
         }
         let kind = value["k"].as_str().unwrap_or_default();
+        if kind == "binary" {
+            let left = &value["left"]["type"];
+            let right = &value["right"]["type"];
+            let domain = value.get("domain").filter(|domain| !domain.is_null());
+            let refusal = crate::translation::reference_identity_rules::read_reference_identity_comparison_error(
+                value["op"].as_str().unwrap_or_default(), left["kind"].as_str().unwrap_or_default(), right["kind"].as_str().unwrap_or_default(),
+                left["reference"] == true, right["reference"] == true, left == right, domain.is_some(),
+                domain.is_some_and(|domain| domain["reference"] == true), domain == Some(left),
+            );
+            if !refusal.is_empty() {
+                return Err(error(refusal));
+            }
+        }
         if kind == "apply" {
             let count = |field: &Value| {
                 serde_json::Number::from(field.as_array().map_or(0, Vec::len))

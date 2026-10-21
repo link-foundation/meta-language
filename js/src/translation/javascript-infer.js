@@ -320,6 +320,10 @@ class Inference {
     }
     this.solve();
     for (const [node, term] of this.expressionTerms) this.expressionTypes.set(node, this.surface(term, node.span));
+    for (const [node] of this.expressionTerms) {
+      const value = node.k === 'let' && !node.type ? this.expressionTypes.get(node.value) : null;
+      if (value?.kind === 'option' && value.element.kind === 'tuple') node.type = value;
+    }
     for (const { path, fn } of functions) {
       const signature = this.signatures.get(path.join('.'));
       fn.params.forEach((param, index) => {

@@ -10,7 +10,9 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
+import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
@@ -587,17 +589,18 @@ class Checker {
         return this.arrayLiteral(node, env, path, expected);
       }
       case 'tuple': {
+        const context = acceptJavaScriptOptionalTupleContext(this.language, node.k, expected?.kind ?? '', expected?.element?.kind ?? '') ? expected.element : expected;
         if (node.frozen !== undefined && typeof node.frozen !== 'boolean') throw typeError('tuple frozen facet must be a boolean', node.span);
         if (node.productModel !== undefined && !acceptProgramTupleProductModel(node.productModel, node.frozen === true)) throw typeError('unknown or contradictory tuple product model', node.span);
         if (node.frozen && node.items.length === 0) throw unsupported('empty immutable tuple product', 'an empty positional product is distinct from a unit value and needs its own target encoding', node.span);
-        if (expected && expected.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(expected)} is expected`, node.span);
-        if (expected && node.items.length !== expected.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
+        if (context && context.kind !== 'tuple') throw typeError(`tuple literal where ${typeKey(context)} is expected`, node.span);
+        if (context && node.items.length !== context.elements.length) throw typeError('tuple literal has the wrong number of elements', node.span);
         const items = node.items.map((item, index) => {
-          const want = expected?.elements[index];
+          const want = context?.elements[index];
           const value = this.expr(item, env, path, want);
           return want ? coerce(value, want, this.language, item.span ?? node.span) : value;
         });
-        const type = expected ?? tuple(items.map(item => item.type));
+        const type = context ?? tuple(items.map(item => item.type));
         if (node.frozen && (!immutableProductType(type) || items.some(item => !immutableProductValue(item, env.get(PRODUCT_VALUES))))) {
           throw unsupported('immutable tuple product', 'every element needs the recursive scalar Copy value model; a mutable inner tuple cannot be frozen by its outer product', node.span);
         }
@@ -671,8 +674,12 @@ class Checker {
       }
       case 'arrayIsArray': {
         const value = this.expr(node.arg, env, path, undefined);
-        const body = literal(BOOL, value.type.kind === 'array' || value.type.kind === 'tuple');
-        return { k: 'let', name: this.freshName('ml_array_test'), value, body, type: BOOL };
+        const plan = readJavaScriptArrayClassificationPlan(value.type.kind, value.type.element?.kind ?? '');
+        if (plan.length !== 2 || !plan[0] && plan[1]) throw unsupported('Array.isArray operand',
+          'the checked value needs a closed represented kind or a flat optional array/tuple; unknown union/proxy domains need an explicit operational model', node.span);
+        const name = this.freshName('ml_array_test');
+        const body = plan[1] ? this.booleanValue({ k: 'var', name, type: value.type }, node.span) : literal(BOOL, plan[0]);
+        return { k: 'let', name, value, body, type: BOOL };
       }
       case 'lambda': {
         const inner = new Map(env);
@@ -798,7 +805,7 @@ class Checker {
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
         let then = this.expr(node.then, env, path, expected, allowLiteral);
-        let otherwise = this.expr(node.else, env, path, then.type.kind === 'literal' ? expected : then.type, allowLiteral);
+        let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
         if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
         if (then.type.kind === 'literal') {
           then = this.expr(node.then, env, path, this.defaultNumber());
@@ -1206,6 +1213,9 @@ class Checker {
         }
       }
       const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+      if (this.language === 'JavaScript' && acceptReferenceIdentityComparison(op, left.type.kind, right.type.kind, left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
+        return {k: 'binary', op, left, right, type: BOOL, domain: left.type};
+      }
       if (left.type.kind === 'tuple') throw unsupported('comparison of tuples', 'tuple value equality and JavaScript reference identity need an explicit operational comparison model; compare positional elements', node.span);
       if (left.type.kind === 'data' || left.type.kind === 'unit') {
         throw unsupported('structural equality of data values', 'comparisons of data values are not in the portable core', node.span);

@@ -312,7 +312,7 @@ export function readTypeQueryResult(kind) {
 
 /** @param {string} language @param {string} sourceKind @param {string} expectedKind @param {string} presentKind @returns {boolean} */
 export function acceptJavaScriptOptionalTupleContext(language, sourceKind, expectedKind, presentKind) {
-  return language === 'JavaScript' && sourceKind === 'array' && expectedKind === 'option' && presentKind === 'tuple';
+  return language === 'JavaScript' && (sourceKind === 'array' || sourceKind === 'tuple') && expectedKind === 'option' && presentKind === 'tuple';
 }
 
 /** @param {string} method @returns {string} */

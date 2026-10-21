@@ -57,6 +57,7 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
         | SNode::ReferencePayload { value: object, .. }
         | SNode::CellRead { cell: object }
         | SNode::TypeOf { arg: object }
+        | SNode::ArrayIsArray { arg: object }
         | SNode::Unary { arg: object, .. }
         | SNode::StringMap { object, .. }
         | SNode::ToString { arg: object }
@@ -192,6 +193,7 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
         | SNode::ReferencePayload { value: object, .. }
         | SNode::CellRead { cell: object }
         | SNode::TypeOf { arg: object }
+        | SNode::ArrayIsArray { arg: object }
         | SNode::Unary { arg: object, .. }
         | SNode::StringMap { object, .. }
         | SNode::ToString { arg: object }

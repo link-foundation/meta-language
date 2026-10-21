@@ -20,6 +20,7 @@ import { TokenCursor, describe, tokenize } from './lexer.js';
 import { BOOL, FLOAT, INT, NAT, STRING, array } from './types.js';
 import { arrayBindingNames, bindArrayElements, isLiteralBinding, readArrayBinding, readArrayBindingInitializer, readClosure, readCompositeType, validateClosureCaptures } from './javascript-bindings.js';
 import { hasStructuralIdentity, requiresReferenceSemantics } from './reference-analysis.js';
+import { markSharedReferenceTypes } from './javascript-cells.js';
 import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from './surface-raw-metadata-rules.js';
 import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
@@ -315,7 +316,11 @@ class JavaScriptParser {
     const inferred = inferJavaScriptTypes(program);
     finishJavaScriptScalarLoops(inferred);
     validateJavaScriptProducts(inferred, this.exportedNames);
-    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) inferred.referenceSemantics = true;
+    if (selectSurfaceReferenceSemantics(false, this.referenceSemanticsEnabled && hasStructuralIdentity(inferred), this.referenceSemanticsEnabled)) {
+      const selected = inferred.referenceSemantics !== true;
+      inferred.referenceSemantics = true;
+      if (selected) return markSharedReferenceTypes(inferred);
+    }
     return inferred;
   }
 

@@ -243,6 +243,13 @@ function inspectSurfaceReferenceExpression(columns, rows, size, program, node, n
     const path = readSurfaceReferenceField(columns, rows, size, node, 'path');
     if (path >= 0 && readRequiredNumberFact(rows, size + (path)) === 1) return [readSurfaceReferenceType(columns, readSurfaceReferenceScope(names, types, readSurfaceReferenceText(columns, size, readRequiredNumberFact(rows, size * 2 + (readRequiredNumberFact(rows, path)))))), 0];
     const signature = findSurfaceReferenceSignature(columns, rows, size, program, readSurfaceReferencePath(columns, rows, size, path));
+    // The existing surface represents a zero-argument call as its resolved
+    // function name. Read that actual declaration's result, as the checker
+    // does; an unapplied function with parameters is still not a container.
+    const parameters = readSurfaceReferenceField(columns, rows, size, signature, 'params');
+    if (readSurfaceReferenceKind(columns, rows, size, signature) === 'fn'
+      && parameters >= 0 && readRequiredNumberFact(rows, size + parameters) === 0)
+      return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, signature, 'ret')), 0];
     return [readSurfaceReferenceType(columns, readSurfaceReferenceField(columns, rows, size, signature, 'type')), 0];
   }
   if (kind === 'let') {

@@ -130,6 +130,9 @@ pub enum SNode {
     TypeOf {
         arg: Box<SExpr>,
     },
+    ArrayIsArray {
+        arg: Box<SExpr>,
+    },
     Unary {
         op: UnaryOp,
         arg: Box<SExpr>,
@@ -352,6 +355,7 @@ impl SNode {
             Self::Field { .. } => "field",
             Self::Record { .. } => "record",
             Self::TypeOf { .. } => "typeOf",
+            Self::ArrayIsArray { .. } => "arrayIsArray",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
             Self::If { .. } => "if",

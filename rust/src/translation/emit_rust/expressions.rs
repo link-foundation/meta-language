@@ -475,11 +475,49 @@ impl RustEmitter<'_> {
             left,
             right,
             semantics,
+            domain,
             ..
         } = &expr.node
         else {
             unreachable!("a binary expression")
         };
+        let reference_error =
+            crate::translation::reference_identity_rules::read_reference_identity_comparison_error(
+                op.name(),
+                left.ty.kind(),
+                right.ty.kind(),
+                left.ty.is_reference(),
+                right.ty.is_reference(),
+                left.ty == right.ty,
+                domain.is_some(),
+                domain.as_ref().is_some_and(Type::is_reference),
+                domain.as_ref() == Some(&left.ty),
+            );
+        if !reference_error.is_empty() {
+            return Err(unsupported(
+                "reference comparison",
+                &reference_error,
+                expr.span,
+            ));
+        }
+        if crate::translation::reference_identity_rules::accept_reference_identity_comparison(
+            op.name(),
+            left.ty.kind(),
+            right.ty.kind(),
+            left.ty.is_reference(),
+            right.ty.is_reference(),
+            left.ty == right.ty,
+        ) {
+            let left = self.borrow(left)?;
+            let right = self.borrow(right)?;
+            return Ok(
+                crate::translation::reference_identity_rules::render_reference_identity_comparison(
+                    op.name(),
+                    &left,
+                    &right,
+                ),
+            );
+        }
         match op {
             BinaryOp::And => Ok(format!("({} && {})", self.expr(left)?, self.expr(right)?)),
             BinaryOp::Or => Ok(format!("({} || {})", self.expr(left)?, self.expr(right)?)),

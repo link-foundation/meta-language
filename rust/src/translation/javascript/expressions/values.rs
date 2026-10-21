@@ -410,6 +410,14 @@ impl JavaScriptParser {
         if name == "Array.from" && self.has_standard_builtin_owner(&token) {
             return Ok(node(SNode::ArrayFrom { args, ty: None }, called));
         }
+        if name == "Array.isArray" && args.len() == 1 && self.has_standard_builtin_owner(&token) {
+            return Ok(node(
+                SNode::ArrayIsArray {
+                    arg: Box::new(args.remove(0)),
+                },
+                called,
+            ));
+        }
         let array_form = crate::translation::frontend_rules::read_array_method_form(&name);
         if (array_form == "copy-from" || array_form == "construct")
             && self.has_standard_builtin_owner(&token)

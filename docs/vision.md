@@ -2983,6 +2983,29 @@ separate obligations. Built-in operations require their actual unshadowed
 owners, and non-simple parameter lists retain strict-directive early errors.
 Generated source and codec replay do not establish native execution.
 
+The unshadowed JavaScript `Array.isArray` intrinsic evaluates its single operand
+once. Shared decisions classify represented arrays and frozen positional products;
+flat optional arrays and products inspect presence, preserving both null and
+undefined. Closed non-array values return false after their original effects.
+Unrepresented unions, proxies and nested optional representations retain explicit
+obligations. Both runtimes consume the same automatically translated decisions.
+
+Reference-qualified arrays, records, maps and sets in the JavaScript source
+profile compare allocation identity for equality and inequality when their
+complete types agree. Rust emission uses
+the shared generated identity operation over existing borrowed operands; it does
+not compare payloads. Source-free checked programs retain the explicit reference
+domain and reject mismatched operands or forged comparison metadata. Value-array
+equality, nullable references and wider source profiles remain separate obligations.
+
+An explicit JavaScript target identifier model reuses the shared binding renderer
+and existing scope allocation to give generated owned names ordinary source
+spellings. Default output and reserved-source-name admission retain their existing
+behavior. Fixed runtime helpers and external providers require their own parsing
+and composition support; naming alone does not establish arbitrary emitted-module
+reparsing or complete bidirectional translation. Native execution of these current
+translation profiles remains a CI check.
+
 Generated libraries can group contiguous primitive Boolean operands into an
 explicit tuple carrier to satisfy the native parameter lint. The source author
 retains the whole decision body and original bindings; a recorded caller author

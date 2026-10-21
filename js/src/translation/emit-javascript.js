@@ -33,6 +33,7 @@ import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
+import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 
 const KEYWORDS = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
@@ -117,6 +118,8 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
+  if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');
   validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   const runtimeShell=checkRustRuntimeShell(program);
@@ -130,7 +133,7 @@ export function emitJavaScript(program, options = {}) {
     reserved.add(name);
   }
   if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
-  const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
+  const state = new EmitState(program, 'JavaScript', targetIdentifier, reserved, { modulesShareTermSpace: true, typeSpace: true });
   recordRustRuntimeShellAssumptions(state,runtimeShell);
   return new JavaScriptEmitter(program, state, scopedBindings, externals).file();
 }
@@ -220,7 +223,7 @@ class JavaScriptEmitter {
   }
 
   fn(entry) {
-    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, entry)) : ident;
+    const local = this.scopedBindings ? name => this.state.ident(this.scopedBindings(name, entry)) : this.state.ident;
     // A revalidated closed loop reads only its locals, Math and its own tail
     // continuation, which becomes writes/continue before JavaScript emission.
     const reserved = this.scopedBindings && !reserveJavaScriptScopedBindingDeclarationNames(entry.sourceLoop !== undefined)
@@ -269,7 +272,7 @@ class JavaScriptEmitter {
   }
 
   theorem(entry) {
-    const { binders, prop } = renameTheorem(entry, ident, this.state.localReserved());
+    const { binders, prop } = renameTheorem(entry, this.state.ident, this.state.localReserved());
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
     this.state.theorem(entry, name, { closedGoal: binders.length === 0, discharge: 'source-kernel', check: 'bounded' });
@@ -679,7 +682,7 @@ class JavaScriptEmitter {
   }
 
   main(main) {
-    const local = this.scopedBindings ? name => ident(this.scopedBindings(name, main)) : ident;
+    const local = this.scopedBindings ? name => this.state.ident(this.scopedBindings(name, main)) : this.state.ident;
     const { effects } = renameMain(main, local, this.state.localReserved());
     const lines = [];
     let assertion = 0;

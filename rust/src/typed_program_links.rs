@@ -787,6 +787,7 @@ pub fn emit_typed_program_links_with_options(
                 &program,
                 JavaScriptEmissionOptions {
                     scoped_binding_model,
+                    identifier_model: None,
                 },
             )
         }

@@ -687,6 +687,10 @@ impl Inference {
                 self.unify(&search_type, &Term::Known(STRING), expr.span)?;
                 Ok(Term::Known(BOOL))
             }
+            SNode::ArrayIsArray { arg } => {
+                self.expr(arg, env)?;
+                Ok(Term::Known(BOOL))
+            }
             SNode::TypeOf { arg } | SNode::ToString { arg } | SNode::Show { arg, .. } => {
                 self.expr(arg, env)?;
                 Ok(Term::Known(STRING))
