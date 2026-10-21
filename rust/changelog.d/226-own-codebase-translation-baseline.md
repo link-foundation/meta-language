@@ -10,3 +10,7 @@ Select original Boolean declarations as formal callable values while preserving
 the complete typed graph and Rust const proof. Keep the historical corpus and
 add current JavaScript/Rust source, CST, archive and truth controls.
 Apply the inspected CI lint feedback through recorded source rules.
+Translate closed ASCII predicates on proven borrowed Rust strings through shared
+generated decisions, and preserve JavaScript string-spread Unicode iteration.
+Register every added test in CI and preserve raw receipt/source history across
+the current frontend changes.

@@ -381,7 +381,23 @@ Unshadowed standard vectors and immutable slices now have bounded source
 admission for direct scalar and string elements, with read-only empty checks and
 length conversion explicitly projected to the Number model. Ownership moves,
 borrowed results, mutable arrays and full generated runtime wrappers still need
-their separate obligations. Rust decimal integer separators before the existing supported suffixes use a
+their separate obligations.
+Proven immutable borrowed `str` receivers can select closed ASCII predicates
+through `starts_with` or direct `chars().all`. Complete shared JavaScript
+decisions generate the native admission rules. Callbacks contain only admitted
+ASCII tests and character equalities; captures, effects and unknown owners
+refuse. The receiver evaluates once. First-character queries remain bounded;
+the all-character value interpretation uses the existing eager point collection
+and therefore needs successful allocation and O(n) temporary storage. It does
+not claim the lazy source iterator's allocation behavior. Actual JavaScript
+array-literal spreads reuse the existing checked source-iterator operation,
+including Unicode code-point iteration and its ownership refusals. Internal
+concatenation and mathematical array construction retain their original paths.
+Complete emitted Rust is checked separately from definitions that omit runtime
+context. Default CST reconstruction remains independent of executable source
+interpretation. The unrestricted JavaScript regular-expression helper still
+needs its observable input coercion and caller-domain proofs.
+Rust decimal integer separators before the existing supported suffixes use a
 shared generated lexical boundary decision, preserving exact integer text and
 UTF-16 source spans. Its original boundary decision retains unsuffixed
 trailing-separator and non-ASCII suffix-boundary refusals. A separate source
