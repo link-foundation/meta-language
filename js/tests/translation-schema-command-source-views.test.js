@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import test from 'node:test';
 import {SCHEMA_COMMAND_SOURCE_PROFILE,readSchemaCommandSourceProfile,renderSchemaCommandSourceView,deriveSchemaCommandSourceView} from '../scripts/schema-command-source-profile.mjs';
 import {generateSchemaCommandSourceProfile} from '../scripts/generate-schema-command-source-profile.mjs';
+import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {BULK_TRANSLATION_RULE_CHECKS,runBulkTranslationRuleChecks} from '../scripts/check-bulk-translation-rules.mjs';
 import {satisfies} from '../scripts/semver-range.mjs';
 import {generateCiRuntimeSourceProfiles} from '../../experiments/ci-runtime-source-profiles/generate.mjs';
@@ -63,11 +64,30 @@ test('the exact two original freshness commands pass with authenticated schema i
 });
 
 test('standalone immutable commands retain their strict live-successor refusals and the source loader refuses update arguments',()=>{
+  assert.equal(satisfies(process.versions.node,SCHEMA_COMMAND_SOURCE_PROFILE.nodeRange,'npm'),true,'uncovered schema refusal runtime '+process.versions.node);
+  const schemaFile=new URL('../src/data/typed-program-links-schema.lino',import.meta.url);
+  const sixthFile=new URL('../../experiments/original-link-complete-table-projection/data/raw-schema-sixth-extension-closure.lino',import.meta.url);
+  const oracleFile=new URL('../../experiments/original-link-complete-table-projection/raw-native-observations.mjs',import.meta.url);
+  const schemaBytes=readFileSync(schemaFile),sixthBytes=readFileSync(sixthFile),oracleBytes=readFileSync(oracleFile);
+  const pins=[...oracleBytes.toString('utf8').matchAll(/^const schemaSixthExtensionReceiptSha256 = '([0-9a-f]{64})';$/gmu)];
+  assert.equal(pins.length,1);assert.equal(pin(sixthBytes),pins[0][1],'the complete immutable sixth receipt retains its independent oracle pin');
+  const sixth=readStructuredDataLino(sixthBytes.toString('utf8'));
+  assert.equal(sixth.current.file,'js/src/data/typed-program-links-schema.lino');
+  assert.ok(Number.isSafeInteger(sixth.current.bytes)&&sixth.current.bytes>0);
+  assert.notEqual(sixth.current.bytes,schemaBytes.length,'this refusal profile requires an actual later schema with a different byte count');
+  // The old153938 expectation belonged to the collection-size predecessor.
+  // These commands first compare the immutable sixth145652 checkpoint with
+  // the actual live successor (155087 at the observed899de CI revision).
+  const expectedBoundary=sixth.current.bytes+' !== '+schemaBytes.length;
   for(const file of SCHEMA_COMMAND_SOURCE_PROFILE.files){
     const original=spawnSync(process.execPath,['--max-old-space-size=288',file,'--check'],{cwd:root,encoding:'utf8',timeout:15000,maxBuffer:262144});
-    assert.equal(original.error,undefined);assert.equal(original.signal,null);assert.equal(original.status,1);assert.match(original.stderr,/145652 !== 153938/u);
+    assert.equal(original.error,undefined);assert.equal(original.signal,null);assert.equal(original.status,1);
+    assert.equal(original.stderr.split(/\r?\n/u).map(line=>line.trim()).filter(line=>line===expectedBoundary).length,1,'the exact authenticated-sixth versus actual-live numeric assertion is retained');
+    assert.ok(original.stderr.includes('at verifyOriginalLinkRawSchemaSixthExtensionClosure '));
+    assert.ok(original.stderr.includes('/'+file+':'),'the failure belongs to the same complete original command');
     const refused=spawnSync(process.execPath,['--import',fileURLToPath(new URL('../scripts/schema-command-source-loader.mjs',import.meta.url)),file,'--write'],
       {cwd:root,encoding:'utf8',timeout:10000,maxBuffer:262144});
     assert.equal(refused.error,undefined);assert.equal(refused.signal,null);assert.equal(refused.status,1);assert.match(refused.stderr,/check-only/u);
   }
+  assert.equal(readFileSync(schemaFile).equals(schemaBytes),true);assert.equal(readFileSync(sixthFile).equals(sixthBytes),true);assert.equal(readFileSync(oracleFile).equals(oracleBytes),true);
 });
