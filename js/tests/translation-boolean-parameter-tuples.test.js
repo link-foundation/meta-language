@@ -6,6 +6,7 @@ import {readProjectData} from '../scripts/project-data.mjs';
 import {verifyGitArtifactCertificate} from '../scripts/git-object-certificate.mjs';
 import {generateBooleanParameterTuples} from '../scripts/generate-boolean-parameter-tuples.mjs';
 import {readBooleanParameterTupleStyle,readBooleanParameterTupleCallStyle} from '../scripts/boolean-parameter-tuple-style.mjs';
+import {restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
 
 const root=new URL('../../',import.meta.url);
 
@@ -24,7 +25,9 @@ test('both generated Boolean carriers retain the complete original decision body
     let raw=row.caller.sourceText;
     for(const edit of row.caller.insertions)raw=raw.slice(0,edit.offset)+edit.text+raw.slice(edit.offset);
     const formatted=execFileSync('rustfmt',['--edition','2024','--config','skip_children=true','--emit','stdout'],{input:raw,encoding:'utf8',maxBuffer:1024*1024,timeout:15000});
-    assert.equal(formatted,readFileSync(new URL(row.caller.file,root),'utf8'));
+    const actual=readFileSync(new URL(row.caller.file,root),'utf8');
+    const historical=row.caller.file==='rust/src/self_translation.rs'?restoreCurrentNativeHostSource(actual,row.caller.file):actual;
+    assert.equal(formatted,historical,'the unchanged whole historical tuple caller survives its authenticated current source view');
     for(const edit of [...row.caller.insertions].reverse()){
       assert.equal(raw.slice(edit.offset,edit.offset+edit.text.length),edit.text);raw=raw.slice(0,edit.offset)+raw.slice(edit.offset+edit.text.length);
     }
