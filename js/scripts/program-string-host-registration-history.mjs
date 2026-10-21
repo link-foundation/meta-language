@@ -7,6 +7,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
+import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource} from './collection-size-projection-schema.mjs';
 
 const root=new URL('../../',import.meta.url);
@@ -142,6 +143,7 @@ export function restoreProgramStringHostRegistrationSource(source,path){
     return replay.source;
   }
   if(path==='js/src/typed-program-links-validation.js'){
+    source=restoreReferenceIdentityHistoricalSource(source,path,'program string registration');
     const packet=readCollectionSizeProjectionSchemaPacket(),owner=packet.owners.find(row=>row.file===path);assert.ok(owner);
     const current=deriveCollectionSizeProjectionValidationSource(owner.source);
     if(source!==current)return source;

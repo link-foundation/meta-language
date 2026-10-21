@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 const archive=new URL('../../parity/self-translation/native-compatibility-source-sources-history.lino',import.meta.url);
-const archiveHash='880282077c637f2fa9a30a8c06168e06a3dfebdaf03fd521880a3ebd09c24c2f';
+const archiveHash='66398c79ff84989dea6df7ff89900a1cfde18fd039c6b1752329c8540b46a9f1';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 let history;
 

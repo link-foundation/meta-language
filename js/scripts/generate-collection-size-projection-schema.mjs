@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {restoreTruthyProjectionHistoricalSource} from './truthy-projection-schema.mjs';
+import {restoreReferenceIdentityHistoricalSource} from './reference-identity-source-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {COLLECTION_SIZE_PROJECTION_SCHEMA_POLICY,COLLECTION_SIZE_PROJECTION_SCHEMA_ENTRIES,
  deriveCollectionSizeProjectionSchema,deriveCollectionSizeProjectionFixtureSource,deriveCollectionSizeProjectionValidationSource,readCollectionSizeProjectionSchemaPacket,verifyCollectionSizeProjectionSchemaPacket} from './collection-size-projection-schema.mjs';
@@ -33,7 +34,8 @@ export function generateCollectionSizeProjectionSchema({check=false}={}) {
   const current=file==='js/scripts/generate-typed-program-links-fixtures.mjs'?deriveCollectionSizeProjectionFixtureSource(blob.toString('utf8'))
    :file==='js/src/typed-program-links-validation.js'?deriveCollectionSizeProjectionValidationSource(blob.toString('utf8')):blob.toString('utf8');
   const physical=readFileSync(new URL(file,root));
-  const historical=file==='js/src/translation/check.js'?restoreTruthyProjectionHistoricalSource(physical,file):physical.toString('utf8');
+  const selected=restoreReferenceIdentityHistoricalSource(physical.toString('utf8'),file,'collection size projection');
+  const historical=file==='js/src/translation/check.js'?restoreTruthyProjectionHistoricalSource(Buffer.from(selected),file):selected;
   assert.equal(historical,current,'actual complete existing owner or exact fixture append is required: '+file);
   return{file,...pin(blob),source:blob.toString('utf8'),certificate,current:pin(current)};
  });

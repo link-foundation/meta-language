@@ -185,7 +185,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   const { outs, scans, moduleScopeKnown, ownerCounts } = family(to) === 'Rust'
     ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
     : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
-  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics });
+  const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics }, scans);
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   // An isolated item proof does not certify its actual mutable module binding.
   // Public/importable signatures need the same complete scope and unique owner
@@ -367,7 +367,7 @@ function readDeclarationModuleScope(groups, scans, from, to, decorators, context
     if (!acceptDeclarationSignatureBinding(true, count)) return false;
   }
   const { literalGroups } = collectLiteralBindings(groups, true, from, to, decorators,
-    { moduleBindingNames: context.moduleBindingNames });
+    { moduleBindingNames: context.moduleBindingNames }, scans);
   const forms = groups.map((group, index) => group.kind === 'comment' ? 'comment'
     : group.kind !== 'item' || group.term === 'ERROR' ? 'unknown module form'
     : scans[index]?.functionDeclaration ? 'named function declaration'
@@ -675,10 +675,10 @@ const isMarker = (item) => item.comment && [HEADER, CARRIED, TRANSLATED, PRELUDE
 // A failed isolated binding can refer to another declaration in its run.
 // Retry the complete run as one checked scope. A failed run keeps the original
 // per-item decisions, so a carried sibling is never represented by a stub.
-function translateBindingGroups(groups, bytes, from, to, decorators, initial, context) {
+function translateBindingGroups(groups, bytes, from, to, decorators, initial, context, scans = []) {
   const bind = family(from) === 'JavaScript' && family(to) === 'Rust';
   if (bind && context.moduleScopeKnown === false) return groups.map((group, index) => ({ group, out: initial[index] }));
-  const { literals, literalGroups } = collectLiteralBindings(groups, bind, from, to, decorators, context);
+  const { literals, literalGroups } = collectLiteralBindings(groups, bind, from, to, decorators, context, scans);
   const terms = groups.map((group) => group.kind === 'item' && !literalGroups.has(group) ? group.term : '');
   const results = [];
   for (let index = 0; index < groups.length;) {
@@ -704,11 +704,15 @@ function translateBindingGroups(groups, bytes, from, to, decorators, initial, co
   return results;
 }
 
-function collectLiteralBindings(groups, bind, from, to, decorators, context = {}) {
+function collectLiteralBindings(groups, bind, from, to, decorators, context = {}, scans = []) {
   const literals = new Map();
   const literalGroups = new Set();
-  if (bind) for (const group of groups) {
-    if (group.kind !== 'item') continue;
+  if (bind) for (const [index, group] of groups.entries()) {
+    // The existing scan of this exact group proves a named declaration.
+    // The frontend always adds that declaration to parsed.items, so it
+    // cannot satisfy the existing zero-item primitive-literal rule. Its
+    // complete ordinary/SCC parse, check and emission remain unchanged.
+    if (group.kind !== 'item' || scans[index]?.functionDeclaration === true) continue;
     try {
       const parsed = parseJavaScript(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text, { ...context, readonlyModuleConstants: family(to) === 'Rust' });
       const effects = parsed.main.effects;

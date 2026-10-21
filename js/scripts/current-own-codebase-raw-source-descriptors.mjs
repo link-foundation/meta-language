@@ -8,7 +8,7 @@ import {serializeProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readCurrentRawPredecessorHistory,readCurrentRawPredecessorPacket} from './current-own-codebase-raw-source-history.mjs';
 const root=new URL('../../',import.meta.url);
-const policySha256='70d92152013fff8c0c3c978b6a85ac4d16970f3db75659c01a5c3edfbc2c265e';
+const policySha256='26646438286157ed8250c4a8e631521ceb39281d95c8766700235d6cc62b6553';
 const revision='a8a789afb0ed569340d9079279f534f0bf7c4e72';
 const property='currentOwnCodebaseRawSourceDescriptorSuccessors';
 const output='parity/self-translation/current-own-codebase-raw-source-descriptors.lino';

@@ -61,7 +61,7 @@ test('a @typedef field may hold an array, of data too', () => {
 test('the array forms that are not kept are refused with a reason', () => {
   assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs);\n'), 'text of an array: console.log lays an array out with util.inspect and String joins its elements with commas, which the translation does not reproduce yet; print the elements one by one at 31..33');
   assert.equal(refusal('const xs = [1, 2];\nxs[0] = 3;\n'), 'reference mutation: this mutation requires its shared reference and slot operations to be represented at 19..28');
-  assert.equal(refusal('const xs = [1, 2];\nconsole.log(xs === xs);\n'), 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');
+  assertModernArrayIdentityTranslation('const xs = [1, 2];\nconsole.log(xs === xs);\n', 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');
   assert.equal(refusal("const s = 'ab';\nconsole.log(s.length);\n"), undefined);
   assert.equal(refusal('const xs = [1, , 2];\n'), refusal('const xs = [1, , 2];\n'));
   assert.match(refusal('const xs = [1, , 2];\n'), /^array hole/u);
@@ -69,6 +69,7 @@ test('the array forms that are not kept are refused with a reason', () => {
 });
 
 // BEGIN modern JavaScript array parity observations
+import {assertModernArrayIdentityTranslation} from './support/modern-javascript-array-parity.js';
 test('retained modern JavaScript array contract executes every original input', async () => {
   const {runModernArrayParityAssertions}=await import('./support/modern-javascript-array-parity.js');
   runModernArrayParityAssertions({record:true,testName:'retained modern JavaScript array contract executes every original input'});

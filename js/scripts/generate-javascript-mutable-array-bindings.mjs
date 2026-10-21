@@ -7,6 +7,7 @@ import { readProjectData } from './project-data.mjs';
 import { verifyGitArtifactCertificate } from './git-object-certificate.mjs';
 import {restoreRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
 import {restoreScopedIterationNativeHostSource} from './scoped-iteration-native-host-source-history.mjs';
+import {restoreMutableArrayFrontendSource} from './javascript-mutable-array-frontend-source-history.mjs';
 import { DecoratorSet } from '../src/decorators.js';
 import { decorateEmitted } from '../src/grammar-emitters/common.js';
 import { readRustLibraryItems } from './rust-library-packaging.mjs';
@@ -116,7 +117,7 @@ export function generateJavaScriptMutableArrayBindings({ check = false } = {}) {
   assert.equal(archive.ownerDecision.name, 'acceptJavaScriptMutableArrayBindingOwner');
   assert.equal(archive.ownerDecision.target, 'accept_java_script_mutable_array_binding_owner');
   assert.equal(archive.ownerDecision.sourceSha256, archive.decision.sourceSha256);
-  assert.equal(digest(readFileSync(new URL(archive.decision.source, root))), archive.decision.sourceSha256,
+  assert.equal(digest(restoreMutableArrayFrontendSource(readFileSync(new URL(archive.decision.source, root),'utf8'),archive.decision.source,'mutable array binding decision source')), archive.decision.sourceSha256,
     'the current complete shared decision source is independently pinned');
   assert.deepEqual(archive.hosts.map(row => row.path), paths);
   const outputs = archive.hosts.map(row => {

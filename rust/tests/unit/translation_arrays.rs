@@ -115,7 +115,11 @@ fn the_array_forms_that_are_not_kept_are_refused_with_a_reason() {
             "comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40",
         ),
     ] {
-        assert_eq!(refusal(source), message, "{source}");
+        if source == "const xs = [1, 2];\nconsole.log(xs === xs);\n" {
+            assert_modern_array_identity_translation(source, message);
+        } else {
+            assert_eq!(refusal(source), message, "{source}");
+        }
     }
     // This original input was historically refused; the current shared
     // JavaScript model preserves UTF-16 length and therefore admits it.
@@ -322,8 +326,10 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
         modern_array_digest(FIXTURE.as_bytes())
     );
     assert_ne!(records[0]["nodeVersion"].as_str().unwrap(), "");
-    assert_eq!(records[0]["admitted"], 6);
-    assert_eq!(records[0]["refused"], 5);
+    assert_eq!(records[0]["admitted"], 7);
+    assert_eq!(records[0]["refused"], 4);
+    assert_eq!(fixture["identityCorrection"]["previous"]["admitted"], 6);
+    assert_eq!(fixture["identityCorrection"]["previous"]["refused"], 5);
     let rows = fixture["cases"].as_array().unwrap();
     assert_eq!(rows.len(), 11);
     assert_eq!(
@@ -341,6 +347,14 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
         assert_eq!(expected_record["sourceSha256"], row["sourceSha256"]);
         let source = row["source"].as_str().unwrap();
         assert_eq!(modern_array_digest(source.as_bytes()), row["sourceSha256"]);
+        if row["id"] == "original-array-identity-refusal" {
+            assert_modern_array_identity_translation(
+                source,
+                fixture["identityCorrection"]["previous"]["row"]["expected"]["diagnostic"]
+                    .as_str()
+                    .unwrap(),
+            );
+        }
         let targets = row["targets"].as_array().unwrap();
         let expected_targets = expected_record["targets"].as_array().unwrap();
         assert_eq!(targets.len(), expected_targets.len());
@@ -428,10 +442,10 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
         assert_eq!(output.stdout, expected, "{}", row["id"]);
         admitted += 1;
     }
-    assert_eq!(admitted, 6);
-    assert_eq!(refused, 5);
+    assert_eq!(admitted, 7);
+    assert_eq!(refused, 4);
     // No record is produced until actual native frontends, all preserved refusals,
-    // full descriptors, both JS paths and all six Rust executables pass.
+    // full descriptors, both JS paths and all seven Rust executables pass.
     let modern = [
         "originalArrayAndStringInputsRetained",
         "utf16StringLengthParityExecuted",
@@ -472,4 +486,115 @@ fn retained_modern_javascript_array_contract_executes_every_original_input() {
             });
         }
     }
+}
+
+// Same original input and old value-mode diagnostic; native execution is CI only.
+fn assert_modern_array_identity_translation(source: &str, previous_message: &str) {
+    use super::issue_195_translation_pairs::run;
+    use meta_language::translation::{
+        check::check_program, emit_javascript::emit_javascript, emit_rust::emit_rust,
+    };
+    use meta_language::{
+        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+        encode_link_network_binary, encode_typed_program_links,
+    };
+    use std::{fs, path::Path, process::Command};
+    assert_eq!(
+        env!("CARGO_PKG_VERSION"),
+        "1.0.0",
+        "uncovered crate version; [1.0.0,1.0.1) required"
+    );
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let package: serde_json::Value =
+        serde_json::from_slice(&fs::read(root.join("js/package.json")).unwrap()).unwrap();
+    assert_eq!(
+        package["version"], "1.0.0",
+        "uncovered npm version; [1.0.0,1.0.1) required"
+    );
+    for (tool, rust) in [("node", false), ("rustc", true)] {
+        let actual = run(Command::new(tool).arg("--version"));
+        assert!(actual.ok, "{}", actual.stderr);
+        let version = if rust {
+            actual.stdout.split_whitespace().nth(1).unwrap()
+        } else {
+            actual.stdout.trim().trim_start_matches('v')
+        };
+        let parts = version
+            .split('.')
+            .map(|value| value.parse::<u32>().unwrap())
+            .collect::<Vec<_>>();
+        assert!(
+            if rust {
+                parts[0] == 1 && (90..100).contains(&parts[1])
+            } else {
+                parts[0] == 22 && parts[1] >= 15 || parts[0] == 24
+            },
+            "uncovered {tool} version {version}"
+        );
+    }
+    let policy = meta_language::read_structured_data_lino(include_str!(
+        "../../src/data/reference-identity-rules.lino"
+    ))
+    .unwrap();
+    assert_eq!(
+        policy["model"],
+        "same-domain structural reference identity equality 1"
+    );
+    assert_eq!(
+        policy["sourceClosure"]["sourceSha256"],
+        "31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e"
+    );
+    assert_eq!(
+        modern_array_digest(&fs::read(root.join(policy["sourcePath"].as_str().unwrap())).unwrap()),
+        policy["sourceClosure"]["sourceSha256"].as_str().unwrap()
+    );
+    let original = run(Command::new("node").args(["--input-type=module", "-e", source]));
+    assert!(original.ok, "{}", original.stderr);
+    assert_eq!(original.stdout, "true\n");
+    let value_script = r"
+import {parseJavaScript} from './js/src/translation/javascript.js';
+console.log(JSON.stringify(parseJavaScript(process.argv[1],{referenceSemantics:false})));
+";
+    let value = run(Command::new("node").current_dir(root).args([
+        "--input-type=module",
+        "-e",
+        value_script,
+        source,
+    ]));
+    assert!(value.ok, "{}", value.stderr);
+    let value_surface = serde_json::from_str(&value.stdout).unwrap();
+    assert_eq!(
+        check_program(&value_surface).unwrap_err().to_string(),
+        previous_message
+    );
+    let translated = translate_program(source, "JavaScript", "Rust").unwrap();
+    assert!(translated.diagnostic().is_none());
+    assert_eq!(
+        translated.contract().support,
+        TranslationSupport::SemanticTranslation
+    );
+    let checked = check_program(&parse_javascript(source).unwrap()).unwrap();
+    let rust = emit_rust(&checked).unwrap().text;
+    let packet = encode_typed_program_links(&checked).unwrap();
+    for network in [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ] {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, checked);
+        assert_eq!(emit_rust(&restored).unwrap().text, rust);
+        let output = run(Command::new("node").args([
+            "--input-type=module",
+            "-e",
+            &emit_javascript(&restored).unwrap().text,
+        ]));
+        assert!(output.ok, "{}", output.stderr);
+        assert_eq!(output.stdout, original.stdout);
+    }
+    // The existing retained corpus compiles/runs the full public Rust output
+    // for this newly admitted row, after both source-free codecs above.
 }

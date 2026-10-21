@@ -22,11 +22,11 @@ test('assertion corrections execute retained historical inputs and the applicabl
   const execution = runModernArrayParityAssertions();
   assert.deepEqual(execution.cases.filter(row => row.originalStdout !== undefined).map(row => row.id), [
     'original-array-corpus', 'original-empty-array-inference', 'original-data-array',
-    'original-string-length', 'supplementary-string-length', 'observable-array-absence',
+    'original-array-identity-refusal', 'original-string-length', 'supplementary-string-length', 'observable-array-absence',
   ]);
   assert.equal(execution.cases.length, 11);
-  assert.equal(execution.metadata.admitted, 6);
-  assert.equal(execution.metadata.refused, 5);
+  assert.equal(execution.metadata.admitted, 7);
+  assert.equal(execution.metadata.refused, 4);
   assert.equal(execution.metadata.nodeVersion, process.versions.node);
   for (const row of execution.cases) {
     for (const { descriptor } of row.targets) {

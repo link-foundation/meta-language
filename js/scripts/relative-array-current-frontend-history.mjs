@@ -19,7 +19,7 @@ export const RELATIVE_ARRAY_CURRENT_FRONTEND_NAMING=Object.freeze({
   bytes:9382656,sha256:'9ecc79376cd2a778a2f07605ac394b5530439a2eb3cc2cba0ccb9bde2161e4f9',
 });
 const legacy={bytes:130416,sha256:'38d155ce765157039d2555c070e537e97a91f2c64587c70b6c6c578c5371ebe8'};
-const packetSha256='85356f744d01326a84b08ff06f3793f42b04792dfe96bc376fe8b09189fc5d12';
+const packetSha256='b7fd705a986b1c5c2e57d959d6680f20874041a1373f746ed56ef33f3fa316a1';
 let cached;
 export const pinRelativeArrayCurrentFrontend=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),[...keys].sort());};

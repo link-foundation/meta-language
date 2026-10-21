@@ -32,13 +32,17 @@ export function restoreNodeDependencyInventoryTestSource(source) {
 }
 
 /** Check every current declaration and every old byte before removing appends. */
-export function verifyDependencyInventoryAppends(inventory,declarations,history=readDependencyInventoryAppendHistory()) {
+export function verifyDependencyInventoryAppends(inventory,declarations,history) {
+  // Impossible current inventories cannot select a historical view. Reject
+  // them before decoding its complete certificate/source packet; successful
+  // inputs still run every original historical authentication below.
+  assert.deepEqual(checkInventory(inventory,declarations),[],'the actual complete current declaration corpus stays checked');
+  if(history===undefined)history=readDependencyInventoryAppendHistory();
   assert.equal(digest(structuredDataToLino(history)),policyHash);
   for(const [capture,revision,path]of [[history.inventory,inventoryRevision,'parity/dependency-inventory.lino'],
     [history.test,testRevision,'js/tests/issue-195-evidence-node-dependency.test.js']]){
     verifyGitArtifactCertificate(capture.certificate,Buffer.from(capture.source),{revision,path});
   }
-  assert.deepEqual(checkInventory(inventory,declarations),[],'the actual complete current declaration corpus stays checked');
   const before=readStructuredDataLino(history.inventory.source);
   assert.equal(before.items.length,745);
   assert.ok(inventory.items.length>=before.items.length);

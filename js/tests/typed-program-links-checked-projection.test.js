@@ -18,6 +18,7 @@ import { COLLECTION_SIZE_PROJECTION_SCHEMA_POLICY, COLLECTION_SIZE_PROJECTION_SC
   deriveCollectionSizeProjectionFixtureSource, deriveCollectionSizeProjectionValidationSource, readCollectionSizeProjectionSchemaPacket,
   verifyCollectionSizeProjectionSchemaPacket, restoreCollectionSizeProjectionSchema } from '../scripts/collection-size-projection-schema.mjs';
 import { generateCollectionSizeProjectionSchema } from '../scripts/generate-collection-size-projection-schema.mjs';
+import {restoreReferenceIdentityHistoricalSource} from '../scripts/reference-identity-source-history.mjs';
 import { restoreTruthyProjectionHistoricalSource } from '../scripts/truthy-projection-schema.mjs';
 
 const floating = { kind: 'float' };
@@ -233,8 +234,9 @@ test('collection size shared schema successor retains every original byte owner 
       : owner.file === 'js/src/typed-program-links-validation.js' ? deriveCollectionSizeProjectionValidationSource(owner.source) : owner.source;
     assert.deepEqual(pin(current), owner.current);
     const physical = readFileSync(new URL('../../' + owner.file, import.meta.url));
+    const selected = restoreReferenceIdentityHistoricalSource(physical.toString('utf8'), owner.file, 'collection size projection');
     const historical = owner.file === 'js/src/translation/check.js'
-      ? restoreTruthyProjectionHistoricalSource(physical, owner.file) : physical.toString('utf8');
+      ? restoreTruthyProjectionHistoricalSource(Buffer.from(selected), owner.file) : selected;
     assert.equal(historical, current);
   }
   const original = packet.owners.find(owner => owner.file === 'js/scripts/generate-typed-program-links-fixtures.mjs');

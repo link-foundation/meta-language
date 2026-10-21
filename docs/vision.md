@@ -3856,6 +3856,15 @@ and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
 
+Self-translation reuses each source group's existing declaration scan when
+classifying primitive literal bindings. A proven named function cannot satisfy
+the literal classifier's zero-declaration condition; its ordinary complete parse,
+check and target emission still run. Dependency-history selection first rejects
+invalid current declaration inventories with the existing complete inventory
+check. Successful inputs still authenticate every original certificate and
+historical byte. These changes remove redundant work without extending budgets
+or changing the independent CI report and acceptance gates.
+
 Canonical Links Notation writing combines bounded groups of complete statements
 before assembling the final text. This bounds temporary string construction while
 retaining every statement, UTF-16 code unit, source order, metadata field,

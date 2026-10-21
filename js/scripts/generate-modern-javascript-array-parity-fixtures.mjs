@@ -5,7 +5,7 @@ import {existsSync,readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {parseNative} from '../src/native-grammar-parser.js';
 import {tokenize} from '../src/translation/lexer.js';
-import {checkProjectData,readProjectData,writeProjectData} from './project-data.mjs';
+import {checkProjectData,readProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 
 const root=new URL('../../',import.meta.url);
 export const MODERN_ARRAY_FIXTURE_FILE='parity/fixtures/modern-javascript-array-parity.lino';
@@ -37,6 +37,17 @@ function literal(node,bytes){
 }
 function visit(node,callback){callback(node);for(const child of node.children)visit(child.node,callback);}
 function originalBody(source){const at=source.indexOf(MODERN_ARRAY_APPEND_MARKER);if(at<0)return source;assert.equal(source.split(MODERN_ARRAY_APPEND_MARKER).length,2);return source.slice(0,at);}
+// These finite assertion-source inverses preserve the independently pinned
+// original test bodies. They never change any extracted program input.
+function originalIdentitySourceBody(source,path){
+ let body=originalBody(source);
+ const recipes=[{"path": "js/tests/translation-arrays.test.js", "before": "  assert.equal(refusal('const xs = [1, 2];\\nconsole.log(xs === xs);\\n'), 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');", "after": "  assertModernArrayIdentityTranslation('const xs = [1, 2];\\nconsole.log(xs === xs);\\n', 'comparison of arrays: === of two arrays compares which array each is, which a value translation does not keep; compare their elements at 31..40');"}, {"path": "rust/tests/unit/translation_arrays.rs", "before": "        assert_eq!(refusal(source), message, \"{source}\");", "after": "        if source == \"const xs = [1, 2];\\nconsole.log(xs === xs);\\n\" {\n            assert_modern_array_identity_translation(source, message);\n        } else {\n            assert_eq!(refusal(source), message, \"{source}\");\n        }"}];
+ const recipe=recipes.find(row=>row.path===path);
+ if(recipe&&body.includes(recipe.after)){assert.equal(body.split(recipe.after).length,2);body=body.replace(recipe.after,()=>recipe.before);}
+ return body;
+}
+const oldIdentityFixturePin={"bytes": 43302, "sha256": "4ac886fa12c5c748f022911a041d96badcf053a16992d7f33e007d1c0ef38de4"};
+const identityImplementation={model:'same-domain structural reference identity equality 1',source:'js/src/translation/reference-identity-rules.js',sha256:'31c61031a2b2bc4c856f85687f8195bb60f51edc823344711962966df39aae1e'};
 function readOriginalJavaScriptInputs(source){
  const bytes=Buffer.from(source),text=node=>bytes.subarray(node.start,node.end).toString('utf8');
  const tree=parseNative('native-javascript',source);assert.equal(tree.term,'program');assert.equal(tree.hasError,false);assert.equal(tree.end,bytes.length);
@@ -76,7 +87,7 @@ export function buildModernArrayParityFixture({historicalSource}={}){
  assert.equal(digest(historicalSource),historicalSha256,'the complete Root-authenticated historical source stays immutable');
  assert.equal(Buffer.byteLength(historicalSource),5228);
  const contract=readFileSync(new URL(MODERN_ARRAY_CONTRACT_FILE,root));assert.equal(digest(contract),MODERN_ARRAY_CONTRACT_SHA256);
- const bases=currentProfiles.map(([path,sha256])=>{const source=originalBody(readFileSync(new URL(path,root),'utf8'));assert.equal(digest(source),sha256,'every original test body remains byte exact');return {path,source,sha256,bytes:Buffer.byteLength(source)};});
+ const bases=currentProfiles.map(([path,sha256])=>{const source=originalIdentitySourceBody(readFileSync(new URL(path,root),'utf8'),path);assert.equal(digest(source),sha256,'every original test body remains byte exact');return {path,source,sha256,bytes:Buffer.byteLength(source)};});
  const originals=readOriginalJavaScriptInputs(bases[0].source);assert.equal(originals.length,9);assert.equal(new Set(originals).size,9);
  const oldLiterals=tokenize(historicalSource,'Rust').tokens.filter(token=>token.kind==='string').map(token=>token.value);
  for(const source of originals)assert.ok(oldLiterals.includes(source),'the complete original input also occurs in the historical native test');
@@ -95,13 +106,25 @@ export function buildModernArrayParityFixture({historicalSource}={}){
   {outcome:'refused',match:'prefix',diagnostic:'for…in loop'},
   {outcome:'admitted',stdout:'4\n'},{outcome:'admitted',stdout:'9\n'},
  ];
- return {schemaVersion:1,model:'retained modern JavaScript array parity 1',contract:{fixtureId:MODERN_ARRAY_CONTRACT_ID,path:MODERN_ARRAY_CONTRACT_FILE,sha256:MODERN_ARRAY_CONTRACT_SHA256},
+ const fixture={schemaVersion:1,model:'retained modern JavaScript array parity 1',contract:{fixtureId:MODERN_ARRAY_CONTRACT_ID,path:MODERN_ARRAY_CONTRACT_FILE,sha256:MODERN_ARRAY_CONTRACT_SHA256},
   historicalNative:{path:'rust/tests/unit/translation_arrays.rs',revision:historicalRevision,source:historicalSource,bytes:5228,sha256:historicalSha256},
   sourceProfiles:bases.map(({path,sha256,bytes})=>({path,sha256,bytes})),
   correction:{revision:'93c65ca1ada6c5001a56acc4430500e55062027a',previous:{inBoundsAssumptionRequired:true,stringLengthDiagnostic:oldStringDiagnostic},current:{inBoundsAssumptionRequired:false,originalStringLengthAdmitted:true},
    basis:'Correction of project expectations, not a dependency-version change. UTF-16 length and absent numeric properties retain stable language semantics.'},
   cases:sources.map((source,index)=>({id:MODERN_ARRAY_CASE_IDS[index],origin:index<9?'original':'added',source,sourceSha256:digest(source),
    targets:expected[index].outcome==='refused'||index===1?['Rust']:['Rust','Lean','Rocq'],expected:expected[index]}))};
+ const before=serializeProjectData(fixture,MODERN_ARRAY_FIXTURE_FILE);
+ assert.deepEqual({bytes:Buffer.byteLength(before),sha256:digest(before)},oldIdentityFixturePin,'the complete original fixture including every old row/profile/alias remains exact');
+ const previousRow=fixture.cases[5];assert.equal(previousRow.id,'original-array-identity-refusal');assert.deepEqual(previousRow.targets,['Rust']);
+ fixture.cases[5]={...previousRow,expected:{outcome:'admitted',stdout:'true\n'}};
+ fixture.identityCorrection={model:'retained array identity expectation correction 1',implementation:identityImplementation,
+  versions:{npm:'[1.0.0,1.0.1)',crate:'[1.0.0,1.0.1)',Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
+  previous:{fixture:oldIdentityFixturePin,row:previousRow,admitted:6,refused:5},current:{admitted:7,refused:4},
+  sourceEpochs:currentProfiles.map(([path])=>{const source=readFileSync(new URL(path,root));return{path,bytes:source.length,sha256:digest(source)};}),
+  basis:'The identical original array owner compares true in JavaScript. The source-qualified shared reference policy preserves that identity in Rust; explicit referenceSemantics:false still retains the original value-mode refusal. Case IDs, order, target sets, historicalNative and original sourceProfiles remain unchanged.'};
+ const inverse={...fixture,cases:fixture.cases.map((row,index)=>index===5?fixture.identityCorrection.previous.row:row)};delete inverse.identityCorrection;
+ assert.equal(serializeProjectData(inverse,MODERN_ARRAY_FIXTURE_FILE),before,'the entire old fixture reconstructs byte exactly');
+ return fixture;
 }
 export function generateModernArrayParityFixtures({check=false,historicalSourcePath}={}){
  const fixture=buildModernArrayParityFixture({historicalSource:historicalSourcePath===undefined?undefined:readFileSync(historicalSourcePath,'utf8')});
