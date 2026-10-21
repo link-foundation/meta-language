@@ -339,25 +339,52 @@ export function measureSelfTranslationModule(module, decorators, context) {
   const items = Object.fromEntries(STATUSES.map((status) => [status, translation.items.filter((item) => item.status === status).length]));
   const milliseconds = Math.round(performance.now() - started);
   const handWritten = rust ? readFileSync(join(root, rust), 'utf8') : null;
-  const generic = compareRustDefinitions(translation.code, handWritten);
-  const retained = { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items };
-  let decorated = { ...generic, coverage, translation: retained };
-  if (decorators.size > 0) {
-    const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators, retainDiagnostics: true });
-    decorated = { ...compareRustDefinitions(translation.code, handWritten), coverage: checkedCoverage(source, translation),
-      translation: { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items } };
-  }
-  const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
-  return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, translation: retained, decorated };
+  const comparisons = createRustDefinitionComparison(handWritten);
+  try {
+    const generic = comparisons.compare(translation.code);
+    const retained = { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items };
+    let decorated = { ...generic, coverage, translation: retained };
+    if (decorators.size > 0) {
+      const translation = selfTranslate(source, 'JavaScript', 'Rust', { ...context, decorators, retainDiagnostics: true });
+      decorated = { ...comparisons.compare(translation.code), coverage: checkedCoverage(source, translation),
+        translation: { sourceLanguage: translation.sourceLanguage, targetLanguage: translation.targetLanguage, items: translation.items } };
+    }
+    const sha256 = (file) => createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+    return { module, rust, sourceSha256: sha256(module), rustSha256: rust ? sha256(rust) : null, items, coverage, milliseconds, ...generic, translation: retained, decorated };
+  } finally { comparisons.clear(); }
 }
 
 /** How the Rust a translation writes compares with the hand-written Rust, or with none. */
 export function compareRustDefinitions(translated, handWritten) {
+  return compareRustDefinitionsWith(translated, handWritten, rustFunctionDefinitions);
+}
+
+// A report row compares its two complete emitted sources with one identical
+// native counterpart. Cache only their exact parser inputs and extracted text,
+// never their CSTs. The optional reader lets controls count actual parser calls.
+export function createRustDefinitionComparison(handWritten, readDefinitions = rustFunctionDefinitions) {
+  const definitions = new Map();
+  const read = text => {
+    if (typeof text !== 'string') return readDefinitions(text);
+    if (definitions.has(text)) return definitions.get(text);
+    // Failed reads propagate unchanged and never enter or evict the cache.
+    const found = readDefinitions(text);
+    if (definitions.size === 3) definitions.delete(definitions.keys().next().value);
+    definitions.set(text, found);
+    return found;
+  };
+  return {
+    compare: translated => compareRustDefinitionsWith(translated, handWritten, read),
+    clear: () => definitions.clear(),
+  };
+}
+
+function compareRustDefinitionsWith(translated, handWritten, readDefinitions) {
   const code = translatedCode(translated);
-  const written = rustFunctionDefinitions(code);
+  const written = readDefinitions(code);
   const row = { functions: written.size };
   if (handWritten === null) return { ...row, matched: 0, identical: 0, codeLines: codeLines(code).length, sharedLines: 0, handWrittenLines: 0 };
-  const existing = rustFunctionDefinitions(handWritten);
+  const existing = readDefinitions(handWritten);
   let matched = 0;
   let identical = 0;
   for (const [name, text] of written) {
