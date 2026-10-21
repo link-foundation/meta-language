@@ -660,12 +660,18 @@ export function emitRust(program, options = {}) {
   });
   // A local may not shadow another item of the module that the program calls or reads.
   for (const external of program.externals ?? []) state.claimed.add(externalName(external.k, external.name));
-  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true).file();
+  return new RustEmitter(program, state, sourceHeaders, borrowedCalls?.targets, options.arrayConsumption === true, options.recordDefinitionOwnership === true).file();
 }
 
 /** The Rust name of another item of the module: a function's in snake case, a constant's as it is written. */
 function externalName(kind, name) {
   return kind === 'fn' ? snake(name) : name;
+}
+
+/** Actual normal emitter target identities, shared by optional ownership checks. */
+export function readRustExternalTargets(program) {
+  const externals = new Map((program.externals ?? []).filter(({name}) => !program.declarations.has(name)).map(entry => [entry.name, entry]));
+  return [...externals.values()].map(entry => ({source: entry.name, kind: entry.k, target: externalName(entry.k, entry.name)}));
 }
 
 /**
@@ -700,9 +706,10 @@ export function emitRustConstants(program) {
 }
 
 class RustEmitter {
-  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false) {
+  constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false) {
     this.program = program;
     this.state = state;
+    this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
     this.sourceHeaders = sourceHeaders;
     this.borrowedCallTargets = borrowedCallTargets;
     // Historical low-level profiles keep copies; ordinary source and Links
@@ -710,6 +717,7 @@ class RustEmitter {
     this.arrayConsumption = arrayConsumption;
     // The other items of the module the program calls or reads, which it does not declare.
     this.externals = new Map((program.externals ?? []).filter(({ name }) => !program.declarations.has(name)).map((external) => [external.name, external]));
+    if (this.definitionOwnership !== null) this.definitionOwnership.externalTargets = readRustExternalTargets(program);
     this.temporaries = 0;
     this.theoremChecks = [];
     this.usesBig = false;
@@ -771,7 +779,7 @@ class RustEmitter {
       encodings: this.state.encodingList(),
       theorems: this.state.theorems,
       entry: main ? 'main' : null,
-    }, preludes, body);
+    }, preludes, body, this.definitionOwnership);
   }
 
   /**
@@ -801,7 +809,18 @@ class RustEmitter {
   }
 
   moduleBody(node, path) {
-    const blocks = node.items.map((entry) => this.declaration(entry));
+    const blocks = node.items.map((entry, index) => {
+      const mappingStart = this.state.mappings.length;
+      const definition = this.declaration(entry);
+      if (this.definitionOwnership !== null && path.length === 0) {
+        this.definitionOwnership.blocks.push({source: entry.fullName, kind: entry.k,
+          definitionIndex: (this.program.imports?.length ?? 0) + index,
+          definition, sourceSpan: entry.span ? {...entry.span} : null,
+          mappingStart, mappingEnd: this.state.mappings.length,
+          targets: this.state.mappings.slice(mappingStart).map(mapping => mapping.target)});
+      }
+      return definition;
+    });
     for (const [segment, child] of node.modules) {
       const inner = this.moduleBody(child, [...path, segment]);
       blocks.push(`pub mod ${this.state.moduleName([...path, segment])} {\n${indent(inner.join('\n\n'), 1)}\n}`);

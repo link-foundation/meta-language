@@ -13,7 +13,7 @@ use super::{
 };
 
 impl<'p> RustEmitter<'p> {
-    pub(super) fn file(mut self) -> Result<Emitted> {
+    pub(super) fn file_owned(mut self) -> Result<(Emitted, Option<super::DefinitionOwnership>)> {
         if self.utf16_strings {
             self.preludes.insert(Prelude::String);
         }
@@ -77,12 +77,13 @@ impl<'p> RustEmitter<'p> {
             lines.push(block);
             lines.push(String::new());
         }
+        let definition_ownership = self.definition_ownership.take();
         let mut emitted = self
             .state
             .finish(lines.join("\n"), has_main.then(|| "main".to_owned()));
         emitted.preludes = preludes;
         emitted.definitions = definitions;
-        Ok(emitted)
+        Ok((emitted, definition_ownership))
     }
 
     pub(super) fn module_body(
@@ -92,7 +93,27 @@ impl<'p> RustEmitter<'p> {
     ) -> Result<Vec<String>> {
         let mut blocks = Vec::new();
         for entry in &node.items {
-            blocks.push(self.declaration(entry)?);
+            let mapping_start = self.state.mappings.len();
+            let definition = self.declaration(entry)?;
+            if path.is_empty() {
+                if let Some(ownership) = &mut self.definition_ownership {
+                    let targets = self.state.mappings[mapping_start..]
+                        .iter()
+                        .map(|mapping| mapping.target.clone())
+                        .collect();
+                    ownership.blocks.push(super::OwnedDefinitionBlock {
+                        source: entry.full_name().to_owned(),
+                        kind: entry.kind(),
+                        source_span: entry.span(),
+                        definition_index: self.program.imports.len() + blocks.len(),
+                        definition: definition.clone(),
+                        mapping_start,
+                        mapping_end: self.state.mappings.len(),
+                        targets,
+                    });
+                }
+            }
+            blocks.push(definition);
         }
         for (segment, child) in &node.modules {
             let mut inner_path = path.to_vec();

@@ -403,9 +403,11 @@ export function orderDeclarations(program, { requireContiguousModules = false } 
  * and `definitions` (its translated top-level definitions, without header,
  * preludes and entry point), kept out of its serialised contract.
  */
-export function withParts(emitted, preludes, definitions) {
-  return Object.defineProperties(emitted, {
+export function withParts(emitted, preludes, definitions, definitionOwnership = null) {
+  const parts = {
     preludes: { value: preludes },
     definitions: { value: definitions },
-  });
+  };
+  if (definitionOwnership !== null) parts.definitionOwnership = { value: definitionOwnership };
+  return Object.defineProperties(emitted, parts);
 }
