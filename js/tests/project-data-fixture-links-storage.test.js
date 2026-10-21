@@ -95,7 +95,7 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
     { cwd: fileURLToPath(root), maxBuffer: 16 * 1024 * 1024 });
   assert.equal(hash(originalBytes), receipt.originalSha256);
   assert.equal(hash(refreshBytes), receipt.refreshSha256);
-  assert.deepEqual(readFileSync(new URL(receipt.refreshPath, root)), refreshBytes,
+  assert.ok(readFileSync(new URL(receipt.refreshPath, root)).equals(refreshBytes),
     'a later generated snapshot needs its own authenticated immutable receipt');
 
   const historical = JSON.parse(originalBytes.toString('utf8'));
@@ -156,7 +156,8 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
   }), /snapshot differs from its immutable Git bytes/u);
   // This immutable snapshot is also the source of the newest archived receipt.
   // The original corruption therefore reaches its source authentication first.
-  const latestReceiptError = receipt.refreshRevision === '499513e0957a9626e3df565f61640fb238fe01ad'
+  const archivedSnapshot = history.receipts.some(entry => entry.sourceCommit === receipt.refreshRevision);
+  const latestReceiptError = archivedSnapshot
     ? /history receipt differs from its immutable Git bytes/u : /latest prior receipt/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === first.sourcePath) return Buffer.from('changed prior receipt bytes');
@@ -172,7 +173,7 @@ test('the stage refresh receipt authenticates the current immutable snapshot and
     return archivedBlob(revision, path);
   }, receipt.refreshRevision), /latest prior receipt/u);
   assert.equal(latestReceiptReads, 2);
-  const latestArchiveError = receipt.refreshRevision === '499513e0957a9626e3df565f61640fb238fe01ad'
+  const latestArchiveError = archivedSnapshot
     ? /complete preceding archive/u : /committed archive/u;
   assert.throws(() => validateTranslationStageRefreshHistory(history, (revision, path) => {
     if (revision === receipt.refreshRevision && path === historyPath) return Buffer.from(structuredDataToLino({ schemaVersion: 2 }));
