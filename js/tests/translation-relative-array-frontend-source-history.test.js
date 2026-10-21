@@ -12,6 +12,7 @@ import {createTypedProgramLinks,decodeTypedProgramLinks} from '../src/typed-prog
 import {recheckLinkedTypedProgram} from '../src/typed-program-checked-projection.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {generateRelativeArrayFrontendSourceHistory} from '../scripts/generate-relative-array-frontend-source-history.mjs';
+import {restoreRelativeArrayCurrentFrontendSource} from '../scripts/relative-array-current-frontend-history.mjs';
 import {RELATIVE_ARRAY_FRONTEND_PROFILE,RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,replayRelativeArrayNullableInference,relativeArrayFrontendPin,readAuthenticatedCurrentRelativeArrayFrontend,
   verifyRelativeArrayFrontendSourceHistory,readRelativeArrayFrontendSourceHistory,
   restoreRelativeArrayFrontendDescriptorSource} from '../scripts/relative-array-frontend-source-history.mjs';
@@ -26,7 +27,7 @@ test('active Node selects explicit relative-array frontend source assertion cove
 
 test('one complete certified historical frontend matches the original descriptor while current source retains its own authority',()=>{
   const history=readRelativeArrayFrontendSourceHistory(),policy=readOwnCodebaseRawDescriptorPolicy();
-  const current=read(policy.sourceFile).toString('utf8');
+  const current=restoreRelativeArrayCurrentFrontendSource(read(policy.sourceFile).toString('utf8'),policy.sourceFile,RELATIVE_ARRAY_FRONTEND_PROFILE);
   assert.equal(current,readAuthenticatedCurrentRelativeArrayFrontend());
   assert.deepEqual(relativeArrayFrontendPin(current),policy.sourceOwner.current);
   const restored=restoreRelativeArrayFrontendDescriptorSource(current,policy.sourceFile,RELATIVE_ARRAY_FRONTEND_PROFILE);

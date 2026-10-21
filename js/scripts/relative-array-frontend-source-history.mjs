@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreRelativeArrayCurrentFrontendSource} from './relative-array-current-frontend-history.mjs';
+import {restoreRelativeArrayCurrentSourceView} from './relative-array-current-source-views.mjs';
 import {readOwnCodebaseRawDescriptorPolicy,readOwnCodebaseRawDescriptorPacket,
   deriveOwnCodebaseRawDescriptorSource} from './own-codebase-raw-source-descriptors.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy} from './own-codebase-baseline-naming-history.mjs';
@@ -132,6 +134,8 @@ export function readRelativeArrayFrontendSourceHistory(){
  * Other profiles/files are identities; unknown selected successors refuse. */
 export function restoreRelativeArrayFrontendDescriptorSource(source,file,profile){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof profile,'string');
+  source=restoreRelativeArrayCurrentSourceView(source,file,profile);
+  source=restoreRelativeArrayCurrentFrontendSource(source,file,profile);
   const policy=readOwnCodebaseRawDescriptorPolicy();
   if(profile!==RELATIVE_ARRAY_FRONTEND_PROFILE)return source;
   if(file===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path){

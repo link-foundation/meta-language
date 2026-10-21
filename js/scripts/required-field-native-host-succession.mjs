@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 import {replayAsciiHostEdits,verifyAsciiTextPredicateHosts} from './ascii-text-predicate-host-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const REQUIRED_FIELD_NATIVE_HOST_REVISION='a8a789afb0ed569340d9079279f534f0bf7c4e72';
@@ -92,7 +93,7 @@ export function verifyRequiredFieldNativeHostSuccession(packet){
       inverse=inverse.slice(0,edit.start)+edit.removed+inverse.slice(edit.start+edit.inserted.length);
     }
     assert.equal(inverse,row.previous.source,'every original complete source byte survives');
-    assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.current.source,'the complete actual current host retains the new registration or builtin-owner guard');
+    assert.equal(restoreCurrentNativeHostSource(readFileSync(new URL(row.file,root),'utf8'),row.file),row.current.source,'the complete actual current host retains the new registration or builtin-owner guard');
   }
   return packet;
 }
@@ -108,6 +109,7 @@ export function readRequiredFieldNativeHostSuccession(){
 export function restoreRequiredFieldNativeHostSource(source,file,reader){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof reader,'string');
   if(!Object.hasOwn(readers,reader)||!readers[reader].includes(file))return source;
+  source=restoreCurrentNativeHostSource(source,file);
   const row=readRequiredFieldNativeHostSuccession().sources.find(row=>row.file===file);assert.ok(row);
   if(source!==row.current.source)return source;
   assert.deepEqual(pinRequiredFieldNativeHostSource(source),{bytes:row.current.bytes,sha256:row.current.sha256});

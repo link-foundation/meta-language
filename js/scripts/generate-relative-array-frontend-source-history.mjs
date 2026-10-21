@@ -8,6 +8,7 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy} from './own-codebase-baseline-naming-history.mjs';
 import {readOwnCodebaseRawDescriptorPolicy} from './own-codebase-raw-source-descriptors.mjs';
+import {restoreRelativeArrayCurrentFrontendSource} from './relative-array-current-frontend-history.mjs';
 import {RELATIVE_ARRAY_FRONTEND_PROFILE,RELATIVE_ARRAY_FRONTEND_HOST,relativeArrayFrontendPin,
   replayRelativeArrayFrontendHost,readAuthenticatedCurrentRelativeArrayFrontend,
   verifyRelativeArrayFrontendSourceHistory,RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,replayRelativeArrayNullableInference} from './relative-array-frontend-source-history.mjs';
@@ -25,7 +26,7 @@ export function generateRelativeArrayFrontendSourceHistory({check=false,apply=fa
   const row=selected[0],historical={file:row.file,commit:row.commit,bytes:row.bytes,sha256:row.sha256,
     sourceText:row.sourceText,certificate:structuredClone(row.certificate)};
   archive=null;global.gc?.();
-  assert.equal(readFileSync(new URL(policy.sourceFile,root),'utf8'),readAuthenticatedCurrentRelativeArrayFrontend());
+  assert.equal(restoreRelativeArrayCurrentFrontendSource(readFileSync(new URL(policy.sourceFile,root),'utf8'),policy.sourceFile,RELATIVE_ARRAY_FRONTEND_PROFILE),readAuthenticatedCurrentRelativeArrayFrontend());
   const inferenceOwner=RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE;
   const inferenceCapture=captureGitArtifactCertificate(inferenceOwner.revision,inferenceOwner.path);
   const inferenceSource=inferenceCapture.blob.toString('utf8');assert.deepEqual(Buffer.from(inferenceSource),inferenceCapture.blob);

@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url),revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const archive='parity/self-translation/ci-39422441941-repair-source-history.lino';
 const helper='js/scripts/current-ci-repair-source-history.mjs';
@@ -44,7 +45,7 @@ const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').up
 /** The diff is computed on exact bytes, retaining UTF-8 boundary integrity. */
 export function generateCurrentCiRepairSourceHistory({check=false}={}) {
   const sources=sourceFiles.map(file=>{
-    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=Buffer.from(restoreGrammarContextMetadataHistory(readFileSync(new URL(file,root),'utf8'),file));
+    const{blob,certificate}=captureGitArtifactCertificate(revision,file),current=Buffer.from(restoreGrammarContextMetadataHistory(restoreCurrentNativeHostSource(readFileSync(new URL(file,root),'utf8'),file),file));
     assert.deepEqual(Buffer.from(blob.toString('utf8')),blob);assert.deepEqual(Buffer.from(current.toString('utf8')),current);
     let start=0,oldEnd=blob.length,end=current.length;
     while(start<oldEnd&&start<end&&blob[start]===current[start])start++;

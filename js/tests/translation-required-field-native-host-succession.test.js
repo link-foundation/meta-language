@@ -7,6 +7,7 @@ import {generateJavaScriptMutableArrayBindings} from '../scripts/generate-javasc
 import {restoreProgramStringHostRegistrationSource} from '../scripts/program-string-host-registration-history.mjs';
 import {readCollectionSizeProjectionSchemaPacket,deriveCollectionSizeProjectionValidationSource,verifyCollectionSizeProjectionSchemaPacket} from '../scripts/collection-size-projection-schema.mjs';
 import {generateRequiredFieldNativeHostSuccession} from '../scripts/generate-required-field-native-host-succession.mjs';
+import {restoreCurrentNativeHostSource} from '../scripts/current-native-host-source-history.mjs';
 import {REQUIRED_FIELD_NATIVE_HOST_OUTPUT,REQUIRED_FIELD_NATIVE_HOST_SOURCES,pinRequiredFieldNativeHostSource,
   verifyRequiredFieldNativeHostSuccession,restoreRequiredFieldNativeHostSource} from '../scripts/required-field-native-host-succession.mjs';
 const root=new URL('../../',import.meta.url);
@@ -19,7 +20,9 @@ test('all three actual current native hosts retain exact a8 source inverses and 
   const value=verifyRequiredFieldNativeHostSuccession(packet());assert.equal(value.sources.length,5);
   const originalSources=value.sources.slice(0,3);assert.equal(originalSources.length,3);
   for(const[index,row]of originalSources.entries()){
-    const current=readFileSync(new URL(row.file,root),'utf8');assert.equal(current,row.current.source);
+    // The original packet's current host is the certified 8d version. The
+    // separate current-native controls retain and inspect every actual source.
+    const current=restoreCurrentNativeHostSource(readFileSync(new URL(row.file,root),'utf8'),row.file);assert.equal(current,row.current.source);
     for(const change of REQUIRED_FIELD_NATIVE_HOST_SOURCES[index].changes)assert.equal(current.split(change.after).length,2);
     const reader=index===2?'ASCII character host':'program string registration';
     assert.equal(restoreRequiredFieldNativeHostSource(current,row.file,reader),row.previous.source);

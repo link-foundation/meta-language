@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
+import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {REQUIRED_FIELD_NATIVE_HOST_REVISION,REQUIRED_FIELD_NATIVE_HOST_OUTPUT,REQUIRED_FIELD_NATIVE_HOST_SOURCES,
   pinRequiredFieldNativeHostSource,verifyRequiredFieldNativeHostSuccession,deriveRequiredFieldNativeHostSource} from './required-field-native-host-succession.mjs';
@@ -11,7 +12,7 @@ export function generateRequiredFieldNativeHostSuccession({check=false}={}){
   const sources=REQUIRED_FIELD_NATIVE_HOST_SOURCES.map(specification=>{
     const{blob,certificate}=captureGitArtifactCertificate(REQUIRED_FIELD_NATIVE_HOST_REVISION,specification.file);
     const source=blob.toString('utf8');assert.deepEqual(Buffer.from(source),blob);
-    const current=readFileSync(new URL(specification.file,root),'utf8');
+    const current=restoreCurrentNativeHostSource(readFileSync(new URL(specification.file,root),'utf8'),specification.file);
     const replay=deriveRequiredFieldNativeHostSource(source,current,specification);
     assert.equal(current,replay.source,'the finite original-source replay is the actual complete native host');
     return{file:specification.file,previous:{source,...pinRequiredFieldNativeHostSource(blob),certificate},

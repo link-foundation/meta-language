@@ -4,9 +4,10 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreCurrentNativeHostSource} from './current-native-host-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
-const archiveSha256='0673dbf9fa72b564b9c5f66ea300675fb0e03974a599b18b7b7da1e311484d0d';
+const archiveSha256='50f4bf031c714466b64491a424c1654b62652ea9e0cbfe68af7cb9e1a8ff2bdc';
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;
@@ -15,6 +16,7 @@ let history;
  * complete independently pinned current source gets an original source view. */
 export function restoreCurrentCiRepairSource(source,path) {
   assert.equal(typeof source,'string');assert.equal(typeof path,'string');
+  source=restoreCurrentNativeHostSource(source,path);
   source=restoreBooleanValueGuardHistory(source,path);
   source=restoreRawPlanningWorkflowHistory(source,path);
   source=restoreGrammarContextMetadataHistory(source,path);
