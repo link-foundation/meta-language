@@ -2,7 +2,7 @@
 // Every accepted reader refers to an inspected declaration, never its spelling.
 import {
   acceptOwnedArrayAppendShape, acceptOwnedArrayRemovalShape, readOwnedArrayRemovalSliceBounds, acceptOwnedArrayAppendUses, acceptOwnedArrayRead,
-  acceptOwnedArrayReaderResult,
+  acceptOwnedArrayReaderResult, acceptOwnedArraySelfSliceRebinding,
 } from './owned-array-append-rules.js';
 import { FLOAT } from './types.js';
 
@@ -36,6 +36,10 @@ export function readOwnedArrayReaderParameters(declaration, readers, statements 
       }
       if (value.k === 'field') {
         visit(value.object, value.field === 'length' ? 'length-receiver' : '', '', false, captured, locals); return;
+      }
+      if (value.k === 'copySlice' || value.k === 'forOfIterable') {
+        visit(value.object, value.k === 'copySlice' ? 'method-receiver' : 'iteration-receiver',
+          value.k === 'copySlice' ? 'slice' : '', false, captured, locals); return;
       }
       if (value.k === 'method' || value.k === 'stringTest') {
         visit(value.object, 'method-receiver', value.op, false, captured, locals);
@@ -135,6 +139,9 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
       read(value.index, scope, loops, '', '', false, captured); return;
     }
     if (value.k === 'field') { read(value.object, scope, loops, value.field === 'length' ? 'length-receiver' : '', '', false, captured); return; }
+    if (value.k === 'copySlice') {
+      read(value.object, scope, loops, 'method-receiver', 'slice', false, captured); return;
+    }
     if (value.k === 'method' || value.k === 'stringTest') {
       read(value.object, scope, loops, 'method-receiver', value.op, false, captured);
       (value.args ?? [value.search]).forEach(argument => read(argument, scope, loops, '', '', false, captured)); return;
@@ -159,7 +166,16 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
       } else if (statement.s === 'assign') {
         read(statement.value, scope, loops);
         const allocation = scope.get(statement.name);
-        if (allocation) escape(allocation, loops);
+        if (allocation) {
+          const value = statement.value;
+          const receiver = value?.object;
+          const sameOwner = receiver?.k === 'name' && receiver.path.length === 1
+            && receiver.path[0] === statement.name && scope.get(receiver.path[0]) === allocation;
+          // The complete RHS walk above retains unsafe argument reads and
+          // every earlier escape. No allocation or escape history is reset.
+          if (!acceptOwnedArraySelfSliceRebinding(value?.k ?? '', value?.op ?? '', receiver?.k ?? '',
+            receiver?.path?.length ?? 0, sameOwner, value?.k === 'copySlice' ? 0 : value?.args?.length ?? -1)) escape(allocation, loops);
+        }
       } else if (statement.s === 'return' || statement.s === 'throw' || statement.s === 'break' || statement.s === 'continue') {
         // No owner reaches another construction after this control transfer.
         break;

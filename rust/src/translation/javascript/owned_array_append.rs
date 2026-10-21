@@ -127,6 +127,25 @@ fn names(
         );
         return;
     }
+    if kind == "copySlice" || kind == "forOfIterable" && parameter.is_some() {
+        names(
+            &value["object"],
+            readers,
+            locals,
+            Use {
+                context: if kind == "copySlice" {
+                    "method-receiver"
+                } else {
+                    "iteration-receiver"
+                },
+                operation: if kind == "copySlice" { "slice" } else { "" },
+                ..ordinary
+            },
+            parameter,
+            record,
+        );
+        return;
+    }
     if kind == "field" {
         let context = if text(value, "field") == "length" {
             "length-receiver"
@@ -449,7 +468,9 @@ impl Occurrences {
                 }
                 Stmt::Assign { name, value, .. } => {
                     self.read(value, scope, loops, readers);
-                    if let Some(Some(allocation)) = scope.get(name) {
+                    if let Some(Some(allocation)) = scope.get(name)
+                        && !self_slice_rebinding(name, value, scope, *allocation)
+                    {
                         self.escape(*allocation, loops);
                     }
                 }
@@ -520,6 +541,30 @@ impl Occurrences {
             }
         }
     }
+}
+
+/// Project actual source AST facts only; all admission stays in generated rules.
+fn self_slice_rebinding(name: &str, value: &SExpr, scope: &Scope, allocation: usize) -> bool {
+    let (operation, object, count) = match &value.node {
+        SNode::Method { op, object, args } => (op.as_str(), Some(object.as_ref()), args.len()),
+        SNode::CopySlice { object } => ("", Some(object.as_ref()), 0),
+        _ => ("", None, 0),
+    };
+    let path = match object.map(|object| &object.node) {
+        Some(SNode::Name { path }) => path.len(),
+        _ => 0,
+    };
+    let same_owner = object
+        .and_then(SExpr::simple_name)
+        .is_some_and(|receiver| receiver == name && scope.get(receiver) == Some(&Some(allocation)));
+    rules::accept_owned_array_self_slice_rebinding(
+        value.node.kind(),
+        operation,
+        object.map_or("", |object| object.node.kind()),
+        number(path),
+        same_owner,
+        number(count),
+    )
 }
 
 fn append_shape(expression: &SExpr) -> bool {

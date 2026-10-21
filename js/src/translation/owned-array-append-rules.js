@@ -21,7 +21,7 @@ export function readOwnedArrayRemovalSliceBounds() {
 
 /** @param {string} context @param {string} operation @param {boolean} reader @returns {boolean} */
 export function acceptOwnedArrayRead(context, operation, reader) {
-  if (context === 'index-receiver' || context === 'length-receiver') return true;
+  if (context === 'index-receiver' || context === 'length-receiver' || context === 'iteration-receiver') return true;
   if (context === 'argument') return reader;
   return context === 'method-receiver' && (operation === 'slice' || operation === 'includes'
     || operation === 'indexOf' || operation === 'lastIndexOf' || operation === 'join');
@@ -61,6 +61,22 @@ export function acceptOwnedArrayAppendUses(allocationLoops, appendLoops, escapeL
     }
   }
   return true;
+}
+
+/**
+ * A complete RHS read walk must still record every actual unsafe use before
+ * this shape can omit the assignment escape. Existing escapes are retained.
+ * This decision never creates an owner or blesses a parameter/foreign array.
+ * @param {string} expression @param {string} operation @param {string} receiver
+ * @param {number} pathLength @param {boolean} sameOwner
+ * @param {number} argumentsCount @returns {boolean}
+ */
+export function acceptOwnedArraySelfSliceRebinding(expression, operation, receiver, pathLength, sameOwner, argumentsCount) {
+  if (expression === 'copySlice') return operation === '' && receiver === 'name'
+    && pathLength === 1 && sameOwner && argumentsCount === 0;
+  return expression === 'method' && operation === 'slice' && receiver === 'name'
+    && pathLength === 1 && sameOwner
+    && (argumentsCount === 0 || argumentsCount === 1 || argumentsCount === 2);
 }
 
 /**

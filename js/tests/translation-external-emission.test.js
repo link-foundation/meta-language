@@ -11,6 +11,7 @@ import { encodeTypedProgramLinks, decodeTypedProgramLinks } from '../src/typed-p
 import { recheckLinkedTypedProgram } from '../src/typed-program-checked-projection.js';
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
+import { generateExternalEmissionRules } from '../scripts/generate-external-emission-rules.mjs';
 
 function versions() {
   const [major, minor] = process.versions.node.split('.').map(Number);
@@ -87,4 +88,10 @@ test('strict target binding policy keeps builtin spellings and refuses unsupport
   }
   assert.equal(renderJavaScriptExternalCall('const', 'limit', 'argument()'), '');
   assert.equal(renderJavaScriptExternalCall('unknown', 'limit', ''), '');
+});
+
+test('the normal external emission author authenticates the complete shared policy', async () => {
+  versions();
+  const policy = await generateExternalEmissionRules({ check: true, native: true });
+  assert.equal(policy.sourcePath, 'js/src/translation/external-emission-rules.js');
 });

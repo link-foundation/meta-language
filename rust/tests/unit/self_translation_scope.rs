@@ -68,7 +68,9 @@ process.stdout.write(structuredDataToLino({javascript,original,actual}));
         };
         let source =
             format!("/** @returns {{number}} */function selected(){{return {expression};}}");
-        let mut externals = self_translation_signatures(provider, "JavaScript").unwrap();
+        let mut externals =
+            self_translation_signatures(provider, "JavaScript", &SelfTranslationOptions::default())
+                .unwrap();
         assert_eq!(externals.len(), 1, "{name}");
         match &mut externals[0] {
             External::Function { name: binding, .. } | External::Constant { name: binding, .. } => {

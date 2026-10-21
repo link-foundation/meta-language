@@ -221,7 +221,9 @@ pub fn read_owned_array_removal_slice_bounds() -> Vec<f64> {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_owned_array_read(context: &str, operation: &str, reader: bool) -> bool {
-    if (context == "index-receiver") || (context == "length-receiver") {
+    if ((context == "index-receiver") || (context == "length-receiver"))
+        || (context == "iteration-receiver")
+    {
         true
     } else if context == "argument" {
         reader
@@ -276,6 +278,29 @@ pub fn accept_owned_array_append_uses(
                 }
             }
         }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_owned_array_self_slice_rebinding(
+    expression: &str,
+    operation: &str,
+    receiver: &str,
+    path_length: f64,
+    same_owner: bool,
+    arguments_count: f64,
+) -> bool {
+    if expression == "copySlice" {
+        (((((operation).is_empty()) && (receiver == "name")) && (path_length == 1f64))
+            && same_owner)
+            && (arguments_count == 0f64)
+    } else {
+        (((((expression == "method") && (operation == "slice")) && (receiver == "name"))
+            && (path_length == 1f64))
+            && same_owner)
+            && (((arguments_count == 0f64) || (arguments_count == 1f64))
+                || (arguments_count == 2f64))
     }
 }
 
