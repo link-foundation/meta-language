@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 246 | 245 | 1 | 0 |
+| Generators | 250 | 249 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -793,6 +793,10 @@ they are.
 | `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `js/scripts/generate-current-raw-descriptor-cohort.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `js/scripts/generate-raw-consuming-snapshot-source-profile.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-truthy-projection-schema.mjs` | `js/scripts/generate-truthy-projection-schema.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `js/scripts/generate-grammar-lazy-comparison-baseline.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `js/scripts/generate-naming-source-binding-codec-profile.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `js/scripts/generate-raw-descriptor-historical-cohort.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `js/scripts/generate-scoped-iteration-native-host-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
