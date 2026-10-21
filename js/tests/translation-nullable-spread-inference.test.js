@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
+import {restoreArrayRelativeElementSource} from '../scripts/array-relative-element-history.mjs';
+import {RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,readRelativeArrayFrontendSourceHistory} from '../scripts/relative-array-frontend-source-history.mjs';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
@@ -57,4 +60,17 @@ test('actual string spreads still select code point iteration including isolated
     const program=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});
     assert.deepEqual(printed(emitJavaScript(program).text+observation),expected);
   }
+});
+
+test('historical callback and character views compose the certified nullable inference inverse only for its actual owner',()=>{
+  const owner=RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE;
+  const current=readFileSync(new URL('../../'+owner.path,import.meta.url),'utf8');
+  const previous=readRelativeArrayFrontendSourceHistory().nullableInference.sourceText;
+  for(const currentOnly of [false,true]){
+    assert.equal(restoreArrayRelativeElementSource(current,owner.path,currentOnly),
+      restoreArrayRelativeElementSource(previous,owner.path,currentOnly));
+    assert.throws(()=>restoreArrayRelativeElementSource(current+'\n',owner.path,currentOnly));
+    assert.equal(restoreArrayRelativeElementSource(current,'unregistered.js',currentOnly),current);
+  }
+  assert.equal(readFileSync(new URL('../../'+owner.path,import.meta.url),'utf8'),current);
 });

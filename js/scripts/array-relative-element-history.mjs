@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 import {readProjectData,serializeProjectData} from './project-data.mjs';
 import {readStructuredDataLino} from '../src/structured-data-links.js';
 import {restoreContinuationHistoricalSource} from './continuation-source-history.mjs';
+import {RELATIVE_ARRAY_FRONTEND_PROFILE,RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,restoreRelativeArrayFrontendDescriptorSource} from './relative-array-frontend-source-history.mjs';
 
 const historyFile=new URL('../../parity/self-translation/array-relative-element-history.lino',import.meta.url);
 const historyHash='5560db49c46a77d13893ca1fc1d3ffe582dc27a727c45d071c58109ed2519c32';
@@ -19,6 +20,8 @@ function arrayRelativeElementHistory() {
 }
 export function restoreArrayRelativeElementSource(source,file,currentOnly=false) {
   assert.equal(typeof source,'string');
+  if(file===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path)
+    source=restoreRelativeArrayFrontendDescriptorSource(source,file,RELATIVE_ARRAY_FRONTEND_PROFILE);
   source=restoreCurrentCiRepairSource(source,file);
   source=restoreContinuationHistoricalSource(source,file,'relative array');
   const row=arrayRelativeElementHistory().sources.find(row=>row.file===file);
