@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {restoreArrayRelativeElementSource} from '../scripts/array-relative-element-history.mjs';
+import {restoreTranslationSourceHistory} from '../scripts/translation-source-history.mjs';
 import {RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE,readRelativeArrayFrontendSourceHistory} from '../scripts/relative-array-frontend-source-history.mjs';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -69,7 +70,10 @@ test('historical callback and character views compose the certified nullable inf
   for(const currentOnly of [false,true]){
     assert.equal(restoreArrayRelativeElementSource(current,owner.path,currentOnly),
       restoreArrayRelativeElementSource(previous,owner.path,currentOnly));
-    assert.throws(()=>restoreArrayRelativeElementSource(current+'\n',owner.path,currentOnly));
+    // This owner is handled only by the certified outer composition. Unknown
+    // bytes remain untouched here and must refuse at the registered boundary.
+    assert.equal(restoreArrayRelativeElementSource(current+'\n',owner.path,currentOnly),current+'\n');
+    assert.throws(()=>restoreTranslationSourceHistory(current+'\n',owner.path,'81107a5945651f17c962e4bb81fb560f96c65ccd'));
     assert.equal(restoreArrayRelativeElementSource(current,'unregistered.js',currentOnly),current);
   }
   assert.equal(readFileSync(new URL('../../'+owner.path,import.meta.url),'utf8'),current);

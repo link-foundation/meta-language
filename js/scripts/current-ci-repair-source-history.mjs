@@ -6,7 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
-const archiveSha256='450100aa432e4d99d46bd9ad3f6b78793ab0a4c5b57827a4136c9e6c8029b315';
+const archiveSha256='0673dbf9fa72b564b9c5f66ea300675fb0e03974a599b18b7b7da1e311484d0d';
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;

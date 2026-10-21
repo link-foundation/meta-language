@@ -20,7 +20,8 @@ function arrayRelativeElementHistory() {
 }
 export function restoreArrayRelativeElementSource(source,file,currentOnly=false) {
   assert.equal(typeof source,'string');
-  if(file===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path)
+  if(file===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.path
+    &&digest(source)===RELATIVE_ARRAY_NULLABLE_INFERENCE_SOURCE.current.sha256)
     source=restoreRelativeArrayFrontendDescriptorSource(source,file,RELATIVE_ARRAY_FRONTEND_PROFILE);
   source=restoreCurrentCiRepairSource(source,file);
   source=restoreContinuationHistoricalSource(source,file,'relative array');
