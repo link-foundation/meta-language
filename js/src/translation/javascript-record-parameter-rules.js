@@ -1,0 +1,178 @@
+// Actual token plans for the first ordered record parameter source profile.
+// Native algorithms must be generated from the complete recorded closure.
+import { acceptJavaScriptArrayBindingName } from './array-binding-rules.js';
+import { readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
+
+/** Detect only an actual object pattern at a formal parameter start. Ordinary
+ * names/defaults remain on the old route unless a real pattern also occurs.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @returns {number} */
+export function findJavaScriptRecordParameterPattern(kinds, values, start) {
+  if (kinds.length !== values.length || !Number.isInteger(start) || start < 0 || start >= kinds.length) return -1;
+  let depth = 0;
+  let binding = true;
+  for (let at = start; at < kinds.length; at += 1) {
+    const kind = readRequiredTextFact(kinds, at);
+    if (kind === 'eof') return -1;
+    if (kind !== 'punct') { if (depth === 0) binding = false; continue; }
+    const value = readRequiredTextFact(values, at);
+    if (depth === 0 && value === ')') return -1;
+    if (depth === 0 && binding && value === '{') return at;
+    if (value === '(' || value === '[' || value === '{') { depth += 1; binding = false; }
+    else if (value === ')' || value === ']' || value === '}') { depth -= 1; if (depth < 0) return -1; }
+    else if (depth === 0 && value === ',') binding = true;
+    else if (depth === 0 && value !== ',') binding = false;
+  }
+  return -1;
+}
+
+/** Reuse actual lexical identifier admission; equal field names are not equal
+ * BoundNames. All duplicate actual local names across the full list refuse.
+ * @param {string} kind @param {string} name @param {string[]} names
+ * @param {string[]} reserved @returns {boolean} */
+export function acceptJavaScriptRecordParameterBinding(kind, name, names, reserved) {
+  let duplicate = false;
+  for (let index = 0; index < names.length; index += 1) if (readRequiredTextFact(names, index) === name) duplicate = true;
+  return acceptJavaScriptArrayBindingName(kind, name, duplicate, reserved);
+}
+
+/** Result [endExclusive,count,...instructions]; simple [0,slot,nameToken];
+ * record [1,slot,openToken,closeToken,pairCount,...propertyToken,bindingToken].
+ * Failure [-reason,actualToken]:1 syntax,2 defaults,3 arrays,4 empty,
+ * 5 nested,6 rest,7 computed/string key,8 invalid/duplicate BoundName.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @returns {number[]} */
+export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
+  if (kinds.length !== values.length || !Number.isInteger(start) || start < 0 || start >= kinds.length) return [-1, start];
+  let at = start;
+  let slot = 0;
+  /** @type {string[]} */
+  const names = [];
+  /** @type {number[]} */
+  let instructions = [];
+  while (at < kinds.length && !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ')')) {
+    if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '...') return [-6, at];
+    if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '[') return [-3, at];
+    if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '{') {
+      const open = at;
+      at += 1;
+      /** @type {number[]} */
+      let pairs = [];
+      while (at < kinds.length && !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) {
+        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '...') return [-6, at];
+        if (readRequiredTextFact(kinds, at) !== 'identifier') return [-7, at];
+        const property = at;
+        at += 1;
+        if (at >= kinds.length) return [-1, at];
+        let binding = property;
+        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ':') {
+          at += 1;
+          if (at >= kinds.length) return [-1, at];
+          if (readRequiredTextFact(kinds, at) === 'punct' && (readRequiredTextFact(values, at) === '{' || readRequiredTextFact(values, at) === '[')) return [-5, at];
+          binding = at;
+          at += 1;
+        }
+        const name = readRequiredTextFact(values, binding);
+        if (!acceptJavaScriptRecordParameterBinding(readRequiredTextFact(kinds, binding), name, names, reserved)) return [-8, binding];
+        names.push(name);
+        pairs = pairs.concat([property, binding]);
+        if (at >= kinds.length) return [-1, at];
+        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '=') return [-2, at];
+        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ',') { at += 1; continue; }
+        if (!(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
+      }
+      if (pairs.length === 0) return [-4, open];
+      if (at >= kinds.length || !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
+      instructions = instructions.concat([1, slot, open, at, pairs.length / 2]).concat(pairs);
+      at += 1;
+    } else {
+      const name = readRequiredTextFact(values, at);
+      if (!acceptJavaScriptRecordParameterBinding(readRequiredTextFact(kinds, at), name, names, reserved)) return [-8, at];
+      names.push(name);
+      instructions = instructions.concat([0, slot, at]);
+      at += 1;
+    }
+    if (at >= kinds.length) return [-1, at];
+    if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '=') return [-2, at];
+    slot += 1;
+    if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ',') { at += 1; continue; }
+    if (!(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ')')) return [-1, at];
+  }
+  if (at >= kinds.length || !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ')')) return [-1, at];
+  return [at + 1, slot].concat(instructions);
+}
+
+/** The first profile has no default-environment, mutable parameter or async
+ * composition proof. Zero parameter doc tags avoids inventing a documentation
+ * name for an unnamed source pattern. Ordinary old signatures stay untouched.
+ * @param {string} context @param {boolean} asynchronous @param {number} documentationParameters
+ * @param {boolean} boundWrites @param {boolean} variableRedeclarations
+ * @returns {boolean} */
+export function acceptJavaScriptRecordParameterProfile(context, asynchronous, documentationParameters, boundWrites, variableRedeclarations) {
+  return context === 'ordinary named function declaration' && !asynchronous
+    && documentationParameters === 0 && !boundWrites && !variableRedeclarations;
+}
+
+/** Builtin spelling alone cannot replace an actual local/module/context owner.
+ * @param {string} name @param {boolean} shadowed @returns {boolean} */
+export function acceptJavaScriptStandardBuiltinOwner(name, shadowed) {
+  return (name === 'Map' || name === 'Set' || name === 'console') && !shadowed;
+}
+
+/** Actual bounded body token facts, including the closing brace. A strict
+ * directive returns its actual token position; -1 means no strict directive;
+ * -2 refuses malformed or unsupported prologue transport. Raw spelling matters:
+ * a cooked string with escapes is an ordinary directive, not Use Strict.
+ * @param {string[]} kinds @param {string[]} values @param {string[]} raws
+ * @param {boolean[]} lineBreaks @param {number} start @returns {number} */
+export function findJavaScriptRecordParameterStrictDirective(kinds, values, raws, lineBreaks, start) {
+  if (kinds.length !== values.length || kinds.length !== raws.length || kinds.length !== lineBreaks.length
+    || !Number.isInteger(start) || start < 0 || start >= kinds.length) return -2;
+  let at = start;
+  while (at < kinds.length) {
+    const current = readRequiredTextFact(kinds, at);
+    if (current === 'eof') return -2;
+    if (current !== 'string') return -1;
+    const raw = readRequiredTextFact(raws, at);
+    const strict = raw === '"use strict"' || raw === "'use strict'";
+    const next = at + 1;
+    if (next >= kinds.length) return -2;
+    const kind = readRequiredTextFact(kinds, next), value = readRequiredTextFact(values, next);
+    if (kind === 'punct' && value === ';') {
+      if (strict) return at;
+      at = next + 1;
+      continue;
+    }
+    if (kind === 'punct' && value === '}') return strict ? at : -1;
+    if (kind === 'eof') return -2;
+    if (!readRequiredBooleanFact(lineBreaks, next)) return -1;
+    if (continuesJavaScriptDirectiveExpression(kind, value)) return -1;
+    if (kind === 'string' || kind === 'identifier' || kind === 'punct' && (value === '{' || value === '++' || value === '--')) {
+      if (strict) return at;
+      at = next;
+      continue;
+    }
+    return -2;
+  }
+  return -2;
+}
+
+/** Expression continuations prevent automatic semicolon insertion after a
+ * candidate directive. Small source guards keep normal generated formatting
+ * bounded; all original punctuators and keyword cases remain represented.
+ * @param {string} kind @param {string} value @returns {boolean} */
+function continuesJavaScriptDirectiveExpression(kind, value) {
+  if (kind === 'template' || kind === 'interpolation') return true;
+  if (kind === 'identifier') return value === 'in' || value === 'instanceof';
+  if (kind !== 'punct') return false;
+  if (value === '(' || value === '[' || value === '.') return true;
+  if (value === '?.' || value === '+' || value === '-') return true;
+  if (value === '*' || value === '/' || value === '%') return true;
+  if (value === '**' || value === '<<' || value === '>>') return true;
+  if (value === '>>>' || value === '<' || value === '>') return true;
+  if (value === '<=' || value === '>=' || value === '==') return true;
+  if (value === '!=' || value === '===' || value === '!==') return true;
+  if (value === '&' || value === '^' || value === '|') return true;
+  if (value === '&&' || value === '||' || value === '??') return true;
+  return value === '?' || value === ',';
+}

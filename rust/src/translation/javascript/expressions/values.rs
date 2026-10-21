@@ -280,6 +280,13 @@ impl JavaScriptParser {
                     Some(self.to_here(&token)),
                 ));
             }
+            if !self.has_standard_builtin_owner(&constructor) {
+                return Err(unsupported(
+                    "shadowed standard collection owner",
+                    "a local, module or supplied context constructor cannot be replaced with the standard Map or Set constructor",
+                    Some(constructor.span()),
+                ));
+            }
             let place = self.to_here(&token);
             let items = arguments.into_iter().next().unwrap_or_else(|| {
                 node(

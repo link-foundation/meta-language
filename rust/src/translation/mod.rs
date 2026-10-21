@@ -44,6 +44,7 @@ pub(crate) mod guarded_private_array_write_rules;
 pub mod ir;
 pub mod javascript;
 mod javascript_line_terminator_rules;
+pub(crate) mod javascript_record_parameter_rules;
 pub(crate) mod javascript_tag_context_rules;
 pub mod js_number;
 pub mod lean;

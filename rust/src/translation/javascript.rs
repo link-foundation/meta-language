@@ -48,6 +48,7 @@ mod object_properties;
 mod owned_array_append;
 mod product_source_rules;
 mod products;
+mod record_parameters;
 mod reference_analysis;
 mod scalar_loops;
 mod statements;
@@ -407,6 +408,9 @@ struct JavaScriptParser {
     owned_array_reader_namespace: usize,
     nested_product_bindings: HashSet<Span>,
     global_binding_names: HashSet<String>,
+    /// Whole actual token/context names, initialized after context installation.
+    record_parameter_names: Option<HashSet<String>>,
+    record_parameter_ordinal: u64,
 }
 
 impl JavaScriptParser {
@@ -452,6 +456,8 @@ impl JavaScriptParser {
             owned_array_reader_namespace: 0,
             nested_product_bindings: HashSet::new(),
             global_binding_names: HashSet::new(),
+            record_parameter_names: None,
+            record_parameter_ordinal: 0,
         }
     }
 

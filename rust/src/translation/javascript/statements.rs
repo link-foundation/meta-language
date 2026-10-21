@@ -720,6 +720,13 @@ impl JavaScriptParser {
     fn console_call(&mut self) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
         self.lexical.read(&start, false, start.span());
+        if !self.has_standard_builtin_owner(&start) {
+            return Err(unsupported(
+                "shadowed standard console owner",
+                "a local, module or supplied context console binding cannot be replaced with standard output",
+                Some(start.span()),
+            ));
+        }
         self.cursor.expect(".", Some("console"))?;
         let method = self.cursor.identifier(Some("console"))?;
         if method.value != "log" {

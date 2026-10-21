@@ -25,10 +25,11 @@ mod jsdoc;
 use jsdoc::{jsdoc_type, promised};
 
 /// How a function's body is written: a block, or an arrow's block or expression.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 enum Body {
     Block,
     Arrow,
+    RecordParameters(Box<super::record_parameters::RecordParameters>),
 }
 
 impl JavaScriptParser {
@@ -255,7 +256,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("function"))?;
         global(&name)?;
-        self.function_rest(start, &name, is_async)
+        self.function_rest(start, &name, is_async, true)
     }
 
     /// Parameters and body of a function or method; `doc_token` is where its `JSDoc` ends.
@@ -264,9 +265,22 @@ impl JavaScriptParser {
         doc_token: &Token,
         name_token: &Token,
         is_async: bool,
+        named_record_parameters: bool,
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
+        if named_record_parameters
+            && let Some(records) = self.read_named_record_parameters(doc.as_ref(), is_async)?
+        {
+            return self.function_body(
+                doc_token,
+                name_token,
+                doc,
+                &[],
+                Body::RecordParameters(Box::new(records)),
+                is_async,
+            );
+        }
         let tokens = self.parameters(&name_token.value)?;
         self.function_body(doc_token, name_token, doc, &tokens, Body::Block, is_async)
     }
@@ -493,7 +507,11 @@ impl JavaScriptParser {
             self.sequential_async = true;
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
-        let mut params = Vec::new();
+        let records = match &body {
+            Body::RecordParameters(records) => Some(records.as_ref()),
+            _ => None,
+        };
+        let mut params = records.map_or_else(Vec::new, |records| records.parameters.clone());
         for (token, default_value) in tokens {
             reserved(token)?;
             let optional = default_value.is_none()
@@ -567,7 +585,7 @@ impl JavaScriptParser {
         let outer_async = std::mem::replace(&mut self.in_async, is_async);
         let outer_jumps = std::mem::take(&mut self.jumps);
         let outer_top_level = std::mem::replace(&mut self.top_level, false);
-        if !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
+        if records.is_none() && !self.scalar_loop_model.is_empty() && self.is_scalar_loop() {
             let names = params
                 .iter()
                 .map(|param| param.name.clone())
@@ -612,7 +630,7 @@ impl JavaScriptParser {
                     super::tag_context::TagReceiverFact::Declared(parameter.ty.clone()),
                 );
             }
-            match body {
+            match &body {
                 Body::Arrow if !parser.cursor.is("{") => {
                     let token = parser.peek();
                     let expr = if is_async {
@@ -627,6 +645,7 @@ impl JavaScriptParser {
                         }]
                     })
                 }
+                Body::RecordParameters(records) => parser.read_named_record_parameter_body(records),
                 _ => parser.block_statements(),
             }
         });
@@ -780,7 +799,7 @@ impl JavaScriptParser {
                 self.function_names
                     .insert(format!("{name}.{}", member.value));
                 self.owned_array_reader_namespace += 1;
-                let function = self.function_rest(&member, &member, false);
+                let function = self.function_rest(&member, &member, false, false);
                 self.owned_array_reader_namespace -= 1;
                 items.push(SItem::Fn(function?));
             } else if self.cursor.eat(":").is_some() {

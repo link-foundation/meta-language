@@ -337,6 +337,7 @@ mod translation_callable_expected_context;
 mod translation_complete_declaration_ranges;
 mod translation_guarded_private_array_writes;
 mod translation_javascript_array_bindings;
+mod translation_javascript_record_parameters;
 mod translation_owned_array_append;
 mod translation_owned_array_moves;
 mod translation_primitive_methods;

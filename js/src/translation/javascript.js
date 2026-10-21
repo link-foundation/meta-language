@@ -24,6 +24,8 @@ import { acceptSurfaceRawMetadataField, selectSurfaceReferenceSemantics } from '
 import { readOptionalLogicalMixingError, readOptionalSourceLiteral } from './optional-value-rules.js';
 import { acceptObjectFreezeOperand, acceptObjectPropertyDefinition } from './primitive-value-rules.js';
 import { validateJavaScriptProducts } from './javascript-products.js';
+import { readNamedJavaScriptRecordParameters, readNamedJavaScriptRecordParameterBody } from './javascript-record-parameters.js';
+import { acceptJavaScriptStandardBuiltinOwner } from './javascript-record-parameter-rules.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
@@ -109,6 +111,13 @@ class JavaScriptParser {
     this.imports = [];
     this.cursor = new TokenCursor(tokens, 'JavaScript');
     this.literalBindings = literalBindings;
+    // This private parser owns its tokenize result; no parser operation
+    // mutates these token records. Reserve all module/import/context names
+    // once, then retain generated logical argument names in the same Set.
+    this.recordParameterTokenOwner = tokens;
+    this.recordParameterNames = new Set([...this.externals.keys(), ...literalBindings.keys()]);
+    this.recordParameterOrdinal = 0;
+    for (const token of tokens) if (token.kind === 'identifier') this.recordParameterNames.add(token.value);
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
     // Tags of every @typedef data type, for `switch (x.$)`.
     this.dataTypes = new Map();
@@ -502,16 +511,18 @@ class JavaScriptParser {
     if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
     const name = c.identifier('function');
     global(name);
-    return this.functionRest(start, name, isAsync);
+    return this.functionRest(start, name, isAsync, true);
   }
 
   /** Parameters and body of a function or method; `docToken` is where its JSDoc ends. */
-  functionRest(docToken, nameToken, isAsync = false) {
+  functionRest(docToken, nameToken, isAsync = false, namedRecordParameters = false) {
     const c = this.cursor;
     const doc = this.jsdocFor(docToken);
     c.expect('(', nameToken.value);
-    const tokens = this.parameters(nameToken.value);
-    return this.functionBody(docToken, nameToken, doc, tokens, () => this.blockStatements(), isAsync);
+    const records = namedRecordParameters ? readNamedJavaScriptRecordParameters(this, doc, isAsync) : null;
+    const tokens = records ? [] : this.parameters(nameToken.value);
+    const body = () => records ? readNamedJavaScriptRecordParameterBody(this, records, () => this.blockStatements()) : this.blockStatements();
+    return this.functionBody(docToken, nameToken, doc, tokens, body, isAsync, records?.parameters ?? null);
   }
 
   /**
@@ -601,12 +612,14 @@ class JavaScriptParser {
    * parameters' scope. An async function is the function its body computes,
    * and its JSDoc may declare the result as `Promise<T>`.
    */
-  functionBody(docToken, nameToken, doc, tokens, statementsOf, isAsync = false) {
+  functionBody(docToken, nameToken, doc, tokens, statementsOf, isAsync = false, logicalParameters = null) {
     const c = this.cursor;
     const name = nameToken.value;
     if (isAsync) this.sequentialAsync = true;
     // A type JSDoc does not declare is inferred once the whole program is read.
-    const params = tokens.map((token) => {
+    // Existing SParam records can own a lowered logical pattern argument;
+    // their spans are origins, not assertions of source identifier spelling.
+    const params = logicalParameters ?? tokens.map((token) => {
       reserved(token);
       const text = doc?.params.get(token.value);
       const optional = doc?.optionalParams.has(token.value) && !token.defaultValue;
@@ -634,7 +647,9 @@ class JavaScriptParser {
     this.topLevel = false;
     const names = params.map((param) => param.name);
     this.scope = { locals: new Set(names), tdz: new Set(), mutable: new Set(names) };
-    if (this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
+    // Record entry bindings must execute before the original body. The old
+    // scalar-loop shortcut skips statementsOf(), so it cannot own this route.
+    if (logicalParameters === null && this.scalarLoopModel && isJavaScriptScalarLoop(c)) {
       let loop;
       try { loop = this.withLexicalScope(names, () => readJavaScriptScalarLoop(this, name, params, isAsync), 2); }
       finally { this.scope = outer; this.inAsync = outerAsync; this.jumps = outerJumps; this.topLevel = outerTopLevel; }
@@ -1504,6 +1519,10 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     this.lexicalRead(start);
+    if (!acceptJavaScriptStandardBuiltinOwner(start.value, this.scope.locals.has(start.value) || this.scope.tdz.has(start.value)
+      || this.moduleBindings.has(start.value) || this.externals.has(start.value) || this.literalBindings.has(start.value)
+      || this.functionNames.has(start.value))) throw unsupported('shadowed standard console owner',
+      'a local, module or supplied context console binding cannot be replaced with standard output', start);
     c.expect('.', 'console');
     const method = c.identifier('console');
     if (method.value !== 'log') {
@@ -2338,6 +2357,10 @@ class JavaScriptParser {
       const args = c.is('(') ? this.arguments(constructor.value) : [];
       const collection = readJavaScriptCollectionConstruction(constructor.value, args.length > 1);
       if (collection !== '') {
+        if (!acceptJavaScriptStandardBuiltinOwner(constructor.value, this.scope.locals.has(constructor.value) || this.scope.tdz.has(constructor.value)
+          || this.moduleBindings.has(constructor.value) || this.externals.has(constructor.value) || this.literalBindings.has(constructor.value)
+          || this.functionNames.has(constructor.value))) throw unsupported('shadowed standard collection owner',
+          'a local, module or supplied context constructor cannot be replaced with the standard Map or Set constructor', constructor);
         const items = args[0] ?? { k: 'array', items: [], span: span(token, c.peek()) };
         return { k: collection, [collection === 'set' ? 'items' : 'entries']: items, span: span(token, c.peek()) };
       }
