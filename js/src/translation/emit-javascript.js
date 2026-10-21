@@ -32,6 +32,7 @@ import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rus
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
+import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
 
 const KEYWORDS = new Set([
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
@@ -123,17 +124,23 @@ export function emitJavaScript(program, options = {}) {
   checkRustOwnedLocalStateProof(program);
   const scopedBindings = options.scopedBindingModel === undefined ? null : readJavaScriptScopedBindingEmission(program, options.scopedBindingModel);
   const reserved = new Set(KEYWORDS);
+  const externals = new Map((program.externals ?? []).filter(external => !program.declarations.has(external.name)).map(external => [external.name, external]));
+  for (const name of externals.keys()) {
+    if (!acceptJavaScriptExternalBinding(name)) throw unsupported('JavaScript external binding', 'this provider name needs an explicit legal target binding alias');
+    reserved.add(name);
+  }
   if ([...program.declarations.values()].some(entry => Object.hasOwn(entry, 'sourceLocalState'))) reserved.add('ml_ownedTextInput');
   const state = new EmitState(program, 'JavaScript', ident, reserved, { modulesShareTermSpace: true, typeSpace: true });
   recordRustRuntimeShellAssumptions(state,runtimeShell);
-  return new JavaScriptEmitter(program, state, scopedBindings).file();
+  return new JavaScriptEmitter(program, state, scopedBindings, externals).file();
 }
 
 class JavaScriptEmitter {
-  constructor(program, state, scopedBindings = null) {
+  constructor(program, state, scopedBindings = null, externals = new Map()) {
     this.program = program;
     this.state = state;
     this.scopedBindings = scopedBindings;
+    this.externals = externals;
     this.helpers = new Set();
     this.temporaries = 0;
     this.theoremChecks = [];
@@ -443,9 +450,14 @@ class JavaScriptEmitter {
       case 'var':
         return e.name;
       case 'call':
+        if (this.externals.has(e.fn)) {
+          const source = renderJavaScriptExternalCall(this.externals.get(e.fn).k, e.fn, e.args.map(arg => this.expr(arg)).join(', '));
+          if (!source) throw unsupported('JavaScript external call', 'the checked provider kind and argument shape need a supported target binding');
+          return source;
+        }
         return `${this.state.ref(e.fn)}(${e.args.map((arg) => this.expr(arg)).join(', ')})`;
       case 'functionRef':
-        return renderCallableFunctionReference('JavaScript', this.state.ref(e.fn));
+        return renderCallableFunctionReference('JavaScript', this.externals.has(e.fn) ? e.fn : this.state.ref(e.fn));
       case 'apply':
         return renderCallableApplication('JavaScript', this.expr(e.fn), e.args.map(arg => this.expr(arg)));
       case 'lambda':

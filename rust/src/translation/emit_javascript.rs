@@ -132,6 +132,21 @@ pub fn emit_javascript_with_options(
     super::owned_local_state::validate_owned_local_state(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     let mut reserved = KEYWORDS.to_vec();
+    for external in &program.externals {
+        if program.external(external.name()).is_none() {
+            continue;
+        }
+        if !super::external_emission_rules::accept_java_script_external_binding(
+            &super::external_emission_rules::ml_string::Text::from_text(external.name()),
+        ) {
+            return Err(unsupported(
+                "JavaScript external binding",
+                "this provider name needs an explicit legal target binding alias",
+                None,
+            ));
+        }
+        reserved.push(external.name());
+    }
     if program.declarations.iter().any(|declaration| matches!(declaration, Decl::Fn(function) if function.source_local_state.is_some())) {
         reserved.push("ml_ownedTextInput");
     }

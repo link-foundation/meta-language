@@ -11,6 +11,114 @@ use std::path::Path;
 use std::process::Command;
 
 #[test]
+fn actual_external_bindings_emit_calls_and_reads_through_both_semantic_codecs() {
+    use meta_language::translation::{
+        check::check_program,
+        emit_javascript::emit_javascript,
+        javascript::{ModuleContext, parse_javascript_in},
+        surface::External,
+    };
+    use meta_language::{
+        BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
+        emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
+        read_structured_data_lino,
+    };
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let version = run(Command::new("node").arg("--version"));
+    assert!(version.ok, "{}", version.stderr);
+    let parts = version
+        .stdout
+        .trim()
+        .trim_start_matches('v')
+        .split('.')
+        .collect::<Vec<_>>();
+    let major = parts[0].parse::<u32>().unwrap();
+    let minor = parts[1].parse::<u32>().unwrap();
+    assert!(
+        major == 22 && minor >= 15 || major == 24,
+        "uncovered Node {}",
+        version.stdout
+    );
+    let script = r#"
+import {runInNewContext} from 'node:vm';
+import {selfTranslationSignatures} from './js/src/self-translation.js';
+import {parseJavaScript} from './js/src/translation/javascript.js';
+import {checkProgram} from './js/src/translation/check.js';
+import {emitJavaScript} from './js/src/translation/emit-javascript.js';
+import {structuredDataToLino} from './js/src/structured-data-links.js';
+const [name,provider,source]=process.argv.slice(1);
+const externals=selfTranslationSignatures(provider,'JavaScript').map(row=>({...row,name}));
+const scope=provider.replace('export ','')+(name==='increment'||name==='limit'?'':'\nconst '+name+'=increment;');
+const program=checkProgram(parseJavaScript(source,{externals,moduleBindingNames:[name]}));
+const javascript=emitJavaScript(program).text;
+const original=runInNewContext(scope+'\n'+source+'\nselected();');
+const actual=runInNewContext(scope+'\n'+javascript+'\nselected();');
+process.stdout.write(structuredDataToLino({javascript,original,actual}));
+"#;
+    for name in ["increment", "String", "_value", "$increment", "limit"] {
+        let provider = if name == "limit" {
+            "export const limit=7;"
+        } else {
+            "/** @param {number} value @returns {number} */export function increment(value){return value+1;}"
+        };
+        let expression = if name == "limit" {
+            "limit+1".to_owned()
+        } else {
+            format!("{name}(7)")
+        };
+        let source =
+            format!("/** @returns {{number}} */function selected(){{return {expression};}}");
+        let mut externals = self_translation_signatures(provider, "JavaScript").unwrap();
+        assert_eq!(externals.len(), 1, "{name}");
+        match &mut externals[0] {
+            External::Function { name: binding, .. } | External::Constant { name: binding, .. } => {
+                *binding = name.to_owned()
+            }
+        }
+        let context = ModuleContext {
+            externals,
+            module_directory: None,
+        };
+        let program = check_program(parse_javascript_in(&source, &context).unwrap()).unwrap();
+        let emitted = emit_javascript(&program).unwrap();
+        let observation = run(Command::new("node").current_dir(root).args([
+            "--input-type=module",
+            "-e",
+            script,
+            name,
+            provider,
+            &source,
+        ]));
+        assert!(observation.ok, "{name}: {}", observation.stderr);
+        let observation = read_structured_data_lino(&observation.stdout).unwrap();
+        assert_eq!(observation["original"], 8, "{name}");
+        assert_eq!(observation["actual"], 8, "{name}");
+        assert_eq!(observation["javascript"], emitted.text, "{name}");
+        let packet = encode_typed_program_links(&program).unwrap();
+        for network in [
+            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+            decode_link_network_binary(
+                &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())
+                    .unwrap(),
+                BinaryLinksOptions::default(),
+            )
+            .unwrap(),
+        ] {
+            assert_eq!(
+                decode_typed_program_links(&network, packet.root).unwrap(),
+                program
+            );
+            assert_eq!(
+                emit_typed_program_links(&network, packet.root, "JavaScript")
+                    .unwrap()
+                    .code,
+                emitted.text
+            );
+        }
+    }
+}
+
+#[test]
 fn resource_limited_executor_preserves_source_and_restores_exactly() {
     let source = include_str!("../../../js/src/grammar-runtime/executor.js");
     let translated = self_translate(source, "JavaScript", "Rust").unwrap();

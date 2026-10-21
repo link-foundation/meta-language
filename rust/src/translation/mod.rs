@@ -32,6 +32,7 @@ pub mod emit_javascript;
 pub mod emit_lean;
 pub mod emit_rocq;
 pub mod emit_rust;
+pub(crate) mod external_emission_rules;
 pub(crate) mod frontend_rules;
 pub(crate) mod grammar_attribute_order_rules;
 pub(crate) mod grammar_lexer_rules;
