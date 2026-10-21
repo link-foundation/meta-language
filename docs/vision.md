@@ -4032,6 +4032,17 @@ Uncertain or conflicting dependencies retain the original uncached behavior.
 All newly computed calls and results keep their original charges, and invalidated
 entries never release mandatory charges. The existing memo cap, memory and step
 budgets, nesting checks and complete-source archive premise remain unchanged.
+JavaScript precedence and ambiguity comparisons traverse parser-owned child
+parts without flattening each retained prefix. Frames preserve physical sibling
+indices, parents and pending lookahead; suffix walks skip complete shared parts
+using their stored lengths. The existing equality plans still compare every
+output field, lexical detail, embedded physical CST and selection witness.
+Structural comparisons preserve their existing trivia predicates. Ordinary
+array-based equality remains available, while an identical immutable child
+sequence keeps its constant-time identity shortcut. Tests compare complete
+outcomes and resource counters with the authenticated immediate predecessor;
+older comparator behavior remains a separate source epoch. This storage change
+does not establish full generated Rust-source resource fit or native parity.
 Bounded tests exercise this large-input cache policy on tiny original Rust
 controls and authored recursive grammars, preserving full outcomes, recovery,
 ambiguity and original zero-budget refusals. They do not establish full-source
