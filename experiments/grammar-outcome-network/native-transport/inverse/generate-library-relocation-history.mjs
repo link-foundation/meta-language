@@ -8,6 +8,7 @@ import {verifyGitArtifactCertificate} from '../../../../js/scripts/git-object-ce
 import {readProjectData,writeProjectData,checkProjectData,serializeProjectData} from '../../../../js/scripts/project-data.mjs';
 import {tokenize} from '../../../../js/src/translation/lexer.js';
 import {restoreCurrentCiRepairSource} from '../../../../js/scripts/current-ci-repair-source-history.mjs';
+import {restoreRawDescriptorHistoricalSource} from '../../../../js/scripts/raw-descriptor-historical-cohort.mjs';
 
 const root=new URL('../../../../',import.meta.url);
 const sourceRevision='6f32c2924d6284e0a43130f225ed817450f1f2f8';
@@ -141,7 +142,9 @@ export function generateLibraryRelocationHistory({check=false}={}) {
   const policy={schemaVersion:1,sourceRevision,sources:rows,modules,sourceAdapters,
     boundary:'An exact native library string-literal correction and separately identified packaging provenance. Complete JavaScript algorithms checked definitions numeric controls archives and ABI remain unchanged. Source history is not native execution or a proof of general concept equivalence.'};
   const text=serializeProjectData(policy,historyFile),helperText=helper.replace('__POLICY_HASH__',pin(text).sha256);
-  const actual=readFileSync(new URL(consumingFile,root),'utf8'),historical=restoreCurrentCiRepairSource(actual,consumingFile);
+  const actual=readFileSync(new URL(consumingFile,root),'utf8');
+  const descriptorView=restoreRawDescriptorHistoricalSource(actual,consumingFile,'native library relocation');
+  const historical=descriptorView===actual?restoreCurrentCiRepairSource(actual,consumingFile):descriptorView;
   if(check)assert.equal(historical,consumingText);else{
     assert.equal(actual,historical,'a historical writer cannot replace a newer current artifact; use --check');
     assert.ok(actual===originalConsuming.sourceText||actual===consumingText,'refuse unrelated consuming artifact edits');

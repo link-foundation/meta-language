@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {serializeProjectData} from './project-data.mjs';
+import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentOwnCodebaseRawSource} from './current-own-codebase-raw-source-descriptors.mjs';
 import {restoreReviewedOverlayProviderModuleSource} from '../../experiments/rust-text-certificate-adapter/provider-succession.mjs';
@@ -88,6 +89,7 @@ export function readRelativeArrayOwnedRuleSourceHistory(){
 export function restoreRelativeArrayCurrentSourceView(source,file,profile){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');assert.equal(typeof profile,'string');
   if(profile!==RELATIVE_ARRAY_CURRENT_SOURCE_PROFILE)return source;
+  const descriptor=restoreRawDescriptorHistoricalSource(source,file,profile);if(descriptor!==source)return descriptor;
   if(RAW_CONSUMING_SNAPSHOT_FILES.some(row=>row.file===file)){
     const bytes=Buffer.from(source),snapshot=restoreRawConsumingSnapshotSource(bytes,file,true);
     if(snapshot!==bytes)return snapshot.toString('utf8');

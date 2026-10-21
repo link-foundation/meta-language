@@ -6,6 +6,7 @@ import {readProjectData} from './project-data.mjs';
 import {restoreNativeCompatibilitySourceHistory} from './native-compatibility-source-history.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {restoreCurrentCiRepairSource} from './current-ci-repair-source-history.mjs';
+import {restoreRawDescriptorHistoricalSource} from './raw-descriptor-historical-cohort.mjs';
 
 const historyFile=new URL('../../parity/self-translation/ci-39389240046-historical-inputs.lino',import.meta.url);
 const historyHash='05e17bf81c6304f36411073ee4853798041e2764164c999ca93888870fb61560';
@@ -15,6 +16,7 @@ let history;
 /** Restore only an exact reviewed successor; existing historical gates reject others. */
 export function restoreContinuationHistoricalSource(source,file,profile) {
   assert.equal(typeof source,'string');
+  if(profile==='relative array')source=restoreRawDescriptorHistoricalSource(source,file,'continuation historical input');
   if(!history){
     const bytes=readFileSync(historyFile);assert.equal(pin(bytes).sha256,historyHash);
     history=readProjectData(historyFile);assert.equal(history.schemaVersion,1);

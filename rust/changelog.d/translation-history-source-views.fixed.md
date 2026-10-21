@@ -1,0 +1,1 @@
+Repair historical translation checks with certified source views for scoped iteration, native emitter registration and raw receipt descriptors. Preserve every original receipt byte, distinct packaging identity and unknown-input refusal.
