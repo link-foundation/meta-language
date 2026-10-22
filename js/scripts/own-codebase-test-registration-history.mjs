@@ -1,3 +1,4 @@
+import {restoreTypedSourceDescriptorHostSource} from './typed-source-descriptor-host-history.mjs';
 // Exact source views preserve every historical assertion while current test discovery grows.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -152,10 +153,10 @@ function restoreSource(source,file){
 export function restoreOwnCodebaseTestRegistrationClassifier(source){
   assert.ok(Buffer.isBuffer(source));
   const text=source.toString('utf8');assert.deepEqual(Buffer.from(text),source);
-  return Buffer.from(restoreSource(text,'js/scripts/test-groups.mjs'));
+  return Buffer.from(restoreSource(restoreTypedSourceDescriptorHostSource(text,'js/scripts/test-groups.mjs'),'js/scripts/test-groups.mjs'));
 }
 
 /** The preceding helper still independently checks its original two supported source forms. */
 export function restoreOwnCodebaseTestRegistrationTestSource(source){
-  return restoreSource(source,'js/tests/issue-195-evidence-node-dependency.test.js');
+  return restoreSource(restoreTypedSourceDescriptorHostSource(source,'js/tests/issue-195-evidence-node-dependency.test.js'),'js/tests/issue-195-evidence-node-dependency.test.js');
 }

@@ -18,6 +18,7 @@ import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, read
 import {createOriginalLinkSuccessorSourceArchives,readOriginalLinkSuccessorArchiveSource} from './successor-source-archives.mjs';
 import {replayOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
 import {freezeOriginalLinkRawData,readOriginalLinkRawFreezeWork} from './raw-data-freeze.mjs';
+import {createOriginalLinkRawProfileCache} from './raw-profile-cache.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
 import {generateOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
@@ -183,7 +184,9 @@ const checkedPlans = new WeakSet();
 const successorSourceArchives=createOriginalLinkSuccessorSourceArchives();
 const readRawSourceTransports=()=>{
   const source=readFileSync(new URL('./raw-data-freeze.mjs',import.meta.url));
+  const profileCache=readFileSync(new URL('./raw-profile-cache.mjs',import.meta.url));
   return[readCanonicalArchiveTransportSource(),readOriginalLinkSuccessorArchiveSource(),...readOriginalLinkRawArchiveWorkerSources(),
+    {file:'experiments/original-link-complete-table-projection/raw-profile-cache.mjs',bytes:profileCache.length,sha256:sha256(profileCache)},
     {file:'experiments/original-link-complete-table-projection/raw-data-freeze.mjs',bytes:source.length,sha256:sha256(source)}];
 };
 const sha256 = value => createHash('sha256').update(value).digest('hex');
@@ -471,12 +474,20 @@ function prepareOriginalLinkRawSource({readProjectData, parseJavaScript, checkPr
     declarationNames: emissionProfile.declarationNames, definitionCount: rust.definitions.length, preludeCount: rust.preludes.length});
 }
 
+const selectOriginalLinkRawProfile = createOriginalLinkRawProfileCache();
 function readOriginalLinkRawSelectedEmissionProfile(profile) {
-  const historicalArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, 'utf8'));
-  const currentArtifact = readStructuredDataLino(readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, 'utf8'));
-  const source = readFileSync(new URL('./raw-rules.mjs', import.meta.url), 'utf8');
-  const selected = readOriginalLinkRawEmissionProfile(['consuming','borrowed consuming'].includes(profile) ? 'current' : profile, {historicalArtifact, currentArtifact, source,
-    producerSources: readOriginalLinkRawEmissionProducerSources()});
+  const historicalBytes = readFileSync(ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT);
+  const currentBytes = readFileSync(ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+  const sourceBytes = readFileSync(new URL('./raw-rules.mjs', import.meta.url));
+  const producerSources = readOriginalLinkRawEmissionProducerSources();
+  const baseProfile = ['consuming','borrowed consuming'].includes(profile) ? 'current' : profile;
+  const selected = selectOriginalLinkRawProfile(baseProfile,
+    {historicalArtifact: historicalBytes, currentArtifact: currentBytes, source: sourceBytes, ...producerSources},
+    () => readOriginalLinkRawEmissionProfile(baseProfile, {
+      historicalArtifact: readStructuredDataLino(historicalBytes.toString('utf8')),
+      currentArtifact: readStructuredDataLino(currentBytes.toString('utf8')),
+      source: sourceBytes.toString('utf8'), producerSources,
+    }));
   const {source: selectedSource, ...descriptor} = selected;
   assert.equal(sha256(selectedSource), descriptor.sourceSha256);
   if (profile === 'consuming') return readOriginalLinkRawConsumingProfile(descriptor);

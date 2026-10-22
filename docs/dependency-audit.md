@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 261 | 260 | 1 | 0 |
+| Generators | 262 | 261 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -808,6 +808,7 @@ they are.
 | `js/scripts/generate-module-scope-naming.mjs` | `js/scripts/generate-module-scope-naming.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-report-workload-costs.mjs` | `js/scripts/generate-report-workload-costs.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

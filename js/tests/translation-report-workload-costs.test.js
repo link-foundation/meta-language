@@ -8,7 +8,7 @@ const walk=directory=>readdirSync(new URL(directory,root),{withFileTypes:true}).
  const file=directory+'/'+entry.name;return entry.isDirectory()?walk(file):file.endsWith('.js')?[file]:[];
 });
 test('fresh source-bound report costs retain every complete current module once across the original eight jobs',()=>{
- const files=walk('js/src').sort(),costs=readProjectData(new URL('parity/fixtures/ci-39848242758-report-costs.lino',root));
+ const files=walk('js/src').sort(),costs=readProjectData(new URL('parity/fixtures/ci-39857274367-report-costs.lino',root));
  const shards=partitionReportMeasuredWorkloads(files,8);assert.equal(shards.length,8);
  assert.ok(shards.every(shard=>shard.length>0));assert.equal(new Set(shards.flat()).size,files.length);assert.deepEqual(shards.flat().sort(),files);
  const changed=partitionReportMeasuredWorkloads(files,8,{readSource:file=>Buffer.concat([readFileSync(new URL(file,root)),Buffer.from('\n')])});
@@ -22,4 +22,6 @@ test('fresh source-bound report costs retain every complete current module once 
   const value=structuredClone(costs);mutate(value);assert.throws(()=>partitionReportMeasuredWorkloads(files,8,{costs:value}));
  }
  assert.throws(()=>partitionReportMeasuredWorkloads([...files,files[0]],8));
+ const previous=readProjectData(new URL('parity/fixtures/ci-39848242758-report-costs.lino',root));
+ assert.deepEqual(partitionReportMeasuredWorkloads(files,8,{costs:previous}).flat().sort(),files);
 });

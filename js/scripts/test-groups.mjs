@@ -35,7 +35,8 @@ export function partitionMeasuredWorkloads(files,count,{readSource,costs}={}){
  assert.equal(measured.schemaVersion,1);assert.equal(measured.model,'observed CI workload scheduling costs 1');
  assert.ok(measured.run===39615628279&&measured.revision===schedulingRevision
    ||measured.run===39644810104&&measured.revision===integrationSchedulingRevision
-   ||measured.run===39848242758&&measured.revision==='d3e4076667add3e19e4cf5f10a3cea60255dd2d7','a scheduling sample has its actual source commit');
+   ||measured.run===39848242758&&measured.revision==='d3e4076667add3e19e4cf5f10a3cea60255dd2d7'
+   ||measured.run===39857274367&&measured.revision==='f3853187c9e3395409361b60b4abe1608cdf1998','a scheduling sample has its actual source commit');
  assert.ok(Array.isArray(measured.entries)&&measured.entries.length<=2048);
  const seen=new Set();
  for(const row of measured.entries){

@@ -9,7 +9,7 @@ import {readHistoricalTranslationSourceDescriptorRegister,projectHistoricalTrans
   from '../scripts/current-translation-source-descriptors.mjs';
 import {readOriginalLinkRawEmissionProducerSources} from '../../experiments/original-link-complete-table-projection/raw-emission-profiles.mjs';
 import {verifyOriginalLinkRawEmissionProducerApplicability} from '../../experiments/original-link-complete-table-projection/raw-emission-producer-applicability.mjs';
-import {restoreRawConsumingSnapshotSource,readRawConsumingSnapshotSourceProfile,verifyRawConsumingSnapshotSourceStructure,RAW_CONSUMING_SNAPSHOT_FILES} from '../scripts/raw-consuming-snapshot-source-profile.mjs';
+import {restoreRawConsumingSnapshotSource,rawConsumingSnapshotSourceReader,readRawConsumingSnapshotSourceProfile,verifyRawConsumingSnapshotSourceStructure,RAW_CONSUMING_SNAPSHOT_FILES} from '../scripts/raw-consuming-snapshot-source-profile.mjs';
 import {generateRawConsumingSnapshotSourceProfile} from '../scripts/generate-raw-consuming-snapshot-source-profile.mjs';
 
 const root=new URL('../../',import.meta.url);
@@ -29,7 +29,7 @@ test('current descriptor provenance restores the entire prior artifact and regis
   for(const row of artifact.decisionSources){
     // The immutable artifact names its own source epoch. The scoped adapter
     // authenticates complete physical successors before exposing that epoch.
-    const physical=readFileSync(new URL(row.file,root)),bytes=restoreRawConsumingSnapshotSource(physical,row.file);assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);
+    const bytes=rawConsumingSnapshotSourceReader(readFileSync)(new URL(row.file,root));assert.equal(bytes.length,row.bytes);assert.equal(hash(bytes),row.sha256);
   }
   const register=readHistoricalTranslationSourceDescriptorRegister();
   const registerFile='parity/self-translation/complete-declaration-receipts.lino';

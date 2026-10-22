@@ -19,11 +19,13 @@ export function readDevelopmentAuthoringPlan(){
    stage('grammar context before repair','experiments/grammar-context-source-metadata/generate.mjs'),
    stage('complete CI repair sources','js/scripts/generate-current-ci-repair-source-history.mjs'),
    stage('native compatibility sources','experiments/grammar-outcome-network/native-transport/inverse/generate-native-compatibility-source-history.mjs'),
+   stage('evidence translation naming sources','experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs',['--naming-only']),
+   stage('evidence translation sources','experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs'),
    stage('grammar context after repair','experiments/grammar-context-source-metadata/generate.mjs'),
    stage('raw planning sources','experiments/original-link-complete-table-projection/generate-raw-planning-source-history.mjs'),
    stage('Boolean value sources','js/scripts/generate-boolean-value-source-history.mjs'),
   ]},
-  {name:'naming',stages:[stage('complete additional naming views','js/scripts/generate-own-codebase-baseline-naming-history.mjs',['--additional-inventories'])]},
+  {name:'naming',stages:[stage('paired canonical concept catalogs','js/scripts/build-concept-records.mjs'),stage('complete additional naming views','js/scripts/generate-own-codebase-baseline-naming-history.mjs',['--additional-inventories'])]},
  ],boundary:'Invokes complete existing normal authors, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Receipts record author invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
 }
 

@@ -3,7 +3,7 @@ import test from 'node:test';
 import {readDevelopmentAuthoringPlan,developmentAuthoringEnvironment,runDevelopmentAuthoringPhase} from './refresh.mjs';
 
 test('authoring phases refuse changed commands before invoking any process',()=>{
- for(const change of [plan=>{plan.phases[1].stages.reverse();},plan=>{plan.phases[1].stages[0].script='cargo';},plan=>{plan.phases[0].stages[0].args.push('--native');}]){
+ for(const change of [plan=>{plan.phases[1].stages.reverse();},plan=>{plan.phases[2].stages.reverse();},plan=>{plan.phases[1].stages[0].script='cargo';},plan=>{plan.phases[0].stages[0].args.push('--native');}]){
   const plan=readDevelopmentAuthoringPlan();change(plan);let calls=0;
   assert.throws(()=>runDevelopmentAuthoringPhase(plan,'history',{execute:()=>{calls++;return{status:0,signal:null};}}));
   assert.equal(calls,0);
@@ -31,6 +31,6 @@ test('authoring clears inherited target directories and native test switches',()
  assert.equal(original.CARGO_TARGET_DIR,'/unrelated/build');
  const calls=[];
  runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'naming',{check:true,environment:original,execute:(command,args,options)=>{calls.push({command,args,options});return{status:0,signal:null};}});
- assert.equal(calls.length,1);assert.deepEqual(calls[0].args.slice(-2),['--additional-inventories','--check']);
- assert.deepEqual(calls[0].options.env,selected);
+ assert.equal(calls.length,2);assert.ok(calls[0].args.includes('js/scripts/build-concept-records.mjs'));assert.equal(calls[0].args.at(-1),'--check');assert.deepEqual(calls[1].args.slice(-2),['--additional-inventories','--check']);
+ for(const call of calls)assert.deepEqual(call.options.env,selected);
 });

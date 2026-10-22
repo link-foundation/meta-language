@@ -4,6 +4,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
+import {Worker} from 'node:worker_threads';
+import {deriveOwnCodebaseHistoricalNamingViews} from './derive-own-codebase-historical-naming-views.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
@@ -73,20 +75,22 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   // Finish Git object capture before retaining the complete naming inventory.
   // Its binding graph and Git's pack buffers need separate memory lifetimes.
   globalThis.gc?.();
-  const {NAME_INVENTORIES}=await import('./issue-195-naming.mjs');
-  console.error('Loaded complete naming inventories.');
-  const views=[];
-  for(const source of sources){
-    globalThis.gc?.();
-    const current=readFileSync(new URL(source.file,root),'utf8');
-    assert.deepEqual(pin(current),source.current,'normal freshness checks retain every complete current source pin');
-    for(const entry of NAME_INVENTORIES.filter(entry=>!entry.words&&entry.files.includes(source.file))){
-      const actual=new Set(entry.extract(current,source.file));
-      const names=[...new Set(entry.extract(source.predecessor.source,source.file))].filter(name=>!actual.has(name))
-        .map(name=>({name,record:entry.recordOf?entry.recordOf(name):name}));
-      if(names.length)views.push({inventory:entry.inventory,file:source.file,revision:source.predecessor.revision,names});
-    }
-  }
+  const views=authorOnly?await new Promise((resolve,reject)=>{
+    let result,failure,messages=0;
+    const worker=new Worker(new URL('./derive-own-codebase-historical-naming-views.mjs',import.meta.url),{
+      workerData:sources.map(({file,current,predecessor})=>({file,current,predecessor:{revision:predecessor.revision,source:predecessor.source}})),
+      execArgv:[],resourceLimits:{maxOldGenerationSizeMb:352,maxYoungGenerationSizeMb:1},
+    });
+    worker.on('message',value=>{messages++;result=value;});
+    worker.on('error',error=>{failure=error;});
+    // Wait for heap release before retaining the complete serialization graph.
+    worker.on('exit',code=>{
+      if(failure)return reject(failure);
+      if(code!==0||messages!==1||!Array.isArray(result))return reject(new Error('complete naming inventory worker failed'));
+      resolve(result);
+    });
+  }):deriveOwnCodebaseHistoricalNamingViews(sources,(await import('./issue-195-naming.mjs')).NAME_INVENTORIES);
+  globalThis.gc?.();
   const history={schemaVersion:1,model:'array identity historical naming inventories 1',revision,sources,views,
     boundary:'Each supplemental name is derived by its unchanged scoped inventory from a complete independently Git-certified original module. Every actual current source name is still extracted first. Historical definitions retain their original concept identities; a changed current body gains no equivalence proof from this source view. Whole current source hashes bind selection and unknown source bytes refuse. These source certificates do not establish runtime execution or requirement completion.'};
   console.error('Derived '+views.length+' historical naming views.');

@@ -85,6 +85,9 @@ export function consumerFoundationReferences(base = root) {
     for (const file of sourceFiles(join(base, directory))) {
       const path = relative(base, file).split('\\').join('/');
       if (CONSUMER_REGISTRIES.includes(path)) continue;
+      // Build the exact expected catalog before retaining another large source
+      // string; every comparison and rejection below remains unchanged.
+      if (conceptPaths.includes(path) && metadata === undefined) metadata = toolingConceptMetadata(base);
       const source = readFileSync(file, 'utf8');
       const references = [];
       source.split('\n').forEach((line, index) => {
@@ -92,7 +95,6 @@ export function consumerFoundationReferences(base = root) {
       });
       if (references.length === 0) continue;
       if (conceptPaths.includes(path)) {
-        if (metadata === undefined) metadata = toolingConceptMetadata(base);
         if (metadata?.text === source && references.every(({ text }) =>
           metadata.permitted.has(text.replace(/^\(\d+:/u, '(identity:')))) continue;
       }

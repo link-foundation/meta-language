@@ -15722,7 +15722,7 @@
 (15722: 25 13913 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (15723: 15724 15726 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (15724: 16 13907 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(15725: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2cd0551e0075799b84db480fd10dc522030184152e6e868049a640666c4bd02f) (lang: meta-language%20structured%20data)))
+(15725: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 80ee4a3022d9d6dca3e0c417b2a4fc426b6354f4301927e6f81492ea8eba47a9) (lang: meta-language%20structured%20data)))
 (15726: 19 15725 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (15727: 1060 15723 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (15728: 15730 15731 15733 15735 15737 19660 19666 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))

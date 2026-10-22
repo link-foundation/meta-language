@@ -4005,6 +4005,29 @@ their current selection. Missing or changed source uses the existing estimate.
 Every current module still runs exactly once, with unchanged commands, complete
 report assertions and the thirty-minute deadline. Further CI must confirm timing.
 
+CI 39857274367 also produced all eight complete reports; its second job exceeded
+the same deadline. Its 347 complete, source-bound samples form a further advisory
+report cohort. Both earlier cohorts and their controls remain available. The
+selected costs affect ownership only; they confer no completion or execution
+authority, and all eight jobs, full module coverage and deadlines remain required.
+
+The raw-oracle runner may reuse a successfully verified base emission profile
+within one process only after comparing every complete historical/current
+artifact, rule source and causal producer input byte again. Input names and order
+also match. Changed, omitted, reordered or added inputs invoke the original
+complete verifier; failures and mutation during verification never enter the
+cache. Returned values have independent ownership. Consuming/borrowed profile
+checks and complete transport source authentication still run around each actual
+or injected invocation. This avoids repeatedly decoding unchanged large Links
+artifacts; it does not replace source replay, native execution or fixture checks.
+
+Serial metadata authoring refreshes both packaged canonical concept catalogs
+before final naming verification, and retains the separate evidence-translation
+naming and source archives after CI source repairs. Catalog authority still
+requires exact canonical data and actual tooling owners. Lower peak allocation
+changes evaluation order only; every foundation rejection and source assertion
+remains mandatory.
+
 Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
 8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical
 tooling and scheduling guards select only those exact byte inverses. Current
@@ -4018,6 +4041,13 @@ normal serialization must reproduce that digest before the command succeeds.
 Equal immutable source strings may share storage; independent ordered rows,
 certificates and containers retain their identities. This keeps the same checks
 within the existing local heap budget without reducing inventories or gates.
+The normal author derives supplemental views with the same inventory extractors
+in a disposable JavaScript worker capped at 352 MiB. It waits for one result and
+successful worker exit before encoding the full output. Every source epoch,
+ordered inventory, current source pin, extracted name and record mapping remains
+mandatory; the exported check path retains its complete in-process comparison.
+The extraction heap expires before serialization so their largest graphs do not
+overlap. The existing process-tree resource guard still bounds the entire task.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;
