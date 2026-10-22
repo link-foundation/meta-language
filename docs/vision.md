@@ -4033,6 +4033,13 @@ naming and source archives after CI source repairs. Catalog authority still
 requires exact canonical data and actual tooling owners. Lower peak allocation
 changes evaluation order only; every foundation rejection and source assertion
 remains mandatory.
+The repository's serial development driver also provides a final `verification`
+phase. Fifteen read-only checks reconcile live requirement sources before ledger
+access, then check dependency/scope/export inventories, documentation, test
+ownership, generated native rules, source histories and both concept catalogs.
+Missing or stale data stops the phase without refreshing it. This consolidates
+the existing bounded checks; full suites, reports and native execution remain
+separate CI obligations. Invocation receipts are not requirement observations.
 
 Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
 8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical

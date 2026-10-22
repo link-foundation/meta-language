@@ -6,10 +6,11 @@ commands after a complete source batch; it implements no translator semantics
 and establishes no requirement evidence.
 
 `stages.lino` is generated automatically by `node experiments/development-batch/refresh.mjs --write-plan`.
-`--list` shows the phases. Each phase invokes the existing normal authors,
-sequentially in fresh JavaScript processes. The six-stage history phase retains
-the intentional grammar-context steps before and after CI/native history.
-The naming phase runs last, after source-changing authors finish.
+`--list` shows the phases. Each phase invokes existing commands sequentially in
+fresh JavaScript processes. The history phase retains the grammar-context steps
+around CI/native history and refreshes evidence-translation archives. Naming
+refreshes both concept catalogs before deriving its supplemental views. Run final
+verification after source-changing authors and manifest refreshes finish.
 
 Use the existing resource and cache wrapper, one phase per bounded invocation:
 
@@ -17,9 +18,17 @@ Use the existing resource and cache wrapper, one phase per bounded invocation:
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase snapshot --receipt /tmp/meta-language-snapshot-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase history --receipt /tmp/meta-language-history-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase naming --receipt /tmp/meta-language-naming-authoring.lino
+env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase verification --receipt /tmp/meta-language-verification.lino
 ```
 
-Append `--check` for each existing author's read-only freshness mode. This does
+Verification runs fifteen read-only checks, beginning with the authenticated
+online requirement-source audit before ledger access. It requires GitHub API
+access. Its remaining commands check dependencies, scope, exports, runtime
+inventory, documentation, test ownership, generated rules, source histories and
+both concept catalogs. Stale outputs fail; verification never refreshes them.
+`--check` leaves these already read-only commands unchanged.
+
+Append `--check` to authoring phases for their read-only freshness mode. This does
 not replace required targeted controls, source reconciliation, source binding
 registration or the final requirement-manifest refresh. If an author fails,
 the receipt includes its actual result and no dependent author runs. Inspect
@@ -36,6 +45,7 @@ To choose the next semantic batch, reuse CI artifacts with
 `js/scripts/self-translation-report-blockers.mjs --report ... --out ...`.
 Repeat `--report` to retain all shards; use `--group` to emit the existing
 source-bound replay plan. Never generate full reports locally or interpret a
-partial report as full coverage. The seven available reports for CI
-39654536127 cover 296 modules; the eighth shard timed out. Those diagnostic
-groups overlap and do not establish a completion percentage.
+partial report as full coverage. CI 39857274367 generated all eight complete
+reports for 347 modules, but its second job exceeded the thirty-minute deadline.
+Complete report artifacts do not override that failed gate. Diagnostic groups
+overlap and do not establish a completion percentage.

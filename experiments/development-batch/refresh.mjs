@@ -26,7 +26,24 @@ export function readDevelopmentAuthoringPlan(){
    stage('Boolean value sources','js/scripts/generate-boolean-value-source-history.mjs'),
   ]},
   {name:'naming',stages:[stage('paired canonical concept catalogs','js/scripts/build-concept-records.mjs'),stage('complete additional naming views','js/scripts/generate-own-codebase-baseline-naming-history.mjs',['--additional-inventories'])]},
- ],boundary:'Invokes complete existing normal authors, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Receipts record author invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
+  {name:'verification',stages:[
+   stage('live requirement sources','js/scripts/check-issue-195-sources.mjs',['--online']),
+   stage('dependency inventory','js/scripts/check-dependencies.mjs',['--offline']),
+   stage('requirement scope','js/scripts/check-issue-195-acceptance.mjs',['--scope-baseline','HEAD']),
+   stage('public exports','js/scripts/generate-export-parity.mjs',['--check']),
+   stage('runtime inventory','js/scripts/check-js-rust-parity.mjs',['--manifest-only']),
+   stage('documentation','js/scripts/check-documentation.mjs'),
+   stage('test ownership','js/scripts/test-groups.mjs',['--check']),
+   stage('test partition history','js/scripts/generate-ci-test-partition-history.mjs',['--check']),
+   stage('shared array native rules','js/scripts/generate-rust-shared-array-handle-rules.mjs',['--native','--check']),
+   stage('inert binding native rules','js/scripts/generate-inert-module-binding-rules.mjs',['--native','--check']),
+   stage('shared array source history','js/scripts/generate-shared-array-native-frontend-history.mjs',['--check']),
+   stage('typed descriptor source history','js/scripts/generate-typed-source-descriptor-host-history.mjs',['--check']),
+   stage('grammar context metadata','experiments/grammar-context-source-metadata/generate.mjs',['--check']),
+   stage('evidence translation history','experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs',['--check']),
+   stage('canonical concept catalogs','js/scripts/build-concept-records.mjs',['--check']),
+  ]},
+ ],boundary:'Invokes complete existing normal authors and read-only metadata verification, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Verification checks live sources before reading the ledger and never refreshes stale outputs. Receipts record invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
 }
 
 export function developmentAuthoringEnvironment(environment){
@@ -41,7 +58,7 @@ export function runDevelopmentAuthoringPhase(plan,name,{check=false,execute=spaw
  const results=[];
  for(const entry of selected.stages){
   const bytes=readFileSync(resolve(root,entry.script));
-  const args=['--expose-gc','--optimize-for-size','--max-old-space-size=352','--max-semi-space-size=1',entry.script,...entry.args,...(check?['--check']:[])];
+  const args=['--expose-gc','--optimize-for-size','--max-old-space-size=352','--max-semi-space-size=1',entry.script,...entry.args,...(check&&name!=='verification'?['--check']:[])];
   process.stderr.write('Authoring '+entry.id+': '+entry.script+'\n');
   const result=execute(process.execPath,args,{cwd:root,env:developmentAuthoringEnvironment(environment),stdio:'inherit',timeout:80000,killSignal:'SIGKILL'});
   results.push({id:entry.id,script:entry.script,sourceSha256:digest(bytes),arguments:args,exitCode:result.status??null,signal:result.signal??null,error:result.error?String(result.error):null});
@@ -65,7 +82,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     for(const phase of plan.phases)console.log(phase.name+': '+phase.stages.map(entry=>entry.id).join(' -> '));
    }else{
     const check=args.at(-1)==='--check';if(check)args.pop();
-    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|naming --receipt output.lino [--check]');
+    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|naming|verification --receipt output.lino [--check]');
     const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
     runDevelopmentAuthoringPhase(plan,args[1],{check,record:operations=>writeFileSync(resolve(args[3]),structuredDataToLino({schemaVersion:1,kind:'author invocation receipt',revision,phase:args[1],check,operations,boundary:plan.boundary}))});
    }

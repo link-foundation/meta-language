@@ -3,12 +3,30 @@ import test from 'node:test';
 import {readDevelopmentAuthoringPlan,developmentAuthoringEnvironment,runDevelopmentAuthoringPhase} from './refresh.mjs';
 
 test('authoring phases refuse changed commands before invoking any process',()=>{
- for(const change of [plan=>{plan.phases[1].stages.reverse();},plan=>{plan.phases[2].stages.reverse();},plan=>{plan.phases[1].stages[0].script='cargo';},plan=>{plan.phases[0].stages[0].args.push('--native');}]){
+ for(const change of [plan=>{plan.phases[1].stages.reverse();},plan=>{plan.phases[2].stages.reverse();},plan=>{plan.phases[3].stages.reverse();},plan=>{plan.phases.pop();},plan=>{plan.phases[1].stages[0].script='cargo';},plan=>{plan.phases[0].stages[0].args.push('--native');}]){
   const plan=readDevelopmentAuthoringPlan();change(plan);let calls=0;
   assert.throws(()=>runDevelopmentAuthoringPhase(plan,'history',{execute:()=>{calls++;return{status:0,signal:null};}}));
   assert.equal(calls,0);
  }
  assert.throws(()=>runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'unknown'),/unknown authoring phase/u);
+});
+
+test('final verification checks live sources first and preserves every read-only command and resource bound',()=>{
+ const commands=[];
+ for(const check of [false,true]){
+  const calls=[];
+  runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'verification',{check,execute:(command,args,options)=>{
+   calls.push({command,args,options});return{status:0,signal:null};
+  }});
+  assert.equal(calls.length,15);
+  assert.deepEqual(calls[0].args.slice(4),['js/scripts/check-issue-195-sources.mjs','--online']);
+  assert.equal(calls[2].args[4],'js/scripts/check-issue-195-acceptance.mjs');
+  assert.ok(calls.every(call=>call.command===process.execPath&&call.options.timeout===80000&&call.options.killSignal==='SIGKILL'));
+  assert.ok(calls.every(call=>call.args.includes('--max-old-space-size=352')));
+  assert.ok(calls.every(call=>!call.args.some(arg=>['--refresh-manifest','--refresh-declarations','--update','--run'].includes(arg))));
+  commands.push(calls.map(call=>call.args));
+ }
+ assert.deepEqual(commands[0],commands[1],'verification already selects complete check-only arguments');
 });
 
 test('authoring failure retains its receipt and stops dependent processes',()=>{
