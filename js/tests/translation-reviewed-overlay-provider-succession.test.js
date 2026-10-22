@@ -136,7 +136,7 @@ test('a real appended source epoch preserves the complete original packet policy
 
 
 test('the reference and identifier provider epoch retains every preceding packet and all three complete source inverses',()=>{
-  const packet=readReviewedOverlayProviderSuccession();assert.equal(packet.profiles.length,4);
+  const packet=readReviewedOverlayProviderSuccession();assert.ok(packet.profiles.length>=4);
   const profile=packet.profiles[3],review=OVERLAY_PROVIDER_REFERENCE_REVIEW;
   assert.equal(profile.sourceCommit,'8bc0ef9725388c7927acf1854870bf46f5e365be');
   assert.equal(profile.previousSourceCommit,packet.profiles[2].sourceCommit);
@@ -149,7 +149,9 @@ test('the reference and identifier provider epoch retains every preceding packet
     const row=profile.certificates.find(row=>row.module===owner.module);assert.ok(row);
     assert.equal(hash(row.previous.source),owner.previousSha256);assert.equal(hash(row.current.source),owner.currentSha256);
     assert.equal(Buffer.byteLength(row.current.source),owner.currentBytes);
-    assert.equal(read('js/src/'+row.module).toString('utf8'),row.current.source);
+    // Live providers can have certified successors; this assertion owns the
+    // exact8bc epoch, whose complete bytes remain independently checked.
+    assert.equal(restoreReviewedOverlayProviderModuleSource(read('js/src/'+row.module).toString('utf8'),'js/src/'+row.module,profile.sourceCommit),row.current.source);
     assert.equal(restoreReviewedOverlayProviderModuleSource(row.current.source,'js/src/'+row.module,profile.previousSourceCommit),row.previous.source);
   }
   for(const change of [

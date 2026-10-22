@@ -125,6 +125,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/checkpoint-merge-and-continuation-issue-2026-10-22.txt',
   developmentAccelerationRequest:
     'parity/sources/development-acceleration-2026-10-23.txt',
+  continuousRequirementDeliveryRequest:
+    'parity/sources/continuous-requirement-delivery-2026-10-23.txt',
   checkpointContinuationIssue:
     'https://github.com/link-foundation/meta-language/issues/227',
 });

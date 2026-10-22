@@ -12,7 +12,7 @@ const changes=[
   },
   {
     "before": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const comparison =",
-    "after": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), node.domain !== undefined, node.domain?.reference === true, node.domain !== undefined && sameType(node.domain, node.left.type));\n      if (referenceError) throw new TypeError(referenceError);\n      const comparison ="
+    "after": "      if (node.domain) same(node.domain, node.left.type, 'binary operation domain');\n      const domainPresent = node.domain !== undefined && node.domain !== null;\n      const referenceError = readReferenceIdentityComparisonError(node.op, node.left.type.kind, node.right.type.kind, node.left.type.reference === true, node.right.type.reference === true, sameType(node.left.type, node.right.type), domainPresent, node.domain?.reference === true, domainPresent && sameType(node.domain, node.left.type));\n      if (referenceError) throw new TypeError(referenceError);\n      const comparison ="
   }
 ];
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});

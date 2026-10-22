@@ -2452,6 +2452,28 @@ Author invocation receipts are drafting diagnostics, never execution evidence
 for a requirement. Local controls remain targeted; full native workloads run
 in CI while the next complete batch is drafted.
 
+CI report generation uses at most two independent measurement workers per
+shard; local report controls remain serial. Every complete selected module is
+measured once, with its real import context, both emitter comparisons and
+original inventory. Publication retains source order, and a failed context or
+worker remains a failure while the other measurements finish. Shard counts,
+deadlines and completeness gates remain unchanged.
+
+Historical raw snapshots may retain separately certified archive metadata when
+the complete current producer artifact matches an independently captured CI
+digest. The current artifact retains the real archive lengths and hashes, and
+both complete codec replays execute before the historical view is available.
+Only explicitly recorded metadata fields can be inverted; every owner, source,
+binding, emitted field, record census, limit and replay remains exact. Unknown
+whole artifacts refuse. The physical historical snapshot and its dependent
+receipts retain their original bytes. Source and metadata conservation do not
+establish native execution or requirement completion.
+
+Canonical Links escaping flattens bounded byte chunks, preserving the exact
+UTF-8 escaping alphabet and malformed UTF-16 replacement behavior. Large source
+archives must not retain a separate string fragment for every encoded byte.
+This changes resource use without changing the text or binary data contract.
+
 Declaration dependencies use one shared source algorithm to partition actual
 module bindings into recursive groups. A group publishes signatures atomically
 only after checking all complete original bodies together and rechecking each

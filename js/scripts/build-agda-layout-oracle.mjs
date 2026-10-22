@@ -43,6 +43,24 @@ export function checkAgdaLayoutOracleSources() {
   return manifest;
 }
 
+/** Retry transient compiler downloads without retrying compiler/source failures. */
+export function runAgdaLayoutOracleBuild(arguments_,options,{execute=execFileSync,pause=milliseconds=>Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,milliseconds),report=message=>process.stderr.write(message)}={}) {
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const result=execute('npx',arguments_,{...options,stdio:'pipe',maxBuffer:2*1024*1024});
+      if(result?.length)report(String(result));
+      return result;
+    }catch(error){
+      const output=[error?.stdout,error?.stderr].filter(Boolean).map(String).join('\n');
+      const downloadFailure=/Failed to download/u.test(output)
+        && /(?:returned error: (?:429|502|503|504)|Could not resolve host|Connection (?:reset|refused)|Failed to connect|SSL connection timeout)/u.test(output);
+      if(!downloadFailure||attempt===2)throw error;
+      report('Agda oracle compiler download failed transiently; retry '+(attempt+1)+'/2.\n'+output.slice(-4096)+'\n');
+      pause(2000*(attempt+1));
+    }
+  }
+}
+
 export function buildAgdaLayoutOracle() {
   const manifest = checkAgdaLayoutOracleSources();
   const scratch = makeScratchDirectory('agda-layout-oracle-', 'build Agda development oracle');
@@ -58,8 +76,8 @@ export function buildAgdaLayoutOracle() {
     const version = execFileSync('npx', [...prefix, '--version'], { cwd: root, encoding: 'utf8' }).trim();
     if (version.split(/\s+/u).slice(0, 2).join(' ') !== `tree-sitter ${manifest.treeSitterCli}`) throw new Error(`Unexpected Agda oracle compiler: ${version}`);
     mkdirSync(dirname(AGDA_LAYOUT_ORACLE_OUTPUT), { recursive: true });
-    execFileSync('npx', [...prefix, 'build', '--wasm', '-o', AGDA_LAYOUT_ORACLE_OUTPUT, grammar], {
-      cwd: scratch, stdio: 'inherit', timeout: 300_000,
+    runAgdaLayoutOracleBuild([...prefix, 'build', '--wasm', '-o', AGDA_LAYOUT_ORACLE_OUTPUT, grammar], {
+      cwd: scratch, timeout: 300_000,
     });
     const wasm = readFileSync(AGDA_LAYOUT_ORACLE_OUTPUT);
     writeProjectData(`${AGDA_LAYOUT_ORACLE_OUTPUT}.json`, {

@@ -36,6 +36,7 @@ import { parseProgrammingLanguage } from '../src/programming-language-parser.js'
 import { selfTranslate, selfTranslationSignatures } from '../src/self-translation.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { createReportMeasurementWorker } from './self-translation-report-worker-host.mjs';
+import {measureReportModules} from './self-translation-report-queue.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
 import {partitionMeasuredWorkloads} from './test-groups.mjs';
@@ -523,38 +524,17 @@ async function main() {
     const file = join(root, 'js/src', module);
     return existsSync(file) && module.endsWith('.js') ? readFileSync(file, 'utf8') : null;
   });
-  const worker = process.env.CI === 'true' ? createReportMeasurementWorker(decoratorsText) : null;
-  let pending = null;
-  const finish = async () => {
-    if (!pending) return;
-    const { module, started, result } = pending;
-    pending = null;
-    const outcome = await result;
-    if (outcome.error) failures.push({ module, error: outcome.error });
-    else {
-      rows.push(outcome.row);
-      console.error(`self-translation report: recorded ${module} (${Math.round(performance.now() - started)} ms)`);
-    }
-  };
+  const workers = [];
   try {
-    for (const module of selected) {
-      const started = performance.now();
-      console.error(`self-translation report: resolving ${module}`);
-      try {
-        const moduleContext = context(posix.relative('js/src', module));
-        // Resolve this context while the preceding module is being measured.
-        // Complete results in their original source order before starting another.
-        await finish();
-        console.error(`self-translation report: measuring ${module} (imports ${Math.round(performance.now() - started)} ms)`);
-        pending = { module, started, result: worker
-          ? worker.measure(module, moduleContext).then(row => ({ row }), error => ({ error: String(error?.message ?? error) }))
-          : Promise.resolve({ row: measureSelfTranslationModule(module, decorators, moduleContext) }) };
-      } catch (error) {
-        failures.push({ module, error: String(error?.message ?? error) });
-      }
-    }
-    await finish();
-  } finally { await worker?.close(); }
+    if(process.env.CI==='true')for(let index=0;index<2;index++)workers.push(createReportMeasurementWorker(decoratorsText));
+    await measureReportModules(selected,{
+      workers:workers.length?workers.map(worker=>(module,context)=>worker.measure(module,context)):[(module,context)=>measureSelfTranslationModule(module,decorators,context)],
+      resolveContext:module=>context(posix.relative('js/src',module)),
+      start:(module,phase,started)=>console.error(`self-translation report: ${phase} ${module}${phase==='measuring'?` (imports ${Math.round(performance.now()-started)} ms)`:''}`),
+      record:(module,row,started)=>{rows.push(row);console.error(`self-translation report: recorded ${module} (${Math.round(performance.now()-started)} ms)`);},
+      failure:(module,error)=>failures.push({module,error:String(error?.message??error)}),
+    });
+  } finally { await Promise.all(workers.map(worker=>worker.close())); }
   mkdirSync(outDir, { recursive: true });
   const data = {
     schemaVersion: 1,

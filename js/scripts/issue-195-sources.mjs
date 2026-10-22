@@ -20,7 +20,7 @@ export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
 export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 227]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 228]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -95,6 +95,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     title: 'Minimize repeated actions through shared automation and continue the complete translator in the next pull request',
     role: 'Direct user request to improve development speed by maximizing useful changes per action, deliver a fully working translator and every remaining requirement, and continue in the next pull request.',
     ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
+  {
+    id: 'continuous-requirement-delivery-2026-10-23',
+    key: 'continuousRequirementDeliveryRequest',
+    title: 'Continue implementing requirements rather than stopping after a draft or status update',
+    role: 'Latest direct user correction requires persistent implementation and CI repair in the current continuation; drafting, opening a pull request or reporting CI status does not satisfy delivery.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
   },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
