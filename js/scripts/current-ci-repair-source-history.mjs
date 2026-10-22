@@ -8,7 +8,7 @@ import {restoreCurrentNativeHostSource} from './current-native-host-source-histo
 import {restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 const file='parity/self-translation/ci-39422441941-repair-source-history.lino';
-const archiveSha256='aee46b52b4f35493c96c99f4850e46acc66a99837b704aeab17c276183c48517';
+const archiveSha256='1d5871f0b8f4af6a15b2d1d944af774a15a1f689c0987faf26cbbbfc73b62849';
 const revision='90636f9fb52b1b9095defbac041c8089608b8576';
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let history;

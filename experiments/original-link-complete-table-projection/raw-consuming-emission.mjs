@@ -265,7 +265,7 @@ export async function prepareOriginalLinkRawConsumingEmission(prepared,{check=tr
     sourceArtifact,declarationNames:artifact.declarationNames,definitionCount:106,
     proof:{artifactSha256:sha256(structuredDataToLino(snapshotArtifact)),predecessor,
       predecessorConservation:snapshotArtifact.predecessorConservation,decisionSources:snapshotArtifact.decisionSources,
-      options:artifact.options,archive:artifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
+      options:artifact.options,archive:snapshotArtifact.archive,replays:artifact.replays,tokenizedSites:artifact.totals,
       boundary:'Actual emitted token sites and existing checked final-use decision source pins; not an internal graph-fact inventory or native performance observation.'}}};
 }
 

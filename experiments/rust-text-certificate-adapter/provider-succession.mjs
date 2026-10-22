@@ -36,7 +36,7 @@ export function readReviewedOverlayProviderReview(previous){
   assert.equal(reviews.length,1,'a source epoch requires exactly one independently reviewed predecessor');
   return reviews[0];
 }
-const packetSha256='d4a5a5e1e66e1fce2d02f389825e253c063cbd2eca26f1e4420b5d21c404aa35';
+const packetSha256='4e701b0f6bbb1ab6c4486bf35715174235c327256110e8e959d7dde8562db215';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:hash(value)});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());

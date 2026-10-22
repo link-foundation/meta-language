@@ -3960,6 +3960,18 @@ Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.
 
+CI 39839936265 reached the existing fifteen-minute deadline in four translation
+cells and one conformance cell. The current physical schedule splits each of
+the six logical translation cohorts into two measured subsets and each of the
+four logical conformance cohorts into two subsets. Each pair preserves its
+complete original file inventory exactly once. All twelve translation feedback
+partitions must retain their exact commit and file scope before merging; missing
+or foreign partitions still fail. Execution remains serial within each runner,
+and commands, assertions, native checks and the fifteen-minute deadline retain
+their existing obligations. The complete earlier workflow and its finite inverse
+remain authenticated separately. These scheduling controls establish no passing
+test observations; CI must verify the actual workloads.
+
 The twenty complete report, grammar and translation job logs of CI 39644810104 add a
 second source-bound timing cohort. The newest matching complete source wins;
 an older matching source remains available when the newer cohort has no sample.

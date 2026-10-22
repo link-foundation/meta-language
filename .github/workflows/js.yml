@@ -158,16 +158,26 @@ jobs:
           - {group: grammar-native, partition: 4, shards: 6}
           - {group: grammar-native, partition: 5, shards: 6}
           - {group: grammar-native, partition: 6, shards: 6}
-          - {group: conformance, partition: 1, shards: 4}
-          - {group: conformance, partition: 2, shards: 4}
-          - {group: conformance, partition: 3, shards: 4}
-          - {group: conformance, partition: 4, shards: 4}
-          - {group: translation, partition: 1, shards: 6}
-          - {group: translation, partition: 2, shards: 6}
-          - {group: translation, partition: 3, shards: 6}
-          - {group: translation, partition: 4, shards: 6}
-          - {group: translation, partition: 5, shards: 6}
-          - {group: translation, partition: 6, shards: 6}
+          - {group: conformance, partition: 1, shards: 8}
+          - {group: conformance, partition: 2, shards: 8}
+          - {group: conformance, partition: 3, shards: 8}
+          - {group: conformance, partition: 4, shards: 8}
+          - {group: conformance, partition: 5, shards: 8}
+          - {group: conformance, partition: 6, shards: 8}
+          - {group: conformance, partition: 7, shards: 8}
+          - {group: conformance, partition: 8, shards: 8}
+          - {group: translation, partition: 1, shards: 12}
+          - {group: translation, partition: 2, shards: 12}
+          - {group: translation, partition: 3, shards: 12}
+          - {group: translation, partition: 4, shards: 12}
+          - {group: translation, partition: 5, shards: 12}
+          - {group: translation, partition: 6, shards: 12}
+          - {group: translation, partition: 7, shards: 12}
+          - {group: translation, partition: 8, shards: 12}
+          - {group: translation, partition: 9, shards: 12}
+          - {group: translation, partition: 10, shards: 12}
+          - {group: translation, partition: 11, shards: 12}
+          - {group: translation, partition: 12, shards: 12}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -226,7 +236,7 @@ jobs:
           TEST_GROUP_SHARD: ${{ matrix.partition }}/${{ matrix.shards || 1 }}
           TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
           SELF_TRANSLATION_CHECK_RUST: ${{ matrix.group == 'translation' && '1' || '0' }}
-        run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/test-groups.mjs --run "$TEST_GROUP"
+        run: node ../scripts/with-cache-cleanup.mjs --event test -- node scripts/ci-test-partitions.mjs --run "$TEST_GROUP"
         working-directory: js
 
       - name: Capture translation compiler feedback partition
@@ -288,7 +298,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/download-artifact@v8
         with:
-          pattern: translation-test-feedback-${{ github.sha }}-*-of-6
+          pattern: translation-test-feedback-${{ github.sha }}-*-of-12
           path: .issue-195-work/translation-test-feedback/partitions
           merge-multiple: false
 
@@ -300,7 +310,7 @@ jobs:
         run: |
           mkdir -p .issue-195-work/translation-test-feedback
           node js/scripts/translation-test-feedback.mjs merge \
-            --partitions 6 \
+            --partitions 12 \
             --commit "$GITHUB_SHA" \
             --inputs .issue-195-work/translation-test-feedback/partitions \
             --out .issue-195-work/translation-test-feedback/merged \
