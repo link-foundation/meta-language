@@ -11,8 +11,11 @@ export function generateCiTestPartitionHistory({check=false,apply=false}={}){
  assert.equal(check&&apply,false);const file='.github/workflows/js.yml',captured=captureGitArtifactCertificate(CI_TEST_PARTITION_REVISION,file);
  const source=captured.blob.toString('utf8');assert.deepEqual(Buffer.from(source),captured.blob);
  const current=deriveCiTestPartitionWorkflow(source),actual=readFileSync(new URL(file,root),'utf8');assert.ok(actual===source||actual===current,'unknown workflow changes refuse');
+ const feedbackFile='js/scripts/translation-test-feedback.mjs',previousFeedback=captureGitArtifactCertificate(CI_TEST_PARTITION_REVISION,feedbackFile);
+ const oldFeedback=previousFeedback.blob.toString('utf8'),currentFeedback=readFileSync(new URL(feedbackFile,root),'utf8');
+ const feedback={file:feedbackFile,previous:{source:oldFeedback,...pin(oldFeedback),certificate:previousFeedback.certificate},current:{source:currentFeedback,...pin(currentFeedback)}};
  const packet={schemaVersion:1,model:'complete CI physical test partition succession 1',revision:CI_TEST_PARTITION_REVISION,run:39839936265,file,
-  previous:{source,...pin(source),certificate:captured.certificate},current:{source:current,...pin(current)},changes:CI_TEST_PARTITION_CHANGES,
+  previous:{source,...pin(source),certificate:captured.certificate},current:{source:current,...pin(current)},changes:CI_TEST_PARTITION_CHANGES,feedback,
   boundary:'Physical twelve-cell translation and eight-cell conformance scheduling only. Each pair retains exactly one complete original logical partition; tests still execute serially within each runner under the unchanged fifteen-minute deadline. Every original assertion, test file, feedback payload and failure predicate remains mandatory. Twelve exact-commit feedback partitions must merge without missing or foreign scope. Source conservation is not test execution or requirement completion.'};
  verifyCiTestPartitionHistory(packet);const output=new URL(CI_TEST_PARTITION_HISTORY,root);
  if(check)checkProjectData(output,packet);else writeProjectData(output,packet);

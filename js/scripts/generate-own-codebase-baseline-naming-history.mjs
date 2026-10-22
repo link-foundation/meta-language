@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {readOwnCodebaseHistoricalNamingPolicy,verifyOwnCodebaseHistoricalNamingSources} from './own-codebase-baseline-naming-history.mjs';
-import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {checkProjectData,writeProjectData,serializeProjectData} from './project-data.mjs';
 const root=new URL('../../',import.meta.url);
 const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:createHash('sha256').update(bytes).digest('hex')});
 
@@ -40,7 +40,7 @@ export function generateOwnCodebaseHistoricalNamingSources({check=false}={}){
   return history;
 }
 /** Append only independently derived historical names; current extraction stays separate. */
-export async function generateAdditionalOwnCodebaseHistoricalNamingSources({check=false}={}){
+export async function generateAdditionalOwnCodebaseHistoricalNamingSources({check=false,authorOnly=false}={}){
   const revision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',baseline='8bc0ef9725388c7927acf1854870bf46f5e365be';
   const integration='8f2f6c483ec32a3ffc17afec694463965dc7551d';
   const file='parity/naming/array-identity-historical-inventories.lino';
@@ -56,18 +56,25 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     };
     const selections=[...originalFiles.map(path=>({path,revision})),...changedAt(baseline).map(path=>({path,revision:baseline})),
       ...changedAt(integration).map(path=>({path,revision:integration}))];
+    const scalarSources=new Map();
     sources=selections.map(({path,revision})=>{
       globalThis.gc?.();
       const {blob,certificate}=captureGitArtifactCertificate(revision,path);
       assert.deepEqual(verifyGitArtifactCertificate(certificate,blob,{revision,path}),blob);
-      return{file:path,predecessor:{revision,source:blob.toString('utf8'),...pin(blob),certificate},
+      const sourcePin=pin(blob);
+      if(!scalarSources.has(sourcePin.sha256))scalarSources.set(sourcePin.sha256,blob.toString('utf8'));
+      // Only equal immutable scalar strings share storage. All ordered source
+      // rows, certificates and containers keep their independent identities.
+      return{file:path,predecessor:{revision,source:scalarSources.get(sourcePin.sha256),...sourcePin,certificate},
         current:pin(readFileSync(new URL(path,root)))};
     });
   }
+  console.error('Captured '+sources.length+' complete naming source epochs.');
   // Finish Git object capture before retaining the complete naming inventory.
   // Its binding graph and Git's pack buffers need separate memory lifetimes.
   globalThis.gc?.();
   const {NAME_INVENTORIES}=await import('./issue-195-naming.mjs');
+  console.error('Loaded complete naming inventories.');
   const views=[];
   for(const source of sources){
     globalThis.gc?.();
@@ -82,18 +89,45 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
   }
   const history={schemaVersion:1,model:'array identity historical naming inventories 1',revision,sources,views,
     boundary:'Each supplemental name is derived by its unchanged scoped inventory from a complete independently Git-certified original module. Every actual current source name is still extracted first. Historical definitions retain their original concept identities; a changed current body gains no equivalence proof from this source view. Whole current source hashes bind selection and unknown source bytes refuse. These source certificates do not establish runtime execution or requirement completion.'};
+  console.error('Derived '+views.length+' historical naming views.');
   if(check){assert.deepEqual(history,stored);checkProjectData(new URL(file,root),history);}
-  else{writeProjectData(new URL(file,root),history);globalThis.gc?.();assert.deepEqual(readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews,history);}
+  else{writeProjectData(new URL(file,root),history);globalThis.gc?.();if(!authorOnly)assert.deepEqual(readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews,history);}
   return history;
 }
 
+// The normal CLI keeps the full author/reader comparison while separating
+// their large graphs into fresh serial processes. No assertion is optional in
+// the normal command; the internal author emits only an invocation receipt.
 if(process.argv[1]===fileURLToPath(import.meta.url)){
-  const args=process.argv.slice(2);assert.ok(new Set(args).size===args.length&&args.every(arg=>['--check','--additional-inventories'].includes(arg)));
-  if(args.includes('--additional-inventories')){
-    const history=await generateAdditionalOwnCodebaseHistoricalNamingSources({check:args.includes('--check')});
-    console.log(JSON.stringify({certifiedSources:history.sources.length,scopedViews:history.views.length,historicalNames:history.views.reduce((total,row)=>total+row.names.length,0),nativeExecution:false}));
+  const args=process.argv.slice(2),file=new URL('../../parity/naming/array-identity-historical-inventories.lino',import.meta.url);
+  if(args.length===1&&args[0]==='--author-additional-inventories'){
+    const history=await generateAdditionalOwnCodebaseHistoricalNamingSources({authorOnly:true});
+    process.stdout.write(serializeProjectData({source:pin(readFileSync(file)),certifiedSources:history.sources.length,scopedViews:history.views.length,historicalNames:history.views.reduce((total,row)=>total+row.names.length,0)},'receipt.lino'));
+  }else if(args.length===3&&args[0]==='--verify-additional-inventories'){
+    assert.match(args[1],/^[a-f0-9]{64}$/u);const expected={bytes:Number(args[2]),sha256:args[1]};
+    assert.ok(Number.isSafeInteger(expected.bytes)&&expected.bytes>0&&expected.bytes<=64*1024*1024);
+    assert.deepEqual(pin(readFileSync(file)),expected,'the entire actual output equals the completed normal author receipt');
+    const history=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+    globalThis.gc?.();assert.deepEqual(pin(serializeProjectData(history,'history.lino')),expected,'the normal fully authenticated reader reconstructs every generated byte');
+    assert.deepEqual(pin(readFileSync(file)),expected,'output did not change during complete reader verification');
   }else{
-    generateOwnCodebaseHistoricalNamingSources({check:args.includes('--check')});
-    console.log('Two complete historical source inventories and every original driver byte retained; current naming policy unchanged.');
+    assert.ok(new Set(args).size===args.length&&args.every(arg=>['--check','--additional-inventories'].includes(arg)));
+    if(args.includes('--additional-inventories')){
+      if(args.includes('--check')){
+        const history=await generateAdditionalOwnCodebaseHistoricalNamingSources({check:true});
+        console.log(JSON.stringify({certifiedSources:history.sources.length,scopedViews:history.views.length,historicalNames:history.views.reduce((total,row)=>total+row.names.length,0),nativeExecution:false}));
+      }else{
+        const invoke=argumentsList=>{
+          const child=spawnSync(process.execPath,[...process.execArgv,fileURLToPath(import.meta.url),...argumentsList],{stdio:['ignore','pipe','inherit'],maxBuffer:1024*1024,timeout:70000});
+          if(child.error)throw child.error;assert.equal(child.signal,null);assert.equal(child.status,0);return child.stdout;
+        };
+        const receipt=readBootstrapStructuredDataLino(invoke(['--author-additional-inventories']).toString('utf8'));
+        invoke(['--verify-additional-inventories',receipt.source.sha256,String(receipt.source.bytes)]);
+        console.log(JSON.stringify({...receipt,nativeExecution:false}));
+      }
+    }else{
+      generateOwnCodebaseHistoricalNamingSources({check:args.includes('--check')});
+      console.log('Two complete historical source inventories and every original driver byte retained; current naming policy unchanged.');
+    }
   }
 }

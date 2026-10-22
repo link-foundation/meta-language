@@ -6534,7 +6534,7 @@
 (6534: 25 3875 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (6535: 6536 6538 (meta: (t: semantic) (n: 1) (term: object%20value) (lang: meta-language%20structured%20data)))
 (6536: 16 3869 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
-(6537: (meta: (t: semantic) (n: 1) (term: string%20value) (def: f45c71eba5f2d61b7d1110cced2b40a4e893d635aeb8d4d10b8b12a26c12af76) (lang: meta-language%20structured%20data)))
+(6537: (meta: (t: semantic) (n: 1) (term: string%20value) (def: 2cd0551e0075799b84db480fd10dc522030184152e6e868049a640666c4bd02f) (lang: meta-language%20structured%20data)))
 (6538: 19 6537 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (6539: 2316 6535 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))
 (6540: 8 9 (meta: (t: semantic) (n: 1) (term: key%20value%20pair) (lang: meta-language%20structured%20data)))

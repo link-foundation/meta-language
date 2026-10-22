@@ -39,7 +39,7 @@ import { createReportMeasurementWorker } from './self-translation-report-worker-
 import {measureReportModules} from './self-translation-report-queue.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
-import {partitionMeasuredWorkloads} from './test-groups.mjs';
+import {partitionReportMeasuredWorkloads} from './report-workload-costs.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -92,7 +92,7 @@ function listSourceModules() {
  * the original byte-balanced contract and every complete source appears once.
  */
 function shardOf(files, index, count) {
-  if(count===8&&files.length>=count)return partitionMeasuredWorkloads(files,count)[index-1];
+  if(count===8&&files.length>=count)return partitionReportMeasuredWorkloads(files,count)[index-1];
   const loads = Array(count).fill(0);
   const shards = Array.from({ length: count }, () => []);
   const sized = files.map((file) => ({ file, size: readFileSync(join(root, file)).length }));

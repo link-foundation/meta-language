@@ -6,7 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 export const CI_TEST_PARTITION_REVISION='491cf0caa9f014e7f4f4caef62611fa482114721';
 export const CI_TEST_PARTITION_HISTORY='parity/fixtures/ci-39839936265-test-partitions.lino';
-const packetSha256='1f0cd6d7e5c01ffd2e219094a3bcd82be6ae4f7a420223b64e2b8650482e4eab';
+const packetSha256='f87c8505682fe4b25715da692c34a46bae2ec48accdf26c4233ca9a3cd18db79';
 const matrix=(group,count)=>Array.from({length:count},(_,index)=>`          - {group: ${group}, partition: ${index+1}, shards: ${count}}\n`).join('');
 export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:matrix('conformance',4),after:matrix('conformance',8)},
@@ -14,6 +14,10 @@ export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:'node scripts/test-groups.mjs --run "$TEST_GROUP"',after:'node scripts/ci-test-partitions.mjs --run "$TEST_GROUP"'},
  {before:'pattern: translation-test-feedback-${{ github.sha }}-*-of-6',after:'pattern: translation-test-feedback-${{ github.sha }}-*-of-12'},
  {before:'            --partitions 6 \\\n',after:'            --partitions 12 \\\n'},
+]);
+export const CI_TEST_FEEDBACK_CHANGES=Object.freeze([
+ {before:"import { partitionGroupFiles, partitionTests, testFiles } from './test-groups.mjs';",after:"import { partitionTests, testFiles } from './test-groups.mjs';\nimport {partitionCiTestGroupFiles} from './ci-test-partitions.mjs';"},
+ {before:"return partitionGroupFiles(groups.translation, shard).map(file => `js/tests/${file}`);",after:"return partitionCiTestGroupFiles('translation',groups.translation,shard).map(file => `js/tests/${file}`);"},
 ]);
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 let cached;
@@ -23,6 +27,13 @@ export function deriveCiTestPartitionWorkflow(source){
  return current;
 }
 export function verifyCiTestPartitionHistory(packet){
+ const row=packet.feedback;assert.equal(row.file,'js/scripts/translation-test-feedback.mjs');
+ verifyGitArtifactCertificate(row.previous.certificate,Buffer.from(row.previous.source),{revision:CI_TEST_PARTITION_REVISION,path:row.file});
+ assert.deepEqual(pin(row.previous.source),{bytes:row.previous.bytes,sha256:row.previous.sha256});
+ let feedback=row.previous.source;for(const{before,after}of CI_TEST_FEEDBACK_CHANGES){assert.equal(feedback.split(before).length,2);feedback=feedback.replace(before,()=>after);}
+ assert.equal(feedback,row.current.source);assert.deepEqual(pin(feedback),{bytes:row.current.bytes,sha256:row.current.sha256});
+ for(const{before,after}of [...CI_TEST_FEEDBACK_CHANGES].reverse()){assert.equal(feedback.split(after).length,2);feedback=feedback.replace(after,()=>before);}
+ assert.equal(feedback,row.previous.source);
  assert.equal(packet.model,'complete CI physical test partition succession 1');assert.equal(packet.revision,CI_TEST_PARTITION_REVISION);
  assert.equal(packet.file,'.github/workflows/js.yml');assert.equal(packet.run,39839936265);
  assert.deepEqual(packet.changes,CI_TEST_PARTITION_CHANGES);
@@ -39,4 +50,10 @@ export function readCiTestPartitionHistory(){
 }
 export function restoreCiTestPartitionWorkflow(source){
  const packet=readCiTestPartitionHistory();return source===packet.current.source?packet.previous.source:source;
+}
+
+export function restoreCiTestPartitionSource(source,file){
+ if(file==='.github/workflows/js.yml')return restoreCiTestPartitionWorkflow(source);
+ if(file!=='js/scripts/translation-test-feedback.mjs')return source;
+ const row=readCiTestPartitionHistory().feedback;return source===row.current.source?row.previous.source:source;
 }

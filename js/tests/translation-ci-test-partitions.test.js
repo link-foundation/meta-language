@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {partitionCiTestGroupFiles} from '../scripts/ci-test-partitions.mjs';
-import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow} from '../scripts/ci-test-partition-history.mjs';
+import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource} from '../scripts/ci-test-partition-history.mjs';
 test('physical CI partitions preserve every complete logical cohort exactly once under the original deadline',()=>{
  const groups=partitionTests(testFiles()).groups;
  for(const[group,oldCount]of [['translation',6],['conformance',4]]){
@@ -19,7 +19,10 @@ test('physical CI partitions preserve every complete logical cohort exactly once
  for(const[group,count]of [['translation',12],['conformance',8]])assert.deepEqual([...region.matchAll(new RegExp('\\{group: '+group+', partition: (\\d+), shards: (\\d+)\\}','gu'))].map(([,index,total])=>[+index,+total]),Array.from({length:count},(_,index)=>[index+1,count]));
  assert.match(current,/pattern: translation-test-feedback-\$\{\{ github.sha \}\}-\*-of-12/u);assert.match(current,/--partitions 12 \\/u);
  assert.equal(restoreCiTestPartitionWorkflow(current),packet.previous.source);assert.equal(restoreCiTestPartitionWorkflow(current+'\n'),current+'\n');
- for(const mutate of [value=>{value.changes.pop();},value=>{value.current.source+=' ';},value=>{value.previous.certificate.path='unregistered.yml';}]){const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));}
+ const feedback=readFileSync(new URL('../../'+packet.feedback.file,import.meta.url),'utf8');
+ assert.equal(restoreCiTestPartitionSource(feedback,packet.feedback.file),packet.feedback.previous.source);
+ assert.equal(restoreCiTestPartitionSource(feedback+'\n',packet.feedback.file),feedback+'\n');
+ for(const mutate of [value=>{value.feedback.current.source+=' ';},value=>{value.feedback.previous.certificate.path='unregistered.mjs';},value=>{value.changes.pop();},value=>{value.current.source+=' ';},value=>{value.previous.certificate.path='unregistered.yml';}]){const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));}
 });
 test('physical scheduling refuses invalid scope and retains the serial child invocation',()=>{
  for(const shard of ['0/12','13/12','1/0','1.2/12','1/999'])assert.throws(()=>partitionCiTestGroupFiles('translation',['one','two'],shard));

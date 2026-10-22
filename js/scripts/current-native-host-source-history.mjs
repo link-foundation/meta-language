@@ -9,7 +9,7 @@ const root=new URL('../../',import.meta.url);
 export const CURRENT_NATIVE_HOST_REVISION='8d77e476d097448eb381ebe03e2aa173402bc03d';
 export const CURRENT_NATIVE_HOST_OUTPUT='parity/self-translation/ci-39539903548-native-host-source-history.lino';
 export const CURRENT_NATIVE_HOST_FILES=Object.freeze(['rust/src/self_translation.rs','rust/src/translation/mod.rs','rust/tests/unit/mod.rs','rust/src/translation/javascript/expressions/values.rs']);
-const packetSha256='65f39f410fddd4c33bdeeb7a9676df7ea56e749b7c47d9841b2585a40aee4b0b';
+const packetSha256='f340d690099b12fd4544714752f9c63d662a908c545bd6efe785caddcbe319f1';
 let cached;
 export const pinCurrentNativeHostSource=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 const exactKeys=(value,keys)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),[...keys].sort());};

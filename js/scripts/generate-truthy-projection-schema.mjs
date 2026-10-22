@@ -9,6 +9,7 @@ import {inspectedTruthyPreimages,TRUTHY_PROJECTION_REVISION,TRUTHY_PROJECTION_OU
  deriveTruthyProjectionHostSource,verifyTruthyProjectionSchemaPacket,readTruthyProjectionSchemaPacket,
  TRUTHY_PROJECTION_HOST_SUCCESSORS,verifyTruthyProjectionHostSuccessors,restoreTruthyProjectionHostSource} from './truthy-projection-schema.mjs';
 
+import {restoreSharedArrayNativeFrontendSource} from './shared-array-native-frontend-history.mjs';
 const root=new URL('../../',import.meta.url),helper='js/scripts/truthy-projection-schema.mjs';
 export function generateTruthyProjectionSchema({check=false}={}) {
  const stored=check?readTruthyProjectionSchemaPacket():null;
@@ -40,7 +41,7 @@ export function generateTruthyProjectionSchema({check=false}={}) {
 
 export function generateTruthyProjectionHostSuccessors({check=false}={}) {
  const output=new URL(TRUTHY_PROJECTION_HOST_SUCCESSORS,root);
- if(check){const packet=verifyTruthyProjectionHostSuccessors(readProjectData(output));for(const row of packet.sources)assert.equal(readFileSync(new URL(row.file,root),'utf8'),row.current.source);checkProjectData(output,packet);return packet;}
+ if(check){const packet=verifyTruthyProjectionHostSuccessors(readProjectData(output));for(const row of packet.sources)assert.equal(restoreSharedArrayNativeFrontendSource(readFileSync(new URL(row.file,root),'utf8'),row.file),row.current.source);checkProjectData(output,packet);return packet;}
  const previousRevision='6ffff3b2dc530a5f24c128dadf877f3fa106932b',revision='3fe3a9f9decfa6431b5b0718729a5d123b5f236b';
  const sources=['js/src/translation/check.js','rust/src/translation/surface/nodes.rs','rust/src/translation/check/expressions.rs'].map(file=>{
   const capture=commit=>{const {blob,certificate}=captureGitArtifactCertificate(commit,file);const source=blob.toString('utf8');assert.deepEqual(Buffer.from(source),blob);return {source,...pinTruthyProjectionSource(source),certificate};};
