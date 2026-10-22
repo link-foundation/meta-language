@@ -42,6 +42,7 @@ export function readDevelopmentAuthoringPlan(){
    stage('grammar context metadata','experiments/grammar-context-source-metadata/generate.mjs',['--check']),
    stage('evidence translation history','experiments/grammar-outcome-network/native-transport/inverse/generate-evidence-translation-history.mjs',['--check']),
    stage('canonical concept catalogs','js/scripts/build-concept-records.mjs',['--check']),
+   stage('historical naming storage','js/scripts/check-historical-naming-inventory-storage.mjs',['--check']),
   ]},
  ],boundary:'Invokes complete existing normal authors and read-only metadata verification, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Verification checks live sources before reading the ledger and never refreshes stale outputs. Receipts record invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
 }

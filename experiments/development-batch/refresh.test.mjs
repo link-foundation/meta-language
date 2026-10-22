@@ -18,7 +18,7 @@ test('final verification checks live sources first and preserves every read-only
   runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'verification',{check,execute:(command,args,options)=>{
    calls.push({command,args,options});return{status:0,signal:null};
   }});
-  assert.equal(calls.length,15);
+  assert.equal(calls.length,16);
   assert.deepEqual(calls[0].args.slice(4),['js/scripts/check-issue-195-sources.mjs','--online']);
   assert.equal(calls[2].args[4],'js/scripts/check-issue-195-acceptance.mjs');
   assert.ok(calls.every(call=>call.command===process.execPath&&call.options.timeout===80000&&call.options.killSignal==='SIGKILL'));

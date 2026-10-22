@@ -39,6 +39,9 @@ function graph(source, namespace, options, expectedRoot = null) {
   const id = `${prefix}[1-9][0-9]*`;
   const statement = new RegExp(`\\((${id}):((?: ${id})*)${fields}`, 'y');
   const network = new StructuredDataNetwork();
+  // This owned graph never escapes: only decoded values and costs are returned.
+  // Reuse equal immutable metadata, retaining every link and validation charge.
+  const containerMetadata = new Map();
   const roots = [];
   let cursor = 0;
   let previous = 0;
@@ -54,8 +57,16 @@ function graph(source, namespace, options, expectedRoot = null) {
     const term = canonicalString(match[3]);
     const definition = match[4] === undefined ? undefined : canonicalString(match[4]);
     const language = canonicalString(match[5]);
-    let metadata = LinkMetadata.new().withLinkType(LinkType.Semantic).withNamed(true).withTerm(term).withLanguage(language);
-    if (definition !== undefined) metadata = metadata.withDefinition(definition);
+    let metadata = definition === undefined ? containerMetadata.get(term)?.get(language) : undefined;
+    if (!metadata) {
+      metadata = LinkMetadata.new().withLinkType(LinkType.Semantic).withNamed(true).withTerm(term).withLanguage(language);
+      if (definition !== undefined) metadata = metadata.withDefinition(definition);
+      else {
+        Object.freeze(metadata.flags); Object.freeze(metadata);
+        if (!containerMetadata.has(term)) containerMetadata.set(term, new Map());
+        containerMetadata.get(term).set(language, metadata);
+      }
+    }
     network._links.set(number, new Link(number, references, metadata));
     if (term === terms.root) roots.push(number);
     cursor = statement.lastIndex;

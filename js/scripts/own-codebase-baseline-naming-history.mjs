@@ -6,6 +6,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {readHistoricalNamingInventoryBundle,decodeHistoricalNamingInventoryBundle} from './historical-naming-inventory-storage.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -73,12 +74,25 @@ const pin=bytes=>({bytes:Buffer.byteLength(bytes),sha256:digest(bytes)});
 function exactKeys(value,keys){assert.ok(value&&typeof value==='object'&&!Array.isArray(value));assert.deepEqual(Object.keys(value).sort(),keys.slice().sort());}
 let additionalSnapshot,originalSnapshot;
 
+// Decoded policy data has plain containers and immutable scalar values. Copy
+// every container with its original sharing, retaining scalar string storage.
+function copyOwnCodebaseNamingData(value,seen=new Map()){
+  if(value===null||typeof value!=='object')return value;
+  if(seen.has(value))return seen.get(value);
+  const result=Array.isArray(value)?[]:{};seen.set(value,result);
+  for(const key of Object.keys(value))Object.defineProperty(result,key,{
+    value:copyOwnCodebaseNamingData(value[key],seen),enumerable:true,configurable:true,writable:true,
+  });
+  return result;
+}
+
 /** Return a detached copy; callers cannot change the trusted source anchors. */
 export function readOwnCodebaseHistoricalNamingPolicy(){
-  const text=readFileSync(new URL('../../parity/naming/array-identity-historical-inventories.lino',import.meta.url),'utf8');
-  if(additionalSnapshot?.text===text)return{...structuredClone(policy),additionalSourceViews:structuredClone(additionalSnapshot.value)};
+  const bundle=readHistoricalNamingInventoryBundle();
+  if(additionalSnapshot?.documents.length===bundle.documents.length&&bundle.documents.every((row,index)=>
+    row.file===additionalSnapshot.documents[index].file&&row.text===additionalSnapshot.documents[index].text))return{...structuredClone(policy),additionalSourceViews:copyOwnCodebaseNamingData(additionalSnapshot.value)};
   additionalSnapshot=undefined;
-  const additional=readBootstrapStructuredDataLino(text);
+  const additional=decodeHistoricalNamingInventoryBundle(bundle);
   exactKeys(additional,['schemaVersion','model','revision','sources','views','boundary']);
   assert.equal(additional.schemaVersion,1);assert.equal(additional.model,'array identity historical naming inventories 1');
   assert.equal(additional.revision,'6ffff3b2dc530a5f24c128dadf877f3fa106932b');
@@ -87,7 +101,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
   for(const row of additional.sources){
     exactKeys(row,['file','predecessor','current']);exactKeys(row.predecessor,['revision','source','bytes','sha256','certificate']);
     assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
-    assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be','8f2f6c483ec32a3ffc17afec694463965dc7551d'].includes(row.predecessor.revision));
+    assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be','8f2f6c483ec32a3ffc17afec694463965dc7551d','3d8e4513e2167d0d15cca13ccaefcb4ae86669fd'].includes(row.predecessor.revision));
     exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
     assert.deepEqual(pin(row.predecessor.source),{bytes:row.predecessor.bytes,sha256:row.predecessor.sha256});
     verifyGitArtifactCertificate(row.predecessor.certificate,Buffer.from(row.predecessor.source),{revision:row.predecessor.revision,path:row.file});
@@ -100,7 +114,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
     assert.equal(typeof view.inventory,'string');assert.ok(Array.isArray(view.names)&&view.names.length>0);
     for(const row of view.names){exactKeys(row,['name','record']);assert.equal(typeof row.name,'string');assert.equal(typeof row.record,'string');}
   }
-  additionalSnapshot={text,value:structuredClone(additional)};
+  additionalSnapshot={documents:bundle.documents,value:copyOwnCodebaseNamingData(additional)};
   return{...structuredClone(policy),additionalSourceViews:additional};
 }
 

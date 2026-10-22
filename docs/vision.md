@@ -4016,6 +4016,12 @@ the same deadline. Its 347 complete, source-bound samples form a further advisor
 report cohort. Both earlier cohorts and their controls remain available. The
 selected costs affect ownership only; they confer no completion or execution
 authority, and all eight jobs, full module coverage and deadlines remain required.
+The two report workers reuse whichever slot finishes first. A slow preceding
+measurement does not leave the other worker idle. Context resolution and final
+publication retain their original source order; failures and complete module
+coverage remain mandatory. The worker count and thirty-minute deadline are
+unchanged. A controlled slow-first regression checks this scheduling boundary;
+complete report timing still requires CI.
 
 The raw-oracle runner may reuse a successfully verified base emission profile
 within one process only after comparing every complete historical/current
@@ -4034,9 +4040,11 @@ requires exact canonical data and actual tooling owners. Lower peak allocation
 changes evaluation order only; every foundation rejection and source assertion
 remains mandatory.
 The repository's serial development driver also provides a final `verification`
-phase. Fifteen read-only checks reconcile live requirement sources before ledger
+phase. Sixteen read-only checks reconcile live requirement sources before ledger
 access, then check dependency/scope/export inventories, documentation, test
 ownership, generated native rules, source histories and both concept catalogs.
+The final source-history check validates all indexed naming documents, their
+source certificates, every current source pin and exact serialization.
 Missing or stale data stops the phase without refreshing it. This consolidates
 the existing bounded checks; full suites, reports and native execution remain
 separate CI obligations. Invocation receipts are not requirement observations.
@@ -4061,6 +4069,25 @@ ordered inventory, current source pin, extracted name and record mapping remains
 mandatory; the exported check path retains its complete in-process comparison.
 The extraction heap expires before serialization so their largest graphs do not
 overlap. The existing process-tree resource guard still bounds the entire task.
+
+Supplemental historical naming sources use an explicit Links index once their
+combined data outgrows one closed graph. Four independently closed documents
+retain the complete ordered source epochs at the registered revisions. The index
+records every path, revision, byte count, digest and source/view count. Every
+document's complete bytes are checked before cache reuse; every decoded source
+still passes its independent Git certificate. Legacy single-graph input retains
+its original decoder and limits. Each indexed document uses those same limits;
+the combined history is not presented as one graph that passed the old budget.
+Normal verification reproduces every page and index byte, preserves source/view
+order and refuses a container alias that would cross documents. Cache results
+retain independent containers while sharing only immutable scalar storage.
+
+The canonical bootstrap reader may share equal immutable metadata inside its
+private graph, which never escapes. It still allocates every original data link,
+distinguishes independent containers, preserves actual aliases, and charges every
+original stored/expanded node and byte. Language, shape, reachability, cycle and
+other validation rules remain unchanged. This reduces peak allocation without
+raising the task or codec limits.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;

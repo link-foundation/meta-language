@@ -34,3 +34,22 @@ test('invalid report worker counts and duplicate module inventories refuse befor
  for(const workers of[[],[()=>{},()=>{},()=>{}]])await assert.rejects(measureReportModules(['first'],{workers}),assert.AssertionError);
  await assert.rejects(measureReportModules(['first','first'],{workers:[()=>{throw new Error('must not run');}]}),/exactly once/u);
 });
+
+test('a completed worker continues the complete queue while an earlier slow module retains publication order',async()=>{
+ let releaseFirst;const events=[],rows=[],contexts=[],active=new Set();
+ const worker=owner=>(module,context)=>{
+  assert.equal(active.has(owner),false);active.add(owner);events.push(module);assert.equal(context.module,module);
+  if(module==='first')return new Promise(resolve=>{releaseFirst=()=>{active.delete(owner);resolve({module});};});
+  return Promise.resolve().then(()=>{active.delete(owner);return{module};});
+ };
+ const running=measureReportModules(['first','second','third','fourth'],{
+  workers:[worker(0),worker(1)],resolveContext:module=>{contexts.push(module);return{module};},record:(_,row)=>rows.push(row.module),failure:(_,error)=>{throw error;},
+ });
+ try{
+  for(let tick=0;tick<40&&!events.includes('fourth');tick++)await Promise.resolve();
+  assert.deepEqual(events,['first','second','third','fourth'],'the free worker cannot idle behind an earlier slow measurement');
+  assert.deepEqual(contexts,events,'complete import contexts retain their original resolution order');
+  assert.deepEqual(rows,[],'publication still waits for the complete preceding row');
+ }finally{releaseFirst();await running;}
+ assert.deepEqual(rows,['first','second','third','fourth']);assert.equal(active.size,0);
+});
