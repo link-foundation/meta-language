@@ -2506,6 +2506,18 @@ constant function initializer or a named class containing only deferred plain
 methods and constructors. It checks complete syntax, exact names and unique
 owners; heritage, decorators, fields, static or computed members and eager
 initializers receive no such proof. Deferred class bodies remain untranslated.
+A separate complete-CST scope proof admits one actual constant binding of fresh
+literal arrays or objects, a root standard `new Map`/`new Set` with literal
+entries, or root `Object.freeze` on a literal container. All nested values must
+be literal data. Actual module and import owners must leave each required
+standard name unshadowed. Calls inside values, getters, computed keys, spreads,
+holes, destructuring, multiple declarators and unknown forms refuse. The shared
+JavaScript decisions generate native rules and both checked Links archives.
+This admits independently checked neighboring functions; the original constant
+initializer remains concrete source provenance and is not claimed as translated
+or executed. Complete module initialization and class translation remain required.
+The proof bounds are 65,536 UTF-8 source bytes and 4,096 CST nodes; exceeding them
+keeps the ordinary complete-module path and never supplies a partial proof.
 Other wider module forms require the real complete-module check. Unknown
 scope cannot select standard builtins by spelling. Generated auxiliary
 composition requires an independent closed profile: every complete function or
@@ -3983,11 +3995,29 @@ thirty-minute report deadline remains mandatory, including checkout time.
 The cancelled fifth report completed only part of its assigned source inventory;
 its partial progress never supplies a complete report or passing observation.
 
+CI 39848242758 published all eight complete report artifacts, but GitHub marked
+the fifth job cancelled for exceeding its thirty-minute job deadline, including
+checkout and teardown. The completed report steps do not override that failed
+gate. Complete bounded logs from all eight jobs supply a new advisory cohort
+for every one of their 345 source modules. Only the eight report cells select
+these newest source-bound costs; older grammar and translation samples retain
+their current selection. Missing or changed source uses the existing estimate.
+Every current module still runs exactly once, with unchanged commands, complete
+report assertions and the thirty-minute deadline. Further CI must confirm timing.
+
 Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
 8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical
 tooling and scheduling guards select only those exact byte inverses. Current
 checkout provenance, current measured scheduling and their new controls execute
 separately. Unknown source successors still refuse.
+
+The normal supplemental naming author generates and verifies its complete
+output in fresh serial processes. The author receipt binds every output byte;
+the unchanged authenticated reader validates every source certificate and its
+normal serialization must reproduce that digest before the command succeeds.
+Equal immutable source strings may share storage; independent ordered rows,
+certificates and containers retain their identities. This keeps the same checks
+within the existing local heap budget without reducing inventories or gates.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;

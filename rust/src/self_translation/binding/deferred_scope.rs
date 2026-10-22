@@ -83,3 +83,55 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
     }
     Some((kind, name.to_owned()))
 }
+
+/// Actual source/column transport to the independently generated inert-value rule.
+pub(super) fn read_inert_binding(source: &str) -> Option<(String, u8)> {
+    if source.len() > 65_536 {
+        return None;
+    }
+    let root = parse_native("native-javascript", source);
+    let mut facts = Facts::default();
+    facts.visit(&root, "", -1.0, source)?;
+    let terms = facts
+        .terms
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let fields = facts
+        .fields
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let texts = facts
+        .texts
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let selected = crate::translation::inert_module_binding_rules::read_inert_module_binding(
+        &terms,
+        &fields,
+        &facts.parents,
+        &facts.starts,
+        &facts.ends,
+        &texts,
+        &facts.errors,
+        source_number(source.len())?,
+    );
+    let [at, owner] = selected.as_slice() else {
+        return None;
+    };
+    let at = crate::translation::frontend_rules::ml_array::number_index(*at)?;
+    let owner = u8::try_from(crate::translation::frontend_rules::ml_array::number_index(
+        *owner,
+    )?)
+    .ok()?;
+    let node = facts.nodes.get(at)?;
+    if node.term != "identifier" || !node.children.is_empty() || node.end <= node.start {
+        return None;
+    }
+    let name = source.get(node.start..node.end)?;
+    if name != *facts.texts.get(at)? {
+        return None;
+    }
+    Some((name.to_owned(), owner))
+}

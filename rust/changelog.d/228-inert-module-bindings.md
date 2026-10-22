@@ -1,0 +1,1 @@
+Support checked function translation beside literal module containers and unshadowed literal Map/Set or Object.freeze initializers. Preserve complete initializer source; generate native scope rules automatically from JavaScript.

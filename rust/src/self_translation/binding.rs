@@ -40,6 +40,7 @@ pub(super) struct Scan {
     empty_class_declaration: Option<[usize; 4]>,
     // Certified complete actual CST: 1=class definition, 2=const function value.
     deferred_binding: Option<u8>,
+    inert_binding: Option<u8>,
     mentions: Vec<String>,
     imports: Option<ImportScan>,
 }
@@ -71,6 +72,11 @@ fn scan_item(text: &str) -> Option<Scan> {
                 || kind(index + 3, TokenKind::Identifier) && value(index + 4, "=>"));
     let deferred = if deferred_candidate {
         deferred_scope::read_binding(text)
+    } else {
+        None
+    };
+    let inert = if word(index, "const") {
+        deferred_scope::read_inert_binding(text)
     } else {
         None
     };
@@ -142,6 +148,11 @@ fn scan_item(text: &str) -> Option<Scan> {
     {
         return None;
     }
+    if let Some((name, _)) = &inert
+        && declares.as_ref() != Some(name)
+    {
+        return None;
+    }
     Some(Scan {
         declares,
         exported,
@@ -149,6 +160,7 @@ fn scan_item(text: &str) -> Option<Scan> {
         function_declaration,
         empty_class_declaration,
         deferred_binding: deferred.map(|(kind, _)| kind),
+        inert_binding: inert.map(|(_, owner)| owner),
         mentions,
         imports,
     })

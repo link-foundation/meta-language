@@ -33,6 +33,8 @@ import {unsupported} from './translation/diagnostics.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
+import {readInertModuleBindingDeclaration} from './translation/inert-module-bindings.js';
+import {acceptInertModuleBindingScope} from './translation/inert-module-binding-rules.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
   acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
   acceptDeclarationSignatureBinding, acceptDeclarationDeferredModuleScope } from './translation/declaration-dependency-rules.js';
@@ -389,8 +391,11 @@ function readDeclarationModuleScope(groups, scans, from, to, decorators, context
     : scans[index]?.emptyClassDeclaration ? 'empty class declaration'
     : scans[index]?.deferredBinding?.kind === 1 ? 'deferred named class declaration'
     : scans[index]?.deferredBinding?.kind === 2 ? 'deferred function value binding'
-    : literalGroups.has(group) ? 'primitive literal binding' : 'unknown module form');
+    : literalGroups.has(group) ? 'primitive literal binding'
+    : scans[index]?.inertBinding ? 'owned inert value binding' : 'unknown module form');
   if (acceptDeclarationModuleScope(forms, false) || acceptDeclarationDeferredModuleScope(forms)) return true;
+  const requiredOwners = forms.map((form, index) => form === 'owned inert value binding' ? scans[index].inertBinding.owner : -1);
+  if (acceptInertModuleBindingScope(forms, requiredOwners, context.moduleBindingNames)) return true;
   if (typeof context.moduleSource !== 'string') return false;
   try {
     const source = from === 'TypeScript' ? projectTypeScriptTyping(context.moduleSource).code : context.moduleSource;
@@ -507,6 +512,7 @@ function scanItem(text) {
     && at(index + 2).value === '=' && (word(index + 3, 'function') || at(index + 3).value === '('
       || at(index + 3).kind === 'identifier' && at(index + 4).value === '=>');
   const deferredBinding = deferredCandidate ? readDeferredDeclarationBinding(text) : null;
+  const inertBinding = word(index, 'const') ? readInertModuleBindingDeclaration(text) : null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
     index += 1;
@@ -548,7 +554,8 @@ function scanItem(text) {
   }
   const mentions = [...new Set(tokens.filter((token) => token.kind === 'identifier').map((token) => token.value))];
   if (deferredBinding && deferredBinding.name !== declares) return null;
-  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, mentions, imports };
+  if (inertBinding && inertBinding.name !== declares) return null;
+  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, inertBinding, mentions, imports };
 }
 
 /**

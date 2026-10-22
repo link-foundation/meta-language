@@ -42,6 +42,13 @@ runtime shells require separate interpretations. The
 [vision](vision.md#four-language-semantics-and-translation) defines the complete
 boundary; native compilation and runtime parity run in CI.
 
+Functions beside literal constant arrays/objects, literal standard Map/Set
+constructors, and `Object.freeze` on literal containers can retain their real
+module binding context. The complete CST proof rejects eager calls, getters,
+computed keys, spreads and shadowed standard owners. It checks the neighboring
+function normally and preserves the original initializer for exact reverse
+translation. That initializer still needs complete executable translation.
+
 The public `projectTypeScriptTyping(source)` JavaScript function and
 `project_type_script_typing(&source)` Rust function return the same JavaScript
 source string with supported TypeScript function and alias annotations retained

@@ -134,12 +134,44 @@ impl Binder<'_, '_> {
                 GroupKind::Item { .. } if literal_groups.contains(&index) => {
                     "primitive literal binding"
                 }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.inert_binding.is_some()) =>
+                {
+                    "owned inert value binding"
+                }
                 _ => "unknown module form",
             })
             .collect::<Vec<_>>();
         if dependency_rules::accept_module_scope(&forms, false)
             || dependency_rules::accept_deferred_module_scope(&forms)
         {
+            return true;
+        }
+        let owners = forms
+            .iter()
+            .enumerate()
+            .map(|(index, form)| {
+                if *form == "owned inert value binding" {
+                    state.scans[index]
+                        .as_ref()
+                        .and_then(|scan| scan.inert_binding)
+                        .map_or(-1.0, f64::from)
+                } else {
+                    -1.0
+                }
+            })
+            .collect::<Vec<_>>();
+        let owned_forms = forms
+            .iter()
+            .map(|form| (*form).to_owned())
+            .collect::<Vec<_>>();
+        if crate::translation::inert_module_binding_rules::accept_inert_module_binding_scope(
+            &owned_forms,
+            &owners,
+            &state.module_binding_names,
+        ) {
             return true;
         }
         let mut externals = Vec::new();
