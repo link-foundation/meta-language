@@ -137,6 +137,14 @@ pub enum SNode {
         op: UnaryOp,
         arg: Box<SExpr>,
     },
+    /// Explicit source pointer identity; ordinary Rust Binary remains value syntax.
+    ReferenceIdentity {
+        op: BinaryOp,
+        left: Box<SExpr>,
+        right: Box<SExpr>,
+        #[serde(flatten)]
+        extra: std::collections::BTreeMap<String, serde_json::Value>,
+    },
     Binary {
         op: BinaryOp,
         left: Box<SExpr>,
@@ -358,6 +366,7 @@ impl SNode {
             Self::ArrayIsArray { .. } => "arrayIsArray",
             Self::Unary { .. } => "unary",
             Self::Binary { .. } => "binary",
+            Self::ReferenceIdentity { .. } => "referenceIdentity",
             Self::If { .. } => "if",
             Self::Let { .. } => "let",
             Self::Match { .. } => "match",

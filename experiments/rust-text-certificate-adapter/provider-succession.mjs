@@ -30,8 +30,9 @@ export const OVERLAY_PROVIDER_APPEND_REVIEW=Object.freeze({
 });
 export const OVERLAY_PROVIDER_REFERENCE_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-reference-provider-review.lino',import.meta.url)));
 export const OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-optional-domain-provider-review.lino',import.meta.url)));
+export const OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW=Object.freeze(readProjectData(new URL('../../parity/self-translation/reviewed-overlay-shared-array-provider-review.lino',import.meta.url)));
 export function readReviewedOverlayProviderReview(previous){
-  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW].filter(row=>row.previous===previous);
+  const reviews=[OVERLAY_PROVIDER_APPEND_REVIEW,OVERLAY_PROVIDER_REFERENCE_REVIEW,OVERLAY_PROVIDER_OPTIONAL_DOMAIN_REVIEW,OVERLAY_PROVIDER_SHARED_ARRAY_REVIEW].filter(row=>row.previous===previous);
   assert.equal(reviews.length,1,'a source epoch requires exactly one independently reviewed predecessor');
   return reviews[0];
 }

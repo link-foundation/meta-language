@@ -49,6 +49,7 @@ mod read_only_query_rules;
 mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
+mod shared_array_handles;
 mod source_origins;
 pub(crate) mod type_namespaces;
 
@@ -116,9 +117,9 @@ pub use source_profiles::{
     parse_rust, parse_rust_with_array_result_model, parse_rust_with_completion_model,
     parse_rust_with_empty_option_source_model, parse_rust_with_primitive_owner_model,
     parse_rust_with_pure_unit_call_model, parse_rust_with_runtime_shell_model,
-    parse_rust_with_scalar_loop_model, parse_rust_with_source_models,
-    parse_rust_with_source_profiles, parse_rust_with_source_signature_model,
-    parse_rust_with_type_namespace_model,
+    parse_rust_with_scalar_loop_model, parse_rust_with_shared_array_handle_source_model,
+    parse_rust_with_source_models, parse_rust_with_source_profiles,
+    parse_rust_with_source_signature_model, parse_rust_with_type_namespace_model,
 };
 
 /// Read explicit owned String local state and its exact source interface.
@@ -161,6 +162,7 @@ pub fn parse_rust_with_const_function_model(
 
 #[derive(Clone, Copy, Default)]
 struct SourceProfiles<'a> {
+    shared_array_handle_source: &'a str,
     const_function: &'a str,
     array_result: &'a str,
     completion: &'a str,
@@ -178,6 +180,7 @@ fn parse_rust_with_selected_profiles(
     profiles: SourceProfiles<'_>,
 ) -> Result<SProgram> {
     let SourceProfiles {
+        shared_array_handle_source: shared_array_handle_source_model,
         const_function: const_function_model,
         array_result: array_result_model,
         completion: completion_model,
@@ -189,6 +192,48 @@ fn parse_rust_with_selected_profiles(
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
     } = profiles;
+    if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_model(
+        shared_array_handle_source_model,
+    ) {
+        return Err(unsupported(
+            "Rust shared array handle source model",
+            "select the legacy model or standard Rust shared array identity handles 1",
+            None,
+        ));
+    }
+    if !shared_array_handle_source_model.is_empty() {
+        if [
+            const_function_model,
+            array_result_model,
+            completion_model,
+            source_signature_model,
+            scalar_loop_model,
+            primitive_owner_model,
+            empty_option_source_model,
+            type_namespace_model,
+            pure_unit_call_model,
+            local_value_state_model,
+        ]
+        .iter()
+        .any(|model| !model.is_empty())
+        {
+            return Err(unsupported(
+                "Rust shared array handle source model",
+                "other source interpretations require independent composition proofs",
+                None,
+            ));
+        }
+        let units = u32::try_from(source.encode_utf16().take(65_537).count()).unwrap_or(u32::MAX);
+        if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_size(
+            f64::from(units),
+        ) {
+            return Err(unsupported(
+                "Rust shared array handle source",
+                "the profile requires its complete source within 65536 UTF-16 units",
+                None,
+            ));
+        }
+    }
     if !const_function_rules::accept_rust_const_function_model(const_function_model) {
         return Err(unsupported(
             "Rust const function model",
@@ -321,7 +366,9 @@ fn parse_rust_with_selected_profiles(
         ));
     }
     let tokens = tokenize(source, Language::Rust)?.tokens;
-    let original_source = (!const_function_model.is_empty()).then(|| Arc::<str>::from(source));
+    let original_source = (!const_function_model.is_empty()
+        || !shared_array_handle_source_model.is_empty())
+    .then(|| Arc::<str>::from(source));
     let mut declarations = RustParser::new(
         tokens.clone(),
         SourceOrigins::new(None, array_result_model),
@@ -350,7 +397,8 @@ fn parse_rust_with_selected_profiles(
     let surface = syntax.file()?;
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
-    if super::check::check_program(&surface).is_err() {
+    if super::check::check_program(&surface).is_err() && shared_array_handle_source_model.is_empty()
+    {
         return Ok(surface);
     }
     let mut parser = RustParser::new(
@@ -419,6 +467,8 @@ impl ProductBindingPattern {
 }
 
 struct RustParser {
+    shared_array_handle_source_model: String,
+    shared_array_state: shared_array_handles::SharedArrayState,
     const_function_model: String,
     const_function_keyword: Option<Token>,
     original_source: Option<Arc<str>>,
@@ -473,7 +523,10 @@ impl RustParser {
             .map(|token| token.value.clone())
             .collect();
         origins.owned_local_values = !profiles.local_value_state.is_empty();
+        origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
+            shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
+            shared_array_state: shared_array_handles::SharedArrayState::default(),
             const_function_model: profiles.const_function.to_owned(),
             const_function_keyword: None,
             original_source,

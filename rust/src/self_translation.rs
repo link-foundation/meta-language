@@ -33,6 +33,7 @@ mod binding;
 mod emission;
 pub mod representation;
 mod representation_rules;
+mod shared_array_handles;
 use emission::emit_item;
 use representation::Context;
 mod scope;
@@ -55,6 +56,8 @@ pub type SelfTranslationSignature = External;
 /// What [`self_translate_with`] translates a module with.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SelfTranslationOptions {
+    /// Independent interpretation of complete actual standard Rust shared handles.
+    pub rust_shared_array_handle_source_model: String,
     /// The emitter decorators, as [`self_translate_decorated`] applies them.
     pub decorators: DecoratorSet,
     /// The module's directory inside its crate, as path segments: the crate
@@ -261,6 +264,12 @@ pub fn self_translation_signatures(
     language: &str,
     options: &SelfTranslationOptions,
 ) -> Result<Vec<SelfTranslationSignature>, SelfTranslationError> {
+    if family(required(language)?) == "Rust"
+        && !options.rust_shared_array_handle_source_model.is_empty()
+    {
+        return translate_module(source, language, "JavaScript", options)
+            .map(|(_, signatures)| signatures);
+    }
     if family(required(language)?) != "JavaScript" {
         return Err(SelfTranslationError {
             message: format!(
@@ -280,6 +289,7 @@ fn translate_module(
     let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
+    shared_array_handles::validate_options(source, from, options)?;
     let network = LinkNetwork::parse(source, from, ParseConfiguration::default());
     let reconstructed = network.reconstruct_text();
     let utf16_strings = representation::select(&network, source, from, options.utf16_strings);
@@ -314,8 +324,42 @@ fn translate_module(
     let mut preludes: Vec<String> = Vec::new();
     let mut recorded = Vec::new();
     let mut gap = String::new();
-    let groups = group_items(&items, source);
-    let (outs, scans, signature_context) = if family(to) == "Rust" {
+    let whole_publication = if options.rust_shared_array_handle_source_model.is_empty() {
+        None
+    } else {
+        Some(shared_array_handles::read_whole_module(
+            source,
+            &options.rust_shared_array_handle_source_model,
+        )?)
+    };
+    let groups = if whole_publication.is_some() {
+        vec![Group {
+            kind: GroupKind::Item {
+                text: source.to_owned(),
+                term: "source_file".to_owned(),
+            },
+            items: items.clone(),
+            after: "",
+        }]
+    } else {
+        group_items(&items, source)
+    };
+    let (outs, scans, signature_context) = if let Some((emitted, signatures)) = &whole_publication {
+        (
+            vec![record_translated_definitions(
+                (source, "source_file", from, to, decorators),
+                emitted.clone(),
+                signatures.clone(),
+                Some(false),
+            )],
+            Vec::new(),
+            ModuleSignatureContext {
+                module_scope_known: true,
+                owner_counts: HashMap::new(),
+                module_binding_names: Vec::new(),
+            },
+        )
+    } else if family(to) == "Rust" {
         Binder {
             groups: &groups,
             source,
@@ -392,19 +436,31 @@ fn translate_module(
         .filter(|scan| scan.exported)
         .filter_map(|scan| scan.declares.as_deref())
         .collect();
-    let signatures: Vec<SelfTranslationSignature> = results
-        .iter()
-        .filter(|(_, out)| out.status == "translated")
-        .flat_map(|(_, out)| {
-            out.signatures
-                .iter()
-                .filter(|signature| {
-                    exported_names.contains(signature.name())
-                        && signature_context.accept_signature_binding(signature.name())
-                })
-                .cloned()
-        })
-        .collect();
+    let signatures: Vec<SelfTranslationSignature> = if let Some((_, signatures)) = whole_publication
+    {
+        if results
+            .first()
+            .is_some_and(|(_, out)| out.status == "translated")
+        {
+            signatures
+        } else {
+            Vec::new()
+        }
+    } else {
+        results
+            .iter()
+            .filter(|(_, out)| out.status == "translated")
+            .flat_map(|(_, out)| {
+                out.signatures
+                    .iter()
+                    .filter(|signature| {
+                        exported_names.contains(signature.name())
+                            && signature_context.accept_signature_binding(signature.name())
+                    })
+                    .cloned()
+            })
+            .collect()
+    };
     for (group, out) in results {
         for prelude in out.preludes {
             if !preludes.contains(&prelude) {
@@ -884,15 +940,32 @@ fn translate_group_bound(
             );
         }
     };
+    record_translated_definitions(
+        (text, term, from, to, decorators),
+        emitted,
+        signatures,
+        None,
+    )
+}
+
+fn record_translated_definitions(
+    context: (&str, &str, &str, &str, &DecoratorSet),
+    emitted: crate::translation::emit_common::Emitted,
+    signatures: Vec<SelfTranslationSignature>,
+    exported_override: Option<bool>,
+) -> Translated {
+    let (text, term, from, to, decorators) = context;
     if emitted.definitions.is_empty() {
         return carry(text, term, from, "no definition");
     }
-    let exported = family(to) == "JavaScript"
-        && if family(from) == "Rust" {
-            RUST_EXPORT.is_match(text)
-        } else {
-            JAVASCRIPT_EXPORT.is_match(text)
-        };
+    let exported = exported_override.unwrap_or_else(|| {
+        family(to) == "JavaScript"
+            && if family(from) == "Rust" {
+                RUST_EXPORT.is_match(text)
+            } else {
+                JAVASCRIPT_EXPORT.is_match(text)
+            }
+    });
     let generic = emitted
         .definitions
         .iter()

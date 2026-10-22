@@ -807,6 +807,27 @@ ABI equivalence. Ordinary source models retain their existing contracts, and
 complete generated runtime wrappers still need an independently proved
 composition. Native library support and production selection remain separate
 obligations.
+The independently selected `standard Rust shared array identity handles 1`
+source profile reads complete flat libraries and programs with actual unshadowed
+`std::rc::Rc<std::cell::RefCell<Vec<scalar>>>` owners. Fresh nonempty scalar
+vectors allocate handles; explicit `.clone()` preserves alias identity; actual
+`std::rc::Rc::ptr_eq` checks two immutable borrowed handles. Ordinary Rust value
+equality remains a separate payload operation. Bare vectors, moves, escaping
+borrows, payload observations and unproved profile compositions refuse.
+Source input is bounded to 65,536 UTF-16 units before tokenization. The complete
+JavaScript admission decisions generate the native rule library automatically;
+native hosts supply actual lexer, binding and concrete visibility facts.
+An explicit source identity operation lowers to the existing checked reference
+domain and rechecks after both Links codecs without depending on source text.
+Whole-module publication binds forward and private functions together and
+exports only functions whose actual concrete visibility is `pub`. Original
+source bytes remain available for exact reverse translation. Full emitted
+executable runner shells still require an independent composition proof; this
+profile does not silently remove their runtime or invent an entry point. The
+registered native parity controls compile and execute only in CI. This finite
+profile advances the JavaScript/Rust baseline without claiming full language or
+own-codebase translation coverage.
+
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
 keyword spellings, in complete source tokens. It derives temporary parser

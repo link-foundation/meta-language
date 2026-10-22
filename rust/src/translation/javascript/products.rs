@@ -140,7 +140,9 @@ pub(super) fn children(node: &SExpr) -> Vec<&SExpr> {
             values
         }
         SNode::StringTest { object, search, .. } => vec![object, search],
-        SNode::Binary { left, right, .. } | SNode::Coalesce { left, right } => vec![left, right],
+        SNode::ReferenceIdentity { left, right, .. }
+        | SNode::Binary { left, right, .. }
+        | SNode::Coalesce { left, right } => vec![left, right],
         SNode::Let { value, body, .. }
         | SNode::Print {
             expr: value, body, ..
@@ -816,7 +818,8 @@ fn apply_projections(program: &mut SProgram, admitted: &HashMap<*const SExpr, us
                 walk(object, admitted);
                 walk(search, admitted);
             }
-            SNode::Binary { left, right, .. }
+            SNode::ReferenceIdentity { left, right, .. }
+            | SNode::Binary { left, right, .. }
             | SNode::Coalesce { left, right }
             | SNode::Let {
                 value: left,

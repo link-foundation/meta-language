@@ -100,6 +100,7 @@ pub(in crate::translation::javascript) fn children(expr: &SExpr) -> Vec<&SExpr> 
             search: right,
             ..
         }
+        | SNode::ReferenceIdentity { left, right, .. }
         | SNode::Binary { left, right, .. } => {
             out.push(left);
             out.push(right);
@@ -236,6 +237,7 @@ pub(in crate::translation::javascript) fn children_mut(expr: &mut SExpr) -> Vec<
             search: right,
             ..
         }
+        | SNode::ReferenceIdentity { left, right, .. }
         | SNode::Binary { left, right, .. } => {
             out.push(left);
             out.push(right);

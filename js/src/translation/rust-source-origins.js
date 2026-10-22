@@ -2,6 +2,7 @@
 // parser collects declarations before validating bodies, retaining its own
 // type, path and pattern records rather than inferring a second typed program.
 import { unsupported } from './diagnostics.js';
+import {acceptRustSharedArrayHandleTransfer} from './rust-shared-array-handle-rules.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
 import { acceptRustImmutableProductType, acceptRustProductOrigin } from './rust-product-rules.js';
@@ -13,8 +14,9 @@ const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: tr
 const clone = origin => origin && ({ proven: true, diverging: false, uncertain: false, copyEvidence: false, fields: null, ...origin, wrappers: [...origin.wrappers], path: [...origin.path], fields: origin.fields?.map(clone) ?? null });
 
 export class RustSourceOrigins {
-  constructor(catalog = null, arrayResultModel = '',localValueStateModel='') {
+  constructor(catalog = null, arrayResultModel = '',localValueStateModel='',sharedArrayHandleSourceModel='') {
     this.localValueStateModel=localValueStateModel;
+    this.sharedArrayHandleSourceModel=sharedArrayHandleSourceModel;
     this.arrayResultModel = arrayResultModel;
     this.freshCalls = new Set();
     this.collecting = catalog === null;
@@ -232,6 +234,7 @@ export class RustSourceOrigins {
 
   bind(name, node, path, declared = null) {
     const actual = this.origin(node, path);
+    if(this.sharedArrayHandleSourceModel&&!this.collecting&&actual.type?.kind==='array'&&!acceptRustSharedArrayHandleTransfer(actual.arraySourceModel,actual.arraySourceModel,actual.wrappers.length,actual.wrappers.length))throw unsupported('Rust shared array handle source','a binding requires an actual owned shared handle, not its vector payload',node.span);
     if (!this.collecting && actual.arraySourceModel && actual.uncertain) throw unsupported('source array join', 'every array alternative needs the same proven source type and ownership', node.span);
     if (!this.collecting && actual.arraySourceModel === 'owned vector' && actual.wrappers.length === 0 && node.k !== 'array' && !actual.freshArrayValue) throw unsupported('owned vector binding', 'moving a local vector needs an explicit consumption proof', node.span);
     if (declared) this.argument(actual, declared, node.span);
@@ -241,6 +244,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    if(this.sharedArrayHandleSourceModel&&(actualOrigin.type?.kind==='array'||expectedOrigin.type?.kind==='array')&&!acceptRustSharedArrayHandleTransfer(actualOrigin.arraySourceModel,expectedOrigin.arraySourceModel,actualOrigin.wrappers.length,expectedOrigin.wrappers.length))throw unsupported('Rust shared array handle source','call and return ownership must preserve actual shared handles without borrowed payload coercion',span);
     if (!actualOrigin.proven && !actualOrigin.uncertain && !actualOrigin.wrappers.length && !expectedOrigin.wrappers.length) return;
     if (!actualOrigin.proven || !expectedOrigin.proven) throw unsupported('source indirection', 'the source ownership of this value cannot be proved', span);
     const actual = actualOrigin.wrappers;

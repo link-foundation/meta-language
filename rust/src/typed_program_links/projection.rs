@@ -18,6 +18,20 @@ use serde_json::{Map, Value, json};
 mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
+    if value["k"] == "binary"
+        && crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+            program.source_language.as_str(), value["op"].as_str().unwrap_or_default(),
+            value["domain"]["kind"].as_str().unwrap_or_default(), value["domain"]["reference"] == true,
+        ) == "referenceIdentity"
+    {
+        let mut result = Map::new();
+        result.insert("k".to_owned(), Value::String("referenceIdentity".to_owned()));
+        result.insert("op".to_owned(), value["op"].clone());
+        result.insert("left".to_owned(), expression(&value["left"], program)?);
+        result.insert("right".to_owned(), expression(&value["right"], program)?);
+        if let Some(span) = value.get("span") { result.insert("span".to_owned(), span.clone()); }
+        return Ok(Value::Object(result));
+    }
     if value["k"].as_str() == Some("record")
         && value.as_object().is_some_and(|fields| {
             fields

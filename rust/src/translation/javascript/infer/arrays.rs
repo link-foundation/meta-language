@@ -201,6 +201,7 @@ pub(super) fn fill_arrays(
                 search: right,
                 ..
             }
+            | SNode::ReferenceIdentity { left, right, .. }
             | SNode::Binary { left, right, .. }
             | SNode::Let {
                 value: left,

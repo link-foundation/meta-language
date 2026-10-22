@@ -316,6 +316,7 @@ mod translation_array_from;
 mod translation_product_unit;
 mod translation_reference_identity;
 mod translation_rust_floating_literals;
+mod translation_rust_shared_array_handles;
 mod translation_schema_second_projections;
 mod translation_surface_array_items;
 mod translation_surface_binding_type_annotations;

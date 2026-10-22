@@ -119,6 +119,15 @@ impl RustParser {
         }
         let ret = self.parse_type()?;
         let mut source_result = self.origins.current_type.clone();
+        if !self.shared_array_handle_source_model.is_empty()
+            && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
+        {
+            return Err(unsupported(
+                "Rust shared array handle source",
+                "mutable parameters and named lifetime binders need another source profile",
+                span(&start, self.cursor.peek()),
+            ));
+        }
         if !self.const_function_model.is_empty()
             && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
         {
@@ -172,6 +181,7 @@ impl RustParser {
             }
         }
         if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
             && !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),
@@ -267,7 +277,9 @@ impl RustParser {
                 const_header_end,
             ))
         });
-        if let Type::Array { element, .. } = &ret {
+        if let Type::Array { element, .. } = &ret
+            && !self.shared_array_origin(&source_result)
+        {
             if !accept_rust_source_array_result(
                 &self.origins.array_result_model,
                 element.kind(),

@@ -63,6 +63,7 @@ impl RustParser {
                     range,
                 );
                 self.origins.mark(&result, origin);
+                self.shared_array_literal(&result)?;
                 Ok(result)
             }
             "format" => {

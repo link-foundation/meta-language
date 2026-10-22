@@ -42,7 +42,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
   // shared native projection boundary. Explicit product qualifiers always
   // require whole-program rechecking, including after a true-to-false edit.
   if (!wholeProgram && (!hasTuple || (!explicitImmutability && unprojected))) return program;
-  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true});
+  const projectExpression = value => projectLinkedProgramExpression(value, program.declarations, {rootedNamespace, referenceSemantics: program.referenceSemantics === true, sourceLanguage: program.sourceLanguage});
   function projectType(value) {
     if (value.kind === 'data') return { kind: 'named', path: projectLinkedProgramDeclarationPath(value.name, program.declarations, rootedNamespace) };
     if (['array', 'option', 'set', 'cell'].includes(value.kind)) return { ...value, element: projectType(value.element) };

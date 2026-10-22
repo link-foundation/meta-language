@@ -83,6 +83,7 @@ pub(crate) mod rust_character_rules;
 mod rust_const_branch_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;
 pub(crate) mod rust_literal_match_rules;
+pub(crate) mod rust_shared_array_handle_rules;
 pub(crate) mod scalar_loop_rules;
 pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;

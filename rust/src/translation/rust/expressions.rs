@@ -70,6 +70,12 @@ impl RustParser {
         {
             self.cursor.advance();
             let right = self.additive(path, Options::default())?;
+            self.refuse_shared_value_observation(
+                &left,
+                Some(&right),
+                path,
+                joined(left.span, right.span, &token),
+            )?;
             let after = self.cursor.peek();
             if after.kind == TokenKind::Punct && comparison_op(&after.value).is_some() {
                 return Err(Self::fail("comparison operators cannot be chained", after));
@@ -196,6 +202,7 @@ impl RustParser {
                 self.origins.wrap(&arg, path, "reference");
             }
             self.origins.wrap(&arg, path, "reference");
+            self.shared_array_borrow(&arg, path)?;
             return Ok(arg);
         }
         if self.cursor.eat("*").is_some() {
@@ -311,6 +318,15 @@ impl RustParser {
                 self.cursor.advance();
                 let args = self.call_arguments(path)?;
                 self.cursor.expect(")", Some(&method.value))?;
+                if let Some(shared) = self.shared_array_method(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                )? {
+                    value = shared;
+                    continue;
+                }
                 self.require_type_namespace_body_method(
                     &value,
                     &method.value,
@@ -838,6 +854,7 @@ impl RustParser {
             && (accept_rust_source_array_owner(&name, false)
                 || accept_rust_source_array_owner(&resolved.join("::"), false))
         {
+            self.refuse_shared_bare_vector(span(token, self.cursor.peek()))?;
             self.origins.vector_owner(
                 &segments,
                 &resolved,
@@ -874,6 +891,9 @@ impl RustParser {
             );
             return Ok(result);
         }
+        if let Some(shared) = self.shared_array_constructor(&segments, token, path)? {
+            return Ok(shared);
+        }
         let c = &self.cursor;
         if c.is("::") && c.is_at("<", 1) {
             return Err(unsupported(
@@ -894,17 +914,22 @@ impl RustParser {
             ));
         }
         if !c.is("(") {
-            return Ok(SExpr::new(
+            let node = SExpr::new(
                 SNode::Name {
                     path: self.resolve(&segments, path),
                 },
                 span(token, token),
-            ));
+            );
+            self.shared_array_name(&node, path)?;
+            return Ok(node);
         }
         self.cursor.advance();
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(shared) = self.shared_array_call(&segments, &args, path, range)? {
+            return Ok(shared);
+        }
         if let Some(empty) =
             self.read_empty_string_constructor(&segments, args.len(), path, range)?
         {

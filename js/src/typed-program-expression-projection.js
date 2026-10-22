@@ -1,6 +1,7 @@
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
+import {readRustSharedArrayHandleComparisonProjection} from './translation/rust-shared-array-handle-rules.js';
 import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 import { readRecordProjection, readRecordProjectionError } from './translation/record-value-rules.js';
@@ -17,7 +18,7 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
   return ['crate', ...actual];
 }
 
-export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false} = {}) {
+export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false, sourceLanguage = ''} = {}) {
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
@@ -41,7 +42,13 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
-  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics});
+  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
+  // This domain already states identity semantics in checked IR. Reconstruct
+  // its explicit operation, never ordinary Rust value-equality syntax.
+  const identity = value.k === 'binary' ? readRustSharedArrayHandleComparisonProjection(sourceLanguage,
+    value.op, value.domain?.kind ?? '', value.domain?.reference === true) : '';
+  if (identity) return { k: identity, op: value.op, left: project(value.left), right: project(value.right),
+    ...(value.span !== undefined ? { span: value.span } : {}) };
   const referenceForm = readSurfaceReferenceProjectionForm(value.k, value.type?.kind ?? '', value.type?.reference === true, referenceSemantics);
   if (plan.construct === 'operand') {
     let projected = project(value[plan.operand]);

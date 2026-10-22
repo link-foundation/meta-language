@@ -26,6 +26,10 @@ import { tokenize } from './translation/lexer.js';
 import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure.js';
 import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
+import {readRustSharedArrayHandleModule} from './translation/rust-shared-array-handle-modules.js';
+import {acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
+import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
+import {unsupported} from './translation/diagnostics.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
@@ -121,17 +125,26 @@ export function selfTranslate(source, sourceLanguage, targetLanguage, options = 
  * whether a literal gives its value. `options` are {@link selfTranslate}'s.
  */
 export function selfTranslationSignatures(source, language, options = {}) {
+  if (family(required(language)) === 'Rust' && options.rustSharedArrayHandleSourceModel) {
+    return translateModule(source, language, 'JavaScript', options, true).signatures;
+  }
   if (family(required(language)) !== 'JavaScript') {
     throw new SelfTranslationError(`signatures are read from JavaScript or TypeScript modules, not ${language}`);
   }
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '' } = {}, signaturesOnly = false) {
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
   const text = String(source);
+  if (!acceptRustSharedArrayHandleSourceModel(rustSharedArrayHandleSourceModel)) throw unsupported('Rust shared array handle source model', 'select the installed source model');
+  if (rustSharedArrayHandleSourceModel) {
+    if (from !== 'Rust') throw unsupported('Rust shared array handle source model', 'the selected source interpretation requires Rust source');
+    if (moduleDirectory.length || Object.keys(imports).length || utf16Strings || referenceSemantics) throw unsupported('Rust shared array handle source model', 'additional module or representation interpretations require independent composition proofs');
+    requireRustSharedArrayHandleSourceText(text);
+  }
   const bytes = Buffer.from(text, 'utf8');
   const parsed = parseProgrammingLanguage(text, from);
   // Signature discovery still checks and translates every declaration. It
@@ -149,11 +162,12 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   if (family(from) === family(to) && (from === to || (keptFamily && !text.startsWith(HEADER)))) {
     return { translation: freeze(from, to, reconstructed, items.map(({ term, start, end }) => ({ term, start, end, status: 'kept', reason: null }))), signatures: [] };
   }
+  const wholePublication = rustSharedArrayHandleSourceModel ? readRustSharedArrayHandleModule(text, rustSharedArrayHandleSourceModel) : null;
   const blocks = [];
   const preludes = [];
   const recorded = [];
   let gap = '';
-  const groups = groupItems(items, bytes);
+  const groups = wholePublication ? [{kind: 'item', term: 'source_file', items, text, after: ''}] : groupItems(items, bytes);
   let references = referenceSemantics || (family(from) === 'JavaScript' && requiresReferenceSemantics(text));
   if (!referenceSemantics && references && family(from) === 'JavaScript') {
     // The complete frontend can prove an owned append rewrite and remove its
@@ -184,13 +198,13 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   const { outs, scans, moduleScopeKnown, ownerCounts } = family(to) === 'Rust'
     ? translateBound(groups, from, to, set, { moduleDirectory, imports, moduleSource: text, utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })
-    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
+    : { outs: groups.map((group) => translateGroup(group, from, to, set, { utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics, wholePublication })), scans: [], moduleScopeKnown: true, ownerCounts: new Map() };
   const results = translateBindingGroups(groups, bytes, from, to, set, outs, { moduleDirectory, moduleScopeKnown, moduleBindingNames: [...ownerCounts.keys()], utf16Strings: representation, referenceSemantics: references || undefined, retainDiagnostics }, scans);
   const exportedNames = new Set(scans.filter(scan => scan?.exported).map(scan => scan.declares));
   // An isolated item proof does not certify its actual mutable module binding.
   // Public/importable signatures need the same complete scope and unique owner
   // facts as an ordinary dependency edge. Preserve isolated item output below.
-  const signatures = results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature =>
+  const signatures = wholePublication ? (results[0]?.out.status === 'translated' ? wholePublication.signatures : []) : results.flatMap(({ out }) => out.status === 'translated' ? (out.signatures ?? []).filter(signature =>
     exportedNames.has(signature.name) && acceptDeclarationSignatureBinding(moduleScopeKnown, ownerCounts.get(signature.name) ?? 0)) : []);
   if (signaturesOnly) return { signatures };
   for (const { group, out } of results) {
@@ -756,6 +770,9 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
         status: 'translated',
       };
     }
+    if (context.wholePublication) {
+      ({program, emitted, signatures} = context.wholePublication);
+    } else {
     // The Rust frontend reads a program, so an item alone gets an empty main.
     program = checkProgram(family(from) === 'Rust'
       ? parseRust(/\bfn\s+main\s*\(/u.test(text) ? text : `${text}\nfn main() {}\n`)
@@ -766,6 +783,7 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
     if (!constants && program.main.effects.length > 0) return carry(text, term, from, 'top-level statement');
     emitted = constants ?? (family(to) === 'Rust' ? emitRust : emitJavaScript)(program, family(to) === 'Rust' ? {arrayConsumption: true, recordDefinitionOwnership: capture !== null} : {});
     signatures = program.imports ? context.externals : declaredSignatures(program, constants);
+    }
   } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
     const carried = carry(text, term, from, from === 'TypeScript' ? error.reason : error.kind);
@@ -780,11 +798,11 @@ function translateGroup(group, from, to, decorators, context = {}, capture = nul
     capture.program = program; capture.emitted = emitted; capture.signatures = signatures;
     capture.source = text; capture.sourceLanguage = from;
   }
-  return recordTranslatedDefinitions(text, term, from, to, decorators, emitted.definitions, emitted.preludes, signatures, capture);
+  return recordTranslatedDefinitions(text, term, from, to, decorators, emitted.definitions, emitted.preludes, signatures, capture, context.wholePublication ? false : null);
 }
 
-function recordTranslatedDefinitions(text, term, from, to, decorators, definitions, preludes, signatures, capture = null) {
-  const exported = family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text);
+function recordTranslatedDefinitions(text, term, from, to, decorators, definitions, preludes, signatures, capture = null, exportedOverride = null) {
+  const exported = exportedOverride ?? (family(to) === 'JavaScript' && (family(from) === 'Rust' ? /^pub(\([^)]*\))?\s/mu : /^export\s/mu).test(text));
   const generic = definitions.map((definition) => (exported ? `export ${definition}` : definition)).join('\n\n');
   const code = decorateEmitted(to, { source: generic }, decorators).source;
   if (code.trim() === '') return carry(text, term, from, 'dropped by a decorator');
