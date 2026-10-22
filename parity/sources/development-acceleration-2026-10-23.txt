@@ -1,0 +1,1 @@
+Deeply think how we can improve speed of development how to do minimum actions to get maximum changes, so we have fully working translator as well all others requirements, and continue in the next pull request.

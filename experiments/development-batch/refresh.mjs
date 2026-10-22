@@ -1,0 +1,72 @@
+// Authoring automation only. No verification observation or native compilation.
+import assert from 'node:assert/strict';
+import {spawnSync,execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {structuredDataToLino,readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
+
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const planFile=new URL('./stages.lino',import.meta.url);
+const digest=source=>createHash('sha256').update(source).digest('hex');
+const stage=(id,script,args=[])=>({id,script,args});
+
+export function readDevelopmentAuthoringPlan(){
+ return{schemaVersion:1,model:'serial JavaScript metadata authoring 1',phases:[
+  {name:'snapshot',stages:[stage('raw consuming source profile','js/scripts/generate-raw-consuming-snapshot-source-profile.mjs')]},
+  {name:'history',stages:[
+   stage('grammar context before repair','experiments/grammar-context-source-metadata/generate.mjs'),
+   stage('complete CI repair sources','js/scripts/generate-current-ci-repair-source-history.mjs'),
+   stage('native compatibility sources','experiments/grammar-outcome-network/native-transport/inverse/generate-native-compatibility-source-history.mjs'),
+   stage('grammar context after repair','experiments/grammar-context-source-metadata/generate.mjs'),
+   stage('raw planning sources','experiments/original-link-complete-table-projection/generate-raw-planning-source-history.mjs'),
+   stage('Boolean value sources','js/scripts/generate-boolean-value-source-history.mjs'),
+  ]},
+  {name:'naming',stages:[stage('complete additional naming views','js/scripts/generate-own-codebase-baseline-naming-history.mjs',['--additional-inventories'])]},
+ ],boundary:'Invokes complete existing normal authors, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Receipts record author invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
+}
+
+export function developmentAuthoringEnvironment(environment){
+ const result={...environment,META_LANGUAGE_JOBS:'1',TRANSLATION_CHECK_RUST:'0',SELF_TRANSLATION_CHECK_RUST:'0',RUSTUP_AUTO_INSTALL:'0'};
+ for(const key of ['CARGO_TARGET_DIR','CARGO_BUILD_TARGET_DIR','NODE_OPTIONS','CI'])delete result[key];
+ return result;
+}
+
+export function runDevelopmentAuthoringPhase(plan,name,{check=false,execute=spawnSync,environment=process.env,record=()=>{}}={}){
+ assert.deepEqual(plan,readDevelopmentAuthoringPlan(),'only the complete recorded authoring plan may execute');
+ const selected=plan.phases.find(phase=>phase.name===name);assert.ok(selected,'unknown authoring phase: '+name);
+ const results=[];
+ for(const entry of selected.stages){
+  const bytes=readFileSync(resolve(root,entry.script));
+  const args=['--expose-gc','--optimize-for-size','--max-old-space-size=352','--max-semi-space-size=1',entry.script,...entry.args,...(check?['--check']:[])];
+  process.stderr.write('Authoring '+entry.id+': '+entry.script+'\n');
+  const result=execute(process.execPath,args,{cwd:root,env:developmentAuthoringEnvironment(environment),stdio:'inherit',timeout:80000,killSignal:'SIGKILL'});
+  results.push({id:entry.id,script:entry.script,sourceSha256:digest(bytes),arguments:args,exitCode:result.status??null,signal:result.signal??null,error:result.error?String(result.error):null});
+  record(structuredClone(results));
+  if(result.error)throw result.error;
+  assert.equal(result.signal,null,entry.id+': author interrupted');
+  assert.equal(result.status,0,entry.id+': author failed; dependent stages must not run');
+ }
+ return results;
+}
+
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+ try{
+  const args=process.argv.slice(2);
+  if(args.length===1&&args[0]==='--write-plan'){
+   writeFileSync(planFile,structuredDataToLino(readDevelopmentAuthoringPlan()));
+  }else{
+   const plan=readBootstrapStructuredDataLino(readFileSync(planFile,'utf8'));
+   assert.deepEqual(plan,readDevelopmentAuthoringPlan(),'regenerate and review a stale plan');
+   if(args.length===1&&args[0]==='--list'){
+    for(const phase of plan.phases)console.log(phase.name+': '+phase.stages.map(entry=>entry.id).join(' -> '));
+   }else{
+    const check=args.at(-1)==='--check';if(check)args.pop();
+    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|naming --receipt output.lino [--check]');
+    const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
+    runDevelopmentAuthoringPhase(plan,args[1],{check,record:operations=>writeFileSync(resolve(args[3]),structuredDataToLino({schemaVersion:1,kind:'author invocation receipt',revision,phase:args[1],check,operations,boundary:plan.boundary}))});
+   }
+  }
+ }catch(error){console.error(String(error?.stack??error));process.exitCode=1;}
+}

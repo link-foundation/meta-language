@@ -160,6 +160,20 @@ test('an edited, deleted or unregistered comment is reported and automation outp
   );
 });
 
+test('the checkpoint continuation appends once and retains every preceding source and complete scope',()=>{
+  const discussion=syntheticDiscussion(),original=structuredClone(discussion.register);
+  const continuation={...discussion.issue,number:227,body:'All inherited requirements remain binding'};
+  const live={...discussion,issues:[continuation]};
+  const first=refreshRegister(discussion.register,live),last=first.requirementSources.at(-1);
+  assert.deepEqual(first.requirementSources.slice(0,-1),original.requirementSources);
+  assert.deepEqual(discussion.register,original);
+  assert.equal(last.id,227);assert.equal(last.key,'checkpointContinuationIssue');
+  assert.deepEqual(last.ledgerCoverage,['I195-']);assert.equal(last.sha256,contentHash(continuation.body));
+  assert.deepEqual(refreshRegister(first,live),first);
+  assert.deepEqual(compareWithLiveDiscussion(first,live),[]);
+  assert.match(compareWithLiveDiscussion(first,{...live,issues:[{...continuation,body:'edited scope'}]})[0],/227 was edited/u);
+});
+
 test('the remaining-scope issue is checked and refreshed independently of the original issue', () => {
   const discussion = syntheticDiscussion();
   const additional = { ...discussion.issue, number: 199, body: '# Remaining scope\nrelease and memory regressions' };
@@ -194,12 +208,13 @@ test('source discovery includes every original and follow-up discussion endpoint
     'issues/195', 'issues/195/comments?per_page=100',
     'issues/199', 'issues/199/comments?per_page=100',
     'issues/224', 'issues/224/comments?per_page=100',
+    'issues/227', 'issues/227/comments?per_page=100',
     'issues/196/comments?per_page=100', 'pulls/196/comments?per_page=100', 'pulls/196/reviews?per_page=100',
     'issues/201/comments?per_page=100', 'pulls/201/comments?per_page=100', 'pulls/201/reviews?per_page=100',
     'issues/226/comments?per_page=100', 'pulls/226/comments?per_page=100', 'pulls/226/reviews?per_page=100',
   ].map((endpoint) => `repos/link-foundation/meta-language/${endpoint}`).sort());
   assert.equal(discussion.issue.number, 195);
-  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224]);
+  assert.deepEqual(discussion.issues.map(({ number }) => number), [199, 224, 227]);
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/199/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/201/comments')));
   assert.ok(discussion.comments.some(({ body }) => body.includes('issues/226/comments')));

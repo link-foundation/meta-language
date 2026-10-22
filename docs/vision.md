@@ -2417,6 +2417,41 @@ expanding unrelated language profiles. This ordering leaves every other critical
 requirement binding. Carried source, item counts and generated Rust alone do not
 establish whole-module semantic translation or native execution.
 
+Development batches prioritize shared semantic operations by the actual complete
+CI report inventory: affected modules, source bytes and exact retained reasons.
+The existing blocker analyzer and replay planner retain the original denominator,
+hashes, decorators and unresolved items. Counts from overlapping groups are not
+added as coverage; a missing shard remains unreported. A correction must remove
+the underlying source-language distinction through a checked operation, rather
+than merely remove its diagnostic. Current reports identify class/object
+representation, complete module/global ownership, collections, regular
+expressions and parameter patterns as broad recurring blockers. Their exact
+priority is recomputed from each complete report cohort.
+
+The efficient implementation unit is one shared Links semantic operation with
+its source admission, binding/type/effect constraints, both emitters, automatic
+native generation and complete round-trip/runtime fixtures delivered together.
+Frontends map source constructs to that common representation; backends emit
+it without separate pairwise translation algorithms. Class/object identity,
+closure environments, collection references and error effects must be modeled
+explicitly before dependent constructs can be supported faithfully. Support for
+unrelated functions beside an untranslated class is not class translation.
+Full JavaScript/Rust project translation remains the first working baseline;
+the rest of the language and ontology contract remains binding.
+
+Finalize each semantic batch before refreshing its generated source histories,
+naming bindings and requirement manifest. The normal authors remain the only
+writers. The [serial batch runner](../experiments/development-batch/README.md)
+records their dependency order as generated Links data, runs fresh bounded
+JavaScript processes and stops dependent generation when an author fails.
+Immutable source epochs and their full inverses remain preserved. Future
+generic source-history hosts should select independently certified complete
+epochs as data, without adding handwritten semantic inverses for every feature.
+Unknown, ambiguous or forged epochs still refuse under the existing gates.
+Author invocation receipts are drafting diagnostics, never execution evidence
+for a requirement. Local controls remain targeted; full native workloads run
+in CI while the next complete batch is drafted.
+
 Declaration dependencies use one shared source algorithm to partition actual
 module bindings into recursive groups. A group publishes signatures atomically
 only after checking all complete original bodies together and rechecking each

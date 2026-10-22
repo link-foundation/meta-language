@@ -121,6 +121,12 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/automation-first-own-codebase-baseline-2026-10-21.txt',
   latestSoloContinuationRequest:
     'parity/sources/solo-continuation-2026-10-21.txt',
+  checkpointMergeRequest:
+    'parity/sources/checkpoint-merge-and-continuation-issue-2026-10-22.txt',
+  developmentAccelerationRequest:
+    'parity/sources/development-acceleration-2026-10-23.txt',
+  checkpointContinuationIssue:
+    'https://github.com/link-foundation/meta-language/issues/227',
 });
 
 // The rows the audit of c39470d0 lists as open work.

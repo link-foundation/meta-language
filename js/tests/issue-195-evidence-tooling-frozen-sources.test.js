@@ -16,6 +16,7 @@ import {LinkNetwork} from '../src/network.js';
 import {encodeStructuredDataLinks} from '../src/structured-data-links.js';
 import {decodeStructuredDataLinks} from '../src/structured-data-graph.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import '../../experiments/development-batch/refresh.test.mjs';
 const root=new URL('../../',import.meta.url);
 const read=file=>readFileSync(new URL(file,root));
 const digest=value=>createHash('sha256').update(value).digest('hex');
