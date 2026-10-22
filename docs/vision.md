@@ -827,6 +827,12 @@ profile does not silently remove their runtime or invent an entry point. The
 registered native parity controls compile and execute only in CI. This finite
 profile advances the JavaScript/Rust baseline without claiming full language or
 own-codebase translation coverage.
+The generated shared-array fixture matrix retains the three original Boolean
+cases and adds alias, equal-payload distinct allocation and repeated fresh-call
+cases for numeric and Unicode-string arrays. Both runtimes consume the same
+nine cases. JavaScript controls additionally compare every fresh payload cell,
+including signed zero and Unicode text, after actual Rust parsing and text/binary
+Links reloads. Full native execution and emitted-field parity remain CI checks.
 
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including

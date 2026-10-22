@@ -26,6 +26,14 @@ export function rustSharedArrayHandleRulesPolicy(){
       {name:'one fresh handle and its explicit alias',source:'function probe(){const value=[true];const alias=value;return value===alias;}',call:'probe',expected:true},
       {name:'separate equal Boolean payloads keep distinct identities',source:'function probe(){const left=[true];const right=[true];return left===right;}',call:'probe',expected:false},
       {name:'fresh calls are distinct allocations',source:'/** @returns {boolean[]} */function fresh(){return [true];}function probe(){return fresh()===fresh();}',call:'probe',expected:false},
+      ...[
+        {domain:'numeric',annotation:'number',literal:'[1.25,-0]'},
+        {domain:'Unicode string',annotation:'string',literal:'["hello","🌍"]'},
+      ].flatMap(({domain,annotation,literal})=>[
+        {name:domain+' payload retains an explicit shared alias',source:'function probe(){const value='+literal+';const alias=value;return value===alias;}',call:'probe',expected:true},
+        {name:domain+' equal payloads remain distinct allocations',source:'function probe(){const left='+literal+';const right='+literal+';return left===right;}',call:'probe',expected:false},
+        {name:domain+' fresh calls retain distinct allocations',source:'/** @returns {'+annotation+'[]} */function fresh(){return '+literal+';}function probe(){return fresh()===fresh();}',call:'probe',expected:false},
+      ]),
     ],
     boundary:'Closed flat Rust source modules/programs with actual fully qualified standard Rc and RefCell owners and direct scalar Vec payloads. Fresh nonempty literal allocation, explicit handle clone and actual ptr_eq borrow are represented by existing checked nodes. Ordinary Rc equality, payload methods and observations, bare value Vec, escaping borrows/moves and alternate source interpretations refuse. Complete portable executable runner composition remains a separate obligation. Native parser and module adapters require actual CI compilation and execution.'};
 }

@@ -48,7 +48,7 @@ test('the complete unchanged retained identity module reparses without cached ch
   assert.throws(()=>parseRust(module),'the original legacy source interpretation remains unchanged');
 });
 
-test('actual whole emitted modules keep independent alias distinct and fresh Boolean array observations',()=>{
+test('actual whole emitted modules keep independent alias distinct and fresh scalar array observations',()=>{
   for(const row of policy.cases){
     assert.equal(context(row.source)[row.call](),row.expected,row.name+' independent original JS');
     const source=actualModule(row.source);sourceGraph(source);const checked=checkProgram(parseRust(source,options));
@@ -56,6 +56,21 @@ test('actual whole emitted modules keep independent alias distinct and fresh Boo
     assert.ok(checkedNodes(checked).some(node=>node.k==='binary'&&node.domain?.reference===true));
     const original=emitRust(checked);
     for(const program of programs(checked)){assert.equal(context(emitJavaScript(program).text)[row.call](),row.expected);const replay=emitRust(program);for(const field of ['text','definitions','preludes','mappings','assumptions','encodings'])assert.deepEqual(replay[field],original[field]);}
+  }
+});
+
+test('fresh shared handles preserve every scalar payload after Rust parsing and both Links reloads',()=>{
+  const fixtures=policy.cases.filter(row=>row.source.includes('function fresh()'));
+  assert.equal(fixtures.length,3,'Boolean, numeric and Unicode string payload domains each retain a fresh allocation fixture');
+  for(const row of fixtures){
+    const independent=context(row.source),expected=[...independent.fresh()];
+    assert.equal(expected.length>0,true);
+    const source=actualModule(row.source),checked=checkProgram(parseRust(source,options));
+    for(const program of programs(checked)){
+      const emitted=context(emitJavaScript(program).text),actual=[...emitted.fresh()];
+      assert.deepEqual(actual,expected,row.name+' keeps every value, including signed zero and Unicode');
+      assert.notStrictEqual(emitted.fresh(),emitted.fresh(),'each call still owns a distinct allocation');
+    }
   }
 });
 
