@@ -79,7 +79,24 @@ const library=selfTranslate(process.argv[1],'JavaScript','Rust',{referenceSemant
 const source=library+'\nfn main(){println!("{}",'+process.argv[2]+'());}\n';
 const surface=parseRust(source,{sharedArrayHandleSourceModel:model}),program=checkProgram(surface);
 const publication=selfTranslate(library,'Rust','JavaScript',{rustSharedArrayHandleSourceModel:model});
-console.log(structuredDataToLino({source,library,surface,javascript:emitJavaScript(program),rust:emitRust(program),publication,signatures:selfTranslationSignatures(library,'Rust',{rustSharedArrayHandleSourceModel:model})}));
+// SurfaceLet's absent optional annotation matches Rust's skip_serializing_if.
+// Every actual value remains mandatory; this adapter changes only wire shape.
+function surfaceContract(value){
+ if(value===null||typeof value!=='object')return value;
+ const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
+ if(prototype!==(array?Array.prototype:Object.prototype)&&!(prototype===null&&!array))throw new TypeError('native surface contract requires plain values');
+ const keys=Reflect.ownKeys(value),descriptors=Object.getOwnPropertyDescriptors(value);
+ if(keys.some(key=>typeof key!=='string'||!Object.hasOwn(descriptors[key],'value')||!descriptors[key].enumerable&&!(array&&key==='length')))throw new TypeError('native surface contract requires enumerable data fields');
+ if(array){if(Object.keys(value).length!==value.length||Object.keys(value).some((key,index)=>key!==String(index)))throw new TypeError('native surface contract requires dense arrays');return value.map(surfaceContract);}
+ const entries=[];
+ for(const[key,child]of Object.entries(value)){
+  if(child===undefined){if(value.k==='let'&&key==='type')continue;throw new TypeError('only an absent optional let type may be omitted: '+key);}
+  entries.push([key,surfaceContract(child)]);
+ }
+ return Object.fromEntries(entries);
+}
+const emittedContract=emitted=>({...emitted,definitions:emitted.definitions,preludes:emitted.preludes});
+console.log(structuredDataToLino({source,library,surface:surfaceContract(surface),javascript:emittedContract(emitJavaScript(program)),rust:emittedContract(emitRust(program)),publication,signatures:selfTranslationSignatures(library,'Rust',{rustSharedArrayHandleSourceModel:model})}));
 "#;
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
     let result = run(Command::new("node").current_dir(root).args([
@@ -152,7 +169,15 @@ fn complete_actual_shared_array_sources_keep_independent_behavior_and_full_runti
                 serde_json::to_value(&rust.preludes).unwrap(),
                 contract["rust"]["preludes"]
             );
-            for field in ["text", "mappings", "assumptions", "encodings"] {
+            for field in [
+                "language",
+                "text",
+                "mappings",
+                "assumptions",
+                "encodings",
+                "theorems",
+                "entry",
+            ] {
                 assert_eq!(
                     serde_json::to_value(&javascript).unwrap()[field],
                     contract["javascript"][field],
