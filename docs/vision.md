@@ -2503,6 +2503,36 @@ unrelated functions beside an untranslated class is not class translation.
 Full JavaScript/Rust project translation remains the first working baseline;
 the rest of the language and ontology contract remains binding.
 
+Number bitwise conjunction, disjunction, exclusive disjunction, complement and
+the three shifts use qualified shared operations with complete checked
+JavaScript definitions. Their ordinary typed Links program contains the
+normalization and recursive loop helpers, and generates the native library
+and emitted runtime. Public reconstruction returns a fresh editable definition
+graph; text and binary reload use ordinary whole-program validation. Number
+coercion, modulo-32 shift counts, signed and unsigned results, nonfinite values
+and positive zero remain explicit. This profile does not discharge BigInt,
+other primitive coercions, compound assignments or arbitrary Rust integer
+bitwise semantics. The immutable base operation inventory remains intact;
+the additional qualified operations have their own admission and arity rules.
+
+Collection construction consumes the checked iterable value through the shared
+reference-read operation. It preserves input evaluation order and creates a
+separate collection identity. Item parsing retains supplied outer module owners
+when adding local declarations, so a carried class or constant cannot silently
+become a standard builtin. Record-parameter coordinates include their complete
+actual delimiters and binding tokens. Imported external signatures survive
+typed-program reload and pass the ordinary checker before emission; imports
+and effect-threaded programs retain their separate admission obligations.
+
+The current development sequence drafts the complete outstanding batch before
+running its tests. Draft the shared behavior, both runtime adapters, automatic
+translation, fixtures and all known CI repairs together. Integrate generated
+histories and manifests once after that draft, then run the applicable targeted
+JavaScript validation and one complete CI feedback cycle. Continue drafting
+independent remaining work while existing CI executes. A draft is not verified
+implementation: preserve every unresolved obligation and failing observation.
+This sequence follows the [direct bulk instruction](../parity/sources/bulk-draft-before-testing-2026-10-23.txt).
+
 Finalize each semantic batch before refreshing its generated source histories,
 naming bindings and requirement manifest. The normal authors remain the only
 writers. The [serial batch runner](../experiments/development-batch/README.md)

@@ -81,6 +81,13 @@ import {tokenize} from './js/src/translation/lexer.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './js/src/translation/array-binding-policy.js';
 import * as rules from './js/src/translation/javascript-record-parameter-rules.js';
 const mode=process.argv[1],source=process.argv[2];
+// Native template tokens have an empty text column; their actual parts/raw
+// stay opaque to these lexical decisions. Keep every original source token.
+const tokenText=t=>{
+ if(t.kind==='template'&&!Object.hasOwn(t,'value'))return '';
+ if(typeof t.value!=='string')throw new TypeError('unrepresented token text fact');
+ return t.value;
+};
 if(mode==='raw-error'){
  let name=null;try{runInNewContext(source,{console:{log(){}}},{timeout:1000});}catch(error){name=error.name;}
  process.stdout.write(structuredDataToLino({name}));
@@ -88,13 +95,13 @@ if(mode==='raw-error'){
  const surface=parseJavaScript(source,{externals:[{k:'const',name:'record_parameter_value1',type:{kind:'float'},literal:false}]});
  process.stdout.write(structuredDataToLino({surface}));
 }else if(mode==='plans'){
- const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(t=>t.value);
+ const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(tokenText);
  const rows=[];for(let end=0;end<=tokens.length;end++)rows.push({kinds:kinds.slice(0,end),values:values.slice(0,end),
  plan:rules.planJavaScriptRecordParameters(kinds.slice(0,end),values.slice(0,end),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings),
  found:rules.findJavaScriptRecordParameterPattern(kinds.slice(0,end),values.slice(0,end),0)});
  process.stdout.write(structuredDataToLino(rows));
 }else if(mode==='directives'){
- const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(t=>t.value);
+ const tokens=tokenize(source,'JavaScript').tokens,kinds=tokens.map(t=>t.kind),values=tokens.map(tokenText);
  const raws=tokens.map(t=>source.slice(t.start,t.end));
  const lines=tokens.map((t,i)=>/[\n\r\u2028\u2029]/u.test(source.slice(i===0?0:tokens[i-1].end,t.start)));
  const rows=[];for(let end=0;end<=tokens.length;end++){

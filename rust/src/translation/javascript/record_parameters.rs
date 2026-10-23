@@ -349,7 +349,7 @@ impl JavaScriptParser {
                     break name;
                 }
             };
-            let parameter_span = span(&open, &close);
+            let parameter_span = Span::new(open.start, close.end);
             syntax
                 .parameters
                 .push(parameter(name.clone(), parameter_span));
@@ -361,7 +361,7 @@ impl JavaScriptParser {
                     property: property.value.clone(),
                     name: local.value.clone(),
                     parameter_span,
-                    span: span(&property, &local),
+                    span: Span::new(property.start, local.end),
                     binding_span: local.span(),
                 });
                 syntax.source_names.push(local.value);

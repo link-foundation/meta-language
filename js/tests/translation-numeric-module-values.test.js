@@ -65,7 +65,12 @@ test('numeric source admission retains eager-effect duplicate-owner and unsuppor
  for(const expression of ['2 ** 8','1 << 8']){
   const source='const VALUE='+expression+';\nexport function verify(){return VALUE===256;}\n';
   const result=selfTranslate(source,'JavaScript','Rust',{retainDiagnostics:true});
-  assert.ok(result.items.some(item=>item.status==='carried'));
+  // Keep both original inputs. The shared Number bitwise interpretation now
+  // discharges the shift; exponentiation remains an explicit obligation.
+  if(expression==='1 << 8'){
+   assert.ok(result.items.every(item=>item.status==='translated'));
+   assert.equal(observe(source),true);
+  }else assert.ok(result.items.some(item=>item.status==='carried'));
   assert.equal(selfTranslate(result.code,'Rust','JavaScript').code,source);
  }
 });

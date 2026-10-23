@@ -12,6 +12,9 @@ mod dependency_rules;
 mod owned_recursive_emission;
 mod recursive_groups;
 
+pub use deferred_scope::read_inert_binding as read_inert_module_binding;
+pub use owned_recursive_emission::accept_declaration_owned_emission;
+
 use super::{Context, Group, GroupKind, Translated, translate_group};
 use crate::decorators::DecoratorSet;
 use crate::translation::Language;

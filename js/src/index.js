@@ -50,6 +50,7 @@ export function projectTypeScriptTyping(source) {
   return projectTypeScriptTypingDetails(source).code;
 }
 export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLinks, emitTypedProgramLinks, readTypedProgramBindingIdentities } from './typed-program-links.js';
+export {createNumberBitwiseProgramLinks} from './number-bitwise-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';

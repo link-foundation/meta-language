@@ -6,7 +6,19 @@ commands after a complete source batch; it implements no translator semantics
 and establishes no requirement evidence.
 
 `stages.lino` is generated automatically by `node experiments/development-batch/refresh.mjs --write-plan`.
-`--list` shows the phases. Each phase invokes existing commands sequentially in
+Draft the complete outstanding implementation and known CI repairs before running
+tests. Keep automatically translated native artifacts and their fixtures in that
+draft. Refresh histories, registrations and naming once after drafting, then run
+the integrated validation. Existing CI may continue while independent work is
+drafted; its feedback belongs in the same batch. No draft establishes execution.
+
+`--list` shows the phases. The translation phase runs the normal rule authors
+and records source-preserving module/test moves. Its reviewed branch fixture is
+captured once from the complete original CI log by
+`js/scripts/generate-declaration-dependency-branch-fixture.mjs`; the ordinary
+declaration author then derives the two mechanical corrections as Links
+decorators. Every original branch condition and test assertion stays binding.
+Each phase invokes existing commands sequentially in
 fresh JavaScript processes. The history phase first captures complete certified compiler and borrowing
 successors and physical workflow succession, retains the grammar-context steps
 around CI/native history and refreshes evidence-translation archives. It also
@@ -29,7 +41,7 @@ env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanu
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase verification --receipt /tmp/meta-language-verification.lino
 ```
 
-Verification runs eighteen read-only checks, beginning with the authenticated
+Verification runs twenty-three read-only checks, beginning with the authenticated
 online requirement-source audit before ledger access. It requires GitHub API
 access. Its remaining commands check dependencies, scope, exports, runtime
 inventory, documentation, test ownership, generated rules, source histories and

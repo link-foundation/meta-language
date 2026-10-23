@@ -80,6 +80,7 @@ pub mod transform;
 pub mod translation;
 pub mod translation_rules;
 mod typed_program_links;
+pub use translation::number_bitwise_program::create_number_bitwise_program_links;
 pub mod verification;
 
 pub use access::{EngineNetwork, ReadOnlyNetwork, ReadOnlyViolation};
@@ -325,9 +326,11 @@ pub use rust_codec::{
     RustTypeKind, RustTypeShape, ToLinks,
 };
 pub use self_translation::{
-    ErasedTypeScript, Erasure, SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError,
-    SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature, erase_type_script,
-    project_type_script_typing, self_translate, self_translate_decorated, self_translate_with,
+    CheckedDeclarationEmission, DeclarationTranslationContext, ErasedTypeScript, Erasure,
+    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
+    SelfTranslationOptions, SelfTranslationSignature, accept_declaration_owned_emission,
+    check_and_emit_declaration_with_ownership, erase_type_script, project_type_script_typing,
+    read_inert_module_binding, self_translate, self_translate_decorated, self_translate_with,
     self_translation_language, self_translation_signatures,
 };
 pub use semantic_translation::{

@@ -1,6 +1,7 @@
 // Host JSON boundary adapter. Projection instructions and admission decisions
 // are shared data; the existing checker still owns types and semantics.
 import { TYPED_PROGRAM_LINKS_SCHEMA } from './typed-program-links.js';
+import {acceptLinkedNumberBitwiseOperation} from './translation/number-bitwise-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './translation/rust-shared-array-handle-rules.js';
 import { acceptProgramExpressionField, acceptProgramExpressionOperation, readProgramExpressionProjection } from './typed-program-link-rules.js';
 import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
@@ -25,7 +26,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   if (value?.k === 'record'
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked record expression has an unrecognized projection field');
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
-    && !acceptProgramExpressionOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
+    && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
   for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {

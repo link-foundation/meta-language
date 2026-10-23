@@ -21,6 +21,11 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        let bitwise_arity =
+            crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(op);
+        if bitwise_arity > 0.0 {
+            return self.check_number_bitwise_operands(op, args, span, env, path);
+        }
         let ty = if PREDICATES.contains(&op) {
             BOOL
         } else {

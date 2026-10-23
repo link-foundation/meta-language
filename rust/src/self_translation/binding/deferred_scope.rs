@@ -83,7 +83,7 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
 }
 
 /// Actual source/column transport to the independently generated inert-value rule.
-pub(super) fn read_inert_binding(source: &str) -> Option<(String, u8)> {
+pub fn read_inert_binding(source: &str) -> Option<(String, u8)> {
     if source.len() > 65_536 {
         return None;
     }
@@ -204,40 +204,4 @@ pub(super) fn read_numeric_binding_name(source: &str) -> Option<String> {
         return None;
     }
     Some(name.to_owned())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::read_inert_binding;
-
-    #[test]
-    fn shared_numeric_constant_sources_retain_every_declared_name_and_owner() {
-        let fixture = crate::read_structured_data_lino(include_str!(
-            "../../data/numeric-module-bindings.lino"
-        ))
-        .unwrap();
-        let cases = fixture["cases"].as_array().unwrap();
-        assert_eq!(cases.len(), 6);
-        for case in cases {
-            let source = case["source"].as_str().unwrap();
-            let name = case["name"].as_str().unwrap().to_owned();
-            assert_eq!(read_inert_binding(source), Some((name, 0)), "{source}");
-        }
-    }
-
-    #[test]
-    fn shared_empty_collection_sources_retain_every_declared_name_and_owner() {
-        let fixture = crate::read_structured_data_lino(include_str!(
-            "../../data/empty-module-collections.lino"
-        ))
-        .unwrap();
-        let cases = fixture["cases"].as_array().unwrap();
-        assert_eq!(cases.len(), 6);
-        for case in cases {
-            let source = case["source"].as_str().unwrap();
-            let name = case["name"].as_str().unwrap().to_owned();
-            let owner = u8::try_from(case["owner"].as_u64().unwrap()).unwrap();
-            assert_eq!(read_inert_binding(source), Some((name, owner)), "{source}");
-        }
-    }
 }

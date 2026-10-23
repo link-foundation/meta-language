@@ -14,6 +14,14 @@ const stage=(id,script,args=[])=>({id,script,args});
 
 export function readDevelopmentAuthoringPlan(){
  return{schemaVersion:1,model:'serial JavaScript metadata authoring 1',phases:[
+  {name:'translation',stages:[
+   stage('declaration dependency native rules','js/scripts/generate-declaration-dependency-rules.mjs',['--native']),
+   stage('complete Number bitwise program','js/scripts/generate-number-bitwise-rules.mjs'),
+   stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),
+   stage('Rust diagnostic attributes','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native']),
+   stage('grammar selection included ranges','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native']),
+   stage('translation source module layout','js/scripts/generate-translation-source-layout.mjs'),
+  ]},
   {name:'snapshot',stages:[stage('raw consuming source profile','js/scripts/generate-raw-consuming-snapshot-source-profile.mjs'),stage('relative character source decisions','experiments/grammar-outcome-network/native-transport/inverse/generate-relative-character-self-translation.mjs')]},
   {name:'history',stages:[
    stage('native compiler host source history','js/scripts/generate-native-compiler-host-source-history.mjs'),
@@ -54,6 +62,11 @@ export function readDevelopmentAuthoringPlan(){
    stage('historical naming storage','js/scripts/check-historical-naming-inventory-storage.mjs',['--check']),
    stage('relative character source decisions','experiments/grammar-outcome-network/native-transport/inverse/generate-relative-character-self-translation.mjs',['--check']),
    stage('crate embedded source inputs','js/tests/crate-package-include.test.js'),
+   stage('complete Number bitwise rules','js/scripts/generate-number-bitwise-rules.mjs',['--check']),
+   stage('translation source module layout','js/scripts/generate-translation-source-layout.mjs',['--check']),
+   stage('grammar selection mapping freshness','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native','--check']),
+   stage('Rust diagnostic attribute freshness','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native','--check']),
+   stage('grammar selection included range freshness','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native','--check']),
   ]},
  ],boundary:'Invokes complete existing normal authors and read-only metadata verification, in dependency order and fresh serial processes. The repeated grammar context step is intentional. Naming runs after all source-changing authors. Verification checks live sources before reading the ledger and never refreshes stale outputs. Receipts record invocations only, not runtime, translation, native, CI or requirement evidence. Full workloads and Rust compilation remain CI-only.'};
 }
@@ -94,7 +107,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     for(const phase of plan.phases)console.log(phase.name+': '+phase.stages.map(entry=>entry.id).join(' -> '));
    }else{
     const check=args.at(-1)==='--check';if(check)args.pop();
-    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|registration|naming|verification --receipt output.lino [--check]');
+    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase translation|snapshot|history|registration|naming|verification --receipt output.lino [--check]');
     const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
     runDevelopmentAuthoringPhase(plan,args[1],{check,record:operations=>writeFileSync(resolve(args[3]),structuredDataToLino({schemaVersion:1,kind:'author invocation receipt',revision,phase:args[1],check,operations,boundary:plan.boundary}))});
    }

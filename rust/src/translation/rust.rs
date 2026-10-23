@@ -32,6 +32,8 @@ pub(crate) mod const_functions;
 mod diagnostic_attributes;
 pub(crate) mod empty_option_rules;
 mod empty_options;
+#[path = "rust/expressions/paths.rs"]
+mod expression_paths;
 mod expressions;
 mod float_predicate_rules;
 mod float_predicates;

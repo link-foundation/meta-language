@@ -65,6 +65,7 @@ impl<'p> RustEmitter<'p> {
                 Prelude::Array => read_array_prelude(self.standard_array).to_owned(),
                 Prelude::String => crate::self_translation::representation::string_prelude(),
                 Prelude::Optional => read_rust_optional_prelude(),
+                Prelude::NumberBitwise => include_str!("../runtime/number-bitwise.rs").to_owned(),
             })
             .collect();
         for prelude in &preludes {

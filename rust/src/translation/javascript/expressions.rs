@@ -127,16 +127,37 @@ impl JavaScriptParser {
     }
 
     pub(super) fn bitwise(&mut self) -> Result<SExpr> {
-        let left = self.equality()?;
-        let token = self.peek();
-        if token.kind == TokenKind::Punct && ["|", "^", "&"].contains(&token.value.as_str()) {
-            return Err(unsupported(
-                &format!("bitwise {}", token.value),
-                "bitwise operators are outside the portable core",
-                Some(span(&token, &token)),
-            ));
+        self.read_bitwise_precedence(0)
+    }
+
+    fn read_bitwise_precedence(&mut self, level: u8) -> Result<SExpr> {
+        let mut left = if level < 2 {
+            self.read_bitwise_precedence(level + 1)?
+        } else {
+            self.equality()?
+        };
+        while self.peek().kind == TokenKind::Punct && crate::translation::number_bitwise_rules::accept_java_script_number_bitwise_precedence(&self.peek().value, f64::from(level)) {
+            let token = self.cursor.advance();
+            let right = if level < 2 { self.read_bitwise_precedence(level + 1)? } else { self.equality()? };
+            left = Self::number_bitwise(&token, left, Some(right));
         }
         Ok(left)
+    }
+
+    fn number_bitwise(token: &Token, left: SExpr, right: Option<SExpr>) -> SExpr {
+        let place = if let Some(value) = &right {
+            joined(&left, value, token)
+        } else {
+            Span::new(token.start, left.span.map_or(token.end, |place| place.end))
+        };
+        let mut args = vec![SArrayItem::new(left, false)];
+        if let Some(value) = right {
+            args.push(SArrayItem::new(value, false));
+        }
+        node(SNode::Math {
+            op: crate::translation::number_bitwise_rules::read_java_script_number_bitwise_operation(&token.value),
+            name: token.value.clone(), args,
+        }, place)
     }
 
     pub(super) fn equality(&mut self) -> Result<SExpr> {
@@ -286,14 +307,11 @@ impl JavaScriptParser {
     }
 
     pub(super) fn shift(&mut self) -> Result<SExpr> {
-        let left = self.additive()?;
-        let token = self.peek();
-        if self.cursor.is("<<") || self.cursor.is(">>") || self.cursor.is(">>>") {
-            return Err(unsupported(
-                &format!("shift {}", token.value),
-                "bit shifts are outside the portable core",
-                Some(span(&token, &token)),
-            ));
+        let mut left = self.additive()?;
+        while self.cursor.is("<<") || self.cursor.is(">>") || self.cursor.is(">>>") {
+            let token = self.cursor.advance();
+            let right = self.additive()?;
+            left = Self::number_bitwise(&token, left, Some(right));
         }
         Ok(left)
     }
@@ -374,12 +392,9 @@ impl JavaScriptParser {
                 here,
             ));
         }
-        if self.cursor.is("~") {
-            return Err(unsupported(
-                "bitwise ~",
-                "bitwise operators are outside the portable core",
-                here,
-            ));
+        if self.cursor.eat("~").is_some() {
+            let arg = self.unary()?;
+            return Ok(Self::number_bitwise(&token, arg, None));
         }
         if self.cursor.is("++") || self.cursor.is("--") {
             return Err(unsupported(

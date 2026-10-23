@@ -103,6 +103,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Latest direct user correction requires persistent implementation and CI repair in the current continuation; drafting, opening a pull request or reporting CI status does not satisfy delivery.',
     ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
   },
+  {
+    id: 'bulk-draft-before-testing-2026-10-23',
+    key: 'bulkDraftBeforeTestingRequest',
+    title: 'Draft the complete remaining scope before testing the integrated batch',
+    role: 'Direct user correction requires drafting all outstanding requirements first, then testing the complete draft; avoid repeated incremental test cycles and metadata refreshes while retaining all verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */

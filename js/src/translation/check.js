@@ -10,6 +10,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
@@ -1144,6 +1145,16 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path) {
+    const bitwiseArity=readJavaScriptNumberBitwiseArity(node.op);
+    if(bitwiseArity){
+      if(node.args.length!==bitwiseArity||node.args.some(item=>item.spread))throw typeError('a Number bitwise operation requires its exact unspread operands',node.span);
+      const args=node.args.map(({value})=>{
+        const arg=this.expr(value,env,path,FLOAT);
+        if(!isFloat(arg.type))throw unsupported('Number bitwise operand','this interpretation requires Number operands; other primitive conversions and BigInt bitwise operations retain their own obligations',value.span??node.span);
+        return arg;
+      });
+      return{k:'math',op:node.op,args,type:FLOAT};
+    }
     const type = PREDICATES.has(node.op) ? BOOL : FLOAT;
     const variadic = node.op === 'max' || node.op === 'min';
     if (variadic && node.args.some((item) => item.spread)) {

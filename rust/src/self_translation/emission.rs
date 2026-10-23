@@ -28,13 +28,13 @@ pub(super) fn emit_item(
 }
 
 /// The exact program and emission already produced by the normal item path.
-pub(super) struct CheckedItem {
-    pub(super) program: Program,
-    pub(super) emitted: Emitted,
-    pub(super) signatures: Vec<External>,
-    pub(super) definition_ownership: Option<crate::translation::emit_rust::DefinitionOwnership>,
-    pub(super) source: String,
-    pub(super) source_language: String,
+pub struct CheckedItem {
+    pub program: Program,
+    pub emitted: Emitted,
+    pub signatures: Vec<External>,
+    pub definition_ownership: Option<crate::translation::emit_rust::DefinitionOwnership>,
+    pub source: String,
+    pub source_language: String,
 }
 
 pub(super) fn check_and_emit_item(
@@ -47,7 +47,11 @@ pub(super) fn check_and_emit_item(
     check_and_emit_item_profile(text, from, to, context, literal_bindings, false)
 }
 
-pub(super) fn check_and_emit_item_with_ownership(
+/// Check a complete declaration and retain its actual emission ownership.
+///
+/// # Errors
+/// Returns the ordinary frontend, checking or emission diagnostic.
+pub fn check_and_emit_item_with_ownership(
     text: &str,
     from: &str,
     to: &str,

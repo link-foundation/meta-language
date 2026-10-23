@@ -1,4 +1,5 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
+import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
@@ -583,6 +584,11 @@ class JavaScriptEmitter {
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
         const args = e.args.map((arg) => this.expr(arg));
+        const bitwise=readJavaScriptNumberBitwiseSymbol(e.op);
+        if(bitwise){
+          if(args.length!==readJavaScriptNumberBitwiseArity(e.op))throw unsupported('Number bitwise arity','the operation requires its exact checked operand inventory',e.span);
+          return args.length===1?`(${bitwise}${args[0]})`:`(${args[0]} ${bitwise} ${args[1]})`;
+        }
         if (e.op === 'maxOf' || e.op === 'minOf') return `Math.${e.op.slice(0, 3)}(...${args[0]})`;
         return `${e.type.kind === 'bool' ? 'Number' : 'Math'}.${e.op}(${args.join(', ')})`;
       }

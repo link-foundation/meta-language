@@ -8,6 +8,23 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        let symbol =
+            crate::translation::number_bitwise_rules::read_java_script_number_bitwise_symbol(op);
+        if !symbol.is_empty() {
+            let count = match args.len() {
+                1 => 1.0,
+                2 => 2.0,
+                _ => 0.0,
+            };
+            if !crate::translation::number_bitwise_rules::accept_java_script_number_bitwise_operand_count(op, count) {
+                return Err(super::unsupported("Number bitwise arity", "the operation requires its exact checked operand inventory", e.span));
+            }
+            return Ok(if args.len() == 1 {
+                format!("({symbol}{})", args[0])
+            } else {
+                format!("({} {symbol} {})", args[0], args[1])
+            });
+        }
         if op == "maxOf" || op == "minOf" {
             return Ok(format!("Math.{}(...{})", &op[..3], args[0]));
         }

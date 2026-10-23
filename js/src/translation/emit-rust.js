@@ -13,6 +13,8 @@ import {requireStringOrderUnits,renderStringOrderExpression} from './string-orde
 // `--ml-check-theorems`, while the proof stays discharged by the source kernel.
 
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
+import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
@@ -702,6 +704,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
     ...(emitter.usesArray ? [readRustArrayPrelude(emitter.usesStandardArray)] : []),
+    ...(emitter.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -726,6 +729,7 @@ class RustEmitter {
     this.usesArray = false;
     this.usesStandardArray = false;
     this.usesMath = false;
+    this.usesNumberBitwise = false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
@@ -761,6 +765,7 @@ class RustEmitter {
       ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray), ''] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE, ''] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
+      ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -771,6 +776,7 @@ class RustEmitter {
       ...(this.usesArray ? [readRustArrayPrelude(this.usesStandardArray)] : []),
       ...(this.utf16Strings ? [STRING_PRELUDE] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
+      ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1407,6 +1413,12 @@ class RustEmitter {
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
     this.floats();
+    const bitwiseCode=readJavaScriptNumberBitwiseOperationCode(e.op);
+    if(bitwiseCode>=0){
+      if(e.args.length!==readJavaScriptNumberBitwiseArity(e.op))throw unsupported('Number bitwise arity','the operation requires its exact checked operand inventory',e.span);
+      this.usesNumberBitwise=true;
+      return `crate::ml_number_bitwise::${snake(e.op)}(${e.args.map(arg=>this.expr(arg)).join(', ')})`;
+    }
     const [arg] = e.args;
     switch (e.op) {
       case 'abs':

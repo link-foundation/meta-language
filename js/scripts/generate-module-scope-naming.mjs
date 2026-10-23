@@ -14,6 +14,9 @@ import {findCompleteModuleScopeDeclaration,restoreModuleScopeDeclarationBindings
 const root=new URL('../../',import.meta.url);
 const revision='d3e4076667add3e19e4cf5f10a3cea60255dd2d7';
 const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs','js/src/translation/numeric-module-binding-rules.js','js/src/translation/numeric-module-bindings.js','js/scripts/borrowed-javascript-body-source-history.mjs','experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs','js/scripts/native-compiler-host-source-history.mjs','js/scripts/numeric-module-binding-source-styles.mjs','js/scripts/generate-borrowed-javascript-body-source-history.mjs','js/scripts/generate-native-compiler-host-source-history.mjs','js/scripts/historical-naming-inventory-storage.mjs','js/scripts/crate-fixture-package-source-history.mjs','js/scripts/module-scope-declaration-history.mjs','js/scripts/generate-module-scope-declaration-history.mjs','experiments/original-link-complete-table-projection/raw-source-archive-validation.mjs','js/scripts/historical-naming-source-preflight.mjs'];
+sources.push('js/src/translation/number-bitwise-rules.js', 'js/src/number-bitwise-program.js',
+ 'js/scripts/generate-number-bitwise-rules.mjs', 'js/scripts/declaration-dependency-branch-styles.mjs',
+ 'js/scripts/generate-declaration-dependency-branch-fixture.mjs', 'js/scripts/generate-translation-source-layout.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

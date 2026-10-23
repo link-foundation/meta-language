@@ -11,6 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import {readJavaScriptNumberBitwiseOperation,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -1918,11 +1919,15 @@ class JavaScriptParser {
   }
 
   bitwise() {
-    const c = this.cursor;
-    const left = this.equality();
-    const token = c.peek();
-    if (token.kind === 'punct' && ['|', '^', '&'].includes(token.value)) {
-      throw unsupported(`bitwise ${token.value}`, 'bitwise operators are outside the portable core', span(token, token));
+    return this.readBitwisePrecedence(0);
+  }
+
+  readBitwisePrecedence(level) {
+    const c=this.cursor,next=()=>level<2?this.readBitwisePrecedence(level+1):this.equality();
+    let left=next();
+    while(c.peek().kind==='punct'&&acceptJavaScriptNumberBitwisePrecedence(c.peek().value,level)){
+      const token=c.next(),right=next();
+      left={k:'math',op:readJavaScriptNumberBitwiseOperation(token.value),name:token.value,args:[{value:left,spread:false},{value:right,spread:false}],span:joined(left,right,token)};
     }
     return left;
   }
@@ -2036,9 +2041,11 @@ class JavaScriptParser {
 
   shift() {
     const c = this.cursor;
-    const left = this.additive();
-    const token = c.peek();
-    if (c.is('<<') || c.is('>>') || c.is('>>>')) throw unsupported(`shift ${token.value}`, 'bit shifts are outside the portable core', span(token, token));
+    let left = this.additive();
+    while(c.is('<<')||c.is('>>')||c.is('>>>')){
+      const token=c.next(),right=this.additive();
+      left={k:'math',op:readJavaScriptNumberBitwiseOperation(token.value),name:token.value,args:[{value:left,spread:false},{value:right,spread:false}],span:joined(left,right,token)};
+    }
     return left;
   }
 
@@ -2091,7 +2098,10 @@ class JavaScriptParser {
       return { k: 'unary', op: 'neg', arg, span: joined(token, arg, token) };
     }
     if (c.is('+')) throw unsupported('unary +', 'unary plus throws a TypeError on BigInt values', span(token, token));
-    if (c.is('~')) throw unsupported('bitwise ~', 'bitwise operators are outside the portable core', span(token, token));
+    if(c.eat('~')){
+      const arg=this.unary();
+      return{k:'math',op:readJavaScriptNumberBitwiseOperation('~'),name:'~',args:[{value:arg,spread:false}],span:joined(token,arg,token)};
+    }
     if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
     if (token.kind === 'identifier' && token.value === 'await') {
       if (!this.inAsync) {

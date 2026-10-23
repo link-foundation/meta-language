@@ -665,4 +665,9 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Deliver full JavaScript and Rust parsing and source emission, with complete concrete syntax by default, and translation between both languages for the real project codebase as the most critical end-to-end baseline. Validate complete source inventories, lossless source reconstruction and executable semantics independently; carried original source, registration or declarations do not establish semantic translation. Complete the remaining languages and capabilities after this baseline while preserving every inherited requirement.',
       ['javascriptRustCompleteParsingAndEmissionPrioritized', 'realOwnSourceInventoryExercised', 'bidirectionalExecutableTranslationChecked', 'defaultConcreteSyntaxAndLosslessSourceRetained', 'remainingScopePreserved']],
   ]),
+  ...rows('bulkDraftBeforeTestingRequest', 'parity/sources/bulk-draft-before-testing-2026-10-23.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING', 'complete outstanding requirements drafted before integrated testing',
+      'Draft every outstanding requirement and known CI repair before testing the complete integrated batch. Include shared behavior, both runtime adapters, automatic translation and complete fixtures; refresh generated histories and manifests once after drafting, then execute required validation. Continue independent drafting while existing CI executes, preserve every inherited gate and distinguish unverified drafts from executed evidence.',
+      ['allOutstandingRequirementsDraftedBeforeTesting', 'knownCiRepairsIncluded', 'metadataIntegratedOnceAfterDrafting', 'completeValidationRetained', 'draftAndEvidenceDistinguished']],
+  ], true),
 ]);

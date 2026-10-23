@@ -39,6 +39,7 @@ mod externals;
 mod items;
 mod matches;
 mod math;
+mod number_bitwise;
 mod optional_values;
 mod primitive_methods;
 mod records;

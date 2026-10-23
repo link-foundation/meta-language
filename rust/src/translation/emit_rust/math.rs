@@ -93,6 +93,27 @@ impl RustEmitter<'_> {
             unreachable!("not a Math expression")
         };
         self.floats();
+        let code = crate::translation::number_bitwise_rules::read_java_script_number_bitwise_operation_code(op);
+        if code >= 0.0 {
+            let count = match args.len() {
+                1 => 1.0,
+                2 => 2.0,
+                _ => 0.0,
+            };
+            if !crate::translation::number_bitwise_rules::accept_java_script_number_bitwise_operand_count(op, count) {
+                return Err(super::unsupported("Number bitwise arity", "the operation requires its exact checked operand inventory", e.span));
+            }
+            self.preludes.insert(Prelude::NumberBitwise);
+            let arguments = args
+                .iter()
+                .map(|arg| self.expr(arg))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(format!(
+                "crate::ml_number_bitwise::{}({})",
+                super::snake(op),
+                arguments.join(", ")
+            ));
+        }
         match op.as_str() {
             "abs" | "floor" | "ceil" | "trunc" | "sqrt" => {
                 Ok(format!("{}.{op}()", self.receiver(&args[0])?))

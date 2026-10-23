@@ -752,6 +752,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Array => read_array_prelude(emitter.standard_array).to_owned(),
             Prelude::String => crate::self_translation::representation::string_prelude(),
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
+            Prelude::NumberBitwise => include_str!("runtime/number-bitwise.rs").to_owned(),
         })
         .collect();
     let mut output = emitter.state.finish(
@@ -792,31 +793,32 @@ enum Prelude {
     Array,
     String,
     Optional,
+    NumberBitwise,
 }
 
-/// Optional internal records captured during normal complete block emission.
-/// Not part of Emitted or its serialized/public contract.
+/// Inspectable records captured during normal complete block emission.
+/// Transient validation metadata, separate from the serialized Emitted contract.
 #[derive(Clone, Debug, Default)]
-pub(crate) struct DefinitionOwnership {
-    pub(crate) blocks: Vec<OwnedDefinitionBlock>,
-    pub(crate) external_targets: Vec<OwnedExternalTarget>,
+pub struct DefinitionOwnership {
+    pub blocks: Vec<OwnedDefinitionBlock>,
+    pub external_targets: Vec<OwnedExternalTarget>,
 }
 #[derive(Clone, Debug)]
-pub(crate) struct OwnedDefinitionBlock {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) source_span: Option<Span>,
-    pub(crate) definition_index: usize,
-    pub(crate) definition: String,
-    pub(crate) mapping_start: usize,
-    pub(crate) mapping_end: usize,
-    pub(crate) targets: Vec<String>,
+pub struct OwnedDefinitionBlock {
+    pub source: String,
+    pub kind: &'static str,
+    pub source_span: Option<Span>,
+    pub definition_index: usize,
+    pub definition: String,
+    pub mapping_start: usize,
+    pub mapping_end: usize,
+    pub targets: Vec<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct OwnedExternalTarget {
-    pub(crate) source: String,
-    pub(crate) kind: &'static str,
-    pub(crate) target: String,
+pub struct OwnedExternalTarget {
+    pub source: String,
+    pub kind: &'static str,
+    pub target: String,
 }
 
 struct RustEmitter<'p> {
