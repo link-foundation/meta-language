@@ -91,7 +91,12 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
 // Internal complete-token entry; public source parsing validates options and lexes first.
 export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '' } = {}, source = null) {
   if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the installed source model');
-  if(sharedArrayHandleSourceModel){if([arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel].some(Boolean))throw unsupported('Rust shared array handle source model','source interpretations need independent composition proofs');verifyRustSharedArrayHandleTokens(tokens,source);}
+  if(sharedArrayHandleSourceModel){
+    if([arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel].some(Boolean))throw unsupported('Rust shared array handle source model','source interpretations need independent composition proofs');
+    verifyRustSharedArrayHandleTokens(tokens,source);
+    // Caller getters or later reads cannot replace an authenticated occurrence.
+    tokens=tokenize(source,'Rust').tokens;
+  }
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));

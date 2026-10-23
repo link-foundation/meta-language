@@ -55,7 +55,7 @@ export async function generateAdditionalOwnCodebaseHistoricalNamingSources({chec
     const changedAt=selected=>{
       const known=new Set(execFileSync('git',['ls-tree','-r','--name-only',selected],{cwd:root,encoding:'utf8',maxBuffer:1024*1024}).trim().split('\n'));
       return execFileSync('git',['diff',selected,'--name-only'],{cwd:root,encoding:'utf8'}).trim().split('\n')
-        .filter(path=>known.has(path)&&/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|scripts|experiments)\/.+\.(?:js|mjs|rs)$/u.test(path));
+        .filter(path=>known.has(path)&&/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|scripts|experiments)\/.+\.(?:js|mjs|rs|ts)$/u.test(path));
     };
     const selections=[...originalFiles.map(path=>({path,revision})),...changedAt(baseline).map(path=>({path,revision:baseline})),
       ...changedAt(integration).map(path=>({path,revision:integration})),

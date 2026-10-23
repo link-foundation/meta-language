@@ -22,13 +22,16 @@ env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanu
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase verification --receipt /tmp/meta-language-verification.lino
 ```
 
-Verification runs sixteen read-only checks, beginning with the authenticated
+Verification runs seventeen read-only checks, beginning with the authenticated
 online requirement-source audit before ledger access. It requires GitHub API
 access. Its remaining commands check dependencies, scope, exports, runtime
 inventory, documentation, test ownership, generated rules, source histories and
 both concept catalogs. It also verifies every source epoch and current source
 pin in the explicitly indexed historical naming documents. Stale outputs fail;
 verification never refreshes them.
+The snapshot phase refreshes the relative-character fixture through its existing
+JavaScript oracle; final verification checks its exact source fingerprint,
+unchanged input, ordered decisions and bounded package version.
 `--check` leaves these already read-only commands unchanged.
 
 Append `--check` to authoring phases for their read-only freshness mode. This does

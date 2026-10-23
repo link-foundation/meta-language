@@ -100,7 +100,7 @@ export function readOwnCodebaseHistoricalNamingPolicy(){
   assert.equal(new Set(additional.sources.map(row=>row.file+'@'+row.predecessor.revision)).size,additional.sources.length);
   for(const row of additional.sources){
     exactKeys(row,['file','predecessor','current']);exactKeys(row.predecessor,['revision','source','bytes','sha256','certificate']);
-    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|scripts|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs)$/u);assert.equal(row.file.includes('..'),false);
+    assert.match(row.file,/^(?:js\/(?:src|scripts|tests)|rust\/(?:src|tests\/unit)|scripts|experiments)\/[A-Za-z_0-9./-]+\.(?:js|mjs|rs|ts)$/u);assert.equal(row.file.includes('..'),false);
     assert.ok(['6ffff3b2dc530a5f24c128dadf877f3fa106932b','8bc0ef9725388c7927acf1854870bf46f5e365be','8f2f6c483ec32a3ffc17afec694463965dc7551d','3d8e4513e2167d0d15cca13ccaefcb4ae86669fd'].includes(row.predecessor.revision));
     exactKeys(row.current,['bytes','sha256']);assert.equal(typeof row.predecessor.source,'string');
     assert.deepEqual(pin(row.predecessor.source),{bytes:row.predecessor.bytes,sha256:row.predecessor.sha256});

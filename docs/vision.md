@@ -850,6 +850,10 @@ Source-free text and binary reloads and exact source restoration remain required
 Public self-translation and semantic graph options declare both selected source
 models. Ten shared refusal inputs exercise parsing, whole-module publication
 and signature discovery in each runtime.
+The JavaScript token entry point validates all supplied entries, then parses an
+owned stream lexed from the complete immutable source. Later caller getters or
+token mutations cannot replace an authenticated occurrence. Initially forged
+tokens still refuse, and ordinary complete inputs retain the same result.
 
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
@@ -4077,7 +4081,7 @@ encoded copies. UTF-16 surrogate replacement and every existing physical and
 expanded byte limit retain their original behavior. Boundary controls compare
 the active UTF-8 encoder, including paired and unpaired surrogates.
 The repository's serial development driver also provides a final `verification`
-phase. Sixteen read-only checks reconcile live requirement sources before ledger
+phase. Seventeen read-only checks reconcile live requirement sources before ledger
 access, then check dependency/scope/export inventories, documentation, test
 ownership, generated native rules, source histories and both concept catalogs.
 The final source-history check validates all indexed naming documents, their

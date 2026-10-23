@@ -15,3 +15,18 @@ test('registered root tooling definitions retain their complete preceding source
  assert.deepEqual(source.current,{bytes:actual.length,sha256:createHash('sha256').update(actual).digest('hex')});
  assert.notEqual(source.predecessor.sha256,source.current.sha256,'the changed current definition retains a separately qualified source');
 });
+
+test('public TypeScript declaration signatures retain complete certified module-qualified source owners',()=>{
+ const file='js/src/index.d.ts',hash='a5c0c87bb6a8d605d248b39d006a97eaba32cddbe9fc25d16134e5880b76e984';
+ const history=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews,sources=history.sources.filter(row=>row.file===file);
+ assert.equal(sources.length,3,'all registered predecessor revisions retain the declaration module');
+ const actual=readFileSync(new URL('../../'+file,import.meta.url)),current={bytes:actual.length,sha256:createHash('sha256').update(actual).digest('hex')};
+ assert.notEqual(current.sha256,hash,'the added source options keep the changed current context separate');
+ for(const row of sources){
+  assert.equal(row.predecessor.sha256,hash);assert.equal(row.predecessor.bytes,92636);assert.deepEqual(row.current,current);
+  assert.ok(row.predecessor.source.includes('export function encodeFormalFunctionDeclarationValue('));
+  const view=history.views.find(view=>view.file===file&&view.revision===row.predecessor.revision&&view.names.some(name=>name.record==='repository.public-boolean-function-declaration-value-type-signature'));
+  // B70 derives the registered English alias; the complete module above owns its source hash.
+  assert.ok(view);assert.ok(view.names.some(name=>name.name==='public boolean function declaration value type signature'&&name.record==='repository.public-boolean-function-declaration-value-type-signature'));
+ }
+});
