@@ -7,7 +7,7 @@
 // local run (pass --modules to measure a few modules).
 //
 //   node js/scripts/generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js]
-//     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--list]
+//     [--decorators parity/self-translation/decorators.lino] [--shard K/N] [--physical-part K/N] [--list]
 //     [--replay-plan selected-blockers.lino]
 //
 // The whole tree takes over an hour on one runner, so CI splits it: `--shard
@@ -39,7 +39,7 @@ import { createReportMeasurementWorker } from './self-translation-report-worker-
 import {measureReportModules} from './self-translation-report-queue.mjs';
 import { rankSelfTranslationBlockers, requireReportSourcePath, validateSelfTranslationReplayPlan } from './self-translation-report-blockers.mjs';
 import { summarizeRetainedSelfTranslationPhases, retainedSelfTranslationPhaseMarkdown } from './self-translation-phase-summary.mjs';
-import {partitionReportMeasuredWorkloads} from './report-workload-costs.mjs';
+import {partitionReportMeasuredWorkloads,selectReportPhysicalPart} from './report-workload-costs.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const STATUSES = ['translated', 'carried', 'comment'];
@@ -107,13 +107,16 @@ function shardOf(files, index, count) {
 
 function selectedModules(replayPlan) {
   const shard = option('--shard');
+  const part = option('--physical-part');
+  assert.ok(!part || shard && !option('--modules') && !option('--replay-plan'), '--physical-part requires an entire logical shard');
   if (!shard) return modules(replayPlan);
   const match = /^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(shard);
   if (!match || Number(match[1]) > Number(match[2])) {
     console.error(`--shard takes K/N with 1 <= K <= N, not ${shard}`);
     process.exit(2);
   }
-  return shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  const selected = shardOf(modules(replayPlan), Number(match[1]), Number(match[2]));
+  return part ? selectReportPhysicalPart(selected, part) : selected;
 }
 
 /** The hand-written Rust module `module` corresponds to, or null. */
@@ -503,7 +506,7 @@ async function main() {
   }
   const outDir = option('--out-dir');
   if (!outDir) {
-    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js | --replay-plan plan.lino] [--decorators file.lino] [--shard K/N] [--list]');
+    console.error('usage: generate-self-translation-report.mjs --out-dir <dir> [--modules a.js,b.js | --replay-plan plan.lino] [--decorators file.lino] [--shard K/N] [--physical-part K/N] [--list]');
     process.exit(2);
   }
   const decoratorsText = readFileSync(join(root, option('--decorators') ?? DEFAULT_DECORATORS), 'utf8');

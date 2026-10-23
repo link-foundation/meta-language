@@ -11,3 +11,13 @@ export function partitionReportMeasuredWorkloads(files,count,options={}){
  assert.deepEqual(costs.entries.map(row=>row.file),costs.inventory);
  return partitionMeasuredWorkloads(files,count,{...options,costs});
 }
+
+// Split a complete logical report cell without changing its module inventory.
+export function selectReportPhysicalPart(files,part,options={}){
+ assert.equal(typeof part,'string');
+ const match=/^([1-9][0-9]*)\/([1-9][0-9]*)$/u.exec(part);
+ assert.ok(match,'--physical-part takes K/N');
+ const index=Number(match[1]),count=Number(match[2]);
+ assert.ok(Number.isSafeInteger(index)&&Number.isSafeInteger(count)&&index<=count&&count<=files.length,'invalid physical report geometry');
+ return partitionReportMeasuredWorkloads(files,count,options)[index-1];
+}

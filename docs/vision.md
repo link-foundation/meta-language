@@ -4023,6 +4023,17 @@ coverage remain mandatory. The worker count and thirty-minute deadline are
 unchanged. A controlled slow-first regression checks this scheduling boundary;
 complete report timing still requires CI.
 
+CI 39872149597 passed seven report cells, while the second exceeded the same
+thirty-minute limit before completing its module inventory. Each of the original
+eight logical report cells now runs as two physical parts. The source-bound
+scheduler partitions complete modules within each logical cell; their disjoint
+union must equal that cell exactly. Both workflows publish distinct artifacts
+for all sixteen physical parts. The existing aggregate still requires every
+current source module exactly once, matching commit and source hashes, both
+translation comparisons and every report assertion. No partial report counts as
+success. The thirty-minute job deadline and two-worker limit remain unchanged;
+the original eight-cell command remains supported. Actual timing requires CI.
+
 The raw-oracle runner may reuse a successfully verified base emission profile
 within one process only after comparing every complete historical/current
 artifact, rule source and causal producer input byte again. Input names and order

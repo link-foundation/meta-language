@@ -6,7 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 export const CI_TEST_PARTITION_REVISION='491cf0caa9f014e7f4f4caef62611fa482114721';
 export const CI_TEST_PARTITION_HISTORY='parity/fixtures/ci-39839936265-test-partitions.lino';
-const packetSha256='f87c8505682fe4b25715da692c34a46bae2ec48accdf26c4233ca9a3cd18db79';
+const packetSha256='f682d5606fb935cab9ec8cf71c186d1b7251eedf6ccb358e7f38244c4967672b';
 const matrix=(group,count)=>Array.from({length:count},(_,index)=>`          - {group: ${group}, partition: ${index+1}, shards: ${count}}\n`).join('');
 export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:matrix('conformance',4),after:matrix('conformance',8)},
@@ -14,6 +14,10 @@ export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:'node scripts/test-groups.mjs --run "$TEST_GROUP"',after:'node scripts/ci-test-partitions.mjs --run "$TEST_GROUP"'},
  {before:'pattern: translation-test-feedback-${{ github.sha }}-*-of-6',after:'pattern: translation-test-feedback-${{ github.sha }}-*-of-12'},
  {before:'            --partitions 6 \\\n',after:'            --partitions 12 \\\n'},
+ {before:'    name: Self-Translation Report (${{ matrix.shard }}/8)',after:'    name: Self-Translation Report (${{ matrix.shard }}/8, part ${{ matrix.part }}/2)'},
+ {before:'        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n',after:'        shard: [1, 2, 3, 4, 5, 6, 7, 8]\n        part: [1, 2]\n'},
+ {before:'--shard ${{ matrix.shard }}/8 --out-dir',after:'--shard ${{ matrix.shard }}/8 --physical-part ${{ matrix.part }}/2 --out-dir'},
+ {before:'name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}',after:'name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}-${{ matrix.part }}'},
 ]);
 export const CI_TEST_FEEDBACK_CHANGES=Object.freeze([
  {before:"import { partitionGroupFiles, partitionTests, testFiles } from './test-groups.mjs';",after:"import { partitionTests, testFiles } from './test-groups.mjs';\nimport {partitionCiTestGroupFiles} from './ci-test-partitions.mjs';"},
