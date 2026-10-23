@@ -129,6 +129,8 @@ export const ISSUE_195_SOURCES = Object.freeze({
     'parity/sources/continuous-requirement-delivery-2026-10-23.txt',
   bulkDraftBeforeTestingRequest:
     'parity/sources/bulk-draft-before-testing-2026-10-23.txt',
+  draftEntireScopeWithoutCodeTestsRequest:
+    'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt',
   checkpointContinuationIssue:
     'https://github.com/link-foundation/meta-language/issues/227',
 });

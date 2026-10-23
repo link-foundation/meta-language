@@ -45,6 +45,7 @@ pub use emission::{
 pub use representation::Context as DeclarationTranslationContext;
 use representation::Context;
 mod scope;
+mod semantic_input;
 mod typescript_erasure;
 mod typescript_erasure_rules;
 mod typescript_portable_typing;
@@ -64,6 +65,8 @@ pub type SelfTranslationSignature = External;
 /// What [`self_translate_with`] translates a module with.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SelfTranslationOptions {
+    /// Reparse actual emitted code; saved originals never restore semantics.
+    pub semantic_translation: bool,
     /// Independent interpretation of complete actual standard Rust shared handles.
     pub rust_shared_array_handle_source_model: String,
     /// The emitter decorators, as [`self_translate_decorated`] applies them.
@@ -349,6 +352,8 @@ fn translate_module(
             items: items.clone(),
             after: "",
         }]
+    } else if options.semantic_translation {
+        semantic_input::group_semantic_items(&items, source, from)
     } else {
         group_items(&items, source)
     };
@@ -499,9 +504,9 @@ fn translate_module(
     }
     let body = format!("{}\n", blocks.concat());
     // An unedited translation back gives the source its header describes.
-    let header = items
-        .iter()
-        .find(|item| item.comment && item.text.starts_with(HEADER));
+    let header = items.iter().find(|item| {
+        !options.semantic_translation && item.comment && item.text.starts_with(HEADER)
+    });
     if let Some(header) = header
         && header.text.contains(&format!(" source={to} "))
         && header.text.contains(&format!(" sha256={} ", sha256(&body)))

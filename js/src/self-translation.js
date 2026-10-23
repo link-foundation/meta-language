@@ -30,6 +30,7 @@ import {readRustSharedArrayHandleModule} from './translation/rust-shared-array-h
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
 import {unsupported} from './translation/diagnostics.js';
+import { readSemanticSourceRole, planSemanticSourceGroups } from './translation/semantic-input-rules.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
@@ -138,7 +139,8 @@ export function selfTranslationSignatures(source, language, options = {}) {
   return translateModule(source, language, 'Rust', options, true).signatures;
 }
 
-function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '' } = {}, signaturesOnly = false) {
+function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '', semanticTranslation = false } = {}, signaturesOnly = false) {
+  if (typeof semanticTranslation !== 'boolean') throw new TypeError('semanticTranslation must be Boolean');
   const from = required(sourceLanguage);
   const to = required(targetLanguage);
   const set = decoratorSet(decorators);
@@ -171,7 +173,8 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   const preludes = [];
   const recorded = [];
   let gap = '';
-  const groups = wholePublication ? [{kind: 'item', term: 'source_file', items, text, after: ''}] : groupItems(items, bytes);
+  const groups = wholePublication ? [{kind: 'item', term: 'source_file', items, text, after: ''}]
+    : semanticTranslation ? groupSemanticItems(items, bytes, from) : groupItems(items, bytes);
   let references = referenceSemantics || (family(from) === 'JavaScript' && requiresReferenceSemantics(text));
   if (!referenceSemantics && references && family(from) === 'JavaScript') {
     // The complete frontend can prove an owned append rewrite and remove its
@@ -225,7 +228,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   const body = `${blocks.join('')}\n`;
   // An unedited translation back gives the source its header describes.
-  const header = items.find((item) => item.comment && item.text.startsWith(HEADER));
+  const header = semanticTranslation ? undefined : items.find((item) => item.comment && item.text.startsWith(HEADER));
   if (header && header.text.includes(` source=${to} `) && header.text.includes(` sha256=${sha256(body)} `)) {
     return { translation: freeze(from, to, body, recorded), signatures };
   }
@@ -688,6 +691,30 @@ function groupItems(items, bytes) {
       while (items[end].comment && end + 1 < items.length && lineBreak(items[end].after) && !isMarker(items[end + 1])) end += 1;
       // A run of comments no item follows is one comment group.
       take(end, { kind: items[end].comment ? 'comment' : 'item', text: textBetween(item, items[end]), term: items[end].term });
+    }
+  }
+  return groups;
+}
+
+// Semantic translation treats saved originals as provenance. In particular,
+// actual runtime prelude declarations remain ordinary source declarations.
+// A carried block has no implementation in this source language and remains
+// a gap even when its saved original happens to match the target language.
+function groupSemanticItems(items, bytes, sourceLanguage) {
+  const groups = [];
+  const plan = planSemanticSourceGroups(items.map(item => readSemanticSourceRole(item.comment, item.text)),
+    items.map(item => lineBreak(item.after)));
+  for (let at = 0; at < plan.length; at += 3) {
+    const index = plan[at], end = plan[at + 1], disposition = plan[at + 2], item = items[index];
+    if (disposition === 0 || disposition === 1) {
+      const fields = disposition === 1
+        ? { kind: 'carried', language: sourceLanguage, lines: sourceLines(items.slice(index + 1, end + 1)) }
+        : { kind: 'provenance' };
+      groups.push({ ...fields, items: items.slice(index, end + 1), after: items[end].after });
+    } else {
+      groups.push({ kind: disposition === 2 ? 'comment' : 'item',
+        text: bytes.subarray(item.start, items[end].end).toString('utf8'), term: items[end].term,
+        items: items.slice(index, end + 1), after: items[end].after });
     }
   }
   return groups;

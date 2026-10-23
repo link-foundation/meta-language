@@ -1,0 +1,7 @@
+Capture provenance: direct user messages in the meta-language issue/PR task,
+captured 2026-10-24. Message revision times are unavailable.
+The following instructions are preserved verbatim in their original order.
+
+Do until you fully draft all the requirements.
+
+No testing of code is allowed, only draft exactly all requirements, only once exactly all requirements are drafted in code you can start testing.

@@ -22,6 +22,25 @@ A language is named by name or extension (`rust`, `rs`, `ts`, `mjs`); without
 `--from`, the CLI takes it from the file extension. `--items` prints one line
 per top-level item instead of the translation.
 
+The current draft also provides `--semantic`, or
+`selfTranslate(source, from, to, { semanticTranslation: true })`. Rust selects
+`SelfTranslationOptions.semantic_translation`. This reads the actual emitted
+code through the ordinary frontend, including its runtime preludes. Saved
+originals stay provenance and carried blocks remain explicit implementation
+gaps. The default continues to support lossless source restoration. Execution
+and parity checks for this new mode are deferred until the full requirement
+scope is drafted.
+
+`draftProjectTranslation(inputs, { targetLanguage })` drafts a complete supplied
+module inventory. Each input supplies its identifier, source language, complete
+source and import-specifier-to-source-identifier map. Source hashes, dependency
+refinement, products and every unsupported item remain in the returned draft;
+`projectTranslationDraftToLinks` stores it as inspectable Links data. The
+`js/scripts/draft-project-translation.mjs` author materializes every tracked
+JavaScript, TypeScript and Rust source of a supplied project and writes that
+draft. This author is intended for the later CI drafting phase; it performs no
+product execution. Remaining language and library gaps retain their full scope.
+
 The library can explicitly read actual standard Rust shared-array handles:
 
 ```js

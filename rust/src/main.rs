@@ -11,7 +11,7 @@ use meta_language::{
     emit_lark, emit_pest, emit_tree_sitter_grammar_js, evaluate, grammar_concept_translation_rules,
     grammar_from_lino, grammar_to_lino, import_abnf, import_antlr, import_bnf, import_ebnf,
     import_gbnf, import_lark, import_pest, import_tree_sitter_json, infer_cfg,
-    parse_grammar_surface, run_grammar_command, self_translate, self_translation_language,
+    parse_grammar_surface, run_grammar_command, self_translation_language,
     translate_grammar_surface, write_grammar_surface,
 };
 
@@ -51,6 +51,9 @@ enum Command {
         /// Print each top-level item's status instead of the translation.
         #[arg(long)]
         items: bool,
+        /// Translate actual emitted code without restoring saved originals.
+        #[arg(long)]
+        semantic: bool,
     },
     /// Parse text into a lossless token network and verify it is clean.
     Verify {
@@ -236,7 +239,8 @@ fn main() {
             from,
             to,
             items,
-        } => translate(&file, from.as_deref(), &to, items),
+            semantic,
+        } => translate(&file, from.as_deref(), &to, items, semantic),
         Command::Verify { language, text } => verify(&language, &text),
         Command::Infer {
             examples,
@@ -270,7 +274,7 @@ fn grammar(args: &[String]) {
     std::process::exit(output.exit_code);
 }
 
-fn translate(file: &Path, from: Option<&str>, to: &str, items: bool) {
+fn translate(file: &Path, from: Option<&str>, to: &str, items: bool, semantic: bool) {
     let extension = file.extension().and_then(|extension| extension.to_str());
     let Some(from) = from.or_else(|| extension.and_then(self_translation_language)) else {
         eprintln!(
@@ -283,7 +287,11 @@ fn translate(file: &Path, from: Option<&str>, to: &str, items: bool) {
         eprintln!("error: cannot read {}: {error}", file.display());
         std::process::exit(1);
     });
-    match self_translate(&source, from, to) {
+    let options = meta_language::SelfTranslationOptions {
+        semantic_translation: semantic,
+        ..meta_language::SelfTranslationOptions::default()
+    };
+    match meta_language::self_translate_with(&source, from, to, &options) {
         Ok(result) if items => {
             for item in result.items {
                 let reason = item

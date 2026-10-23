@@ -1362,6 +1362,23 @@ Full reconstruction records latency and resource use on pinned inputs, with the
 representation, input size and execution environment attached to the measurements.
 Lazy loading and token-only envelopes do not count as a measured complete rebuild;
 the qualitative speed requirement does not invent a numeric deadline.
+The complete-graph JavaScript archive draft copies actual networks in two
+passes, retaining cycles, disconnected members, original source identities,
+exact registrations, selected syntax and allocator state. An explicit linked
+descriptor selects the source groups and entry roots. Entries using the same
+source network retain shared identities; independent networks keep separate
+identities. Text and binary operations reload the whole graph eagerly, and
+extensions select replacements and removals explicitly. Canonical text loading
+is streamed under node, reference and byte limits and retains all four stored
+parse flags independently. The public archive CLI packs, lists, selects and
+extends these graphs. The dynamic session draft uses archived discovered
+grammars and formal premises with the existing native compiler and common
+concept verifier. Its default parse product is the complete concrete tree,
+including mapped source planes and recursive grammar provenance. An optional
+abstract projection retains that concrete product. Complete native counterparts,
+formal definitions for the remaining concepts, link-cli workload integration
+and reconstruction measurements remain implementation obligations. These new
+drafts have no execution evidence.
 The current binary graph primitive writes a versioned meta-language archive of
 actual link identities, references, supported metadata, exact term-map keys,
 selected syntax and the next allocation identity. Shared framing rules are
@@ -2543,6 +2560,34 @@ JavaScript validation and one complete CI feedback cycle. Continue drafting
 independent remaining work while existing CI executes. A draft is not verified
 implementation: preserve every unresolved obligation and failing observation.
 This sequence follows the [direct bulk instruction](../parity/sources/bulk-draft-before-testing-2026-10-23.txt).
+The [current explicit prohibition](../parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt)
+defers every code test and validation run until every requirement has an
+implementation draft. Authoring fixtures, test drivers and generators belongs
+to drafting; executing their assertions or behavioral comparisons belongs to
+the later validation phase. Source generation can parse, type-check and format
+its input while writing code; it runs no fixture, product, behavioral replay or
+oracle. Missing implementations remain visible. Source
+presence, stubs, carried originals and a source inventory cannot establish that
+the complete behavior has been drafted. Existing CI observations retain their
+original commits and cannot validate the new draft.
+Independent semantic translation is now an explicit source-level option:
+`semanticTranslation` in JavaScript and `semantic_translation` in Rust, exposed
+as `translate --semantic` in both CLI drafts. Actual emitted declarations and
+runtime preludes enter the ordinary frontend. Saved source comments supply
+provenance, while carried blocks remain unresolved source-language gaps. The
+grouping algorithm is shared JavaScript with automatically generated Rust;
+complete source and mechanical ownership styles are retained as Links data.
+Ordinary lossless source restoration remains available through the existing
+default. Full emitted-runtime interpretation and executable parity still
+require implementation and later CI evidence.
+The project translation draft API processes complete supplied module inventories
+with source hashes, bounded dependency-signature refinement and explicit failure
+ranges. Only ordinary translated declarations supply import signatures. Its
+tracked-project author inventories every tracked JavaScript, TypeScript and
+Rust source, retains unresolved imports and writes the products and diagnostics
+as Links Notation. It executes no products. This orchestration exposes remaining
+language, library and independent Rust signature-discovery gaps; the complete
+own-codebase translator remains a critical delivery requirement.
 
 Finalize each semantic batch before refreshing its generated source histories,
 naming bindings and requirement manifest. The normal authors remain the only

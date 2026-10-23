@@ -110,6 +110,13 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     role: 'Direct user correction requires drafting all outstanding requirements first, then testing the complete draft; avoid repeated incremental test cycles and metadata refreshes while retaining all verification obligations.',
     ledgerCoverage: ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING'],
   },
+  {
+    id: 'draft-entire-scope-without-code-tests-2026-10-24',
+    key: 'draftEntireScopeWithoutCodeTestsRequest',
+    title: 'Continue until every requirement has code, without executing code tests first',
+    role: 'The current user instruction permits drafting only and prohibits code tests until exactly every requirement has an implementation draft. All inherited obligations remain, fixtures may be authored, and validation is deferred rather than removed.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT'],
+  },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
 /** Prepare append-only registrations from the actual captured UTF-8 bytes. */

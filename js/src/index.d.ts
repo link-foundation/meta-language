@@ -113,6 +113,8 @@ export type SelfTranslationSignature =
   | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
 
 export interface SelfTranslationOptions {
+  /** Reparse actual emitted code; saved originals never restore semantics. */
+  readonly semanticTranslation?: boolean;
   /** Selects an independently checked standard Rust shared-array source interpretation. */
   readonly rustSharedArrayHandleSourceModel?: '' | 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
   /** Uses one UTF-16 string representation across all emitted module items. */
@@ -1936,6 +1938,74 @@ export interface BinaryLinksOptions { recordLimit?: number; byteLimit?: number }
 export class BinaryLinksError extends TypeError { constructor(message: string) }
 export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
+
+export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'grammar'
+  | 'global concept space' | 'formal concept definition' | 'ontology' | 'taxonomy'
+  | 'resource description graph' | 'resource description dataset' | 'typed program'
+  | 'discovered concepts' | 'decorators' | 'grammar inference';
+export interface MetaLanguageArchiveEntry {
+  identifier: string;
+  kind: MetaLanguageArchiveKind;
+  network: LinkNetwork;
+  root: LinkIdValue;
+}
+export interface MetaLanguageArchiveLimits {
+  nodeLimit?: number;
+  referenceLimit?: number;
+  byteLimit?: number;
+}
+export interface MetaLanguageArchive { network: LinkNetwork; root: LinkId; }
+export interface ReconstructedMetaLanguageArchive {
+  entries: MetaLanguageArchiveEntry[];
+  networks: LinkNetwork[];
+}
+export function createMetaLanguageArchive(entries: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive;
+export function readMetaLanguageArchive(network: LinkNetwork, root: LinkIdValue, options?: MetaLanguageArchiveLimits): ReconstructedMetaLanguageArchive;
+export function metaLanguageArchiveToText(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): string;
+export function readMetaLanguageArchiveText(text: string, options?: MetaLanguageArchiveLimits): MetaLanguageArchive & ReconstructedMetaLanguageArchive;
+export function metaLanguageArchiveToBinary(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
+export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive & ReconstructedMetaLanguageArchive;
+export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
+
+export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
+  depthLimit?: number;
+  records?: ConceptRecord[];
+  formalDefinitions?: Record<string, FormalConceptArchive>;
+  equivalences?: [string, string][];
+  entries?: MetaLanguageArchiveEntry[];
+}
+export class DynamicMetaLanguage {
+  constructor(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits);
+  archive: MetaLanguageArchive;
+  entries: MetaLanguageArchiveEntry[];
+  sources: GlobalConceptSource[];
+  space: GlobalConceptSpace;
+  parser(sourceIdentifier: string, options?: Record<string, unknown>): {
+    parse(input: string, overrides?: Record<string, unknown>): unknown;
+    parseTree(input: string, overrides?: Record<string, unknown>): unknown;
+  };
+  parse(sourceIdentifier: string, input: string, options?: Record<string, unknown>): unknown;
+  extend(additions: GlobalConceptSource[], options?: DynamicMetaLanguageOptions & { replace?: boolean }): DynamicMetaLanguage;
+}
+export function createDynamicMetaLanguage(sources: GlobalConceptSource[], options?: DynamicMetaLanguageOptions): DynamicMetaLanguage;
+
+export interface ProjectTranslationSource {
+  identifier: string;
+  language: string;
+  source: string;
+  imports?: Record<string, string>;
+  options?: SelfTranslationOptions;
+}
+export interface ProjectTranslationDraftOptions {
+  targetLanguage: string;
+  translationOptions?: SelfTranslationOptions;
+  externalImports?: Record<string, Record<string, SelfTranslationSignature[]>>;
+  moduleLimit?: number;
+  byteLimit?: number;
+  refinementLimit?: number;
+}
+export function draftProjectTranslation(inputs: ProjectTranslationSource[], options: ProjectTranslationDraftOptions): StructuredDataValue;
+export function projectTranslationDraftToLinks(draft: StructuredDataValue, options?: StructuredDataLinksLimits): StructuredDataLinksArchive;
 
 /** Structured RDF 1.1 terms; syntax import and OWL entailment are separate operations. */
 export type ResourceDescriptionTerm =

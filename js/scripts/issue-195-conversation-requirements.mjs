@@ -670,4 +670,9 @@ export const CRITICAL_CONVERSATION_REQUIREMENTS = Object.freeze([
       'Draft every outstanding requirement and known CI repair before testing the complete integrated batch. Include shared behavior, both runtime adapters, automatic translation and complete fixtures; refresh generated histories and manifests once after drafting, then execute required validation. Continue independent drafting while existing CI executes, preserve every inherited gate and distinguish unverified drafts from executed evidence.',
       ['allOutstandingRequirementsDraftedBeforeTesting', 'knownCiRepairsIncluded', 'metadataIntegratedOnceAfterDrafting', 'completeValidationRetained', 'draftAndEvidenceDistinguished']],
   ], true),
+  ...rows('draftEntireScopeWithoutCodeTestsRequest', 'parity/sources/draft-entire-scope-without-code-tests-2026-10-24.txt', 'critical-conversation-requirements', 'workflow-contract', [
+    ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'no code testing before exactly all requirements have implementation drafts',
+      'Continue drafting exactly the full issue, pull-request and conversation scope in implementation code. Do not run code tests, validation, behavioral comparisons or fixture oracles until every requirement has an implementation draft. Preserve all fixtures, assertions and later verification obligations. A registry entry, carried source, stub or unexecuted test declaration is insufficient implementation drafting, and drafting is distinct from verified delivery.',
+      ['everyRequirementHasImplementationDraft', 'codeExecutionForTestingDeferredUntilWholeDraft', 'allLaterVerificationRetained', 'stubsAndDeclarationsDoNotReplaceBehavior']],
+  ], true),
 ]);

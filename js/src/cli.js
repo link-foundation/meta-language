@@ -10,20 +10,23 @@ import { fileURLToPath } from 'node:url';
 
 import { runGrammarCommand } from './grammar-interchange.js';
 import { SelfTranslationError, selfTranslate, selfTranslationLanguage } from './self-translation.js';
+import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
 
 const USAGE = 'usage: meta-language grammar <command> [options]; run meta-language grammar help\n'
+  + '       meta-language archive <command> [options]; run meta-language archive help\n'
   + '       meta-language translate --to <language> [--from <language>] [--items] <file>\n';
-const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] <file>\n'
+const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] <file>\n'
   + 'Translates a module between JavaScript, TypeScript and Rust; --from defaults to the file\'s extension\n'
   + 'and --items prints each top-level item\'s status instead of the translation.\n';
 
 /** Runs `meta-language translate` over `args`. */
 function runTranslateCommand(args, { readFile }) {
-  const options = { from: null, to: null, items: false, file: null };
+  const options = { from: null, to: null, items: false, semantic: false, file: null };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--help' || arg === '-h') return { exitCode: 0, stdout: TRANSLATE_USAGE, stderr: '' };
     if (arg === '--items') options.items = true;
+    else if (arg === '--semantic') options.semantic = true;
     else if ((arg === '--from' || arg === '--to') && index + 1 < args.length) options[arg.slice(2)] = args[++index];
     else if (!arg.startsWith('--') && options.file === null) options.file = arg;
     else return { exitCode: 2, stdout: '', stderr: `error: unexpected argument ${arg}\n${TRANSLATE_USAGE}` };
@@ -32,7 +35,7 @@ function runTranslateCommand(args, { readFile }) {
   const from = options.from ?? selfTranslationLanguage(options.file.split('.').pop());
   if (from === null) return { exitCode: 2, stdout: '', stderr: `error: pass --from; the extension of ${options.file} names no language\n` };
   try {
-    const result = selfTranslate(readFile(options.file), from, options.to);
+    const result = selfTranslate(readFile(options.file), from, options.to, { semanticTranslation: options.semantic });
     const stdout = options.items
       ? result.items.map(({ term, start, end, status, reason }) => `${start}..${end} ${term} ${status}${reason ? ` (${reason})` : ''}\n`).join('')
       : result.code;
@@ -44,10 +47,11 @@ function runTranslateCommand(args, { readFile }) {
 }
 
 /** Runs the tool over `args` and returns `{ exitCode, stdout, stderr }`. */
-export function runCommandLine(args, { readFile = (file) => readFileSync(file, 'utf8') } = {}) {
+export function runCommandLine(args, { readFile = (file) => readFileSync(file, 'utf8'), readBytes = (file) => readFileSync(file) } = {}) {
   const [group, ...rest] = args;
   if (group === 'grammar') return runGrammarCommand(rest, { readFile });
   if (group === 'translate') return runTranslateCommand(rest, { readFile });
+  if (group === 'archive') return runMetaLanguageArchiveCommand(rest, { readFile, readBytes });
   if (group === '--help' || group === '-h' || group === 'help') return { exitCode: 0, stdout: USAGE, stderr: '' };
   return { exitCode: 2, stdout: '', stderr: group === undefined ? USAGE : `error: unknown command ${group}\n${USAGE}` };
 }

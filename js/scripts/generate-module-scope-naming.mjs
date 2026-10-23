@@ -17,6 +17,9 @@ const sources=['js/src/translation/inert-module-binding-rules.js','js/src/transl
 sources.push('js/src/translation/number-bitwise-rules.js', 'js/src/number-bitwise-program.js',
  'js/scripts/generate-number-bitwise-rules.mjs', 'js/scripts/declaration-dependency-branch-styles.mjs',
  'js/scripts/generate-declaration-dependency-branch-fixture.mjs', 'js/scripts/generate-translation-source-layout.mjs');
+sources.push('js/src/translation/semantic-input-rules.js', 'js/src/meta-language-archive.js',
+ 'js/src/meta-language-archive-cli.js', 'js/src/dynamic-meta-language.js', 'js/src/project-translation.js',
+ 'js/scripts/generate-semantic-input-rules.mjs', 'js/scripts/draft-project-translation.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

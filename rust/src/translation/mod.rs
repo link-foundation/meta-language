@@ -83,6 +83,7 @@ pub mod rocq;
 pub(crate) mod runtime_shell;
 pub(crate) mod runtime_shell_rules;
 pub mod rust;
+pub(crate) mod semantic_input_rules;
 pub(crate) mod rust_character_rules;
 mod rust_const_branch_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;

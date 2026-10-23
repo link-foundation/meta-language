@@ -22,6 +22,10 @@ export * from './global-concept-space.js';
 export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
+export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
+  readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,
+  extendMetaLanguageArchive } from './meta-language-archive.js';
+export { DynamicMetaLanguage, createDynamicMetaLanguage } from './dynamic-meta-language.js';
 export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
 export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
   mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';
@@ -44,6 +48,7 @@ export * from './query-algebra.js';
 export * from './query-plan.js';
 export * from './regions.js';
 export * from './self-translation.js';
+export { draftProjectTranslation, projectTranslationDraftToLinks } from './project-translation.js';
 export { eraseTypeScript } from './typescript-erasure.js';
 /** Project supported TypeScript annotations into the shared frontend's JSDoc form. */
 export function projectTypeScriptTyping(source) {
