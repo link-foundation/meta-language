@@ -855,6 +855,22 @@ owned stream lexed from the complete immutable source. Later caller getters or
 token mutations cannot replace an authenticated occurrence. Initially forged
 tokens still refuse, and ordinary complete inputs retain the same result.
 
+An additive complete-CST scope interpretation recognizes a constant whose
+initializer allocates an empty standard `Map` or `Set`, with or without argument
+parentheses. Every actual module binder must leave the required standard owner
+unshadowed. Evaluated arguments, computed owners, additional eager statements,
+malformed trees and unproved owner bindings refuse. A neighboring unsupported
+deferred function keeps its own obligation while independently checked functions
+can translate. The original literal-binding decisions remain unchanged. Shared
+JavaScript decisions generate the Rust implementation and both checked Links
+archives; six source fixtures retain comments, UTF-8 coordinates and exact
+reverse source restoration. The initializer itself still requires executable
+translation. Native parity and independent generated execution run in CI.
+The standard constructors return before reading an iterator when their iterable
+argument is absent, as specified for
+[Map](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-map-iterable)
+and [Set](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-set-iterable).
+
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
 keyword spellings, in complete source tokens. It derives temporary parser
@@ -4084,6 +4100,9 @@ The repository's serial development driver also provides a final `verification`
 phase. Seventeen read-only checks reconcile live requirement sources before ledger
 access, then check dependency/scope/export inventories, documentation, test
 ownership, generated native rules, source histories and both concept catalogs.
+Its separate registration phase invokes the normal append-only operation,
+complete binding and codec-epoch authors in order before catalog generation.
+A failed author retains its receipt and prevents dependent registration.
 The final source-history check validates all indexed naming documents, their
 source certificates, every current source pin and exact serialization.
 Missing or stale data stops the phase without refreshing it. This consolidates

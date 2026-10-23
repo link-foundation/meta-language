@@ -26,6 +26,11 @@ export function readDevelopmentAuthoringPlan(){
    stage('raw planning sources','experiments/original-link-complete-table-projection/generate-raw-planning-source-history.mjs'),
    stage('Boolean value sources','js/scripts/generate-boolean-value-source-history.mjs'),
   ]},
+  {name:'registration',stages:[
+   stage('canonical source operations','js/scripts/generate-module-scope-naming.mjs',['--section','canonical']),
+   stage('complete source operation bindings','js/scripts/generate-module-scope-naming.mjs',['--section','bindings']),
+   stage('complete binding codec epoch','js/scripts/generate-naming-source-binding-codec-profile.mjs'),
+  ]},
   {name:'naming',stages:[stage('paired canonical concept catalogs','js/scripts/build-concept-records.mjs'),stage('complete additional naming views','js/scripts/generate-own-codebase-baseline-naming-history.mjs',['--additional-inventories'])]},
   {name:'verification',stages:[
    stage('live requirement sources','js/scripts/check-issue-195-sources.mjs',['--online']),
@@ -85,7 +90,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
     for(const phase of plan.phases)console.log(phase.name+': '+phase.stages.map(entry=>entry.id).join(' -> '));
    }else{
     const check=args.at(-1)==='--check';if(check)args.pop();
-    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|naming|verification --receipt output.lino [--check]');
+    assert.ok(args.length===4&&args[0]==='--phase'&&args[2]==='--receipt','usage: refresh.mjs --list | --write-plan | --phase snapshot|history|registration|naming|verification --receipt output.lino [--check]');
     const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
     runDevelopmentAuthoringPhase(plan,args[1],{check,record:operations=>writeFileSync(resolve(args[3]),structuredDataToLino({schemaVersion:1,kind:'author invocation receipt',revision,phase:args[1],check,operations,boundary:plan.boundary}))});
    }

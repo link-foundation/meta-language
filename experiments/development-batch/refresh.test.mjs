@@ -42,6 +42,18 @@ test('authoring failure retains its receipt and stops dependent processes',()=>{
  assert.ok(calls.every(call=>call.args.includes('--max-old-space-size=352')));
 });
 
+test('source registration keeps canonical bindings and codec epochs in dependency order',()=>{
+ const expected=[['js/scripts/generate-module-scope-naming.mjs','--section','canonical'],['js/scripts/generate-module-scope-naming.mjs','--section','bindings'],['js/scripts/generate-naming-source-binding-codec-profile.mjs']];
+ for(const check of [false,true]){
+  const calls=[];
+  runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'registration',{check,execute:(command,args)=>{calls.push(args.slice(4));return{status:0,signal:null};}});
+  assert.deepEqual(calls,expected.map(args=>[...args,...(check?['--check']:[])]));
+ }
+ const calls=[];
+ assert.throws(()=>runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'registration',{execute:(command,args)=>{calls.push(args.slice(4));return{status:7,signal:null};}}),/author failed/u);
+ assert.deepEqual(calls,[expected[0]],'no binding or codec author runs after an operation registration failure');
+});
+
 test('authoring clears inherited target directories and native test switches',()=>{
  const original={PATH:'/retained/tools',CARGO_TARGET_DIR:'/unrelated/build',CARGO_BUILD_TARGET_DIR:'/other/build',NODE_OPTIONS:'--max-old-space-size=8192',CI:'true',TRANSLATION_CHECK_RUST:'1',SELF_TRANSLATION_CHECK_RUST:'1'};
  const selected=developmentAuthoringEnvironment(original);

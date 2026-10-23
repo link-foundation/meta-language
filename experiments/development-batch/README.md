@@ -9,7 +9,9 @@ and establishes no requirement evidence.
 `--list` shows the phases. Each phase invokes existing commands sequentially in
 fresh JavaScript processes. The history phase first captures the complete physical
 workflow succession, retains the grammar-context steps
-around CI/native history and refreshes evidence-translation archives. Naming
+around CI/native history and refreshes evidence-translation archives. Registration
+appends canonical operations, their complete source bindings and the current
+binding codec epoch in order, retaining every earlier row and epoch. Naming
 refreshes both concept catalogs before deriving its supplemental views. Run final
 verification after source-changing authors and manifest refreshes finish.
 
@@ -18,6 +20,7 @@ Use the existing resource and cache wrapper, one phase per bounded invocation:
 ```sh
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase snapshot --receipt /tmp/meta-language-snapshot-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase history --receipt /tmp/meta-language-history-authoring.lino
+env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase registration --receipt /tmp/meta-language-registration-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase naming --receipt /tmp/meta-language-naming-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase verification --receipt /tmp/meta-language-verification.lino
 ```
@@ -35,8 +38,8 @@ unchanged input, ordered decisions and bounded package version.
 `--check` leaves these already read-only commands unchanged.
 
 Append `--check` to authoring phases for their read-only freshness mode. This does
-not replace required targeted controls, source reconciliation, source binding
-registration or the final requirement-manifest refresh. If an author fails,
+not replace required targeted controls, source reconciliation or the final
+requirement-manifest refresh. If an author fails,
 the receipt includes its actual result and no dependent author runs. Inspect
 the error, fix its cause and rerun the phase; earlier generated changes are
 retained for review. Do not run multiple phases concurrently.

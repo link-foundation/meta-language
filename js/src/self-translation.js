@@ -34,6 +34,7 @@ import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acc
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
 import {readInertModuleBindingDeclaration} from './translation/inert-module-bindings.js';
+import {readEmptyStandardCollectionBindingDeclaration} from './translation/empty-module-collections.js';
 import {acceptInertModuleBindingScope} from './translation/inert-module-binding-rules.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
   acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
@@ -512,7 +513,9 @@ function scanItem(text) {
     && at(index + 2).value === '=' && (word(index + 3, 'function') || at(index + 3).value === '('
       || at(index + 3).kind === 'identifier' && at(index + 4).value === '=>');
   const deferredBinding = deferredCandidate ? readDeferredDeclarationBinding(text) : null;
-  const inertBinding = word(index, 'const') ? readInertModuleBindingDeclaration(text) : null;
+  const emptyCollectionCandidate = word(index + 3, 'new') && (word(index + 4, 'Map') || word(index + 4, 'Set'));
+  const inertBinding = word(index, 'const') ? readInertModuleBindingDeclaration(text)
+    ?? (emptyCollectionCandidate ? readEmptyStandardCollectionBindingDeclaration(text) : null) : null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
     index += 1;

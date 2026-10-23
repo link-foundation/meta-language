@@ -49,6 +49,11 @@ computed keys, spreads and shadowed standard owners. It checks the neighboring
 function normally and preserves the original initializer for exact reverse
 translation. That initializer still needs complete executable translation.
 
+Empty standard `Map` and `Set` module constants also retain their binding
+context, including `new Map()` and `new Set` without argument parentheses.
+Shadowed constructors and evaluated arguments refuse. Unsupported neighboring
+function bodies remain explicit translation obligations.
+
 The public `projectTypeScriptTyping(source)` JavaScript function and
 `project_type_script_typing(&source)` Rust function return the same JavaScript
 source string with supported TypeScript function and alias annotations retained

@@ -1,10 +1,314 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlReadInertModuleBindingLoop20Result;
+use super::MlReadInertModuleBindingLoop16Result;
+use super::accept_inert_binding_sequence;
 use super::ml;
 use super::ml_array;
+use super::ml_read_inert_module_binding_loop16;
+use super::read_inert_binding_children;
+use super::read_inert_binding_value;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_inert_module_binding_loop15(
+    terms: &[String],
+    fields: &[String],
+    parents: &[f64],
+    mut values: Vec<bool>,
+    mut at: f64,
+) -> Vec<bool> {
+    loop {
+        if at >= 0f64 {
+            {
+                let term = self::read_required_text_fact(terms, at);
+                {
+                    let children = self::read_inert_binding_children(terms, parents, at);
+                    {
+                        let admitted = false;
+                        {
+                            let admitted_8 = if ((((term == "string") || (term == "number"))
+                                || (term == "true"))
+                                || (term == "false"))
+                                || (term == "null")
+                            {
+                                { true }
+                            } else if term == "array" {
+                                {
+                                    self::accept_inert_binding_sequence(
+                                        terms,
+                                        parents,
+                                        &(values),
+                                        at,
+                                        "[",
+                                        "]",
+                                        "",
+                                    )
+                                }
+                            } else if term == "object" {
+                                {
+                                    self::accept_inert_binding_sequence(
+                                        terms,
+                                        parents,
+                                        &(values),
+                                        at,
+                                        "{",
+                                        "}",
+                                        "pair",
+                                    )
+                                }
+                            } else if term == "pair" {
+                                {
+                                    let key = -1f64;
+                                    {
+                                        let item = -1f64;
+                                        {
+                                            let colons = 0f64;
+                                            {
+                                                let ml_values7 = children;
+                                                {
+                                                    let ml_index7 = self::ml::Big::from_i128(0);
+                                                    {
+                                                        let ml_s25 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
+                                                        match ml_s25 {
+                                                                        self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_2, item_2, colons_2) => {
+                                                                            {
+                                                                                (((key_2 >= 0f64) && (item_2 >= 0f64)) && (colons_2 == 1f64)) && self::read_inert_binding_value(&(values), (parents.len() as f64), item_2)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (term == "unary_expression")
+                                && ((children.len() as f64) == 2f64)
+                            {
+                                {
+                                    let operator =
+                                        self::read_required_number_fact(&(children), 0f64);
+                                    {
+                                        let operand =
+                                            self::read_required_number_fact(&(children), 1f64);
+                                        {
+                                            let operation =
+                                                self::read_required_text_fact(terms, operator);
+                                            {
+                                                ((operation == "-") || (operation == "+"))
+                                                    && ((self::read_required_text_fact(
+                                                        terms, operand,
+                                                    )) == "number")
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (term == "parenthesized_expression")
+                                && ((children.len() as f64) == 3f64)
+                            {
+                                {
+                                    (((self::read_required_text_fact(
+                                        terms,
+                                        self::read_required_number_fact(&(children), 0f64),
+                                    )) == "(")
+                                        && ((self::read_required_text_fact(
+                                            terms,
+                                            self::read_required_number_fact(&(children), 2f64),
+                                        )) == ")"))
+                                        && self::read_inert_binding_value(
+                                            &(values),
+                                            (parents.len() as f64),
+                                            self::read_required_number_fact(&(children), 1f64),
+                                        )
+                                }
+                            } else {
+                                admitted
+                            };
+                            {
+                                let values_2 = {
+                                    let (ml_append_right, ml_append_left) =
+                                        (vec![admitted_8], values);
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                };
+                                {
+                                    let at_2 = at - 1f64;
+                                    {
+                                        (values, at) = (values_2, at_2);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { values };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadInertModuleBindingJoin17 {
+    MlReadInertModuleBindingJoin17Next,
+    MlReadInertModuleBindingJoin17Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadInertModuleBindingLoop19Result {
+    MlReadInertModuleBindingLoop19Done,
+    MlReadInertModuleBindingLoop19Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_inert_module_binding_loop19(
+    terms: &[String],
+    parents: &[f64],
+    ml_values9: &[f64],
+    mut ml_index9: self::ml::Big,
+) -> self::MlReadInertModuleBindingLoop19Result {
+    loop {
+        return if ml_index9 < (self::ml::Big::from_u128(ml_values9.len() as u128)) {
+            {
+                let child = self::ml_array::at(ml_values9, ml_index9.to_index());
+                {
+                    let part = self::read_required_text_fact(terms, child);
+                    if ((part == "[") || (part == "]")) || (part == ",") {
+                        {
+                            let ml_index9_2 = ml_index9.add(&self::ml::Big::from_i128(1));
+                            {
+                                ml_index9 = ml_index9_2;
+                                continue;
+                            }
+                        }
+                    }
+                    {
+                        if part == "array" {
+                            {
+                                let entries =
+                                    self::read_inert_binding_children(terms, parents, child);
+                                if ((entries.len() as f64) != 5f64)
+                                    && ((entries.len() as f64) != 6f64)
+                                {
+                                    self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Return(Vec::<f64>::new())
+                                } else {
+                                    {
+                                        let ml_index9_3 =
+                                            ml_index9.add(&self::ml::Big::from_i128(1));
+                                        {
+                                            ml_index9 = ml_index9_3;
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Return(Vec::<f64>::new())
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadInertModuleBindingLoop18Result {
+    MlReadInertModuleBindingLoop18Done(f64, f64, f64),
+    MlReadInertModuleBindingLoop18Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_inert_module_binding_loop18(
+    terms: &[String],
+    fields: &[String],
+    mut constructor: f64,
+    mut arguments_at: f64,
+    mut news: f64,
+    ml_values8: &[f64],
+    mut ml_index8: self::ml::Big,
+) -> self::MlReadInertModuleBindingLoop18Result {
+    loop {
+        return if ml_index8 < (self::ml::Big::from_u128(ml_values8.len() as u128)) {
+            {
+                let child = self::ml_array::at(ml_values8, ml_index8.to_index());
+                {
+                    let field = self::read_required_text_fact(fields, child);
+                    {
+                        let part = self::read_required_text_fact(terms, child);
+                        if ((field == "constructor") && (part == "identifier"))
+                            && (constructor < 0f64)
+                        {
+                            {
+                                let constructor_2 = child;
+                                {
+                                    let ml_index8_2 = ml_index8.add(&self::ml::Big::from_i128(1));
+                                    {
+                                        (constructor, ml_index8) = (constructor_2, ml_index8_2);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                        {
+                            if ((field == "arguments") && (part == "arguments"))
+                                && (arguments_at < 0f64)
+                            {
+                                {
+                                    let arguments_at_2 = child;
+                                    {
+                                        let ml_index8_3 =
+                                            ml_index8.add(&self::ml::Big::from_i128(1));
+                                        {
+                                            (arguments_at, ml_index8) =
+                                                (arguments_at_2, ml_index8_3);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            {
+                                if part == "new" {
+                                    {
+                                        let news_2 = news + 1f64;
+                                        {
+                                            let ml_index8_4 =
+                                                ml_index8.add(&self::ml::Big::from_i128(1));
+                                            {
+                                                (news, ml_index8) = (news_2, ml_index8_4);
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                                {
+                                    self::MlReadInertModuleBindingLoop18Result::MlReadInertModuleBindingLoop18Return(Vec::<f64>::new())
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlReadInertModuleBindingLoop18Result::MlReadInertModuleBindingLoop18Done(
+                constructor,
+                arguments_at,
+                news,
+            )
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadInertModuleBindingLoop20Result {
+    MlReadInertModuleBindingLoop20Done(f64, f64),
+    MlReadInertModuleBindingLoop20Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -435,13 +739,13 @@ pub fn ml_accept_inert_module_binding_scope_loop23(
                                 {
                                     let ml_index22 = self::ml::Big::from_i128(0);
                                     {
-                                        let ml_s18 =
+                                        let ml_s26 =
                                             self::ml_accept_inert_module_binding_scope_loop24(
                                                 owner,
                                                 &(ml_values22),
                                                 ml_index22,
                                             );
-                                        match ml_s18 {
+                                        match ml_s26 {
                                             self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Done => {
                                                 {
                                                     let at_2 = at + 1f64;
@@ -485,4 +789,59 @@ pub fn ml_accept_inert_module_binding_scope_loop23(
             self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Done
         };
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_empty_collection_binding_children_loop25(
+    terms: &[String],
+    parents: &[f64],
+    mut owner: f64,
+    mut result: Vec<f64>,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if at < (terms.len() as f64) {
+            if (((self::read_required_number_fact(parents, at)) == owner)
+                && ((self::read_required_text_fact(terms, at)) != "comment"))
+                && ((self::read_required_text_fact(terms, at)) != "whitespace")
+            {
+                {
+                    let result_2 = {
+                        let (ml_append_right, ml_append_left) = (vec![at], result);
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
+                    {
+                        let at_2 = at + 1f64;
+                        {
+                            (result, at) = (result_2, at_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let at_3 = at + 1f64;
+                    {
+                        at = at_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadEmptyStandardCollectionModuleBindingJoin35 {
+    MlReadEmptyStandardCollectionModuleBindingJoin35Next,
+    MlReadEmptyStandardCollectionModuleBindingJoin35Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadEmptyStandardCollectionModuleBindingLoop34Result {
+    MlReadEmptyStandardCollectionModuleBindingLoop34Done(f64, f64, f64),
+    MlReadEmptyStandardCollectionModuleBindingLoop34Return(Vec<f64>),
 }

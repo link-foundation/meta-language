@@ -1,18 +1,37 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
 use super::MlAcceptInertModuleBindingScopeLoop23Result;
+use super::MlReadEmptyStandardCollectionModuleBindingJoin31;
+use super::MlReadEmptyStandardCollectionModuleBindingJoin35;
+use super::MlReadEmptyStandardCollectionModuleBindingLoop30Result;
+use super::MlReadEmptyStandardCollectionModuleBindingLoop32Result;
+use super::MlReadEmptyStandardCollectionModuleBindingLoop33Result;
+use super::MlReadEmptyStandardCollectionModuleBindingLoop34Result;
+use super::MlReadEmptyStandardCollectionModuleBindingLoop36Result;
 use super::MlReadInertModuleBindingJoin12;
+use super::MlReadInertModuleBindingJoin17;
 use super::MlReadInertModuleBindingLoop11Result;
 use super::MlReadInertModuleBindingLoop13Result;
 use super::MlReadInertModuleBindingLoop14Result;
+use super::MlReadInertModuleBindingLoop18Result;
+use super::MlReadInertModuleBindingLoop19Result;
+use super::MlReadInertModuleBindingLoop20Result;
 use super::MlReadInertModuleBindingLoop21Result;
-use super::accept_inert_binding_sequence;
 use super::ml;
 use super::ml_accept_inert_module_binding_scope_loop23;
 use super::ml_array;
+use super::ml_read_empty_collection_binding_children_loop25;
+use super::ml_read_empty_standard_collection_module_binding_loop30;
+use super::ml_read_empty_standard_collection_module_binding_loop32;
+use super::ml_read_empty_standard_collection_module_binding_loop33;
+use super::ml_read_empty_standard_collection_module_binding_loop34;
+use super::ml_read_empty_standard_collection_module_binding_loop36;
 use super::ml_read_inert_module_binding_loop11;
 use super::ml_read_inert_module_binding_loop13;
 use super::ml_read_inert_module_binding_loop14;
+use super::ml_read_inert_module_binding_loop15;
+use super::ml_read_inert_module_binding_loop18;
+use super::ml_read_inert_module_binding_loop19;
 use super::ml_read_inert_module_binding_loop20;
 use super::ml_read_inert_module_binding_loop21;
 use super::read_inert_binding_argument;
@@ -379,6 +398,256 @@ pub fn accept_inert_module_binding_scope(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_empty_collection_binding_children(
+    terms: &[String],
+    parents: &[f64],
+    owner: f64,
+) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let at = 0f64;
+            {
+                self::ml_read_empty_collection_binding_children_loop25(
+                    terms, parents, owner, result, at,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_empty_standard_collection_module_binding(
+    terms: &[String],
+    fields: &[String],
+    parents: &[f64],
+    starts: &[f64],
+    ends: &[f64],
+    texts: &[String],
+    errors: &[f64],
+    source_bytes: f64,
+) -> Vec<f64> {
+    if (((((((((terms.len() as f64) < 1f64) || ((terms.len() as f64) > 4096f64))
+        || ((fields.len() as f64) != (terms.len() as f64)))
+        || ((parents.len() as f64) != (terms.len() as f64)))
+        || ((starts.len() as f64) != (terms.len() as f64)))
+        || ((ends.len() as f64) != (terms.len() as f64)))
+        || ((texts.len() as f64) != (terms.len() as f64)))
+        || ((errors.len() as f64) != (terms.len() as f64)))
+        || !(((0f64..=65_536f64).contains(&source_bytes)) && ((source_bytes % 1f64) == 0f64))
+    {
+        Vec::<f64>::new()
+    } else {
+        {
+            let at = 0f64;
+            {
+                let ml_s16 = self::ml_read_empty_standard_collection_module_binding_loop30(
+                    terms,
+                    parents,
+                    starts,
+                    ends,
+                    errors,
+                    source_bytes,
+                    at,
+                );
+                match ml_s16 {
+                    self::MlReadEmptyStandardCollectionModuleBindingLoop30Result::MlReadEmptyStandardCollectionModuleBindingLoop30Done => {
+                        {
+                            let top = self::read_empty_collection_binding_children(terms, parents, 0f64);
+                            {
+let ml_library_inequality_2 = (top.len() as f64) != 1f64 ;
+if ml_library_inequality_2 {
+                                Vec::<f64>::new()
+                            } else {
+                                {
+                                    let declaration = self::read_required_number_fact(&(top), 0f64);
+                                    {
+                                        let ml_s18 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
+                                            {
+                                                let selected = -1f64;
+                                                {
+                                                    let exports = 0f64;
+                                                    {
+                                                        let ml_values26 = self::read_empty_collection_binding_children(terms, parents, declaration);
+                                                        {
+                                                            let ml_index26 = self::ml::Big::from_i128(0);
+                                                            {
+                                                                let ml_s19 = self::ml_read_empty_standard_collection_module_binding_loop36(terms, selected, exports, &(ml_values26), ml_index26);
+                                                                match ml_s19 {
+                                                                    self::MlReadEmptyStandardCollectionModuleBindingLoop36Result::MlReadEmptyStandardCollectionModuleBindingLoop36Done(selected_2, exports_2) => {
+                                                                        if (exports_2 != 1f64) || (selected_2 < 0f64) {
+                                                                            self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Return(Vec::<f64>::new())
+                                                                        } else {
+                                                                            {
+                                                                                let declaration_2 = selected_2;
+                                                                                self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Next(declaration_2)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    self::MlReadEmptyStandardCollectionModuleBindingLoop36Result::MlReadEmptyStandardCollectionModuleBindingLoop36Return(ml_result36) => {
+                                                                        self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Return(ml_result36)
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Next(declaration)
+                                        };
+                                        match ml_s18 {
+                                            self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Next(declaration_3) => {
+                                                {
+let ml_library_inequality_1 = (self::read_required_text_fact(terms, declaration_3)) != "lexical_declaration" ;
+if ml_library_inequality_1 {
+                                                    Vec::<f64>::new()
+                                                } else {
+                                                    {
+                                                        let binding = -1f64;
+                                                        {
+                                                            let constants = 0f64;
+                                                            {
+                                                                let ml_values27 = self::read_empty_collection_binding_children(terms, parents, declaration_3);
+                                                                {
+                                                                    let ml_index27 = self::ml::Big::from_i128(0);
+                                                                    {
+                                                                        let ml_s20 = self::ml_read_empty_standard_collection_module_binding_loop32(terms, binding, constants, &(ml_values27), ml_index27);
+                                                                        match ml_s20 {
+                                                                            self::MlReadEmptyStandardCollectionModuleBindingLoop32Result::MlReadEmptyStandardCollectionModuleBindingLoop32Done(binding_2, constants_2) => {
+                                                                                if (constants_2 != 1f64) || (binding_2 < 0f64) {
+                                                                                    Vec::<f64>::new()
+                                                                                } else {
+                                                                                    {
+                                                                                        let name = -1f64;
+                                                                                        {
+                                                                                            let value = -1f64;
+                                                                                            {
+                                                                                                let equals = 0f64;
+                                                                                                {
+                                                                                                    let ml_values28 = self::read_empty_collection_binding_children(terms, parents, binding_2);
+                                                                                                    {
+                                                                                                        let ml_index28 = self::ml::Big::from_i128(0);
+                                                                                                        {
+                                                                                                            let ml_s21 = self::ml_read_empty_standard_collection_module_binding_loop33(terms, fields, name, value, equals, &(ml_values28), ml_index28);
+                                                                                                            match ml_s21 {
+                                                                                                                self::MlReadEmptyStandardCollectionModuleBindingLoop33Result::MlReadEmptyStandardCollectionModuleBindingLoop33Done(name_2, value_2, equals_2) => {
+                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains("\\") {
+                                                                                                                        Vec::<f64>::new()
+                                                                                                                    } else {
+                                                                                                                        {
+                                                                                                                            let constructor = -1f64;
+                                                                                                                            {
+                                                                                                                                let arguments_at = -1f64;
+                                                                                                                                {
+                                                                                                                                    let news = 0f64;
+                                                                                                                                    {
+                                                                                                                                        let ml_values29 = self::read_empty_collection_binding_children(terms, parents, value_2);
+                                                                                                                                        {
+                                                                                                                                            let ml_index29 = self::ml::Big::from_i128(0);
+                                                                                                                                            {
+                                                                                                                                                let ml_s22 = self::ml_read_empty_standard_collection_module_binding_loop34(terms, fields, constructor, arguments_at, news, &(ml_values29), ml_index29);
+                                                                                                                                                match ml_s22 {
+                                                                                                                                                    self::MlReadEmptyStandardCollectionModuleBindingLoop34Result::MlReadEmptyStandardCollectionModuleBindingLoop34Done(constructor_2, arguments_at_2, news_2) => {
+                                                                                                                                                        if (news_2 != 1f64) || (constructor_2 < 0f64) {
+                                                                                                                                                            Vec::<f64>::new()
+                                                                                                                                                        } else {
+                                                                                                                                                            {
+                                                                                                                                                                let ml_s23 = if arguments_at_2 >= 0f64 {
+                                                                                                                                                                    {
+                                                                                                                                                                        let children = self::read_empty_collection_binding_children(terms, parents, arguments_at_2);
+                                                                                                                                                                        if (((children.len() as f64) != 2f64) || ((self::read_required_text_fact(terms, self::read_required_number_fact(&(children), 0f64))) != "(")) || ((self::read_required_text_fact(terms, self::read_required_number_fact(&(children), 1f64))) != ")") {
+                                                                                                                                                                            self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Return(Vec::<f64>::new())
+                                                                                                                                                                        } else {
+                                                                                                                                                                            self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Next
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                } else {
+                                                                                                                                                                    self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Next
+                                                                                                                                                                };
+                                                                                                                                                                match ml_s23 {
+                                                                                                                                                                    self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Next => {
+                                                                                                                                                                        {
+                                                                                                                                                                            let owner = self::read_required_text_fact(texts, constructor_2);
+                                                                                                                                                                            if owner == "Map" {
+                                                                                                                                                                                vec![name_2, 1f64]
+                                                                                                                                                                            } else if owner == "Set" {
+                                                                                                                                                                                    vec![name_2, 2f64]
+                                                                                                                                                                                } else {
+                                                                                                                                                                                    Vec::<f64>::new()
+                                                                                                                                                                                }
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                    self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Return(ml_result35) => {
+                                                                                                                                                                        ml_result35
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                                                                                    }
+                                                                                                                                                    self::MlReadEmptyStandardCollectionModuleBindingLoop34Result::MlReadEmptyStandardCollectionModuleBindingLoop34Return(ml_result35_2) => {
+                                                                                                                                                        ml_result35_2
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                self::MlReadEmptyStandardCollectionModuleBindingLoop33Result::MlReadEmptyStandardCollectionModuleBindingLoop33Return(ml_result35_3) => {
+                                                                                                                    ml_result35_3
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            self::MlReadEmptyStandardCollectionModuleBindingLoop32Result::MlReadEmptyStandardCollectionModuleBindingLoop32Return(ml_result35_4) => {
+                                                                                ml_result35_4
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+}
+                                            }
+                                            self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Return(ml_result35_5) => {
+                                                ml_result35_5
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+}
+                        }
+                    }
+                    self::MlReadEmptyStandardCollectionModuleBindingLoop30Result::MlReadEmptyStandardCollectionModuleBindingLoop30Return(ml_result36_2) => {
+                        ml_result36_2
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_read_inert_binding_children_loop1(
     terms: &[String],
     parents: &[f64],
@@ -450,7 +719,7 @@ pub fn ml_accept_inert_binding_sequence_loop2(
                 {
                     let term = self::read_required_text_fact(terms, child);
                     {
-                        let ml_s16 = if value {
+                        let ml_s24 = if value {
                             if !(self::read_inert_binding_value(
                                 values,
                                 (parents.len() as f64),
@@ -469,7 +738,7 @@ pub fn ml_accept_inert_binding_sequence_loop2(
                                 self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
                             }
                         };
-                        match ml_s16 {
+                        match ml_s24 {
                             self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next => {
                                 {
                                     let value_2 = !value;
@@ -579,304 +848,4 @@ pub fn ml_read_inert_module_binding_loop16(
             )
         };
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_inert_module_binding_loop15(
-    terms: &[String],
-    fields: &[String],
-    parents: &[f64],
-    mut values: Vec<bool>,
-    mut at: f64,
-) -> Vec<bool> {
-    loop {
-        if at >= 0f64 {
-            {
-                let term = self::read_required_text_fact(terms, at);
-                {
-                    let children = self::read_inert_binding_children(terms, parents, at);
-                    {
-                        let admitted = false;
-                        {
-                            let admitted_8 = if ((((term == "string") || (term == "number"))
-                                || (term == "true"))
-                                || (term == "false"))
-                                || (term == "null")
-                            {
-                                { true }
-                            } else if term == "array" {
-                                {
-                                    self::accept_inert_binding_sequence(
-                                        terms,
-                                        parents,
-                                        &(values),
-                                        at,
-                                        "[",
-                                        "]",
-                                        "",
-                                    )
-                                }
-                            } else if term == "object" {
-                                {
-                                    self::accept_inert_binding_sequence(
-                                        terms,
-                                        parents,
-                                        &(values),
-                                        at,
-                                        "{",
-                                        "}",
-                                        "pair",
-                                    )
-                                }
-                            } else if term == "pair" {
-                                {
-                                    let key = -1f64;
-                                    {
-                                        let item = -1f64;
-                                        {
-                                            let colons = 0f64;
-                                            {
-                                                let ml_values7 = children;
-                                                {
-                                                    let ml_index7 = self::ml::Big::from_i128(0);
-                                                    {
-                                                        let ml_s17 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
-                                                        match ml_s17 {
-                                                                        self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_2, item_2, colons_2) => {
-                                                                            {
-                                                                                (((key_2 >= 0f64) && (item_2 >= 0f64)) && (colons_2 == 1f64)) && self::read_inert_binding_value(&(values), (parents.len() as f64), item_2)
-                                                                            }
-                                                                        }
-                                                                    }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (term == "unary_expression")
-                                && ((children.len() as f64) == 2f64)
-                            {
-                                {
-                                    let operator =
-                                        self::read_required_number_fact(&(children), 0f64);
-                                    {
-                                        let operand =
-                                            self::read_required_number_fact(&(children), 1f64);
-                                        {
-                                            let operation =
-                                                self::read_required_text_fact(terms, operator);
-                                            {
-                                                ((operation == "-") || (operation == "+"))
-                                                    && ((self::read_required_text_fact(
-                                                        terms, operand,
-                                                    )) == "number")
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (term == "parenthesized_expression")
-                                && ((children.len() as f64) == 3f64)
-                            {
-                                {
-                                    (((self::read_required_text_fact(
-                                        terms,
-                                        self::read_required_number_fact(&(children), 0f64),
-                                    )) == "(")
-                                        && ((self::read_required_text_fact(
-                                            terms,
-                                            self::read_required_number_fact(&(children), 2f64),
-                                        )) == ")"))
-                                        && self::read_inert_binding_value(
-                                            &(values),
-                                            (parents.len() as f64),
-                                            self::read_required_number_fact(&(children), 1f64),
-                                        )
-                                }
-                            } else {
-                                admitted
-                            };
-                            {
-                                let values_2 = {
-                                    let (ml_append_right, ml_append_left) =
-                                        (vec![admitted_8], values);
-                                    self::ml_array::append(ml_append_left, ml_append_right)
-                                };
-                                {
-                                    let at_2 = at - 1f64;
-                                    {
-                                        (values, at) = (values_2, at_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { values };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadInertModuleBindingJoin17 {
-    MlReadInertModuleBindingJoin17Next,
-    MlReadInertModuleBindingJoin17Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadInertModuleBindingLoop19Result {
-    MlReadInertModuleBindingLoop19Done,
-    MlReadInertModuleBindingLoop19Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_inert_module_binding_loop19(
-    terms: &[String],
-    parents: &[f64],
-    ml_values9: &[f64],
-    mut ml_index9: self::ml::Big,
-) -> self::MlReadInertModuleBindingLoop19Result {
-    loop {
-        return if ml_index9 < (self::ml::Big::from_u128(ml_values9.len() as u128)) {
-            {
-                let child = self::ml_array::at(ml_values9, ml_index9.to_index());
-                {
-                    let part = self::read_required_text_fact(terms, child);
-                    if ((part == "[") || (part == "]")) || (part == ",") {
-                        {
-                            let ml_index9_2 = ml_index9.add(&self::ml::Big::from_i128(1));
-                            {
-                                ml_index9 = ml_index9_2;
-                                continue;
-                            }
-                        }
-                    }
-                    {
-                        if part == "array" {
-                            {
-                                let entries =
-                                    self::read_inert_binding_children(terms, parents, child);
-                                if ((entries.len() as f64) != 5f64)
-                                    && ((entries.len() as f64) != 6f64)
-                                {
-                                    self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Return(Vec::<f64>::new())
-                                } else {
-                                    {
-                                        let ml_index9_3 =
-                                            ml_index9.add(&self::ml::Big::from_i128(1));
-                                        {
-                                            ml_index9 = ml_index9_3;
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Return(Vec::<f64>::new())
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadInertModuleBindingLoop18Result {
-    MlReadInertModuleBindingLoop18Done(f64, f64, f64),
-    MlReadInertModuleBindingLoop18Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_inert_module_binding_loop18(
-    terms: &[String],
-    fields: &[String],
-    mut constructor: f64,
-    mut arguments_at: f64,
-    mut news: f64,
-    ml_values8: &[f64],
-    mut ml_index8: self::ml::Big,
-) -> self::MlReadInertModuleBindingLoop18Result {
-    loop {
-        return if ml_index8 < (self::ml::Big::from_u128(ml_values8.len() as u128)) {
-            {
-                let child = self::ml_array::at(ml_values8, ml_index8.to_index());
-                {
-                    let field = self::read_required_text_fact(fields, child);
-                    {
-                        let part = self::read_required_text_fact(terms, child);
-                        if ((field == "constructor") && (part == "identifier"))
-                            && (constructor < 0f64)
-                        {
-                            {
-                                let constructor_2 = child;
-                                {
-                                    let ml_index8_2 = ml_index8.add(&self::ml::Big::from_i128(1));
-                                    {
-                                        (constructor, ml_index8) = (constructor_2, ml_index8_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            if ((field == "arguments") && (part == "arguments"))
-                                && (arguments_at < 0f64)
-                            {
-                                {
-                                    let arguments_at_2 = child;
-                                    {
-                                        let ml_index8_3 =
-                                            ml_index8.add(&self::ml::Big::from_i128(1));
-                                        {
-                                            (arguments_at, ml_index8) =
-                                                (arguments_at_2, ml_index8_3);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                            {
-                                if part == "new" {
-                                    {
-                                        let news_2 = news + 1f64;
-                                        {
-                                            let ml_index8_4 =
-                                                ml_index8.add(&self::ml::Big::from_i128(1));
-                                            {
-                                                (news, ml_index8) = (news_2, ml_index8_4);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                {
-                                    self::MlReadInertModuleBindingLoop18Result::MlReadInertModuleBindingLoop18Return(Vec::<f64>::new())
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlReadInertModuleBindingLoop18Result::MlReadInertModuleBindingLoop18Done(
-                constructor,
-                arguments_at,
-                news,
-            )
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadInertModuleBindingLoop20Result {
-    MlReadInertModuleBindingLoop20Done(f64, f64),
-    MlReadInertModuleBindingLoop20Return(Vec<f64>),
 }
