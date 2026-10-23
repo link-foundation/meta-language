@@ -364,7 +364,6 @@ fn translate_module_diagnostic(
         && options.semantic_translation
         && from == "Rust"
         && family(to) == "JavaScript"
-        && options.module_directory.is_empty()
         && options.imports.is_empty()
         && !options.utf16_strings
     {

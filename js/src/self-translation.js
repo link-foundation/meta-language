@@ -242,7 +242,7 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   }
   let wholePublication = rustSharedArrayHandleSourceModel ? readRustSharedArrayHandleModule(text, rustSharedArrayHandleSourceModel) : null;
   if (!wholePublication && semanticTranslation && from === 'Rust' && family(to) === 'JavaScript'
-    && !moduleDirectory.length && !Object.keys(imports).length && !utf16Strings && !referenceSemantics) {
+    && !Object.keys(imports).length && !utf16Strings && !referenceSemantics) {
     try { wholePublication = readIndependentRustModulePublication(text, bytes, parsed, items); }
     catch (error) { if (!(error instanceof TranslationError)) throw error; }
   }

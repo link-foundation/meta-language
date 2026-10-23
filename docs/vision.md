@@ -2646,6 +2646,11 @@ functions receive export aliases using the emitter's real source/target mapping.
 Effectful entry points, other source items and unsupported interpretations retain
 their ordinary item diagnostics. Whole-module source checking and source
 generation do not establish native execution or complete project translation.
+Project-relative directory metadata does not disable this flat source-module
+path: the admitted source has no external namespace assumptions, and every
+function owner is checked within its actual complete module. Directory metadata
+continues to bind relative JavaScript imports, and the separate shared-array
+source interpretation keeps its existing composition requirements.
 
 Finalize each semantic batch before refreshing its generated source histories,
 naming bindings and requirement manifest. The normal authors remain the only
