@@ -8,6 +8,7 @@ import { checkRustScalarLoopProof } from './translation/rust-scalar-loops.js';
 import { readRecordProjection, readRecordProjectionError } from './translation/record-value-rules.js';
 import { readLinkedProgramNumberOperand } from './typed-program-number-projection.js';
 import { readSurfaceReferenceProjectionForm, readSurfaceReferencePayloadOperand } from './translation/surface-reference-analysis-rules.js';
+import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -26,7 +27,8 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   if (value?.k === 'record'
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked record expression has an unrecognized projection field');
   if (Object.hasOwn(TYPED_PROGRAM_LINKS_SCHEMA.expressionOperations, value?.k)
-    && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
+    && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)
+    && !acceptLinkedReferenceMethodOperation(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
   for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {

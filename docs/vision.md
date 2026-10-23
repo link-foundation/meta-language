@@ -3528,6 +3528,43 @@ report contexts retain that obligation and the complete carried source rather
 than failing with an internal exception; this does not establish native
 execution of unsupported mutation.
 
+The shared collection method source draft now admits dense array
+`push`, `pop`, `shift`, `unshift` and `reverse`, Set `add`, `delete`, `clear`
+and `has`, and Map `set`, `delete`, `clear`, `get` and `has` when the actual
+receiver has the shared reference representation. Primitive keys keep
+SameValueZero equality, NaN membership and canonical positive zero; replacement
+keeps insertion order. Mutations change the same allocation and return the
+declared length, optional value, Boolean, undefined or receiver identity.
+The native emitter binds the receiver and every actual argument in source order
+before borrowing mutable storage, including evaluated unused extra arguments.
+Array growth keeps its declared length bound. The construction follows the
+[ECMAScript array operations](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.push)
+and [keyed collection operations](https://tc39.es/ecma262/2025/multipage/keyed-collections.html#sec-map.prototype.set).
+The shared JavaScript rules automatically generate the native target builder;
+host adapters only allocate checked operands and target source. Full typed
+definitions ship as editable Links in both packages, with the existing linked
+reference-operation identities retained in target encoding contracts.
+
+The checked Links boundary has an additive method profile tied to the actual
+receiver kind and reference facet. It reuses ordinary checked method nodes and
+rechecks the full result and operands; the earlier operation union and all
+unknown-operation refusals remain intact. Single-spread copies retain a distinct
+allocation. Shared collection iterators continue to refuse until their live
+ordered entries and tombstones are represented. Dynamic spreads, missing
+undefined arguments, nonprimitive keys, indexed/field writes, callbacks that
+observe mutations, custom prototypes and the independent parsing of complete
+generated Rust runtimes still require their remaining implementation work.
+The existing snapshot callback backend is admitted only after traversing the
+actual checked callback and every reachable known function body under a common
+expression budget. Writes, unknown indirect/external calls and a callback
+receiver parameter retain the live-state obligation. Pure callbacks with the
+element and index parameters retain their previous behavior; an unproved
+callback cannot silently receive stale array contents or a copied identity.
+Lean and Rocq retain their explicit state-model obligations. The new methods
+have future builtin, codec, runtime-parity and native product controls; none
+has executed during the complete draft phase. Their declarations are not
+evidence, and they do not establish full JavaScript or Rust translation.
+
 CI keeps its pinned Lean version when the upstream release index is
 unavailable. A Linux x64 GitHub Actions fallback downloads the same official
 release from GitHub, checks its published SHA-256 before extraction, and checks

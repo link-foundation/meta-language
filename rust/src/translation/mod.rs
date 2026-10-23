@@ -81,6 +81,8 @@ pub(crate) mod record_emission_rules;
 pub(crate) mod record_type_syntax_rules;
 pub(crate) mod record_value_rules;
 pub(crate) mod reference_identity_rules;
+pub(crate) mod reference_method_program;
+pub(crate) mod reference_method_rules;
 pub mod rocq;
 pub(crate) mod runtime_shell;
 pub(crate) mod runtime_shell_rules;

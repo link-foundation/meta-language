@@ -498,3 +498,14 @@ Both adapters retain the original runtime evaluation order. Source formatting
 of the new inference library currently triggers a rustfmt internal whitespace
 error; its author preserves the emitted draft and retains all existing CI gates.
 No behavioral execution or validation has been performed for these changes.
+
+The next source draft connects shared array, Map and Set methods to checked
+method nodes and the JavaScript/Rust emitters. Receiver and argument evaluation
+are explicit before native storage borrowing; aliases, insertion order, NaN
+membership, numeric zero keys and each declared return kind remain represented.
+The complete shared constructor and admission library is generated from
+JavaScript and shipped as typed Links data. Checked-wire admission uses an
+additive actual-receiver profile. Live collection iterators and other missing
+state behavior retain explicit obligations. Future controls compare independent
+builtins, checked text/binary reload, both translators and one native compiled
+product in CI. These controls have only been authored, never executed locally.

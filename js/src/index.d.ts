@@ -961,6 +961,7 @@ export function encodeTypedProgramLinks(
 ): TypedProgramLinks;
 export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
+export function createReferenceMethodProgramLinks(): TypedProgramLinks;
 export function createRegularGrammarInferenceProgramLinks(): TypedProgramLinks;
 export interface RegularGrammarInferenceOptions {
   strategy?: 'rpni' | 'edsm' | 'alergia'; alpha?: number;

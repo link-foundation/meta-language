@@ -13,6 +13,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
+import { checkReferenceMethod } from './reference-methods.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
@@ -1033,7 +1034,10 @@ class Checker {
   }
 
   method(node, env, path, expected) {
-    const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+    const receiver = this.expr(node.object, env, path, undefined);
+    const referenceMethod = checkReferenceMethod(this, node, receiver, env, path);
+    if (referenceMethod) return flattenOption(referenceMethod);
+    const object = this.referenceValue(receiver);
     const args = node.args;
     const count = (minimum, maximum = minimum) => {
       if (args.length < minimum || args.length > maximum) throw unsupported(`method call .${node.op}()`, `.${node.op}() expects ${minimum === maximum ? minimum : `${minimum} to ${maximum}`} arguments`, node.span);

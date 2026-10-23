@@ -40,6 +40,8 @@ mod number_prelude;
 mod optional_values;
 mod primitive_methods;
 mod records;
+mod reference_callbacks;
+mod reference_methods;
 
 use self::arrays::read_array_prelude;
 use self::externals::external_name;

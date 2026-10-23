@@ -153,6 +153,12 @@ fn validate_type_record(
                 kind,
                 value["op"].as_str().unwrap_or_default(),
             )
+            && !crate::translation::reference_method_rules::accept_linked_reference_method_operation(
+                kind,
+                value["op"].as_str().unwrap_or_default(),
+                value["object"]["type"]["kind"].as_str().unwrap_or_default(),
+                value["object"]["type"]["reference"].as_bool() == Some(true),
+            )
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",

@@ -1,5 +1,6 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -468,6 +469,15 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if (e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
+          const receiver = this.expr(e.object);
+          const args = e.args.map(argument => {
+            if (argument === null) throw unsupported('shared collection method argument', 'every source argument needs its actual expression', e.span);
+            return this.expr(argument);
+          });
+          this.state.encode(readReferenceMethodIdentity(e.object.type.kind, e.op), readReferenceMethodStatement());
+          return renderReferenceMethodExpression('JavaScript', e.object.type.kind, e.op, receiver, args, false, '');
+        }
         if (e.op === 'map' && e.args.length === 1 && e.args[0] !== null) return renderArrayFromMapping('JavaScript', this.expr(e.object), this.expr(e.args[0]), 0, '');
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));

@@ -39,6 +39,24 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        if object.ty.is_reference() {
+            let refusal = crate::translation::reference_method_rules::read_reference_method_refusal(
+                object.ty.kind(),
+                operation,
+            );
+            if !refusal.is_empty() {
+                return Err(unsupported("mutable collection iteration", &refusal, span));
+            }
+        }
+        if object.ty.is_reference()
+            && !crate::translation::reference_method_rules::read_reference_method_result(
+                object.ty.kind(),
+                operation,
+            )
+            .is_empty()
+        {
+            return self.check_reference_method(object, operation, args, env, path, span);
+        }
         let object = Self::reference_value(object);
         self.primitive_method_on_checked_receiver(object, operation, args, env, path, span)
     }

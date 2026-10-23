@@ -1,5 +1,9 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
+import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
+import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
+import { readArrayCallbackResultForm } from './array-callback-rules.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -1142,6 +1146,13 @@ class RustEmitter {
   }
 
   method(e) {
+    if (e.object.k === 'referenceRead' && e.object.reference.type.reference && readArrayCallbackResultForm(e.op)) {
+      const callback = e.args[0];
+      if (!callback || !acceptSnapshotCallbackParameters(e.op, callback.type.params.length)
+        || !acceptReadOnlyReferenceCallback(callback, this.program.declarations)) {
+        throw unsupported('shared array callback', 'this callback needs live array slots, effects and the original receiver identity rather than a snapshot', e.span);
+      }
+    }
     if (e.object.type.kind === 'string') {
       const object = this.receiver(e.object);
       const argumentsText = e.args.map((arg, index) => renderPrimitiveMethodArgument('Rust', 'string', e.op, index, arg === null,
@@ -1192,6 +1203,17 @@ class RustEmitter {
 
   expr(e) {
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
+    if (e.k === 'method' && e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
+      this.temporaries += 1;
+      const suffix = String(this.temporaries), receiver = this.expr(e.object);
+      const args = e.args.map(argument => {
+        if (argument === null) throw unsupported('shared collection method argument', 'every source argument needs its actual expression', e.span);
+        return this.expr(argument);
+      });
+      const key = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
+      this.state.encode(readReferenceMethodIdentity(e.object.type.kind, e.op), readReferenceMethodStatement());
+      return renderReferenceMethodExpression('Rust', e.object.type.kind, e.op, receiver, args, key.kind === 'float', suffix);
+    }
     const statefulReceiver = e.array?.type.reference || e.object?.type.reference;
     const referenceOperation = readSurfaceReferenceEmissionOperation(e.k, Boolean(statefulReceiver), Boolean(e.type?.reference));
     if (referenceOperation) throw unsupported(referenceOperation, readSurfaceReferenceEmissionRefusal(referenceOperation), e.span);

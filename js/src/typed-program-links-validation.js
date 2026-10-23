@@ -1,5 +1,6 @@
 import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules.js';
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
+import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -145,7 +146,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && Object.keys(node).some(field => !acceptProgramExpressionField(node.k, field))) throw new TypeError(
         ['tuple', 'tupleIndex'].includes(node.k) ? 'a linked tuple expression has an unrecognized projection field'
           : 'a linked expression contains an unrecognized semantic field');
-    if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op) && !acceptLinkedNumberBitwiseOperation(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
+    if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op) && !acceptLinkedNumberBitwiseOperation(node.k,node.op)
+      && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -301,7 +303,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (node.k === 'stringTest') same(node.search.type, { kind: 'string' }, 'string search type');
       same(node.type, { kind: node.k === 'stringMap' ? 'string' : 'bool' }, 'string operation result type');
     }
-    if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)) throw new TypeError('a linked method has an unsupported receiver type');
+    if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)
+      && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)) throw new TypeError('a linked method has an unsupported receiver type');
     if (node.k === 'optionalPredicate') {
       if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');
       same(node.type, { kind: 'bool' }, 'optional predicate result type');

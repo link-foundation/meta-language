@@ -9,6 +9,16 @@ use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_me
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if let Node::Method { object, op, .. } = &expr.node
+            && object.ty.is_reference()
+            && !crate::translation::reference_method_rules::read_reference_method_result(
+                object.ty.kind(),
+                op,
+            )
+            .is_empty()
+        {
+            return self.reference_method(expr);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&expr.node, Node::Ctor { frozen: true, .. })
         {

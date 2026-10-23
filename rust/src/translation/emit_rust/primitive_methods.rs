@@ -82,6 +82,33 @@ impl RustEmitter<'_> {
         let Node::Method { object, op, args } = &expression.node else {
             unreachable!("primitive method dispatch")
         };
+        if let Node::ReferenceRead { reference } = &object.node
+            && reference.ty.is_reference()
+            && !crate::translation::array_callback_rules::read_array_callback_result_form(op)
+                .is_empty()
+        {
+            let safe = args
+                .first()
+                .and_then(Option::as_ref)
+                .is_some_and(|callback| {
+                    let Type::Function { params, .. } = &callback.ty else {
+                        return false;
+                    };
+                    crate::translation::reference_method_rules::accept_snapshot_callback_parameters(
+                        op,
+                        serde_json::Number::from(params.len())
+                            .as_f64()
+                            .expect("an actual callback parameter count is a Number"),
+                    ) && self.read_only_reference_callback(callback)
+                });
+            if !safe {
+                return Err(unsupported(
+                    "shared array callback",
+                    "this callback needs live array slots, effects and the original receiver identity rather than a snapshot",
+                    expression.span,
+                ));
+            }
+        }
         let receiver = object.ty.kind();
         if receiver == "array" && op == "map" {
             self.preludes.insert(Prelude::Array);

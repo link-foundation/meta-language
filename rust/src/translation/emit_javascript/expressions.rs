@@ -179,6 +179,29 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if object.ty.is_reference()
+                    && !crate::translation::reference_method_rules::read_reference_method_result(
+                        object.ty.kind(),
+                        op,
+                    )
+                    .is_empty()
+                {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared collection method argument",
+                                "every source argument needs its actual expression",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(&crate::translation::reference_method_rules::read_reference_method_identity(object.ty.kind(), op),
+                        &crate::translation::reference_method_rules::read_reference_method_statement());
+                    return Ok(crate::translation::reference_method_rules::render_reference_method_expression("JavaScript", object.ty.kind(), op, &receiver, &arguments, false, ""));
+                }
                 if op == "map"
                     && let [Some(callback)] = args.as_slice()
                 {
