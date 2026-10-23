@@ -42,3 +42,8 @@ export function readDynamicConcreteIdentifier(identifiers, source) {
   }
   return selected;
 }
+
+/** @param {string} concrete @returns {string} */
+export function readDynamicAbstractIdentifier(concrete) {
+  return 'abstract syntax:' + concrete;
+}

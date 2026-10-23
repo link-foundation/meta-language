@@ -14,6 +14,8 @@ import { readDynamicMetaLanguageIdentifier, acceptDynamicSyntaxProjection,
   acceptDynamicParserOption, readDynamicSnapshotIdentifier,
   readDynamicConcreteIdentifier } from './dynamic-meta-language-rules.js';
 import { decoratorSet } from './decorators.js';
+import { createAbstractSyntaxLinks, readAbstractSyntaxLinks } from './syntax-projection.js';
+import { readDynamicAbstractIdentifier } from './dynamic-meta-language-rules.js';
 
 const discoveryIdentifier = readDynamicMetaLanguageIdentifier('definitions');
 const configurationIdentifier = readDynamicMetaLanguageIdentifier('configuration');
@@ -259,13 +261,12 @@ export class DynamicMetaLanguage {
     return parser;
   }
 
-  /** Concrete syntax is always the default. AST callers supply an explicit
-   * projection; the complete original CST and its archive remain available.
+  /** Concrete syntax is always the default. Explicit AST projection retains
+   * actual concrete links and inspectable cst-to-ast decorator records.
    */
   parse(sourceIdentifier, input, options = {}) {
-    const { projection = 'concrete syntax', projectAbstractSyntax, identifier, replaceSnapshot = false, ...settings } = options;
+    const { projection = 'concrete syntax', abstractDecorators, abstractIdentifier, identifier, replaceSnapshot = false, ...settings } = options;
     if (!acceptDynamicSyntaxProjection(projection)) fail('unknown syntax projection');
-    if (projection === 'abstract syntax' && typeof projectAbstractSyntax !== 'function') fail('abstract syntax needs an explicit projection');
     const outcome = this.parser(sourceIdentifier, settings).parseTree(input);
     if (!outcome.tree) return { ...outcome, projection, archive: null };
     const retained = retainedData({ schemaVersion: readDynamicConcreteSyntaxVersion(), sourceIdentifier, projection: 'concrete syntax',
@@ -278,11 +279,21 @@ export class DynamicMetaLanguage {
     const entries = this.entries;
     const selected = identifier ?? readDynamicConcreteIdentifier(entries.map(entry => entry.identifier), sourceIdentifier);
     if (entries.some(entry => entry.identifier === selected && entry.kind !== 'concrete syntax')) fail('concrete syntax identifier collides with another entry point');
-    const entry = { identifier: selected, kind: 'concrete syntax', ...concrete };
-    const archive = extendMetaLanguageArchive(this.#archive, [entry], { ...this.#limits, replace: replaceSnapshot });
-    if (projection === 'concrete syntax') return { ...outcome, projection, archive, concrete };
-    const abstract = projectAbstractSyntax(structuredClone(outcome.tree), { sourceIdentifier, space: this.space });
-    return { ...outcome, tree: abstract, concreteTree: outcome.tree, projection, archive, concrete };
+    if (projection === 'concrete syntax') {
+      const archive = extendMetaLanguageArchive(this.#archive, [{ identifier: selected, kind: 'concrete syntax', ...concrete }],
+        { ...this.#limits, replace: replaceSnapshot });
+      return { ...outcome, projection, archive, concrete };
+    }
+    const abstract = createAbstractSyntaxLinks(concrete.network, concrete.root, { ...this.#limits,
+      treePath: ['outcome', 'tree'], decorators: abstractDecorators ?? settings.decorators });
+    const name = abstractIdentifier ?? readDynamicAbstractIdentifier(selected);
+    if (name === selected || entries.some(entry => entry.identifier === name && entry.kind !== 'abstract syntax')) fail('abstract syntax identifier collides with another entry point');
+    const archive = extendMetaLanguageArchive(this.#archive, [
+      { identifier: selected, kind: 'concrete syntax', network: abstract.network, root: concrete.root },
+      { identifier: name, kind: 'abstract syntax', network: abstract.network, root: abstract.root },
+    ], { ...this.#limits, replace: replaceSnapshot });
+    return { ...outcome, tree: readAbstractSyntaxLinks(abstract.network, abstract.root, this.#limits).tree,
+      concreteTree: outcome.tree, projection, archive, concrete, abstract };
   }
 
   /** A new session retains prior source identities, complete old roots and

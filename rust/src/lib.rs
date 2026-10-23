@@ -7,6 +7,7 @@ mod concept_distinctions;
 mod concept_ontology;
 mod concept_records;
 pub mod configuration;
+mod decorator_data;
 pub mod decorators;
 mod discovered_concept_links;
 mod discovered_concept_rules;
@@ -82,6 +83,8 @@ pub mod structured_data_links;
 pub mod structured_data_records;
 mod structured_text_parser;
 pub mod substitution;
+mod syntax_projection;
+mod syntax_projection_rules;
 pub mod transform;
 pub mod translation;
 pub mod translation_rules;
@@ -387,6 +390,11 @@ pub use structured_data_records::{
 pub use substitution::{
     SubstitutionBindings, SubstitutionReport, SubstitutionRule, SubstitutionValue,
     VariableSubstitutionRule,
+};
+pub use syntax_projection::{
+    AbstractSyntaxChild, AbstractSyntaxLinks, AbstractSyntaxNode, AbstractSyntaxOptions,
+    ReadAbstractSyntaxLinks, SyntaxProjectionLimits, create_abstract_syntax_links,
+    read_abstract_syntax_links,
 };
 pub use transform::{
     QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,

@@ -1385,8 +1385,8 @@ bind these exact contexts without asserting semantic equivalence. Snapshot
 replacement is explicit, and structured encoders use the caller's finite budgets.
 Shared archive and snapshot policies are generated automatically from JavaScript;
 native adapters copy actual graph structures and invoke the existing compiler
-and concept verifier. Formal definitions for the remaining concepts, complete
-built-in abstract projections, link-cli workload integration and reconstruction
+and concept verifier. Formal definitions for the remaining concepts, language
+specific semantic abstractions, link-cli workload integration and reconstruction
 measurements remain implementation obligations. These drafts have no execution
 evidence.
 The current binary graph primitive writes a versioned meta-language archive of
@@ -1831,6 +1831,30 @@ Concrete syntax is the default for every supported language and every nested
 region. Abstract syntax is an explicitly selected projection or mode with
 provenance to the complete concrete tree; omitting that selection always keeps
 the full concrete representation.
+
+The paired generic AST draft projects complete structured CST graphs through
+shared automatically translated membership policies. Every abstract node points
+directly to its actual concrete object. Each child records the original concrete
+container and reference position; embedding roots, physical source children and
+all alternative roots retain distinct relationship roles. Original concrete links
+and identities remain present. Default projection removes marked trivia while
+retaining every other token, including operators, and every error/missing record.
+Inspectable `cst-to-ast` decorators may explicitly change or drop projected
+records. Their complete records and tree-selection path stay linked in the
+artifact; dynamic sessions save concrete and abstract roots in the same source
+group. No host callback supplies the default abstraction.
+
+Projection readers accept editable abstract relationships with explicit source
+provenance, check actual original child origins, reject cycles and preserve shared
+node identities. Finite node/reference/byte, materialized-property and actual
+depth limits cover reconstruction, including cached subgraphs. Exact UTF-16
+property strings remain structured values. The native decorator host transports
+each code unit bijectively to one private scalar before invoking the existing
+equality/replacement algorithm, then restores the original units. This changes
+no public source or stored decorator data. Native decorator declarations still
+need the existing exact supported text profile; broader declared-value profiles
+remain explicit work. These source drafts have no behavioral observations and
+do not establish language-specific semantic abstraction or full translation.
 
 An inspectable linked `any-grammar` or `all-grammar` selection rule invokes
 supported grammar definitions recursively through the same algorithms and

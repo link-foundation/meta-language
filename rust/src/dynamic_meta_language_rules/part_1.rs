@@ -309,6 +309,12 @@ pub fn read_dynamic_concrete_identifier(identifiers: &[String], source: &str) ->
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_dynamic_abstract_identifier(concrete: &str) -> String {
+    format!("abstract syntax:{}", concrete.to_owned())
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_read_dynamic_snapshot_identifier_loop1(
     identifiers: &[String],
     prefix: &str,

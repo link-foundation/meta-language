@@ -5,7 +5,7 @@ use crate::dynamic_meta_language_rules::{
     read_dynamic_meta_language_identifier,
 };
 use crate::grammar::feature_runtime::{
-    FeatureParseOptions, ParseOutcome, SyntaxTree, check_grammar_selection_mapped_tree,
+    FeatureParseOptions, ParseOutcome, check_grammar_selection_mapped_tree,
 };
 use crate::{
     FormalConceptArchive, GlobalConceptOptions, GlobalConceptSource, GlobalConceptSpaceParser,
@@ -47,6 +47,10 @@ pub struct DynamicParseOptions {
     pub parser: FeatureParseOptions,
     /// Concrete syntax or an explicitly supplied abstract projection.
     pub projection: String,
+    /// Optional AST decorator override; otherwise inherit parser decorators.
+    pub abstract_decorators: Option<crate::DecoratorSet>,
+    /// Optional separate identity for the saved linked AST.
+    pub abstract_identifier: Option<String>,
     /// Optional stable name for the saved complete concrete tree.
     pub identifier: Option<String>,
     /// Explicitly replace an existing concrete snapshot with that name.
@@ -57,6 +61,8 @@ impl Default for DynamicParseOptions {
         Self {
             parser: FeatureParseOptions::default(),
             projection: "concrete syntax".to_owned(),
+            abstract_decorators: None,
+            abstract_identifier: None,
             identifier: None,
             replace_snapshot: false,
         }
@@ -74,8 +80,10 @@ pub struct DynamicParseResult {
     pub archive: Option<MetaLanguageArchive>,
     /// Actual retained concrete syntax data graph.
     pub concrete: Option<StructuredDataLinks>,
-    /// Optional caller projection; the original concrete tree stays in outcome.
-    pub abstract_tree: Option<Value>,
+    /// Optional linked AST; the original concrete tree stays in outcome.
+    pub abstract_syntax: Option<crate::AbstractSyntaxLinks>,
+    /// Reloaded AST nodes with actual concrete relationship provenance.
+    pub abstract_tree: Option<crate::ReadAbstractSyntaxLinks>,
 }
 
 /// Derived parsers read a private immutable linked snapshot. Exported graphs
@@ -284,7 +292,7 @@ impl DynamicMetaLanguage {
     }
 
     /// Parse concrete syntax by default and retain its complete linked product.
-    /// An explicit abstraction receives an immutable concrete tree.
+    /// An explicit abstraction preserves actual concrete links and decorators.
     ///
     /// # Errors
     /// Refuses invalid projections, archived contexts or resource violations.
@@ -293,27 +301,24 @@ impl DynamicMetaLanguage {
         source_identifier: &str,
         input: &[u8],
         options: &DynamicParseOptions,
-        project_abstract_syntax: Option<&dyn Fn(&SyntaxTree, &Value) -> Result<Value, String>>,
     ) -> Result<DynamicParseResult, String> {
         if !accept_dynamic_syntax_projection(&options.projection) {
             return Err(fail("unknown syntax projection"));
-        }
-        if options.projection == "abstract syntax" && project_abstract_syntax.is_none() {
-            return Err(fail("abstract syntax needs an explicit projection"));
         }
         let outcome = self
             .parser(source_identifier, options.parser.clone())?
             .parse_tree(input, &FeatureParseOptions::default())
             .map_err(|error| error.to_string())?;
-        let Some(tree) = outcome.tree.as_ref() else {
+        if outcome.tree.is_none() {
             return Ok(DynamicParseResult {
                 outcome,
                 projection: options.projection.clone(),
                 archive: None,
                 concrete: None,
+                abstract_syntax: None,
                 abstract_tree: None,
             });
-        };
+        }
         let saved = public_tree::outcome(&outcome, self.depth_limit)?;
         if outcome.source_planes.is_some() {
             check_grammar_selection_mapped_tree(&saved, &options.parser)
@@ -346,31 +351,84 @@ impl DynamicMetaLanguage {
                 "concrete syntax identifier collides with another entry point",
             ));
         }
+        let abstract_syntax = if options.projection == "abstract syntax" {
+            Some(crate::create_abstract_syntax_links(
+                &concrete.network,
+                concrete.root,
+                &crate::AbstractSyntaxOptions {
+                    tree_path: vec!["outcome".to_owned(), "tree".to_owned()],
+                    decorators: options
+                        .abstract_decorators
+                        .clone()
+                        .unwrap_or_else(|| options.parser.decorators.clone()),
+                    limits: crate::SyntaxProjectionLimits {
+                        graph: self.limits,
+                        depth_limit: self.depth_limit,
+                    },
+                },
+            )?)
+        } else {
+            None
+        };
+        let carrier = Arc::new(
+            abstract_syntax
+                .as_ref()
+                .map_or_else(|| concrete.network.clone(), |value| value.network.clone()),
+        );
         let entry = MetaLanguageArchiveEntry {
-            identifier,
+            identifier: identifier.clone(),
             kind: "concrete syntax".to_owned(),
-            network: Arc::new(concrete.network.clone()),
+            network: Arc::clone(&carrier),
             root: concrete.root,
         };
+        let mut entries = vec![entry];
+        if let Some(abstract_syntax) = &abstract_syntax {
+            let name = options.abstract_identifier.clone().unwrap_or_else(|| {
+                crate::dynamic_meta_language_rules::read_dynamic_abstract_identifier(&identifier)
+            });
+            if name == identifier
+                || self
+                    .entries
+                    .iter()
+                    .any(|entry| entry.identifier == name && entry.kind != "abstract syntax")
+            {
+                return Err(fail(
+                    "abstract syntax identifier collides with another entry point",
+                ));
+            }
+            entries.push(MetaLanguageArchiveEntry {
+                identifier: name,
+                kind: "abstract syntax".to_owned(),
+                network: Arc::clone(&carrier),
+                root: abstract_syntax.root,
+            });
+        }
         let archive = extend_meta_language_archive(
             &self.archive,
-            &[entry],
+            &entries,
             options.replace_snapshot,
             &[],
             self.limits,
         )?;
-        let abstract_tree = if options.projection == "abstract syntax" {
-            Some(project_abstract_syntax.ok_or_else(|| {
-                fail("abstract syntax needs an explicit projection")
-            })?(tree, &self.space)?)
-        } else {
-            None
-        };
+        let abstract_tree = abstract_syntax
+            .as_ref()
+            .map(|value| {
+                crate::read_abstract_syntax_links(
+                    &value.network,
+                    value.root,
+                    crate::SyntaxProjectionLimits {
+                        graph: self.limits,
+                        depth_limit: self.depth_limit,
+                    },
+                )
+            })
+            .transpose()?;
         Ok(DynamicParseResult {
             outcome,
             projection: options.projection.clone(),
             archive: Some(archive),
             concrete: Some(concrete),
+            abstract_syntax,
             abstract_tree,
         })
     }

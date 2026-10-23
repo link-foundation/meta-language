@@ -60,6 +60,7 @@ export {createNumberBitwiseProgramLinks} from './number-bitwise-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';
+export * from './syntax-projection.js';
 export * from './sql-adapter.js';
 export * from './substitution.js';
 export { encodeStructuredDataLinks, decodeStructuredDataLinks, structuredDataToLino, readStructuredDataLino } from './structured-data-links.js';

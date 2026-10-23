@@ -2008,6 +2008,28 @@ export class DynamicMetaLanguage {
 }
 export function createDynamicMetaLanguage(sources: GlobalConceptSource[], options?: DynamicMetaLanguageOptions): DynamicMetaLanguage;
 
+export interface SyntaxProjectionLimits extends MetaLanguageArchiveLimits { depthLimit?: number }
+export interface AbstractSyntaxOptions extends SyntaxProjectionLimits {
+  treePath?: string[];
+  decorators?: DecoratorInput;
+}
+export interface AbstractSyntaxLinks { network: LinkNetwork; root: LinkId; concreteRoot: LinkId }
+export interface AbstractSyntaxNode {
+  id: LinkId;
+  origin: LinkId;
+  properties: Record<string, string>;
+  children: Array<{ role: string; container: LinkId; index: number; node: AbstractSyntaxNode }>;
+}
+export interface ReadAbstractSyntaxLinks {
+  concreteRoot: LinkId;
+  tree: AbstractSyntaxNode | null;
+  settings: { schemaVersion: 1; treePath: string[]; decorators: Decorator[] };
+}
+export function createAbstractSyntaxLinks(network: LinkNetwork | StructuredDataLinksArchive['network'],
+  root: LinkIdValue, options?: AbstractSyntaxOptions): AbstractSyntaxLinks;
+export function readAbstractSyntaxLinks(network: LinkNetwork, root: LinkIdValue,
+  options?: SyntaxProjectionLimits): ReadAbstractSyntaxLinks;
+
 export interface ProjectTranslationSource {
   identifier: string;
   language: string;
