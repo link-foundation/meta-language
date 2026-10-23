@@ -113,6 +113,8 @@ export type SelfTranslationSignature =
   | { readonly k: 'const'; readonly name: string; readonly type: SelfTranslationType; readonly literal: boolean };
 
 export interface SelfTranslationOptions {
+  /** Selects an independently checked standard Rust shared-array source interpretation. */
+  readonly rustSharedArrayHandleSourceModel?: '' | 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
   /** Uses one UTF-16 string representation across all emitted module items. */
   readonly utf16Strings?: boolean;
   /** Forces shared reference values across module items; observable identity and mutation also select them automatically. */
@@ -916,6 +918,8 @@ export function createTypedProgramLinks(
   source: string,
   language: string,
   options?: { provenance?: unknown; utf16Strings?: boolean; context?: object;
+    /** Imports one explicitly selected standard Rust shared-array source domain. */
+    rustSharedArrayHandleSourceModel?: 'standard Rust shared array identity handles 1' | 'standard Rust shared array identity handles 2';
     rustArrayResultModel?: 'immutable fresh scalar vector results 1';
     rustCompletionModel?: 'closed guarded function returns 1';
     /** Retains const qualification on closed primitive predicates; no compile-time evaluation requests. */

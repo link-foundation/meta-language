@@ -834,6 +834,23 @@ nine cases. JavaScript controls additionally compare every fresh payload cell,
 including signed zero and Unicode text, after actual Rust parsing and text/binary
 Links reloads. Full native execution and emitted-field parity remain CI checks.
 
+The additive `standard Rust shared array identity handles 2` source profile also
+admits fully qualified `std::rc::Rc::clone(&value)`. The actual standard owner,
+one immutable source borrow and the complete shared scalar-array domain must
+be proved. Nested clones retain alias identity; borrowed call operands evaluate
+once in source order. The operation creates no new payload allocation, following
+the [standard Rc clone contract](https://doc.rust-lang.org/std/rc/struct.Rc.html#impl-Clone-for-Rc%3CT,+A%3E).
+Mutable or escaping borrows, alternate owners and wrong argument counts refuse.
+The first profile and its original admission declaration keep their exact domain;
+two additive source-qualified decisions select the new interpretation and its
+borrowed clone. The original sixteen operation records and source bindings stay
+an unchanged prefix. Both runtimes use the same generated decisions and scalar
+fixtures, with full native compilation and emitted-field parity required in CI.
+Source-free text and binary reloads and exact source restoration remain required.
+Public self-translation and semantic graph options declare both selected source
+models. Ten shared refusal inputs exercise parsing, whole-module publication
+and signature discovery in each runtime.
+
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
 keyword spellings, in complete source tokens. It derives temporary parser
@@ -4033,6 +4050,11 @@ current source module exactly once, matching commit and source hashes, both
 translation comparisons and every report assertion. No partial report counts as
 success. The thirty-minute job deadline and two-worker limit remain unchanged;
 the original eight-cell command remains supported. Actual timing requires CI.
+CI 39878097119 passed all sixteen physical report jobs. Complete certified
+workflow predecessors keep the older evidence-partition conservation control
+on its exact original bytes. Both committed workflow versions and every report
+edit are independently checked; unknown successor bytes receive no historical
+view. Actual current report coverage still uses the sixteen-part controls.
 
 The raw-oracle runner may reuse a successfully verified base emission profile
 within one process only after comparing every complete historical/current
@@ -4050,6 +4072,10 @@ naming and source archives after CI source repairs. Catalog authority still
 requires exact canonical data and actual tooling owners. Lower peak allocation
 changes evaluation order only; every foundation rejection and source assertion
 remains mandatory.
+Canonical tooling counts exact UTF-8 input bytes without allocating complete
+encoded copies. UTF-16 surrogate replacement and every existing physical and
+expanded byte limit retain their original behavior. Boundary controls compare
+the active UTF-8 encoder, including paired and unpaired surrogates.
 The repository's serial development driver also provides a final `verification`
 phase. Sixteen read-only checks reconcile live requirement sources before ledger
 access, then check dependency/scope/export inventories, documentation, test

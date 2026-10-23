@@ -192,7 +192,7 @@ fn parse_rust_with_selected_profiles(
         pure_unit_call: pure_unit_call_model,
         local_value_state: local_value_state_model,
     } = profiles;
-    if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_model(
+    if !super::rust_shared_array_handle_rules::accept_rust_shared_array_handle_source_interpretation(
         shared_array_handle_source_model,
     ) {
         return Err(unsupported(

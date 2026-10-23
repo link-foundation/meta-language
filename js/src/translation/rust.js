@@ -1,4 +1,4 @@
-import {acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
+import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
   noteRustSharedArrayHandleBorrow,readRustSharedArrayHandleMethod,readRustSharedArrayHandleConstructor,

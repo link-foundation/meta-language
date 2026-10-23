@@ -38,6 +38,11 @@ test('bootstrap canonical data readers share exact values and strict graph valid
   const two = structuredDataRecordToLino([shared, shared], namespace) + structuredDataRecordToLino([shared, shared]);
   assert.ok(Buffer.byteLength(two) < 4096);
   assert.throws(() => readBootstrapStructuredDataRecords(two, { nodeLimit: 10, byteLimit: 4096 }), /expanded.*resource/);
+  for(const text of ['plain\n','é\n','🌍\n','\ud800\n','\udc00\n','\ud800\udc00\n','\0\n']){
+    const bytes=new TextEncoder().encode(text).length;
+    assert.throws(()=>readBootstrapStructuredDataLino(text,{byteLimit:bytes-1}),/input byte resource limit exceeded/);
+    assert.throws(()=>readBootstrapStructuredDataLino(text,{byteLimit:bytes}),/not a canonical owned data statement/);
+  }
 });
 
 test('cleanup before npm installation writes canonical reports using only repository leaf modules', t => {

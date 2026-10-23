@@ -67,6 +67,9 @@ fn compiled(source: &str) -> String {
     result.stdout
 }
 fn contract(source: &str, call: &str) -> Value {
+    contract_with_source_model(source, call, MODEL, "JavaScript")
+}
+fn contract_with_source_model(source: &str, call: &str, model: &str, language: &str) -> Value {
     let script = r#"
 import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';
 import {parseRust} from './js/src/translation/rust.js';
@@ -74,8 +77,8 @@ import {checkProgram} from './js/src/translation/check.js';
 import {emitJavaScript} from './js/src/translation/emit-javascript.js';
 import {emitRust} from './js/src/translation/emit-rust.js';
 import {structuredDataToLino} from './js/src/structured-data-links.js';
-const model='standard Rust shared array identity handles 1';
-const library=selfTranslate(process.argv[1],'JavaScript','Rust',{referenceSemantics:true}).code;
+const model=process.argv[3]??'standard Rust shared array identity handles 1';
+const library=process.argv[4]==='Rust'?process.argv[1]:selfTranslate(process.argv[1],'JavaScript','Rust',{referenceSemantics:true}).code;
 const source=library+'\nfn main(){println!("{}",'+process.argv[2]+'());}\n';
 const surface=parseRust(source,{sharedArrayHandleSourceModel:model}),program=checkProgram(surface);
 const publication=selfTranslate(library,'Rust','JavaScript',{rustSharedArrayHandleSourceModel:model});
@@ -105,9 +108,124 @@ console.log(structuredDataToLino({source,library,surface:surfaceContract(surface
         script,
         source,
         call,
+        model,
+        language,
     ]));
     assert!(result.ok, "{}", result.stderr);
     read_structured_data_lino(&result.stdout).unwrap()
+}
+fn assert_shared_array_case(row: &Value, model: &str, language: &str) {
+    let call = row["call"].as_str().unwrap();
+    let expected = format!("{}\n", row["expected"].as_bool().unwrap());
+    let source = row["source"].as_str().unwrap();
+    assert_eq!(
+        observe(&format!(
+            "{}\nconsole.log({call}());",
+            row["javascriptSource"].as_str().unwrap_or(source),
+        )),
+        expected,
+        "independent original JavaScript"
+    );
+    let contract = if language == "JavaScript" {
+        contract(source, call)
+    } else {
+        contract_with_source_model(source, call, model, language)
+    };
+    let input = contract["source"].as_str().unwrap();
+    assert_eq!(
+        compiled(input),
+        expected,
+        "independent actual Rust source, with its explicit fixture entry point"
+    );
+    let surface = parse_rust_with_shared_array_handle_source_model(input, model).unwrap();
+    assert_eq!(serde_json::to_value(&surface).unwrap(), contract["surface"]);
+    let program = check_program(&surface).unwrap();
+    let packet = encode_typed_program_links(&program).unwrap();
+    let archives = [
+        LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
+        decode_link_network_binary(
+            &encode_link_network_binary(&packet.network, BinaryLinksOptions::default()).unwrap(),
+            BinaryLinksOptions::default(),
+        )
+        .unwrap(),
+    ];
+    for network in archives {
+        let restored = decode_typed_program_links(&network, packet.root).unwrap();
+        assert_eq!(restored, program);
+        encode_typed_program_links(&restored).unwrap();
+        let javascript = emit_javascript(&restored).unwrap();
+        let rust = emit_rust(&restored).unwrap();
+        // Emitted's public Serde contract deliberately omits these internal
+        // ordered fields; compare their actual values independently.
+        assert_eq!(
+            serde_json::to_value(&javascript.definitions).unwrap(),
+            contract["javascript"]["definitions"]
+        );
+        assert_eq!(
+            serde_json::to_value(&javascript.preludes).unwrap(),
+            contract["javascript"]["preludes"]
+        );
+        assert_eq!(
+            serde_json::to_value(&rust.definitions).unwrap(),
+            contract["rust"]["definitions"]
+        );
+        assert_eq!(
+            serde_json::to_value(&rust.preludes).unwrap(),
+            contract["rust"]["preludes"]
+        );
+        for field in [
+            "language",
+            "text",
+            "mappings",
+            "assumptions",
+            "encodings",
+            "theorems",
+            "entry",
+        ] {
+            assert_eq!(
+                serde_json::to_value(&javascript).unwrap()[field],
+                contract["javascript"][field],
+                "complete JavaScript field {field}"
+            );
+            assert_eq!(
+                serde_json::to_value(&rust).unwrap()[field],
+                contract["rust"][field],
+                "complete Rust field {field}"
+            );
+        }
+        assert_eq!(observe(&javascript.text), expected);
+        assert_eq!(compiled(&rust.text), expected);
+    }
+    let library = contract["library"].as_str().unwrap();
+    assert!(
+        parse_rust(library).is_err(),
+        "legacy source interpretation remains closed"
+    );
+    let options = SelfTranslationOptions {
+        rust_shared_array_handle_source_model: model.to_owned(),
+        ..SelfTranslationOptions::default()
+    };
+    let publication = self_translate_with(library, "Rust", "JavaScript", &options).unwrap();
+    assert_eq!(
+        publication.code,
+        contract["publication"]["code"].as_str().unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(self_translation_signatures(library, "Rust", &options).unwrap())
+            .unwrap(),
+        contract["signatures"]
+    );
+    assert_eq!(
+        self_translate(&publication.code, "JavaScript", "Rust")
+            .unwrap()
+            .code,
+        library
+    );
+    let created=meta_language::typed_program_links::create_typed_program_links_with_rust_shared_array_handle_source_model(input,"Rust",model,None).unwrap();
+    assert_eq!(
+        decode_typed_program_links(&created.network, created.root).unwrap(),
+        program
+    );
 }
 #[test]
 fn complete_actual_shared_array_sources_keep_independent_behavior_and_full_runtime_parity() {
@@ -117,110 +235,53 @@ fn complete_actual_shared_array_sources_keep_independent_behavior_and_full_runti
     ))
     .unwrap();
     for row in policy["cases"].as_array().unwrap() {
-        let call = row["call"].as_str().unwrap();
-        let expected = format!("{}\n", row["expected"].as_bool().unwrap());
-        let source = row["source"].as_str().unwrap();
-        assert_eq!(
-            observe(&format!("{source}\nconsole.log({call}());")),
-            expected,
-            "independent original JavaScript"
-        );
-        let contract = contract(source, call);
-        let input = contract["source"].as_str().unwrap();
-        assert_eq!(
-            compiled(input),
-            expected,
-            "independent actual Rust source, with its explicit fixture entry point"
-        );
-        let surface = parse_rust_with_shared_array_handle_source_model(input, MODEL).unwrap();
-        assert_eq!(serde_json::to_value(&surface).unwrap(), contract["surface"]);
-        let program = check_program(&surface).unwrap();
-        let packet = encode_typed_program_links(&program).unwrap();
-        let archives = [
-            LinkNetwork::from_lino(&packet.network.to_lino()).unwrap(),
-            decode_link_network_binary(
-                &encode_link_network_binary(&packet.network, BinaryLinksOptions::default())
-                    .unwrap(),
-                BinaryLinksOptions::default(),
-            )
-            .unwrap(),
-        ];
-        for network in archives {
-            let restored = decode_typed_program_links(&network, packet.root).unwrap();
-            assert_eq!(restored, program);
-            encode_typed_program_links(&restored).unwrap();
-            let javascript = emit_javascript(&restored).unwrap();
-            let rust = emit_rust(&restored).unwrap();
-            // Emitted's public Serde contract deliberately omits these internal
-            // ordered fields; compare their actual values independently.
-            assert_eq!(
-                serde_json::to_value(&javascript.definitions).unwrap(),
-                contract["javascript"]["definitions"]
-            );
-            assert_eq!(
-                serde_json::to_value(&javascript.preludes).unwrap(),
-                contract["javascript"]["preludes"]
-            );
-            assert_eq!(
-                serde_json::to_value(&rust.definitions).unwrap(),
-                contract["rust"]["definitions"]
-            );
-            assert_eq!(
-                serde_json::to_value(&rust.preludes).unwrap(),
-                contract["rust"]["preludes"]
-            );
-            for field in [
-                "language",
-                "text",
-                "mappings",
-                "assumptions",
-                "encodings",
-                "theorems",
-                "entry",
-            ] {
-                assert_eq!(
-                    serde_json::to_value(&javascript).unwrap()[field],
-                    contract["javascript"][field],
-                    "complete JavaScript field {field}"
-                );
-                assert_eq!(
-                    serde_json::to_value(&rust).unwrap()[field],
-                    contract["rust"][field],
-                    "complete Rust field {field}"
-                );
-            }
-            assert_eq!(observe(&javascript.text), expected);
-            assert_eq!(compiled(&rust.text), expected);
-        }
-        let library = contract["library"].as_str().unwrap();
+        assert_shared_array_case(row, MODEL, "JavaScript");
+    }
+}
+#[test]
+fn associated_shared_array_clones_keep_independent_behavior_and_full_runtime_parity() {
+    versions();
+    let policy = read_structured_data_lino(include_str!(
+        "../../src/data/rust-shared-array-handles.lino"
+    ))
+    .unwrap();
+    let model = policy["associatedCloneModel"].as_str().unwrap();
+    assert_eq!(model, "standard Rust shared array identity handles 2");
+    assert_eq!(policy["associatedCloneCases"].as_array().unwrap().len(), 3);
+    for row in policy["associatedCloneCases"].as_array().unwrap() {
+        assert_shared_array_case(row, model, "Rust");
         assert!(
-            parse_rust(library).is_err(),
-            "legacy source interpretation remains closed"
+            parse_rust_with_shared_array_handle_source_model(
+                row["source"].as_str().unwrap(),
+                MODEL,
+            )
+            .is_err()
         );
-        let options = SelfTranslationOptions {
-            rust_shared_array_handle_source_model: MODEL.to_owned(),
-            ..SelfTranslationOptions::default()
-        };
-        let publication = self_translate_with(library, "Rust", "JavaScript", &options).unwrap();
-        assert_eq!(
-            publication.code,
-            contract["publication"]["code"].as_str().unwrap()
+    }
+    let options = SelfTranslationOptions {
+        rust_shared_array_handle_source_model: model.to_owned(),
+        ..SelfTranslationOptions::default()
+    };
+    assert_eq!(
+        policy["associatedCloneRefusals"].as_array().unwrap().len(),
+        10
+    );
+    for row in policy["associatedCloneRefusals"].as_array().unwrap() {
+        let source = row["source"].as_str().unwrap();
+        assert!(
+            parse_rust_with_shared_array_handle_source_model(source, model).is_err(),
+            "{}",
+            row["name"],
         );
-        assert_eq!(
-            serde_json::to_value(self_translation_signatures(library, "Rust", &options).unwrap())
-                .unwrap(),
-            contract["signatures"]
+        assert!(
+            self_translate_with(source, "Rust", "JavaScript", &options).is_err(),
+            "{}",
+            row["name"],
         );
-        assert_eq!(
-            self_translate(&publication.code, "JavaScript", "Rust")
-                .unwrap()
-                .code,
-            library
-        );
-        let created=meta_language::typed_program_links::create_typed_program_links_with_rust_shared_array_handle_source_model(input,"Rust",MODEL,None).unwrap();
-        assert_eq!(
-            decode_typed_program_links(&created.network, created.root).unwrap(),
-            program
+        assert!(
+            self_translation_signatures(source, "Rust", &options).is_err(),
+            "{}",
+            row["name"],
         );
     }
 }

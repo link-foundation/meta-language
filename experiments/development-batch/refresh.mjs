@@ -16,6 +16,7 @@ export function readDevelopmentAuthoringPlan(){
  return{schemaVersion:1,model:'serial JavaScript metadata authoring 1',phases:[
   {name:'snapshot',stages:[stage('raw consuming source profile','js/scripts/generate-raw-consuming-snapshot-source-profile.mjs')]},
   {name:'history',stages:[
+   stage('physical CI workflow history','js/scripts/generate-ci-test-partition-history.mjs'),
    stage('grammar context before repair','experiments/grammar-context-source-metadata/generate.mjs'),
    stage('complete CI repair sources','js/scripts/generate-current-ci-repair-source-history.mjs'),
    stage('native compatibility sources','experiments/grammar-outcome-network/native-transport/inverse/generate-native-compatibility-source-history.mjs'),

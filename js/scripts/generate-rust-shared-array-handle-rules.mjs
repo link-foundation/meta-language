@@ -9,7 +9,7 @@ import {tokenize} from '../src/translation/lexer.js';
 const root=new URL('../../',import.meta.url),sourcePath='js/src/translation/rust-shared-array-handle-rules.js';
 const digest=source=>createHash('sha256').update(source).digest('hex');
 const imports=["import {acceptRustSourceArrayElement} from './rust-array-rules.js';\n","import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';\n"];
-const decisions=['acceptRustSharedArrayHandleSourceModel','acceptRustSharedArrayHandleSourceSize','acceptRustSharedArrayHandleLayer','acceptRustSharedArrayHandlePayload','acceptRustSharedArrayHandleTransfer','readRustSharedArrayHandleSourceForm','acceptRustSharedArrayHandleValueObservation','readRustSharedArrayHandleComparisonProjection'];
+const decisions=['acceptRustSharedArrayHandleSourceModel','acceptRustSharedArrayHandleSourceSize','acceptRustSharedArrayHandleLayer','acceptRustSharedArrayHandlePayload','acceptRustSharedArrayHandleTransfer','readRustSharedArrayHandleSourceForm','acceptRustSharedArrayHandleValueObservation','readRustSharedArrayHandleComparisonProjection','acceptRustSharedArrayHandleSourceInterpretation','acceptRustSharedArrayHandleBorrowedClone'];
 export function rustSharedArrayHandleRulesPolicy(){
   const paths=['js/src/translation/rust-array-rules.js','js/src/translation/reference-identity-rules.js',sourcePath];
   const inputs=paths.map(path=>{const source=readFileSync(new URL(path,root),'utf8');return{path,source,bytes:Buffer.byteLength(source),sha256:digest(source)};});
@@ -18,7 +18,7 @@ export function rustSharedArrayHandleRulesPolicy(){
   assert.ok(inputs.slice(0,-1).every(input=>!/^\s*import\b/mu.test(input.source)));assert.doesNotMatch(own,/^\s*import\b/mu);
   assert.deepEqual([...inputs.at(-1).source.matchAll(/^export function (\w+)\(/gmu)].map(match=>match[1]),decisions);
   const source=inputs.slice(0,-1).map(input=>input.source).concat([own]).join('\n');
-  return{schemaVersion:1,model:'standard Rust shared array identity handles 1',sourcePath,decisions,
+  return{schemaVersion:1,model:'standard Rust shared array identity handles 1',associatedCloneModel:'standard Rust shared array identity handles 2',sourcePath,decisions,
     sourceClosure:{source,bytes:Buffer.byteLength(source),sha256:digest(source),inputs,removedImports:imports},
     assertionVersions:{Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
     retainedIdentity:{file:'js/tests/translation-module-reference.test.js',owner:'identity',source:readFileSync(new URL('js/tests/translation-module-reference.test.js',root),'utf8')},
@@ -35,7 +35,31 @@ export function rustSharedArrayHandleRulesPolicy(){
         {name:domain+' fresh calls retain distinct allocations',source:'/** @returns {'+annotation+'[]} */function fresh(){return '+literal+';}function probe(){return fresh()===fresh();}',call:'probe',expected:false},
       ]),
     ],
-    boundary:'Closed flat Rust source modules/programs with actual fully qualified standard Rc and RefCell owners and direct scalar Vec payloads. Fresh nonempty literal allocation, explicit handle clone and actual ptr_eq borrow are represented by existing checked nodes. Ordinary Rc equality, payload methods and observations, bare value Vec, escaping borrows/moves and alternate source interpretations refuse. Complete portable executable runner composition remains a separate obligation. Native parser and module adapters require actual CI compilation and execution.'};
+    associatedCloneCases:[
+      {domain:'Boolean',rustType:'bool',rustLiteral:'vec![true]',javascriptLiteral:'[true]'},
+      {domain:'numeric',rustType:'f64',rustLiteral:'vec![1.25,-0.0]',javascriptLiteral:'[1.25,-0]'},
+      {domain:'Unicode string',rustType:'String',rustLiteral:'vec![String::from("hello"),String::from("🌍")]',javascriptLiteral:'["hello","🌍"]'},
+    ].map(({domain,rustType,rustLiteral,javascriptLiteral})=>{
+      const handle='std::rc::Rc<std::cell::RefCell<Vec<'+rustType+'>>>';
+      return{name:domain+' associated shared clones preserve alias and fresh identities',call:'probe',expected:true,
+        source:'fn fresh()->'+handle+'{std::rc::Rc::new(std::cell::RefCell::new('+rustLiteral+'))}\n'
+          +'pub fn identity(value:'+handle+')->'+handle+'{std::rc::Rc::clone(&std::rc::Rc::clone(&value))}\n'
+          +'pub fn probe()->bool{let value=fresh();let alias=identity(std::rc::Rc::clone(&value));std::rc::Rc::ptr_eq(&value,&alias)&&!std::rc::Rc::ptr_eq(&value,&fresh())}\n',
+        javascriptSource:'function fresh(){return '+javascriptLiteral+';}function identity(value){return value;}function probe(){const value=fresh();const alias=identity(value);return value===alias&&value!==fresh();}'};
+    }),
+    associatedCloneRefusals:[
+      {name:'owned argument',body:'std::rc::Rc::clone(value)'},
+      {name:'double borrow',body:'std::rc::Rc::clone(&&value)'},
+      {name:'mutable borrow',body:'std::rc::Rc::clone(&mut value)'},
+      {name:'missing argument',body:'std::rc::Rc::clone()'},
+      {name:'extra argument',body:'std::rc::Rc::clone(&value,&value)'},
+      {name:'custom owner',body:'custom::Rc::clone(&value)'},
+      {name:'atomic owner',body:'std::sync::Arc::clone(&value)'},
+      {name:'unproved trait owner',body:'Clone::clone(&value)'},
+      {name:'borrowed payload observation',body:'std::rc::Rc::clone(&value.borrow())'},
+      {name:'escaping borrow',body:'let borrowed=&value;std::rc::Rc::clone(borrowed)'},
+    ].map(({name,body})=>({name,source:'fn identity(value:std::rc::Rc<std::cell::RefCell<Vec<bool>>>)->std::rc::Rc<std::cell::RefCell<Vec<bool>>>{'+body+'}'})),
+    boundary:'Closed flat Rust source modules/programs with actual fully qualified standard Rc and RefCell owners and direct scalar Vec payloads. The first model retains its exact domain; the second additionally admits one actual immutable borrowed argument to the associated standard clone. Fresh nonempty literal allocation, explicit handle clone and actual ptr_eq borrow use existing checked nodes. Ordinary Rc equality, payload methods and observations, bare value Vec, escaping borrows/moves and alternate source interpretations refuse. Complete portable executable runner composition remains a separate obligation. Native parser and module adapters require actual CI compilation and execution.'};
 }
 export async function generateRustSharedArrayHandleRules({check=false,native=false}={}){
   const policy=rustSharedArrayHandleRulesPolicy();
@@ -84,7 +108,7 @@ export async function generateRustSharedArrayHandleRules({check=false,native=fal
   }
   const featurePath=new URL('parity/language-features.lino',root),catalog=readProjectData(featurePath);
   const feature={id:'rust-standard-shared-array-handle-source-identity',required:true,
-    javascript:{status:'implemented',evidence:[sourcePath,'js/src/translation/rust-shared-array-handles.js','js/src/translation/rust-shared-array-handle-modules.js','js/src/translation/rust.js','js/src/translation/check.js','js/src/self-translation.js','js/src/typed-program-links.js','js/scripts/generate-rust-shared-array-handle-rules.mjs','js/src/translation/data/rust-shared-array-handles.lino','js/src/data/rust-shared-array-handle-program.lino','js/tests/translation-rust-shared-array-handles.test.js','js/tests/translation-rust-shared-array-handle-modules.test.js']},
+    javascript:{status:'implemented',evidence:[sourcePath,'js/src/translation/rust-shared-array-handles.js','js/src/translation/rust-shared-array-handle-modules.js','js/src/translation/rust.js','js/src/translation/check.js','js/src/self-translation.js','js/src/typed-program-links.js','js/scripts/generate-rust-shared-array-handle-rules.mjs','js/src/translation/data/rust-shared-array-handles.lino','js/src/data/rust-shared-array-handle-program.lino','js/tests/translation-rust-shared-array-handles.test.js','js/tests/translation-rust-shared-array-handle-modules.test.js','js/tests/translation-rust-shared-array-associated-clone.test.js']},
     rust:{status:'implemented',evidence:['rust/src/translation/rust/shared_array_handles.rs','rust/src/self_translation/shared_array_handles.rs','rust/src/translation/check/expressions.rs','rust/src/typed_program_links/projection.rs','rust/src/translation/rust_shared_array_handle_rules.rs','rust/src/translation/rust_shared_array_handle_rules/part_1.rs','rust/src/data/rust-shared-array-handles.lino','rust/src/data/rust-shared-array-handle-program.lino','rust/tests/unit/translation_rust_shared_array_handles.rs','parity/self-translation/rust-shared-array-handle-rules-native.lino']}};
   const rows=catalog.features.filter(row=>row.id===feature.id);assert.ok(rows.length<=1);
   if(check)assert.deepEqual(rows,[feature]);

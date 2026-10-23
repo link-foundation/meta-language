@@ -7,7 +7,8 @@ and establishes no requirement evidence.
 
 `stages.lino` is generated automatically by `node experiments/development-batch/refresh.mjs --write-plan`.
 `--list` shows the phases. Each phase invokes existing commands sequentially in
-fresh JavaScript processes. The history phase retains the grammar-context steps
+fresh JavaScript processes. The history phase first captures the complete physical
+workflow succession, retains the grammar-context steps
 around CI/native history and refreshes evidence-translation archives. Naming
 refreshes both concept catalogs before deriving its supplemental views. Run final
 verification after source-changing authors and manifest refreshes finish.

@@ -63,7 +63,11 @@ export function generateModuleScopeNaming({section,check=false}={}){
  }else {global.gc?.();document=readBootstrapStructuredDataLino(text);}
  const list=section==='canonical'?document.concepts:document,additions=section==='canonical'?records(rows):rows;
  const first=list.findIndex(row=>row.id===additions[0].id&& (section==='canonical'||row.source===additions[0].source));
- if(first>=0){assert.deepEqual(list.slice(first),additions);list.splice(first);}
+ if(first>=0){
+  const preceding=list.slice(first);assert.ok(preceding.length<=additions.length);
+  assert.deepEqual(preceding,additions.slice(0,preceding.length),'every preceding operation, declaration and identity remains exact');
+  list.splice(first);
+ }
  const oldCount=list.length;assert.deepEqual(pin(serializeProjectData(document,file)),original.expected,'every preceding register byte and ordered row stays exact');
  const ids=new Set(list.map(row=>section==='canonical'?row.id:JSON.stringify([row.source,row.name])));
  for(const row of additions){const key=section==='canonical'?row.id:JSON.stringify([row.source,row.name]);assert.ok(!ids.has(key),'one distinct source identity');ids.add(key);}

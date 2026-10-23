@@ -3,10 +3,9 @@ import {unsupported} from './diagnostics.js';
 import {array,BOOL,sameType} from './types.js';
 import {tokenize} from './lexer.js';
 import {acceptRustSourceArrayOwner} from './rust-array-rules.js';
-import {acceptRustSharedArrayHandleSourceSize,acceptRustSharedArrayHandleLayer,
+import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel,acceptRustSharedArrayHandleBorrowedClone,acceptRustSharedArrayHandleSourceSize,acceptRustSharedArrayHandleLayer,
   acceptRustSharedArrayHandlePayload,readRustSharedArrayHandleSourceForm,acceptRustSharedArrayHandleValueObservation} from './rust-shared-array-handle-rules.js';
 const states=new WeakMap();
-const model='standard Rust shared array identity handles 1';
 const sourceModel='standard shared array handle';
 const fail=(reason,span)=>{throw unsupported('Rust shared array handle source',reason,span);};
 const state=parser=>{const value=states.get(parser);if(!value||value.tokens!==parser.cursor.tokens)fail('source facts require this actual parser-owned token stream');return value;};
@@ -26,7 +25,7 @@ export function verifyRustSharedArrayHandleTokens(tokens,source){
 }
 export function createRustSharedArrayHandleState(parser,selected){
   if(!selected)return;
-  if(selected!==model)fail('select the standard shared array identity handle source model');
+  if(!acceptRustSharedArrayHandleSourceModel(selected))fail('select the standard shared array identity handle source model');
   states.set(parser,{tokens:parser.cursor.tokens,payloadDepth:0,names:new Map(),borrows:new Set(),acceptedNames:new Set(),acceptedBorrows:new Set()});
 }
 function owner(parser,segments,role,path,span){
@@ -113,9 +112,21 @@ export function noteRustSharedArrayLiteral(parser,node,path){
   return node;
 }
 export function readRustSharedArrayHandleCall(parser,segments,args,path,range){
-  if(!parser.sharedArrayHandleSourceModel||segments.join('::')!=='std::rc::Rc::ptr_eq')return null;
+  if(!parser.sharedArrayHandleSourceModel)return null;
+  const operation=segments.join('::');
+  if(operation!=='std::rc::Rc::ptr_eq'&&operation!=='std::rc::Rc::clone')return null;
   const value=state(parser),origins=args.map(arg=>parser.origins.origin(arg,path));
   const handles=origins.map(origin=>Boolean(origin.proven&&origin.arraySourceModel===sourceModel&&origin.type?.reference));
+  if(operation==='std::rc::Rc::clone'){
+    if(args.length!==1)fail('associated clone needs exactly one argument',range);
+    const borrowed=origins.length===1&&origins[0].wrappers.length===1&&origins[0].wrappers[0]==='reference'&&value.borrows.has(args[0]);
+    const admitted=acceptRustSharedArrayHandleBorrowedClone(parser.sharedArrayHandleSourceModel,args.length,owner(parser,segments.slice(0,-1),'handle',path,range),handles[0]===true,Boolean(borrowed));
+    if(!admitted&&!parser.origins.collecting)fail('associated clone requires source model 2 and one actual immutable borrowed standard shared handle',range);
+    acceptName(parser,args[0]);value.acceptedBorrows.add(args[0]);
+    const origin={...origins[0],wrappers:origins[0].wrappers[0]==='reference'?origins[0].wrappers.slice(1):origins[0].wrappers};
+    parser.origins.mark(args[0],origin);
+    return parser.origins.mark({...args[0],span:{start:range.start,end:parser.cursor.peek(-1).end}},origin);
+  }
   const borrowed=origins.length===2&&origins.every((origin,index)=>origin.wrappers.length===1&&origin.wrappers[0]==='reference'&&value.borrows.has(args[index]));
   const same=origins.length===2&&origins[0].type&&origins[1].type&&sameType(origins[0].type,origins[1].type);
   const form=readRustSharedArrayHandleSourceForm('pointer equality',args.length,owner(parser,segments.slice(0,-1),'handle',path,range),handles[0]===true,handles[1]===true,Boolean(borrowed),Boolean(same),false);

@@ -48,3 +48,17 @@ export function readRustSharedArrayHandleComparisonProjection(language, operatio
   if (language === 'Rust' && kind === 'array' && reference && (operation === 'eq' || operation === 'ne')) return 'referenceIdentity';
   return '';
 }
+/** Additive selection keeps the first model's declaration and domain intact.
+ * @param {string} model @returns {boolean} */
+export function acceptRustSharedArrayHandleSourceInterpretation(model) {
+  return acceptRustSharedArrayHandleSourceModel(model)
+    || model === 'standard Rust shared array identity handles 2';
+}
+/** The second source model admits the associated Clone spelling only for one
+ * actual immutable borrow of an owned standard shared handle.
+ * @param {string} model @param {number} arity @param {boolean} owner
+ * @param {boolean} handle @param {boolean} borrowed @returns {boolean} */
+export function acceptRustSharedArrayHandleBorrowedClone(model, arity, owner, handle, borrowed) {
+  return model === 'standard Rust shared array identity handles 2'
+    && arity === 1 && owner && handle && borrowed;
+}

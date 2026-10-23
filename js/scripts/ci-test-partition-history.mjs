@@ -6,7 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 export const CI_TEST_PARTITION_REVISION='491cf0caa9f014e7f4f4caef62611fa482114721';
 export const CI_TEST_PARTITION_HISTORY='parity/fixtures/ci-39839936265-test-partitions.lino';
-const packetSha256='f682d5606fb935cab9ec8cf71c186d1b7251eedf6ccb358e7f38244c4967672b';
+const packetSha256='8b26c5d957fb6292e8165004aea7f2423960011d098a889bb0e2496789567e81';
 const matrix=(group,count)=>Array.from({length:count},(_,index)=>`          - {group: ${group}, partition: ${index+1}, shards: ${count}}\n`).join('');
 export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:matrix('conformance',4),after:matrix('conformance',8)},
@@ -19,6 +19,9 @@ export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:'--shard ${{ matrix.shard }}/8 --out-dir',after:'--shard ${{ matrix.shard }}/8 --physical-part ${{ matrix.part }}/2 --out-dir'},
  {before:'name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}',after:'name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}-${{ matrix.part }}'},
 ]);
+export const CI_REPORT_PARTITION_PREVIOUS='41fd412c6b7efde07b56f47a7b407b41389588ee';
+export const CI_REPORT_PARTITION_CURRENT='865749f74f324a332e9201f85386517f8186f3c0';
+export const CI_REPORT_PARTITION_CHANGES=Object.freeze(CI_TEST_PARTITION_CHANGES.slice(-4));
 export const CI_TEST_FEEDBACK_CHANGES=Object.freeze([
  {before:"import { partitionGroupFiles, partitionTests, testFiles } from './test-groups.mjs';",after:"import { partitionTests, testFiles } from './test-groups.mjs';\nimport {partitionCiTestGroupFiles} from './ci-test-partitions.mjs';"},
  {before:"return partitionGroupFiles(groups.translation, shard).map(file => `js/tests/${file}`);",after:"return partitionCiTestGroupFiles('translation',groups.translation,shard).map(file => `js/tests/${file}`);"},
@@ -31,6 +34,23 @@ export function deriveCiTestPartitionWorkflow(source){
  return current;
 }
 export function verifyCiTestPartitionHistory(packet){
+ if(packet.reportWorkflows!==undefined){
+  const reports=packet.reportWorkflows;
+  assert.equal(reports.previousRevision,CI_REPORT_PARTITION_PREVIOUS);assert.equal(reports.currentRevision,CI_REPORT_PARTITION_CURRENT);
+  assert.deepEqual(reports.changes,CI_REPORT_PARTITION_CHANGES);
+  assert.deepEqual(reports.rows.map(row=>row.file),['.github/workflows/ci.yml','.github/workflows/js.yml']);
+  for(const row of reports.rows){
+   for(const[side,revision]of[['previous',reports.previousRevision],['current',reports.currentRevision]]){
+    const value=row[side];assert.deepEqual(pin(value.source),{bytes:value.bytes,sha256:value.sha256});
+    verifyGitArtifactCertificate(value.certificate,Buffer.from(value.source),{revision,path:row.file});
+   }
+   let current=row.previous.source;
+   for(const{before,after}of reports.changes){assert.equal(current.split(before).length,2);current=current.replace(before,()=>after);}
+   assert.equal(current,row.current.source);
+   for(const{before,after}of [...reports.changes].reverse()){assert.equal(current.split(after).length,2);current=current.replace(after,()=>before);}
+   assert.equal(current,row.previous.source);
+  }
+ }
  const row=packet.feedback;assert.equal(row.file,'js/scripts/translation-test-feedback.mjs');
  verifyGitArtifactCertificate(row.previous.certificate,Buffer.from(row.previous.source),{revision:CI_TEST_PARTITION_REVISION,path:row.file});
  assert.deepEqual(pin(row.previous.source),{bytes:row.previous.bytes,sha256:row.previous.sha256});
@@ -54,6 +74,12 @@ export function readCiTestPartitionHistory(){
 }
 export function restoreCiTestPartitionWorkflow(source){
  const packet=readCiTestPartitionHistory();return source===packet.current.source?packet.previous.source:source;
+}
+
+/** Only the complete independently certified report successor gets this view. */
+export function restorePhysicalReportWorkflow(source,file){
+ const row=readCiTestPartitionHistory().reportWorkflows?.rows.find(row=>row.file===file);
+ return row&&source===row.current.source?row.previous.source:source;
 }
 
 export function restoreCiTestPartitionSource(source,file){

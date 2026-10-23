@@ -220,3 +220,24 @@ pub fn read_rust_shared_array_handle_comparison_projection(
         String::new()
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_shared_array_handle_source_interpretation(model: &str) -> bool {
+    self::accept_rust_shared_array_handle_source_model(model)
+        || (model == "standard Rust shared array identity handles 2")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_shared_array_handle_borrowed_clone(
+    model: &str,
+    arity: f64,
+    owner: bool,
+    handle: bool,
+    borrowed: bool,
+) -> bool {
+    ((((model == "standard Rust shared array identity handles 2") && (arity == 1f64)) && owner)
+        && handle)
+        && borrowed
+}

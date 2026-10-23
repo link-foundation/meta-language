@@ -16,7 +16,7 @@ pub(super) fn validate_options(
     options: &SelfTranslationOptions,
 ) -> Result<(), SelfTranslationError> {
     let model = &options.rust_shared_array_handle_source_model;
-    if !rules::accept_rust_shared_array_handle_source_model(model) {
+    if !rules::accept_rust_shared_array_handle_source_interpretation(model) {
         return Err(failure("select the installed source model"));
     }
     if model.is_empty() {

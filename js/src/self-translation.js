@@ -27,7 +27,7 @@ import { eraseTypeScript, requiresTypeScriptErasure } from './typescript-erasure
 import { projectTypeScriptTyping } from './typescript-portable-typing.js';
 import { parseRust } from './translation/rust.js';
 import {readRustSharedArrayHandleModule} from './translation/rust-shared-array-handle-modules.js';
-import {acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
+import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
 import {unsupported} from './translation/diagnostics.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';

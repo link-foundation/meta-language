@@ -330,6 +330,60 @@ impl RustParser {
         }
         Ok(())
     }
+    fn shared_array_associated_clone(
+        &mut self,
+        segments: &[String],
+        args: &[SExpr],
+        path: &[String],
+        range: Option<Span>,
+    ) -> Result<Option<SExpr>> {
+        if args.len() != 1 {
+            return Err(failure(
+                "associated clone needs exactly one argument",
+                range,
+            ));
+        }
+        let arg = &args[0];
+        let mut origin = self.origins.origin(arg, path);
+        let handle = origin.proven
+            && origin.array_source_model == Some(SOURCE_MODEL)
+            && origin.ty.as_ref().is_some_and(Type::is_reference);
+        let borrowed = origin.wrappers == ["reference"]
+            && arg
+                .span
+                .is_some_and(|span| self.shared_array_state.borrows.contains(&span));
+        let admitted = rules::accept_rust_shared_array_handle_borrowed_clone(
+            &self.shared_array_handle_source_model,
+            f64::from(u32::try_from(args.len()).unwrap_or(u32::MAX)),
+            self.shared_array_owner(&segments[..segments.len() - 1], "handle", path),
+            handle,
+            borrowed,
+        );
+        if !admitted && !self.origins.collecting {
+            return Err(failure(
+                "associated clone requires source model 2 and one actual immutable borrowed standard shared handle",
+                range,
+            ));
+        }
+        self.accept_shared_name(arg);
+        let span = arg
+            .span
+            .ok_or_else(|| failure("a clone argument needs its actual source occurrence", range))?;
+        self.shared_array_state.accepted_borrows.insert(span);
+        if origin
+            .wrappers
+            .first()
+            .is_some_and(|wrapper| wrapper == "reference")
+        {
+            origin.wrappers.remove(0);
+        }
+        self.origins.mark(arg, origin.clone());
+        let mut node = arg.clone();
+        node.span =
+            range.map(|span| Span::new(span.start, self.cursor.tokens[self.cursor.index - 1].end));
+        self.origins.mark(&node, origin);
+        Ok(Some(node))
+    }
     pub(super) fn shared_array_call(
         &mut self,
         segments: &[String],
@@ -337,6 +391,11 @@ impl RustParser {
         path: &[String],
         range: Option<Span>,
     ) -> Result<Option<SExpr>> {
+        if !self.shared_array_handle_source_model.is_empty()
+            && segments.join("::") == "std::rc::Rc::clone"
+        {
+            return self.shared_array_associated_clone(segments, args, path, range);
+        }
         if self.shared_array_handle_source_model.is_empty()
             || segments.join("::") != "std::rc::Rc::ptr_eq"
         {

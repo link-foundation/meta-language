@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {partitionCiTestGroupFiles} from '../scripts/ci-test-partitions.mjs';
-import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource} from '../scripts/ci-test-partition-history.mjs';
+import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource,restorePhysicalReportWorkflow} from '../scripts/ci-test-partition-history.mjs';
 test('physical CI partitions preserve every complete logical cohort exactly once under the original deadline',()=>{
  const groups=partitionTests(testFiles()).groups;
  for(const[group,oldCount]of [['translation',6],['conformance',4]]){
@@ -28,4 +28,18 @@ test('physical scheduling refuses invalid scope and retains the serial child inv
  for(const shard of ['0/12','13/12','1/0','1.2/12','1/999'])assert.throws(()=>partitionCiTestGroupFiles('translation',['one','two'],shard));
  assert.throws(()=>partitionCiTestGroupFiles('translation',['one','one'],'1/2'));
  const source=readFileSync(new URL('../scripts/ci-test-partitions.mjs',import.meta.url),'utf8');assert.match(source,/'--test-concurrency=1'/u);
+});
+
+test('physical report changes retain complete independently certified workflow predecessors',()=>{
+ const packet=readCiTestPartitionHistory();assert.equal(packet.reportWorkflows.rows.length,2);
+ for(const row of packet.reportWorkflows.rows){
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  assert.equal(restorePhysicalReportWorkflow(actual,row.file),row.previous.source);
+  assert.equal(restorePhysicalReportWorkflow(actual+'\n',row.file),actual+'\n');
+  assert.equal(restorePhysicalReportWorkflow(actual,row.file+'.unknown'),actual);
+  assert.equal(restorePhysicalReportWorkflow(row.previous.source,row.file),row.previous.source);
+ }
+ for(const mutate of [value=>{value.reportWorkflows.rows[0].current.source+=' ';},value=>{value.reportWorkflows.rows[0].previous.certificate.path='foreign.yml';},value=>{value.reportWorkflows.changes.pop();},value=>{value.reportWorkflows.rows.reverse();}]){
+  const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));
+ }
 });
