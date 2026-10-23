@@ -43,6 +43,7 @@ mod math;
 mod number_bitwise;
 mod optional_values;
 mod primitive_methods;
+mod record_writes;
 mod records;
 mod recursion;
 mod reference_methods;

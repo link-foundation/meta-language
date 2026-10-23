@@ -99,6 +99,7 @@ pub mod translation_rules;
 mod typed_program_links;
 pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
 pub use translation::number_bitwise_program::create_number_bitwise_program_links;
+pub use translation::record_write_program::create_record_field_write_program_links;
 pub use translation::reference_method_program::create_reference_method_program_links;
 pub mod verification;
 

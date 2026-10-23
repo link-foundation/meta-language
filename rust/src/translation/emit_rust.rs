@@ -39,6 +39,7 @@ mod math;
 mod number_prelude;
 mod optional_values;
 mod primitive_methods;
+mod record_writes;
 mod records;
 mod reference_callbacks;
 mod reference_methods;

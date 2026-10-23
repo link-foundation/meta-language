@@ -179,6 +179,33 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if crate::translation::record_write_rules::accept_linked_record_field_write(
+                    "method",
+                    op,
+                    object.ty.kind(),
+                    object.ty.is_reference(),
+                ) {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared record field assignment",
+                                "the actual operand is missing",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(
+                        "write-record-field",
+                        &crate::translation::record_write_rules::read_record_field_write_statement(
+                        ),
+                    );
+                    return Ok(crate::translation::record_write_rules::render_record_field_write("JavaScript",
+                        &crate::translation::record_write_rules::read_record_field_write_operator(op), &receiver,
+                        &json_string(&crate::translation::record_write_rules::read_record_field_write_name(op)), "", &arguments, ""));
+                }
                 if object.ty.is_reference()
                     && !crate::translation::reference_method_rules::read_reference_method_result(
                         object.ty.kind(),

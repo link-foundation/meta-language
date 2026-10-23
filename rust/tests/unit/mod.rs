@@ -228,6 +228,7 @@ mod translation_optional_values;
 mod translation_primitive_values;
 mod translation_printing;
 mod translation_prototype_definitions;
+mod translation_record_writes;
 mod translation_reference_methods;
 mod translation_rocq;
 mod translation_rules;

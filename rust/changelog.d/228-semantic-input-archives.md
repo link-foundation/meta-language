@@ -25,3 +25,6 @@ inference, and four-target emission directly from checked typed Links.
 Draft shared RDF IRI address parsing for IPv6, embedded IPv4 and IPvFuture,
 preserving exact graph terms and N-Triples source provenance.
 Behavioral checks remain deferred until the complete requirements draft.
+Draft shared own-record field assignments, Number compound state updates and
+capture-avoiding native construction, with editable typed definitions and future
+alias and evaluation-order controls.

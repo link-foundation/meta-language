@@ -2617,6 +2617,22 @@ containers only order children. Native structural decoding retains its separate
 The complete three-node dependency graph product remains a required native
 archive workload, with all 512 graph inputs and their independent observations.
 
+The shared own-field state draft admits assignments to existing fields of
+closed reference records. Direct assignments retain their actual field type;
+Number compound arithmetic and statement increments retain the preceding read
+before the right operand. Receiver identity, right operand evaluation, alias
+visibility, signed zero, NaN and source order remain explicit. Native storage
+borrows end before the right operand runs. Target temporary names reserve the
+complete emitted operands to prevent capture. The qualified operation carries
+its actual property name; it is admitted only against the real closed shared
+record and rechecked field, arity and value type during typed Links reload.
+Complete checked JavaScript definitions automatically generate native source and
+ship as editable Links programs. Mutation-sensitive callback admission includes
+these field writes. This follows the [ECMAScript assignment order](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators-runtime-semantics-evaluation).
+Fourteen source controls and three refusal controls have been authored and have
+not run. Field creation, descriptors, prototype setters, arbitrary coercions,
+indexed slots and the rest of full project translation remain obligations.
+
 The current development sequence drafts the complete outstanding batch before
 running its tests. Draft the shared behavior, both runtime adapters, automatic
 translation, fixtures and all known CI repairs together. Integrate generated

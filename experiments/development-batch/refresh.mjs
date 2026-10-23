@@ -28,6 +28,8 @@ export function readDevelopmentAuthoringPlan(){
    stage('shared reference collection method fixture inputs','js/scripts/generate-reference-method-fixtures.mjs',['--draft']),
    stage('insertion ordered collection access native rules','js/scripts/generate-collection-access-rules.mjs',['--draft']),
    stage('insertion ordered collection access fixture inputs','js/scripts/generate-collection-access-fixtures.mjs',['--draft']),
+   stage('shared own record field write native rules','js/scripts/generate-record-write-rules.mjs',['--draft']),
+   stage('shared own record field write fixture inputs','js/scripts/generate-record-write-fixtures.mjs',['--draft']),
    stage('resource identifier address native rules','js/scripts/generate-resource-description-address-rules.mjs',['--draft']),
    stage('resource identifier address fixture inputs','js/scripts/generate-resource-description-address-fixtures.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),

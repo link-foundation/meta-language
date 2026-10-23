@@ -35,6 +35,7 @@ export function readReferenceMethodRefusal(kind, operation) {
 
 /** @param {string} expression @param {string} operation @returns {number} */
 export function readReferenceCallbackEffect(expression, operation) {
+  if (expression === 'method' && operation.startsWith('writeRecordField')) return 1;
   if (expression === 'cellWrite' || expression === 'referenceWrite') return 1;
   if (expression === 'method' && operation !== 'has' && operation !== 'get'
     && (readReferenceMethodResult('array', operation) !== '' || readReferenceMethodResult('map', operation) !== ''

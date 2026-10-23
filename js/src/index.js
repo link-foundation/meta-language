@@ -61,6 +61,7 @@ export { createTypedProgramLinks, encodeTypedProgramLinks, decodeTypedProgramLin
 export {createNumberBitwiseProgramLinks} from './number-bitwise-program.js';
 export { createFixedIntegerCastProgramLinks } from './fixed-integer-cast-program.js';
 export { createReferenceMethodProgramLinks } from './reference-method-program.js';
+export { createRecordFieldWriteProgramLinks } from './record-write-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';

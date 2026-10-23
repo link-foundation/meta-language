@@ -10,6 +10,16 @@ use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_me
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
         if let Node::Method { object, op, .. } = &expr.node
+            && crate::translation::record_write_rules::accept_linked_record_field_write(
+                "method",
+                op,
+                object.ty.kind(),
+                object.ty.is_reference(),
+            )
+        {
+            return self.record_field_write(expr);
+        }
+        if let Node::Method { object, op, .. } = &expr.node
             && object.ty.is_reference()
             && !crate::translation::reference_method_rules::read_reference_method_result(
                 object.ty.kind(),

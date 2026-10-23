@@ -1,6 +1,7 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
+import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement, readRecordFieldWriteSuffix } from './record-write-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
 import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
@@ -1203,6 +1204,17 @@ class RustEmitter {
   }
 
   expr(e) {
+    if (e.k === 'method' && acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+      this.temporaries += 1;
+      const initial = this.temporaries, receiver = this.expr(e.object);
+      const index = e.object.type.fields.findIndex(field => field.name === readRecordFieldWriteName(e.op));
+      if (index < 0) throw unsupported('shared record field assignment', 'the actual field owner is missing', e.span);
+      const args = e.args.map(argument => this.expr(argument));
+      this.temporaries = readRecordFieldWriteSuffix(Math.max(initial, this.temporaries), receiver, args);
+      const suffix = String(this.temporaries);
+      this.state.encode('write-record-field', readRecordFieldWriteStatement());
+      return renderRecordFieldWrite('Rust', readRecordFieldWriteOperator(e.op), receiver, '', String(index), args, suffix);
+    }
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'method' && e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
       this.temporaries += 1;

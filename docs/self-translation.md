@@ -527,3 +527,14 @@ Future controls cover eleven valid and twenty-four invalid identifiers, source
 replay, canonical emission and paired graph bytes. They have not run. Generated
 source is retained while a rustfmt internal whitespace failure is deferred;
 formatting gates and earlier unsupported-domain assertions remain unchanged.
+
+Shared own-record field assignment now has a complete JavaScript-first draft:
+source admission, actual type owners, both target constructors, automatic native
+rules, editable typed definitions and text/binary replay controls. Qualified
+method operations preserve existing checked algebra identities and undergo full
+rechecking against the actual record. Direct assignments and Number compound
+statement assignments preserve aliases, order and the preceding value. Native
+borrows end before the right operand; generated names reserve complete operands.
+Future fourteen-case and three-refusal controls remain unexecuted. Dynamic
+properties, slots, prototype behavior and coercing compound writes still need
+their implementation drafts.

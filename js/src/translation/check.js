@@ -14,12 +14,13 @@ import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
+import { checkRecordFieldWrite, checkSourceRecordFieldWrite } from './record-writes.js';
 import { readCollectionAccessArgumentCount } from './collection-access-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
 import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
-import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
+import { readArrayIterableForm, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
 import { readArrayFromArgumentError, readArrayFromMapCallbackError, readArrayFromReceiverError } from './array-from-rules.js';
 import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromMapCallback } from './array-from.js';
 import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,
@@ -660,7 +661,7 @@ class Checker {
         return { k: 'cellWrite', cell, value, body, referenceOperation: referenceOperation(readScalarCellOperation(node.k)).id, type: body.type };
       }
       case 'referenceWrite':
-        throw unsupported(readReferenceMutationDiagnostic('feature'), readReferenceMutationDiagnostic('reason'), node.span);
+        return checkSourceRecordFieldWrite(this, node, env, path);
       case 'set':
       case 'map':
         return checkCollectionConstruction(this, node, env, path, expected);
@@ -1036,6 +1037,8 @@ class Checker {
 
   method(node, env, path, expected) {
     const receiver = this.expr(node.object, env, path, undefined);
+    const recordWrite = checkRecordFieldWrite(this, node, receiver, env, path);
+    if (recordWrite) return recordWrite;
     const referenceMethod = checkReferenceMethod(this, node, receiver, env, path);
     if (referenceMethod) return flattenOption(referenceMethod);
     const object = this.referenceValue(receiver);

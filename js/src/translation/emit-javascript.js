@@ -1,6 +1,7 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
+import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement } from './record-write-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
@@ -470,6 +471,12 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if (acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+          const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+          this.state.encode('write-record-field', readRecordFieldWriteStatement());
+          return renderRecordFieldWrite('JavaScript', readRecordFieldWriteOperator(e.op), receiver,
+            JSON.stringify(readRecordFieldWriteName(e.op)), '', args, '');
+        }
         if (e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
           const receiver = this.expr(e.object);
           const args = e.args.map(argument => {

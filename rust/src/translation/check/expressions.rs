@@ -594,15 +594,22 @@ impl Checker {
                     crate::translation::types::array(STRING),
                 ))
             }
-            SNode::ReferenceWrite { .. } => Err(unsupported(
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "feature",
-                ),
-                &crate::translation::array_value_rules::read_reference_mutation_diagnostic(
-                    "reason",
-                ),
+            SNode::ReferenceWrite {
+                object,
+                index,
+                field,
+                value,
+                op,
+            } => self.source_record_field_write(
+                object,
+                index.as_deref(),
+                field.as_deref(),
+                value.as_deref(),
+                op,
+                env,
+                path,
                 span,
-            )),
+            ),
             SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),

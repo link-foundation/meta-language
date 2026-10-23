@@ -39,6 +39,11 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        if !crate::translation::record_write_rules::read_record_field_write_operator(operation)
+            .is_empty()
+        {
+            return self.check_record_field_write(object, operation, args, env, path, span);
+        }
         if object.ty.is_reference() {
             let refusal = crate::translation::reference_method_rules::read_reference_method_refusal(
                 object.ty.kind(),
