@@ -2588,6 +2588,15 @@ Rust source, retains unresolved imports and writes the products and diagnostics
 as Links Notation. It executes no products. This orchestration exposes remaining
 language, library and independent Rust signature-discovery gaps; the complete
 own-codebase translator remains a critical delivery requirement.
+The independent signature draft now also checks complete ordinary Rust modules
+through the existing frontend, checker and JavaScript emitter before exposing
+unrestricted public free-function signatures. Attribute-prefix and visibility
+selection uses a shared automatically translated policy on actual concrete
+function items. Private siblings participate in the whole-source check; private
+and restricted declarations supply no public signature. External signature
+assumptions retain a separate namespace-composition obligation. Original default
+signature behavior and the selected shared-array interpretation remain intact.
+This extension is a code draft with execution deferred.
 
 Finalize each semantic batch before refreshing its generated source histories,
 naming bindings and requirement manifest. The normal authors remain the only

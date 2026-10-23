@@ -281,6 +281,9 @@ pub fn self_translation_signatures(
         return translate_module(source, language, "JavaScript", options)
             .map(|(_, signatures)| signatures);
     }
+    if family(required(language)?) == "Rust" && options.semantic_translation {
+        return semantic_input::read_independent_rust_module_signatures(source, options);
+    }
     if family(required(language)?) != "JavaScript" {
         return Err(SelfTranslationError {
             message: format!(

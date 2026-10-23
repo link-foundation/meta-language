@@ -31,6 +31,14 @@ gaps. The default continues to support lossless source restoration. Execution
 and parity checks for this new mode are deferred until the full requirement
 scope is drafted.
 
+With `semanticTranslation: true`, `selfTranslationSignatures` also reads
+unrestricted public free functions from a complete Rust module. The ordinary
+Rust frontend checks every body and sibling dependency together, and the
+ordinary JavaScript emitter must accept the result. The original concrete
+grammar selects actual function owners; the shared generated token policy
+selects their public name after attributes. Restricted visibility and external
+signature assumptions retain explicit namespace-composition obligations.
+
 `draftProjectTranslation(inputs, { targetLanguage })` drafts a complete supplied
 module inventory. Each input supplies its identifier, source language, complete
 source and import-specifier-to-source-identifier map. Source hashes, dependency

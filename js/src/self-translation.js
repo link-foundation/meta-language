@@ -30,7 +30,7 @@ import {readRustSharedArrayHandleModule} from './translation/rust-shared-array-h
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './translation/rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
 import {unsupported} from './translation/diagnostics.js';
-import { readSemanticSourceRole, planSemanticSourceGroups } from './translation/semantic-input-rules.js';
+import { readSemanticSourceRole, planSemanticSourceGroups, readRustPublicSignatureNamePosition } from './translation/semantic-input-rules.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
@@ -133,10 +133,40 @@ export function selfTranslationSignatures(source, language, options = {}) {
   if (family(required(language)) === 'Rust' && options.rustSharedArrayHandleSourceModel) {
     return translateModule(source, language, 'JavaScript', options, true).signatures;
   }
+  if (family(required(language)) === 'Rust' && options.semanticTranslation === true) {
+    return readIndependentRustModuleSignatures(source, options);
+  }
   if (family(required(language)) !== 'JavaScript') {
     throw new SelfTranslationError(`signatures are read from JavaScript or TypeScript modules, not ${language}`);
   }
   return translateModule(source, language, 'Rust', options, true).signatures;
+}
+
+function readIndependentRustModuleSignatures(source, options) {
+  if (Object.keys(options.imports ?? {}).length) throw unsupported('independent Rust signature imports',
+    'a source module with external signature assumptions requires a composed Rust namespace interpretation');
+  let surface;
+  try { surface = parseRust(source); }
+  catch (error) {
+    if (!(error instanceof TranslationError) || error.kind !== 'syntax' || error.reason !== 'a Rust program needs fn main') throw error;
+    surface = parseRust(`${source}\nfn main() {}\n`);
+  }
+  const program = checkProgram(surface);
+  // Every body, private dependency and actual source type is checked together;
+  // successful source parsing alone cannot publish an import signature.
+  emitJavaScript(program);
+  const bytes = Buffer.from(source, 'utf8'), parsed = parseProgrammingLanguage(source, 'Rust');
+  if (!parsed?.tree || parsed.tree.flags.hasError || parsed.tree.flags.isError || parsed.tree.flags.isMissing) {
+    throw unsupported('independent Rust signature concrete syntax', 'the complete source needs a clean concrete grammar interpretation');
+  }
+  const names = new Set();
+  for (const item of topLevelItems(bytes, parsed)) {
+    if (item.term !== 'function_item') continue;
+    const { tokens } = tokenize(item.text, 'Rust');
+    const position = readRustPublicSignatureNamePosition(tokens.map(token => token.kind), tokens.map(token => token.value));
+    if (position >= 0) names.add(tokens[position].value);
+  }
+  return declaredSignatures(program, null).filter(signature => names.has(signature.name));
 }
 
 function translateModule(source, sourceLanguage, targetLanguage, { decorators, moduleDirectory = [], imports = {}, utf16Strings = false, referenceSemantics = false, retainDiagnostics = false, rustSharedArrayHandleSourceModel = '', semanticTranslation = false } = {}, signaturesOnly = false) {

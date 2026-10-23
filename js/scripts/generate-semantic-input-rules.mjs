@@ -1,12 +1,12 @@
 // Source generation only. The --draft phase runs no fixture, behavioral replay,
 // native compiler or test. Verification belongs after the complete scope draft.
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitRust } from '../src/translation/emit-rust.js';
 import { readPortableLibraryRelocation } from './record-rule-library.mjs';
-import { readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
+import { readPortableSourceParameterStyles, partitionPortableRustLibrary } from './portable-source-library-style.mjs';
 import { readPortableSourceLintStyles } from './portable-source-lint-style.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { createHash } from 'node:crypto';
@@ -25,17 +25,26 @@ export function draftSemanticInputRules() {
   const borrowed = readPortableSourceParameterStyles(relocation.source, { publicNames: names });
   const styled = readPortableSourceLintStyles(borrowed.source);
   const output = formatProductRuleSource(styled.source);
-  writeFileSync(new URL('../../rust/src/translation/semantic_input_rules.rs', import.meta.url),
-    '// Generated from complete semantic-input-rules.js. Do not edit by hand.\n' + output);
+  const files = partitionPortableRustLibrary(output, {
+    notice: '// Generated from complete semantic-input-rules.js. Do not edit by hand.\n',
+    directory: 'semantic_input_rules',
+  });
+  for (const file of files) {
+    const path = new URL('../../rust/src/translation/' + (file.path ?? 'semantic_input_rules.rs'), import.meta.url);
+    mkdirSync(new URL('.', path), { recursive: true });
+    writeFileSync(path, file.source);
+  }
   const styles = new DecoratorSet([{ id: 'semantic-input-library-source-styles', level: 'emitter', order: 0,
     when: [['format', 'Rust']], actions: [...relocation.actions, ...borrowed.actions, ...styled.actions] }]);
   writeFileSync(new URL('../../parity/self-translation/semantic-input-rules-decorators.lino', import.meta.url), styles.toLino());
   writeProjectData(new URL('../../parity/self-translation/semantic-input-rules-native.lino', import.meta.url), {
     schemaVersion: 1, model: 'independent semantic source grouping 1',
-    sourceClosure: { source, sourceSha256: createHash('sha256').update(source).digest('hex'),
-      inputs: [{ path: 'js/src/translation/semantic-input-rules.js', source, removedImports: [] }] },
+    sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256: createHash('sha256').update(source).digest('hex'),
+      inputs: [{ path: 'js/src/translation/semantic-input-rules.js', source, bytes: Buffer.byteLength(source),
+        sourceSha256: createHash('sha256').update(source).digest('hex'), removedImports: [] }] },
     emitted: { text: emitted.text, preludes: emitted.preludes, definitions: emitted.definitions, mappings: emitted.mappings },
     nativeSource: output,
+    files: files.map(file => ({ path: file.path ?? 'semantic_input_rules.rs', source: file.source })),
     boundary: 'Automatic complete-source authoring only. No fixture, behavioral comparison, archive replay, product execution or native compilation has run.',
   });
   return { source, program, emitted };

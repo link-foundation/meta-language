@@ -37,3 +37,37 @@ export function planSemanticSourceGroups(roles, lineBreaks) {
   }
   return plan;
 }
+
+/** Select an unrestricted public free function's actual name token after its
+ * complete attribute prefix. The caller supplies a parsed function item.
+ * Restricted visibility retains a separate module-scope obligation.
+ * @param {string[]} kinds @param {string[]} values @returns {number}
+ */
+export function readRustPublicSignatureNamePosition(kinds, values) {
+  let position = 0;
+  while (position < values.length && kinds[position] === 'punct' && values[position] === '#') {
+    position += 1;
+    if (position < values.length && kinds[position] === 'punct' && values[position] === '!') position += 1;
+    if (position >= values.length || kinds[position] !== 'punct' || values[position] !== '[') return -1;
+    let depth = 1;
+    position += 1;
+    while (position < values.length && depth > 0) {
+      if (kinds[position] === 'punct' && values[position] === '[') depth += 1;
+      if (kinds[position] === 'punct' && values[position] === ']') depth -= 1;
+      position += 1;
+    }
+    if (depth !== 0) return -1;
+  }
+  if (position >= values.length || kinds[position] !== 'identifier' || values[position] !== 'pub') return -1;
+  position += 1;
+  if (position < values.length && kinds[position] === 'punct' && values[position] === '(') return -1;
+  while (position < values.length) {
+    if (kinds[position] === 'identifier' && values[position] === 'fn') {
+      if (position + 1 < values.length && kinds[position + 1] === 'identifier') return position + 1;
+      return -1;
+    }
+    if (kinds[position] === 'punct' && (values[position] === '{' || values[position] === ';')) return -1;
+    position += 1;
+  }
+  return -1;
+}

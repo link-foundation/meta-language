@@ -76,15 +76,6 @@ export function draftProjectTranslation(inputs, options = {}) {
     const next = new Map(signatures), refusals = [];
     for (const record of records) {
       if (!pending.has(record.identifier)) continue;
-      if (record.language === 'Rust' && !record.options.rustSharedArrayHandleSourceModel) {
-        next.set(record.identifier, []);
-        if (records.some(other => other.imports.some(dependency => dependency.identifier === record.identifier))) {
-          refusals.push({ identifier: record.identifier, diagnostic: {
-            name: 'SourceSignatureGap', message: 'Independent Rust exported signature discovery needs a supported source interpretation.',
-          } });
-        }
-        continue;
-      }
       try {
         next.set(record.identifier, selfTranslationSignatures(record.source, record.language, context(record, signatures, options)));
       } catch (error) {
