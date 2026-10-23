@@ -155,6 +155,57 @@ pub(super) fn read_inert_binding(source: &str) -> Option<(String, u8)> {
     Some((name.to_owned(), owner))
 }
 
+/// Only parser-owned fact/coordinate transport; the shared rule proves purity.
+pub(super) fn read_numeric_binding_name(source: &str) -> Option<String> {
+    if source.len() > 65_536 {
+        return None;
+    }
+    let root = parse_native("native-javascript", source);
+    let mut facts = Facts::default();
+    facts.visit(&root, "", -1.0, source)?;
+    let terms = facts
+        .terms
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let fields = facts
+        .fields
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let texts = facts
+        .texts
+        .iter()
+        .map(|value| (*value).to_owned())
+        .collect::<Vec<_>>();
+    let selected = crate::translation::inert_module_binding_rules::read_numeric_module_binding(
+        &terms,
+        &fields,
+        &facts.parents,
+        &facts.starts,
+        &facts.ends,
+        &texts,
+        &facts.errors,
+        source_number(source.len())?,
+    );
+    let [at, owner] = selected.as_slice() else {
+        return None;
+    };
+    if *owner != 0.0 {
+        return None;
+    }
+    let at = number_index(*at)?;
+    let node = facts.nodes.get(at)?;
+    if node.term != "identifier" || !node.children.is_empty() || node.end <= node.start {
+        return None;
+    }
+    let name = source.get(node.start..node.end)?;
+    if name != *facts.texts.get(at)? {
+        return None;
+    }
+    Some(name.to_owned())
+}
+
 #[cfg(test)]
 mod tests {
     use super::read_inert_binding;

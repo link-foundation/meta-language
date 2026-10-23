@@ -221,3 +221,146 @@ fn numeric_constant_siblings_preserve_complete_parity_and_independent_behavior()
         assert_literal_sibling_translation(&source);
     }
 }
+
+#[test]
+fn arithmetic_module_values_preserve_independent_numeric_behavior_and_complete_runtime_parity() {
+    versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/numeric-module-values.lino"
+    ))
+    .unwrap();
+    let cases = fixture["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 6);
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let numeric_script = r#"import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';import {structuredDataToLino} from './js/src/structured-data-links.js';const source=process.argv[1];console.log(structuredDataToLino({translation:selfTranslate(source,'JavaScript','Rust'),signatures:selfTranslationSignatures(source,'JavaScript')}));"#;
+    for case in cases {
+        let source = format!(
+            "{}\nexport function verify(){{return {};}}\n",
+            case["source"].as_str().unwrap(),
+            case["predicate"].as_str().unwrap()
+        );
+        let original = run(Command::new("node").args([
+            "--input-type=module",
+            "-e",
+            &format!("{source}\nconsole.log(verify());"),
+        ]));
+        assert!(original.ok, "{}", original.stderr);
+        assert_eq!(original.stdout, "true\n", "{source}");
+        let output = run(Command::new("node").current_dir(root).args([
+            "--input-type=module",
+            "-e",
+            numeric_script,
+            &source,
+        ]));
+        assert!(output.ok, "{}", output.stderr);
+        let expected = read_structured_data_lino(&output.stdout).unwrap();
+        let actual = self_translate(&source, "JavaScript", "Rust").unwrap();
+        assert_eq!(
+            serde_json::json!({
+                "sourceLanguage": actual.source_language,
+                "targetLanguage": actual.target_language,
+                "code": &actual.code,
+                "items": actual.items.iter().map(|item| serde_json::json!({
+                    "term": &item.term, "start": item.start, "end": item.end,
+                    "status": item.status, "reason": &item.reason,
+                })).collect::<Vec<_>>(),
+            }),
+            expected["translation"]
+        );
+        assert!(
+            actual.items.iter().all(|item| item.status == "translated"),
+            "{source}"
+        );
+        assert_eq!(
+            serde_json::to_value(
+                self_translation_signatures(&source, "JavaScript", &Default::default()).unwrap()
+            )
+            .unwrap(),
+            expected["signatures"]
+        );
+        assert_eq!(
+            self_translate(&actual.code, "Rust", "JavaScript")
+                .unwrap()
+                .code,
+            source
+        );
+        let directory = TemporaryDirectory::new("numeric-module-value");
+        let input = directory.0.join("module.rs");
+        let binary = directory.0.join(if cfg!(windows) {
+            "module.exe"
+        } else {
+            "module"
+        });
+        fs::write(
+            &input,
+            format!(
+                "{}\nfn main(){{println!(\"{{}}\",verify());}}\n",
+                actual.code
+            ),
+        )
+        .unwrap();
+        let build = run(Command::new("rustc")
+            .args(["--edition", "2024"])
+            .arg(&input)
+            .arg("-o")
+            .arg(&binary));
+        assert!(build.ok, "{}", build.stderr);
+        let observed = run(&mut Command::new(&binary));
+        assert!(observed.ok, "{}", observed.stderr);
+        assert_eq!(observed.stdout, original.stdout, "{source}");
+    }
+}
+
+#[test]
+fn typed_arithmetic_constants_retain_complete_runtime_parity_and_original_source() {
+    versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/numeric-module-values.lino"
+    ))
+    .unwrap();
+    let cases = fixture["typedCases"].as_array().unwrap();
+    assert_eq!(cases.len(), 1);
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let typed_script = r#"import {selfTranslate,selfTranslationSignatures} from './js/src/self-translation.js';import {structuredDataToLino} from './js/src/structured-data-links.js';const source=process.argv[1];console.log(structuredDataToLino({translation:selfTranslate(source,'TypeScript','Rust'),signatures:selfTranslationSignatures(source,'TypeScript')}));"#;
+    for case in cases {
+        let source = format!(
+            "{}\nexport function verify(){{return {};}}\n",
+            case["source"].as_str().unwrap(),
+            case["predicate"].as_str().unwrap()
+        );
+        let output = run(Command::new("node").current_dir(root).args([
+            "--input-type=module",
+            "-e",
+            typed_script,
+            &source,
+        ]));
+        assert!(output.ok, "{}", output.stderr);
+        let expected = read_structured_data_lino(&output.stdout).unwrap();
+        let actual = self_translate(&source, "TypeScript", "Rust").unwrap();
+        assert_eq!(
+            serde_json::json!({
+                "sourceLanguage": actual.source_language,
+                "targetLanguage": actual.target_language,
+                "code": &actual.code,
+                "items": actual.items.iter().map(|item| serde_json::json!({
+                    "term": &item.term,"start":item.start,"end":item.end,"status":item.status,"reason":&item.reason,
+                })).collect::<Vec<_>>(),
+            }),
+            expected["translation"]
+        );
+        assert!(actual.items.iter().all(|item| item.status == "translated"));
+        assert_eq!(
+            serde_json::to_value(
+                self_translation_signatures(&source, "TypeScript", &Default::default()).unwrap()
+            )
+            .unwrap(),
+            expected["signatures"]
+        );
+        assert_eq!(
+            self_translate(&actual.code, "Rust", "TypeScript")
+                .unwrap()
+                .code,
+            source
+        );
+    }
+}

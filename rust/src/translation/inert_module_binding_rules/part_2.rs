@@ -26,7 +26,6 @@ use super::MlReadNumericModuleBindingLoop48Result;
 use super::ml;
 use super::ml_accept_inert_module_binding_scope_loop23;
 use super::ml_accept_numeric_module_binding_number_literal_loop39;
-use super::ml_array;
 use super::ml_read_empty_collection_binding_children_loop25;
 use super::ml_read_empty_standard_collection_module_binding_loop30;
 use super::ml_read_empty_standard_collection_module_binding_loop32;
@@ -907,49 +906,14 @@ if ml_library_inequality_1 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_inert_binding_children_loop1(
-    terms: &[String],
-    parents: &[f64],
-    mut owner: f64,
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < (terms.len() as f64) {
-            if (((self::read_required_number_fact(parents, at)) == owner)
-                && ((self::read_required_text_fact(terms, at)) != "comment"))
-                && ((self::read_required_text_fact(terms, at)) != "whitespace")
-            {
-                {
-                    let result_2 = {
-                        let (ml_append_right, ml_append_left) = (vec![at], result);
-                        self::ml_array::append(ml_append_left, ml_append_right)
-                    };
-                    {
-                        let at_2 = at + 1f64;
-                        {
-                            (result, at) = (result_2, at_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let at_3 = at + 1f64;
-                    {
-                        at = at_3;
-                        continue;
-                    }
-                }
-            }
-        }
-        return { result };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptInertBindingSequenceLoop2Result {
-    MlAcceptInertBindingSequenceLoop2Done,
-    MlAcceptInertBindingSequenceLoop2Return(bool),
+pub fn accept_numeric_module_binding_signature(
+    kind: &str,
+    type_: &str,
+    literal: bool,
+    source_name: &str,
+    signature_name: &str,
+) -> bool {
+    ((((kind == "const") && (type_ == "float")) && !literal)
+        && ((source_name.encode_utf16().count() as f64) > 0f64))
+        && (source_name == signature_name)
 }

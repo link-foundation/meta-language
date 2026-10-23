@@ -2,7 +2,7 @@
 use super::super::emission::{check_and_emit_item, check_and_emit_item_with_ownership};
 use super::super::{Context, GroupKind, Translated, project_type_script_typing, translate_group};
 use super::dependency_rules;
-use super::{Binder, Scan, Visit, accept_signature};
+use super::{Binder, Scan, Visit};
 use crate::translation::{
     check::check_program,
     frontend_rules::ml_array::number_index,
@@ -266,7 +266,8 @@ impl Binder<'_, '_> {
                     continue;
                 }
                 if let Some(signature) = out.signatures.iter().find(|signature| {
-                    signature.name() == name.as_str() && accept_signature(signature)
+                    signature.name() == name.as_str()
+                        && self.accept_source_signature(owner, signature)
                 }) {
                     if let Some(previous) = externals
                         .iter_mut()

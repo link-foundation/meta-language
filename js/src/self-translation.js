@@ -34,7 +34,7 @@ import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acc
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
 import {readInertModuleBindingDeclaration} from './translation/inert-module-bindings.js';
-import {readNumericModuleBindingDeclaration} from './translation/numeric-module-bindings.js';
+import {readNumericModuleBindingDeclaration,acceptNumericModuleBindingDeclarationSignature} from './translation/numeric-module-bindings.js';
 import {readEmptyStandardCollectionBindingDeclaration} from './translation/empty-module-collections.js';
 import {acceptInertModuleBindingScope} from './translation/inert-module-binding-rules.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
@@ -276,7 +276,11 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
  * A failed component supplies no provisional peers to the ordinary fallback.
  */
 function translateBound(groups, from, to, decorators, { moduleDirectory, imports, moduleSource, utf16Strings, referenceSemantics, retainDiagnostics }) {
-  const scans = groups.map((group) => (group.kind === 'item' ? scanItem(group.text) : null));
+  const scans = groups.map((group) => {
+    if (group.kind !== 'item') return null;
+    try { return scanItem(from === 'TypeScript' ? projectTypeScriptTyping(group.text).code : group.text); }
+    catch (error) { if (error instanceof TranslationError) return null; throw error; }
+  });
   const owners = new Map();
   const ownerCounts = new Map();
   scans.forEach((scan, index) => {
@@ -304,6 +308,8 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
   });
   const attempted = new Set();
   const moduleBindingNames = [...owners.keys()];
+  const acceptSourceSignature = (signature,owner) => acceptDeclarationSignature(signature.k === 'const',signature.literal ?? false)
+    || acceptNumericModuleBindingDeclarationSignature(from === 'TypeScript' ? projectTypeScriptTyping(groups[owner].text).code : groups[owner].text,signature);
   const outs = new Array(groups.length);
   const visiting = new Set();
   let moduleScopeKnown = false;
@@ -324,7 +330,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
         visit(owner);
         if (outs[owner]?.status !== 'translated' || scans[owner]?.async) continue;
         const signature = outs[owner].signatures?.find(candidate => candidate.name === name);
-        if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.set(name, signature);
+        if (signature && acceptSourceSignature(signature,owner)) externals.set(name, signature);
       }
       const completed = translateRecursiveDeclarationGroup(members, groups, scans, from, to, decorators,
         { externals: [...externals.values()], moduleDirectory, moduleBindingNames, moduleScopeKnown, utf16Strings, referenceSemantics, retainDiagnostics });
@@ -360,7 +366,7 @@ function translateBound(groups, from, to, decorators, { moduleDirectory, imports
         visit(owner);
         if (outs[owner]?.status !== 'translated' || scans[owner].async) continue;
         const signature = outs[owner].signatures.find((candidate) => candidate.name === name);
-        if (signature && acceptDeclarationSignature(signature.k === 'const', signature.literal ?? false)) externals.push(signature);
+        if (signature && acceptSourceSignature(signature,owner)) externals.push(signature);
       }
     }
     outs[index] = translateGroup(groups[index], from, to, decorators, { externals, moduleDirectory, moduleBindingNames, moduleScopeKnown, utf16Strings, referenceSemantics, retainDiagnostics });

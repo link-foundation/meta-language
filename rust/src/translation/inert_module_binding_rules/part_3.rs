@@ -1,6 +1,5 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlAcceptInertBindingSequenceLoop2Result;
 use super::accept_inert_binding_sequence;
 use super::ml;
 use super::ml_array;
@@ -8,6 +7,55 @@ use super::read_inert_binding_children;
 use super::read_inert_binding_value;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_inert_binding_children_loop1(
+    terms: &[String],
+    parents: &[f64],
+    mut owner: f64,
+    mut result: Vec<f64>,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if at < (terms.len() as f64) {
+            if (((self::read_required_number_fact(parents, at)) == owner)
+                && ((self::read_required_text_fact(terms, at)) != "comment"))
+                && ((self::read_required_text_fact(terms, at)) != "whitespace")
+            {
+                {
+                    let result_2 = {
+                        let (ml_append_right, ml_append_left) = (vec![at], result);
+                        self::ml_array::append(ml_append_left, ml_append_right)
+                    };
+                    {
+                        let at_2 = at + 1f64;
+                        {
+                            (result, at) = (result_2, at_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let at_3 = at + 1f64;
+                    {
+                        at = at_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptInertBindingSequenceLoop2Result {
+    MlAcceptInertBindingSequenceLoop2Done,
+    MlAcceptInertBindingSequenceLoop2Return(bool),
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptInertBindingSequenceJoin3 {
@@ -838,36 +886,4 @@ pub enum MlAcceptInertModuleBindingScopeLoop23Result {
 pub enum MlAcceptInertModuleBindingScopeLoop24Result {
     MlAcceptInertModuleBindingScopeLoop24Done,
     MlAcceptInertModuleBindingScopeLoop24Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_inert_module_binding_scope_loop24(
-    mut owner: f64,
-    ml_values22: &[String],
-    mut ml_index22: self::ml::Big,
-) -> self::MlAcceptInertModuleBindingScopeLoop24Result {
-    loop {
-        return if ml_index22 < (self::ml::Big::from_u128(ml_values22.len() as u128)) {
-            {
-                let binding = self::ml_array::at(ml_values22, ml_index22.to_index());
-                if (((owner == 1f64) && (binding == "Map"))
-                    || ((owner == 2f64) && (binding == "Set")))
-                    || ((owner == 3f64) && (binding == "Object"))
-                {
-                    self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Return(false)
-                } else {
-                    {
-                        let ml_index22_2 = ml_index22.add(&self::ml::Big::from_i128(1));
-                        {
-                            ml_index22 = ml_index22_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Done
-        };
-    }
 }

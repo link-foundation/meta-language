@@ -70,3 +70,12 @@ export function readNumericModuleBinding(terms,fields,parents,starts,ends,texts,
  }
  return readRequiredBooleanFact(values,terms.length-1-value)?[name,0]:[];
 }
+
+/** A translated pure Number initializer may supply its actual scalar static
+ * signature. The complete CST owns the name; ordinary literal signatures keep
+ * their original route. No container or callable acquires this interpretation.
+ * @param {string} kind @param {string} type @param {boolean} literal
+ * @param {string} sourceName @param {string} signatureName @returns {boolean} */
+export function acceptNumericModuleBindingSignature(kind,type,literal,sourceName,signatureName){
+ return kind==='const'&&type==='float'&&!literal&&sourceName.length>0&&sourceName===signatureName;
+}

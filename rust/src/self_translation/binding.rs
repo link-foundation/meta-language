@@ -408,11 +408,9 @@ impl Binder<'_, '_> {
                 {
                     continue;
                 }
-                if let Some(signature) = out
-                    .signatures
-                    .iter()
-                    .find(|candidate| candidate.name() == name && accept_signature(candidate))
-                {
+                if let Some(signature) = out.signatures.iter().find(|candidate| {
+                    candidate.name() == name && self.accept_source_signature(owner, candidate)
+                }) {
                     externals.push(signature.clone());
                 }
             }
@@ -433,6 +431,38 @@ impl Binder<'_, '_> {
             &context,
         ));
         state.visiting.remove(&index);
+    }
+
+    /// Adapt the existing checked signature and complete original source only.
+    fn accept_source_signature(&self, owner: usize, signature: &External) -> bool {
+        if accept_signature(signature) {
+            return true;
+        }
+        let External::Constant { name, ty, literal } = signature else {
+            return false;
+        };
+        if !matches!(ty, Type::Float) {
+            return false;
+        }
+        let GroupKind::Item { text, .. } = &self.groups[owner].kind else {
+            return false;
+        };
+        let source = if self.from == "TypeScript" {
+            let Ok(source) = super::project_type_script_typing(text) else {
+                return false;
+            };
+            source
+        } else {
+            text.clone()
+        };
+        let actual = deferred_scope::read_numeric_binding_name(&source);
+        crate::translation::inert_module_binding_rules::accept_numeric_module_binding_signature(
+            "const",
+            ty.kind(),
+            *literal,
+            actual.as_deref().unwrap_or(""),
+            name,
+        )
     }
 }
 

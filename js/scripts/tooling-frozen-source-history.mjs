@@ -7,6 +7,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {tokenize} from '../src/translation/lexer.js';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readOwnCodebaseTestRegistrationHistory,restoreOwnCodebaseTestRegistrationClassifier} from './own-codebase-test-registration-history.mjs';
+import {restoreCrateFixturePackageSource} from './crate-fixture-package-source-history.mjs';
 const root=new URL('../../',import.meta.url);
 export const TOOLING_FROZEN_SOURCE_REVISION='7881e1e6f83818e0b25b77e1b3ab15c2d51ca9f3';
 export const CRITICAL_DELIVERY_SOURCE_HISTORY={path:'parity/self-translation/critical-delivery-source-history.lino',bytes:419191,
@@ -182,6 +183,7 @@ export function readToolingFrozenSourceHistory({hostSuccessors=false}={}){
  * this packet. A selected unknown successor cannot acquire an older guard view. */
 export function restoreToolingFrozenHostSource(source,file,{hostSuccessorsOnly=false,preserveUnknownSource=false}={}){
   assert.equal(typeof source,'string');assert.equal(typeof file,'string');
+  source=restoreCrateFixturePackageSource(source,file);
   if(hostSuccessorsOnly)return restoreToolingHostSuccessor(source,file,preserveUnknownSource);
   if(!TOOLING_FROZEN_HOSTS.some(row=>row.path===file))return source;
   const packet=readToolingFrozenSourceHistory(),row=packet.hosts.find(candidate=>candidate.path===file);

@@ -3966,6 +3966,16 @@ module arithmetic excludes legacy leading-zero spellings. This admits ordinary
 size constants such as `128 * 1024 * 1024` while retaining separate translation
 and native execution obligations.
 
+An independently translated pure Number module initializer may supply its actual
+checked scalar static signature to a sibling. Complete CST ownership, a matching
+name, the existing unique-owner/module-scope proof and a successfully emitted
+initializer are required. The ordinary emitter retains the original arithmetic
+and reads its existing lazy static; no alternate evaluator or copied semantics
+are introduced. Containers, calls, BigInt and unsupported operators do not gain
+this interpretation. TypeScript ownership scans use the same real erasure path
+as its ordinary frontend and native binder. Source restoration remains exact;
+independent Number behavior and whole-result parity require execution in CI.
+
 The borrowed JavaScript function-body host retains its preceding scoped-iteration
 source through complete Git-certified Links data and seven exact borrowing edits.
 Only the existing historical readers request that predecessor. Current source
@@ -3981,6 +3991,11 @@ receipt adds this source succession while keeping its whole earlier recipe and
 all actual current reexports; native CST owner proofs inspect the complete current
 root, including the newly public constructor. Older root receipts remain valid
 for their original bytes, and unknown source edits still refuse.
+Crate fixture packaging similarly retains both complete certified manifests and
+the exact two-entry inverse. Historical tooling capture selects its original
+manifest only through that proof; actual packaging checks keep the current one.
+Operation registration preserves the published order when new declarations are
+added to an existing source module, appending new identities after every old row.
 
 Historical naming storage rereads every complete document before selecting its
 cached immutable text. Only equal scalar strings share storage; returned index,
@@ -4050,6 +4065,14 @@ coordinator owns the factory inventory and reserves an extra GiB when selecting
 capacity; the original CPU, explicit job-count and one-GiB worker bounds remain.
 Tiny injected scheduling tests establish ordering and retention, not improved
 whole-source timing. Corrected timing requires CI; full raw workloads stay there.
+The subsequent raw job in CI 39951766736 still exceeded ten minutes after all
+three complete archive replays and matrix construction. One invocation now
+shares its actual checked program between the ordinary current and consuming
+emission helpers, instead of repeating parse/check/current emission. Every
+original source pin, 106-owner comparison, consuming codec replay and final
+profile assertion remains. The temporary checked graph is released after
+consuming preparation, including failure; it is never retained across plans.
+This removes repeated preparation, without claiming corrected CI timing.
 The serial final verification also runs the existing JavaScript crate-input
 package check after all seventeen preceding checks. Generated native unit
 fixtures live in the crate data directory with identical shared Links inputs

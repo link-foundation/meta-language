@@ -1,10 +1,21 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlReadNumericModuleBindingLoop48Result;
 use super::ml;
 use super::ml_array;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadNumericModuleBindingJoin44 {
+    MlReadNumericModuleBindingJoin44Next(f64),
+    MlReadNumericModuleBindingJoin44Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadNumericModuleBindingLoop48Result {
+    MlReadNumericModuleBindingLoop48Done(f64, f64),
+    MlReadNumericModuleBindingLoop48Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

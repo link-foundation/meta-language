@@ -5,6 +5,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.mjs';
 import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {restoreCrateFixturePackageSource} from './crate-fixture-package-source-history.mjs';
 import {TOOLING_FROZEN_SOURCE_REVISION,TOOLING_FROZEN_HOSTS,CURRENT_CONVERSATION_SOURCE,CRITICAL_DELIVERY_SOURCE_HISTORY,
   toolingFrozenSourcePin,replayToolingFrozenHostChanges,readCriticalDeliveryFrozenSource,readCriticalDeliveryAppend,
   verifyToolingFrozenSourceHistory,restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
@@ -18,7 +19,7 @@ export function generateToolingFrozenSourceHistory({check=false,apply=false,host
     const revision='8f2f6c483ec32a3ffc17afec694463965dc7551d',predecessor='8bc0ef9725388c7927acf1854870bf46f5e365be';
     const sources=['js/tests/ci-workflow-structure.test.js','js/tests/test-groups.test.js','rust/Cargo.toml'].map(path=>{
       const captured=captureGitArtifactCertificate(revision,path),source=captured.blob.toString('utf8');
-      assert.deepEqual(Buffer.from(source),captured.blob);assert.equal(readFileSync(new URL(path,root),'utf8'),source);
+      assert.deepEqual(Buffer.from(source),captured.blob);assert.equal(restoreCrateFixturePackageSource(readFileSync(new URL(path,root),'utf8'),path),source);
       const old=captureGitArtifactCertificate(predecessor,path),prior=old.blob.toString('utf8');assert.deepEqual(Buffer.from(prior),old.blob);
       let start=0;while(start<prior.length&&start<source.length&&prior[start]===source[start])start++;
       let suffix=0;while(suffix<prior.length-start&&suffix<source.length-start&&prior.at(-1-suffix)===source.at(-1-suffix))suffix++;

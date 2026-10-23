@@ -20,6 +20,26 @@ test('every complete compiler source epoch retains independent membership exact 
  }
 });
 
+test('crate fixture packaging preserves complete certified old bytes and rejects changed source authority',async()=>{
+ const {CRATE_FIXTURE_PACKAGE_SOURCE,readCrateFixturePackageSourceHistory,verifyCrateFixturePackageSourceHistory,restoreCrateFixturePackageSource}=await import('../scripts/crate-fixture-package-source-history.mjs');
+ const {generateCrateFixturePackageSourceHistory}=await import('../scripts/generate-native-compiler-host-source-history.mjs');
+ const packet=readCrateFixturePackageSourceHistory();assert.deepEqual(generateCrateFixturePackageSourceHistory({check:true}),packet);
+ assert.equal(read(CRATE_FIXTURE_PACKAGE_SOURCE.file),packet.current.source);
+ assert.equal(restoreCrateFixturePackageSource(packet.current.source,packet.file),packet.previous.source);
+ assert.equal(restoreCrateFixturePackageSource(packet.previous.source,packet.file),packet.previous.source);
+ assert.equal(restoreCrateFixturePackageSource(packet.current.source+'\n',packet.file),packet.current.source+'\n');
+ assert.equal(restoreCrateFixturePackageSource(packet.current.source,'unknown.toml'),packet.current.source);
+ for(const mutate of [value=>{value.currentRevision='0'.repeat(40);},value=>{value.file='unknown.toml';},value=>{value.current.certificate.path='unknown.toml';},value=>{value.previous.certificate.revision='0'.repeat(40);},value=>{value.change.after+='\n';},value=>{value.current.source+='\n';Object.assign(value.current,readNativeCompilerHostSourceIdentity(value.current.source));}]){
+  const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCrateFixturePackageSourceHistory(changed));
+ }
+ const detached=readCrateFixturePackageSourceHistory();detached.current.source='caller mutation';
+ assert.deepEqual(readCrateFixturePackageSourceHistory(),packet);
+ const encoded=encodeStructuredDataLinks(packet),canonical=LinkNetwork.fromLino(encoded.network.toLino());
+ for(const network of [canonical,decodeLinkNetworkBinary(encodeLinkNetworkBinary(canonical))]){
+  const decoded=decodeStructuredDataLinks(network,encoded.root);assert.deepEqual(decoded,packet);verifyCrateFixturePackageSourceHistory(decoded);
+ }
+});
+
 test('coherent current metadata foreign certificates changed edits and lost source fields refuse',()=>{
  const packet=readNativeCompilerHostSourceHistory();
  for(const mutate of [value=>{value.sources.reverse();},value=>{value.currentRevision='0'.repeat(40);},value=>{value.sources[0].current.source+='\n';Object.assign(value.sources[0].current,readNativeCompilerHostSourceIdentity(value.sources[0].current.source));},value=>{value.sources[1].current.certificate.path=value.sources[0].file;},value=>{value.sources[0].changes=[];},value=>{value.sources[3].previous.source=value.sources[3].current.source;},value=>{value.extra='unrepresented';}]){

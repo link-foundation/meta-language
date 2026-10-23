@@ -1,6 +1,6 @@
 // Append source-qualified operations without changing preceding identities.
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {tokenize} from '../src/translation/lexer.js';
@@ -12,7 +12,7 @@ import {inspectBootstrapStructuredDataLino,readBootstrapStructuredDataLino} from
 
 const root=new URL('../../',import.meta.url);
 const revision='d3e4076667add3e19e4cf5f10a3cea60255dd2d7';
-const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs','js/src/translation/numeric-module-binding-rules.js','js/src/translation/numeric-module-bindings.js','js/scripts/borrowed-javascript-body-source-history.mjs','experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs','js/scripts/native-compiler-host-source-history.mjs','js/scripts/numeric-module-binding-source-styles.mjs','js/scripts/generate-borrowed-javascript-body-source-history.mjs','js/scripts/generate-native-compiler-host-source-history.mjs','js/scripts/historical-naming-inventory-storage.mjs'];
+const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs','js/src/translation/numeric-module-binding-rules.js','js/src/translation/numeric-module-bindings.js','js/scripts/borrowed-javascript-body-source-history.mjs','experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs','js/scripts/native-compiler-host-source-history.mjs','js/scripts/numeric-module-binding-source-styles.mjs','js/scripts/generate-borrowed-javascript-body-source-history.mjs','js/scripts/generate-native-compiler-host-source-history.mjs','js/scripts/historical-naming-inventory-storage.mjs','js/scripts/crate-fixture-package-source-history.mjs'];
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{
@@ -42,6 +42,15 @@ export function generateModuleScopeNaming({section,check=false}={}){
  assert.ok(['canonical','bindings'].includes(section));const rows=operations();
  const file=section==='canonical'?'parity/naming/canonical-concepts.lino':'parity/naming/source-bindings.lino';
  const receiptFile='parity/naming/module-scope-'+section+'-registration.lino';
+ // A new declaration in an existing module must append after all registered
+ // identities, rather than move later modules' already published operations.
+ if(existsSync(new URL(receiptFile,root))){
+  const previous=readBootstrapStructuredDataLino(readFileSync(new URL(receiptFile,root),'utf8'));
+  const positions=new Map(previous.additions.map((row,index)=>[row.id,index]));
+  assert.equal(positions.size,previous.additions.length);
+  for(const id of positions.keys())assert.ok(rows.some(row=>row.id===id),'every registered operation remains present');
+  rows.sort((left,right)=>(positions.get(left.id)??positions.size)-(positions.get(right.id)??positions.size));
+ }
  let original;
  if(section==='bindings'){
   // Reuse the small, independently certified source profile rather than copying

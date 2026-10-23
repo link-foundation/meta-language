@@ -285,6 +285,10 @@ prevent an unrelated checked function from constructing the standard Map.
 This classification accepts Number arithmetic without evaluating it, preserves
 the actual binding name and refuses identifiers, calls, BigInt and coercion from
 other types. The initializer retains its own translation obligation.
+When that complete initializer independently translates, its actual checked
+Number static signature may bind sibling functions. The existing static emitter
+retains the expression, including rounding, NaN and signed zero. Unknown owners,
+eager sibling effects and operators the frontend cannot translate still refuse.
 
 A declaration-only module with carried groups is also retried as one checked
 scope, so JSDoc data types can bind across declarations. A failed retry keeps
