@@ -14,6 +14,20 @@ const pathOf=revision=>'parity/naming/array-identity-historical-inventories-'+re
 assert.equal(new Set(revisions.map(pathOf)).size,revisions.length,'registered source documents have distinct paths');
 const pin=source=>({bytes:Buffer.byteLength(source),sha256:createHash('sha256').update(source).digest('hex')});
 const exactKeys=(value,keys)=>assert.deepEqual(Object.keys(value).sort(),[...keys].sort());
+let documentSnapshot;
+
+/** Read every actual byte before reusing an equal immutable scalar string.
+ * One actual root and its five registered documents bound retained storage. */
+function readHistoricalNamingDocumentText(base,file){
+  assert.ok(file===HISTORICAL_NAMING_INVENTORY_INDEX||revisions.some(revision=>pathOf(revision)===file));
+  const directory=resolve(base),actual=readFileSync(resolve(directory,file),'utf8');
+  if(documentSnapshot?.directory!==directory)documentSnapshot={directory,texts:new Map()};
+  const previous=documentSnapshot.texts.get(file);
+  if(previous===actual)return previous;
+  documentSnapshot.texts.set(file,actual);
+  assert.ok(documentSnapshot.texts.size<=revisions.length+1);
+  return actual;
+}
 
 function inventoryFragments(history){
   const fragments=revisions.map(revision=>({schemaVersion:1,model:'historical naming inventory fragment 1',revision,
@@ -50,7 +64,7 @@ export function storeHistoricalNamingInventories(history,{check=false,base=root}
 /** Read all complete document bytes before cache selection. No page can hide
  * behind an unchanged index, and no decoded graph gets a larger node budget. */
 export function readHistoricalNamingInventoryBundle({base=root}={}){
-  const text=readFileSync(resolve(base,HISTORICAL_NAMING_INVENTORY_INDEX),'utf8');
+  const text=readHistoricalNamingDocumentText(base,HISTORICAL_NAMING_INVENTORY_INDEX);
   const index=readBootstrapStructuredDataLino(text),documents=[{file:HISTORICAL_NAMING_INVENTORY_INDEX,text}];
   if(index.model==='array identity historical naming inventories 1')return{legacy:index,documents};
   exactKeys(index,['schemaVersion','model','revision','boundary','partitions']);
@@ -63,7 +77,7 @@ export function readHistoricalNamingInventoryBundle({base=root}={}){
     assert.ok(Number.isSafeInteger(row.bytes)&&row.bytes>0&&row.bytes<=64*1024*1024);
     assert.match(row.sha256,/^[a-f0-9]{64}$/u);
     assert.ok(Number.isSafeInteger(row.sources)&&row.sources>=0&&Number.isSafeInteger(row.views)&&row.views>=0);
-    const text=readFileSync(resolve(base,row.file),'utf8');assert.deepEqual(pin(text),{bytes:row.bytes,sha256:row.sha256});
+    const text=readHistoricalNamingDocumentText(base,row.file);assert.deepEqual(pin(text),{bytes:row.bytes,sha256:row.sha256});
     documents.push({file:row.file,text});
   }
   return{index,documents};

@@ -3953,6 +3953,43 @@ to execute cycles under every other real grammar tool. Development oracle
 corrections build in CI and keep their original source hashes and a separately
 identified correction, so the native runtime remains independent of the oracle.
 
+Module scope may additionally admit a constant initializer whose complete CST
+contains only Number literals, arithmetic operators and parentheses. Its actual
+lexical name still participates in standard-owner shadowing. Calls, references,
+BigInt, coercion from other values, assignments and eager sibling effects refuse.
+Shared JavaScript decisions generate the native classifier and both checked
+Links archives. Classification neither folds nor translates the initializer and
+never supplies a callable signature for a carried binding. Both host adapters
+retain the actual CST binder when the portable lexer lacks its Unicode spelling;
+this ownership transport does not establish general Unicode translation. Strict
+module arithmetic excludes legacy leading-zero spellings. This admits ordinary
+size constants such as `128 * 1024 * 1024` while retaining separate translation
+and native execution obligations.
+
+The borrowed JavaScript function-body host retains its preceding scoped-iteration
+source through complete Git-certified Links data and seven exact borrowing edits.
+Only the existing historical readers request that predecessor. Current source
+bytes, unknown-edit refusals, original packets and both source codecs retain
+independent checks; source conservation supplies no native execution evidence.
+
+Compiler-host source succession also retains the complete preceding crate root,
+Boolean hosts and ASCII native artifact as independently certified Links data.
+Every checked program, interface, source definition and replay field of the ASCII
+artifact stays exact; only its certified generated native files differ. Historical
+Boolean author modes preserve current physical hosts. The active crate-root
+receipt adds this source succession while keeping its whole earlier recipe and
+all actual current reexports; native CST owner proofs inspect the complete current
+root, including the newly public constructor. Older root receipts remain valid
+for their original bytes, and unknown source edits still refuse.
+
+Historical naming storage rereads every complete document before selecting its
+cached immutable text. Only equal scalar strings share storage; returned index,
+document and decoded containers remain detached. One actual root and its five
+registered paths bound the cache. Every whole-file hash, source certificate,
+serializer comparison and final reread remains mandatory, including page edits
+behind an unchanged index and distinct copied roots. Decoder and memory limits
+remain unchanged.
+
 ## Resource limits
 
 Grammar test files run exactly once across six required JavaScript cells. Their
@@ -4004,6 +4041,19 @@ ownership disjoint, serialize resource-heavy local checks and Git index writes,
 and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
+CI 39937987715 exceeded the unchanged ten-minute package deadline while replaying
+three complete Rust sources. Source preparation now proceeds serially while each
+ready source starts its existing archive worker. All three text and binary CST
+replays and successful worker exits still precede fixture/matrix allocation.
+Every factory and worker settles before publication or aggregate failure. The
+coordinator owns the factory inventory and reserves an extra GiB when selecting
+capacity; the original CPU, explicit job-count and one-GiB worker bounds remain.
+Tiny injected scheduling tests establish ordering and retention, not improved
+whole-source timing. Corrected timing requires CI; full raw workloads stay there.
+The serial final verification also runs the existing JavaScript crate-input
+package check after all seventeen preceding checks. Generated native unit
+fixtures live in the crate data directory with identical shared Links inputs
+and explicit package entries; the check does not invoke Cargo.
 
 Report modules retain eight required jobs; general grammar tests retain six.
 Their complete current source inventories are scheduled using source-bound

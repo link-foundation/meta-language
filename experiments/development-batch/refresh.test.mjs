@@ -18,10 +18,11 @@ test('final verification checks live sources first and preserves every read-only
   runDevelopmentAuthoringPhase(readDevelopmentAuthoringPlan(),'verification',{check,execute:(command,args,options)=>{
    calls.push({command,args,options});return{status:0,signal:null};
   }});
-  assert.equal(calls.length,17);
+  assert.equal(calls.length,18);
   assert.deepEqual(calls[0].args.slice(4),['js/scripts/check-issue-195-sources.mjs','--online']);
   assert.equal(calls[2].args[4],'js/scripts/check-issue-195-acceptance.mjs');
-  assert.deepEqual(calls.at(-1).args.slice(4),['experiments/grammar-outcome-network/native-transport/inverse/generate-relative-character-self-translation.mjs','--check']);
+  assert.deepEqual(calls[16].args.slice(4),['experiments/grammar-outcome-network/native-transport/inverse/generate-relative-character-self-translation.mjs','--check']);
+  assert.deepEqual(calls[17].args.slice(4),['js/tests/crate-package-include.test.js']);
   assert.ok(calls.every(call=>call.command===process.execPath&&call.options.timeout===80000&&call.options.killSignal==='SIGKILL'));
   assert.ok(calls.every(call=>call.args.includes('--max-old-space-size=352')));
   assert.ok(calls.every(call=>!call.args.some(arg=>['--refresh-manifest','--refresh-declarations','--update','--run'].includes(arg))));

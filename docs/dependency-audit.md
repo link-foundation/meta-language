@@ -67,12 +67,12 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 263 | 262 | 1 | 0 |
+| Generators | 265 | 264 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
 | Runners | 3 | 3 | 0 | 0 |
-| Published artifact contents | 91 | 0 | 0 | 91 |
+| Published artifact contents | 93 | 0 | 0 | 93 |
 
 ## JavaScript engines
 
@@ -810,6 +810,8 @@ they are.
 | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `js/scripts/generate-shared-array-native-frontend-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `js/scripts/generate-typed-source-descriptor-host-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-native-compiler-host-source-history.mjs` | `js/scripts/generate-native-compiler-host-source-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 
@@ -969,6 +971,8 @@ they are.
 | `src/data/array-relative-element-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/string-relative-character-template.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 | `src/data/javascript-identifier-models.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/empty-module-collections.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
+| `src/data/numeric-module-bindings.lino` | `crate` | `rust/Cargo.toml` | `include` |  | unversioned | not applicable |  |
 
 ## Behind the current stable release
 

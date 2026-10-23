@@ -143,6 +143,13 @@ fn scan_item(text: &str) -> Option<Scan> {
             mentions.push(token.value.clone());
         }
     }
+    // Actual CST transport can retain a Unicode binder outside this lexer's
+    // portable identifier subset; it does not supply a callable signature.
+    if declares.is_none()
+        && let Some((name, _)) = &inert
+    {
+        declares = Some(name.clone());
+    }
     if let Some((_, name)) = &deferred
         && declares.as_ref() != Some(name)
     {

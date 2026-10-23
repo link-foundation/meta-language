@@ -105,6 +105,8 @@ include = [
     "src/data/collection-construction-rules.lino",
     "src/data/guarded-private-array-write-rules.lino",
     "src/data/guarded-private-array-write-program.lino",
+    "src/data/empty-module-collections.lino",
+    "src/data/numeric-module-bindings.lino",
 ]
 
 [lib]

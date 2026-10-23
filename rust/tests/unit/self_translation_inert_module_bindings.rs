@@ -203,3 +203,21 @@ fn evaluated_or_shadowed_module_initializers_keep_their_original_scope_refusal()
         );
     }
 }
+
+#[test]
+fn numeric_constant_siblings_preserve_complete_parity_and_independent_behavior() {
+    versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/numeric-module-bindings.lino"
+    ))
+    .unwrap();
+    let cases = fixture["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 6);
+    for case in cases {
+        let prefix = case["source"].as_str().unwrap();
+        let source = format!(
+            "{prefix}\nexport function create(){{return new Map([[\"a\",1],[\"b\",2]]);}}\nfunction deferred(){{return /unsupported/u;}}\n"
+        );
+        assert_literal_sibling_translation(&source);
+    }
+}

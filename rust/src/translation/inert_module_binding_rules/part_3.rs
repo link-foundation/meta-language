@@ -1,14 +1,168 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
-use super::MlReadInertModuleBindingLoop16Result;
+use super::MlAcceptInertBindingSequenceLoop2Result;
 use super::accept_inert_binding_sequence;
 use super::ml;
 use super::ml_array;
-use super::ml_read_inert_module_binding_loop16;
 use super::read_inert_binding_children;
 use super::read_inert_binding_value;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlAcceptInertBindingSequenceJoin3 {
+    MlAcceptInertBindingSequenceJoin3Next,
+    MlAcceptInertBindingSequenceJoin3Return(bool),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_accept_inert_binding_sequence_loop2(
+    terms: &[String],
+    parents: &[f64],
+    values: &[bool],
+    element: &str,
+    children: &[f64],
+    mut value: bool,
+    mut at: f64,
+) -> self::MlAcceptInertBindingSequenceLoop2Result {
+    loop {
+        return if at < ((children.len() as f64) - 1f64) {
+            {
+                let child = self::read_required_number_fact(children, at);
+                {
+                    let term = self::read_required_text_fact(terms, child);
+                    {
+                        let ml_s3311 = if value {
+                            if !(self::read_inert_binding_value(
+                                values,
+                                (parents.len() as f64),
+                                child,
+                            )) || ((!(element).is_empty()) && (term != element))
+                            {
+                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(false)
+                            } else {
+                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
+                            }
+                        } else {
+                            let ml_library_inequality_1 = (term != ",");
+                            if ml_library_inequality_1 {
+                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(false)
+                            } else {
+                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
+                            }
+                        };
+                        match ml_s3311 {
+                            self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next => {
+                                {
+                                    let value_2 = !value;
+                                    {
+                                        let at_2 = at + 1f64;
+                                        {
+                                            (value, at) = (value_2, at_2);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(ml_result3) => {
+                                self::MlAcceptInertBindingSequenceLoop2Result::MlAcceptInertBindingSequenceLoop2Return(ml_result3)
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlAcceptInertBindingSequenceLoop2Result::MlAcceptInertBindingSequenceLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlReadInertModuleBindingLoop16Result {
+    MlReadInertModuleBindingLoop16Done(f64, f64, f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_inert_module_binding_loop16(
+    terms: &[String],
+    fields: &[String],
+    mut key: f64,
+    mut item: f64,
+    mut colons: f64,
+    ml_values7: &[f64],
+    mut ml_index7: self::ml::Big,
+) -> self::MlReadInertModuleBindingLoop16Result {
+    loop {
+        return if ml_index7 < (self::ml::Big::from_u128(ml_values7.len() as u128)) {
+            {
+                let child = self::ml_array::at(ml_values7, ml_index7.to_index());
+                {
+                    let field = self::read_required_text_fact(fields, child);
+                    {
+                        let part = self::read_required_text_fact(terms, child);
+                        if ((field == "key") && (key < 0f64))
+                            && (((part == "property_identifier") || (part == "string"))
+                                || (part == "number"))
+                        {
+                            {
+                                let key_2 = child;
+                                {
+                                    let ml_index7_2 = ml_index7.add(&self::ml::Big::from_i128(1));
+                                    {
+                                        (key, ml_index7) = (key_2, ml_index7_2);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                        {
+                            if (field == "value") && (item < 0f64) {
+                                {
+                                    let item_2 = child;
+                                    {
+                                        let ml_index7_3 =
+                                            ml_index7.add(&self::ml::Big::from_i128(1));
+                                        {
+                                            (item, ml_index7) = (item_2, ml_index7_3);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                            {
+                                if part == ":" {
+                                    {
+                                        let colons_2 = colons + 1f64;
+                                        {
+                                            let ml_index7_4 =
+                                                ml_index7.add(&self::ml::Big::from_i128(1));
+                                            {
+                                                (colons, ml_index7) = (colons_2, ml_index7_4);
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                                {
+                                    {
+                                        let key_3 = -2f64;
+                                        self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_3, item, colons)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(
+                key, item, colons,
+            )
+        };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -70,8 +224,8 @@ pub fn ml_read_inert_module_binding_loop15(
                                                 {
                                                     let ml_index7 = self::ml::Big::from_i128(0);
                                                     {
-                                                        let ml_s2255 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
-                                                        match ml_s2255 {
+                                                        let ml_s3322 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
+                                                        match ml_s3322 {
                                                                         self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_2, item_2, colons_2) => {
                                                                             {
                                                                                 (((key_2 >= 0f64) && (item_2 >= 0f64)) && (colons_2 == 1f64)) && self::read_inert_binding_value(&(values), (parents.len() as f64), item_2)
@@ -716,132 +870,4 @@ pub fn ml_accept_inert_module_binding_scope_loop24(
             self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Done
         };
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_inert_module_binding_scope_loop23(
-    forms: &[String],
-    owners: &[f64],
-    bindings: &[String],
-    mut at: f64,
-) -> self::MlAcceptInertModuleBindingScopeLoop23Result {
-    loop {
-        return if at < (forms.len() as f64) {
-            {
-                let form = self::read_required_text_fact(forms, at);
-                {
-                    let owner = self::read_required_number_fact(owners, at);
-                    if form == "owned inert value binding" {
-                        if (((0f64..=3f64).contains(&owner)) && ((owner % 1f64) == 0f64)) {
-                            {
-                                let ml_values22 = bindings.to_vec();
-                                {
-                                    let ml_index22 = self::ml::Big::from_i128(0);
-                                    {
-                                        let ml_s2266 =
-                                            self::ml_accept_inert_module_binding_scope_loop24(
-                                                owner,
-                                                &(ml_values22),
-                                                ml_index22,
-                                            );
-                                        match ml_s2266 {
-                                            self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Done => {
-                                                {
-                                                    let at_2 = at + 1f64;
-                                                    {
-                                                        at = at_2;
-                                                        continue;
-                                                    }
-                                                }
-                                            }
-                                            self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Return(ml_result24) => {
-                                                self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Return(ml_result24)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Return(false)
-                        }
-                    } else if (owner != -1f64)
-                        || (((((((form != "comment") && (form != "named function declaration"))
-                            && (form != "named import"))
-                            && (form != "primitive literal binding"))
-                            && (form != "empty class declaration"))
-                            && (form != "deferred named class declaration"))
-                            && (form != "deferred function value binding"))
-                    {
-                        self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Return(false)
-                    } else {
-                        {
-                            let at_3 = at + 1f64;
-                            {
-                                at = at_3;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_empty_collection_binding_children_loop25(
-    terms: &[String],
-    parents: &[f64],
-    mut owner: f64,
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < (terms.len() as f64) {
-            if (((self::read_required_number_fact(parents, at)) == owner)
-                && ((self::read_required_text_fact(terms, at)) != "comment"))
-                && ((self::read_required_text_fact(terms, at)) != "whitespace")
-            {
-                {
-                    let result_2 = {
-                        let (ml_append_right, ml_append_left) = (vec![at], result);
-                        self::ml_array::append(ml_append_left, ml_append_right)
-                    };
-                    {
-                        let at_2 = at + 1f64;
-                        {
-                            (result, at) = (result_2, at_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let at_3 = at + 1f64;
-                    {
-                        at = at_3;
-                        continue;
-                    }
-                }
-            }
-        }
-        return { result };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadEmptyStandardCollectionModuleBindingJoin35 {
-    MlReadEmptyStandardCollectionModuleBindingJoin35Next,
-    MlReadEmptyStandardCollectionModuleBindingJoin35Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadEmptyStandardCollectionModuleBindingLoop34Result {
-    MlReadEmptyStandardCollectionModuleBindingLoop34Done(f64, f64, f64),
-    MlReadEmptyStandardCollectionModuleBindingLoop34Return(Vec<f64>),
 }

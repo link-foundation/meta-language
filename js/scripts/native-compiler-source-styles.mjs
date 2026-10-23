@@ -160,3 +160,17 @@ export function readNativeCompilerSourceStyles(source,family){
  for(const [,name]of [...current.matchAll(/^pub fn (\w+)\(/gmu)])functionStyle(name,body=>normalizeNativeCompilerStyleTextOperations(distinguishNativeCompilerStyleBranches(body)));
  return{source:current,actions};
 }
+
+/** A one-character String pattern and char pattern select the same Rust search.
+ * Applied only to the Number-literal classifier's generated loop. */
+export function readNativeNumericPatternSourceStyles(source,family){
+ if(family!=='inert_module_binding_rules')return{source,actions:[]};
+ const names=[...source.matchAll(/^pub fn ((?:ml_)?(?:read|accept)_numeric_module_binding_[a-z_0-9]+)\(/gmu)].map(match=>match[1]);
+ const actions=[];let current=source;
+ for(const name of names){
+  const before=readSourceTextRustBlock(current,'fn',name),after=before.replaceAll('.contains("n")',".contains('n')");
+  if(before===after)continue;
+  assert.equal(current.split(before).length,2);actions.push({op:'replace',field:'source',from:before,to:after});current=current.replace(before,()=>after);
+ }
+ return{source:current,actions};
+}

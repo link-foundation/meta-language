@@ -7,8 +7,8 @@ and establishes no requirement evidence.
 
 `stages.lino` is generated automatically by `node experiments/development-batch/refresh.mjs --write-plan`.
 `--list` shows the phases. Each phase invokes existing commands sequentially in
-fresh JavaScript processes. The history phase first captures the complete physical
-workflow succession, retains the grammar-context steps
+fresh JavaScript processes. The history phase first captures complete certified compiler and borrowing
+successors and physical workflow succession, retains the grammar-context steps
 around CI/native history and refreshes evidence-translation archives. Registration
 appends canonical operations, their complete source bindings and the current
 binding codec epoch in order, retaining every earlier row and epoch. Naming
@@ -25,7 +25,7 @@ env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanu
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase verification --receipt /tmp/meta-language-verification.lino
 ```
 
-Verification runs seventeen read-only checks, beginning with the authenticated
+Verification runs eighteen read-only checks, beginning with the authenticated
 online requirement-source audit before ledger access. It requires GitHub API
 access. Its remaining commands check dependencies, scope, exports, runtime
 inventory, documentation, test ownership, generated rules, source histories and
@@ -36,6 +36,8 @@ The snapshot phase refreshes the relative-character fixture through its existing
 JavaScript oracle; final verification checks its exact source fingerprint,
 unchanged input, ordered decisions and bounded package version.
 `--check` leaves these already read-only commands unchanged.
+The final command runs the existing JavaScript check that every embedded Rust
+source input is packaged. It performs no Cargo invocation or compilation.
 
 Append `--check` to authoring phases for their read-only freshness mode. This does
 not replace required targeted controls, source reconciliation or the final

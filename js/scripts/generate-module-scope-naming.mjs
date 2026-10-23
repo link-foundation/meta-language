@@ -12,7 +12,7 @@ import {inspectBootstrapStructuredDataLino,readBootstrapStructuredDataLino} from
 
 const root=new URL('../../',import.meta.url);
 const revision='d3e4076667add3e19e4cf5f10a3cea60255dd2d7';
-const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs'];
+const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs','js/src/translation/numeric-module-binding-rules.js','js/src/translation/numeric-module-bindings.js','js/scripts/borrowed-javascript-body-source-history.mjs','experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs','js/scripts/native-compiler-host-source-history.mjs','js/scripts/numeric-module-binding-source-styles.mjs','js/scripts/generate-borrowed-javascript-body-source-history.mjs','js/scripts/generate-native-compiler-host-source-history.mjs','js/scripts/historical-naming-inventory-storage.mjs'];
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{
@@ -22,9 +22,10 @@ function operations(){
    const name=tokens[at+1].value;let open=at+2;while(open<tokens.length&&tokens[open].value!=='{')open++;
    assert.ok(open<tokens.length);let depth=1,end=open+1;
    while(end<tokens.length&&depth){if(tokens[end].kind==='punct'){if(tokens[end].value==='{')depth++;else if(tokens[end].value==='}')depth--;}end++;}
-   assert.equal(depth,0);const start=tokens[at-1]?.value==='export'?tokens[at-1].start:tokens[at].start;
+   assert.equal(depth,0);let declaration=at;if(tokens[declaration-1]?.value==='async')declaration--;if(tokens[declaration-1]?.value==='export')declaration--;const start=tokens[declaration].start;
    const sourceText=text.slice(start,tokens[end-1].end),phrase=name.replace(/([a-z])([A-Z])/gu,'$1 $2').toLowerCase();
-   rows.push({id:'translation.'+phrase.split(' ').join('-'),source,name,inventoryName:phrase,sourceText});at=end-1;
+   const selected=source==='experiments/original-link-complete-table-projection/raw-source-archive-workers.mjs'?['runOriginalLinkRawArchivePreparationJobs','prepareOriginalLinkRawSourceArchives'].includes(name):source!=='js/scripts/historical-naming-inventory-storage.mjs'||name==='readHistoricalNamingDocumentText';
+   if(selected)rows.push({id:'translation.'+phrase.split(' ').join('-'),source,name,inventoryName:phrase,sourceText});at=end-1;
   }
   assert.ok(rows.length>0);return rows;
  });

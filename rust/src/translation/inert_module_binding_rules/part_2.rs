@@ -1,6 +1,7 @@
 // Generated from the complete checked JavaScript source and recorded dependencies.
 // Do not edit by hand.
 use super::MlAcceptInertModuleBindingScopeLoop23Result;
+use super::MlAcceptNumericModuleBindingNumberLiteralLoop39Result;
 use super::MlReadEmptyStandardCollectionModuleBindingJoin31;
 use super::MlReadEmptyStandardCollectionModuleBindingJoin35;
 use super::MlReadEmptyStandardCollectionModuleBindingLoop30Result;
@@ -17,8 +18,14 @@ use super::MlReadInertModuleBindingLoop18Result;
 use super::MlReadInertModuleBindingLoop19Result;
 use super::MlReadInertModuleBindingLoop20Result;
 use super::MlReadInertModuleBindingLoop21Result;
+use super::MlReadNumericModuleBindingJoin44;
+use super::MlReadNumericModuleBindingLoop43Result;
+use super::MlReadNumericModuleBindingLoop45Result;
+use super::MlReadNumericModuleBindingLoop46Result;
+use super::MlReadNumericModuleBindingLoop48Result;
 use super::ml;
 use super::ml_accept_inert_module_binding_scope_loop23;
+use super::ml_accept_numeric_module_binding_number_literal_loop39;
 use super::ml_array;
 use super::ml_read_empty_collection_binding_children_loop25;
 use super::ml_read_empty_standard_collection_module_binding_loop30;
@@ -34,9 +41,16 @@ use super::ml_read_inert_module_binding_loop18;
 use super::ml_read_inert_module_binding_loop19;
 use super::ml_read_inert_module_binding_loop20;
 use super::ml_read_inert_module_binding_loop21;
+use super::ml_read_numeric_module_binding_children_loop37;
+use super::ml_read_numeric_module_binding_loop43;
+use super::ml_read_numeric_module_binding_loop45;
+use super::ml_read_numeric_module_binding_loop46;
+use super::ml_read_numeric_module_binding_loop47;
+use super::ml_read_numeric_module_binding_loop48;
 use super::read_inert_binding_argument;
 use super::read_inert_binding_children;
 use super::read_inert_binding_value;
+use super::read_required_boolean_fact;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 
@@ -648,6 +662,251 @@ if ml_library_inequality_1 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_numeric_module_binding_children(
+    terms: &[String],
+    parents: &[f64],
+    owner: f64,
+) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let at = 0f64;
+            {
+                self::ml_read_numeric_module_binding_children_loop37(
+                    terms, parents, owner, result, at,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_numeric_module_binding_number_literal(text: &str) -> bool {
+    if ((text.encode_utf16().count() as f64) == 0f64) || text.contains('n') {
+        false
+    } else {
+        {
+            let ml_values38 = vec![
+                String::from("00"),
+                String::from("01"),
+                String::from("02"),
+                String::from("03"),
+                String::from("04"),
+                String::from("05"),
+                String::from("06"),
+                String::from("07"),
+                String::from("08"),
+                String::from("09"),
+            ];
+            {
+                let ml_index38 = self::ml::Big::from_i128(0);
+                {
+                    let ml_s2244 = self::ml_accept_numeric_module_binding_number_literal_loop39(
+                        text,
+                        &(ml_values38),
+                        ml_index38,
+                    );
+                    match ml_s2244 {
+                        self::MlAcceptNumericModuleBindingNumberLiteralLoop39Result::MlAcceptNumericModuleBindingNumberLiteralLoop39Done => {
+                            true
+                        }
+                        self::MlAcceptNumericModuleBindingNumberLiteralLoop39Result::MlAcceptNumericModuleBindingNumberLiteralLoop39Return(ml_result39) => {
+                            ml_result39
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn read_numeric_module_binding(
+    terms: &[String],
+    fields: &[String],
+    parents: &[f64],
+    starts: &[f64],
+    ends: &[f64],
+    texts: &[String],
+    errors: &[f64],
+    source_bytes: f64,
+) -> Vec<f64> {
+    if (((((((((terms.len() as f64) < 1f64) || ((terms.len() as f64) > 4096f64))
+        || ((fields.len() as f64) != (terms.len() as f64)))
+        || ((parents.len() as f64) != (terms.len() as f64)))
+        || ((starts.len() as f64) != (terms.len() as f64)))
+        || ((ends.len() as f64) != (terms.len() as f64)))
+        || ((texts.len() as f64) != (terms.len() as f64)))
+        || ((errors.len() as f64) != (terms.len() as f64)))
+        || !(((0f64..=65_536f64).contains(&source_bytes)) && ((source_bytes % 1f64) == 0f64))
+    {
+        Vec::<f64>::new()
+    } else {
+        {
+            let at = 0f64;
+            {
+                let ml_s2255 = self::ml_read_numeric_module_binding_loop43(
+                    terms,
+                    parents,
+                    starts,
+                    ends,
+                    errors,
+                    source_bytes,
+                    at,
+                );
+                match ml_s2255 {
+                    self::MlReadNumericModuleBindingLoop43Result::MlReadNumericModuleBindingLoop43Done => {
+                        {
+                            let top = self::read_numeric_module_binding_children(terms, parents, 0f64);
+                            {
+let ml_library_inequality_2 = (top.len() as f64) != 1f64 ;
+if ml_library_inequality_2 {
+                                Vec::<f64>::new()
+                            } else {
+                                {
+                                    let declaration = self::read_required_number_fact(&(top), 0f64);
+                                    {
+                                        let ml_s2277 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
+                                            {
+                                                let selected = -1f64;
+                                                {
+                                                    let exports = 0f64;
+                                                    {
+                                                        let ml_values40 = self::read_numeric_module_binding_children(terms, parents, declaration);
+                                                        {
+                                                            let ml_index40 = self::ml::Big::from_i128(0);
+                                                            {
+                                                                let ml_s2288 = self::ml_read_numeric_module_binding_loop48(terms, selected, exports, &(ml_values40), ml_index40);
+                                                                match ml_s2288 {
+                                                                    self::MlReadNumericModuleBindingLoop48Result::MlReadNumericModuleBindingLoop48Done(selected_2, exports_2) => {
+                                                                        if (exports_2 != 1f64) || (selected_2 < 0f64) {
+                                                                            self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Return(Vec::<f64>::new())
+                                                                        } else {
+                                                                            {
+                                                                                let declaration_2 = selected_2;
+                                                                                self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Next(declaration_2)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    self::MlReadNumericModuleBindingLoop48Result::MlReadNumericModuleBindingLoop48Return(ml_result48) => {
+                                                                        self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Return(ml_result48)
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Next(declaration)
+                                        };
+                                        match ml_s2277 {
+                                            self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Next(declaration_3) => {
+                                                {
+let ml_library_inequality_1 = (self::read_required_text_fact(terms, declaration_3)) != "lexical_declaration" ;
+if ml_library_inequality_1 {
+                                                    Vec::<f64>::new()
+                                                } else {
+                                                    {
+                                                        let binding = -1f64;
+                                                        {
+                                                            let constants = 0f64;
+                                                            {
+                                                                let ml_values41 = self::read_numeric_module_binding_children(terms, parents, declaration_3);
+                                                                {
+                                                                    let ml_index41 = self::ml::Big::from_i128(0);
+                                                                    {
+                                                                        let ml_s2299 = self::ml_read_numeric_module_binding_loop45(terms, binding, constants, &(ml_values41), ml_index41);
+                                                                        match ml_s2299 {
+                                                                            self::MlReadNumericModuleBindingLoop45Result::MlReadNumericModuleBindingLoop45Done(binding_2, constants_2) => {
+                                                                                if (constants_2 != 1f64) || (binding_2 < 0f64) {
+                                                                                    Vec::<f64>::new()
+                                                                                } else {
+                                                                                    {
+                                                                                        let name = -1f64;
+                                                                                        {
+                                                                                            let value = -1f64;
+                                                                                            {
+                                                                                                let equals = 0f64;
+                                                                                                {
+                                                                                                    let ml_values42 = self::read_numeric_module_binding_children(terms, parents, binding_2);
+                                                                                                    {
+                                                                                                        let ml_index42 = self::ml::Big::from_i128(0);
+                                                                                                        {
+                                                                                                            let ml_s3300 = self::ml_read_numeric_module_binding_loop46(terms, fields, name, value, equals, &(ml_values42), ml_index42);
+                                                                                                            match ml_s3300 {
+                                                                                                                self::MlReadNumericModuleBindingLoop46Result::MlReadNumericModuleBindingLoop46Done(name_2, value_2, equals_2) => {
+                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains('\\') {
+                                                                                                                        Vec::<f64>::new()
+                                                                                                                    } else {
+                                                                                                                        {
+                                                                                                                            let values = Vec::<bool>::new();
+                                                                                                                            {
+                                                                                                                                let at_2 = (terms.len() as f64) - 1f64;
+                                                                                                                                {
+                                                                                                                                    let numeric_literal_decisions = self::ml_read_numeric_module_binding_loop47(terms, parents, texts, values, at_2);
+                                                                                                                                    if self::read_required_boolean_fact(&(numeric_literal_decisions), (((terms.len() as f64) - 1f64) - value_2)) {
+                                                                                                                                        vec![name_2, 0f64]
+                                                                                                                                    } else {
+                                                                                                                                        Vec::<f64>::new()
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                self::MlReadNumericModuleBindingLoop46Result::MlReadNumericModuleBindingLoop46Return(ml_result47) => {
+                                                                                                                    ml_result47
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            self::MlReadNumericModuleBindingLoop45Result::MlReadNumericModuleBindingLoop45Return(ml_result47_2) => {
+                                                                                ml_result47_2
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+}
+                                            }
+                                            self::MlReadNumericModuleBindingJoin44::MlReadNumericModuleBindingJoin44Return(ml_result47_3) => {
+                                                ml_result47_3
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+}
+                        }
+                    }
+                    self::MlReadNumericModuleBindingLoop43Result::MlReadNumericModuleBindingLoop43Return(ml_result48_2) => {
+                        ml_result48_2
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_read_inert_binding_children_loop1(
     terms: &[String],
     parents: &[f64],
@@ -693,159 +952,4 @@ pub fn ml_read_inert_binding_children_loop1(
 pub enum MlAcceptInertBindingSequenceLoop2Result {
     MlAcceptInertBindingSequenceLoop2Done,
     MlAcceptInertBindingSequenceLoop2Return(bool),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlAcceptInertBindingSequenceJoin3 {
-    MlAcceptInertBindingSequenceJoin3Next,
-    MlAcceptInertBindingSequenceJoin3Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_accept_inert_binding_sequence_loop2(
-    terms: &[String],
-    parents: &[f64],
-    values: &[bool],
-    element: &str,
-    children: &[f64],
-    mut value: bool,
-    mut at: f64,
-) -> self::MlAcceptInertBindingSequenceLoop2Result {
-    loop {
-        return if at < ((children.len() as f64) - 1f64) {
-            {
-                let child = self::read_required_number_fact(children, at);
-                {
-                    let term = self::read_required_text_fact(terms, child);
-                    {
-                        let ml_s2244 = if value {
-                            if !(self::read_inert_binding_value(
-                                values,
-                                (parents.len() as f64),
-                                child,
-                            )) || ((!(element).is_empty()) && (term != element))
-                            {
-                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(false)
-                            } else {
-                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
-                            }
-                        } else {
-                            let ml_library_inequality_1 = (term != ",");
-                            if ml_library_inequality_1 {
-                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(false)
-                            } else {
-                                self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
-                            }
-                        };
-                        match ml_s2244 {
-                            self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next => {
-                                {
-                                    let value_2 = !value;
-                                    {
-                                        let at_2 = at + 1f64;
-                                        {
-                                            (value, at) = (value_2, at_2);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                            self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Return(ml_result3) => {
-                                self::MlAcceptInertBindingSequenceLoop2Result::MlAcceptInertBindingSequenceLoop2Return(ml_result3)
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlAcceptInertBindingSequenceLoop2Result::MlAcceptInertBindingSequenceLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlReadInertModuleBindingLoop16Result {
-    MlReadInertModuleBindingLoop16Done(f64, f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_inert_module_binding_loop16(
-    terms: &[String],
-    fields: &[String],
-    mut key: f64,
-    mut item: f64,
-    mut colons: f64,
-    ml_values7: &[f64],
-    mut ml_index7: self::ml::Big,
-) -> self::MlReadInertModuleBindingLoop16Result {
-    loop {
-        return if ml_index7 < (self::ml::Big::from_u128(ml_values7.len() as u128)) {
-            {
-                let child = self::ml_array::at(ml_values7, ml_index7.to_index());
-                {
-                    let field = self::read_required_text_fact(fields, child);
-                    {
-                        let part = self::read_required_text_fact(terms, child);
-                        if ((field == "key") && (key < 0f64))
-                            && (((part == "property_identifier") || (part == "string"))
-                                || (part == "number"))
-                        {
-                            {
-                                let key_2 = child;
-                                {
-                                    let ml_index7_2 = ml_index7.add(&self::ml::Big::from_i128(1));
-                                    {
-                                        (key, ml_index7) = (key_2, ml_index7_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            if (field == "value") && (item < 0f64) {
-                                {
-                                    let item_2 = child;
-                                    {
-                                        let ml_index7_3 =
-                                            ml_index7.add(&self::ml::Big::from_i128(1));
-                                        {
-                                            (item, ml_index7) = (item_2, ml_index7_3);
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                            {
-                                if part == ":" {
-                                    {
-                                        let colons_2 = colons + 1f64;
-                                        {
-                                            let ml_index7_4 =
-                                                ml_index7.add(&self::ml::Big::from_i128(1));
-                                            {
-                                                (colons, ml_index7) = (colons_2, ml_index7_4);
-                                                continue;
-                                            }
-                                        }
-                                    }
-                                }
-                                {
-                                    {
-                                        let key_3 = -2f64;
-                                        self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_3, item, colons)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(
-                key, item, colons,
-            )
-        };
-    }
 }

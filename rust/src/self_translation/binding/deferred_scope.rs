@@ -127,6 +127,18 @@ pub(super) fn read_inert_binding(source: &str) -> Option<(String, u8)> {
             source_number(source.len())?,
         );
     }
+    if selected.is_empty() {
+        selected = crate::translation::inert_module_binding_rules::read_numeric_module_binding(
+            &terms,
+            &fields,
+            &facts.parents,
+            &facts.starts,
+            &facts.ends,
+            &texts,
+            &facts.errors,
+            source_number(source.len())?,
+        );
+    }
     let [at, owner] = selected.as_slice() else {
         return None;
     };
@@ -148,9 +160,24 @@ mod tests {
     use super::read_inert_binding;
 
     #[test]
+    fn shared_numeric_constant_sources_retain_every_declared_name_and_owner() {
+        let fixture = crate::read_structured_data_lino(include_str!(
+            "../../data/numeric-module-bindings.lino"
+        ))
+        .unwrap();
+        let cases = fixture["cases"].as_array().unwrap();
+        assert_eq!(cases.len(), 6);
+        for case in cases {
+            let source = case["source"].as_str().unwrap();
+            let name = case["name"].as_str().unwrap().to_owned();
+            assert_eq!(read_inert_binding(source), Some((name, 0)), "{source}");
+        }
+    }
+
+    #[test]
     fn shared_empty_collection_sources_retain_every_declared_name_and_owner() {
         let fixture = crate::read_structured_data_lino(include_str!(
-            "../../../../parity/fixtures/empty-module-collections.lino"
+            "../../data/empty-module-collections.lino"
         ))
         .unwrap();
         let cases = fixture["cases"].as_array().unwrap();

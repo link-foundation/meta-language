@@ -279,6 +279,13 @@ This does not bind mutable values, array or object identities, or imported value
 Rust constant storage decisions and declaration rendering are generated from
 the same JavaScript rules.
 
+Literal Number arithmetic constants also provide module ownership facts, from
+the complete CST. For example, `const BYTE_LIMIT = 128 * 1024 * 1024` need not
+prevent an unrelated checked function from constructing the standard Map.
+This classification accepts Number arithmetic without evaluating it, preserves
+the actual binding name and refuses identifiers, calls, BigInt and coercion from
+other types. The initializer retains its own translation obligation.
+
 A declaration-only module with carried groups is also retried as one checked
 scope, so JSDoc data types can bind across declarations. A failed retry keeps
 its earlier decisions. Imports, executable statements and stored provenance

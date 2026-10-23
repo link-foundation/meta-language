@@ -45,3 +45,30 @@ test('changed missing reordered or foreign documents and cross-document aliases 
   assert.throws(()=>storeHistoricalNamingInventories(history,{base}),/shared container cannot cross/u);
  }finally{rmSync(base,{recursive:true,force:true});}
 });
+
+test('repeated document reads keep caller containers detached and observe page edits behind an unchanged index',()=>{
+ const base=mkdtempSync(join(tmpdir(),'meta-language-naming-storage-'));
+ try{
+  const history=fixture();storeHistoricalNamingInventories(history,{base});
+  const original=readHistoricalNamingInventoryBundle({base}),expected=structuredClone(original);
+  original.documents[1].text='caller replacement';original.documents.push({file:'foreign',text:'caller'});original.index.partitions[0].sha256='caller';
+  assert.deepEqual(readHistoricalNamingInventoryBundle({base}),expected);
+  const page=join(base,expected.documents[1].file),bytes=readFileSync(page),index=readFileSync(join(base,HISTORICAL_NAMING_INVENTORY_INDEX));
+  writeFileSync(page,Buffer.concat([bytes,Buffer.from('\n')]));
+  assert.throws(()=>readHistoricalNamingInventoryBundle({base}));
+  assert.deepEqual(readFileSync(join(base,HISTORICAL_NAMING_INVENTORY_INDEX)),index,'the index is deliberately unchanged');
+  assert.throws(()=>verifyHistoricalNamingInventorySerialization(history,expected,{base}));
+  writeFileSync(page,bytes);assert.deepEqual(readHistoricalNamingInventoryBundle({base}),expected);
+ }finally{rmSync(base,{recursive:true,force:true});}
+});
+
+test('scalar storage reuse never selects another actual root as source authority',()=>{
+ const first=mkdtempSync(join(tmpdir(),'meta-language-naming-storage-')),second=mkdtempSync(join(tmpdir(),'meta-language-naming-storage-'));
+ try{
+  const old=fixture(),current=fixture();current.sources[0].predecessor.source+=' different root';
+  storeHistoricalNamingInventories(old,{base:first});storeHistoricalNamingInventories(current,{base:second});
+  assert.deepEqual(decodeHistoricalNamingInventoryBundle(readHistoricalNamingInventoryBundle({base:first})),old);
+  assert.deepEqual(decodeHistoricalNamingInventoryBundle(readHistoricalNamingInventoryBundle({base:second})),current);
+  assert.deepEqual(decodeHistoricalNamingInventoryBundle(readHistoricalNamingInventoryBundle({base:first})),old);
+ }finally{rmSync(first,{recursive:true,force:true});rmSync(second,{recursive:true,force:true});}
+});

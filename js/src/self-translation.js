@@ -34,6 +34,7 @@ import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acc
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
 import {readInertModuleBindingDeclaration} from './translation/inert-module-bindings.js';
+import {readNumericModuleBindingDeclaration} from './translation/numeric-module-bindings.js';
 import {readEmptyStandardCollectionBindingDeclaration} from './translation/empty-module-collections.js';
 import {acceptInertModuleBindingScope} from './translation/inert-module-binding-rules.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
@@ -514,8 +515,11 @@ function scanItem(text) {
       || at(index + 3).kind === 'identifier' && at(index + 4).value === '=>');
   const deferredBinding = deferredCandidate ? readDeferredDeclarationBinding(text) : null;
   const emptyCollectionCandidate = word(index + 3, 'new') && (word(index + 4, 'Map') || word(index + 4, 'Set'));
+  const initializerAt = tokens.findIndex(token => token.kind === 'punct' && token.value === '=') + 1;
+  const numericBindingCandidate = !deferredBinding && initializerAt > 0 && (at(initializerAt).kind === 'number' || ['(', '+', '-', '~'].includes(at(initializerAt).value));
   const inertBinding = word(index, 'const') ? readInertModuleBindingDeclaration(text)
-    ?? (emptyCollectionCandidate ? readEmptyStandardCollectionBindingDeclaration(text) : null) : null;
+    ?? (emptyCollectionCandidate ? readEmptyStandardCollectionBindingDeclaration(text) : null)
+    ?? (numericBindingCandidate ? readNumericModuleBindingDeclaration(text) : null) : null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
     index += 1;
@@ -556,6 +560,9 @@ function scanItem(text) {
     if (at(next).value === '}' && word(next + 1, 'from') && at(next + 2).kind === 'string') imports = { specifier: at(next + 2).value, names };
   }
   const mentions = [...new Set(tokens.filter((token) => token.kind === 'identifier').map((token) => token.value))];
+  // The complete CST proves the actual binder even when the portable lexer
+  // cannot yet represent its Unicode spelling. It supplies no signature.
+  if (inertBinding && declares === null) declares = inertBinding.name;
   if (deferredBinding && deferredBinding.name !== declares) return null;
   if (inertBinding && inertBinding.name !== declares) return null;
   return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, inertBinding, mentions, imports };
