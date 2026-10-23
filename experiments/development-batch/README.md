@@ -18,6 +18,10 @@ captured once from the complete original CI log by
 `js/scripts/generate-declaration-dependency-branch-fixture.mjs`; the ordinary
 declaration author then derives the two mechanical corrections as Links
 decorators. Every original branch condition and test assertion stays binding.
+The diagnostic-order author captures the actual dependency patch, lock and
+manifest together; it retains the original independent diagnostic cases.
+For its explicit mode, phase `--check` selects the author's `--check` in place
+of `--write`.
 Each phase invokes existing commands sequentially in
 fresh JavaScript processes. The history phase first captures complete certified compiler and borrowing
 successors and physical workflow succession, retains the grammar-context steps
@@ -34,6 +38,7 @@ verification after source-changing authors and manifest refreshes finish.
 Use the existing resource and cache wrapper, one phase per bounded invocation:
 
 ```sh
+env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase translation --receipt /tmp/meta-language-translation-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase snapshot --receipt /tmp/meta-language-snapshot-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase history --receipt /tmp/meta-language-history-authoring.lino
 env -u CARGO_TARGET_DIR -u CARGO_BUILD_TARGET_DIR node scripts/with-cache-cleanup.mjs --event test --project-owned-only --no-preflight --no-docker -- node experiments/development-batch/refresh.mjs --phase registration --receipt /tmp/meta-language-registration-authoring.lino

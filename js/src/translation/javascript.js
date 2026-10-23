@@ -11,7 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
-import {readJavaScriptNumberBitwiseOperation,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
+import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -1213,6 +1213,10 @@ class JavaScriptParser {
     } else if (COMPOUND[op]) {
       const right = this.expr();
       value = { k: 'binary', op: COMPOUND[op], left: read, right, span: joined(read, right, start) };
+    } else if (readJavaScriptNumberBitwiseAssignment(op)) {
+      const right = this.expr();
+      value = {k:'math', op:readJavaScriptNumberBitwiseAssignment(op), name:op,
+        args:[{value:read,spread:false},{value:right,spread:false}], span:joined(read,right,start)};
     } else {
       throw unsupported(`${op} assignment`, 'the portable compound assignments are +=, -=, *=, /=, %=, &&= and ||=', where);
     }

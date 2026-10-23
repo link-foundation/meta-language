@@ -52,6 +52,20 @@ fn complete_number_bitwise_product_has_full_runtime_codec_and_definition_parity(
     let code = check_translation(&expected);
     check_definition_archives(&expected);
     execute_product(&expected, &code);
+    let assignments = run(Command::new("node").current_dir(root).args([
+        "--max-old-space-size=352",
+        "--max-semi-space-size=1",
+        "experiments/number-bitwise/oracle.mjs",
+        "--assignments",
+    ]));
+    assert!(assignments.ok, "{}", assignments.stderr);
+    let assignments = read_structured_data_lino(&assignments.stdout).unwrap();
+    let code = check_translation(&assignments);
+    check_definition_archives(&assignments);
+    let names = (0..6)
+        .map(|index| format!("assign{index}"))
+        .collect::<Vec<_>>();
+    execute_named_product(&assignments, &code, &names, 5400);
 }
 
 fn check_translation(expected: &Value) -> String {
@@ -118,21 +132,32 @@ fn check_definition_archives(expected: &Value) {
 }
 
 fn execute_product(expected: &Value, code: &str) {
+    let names = (0..7)
+        .map(|index| format!("compute{index}"))
+        .collect::<Vec<_>>();
+    execute_named_product(expected, code, &names, 6300);
+}
+
+fn execute_named_product(expected: &Value, code: &str, names: &[String], cells: usize) {
     let inputs = integer_bits(&expected["values"]);
     let results = integer_bits(&expected["expected"]);
     assert_eq!(inputs.len(), 30);
-    assert_eq!(results.len(), 6300);
+    assert_eq!(results.len(), cells);
+    assert_eq!(cells, names.len() * inputs.len() * inputs.len());
     let input = inputs
         .iter()
         .map(|bits| format!("f64::from_bits({bits})"))
         .collect::<Vec<_>>()
         .join(",");
-    let branches = (0..7)
-        .map(|index| format!("{index}=>compute{index}(left,right),"))
+    let branches = names
+        .iter()
+        .enumerate()
+        .map(|(index, name)| format!("{index}=>{name}(left,right),"))
         .collect::<String>();
     let main = format!(
-        "\nfn main(){{let inputs=[{input}];let expected=[{}];let mut count=0;for operation in 0..7{{for left in inputs{{for right in inputs{{let actual=match operation{{{branches}_=>unreachable!(),}};assert_eq!(actual.to_bits(),expected[count],\"cell {{count}}\");count+=1;}}}}}}assert_eq!(count,6300);println!(\"{{count}}\");}}\n",
-        results.join(",")
+        "\nfn main(){{let inputs=[{input}];let expected=[{}];let mut count=0;for operation in 0..{}{{for left in inputs{{for right in inputs{{let actual=match operation{{{branches}_=>unreachable!(),}};assert_eq!(actual.to_bits(),expected[count],\"cell {{count}}\");count+=1;}}}}}}assert_eq!(count,{cells});println!(\"{{count}}\");}}\n",
+        results.join(","),
+        names.len()
     );
     let directory = TemporaryDirectory::new("number-bitwise-product");
     let input = directory.0.join("product.rs");
@@ -142,13 +167,15 @@ fn execute_product(expected: &Value, code: &str) {
         "product"
     });
     fs::write(&input, code.to_owned() + &main).unwrap();
-    let build = run(Command::new("rustc")
-        .args(["--edition", "2024"])
-        .arg(&input)
-        .arg("-o")
-        .arg(&binary));
+    let mut compiler = Command::new("rustc");
+    compiler.args(["--edition", "2024"]);
+    #[cfg(windows)]
+    if let Ok(linker) = std::env::var("CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER") {
+        compiler.arg("-C").arg(format!("linker={linker}"));
+    }
+    let build = run(compiler.arg(&input).arg("-o").arg(&binary));
     assert!(build.ok, "{}", build.stderr);
     let observed = run(&mut Command::new(&binary));
     assert!(observed.ok, "{}", observed.stderr);
-    assert_eq!(observed.stdout, "6300\n");
+    assert_eq!(observed.stdout, format!("{cells}\n"));
 }

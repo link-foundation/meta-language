@@ -144,7 +144,7 @@ pub fn accept_recursive_declaration_owned_publication(
     completed: f64,
     proofs: &[f64],
 ) -> bool {
-    if !(((((((members > 1f64) && ((members % 1f64) == 0f64))
+    if (((((((members > 1f64) && ((members % 1f64) == 0f64))
         && (members <= 9_007_199_254_740_991f64))
         && (((declarations > members) && ((declarations % 1f64) == 0f64))
             && (declarations <= 9_007_199_254_740_991f64)))
@@ -152,8 +152,6 @@ pub fn accept_recursive_declaration_owned_publication(
         && (completed == members))
         && ((proofs.len() as f64) == 7f64))
     {
-        false
-    } else {
         {
             let ml_values39 = proofs.to_vec();
             {
@@ -174,6 +172,8 @@ pub fn accept_recursive_declaration_owned_publication(
                 }
             }
         }
+    } else {
+        false
     }
 }
 

@@ -26,4 +26,24 @@ export function readNumberBitwiseOraclePacket(){
   program:{links:packet.network.toLino(),root:packet.root.asU64(),emission:emitTypedProgramLinks(packet.network,packet.root,'Rust')},
   definition:{links:definition.network.toLino(),root:definition.root.asU64(),emission:emitTypedProgramLinks(definition.network,definition.root,'Rust')}};
 }
-if(process.argv[1]===fileURLToPath(import.meta.url))process.stdout.write(structuredDataToLino(readNumberBitwiseOraclePacket()));
+
+export function readNumberBitwiseAssignmentOraclePacket(){
+ const original=readNumberBitwiseOraclePacket();
+ const fixture=readProjectData(new URL('../../parity/fixtures/number-bitwise.lino',import.meta.url));
+ assert.equal(fixture.assignmentOperations.length,6);
+ const source=fixture.assignmentSource;
+ const functions=runInNewContext(source.replace(/^export /gmu,'')+'\n['+fixture.assignmentOperations.map(row=>row.name).join(',')+'];',{}, {timeout:1000});
+ const values=original.values.map(text=>{const view=new DataView(new ArrayBuffer(8));view.setBigUint64(0,BigInt('0x'+text),false);return view.getFloat64(0,false);});
+ const bits=value=>{const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value,false);return view.getBigUint64(0,false).toString(16).padStart(16,'0');};
+ const expected=[];
+ for(const observe of functions)for(const left of values)for(const right of values)expected.push(bits(observe(left,right)));
+ assert.equal(expected.length,5400,'all additional compound assignment cells execute');
+ const packet=createTypedProgramLinks(source,'JavaScript');
+ return{...original,model:'Number local compound assignment product 1',source,expected,
+  translation:selfTranslate(source,'JavaScript','Rust'),signatures:selfTranslationSignatures(source,'JavaScript'),
+  program:{links:packet.network.toLino(),root:packet.root.asU64(),emission:emitTypedProgramLinks(packet.network,packet.root,'Rust')}};
+}
+if(process.argv[1]===fileURLToPath(import.meta.url)){
+ assert.ok(process.argv.slice(2).every(argument=>argument==='--assignments'));
+ process.stdout.write(structuredDataToLino(process.argv.includes('--assignments')?readNumberBitwiseAssignmentOraclePacket():readNumberBitwiseOraclePacket()));
+}

@@ -73,6 +73,25 @@ fn validate_type_records(
     data_names: &HashSet<&str>,
     source_language: &str,
 ) -> Result<()> {
+    // Preserve the original depth-first order and every per-record check while
+    // transporting traversal frames on the heap rather than the native stack.
+    let mut pending = vec![value];
+    while let Some(value) = pending.pop() {
+        validate_type_record(value, data_names, source_language)?;
+        if let Some(fields) = value.as_object() {
+            pending.extend(fields.values().rev());
+        } else if let Some(values) = value.as_array() {
+            pending.extend(values.iter().rev());
+        }
+    }
+    Ok(())
+}
+
+fn validate_type_record(
+    value: &Value,
+    data_names: &HashSet<&str>,
+    source_language: &str,
+) -> Result<()> {
     if let Some(fields) = value.as_object() {
         if value["k"] == "binary"
             && value
@@ -206,13 +225,6 @@ fn validate_type_records(
             return Err(error(
                 "a linked optional type has an invalid absence policy",
             ));
-        }
-        for child in fields.values() {
-            validate_type_records(child, data_names, source_language)?;
-        }
-    } else if let Some(values) = value.as_array() {
-        for child in values {
-            validate_type_records(child, data_names, source_language)?;
         }
     }
     Ok(())

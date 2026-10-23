@@ -162,6 +162,14 @@ impl JavaScriptParser {
             let right = self.expr()?;
             let whole = joined(&read, &right, &start);
             binary(*compound, read, right, whole)
+        } else if !crate::translation::number_bitwise_rules::read_java_script_number_bitwise_assignment(&op).is_empty() {
+            let right = self.expr()?;
+            let whole = joined(&read, &right, &start);
+            node(SNode::Math {
+                op: crate::translation::number_bitwise_rules::read_java_script_number_bitwise_assignment(&op),
+                name: op,
+                args: vec![super::SArrayItem::new(read, false), super::SArrayItem::new(right, false)],
+            }, whole)
         } else {
             return Err(unsupported(
                 &format!("{op} assignment"),

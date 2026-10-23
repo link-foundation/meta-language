@@ -41,6 +41,17 @@ export function readJavaScriptNumberBitwiseOperation(symbol) {
   return '';
 }
 
+/** @param {string} symbol @returns {string} */
+export function readJavaScriptNumberBitwiseAssignment(symbol) {
+  if (symbol === '&=') return readJavaScriptNumberBitwiseOperation('&');
+  if (symbol === '|=') return readJavaScriptNumberBitwiseOperation('|');
+  if (symbol === '^=') return readJavaScriptNumberBitwiseOperation('^');
+  if (symbol === '<<=') return readJavaScriptNumberBitwiseOperation('<<');
+  if (symbol === '>>=') return readJavaScriptNumberBitwiseOperation('>>');
+  if (symbol === '>>>=') return readJavaScriptNumberBitwiseOperation('>>>');
+  return '';
+}
+
 /** @param {string} operation @returns {string} */
 export function readJavaScriptNumberBitwiseSymbol(operation) {
   if (operation === 'conjoinJavaScriptNumberBits') return '&';

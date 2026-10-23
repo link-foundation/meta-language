@@ -14,7 +14,8 @@ import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-netwo
 import {selfTranslate} from '../src/self-translation.js';
 import {createNumberBitwiseProgramLinks} from '../src/number-bitwise-program.js';
 import {readProjectData} from '../scripts/project-data.mjs';
-import {readNumberBitwiseOraclePacket} from '../../experiments/number-bitwise/oracle.mjs';
+import {tokenize} from '../src/translation/lexer.js';
+import {readNumberBitwiseOraclePacket,readNumberBitwiseAssignmentOraclePacket} from '../../experiments/number-bitwise/oracle.mjs';
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; >=22.15 <23 or >=24 <25');
 const operations=[['&',(left,right)=>left&right],['|',(left,right)=>left|right],['^',(left,right)=>left^right],['<<',(left,right)=>left<<right],['>>',(left,right)=>left>>right],['>>>',(left,right)=>left>>>right],['~',left=>~left]];
@@ -87,18 +88,48 @@ test('whole module translation shares its generated runtime and restores every o
  assert.equal(selfTranslate(translated.code,'Rust','TypeScript').code,typed);
 });
 
-test('other primitive conversions BigInt compound assignments and forged wire operators stay explicit refusals',()=>{
+test('other primitive conversions BigInt and forged wire operators stay explicit refusals',()=>{
  for(const expression of ['1n & 2n','1n << 2n','1n >>> 2n','1n | 2','true & 1','"3" ^ 1']){
   const source='export function compute(){return '+expression+';}\n',result=selfTranslate(source,'JavaScript','Rust',{retainDiagnostics:true});
   assert.ok(result.items.some(item=>item.status==='carried'),expression);
   assert.equal(selfTranslate(result.code,'Rust','JavaScript').code,source);
  }
- for(const symbol of ['&=','|=','^=','<<=','>>=','>>>='])assert.throws(()=>checkProgram(parseJavaScript('/** @param {number} left @param {number} right */\nexport function compute(left,right){left '+symbol+' right;return left;}')));
  const source=functionSource('&');
  const body=program=>[...program.declarations.values()].find(row=>row.name==='compute').body;
  for(const mutate of [value=>{value.op='unknownBitwise';},value=>{value.args.pop();},value=>{value.args.push(value.args[0]);},value=>{value.type={kind:'bool'};},value=>{value.args[0]={k:'lit',value:true,type:{kind:'bool'}};}]){
   const program=checkProgram(parseJavaScript(source));mutate(body(program));assert.throws(()=>encodeTypedProgramLinks(program));
  }
+});
+
+test('all six original local compound assignment inputs retain independent Number behavior and checked archives',()=>{
+ for(const [symbol,observe]of operations.slice(0,6)){
+  // Retain the complete original formerly unsupported input, including its docs.
+  const source='/** @param {number} left @param {number} right */\nexport function compute(left,right){left '+symbol+'= right;return left;}';
+  const program=checkProgram(parseJavaScript(source)),execute=evaluate(program);
+  for(const left of values)for(const right of values)assert.equal(execute(left,right),observe(left,right),symbol+'= '+left+' '+right);
+  const translation=selfTranslate(source,'JavaScript','Rust');
+  assert.ok(translation.items.every(item=>item.status==='translated'||item.status==='comment'));
+  assert.equal(selfTranslate(translation.code,'Rust','JavaScript').code,source);
+  const packet=encodeTypedProgramLinks(program);
+  const original=emitRust(program);
+  for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))]){
+   const restored=recheckLinkedTypedProgram(decodeTypedProgramLinks(network,packet.root),{wholeProgram:true});
+   const emitted=emitRust(restored);
+   for(const field of ['text','definitions','preludes','mappings','assumptions','encodings'])assert.deepEqual(emitted[field],original[field]);
+  }
+  for(const invalid of [
+   'export function compute(){let left=1n;left '+symbol+'=2n;return left;}',
+   'export function compute(){const left=1;left '+symbol+'=2;return left;}',
+   'export function compute(){left '+symbol+'=2;let left=1;return left;}',
+   'export function compute(){const item={value:1};item.value '+symbol+'=2;return item.value;}',
+  ])assert.throws(()=>checkProgram(parseJavaScript(invalid)),invalid);
+ }
+});
+
+test('the separate compound assignment oracle executes all 5400 declared cells',()=>{
+ const packet=readNumberBitwiseAssignmentOraclePacket();
+ assert.equal(packet.expected.length,5400);assert.equal(packet.values.length,30);
+ assert.ok(packet.translation.items.every(item=>item.status==='translated'||item.status==='comment'));
 });
 
 test('the published Links definition contains each named operation and fresh caller-owned graphs',()=>{
@@ -110,8 +141,9 @@ test('the published Links definition contains each named operation and fresh cal
  assert.notEqual(first.network.toLino(),second.network.toLino());
  assert.equal(createNumberBitwiseProgramLinks().network.toLino(),second.network.toLino());
  const native=readFileSync(new URL('../../rust/src/translation/number_bitwise_program_data.rs',import.meta.url),'utf8');
- const parts=native.split('r####"');assert.equal(parts.length,2);assert.ok(parts[1].endsWith('"####;\n'));
- assert.equal(parts[1].slice(0,-'"####;\n'.length),second.network.toLino());
+ const literalText=tokenize(native,'Rust').tokens.filter(token=>token.kind==='string').map(token=>token.value).join('');
+ assert.equal(literalText,second.network.toLino());
+ assert.ok(native.split('\n').length<=1000);
  assert.match(native,new RegExp('const ROOT: u64 = '+second.root.asU64()+';','u'));
 });
 

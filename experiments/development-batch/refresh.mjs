@@ -20,6 +20,7 @@ export function readDevelopmentAuthoringPlan(){
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),
    stage('Rust diagnostic attributes','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native']),
    stage('grammar selection included ranges','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native']),
+   stage('active diagnostic dependency profile','experiments/grammar-outcome-network/native-transport/diagnostic-order/generate.mjs',['--write']),
    stage('translation source module layout','js/scripts/generate-translation-source-layout.mjs'),
   ]},
   {name:'snapshot',stages:[stage('raw consuming source profile','js/scripts/generate-raw-consuming-snapshot-source-profile.mjs'),stage('relative character source decisions','experiments/grammar-outcome-network/native-transport/inverse/generate-relative-character-self-translation.mjs')]},
@@ -83,7 +84,9 @@ export function runDevelopmentAuthoringPhase(plan,name,{check=false,execute=spaw
  const results=[];
  for(const entry of selected.stages){
   const bytes=readFileSync(resolve(root,entry.script));
-  const args=['--expose-gc','--optimize-for-size','--max-old-space-size=352','--max-semi-space-size=1',entry.script,...entry.args,...(check&&name!=='verification'?['--check']:[])];
+  const writing=entry.args.includes('--write');
+  const selectedArgs=check&&name!=='verification'&&writing?entry.args.map(argument=>argument==='--write'?'--check':argument):entry.args;
+  const args=['--expose-gc','--optimize-for-size','--max-old-space-size=352','--max-semi-space-size=1',entry.script,...selectedArgs,...(check&&name!=='verification'&&!writing?['--check']:[])];
   process.stderr.write('Authoring '+entry.id+': '+entry.script+'\n');
   const result=execute(process.execPath,args,{cwd:root,env:developmentAuthoringEnvironment(environment),stdio:'inherit',timeout:80000,killSignal:'SIGKILL'});
   results.push({id:entry.id,script:entry.script,sourceSha256:digest(bytes),arguments:args,exitCode:result.status??null,signal:result.signal??null,error:result.error?String(result.error):null});

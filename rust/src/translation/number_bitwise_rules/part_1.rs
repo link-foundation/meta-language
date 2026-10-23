@@ -85,6 +85,26 @@ pub fn read_java_script_number_bitwise_operation(symbol: &str) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_number_bitwise_assignment(symbol: &str) -> String {
+    if symbol == "&=" {
+        self::read_java_script_number_bitwise_operation("&")
+    } else if symbol == "|=" {
+        self::read_java_script_number_bitwise_operation("|")
+    } else if symbol == "^=" {
+        self::read_java_script_number_bitwise_operation("^")
+    } else if symbol == "<<=" {
+        self::read_java_script_number_bitwise_operation("<<")
+    } else if symbol == ">>=" {
+        self::read_java_script_number_bitwise_operation(">>")
+    } else if symbol == ">>>=" {
+        self::read_java_script_number_bitwise_operation(">>>")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_number_bitwise_symbol(operation: &str) -> String {
     if operation == "conjoinJavaScriptNumberBits" {
         String::from("&")
@@ -133,6 +153,13 @@ pub fn accept_java_script_number_bitwise_operand_count(operation: &str, count: f
         let arity = self::read_java_script_number_bitwise_arity(operation);
         ((arity > 0f64) && ((count).partial_cmp(&(arity)) == Some(std::cmp::Ordering::Equal)))
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_number_bitwise_precedence(symbol: &str, level: f64) -> bool {
+    (((level == 0f64) && (symbol == "|")) || ((level == 1f64) && (symbol == "^")))
+        || ((level == 2f64) && (symbol == "&"))
 }
 
 /// Execute the checked shared source algorithm.

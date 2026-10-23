@@ -1,4 +1,5 @@
 //! Unexecuted private draft. Native compilation and observation run only in CI.
+use super::issue_195_translation_pairs;
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, ParseConfiguration, SelfTranslationOptions,

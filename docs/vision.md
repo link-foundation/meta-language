@@ -2511,9 +2511,13 @@ and emitted runtime. Public reconstruction returns a fresh editable definition
 graph; text and binary reload use ordinary whole-program validation. Number
 coercion, modulo-32 shift counts, signed and unsigned results, nonfinite values
 and positive zero remain explicit. This profile does not discharge BigInt,
-other primitive coercions, compound assignments or arbitrary Rust integer
+other primitive coercions, property compound assignments or arbitrary Rust integer
 bitwise semantics. The immutable base operation inventory remains intact;
 the additional qualified operations have their own admission and arity rules.
+The six corresponding Number compound assignments to mutable local bindings
+reuse those same checked operations, preserving the read before the right
+operand and the final write. Constant, temporal-dead-zone, property and BigInt
+assignment semantics keep their separate admission obligations.
 
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
@@ -2523,6 +2527,13 @@ become a standard builtin. Record-parameter coordinates include their complete
 actual delimiters and binding tokens. Imported external signatures survive
 typed-program reload and pass the ordinary checker before emission; imports
 and effect-threaded programs retain their separate admission obligations.
+
+Reference and binding resource accounting counts owning records, matching the
+JavaScript traversal. Primitive fields cannot own semantic references and array
+containers only order children. Native structural decoding retains its separate
+100,000-value and 256-level defaults; no numeric resource ceiling is increased.
+The complete three-node dependency graph product remains a required native
+archive workload, with all 512 graph inputs and their independent observations.
 
 The current development sequence drafts the complete outstanding batch before
 running its tests. Draft the shared behavior, both runtime adapters, automatic

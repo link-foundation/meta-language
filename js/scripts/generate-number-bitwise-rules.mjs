@@ -15,6 +15,7 @@ import {DecoratorSet} from '../src/decorators.js';
 import {writeRecordRuleLibrary} from './record-rule-library.mjs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 import {writeProjectData,checkProjectData} from './project-data.mjs';
+import {rustString} from '../src/translation/rust-string-literals.js';
 const root=new URL('../../',import.meta.url),pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 
 export function generateNumberBitwiseRules({check=false}={}){
@@ -34,11 +35,16 @@ export function generateNumberBitwiseRules({check=false}={}){
  const flat=formatProductRuleSource(styles.decorate('emitter',{format:'Rust',source:raw}).source);
  const rootHeader=files[0].source.indexOf('#[path =');assert.ok(rootHeader>0,'the native partition owns its complete reviewed library attributes');
  const prelude=formatProductRuleSource('pub mod ml_number_bitwise {\n'+files[0].source.slice(0,rootHeader)+'\n'+flat+'\n}\n');
- assert.equal(text.includes('"####'),false,'the generated Links carrier has an unambiguous Rust string boundary');
  const rootIdentity=packet.root.asU64();
+ // This is Links data, encoded as ordinary Rust string transport. Bound the
+ // carrier's physical lines without changing or omitting a single graph byte.
+ const lines=text.match(/[^\n]*\n|[^\n]+$/gu)??[],chunks=[];
+ for(let at=0;at<lines.length;at+=16)chunks.push(lines.slice(at,at+16).join(''));
+ assert.equal(chunks.join(''),text);
  const carrier='// Generated Links Notation transport for the complete checked Number definition.\n'
   +'pub(crate) const ROOT: u64 = '+rootIdentity+';\n'
-  +'pub(crate) const LINKS: &str = r####"'+text+'"####;\n';
+  +'pub(crate) const LINKS: &str = concat!(\n'+chunks.map(chunk=>'    '+rustString(chunk)+',').join('\n')+'\n);\n';
+ assert.ok(carrier.split('\n').length<=1000,'the generated Rust data carrier respects the existing source line limit');
  const outputs=[
   ['rust/src/translation/runtime/number-bitwise.rs',prelude],
   ['js/src/translation/number-bitwise-runtime.js','// Generated from the complete checked Number bitwise program. Do not edit.\nexport const NUMBER_BITWISE_PRELUDE = '+JSON.stringify(prelude)+';\nexport const NUMBER_BITWISE_PROGRAM_ROOT = '+rootIdentity+';\nexport const NUMBER_BITWISE_PROGRAM_LINKS = '+JSON.stringify(text)+';\n'],
@@ -51,14 +57,17 @@ export function generateNumberBitwiseRules({check=false}={}){
  }
  const symbols=['&','|','^','<<','>>','>>>','~'];
  const operations=symbols.map((symbol,index)=>({symbol,name:'compute'+index}));
+ const assignmentOperations=symbols.slice(0,6).map((symbol,index)=>({symbol:symbol+'=',name:'assign'+index}));
  const valueSources=['0','-0','NaN','Infinity','-Infinity','1','-1','1.9','-1.9','31','32','33','-33','0.5','-0.5',
   '2147483647','2147483648','2147483649','4294967295','4294967296','4294967297','-2147483649','-4294967296','-4294967297',
   '9007199254740991','9007199254740992','Number.MAX_VALUE','-Number.MAX_VALUE','Number.MIN_VALUE','-Number.MIN_VALUE'];
  const fixture={schemaVersion:1,model:'complete Number operator boundary product 1',operations,valueSources,
   source:operations.map(({symbol,name})=>'/** @param {number} left @param {number} right @returns {number} */\nexport function '+name+'(left,right){return '+(symbol==='~'?'~left':'left '+symbol+' right')+';}\n').join('\n'),
+  assignmentOperations,
+  assignmentSource:assignmentOperations.map(({symbol,name})=>'/** @param {number} left @param {number} right @returns {number} */\nexport function '+name+'(left,right){left '+symbol+' right;return left;}\n').join('\n'),
   assertions:['every actual original operator result','complete JavaScript/native translation parity','one generated runtime','exact source restoration','both typed-program codecs','all declared boundary pairs executed'],
   assertionVersions:{Node:'>=22.15.0 <23.0.0 || >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0'},
-  boundary:'Seven original source operators and thirty independent Number input sources declare the complete 6300-cell product. Tests execute the original JavaScript functions to obtain observations, then compare each generated result. This fixture is input and oracle declaration, not execution evidence.'};
+  boundary:'Seven original source operators and thirty independent Number input sources retain their complete 6300-cell product. Six additional local compound assignments declare a separate 5400-cell product. Tests execute the actual original JavaScript functions to obtain observations, then compare each generated result. Const, temporal-dead-zone, property and BigInt assignments retain separate admission boundaries. This fixture is input and oracle declaration, not execution evidence.'};
  const fixtureFile=new URL('parity/fixtures/number-bitwise.lino',root);
  if(check)checkProjectData(fixtureFile,fixture);else writeProjectData(fixtureFile,fixture);
  const artifact={schemaVersion:1,model:'ECMAScript Number bitwise operations 1',source:{path,source,...pin(source)},

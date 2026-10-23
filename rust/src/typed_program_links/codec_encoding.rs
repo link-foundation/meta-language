@@ -170,10 +170,13 @@ fn semantic_targets(
     targets: &mut Targets,
     remaining: &mut usize,
 ) -> Result<()> {
-    *remaining = remaining
-        .checked_sub(1)
-        .ok_or_else(|| error("the linked program exceeds its reference resource limit"))?;
     if let Some(object) = value.as_object() {
+        // The JavaScript reference walk counts owned records. Scalars cannot
+        // own a declaration reference; array containers only order children.
+        // The decoder retains its independent complete structural limits.
+        *remaining = remaining
+            .checked_sub(1)
+            .ok_or_else(|| error("the linked program exceeds its reference resource limit"))?;
         let kind = value["k"].as_str().unwrap_or_default();
         let type_kind = value["kind"].as_str().unwrap_or_default();
         for (role, label) in typed_program_links_schema()["references"]
@@ -239,9 +242,14 @@ fn bindings(
     targets: &mut Targets,
     remaining: &mut usize,
 ) -> Result<()> {
-    *remaining = remaining
-        .checked_sub(1)
-        .ok_or_else(|| error("the linked program exceeds its binding resource limit"))?;
+    if !value.is_object() && !value.is_array() {
+        return Ok(());
+    }
+    if value.is_object() {
+        *remaining = remaining
+            .checked_sub(1)
+            .ok_or_else(|| error("the linked program exceeds its binding resource limit"))?;
+    }
     let kind = value["k"].as_str().unwrap_or_default();
     if let Some(proposition) = value["p"].as_str() {
         let form = read_program_proposition_binding_form(proposition);
