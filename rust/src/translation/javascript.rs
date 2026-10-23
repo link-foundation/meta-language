@@ -203,6 +203,32 @@ pub(crate) fn parse_javascript_bound_in_with_module_scope(
     readonly_module_constants: bool,
     module_scope: Option<&ModuleBindingScope>,
 ) -> Result<SProgram> {
+    parse_javascript_bound_in_with_module_representation(
+        source,
+        context,
+        literal_bindings,
+        readonly_module_constants,
+        module_scope,
+        false,
+    )
+}
+
+pub(crate) fn requires_javascript_reference_semantics(source: &str) -> Result<bool> {
+    let tokens = tokenize(source, Language::JavaScript)?;
+    Ok(reference_analysis::requires_reference_semantics(
+        &tokens.tokens,
+        &[],
+    ))
+}
+
+pub(crate) fn parse_javascript_bound_in_with_module_representation(
+    source: &str,
+    context: &ModuleContext,
+    literal_bindings: &HashMap<String, SExpr>,
+    readonly_module_constants: bool,
+    module_scope: Option<&ModuleBindingScope>,
+    reference_semantics: bool,
+) -> Result<SProgram> {
     if module_scope.is_some_and(|scope| {
         scope.names.len() > 100_000 || scope.names.iter().any(String::is_empty)
     }) {
@@ -214,6 +240,10 @@ pub(crate) fn parse_javascript_bound_in_with_module_scope(
     }
     let tokens = tokenize(source, Language::JavaScript)?;
     let mut parser = JavaScriptParser::new(source, tokens.tokens, &tokens.comments);
+    if reference_semantics {
+        parser.reference_state.enabled = true;
+        parser.reference_state.forced = true;
+    }
     parser.literal_bindings.clone_from(literal_bindings);
     parser.readonly_constants.module = readonly_module_constants;
     parser.externals.clone_from(&context.externals);

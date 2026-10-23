@@ -88,3 +88,17 @@ export function acceptRustSemanticModuleItem(term, comment, role) {
 export function renderRustSemanticModuleExport(source, target) {
   return 'export { ' + target + ' as ' + source + ' };';
 }
+
+/** @param {boolean} explicit @param {boolean} javascript @param {boolean} lexical @returns {boolean} */
+export function selectSelfTranslationModuleReferences(explicit, javascript, lexical) {
+  return explicit || javascript && lexical;
+}
+
+/** A successful complete frontend may discharge owned mutations. A refusal
+ * retains the actual lexical selection; explicit selection always survives.
+ * @param {boolean} selected @param {boolean} explicit @param {boolean} javascript
+ * @param {boolean} complete @param {boolean} reference @returns {boolean}
+ */
+export function refineSelfTranslationModuleReferences(selected, explicit, javascript, complete, reference) {
+  return !explicit && selected && javascript && complete ? reference : selected;
+}

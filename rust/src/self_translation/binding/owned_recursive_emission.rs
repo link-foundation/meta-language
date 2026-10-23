@@ -619,6 +619,7 @@ impl super::Binder<'_, '_> {
                     module_directory: Some(self.module_directory.to_vec()),
                 },
                 utf16_strings: self.utf16_strings,
+                reference_semantics: self.reference_semantics,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
             let capture = super::super::emission::check_and_emit_item_with_ownership(

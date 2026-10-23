@@ -19,6 +19,8 @@ use super::representation_rules::{
 pub struct Context {
     pub module: ModuleContext,
     pub utf16_strings: bool,
+    /// Keep one selected shared heap representation across sibling items.
+    pub reference_semantics: bool,
     pub(crate) module_binding_scope: Option<crate::translation::javascript::ModuleBindingScope>,
 }
 

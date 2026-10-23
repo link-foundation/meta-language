@@ -216,6 +216,32 @@ pub fn render_rust_semantic_module_export(source: &str, target: &str) -> String 
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub const fn select_self_translation_module_references(
+    explicit: bool,
+    javascript: bool,
+    lexical: bool,
+) -> bool {
+    explicit || (javascript && lexical)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn refine_self_translation_module_references(
+    selected: bool,
+    explicit: bool,
+    javascript: bool,
+    complete: bool,
+    reference: bool,
+) -> bool {
+    if ((!explicit && selected) && javascript) && complete {
+        reference
+    } else {
+        selected
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_plan_semantic_source_groups_loop2(
     roles: &[f64],
     line_breaks: &[bool],

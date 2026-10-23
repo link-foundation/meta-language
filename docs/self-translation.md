@@ -38,12 +38,26 @@ ordinary JavaScript emitter must accept the result. The original concrete
 grammar selects actual function owners; the shared generated token policy
 selects their public name after attributes. Restricted visibility and external
 signature assumptions retain explicit namespace-composition obligations.
+The semantic draft can also emit complete flat Rust free-function libraries as
+one checked scope, preserving private/forward helpers and actual public export
+aliases. Project directory metadata remains available and does not disable this
+source-module path. Effectful entry points and other unsupported source items
+keep their explicit gaps.
+
+`selfTranslateWithDiagnostics` and Rust `self_translate_with_diagnostics` retain
+actual compiler diagnostics beside the unchanged source owners. JavaScript's
+`referenceSemantics: true` and Rust's `reference_semantics: true` select shared
+reference values across the complete module; false keeps automatic selection
+from source operations, inferred identities and imported types. Native context
+propagation is a code draft; behavior remains untested in this phase.
 
 `draftProjectTranslation(inputs, { targetLanguage })` drafts a complete supplied
 module inventory. Each input supplies its identifier, source language, complete
 source and import-specifier-to-source-identifier map. Source hashes, dependency
 refinement, products and every unsupported item remain in the returned draft;
-`projectTranslationDraftToLinks` stores it as inspectable Links data. The
+`projectTranslationDraftToLinks` stores it as inspectable Links data. Rust exposes
+`draft_project_translation` and `project_translation_draft_to_links` over the
+same source inventory and generated worklist decisions. The
 `js/scripts/draft-project-translation.mjs` author materializes every tracked
 JavaScript, TypeScript and Rust source of a supplied project and writes that
 draft. This author is intended for the later CI drafting phase; it performs no

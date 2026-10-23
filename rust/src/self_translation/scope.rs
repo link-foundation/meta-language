@@ -8,13 +8,14 @@ use crate::translation::frontend_rules::{
     accept_binding_scope, accept_literal_binding, accept_module_binding_scope, find_binding_run_end,
 };
 use crate::translation::javascript::{
-    ModuleBindingScope, ModuleContext, parse_javascript_bound_in_with_module_scope,
+    ModuleBindingScope, ModuleContext, parse_javascript_bound_in_with_module_representation,
 };
 use crate::translation::surface::{SEffect, SExpr, SNode};
 use std::collections::{HashMap, HashSet};
 
 pub(super) struct BindingScopeContext {
     pub(super) utf16_strings: bool,
+    pub(super) reference_semantics: bool,
     pub(super) module_scope_known: bool,
     pub(super) module_binding_names: Vec<String>,
 }
@@ -32,6 +33,7 @@ pub(super) fn translate_binding_groups<'a>(
 ) -> Vec<(Group<'a>, Translated)> {
     let BindingScopeContext {
         utf16_strings,
+        reference_semantics,
         module_scope_known,
         module_binding_names,
     } = context;
@@ -54,6 +56,7 @@ pub(super) fn translate_binding_groups<'a>(
         to,
         decorators,
         utf16_strings,
+        reference_semantics,
         Some(&module_scope),
     );
     let terms: Vec<String> = groups
@@ -113,6 +116,7 @@ pub(super) fn translate_binding_groups<'a>(
                 decorators,
                 &Context {
                     utf16_strings,
+                    reference_semantics,
                     module_binding_scope: Some(module_scope.clone()),
                     ..Context::default()
                 },
@@ -170,6 +174,7 @@ pub(super) fn translate_binding_groups<'a>(
             decorators,
             &Context {
                 utf16_strings,
+                reference_semantics,
                 module_binding_scope: Some(module_scope),
                 ..Context::default()
             },
@@ -189,6 +194,7 @@ pub(super) fn collect_literal_bindings(
     to: &str,
     decorators: &DecoratorSet,
     utf16_strings: bool,
+    reference_semantics: bool,
     module_scope: Option<&ModuleBindingScope>,
 ) -> (HashMap<String, SExpr>, HashSet<usize>) {
     let mut literals = HashMap::new();
@@ -204,12 +210,13 @@ pub(super) fn collect_literal_bindings(
                 Some(Err(_)) => continue,
                 None => text,
             };
-            let Ok(parsed) = parse_javascript_bound_in_with_module_scope(
+            let Ok(parsed) = parse_javascript_bound_in_with_module_representation(
                 source,
                 &ModuleContext::default(),
                 &HashMap::new(),
                 family(to) == "Rust",
                 module_scope,
+                reference_semantics,
             ) else {
                 continue;
             };
@@ -245,6 +252,7 @@ pub(super) fn collect_literal_bindings(
                     decorators,
                     &Context {
                         utf16_strings,
+                        reference_semantics,
                         module_binding_scope: module_scope.cloned(),
                         ..Context::default()
                     },

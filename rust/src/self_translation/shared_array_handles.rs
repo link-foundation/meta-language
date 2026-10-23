@@ -27,7 +27,10 @@ pub(super) fn validate_options(
             "the selected source interpretation requires Rust source",
         ));
     }
-    if !options.module_directory.is_empty() || !options.imports.is_empty() || options.utf16_strings
+    if !options.module_directory.is_empty()
+        || !options.imports.is_empty()
+        || options.utf16_strings
+        || options.reference_semantics
     {
         return Err(failure(
             "additional module or representation interpretations require independent composition proofs",

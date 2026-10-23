@@ -250,6 +250,7 @@ pub(super) struct Binder<'g, 'a> {
     pub(super) module_directory: &'g [String],
     pub(super) imports: &'g BTreeMap<String, Vec<External>>,
     pub(super) utf16_strings: bool,
+    pub(super) reference_semantics: bool,
 }
 
 pub(super) struct ModuleSignatureContext {
@@ -366,6 +367,7 @@ impl Binder<'_, '_> {
                 self.decorators,
                 &Context {
                     utf16_strings: self.utf16_strings,
+                    reference_semantics: self.reference_semantics,
                     module_binding_scope: Some(Self::module_binding_scope(state)),
                     ..Context::default()
                 },
@@ -424,6 +426,7 @@ impl Binder<'_, '_> {
                 module_directory: Some(self.module_directory.to_vec()),
             },
             utf16_strings: self.utf16_strings,
+            reference_semantics: self.reference_semantics,
             module_binding_scope: Some(Self::module_binding_scope(state)),
         };
         state.outs[index] = Some(translate_group(

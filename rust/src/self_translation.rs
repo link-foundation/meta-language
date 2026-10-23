@@ -33,6 +33,7 @@ mod binding;
 mod emission;
 mod publication;
 use publication::{carry, comment_fits, record_translated_definitions, source_line};
+mod reference_context;
 pub mod representation;
 mod representation_rules;
 mod shared_array_handles;
@@ -69,6 +70,9 @@ pub type SelfTranslationSignature = External;
 /// What [`self_translate_with`] translates a module with.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct SelfTranslationOptions {
+    /// Force the shared reference representation across every module item.
+    /// False retains automatic whole-module selection.
+    pub reference_semantics: bool,
     /// Reparse actual emitted code; saved originals never restore semantics.
     pub semantic_translation: bool,
     /// Independent interpretation of complete actual standard Rust shared handles.
@@ -366,6 +370,7 @@ fn translate_module_diagnostic(
         && family(to) == "JavaScript"
         && options.imports.is_empty()
         && !options.utf16_strings
+        && !options.reference_semantics
     {
         // A refused whole module retains all ordinary per-item diagnostics;
         // unsupported owners cannot publish provisional helper signatures.
@@ -388,6 +393,7 @@ fn translate_module_diagnostic(
     } else {
         group_items(&items, source)
     };
+    let reference_semantics = reference_context::select(source, from, &groups, options)?;
     let (outs, scans, signature_context) = if let Some((emitted, signatures)) = &whole_publication {
         (
             vec![record_translated_definitions(
@@ -413,6 +419,7 @@ fn translate_module_diagnostic(
             module_directory: &options.module_directory,
             imports: &options.imports,
             utf16_strings,
+            reference_semantics,
         }
         .translate()
     } else {
@@ -426,6 +433,7 @@ fn translate_module_diagnostic(
                     decorators,
                     &Context {
                         utf16_strings,
+                        reference_semantics,
                         ..Context::default()
                     },
                 )
@@ -451,6 +459,7 @@ fn translate_module_diagnostic(
         &outs,
         BindingScopeContext {
             utf16_strings,
+            reference_semantics,
             module_scope_known,
             module_binding_names: signature_context.module_binding_names.clone(),
         },

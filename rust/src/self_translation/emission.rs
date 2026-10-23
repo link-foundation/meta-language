@@ -10,7 +10,7 @@ use crate::translation::emit_common::Emitted;
 use crate::translation::emit_javascript::emit_javascript;
 use crate::translation::emit_rust::{emit_rust_constants, emit_rust_with_representation};
 use crate::translation::ir::Program;
-use crate::translation::javascript::parse_javascript_bound_in_with_module_scope;
+use crate::translation::javascript::parse_javascript_bound_in_with_module_representation;
 use crate::translation::rust::parse_rust;
 use crate::translation::surface::{External, SExpr};
 
@@ -78,20 +78,22 @@ fn check_and_emit_item_profile(
         }
     } else {
         if from == "TypeScript" {
-            parse_javascript_bound_in_with_module_scope(
+            parse_javascript_bound_in_with_module_representation(
                 &project_type_script_typing(text)?,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
                 context.module_binding_scope.as_ref(),
+                context.reference_semantics,
             )?
         } else {
-            parse_javascript_bound_in_with_module_scope(
+            parse_javascript_bound_in_with_module_representation(
                 text,
                 &context.module,
                 literal_bindings,
                 family(to) == "Rust",
                 context.module_binding_scope.as_ref(),
+                context.reference_semantics,
             )?
         }
     };

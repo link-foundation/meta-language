@@ -2626,9 +2626,17 @@ Shared project worklist and item-admission rules are generated from JavaScript,
 including its exact UTF-16 identifier ordering. Changed providers select only
 their actual dependent sources for the next refinement pass. Actual compiler
 diagnostics can be retained beside their unchanged original source owners in
-both runtimes, without executing generated products. The native project host
-retains its unsupported explicit reference-option and detailed signature-error
-transport gaps; it must not silently substitute an unsupported representation.
+both runtimes, without executing generated products. Detailed native signature
+error transport remains an implementation gap.
+The native module adapter now drafts the same whole-module reference selection
+already used by JavaScript. It retains actual shared selector decisions,
+successful complete-source ownership rewrites, imported reference types and
+inferred identity observations. One selected representation reaches sibling
+items, recursive components, owned emission captures and scope retries. Explicit
+`referenceSemantics: true` and Rust `reference_semantics: true` force this same
+context; false retains automatic selection. The existing independent shared-array
+source interpretation keeps its separate composition restrictions. This source
+draft does not establish native execution or complete heap/class semantics.
 The independent signature draft now also checks complete ordinary Rust modules
 through the existing frontend, checker and JavaScript emitter before exposing
 unrestricted public free-function signatures. Attribute-prefix and visibility

@@ -7,7 +7,9 @@ use crate::translation::{
     check::check_program,
     frontend_rules::ml_array::number_index,
     ir::Decl,
-    javascript::{ModuleBindingScope, ModuleContext, parse_javascript_bound_in},
+    javascript::{
+        ModuleBindingScope, ModuleContext, parse_javascript_bound_in_with_module_representation,
+    },
     surface::External,
 };
 use std::collections::{HashMap, HashSet};
@@ -87,6 +89,7 @@ impl Binder<'_, '_> {
             self.to,
             self.decorators,
             self.utf16_strings,
+            self.reference_semantics,
             Some(&candidate_scope),
         );
         let forms = self
@@ -197,9 +200,16 @@ impl Binder<'_, '_> {
             externals,
             module_directory: Some(self.module_directory.to_vec()),
         };
-        let complete_checked = parse_javascript_bound_in(&source, &context, &HashMap::new(), true)
-            .and_then(|surface| check_program(&surface))
-            .is_ok();
+        let complete_checked = parse_javascript_bound_in_with_module_representation(
+            &source,
+            &context,
+            &HashMap::new(),
+            true,
+            None,
+            self.reference_semantics,
+        )
+        .and_then(|surface| check_program(&surface))
+        .is_ok();
         dependency_rules::accept_module_scope(&forms, complete_checked)
     }
 
@@ -318,6 +328,7 @@ impl Binder<'_, '_> {
                 module_directory: Some(self.module_directory.to_vec()),
             },
             utf16_strings: self.utf16_strings,
+            reference_semantics: self.reference_semantics,
             module_binding_scope: Some(Self::module_binding_scope(state)),
         };
         let whole = check_and_emit_item_with_ownership(
@@ -380,6 +391,7 @@ impl Binder<'_, '_> {
                     module_directory: Some(self.module_directory.to_vec()),
                 },
                 utf16_strings: self.utf16_strings,
+                reference_semantics: self.reference_semantics,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
             let GroupKind::Item { text, .. } = &self.groups[member].kind else {

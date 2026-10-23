@@ -31,7 +31,8 @@ import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArray
 import {requireRustSharedArrayHandleSourceText} from './translation/rust-shared-array-handles.js';
 import {unsupported} from './translation/diagnostics.js';
 import { readSemanticSourceRole, planSemanticSourceGroups, readRustPublicSignatureNamePosition,
-  acceptRustSemanticModuleItem, renderRustSemanticModuleExport } from './translation/semantic-input-rules.js';
+  acceptRustSemanticModuleItem, renderRustSemanticModuleExport,
+  selectSelfTranslationModuleReferences, refineSelfTranslationModuleReferences } from './translation/semantic-input-rules.js';
 import { acceptBindingScope, acceptLiteralBinding, acceptModuleBindingScope, acceptRootSyntaxItem, acceptSourcePrefixRestoration, acceptSourceEnvelopeRestoration, acceptDeclarationSignature, findBindingRunEnd } from './translation/frontend-rules.js';
 import {requireSelfTranslationLayoutEnvelope} from './self-translation-layout-rules.js';
 import {readDeferredDeclarationBinding} from './translation/deferred-declaration-scope.js';
@@ -252,11 +253,13 @@ function translateModule(source, sourceLanguage, targetLanguage, { decorators, m
   let gap = '';
   const groups = wholePublication ? [{kind: 'item', term: 'source_file', items, text, after: ''}]
     : semanticTranslation ? groupSemanticItems(items, bytes, from) : groupItems(items, bytes);
-  let references = referenceSemantics || (family(from) === 'JavaScript' && requiresReferenceSemantics(text));
+  let references = selectSelfTranslationModuleReferences(referenceSemantics, family(from) === 'JavaScript',
+    !referenceSemantics && family(from) === 'JavaScript' && requiresReferenceSemantics(text));
   if (!referenceSemantics && references && family(from) === 'JavaScript') {
     // The complete frontend can prove an owned append rewrite and remove its
     // reference trigger. Preserve lexical admission when that parse refuses.
-    try { references = parseJavaScript(text, { moduleDirectory }).referenceSemantics === true; }
+    try { references = refineSelfTranslationModuleReferences(references, referenceSemantics, true,
+      true, parseJavaScript(text, { moduleDirectory }).referenceSemantics === true); }
     catch (error) { if (!(error instanceof TranslationError)) throw error; }
   }
   const pendingTypes = Object.values(imports).flat();

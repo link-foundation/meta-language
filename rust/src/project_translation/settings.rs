@@ -28,9 +28,9 @@ pub(super) fn apply(target: &mut SelfTranslationOptions, value: &Value) -> Resul
             // The project owns these derived contexts after applying records.
             "imports" | "semanticTranslation" | "retainDiagnostics" => {}
             "referenceSemantics" => {
-                return Err(fail(
-                    "the native project driver requires the actual supported source reference interpretation",
-                ));
+                target.reference_semantics = value
+                    .as_bool()
+                    .ok_or_else(|| fail("referenceSemantics must be Boolean"))?;
             }
             _ => return Err(fail(&format!("unknown translation option {name}"))),
         }
