@@ -477,3 +477,13 @@ Rust, then bound to the existing checked array and spread representation. Both
 runtimes test order, nested arrays, empty arrays, strings, booleans and a receiver
 that prints once. Indexed slicing, non-array iterators, array-like objects and
 mapping functions remain explicit diagnostics until their behavior is modeled.
+
+The fixed integer cast source draft adds Rust's truncating and sign-reinterpreting
+casts across all four emitters without changing exact widening. Its modular
+definition, decimal powers of two, rendering decisions and JavaScript source
+construction plan are shared JavaScript translated automatically into Rust.
+Both packages ship the complete typed definition graph as Links data.
+Independent JavaScript parsing admits unshadowed `BigInt.asIntN`/`asUintN` at
+the represented constant widths and lowers to ordinary unbounded integer terms
+with fresh local bindings and one operand evaluation. Non-BigInt coercions and
+dynamic or other widths remain explicit gaps. This batch has not been tested.

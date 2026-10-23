@@ -11,9 +11,10 @@ import { readPortableSourceParameterStyles, partitionPortableRustLibrary } from 
 import { readPortableSourceLintStyles } from './portable-source-lint-style.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { writeProjectData } from './project-data.mjs';
+import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   const source = readFileSync(new URL(sourcePath, root), 'utf8');
   const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
@@ -32,6 +33,15 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     const path = new URL(file.path ?? moduleName + '.rs', base);
     mkdirSync(new URL('.', path), { recursive: true });
     writeFileSync(path, file.source);
+  }
+  if (programAsset !== undefined) {
+    if (!/^[a-z][a-z0-9-]*$/u.test(programAsset)) throw new TypeError('invalid typed source program asset');
+    // Construct inspectable source IR. The encoder rechecks static typing;
+    // nothing decodes/replays an archive or executes the represented program.
+    const linked = encodeTypedProgramLinks(program);
+    const text = linked.network.toLino();
+    writeFileSync(new URL('js/src/data/' + programAsset + '.lino', root), text);
+    writeFileSync(new URL('rust/src/data/' + programAsset + '.lino', root), text);
   }
   const decorators = new DecoratorSet([{ id: moduleName.replaceAll('_', '-') + '-source-styles',
     level: 'emitter', order: 0, when: [['format', 'Rust']],

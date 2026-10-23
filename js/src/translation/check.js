@@ -11,6 +11,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
@@ -880,7 +881,7 @@ class Checker {
       case 'cast': {
         const to = this.resolveType(node.to, path, node.span);
         const arg = this.expr(node.arg, env, path, node.from);
-        return castTo(arg, to, node.flavor, node.span);
+        return castTo(arg, to, node.flavor, node.span, this.language);
       }
       case 'print': {
         const text = this.show(node.expr, env, path, node.style);
@@ -1957,7 +1958,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
   throw typeError(`expected ${typeKey(type)} but found ${typeKey(value.type)}`, span);
 }
 
-function castTo(arg, to, flavor, span) {
+function castTo(arg, to, flavor, span, language = '') {
   if (sameType(arg.type, to)) return arg;
   const from = arg.type;
   if (from.kind === 'nat' && to.kind === 'int') return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
@@ -1968,7 +1969,8 @@ function castTo(arg, to, flavor, span) {
   if (from.kind === 'fixed' && to.kind === 'fixed') {
     const source = fixedBounds(from);
     const target = fixedBounds(to);
-    if (source.min >= target.min && source.max <= target.max) return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
+    const selected = readFixedIntegerCastFlavor(language, source.min >= target.min && source.max <= target.max, flavor ?? '');
+    if (selected) return { k: 'cast', arg, from, to, flavor: selected, type: to };
     throw unsupported('narrowing integer cast', `${typeKey(from)} as ${typeKey(to)} wraps in Rust and has no portable encoding yet`, span);
   }
   throw typeError(`cannot convert ${typeKey(from)} to ${typeKey(to)}`, span);

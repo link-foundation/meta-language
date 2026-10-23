@@ -35,6 +35,7 @@ mod console;
 mod constructed_guarded_array_writes;
 mod declarations;
 mod expressions;
+mod fixed_integer_casts;
 mod flow;
 mod guarded_private_array_writes;
 mod imperative;

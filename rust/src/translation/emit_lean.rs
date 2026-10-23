@@ -32,6 +32,7 @@ use super::types::Type;
 
 mod arrays;
 mod callables;
+mod casts;
 mod helpers;
 mod main;
 mod math;
@@ -909,29 +910,6 @@ impl LeanEmitter<'_> {
             arms.push(format!("{}| {text} => {}", pad(depth + 1), body?));
         }
         Ok(format!("(match {subject} with\n{})", arms.join("\n")))
-    }
-
-    fn cast(
-        &mut self,
-        arg: &Expr,
-        from: &Type,
-        to: &Type,
-        flavor: Flavor,
-        depth: usize,
-    ) -> Result<String> {
-        let arg = self.expr(arg, depth)?;
-        let natural_from = from.is_natural();
-        let natural_to = to.is_natural();
-        if natural_from == natural_to {
-            return Ok(arg);
-        }
-        if natural_from {
-            return Ok(format!("(Int.ofNat {arg})"));
-        }
-        if flavor == Flavor::Checked {
-            unthreaded("a checked conversion to a natural");
-        }
-        Ok(format!("(Int.toNat {arg})"))
     }
 }
 

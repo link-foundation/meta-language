@@ -959,6 +959,8 @@ export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
   options?: { provenance?: unknown },
 ): TypedProgramLinks;
+export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
+export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,

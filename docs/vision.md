@@ -3374,6 +3374,22 @@ patterns still refuse explicitly. Bounded JavaScript checks cover complete
 programs and checked text/binary Links replay; native compilation and execution
 remain pending CI verification.
 
+The next source draft represents fixed integer casts at 8, 16, 32, 64 and 128
+bits with an explicit wrapping flavor where Rust truncates or reinterprets
+the sign. Widening stays exact. One JavaScript definition supplies the modular
+operation, native generation and all four target renderers, following the
+[Rust integer cast rules](https://doc.rust-lang.org/reference/expressions/operator-expr.html#numeric-cast).
+No value passes through binary64. The complete typed operation definitions are
+editable Links data in both packages. Ordinary unshadowed `BigInt.asIntN` and
+`BigInt.asUintN` calls with these constant Number widths lower through the same
+generated construction plan to existing integer terms. The operand is bound
+once and the result retains JavaScript's unbounded BigInt domain; subsequent
+addition does not acquire a machine-width overflow check. Actual module,
+lexical and supplied context owners determine builtin admission. Dynamic and
+other widths and non-BigInt conversion domains remain separate obligations.
+This batch is a code draft: no behavioral execution or verification claim is
+made while the complete-scope testing prohibition applies.
+
 JavaScript constructor selection uses the actual receiver
 datatype and nearest lexical binding to resolve repeated tag names, while
 unknown, optional or shadowed owners retain their existing refusals. Both rule

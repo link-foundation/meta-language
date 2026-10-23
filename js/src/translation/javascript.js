@@ -11,6 +11,7 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
@@ -127,7 +128,7 @@ class JavaScriptParser {
     // mutates these token records. Reserve all module/import/context names
     // once, then retain generated logical argument names in the same Set.
     this.recordParameterTokenOwner = tokens;
-    this.recordParameterNames = new Set([...this.externals.keys(), ...literalBindings.keys()]);
+    this.recordParameterNames = new Set([...this.externals.keys(), ...literalBindings.keys(), ...moduleBindingNames]);
     this.recordParameterOrdinal = 0;
     for (const token of tokens) if (token.kind === 'identifier') this.recordParameterNames.add(token.value);
     this.docs = comments.filter((comment) => comment.text.startsWith('/**') && comment.text !== '/**/');
@@ -2446,6 +2447,10 @@ class JavaScriptParser {
     }
     const args = this.arguments(name);
     const called = span(token, c.peek());
+    if (standardOwner) {
+      const fixedCast = readJavaScriptFixedIntegerCast(this, name, args, called);
+      if (fixedCast) return fixedCast;
+    }
     if (name === 'Array.from' && standardOwner) return { k: 'arrayFrom', args, span: called };
     if (name === 'Array.isArray' && args.length === 1 && standardOwner) return { k: 'arrayIsArray', arg: args[0], span: called };
     const arrayForm = standardOwner ? readArrayMethodForm(name) : '';

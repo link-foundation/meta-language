@@ -1,5 +1,6 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -758,6 +759,13 @@ class LeanEmitter {
 
   cast(e, depth) {
     const arg = this.expr(e.arg, depth);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Lean', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     const naturalFrom = e.from.kind === 'nat' || (e.from.kind === 'fixed' && !e.from.signed);
     const naturalTo = e.to.kind === 'nat' || (e.to.kind === 'fixed' && !e.to.signed);
     if (naturalFrom === naturalTo) return arg;

@@ -210,6 +210,16 @@ pub fn coerce(
 }
 
 fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<Expr> {
+    cast_to_in_language(arg, to, flavor, span, "")
+}
+
+fn cast_to_in_language(
+    arg: Expr,
+    to: &Type,
+    flavor: Flavor,
+    span: Option<Span>,
+    language: &str,
+) -> Result<Expr> {
     if arg.ty.same(to) {
         return Ok(arg);
     }
@@ -247,8 +257,17 @@ fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<E
         ) => {
             let (source_min, source_max) = fixed_bounds(*from_bits, *from_signed);
             let (target_min, target_max) = fixed_bounds(*bits, *signed);
-            if source_min >= target_min && source_max <= target_max {
+            let selected =
+                crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_flavor(
+                    language,
+                    source_min >= target_min && source_max <= target_max,
+                    flavor.as_str(),
+                );
+            if selected == "exact" {
                 return Ok(cast(arg, Flavor::Exact));
+            }
+            if selected == "wrapping" {
+                return Ok(cast(arg, Flavor::Wrapping));
             }
             Err(unsupported(
                 "narrowing integer cast",

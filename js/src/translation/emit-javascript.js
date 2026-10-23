@@ -1,4 +1,5 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -681,6 +682,13 @@ class JavaScriptEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('JavaScript', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `((value) => (value < 0n ? 0n : value))(${arg})`;
     this.helpers.add('toNatChecked');

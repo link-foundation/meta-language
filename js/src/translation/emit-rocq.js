@@ -1,5 +1,6 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -1099,6 +1100,13 @@ class RocqEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Rocq', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     const from = e.from.kind === 'fixed' ? (e.from.signed ? 'Z' : 'N') : (e.from.kind === 'nat' ? 'N' : 'Z');
     const to = e.to.kind === 'fixed' ? (e.to.signed ? 'Z' : 'N') : (e.to.kind === 'nat' ? 'N' : 'Z');
     if (e.flavor === 'checked') throw unthreaded('a checked conversion to a natural');

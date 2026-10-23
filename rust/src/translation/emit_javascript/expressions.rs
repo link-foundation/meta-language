@@ -284,10 +284,12 @@ impl JavaScriptEmitter<'_> {
             }
             Node::Cast {
                 arg,
+                from,
+                to,
                 flavor,
                 message,
                 ..
-            } => self.cast(arg, *flavor, message.as_deref()),
+            } => self.cast(arg, from, to, *flavor, message.as_deref()),
             Node::Abort { message } => {
                 self.helpers.insert(Helper::Abort);
                 Ok(format!("ml_abort({})", json_string(message)))

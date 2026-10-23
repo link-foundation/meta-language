@@ -213,6 +213,20 @@ pub enum Flavor {
     Exact,
     Checked,
     Clamp,
+    Wrapping,
+}
+
+impl Flavor {
+    /// The shared serialized operation qualifier.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Exact => "exact",
+            Self::Checked => "checked",
+            Self::Clamp => "clamp",
+            Self::Wrapping => "wrapping",
+        }
+    }
 }
 
 /// A source prototype definition, preserved until the checker refuses it.

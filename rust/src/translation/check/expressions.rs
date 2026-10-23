@@ -5,8 +5,8 @@ use super::expectation::ExpectedType;
 use super::{
     BOOL, BinaryOp, Checker, Decimal, Env, Expr, FLOAT, INT, Language, LitValue, Node, Result,
     Rounding, SExpr, SNode, STRING, Semantics, Span, Type, UNIT, UnaryOp, arithmetic_semantics,
-    binary_node, cast_to, coerce, comparison, fixed_bounds, negate_number, op_name, plain_binary,
-    text_lit, type_error, unsupported,
+    binary_node, cast_to_in_language, coerce, comparison, fixed_bounds, negate_number, op_name,
+    plain_binary, text_lit, type_error, unsupported,
 };
 use crate::translation::frontend_rules::accept_java_script_optional_tuple_context;
 use crate::translation::rust_character_rules::accept_rust_numeric_literal_negation;
@@ -451,7 +451,7 @@ impl Checker {
             } => {
                 let to = self.resolve_type(Some(to), path, span)?;
                 let arg = self.expr(arg, env, path, from.as_ref(), false)?;
-                cast_to(arg, &to, *flavor, span)
+                cast_to_in_language(arg, &to, *flavor, span, self.language.as_str())
             }
             SNode::Abort { message } => {
                 let Some(expected) = expected else {

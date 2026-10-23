@@ -11,4 +11,7 @@ Draft generic linked AST projection in both runtimes, keeping full CSTs,
 actual concrete origins, embedding alternatives and declarative projection rules.
 Draft native module-wide reference selection and propagation through sibling
 functions, recursive components, scope retries and project translation options.
+Draft fixed integer wrapping casts at every native width across all four
+emitters, complete typed Links definitions and independent JavaScript BigInt
+cast parsing through one automatically translated construction plan.
 Behavioral checks remain deferred until the complete requirements draft.

@@ -25,6 +25,7 @@ sources.push('js/src/meta-language-archive-rules.js', 'js/scripts/draft-source-l
 sources.push('js/src/dynamic-meta-language-rules.js', 'js/scripts/generate-dynamic-meta-language-rules.mjs');
 sources.push('js/src/project-translation-rules.js', 'js/scripts/generate-project-translation-rules.mjs');
 sources.push('js/src/syntax-projection.js', 'js/src/syntax-projection-rules.js', 'js/scripts/generate-syntax-projection-rules.mjs');
+sources.push('js/src/translation/fixed-integer-cast-rules.js', 'js/src/translation/javascript-fixed-integer-casts.js', 'js/src/fixed-integer-cast-program.js', 'js/scripts/generate-fixed-integer-cast-rules.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

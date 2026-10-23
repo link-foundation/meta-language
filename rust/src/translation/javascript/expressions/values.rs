@@ -407,6 +407,11 @@ impl JavaScriptParser {
         }
         let mut args = self.arguments(&name)?;
         let called = self.to_here(&token);
+        if self.has_standard_builtin_owner(&token) {
+            if let Some(value) = self.read_fixed_integer_cast(&name, &args, called)? {
+                return Ok(value);
+            }
+        }
         if name == "Array.from" && self.has_standard_builtin_owner(&token) {
             return Ok(node(SNode::ArrayFrom { args, ty: None }, called));
         }

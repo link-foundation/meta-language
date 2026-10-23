@@ -1,4 +1,5 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
+import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -1607,6 +1608,13 @@ class RustEmitter {
 
   cast(e) {
     const arg = this.expr(e.arg);
+    if (e.flavor === 'wrapping') {
+      if (e.from.kind !== 'fixed' || e.to.kind !== 'fixed') throw unsupported('wrapping integer cast', 'requires actual fixed integer source and target types', e.span);
+      const code = renderWrappingFixedIntegerCast('Rust', arg, e.to.bits, e.to.signed, e.from.signed);
+      if (!code) throw unsupported('wrapping integer cast', 'the integer width needs an exact target encoding', e.span);
+      this.state.encode('fixed integer casts', readFixedIntegerCastStatement());
+      return code;
+    }
     if (e.from.kind === 'fixed' && e.to.kind === 'fixed') return `${typeKey(e.to)}::from(${arg})`;
     if (e.flavor === 'exact') return arg;
     if (e.flavor === 'clamp') return `crate::ml::clamp_nat(${arg})`;

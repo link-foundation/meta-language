@@ -576,6 +576,42 @@ impl RocqEmitter<'_> {
         flavor: Flavor,
     ) -> Result<String> {
         let arg = self.expr(arg)?;
+        if flavor == Flavor::Wrapping {
+            let (
+                Type::Fixed {
+                    signed: source_signed,
+                    ..
+                },
+                Type::Fixed { bits, signed },
+            ) = (from, to)
+            else {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "requires actual fixed integer source and target types",
+                    None,
+                ));
+            };
+            let code =
+                crate::translation::fixed_integer_cast_rules::render_wrapping_fixed_integer_cast(
+                    "Rocq",
+                    &arg,
+                    f64::from(*bits),
+                    *signed,
+                    *source_signed,
+                );
+            if code.is_empty() {
+                return Err(unsupported(
+                    "wrapping integer cast",
+                    "the integer width needs an exact target encoding",
+                    None,
+                ));
+            }
+            self.state.encode(
+                "fixed integer casts",
+                &crate::translation::fixed_integer_cast_rules::read_fixed_integer_cast_statement(),
+            );
+            return Ok(code);
+        }
         let module = |ty: &Type| match ty {
             Type::Fixed { signed, .. } => {
                 if *signed {
