@@ -517,3 +517,13 @@ The typed Links emission API also reaches the existing Lean and Rocq backends,
 while retaining model-specific option boundaries and full static rechecking.
 Future nine-case controls compare actual JavaScript behavior, exact native
 graphs and all four target emissions. Their product compilation remains CI-only.
+
+The RDF address draft generates IPv6 and IPvFuture authority admission from a
+single JavaScript definition, including embedded IPv4 tails. Both graph and
+N-Triples boundaries compose this with the preceding IRI grammar. The validation
+projection never replaces an identifier, original token, source spelling or
+semantic value. Both packages retain the complete typed Links definition.
+Future controls cover eleven valid and twenty-four invalid identifiers, source
+replay, canonical emission and paired graph bytes. They have not run. Generated
+source is retained while a rustfmt internal whitespace failure is deferred;
+formatting gates and earlier unsupported-domain assertions remain unchanged.

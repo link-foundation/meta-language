@@ -3585,6 +3585,24 @@ unsupported state, ownership or dependent-language constructs. Future controls
 cover readonly collections, four-target codec replay, paired source emission
 and one native product. No such control has run in the complete draft phase.
 
+The RDF identifier draft also composes a source-generated IP-literal grammar
+with the existing scheme, Unicode, userinfo, port, path, query and fragment
+rules. It follows [RFC 3987 section 2.2](https://www.rfc-editor.org/rfc/rfc3987#section-2.2)
+and its [RFC 3986 address productions](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2):
+full and compressed IPv6, an optional final IPv4 tail, and IPvFuture version
+and address syntax. The temporary host projection is only a validation premise;
+the actual linked IRI and every source token retain their original spelling.
+No address normalization or dereferencing is performed. Zone identifiers and
+other extensions outside this selected RFC grammar do not become admitted by
+accepting arbitrary bracketed text. The frozen original lexical kernel remains
+unchanged; the additional grammar is a separate complete typed Links definition.
+Graph and N-Triples adapters consume the same generated decisions in both
+packages. Earlier unsupported-address expectations need their explicit profile
+reconciliation in the deferred metadata/assertion batch, retaining all inputs
+and evidence. Future normative, codec and exact runtime-graph controls have been
+authored. Formatter repair and behavioral checks remain deferred; this expansion
+does not establish complete RDF/OWL/import/conversion support.
+
 CI keeps its pinned Lean version when the upstream release index is
 unavailable. A Linux x64 GitHub Actions fallback downloads the same official
 release from GitHub, checks its published SHA-256 before extraction, and checks

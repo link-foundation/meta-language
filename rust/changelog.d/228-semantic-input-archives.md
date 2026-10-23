@@ -22,4 +22,6 @@ Draft shared array, Map and Set method translation with preserved aliases,
 ordered evaluation, SameValueZero primitive keys and checked Links reload.
 Draft native immutable collection reads and size queries, shared collection
 inference, and four-target emission directly from checked typed Links.
+Draft shared RDF IRI address parsing for IPv6, embedded IPv4 and IPvFuture,
+preserving exact graph terms and N-Triples source provenance.
 Behavioral checks remain deferred until the complete requirements draft.

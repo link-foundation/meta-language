@@ -15,9 +15,7 @@ use crate::resource_description_ntriples_rules::{
     read_resource_description_n_triples_scalar, read_resource_description_n_triples_token,
     read_resource_description_n_triples_transition,
 };
-use crate::resource_description_rules::{
-    accept_resource_description_identifier, accept_resource_description_language,
-};
+use crate::resource_description_rules::accept_resource_description_language;
 use crate::{
     LinkId, LinkNetwork, ResourceDescriptionLinks, decode_resource_description_graph,
     import_resource_description_graph, read_structured_data_lino,
@@ -132,14 +130,7 @@ fn identity(term: &Value) -> String {
     serde_json::to_string(&parts).expect("resource term strings serialize")
 }
 fn identifier(value: &str, offset: usize) -> Result<Value> {
-    if value.contains(['[', ']']) {
-        return Err(error(
-            "unsupported",
-            offset,
-            "bracketed identifiers require an address grammar outside this profile",
-        ));
-    }
-    if !accept_resource_description_identifier(&units(value)) {
+    if !crate::resource_description_graphs::accept_identifier_text(value) {
         return Err(error(
             "malformed",
             offset,

@@ -179,6 +179,7 @@ mod query_plan;
 mod query_transform;
 mod recursive_embedded_regions;
 mod regular_grammar_inference;
+mod resource_description_addresses;
 mod resource_description_graphs;
 mod resource_description_ntriples;
 mod rust_codec;

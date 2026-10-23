@@ -69,6 +69,7 @@ pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
+mod resource_description_address_rules;
 mod resource_description_graphs;
 mod resource_description_ntriples;
 mod resource_description_ntriples_rules;
