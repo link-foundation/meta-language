@@ -32,6 +32,7 @@ mod array_from;
 mod array_relative_element_template;
 mod arrays;
 mod callables;
+mod collection_access;
 mod collections;
 mod expectation;
 mod expressions;

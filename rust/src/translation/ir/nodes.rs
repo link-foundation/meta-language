@@ -247,6 +247,16 @@ pub enum Node {
         object: Box<Expr>,
         op: String,
     },
+    /// Number of entries in the actual insertion-order collection payload.
+    CollectionSize {
+        object: Box<Expr>,
+    },
+    /// SameValueZero primitive-key membership or optional map lookup.
+    CollectionRead {
+        object: Box<Expr>,
+        op: String,
+        key: Box<Expr>,
+    },
     /// The number of elements of `array`, as a Number or an integer.
     Length {
         array: Box<Expr>,
@@ -327,6 +337,8 @@ impl Node {
             Self::OptionalIndexNumber { .. } => "optionalIndexNumber",
             Self::StringPoints { .. } => "stringPoints",
             Self::CollectionItems { .. } => "collectionItems",
+            Self::CollectionSize { .. } => "collectionSize",
+            Self::CollectionRead { .. } => "collectionRead",
             Self::Length { .. } => "length",
             Self::ReferenceAllocate { .. } => "referenceAllocate",
             Self::ReferenceRead { .. } => "referenceRead",

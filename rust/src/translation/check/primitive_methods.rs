@@ -74,6 +74,9 @@ impl Checker {
             return self
                 .checked_record_method_application(object, operation, args, env, path, span);
         }
+        if matches!(object.ty, Type::Map { .. } | Type::Set { .. }) {
+            return self.checked_collection_access(object, operation, args, env, path, span);
+        }
         if matches!(object.ty, Type::Array { .. }) && operation == "map" {
             return self.array_map_on_checked_receiver(object, args, env, path, span);
         }

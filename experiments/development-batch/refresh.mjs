@@ -26,6 +26,8 @@ export function readDevelopmentAuthoringPlan(){
    stage('regular grammar discovery meanings and native rules','js/scripts/generate-grammar-inference-rules.mjs',['--draft']),
    stage('shared reference collection method native rules','js/scripts/generate-reference-method-rules.mjs',['--draft']),
    stage('shared reference collection method fixture inputs','js/scripts/generate-reference-method-fixtures.mjs',['--draft']),
+   stage('insertion ordered collection access native rules','js/scripts/generate-collection-access-rules.mjs',['--draft']),
+   stage('insertion ordered collection access fixture inputs','js/scripts/generate-collection-access-fixtures.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),
    stage('Rust diagnostic attributes','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native']),
    stage('grammar selection included ranges','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native']),

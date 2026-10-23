@@ -18,6 +18,31 @@ impl RustEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr) -> Result<String> {
         match &e.node {
+            Node::CollectionSize { object } => {
+                let value = self.receiver(object)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_size_expression(
+                        "Rust", &value,
+                    ),
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let key_type = match &object.ty {
+                    super::Type::Map { key, .. } | super::Type::Set { element: key, .. } => {
+                        key.as_ref()
+                    }
+                    _ => unreachable!("checked collection access owner"),
+                };
+                let float_key = key_type.is_float();
+                let kind = object.ty.kind();
+                let value = self.expr(object)?;
+                let search = self.expr(key)?;
+                Ok(
+                    crate::translation::collection_access_rules::render_collection_read_expression(
+                        "Rust", kind, op, &value, &search, float_key, "", "", "",
+                    ),
+                )
+            }
             Node::Array { items } => {
                 if items.is_empty() {
                     let element = e.ty.element().expect("an array literal has an array type");

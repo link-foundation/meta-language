@@ -222,6 +222,14 @@ impl Checker {
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
             return Ok(record);
         }
+        if field == "size" && matches!(value.ty, Type::Map { .. } | Type::Set { .. }) {
+            return Ok(Expr::new(
+                Node::CollectionSize {
+                    object: Box::new(value),
+                },
+                crate::translation::types::FLOAT,
+            ));
+        }
         if field == "length"
             && let Some(length) = Self::length_field(value)
         {

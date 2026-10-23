@@ -130,6 +130,65 @@ pub(super) struct Includes {
 }
 
 impl Inference {
+    fn infer_shared_collection_method(&mut self, method: &Method, receiver: &Term) -> Result<bool> {
+        use crate::translation::{
+            collection_access_rules as access, reference_method_rules as references,
+        };
+        let (kind, key, value) = match receiver {
+            Term::Array(element) => ("array", element.as_ref().clone(), element.as_ref().clone()),
+            Term::Map { key, value, .. } => ("map", key.as_ref().clone(), value.as_ref().clone()),
+            Term::Set { element, .. } => {
+                ("set", element.as_ref().clone(), element.as_ref().clone())
+            }
+            _ => return Ok(false),
+        };
+        let reference_result = references::read_reference_method_result(kind, &method.operation);
+        let result = if reference_result.is_empty() {
+            access::read_collection_access_result(kind, &method.operation)
+        } else {
+            reference_result.clone()
+        };
+        if result.is_empty() {
+            return Ok(false);
+        }
+        for (index, argument) in method.args.iter().enumerate() {
+            let role = if reference_result.is_empty() {
+                String::new()
+            } else {
+                references::read_reference_method_argument_role(
+                    kind,
+                    &method.operation,
+                    serde_json::Number::from(index)
+                        .as_f64()
+                        .expect("an actual argument position is a Number"),
+                )
+            };
+            match role.as_str() {
+                "key" | "element" => self.unify(argument, &key, method.place)?,
+                "value" => self.unify(argument, &value, method.place)?,
+                _ => {}
+            }
+        }
+        let optional = |element| Term::Option {
+            element: Box::new(element),
+            absence: Rc::new(RefCell::new("undefined".to_owned())),
+        };
+        let output = match result.as_str() {
+            "receiver" => receiver.clone(),
+            "length" => Term::Known(FLOAT),
+            "boolean" => Term::Known(BOOL),
+            "unit" => Term::Known(crate::translation::types::UNIT),
+            "optional element" => optional(key),
+            "optional value" => optional(value),
+            "keys" => Term::Array(Box::new(key)),
+            "values" => Term::Array(Box::new(value)),
+            "entries" => Term::Array(Box::new(Term::Tuple(vec![key, value]))),
+            _ => return Ok(false),
+        };
+        self.unify(&method.result, &output, method.place)?;
+        Ok(true)
+    }
+
     pub(super) fn includes(
         &mut self,
         expression: &SExpr,
@@ -234,6 +293,11 @@ impl Inference {
             read_java_script_string_method_result_form,
         };
         let mut receiver = self.resolve(&method.object);
+        if let Term::Known(ty) = &receiver
+            && matches!(ty, Type::Map { .. } | Type::Set { .. })
+        {
+            receiver = self.declared(Some(ty));
+        }
         if matches!(receiver, Term::Var(_)) {
             match read_java_script_method_receiver_kind(&method.operation).as_str() {
                 "string" => self.unify(&method.object, &Term::Known(STRING), method.place)?,
@@ -248,6 +312,9 @@ impl Inference {
                 _ => return Ok(false),
             }
             receiver = self.resolve(&method.object);
+        }
+        if self.infer_shared_collection_method(method, &receiver)? {
+            return Ok(true);
         }
         let kind = match &receiver {
             Term::Known(ty) => ty.kind(),

@@ -827,9 +827,26 @@ pub fn emit_typed_program_links_with_options(
                 },
             )
         }
+        "lean" | "rocq" => {
+            if source_header_model.is_some() {
+                return Err(error(
+                    "a Rust source header emission model requires Rust target",
+                ));
+            }
+            if options.java_script_scoped_binding_emission_model.is_some() {
+                return Err(error(
+                    "a JavaScript scoped binding emission model requires JavaScript target",
+                ));
+            }
+            if target.eq_ignore_ascii_case("lean") {
+                crate::translation::emit_lean::emit_lean(&program)
+            } else {
+                crate::translation::emit_rocq::emit_rocq(&program)
+            }
+        }
         _ => {
             return Err(error(
-                "typed linked emission currently writes JavaScript and Rust",
+                "typed linked emission writes JavaScript, Rust, Lean and Rocq",
             ));
         }
     }

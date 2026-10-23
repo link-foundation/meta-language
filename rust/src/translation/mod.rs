@@ -24,6 +24,7 @@ pub(crate) mod borrowed_call_interface_rules;
 pub(crate) mod callable_emission_rules;
 pub(crate) mod callable_source_rules;
 pub mod check;
+pub(crate) mod collection_access_rules;
 pub(crate) mod collection_construction_rules;
 pub mod decimal;
 pub(crate) mod declaration_dependency_rules;

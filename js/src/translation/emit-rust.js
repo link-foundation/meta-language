@@ -1,5 +1,6 @@
 import {rustEscape,rustString} from './rust-string-literals.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
 import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
@@ -1333,12 +1334,10 @@ class RustEmitter {
         return renderCollectionConstruction('Rust', e.k, key.kind, values, '', '', '');
       }
       case 'collectionSize':
-        return `(${this.receiver(e.object)}.len() as f64)`;
+        return renderCollectionSizeExpression('Rust', this.receiver(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
-        const equal = keyType.kind === 'float' ? '(ml_key == &ml_search || (ml_key.is_nan() && ml_search.is_nan()))' : 'ml_key == &ml_search';
-        const binds = e.object.type.kind === 'map' ? '(ml_key, ml_value)' : 'ml_key';
-        return `{ let ml_collection = ${this.expr(e.object)}; let ml_search = ${this.expr(e.key)}; ml_collection.iter().${e.op === 'get' ? `find_map(|${binds}| if ${equal} { Some(ml_value.clone()) } else { None })` : `any(|${binds}| ${equal})`} }`;
+        return renderCollectionReadExpression('Rust', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), keyType.kind === 'float', '', '', '');
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';

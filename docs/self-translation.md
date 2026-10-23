@@ -509,3 +509,11 @@ additive actual-receiver profile. Live collection iterators and other missing
 state behavior retain explicit obligations. Future controls compare independent
 builtins, checked text/binary reload, both translators and one native compiled
 product in CI. These controls have only been authored, never executed locally.
+
+The following parity draft fills native immutable collection read/size nodes,
+their actual key/value inference and their four target constructors. All target
+text decisions come from one automatically translated JavaScript library.
+The typed Links emission API also reaches the existing Lean and Rocq backends,
+while retaining model-specific option boundaries and full static rechecking.
+Future nine-case controls compare actual JavaScript behavior, exact native
+graphs and all four target emissions. Their product compilation remains CI-only.

@@ -7,6 +7,8 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import { readReferenceMethodResult } from './reference-method-rules.js';
+import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
 import { readJavaScriptArrayDefaultConstraints } from './array-binding-inference.js';
@@ -1131,13 +1133,14 @@ class Inference {
       return true;
     }
     if (receiver.kind === 'array') {
-      if (op === 'push' || op === 'unshift') {
+      const referenceResult = readReferenceMethodResult('array', op);
+      if (referenceResult === 'length') {
         for (const arg of args) {
           this.unify(arg, receiver.element, where);
           if (receiver.element.kind === 'var' && this.resolve(arg).kind === 'option') this.bindings[receiver.element.id] = this.resolve(arg);
         }
         this.unify(result, FLOAT, where);
-      } else if (op === 'pop' || op === 'shift') {
+      } else if (referenceResult === 'optional element') {
         this.unify(result, { kind: 'option', element: receiver.element, absence: 'undefined' }, where);
       } else if (op === 'splice') {
         for (const arg of args.slice(0, 2)) this.unify(arg, FLOAT, where);
@@ -1195,12 +1198,13 @@ class Inference {
         this.unify(args[1], receiver.value, where);
         if (receiver.value.kind === 'var' && this.resolve(args[1]).kind === 'option') this.bindings[receiver.value.id] = this.resolve(args[1]);
       }
-      const output = op === 'get' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
-        : op === 'has' || op === 'delete' ? BOOL
-        : op === 'clear' ? UNIT
-        : op === 'keys' ? { kind: 'array', element: key }
-        : op === 'values' ? { kind: 'array', element: receiver.kind === 'map' ? receiver.value : key }
-        : op === 'entries' ? { kind: 'array', element: { kind: 'tuple', elements: receiver.kind === 'map' ? [receiver.key, receiver.value] : [key, key] } }
+      const form = readReferenceMethodResult(receiver.kind, op) || readCollectionAccessResult(receiver.kind, op);
+      const output = form === 'optional value' ? { kind: 'option', element: receiver.value, absence: 'undefined' }
+        : form === 'boolean' ? BOOL
+        : form === 'unit' ? UNIT
+        : form === 'keys' ? { kind: 'array', element: key }
+        : form === 'values' ? { kind: 'array', element: receiver.kind === 'map' ? receiver.value : key }
+        : form === 'entries' ? { kind: 'array', element: { kind: 'tuple', elements: receiver.kind === 'map' ? [receiver.key, receiver.value] : [key, key] } }
         : receiver;
       this.unify(result, output, where);
       return true;

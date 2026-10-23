@@ -1,6 +1,7 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
 // represented by `Nat`/`Int` with explicit range checks that `panic!` where
 // Rust would panic. Recursion is structural and annotated as such, so the
@@ -516,13 +517,10 @@ class LeanEmitter {
         return renderCollectionConstruction('Lean', e.k, keyType.kind, values, this.type(e.type), '', '');
       }
       case 'collectionSize':
-        return `(Float.ofNat ${this.expr(e.object, depth)}.size)`;
+        return renderCollectionSizeExpression('Lean', this.expr(e.object, depth));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
-        const key = e.object.type.kind === 'map' ? 'ml_value.1' : 'ml_value';
-        const equal = keyType.kind === 'float' ? `(${key} == ml_search || (${key}.isNaN && ml_search.isNaN))` : `(${key} == ml_search)`;
-        const result = e.op === 'get' ? `((ml_values.toList.find? (fun ml_value => ${equal})).map (fun ml_pair => ml_pair.2))` : `(ml_values.any (fun ml_value => ${equal}))`;
-        return `(let ml_values := ${this.expr(e.object, depth)}; let ml_search := ${this.expr(e.key, depth)}; ${result})`;
+        return renderCollectionReadExpression('Lean', e.object.type.kind, e.op, this.expr(e.object, depth), this.expr(e.key, depth), keyType.kind === 'float', '', '', '');
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';

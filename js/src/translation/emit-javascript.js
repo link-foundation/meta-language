@@ -1,5 +1,6 @@
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
@@ -536,9 +537,9 @@ class JavaScriptEmitter {
       case 'map':
         return renderCollectionConstruction('JavaScript', e.k, '', this.expr(e.k === 'set' ? e.items : e.entries), '', '', '');
       case 'collectionSize':
-        return `(${this.expr(e.object)}).size`;
+        return renderCollectionSizeExpression('JavaScript', this.expr(e.object));
       case 'collectionRead':
-        return `(${this.expr(e.object)}).${e.op}(${this.expr(e.key)})`;
+        return renderCollectionReadExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), false, '', '', '');
       case 'collectionItems':
         return renderCollectionIteration('JavaScript', e.object.type.kind === 'map', e.op, this.expr(e.object), '', '');
       case 'ctor': {

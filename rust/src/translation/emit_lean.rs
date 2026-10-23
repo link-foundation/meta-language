@@ -741,6 +741,9 @@ impl LeanEmitter<'_> {
             | Node::OptionalIndex { .. }
             | Node::StringPoints { .. }
             | Node::CollectionItems { .. } => self.array_expr(e, depth)?,
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => {
+                self.array_expr(e, depth)?
+            }
             Node::Math { .. } => self.math(e, depth)?,
             // Output threading leaves no `print` node.
             Node::Print { .. } => {

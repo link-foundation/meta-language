@@ -14,6 +14,7 @@ import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
+import { readCollectionAccessArgumentCount } from './collection-access-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
@@ -1053,11 +1054,11 @@ class Checker {
     if (object.type.kind === 'set' || object.type.kind === 'map') {
       const key = object.type.kind === 'set' ? object.type.element : object.type.key;
       if (node.op === 'has' || (node.op === 'get' && object.type.kind === 'map')) {
-        count(1);
+        count(readCollectionAccessArgumentCount(node.op));
         return flattenOption({ k: 'collectionRead', object, op: node.op, key: checked(0, key), type: node.op === 'has' ? BOOL : { kind: 'option', element: object.type.value, absence: 'undefined' } });
       }
       if (['keys', 'values', 'entries'].includes(node.op)) {
-        count(0);
+        count(readCollectionAccessArgumentCount(node.op));
         const value = object.type.kind === 'map' ? object.type.value : key;
         const element = node.op === 'keys' ? key : node.op === 'values' ? value : { kind: 'tuple', elements: [key, value] };
         return { k: 'collectionItems', object, op: node.op, type: array(element) };

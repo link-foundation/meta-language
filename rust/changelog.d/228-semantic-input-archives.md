@@ -20,4 +20,6 @@ grammar and recursive common concepts. Add branch result-context inference
 and reference-array spread copying needed by ordinary source translation.
 Draft shared array, Map and Set method translation with preserved aliases,
 ordered evaluation, SameValueZero primitive keys and checked Links reload.
+Draft native immutable collection reads and size queries, shared collection
+inference, and four-target emission directly from checked typed Links.
 Behavioral checks remain deferred until the complete requirements draft.

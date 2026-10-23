@@ -29,6 +29,32 @@ impl LeanEmitter<'_> {
     /// An array literal, an append, an element read or a length.
     pub(super) fn array_expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
         Ok(match &e.node {
+            Node::CollectionSize { object } => {
+                let value = self.expr(object, depth)?;
+                crate::translation::collection_access_rules::render_collection_size_expression(
+                    "Lean", &value,
+                )
+            }
+            Node::CollectionRead { object, op, key } => {
+                let key_type = match &object.ty {
+                    Type::Map { key, .. } | Type::Set { element: key, .. } => key.as_ref(),
+                    _ => unreachable!("checked collection access owner"),
+                };
+                let float_key = key_type.is_float();
+                let value = self.expr(object, depth)?;
+                let search = self.expr(key, depth)?;
+                crate::translation::collection_access_rules::render_collection_read_expression(
+                    "Lean",
+                    object.ty.kind(),
+                    op,
+                    &value,
+                    &search,
+                    float_key,
+                    "",
+                    "",
+                    "",
+                )
+            }
             Node::Array { items } => {
                 let mut texts = Vec::with_capacity(items.len());
                 for item in items {

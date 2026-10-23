@@ -159,6 +159,7 @@ impl Expr {
             | Node::OptionalIndexNumber { arg }
             | Node::StringPoints { object: arg }
             | Node::CollectionItems { object: arg, .. }
+            | Node::CollectionSize { object: arg }
             | Node::StringMap { string: arg, .. }
             | Node::ToString { arg, .. }
             | Node::Cast { arg, .. }
@@ -172,6 +173,11 @@ impl Expr {
             Node::StringTest {
                 string: left,
                 search: right,
+                ..
+            }
+            | Node::CollectionRead {
+                object: left,
+                key: right,
                 ..
             }
             | Node::Binary { left, right, .. }
@@ -349,6 +355,14 @@ impl Expr {
             Node::CollectionItems { object, op } => Node::CollectionItems {
                 object: Box::new(visit(object)),
                 op: op.clone(),
+            },
+            Node::CollectionSize { object } => Node::CollectionSize {
+                object: Box::new(visit(object)),
+            },
+            Node::CollectionRead { object, op, key } => Node::CollectionRead {
+                object: Box::new(visit(object)),
+                op: op.clone(),
+                key: Box::new(visit(key)),
             },
             Node::Length { array } => Node::Length {
                 array: Box::new(visit(array)),

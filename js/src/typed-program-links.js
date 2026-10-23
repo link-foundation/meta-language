@@ -8,6 +8,8 @@ import { parseRust } from './translation/rust.js';
 import { checkProgram } from './translation/check.js';
 import { emitJavaScript } from './translation/emit-javascript.js';
 import { emitRust } from './translation/emit-rust.js';
+import { emitLean } from './translation/emit-lean.js';
+import { emitRocq } from './translation/emit-rocq.js';
 import { validateLinkedTypedProgram } from './typed-program-links-validation.js';
 import { recheckLinkedTypedProgram } from './typed-program-checked-projection.js';
 import { readLinkedPatternBindingScope } from './typed-program-pattern-bindings.js';
@@ -359,11 +361,13 @@ export function createTypedProgramLinks(source, language, options = {}) {
 
 export function emitTypedProgramLinks(network, root, target, options = {}) {
   const program = decodeTypedProgramLinks(network, root);
-  const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript : null;
-  if (!emit) throw new TypeError('typed linked emission currently writes JavaScript and Rust');
+  const emit = /^(?:rust|rs)$/iu.test(target) ? emitRust : /^(?:javascript|js|mjs)$/iu.test(target) ? emitJavaScript
+    : /^lean$/iu.test(target) ? emitLean : /^rocq$/iu.test(target) ? emitRocq : null;
+  if (!emit) throw new TypeError('typed linked emission writes JavaScript, Rust, Lean and Rocq');
   if (options.rustSourceHeaderEmissionModel !== undefined && emit !== emitRust) throw new TypeError('a Rust source header emission model requires Rust target');
   if (options.javaScriptScopedBindingEmissionModel !== undefined && emit !== emitJavaScript) throw new TypeError('a JavaScript scoped binding emission model requires JavaScript target');
-  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true }) : emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel});
+  const emitted = emit === emitRust ? emit(program, { sourceHeaderModel: options.rustSourceHeaderEmissionModel, arrayConsumption: true })
+    : emit === emitJavaScript ? emit(program, {scopedBindingModel: options.javaScriptScopedBindingEmissionModel}) : emit(program);
   return { code: emitted.text, language: emitted.language, mappings: emitted.mappings,
     assumptions: emitted.assumptions, encodings: emitted.encodings, theorems: emitted.theorems };
 }

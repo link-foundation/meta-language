@@ -235,6 +235,7 @@ impl RocqEmitter<'_> {
                 self.array_expr(e)
             }
             Node::Math { .. } => self.math(e),
+            Node::CollectionSize { .. } | Node::CollectionRead { .. } => self.array_expr(e),
         }
     }
 

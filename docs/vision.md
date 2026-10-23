@@ -3565,6 +3565,26 @@ have future builtin, codec, runtime-parity and native product controls; none
 has executed during the complete draft phase. Their declarations are not
 evidence, and they do not establish full JavaScript or Rust translation.
 
+The next native parity draft adds the existing checked `collectionSize` and
+`collectionRead` forms to the native algebra, including traversal, reconstruction
+and all four emitters. Native checking now binds immutable Map/Set membership,
+lookup, keys, values, entries and size to their actual collection types.
+Inference uses the same shared result/argument selectors for mutable arrays and
+collections as JavaScript, including optional reads. The complete constructor
+library is generated from JavaScript into Rust and stored as typed Links data.
+Its four target renderers retain the existing JavaScript output spellings,
+ordered operand evaluation and primitive key rules. Live mutable iteration and
+unsupported key domains retain their separate obligations.
+
+Typed Links emission now drafts all four existing portable targets: JavaScript,
+Rust, Lean and Rocq. Every path decodes and statically rechecks the same actual
+linked program. Rust header models and JavaScript binding models remain confined
+to their selected targets, with explicit refusals elsewhere. This connects the
+existing backend implementations; it does not claim new support for previously
+unsupported state, ownership or dependent-language constructs. Future controls
+cover readonly collections, four-target codec replay, paired source emission
+and one native product. No such control has run in the complete draft phase.
+
 CI keeps its pinned Lean version when the upstream release index is
 unavailable. A Linux x64 GitHub Actions fallback downloads the same official
 release from GitHub, checks its published SHA-256 before extraction, and checks

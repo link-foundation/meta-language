@@ -28,6 +28,7 @@ sources.push('js/src/syntax-projection.js', 'js/src/syntax-projection-rules.js',
 sources.push('js/src/translation/fixed-integer-cast-rules.js', 'js/src/translation/javascript-fixed-integer-casts.js', 'js/src/fixed-integer-cast-program.js', 'js/scripts/generate-fixed-integer-cast-rules.mjs');
 sources.push('js/src/grammar-inference-rules.js', 'js/src/grammar-inference.js', 'js/scripts/generate-grammar-inference-rules.mjs', 'js/scripts/generate-regular-grammar-inference-fixtures.mjs');
 sources.push('js/src/translation/reference-method-rules.js', 'js/src/translation/reference-methods.js', 'js/src/translation/reference-callbacks.js', 'js/src/reference-method-program.js', 'js/scripts/generate-reference-method-rules.mjs', 'js/scripts/generate-reference-method-fixtures.mjs');
+sources.push('js/src/translation/collection-access-rules.js', 'js/scripts/generate-collection-access-rules.mjs', 'js/scripts/generate-collection-access-fixtures.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

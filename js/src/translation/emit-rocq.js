@@ -1,6 +1,7 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
+import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
 // run at their source sizes (unary `nat` cannot hold 20!). Structural
 // recursion over data is a `Fixpoint`; recursion that decreases a natural is
@@ -760,14 +761,13 @@ class RocqEmitter {
       }
       case 'collectionSize':
         this.floats();
-        return `(PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ${this.expr(e.object)}))))`;
+        return renderCollectionSizeExpression('Rocq', this.expr(e.object));
       case 'collectionRead': {
         const keyType = e.object.type.kind === 'map' ? e.object.type.key : e.object.type.element;
         const key = e.object.type.kind === 'map' ? '(fst ml_value)' : 'ml_value';
-        let equal = this.comparison('eq', keyType, key, 'ml_search');
-        if (keyType.kind === 'float') equal = `(orb ${equal} (andb (PrimFloat.is_nan ${key}) (PrimFloat.is_nan ml_search)))`;
-        const result = e.op === 'get' ? `(option_map (@snd ${this.type(e.object.type.key)} ${this.type(e.object.type.value)}) (List.find (fun ml_value => ${equal}) ml_values))` : `(List.existsb (fun ml_value => ${equal}) ml_values)`;
-        return `(let ml_values := ${this.expr(e.object)} in let ml_search := ${this.expr(e.key)} in ${result})`;
+        const equal = this.comparison('eq', keyType, key, 'ml_search');
+        const first = e.op === 'get' ? this.type(e.object.type.key) : '', second = e.op === 'get' ? this.type(e.object.type.value) : '';
+        return renderCollectionReadExpression('Rocq', e.object.type.kind, e.op, this.expr(e.object), this.expr(e.key), keyType.kind === 'float', equal, first, second);
       }
       case 'collectionItems': {
         const map = e.object.type.kind === 'map';
