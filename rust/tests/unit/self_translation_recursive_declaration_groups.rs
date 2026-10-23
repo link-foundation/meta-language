@@ -7,7 +7,6 @@ use meta_language::{
     read_structured_data_lino, self_translate, self_translate_with, self_translation_signatures,
 };
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeMap, fs, path::Path, process::Command, sync::OnceLock};
 
 fn root() -> &'static Path {
@@ -27,7 +26,7 @@ fn owned_auxiliary_fixture() -> Value {
             input["bytes"].as_u64().unwrap()
         );
         assert_eq!(
-            format!("{:x}", Sha256::digest(&bytes)),
+            super::issue_195_translation_pairs::sha256(&bytes),
             input["sourceSha256"].as_str().unwrap()
         );
         assert_eq!(
@@ -1027,7 +1026,7 @@ fn the_complete_original_shared_algorithm_and_every_three_node_graph_execute_thr
             input["bytes"].as_u64().unwrap()
         );
         assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
+            super::issue_195_translation_pairs::sha256(&source),
             input["sourceSha256"].as_str().unwrap()
         );
     }

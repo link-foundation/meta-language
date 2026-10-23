@@ -17,7 +17,6 @@ use meta_language::{
     encode_link_network_binary, read_structured_data_lino,
 };
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -329,7 +328,7 @@ fn actual_source_policy_captures_and_scalar_loop_exclusion_keep_their_original_o
         let source = fs::read(root().join(owner["path"].as_str().unwrap())).unwrap();
         assert_eq!(source.len() as u64, owner["bytes"].as_u64().unwrap());
         assert_eq!(
-            format!("{:x}", Sha256::digest(&source)),
+            super::issue_195_translation_pairs::sha256(&source),
             owner["sourceSha256"].as_str().unwrap()
         );
         if let Some(declaration) = owner["declaration"].as_str() {

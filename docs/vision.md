@@ -4076,6 +4076,24 @@ on its exact original bytes. Both committed workflow versions and every report
 edit are independently checked; unknown successor bytes receive no historical
 view. Actual current report coverage still uses the sixteen-part controls.
 
+Source-only package checks run alongside the JavaScript test matrix. They use
+fresh checkouts and consume no test or report artifacts; the final JavaScript
+aggregate still requires tests, reports, every package check and merged compiler
+feedback. Rust and acceptance keep their complete JavaScript prerequisites.
+The scheduling change retains both independently committed complete workflows
+and an exact one-line forward/inverse proof. Unknown successors receive no
+historical view, and all previous workflow conservation assertions remain.
+
+Reviewed compiler feedback corrects generated library styles through the normal
+Links decorators. Complete original Git-certified source files and the original
+rendered diagnostic log remain separate from machine-applicable suggestions.
+Corrections preserve lexical references, source strings and comments; Boolean
+normalization retains operand order, NaN and signed zero. Independent Boolean
+facts and complete ordered CST columns retain their shared interfaces through
+specific lint expectations that must remain fulfilled. The strict compiler and
+lint gates continue to run in CI. Formatting, source replay and JavaScript
+controls do not establish native execution.
+
 The raw-oracle runner may reuse a successfully verified base emission profile
 within one process only after comparing every complete historical/current
 artifact, rule source and causal producer input byte again. Input names and order

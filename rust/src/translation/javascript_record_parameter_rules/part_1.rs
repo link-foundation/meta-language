@@ -665,9 +665,9 @@ pub fn accept_java_script_array_binding_name(
         {
             let index = 0f64;
             {
-                let ml_s1 =
+                let ml_s11 =
                     self::ml_accept_java_script_array_binding_name_loop1(name, reserved, index);
-                match ml_s1 {
+                match ml_s11 {
                         self::MlAcceptJavaScriptArrayBindingNameLoop1Result::MlAcceptJavaScriptArrayBindingNameLoop1Done => {
                             true
                         }

@@ -6,7 +6,7 @@ import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 export const CI_TEST_PARTITION_REVISION='491cf0caa9f014e7f4f4caef62611fa482114721';
 export const CI_TEST_PARTITION_HISTORY='parity/fixtures/ci-39839936265-test-partitions.lino';
-const packetSha256='8b26c5d957fb6292e8165004aea7f2423960011d098a889bb0e2496789567e81';
+const packetSha256='be7756fec94eb9cced8bb4c1cd6d20ab8b0c1e549c114bd4e25cff0d00e76a9a';
 const matrix=(group,count)=>Array.from({length:count},(_,index)=>`          - {group: ${group}, partition: ${index+1}, shards: ${count}}\n`).join('');
 export const CI_TEST_PARTITION_CHANGES=Object.freeze([
  {before:matrix('conformance',4),after:matrix('conformance',8)},
@@ -21,6 +21,9 @@ export const CI_TEST_PARTITION_CHANGES=Object.freeze([
 ]);
 export const CI_REPORT_PARTITION_PREVIOUS='41fd412c6b7efde07b56f47a7b407b41389588ee';
 export const CI_REPORT_PARTITION_CURRENT='865749f74f324a332e9201f85386517f8186f3c0';
+export const CI_PACKAGE_CHECK_PREVIOUS='00ddbc5eaf879d9e2f81f896fb8984f18f00c7c0';
+export const CI_PACKAGE_CHECK_CURRENT='d53fd67bb28cc4ae25b311ac58e83f1490775dc9';
+export const CI_PACKAGE_CHECK_CHANGES=Object.freeze([{before:'    needs: [tests, report-assertions]\n',after:''}]);
 export const CI_REPORT_PARTITION_CHANGES=Object.freeze(CI_TEST_PARTITION_CHANGES.slice(-4));
 export const CI_TEST_FEEDBACK_CHANGES=Object.freeze([
  {before:"import { partitionGroupFiles, partitionTests, testFiles } from './test-groups.mjs';",after:"import { partitionTests, testFiles } from './test-groups.mjs';\nimport {partitionCiTestGroupFiles} from './ci-test-partitions.mjs';"},
@@ -34,6 +37,28 @@ export function deriveCiTestPartitionWorkflow(source){
  return current;
 }
 export function verifyCiTestPartitionHistory(packet){
+ if(packet.packageWorkflows!==undefined){
+  const packages=packet.packageWorkflows;
+  assert.equal(packages.previousRevision,CI_PACKAGE_CHECK_PREVIOUS);assert.equal(packages.currentRevision,CI_PACKAGE_CHECK_CURRENT);
+  assert.deepEqual(packages.rows.map(row=>row.file),['.github/workflows/ci.yml','.github/workflows/js.yml']);
+  for(const row of packages.rows){
+   assert.deepEqual(row.changes,row.file==='.github/workflows/js.yml'?CI_PACKAGE_CHECK_CHANGES:[]);
+   for(const[side,revision]of[['previous',packages.previousRevision],['current',packages.currentRevision]]){
+    const value=row[side];assert.deepEqual(pin(value.source),{bytes:value.bytes,sha256:value.sha256});
+    verifyGitArtifactCertificate(value.certificate,Buffer.from(value.source),{revision,path:row.file});
+   }
+   let current=row.previous.source;
+   for(const{before,after}of row.changes){assert.equal(current.split(before).length,2);current=current.replace(before,()=>after);}
+   assert.equal(current,row.current.source);
+   // The certified predecessor fixes the insertion point of the deleted edge.
+   let inverse=current;
+   for(const{before,after}of [...row.changes].reverse()){
+    assert.equal(after,'');const at=row.previous.source.indexOf(before);assert.ok(at>=0);
+    inverse=inverse.slice(0,at)+before+inverse.slice(at);
+   }
+   assert.equal(inverse,row.previous.source);
+  }
+ }
  if(packet.reportWorkflows!==undefined){
   const reports=packet.reportWorkflows;
   assert.equal(reports.previousRevision,CI_REPORT_PARTITION_PREVIOUS);assert.equal(reports.currentRevision,CI_REPORT_PARTITION_CURRENT);
@@ -73,11 +98,19 @@ export function readCiTestPartitionHistory(){
  return structuredClone(cached);
 }
 export function restoreCiTestPartitionWorkflow(source){
+ source=restoreParallelPackageWorkflow(source,'.github/workflows/js.yml');
  const packet=readCiTestPartitionHistory();return source===packet.current.source?packet.previous.source:source;
+}
+
+/** Exact certified scheduling change only; every command and aggregate stays. */
+export function restoreParallelPackageWorkflow(source,file){
+ const row=readCiTestPartitionHistory().packageWorkflows?.rows.find(row=>row.file===file);
+ return row&&source===row.current.source?row.previous.source:source;
 }
 
 /** Only the complete independently certified report successor gets this view. */
 export function restorePhysicalReportWorkflow(source,file){
+ source=restoreParallelPackageWorkflow(source,file);
  const row=readCiTestPartitionHistory().reportWorkflows?.rows.find(row=>row.file===file);
  return row&&source===row.current.source?row.previous.source:source;
 }

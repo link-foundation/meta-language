@@ -12,7 +12,7 @@ import {inspectBootstrapStructuredDataLino,readBootstrapStructuredDataLino} from
 
 const root=new URL('../../',import.meta.url);
 const revision='d3e4076667add3e19e4cf5f10a3cea60255dd2d7';
-const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js'];
+const sources=['js/src/translation/inert-module-binding-rules.js','js/src/translation/inert-module-bindings.js','js/src/translation/rust-shared-array-handle-rules.js','js/src/translation/empty-module-collection-rules.js','js/src/translation/empty-module-collections.js','js/scripts/native-compiler-source-styles.mjs'];
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

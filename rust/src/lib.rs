@@ -391,6 +391,7 @@ pub use typed_program_links::{
     create_typed_program_links_with_rust_pure_unit_call_model,
     create_typed_program_links_with_rust_runtime_shell_model,
     create_typed_program_links_with_rust_scalar_loop_model,
+    create_typed_program_links_with_rust_shared_array_handle_source_model,
     create_typed_program_links_with_rust_source_models,
     create_typed_program_links_with_rust_source_profiles,
     create_typed_program_links_with_rust_source_signature_model,

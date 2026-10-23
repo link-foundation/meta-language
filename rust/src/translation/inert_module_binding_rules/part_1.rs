@@ -569,7 +569,7 @@ pub fn accept_inert_binding_sequence(
                 {
                     let at = 1f64;
                     {
-                        let ml_s1 = self::ml_accept_inert_binding_sequence_loop2(
+                        let ml_s11 = self::ml_accept_inert_binding_sequence_loop2(
                             terms,
                             parents,
                             values,
@@ -578,7 +578,7 @@ pub fn accept_inert_binding_sequence(
                             value,
                             at,
                         );
-                        match ml_s1 {
+                        match ml_s11 {
                             self::MlAcceptInertBindingSequenceLoop2Result::MlAcceptInertBindingSequenceLoop2Done => {
                                 true
                             }

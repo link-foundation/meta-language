@@ -70,8 +70,8 @@ pub fn ml_read_inert_module_binding_loop15(
                                                 {
                                                     let ml_index7 = self::ml::Big::from_i128(0);
                                                     {
-                                                        let ml_s25 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
-                                                        match ml_s25 {
+                                                        let ml_s2255 = self::ml_read_inert_module_binding_loop16(terms, fields, key, item, colons, &(ml_values7), ml_index7);
+                                                        match ml_s2255 {
                                                                         self::MlReadInertModuleBindingLoop16Result::MlReadInertModuleBindingLoop16Done(key_2, item_2, colons_2) => {
                                                                             {
                                                                                 (((key_2 >= 0f64) && (item_2 >= 0f64)) && (colons_2 == 1f64)) && self::read_inert_binding_value(&(values), (parents.len() as f64), item_2)
@@ -739,13 +739,13 @@ pub fn ml_accept_inert_module_binding_scope_loop23(
                                 {
                                     let ml_index22 = self::ml::Big::from_i128(0);
                                     {
-                                        let ml_s26 =
+                                        let ml_s2266 =
                                             self::ml_accept_inert_module_binding_scope_loop24(
                                                 owner,
                                                 &(ml_values22),
                                                 ml_index22,
                                             );
-                                        match ml_s26 {
+                                        match ml_s2266 {
                                             self::MlAcceptInertModuleBindingScopeLoop24Result::MlAcceptInertModuleBindingScopeLoop24Done => {
                                                 {
                                                     let at_2 = at + 1f64;

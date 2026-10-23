@@ -1,5 +1,9 @@
 //! Complete expression emission, separated without changing its decisions.
 
+use crate::translation::external_emission_rules::{
+    ml_string::Text, render_java_script_external_call,
+};
+
 use super::{
     Expr, Helper, JavaScriptEmitter, Node, Result, Type, UnaryOp, ctor_object, indent, json_string,
     literal, negate, unsupported,
@@ -113,9 +117,6 @@ impl JavaScriptEmitter<'_> {
                         crate::translation::surface::External::Constant { .. } => "const",
                     };
                     let args = self.exprs(args)?.join(", ");
-                    use crate::translation::external_emission_rules::{
-                        ml_string::Text, render_java_script_external_call,
-                    };
                     let rendered = render_java_script_external_call(
                         &Text::from_text(kind),
                         &Text::from_text(func),

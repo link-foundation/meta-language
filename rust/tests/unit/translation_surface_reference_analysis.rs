@@ -53,7 +53,6 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
     use meta_language::{
         BinaryLinksOptions, decode_link_network_binary, encode_link_network_binary,
     };
-    use sha2::{Digest, Sha256};
     use std::{fs, process::Command};
 
     // This unreleased implementation epoch keeps the exact predecessor input.
@@ -88,7 +87,7 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
         usize::try_from(profile["sourceClosure"]["bytes"].as_u64().unwrap()).unwrap()
     );
     assert_eq!(
-        format!("{:x}", Sha256::digest(definition.as_bytes())),
+        super::issue_195_translation_pairs::sha256(definition.as_bytes()),
         profile["sourceClosure"]["sourceSha256"].as_str().unwrap()
     );
     for (tool, rust) in [("node", false), ("rustc", true)] {
@@ -113,6 +112,12 @@ fn late_structural_equality_selection_marks_actual_types_and_preserves_reference
         );
     }
     let source = "function same(left,right){return left===right;} console.log(same([1],[1]));";
+    let observe = |source: &str| {
+        Command::new("node")
+            .args(["--input-type=module", "-e", source])
+            .output()
+            .expect("the independent JavaScript process starts")
+    };
     let original = observe(source);
     assert!(original.status.success());
     assert_eq!(original.stdout, b"false\n");

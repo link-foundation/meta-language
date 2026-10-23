@@ -71,7 +71,7 @@ pub fn read_inert_module_binding(
         {
             let at = 0f64;
             {
-                let ml_s2 = self::ml_read_inert_module_binding_loop11(
+                let ml_s22 = self::ml_read_inert_module_binding_loop11(
                     terms,
                     parents,
                     starts,
@@ -80,7 +80,7 @@ pub fn read_inert_module_binding(
                     source_bytes,
                     at,
                 );
-                match ml_s2 {
+                match ml_s22 {
                     self::MlReadInertModuleBindingLoop11Result::MlReadInertModuleBindingLoop11Done => {
                         {
                             let top = self::read_inert_binding_children(terms, parents, 0f64);
@@ -92,7 +92,7 @@ if ml_library_inequality_3 {
                                 {
                                     let declaration = self::read_required_number_fact(&(top), 0f64);
                                     {
-                                        let ml_s4 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
+                                        let ml_s44 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
                                             {
                                                 let children = self::read_inert_binding_children(terms, parents, declaration);
                                                 {
@@ -104,8 +104,8 @@ if ml_library_inequality_3 {
                                                             {
                                                                 let ml_index4 = self::ml::Big::from_i128(0);
                                                                 {
-                                                                    let ml_s5 = self::ml_read_inert_module_binding_loop21(terms, selected, exports, &(ml_values4), ml_index4);
-                                                                    match ml_s5 {
+                                                                    let ml_s55 = self::ml_read_inert_module_binding_loop21(terms, selected, exports, &(ml_values4), ml_index4);
+                                                                    match ml_s55 {
                                                                         self::MlReadInertModuleBindingLoop21Result::MlReadInertModuleBindingLoop21Done(selected_2, exports_2) => {
                                                                             if (exports_2 != 1f64) || (selected_2 < 0f64) {
                                                                                 self::MlReadInertModuleBindingJoin12::MlReadInertModuleBindingJoin12Return(Vec::<f64>::new())
@@ -129,7 +129,7 @@ if ml_library_inequality_3 {
                                         } else {
                                             self::MlReadInertModuleBindingJoin12::MlReadInertModuleBindingJoin12Next(declaration)
                                         };
-                                        match ml_s4 {
+                                        match ml_s44 {
                                             self::MlReadInertModuleBindingJoin12::MlReadInertModuleBindingJoin12Next(declaration_3) => {
                                                 {
 let ml_library_inequality_2 = (self::read_required_text_fact(terms, declaration_3)) != "lexical_declaration" ;
@@ -145,8 +145,8 @@ if ml_library_inequality_2 {
                                                                 {
                                                                     let ml_index5 = self::ml::Big::from_i128(0);
                                                                     {
-                                                                        let ml_s6 = self::ml_read_inert_module_binding_loop13(terms, binding, constants, &(ml_values5), ml_index5);
-                                                                        match ml_s6 {
+                                                                        let ml_s66 = self::ml_read_inert_module_binding_loop13(terms, binding, constants, &(ml_values5), ml_index5);
+                                                                        match ml_s66 {
                                                                             self::MlReadInertModuleBindingLoop13Result::MlReadInertModuleBindingLoop13Done(binding_2, constants_2) => {
                                                                                 if (constants_2 != 1f64) || (binding_2 < 0f64) {
                                                                                     Vec::<f64>::new()
@@ -162,10 +162,10 @@ if ml_library_inequality_2 {
                                                                                                     {
                                                                                                         let ml_index6 = self::ml::Big::from_i128(0);
                                                                                                         {
-                                                                                                            let ml_s7 = self::ml_read_inert_module_binding_loop14(terms, fields, name, value, equals, &(ml_values6), ml_index6);
-                                                                                                            match ml_s7 {
+                                                                                                            let ml_s77 = self::ml_read_inert_module_binding_loop14(terms, fields, name, value, equals, &(ml_values6), ml_index6);
+                                                                                                            match ml_s77 {
                                                                                                                 self::MlReadInertModuleBindingLoop14Result::MlReadInertModuleBindingLoop14Done(name_2, value_2, equals_2) => {
-                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains("\\") {
+                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains('\\') {
                                                                                                                         Vec::<f64>::new()
                                                                                                                     } else {
                                                                                                                         {
@@ -173,8 +173,8 @@ if ml_library_inequality_2 {
                                                                                                                             {
                                                                                                                                 let at_2 = (terms.len() as f64) - 1f64;
                                                                                                                                 {
-                                                                                                                                    let values_2 = self::ml_read_inert_module_binding_loop15(terms, fields, parents, values, at_2);
-                                                                                                                                    if self::read_inert_binding_value(&(values_2), (parents.len() as f64), value_2) {
+                                                                                                                                    let accepted_literal_values = self::ml_read_inert_module_binding_loop15(terms, fields, parents, values, at_2);
+                                                                                                                                    if self::read_inert_binding_value(&(accepted_literal_values), (parents.len() as f64), value_2) {
                                                                                                                                         vec![name_2, 0f64]
                                                                                                                                     } else {
                                                                                                                                         {
@@ -182,7 +182,7 @@ if ml_library_inequality_2 {
                                                                                                                                             {
                                                                                                                                                 let children_2 = self::read_inert_binding_children(terms, parents, value_2);
                                                                                                                                                 {
-                                                                                                                                                    let ml_s11 = if term == "new_expression" {
+                                                                                                                                                    let ml_s1111 = if term == "new_expression" {
                                                                                                                                                         {
                                                                                                                                                             let constructor = -1f64;
                                                                                                                                                             {
@@ -194,8 +194,8 @@ if ml_library_inequality_2 {
                                                                                                                                                                         {
                                                                                                                                                                             let ml_index8 = self::ml::Big::from_i128(0);
                                                                                                                                                                             {
-                                                                                                                                                                                let ml_s12 = self::ml_read_inert_module_binding_loop18(terms, fields, constructor, arguments_at, news, &(ml_values8), ml_index8);
-                                                                                                                                                                                match ml_s12 {
+                                                                                                                                                                                let ml_s1122 = self::ml_read_inert_module_binding_loop18(terms, fields, constructor, arguments_at, news, &(ml_values8), ml_index8);
+                                                                                                                                                                                match ml_s1122 {
                                                                                                                                                                                     self::MlReadInertModuleBindingLoop18Result::MlReadInertModuleBindingLoop18Done(constructor_2, arguments_at_2, news_2) => {
                                                                                                                                                                                         if ((news_2 != 1f64) || (constructor_2 < 0f64)) || (arguments_at_2 < 0f64) {
                                                                                                                                                                                             self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(Vec::<f64>::new())
@@ -203,7 +203,7 @@ if ml_library_inequality_2 {
                                                                                                                                                                                             {
                                                                                                                                                                                                 let owner = self::read_required_text_fact(texts, constructor_2);
                                                                                                                                                                                                 {
-                                                                                                                                                                                                    let argument = self::read_inert_binding_argument(terms, parents, &(values_2), arguments_at_2);
+                                                                                                                                                                                                    let argument = self::read_inert_binding_argument(terms, parents, &(accepted_literal_values), arguments_at_2);
                                                                                                                                                                                                     if (argument < 0f64) || ((self::read_required_text_fact(terms, argument)) != "array") {
                                                                                                                                                                                                         self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(Vec::<f64>::new())
                                                                                                                                                                                                     } else if owner == "Set" {
@@ -214,8 +214,8 @@ if ml_library_inequality_2 {
                                                                                                                                                                                                                     {
                                                                                                                                                                                                                         let ml_index9 = self::ml::Big::from_i128(0);
                                                                                                                                                                                                                         {
-                                                                                                                                                                                                                            let ml_s13 = self::ml_read_inert_module_binding_loop19(terms, parents, &(ml_values9), ml_index9);
-                                                                                                                                                                                                                            match ml_s13 {
+                                                                                                                                                                                                                            let ml_s1133 = self::ml_read_inert_module_binding_loop19(terms, parents, &(ml_values9), ml_index9);
+                                                                                                                                                                                                                            match ml_s1133 {
                                                                                                                                                                                                                                 self::MlReadInertModuleBindingLoop19Result::MlReadInertModuleBindingLoop19Done => {
                                                                                                                                                                                                                                     self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(vec![name_2, 1f64])
                                                                                                                                                                                                                                 }
@@ -253,8 +253,8 @@ if ml_library_inequality_2 {
                                                                                                                                                                         {
                                                                                                                                                                             let ml_index10 = self::ml::Big::from_i128(0);
                                                                                                                                                                             {
-                                                                                                                                                                                let ml_s14 = self::ml_read_inert_module_binding_loop20(terms, fields, callee, arguments_at_3, &(ml_values10), ml_index10);
-                                                                                                                                                                                match ml_s14 {
+                                                                                                                                                                                let ml_s1144 = self::ml_read_inert_module_binding_loop20(terms, fields, callee, arguments_at_3, &(ml_values10), ml_index10);
+                                                                                                                                                                                match ml_s1144 {
                                                                                                                                                                                     self::MlReadInertModuleBindingLoop20Result::MlReadInertModuleBindingLoop20Done(callee_2, arguments_at_4) => {
                                                                                                                                                                                         if (callee_2 < 0f64) || (arguments_at_4 < 0f64) {
                                                                                                                                                                                             self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(Vec::<f64>::new())
@@ -276,7 +276,7 @@ if ml_library_inequality_1 {
                                                                                                                                                                                                                     self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(Vec::<f64>::new())
                                                                                                                                                                                                                 } else {
                                                                                                                                                                                                                     {
-                                                                                                                                                                                                                        let argument_2 = self::read_inert_binding_argument(terms, parents, &(values_2), arguments_at_4);
+                                                                                                                                                                                                                        let argument_2 = self::read_inert_binding_argument(terms, parents, &(accepted_literal_values), arguments_at_4);
                                                                                                                                                                                                                         if (argument_2 >= 0f64) && (((self::read_required_text_fact(terms, argument_2)) == "array") || ((self::read_required_text_fact(terms, argument_2)) == "object")) {
                                                                                                                                                                                                                             self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Return(vec![name_2, 3f64])
                                                                                                                                                                                                                         } else {
@@ -304,7 +304,7 @@ if ml_library_inequality_1 {
                                                                                                                                                         } else {
                                                                                                                                                             self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Next
                                                                                                                                                         };
-                                                                                                                                                    match ml_s11 {
+                                                                                                                                                    match ml_s1111 {
                                                                                                                                                         self::MlReadInertModuleBindingJoin17::MlReadInertModuleBindingJoin17Next => {
                                                                                                                                                             Vec::<f64>::new()
                                                                                                                                                         }
@@ -379,10 +379,10 @@ pub fn accept_inert_module_binding_scope(
             {
                 let at = 0f64;
                 {
-                    let ml_s15 = self::ml_accept_inert_module_binding_scope_loop23(
+                    let ml_s1155 = self::ml_accept_inert_module_binding_scope_loop23(
                         forms, owners, bindings, at,
                     );
-                    match ml_s15 {
+                    match ml_s1155 {
                     self::MlAcceptInertModuleBindingScopeLoop23Result::MlAcceptInertModuleBindingScopeLoop23Done => {
                         true
                     }
@@ -447,7 +447,7 @@ pub fn read_empty_standard_collection_module_binding(
         {
             let at = 0f64;
             {
-                let ml_s16 = self::ml_read_empty_standard_collection_module_binding_loop30(
+                let ml_s1166 = self::ml_read_empty_standard_collection_module_binding_loop30(
                     terms,
                     parents,
                     starts,
@@ -456,7 +456,7 @@ pub fn read_empty_standard_collection_module_binding(
                     source_bytes,
                     at,
                 );
-                match ml_s16 {
+                match ml_s1166 {
                     self::MlReadEmptyStandardCollectionModuleBindingLoop30Result::MlReadEmptyStandardCollectionModuleBindingLoop30Done => {
                         {
                             let top = self::read_empty_collection_binding_children(terms, parents, 0f64);
@@ -468,7 +468,7 @@ if ml_library_inequality_2 {
                                 {
                                     let declaration = self::read_required_number_fact(&(top), 0f64);
                                     {
-                                        let ml_s18 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
+                                        let ml_s1188 = if (self::read_required_text_fact(terms, declaration)) == "export_statement" {
                                             {
                                                 let selected = -1f64;
                                                 {
@@ -478,8 +478,8 @@ if ml_library_inequality_2 {
                                                         {
                                                             let ml_index26 = self::ml::Big::from_i128(0);
                                                             {
-                                                                let ml_s19 = self::ml_read_empty_standard_collection_module_binding_loop36(terms, selected, exports, &(ml_values26), ml_index26);
-                                                                match ml_s19 {
+                                                                let ml_s1199 = self::ml_read_empty_standard_collection_module_binding_loop36(terms, selected, exports, &(ml_values26), ml_index26);
+                                                                match ml_s1199 {
                                                                     self::MlReadEmptyStandardCollectionModuleBindingLoop36Result::MlReadEmptyStandardCollectionModuleBindingLoop36Done(selected_2, exports_2) => {
                                                                         if (exports_2 != 1f64) || (selected_2 < 0f64) {
                                                                             self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Return(Vec::<f64>::new())
@@ -502,7 +502,7 @@ if ml_library_inequality_2 {
                                         } else {
                                             self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Next(declaration)
                                         };
-                                        match ml_s18 {
+                                        match ml_s1188 {
                                             self::MlReadEmptyStandardCollectionModuleBindingJoin31::MlReadEmptyStandardCollectionModuleBindingJoin31Next(declaration_3) => {
                                                 {
 let ml_library_inequality_1 = (self::read_required_text_fact(terms, declaration_3)) != "lexical_declaration" ;
@@ -518,8 +518,8 @@ if ml_library_inequality_1 {
                                                                 {
                                                                     let ml_index27 = self::ml::Big::from_i128(0);
                                                                     {
-                                                                        let ml_s20 = self::ml_read_empty_standard_collection_module_binding_loop32(terms, binding, constants, &(ml_values27), ml_index27);
-                                                                        match ml_s20 {
+                                                                        let ml_s2200 = self::ml_read_empty_standard_collection_module_binding_loop32(terms, binding, constants, &(ml_values27), ml_index27);
+                                                                        match ml_s2200 {
                                                                             self::MlReadEmptyStandardCollectionModuleBindingLoop32Result::MlReadEmptyStandardCollectionModuleBindingLoop32Done(binding_2, constants_2) => {
                                                                                 if (constants_2 != 1f64) || (binding_2 < 0f64) {
                                                                                     Vec::<f64>::new()
@@ -535,10 +535,10 @@ if ml_library_inequality_1 {
                                                                                                     {
                                                                                                         let ml_index28 = self::ml::Big::from_i128(0);
                                                                                                         {
-                                                                                                            let ml_s21 = self::ml_read_empty_standard_collection_module_binding_loop33(terms, fields, name, value, equals, &(ml_values28), ml_index28);
-                                                                                                            match ml_s21 {
+                                                                                                            let ml_s2211 = self::ml_read_empty_standard_collection_module_binding_loop33(terms, fields, name, value, equals, &(ml_values28), ml_index28);
+                                                                                                            match ml_s2211 {
                                                                                                                 self::MlReadEmptyStandardCollectionModuleBindingLoop33Result::MlReadEmptyStandardCollectionModuleBindingLoop33Done(name_2, value_2, equals_2) => {
-                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains("\\") {
+                                                                                                                    if ((((name_2 < 0f64) || (value_2 < 0f64)) || (equals_2 != 1f64)) || (((self::read_required_text_fact(texts, name_2)).encode_utf16().count() as f64) == 0f64)) || (self::read_required_text_fact(texts, name_2)).contains('\\') {
                                                                                                                         Vec::<f64>::new()
                                                                                                                     } else {
                                                                                                                         {
@@ -552,14 +552,14 @@ if ml_library_inequality_1 {
                                                                                                                                         {
                                                                                                                                             let ml_index29 = self::ml::Big::from_i128(0);
                                                                                                                                             {
-                                                                                                                                                let ml_s22 = self::ml_read_empty_standard_collection_module_binding_loop34(terms, fields, constructor, arguments_at, news, &(ml_values29), ml_index29);
-                                                                                                                                                match ml_s22 {
+                                                                                                                                                let ml_s2222 = self::ml_read_empty_standard_collection_module_binding_loop34(terms, fields, constructor, arguments_at, news, &(ml_values29), ml_index29);
+                                                                                                                                                match ml_s2222 {
                                                                                                                                                     self::MlReadEmptyStandardCollectionModuleBindingLoop34Result::MlReadEmptyStandardCollectionModuleBindingLoop34Done(constructor_2, arguments_at_2, news_2) => {
                                                                                                                                                         if (news_2 != 1f64) || (constructor_2 < 0f64) {
                                                                                                                                                             Vec::<f64>::new()
                                                                                                                                                         } else {
                                                                                                                                                             {
-                                                                                                                                                                let ml_s23 = if arguments_at_2 >= 0f64 {
+                                                                                                                                                                let ml_s2233 = if arguments_at_2 >= 0f64 {
                                                                                                                                                                     {
                                                                                                                                                                         let children = self::read_empty_collection_binding_children(terms, parents, arguments_at_2);
                                                                                                                                                                         if (((children.len() as f64) != 2f64) || ((self::read_required_text_fact(terms, self::read_required_number_fact(&(children), 0f64))) != "(")) || ((self::read_required_text_fact(terms, self::read_required_number_fact(&(children), 1f64))) != ")") {
@@ -571,7 +571,7 @@ if ml_library_inequality_1 {
                                                                                                                                                                 } else {
                                                                                                                                                                     self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Next
                                                                                                                                                                 };
-                                                                                                                                                                match ml_s23 {
+                                                                                                                                                                match ml_s2233 {
                                                                                                                                                                     self::MlReadEmptyStandardCollectionModuleBindingJoin35::MlReadEmptyStandardCollectionModuleBindingJoin35Next => {
                                                                                                                                                                         {
                                                                                                                                                                             let owner = self::read_required_text_fact(texts, constructor_2);
@@ -719,7 +719,7 @@ pub fn ml_accept_inert_binding_sequence_loop2(
                 {
                     let term = self::read_required_text_fact(terms, child);
                     {
-                        let ml_s24 = if value {
+                        let ml_s2244 = if value {
                             if !(self::read_inert_binding_value(
                                 values,
                                 (parents.len() as f64),
@@ -738,7 +738,7 @@ pub fn ml_accept_inert_binding_sequence_loop2(
                                 self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next
                             }
                         };
-                        match ml_s24 {
+                        match ml_s2244 {
                             self::MlAcceptInertBindingSequenceJoin3::MlAcceptInertBindingSequenceJoin3Next => {
                                 {
                                     let value_2 = !value;

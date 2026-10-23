@@ -31,10 +31,10 @@ pub fn read_array_binding_fact_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let ml_s2 = self::ml_read_array_binding_fact_field_loop2(
+                    let ml_s22 = self::ml_read_array_binding_fact_field_loop2(
                         labels, targets, field, at, end,
                     );
-                    match ml_s2 {
+                    match ml_s22 {
                         self::MlReadArrayBindingFactFieldLoop2Result::MlReadArrayBindingFactFieldLoop2Done => {
                             -1f64
                         }
@@ -60,10 +60,10 @@ pub fn read_array_binding_initializer_end(
         {
             let closes = Vec::<self::ml_string::Text>::new();
             {
-                let ml_s3 = self::ml_read_array_binding_initializer_end_loop3(
+                let ml_s33 = self::ml_read_array_binding_initializer_end_loop3(
                     kinds, values, start, index, closes,
                 );
-                match ml_s3 {
+                match ml_s33 {
                     self::MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Done => {
                         -1f64
                     }
@@ -97,10 +97,10 @@ pub fn plan_java_script_array_binding_names(
             {
                 let positions = Vec::<f64>::new();
                 {
-                    let ml_s4 = self::ml_plan_java_script_array_binding_names_loop5(
+                    let ml_s44 = self::ml_plan_java_script_array_binding_names_loop5(
                         kinds, values, index, positions,
                     );
-                    match ml_s4 {
+                    match ml_s44 {
                             self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Done => {
                                 vec![-1f64]
                             }
@@ -134,10 +134,10 @@ pub fn find_java_script_record_parameter_pattern(
                 {
                     let at = start;
                     {
-                        let ml_s5 = self::ml_find_java_script_record_parameter_pattern_loop9(
+                        let ml_s55 = self::ml_find_java_script_record_parameter_pattern_loop9(
                             kinds, values, depth, binding, at,
                         );
-                        match ml_s5 {
+                        match ml_s55 {
                             self::MlFindJavaScriptRecordParameterPatternLoop9Result::MlFindJavaScriptRecordParameterPatternLoop9Done => {
                                 -1f64
                             }
@@ -197,7 +197,7 @@ pub fn plan_java_script_record_parameters(
                     {
                         let instructions = Vec::<f64>::new();
                         {
-                            let ml_s6 = self::ml_plan_java_script_record_parameters_loop11(
+                            let ml_s66 = self::ml_plan_java_script_record_parameters_loop11(
                                 kinds,
                                 values,
                                 reserved,
@@ -206,7 +206,7 @@ pub fn plan_java_script_record_parameters(
                                 names,
                                 instructions,
                             );
-                            match ml_s6 {
+                            match ml_s66 {
                                 self::MlPlanJavaScriptRecordParametersLoop11Result::MlPlanJavaScriptRecordParametersLoop11Done(at_2, slot_2, instructions_2) => {
                                     if (at_2 >= (kinds.len() as f64)) || !(((self::read_required_text_fact(kinds, at_2)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, at_2)) == (self::ml_string::Text::from_units(vec![41])))) {
                                         vec![-1f64, at_2]
@@ -310,14 +310,14 @@ pub fn find_java_script_record_parameter_strict_directive(
         {
             let at = start;
             {
-                let ml_s7 = self::ml_find_java_script_record_parameter_strict_directive_loop15(
+                let ml_s77 = self::ml_find_java_script_record_parameter_strict_directive_loop15(
                     kinds,
                     values,
                     raws,
                     line_breaks,
                     at,
                 );
-                match ml_s7 {
+                match ml_s77 {
                     self::MlFindJavaScriptRecordParameterStrictDirectiveLoop15Result::MlFindJavaScriptRecordParameterStrictDirectiveLoop15Done => {
                         -2f64
                     }
@@ -493,7 +493,7 @@ pub fn ml_read_array_binding_initializer_end_loop3(
                         self::MlReadArrayBindingInitializerEndLoop3Result::MlReadArrayBindingInitializerEndLoop3Return(-1f64)
                     } else {
                         {
-                            let ml_s8 = if kind
+                            let ml_s88 = if kind
                                 == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))
                             {
                                 if ((closes.len() as f64) == 0f64)
@@ -556,7 +556,7 @@ pub fn ml_read_array_binding_initializer_end_loop3(
                             } else {
                                 self::MlReadArrayBindingInitializerEndJoin4::MlReadArrayBindingInitializerEndJoin4Next(closes)
                             };
-                            match ml_s8 {
+                            match ml_s88 {
                                 self::MlReadArrayBindingInitializerEndJoin4::MlReadArrayBindingInitializerEndJoin4Next(closes_4) => {
                                     {
                                         let index_2 = index + 1f64;
@@ -638,7 +638,7 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                             {
                                 let rest = false;
                                 {
-                                    let ml_s9 = if (kind
+                                    let ml_s99 = if (kind
                                         == (self::ml_string::Text::from_units(vec![
                                             112, 117, 110, 99, 116,
                                         ])))
@@ -656,13 +656,13 @@ pub fn ml_plan_java_script_array_binding_names_loop5(
                                     } else {
                                         self::MlPlanJavaScriptArrayBindingNamesJoin6::MlPlanJavaScriptArrayBindingNamesJoin6Next(index, rest)
                                     };
-                                    match ml_s9 {
+                                    match ml_s99 {
                                         self::MlPlanJavaScriptArrayBindingNamesJoin6::MlPlanJavaScriptArrayBindingNamesJoin6Next(index_4, rest_3) => {
                                             if (index_4 >= (values.len() as f64)) || (index_4 >= (kinds.len() as f64)) {
                                                 self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
                                             } else {
                                                 {
-                                                    let ml_s10 = if ((self::read_required_text_fact(kinds, index_4)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_4)) == (self::ml_string::Text::from_units(vec![91]))) {
+                                                    let ml_s1100 = if ((self::read_required_text_fact(kinds, index_4)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_4)) == (self::ml_string::Text::from_units(vec![91]))) {
                                                         if rest_3 {
                                                             self::MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Return(vec![-1f64])
                                                         } else {
@@ -695,7 +695,7 @@ if ml_library_inequality_3 {
                                                             }
                                                         }
 };
-                                                    match ml_s10 {
+                                                    match ml_s1100 {
                                                         self::MlPlanJavaScriptArrayBindingNamesJoin7::MlPlanJavaScriptArrayBindingNamesJoin7Next(index_7, positions_4) => {
                                                             if (index_7 >= (values.len() as f64)) || (index_7 >= (kinds.len() as f64)) {
                                                                 self::MlPlanJavaScriptArrayBindingNamesLoop5Result::MlPlanJavaScriptArrayBindingNamesLoop5Return(vec![-1f64])
@@ -707,7 +707,7 @@ if ml_library_inequality_3 {
                                                                     })
                                                                 } else {
                                                                     {
-                                                                        let ml_s11 = if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![61]))) {
+                                                                        let ml_s1111 = if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![61]))) {
                                                                             {
                                                                                 let index_8 = self::read_array_binding_initializer_end(kinds, values, (index_7 + 1f64));
                                                                                 if index_8 < 0f64 {
@@ -719,7 +719,7 @@ if ml_library_inequality_3 {
                                                                         } else {
                                                                             self::MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Next(index_7)
                                                                         };
-                                                                        match ml_s11 {
+                                                                        match ml_s1111 {
                                                                             self::MlPlanJavaScriptArrayBindingNamesJoin8::MlPlanJavaScriptArrayBindingNamesJoin8Next(index_9) => {
                                                                                 {
 let ml_library_inequality_2 = (self::read_required_text_fact(kinds, index_9)) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) ;

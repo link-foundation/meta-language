@@ -167,8 +167,8 @@ impl RustParser {
             return Ok(());
         }
         let origin = self.origins.origin(node, path);
-        if !self.origins.collecting
-            && !(origin.array_source_model == Some(SOURCE_MODEL)
+        if !(self.origins.collecting
+            || origin.array_source_model == Some(SOURCE_MODEL)
                 && origin.ty.as_ref().is_some_and(Type::is_reference)
                 && origin.wrappers == ["reference"])
         {

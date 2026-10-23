@@ -331,7 +331,7 @@ impl Binder<'_, '_> {
         let signatures = &whole.signatures;
         let flat=whole.program.main.as_ref().is_none_or(|main|main.effects.is_empty())&&whole.program.imports.is_empty()
             &&declarations.iter().all(|declaration|matches!(declaration,Decl::Fn(function)if function.module_path.is_empty()&&!function.generated&&names.contains(&function.name)))
-            &&declarations.iter().map(|declaration|declaration.name()).collect::<HashSet<_>>().len()==names.len()
+            &&declarations.iter().map(Decl::name).collect::<HashSet<_>>().len()==names.len()
             &&signatures.iter().all(|signature|matches!(signature,External::Function{name,..}if names.contains(name)))
             &&signatures.iter().map(External::name).collect::<HashSet<_>>().len()==names.len();
         let count = source_number(names.len())?;
@@ -381,9 +381,8 @@ impl Binder<'_, '_> {
                 utf16_strings: self.utf16_strings,
                 module_binding_scope: Some(Self::module_binding_scope(state)),
             };
-            let text = match &self.groups[member].kind {
-                GroupKind::Item { text, .. } => text,
-                _ => return None,
+            let GroupKind::Item { text, .. } = &self.groups[member].kind else {
+                return None;
             };
             let capture =
                 check_and_emit_item(text, self.from, self.to, &context, &HashMap::new()).ok()??;

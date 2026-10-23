@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import {partitionTests,partitionGroupFiles,testFiles} from '../scripts/test-groups.mjs';
 import {partitionCiTestGroupFiles} from '../scripts/ci-test-partitions.mjs';
-import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource,restorePhysicalReportWorkflow} from '../scripts/ci-test-partition-history.mjs';
+import {readCiTestPartitionHistory,verifyCiTestPartitionHistory,restoreCiTestPartitionWorkflow,restoreCiTestPartitionSource,restorePhysicalReportWorkflow,restoreParallelPackageWorkflow} from '../scripts/ci-test-partition-history.mjs';
 test('physical CI partitions preserve every complete logical cohort exactly once under the original deadline',()=>{
  const groups=partitionTests(testFiles()).groups;
  for(const[group,oldCount]of [['translation',6],['conformance',4]]){
@@ -12,7 +12,7 @@ test('physical CI partitions preserve every complete logical cohort exactly once
   for(let index=0;index<oldCount;index++)assert.deepEqual([...physical[index],...physical[index+oldCount]].sort(),partitionGroupFiles(files,`${index+1}/${oldCount}`),'complete original logical cohort '+group+index);
  }
  for(const[group,count]of [['grammar',6],['grammar-native',6],['tooling',4]])for(let at=1;at<=count;at++)assert.deepEqual(partitionCiTestGroupFiles(group,groups[group],`${at}/${count}`),partitionGroupFiles(groups[group],`${at}/${count}`));
- const packet=readCiTestPartitionHistory(),current=readFileSync(new URL('../../.github/workflows/js.yml',import.meta.url),'utf8');assert.equal(current,packet.current.source);
+ const packet=readCiTestPartitionHistory(),current=readFileSync(new URL('../../.github/workflows/js.yml',import.meta.url),'utf8');assert.equal(restoreParallelPackageWorkflow(current,'.github/workflows/js.yml'),packet.current.source);
  const region=current.slice(current.indexOf('\n  tests:\n'),current.indexOf('\n  translation-test-feedback:\n'));
  assert.match(region,/timeout-minutes: 15\n/u);assert.match(region,/fail-fast: false\n/u);
  assert.match(region,/ci-test-partitions\.mjs --run "\$TEST_GROUP"/u);
@@ -33,13 +33,36 @@ test('physical scheduling refuses invalid scope and retains the serial child inv
 test('physical report changes retain complete independently certified workflow predecessors',()=>{
  const packet=readCiTestPartitionHistory();assert.equal(packet.reportWorkflows.rows.length,2);
  for(const row of packet.reportWorkflows.rows){
-  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(restoreParallelPackageWorkflow(actual,row.file),row.current.source);
   assert.equal(restorePhysicalReportWorkflow(actual,row.file),row.previous.source);
   assert.equal(restorePhysicalReportWorkflow(actual+'\n',row.file),actual+'\n');
   assert.equal(restorePhysicalReportWorkflow(actual,row.file+'.unknown'),actual);
   assert.equal(restorePhysicalReportWorkflow(row.previous.source,row.file),row.previous.source);
  }
  for(const mutate of [value=>{value.reportWorkflows.rows[0].current.source+=' ';},value=>{value.reportWorkflows.rows[0].previous.certificate.path='foreign.yml';},value=>{value.reportWorkflows.changes.pop();},value=>{value.reportWorkflows.rows.reverse();}]){
+  const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));
+ }
+});
+
+test('parallel package checks retain every command and all JavaScript and native prerequisites',()=>{
+ const packet=readCiTestPartitionHistory();assert.equal(packet.packageWorkflows.rows.length,2);
+ for(const row of packet.packageWorkflows.rows){
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  assert.equal(restoreParallelPackageWorkflow(actual,row.file),row.previous.source);
+  assert.equal(restoreParallelPackageWorkflow(actual+'\n',row.file),actual+'\n');
+  assert.equal(restoreParallelPackageWorkflow(actual,row.file+'.unknown'),actual);
+  assert.equal(restoreParallelPackageWorkflow(row.previous.source,row.file),row.previous.source);
+  if(row.file==='.github/workflows/js.yml'){
+   assert.equal(row.previous.source.replace('    needs: [tests, report-assertions]\n',''),actual,'one dependency edge is the entire workflow change');
+   const packageJob=actual.slice(actual.indexOf('\n  package-checks:\n'),actual.indexOf('\n  test:\n'));
+   assert.doesNotMatch(packageJob,/^    needs:/mu);assert.doesNotMatch(packageJob,/download-artifact|\$\{\{ needs\./u);
+   assert.match(actual,/needs: \[tests, report-assertions, package-checks, translation-test-feedback\]/u);
+  }else{
+   assert.equal(actual,row.previous.source,'the complete native and acceptance workflow remains exact');
+   assert.match(actual,/needs: \[changes, js, self-translation-report-validation\]/u);
+  }
+ }
+ for(const mutate of [value=>{value.packageWorkflows.rows[0].current.source+=' ';},value=>{value.packageWorkflows.rows[1].previous.certificate.path='foreign.yml';},value=>{value.packageWorkflows.rows[1].changes=[];},value=>{value.packageWorkflows.rows.reverse();}]){
   const changed=structuredClone(packet);mutate(changed);assert.throws(()=>verifyCiTestPartitionHistory(changed));
  }
 });

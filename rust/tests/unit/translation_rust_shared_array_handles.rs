@@ -1,8 +1,5 @@
 //! Real complete source, both independent emitters and codecs; execute only in CI.
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
-use meta_language::self_translation::{
-    SelfTranslationOptions, self_translate, self_translate_with, self_translation_signatures,
-};
 use meta_language::translation::{
     check::check_program,
     emit_javascript::emit_javascript,
@@ -12,6 +9,9 @@ use meta_language::translation::{
 use meta_language::{
     BinaryLinksOptions, LinkNetwork, decode_link_network_binary, decode_typed_program_links,
     encode_link_network_binary, encode_typed_program_links, read_structured_data_lino,
+};
+use meta_language::{
+    SelfTranslationOptions, self_translate, self_translate_with, self_translation_signatures,
 };
 use serde_json::Value;
 use std::{fs, path::Path, process::Command};
@@ -221,7 +221,11 @@ fn assert_shared_array_case(row: &Value, model: &str, language: &str) {
             .code,
         library
     );
-    let created=meta_language::typed_program_links::create_typed_program_links_with_rust_shared_array_handle_source_model(input,"Rust",model,None).unwrap();
+    let created =
+        meta_language::create_typed_program_links_with_rust_shared_array_handle_source_model(
+            input, "Rust", model, None,
+        )
+        .unwrap();
     assert_eq!(
         decode_typed_program_links(&created.network, created.root).unwrap(),
         program

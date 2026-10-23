@@ -51,7 +51,7 @@ pub(super) fn fill_arrays(
                 walk_prop(right, arrays, solved);
             }
             SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => {
-                walk_prop(arg, arrays, solved)
+                walk_prop(arg, arrays, solved);
             }
             SPropNode::Bool { expr: value } => walk(value, arrays, solved),
         }
@@ -277,7 +277,7 @@ pub(super) fn fill_arrays(
     for effect in program.main.iter_mut().flat_map(|main| &mut main.effects) {
         match effect {
             SEffect::Print { expr: value, .. } | SEffect::Let { value, .. } => {
-                walk(value, arrays, solved)
+                walk(value, arrays, solved);
             }
             SEffect::Assert { prop: value, .. } => walk_prop(value, arrays, solved),
         }
