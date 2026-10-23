@@ -344,7 +344,6 @@ jobs:
   # checks. Every group is required; a failure never cancels its siblings.
   package-checks:
     name: JavaScript Package Checks (${{ matrix.group }})${{ matrix.generated_slice == 'second' && ' / second' || '' }}
-    needs: [tests, report-assertions]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
