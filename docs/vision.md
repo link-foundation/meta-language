@@ -2590,7 +2590,7 @@ complete source and mechanical ownership styles are retained as Links data.
 Ordinary lossless source restoration remains available through the existing
 default. Full emitted-runtime interpretation and executable parity still
 require implementation and later CI evidence.
-The project translation draft API processes complete supplied module inventories
+The paired project translation draft APIs process complete supplied module inventories
 with source hashes, bounded dependency-signature refinement and explicit failure
 ranges. Only ordinary translated declarations supply import signatures. Its
 tracked-project author inventories every tracked JavaScript, TypeScript and
@@ -2598,6 +2598,13 @@ Rust source, retains unresolved imports and writes the products and diagnostics
 as Links Notation. It executes no products. This orchestration exposes remaining
 language, library and independent Rust signature-discovery gaps; the complete
 own-codebase translator remains a critical delivery requirement.
+Shared project worklist and item-admission rules are generated from JavaScript,
+including its exact UTF-16 identifier ordering. Changed providers select only
+their actual dependent sources for the next refinement pass. Actual compiler
+diagnostics can be retained beside their unchanged original source owners in
+both runtimes, without executing generated products. The native project host
+retains its unsupported explicit reference-option and detailed signature-error
+transport gaps; it must not silently substitute an unsupported representation.
 The independent signature draft now also checks complete ordinary Rust modules
 through the existing frontend, checker and JavaScript emitter before exposing
 unrestricted public free-function signatures. Attribute-prefix and visibility
@@ -2607,6 +2614,14 @@ and restricted declarations supply no public signature. External signature
 assumptions retain a separate namespace-composition obligation. Original default
 signature behavior and the selected shared-array interpretation remain intact.
 This extension is a code draft with execution deferred.
+Under independent semantic translation, ordinary flat Rust free-function
+libraries also check and emit as one scope. Actual concrete owners must account
+for every checked declaration with no duplicate names. Private and forward
+dependencies remain actual translated functions; only unrestricted public
+functions receive export aliases using the emitter's real source/target mapping.
+Effectful entry points, other source items and unsupported interpretations retain
+their ordinary item diagnostics. Whole-module source checking and source
+generation do not establish native execution or complete project translation.
 
 Finalize each semantic batch before refreshing its generated source histories,
 naming bindings and requirement manifest. The normal authors remain the only

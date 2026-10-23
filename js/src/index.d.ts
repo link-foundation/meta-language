@@ -87,6 +87,16 @@ export interface SelfTranslationItem {
   readonly end: number;
   readonly status: SelfTranslationStatus;
   readonly reason: string | null;
+  readonly diagnostic?: SelfTranslationDiagnostic;
+}
+
+export interface SelfTranslationDiagnostic {
+  readonly kind: 'syntax' | 'type' | 'unsupported';
+  readonly reason: string;
+  readonly message: string;
+  readonly span: { start: number; end: number } | null;
+  readonly details: Record<string, unknown>;
+  readonly sourceRange: { start: number; end: number };
 }
 
 export interface SelfTranslation {
@@ -149,6 +159,9 @@ export function projectTypeScriptTyping(source: string): string;
  * relative named import becomes a `use crate::…` declaration.
  */
 export function selfTranslate(source: string, from: string, to: string, options?: SelfTranslationOptions): SelfTranslation;
+export function selfTranslateWithDiagnostics(source: string, from: string, to: string, options?: SelfTranslationOptions): {
+  translation: SelfTranslation; diagnostics: Array<SelfTranslationDiagnostic | null>;
+};
 
 /**
  * The signatures of the exported items of a JavaScript or TypeScript module

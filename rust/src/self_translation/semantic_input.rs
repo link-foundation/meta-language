@@ -1,28 +1,39 @@
 //! Native item views over the automatically translated shared grouping plan.
 use super::{Group, GroupKind, Item, line_break, source_lines};
 use crate::translation::semantic_input_rules::{
-    plan_semantic_source_groups, read_rust_public_signature_name_position,
-    read_semantic_source_role,
+    accept_rust_semantic_module_item, plan_semantic_source_groups,
+    read_rust_public_signature_name_position, read_semantic_source_role,
+    render_rust_semantic_module_export,
 };
 
 pub(super) fn read_independent_rust_module_signatures(
     source: &str,
     options: &super::SelfTranslationOptions,
 ) -> Result<Vec<super::SelfTranslationSignature>, super::SelfTranslationError> {
-    use crate::translation::{
-        Language,
-        check::check_program,
-        emit_javascript::emit_javascript,
-        lexer::{TokenKind, tokenize},
-        rust::parse_rust,
-    };
-    let failure =
-        |error: crate::translation::diagnostics::TranslationError| super::SelfTranslationError {
-            message: error.to_string(),
-        };
     if !options.imports.is_empty() {
         return Err(super::SelfTranslationError { message: "independent Rust signature imports: a source module with external signature assumptions requires a composed Rust namespace interpretation".to_owned() });
     }
+    let program = read_independent_rust_program(source)?;
+    crate::translation::emit_javascript::emit_javascript(&program).map_err(failure)?;
+    let names = read_rust_public_names(source)?;
+    Ok(super::binding::declared_signatures(&program, false)
+        .into_iter()
+        .filter(|signature| names.contains(signature.name()))
+        .collect())
+}
+
+fn failure(
+    error: crate::translation::diagnostics::TranslationError,
+) -> super::SelfTranslationError {
+    super::SelfTranslationError {
+        message: error.to_string(),
+    }
+}
+
+fn read_independent_rust_program(
+    source: &str,
+) -> Result<crate::translation::ir::Program, super::SelfTranslationError> {
+    use crate::translation::{check::check_program, rust::parse_rust};
     let surface = match parse_rust(source) {
         Ok(surface) => surface,
         Err(error)
@@ -33,8 +44,16 @@ pub(super) fn read_independent_rust_module_signatures(
         }
         Err(error) => return Err(failure(error)),
     };
-    let program = check_program(&surface).map_err(failure)?;
-    emit_javascript(&program).map_err(failure)?;
+    check_program(&surface).map_err(failure)
+}
+
+fn read_rust_public_names(
+    source: &str,
+) -> Result<std::collections::HashSet<String>, super::SelfTranslationError> {
+    use crate::translation::{
+        Language,
+        lexer::{TokenKind, tokenize},
+    };
     let network = crate::LinkNetwork::parse(source, "Rust", crate::ParseConfiguration::default());
     if !network.verify_full_match(None).is_clean() {
         return Err(super::SelfTranslationError { message: "independent Rust signature concrete syntax: the complete source needs a clean concrete grammar interpretation".to_owned() });
@@ -69,10 +88,97 @@ pub(super) fn read_independent_rust_module_signatures(
             names.insert(values[position].clone());
         }
     }
-    Ok(super::binding::declared_signatures(&program, false)
+    Ok(names)
+}
+
+pub(super) fn read_independent_rust_module_publication(
+    source: &str,
+    items: &[Item<'_>],
+) -> Result<
+    Option<(
+        crate::translation::emit_common::Emitted,
+        Vec<super::SelfTranslationSignature>,
+    )>,
+    super::SelfTranslationError,
+> {
+    use crate::translation::{emit_javascript::emit_javascript, ir::Decl};
+    if items.is_empty()
+        || items.iter().any(|item| {
+            !accept_rust_semantic_module_item(
+                &item.term,
+                item.comment,
+                read_semantic_source_role(item.comment, item.text),
+            )
+        })
+    {
+        return Ok(None);
+    }
+    let names = read_rust_public_names(source)?;
+    let program = read_independent_rust_program(source)?;
+    let tree = crate::native_grammar_parser::parse_native("native-rust", source);
+    let mut owners = std::collections::HashSet::new();
+    for (node, _) in tree
+        .children
+        .iter()
+        .filter(|(node, _)| node.term == "function_item")
+    {
+        let declarations: Vec<_> = node
+            .children
+            .iter()
+            .filter(|(_, field)| field.as_deref() == Some("name"))
+            .collect();
+        if declarations.len() != 1 {
+            return Ok(None);
+        }
+        let name = &declarations[0].0;
+        let Some(name) = source.get(name.start..name.end) else {
+            return Ok(None);
+        };
+        if !owners.insert(name.to_owned()) {
+            return Ok(None);
+        }
+    }
+    if program
+        .main
+        .as_ref()
+        .is_some_and(|main| !main.effects.is_empty())
+        || owners.len() != program.declarations.len() + usize::from(owners.contains("main"))
+        || program
+            .declarations
+            .iter()
+            .any(|entry| !matches!(entry, Decl::Fn(function) if function.module_path.is_empty() && owners.contains(&function.name)))
+    {
+        return Ok(None);
+    }
+    let mut emitted = emit_javascript(&program).map_err(failure)?;
+    // Emit aliases in actual source declaration order, independently of native
+    // hash iteration order. Private declarations remain private target helpers.
+    for entry in &program.declarations {
+        let Decl::Fn(function) = entry else {
+            continue;
+        };
+        if !names.contains(&function.name) {
+            continue;
+        }
+        let mappings: Vec<_> = emitted
+            .mappings
+            .iter()
+            .filter(|mapping| mapping.kind == "function" && mapping.source == function.full_name)
+            .collect();
+        if mappings.len() != 1 {
+            return Err(super::SelfTranslationError { message:
+            "independent Rust module visibility: every public source function needs one actual target mapping".to_owned() });
+        }
+        emitted.definitions.push(render_rust_semantic_module_export(
+            &function.name,
+            &mappings[0].target,
+        ));
+    }
+    let signatures = super::binding::declared_signatures(&program, false)
         .into_iter()
         .filter(|signature| names.contains(signature.name()))
-        .collect())
+        .collect();
+    Ok(Some((emitted, signatures)))
 }
 
 pub(super) fn group_semantic_items<'a>(

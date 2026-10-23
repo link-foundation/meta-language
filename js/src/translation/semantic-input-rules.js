@@ -71,3 +71,20 @@ export function readRustPublicSignatureNamePosition(kinds, values) {
   }
   return -1;
 }
+
+/** Ordinary free-function modules may share private and forward dependencies.
+ * A carried source envelope is still an unresolved owner, never an empty body.
+ * @param {string} term @param {boolean} comment @param {number} role @returns {boolean}
+ */
+export function acceptRustSemanticModuleItem(term, comment, role) {
+  if (role === 3) return false;
+  return comment || term === 'function_item' || term === 'attribute_item' || term === 'inner_attribute_item';
+}
+
+/** Both names come from actual checked source declarations/emitter mappings.
+ * Export aliases preserve source visibility even when target names are renamed.
+ * @param {string} source @param {string} target @returns {string}
+ */
+export function renderRustSemanticModuleExport(source, target) {
+  return 'export { ' + target + ' as ' + source + ' };';
+}

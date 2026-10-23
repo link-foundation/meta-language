@@ -55,6 +55,8 @@ mod pdf_parser;
 pub mod program_representation;
 pub mod program_translation;
 pub mod project_data;
+mod project_translation;
+mod project_translation_rules;
 pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
@@ -311,6 +313,7 @@ pub use project_data::{
     ProjectDataFormat, read_project_data_file, read_project_data_file_with_format,
     read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
 };
+pub use project_translation::{draft_project_translation, project_translation_draft_to_links};
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -342,10 +345,11 @@ pub use rust_codec::{
 };
 pub use self_translation::{
     CheckedDeclarationEmission, DeclarationTranslationContext, ErasedTypeScript, Erasure,
-    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationError, SelfTranslationItem,
-    SelfTranslationOptions, SelfTranslationSignature, accept_declaration_owned_emission,
-    check_and_emit_declaration_with_ownership, erase_type_script, project_type_script_typing,
-    read_inert_module_binding, self_translate, self_translate_decorated, self_translate_with,
+    SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationDiagnosticReport,
+    SelfTranslationError, SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature,
+    accept_declaration_owned_emission, check_and_emit_declaration_with_ownership,
+    erase_type_script, project_type_script_typing, read_inert_module_binding, self_translate,
+    self_translate_decorated, self_translate_with, self_translate_with_diagnostics,
     self_translation_language, self_translation_signatures,
 };
 pub use semantic_translation::{

@@ -195,6 +195,27 @@ pub fn read_rust_public_signature_name_position(kinds: &[String], values: &[Stri
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_semantic_module_item(term: &str, comment: bool, role: f64) -> bool {
+    if role == 3f64 {
+        false
+    } else {
+        ((comment || (term == "function_item")) || (term == "attribute_item"))
+            || (term == "inner_attribute_item")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_rust_semantic_module_export(source: &str, target: &str) -> String {
+    format!(
+        "export {{ {} as {} }};",
+        target.to_owned(),
+        source.to_owned()
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_plan_semantic_source_groups_loop2(
     roles: &[f64],
     line_breaks: &[bool],

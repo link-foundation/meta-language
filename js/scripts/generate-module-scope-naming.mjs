@@ -23,6 +23,7 @@ sources.push('js/src/translation/semantic-input-rules.js', 'js/src/meta-language
 sources.push('js/src/meta-language-archive-rules.js', 'js/scripts/draft-source-library.mjs',
  'js/scripts/generate-meta-language-archive-rules.mjs');
 sources.push('js/src/dynamic-meta-language-rules.js', 'js/scripts/generate-dynamic-meta-language-rules.mjs');
+sources.push('js/src/project-translation-rules.js', 'js/scripts/generate-project-translation-rules.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){
  return sources.flatMap(source=>{

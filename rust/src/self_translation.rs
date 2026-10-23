@@ -44,8 +44,12 @@ pub use emission::{
 };
 pub use representation::Context as DeclarationTranslationContext;
 use representation::Context;
+mod diagnostics;
+mod group_translation;
 mod scope;
 mod semantic_input;
+pub use diagnostics::{SelfTranslationDiagnosticReport, self_translate_with_diagnostics};
+use group_translation::{translate_group, translate_group_bound};
 mod typescript_erasure;
 mod typescript_erasure_rules;
 mod typescript_portable_typing;
@@ -300,6 +304,16 @@ fn translate_module(
     target_language: &str,
     options: &SelfTranslationOptions,
 ) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
+    translate_module_diagnostic(source, source_language, target_language, options, None)
+}
+
+fn translate_module_diagnostic(
+    source: &str,
+    source_language: &str,
+    target_language: &str,
+    options: &SelfTranslationOptions,
+    mut diagnostics: Option<&mut Vec<Option<serde_json::Value>>>,
+) -> Result<(SelfTranslation, Vec<SelfTranslationSignature>), SelfTranslationError> {
     let decorators = &options.decorators;
     let from = required(source_language)?;
     let to = required(target_language)?;
@@ -338,7 +352,7 @@ fn translate_module(
     let mut preludes: Vec<String> = Vec::new();
     let mut recorded = Vec::new();
     let mut gap = String::new();
-    let whole_publication = if options.rust_shared_array_handle_source_model.is_empty() {
+    let mut whole_publication = if options.rust_shared_array_handle_source_model.is_empty() {
         None
     } else {
         Some(shared_array_handles::read_whole_module(
@@ -346,6 +360,21 @@ fn translate_module(
             &options.rust_shared_array_handle_source_model,
         )?)
     };
+    if whole_publication.is_none()
+        && options.semantic_translation
+        && from == "Rust"
+        && family(to) == "JavaScript"
+        && options.module_directory.is_empty()
+        && options.imports.is_empty()
+        && !options.utf16_strings
+    {
+        // A refused whole module retains all ordinary per-item diagnostics;
+        // unsupported owners cannot publish provisional helper signatures.
+        whole_publication =
+            semantic_input::read_independent_rust_module_publication(source, &items)
+                .ok()
+                .flatten();
+    }
     let groups = if whole_publication.is_some() {
         vec![Group {
             kind: GroupKind::Item {
@@ -484,6 +513,15 @@ fn translate_module(
             }
         }
         for item in &group.items {
+            if let Some(records) = diagnostics.as_deref_mut() {
+                records.push(out.diagnostic.as_ref().map(|error| {
+                    diagnostics::retained(
+                        error,
+                        group.items.first().map_or(item.start, |item| item.start),
+                        group.items.last().map_or(item.end, |item| item.end),
+                    )
+                }));
+            }
             recorded.push(SelfTranslationItem {
                 term: item.term.clone(),
                 start: item.start,
@@ -851,115 +889,7 @@ struct Translated {
     preludes: Vec<String>,
     status: &'static str,
     reason: Option<String>,
+    diagnostic: Option<crate::translation::diagnostics::TranslationError>,
     /// The signatures a translated item gives the other items of its module.
     signatures: Vec<External>,
-}
-
-fn translate_group(
-    group: &Group<'_>,
-    from: &str,
-    to: &str,
-    decorators: &DecoratorSet,
-    context: &Context,
-) -> Translated {
-    translate_group_bound(group, from, to, decorators, context, &HashMap::new())
-}
-
-fn translate_group_bound(
-    group: &Group<'_>,
-    from: &str,
-    to: &str,
-    decorators: &DecoratorSet,
-    context: &Context,
-    literal_bindings: &HashMap<String, SExpr>,
-) -> Translated {
-    let done = |code: String, status: &'static str| Translated {
-        code: Some(code),
-        preludes: Vec::new(),
-        status,
-        reason: None,
-        signatures: Vec::new(),
-    };
-    let (text, term) = match &group.kind {
-        GroupKind::Provenance => {
-            return Translated {
-                code: None,
-                preludes: Vec::new(),
-                status: "provenance",
-                reason: None,
-                signatures: Vec::new(),
-            };
-        }
-        GroupKind::Carried { language, lines } => {
-            if family(language) == family(to) {
-                return done(lines.join("\n"), "restored");
-            }
-            let mut code = vec![group.items[0].text.to_owned()];
-            code.extend(lines.iter().map(|line| source_line(line)));
-            return Translated {
-                reason: Some("carried from another language".to_owned()),
-                ..done(code.join("\n"), "carried")
-            };
-        }
-        GroupKind::Comment { text, term } => {
-            // A copied comment has no provenance, so it must also fit the source.
-            if group
-                .items
-                .iter()
-                .all(|item| comment_fits(item.text, from) && comment_fits(item.text, to))
-            {
-                return done(text.clone(), "comment");
-            }
-            return carry(text, term, from, "comment the target cannot hold");
-        }
-        GroupKind::Item { text, term } => (text, term),
-    };
-    if term == "ERROR" {
-        return carry(text, term, from, "syntax");
-    }
-    if from == "TypeScript" && to == "JavaScript" {
-        let erased = match erase_type_script(text) {
-            Ok(erased) => erased,
-            Err(error) => return carry(text, term, from, &error.reason),
-        };
-        let erased_code = erased.code.trim();
-        let count = top_level_items(erased_code, "JavaScript")
-            .iter()
-            .filter(|item| !item.comment)
-            .count();
-        let code = if count == 0 { "" } else { erased_code };
-        let mut lines = vec![format!(
-            "{TRANSLATED}{from} {term} items={count} sha256={}",
-            sha256(code)
-        )];
-        lines.extend(LINE_BREAK.split(text).map(source_line));
-        if !code.is_empty() {
-            lines.push(code.to_owned());
-        }
-        return done(lines.join("\n"), "translated");
-    }
-    let (emitted, signatures) = match emit_item(text, from, to, context, literal_bindings) {
-        Ok(Some(emitted)) => emitted,
-        Ok(None) => return carry(text, term, from, "top-level statement"),
-        Err(error) => {
-            return carry(
-                text,
-                term,
-                from,
-                if from == "TypeScript"
-                    || error.construct.as_deref() == Some("UTF16 Text representation")
-                {
-                    &error.reason
-                } else {
-                    error.kind.as_str()
-                },
-            );
-        }
-    };
-    record_translated_definitions(
-        (text, term, from, to, decorators),
-        emitted,
-        signatures,
-        None,
-    )
 }

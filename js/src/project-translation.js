@@ -4,10 +4,11 @@ import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { selfTranslate, selfTranslationLanguage, selfTranslationSignatures } from './self-translation.js';
 import { encodeStructuredDataLinks } from './structured-data-links.js';
+import { acceptProjectTranslationItem, readProjectTranslationFrontier,
+  acceptProjectTranslationSourceFamily, compareProjectTranslationIdentifiers } from './project-translation-rules.js';
 
 const fail = message => { throw new TypeError(`project translation: ${message}`); };
 const digest = source => createHash('sha256').update(source, 'utf8').digest('hex');
-const compare = (first, second) => first < second ? -1 : first > second ? 1 : 0;
 
 function sourceRecords(inputs, options) {
   if (!Array.isArray(inputs) || inputs.length === 0 || inputs.length > (options.moduleLimit ?? 10000)) fail('expected a bounded nonempty complete module inventory');
@@ -29,7 +30,7 @@ function sourceRecords(inputs, options) {
     return { identifier: input.identifier, language, source: input.source,
       sourceSha256: digest(input.source), sourceBytes: Buffer.byteLength(input.source), imports,
       options: input.options ?? {} };
-  }).sort((first, second) => compare(first.identifier, second.identifier));
+  }).sort((first, second) => compareProjectTranslationIdentifiers(first.identifier, second.identifier));
   for (const record of records) for (const dependency of record.imports) {
     if (!seen.has(dependency.identifier)) fail(`missing source ${dependency.identifier} imported by ${record.identifier}`);
   }
@@ -66,8 +67,10 @@ export function draftProjectTranslation(inputs, options = {}) {
   }
   const records = sourceRecords(inputs, options);
   let signatures = new Map(records.map(record => [record.identifier, []]));
-  const dependents = new Map(records.map(record => [record.identifier, new Set()]));
-  for (const record of records) for (const dependency of record.imports) dependents.get(dependency.identifier).add(record.identifier);
+  const identifiers = records.map(record => record.identifier), importers = [], providers = [];
+  for (const record of records) for (const dependency of record.imports) {
+    importers.push(record.identifier); providers.push(dependency.identifier);
+  }
   let pending = new Set(records.map(record => record.identifier));
   const passes = [];
   const limit = options.refinementLimit ?? records.length + 1;
@@ -88,7 +91,7 @@ export function draftProjectTranslation(inputs, options = {}) {
     passes.push({ pass, changed, refusals });
     signatures = next;
     if (changed.length === 0) { stable = true; break; }
-    pending = new Set(changed.flatMap(identifier => [...dependents.get(identifier)]));
+    pending = new Set(readProjectTranslationFrontier(identifiers, changed, importers, providers));
     if (pending.size === 0) { stable = true; break; }
   }
   const modules = records.map(record => {
@@ -97,10 +100,8 @@ export function draftProjectTranslation(inputs, options = {}) {
       imports: record.imports, signatures: signatures.get(record.identifier) };
     try {
       const translation = selfTranslate(record.source, record.language, targetLanguage, context(record, signatures, options));
-      const sameFamily = record.language === targetLanguage
-        || record.language === 'JavaScript' && targetLanguage === 'TypeScript';
-      const gaps = translation.items.filter(item => !['translated', 'comment', 'provenance'].includes(item.status)
-        && !(sameFamily && item.status === 'kept'));
+      const sameFamily = acceptProjectTranslationSourceFamily(record.language, targetLanguage);
+      const gaps = translation.items.filter(item => !acceptProjectTranslationItem(item.status, sameFamily));
       if (!stable) gaps.push({ diagnostic: { name: 'DependencyRefinementGap', message: 'Source signature refinement did not converge within the explicit budget.' } });
       return { ...base, items: translation.items, gaps,
         // Partial carried envelopes are retained as diagnostics. A consumer

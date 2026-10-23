@@ -49,6 +49,7 @@ pub(super) fn record_translated_definitions(
         preludes: emitted.preludes,
         status: "translated",
         reason: None,
+        diagnostic: None,
         signatures,
     }
 }
@@ -61,6 +62,7 @@ pub(super) fn carry(text: &str, term: &str, from: &str, reason: &str) -> Transla
         preludes: Vec::new(),
         status: "carried",
         reason: Some(reason.to_owned()),
+        diagnostic: None,
         signatures: Vec::new(),
     }
 }

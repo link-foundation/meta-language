@@ -697,6 +697,7 @@ impl super::Binder<'_, '_> {
                     preludes: whole.emitted.preludes.clone(),
                     status: "translated",
                     reason: None,
+                    diagnostic: None,
                     signatures: whole
                         .signatures
                         .iter()
