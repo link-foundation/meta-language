@@ -89,6 +89,33 @@ pub fn create_global_concept_space_parser(
 }
 
 impl GlobalConceptSpaceParser {
+    /// Internal storage adapter entry after complete discovered-graph validation.
+    pub(crate) fn from_validated_sources(
+        sources: &[GlobalConceptSource],
+        space: serde_json::Value,
+        source_identifier: &str,
+        mut options: FeatureParseOptions,
+    ) -> Result<Self, GrammarRuntimeError> {
+        require_global_concept_parser_options(&options)?;
+        let grammar = sources
+            .iter()
+            .find(|source| source.id == source_identifier)
+            .ok_or_else(|| GrammarRuntimeError {
+                reason: "selection",
+                message: "an archived grammar needs an exact existing source identifier".to_owned(),
+            })?;
+        let resolve = |name: &str| {
+            sources
+                .iter()
+                .find(|source| source.id == name)
+                .map(|source| source.grammar.clone())
+        };
+        options.grammar_name = Some(source_identifier.to_owned());
+        options.global_concept_space = Some(space);
+        let parser = compile_feature_grammar(&grammar.grammar, Some(&resolve), options)?;
+        Ok(Self { parser })
+    }
+
     /// Parses with the archive's identity, preserving ordinary CST and budgets.
     ///
     /// # Errors

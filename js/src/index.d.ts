@@ -1940,6 +1940,7 @@ export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLi
 export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
 
 export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'grammar'
+  | 'language configuration'
   | 'global concept space' | 'formal concept definition' | 'ontology' | 'taxonomy'
   | 'resource description graph' | 'resource description dataset' | 'typed program'
   | 'discovered concepts' | 'decorators' | 'grammar inference';
@@ -1959,12 +1960,14 @@ export interface ReconstructedMetaLanguageArchive {
   entries: MetaLanguageArchiveEntry[];
   networks: LinkNetwork[];
 }
+export interface LoadedMetaLanguageArchive extends MetaLanguageArchive, ReconstructedMetaLanguageArchive {}
 export function createMetaLanguageArchive(entries: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive;
 export function readMetaLanguageArchive(network: LinkNetwork, root: LinkIdValue, options?: MetaLanguageArchiveLimits): ReconstructedMetaLanguageArchive;
 export function metaLanguageArchiveToText(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): string;
-export function readMetaLanguageArchiveText(text: string, options?: MetaLanguageArchiveLimits): MetaLanguageArchive & ReconstructedMetaLanguageArchive;
+export function readMetaLanguageArchiveNetworkText(text: string, options?: MetaLanguageArchiveLimits): LinkNetwork;
+export function readMetaLanguageArchiveText(text: string, options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
 export function metaLanguageArchiveToBinary(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits): Uint8Array;
-export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): MetaLanguageArchive & ReconstructedMetaLanguageArchive;
+export function readMetaLanguageArchiveBinary(bytes: Uint8Array | readonly number[], options?: MetaLanguageArchiveLimits): LoadedMetaLanguageArchive;
 export function extendMetaLanguageArchive(archive: MetaLanguageArchive, additions: MetaLanguageArchiveEntry[], options?: MetaLanguageArchiveLimits & { replace?: boolean; remove?: string[] }): MetaLanguageArchive;
 
 export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
@@ -1976,10 +1979,13 @@ export interface DynamicMetaLanguageOptions extends MetaLanguageArchiveLimits {
 }
 export class DynamicMetaLanguage {
   constructor(archive: MetaLanguageArchive, options?: MetaLanguageArchiveLimits);
-  archive: MetaLanguageArchive;
-  entries: MetaLanguageArchiveEntry[];
-  sources: GlobalConceptSource[];
-  space: GlobalConceptSpace;
+  readonly archive: MetaLanguageArchive;
+  readonly entries: MetaLanguageArchiveEntry[];
+  readonly sources: GlobalConceptSource[];
+  readonly space: GlobalConceptSpace;
+  readonly formalDefinitions: Record<string, FormalConceptArchive>;
+  readonly configuration: { schemaVersion: 1; records: ConceptRecord[]; equivalences: [string, string][] };
+  readonly limits: Required<MetaLanguageArchiveLimits> & { depthLimit: number };
   parser(sourceIdentifier: string, options?: Record<string, unknown>): {
     parse(input: string, overrides?: Record<string, unknown>): unknown;
     parseTree(input: string, overrides?: Record<string, unknown>): unknown;

@@ -1,6 +1,6 @@
 // Text output remains Links Notation. Binary output is the actual graph codec.
-import { LinkNetwork } from './network.js';
 import { createMetaLanguageArchive, readMetaLanguageArchiveText,
+  readMetaLanguageArchiveNetworkText,
   readMetaLanguageArchiveBinary, metaLanguageArchiveToText,
   metaLanguageArchiveToBinary, extendMetaLanguageArchive } from './meta-language-archive.js';
 import { structuredDataToLino } from './structured-data-links.js';
@@ -27,7 +27,7 @@ export function runMetaLanguageArchiveCommand(args, { readFile, readBytes }) {
       else if (option === '--entry' && ['pack', 'extend'].includes(command) && index + 4 < rest.length) {
         const identifier = rest[++index], kind = rest[++index], root = rest[++index], path = rest[++index];
         if (!/^[1-9][0-9]*$/u.test(root)) throw new TypeError('an entry root needs a positive decimal identity');
-        if (!networks.has(path)) networks.set(path, LinkNetwork.fromLino(readFile(path)));
+        if (!networks.has(path)) networks.set(path, readMetaLanguageArchiveNetworkText(readFile(path)));
         entries.push({ identifier, kind, root, network: networks.get(path) });
       } else if (!option.startsWith('--') && file === undefined && command !== 'pack') file = option;
       else throw new TypeError(`unexpected archive argument ${option}`);

@@ -1362,23 +1362,33 @@ Full reconstruction records latency and resource use on pinned inputs, with the
 representation, input size and execution environment attached to the measurements.
 Lazy loading and token-only envelopes do not count as a measured complete rebuild;
 the qualitative speed requirement does not invent a numeric deadline.
-The complete-graph JavaScript archive draft copies actual networks in two
+The complete-graph JavaScript and Rust archive drafts copy actual networks in two
 passes, retaining cycles, disconnected members, original source identities,
 exact registrations, selected syntax and allocator state. An explicit linked
 descriptor selects the source groups and entry roots. Entries using the same
 source network retain shared identities; independent networks keep separate
 identities. Text and binary operations reload the whole graph eagerly, and
 extensions select replacements and removals explicitly. Canonical text loading
-is streamed under node, reference and byte limits and retains all four stored
-parse flags independently. The public archive CLI packs, lists, selects and
+is streamed under node, reference and byte limits and retains exact supported
+parse flags. The public archive CLI packs, lists, selects and
 extends these graphs. The dynamic session draft uses archived discovered
 grammars and formal premises with the existing native compiler and common
 concept verifier. Its default parse product is the complete concrete tree,
 including mapped source planes and recursive grammar provenance. An optional
-abstract projection retains that concrete product. Complete native counterparts,
-formal definitions for the remaining concepts, link-cli workload integration
-and reconstruction measurements remain implementation obligations. These new
-drafts have no execution evidence.
+abstract projection retains that concrete product. Both runtimes retain private
+linked session snapshots; exported views cannot mutate their grammar context.
+Derived parser caches may be discarded without losing authoritative data.
+Saved concrete products pin complete historical definition and configuration
+roots, parser options and decorator records. Replacing a grammar creates a new
+context while retaining older products and their source selections. Fingerprints
+bind these exact contexts without asserting semantic equivalence. Snapshot
+replacement is explicit, and structured encoders use the caller's finite budgets.
+Shared archive and snapshot policies are generated automatically from JavaScript;
+native adapters copy actual graph structures and invoke the existing compiler
+and concept verifier. Formal definitions for the remaining concepts, complete
+built-in abstract projections, link-cli workload integration and reconstruction
+measurements remain implementation obligations. These drafts have no execution
+evidence.
 The current binary graph primitive writes a versioned meta-language archive of
 actual link identities, references, supported metadata, exact term-map keys,
 selected syntax and the next allocation identity. Shared framing rules are

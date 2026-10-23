@@ -12,6 +12,8 @@ mod discovered_concept_links;
 mod discovered_concept_rules;
 pub mod document_formatting;
 mod docx_parser;
+mod dynamic_meta_language;
+mod dynamic_meta_language_rules;
 mod embedded_region_parser;
 mod formal_concept_definition;
 mod formal_function_links;
@@ -39,6 +41,8 @@ mod link_network_binary_rules;
 mod lino_grammar;
 mod lino_parser;
 pub mod lino_serialization;
+mod meta_language_archive;
+mod meta_language_archive_rules;
 pub mod mixed_regions;
 mod natural_language;
 mod natural_language_grammar;
@@ -123,6 +127,10 @@ pub use document_formatting::{
     docx_profile_is_recognized, parse_docx_document, parse_docx_package, parse_markup_document,
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
+};
+pub use dynamic_meta_language::{
+    DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult,
+    create_dynamic_meta_language,
 };
 pub use formal_concept_definition::{
     FormalConceptArchive, FormalConceptDefinitionInput, FormalConceptDefinitionOptions,
@@ -265,6 +273,13 @@ pub use link_network_binary::{
 };
 pub use lino_parser::LinksNotationReading;
 pub use lino_serialization::LinoSerializationError;
+pub use meta_language_archive::{
+    LoadedMetaLanguageArchive, MetaLanguageArchive, MetaLanguageArchiveEntry,
+    MetaLanguageArchiveLimits, ReconstructedMetaLanguageArchive, create_meta_language_archive,
+    extend_meta_language_archive, meta_language_archive_to_binary, meta_language_archive_to_text,
+    read_meta_language_archive, read_meta_language_archive_binary,
+    read_meta_language_archive_network_text, read_meta_language_archive_text,
+};
 pub use mixed_regions::{
     EmbeddedRegion, detect_embedded_regions, detect_embedded_regions_in_tree, script_language,
     sniff_language,
@@ -352,10 +367,11 @@ pub use structured_data_links::{
     StructuredDataLinks, StructuredDataLinksLimits, StructuredDataValue,
     decode_structured_data_links, decode_structured_data_links_ordered,
     decode_structured_data_links_ordered_with_limits, decode_structured_data_links_with_limits,
-    encode_structured_data_links, encode_structured_data_links_ordered, read_structured_data_lino,
-    read_structured_data_lino_ordered, read_structured_data_lino_ordered_with_limits,
-    read_structured_data_lino_with_limits, structured_data_to_lino,
-    structured_data_to_lino_ordered,
+    encode_structured_data_links, encode_structured_data_links_ordered,
+    encode_structured_data_links_ordered_with_limits, encode_structured_data_links_with_limits,
+    read_structured_data_lino, read_structured_data_lino_ordered,
+    read_structured_data_lino_ordered_with_limits, read_structured_data_lino_with_limits,
+    structured_data_to_lino, structured_data_to_lino_ordered,
 };
 pub use structured_data_records::{
     read_structured_data_records, read_structured_data_records_ordered,

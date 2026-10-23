@@ -1,7 +1,9 @@
 use std::collections::BTreeSet;
 use std::fs;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
+mod archive_cli;
 
 use clap::{Parser, Subcommand, ValueEnum};
 
@@ -27,6 +29,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Pack, select and extend complete graph archives; run archive help.
+    #[command(disable_help_flag = true)]
+    Archive {
+        /// Archive operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Print the built-in self-description roots.
     Describe,
     /// Import, validate, convert, merge, rename, export and round-trip
@@ -232,6 +241,14 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::Archive { args } => {
+            let output = archive_cli::run(&args);
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
         Command::Describe => describe(),
         Command::Grammar { args } => grammar(&args),
         Command::Translate {

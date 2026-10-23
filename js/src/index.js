@@ -23,6 +23,7 @@ export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './disc
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
+  readMetaLanguageArchiveNetworkText,
   readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,
   extendMetaLanguageArchive } from './meta-language-archive.js';
 export { DynamicMetaLanguage, createDynamicMetaLanguage } from './dynamic-meta-language.js';

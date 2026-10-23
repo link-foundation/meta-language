@@ -6,19 +6,35 @@ import { encodeStructuredDataLinks, decodeStructuredDataLinks } from './structur
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 import { StreamParser } from 'links-notation';
 import { decodeCanonicalStatements } from './lino-serialization.js';
+import { readMetaLanguageArchiveLanguage, readMetaLanguageArchiveTerm,
+  readMetaLanguageArchiveRecordFields,
+  acceptMetaLanguageArchiveKind, acceptMetaLanguageArchiveVersion,
+  acceptMetaLanguageArchiveNextIdentity, acceptMetaLanguageArchiveEntryGroup,
+  acceptMetaLanguageArchiveFlags } from './meta-language-archive-rules.js';
 
-const language = 'meta-language complete graph archive';
-const rootTerm = 'complete meta-language archive';
-const groupTerm = 'complete source network';
-const kinds = new Set(['concrete syntax', 'abstract syntax', 'grammar',
-  'global concept space', 'formal concept definition', 'ontology', 'taxonomy',
-  'resource description graph', 'resource description dataset', 'typed program',
-  'discovered concepts', 'decorators', 'grammar inference']);
+const language = readMetaLanguageArchiveLanguage();
+const rootTerm = readMetaLanguageArchiveTerm('root');
+const groupTerm = readMetaLanguageArchiveTerm('group');
 const encoder = new TextEncoder();
 const identity = value => LinkId.from(value).asU64();
 const fail = message => { throw new TypeError(`meta-language archive: ${message}`); };
 const metadata = term => new LinkMetadata({ linkType: LinkType.Semantic,
   named: true, term, language });
+
+function compareTextBytes(first, second) {
+  const left = encoder.encode(first), right = encoder.encode(second);
+  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
+    if (left[index] !== right[index]) return left[index] - right[index];
+  }
+  return left.length - right.length;
+}
+
+function recordShape(value, role) {
+  const fields = readMetaLanguageArchiveRecordFields(role).split('|');
+  if (!value || typeof value !== 'object' || Array.isArray(value)
+    || fields[0] === '' || Object.keys(value).length !== fields.length
+    || fields.some(field => !Object.hasOwn(value, field))) fail('invalid archive record shape');
+}
 
 function bounds(options) {
   const result = { nodeLimit: options.nodeLimit ?? 100000,
@@ -39,8 +55,9 @@ function inspect(network, limits) {
   let references = 0, bytes = 0;
   for (const link of links) {
     const data = link.metadata();
-    if (!Object.values(LinkType).includes(data.linkType) || typeof data.named !== 'boolean'
+    if (data.linkType !== undefined && !Object.values(LinkType).includes(data.linkType) || typeof data.named !== 'boolean'
       || !['isError', 'hasError', 'isMissing', 'isExtra'].every(flag => typeof data.flags?.[flag] === 'boolean')) fail('invalid graph metadata profile');
+    if (!acceptMetaLanguageArchiveFlags(data.flags.isError, data.flags.hasError, data.flags.isMissing)) fail('invalid parse status relationship');
     if (data.span) {
       const { byteRange, start, end } = data.span;
       if (![byteRange?.start, byteRange?.end, start?.row, start?.column, end?.row, end?.column]
@@ -59,13 +76,13 @@ function inspect(network, limits) {
     }
     if (references > limits.referenceLimit || bytes > limits.byteLimit) fail('graph resource limit exceeded');
   }
-  if (!Number.isSafeInteger(network._nextId) || network._nextId < 1
-    || links.some(link => identity(link.id()) >= network._nextId)) fail('invalid allocator state');
+  const maximum = links.reduce((value, link) => Math.max(value, identity(link.id())), 0);
+  if (!acceptMetaLanguageArchiveNextIdentity(network._nextId, maximum)) fail('invalid allocator state');
   const terms = [...network._terms].map(([term, id]) => {
     if (typeof term !== 'string' || !term.isWellFormed() || !identities.has(identity(id))) fail('invalid term registration');
     bytes += encoder.encode(term).length;
     return { term, identity: identity(id) };
-  });
+  }).sort((first, second) => compareTextBytes(first.term, second.term));
   const syntax = [...network._conceptSyntax].map(([key, value]) => {
     if (typeof key !== 'string' || typeof value !== 'string'
       || !key.isWellFormed() || !value.isWellFormed()) fail('invalid selected syntax');
@@ -73,7 +90,7 @@ function inspect(network, limits) {
     if (at < 0 || key.indexOf('\0', at + 1) !== -1) fail('ambiguous selected syntax key');
     bytes += encoder.encode(key).length + encoder.encode(value).length;
     return { concept: key.slice(0, at), language: key.slice(at + 1), value };
-  });
+  }).sort((first, second) => compareTextBytes(first.concept, second.concept) || compareTextBytes(first.language, second.language));
   if (bytes > limits.byteLimit) fail('byte resource limit exceeded');
   return { links, state: { identities: links.map(link => identity(link.id())),
     nextIdentity: network._nextId, terms, syntax } };
@@ -95,7 +112,7 @@ function copy(target, source, limits) {
 
 function entryRecord(entry, group) {
   if (!entry || typeof entry.identifier !== 'string' || entry.identifier.length === 0
-    || !entry.identifier.isWellFormed() || !kinds.has(entry.kind)) fail('invalid entry identifier or kind');
+    || !entry.identifier.isWellFormed() || !acceptMetaLanguageArchiveKind(entry.kind)) fail('invalid entry identifier or kind');
   const root = identity(entry.root);
   if (!entry.network.link(root)) fail('entry root is absent');
   return { identifier: entry.identifier, kind: entry.kind, group, root };
@@ -140,6 +157,7 @@ function references(network, root, term) {
 }
 
 function restore(network, inventory, state, claimed, limits) {
+  recordShape(state, 'group');
   if (!state || !Array.isArray(state.identities) || !Array.isArray(state.terms)
     || !Array.isArray(state.syntax) || inventory.length !== state.identities.length) fail('invalid source network descriptor');
   const mapping = new Map(), original = new Set();
@@ -162,11 +180,13 @@ function restore(network, inventory, state, claimed, limits) {
     result.insertLinkWithOptionalId(mapping.get(identity(id)), targets, link.metadata().clone());
   }
   for (const record of state.terms) {
+    recordShape(record, 'term');
     if (!record || typeof record.term !== 'string' || !original.has(identity(record.identity))
       || result._terms.has(record.term)) fail('invalid or duplicate term registration');
     result._terms.set(record.term, LinkId.from(record.identity));
   }
   for (const record of state.syntax) {
+    recordShape(record, 'syntax');
     if (!record || !['concept', 'language', 'value'].every(field => typeof record[field] === 'string')
       || record.concept.includes('\0') || record.language.includes('\0')) fail('invalid selected syntax');
     const key = `${record.concept}\0${record.language}`;
@@ -207,14 +227,16 @@ export function readMetaLanguageArchive(network, root, options = {}) {
     descriptorNetwork.insertLinkWithOptionalId(id, link.references(), link.metadata().clone());
   }
   const descriptor = decodeStructuredDataLinks(descriptorNetwork, roots[0], limits);
-  if (descriptor?.schemaVersion !== 1 || !Array.isArray(descriptor.entries)
+  recordShape(descriptor, 'descriptor');
+  if (!acceptMetaLanguageArchiveVersion(descriptor?.schemaVersion) || !Array.isArray(descriptor.entries)
     || !Array.isArray(descriptor.groups) || descriptor.groups.length !== roots.length - 1
     || descriptor.entries.length === 0) fail('invalid archive descriptor');
   const groups = descriptor.groups.map((state, index) => restore(network,
     references(network, roots[index + 1], groupTerm), state, claimed, limits));
   const names = new Set(), used = new Set();
   const entries = descriptor.entries.map(record => {
-    if (!record || !Number.isSafeInteger(record.group) || record.group < 0 || record.group >= groups.length) fail('invalid entry source group');
+    recordShape(record, 'entry');
+    if (!record || !acceptMetaLanguageArchiveEntryGroup(record.group, groups.length)) fail('invalid entry source group');
     const entry = { ...record, network: groups[record.group] };
     entryRecord(entry, record.group);
     if (names.has(record.identifier)) fail('duplicate entry identifier');
@@ -241,7 +263,7 @@ function findRoot(network) {
   return roots[0];
 }
 
-export function readMetaLanguageArchiveText(text, options = {}) {
+export function readMetaLanguageArchiveNetworkText(text, options = {}) {
   const limits = bounds(options);
   if (typeof text !== 'string' || encoder.encode(text).length > limits.byteLimit) fail('invalid or oversized Links text');
   const network = new LinkNetwork(), seen = new Set();
@@ -261,7 +283,7 @@ export function readMetaLanguageArchiveText(text, options = {}) {
       fields.set(field.id, field);
     }
     const named = fields.get('n');
-    if (!fields.has('t') || !named || named.values.length !== 1
+    if (!named || named.values.length !== 1
       || !['0', '1'].includes(named.values[0].id)) fail('missing or invalid graph metadata');
     referenceCount += statement.values.filter(value => value.values.length === 0).length;
     if (referenceCount > limits.referenceLimit) fail('reference resource limit exceeded');
@@ -277,10 +299,17 @@ export function readMetaLanguageArchiveText(text, options = {}) {
         hasError: Math.floor(bits / 2) % 2 === 1, isMissing: Math.floor(bits / 4) % 2 === 1,
         isExtra: Math.floor(bits / 8) % 2 === 1 }));
     }
-    network.insertLinkWithOptionalId(record.id, record.references, record.metadata);
+    const id = network.insertLinkWithOptionalId(record.id, record.references, record.metadata);
+    if (record.registered && record.metadata.term !== undefined) network._terms.set(record.metadata.term, id);
   });
   for (let at = 0; at < text.length; at += 8192) parser.write(text.slice(at, at + 8192));
   parser.end();
+  inspect(network, limits);
+  return network;
+}
+
+export function readMetaLanguageArchiveText(text, options = {}) {
+  const network = readMetaLanguageArchiveNetworkText(text, options);
   const root = findRoot(network);
   return { network, root, ...readMetaLanguageArchive(network, root, options) };
 }

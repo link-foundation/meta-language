@@ -18,6 +18,8 @@ export function readDevelopmentAuthoringPlan(){
    stage('declaration dependency native rules','js/scripts/generate-declaration-dependency-rules.mjs',['--native']),
    stage('complete Number bitwise program','js/scripts/generate-number-bitwise-rules.mjs'),
    stage('independent semantic source grouping','js/scripts/generate-semantic-input-rules.mjs',['--draft']),
+   stage('complete graph archive native rules','js/scripts/generate-meta-language-archive-rules.mjs',['--draft']),
+   stage('dynamic language snapshot native rules','js/scripts/generate-dynamic-meta-language-rules.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),
    stage('Rust diagnostic attributes','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native']),
    stage('grammar selection included ranges','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native']),
