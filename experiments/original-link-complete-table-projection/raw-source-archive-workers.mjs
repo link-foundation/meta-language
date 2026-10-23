@@ -76,3 +76,39 @@ export async function replayOriginalLinkRawSourceArchives(sources,environment=pr
   process.stdout.write('Raw source archive capacity: workers='+concurrency+'; processors='+processors+'; freeBytes='+availableBytes+'; heapMiB=1024\n');
   return runOriginalLinkRawArchiveJobs(sources,runOriginalLinkRawArchiveWorker,concurrency,3);
 }
+
+/** Prepare sources serially while already prepared sources use bounded workers.
+ * No result escapes until every factory and complete worker has settled. */
+export async function runOriginalLinkRawArchivePreparationJobs(prepare,invoke,concurrency){
+ assert.ok(Array.isArray(prepare));const count=prepare.length;assert.ok(count>0&&count<=3);
+ assert.equal(typeof invoke,'function');assert.ok(Number.isSafeInteger(concurrency)&&concurrency>=1&&concurrency<=3);
+ const input=[];
+ for(let index=0;index<count;index++){assert.ok(Object.hasOwn(prepare,index));const factory=prepare[index];assert.equal(typeof factory,'function');input.push(factory);}
+ const sources=new Array(count),receipts=new Array(count),failures=[],active=new Set();
+ for(let index=0;index<count;index++){
+  while(active.size>=concurrency)await Promise.race(active);
+  try{
+   const source=await input[index]();
+   assert.equal(typeof source,'string');assert.equal(source.isWellFormed(),true);assert.ok(Buffer.byteLength(source)<=1024*1024);
+   sources[index]=source;
+   // Invoke synchronously so the real worker starts before the next CPU-bound
+   // factory runs on the coordinator. Only its result is asynchronous.
+   const result=invoke(source,index);
+   const pending=Promise.resolve(result).then(receipt=>{receipts[index]=receipt;},error=>{failures.push({index,error});}).finally(()=>active.delete(pending));
+   active.add(pending);
+  }catch(error){failures.push({index,error});}
+ }
+ await Promise.all(active);
+ if(failures.length)throw new AggregateError(failures.sort((a,b)=>a.index-b.index).map(row=>row.error),'complete source archive preparation or replay failed');
+ return{sources,receipts};
+}
+
+/** Every archive still completes before fixture/matrix allocation. Reserve one
+ * additional GiB for overlapping coordinator preparation; worker heaps stay. */
+export async function prepareOriginalLinkRawSourceArchives(prepare,environment=process.env){
+ assert.equal(environment.CI,'true','complete source archive workers require CI=true');
+ const processors=availableParallelism(),availableBytes=freemem();
+ const concurrency=readOriginalLinkRawArchiveCapacity(processors,Math.max(0,availableBytes-1024**3),environment.META_LANGUAGE_JOBS);
+ process.stdout.write('Raw source archive preparation capacity: workers='+concurrency+'; processors='+processors+'; freeBytes='+availableBytes+'; coordinatorReserveMiB=1024; heapMiB=1024\n');
+ return runOriginalLinkRawArchivePreparationJobs(prepare,runOriginalLinkRawArchiveWorker,concurrency);
+}

@@ -337,7 +337,7 @@ pub fn encode_formal_concept_definition(
 
 // Private graph constructor for the additive declaration-value entry API.
 // The public options type and original wrapper constructor remain unchanged.
-pub(crate) fn encode_formal_function_declaration_context(
+pub fn encode_formal_function_declaration_context(
     network: &LinkNetwork,
     typed_root: LinkId,
     entry_declaration: LinkId,

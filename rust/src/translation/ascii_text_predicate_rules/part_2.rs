@@ -143,26 +143,25 @@ pub fn plan_rust_ascii_character_callback(
     characters: &[f64],
     start: f64,
 ) -> Vec<f64> {
-    if (((((kinds.len() as f64) != (values.len() as f64))
+    if ((((((kinds.len() as f64) != (values.len() as f64))
         || ((kinds.len() as f64) != (characters.len() as f64)))
         || !(self::ml_math::is_integer(start)))
         || (start < 0f64))
-        || (start >= (kinds.len() as f64))
+        || (start >= (kinds.len() as f64)))
+        || (!(match (
+            self::ml_array::optional_at(kinds, self::ml_array::number_index(start)),
+            self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
+        ) {
+            (Some(ml_left), ml_right) => ml_left == ml_right,
+            _ => false,
+        }) || !(match (
+            self::ml_array::optional_at(values, self::ml_array::number_index(start)),
+            self::ml_string::Text::from_units(vec![124]),
+        ) {
+            (Some(ml_left), ml_right) => ml_left == ml_right,
+            _ => false,
+        }))
     {
-        Vec::<f64>::new()
-    } else if !(match (
-        self::ml_array::optional_at(kinds, self::ml_array::number_index(start)),
-        self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
-    ) {
-        (Some(ml_left), ml_right) => ml_left == ml_right,
-        _ => false,
-    }) || !(match (
-        self::ml_array::optional_at(values, self::ml_array::number_index(start)),
-        self::ml_string::Text::from_units(vec![124]),
-    ) {
-        (Some(ml_left), ml_right) => ml_left == ml_right,
-        _ => false,
-    }) {
         Vec::<f64>::new()
     } else {
         {
@@ -184,18 +183,18 @@ pub fn plan_rust_ascii_character_callback(
                         {
                             let index = 0f64;
                             {
-                                let ml_s1 = self::ml_plan_rust_ascii_character_callback_loop1(
+                                let ml_s11 = self::ml_plan_rust_ascii_character_callback_loop1(
                                     &(parameter),
                                     index,
                                 );
-                                match ml_s1 {
+                                match ml_s11 {
                                         self::MlPlanRustAsciiCharacterCallbackLoop1Result::MlPlanRustAsciiCharacterCallbackLoop1Done => {
                                             {
                                                 let at_2 = at + 1f64;
                                                 {
                                                     let annotation = -1f64;
                                                     {
-                                                        let ml_s2 = if match (self::ml_array::optional_at(kinds, self::ml_array::number_index(at_2)), self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (self::ml_array::optional_at(values, self::ml_array::number_index(at_2)), self::ml_string::Text::from_units(vec![58])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
+                                                        let ml_s22 = if match (self::ml_array::optional_at(kinds, self::ml_array::number_index(at_2)), self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (self::ml_array::optional_at(values, self::ml_array::number_index(at_2)), self::ml_string::Text::from_units(vec![58])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
                                                             {
                                                                 let at_3 = at_2 + 1f64;
                                                                 {
@@ -213,7 +212,7 @@ pub fn plan_rust_ascii_character_callback(
                                                         } else {
                                                             self::MlPlanRustAsciiCharacterCallbackJoin2::MlPlanRustAsciiCharacterCallbackJoin2Next(at_2, annotation)
                                                         };
-                                                        match ml_s2 {
+                                                        match ml_s22 {
                                                             self::MlPlanRustAsciiCharacterCallbackJoin2::MlPlanRustAsciiCharacterCallbackJoin2Next(at_5, annotation_3) => {
                                                                 if !(match (self::ml_array::optional_at(kinds, self::ml_array::number_index(at_5)), self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) || !(match (self::ml_array::optional_at(values, self::ml_array::number_index(at_5)), self::ml_string::Text::from_units(vec![124])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false }) {
                                                                     Vec::<f64>::new()
@@ -225,8 +224,8 @@ pub fn plan_rust_ascii_character_callback(
                                                                             {
                                                                                 let literals = Vec::<f64>::new();
                                                                                 {
-                                                                                    let ml_s3 = self::ml_plan_rust_ascii_character_callback_loop3(kinds, values, characters, at_6, &(parameter), annotation_3, methods, literals);
-                                                                                    match ml_s3 {
+                                                                                    let ml_s33 = self::ml_plan_rust_ascii_character_callback_loop3(kinds, values, characters, at_6, &(parameter), annotation_3, methods, literals);
+                                                                                    match ml_s33 {
                                                                                         self::MlPlanRustAsciiCharacterCallbackLoop3Result::MlPlanRustAsciiCharacterCallbackLoop3Done => {
                                                                                             Vec::<f64>::new()
                                                                                         }
@@ -308,7 +307,8 @@ pub fn ml_plan_rust_ascii_character_callback_loop6(
                             }
                         }
                     }
-                } else {
+                }
+                {
                     {
                         let index_3 = index + 1f64;
                         {
@@ -419,7 +419,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop3(
                 {
                     let at_2 = at + 1f64;
                     {
-                        let ml_s4 = if match (
+                        let ml_s44 = if match (
                             self::ml_array::optional_at(kinds, self::ml_array::number_index(at_2)),
                             self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]),
                         ) {
@@ -641,7 +641,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop3(
                                 }
                             }
                         };
-                        match ml_s4 {
+                        match ml_s44 {
                             self::MlPlanRustAsciiCharacterCallbackJoin4::MlPlanRustAsciiCharacterCallbackJoin4Next(at_9, methods_4, literals_4) => {
                                 if match (self::ml_array::optional_at(kinds, self::ml_array::number_index(at_9)), self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } && match (self::ml_array::optional_at(values, self::ml_array::number_index(at_9)), self::ml_string::Text::from_units(vec![124, 124])) { (Some(ml_left), ml_right) => ml_left == ml_right, _ => false } {
                                     {
@@ -714,8 +714,7 @@ pub fn ml_plan_rust_ascii_character_callback_loop1(
                             f64::NAN
                         } else {
                             ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                .clone()
-                                .unwrap_or_else(|| f64::NAN)
+                                .unwrap_or(f64::NAN)
                         }
                     }
                 }))(parameter.clone(), index),

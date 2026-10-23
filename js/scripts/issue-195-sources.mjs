@@ -19,8 +19,8 @@ export const ISSUE_195_SOURCE_REGISTER_PATH = 'parity/issue-195-sources.json';
 export const ISSUE_195_SOURCE_REGISTER_SCHEMA_VERSION = 1;
 
 const REPOSITORY = 'link-foundation/meta-language';
-export const TRACKED_ISSUES = Object.freeze([195, 199, 224]);
-export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226]);
+export const TRACKED_ISSUES = Object.freeze([195, 199, 224, 227]);
+export const TRACKED_PULL_REQUESTS = Object.freeze([196, 201, 226, 228]);
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Actual direct conversation captures. Appending these declarations never
@@ -81,6 +81,27 @@ export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
     title: 'Finish all existing agents and continue the current phase alone',
     role: 'Latest direct user instruction supersedes the earlier three-agent allowance for this task phase: allow existing agents to finish and continue as coordinator without spawning or reactivating agents.',
     ledgerCoverage: ['I195-WORKFLOW-GRADUAL-AGENT-REDUCTION'],
+  },
+  {
+    id: 'checkpoint-merge-and-continuation-issue-2026-10-22',
+    key: 'checkpointMergeRequest',
+    title: 'Merge the meaningful checkpoint and preserve every remaining requirement in a continuation issue',
+    role: 'Explicit one-time authorization to merge PR 226 at a meaningful step and create issue 227 without dropping unfinished requirements; subsequent checks and full-delivery obligations remain binding.',
+    ledgerCoverage: ['I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS'],
+  },
+  {
+    id: 'development-acceleration-2026-10-23',
+    key: 'developmentAccelerationRequest',
+    title: 'Minimize repeated actions through shared automation and continue the complete translator in the next pull request',
+    role: 'Direct user request to improve development speed by maximizing useful changes per action, deliver a fully working translator and every remaining requirement, and continue in the next pull request.',
+    ledgerCoverage: ['I195-WORKFLOW-AUTOMATION-FIRST-COVERAGE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE', 'I195-WORKFLOW-BULK-EXACT-SCOPE'],
+  },
+  {
+    id: 'continuous-requirement-delivery-2026-10-23',
+    key: 'continuousRequirementDeliveryRequest',
+    title: 'Continue implementing requirements rather than stopping after a draft or status update',
+    role: 'Latest direct user correction requires persistent implementation and CI repair in the current continuation; drafting, opening a pull request or reporting CI status does not satisfy delivery.',
+    ledgerCoverage: ['I195-WORKFLOW-FAST-CONTINUOUS-PROGRESS', 'I195-WORKFLOW-BULK-EXACT-SCOPE', 'I195-TRANSLATION-OWN-CODEBASE-BASELINE'],
   },
 ].map(source => Object.freeze({ ...source, ledgerCoverage: Object.freeze(source.ledgerCoverage) })));
 
@@ -299,9 +320,18 @@ export function refreshRegister(register, { issue, issues = [], comments }) {
     if (!current) return entry;
     return { ...entry, ...revisionOf(current), title: entry.title || sourceTitle(current.body) };
   };
+  const requirementSources = register.requirementSources.map(refresh);
+  const continuation = issues.find(source => source.number === 227);
+  if (continuation && !requirementSources.some(source => source.id === 227)) {
+    requirementSources.push({id:227,key:'checkpointContinuationIssue',kind:'issue',
+      url:'https://github.com/link-foundation/meta-language/issues/227',
+      title:'Continue every inherited requirement after the PR 226 checkpoint',
+      role:'Complete continuation of all original ledger obligations, CI repairs and preserved drafts; the priority is complete JavaScript and Rust parsing, emission and bidirectional own-codebase translation.',
+      ledgerCoverage:['I195-'],...revisionOf(continuation)});
+  }
   return {
     ...register,
-    requirementSources: register.requirementSources.map(refresh),
+    requirementSources,
     statusReports: register.statusReports.map(refresh),
   };
 }

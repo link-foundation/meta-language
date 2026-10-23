@@ -40,6 +40,7 @@ pub(super) struct Scan {
     empty_class_declaration: Option<[usize; 4]>,
     // Certified complete actual CST: 1=class definition, 2=const function value.
     deferred_binding: Option<u8>,
+    inert_binding: Option<u8>,
     mentions: Vec<String>,
     imports: Option<ImportScan>,
 }
@@ -71,6 +72,11 @@ fn scan_item(text: &str) -> Option<Scan> {
                 || kind(index + 3, TokenKind::Identifier) && value(index + 4, "=>"));
     let deferred = if deferred_candidate {
         deferred_scope::read_binding(text)
+    } else {
+        None
+    };
+    let inert = if word(index, "const") {
+        deferred_scope::read_inert_binding(text)
     } else {
         None
     };
@@ -137,7 +143,19 @@ fn scan_item(text: &str) -> Option<Scan> {
             mentions.push(token.value.clone());
         }
     }
+    // Actual CST transport can retain a Unicode binder outside this lexer's
+    // portable identifier subset; it does not supply a callable signature.
+    if declares.is_none()
+        && let Some((name, _)) = &inert
+    {
+        declares = Some(name.clone());
+    }
     if let Some((_, name)) = &deferred
+        && declares.as_ref() != Some(name)
+    {
+        return None;
+    }
+    if let Some((name, _)) = &inert
         && declares.as_ref() != Some(name)
     {
         return None;
@@ -149,6 +167,7 @@ fn scan_item(text: &str) -> Option<Scan> {
         function_declaration,
         empty_class_declaration,
         deferred_binding: deferred.map(|(kind, _)| kind),
+        inert_binding: inert.map(|(_, owner)| owner),
         mentions,
         imports,
     })
@@ -389,11 +408,9 @@ impl Binder<'_, '_> {
                 {
                     continue;
                 }
-                if let Some(signature) = out
-                    .signatures
-                    .iter()
-                    .find(|candidate| candidate.name() == name && accept_signature(candidate))
-                {
+                if let Some(signature) = out.signatures.iter().find(|candidate| {
+                    candidate.name() == name && self.accept_source_signature(owner, candidate)
+                }) {
                     externals.push(signature.clone());
                 }
             }
@@ -414,6 +431,38 @@ impl Binder<'_, '_> {
             &context,
         ));
         state.visiting.remove(&index);
+    }
+
+    /// Adapt the existing checked signature and complete original source only.
+    fn accept_source_signature(&self, owner: usize, signature: &External) -> bool {
+        if accept_signature(signature) {
+            return true;
+        }
+        let External::Constant { name, ty, literal } = signature else {
+            return false;
+        };
+        if !matches!(ty, Type::Float) {
+            return false;
+        }
+        let GroupKind::Item { text, .. } = &self.groups[owner].kind else {
+            return false;
+        };
+        let source = if self.from == "TypeScript" {
+            let Ok(source) = super::project_type_script_typing(text) else {
+                return false;
+            };
+            source
+        } else {
+            text.clone()
+        };
+        let actual = deferred_scope::read_numeric_binding_name(&source);
+        crate::translation::inert_module_binding_rules::accept_numeric_module_binding_signature(
+            "const",
+            ty.kind(),
+            *literal,
+            actual.as_deref().unwrap_or(""),
+            name,
+        )
     }
 }
 

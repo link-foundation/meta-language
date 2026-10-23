@@ -1,3 +1,8 @@
+import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
+import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
+  isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
+  noteRustSharedArrayHandleBorrow,readRustSharedArrayHandleMethod,readRustSharedArrayHandleConstructor,
+  noteRustSharedArrayLiteral,readRustSharedArrayHandleCall,finishRustSharedArrayHandleSource,refuseRustSharedArrayHandleValueComparison,refuseRustSharedArrayHandleObservation} from './rust-shared-array-handles.js';
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -59,7 +64,9 @@ const ADDITIVE = { '+': 'add', '-': 'sub' };
 const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const RESERVED_ITEMS = new Set(['impl', 'trait', 'struct', 'union', 'static', 'type', 'extern', 'macro_rules', 'async', 'unsafe']);
 
-export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='' } = {}) {
+export function parseRust(source, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',runtimeShellModel='',sharedArrayHandleSourceModel='' } = {}) {
+  if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the legacy model or standard Rust shared array identity handles 1');
+  if(sharedArrayHandleSourceModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,runtimeShellModel].some(Boolean))throw unsupported('Rust shared array handle source model','other source interpretations require independent composition proofs');
   if(!acceptRustConstFunctionModel(constFunctionModel))throw unsupported('Rust const function model','select the legacy model or closed pure Rust const predicates 1');
   if(constFunctionModel&&[arrayResultModel,completionModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel,pureUnitCallModel,runtimeShellModel].some(Boolean))throw unsupported('Rust const function model','other source interpretations require independent composition proofs');
   if(!acceptRustRuntimeShellModel(runtimeShellModel))throw unsupported('Rust runtime shell model','select the legacy model or closed pure Rust unit runtime shell 1');
@@ -76,16 +83,24 @@ export function parseRust(source, { arrayResultModel = '', completionModel = '',
   if (emptyOptionSourceModel && [arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,typeNamespaceModel,localValueStateModel].some(Boolean)) throw unsupported('Rust empty option source model', 'the closed empty interpretation requires its independent source profile');
   if(!acceptRustPureUnitCallModel(pureUnitCallModel))throw unsupported('Rust pure Unit-call model','select the legacy model, closed pure Rust unit calls 1 or closed public pure Rust unit calls 1');
   if(pureUnitCallModel&&[arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,localValueStateModel].some(Boolean))throw unsupported('Rust pure Unit-call model','the closed Unit-call interpretation requires its independent source profile');
+  if(sharedArrayHandleSourceModel)requireRustSharedArrayHandleSourceText(source);
   const { tokens } = tokenize(source, 'Rust');
-  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel }, source);
+  return parseRustTokenStream(tokens, { arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel, primitiveOwnerModel, emptyOptionSourceModel, typeNamespaceModel, pureUnitCallModel, localValueStateModel, constFunctionModel, sharedArrayHandleSourceModel }, source);
 }
 
 // Internal complete-token entry; public source parsing validates options and lexes first.
-export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '' } = {}, source = null) {
-  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
+export function parseRustTokenStream(tokens, { arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '', primitiveOwnerModel = '', emptyOptionSourceModel = '', typeNamespaceModel = '', pureUnitCallModel = '', localValueStateModel = '', constFunctionModel = '', sharedArrayHandleSourceModel = '' } = {}, source = null) {
+  if(!acceptRustSharedArrayHandleSourceModel(sharedArrayHandleSourceModel))throw unsupported('Rust shared array handle source model','select the installed source model');
+  if(sharedArrayHandleSourceModel){
+    if([arrayResultModel,completionModel,sourceSignatureModel,scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel].some(Boolean))throw unsupported('Rust shared array handle source model','source interpretations need independent composition proofs');
+    verifyRustSharedArrayHandleTokens(tokens,source);
+    // Caller getters or later reads cannot replace an authenticated occurrence.
+    tokens=tokenize(source,'Rust').tokens;
+  }
+  const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
-  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
+  const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   const surface = syntax.file();
@@ -93,21 +108,23 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   // for programs that already cannot enter the canonical semantic core.
   try { checkProgram(surface); } catch (error) {
     if (!(error instanceof TranslationError)) throw error;
-    return surface;
+    if(!sharedArrayHandleSourceModel)return surface;
   }
-  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source);
+  const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.aliases = syntax.aliases;
   return parser.file();
 }
 
 class RustParser {
-  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null) {
+  constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null,sharedArrayHandleSourceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
     this.crateDeclarations = new Set();
-    this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel);
+    this.origins = new RustSourceOrigins(catalog, arrayResultModel,localValueStateModel,sharedArrayHandleSourceModel);
+    this.sharedArrayHandleSourceModel=sharedArrayHandleSourceModel;
+    createRustSharedArrayHandleState(this,sharedArrayHandleSourceModel);
     this.localValueStateModel=localValueStateModel;
     this.ownedTupleCallDiscovery=Boolean(acceptRustOwnedTupleCallModel(localValueStateModel)&&catalog===null);
     this.constFunctionModel=constFunctionModel;
@@ -144,10 +161,11 @@ class RustParser {
     if(this.primitiveOwnerModel&&(root.items.some(item=>item.k!=='fn')||root.main?.effects.length))throw unsupported('Rust primitive owner profile','only flat primitive leaf functions and an empty main are admitted');
     if(this.localValueStateModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceLocalState')||RUST_OWNED_LOCAL_STATE_POLICY.reservedOwners.includes(item.name))||root.main?.effects.length))throw unsupported('Rust owned local state','only flat functions with an empty main and unshadowed standard owners are admitted');
     if(this.constFunctionModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceConstFunction'))||root.main?.effects.length))throw unsupported('Rust const function source','only closed flat const predicates and an empty ordinary main are admitted');
-    if (!root.main) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
+    if (!root.main&&!this.sharedArrayHandleSourceModel) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
-    return { language: 'Rust', items: root.items, main: root.main,...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
+    finishRustSharedArrayHandleSource(this,root);
+    return { language: 'Rust', items: root.items, main: root.main,...(this.sharedArrayHandleSourceModel?{referenceSemantics:true}:{}),...(this.pureUnitCallModel?{sourcePureUnitCalls:{model:this.pureUnitCallModel,language:'Rust'}}:{}) };
   }
 
   innerAttributes() {
@@ -405,6 +423,7 @@ class RustParser {
     this.typeNamespaceFrames.push(namespaceChildren);
     try {
       const result = this.typeValue();
+      if(this.sharedArrayHandleSourceModel&&this.origins.type.wrappers.length)throw unsupported('Rust shared array handle source','borrowed or boxed source type wrappers need an independent composition proof',span(this.cursor.tokens[Math.max(0,this.cursor.index-1)],this.cursor.peek()));
       const position=readRustStandardPrimitivePosition(this,head)??(['&','('].includes(head[0])&&primitiveChildren.length===1?primitiveChildren[0]:null);
       this.origins.type.primitiveOwnerPosition=position;
       const owner = position?{kind:'primitive',path:['f64'],arguments:[]}:readRustSourceTypeOwner(this, head, children, result);
@@ -480,6 +499,8 @@ class RustParser {
     const segments = this.pathSegments('type');
     const name = segments.join('::');
     const resolved = this.resolve(segments, this.modulePath);
+    const sharedHandle=readRustSharedArrayHandleType(this,segments,token);
+    if(sharedHandle)return sharedHandle;
     const emptyOption=readRustEmptyOptionResult(this,segments,token);
     if(emptyOption)return emptyOption;
     if (this.typeNamespaceModel) {
@@ -492,6 +513,7 @@ class RustParser {
     }
     if(readRustStandardPrimitivePosition(this,segments))return this.origins.typed(FLOAT,this.modulePath);
     if (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false)) {
+      refuseRustSharedArrayBareVector(this,span(token,c.peek()));
       this.origins.vector(segments, resolved, this.modulePath, span(token, c.peek()));
       c.expect('<', 'Vec');
       const elementToken = c.peek();
@@ -586,6 +608,7 @@ class RustParser {
       const resultToken=c.peek();
       const ret = this.type();
       const sourceResult = this.origins.type;
+      if(this.sharedArrayHandleSourceModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust shared array handle source','mutable parameters and named lifetime binders need another source profile',span(start,c.peek()));
       if(this.constFunctionModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust const function interface','mutable parameters and lifetime binders require an independent interpretation');
       if(this.localValueStateModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust owned local state','mutable parameters and lifetimes require a separate interface proof');
       if(this.emptyOptionSourceModel && (!sourceResult.emptyOptionResult || sourceResult.wrappers.length || sourceResult.emptyOptionResult.span.start!==resultToken.start)) throw unsupported('Rust empty option source', 'the result needs an exact direct standard Option<f64> owner', span(start,c.peek()));
@@ -601,7 +624,7 @@ class RustParser {
           }
         }
       }
-      if (ret.kind === 'array' && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
+      if (ret.kind === 'array' && !isRustSharedArrayHandleOrigin(this,sourceResult) && !acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, true)) throw unsupported('Rust array result', 'returning vectors or borrowed slices needs a separate consumption and outlives proof', span(start, c.peek()));
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
@@ -618,7 +641,7 @@ class RustParser {
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
       const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
-      if (ret.kind === 'array') {
+      if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
         this.origins.mark(body, sourceResult);
@@ -905,6 +928,7 @@ class RustParser {
       }
       if (text) pieces.push({ k: 'str', value: text, span: template.span });
       text = '';
+      refuseRustSharedArrayHandleObservation(this,value,this.modulePath,value.span);
       pieces.push({ k: 'show', arg: value, style: 'rust', span: value.span });
       index = end;
     }
@@ -950,6 +974,7 @@ class RustParser {
     if (token.kind === 'punct' && COMPARISON[token.value]) {
       c.next();
       const right = this.additive(path, {});
+      refuseRustSharedArrayHandleValueComparison(this,left,right,path,joined(left,right,token));
       const after = c.peek();
       if (after.kind === 'punct' && COMPARISON[after.value]) throw this.fail('comparison operators cannot be chained', after);
       return { k: 'binary', op: COMPARISON[token.value], left, right, span: joined(left, right, token) };
@@ -1024,7 +1049,7 @@ class RustParser {
       if (c.is('mut')) throw unsupported('mutable reference', 'mutation is outside the portable core', span(token, c.peek()));
       const arg = this.unary(path, {});
       if (token.value === '&&') this.origins.wrap(arg, path, 'reference');
-      return this.origins.wrap(arg, path, 'reference');
+      return noteRustSharedArrayHandleBorrow(this,this.origins.wrap(arg, path, 'reference'),path);
     }
     if (c.eat('*')) return this.origins.dereference(this.unary(path, {}), path, span(token, c.peek()));
     return this.postfix(path, options);
@@ -1100,6 +1125,8 @@ class RustParser {
   }
 
   method(receiver, method, args, range) {
+    const sharedMethod=readRustSharedArrayHandleMethod(this,receiver,method,args,range);
+    if(sharedMethod)return sharedMethod;
     const discovery=acceptRustTypeNamespaceMethodDiscovery(this.typeNamespaceDiscovery,method.value);
     if (!acceptRustTypeNamespaceBodyMethod(Boolean(this.typeNamespaceModel)&&!discovery, method.value, acceptRustUnitCloneReceiver(this,receiver))) throw unsupported('Rust type namespace body method', `${method.value} requires a separate actual method owner proof`, range);
     const expect = (count) => {
@@ -1267,6 +1294,7 @@ class RustParser {
         return this.origins.mark(createRustFloatConstantExpression(segments[1], range), this.origins.typeOrigin(FLOAT, path));
       }
       if (c.is('::') && c.is('<', 1) && (acceptRustSourceArrayOwner(name, false) || acceptRustSourceArrayOwner(resolved.join('::'), false))) {
+        refuseRustSharedArrayBareVector(this,span(token,c.peek()));
         this.origins.vector(segments, resolved, path, span(token, c.peek()));
         c.next(); c.next();
         const elementToken = c.peek();
@@ -1280,7 +1308,9 @@ class RustParser {
       if (c.is('{') && /^[A-Z]/u.test(segments.at(-1)) && !options.noStruct) {
         throw unsupported('struct literal', 'named fields are outside the Rust frontend', span(token, c.peek()));
       }
-      if (!c.is('(')) return { k: 'name', path: this.resolve(segments, path), span: span(token, token) };
+      const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
+      if(sharedConstruction)return sharedConstruction;
+      if (!c.is('(')) return noteRustSharedArrayHandleName(this,{ k: 'name', path: this.resolve(segments, path), span: span(token, token) },path);
       c.next();
       const args = [];
       while (!c.is(')')) {
@@ -1289,6 +1319,8 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      const sharedCall=readRustSharedArrayHandleCall(this,segments,args,path,range);
+      if(sharedCall)return sharedCall;
       const emptyString = readRustEmptyStringConstructor(this, segments, args, path, range);
       if (emptyString) return emptyString;
       const resolvedOwner = segments.length > 1 ? this.resolve(segments.slice(0, -1), path) : [];
@@ -1335,7 +1367,7 @@ class RustParser {
           if (origin.wrappers.length || (origin.type && !acceptRustSourceArrayElement(origin.type.kind, false))) throw unsupported('Rust array element', 'only direct immutable scalar and owned string elements are admitted', range);
         }
         const element = args.length ? this.origins.origin(args[0], path).type : null;
-        return this.origins.mark({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
+        return noteRustSharedArrayLiteral(this,this.origins.mark({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true }),path);
       }
       case 'format':
         return { ...this.format(args, token), span: range };

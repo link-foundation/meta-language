@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {readProjectData} from './project-data.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
+import {restoreToolingFrozenHostSource} from './tooling-frozen-source-history.mjs';
 const archive=new URL('../../parity/self-translation/concrete-program-native-source-sources-history.lino',import.meta.url);
 const archiveHash='529d034f1aa422875c7abd699720b92d36791ccceef250612cded7688c50751e';
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -11,6 +12,7 @@ let history;
 
 export function restoreNativeGraphSourceHistory(file,source) {
   assert.equal(typeof file,'string');assert.equal(typeof source,'string');
+  source=restoreToolingFrozenHostSource(source,file,{hostSuccessorsOnly:true,preserveUnknownSource:true});
   source=restoreCurrentCiRepairSource(source,file);
   source=restoreEvidenceTranslationSourceHistory(file,source);
   if(!history){assert.equal(digest(readFileSync(archive)),archiveHash);history=readProjectData(archive);}

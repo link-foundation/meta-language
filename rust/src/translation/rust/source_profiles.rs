@@ -2,6 +2,23 @@
 //! Public reexports preserve the frontend API and shared parser implementation.
 use super::{Result, SProgram, SourceProfiles, parse_rust_with_selected_profiles};
 
+/// Read actual standard shared-array handles under their independent source model.
+///
+/// # Errors
+/// Refuses unknown selectors, unproved ownership and unsupported compositions.
+pub fn parse_rust_with_shared_array_handle_source_model(
+    source: &str,
+    model: &str,
+) -> Result<SProgram> {
+    parse_rust_with_selected_profiles(
+        source,
+        SourceProfiles {
+            shared_array_handle_source: model,
+            ..SourceProfiles::default()
+        },
+    )
+}
+
 /// Read a complete emitted Rust runtime under its independent owned interpretation.
 ///
 /// # Errors

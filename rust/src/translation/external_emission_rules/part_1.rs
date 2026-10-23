@@ -454,8 +454,7 @@ pub fn accept_java_script_external_binding(name: &self::ml_string::Text) -> bool
                         f64::NAN
                     } else {
                         ((text.slice(index, (index + 1f64))).code_point_at(0f64))
-                            .clone()
-                            .unwrap_or_else(|| f64::NAN)
+                            .unwrap_or(f64::NAN)
                     }
                 }
             },
@@ -466,8 +465,8 @@ pub fn accept_java_script_external_binding(name: &self::ml_string::Text) -> bool
         {
             let at = 1f64;
             {
-                let ml_s1 = self::ml_accept_java_script_external_binding_loop1(name, at);
-                match ml_s1 {
+                let ml_s11 = self::ml_accept_java_script_external_binding_loop1(name, at);
+                match ml_s11 {
                     self::MlAcceptJavaScriptExternalBindingLoop1Result::MlAcceptJavaScriptExternalBindingLoop1Done => {
                         ((((!(self::external_reserved_statement(name)) && !(self::external_reserved_control(name))) && !(self::external_reserved_declaration(name))) && !(self::external_reserved_expression(name))) && !(self::external_reserved_binding(name))) && !(self::external_reserved_strict_binding(name))
                     }
@@ -530,8 +529,7 @@ pub fn ml_accept_java_script_external_binding_loop1(
                                 f64::NAN
                             } else {
                                 ((text.slice(index, (index + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
+                                    .unwrap_or(f64::NAN)
                             }
                         }
                     }))(name.clone(), at);

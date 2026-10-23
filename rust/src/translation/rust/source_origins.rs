@@ -176,6 +176,7 @@ pub(super) struct SourceLookup {
 }
 
 pub(super) struct SourceOrigins {
+    pub(super) shared_array_handles: bool,
     pub(super) array_result_model: String,
     pub(super) owned_local_values: bool,
     fresh_calls: HashSet<Span>,
@@ -195,6 +196,7 @@ pub(super) struct SourceOrigins {
 impl SourceOrigins {
     pub(super) fn new(catalog: Option<HashMap<String, SourceDeclaration>>, model: &str) -> Self {
         Self {
+            shared_array_handles: false,
             array_result_model: model.to_owned(),
             owned_local_values: false,
             fresh_calls: HashSet::new(),
@@ -803,6 +805,13 @@ impl SourceOrigins {
         declared: Option<&SourceOrigin>,
     ) -> Result<()> {
         let actual = self.origin(node, path);
+        if self.shared_array_handles && !self.collecting && matches!(actual.ty, Some(Type::Array {..}))
+            && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
+                actual.array_source_model.unwrap_or(""), actual.array_source_model.unwrap_or(""),
+                f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)), f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)),
+            ) {
+            return Err(unsupported("Rust shared array handle source", "a binding requires an actual owned shared handle, not its vector payload", node.span));
+        }
         if !self.collecting && actual.array_source_model.is_some() && actual.uncertain {
             return Err(unsupported(
                 "source array join",
@@ -842,6 +851,13 @@ impl SourceOrigins {
         }
         if actual.diverging {
             return Ok(());
+        }
+        if self.shared_array_handles && (matches!(actual.ty, Some(Type::Array {..})) || matches!(expected.ty, Some(Type::Array {..})))
+            && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(
+                actual.array_source_model.unwrap_or(""), expected.array_source_model.unwrap_or(""),
+                f64::from(u32::try_from(actual.wrappers.len()).unwrap_or(u32::MAX)), f64::from(u32::try_from(expected.wrappers.len()).unwrap_or(u32::MAX)),
+            ) {
+            return Err(unsupported("Rust shared array handle source", "call and return ownership must preserve actual shared handles without borrowed payload coercion", span));
         }
         if !actual.proven
             && !actual.uncertain

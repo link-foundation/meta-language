@@ -7,6 +7,7 @@ import {captureGitArtifactCertificate} from './capture-git-artifact-certificate.
 import {checkProjectData,writeProjectData} from './project-data.mjs';
 import {readOwnCodebaseRawDescriptorPolicy,deriveOwnCodebaseRawDescriptorSource,deriveOwnCodebaseRawDescriptorOutputs,verifyOwnCodebaseRawDescriptorPacket} from './own-codebase-raw-source-descriptors.mjs';
 import {restoreCurrentOwnCodebaseRawSource,restoreCurrentOwnCodebaseRawText} from './current-own-codebase-raw-source-descriptors.mjs';
+import {restoreTypedSourceDescriptorHostSource} from './typed-source-descriptor-host-history.mjs';
 const root=new URL('../../',import.meta.url);
 const output='parity/self-translation/own-codebase-raw-source-descriptors.lino';
 const helper='js/scripts/own-codebase-raw-source-descriptors.mjs';
@@ -26,7 +27,7 @@ export function generateOwnCodebaseRawSourceDescriptors({check=false}={}){
   assert.deepEqual(pin(Buffer.from(restoreCurrentOwnCodebaseRawSource(readFileSync(new URL(policy.sourceFile,root),'utf8'),policy.sourceFile))),policy.sourceOwner.current,'the original frontend assertion checks its exact historical view; live bytes belong to the successor');
   const writes=derived.outputs.map(row=>({...row,previous:[artifact,register,loan].find(capture=>capture.file===row.file).sourceText}));
   for(const [index,row]of adapters.entries())writes.push({file:row.file,previous:row.sourceText,source:deriveOwnCodebaseRawDescriptorSource(policy.adapters[index],row.sourceText)});
-  for(const row of writes){const physical=readFileSync(new URL(row.file,root),'utf8'),observed=check&&[policy.artifactFile,policy.registerFile,policy.loanFile].includes(row.file)?restoreCurrentOwnCodebaseRawText(physical,row.file):physical;assert.ok(observed===row.previous||observed===row.source,'unknown complete source or artifact changes refuse: '+row.file);if(check)assert.equal(observed,row.source);}
+  for(const row of writes){const actualSource=readFileSync(new URL(row.file,root),'utf8'),physical=check?restoreTypedSourceDescriptorHostSource(actualSource,row.file):actualSource,observed=check&&[policy.artifactFile,policy.registerFile,policy.loanFile].includes(row.file)?restoreCurrentOwnCodebaseRawText(physical,row.file):physical;assert.ok(observed===row.previous||observed===row.source,'unknown complete source or artifact changes refuse: '+row.file);if(check)assert.equal(observed,row.source);}
   const helperPath=new URL(helper,root),source=readFileSync(helperPath,'utf8'),pattern=/^const policySha256='(?:PENDING|[a-f0-9]{64})';$/mu;
   assert.equal(source.split(pattern).length,2);
   if(check)checkProjectData(new URL(output,root),packet);else writeProjectData(new URL(output,root),packet);

@@ -321,6 +321,46 @@ impl Checker {
                     ty,
                 ))
             }
+            SNode::ReferenceIdentity {
+                op,
+                left,
+                right,
+                extra,
+            } => {
+                if !extra.is_empty()
+                    || node.parenthesized.is_some()
+                    || node.block
+                    || node.tag_test.is_some()
+                {
+                    return Err(type_error(
+                        "explicit reference identity needs its closed owned operands",
+                        span,
+                    ));
+                }
+                let (left, right) = self.operands(left, right, env, path, span)?;
+                let form = crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
+                    self.language.as_str(), op_name(*op), left.ty.kind(), left.ty.is_reference(),
+                );
+                if !self.reference_semantics || form != "referenceIdentity"
+                    || !crate::translation::reference_identity_rules::accept_reference_identity_comparison(
+                        op_name(*op), left.ty.kind(), right.ty.kind(), left.ty.is_reference(), right.ty.is_reference(), left.ty == right.ty,
+                    ) {
+                    return Err(unsupported("explicit Rust array identity", "only the owned array reference domain admits this operation", span));
+                }
+                let domain = left.ty.clone();
+                Ok(Expr::new(
+                    binary_node(
+                        *op,
+                        Box::new(left),
+                        Box::new(right),
+                        Some(domain),
+                        None,
+                        None,
+                        None,
+                    ),
+                    BOOL,
+                ))
+            }
             SNode::Binary {
                 op,
                 left,

@@ -105,7 +105,7 @@ jobs:
   # size. It runs beside the JavaScript and Rust workflows; acceptance verifies
   # every published module before recording the reporting assertion.
   self-translation-report:
-    name: Self-Translation Report (${{ matrix.shard }}/8)
+    name: Self-Translation Report (${{ matrix.shard }}/8, part ${{ matrix.part }}/2)
     if: ${{ github.event_name != 'release' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -113,6 +113,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        part: [1, 2]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -133,7 +134,7 @@ jobs:
         env:
           META_LANGUAGE_REPORT_PROGRESS: '1'
         run: |
-          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --out-dir ../self-translation-report > /dev/null
+          node scripts/generate-self-translation-report.mjs --shard ${{ matrix.shard }}/8 --physical-part ${{ matrix.part }}/2 --out-dir ../self-translation-report > /dev/null
           cat ../self-translation-report/self-translation-report.md >> "$GITHUB_STEP_SUMMARY"
         working-directory: js
 
@@ -141,7 +142,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}
+          name: self-translation-report-${{ github.sha }}-${{ matrix.shard }}-${{ matrix.part }}
           path: self-translation-report
           if-no-files-found: error
 

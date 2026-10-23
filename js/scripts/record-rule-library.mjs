@@ -7,6 +7,8 @@ import { DecoratorSet } from '../src/decorators.js';
 import { tokenize } from '../src/translation/lexer.js';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { partitionPortableRustLibrary, readPortableSourceLintStyles, readPortableSourceParameterStyles } from './portable-source-library-style.mjs';
+import {readNativeCompilerSourceStyles,readNativeNumericPatternSourceStyles} from './native-compiler-source-styles.mjs';
+import {readNumericModuleBindingSourceStyles} from './numeric-module-binding-source-styles.mjs';
 
 /** Relocate actual module paths while retaining every literal and comment byte. */
 export function readPortableLibraryRelocation(source) {
@@ -42,13 +44,16 @@ export function writeRecordRuleLibrary(emitted, name, { check = false, sourceSty
   const reviewed = readPortableSourceLintStyles(loans.source);
   assert.ok(sourceStyles === null || typeof sourceStyles === 'function', 'an optional family style is an actual source proof producer');
   const additional = sourceStyles === null ? {source: reviewed.source, actions: []} : sourceStyles(reviewed.source);
-  const actions = [...relocation, ...loans.actions, ...reviewed.actions, ...additional.actions];
+  const feedback = readNativeCompilerSourceStyles(additional.source, name);
+  const numeric = readNativeNumericPatternSourceStyles(feedback.source, name);
+  const names = readNumericModuleBindingSourceStyles(numeric.source, name);
+  const actions = [...relocation, ...loans.actions, ...reviewed.actions, ...additional.actions, ...feedback.actions, ...numeric.actions, ...names.actions];
   const styles = new DecoratorSet(actions.length ? [{ id: name + '-library-style', level: 'emitter', order: 0, when: [['format', 'Rust']], actions }] : []);
   const styleFile = new URL('../../parity/self-translation/' + name.replaceAll('_', '-') + '-decorators.lino', import.meta.url);
   if (check) assert.equal(readFileSync(styleFile, 'utf8'), styles.toLino(), 'record family library styles retain every actual declaration');
   else writeFileSync(styleFile, styles.toLino());
   const decorated = DecoratorSet.fromLino(readFileSync(styleFile, 'utf8')).decorate('emitter', { format: 'Rust', source: raw }).source;
-  assert.equal(decorated, additional.source, 'the recorded ownership, loan and lint styles replay exactly');
+  assert.equal(decorated, names.source, 'the recorded ownership, loan and lint styles replay exactly');
   const formatted = formatProductRuleSource(decorated);
   const files = partitionPortableRustLibrary(formatted, {
     notice: '// Generated from the complete checked JavaScript source and recorded dependencies.\n// Do not edit by hand.\n',

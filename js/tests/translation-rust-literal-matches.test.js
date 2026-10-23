@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {restoreSharedArrayNativeFrontendSource} from '../scripts/shared-array-native-frontend-history.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -173,7 +174,9 @@ test('certified complete native hosts replay offline and refuse damaged predeces
   assert.equal(archive.additions.length, 2);
   assert.equal(files.length, 4);
   assert.deepEqual(verifyRustLiteralMatchHosts(archive), files);
-  for (const row of files) assert.equal(readFileSync(new URL(row.path, root), 'utf8'), row.source);
+  // This control owns the original literal-match source; actual successors
+  // retain separate complete Git membership and current semantic tests.
+  for (const row of files) assert.equal(restoreSharedArrayNativeFrontendSource(readFileSync(new URL(row.path, root), 'utf8'),row.path), row.source);
   const damage = mutate => {
     const changed = structuredClone(archive);
     mutate(changed);

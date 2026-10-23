@@ -244,14 +244,14 @@ pub fn ml_plan_java_script_record_parameters_loop13(
                                 {
                                     let binding = property;
                                     {
-                                        let ml_s12 = if ((self::read_required_text_fact(
+                                        let ml_s1122 = if ((self::read_required_text_fact(
                                             kinds, at_2,
-                                        )) == (self::ml_string::Text::from_units(
-                                            vec![112, 117, 110, 99, 116],
-                                        ))) && ((self::read_required_text_fact(
-                                            values, at_2,
                                         ))
-                                            == (self::ml_string::Text::from_units(vec![58])))
+                                            == (self::ml_string::Text::from_units(vec![
+                                                112, 117, 110, 99, 116,
+                                            ])))
+                                            && ((self::read_required_text_fact(values, at_2))
+                                                == (self::ml_string::Text::from_units(vec![58])))
                                         {
                                             {
                                                 let at_3 = at_2 + 1f64;
@@ -288,7 +288,7 @@ pub fn ml_plan_java_script_record_parameters_loop13(
                                         } else {
                                             self::MlPlanJavaScriptRecordParametersJoin14::MlPlanJavaScriptRecordParametersJoin14Next(at_2, binding)
                                         };
-                                        match ml_s12 {
+                                        match ml_s1122 {
                                             self::MlPlanJavaScriptRecordParametersJoin14::MlPlanJavaScriptRecordParametersJoin14Next(at_5, binding_3) => {
                                                 {
                                                     let name = self::read_required_text_fact(values, binding_3);
@@ -379,7 +379,7 @@ pub fn ml_plan_java_script_record_parameters_loop11(
                 self::MlPlanJavaScriptRecordParametersLoop11Result::MlPlanJavaScriptRecordParametersLoop11Return(vec![-3f64, at])
             } else {
                 {
-                    let ml_s14 = if ((self::read_required_text_fact(kinds, at))
+                    let ml_s1144 = if ((self::read_required_text_fact(kinds, at))
                         == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
                         && ((self::read_required_text_fact(values, at))
                             == (self::ml_string::Text::from_units(vec![123])))
@@ -391,11 +391,11 @@ pub fn ml_plan_java_script_record_parameters_loop11(
                                 {
                                     let pairs = Vec::<f64>::new();
                                     {
-                                        let ml_s15 =
+                                        let ml_s1155 =
                                             self::ml_plan_java_script_record_parameters_loop13(
                                                 kinds, values, reserved, at_2, names, pairs,
                                             );
-                                        match ml_s15 {
+                                        match ml_s1155 {
                                                 self::MlPlanJavaScriptRecordParametersLoop13Result::MlPlanJavaScriptRecordParametersLoop13Done(at_3, names_2, pairs_2) => {
                                                     if (pairs_2.len() as f64) == 0f64 {
                                                         self::MlPlanJavaScriptRecordParametersJoin12::MlPlanJavaScriptRecordParametersJoin12Return(vec![-4f64, open])
@@ -451,7 +451,7 @@ pub fn ml_plan_java_script_record_parameters_loop11(
                             }
                         }
                     };
-                    match ml_s14 {
+                    match ml_s1144 {
                             self::MlPlanJavaScriptRecordParametersJoin12::MlPlanJavaScriptRecordParametersJoin12Next(at_6, names_4, instructions_4) => {
                                 if at_6 >= (kinds.len() as f64) {
                                     self::MlPlanJavaScriptRecordParametersLoop11Result::MlPlanJavaScriptRecordParametersLoop11Return(vec![-1f64, at_6])
@@ -520,13 +520,13 @@ pub fn ml_find_java_script_record_parameter_strict_directive_loop15(
                     == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103]))
                 {
                     {
-                        let raw_ = self::read_required_text_fact(raws, at);
+                        let directive_source_text = self::read_required_text_fact(raws, at);
                         {
-                            let strict = (raw_
+                            let strict = (directive_source_text
                                 == (self::ml_string::Text::from_units(vec![
                                     34, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 34,
                                 ])))
-                                || (raw_
+                                || (directive_source_text
                                     == (self::ml_string::Text::from_units(vec![
                                         39, 117, 115, 101, 32, 115, 116, 114, 105, 99, 116, 39,
                                     ])));

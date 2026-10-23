@@ -1,3 +1,4 @@
+import {restoreSharedArrayNativeFrontendSource} from '../scripts/shared-array-native-frontend-history.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -132,7 +133,10 @@ test('normal Boolean projection successor preserves every complete predecessor a
 test('the complete current Boolean checker successors preserve the old packet and refuse forged source authority',()=>{
  const packet=generateTruthyProjectionHostSuccessors({check:true});
  for(const row of packet.sources){
-  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');assert.equal(actual,row.current.source);
+  const actual=readFileSync(new URL('../../'+row.file,import.meta.url),'utf8');
+  // The complete independently certified predecessor retains this historical
+  // checker contract; current reference identity has its own semantic tests.
+  assert.equal(restoreSharedArrayNativeFrontendSource(actual,row.file),row.current.source);
   assert.equal(restoreTruthyProjectionHostSource(actual,row.file),row.previous.source);
   assert.equal(restoreTruthyProjectionHostSource(actual+'\n',row.file),actual+'\n');
   assert.equal(restoreTruthyProjectionHostSource(actual,'unregistered/source.js'),actual);

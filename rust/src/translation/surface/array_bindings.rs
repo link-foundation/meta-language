@@ -44,6 +44,14 @@ impl TryFrom<SurfaceExpression> for SExpr {
     type Error = String;
 
     fn try_from(raw: SurfaceExpression) -> Result<Self, Self::Error> {
+        if let SNode::ReferenceIdentity { extra, .. } = &raw.node
+            && (!extra.is_empty()
+                || raw.parenthesized.is_some()
+                || raw.block.is_some()
+                || matches!(raw.tag_test, TagTestPresence::Present(_)))
+        {
+            return Err("explicit reference identity needs its closed owned operands".to_owned());
+        }
         if let SNode::ReferencePayload { extra, .. } = &raw.node
             && (!extra.is_empty()
                 || raw.parenthesized.is_some()

@@ -404,6 +404,29 @@ pub fn create_typed_program_links_with_rust_runtime_shell_model(
     encode_typed_program_links_with_provenance(&program, Some(&selected))
 }
 
+/// Import actual standard Rust shared-array handles through the checked link model.
+///
+/// # Errors
+/// Refuses non-Rust sources, unknown models and unproved handle operations.
+pub fn create_typed_program_links_with_rust_shared_array_handle_source_model(
+    source: &str,
+    language: &str,
+    model: &str,
+    provenance: Option<&Value>,
+) -> Result<TypedProgramLinks> {
+    if !matches!(language.to_ascii_lowercase().as_str(), "rust" | "rs") {
+        return Err(error(
+            "a Rust shared array handle source model requires Rust source",
+        ));
+    }
+    let surface =
+        crate::translation::rust::parse_rust_with_shared_array_handle_source_model(source, model)
+            .map_err(|failure| error(failure.to_string()))?;
+    let program = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let selected = serde_json::json!({"sourceProfile":{"language":"Rust","rustSharedArrayHandleSourceModel":model},"userProvenance":provenance});
+    encode_typed_program_links_with_provenance(&program, Some(&selected))
+}
+
 /// Import owned const qualification on closed primitive Rust predicates.
 ///
 /// # Errors

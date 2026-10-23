@@ -134,6 +134,15 @@ impl RustParser {
             .pop()
             .expect("the type namespace frame is owned");
         let ty = result?;
+        if !self.shared_array_handle_source_model.is_empty()
+            && !self.origins.current_type.wrappers.is_empty()
+        {
+            return Err(unsupported(
+                "Rust shared array handle source",
+                "borrowed or boxed source type wrappers need an independent composition proof",
+                None,
+            ));
+        }
         let primitive_children = self
             .primitive_owner_frames
             .pop()

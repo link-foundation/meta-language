@@ -135,6 +135,9 @@ impl RustParser {
         let segments = self.path_segments("type")?;
         let name = segments.join("::");
         let resolved = self.resolve(&segments, &self.module_path);
+        if let Some(handle) = self.shared_array_type(&segments, &token)? {
+            return Ok(handle);
+        }
         if let Some(empty) = self.read_empty_option_result(&segments, &token)? {
             return Ok(empty);
         }
@@ -181,6 +184,7 @@ impl RustParser {
         if accept_rust_source_array_owner(&name, false)
             || accept_rust_source_array_owner(&resolved.join("::"), false)
         {
+            self.refuse_shared_bare_vector(span(&token, self.cursor.peek()))?;
             self.origins.vector_owner(
                 &segments,
                 &resolved,

@@ -6,6 +6,8 @@ import test from 'node:test';
 import {structuredDataToLino} from '../../js/src/structured-data-links.js';
 import {readProjectData} from '../../js/scripts/project-data.mjs';
 import {restoreCompleteDeclarationReceipt} from '../../js/scripts/complete-declaration-receipts.mjs';
+import {readRawArchiveReceiptHistory,restoreRawArchiveReceiptText} from '../../js/scripts/raw-archive-receipt-history.mjs';
+import {readStructuredDataLino} from '../../js/src/structured-data-links.js';
 import {ORIGINAL_LINK_RAW_EMISSION_BASELINE,ORIGINAL_LINK_RAW_CURRENT_ARTIFACT,ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT} from './raw-emission-profiles.mjs';
 import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,ORIGINAL_LINK_RAW_CONSUMING_HISTORICAL_ARTIFACT,
   ORIGINAL_LINK_RAW_CONSUMING_SUCCESSOR,generateOriginalLinkRawConsumingEmission,
@@ -35,8 +37,16 @@ test('raw consuming emission keeps all106owners and both complete typed archives
     return{file:row.file,bytes:bytes.length,sha256:sha256(bytes)};
   }));
   assert.notDeepEqual(currentDecisionSources,artifact.decisionSources,'the original snapshot is not relabeled as current source');
-  const {decisionSources:actualSources,...actualSemanticFields}=currentArtifact;
+  const actualSources=currentArtifact.decisionSources;
+  const archiveHistory=readRawArchiveReceiptHistory(),row=archiveHistory.rows[0];
+  // CI39830836214 identifies exactly three archive metadata differences. Keep
+  // every actual field and independently recover the whole certified snapshot.
+  const snapshotCandidate={...currentArtifact,decisionSources:artifact.decisionSources};
+  const historicalView=readStructuredDataLino(restoreRawArchiveReceiptText(structuredDataToLino(snapshotCandidate),row.file));
+  for(const change of row.changes){assert.deepEqual(currentArtifact[change.path[0]][change.path[1]],change.after);assert.deepEqual(artifact[change.path[0]][change.path[1]],change.before);}
+  const {decisionSources:historicalSources,...actualSemanticFields}=historicalView;
   const {decisionSources:snapshotSources,...snapshotSemanticFields}=artifact;
+  assert.deepEqual(historicalSources,snapshotSources);
   assert.deepEqual(actualSemanticFields,snapshotSemanticFields,'every actual complete emission archive owner mapping and original field stays exact');
   assert.deepEqual(actualSources,currentDecisionSources);
   assert.equal(snapshotSources,artifact.decisionSources);

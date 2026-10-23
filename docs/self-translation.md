@@ -22,6 +22,38 @@ A language is named by name or extension (`rust`, `rs`, `ts`, `mjs`); without
 `--from`, the CLI takes it from the file extension. `--items` prints one line
 per top-level item instead of the translation.
 
+The library can explicitly read actual standard Rust shared-array handles:
+
+```js
+const options = {
+  rustSharedArrayHandleSourceModel: 'standard Rust shared array identity handles 1',
+};
+const result = selfTranslate(rustLibrarySource, 'Rust', 'JavaScript', options);
+```
+
+Rust selects the same model through
+`SelfTranslationOptions.rust_shared_array_handle_source_model`. This finite
+profile preserves fresh `Rc<RefCell<Vec<scalar>>>` allocations, explicit clone
+aliases and `Rc::ptr_eq`, with actual fully qualified standard owners. Whole
+libraries retain private/forward siblings and concrete `pub` visibility. Both
+Links codecs retain the checked identity domain, and reverse translation
+restores the complete source. Ordinary payload equality and complete executable
+runtime shells require separate interpretations. The
+[vision](vision.md#four-language-semantics-and-translation) defines the complete
+boundary; native compilation and runtime parity run in CI.
+
+Functions beside literal constant arrays/objects, literal standard Map/Set
+constructors, and `Object.freeze` on literal containers can retain their real
+module binding context. The complete CST proof rejects eager calls, getters,
+computed keys, spreads and shadowed standard owners. It checks the neighboring
+function normally and preserves the original initializer for exact reverse
+translation. That initializer still needs complete executable translation.
+
+Empty standard `Map` and `Set` module constants also retain their binding
+context, including `new Map()` and `new Set` without argument parentheses.
+Shadowed constructors and evaluated arguments refuse. Unsupported neighboring
+function bodies remain explicit translation obligations.
+
 The public `projectTypeScriptTyping(source)` JavaScript function and
 `project_type_script_typing(&source)` Rust function return the same JavaScript
 source string with supported TypeScript function and alias annotations retained
@@ -246,6 +278,17 @@ over those bindings, including a local declaration in its temporal dead zone.
 This does not bind mutable values, array or object identities, or imported values.
 Rust constant storage decisions and declaration rendering are generated from
 the same JavaScript rules.
+
+Literal Number arithmetic constants also provide module ownership facts, from
+the complete CST. For example, `const BYTE_LIMIT = 128 * 1024 * 1024` need not
+prevent an unrelated checked function from constructing the standard Map.
+This classification accepts Number arithmetic without evaluating it, preserves
+the actual binding name and refuses identifiers, calls, BigInt and coercion from
+other types. The initializer retains its own translation obligation.
+When that complete initializer independently translates, its actual checked
+Number static signature may bind sibling functions. The existing static emitter
+retains the expression, including rounding, NaN and signed zero. Unknown owners,
+eager sibling effects and operators the frontend cannot translate still refuse.
 
 A declaration-only module with carried groups is also retried as one checked
 scope, so JSDoc data types can bind across declarations. A failed retry keeps

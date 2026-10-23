@@ -11,6 +11,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
+import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
 import { readJavaScriptArrayClassificationPlan } from './array-classification-rules.js';
 import { readArrayIterableForm, readReferenceMutationDiagnostic, selectOptionalArrayIndexNumber, selectOptionalArrayRead } from './array-value-rules.js';
@@ -799,6 +800,25 @@ class Checker {
           return { k: 'unary', op: 'neg', arg, type: arg.type, semantics: arg.type.kind === 'fixed' ? 'checked' : 'exact' };
         }
         throw typeError(`unknown unary ${node.op}`, node.span);
+      }
+      case 'referenceIdentity': {
+        const descriptors = Object.getOwnPropertyDescriptors(node);
+        const prototype = Object.getPrototypeOf(node);
+        if ((prototype !== Object.prototype && prototype !== null)
+          || ['k', 'op', 'left', 'right'].some(field => !Object.hasOwn(descriptors, field))
+          || Reflect.ownKeys(descriptors).some(field => typeof field !== 'string'
+            || !['k', 'op', 'left', 'right', 'span'].includes(field)
+            || !descriptors[field].enumerable || !Object.hasOwn(descriptors[field], 'value'))) {
+          throw typeError('explicit reference identity needs its closed owned operands');
+        }
+        const [left, right] = this.operands(node.left, node.right, env, path, node.span);
+        if (!this.referenceSemantics
+          || readRustSharedArrayHandleComparisonProjection(this.language, node.op, left.type.kind, left.type.reference === true) !== 'referenceIdentity'
+          || !acceptReferenceIdentityComparison(node.op, left.type.kind, right.type.kind,
+            left.type.reference === true, right.type.reference === true, sameType(left.type, right.type))) {
+          throw unsupported('explicit Rust array identity', 'only the owned array reference domain admits this operation', node.span);
+        }
+        return { k: 'binary', op: node.op, left, right, type: BOOL, domain: left.type };
       }
       case 'binary':
         return this.binary(node, env, path, expected, allowLiteral);

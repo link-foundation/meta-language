@@ -807,6 +807,70 @@ ABI equivalence. Ordinary source models retain their existing contracts, and
 complete generated runtime wrappers still need an independently proved
 composition. Native library support and production selection remain separate
 obligations.
+The independently selected `standard Rust shared array identity handles 1`
+source profile reads complete flat libraries and programs with actual unshadowed
+`std::rc::Rc<std::cell::RefCell<Vec<scalar>>>` owners. Fresh nonempty scalar
+vectors allocate handles; explicit `.clone()` preserves alias identity; actual
+`std::rc::Rc::ptr_eq` checks two immutable borrowed handles. Ordinary Rust value
+equality remains a separate payload operation. Bare vectors, moves, escaping
+borrows, payload observations and unproved profile compositions refuse.
+Source input is bounded to 65,536 UTF-16 units before tokenization. The complete
+JavaScript admission decisions generate the native rule library automatically;
+native hosts supply actual lexer, binding and concrete visibility facts.
+An explicit source identity operation lowers to the existing checked reference
+domain and rechecks after both Links codecs without depending on source text.
+Whole-module publication binds forward and private functions together and
+exports only functions whose actual concrete visibility is `pub`. Original
+source bytes remain available for exact reverse translation. Full emitted
+executable runner shells still require an independent composition proof; this
+profile does not silently remove their runtime or invent an entry point. The
+registered native parity controls compile and execute only in CI. This finite
+profile advances the JavaScript/Rust baseline without claiming full language or
+own-codebase translation coverage.
+The generated shared-array fixture matrix retains the three original Boolean
+cases and adds alias, equal-payload distinct allocation and repeated fresh-call
+cases for numeric and Unicode-string arrays. Both runtimes consume the same
+nine cases. JavaScript controls additionally compare every fresh payload cell,
+including signed zero and Unicode text, after actual Rust parsing and text/binary
+Links reloads. Full native execution and emitted-field parity remain CI checks.
+
+The additive `standard Rust shared array identity handles 2` source profile also
+admits fully qualified `std::rc::Rc::clone(&value)`. The actual standard owner,
+one immutable source borrow and the complete shared scalar-array domain must
+be proved. Nested clones retain alias identity; borrowed call operands evaluate
+once in source order. The operation creates no new payload allocation, following
+the [standard Rc clone contract](https://doc.rust-lang.org/std/rc/struct.Rc.html#impl-Clone-for-Rc%3CT,+A%3E).
+Mutable or escaping borrows, alternate owners and wrong argument counts refuse.
+The first profile and its original admission declaration keep their exact domain;
+two additive source-qualified decisions select the new interpretation and its
+borrowed clone. The original sixteen operation records and source bindings stay
+an unchanged prefix. Both runtimes use the same generated decisions and scalar
+fixtures, with full native compilation and emitted-field parity required in CI.
+Source-free text and binary reloads and exact source restoration remain required.
+Public self-translation and semantic graph options declare both selected source
+models. Ten shared refusal inputs exercise parsing, whole-module publication
+and signature discovery in each runtime.
+The JavaScript token entry point validates all supplied entries, then parses an
+owned stream lexed from the complete immutable source. Later caller getters or
+token mutations cannot replace an authenticated occurrence. Initially forged
+tokens still refuse, and ordinary complete inputs retain the same result.
+
+An additive complete-CST scope interpretation recognizes a constant whose
+initializer allocates an empty standard `Map` or `Set`, with or without argument
+parentheses. Every actual module binder must leave the required standard owner
+unshadowed. Evaluated arguments, computed owners, additional eager statements,
+malformed trees and unproved owner bindings refuse. A neighboring unsupported
+deferred function keeps its own obligation while independently checked functions
+can translate. The original literal-binding decisions remain unchanged. Shared
+JavaScript decisions generate the Rust implementation and both checked Links
+archives; six source fixtures retain comments, UTF-8 coordinates and exact
+reverse source restoration. The initializer itself still requires executable
+translation. Native parity and independent generated execution run in CI.
+The standard constructors return before reading an iterator when their iterable
+argument is absent, as specified for
+[Map](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-map-iterable)
+and [Set](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-set-iterable).
+
 The separate JavaScript-first `Rust raw binding identifier interpretation 1`
 experiment retains original ASCII raw function and parameter names, including
 keyword spellings, in complete source tokens. It derives temporary parser
@@ -2368,6 +2432,14 @@ Positive and negative fixtures include deliberately abbreviated, ambiguous and
 duplicate names. A letters-only regular expression or a hand-picked example list
 does not establish readability or semantic uniqueness.
 
+The technical vocabulary supplements WordNet only with defined, sourced terms.
+The unabbreviated nouns `codebase` and `frontend` follow the primary definitions
+in [The Twelve-Factor App](https://12factor.net/codebase) and the
+[Clang manual](https://clang.llvm.org/docs/UsersManual.html#terminology).
+Their normal Links author retains every preceding vocabulary and fixture byte;
+positive names and misspellings exercise the existing gate. Canonical identities,
+source bindings, abbreviation rules and WordNet 3.1 remain unchanged.
+
 Source binding records are shared Links data in
 [`source-bindings.lino`](../parity/naming/source-bindings.lino), produced by
 `js/scripts/generate-naming-source-bindings.mjs`. The automatic migration retains
@@ -2409,6 +2481,63 @@ expanding unrelated language profiles. This ordering leaves every other critical
 requirement binding. Carried source, item counts and generated Rust alone do not
 establish whole-module semantic translation or native execution.
 
+Development batches prioritize shared semantic operations by the actual complete
+CI report inventory: affected modules, source bytes and exact retained reasons.
+The existing blocker analyzer and replay planner retain the original denominator,
+hashes, decorators and unresolved items. Counts from overlapping groups are not
+added as coverage; a missing shard remains unreported. A correction must remove
+the underlying source-language distinction through a checked operation, rather
+than merely remove its diagnostic. Current reports identify class/object
+representation, complete module/global ownership, collections, regular
+expressions and parameter patterns as broad recurring blockers. Their exact
+priority is recomputed from each complete report cohort.
+
+The efficient implementation unit is one shared Links semantic operation with
+its source admission, binding/type/effect constraints, both emitters, automatic
+native generation and complete round-trip/runtime fixtures delivered together.
+Frontends map source constructs to that common representation; backends emit
+it without separate pairwise translation algorithms. Class/object identity,
+closure environments, collection references and error effects must be modeled
+explicitly before dependent constructs can be supported faithfully. Support for
+unrelated functions beside an untranslated class is not class translation.
+Full JavaScript/Rust project translation remains the first working baseline;
+the rest of the language and ontology contract remains binding.
+
+Finalize each semantic batch before refreshing its generated source histories,
+naming bindings and requirement manifest. The normal authors remain the only
+writers. The [serial batch runner](../experiments/development-batch/README.md)
+records their dependency order as generated Links data, runs fresh bounded
+JavaScript processes and stops dependent generation when an author fails.
+Immutable source epochs and their full inverses remain preserved. Future
+generic source-history hosts should select independently certified complete
+epochs as data, without adding handwritten semantic inverses for every feature.
+Unknown, ambiguous or forged epochs still refuse under the existing gates.
+Author invocation receipts are drafting diagnostics, never execution evidence
+for a requirement. Local controls remain targeted; full native workloads run
+in CI while the next complete batch is drafted.
+
+CI report generation uses at most two independent measurement workers per
+shard; local report controls remain serial. Every complete selected module is
+measured once, with its real import context, both emitter comparisons and
+original inventory. Publication retains source order, and a failed context or
+worker remains a failure while the other measurements finish. Shard counts,
+deadlines and completeness gates remain unchanged.
+
+Historical raw snapshots may retain separately certified archive metadata when
+the complete current producer artifact matches an independently captured CI
+digest. The current artifact retains the real archive lengths and hashes, and
+both complete codec replays execute before the historical view is available.
+Only explicitly recorded metadata fields can be inverted; every owner, source,
+binding, emitted field, record census, limit and replay remains exact. Unknown
+whole artifacts refuse. The physical historical snapshot and its dependent
+receipts retain their original bytes. Source and metadata conservation do not
+establish native execution or requirement completion.
+
+Canonical Links escaping flattens bounded byte chunks, preserving the exact
+UTF-8 escaping alphabet and malformed UTF-16 replacement behavior. Large source
+archives must not retain a separate string fragment for every encoded byte.
+This changes resource use without changing the text or binary data contract.
+
 Declaration dependencies use one shared source algorithm to partition actual
 module bindings into recursive groups. A group publishes signatures atomically
 only after checking all complete original bodies together and rechecking each
@@ -2420,6 +2549,18 @@ constant function initializer or a named class containing only deferred plain
 methods and constructors. It checks complete syntax, exact names and unique
 owners; heritage, decorators, fields, static or computed members and eager
 initializers receive no such proof. Deferred class bodies remain untranslated.
+A separate complete-CST scope proof admits one actual constant binding of fresh
+literal arrays or objects, a root standard `new Map`/`new Set` with literal
+entries, or root `Object.freeze` on a literal container. All nested values must
+be literal data. Actual module and import owners must leave each required
+standard name unshadowed. Calls inside values, getters, computed keys, spreads,
+holes, destructuring, multiple declarators and unknown forms refuse. The shared
+JavaScript decisions generate native rules and both checked Links archives.
+This admits independently checked neighboring functions; the original constant
+initializer remains concrete source provenance and is not claimed as translated
+or executed. Complete module initialization and class translation remain required.
+The proof bounds are 65,536 UTF-8 source bytes and 4,096 CST nodes; exceeding them
+keeps the ordinary complete-module path and never supplies a partial proof.
 Other wider module forms require the real complete-module check. Unknown
 scope cannot select standard builtins by spelling. Generated auxiliary
 composition requires an independent closed profile: every complete function or
@@ -3812,6 +3953,69 @@ to execute cycles under every other real grammar tool. Development oracle
 corrections build in CI and keep their original source hashes and a separately
 identified correction, so the native runtime remains independent of the oracle.
 
+Module scope may additionally admit a constant initializer whose complete CST
+contains only Number literals, arithmetic operators and parentheses. Its actual
+lexical name still participates in standard-owner shadowing. Calls, references,
+BigInt, coercion from other values, assignments and eager sibling effects refuse.
+Shared JavaScript decisions generate the native classifier and both checked
+Links archives. Classification neither folds nor translates the initializer and
+never supplies a callable signature for a carried binding. Both host adapters
+retain the actual CST binder when the portable lexer lacks its Unicode spelling;
+this ownership transport does not establish general Unicode translation. Strict
+module arithmetic excludes legacy leading-zero spellings. This admits ordinary
+size constants such as `128 * 1024 * 1024` while retaining separate translation
+and native execution obligations.
+
+An independently translated pure Number module initializer may supply its actual
+checked scalar static signature to a sibling. Complete CST ownership, a matching
+name, the existing unique-owner/module-scope proof and a successfully emitted
+initializer are required. The ordinary emitter retains the original arithmetic
+and reads its existing lazy static; no alternate evaluator or copied semantics
+are introduced. Containers, calls, BigInt and unsupported operators do not gain
+this interpretation. TypeScript ownership scans use the same real erasure path
+as its ordinary frontend and native binder. Source restoration remains exact;
+independent Number behavior and whole-result parity require execution in CI.
+
+The borrowed JavaScript function-body host retains its preceding scoped-iteration
+source through complete Git-certified Links data and seven exact borrowing edits.
+Only the existing historical readers request that predecessor. Current source
+bytes, unknown-edit refusals, original packets and both source codecs retain
+independent checks; source conservation supplies no native execution evidence.
+
+Compiler-host source succession also retains the complete preceding crate root,
+Boolean hosts and ASCII native artifact as independently certified Links data.
+Every checked program, interface, source definition and replay field of the ASCII
+artifact stays exact; only its certified generated native files differ. Historical
+Boolean author modes preserve current physical hosts. The active crate-root
+receipt adds this source succession while keeping its whole earlier recipe and
+all actual current reexports; native CST owner proofs inspect the complete current
+root, including the newly public constructor. Older root receipts remain valid
+for their original bytes, and unknown source edits still refuse.
+Crate fixture packaging similarly retains both complete certified manifests and
+the exact two-entry inverse. Historical tooling capture selects its original
+manifest only through that proof; actual packaging checks keep the current one.
+Operation registration preserves the published order when new declarations are
+added to an existing source module, appending new identities after every old row.
+The operation extractor reads the complete formal parameter list before locating
+its body, so destructured/default parameters cannot masquerade as a definition.
+Two earlier parameter fragments are corrected from the same complete original
+Git-certified modules, registration receipt and codec profile. The proof retains
+both original fragments, every identity and unchanged implementation/import
+context; the exact field inverse preserves the old metadata scope. Unknown
+source contexts or definition edits refuse. Declaration offsets in this profile
+use UTF-16 code units, as the original JavaScript source lexer and string slices
+do. Both Links codecs preserve complete original/current definition fields.
+This metadata correction does not claim program equivalence between changed
+implementations or complete recursive semantic definitions for every concept.
+
+Historical naming storage rereads every complete document before selecting its
+cached immutable text. Only equal scalar strings share storage; returned index,
+document and decoded containers remain detached. One actual root and its five
+registered paths bound the cache. Every whole-file hash, source certificate,
+serializer comparison and final reread remains mandatory, including page edits
+behind an unchanged index and distinct copied roots. Decoder and memory limits
+remain unchanged.
+
 ## Resource limits
 
 Grammar test files run exactly once across six required JavaScript cells. Their
@@ -3863,6 +4067,53 @@ ownership disjoint, serialize resource-heavy local checks and Git index writes,
 and integrate shared metadata once per complete batch. One coordinator pushes
 only after the preceding CI finishes and its errors have concrete repairs.
 Native compilation and expensive workloads remain exclusive to CI.
+CI 39937987715 exceeded the unchanged ten-minute package deadline while replaying
+three complete Rust sources. Source preparation now proceeds serially while each
+ready source starts its existing archive worker. All three text and binary CST
+replays and successful worker exits still precede fixture/matrix allocation.
+Every factory and worker settles before publication or aggregate failure. The
+coordinator owns the factory inventory and reserves an extra GiB when selecting
+capacity; the original CPU, explicit job-count and one-GiB worker bounds remain.
+Tiny injected scheduling tests establish ordering and retention, not improved
+whole-source timing. Corrected timing requires CI; full raw workloads stay there.
+The subsequent raw job in CI 39951766736 still exceeded ten minutes after all
+three complete archive replays and matrix construction. One invocation now
+shares its actual checked program between the ordinary current and consuming
+emission helpers, instead of repeating parse/check/current emission. Every
+original source pin, 106-owner comparison, consuming codec replay and final
+profile assertion remains. The temporary checked graph is released after
+consuming preparation, including failure; it is never retained across plans.
+This removes repeated preparation, without claiming corrected CI timing.
+CI 39960718444 still exceeded that deadline just after plan construction.
+Complete stored source candidates now start every available archive worker
+before fresh compiler preparation begins. Candidates supply no compiler or
+profile authority: their entire text must equal each freshly generated source,
+and the original complete source, owner, profile and codec checks still run.
+Every worker and fresh validation settles before aggregate failure or
+publication; fixtures and the observation matrix wait for both phases. The
+original three complete CST text/binary replays, CPU/heap bounds and ten-minute
+deadline remain. Worker diagnostics record elapsed time at their source so
+buffered output cannot conceal the phase durations. Whole-workload timing
+remains a CI observation.
+Historical naming selection preflights every selected current source's complete
+bytes and digest before running its historical extractors. It keeps a private
+per-invocation read map, checks every selected epoch's pin and discards the map
+afterward. All original per-view reads, hash assertions, extractor calls and
+current-name exclusions still execute after successful preflight. Unknown edits
+therefore refuse before expensive unrelated extraction without acquiring any
+historical authority. This addresses the tooling shard in CI 39960718444 that
+passed all 173 tests but exceeded its existing fifteen-minute job deadline.
+The corrected timing still requires CI.
+That run also exposed an obsolete refusal for the retained `const LIMIT = 1 + 2`
+fixture. The expected translation now reflects the actual source-owned Number
+static support. Every old input and round-trip assertion remains; an additional
+control requires JavaScript and generated Rust to execute the original source's
+result of three. Active Node versions are bounded to `>=22.15 <23` or `>=24 <25`,
+and native execution to Rust `>=1.90 <1.100`; uncovered versions refuse.
+The serial final verification also runs the existing JavaScript crate-input
+package check after all seventeen preceding checks. Generated native unit
+fixtures live in the crate data directory with identical shared Links inputs
+and explicit package entries; the check does not invoke Cargo.
 
 Report modules retain eight required jobs; general grammar tests retain six.
 Their complete current source inventories are scheduled using source-bound
@@ -3873,6 +4124,158 @@ native and historical modulo partitions keep their existing ownership rules.
 Job counts, commands, coverage assertions and deadlines remain unchanged.
 These samples and scheduling estimates establish no requirement observation;
 only the next CI execution can confirm actual timing and results.
+
+CI 39839936265 reached the existing fifteen-minute deadline in four translation
+cells and one conformance cell. The current physical schedule splits each of
+the six logical translation cohorts into two measured subsets and each of the
+four logical conformance cohorts into two subsets. Each pair preserves its
+complete original file inventory exactly once. All twelve translation feedback
+partitions must retain their exact commit and file scope before merging; missing
+or foreign partitions still fail. Execution remains serial within each runner,
+and commands, assertions, native checks and the fifteen-minute deadline retain
+their existing obligations. The complete earlier workflow and its finite inverse
+remain authenticated separately. These scheduling controls establish no passing
+test observations; CI must verify the actual workloads.
+
+The twenty complete report, grammar and translation job logs of CI 39644810104 add a
+second source-bound timing cohort. The newest matching complete source wins;
+an older matching source remains available when the newer cohort has no sample.
+Only the eight report cells, six general grammar cells and six translation
+cells use these costs.
+Other report geometries retain their original byte-balance contract. No required
+job, complete module, assertion or deadline is removed or relaxed. GitHub's
+thirty-minute report deadline remains mandatory, including checkout time.
+The cancelled fifth report completed only part of its assigned source inventory;
+its partial progress never supplies a complete report or passing observation.
+
+CI 39848242758 published all eight complete report artifacts, but GitHub marked
+the fifth job cancelled for exceeding its thirty-minute job deadline, including
+checkout and teardown. The completed report steps do not override that failed
+gate. Complete bounded logs from all eight jobs supply a new advisory cohort
+for every one of their 345 source modules. Only the eight report cells select
+these newest source-bound costs; older grammar and translation samples retain
+their current selection. Missing or changed source uses the existing estimate.
+Every current module still runs exactly once, with unchanged commands, complete
+report assertions and the thirty-minute deadline. Further CI must confirm timing.
+
+CI 39857274367 also produced all eight complete reports; its second job exceeded
+the same deadline. Its 347 complete, source-bound samples form a further advisory
+report cohort. Both earlier cohorts and their controls remain available. The
+selected costs affect ownership only; they confer no completion or execution
+authority, and all eight jobs, full module coverage and deadlines remain required.
+The two report workers reuse whichever slot finishes first. A slow preceding
+measurement does not leave the other worker idle. Context resolution and final
+publication retain their original source order; failures and complete module
+coverage remain mandatory. The worker count and thirty-minute deadline are
+unchanged. A controlled slow-first regression checks this scheduling boundary;
+complete report timing still requires CI.
+
+CI 39872149597 passed seven report cells, while the second exceeded the same
+thirty-minute limit before completing its module inventory. Each of the original
+eight logical report cells now runs as two physical parts. The source-bound
+scheduler partitions complete modules within each logical cell; their disjoint
+union must equal that cell exactly. Both workflows publish distinct artifacts
+for all sixteen physical parts. The existing aggregate still requires every
+current source module exactly once, matching commit and source hashes, both
+translation comparisons and every report assertion. No partial report counts as
+success. The thirty-minute job deadline and two-worker limit remain unchanged;
+the original eight-cell command remains supported. Actual timing requires CI.
+CI 39878097119 passed all sixteen physical report jobs. Complete certified
+workflow predecessors keep the older evidence-partition conservation control
+on its exact original bytes. Both committed workflow versions and every report
+edit are independently checked; unknown successor bytes receive no historical
+view. Actual current report coverage still uses the sixteen-part controls.
+
+Source-only package checks run alongside the JavaScript test matrix. They use
+fresh checkouts and consume no test or report artifacts; the final JavaScript
+aggregate still requires tests, reports, every package check and merged compiler
+feedback. Rust and acceptance keep their complete JavaScript prerequisites.
+The scheduling change retains both independently committed complete workflows
+and an exact one-line forward/inverse proof. Unknown successors receive no
+historical view, and all previous workflow conservation assertions remain.
+
+Reviewed compiler feedback corrects generated library styles through the normal
+Links decorators. Complete original Git-certified source files and the original
+rendered diagnostic log remain separate from machine-applicable suggestions.
+Corrections preserve lexical references, source strings and comments; Boolean
+normalization retains operand order, NaN and signed zero. Independent Boolean
+facts and complete ordered CST columns retain their shared interfaces through
+specific lint expectations that must remain fulfilled. The strict compiler and
+lint gates continue to run in CI. Formatting, source replay and JavaScript
+controls do not establish native execution.
+
+The raw-oracle runner may reuse a successfully verified base emission profile
+within one process only after comparing every complete historical/current
+artifact, rule source and causal producer input byte again. Input names and order
+also match. Changed, omitted, reordered or added inputs invoke the original
+complete verifier; failures and mutation during verification never enter the
+cache. Returned values have independent ownership. Consuming/borrowed profile
+checks and complete transport source authentication still run around each actual
+or injected invocation. This avoids repeatedly decoding unchanged large Links
+artifacts; it does not replace source replay, native execution or fixture checks.
+
+Serial metadata authoring refreshes both packaged canonical concept catalogs
+before final naming verification, and retains the separate evidence-translation
+naming and source archives after CI source repairs. Catalog authority still
+requires exact canonical data and actual tooling owners. Lower peak allocation
+changes evaluation order only; every foundation rejection and source assertion
+remains mandatory.
+Canonical tooling counts exact UTF-8 input bytes without allocating complete
+encoded copies. UTF-16 surrogate replacement and every existing physical and
+expanded byte limit retain their original behavior. Boundary controls compare
+the active UTF-8 encoder, including paired and unpaired surrogates.
+The repository's serial development driver also provides a final `verification`
+phase. Seventeen read-only checks reconcile live requirement sources before ledger
+access, then check dependency/scope/export inventories, documentation, test
+ownership, generated native rules, source histories and both concept catalogs.
+Its separate registration phase invokes the normal append-only operation,
+complete binding and codec-epoch authors in order before catalog generation.
+A failed author retains its receipt and prevents dependent registration.
+The final source-history check validates all indexed naming documents, their
+source certificates, every current source pin and exact serialization.
+Missing or stale data stops the phase without refreshing it. This consolidates
+the existing bounded checks; full suites, reports and native execution remain
+separate CI obligations. Invocation receipts are not requirement observations.
+
+Complete workflow and scheduling test successors, and the crate manifest, are independently certified at
+8f2f6c48, with their complete predecessors certified at 8bc0ef97. Historical
+tooling and scheduling guards select only those exact byte inverses. Current
+checkout provenance, current measured scheduling and their new controls execute
+separately. Unknown source successors still refuse.
+
+The normal supplemental naming author generates and verifies its complete
+output in fresh serial processes. The author receipt binds every output byte;
+the unchanged authenticated reader validates every source certificate and its
+normal serialization must reproduce that digest before the command succeeds.
+Equal immutable source strings may share storage; independent ordered rows,
+certificates and containers retain their identities. This keeps the same checks
+within the existing local heap budget without reducing inventories or gates.
+The normal author derives supplemental views with the same inventory extractors
+in a disposable JavaScript worker capped at 352 MiB. It waits for one result and
+successful worker exit before encoding the full output. Every source epoch,
+ordered inventory, current source pin, extracted name and record mapping remains
+mandatory; the exported check path retains its complete in-process comparison.
+The extraction heap expires before serialization so their largest graphs do not
+overlap. The existing process-tree resource guard still bounds the entire task.
+
+Supplemental historical naming sources use an explicit Links index once their
+combined data outgrows one closed graph. Four independently closed documents
+retain the complete ordered source epochs at the registered revisions. The index
+records every path, revision, byte count, digest and source/view count. Every
+document's complete bytes are checked before cache reuse; every decoded source
+still passes its independent Git certificate. Legacy single-graph input retains
+its original decoder and limits. Each indexed document uses those same limits;
+the combined history is not presented as one graph that passed the old budget.
+Normal verification reproduces every page and index byte, preserves source/view
+order and refuses a container alias that would cross documents. Cache results
+retain independent containers while sharing only immutable scalar storage.
+
+The canonical bootstrap reader may share equal immutable metadata inside its
+private graph, which never escapes. It still allocates every original data link,
+distinguishes independent containers, preserves actual aliases, and charges every
+original stored/expanded node and byte. Language, shape, reachability, cycle and
+other validation rules remain unchanged. This reduces peak allocation without
+raising the task or codec limits.
 
 Repeated historical naming reads reuse one authenticated immutable snapshot.
 Every packet read checks its complete serialized input before lookup;
