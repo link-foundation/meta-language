@@ -1434,6 +1434,37 @@ active learning and minimization already present in the Rust inference modules
 and their closed issues are audited and extended, with matching JavaScript
 behavior. Closed issues do not supply current implementation evidence.
 
+A new shared source draft supplies labelled prefix-tree construction, red/blue
+RPNI selection, evidence-driven selection and an ALERGIA-style compatibility
+worklist in both runtimes. First-observed symbol and state order explicitly
+break ties. The compatibility bound uses a versioned, finite binary64 logarithm
+series; it is not asserted identical to the older native implementation's
+transcendental library decisions. Historical native APIs remain intact. The
+algorithm follows the state-merging families described in the
+[Abbadingo paper](https://mural.maynoothuniversity.ie/id/eprint/10250/) and
+[Carrasco and Oncina's stochastic grammar paper](https://www.dlsi.ua.es/~carrasco/papers/RAIRO99.pdf).
+Its public wrappers retain duplicate observations, contradictory-label refusal,
+explicit limits and actual transition/final frequencies. Without a separate
+lexer definition, token texts must be nonempty, well-formed and prefix-free;
+Unicode character examples satisfy that condition. Missing transitions reject.
+The resulting right-linear grammar uses the normal full CST parser path.
+
+The complete typed algorithm, declared inputs, selected parameters, actual model,
+recursive candidate grammar and common concept definitions serialize together
+in a complete-network archive. Reload checks the exact versioned algorithm
+definition and recomputes its model decisions before comparing the candidate
+grammar. The source view can extend a dynamic language session; no language-pair
+dispatch table is added. Training observations and this internal reconstruction
+are not independent evidence of the unknown language's meaning. Learned
+similarity never permits global identity deduplication without its separate
+formal certificate. Worklist, merge and sample budgets return explicit linked
+failure values rather than truncating inference silently. Native source is
+generated automatically from JavaScript. Formatter repair and all behavioral
+checks remain deferred under the current whole-scope draft instruction.
+Context-free inference, active learning, semantic induction, lexical inference,
+minimization and the modern research obligations still require the remaining
+paired implementation work; these regular learners do not discharge them.
+
 ### Critical conversation requirements
 
 Every requirement-bearing conversation message is captured verbatim, hashed,

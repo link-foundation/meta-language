@@ -25,6 +25,13 @@ mod global_concept_rules;
 mod global_concept_space;
 pub mod grammar;
 mod grammar_concepts;
+mod grammar_inference;
+mod grammar_inference_rules;
+pub use grammar_inference::{
+    RegularGrammarInference, RegularGrammarInferenceOptions, RegularGrammarInferenceParameters,
+    accept_inferred_grammar_symbols, create_regular_grammar_inference_program_links,
+    infer_regular_grammar, read_regular_grammar_inference_links,
+};
 pub mod graphql_adapter;
 mod incremental;
 pub mod language_catalog;

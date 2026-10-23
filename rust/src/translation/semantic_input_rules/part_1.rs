@@ -242,6 +242,16 @@ pub const fn refine_self_translation_module_references(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub const fn accept_semantic_branch_context_reordering(
+    expected_known: bool,
+    first_needs_context: bool,
+    second_needs_context: bool,
+) -> bool {
+    (!expected_known && first_needs_context) && !second_needs_context
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn ml_plan_semantic_source_groups_loop2(
     roles: &[f64],
     line_breaks: &[bool],

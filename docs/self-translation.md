@@ -487,3 +487,14 @@ Independent JavaScript parsing admits unshadowed `BigInt.asIntN`/`asUintN` at
 the represented constant widths and lowers to ordinary unbounded integer terms
 with fresh local bindings and one operand evaluation. Non-BigInt coercions and
 dynamic or other widths remain explicit gaps. This batch has not been tested.
+
+The regular grammar discovery draft is another complete JavaScript-first
+algorithm library. Its persistent numeric worklists and explicit failure values
+translate into native source together, and both packages ship the complete typed
+Links program. Source drafting also exposed two general frontend gaps: a leading
+throw branch can now borrow the actual returning branch's inferred type, and an
+array spread reads a reference payload while retaining fresh array identity.
+Both adapters retain the original runtime evaluation order. Source formatting
+of the new inference library currently triggers a rustfmt internal whitespace
+error; its author preserves the emitted draft and retains all existing CI gates.
+No behavioral execution or validation has been performed for these changes.

@@ -14,4 +14,8 @@ functions, recursive components, scope retries and project translation options.
 Draft fixed integer wrapping casts at every native width across all four
 emitters, complete typed Links definitions and independent JavaScript BigInt
 cast parsing through one automatically translated construction plan.
+Draft paired regular grammar discovery, explicit learning budgets and complete
+Links archives containing the generated algorithm, observations, candidate
+grammar and recursive common concepts. Add branch result-context inference
+and reference-array spread copying needed by ordinary source translation.
 Behavioral checks remain deferred until the complete requirements draft.

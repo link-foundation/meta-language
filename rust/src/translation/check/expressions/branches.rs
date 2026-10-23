@@ -5,6 +5,25 @@ use super::{
     negate_number, text_lit, type_error,
 };
 
+fn needs_branch_result_context(node: &SExpr, depth: usize) -> bool {
+    if depth > 256 {
+        return false;
+    }
+    match &node.node {
+        SNode::Abort { .. } => true,
+        SNode::Let { body, .. } | SNode::Print { body, .. } | SNode::CellWrite { body, .. } => {
+            needs_branch_result_context(body, depth + 1)
+        }
+        SNode::If {
+            then, otherwise, ..
+        } => {
+            needs_branch_result_context(then, depth + 1)
+                && needs_branch_result_context(otherwise, depth + 1)
+        }
+        _ => false,
+    }
+}
+
 impl Checker {
     #[allow(clippy::too_many_lines)]
     pub(super) fn check_literal_expression(
@@ -129,6 +148,19 @@ impl Checker {
             } => {
                 let checked = self.expr(cond, env, path, None, false)?;
                 let cond = self.boolean_value(checked, span)?;
+                if crate::translation::semantic_input_rules::accept_semantic_branch_context_reordering(
+                    !matches!(context, ExpectedType::Concrete(None)),
+                    needs_branch_result_context(then, 0), needs_branch_result_context(otherwise, 0),
+                ) {
+                    let mut else_expr = self.expr(otherwise, env, path, None, allow_literal)?;
+                    if else_expr.ty.is_literal() {
+                        else_expr = self.expr(otherwise, env, path, Some(&self.default_number()), false)?;
+                    }
+                    let then_expr = self.expr(then, env, path, Some(&else_expr.ty), allow_literal)?;
+                    let (then_expr, else_expr) = self.unify_branches(then_expr, else_expr, expected, span)?;
+                    let ty = then_expr.ty.clone();
+                    return Ok(Expr::new(Node::If { cond: Box::new(cond), then: Box::new(then_expr), otherwise: Box::new(else_expr) }, ty));
+                }
                 let mut then_expr =
                     self.expr_with_context(then, env, path, context, allow_literal)?;
                 let else_expected = expected

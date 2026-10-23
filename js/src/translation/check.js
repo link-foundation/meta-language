@@ -12,6 +12,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import { typeError, unsupported } from './diagnostics.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
+import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
 import { checkCollectionConstruction } from './collection-construction.js';
@@ -66,6 +67,16 @@ const KNOWN = Symbol('known constructors');
 const PRODUCT_VALUES = Symbol('known immutable product values');
 /** Natural numeral patterns above this unfold to equality tests rather than successor chains. */
 const NAT_PATTERN_UNFOLD = 16n;
+
+// Conservative structural bottom classification. Unknown forms use the
+// existing checker order; this predicate never invents an operand type.
+function needsBranchResultContext(node, depth = 0) {
+  if (!node || depth > 256) return false;
+  if (node.k === 'abort') return true;
+  if (node.k === 'let' || node.k === 'print' || node.k === 'cellWrite') return needsBranchResultContext(node.body, depth + 1);
+  if (node.k === 'if') return needsBranchResultContext(node.then, depth + 1) && needsBranchResultContext(node.else, depth + 1);
+  return false;
+}
 
 // The Math and Number functions whose value is a boolean.
 const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
@@ -826,6 +837,13 @@ class Checker {
         return this.binary(node, env, path, expected, allowLiteral);
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
+        if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
+          let otherwise = this.expr(node.else, env, path, undefined, allowLiteral);
+          if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, env, path, this.defaultNumber());
+          const then = this.expr(node.then, env, path, otherwise.type, allowLiteral);
+          const branches = unifyBranches(then, otherwise, expected, this.language, node.span);
+          return { k: 'if', cond, then: branches[0], else: branches[1], type: branches[0].type };
+        }
         let then = this.expr(node.then, env, path, expected, allowLiteral);
         let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
         if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
@@ -1117,6 +1135,7 @@ class Checker {
     for (const item of node.items) {
       const want = element && item.spread ? array(element) : element;
       let value = this.expr(item.value, env, path, want);
+      if (item.spread) value = this.referenceValue(value);
       if (item.spread && value.type.kind !== 'array') {
         throw unsupported(`spread of ${typeKey(value.type)}`, 'only arrays are spread into an array literal', item.value.span ?? node.span);
       }
@@ -1137,6 +1156,9 @@ class Checker {
     }
     if (!element) throw unsupported('empty array of an unknown type', 'nothing fixes the type of the elements of this empty array; declare it with JSDoc', node.span);
     if (!parts.length) return { k: 'array', items: [], type: array(element) };
+    if (parts.length === 1 && node.items.length === 1 && node.items[0].spread) {
+      return { k: 'append', left: { k: 'array', items: [], type: array(element) }, right: parts[0], type: array(element) };
+    }
     return parts.reduce((left, right) => ({ k: 'append', left, right, type: array(element) }));
   }
 

@@ -155,6 +155,11 @@ impl Checker {
                 }
             });
             let value = self.expr(&item.value, env, path, want.as_ref(), false)?;
+            let value = if item.spread {
+                Self::reference_value(value)
+            } else {
+                value
+            };
             let place = item.value.span.or(span);
             let mut ty = if item.spread {
                 value.ty.element().cloned().ok_or_else(|| {
@@ -202,6 +207,16 @@ impl Checker {
             ));
         };
         let ty = array(element);
+        if parts.len() == 1 && items.len() == 1 && items[0].spread {
+            let right = parts.remove(0);
+            return Ok(Expr::new(
+                Node::Append {
+                    left: Box::new(Expr::new(Node::Array { items: Vec::new() }, ty.clone())),
+                    right: Box::new(right),
+                },
+                ty,
+            ));
+        }
         let mut parts = parts.into_iter();
         let Some(first) = parts.next() else {
             return Ok(Expr::new(Node::Array { items: Vec::new() }, ty));

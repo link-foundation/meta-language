@@ -23,6 +23,7 @@ export function readDevelopmentAuthoringPlan(){
    stage('project translation worklist native rules','js/scripts/generate-project-translation-rules.mjs',['--draft']),
    stage('concrete syntax projection native rules','js/scripts/generate-syntax-projection-rules.mjs',['--draft']),
    stage('fixed integer cast meanings and native rules','js/scripts/generate-fixed-integer-cast-rules.mjs',['--draft']),
+   stage('regular grammar discovery meanings and native rules','js/scripts/generate-grammar-inference-rules.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),
    stage('Rust diagnostic attributes','js/scripts/generate-rust-diagnostic-attribute-rules.mjs',['--native']),
    stage('grammar selection included ranges','js/scripts/generate-grammar-selection-included-range-rules.mjs',['--native']),

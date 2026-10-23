@@ -20,6 +20,8 @@ export * from './concept-records.js';
 export * from './concept-distinctions.js';
 export * from './global-concept-space.js';
 export { createDiscoveredConceptLinks, readDiscoveredConceptLinks } from './discovered-concept-links.js';
+export { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGrammarSymbols,
+  createRegularGrammarInferenceProgramLinks } from './grammar-inference.js';
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,

@@ -14,10 +14,11 @@ import { writeProjectData } from './project-data.mjs';
 import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, referenceSemantics = false, sourceFormatting = 'rustfmt' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   const source = readFileSync(new URL(sourcePath, root), 'utf8');
-  const program = checkProgram(parseJavaScript(source, { referenceSemantics: false }));
+  if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
+  const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
   const emitted = emitRust(program, { arrayConsumption: true });
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   if (!header) throw new TypeError('the source translator omitted its library attributes');
@@ -25,7 +26,16 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const names = [...relocation.source.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const loans = readPortableSourceParameterStyles(relocation.source, { publicNames: names });
   const styles = readPortableSourceLintStyles(loans.source);
-  const output = formatProductRuleSource(styles.source);
+  if (!['rustfmt', 'preserve'].includes(sourceFormatting)) throw new TypeError('unknown source formatting selection');
+  let output;
+  try { output = sourceFormatting === 'preserve' ? styles.source : formatProductRuleSource(styles.source); }
+  catch (error) {
+    const line = Number(String(error.message).match(/rules\.rs:(\d+)/u)?.[1]);
+    if (Number.isSafeInteger(line) && line > 0) error.message += '\nSource formatting context:\n'
+      + styles.source.split('\n').slice(Math.max(0, line - 3), line + 2)
+        .map((text, index) => String(Math.max(1, line - 2) + index) + ': ' + text.slice(0, 400)).join('\n');
+    throw error;
+  }
   const files = partitionPortableRustLibrary(output, { directory: moduleName,
     notice: '// Generated from complete ' + sourcePath + '. Do not edit by hand.\n' });
   const base = new URL('rust/src/' + (directory ? directory + '/' : ''), root);
@@ -50,7 +60,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings },

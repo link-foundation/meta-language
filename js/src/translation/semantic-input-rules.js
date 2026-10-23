@@ -102,3 +102,12 @@ export function selectSelfTranslationModuleReferences(explicit, javascript, lexi
 export function refineSelfTranslationModuleReferences(selected, explicit, javascript, complete, reference) {
   return !explicit && selected && javascript && complete ? reference : selected;
 }
+
+/** Static branch checking may borrow the returning branch's actual type. This
+ * never changes the runtime condition or order of evaluation.
+ * @param {boolean} expectedKnown @param {boolean} firstNeedsContext
+ * @param {boolean} secondNeedsContext @returns {boolean}
+ */
+export function acceptSemanticBranchContextReordering(expectedKnown, firstNeedsContext, secondNeedsContext) {
+  return !expectedKnown && firstNeedsContext && !secondNeedsContext;
+}

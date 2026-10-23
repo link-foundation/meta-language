@@ -961,6 +961,19 @@ export function encodeTypedProgramLinks(
 ): TypedProgramLinks;
 export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
+export function createRegularGrammarInferenceProgramLinks(): TypedProgramLinks;
+export interface RegularGrammarInferenceOptions {
+  strategy?: 'rpni' | 'edsm' | 'alergia'; alpha?: number;
+  stateLimit?: number; pairLimit?: number; attemptLimit?: number;
+  symbolLimit?: number; byteLimit?: number;
+  identifier?: string; language?: string; edition?: string;
+}
+export interface RegularGrammarInference extends TypedProgramLinks {
+  grammar: Grammar; source: GlobalConceptSource; alphabet: string[]; table: number[];
+}
+export function inferRegularGrammar(positives: readonly (readonly string[])[], negatives?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions): RegularGrammarInference;
+export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: LinkId | number): RegularGrammarInference;
+export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,
   root: LinkIdValue,
