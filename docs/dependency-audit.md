@@ -67,7 +67,7 @@ they are.
 | Downloaded generated parser sources | 5 | 5 | 0 | 0 |
 | Vendored runtime | 1 | 0 | 1 | 0 |
 | Downloaded WebAssembly grammars | 60 | 60 | 0 | 0 |
-| Generators | 265 | 264 | 1 | 0 |
+| Generators | 266 | 265 | 1 | 0 |
 | Toolchains and tools | 17 | 15 | 1 | 1 |
 | GitHub Actions | 22 | 22 | 0 | 0 |
 | Build images | 1 | 0 | 1 | 0 |
@@ -812,6 +812,7 @@ they are.
 | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `js/scripts/generate-native-compiler-style-fixtures.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `js/scripts/generate-borrowed-javascript-body-source-history.mjs` | `script` |  | derived | current |  |
 | `js/scripts/generate-native-compiler-host-source-history.mjs` | `js/scripts/generate-native-compiler-host-source-history.mjs` | `script` |  | derived | current |  |
+| `js/scripts/generate-module-scope-declaration-history.mjs` | `js/scripts/generate-module-scope-declaration-history.mjs` | `script` |  | derived | current |  |
 
 ## Toolchains and tools
 

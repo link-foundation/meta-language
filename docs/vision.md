@@ -3996,6 +3996,17 @@ the exact two-entry inverse. Historical tooling capture selects its original
 manifest only through that proof; actual packaging checks keep the current one.
 Operation registration preserves the published order when new declarations are
 added to an existing source module, appending new identities after every old row.
+The operation extractor reads the complete formal parameter list before locating
+its body, so destructured/default parameters cannot masquerade as a definition.
+Two earlier parameter fragments are corrected from the same complete original
+Git-certified modules, registration receipt and codec profile. The proof retains
+both original fragments, every identity and unchanged implementation/import
+context; the exact field inverse preserves the old metadata scope. Unknown
+source contexts or definition edits refuse. Declaration offsets in this profile
+use UTF-16 code units, as the original JavaScript source lexer and string slices
+do. Both Links codecs preserve complete original/current definition fields.
+This metadata correction does not claim program equivalence between changed
+implementations or complete recursive semantic definitions for every concept.
 
 Historical naming storage rereads every complete document before selecting its
 cached immutable text. Only equal scalar strings share storage; returned index,
@@ -4073,6 +4084,32 @@ original source pin, 106-owner comparison, consuming codec replay and final
 profile assertion remains. The temporary checked graph is released after
 consuming preparation, including failure; it is never retained across plans.
 This removes repeated preparation, without claiming corrected CI timing.
+CI 39960718444 still exceeded that deadline just after plan construction.
+Complete stored source candidates now start every available archive worker
+before fresh compiler preparation begins. Candidates supply no compiler or
+profile authority: their entire text must equal each freshly generated source,
+and the original complete source, owner, profile and codec checks still run.
+Every worker and fresh validation settles before aggregate failure or
+publication; fixtures and the observation matrix wait for both phases. The
+original three complete CST text/binary replays, CPU/heap bounds and ten-minute
+deadline remain. Worker diagnostics record elapsed time at their source so
+buffered output cannot conceal the phase durations. Whole-workload timing
+remains a CI observation.
+Historical naming selection preflights every selected current source's complete
+bytes and digest before running its historical extractors. It keeps a private
+per-invocation read map, checks every selected epoch's pin and discards the map
+afterward. All original per-view reads, hash assertions, extractor calls and
+current-name exclusions still execute after successful preflight. Unknown edits
+therefore refuse before expensive unrelated extraction without acquiring any
+historical authority. This addresses the tooling shard in CI 39960718444 that
+passed all 173 tests but exceeded its existing fifteen-minute job deadline.
+The corrected timing still requires CI.
+That run also exposed an obsolete refusal for the retained `const LIMIT = 1 + 2`
+fixture. The expected translation now reflects the actual source-owned Number
+static support. Every old input and round-trip assertion remains; an additional
+control requires JavaScript and generated Rust to execute the original source's
+result of three. Active Node versions are bounded to `>=22.15 <23` or `>=24 <25`,
+and native execution to Rust `>=1.90 <1.100`; uncovered versions refuse.
 The serial final verification also runs the existing JavaScript crate-input
 package check after all seventeen preceding checks. Generated native unit
 fixtures live in the crate data directory with identical shared Links inputs

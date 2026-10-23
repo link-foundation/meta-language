@@ -27,6 +27,7 @@ export function readDevelopmentAuthoringPlan(){
    stage('grammar context after repair','experiments/grammar-context-source-metadata/generate.mjs'),
    stage('raw planning sources','experiments/original-link-complete-table-projection/generate-raw-planning-source-history.mjs'),
    stage('Boolean value sources','js/scripts/generate-boolean-value-source-history.mjs'),
+   stage('complete original operation declarations','js/scripts/generate-module-scope-declaration-history.mjs'),
   ]},
   {name:'registration',stages:[
    stage('canonical source operations','js/scripts/generate-module-scope-naming.mjs',['--section','canonical']),

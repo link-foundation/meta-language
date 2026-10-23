@@ -9,8 +9,12 @@ and establishes no requirement evidence.
 `--list` shows the phases. Each phase invokes existing commands sequentially in
 fresh JavaScript processes. The history phase first captures complete certified compiler and borrowing
 successors and physical workflow succession, retains the grammar-context steps
-around CI/native history and refreshes evidence-translation archives. Registration
-appends canonical operations, their complete source bindings and the current
+around CI/native history and refreshes evidence-translation archives. It also
+recovers two incomplete declaration fields from their complete original
+Git-certified modules, keeping the original fragments and identities through
+an explicit metadata inverse. The history phase captures this proof before
+registration. Complete formal parameter lists determine where bodies start.
+Registration appends canonical operations, their complete source bindings and the current
 binding codec epoch in order, retaining every earlier row and epoch. Naming
 refreshes both concept catalogs before deriving its supplemental views. Run final
 verification after source-changing authors and manifest refreshes finish.

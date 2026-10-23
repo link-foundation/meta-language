@@ -16,12 +16,13 @@ import {verifyStringOrderSchemaSuccessor} from '../../js/scripts/check-typed-pro
 import {SOURCE_NATIVE_RUNNER_ADDITIONS,SOURCE_NATIVE_RUNNER_VERIFIER_FILES,verifySourceNativeRunnerSourceClosure} from '../source-native-runner-source-closure.mjs';
 import {createCompleteRustSourceArchives, replayCompleteRustSourceArchives, readCanonicalArchiveTransportSource, requireSuccessfulSourceArchive} from './archive-transport.mjs';
 import {createOriginalLinkSuccessorSourceArchives,readOriginalLinkSuccessorArchiveSource} from './successor-source-archives.mjs';
-import {prepareOriginalLinkRawSourceArchives,readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
+import {readOriginalLinkRawArchiveWorkerSources} from './raw-source-archive-workers.mjs';
+import {validateOriginalLinkRawSourceArchives} from './raw-source-archive-validation.mjs';
 import {freezeOriginalLinkRawData,readOriginalLinkRawFreezeWork} from './raw-data-freeze.mjs';
 import {createOriginalLinkRawProfileCache} from './raw-profile-cache.mjs';
 import {prepareCurrentOriginalLinkRawEmission} from './generate-raw-current-emission.mjs';
 import {ORIGINAL_LINK_RAW_CURRENT_ARTIFACT, ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT, readOriginalLinkRawEmissionProducerSources, readOriginalLinkRawEmissionProfile} from './raw-emission-profiles.mjs';
-import {generateOriginalLinkRawConsumingEmission,prepareOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
+import {ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT,generateOriginalLinkRawConsumingEmission,prepareOriginalLinkRawConsumingEmission,readOriginalLinkRawConsumingProfile} from './raw-consuming-emission.mjs';
 import {prepareOriginalLinkRawBorrowedEmission,readOriginalLinkRawBorrowedProfile} from './raw-borrowed-emission.mjs';
 const {Link: CarrierLink, StreamParser: CarrierLinksParser} = await import(pathToFileURL(createRequire(new URL('../../js/package.json', import.meta.url)).resolve('links-notation')).href);
 
@@ -186,10 +187,12 @@ const readRawSourceTransports=()=>{
   const source=readFileSync(new URL('./raw-data-freeze.mjs',import.meta.url));
   const profileCache=readFileSync(new URL('./raw-profile-cache.mjs',import.meta.url));
   return[readCanonicalArchiveTransportSource(),readOriginalLinkSuccessorArchiveSource(),...readOriginalLinkRawArchiveWorkerSources(),
+    {file:'experiments/original-link-complete-table-projection/raw-source-archive-validation.mjs',...sourceIdentity(readFileSync(new URL('./raw-source-archive-validation.mjs',import.meta.url)))},
     {file:'experiments/original-link-complete-table-projection/raw-profile-cache.mjs',bytes:profileCache.length,sha256:sha256(profileCache)},
     {file:'experiments/original-link-complete-table-projection/raw-data-freeze.mjs',bytes:source.length,sha256:sha256(source)}];
 };
 const sha256 = value => createHash('sha256').update(value).digest('hex');
+const sourceIdentity=value=>({bytes:Buffer.byteLength(value),sha256:sha256(value)});
 const maximumProtocolBytes = 1024 * 1024, maximumConsumerBytes = 4 * 1024 * 1024;
 const blockWidth = 256;
 
@@ -302,9 +305,10 @@ function createCarrier(observations) {
 const vectorBits = (carrier, index) => carrier.vectors[index].flatMap(index => carrier.blocks[index].map(index => carrier.words[index]));
 const protocol = (observations, carrier) => observations.map((row, index) => [index, row.resultBits.length, ...carrier.vectors[carrier.invocations[index].result].map(value => value.toString(16))].join(':')).join('\n') + '\n';
 function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBinary) {
+  const started=performance.now();
   const options = {parseSource: original => {const graph = LinkNetwork.parse(original, 'Rust'); requireSuccessfulSourceArchive(graph); return graph;}, encodeBinary, decodeBinary,
-    onNativeRun: event => process.stdout.write(`Raw source native run: phase=${event.phase}; run=${event.sequence}; inputBytes=${event.inputBytes}; memoCells=${event.memoCells}; storedRules=${event.storedRules}; heap=${event.heap}; farthest=${event.farthest}; callPosition=${event.callPosition}; depth=${event.depth}\n`),
-    onPhase: (phase, count) => process.stdout.write(`Raw source archive: ${phase}; records=${count ?? 'unknown'}; heap=${process.memoryUsage().heapUsed}\n`)};
+    onNativeRun: event => process.stdout.write(`Raw source native run: phase=${event.phase}; run=${event.sequence}; inputBytes=${event.inputBytes}; memoCells=${event.memoCells}; storedRules=${event.storedRules}; heap=${event.heap}; farthest=${event.farthest}; callPosition=${event.callPosition}; depth=${event.depth}; elapsed_ms=${Math.round(performance.now()-started)}\n`),
+    onPhase: (phase, count) => process.stdout.write(`Raw source archive: ${phase}; records=${count ?? 'unknown'}; heap=${process.memoryUsage().heapUsed}; elapsed_ms=${Math.round(performance.now()-started)}\n`)};
   const archives = createCompleteRustSourceArchives(source, options);
   const {textReplay, binaryReplay} = replayCompleteRustSourceArchives(archives, options);
   assert.equal(textReplay, source); assert.equal(binaryReplay, source);
@@ -315,7 +319,7 @@ function archiveCompleteRustSource(source, LinkNetwork, encodeBinary, decodeBina
 /** The worker uses this same complete source algorithm, without native tools. */
 export async function replayOriginalLinkRawRustSource(source) {
   assert.equal(process.env.CI,'true','complete source archives require CI=true');
-  const{LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary}=await import('../../js/src/index.js');
+  const[{LinkNetwork},{encodeLinkNetworkBinary,decodeLinkNetworkBinary}]=await Promise.all([import('../../js/src/network.js'),import('../../js/src/link-network-binary.js')]);
   return archiveCompleteRustSource(source,LinkNetwork,encodeLinkNetworkBinary,decodeLinkNetworkBinary);
 }
 
@@ -592,37 +596,51 @@ function buildOriginalLinkRawPlan(prepared, originalReceipt, modelSources, trans
   const plan = freeze({model: prepared.model, modelCommit: ORIGINAL_LINK_RAW_MODEL_COMMIT, modelSources, transportSources, emissionProfile: prepared.emissionProfile, originalCount: 1, fixtureInventory: frozenFixtureIds, inventoryCounts: frozenInventory, entries: [entry]}); checkedPlans.add(plan); return plan;
 }
 
+// Candidate text starts complete archive work early; it supplies NO compiler
+// authority. Every candidate must equal the full freshly generated source below.
+function readOriginalLinkRawArchiveCandidateSources(profile,readProjectData) {
+  const artifact=readProjectData(profile==='historical'?ORIGINAL_LINK_RAW_HISTORICAL_ARTIFACT:ORIGINAL_LINK_RAW_CURRENT_ARTIFACT);
+  if(profile==='historical')return[artifact.completeRust];
+  const consuming=readProjectData(ORIGINAL_LINK_RAW_CONSUMING_ARTIFACT);
+  const descriptor=readOriginalLinkRawConsumingProfile(consuming.predecessor);
+  const borrowed=prepareOriginalLinkRawBorrowedEmission(descriptor);
+  return[artifact.completeRust,consuming.completeRust,borrowed.source];
+}
+
 export async function planOriginalLinkRawNative(environment = process.env, {emissionProfile = 'current'} = {}) {
   requireOriginalLinkRawPlanning(environment);
   assert.ok(emissionProfile === 'current' || emissionProfile === 'historical', 'unknown raw emission profile');
   const modelSources = verifyOriginalLinkRawNativeModel();
   const transportSources = freeze(readRawSourceTransports());
   // Nothing above this point loads grammars, creates fixtures or reconstructs a CST.
-  const [{readProjectData}, {LinkNetwork, encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
-    import('../../js/scripts/project-data.mjs'), import('../../js/src/index.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
+  const [{readProjectData}, {LinkNetwork}, {encodeLinkNetworkBinary, decodeLinkNetworkBinary}, {parseJavaScript}, {checkProgram}, {emitRust}, {emitJavaScript}, {tokenize}, fixtures, corpus, transport, rules, oldDecoder, oldProjector, textProjection] = await Promise.all([
+    import('../../js/scripts/project-data.mjs'), import('../../js/src/network.js'), import('../../js/src/link-network-binary.js'), import('../../js/src/translation/javascript.js'), import('../../js/src/translation/check.js'), import('../../js/src/translation/emit-rust.js'), import('../../js/src/translation/emit-javascript.js'), import('../../js/src/translation/lexer.js'), import('./raw-fixtures.mjs'), import('./raw-corpus.mjs'), import('./raw-transport.mjs'), import('./raw-rules.mjs'), import('../rust-text-certificate-adapter/raw-identity.mjs'), import('./transport.mjs'), import('../rust-text-value-projection/model.mjs'),
   ]);
-  // One actual checked program supplies both ordinary emitters within this
-  // invocation. Every consuming owner, source pin and codec replay still runs.
-  // Release that temporary program before the remaining workers/matrix settle.
-  let sharedPreparation=prepareCurrentOriginalLinkRawEmission({readProjectData,parseJavaScript,checkProgram,emitRust});
-  const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile,sharedPreparation);
-  const successorSources=[];
-  let generated;
-  const prepare=[()=>preparedSource.source];
-  if(emissionProfile==='current')prepare.push(async()=>{
+  const candidates=readOriginalLinkRawArchiveCandidateSources(emissionProfile,readProjectData);
+  const {sources,receipts,validated}=await validateOriginalLinkRawSourceArchives(candidates,async snapshots=>{
+    const started=performance.now();
+    process.stdout.write('Raw fresh source validation: begin after all available archive workers start\n');
+    // This is the SAME complete normal source/compiler/codec validation as
+    // before. A stored candidate never replaces any of these original checks.
+    let sharedPreparation=prepareCurrentOriginalLinkRawEmission({readProjectData,parseJavaScript,checkProgram,emitRust});
+    const successorSources=[];
     try{
-      generated=await prepareOriginalLinkRawConsumingEmission(sharedPreparation,{check:true});
-      assert.deepEqual(readOriginalLinkRawConsumingProfile(generated.artifact.predecessor),generated.profile);
+      const preparedSource=prepareOriginalLinkRawSource({readProjectData,parseJavaScript,checkProgram,emitRust,emitJavaScript,tokenize},emissionProfile,sharedPreparation);
+      assert.equal(preparedSource.source,snapshots[0],'the complete candidate equals actual fresh compiler output');
+      if(emissionProfile==='current'){
+        const generated=await prepareOriginalLinkRawConsumingEmission(sharedPreparation,{check:true});
+        assert.deepEqual(readOriginalLinkRawConsumingProfile(generated.artifact.predecessor),generated.profile);
+        assert.equal(generated.rust.text,snapshots[1],'the complete consuming candidate equals actual fresh compiler output');
+        const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
+        assert.equal(borrowed.source,snapshots[2],'the complete borrowed candidate equals its actual fresh predecessor styles');
+        successorSources.push({source:generated.rust.text,profile:generated.profile},{source:borrowed.source,profile:borrowed.profile});
+      }
+      assert.equal(snapshots.length,1+successorSources.length);
+      process.stdout.write('Raw fresh source validation: complete; elapsed_ms='+Math.round(performance.now()-started)+'\n');
+      return{preparedSource,successorSources};
     }finally{sharedPreparation=null;}
-    successorSources.push({source:generated.rust.text,profile:generated.profile});
-    return generated.rust.text;
-  },()=>{
-    assert.ok(generated,'the consuming source must finish before borrowed preparation');
-    const borrowed=prepareOriginalLinkRawBorrowedEmission(generated.profile);
-    successorSources.push({source:borrowed.source,profile:borrowed.profile});return borrowed.source;
-  });
-  else sharedPreparation=null;
-  const {sources,receipts}=await prepareOriginalLinkRawSourceArchives(prepare,environment);
+  },environment);
+  const {preparedSource,successorSources}=validated;
   const replay=source=>{const index=sources.indexOf(source);assert.ok(index>=0);return receipts[index];};
   const sourceToken=emissionProfile==='current'
     ?successorSourceArchives.prepare({source:preparedSource.source,profile:preparedSource.emissionProfile},successorSources,replay):null;

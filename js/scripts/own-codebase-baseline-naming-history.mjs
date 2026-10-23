@@ -7,6 +7,7 @@ import {resolve} from 'node:path';
 import {readBootstrapStructuredDataLino} from '../../scripts/lib/structured-data-bootstrap.mjs';
 import {verifyGitArtifactCertificate} from './git-object-certificate.mjs';
 import {readHistoricalNamingInventoryBundle,decodeHistoricalNamingInventoryBundle} from './historical-naming-inventory-storage.mjs';
+import {validateCurrentHistoricalNamingSourcePins} from './historical-naming-source-preflight.mjs';
 const policy={
   "schemaVersion": 1,
   "model": "own codebase baseline historical naming 1",
@@ -172,6 +173,7 @@ export function extractOwnCodebaseHistoricalNames(root,inventories,history=readO
       boundary:'Historical definitions keep their original identities. Every actual current inventory row is retained separately; changed source owners have distinct qualified records.'}})));
   }
   const additional=readOwnCodebaseHistoricalNamingPolicy().additionalSourceViews;
+  validateCurrentHistoricalNamingSourcePins(root,inventories,additional);
   for(const view of additional.views){
     const source=additional.sources.find(row=>row.file===view.file&&row.predecessor.revision===view.revision);
     const entries=inventories.filter(entry=>entry.inventory===view.inventory&&entry.files.includes(view.file));
