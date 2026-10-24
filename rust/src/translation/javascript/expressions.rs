@@ -475,8 +475,43 @@ impl JavaScriptParser {
         Ok(expr)
     }
 
+    fn begin_optional_chain(
+        &mut self,
+        receiver: SExpr,
+        continuations: &mut Vec<(String, SExpr)>,
+    ) -> SExpr {
+        self.generated_count += 1;
+        let name = format!(
+            "{}temporary_optional_chain{}",
+            self.generated_prefix, self.generated_count
+        );
+        let place = receiver.span;
+        continuations.push((name.clone(), receiver));
+        SExpr::new(SNode::Name { path: vec![name] }, place)
+    }
+    fn finish_optional_chains(mut value: SExpr, continuations: Vec<(String, SExpr)>) -> SExpr {
+        for (name, receiver) in continuations.into_iter().rev() {
+            let place = match (receiver.span, value.span) {
+                (Some(first), Some(last)) => Some(Span::new(first.start, last.end)),
+                _ => None,
+            };
+            let scope = SExpr::new(
+                SNode::Let {
+                    name,
+                    ty: None,
+                    value: Box::new(receiver),
+                    body: Box::new(value),
+                },
+                place,
+            );
+            value=SExpr::new(SNode::Math{op:crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(),name:String::new(),args:vec![SArrayItem::new(scope,false)]},place);
+        }
+        value
+    }
+
     pub(super) fn postfix(&mut self) -> Result<SExpr> {
         let mut expr = self.primary()?;
+        let mut continuations = Vec::new();
         loop {
             let token = self.peek();
             let start = expr.span.map_or(token.start, |place| place.start);
@@ -607,12 +642,30 @@ impl JavaScriptParser {
                         return Err(unsupported("optional method call","the property reference needs its complete original receiver and chain extent",Some(joined(&expr,&node(SNode::Unit,token.span()),&token))));
                     }
                     let args = self.arguments("optional callable")?;
-                    if crate::translation::javascript_optional_call_rules::require_java_script_optional_call_chain(&self.cursor.peek().value){
-                        return Err(unsupported("optional call chain","the chain needs its distinct skipped and returned value continuations",Some(joined(&expr,&node(SNode::Unit,self.cursor.peek().span()),&token))));
-                    }
                     let place =
                         joined(&expr, &node(SNode::Unit, self.cursor.peek().span()), &token);
-                    expr=node(SNode::Math{op:crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(),name:String::new(),args:std::iter::once(expr).chain(args).map(|value|super::SArrayItem::new(value,false)).collect()},place);
+                    if crate::translation::javascript_optional_call_rules::require_java_script_optional_call_chain(&self.cursor.peek().value) {
+                        let func = self.begin_optional_chain(expr, &mut continuations);
+                        expr = node(SNode::App {func: Box::new(func), args}, place);
+                    } else {
+                        expr=node(SNode::Math{op:crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(),name:String::new(),args:std::iter::once(expr).chain(args).map(|value|super::SArrayItem::new(value,false)).collect()},place);
+                    }
+                    continue;
+                }
+                if self.cursor.eat("[").is_some() {
+                    let index = self.sequence()?;
+                    let close = self.cursor.expect("]", Some("optional index"))?;
+                    let place = joined(&expr, &node(SNode::Unit, close.span()), &token);
+                    let object = self.begin_optional_chain(expr, &mut continuations);
+                    expr = node(
+                        SNode::Index {
+                            object: Box::new(object),
+                            index: Box::new(index),
+                            optional: None,
+                            proven_in_bounds: None,
+                        },
+                        place,
+                    );
                     continue;
                 }
                 let field = self.cursor.identifier(Some("optional field"))?;
@@ -620,13 +673,27 @@ impl JavaScriptParser {
                     expr.span.map_or(token.start, |place| place.start),
                     field.end,
                 );
-                expr = node(
-                    SNode::OptionalField {
-                        object: Box::new(expr),
-                        field: field.value,
-                    },
-                    place,
-                );
+                let object = self.begin_optional_chain(expr, &mut continuations);
+                if self.cursor.is("(") {
+                    let args = self.arguments(&field.value)?;
+                    let place = Span::new(place.start, self.to_here(&token).end);
+                    expr = node(
+                        SNode::Method {
+                            object: Box::new(object),
+                            op: field.value,
+                            args: args.into_iter().map(Some).collect(),
+                        },
+                        place,
+                    );
+                } else {
+                    expr = node(
+                        SNode::Field {
+                            object: Box::new(object),
+                            field: field.value,
+                        },
+                        place,
+                    );
+                }
                 continue;
             }
             if self.cursor.is("[") {
@@ -701,12 +768,18 @@ impl JavaScriptParser {
                     .iter()
                     .any(|unit| super::accept_java_script_line_terminator(f64::from(*unit)))
                 {
-                    return Ok(expr);
+                    return Ok(Self::finish_optional_chains(expr, continuations));
+                }
+                if !continuations.is_empty() {
+                    return Err(Self::fail(
+                        "an optional chain cannot be an assignment target",
+                        &token,
+                    ));
                 }
                 self.cursor.advance();
                 return self.scalar_assignment_expression(expr, &token, true, None);
             }
-            return Ok(expr);
+            return Ok(Self::finish_optional_chains(expr, continuations));
         }
     }
 }

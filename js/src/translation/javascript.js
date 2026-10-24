@@ -1,3 +1,4 @@
+import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {readJavaScriptOptionalCallOperation,acceptJavaScriptOptionalCallHead,requireJavaScriptOptionalCallChain} from './javascript-optional-call-rules.js';
 import {readJavaScriptArrayClassificationBuiltinOperation} from './array-classification-rules.js';
 import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
@@ -2202,6 +2203,9 @@ class JavaScriptParser {
   postfix() {
     const c = this.cursor;
     let expr = this.primary();
+    const continuations=[];
+    const finish=value=>{for(const entry of continuations.toReversed()){const where={start:entry.receiver.span.start,end:value.span.end};value={k:'math',op:readJavaScriptOptionalChainOperation(),name:'',args:[{value:{k:'let',name:entry.name,value:entry.receiver,body:value,span:where},spread:false}],span:where};}return value;};
+    const bind=receiver=>{const name=this.generatedPrefix+'temporary_optional_chain'+(++this.generatedCount);continuations.push({receiver,name});return {k:'name',path:[name],span:receiver.span};};
     for (;;) {
       const token = c.peek();
       if (c.is('.') && c.peek(1).kind === 'identifier') {
@@ -2249,11 +2253,23 @@ class JavaScriptParser {
         if(c.is('(')){
           if(!acceptJavaScriptOptionalCallHead(expr.k,expr.path?.length??0))throw unsupported('optional method call','the property reference needs its complete original receiver and chain extent',joined(expr,token,token));
           const args=this.arguments('optional callable');
-          if(requireJavaScriptOptionalCallChain(c.peek().value))throw unsupported('optional call chain','the chain needs its distinct skipped and returned value continuations',joined(expr,c.peek(),token));
-          expr={k:'math',op:readJavaScriptOptionalCallOperation(),name:'',args:[expr,...args].map(value=>({value,spread:false})),span:joined(expr,c.peek(),token)};continue;
+          if(requireJavaScriptOptionalCallChain(c.peek().value)){
+            const receiver=expr,fn=bind(receiver);
+            expr={k:'app',fn,args,span:joined(receiver,c.peek(),token)};
+          }else expr={k:'math',op:readJavaScriptOptionalCallOperation(),name:'',args:[expr,...args].map(value=>({value,spread:false})),span:joined(expr,c.peek(),token)};
+          continue;
+        }
+        if(c.eat('[')){
+          const receiver=expr,index=this.sequence(),close=c.expect(']','optional index');
+          expr={k:'index',object:bind(receiver),index,span:joined(receiver,close,token)};
+          continue;
         }
         const field = c.identifier('optional field');
-        expr = { k: 'optionalField', object: expr, field: field.value, span: joined(expr, field, token) };
+        const receiver=expr,object=bind(receiver);
+        if(c.is('(')){
+          const args=this.arguments(field.value);
+          expr={k:'method',object,op:field.value,args,span:joined(receiver,c.peek(),token)};
+        }else expr={k:'field',object,field:field.value,span:joined(receiver,field,token)};
         continue;
       }
       if (c.is('[')) {
@@ -2273,10 +2289,11 @@ class JavaScriptParser {
       }
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
       if (c.is('++') || c.is('--')) {
-        if (findJavaScriptLineTerminator(this.source,c.tokens[c.index-1].end,token.start)<token.start) return expr;
+        if (findJavaScriptLineTerminator(this.source,c.tokens[c.index-1].end,token.start)<token.start) return finish(expr);
+        if(continuations.length)throw this.fail('an optional chain cannot be an assignment target',token);
         c.next();return this.scalarAssignmentExpression(expr,token,true,null);
       }
-      return expr;
+      return finish(expr);
     }
   }
 

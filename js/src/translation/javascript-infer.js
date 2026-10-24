@@ -1,3 +1,4 @@
+import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call-rules.js';
 // Types of JavaScript functions written without JSDoc. A parameter or result
@@ -72,7 +73,7 @@ function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
   if (node.k === 'arrayBindingRest' || node.k === 'arrayBindingDefault') return true;
-  if(node.k==='math'&&node.op===readJavaScriptOptionalCallOperation())return true;
+  if(node.k==='math'&&(node.op===readJavaScriptOptionalChainOperation()||node.op===readJavaScriptOptionalCallOperation()))return true;
   if (requireCallableStructuralInference(node.k ?? '', node.kind ?? '', node.op ?? '')) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -963,6 +964,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
         if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
         if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
@@ -1022,6 +1024,19 @@ class Inference {
       default:
         return this.fresh();
     }
+  }
+
+  optionalChain(node,env){
+    const source=node.args[0]?.value;
+    if(node.args.length!==1||source?.k!=='let'||!source.name||source.type!==undefined)throw typeError('an optional chain needs its actual receiver, lexical binding and complete continuation',node.span);
+    const receiver=this.expr(source.value,env),resolved=this.resolve(receiver);
+    const form=readJavaScriptOptionalChainInferenceForm(resolved.kind,resolved.element?this.resolve(resolved.element).kind:'');
+    if(form==='absent')return {kind:'option',element:UNIT,absence:'undefined'};
+    const present=form==='guarded'?resolved.element:form==='unknown'?this.fresh():receiver;
+    if(form==='unknown')this.unify(receiver,{kind:'option',element:present,absence:'both'},node.span);
+    const scope=new Map(env);scope.set(source.name,present);
+    const result=this.expr(source.body,scope);
+    return form==='direct'?result:this.join(result,{kind:'option',element:UNIT,absence:'undefined'},node.span);
   }
 
   optionalCall(node,env){

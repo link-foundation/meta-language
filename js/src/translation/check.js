@@ -1,3 +1,5 @@
+import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
+import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
@@ -113,7 +115,7 @@ function needsBranchResultContext(node, depth = 0) {
 const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
 
 /** Binds a local, forgetting constructor facts the new binding shadows. */
-function bindLocal(env, name, type, immutableProduct = false) {
+export function bindLocal(env, name, type, immutableProduct = false) {
   env.set(name, type);
   const products = env.get(PRODUCT_VALUES);
   if (immutableProduct || products?.has(name)) {
@@ -1222,6 +1224,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readJavaScriptOptionalChainOperation())return checkJavaScriptOptionalChain(this,node,env,path);
     if(node.op===readJavaScriptOptionalCallOperation())return checkJavaScriptOptionalCall(this,node,env,path);
     if(node.op==='testJavaScriptArrayValue')return checkJavaScriptArrayBuiltin(this,node,env,path);
     if(node.op==='convertJavaScriptBooleanValue')return checkJavaScriptBooleanBuiltin(this,node,env,path);

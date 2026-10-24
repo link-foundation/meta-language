@@ -76,3 +76,12 @@ fn lexical_optional_calls_keep_callee_capture_lazy_arguments_and_result_absence(
         meta_language::create_java_script_optional_call_program_links,
     );
 }
+
+#[test]
+fn continuous_optional_chains_keep_scoped_suffixes_lazy_operands_and_graphs() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/optional-chains.mjs",
+        "continuous optional chains",
+        meta_language::create_java_script_optional_chain_program_links,
+    );
+}

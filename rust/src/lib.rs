@@ -110,6 +110,7 @@ pub use translation::callable_source_program::create_callable_source_program_lin
 pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
 pub use translation::javascript_identifier_program::create_java_script_identifier_program_links;
 pub use translation::javascript_optional_call_program::create_java_script_optional_call_program_links;
+pub use translation::javascript_optional_chain_program::create_java_script_optional_chain_program_links;
 pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;
 pub use translation::javascript_record_parameter_program::create_javascript_record_parameter_program_links;
 pub use translation::lexer::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};

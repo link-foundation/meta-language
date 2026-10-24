@@ -6641,3 +6641,37 @@ TDZ inference, arbitrary effectful callable contexts and every preceding
 requirement remain required. Future original/native values, exception fields,
 source ASTs, both definition/program codecs and four emissions are declared;
 none executed.
+
+
+### Continuous JavaScript optional chain draft
+
+Continuous optional suffixes use a source constructor over one actual lexical
+Let scope: its value is the original receiver, its name binds the present value,
+and its body is the entire remaining suffix. Existing free-reference, capture,
+renaming and loop analyses therefore see the real binding without an invented
+callback or a placeholder value. The constructor lowers to ordinary typed
+record, Let, If, Apply, method, index and optional terms. It is not persisted as
+a trusted operator. Parentheses finish the inner chain before an outer suffix.
+An absent receiver skips the complete continuation, including its arguments,
+computed indices and nested calls. A present receiver evaluates that complete
+continuation, with its own nested optional boundaries; a nullish returned value
+never retroactively turns into a skipped outer chain.
+
+The same construction covers optional property and method receivers, computed
+indices and continued lexical calls within the represented type domains. The
+presence guard observes actual nullish alternatives, retaining false, zero,
+NaN, empty text and zero BigInt values as present. Private captures preserve
+existing reference handles for mutable arrays, records and collections.
+Source-derived selection/inference rules generate the native implementation
+and full editable definitions. Native and JavaScript hosts adapt actual source
+and type operands to the existing algebra. The complete original native
+expression dispatcher moved intact into its own bounded module.
+
+The two earlier lexical-chain refusal inputs now have positive source/value,
+AST, codec, complete definition and native controls, together with their full
+preceding source/fixture/assertion history. Their corrected domain is ECMAScript
+2025 on the declared Node 22/24 ranges. These controls have not run. Ordinary
+access on a nullish returned value still needs its actual runtime TypeError,
+separately from the skipped-chain branch. General this/proxy/accessor protocols,
+dynamic keys/callables and argument protocols, whole-program integration and
+all preceding requirements remain obligations; this draft is not completion.
