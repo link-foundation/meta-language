@@ -30,7 +30,19 @@ for (const operation of fixture.operations) test(operation.name + ': original Bi
     for (const left of values) for (const right of rightValues) assert.equal(translated(left, right), original(left, right));
   }
 });
-for (const source of fixture.refusals) test('mixed and unsigned domains retain explicit obligations: ' + source, () => {
-  assert.throws(() => runInNewContext(source.replace(/^export /gmu, '') + '\ncompute();'), error => error.name === 'TypeError');
-  assert.throws(() => checkProgram(parseJavaScript(source)));
+// Corrected with ECMAScript ApplyStringOrNumericBinaryOperator and BigInt
+// unsignedRightShift: these original supported inputs throw during execution.
+// Original inputs and the old "checkProgram throws" assertion remain recorded.
+for (const source of fixture.refusals) test('retained mixed and unsigned input has faithful runtime error: ' + source, () => {
+  const correction=readProjectData(new URL('../../parity/fixtures/numeric-operation-errors.lino',import.meta.url)).cases.find(row=>row.source===source);
+  assert.equal(correction.previousExpectation,'checkProgram throws');
+  const observe=code=>{try{runInNewContext(code.replace(/^export /gmu,'')+'\ncompute();');assert.fail('source must throw');}catch(error){return {name:error.name,message:error.message,present:Object.hasOwn(error,'message')};}};
+  const expected={name:correction.errorClass,message:correction.abort,present:correction.messagePresent};
+  assert.deepEqual(observe(source),expected);
+  const program=checkProgram(parseJavaScript(source)),packet=encodeTypedProgramLinks(program);
+  for(const target of ['JavaScript','Rust','Lean','Rocq']){
+    const expected=emitTypedProgramLinks(packet.network,packet.root,target);
+    for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
+  }
+  assert.deepEqual(observe(emitJavaScript(program).text),expected);
 });

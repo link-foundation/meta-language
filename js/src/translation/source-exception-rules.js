@@ -79,3 +79,18 @@ export function readSourceExceptionObservationStatement(){
 export function readSourceExceptionRocqOutputPrelude(){
  return 'Definition ml_emit_source_exception {E : Type} (lines : list string) (next : list string * option E) : list string * option E := (List.app lines (fst next), snd next).';
 }
+
+/** Operands already passed ToNumeric; this does not conflate String addition
+ * with numeric addition. A failing operation has no resulting value domain.
+ * @param {string} operation @param {string} left @param {string} right @returns {string} */
+export function readJavaScriptNumericOperationFailure(operation,left,right){
+ const first=left==='int'||left==='nat',second=right==='int'||right==='nat';
+ if(first&&right==='float'||left==='float'&&second)return 'mixed';
+ return first&&second&&operation==='shiftJavaScriptNumberBitsRightUnsigned'?'unsigned':'';
+}
+/** V8 messages use the fixture's explicit Node version profile.
+ * @param {string} failure @returns {string} */
+export function readJavaScriptNumericOperationMessage(failure){
+ if(failure==='mixed')return 'Cannot mix BigInt and other types, use explicit conversions';
+ return failure==='unsigned'?'BigInts have no unsigned right shift, use >> instead':'';
+}

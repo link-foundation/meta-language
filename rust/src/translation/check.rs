@@ -47,6 +47,7 @@ mod matches;
 mod math;
 mod number_bitwise;
 mod number_conversions;
+mod numeric_failures;
 mod optional_values;
 mod primitive_methods;
 mod record_writes;

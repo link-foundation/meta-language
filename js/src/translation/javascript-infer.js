@@ -9,6 +9,7 @@
 import { typeError } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
+import {readJavaScriptNumericOperationFailure} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './string-construction-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
@@ -578,6 +579,7 @@ class Inference {
     const first = this.resolve(x);
     const second = this.resolve(y);
     if (first.kind === 'string' || second.kind === 'string') throw typeError('nullable string addition needs a string or number result determined by the values', where);
+    if(readJavaScriptNumericOperationFailure('plus',first.kind,second.kind))return true;
     this.unify(x, y, where);
     this.unify(result, x, where);
     return true;
@@ -590,10 +592,11 @@ class Inference {
     return operation === 'element' ? this.numericValue(type.element,strings) : operation === 'float' ? FLOAT : term;
   }
 
-  arithmeticStep({ left, right, result, where }, force) {
+  arithmeticStep({ left, right, result, where,operation='' }, force) {
     const a = this.numericValue(left);
     const b = right ? this.numericValue(right) : a;
     if (!force && (this.resolve(a).kind === 'var' || this.resolve(b).kind === 'var')) return false;
+    if(readJavaScriptNumericOperationFailure(operation,this.resolve(a).kind,this.resolve(b).kind))return true;
     this.unify(a, b, where);
     this.unify(result, a, where);
     return true;
@@ -979,7 +982,7 @@ class Inference {
         }
         if ((readJavaScriptNumberBitwiseArity(node.op) || readBigIntegerBitwiseArity(node.op)) && node.args.length > 0) {
           const values = node.args.map(item => this.expr(item.value, env)), result = this.fresh();
-          this.arithmetic.push({ left: values[0], right: values[1], result, where: node.span });
+          this.arithmetic.push({ left: values[0], right: values[1], result, where: node.span,operation:node.op });
           return result;
         }
         // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.

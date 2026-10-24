@@ -17,6 +17,7 @@ mod arrays;
 mod callables;
 mod collections;
 mod expressions;
+mod fields;
 mod methods;
 mod numbers;
 mod optional_values;
@@ -183,6 +184,7 @@ struct Join {
     place: Option<Span>,
 }
 struct Arithmetic {
+    operation: String,
     left: Term,
     right: Option<Term>,
     result: Term,
@@ -508,76 +510,17 @@ impl Inference {
                 constraint.place,
             ));
         }
-        self.unify(&left, &right, constraint.place)?;
-        self.unify(&constraint.result, &left, constraint.place)?;
-        Ok(true)
-    }
-
-    fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
-        if let Term::Record(owner) = self.resolve(&constraint.object) {
-            return self.record_field_constraint(
-                &owner,
-                &constraint.field,
-                &constraint.result,
-                constraint.place,
-            );
-        }
-        if constraint.field == "size"
-            && matches!(
-                self.resolve(&constraint.object),
-                Term::Map { .. } | Term::Set { .. }
-            )
+        if !crate::translation::source_exception_rules::read_java_script_numeric_operation_failure(
+            "plus",
+            optional_values::kind(&self.resolve(&left)),
+            optional_values::kind(&self.resolve(&right)),
+        )
+        .is_empty()
         {
-            self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
             return Ok(true);
         }
-        let name = match self.resolve(&constraint.object) {
-            Term::Known(Type::Data { name }) => name,
-            Term::Array(_) | Term::Tuple(_) | Term::Known(Type::String)
-                if constraint.field == "length" =>
-            {
-                self.unify(&constraint.result, &Term::Known(FLOAT), constraint.place)?;
-                return Ok(true);
-            }
-            other => {
-                let owners: Vec<&String> = self
-                    .data
-                    .iter()
-                    .filter(|(_, ctors)| {
-                        ctors.iter().any(|ctor| {
-                            ctor.fields.iter().any(|field| {
-                                field.name.as_deref() == Some(constraint.field.as_str())
-                            })
-                        })
-                    })
-                    .map(|(name, _)| name)
-                    .collect();
-                if !matches!(other, Term::Var(_)) || owners.len() != 1 {
-                    return Ok(false);
-                }
-                let owner = Term::Known(Type::Data {
-                    name: owners[0].clone(),
-                });
-                self.unify(&constraint.object, &owner, constraint.place)?;
-                return self.field_step(constraint);
-            }
-        };
-        let declared = self
-            .data
-            .iter()
-            .find(|(data, _)| *data == name)
-            .and_then(|(_, ctors)| {
-                ctors.iter().find_map(|ctor| {
-                    ctor.fields
-                        .iter()
-                        .position(|field| field.name.as_deref() == Some(constraint.field.as_str()))
-                        .map(|index| (ctor.name.clone(), index))
-                })
-            });
-        if let Some((ctor, index)) = declared {
-            let term = self.field(&name, &ctor, index);
-            self.unify(&constraint.result, &term, constraint.place)?;
-        }
+        self.unify(&left, &right, constraint.place)?;
+        self.unify(&constraint.result, &left, constraint.place)?;
         Ok(true)
     }
 
@@ -656,6 +599,7 @@ impl Inference {
                 let result = self.fresh(false);
                 self.arithmetic.push(Arithmetic {
                     left: arg,
+                    operation: String::new(),
                     right: None,
                     result: result.clone(),
                     place: expr.span,
@@ -796,6 +740,7 @@ impl Inference {
                     let result = self.fresh(false);
                     self.arithmetic.push(Arithmetic {
                         left: values[0].clone(),
+                        operation: op.clone(),
                         right: values.get(1).cloned(),
                         result: result.clone(),
                         place: expr.span,

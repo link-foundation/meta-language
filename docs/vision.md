@@ -6000,3 +6000,25 @@ No behavior has executed. Formal general-recursion fuel remains an explicit
 obligation for inputs beyond the existing evaluation budget; generated source
 alone does not prove unbounded formal evaluation. Mixed numeric type errors,
 exponentiation, unsigned shifts and every preceding gap remain requirements.
+
+### Numeric operation failure draft
+
+Mixed Number/BigInt arithmetic and bitwise operations, and unsigned BigInt
+shifts, preserve their actual TypeError after evaluating both operands.
+Primitive ToNumeric conversion remains distinct from String addition. Shared
+source rules select the failure and version-profiled message; actual checker
+adapters construct existing typed exception operations. Inference leaves a
+statically failing operation's result unconstrained, so it can inhabit its
+actual contextual return type without inventing a successful numeric value.
+Operand evaluation and earlier exceptions still precede the selected error.
+
+The original mixed/unsigned bitwise refusal sources and old assertion are
+retained beside the corrected runtime-error expectations, independent original
+source observations and complete codec/emission/native controls. This follows
+[ApplyStringOrNumericBinaryOperator](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-applystringornumericbinaryoperator),
+[BigInt unsigned shift](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-unsignedRightShift)
+and [V8 message declarations](https://github.com/nodejs/node/blob/main/deps/v8/src/common/message-template.h).
+Assertions select explicit Node version ranges and refuse uncovered runtimes.
+These controls are authored only. Object/Symbol conversion, mixed numeric
+ordering, optional dynamic numeric domains, exponentiation and every remaining
+requirement still need implementation. No code tests or validation gates ran.

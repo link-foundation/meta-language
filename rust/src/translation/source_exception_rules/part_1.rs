@@ -358,3 +358,37 @@ pub fn read_source_exception_rocq_output_prelude() -> String {
         "Definition ml_emit_source_exception {E : Type} (lines : list string) (next : list string * option E) : list string * option E := (List.app lines (fst next), snd next).",
     )
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_numeric_operation_failure(
+    operation: &str,
+    left: &str,
+    right: &str,
+) -> String {
+    {
+        let first = (left == "int") || (left == "nat");
+        {
+            let second = (right == "int") || (right == "nat");
+            if (first && (right == "float")) || ((left == "float") && second) {
+                String::from("mixed")
+            } else if (first && second) && (operation == "shiftJavaScriptNumberBitsRightUnsigned") {
+                String::from("unsigned")
+            } else {
+                String::new()
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_numeric_operation_message(failure: &str) -> String {
+    if failure == "mixed" {
+        String::from("Cannot mix BigInt and other types, use explicit conversions")
+    } else if failure == "unsigned" {
+        String::from("BigInts have no unsigned right shift, use >> instead")
+    } else {
+        String::new()
+    }
+}

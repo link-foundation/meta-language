@@ -1,6 +1,6 @@
 //! Host typing adapter for the shared checked Number interpretation.
 use super::{
-    Checker, Env, Expr, FLOAT, INT, Node, Result, SArrayItem, Span, type_error, unsupported,
+    Checker, Env, Expr, FLOAT, INT, Node, Result, SArrayItem, Span, Type, type_error, unsupported,
 };
 use crate::translation::big_integer_bitwise_rules as rules;
 
@@ -12,6 +12,7 @@ impl Checker {
         span: Option<Span>,
         env: &Env,
         path: &[String],
+        expected: Option<&Type>,
     ) -> Result<Expr> {
         let count = match args.len() {
             1 => 1.0,
@@ -44,6 +45,9 @@ impl Checker {
             .iter()
             .map(|argument| argument.ty.kind().to_owned())
             .collect::<Vec<_>>();
+        if let Some(failure) = self.materialize_numeric_failure(operation, &checked, expected) {
+            return Ok(failure);
+        }
         let domain = rules::read_primitive_bitwise_domain(&kinds);
         let selected = if domain == "BigInt" {
             rules::read_big_integer_bitwise_operation(operation)

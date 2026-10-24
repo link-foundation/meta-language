@@ -1,6 +1,14 @@
 //! Future complete source exception controls; no local compilation or execution.
 use super::translation_rust_records::assert_nominal_translation_product;
 #[test]
+fn mixed_numeric_and_unsigned_big_integer_errors_keep_original_operand_order_and_payloads() {
+    assert_nominal_translation_product(
+        "../experiments/source-exceptions/numeric-oracle.mjs",
+        "JavaScript numeric operation errors",
+        meta_language::create_source_exception_program_links,
+    );
+}
+#[test]
 fn computed_exception_messages_retain_class_units_presence_and_operand_order() {
     assert_nominal_translation_product(
         "../experiments/source-exceptions/oracle.mjs",

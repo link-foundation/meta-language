@@ -642,7 +642,7 @@ impl Checker {
                 }
                 if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
                     self.rust_primitive_bitwise(op, args, env, path, expected, span)
-                } else { self.math(op, name, args, span, env, path) }
+                } else { self.math(op, name, args, span, env, path, expected) }
             }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
@@ -947,6 +947,11 @@ impl Checker {
             };
             left = widen(left)?;
             right = widen(right)?;
+        }
+        if let Some(failure) =
+            self.materialize_numeric_failure(op.name(), &[left.clone(), right.clone()], expected)
+        {
+            return Ok(failure);
         }
         let (left, right) = self.unify(left, right, span)?;
         if !left.ty.is_ordered() {

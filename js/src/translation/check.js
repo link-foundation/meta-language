@@ -14,6 +14,7 @@ import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructor
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision} from './javascript-big-integer-conversion.js';
+import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
 import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
@@ -1226,6 +1227,8 @@ class Checker {
     if(bitwiseArity){
       if(node.args.length!==bitwiseArity||node.args.some(item=>item.spread))throw typeError('a Number bitwise operation requires its exact unspread operands',node.span);
       const args=node.args.map(({value})=>this.numberValue(this.expr(value,env,path,undefined),value.span??node.span));
+      const failure=materializeJavaScriptNumericFailure(this,node.op,args,expected);
+      if(failure)return failure;
       const domain=readPrimitiveBitwiseDomain(args.map(argument=>argument.type.kind));
       const operation=domain==='BigInt'?readBigIntegerBitwiseOperation(node.op):'';
       if(operation) return{k:'math',op:operation,args:args.map(argument=>coerce(argument,INT,this.language,node.span)),type:INT};
@@ -1397,6 +1400,8 @@ class Checker {
       left = widen(left);
       right = widen(right);
     }
+    const failure=materializeJavaScriptNumericFailure(this,op,[left,right],expected);
+    if(failure)return failure;
     [left, right] = unify(left, right, this.language, node.span);
     if (!isOrdered(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
     const division=materializeJavaScriptBigIntegerDivision(this,op,left,right);

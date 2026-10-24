@@ -36,6 +36,7 @@ impl Inference {
             BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem => {
                 let result = self.fresh(false);
                 self.arithmetic.push(Arithmetic {
+                    operation: op.name().to_owned(),
                     left: left_term,
                     right: Some(right_term),
                     result: result.clone(),
@@ -123,6 +124,15 @@ impl Inference {
                 || matches!(self.resolve(&right), Term::Var(_)))
         {
             return Ok(false);
+        }
+        if !crate::translation::source_exception_rules::read_java_script_numeric_operation_failure(
+            &constraint.operation,
+            super::optional_values::kind(&self.resolve(&left)),
+            super::optional_values::kind(&self.resolve(&right)),
+        )
+        .is_empty()
+        {
+            return Ok(true);
         }
         self.unify(&left, &right, constraint.place)?;
         self.unify(&constraint.result, &left, constraint.place)?;
