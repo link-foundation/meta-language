@@ -462,3 +462,12 @@ fn terminal_returns_preserve_actual_source_values_and_function_boundary() {
         meta_language::create_rust_unit_value_program_links,
     );
 }
+
+#[test]
+fn ordinary_guarded_returns_preserve_scope_values_and_actual_continuations() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/ordinary-returns.mjs",
+        "ordinary Rust guarded completions",
+        meta_language::create_rust_unit_value_program_links,
+    );
+}

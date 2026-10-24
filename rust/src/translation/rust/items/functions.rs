@@ -271,7 +271,11 @@ impl RustParser {
             source_local_state = Some(Box::new(proof));
             body
         } else if self.completion_model.is_empty() {
-            self.block_with_context(path, true)?
+            if self.ordinary_completion_selected() {
+                self.ordinary_function_completion(path)?
+            } else {
+                self.block_with_context(path, true)?
+            }
         } else {
             self.closed_function_completion(path)?
         };

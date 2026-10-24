@@ -17,6 +17,9 @@ const inputs=[
  ['print precedes terminal return','fn report()->i64{println!("before");return 7;}fn main(){println!("{}",report());}', ['before','7']],
  ['nested module context retains its own names','mod nested{fn value()->i64{8}pub fn report(){println!("module {}",value());}}fn main(){nested::report();}', ['module 8']],
  ['format temporary cannot capture source names','fn main(){let ml_tuple_value0=11;println!("{0}:{ml_tuple_value0}",12);}', ['12:11']],
+ ['ordinary Unit guard exits before later output','fn report(flag:bool){if flag{return;}println!("after");}fn main(){report(true);report(false);}', ['after']],
+ ['output before and after a selected guard','fn report(flag:bool)->i64{println!("before");if flag{return 7;}println!("after");9}fn main(){println!("{}",report(true));println!("{}",report(false));}', ['before','7','before','after','9']],
+ ['implicit Unit fallback after a terminal return branch','fn report(flag:bool){if flag{return;}}fn main(){report(true);report(false);println!("done");}', ['done']],
 ];
 const cases=inputs.map(([name,source,lines],index)=>({name,source,lines,module:'function_output_'+index,marker:'META_FUNCTION_OUTPUT_'+index}));
 const source=cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\npub fn invoke(){main();}\n}').join('\n')+'\nfn main(){\n'+cases.map(row=>'println!("'+row.marker+'");'+row.module+'::invoke();').join('\n')+'\n}';

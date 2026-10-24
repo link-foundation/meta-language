@@ -1,6 +1,7 @@
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
-import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition} from './rust-unit-value-rules.js';
+import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionReturnPresence} from './rust-unit-value-rules.js';
+import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
@@ -681,7 +682,7 @@ class RustParser {
         else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
-      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path,true));
+      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path):this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
@@ -737,6 +738,24 @@ class RustParser {
     }
   }
 
+  ordinaryCompletionSelected() {
+    if(!acceptRustOrdinaryCompletionProfiles([this.completionModel,this.sourceSignatureModel,this.scalarLoopModel,this.primitiveOwnerModel,this.emptyOptionSourceModel,this.typeNamespaceModel,this.pureUnitCallModel,this.localValueStateModel,this.constFunctionModel,this.sharedArrayHandleSourceModel,this.origins.arrayResultModel]))return false;
+    const c=this.cursor;
+    let count=64;
+    for(;;){
+      const values=c.tokens.slice(c.index,c.index+count).map((token,index)=>token.kind==='punct'&&(token.value==='{'||token.value==='}')?token.value:c.is('return',index)?'return':'');
+      const presence=readRustFunctionReturnPresence(values);
+      if(presence!==-1)return presence===1;
+      if(count>=c.tokens.length-c.index)return false;
+      count*=2;
+    }
+  }
+
+  functionPrintValue(path) {
+    const effect=this.mainMacro(path),unit={k:'unit',span:effect.span};
+    return this.origins.mark({k:'print',expr:effect.expr,style:effect.style,body:unit,span:effect.span},this.origins.origin(unit,path));
+  }
+
   block(path,functionBody=false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
@@ -752,9 +771,8 @@ class RustParser {
         continue;
       }
       if(token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'){
-        const effect=this.mainMacro(path),unit={k:'unit',span:effect.span};
-        const printed=this.origins.mark({k:'print',expr:effect.expr,style:effect.style,body:unit,span:effect.span},this.origins.origin(unit,path));
-        if(c.eat(';')){lets.push({name:this.freshProductBinding(),value:printed,span:effect.span});continue;}
+        const printed=this.functionPrintValue(path);
+        if(c.eat(';')){lets.push({name:this.freshProductBinding(),value:printed,span:printed.span});continue;}
         if(!c.is('}'))throw this.fail('expected ; or }');
         tail=printed;break;
       }

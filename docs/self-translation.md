@@ -1015,3 +1015,12 @@ The former native handwritten grammar is replaced by source-plan transport.
 Future complete original/native traces, source AST parity, both archives and
 four emissions remain unexecuted; all general formatting/macro/borrow and
 preceding requirements remain.
+
+Ordinary guarded Rust completions now select from actual source keyword windows
+and complete shared source decisions, without manufacturing a selected-profile
+proof. Both adapters preserve lexical scopes, ordered Unit/print bindings,
+guarded continuations and terminal returned/value alternatives. Existing closed
+profiles remain exact. Private mixed exits are distinguished; unresolved joins
+and continuing else-if alternatives require the full completion carrier and
+retain their refusal. Full source rules generate native code and editable
+graphs; future value/output/codec/parity controls remain unexecuted.

@@ -6400,3 +6400,34 @@ Native compilers run only in CI and enforce explicit version ranges. No such
 control executed during the complete draft. Full format specs, explicit named
 argument assignments, custom Display/borrow effects, complete macro namespaces
 and every earlier source/architecture requirement remain required.
+
+
+### Ordinary guarded Rust function completions draft
+
+An ordinary function's actual return keyword now selects source control-flow
+lowering without a selected-profile declaration. Keyword-aware punctuation
+windows stop at the owning function boundary; literal text and raw identifiers
+cannot select control flow. Existing explicit source/completion profiles keep
+their original guards and paths. Actual source ownership/result checks still
+apply after the ordinary body is read.
+
+Shared source decisions lower terminal block returns, ordered immutable/Unit
+bindings, prints, guarded return/abort continuations, complete returned
+alternatives and terminal mixed returned/value alternatives through existing
+If/Let terms. Implicit Unit alternatives retain ordinary Rust result checking.
+Branch scopes are restored before reading a continuation. Private mixed exits
+remain distinct from ordinary values. An else-if may consume an outer
+continuation only when the preceding alternative cannot fall through.
+General joins of mixed exits and fallthrough require their complete completion
+carrier; refusal does not fulfill that remaining requirement. This follows
+[Rust if expressions](https://doc.rust-lang.org/reference/expressions/if-expr.html)
+and [return expressions](https://doc.rust-lang.org/reference/expressions/return-expr.html).
+
+New future values/abort controls retain guard ordering, branch shadows, owned
+strings, nominal constructors, complete nested exits, raw return identifiers
+and literal keyword text. Added complete output traces retain prints before
+guards, selected Unit returns and implicit Unit fallthrough. Both native/source
+adapters and full editable definition graphs are drafted; no control executed.
+General completion carriers, nested expression returns, pattern control, loops,
+mutable/drop/borrow effects, explicit profile composition and every earlier
+requirement remain required.

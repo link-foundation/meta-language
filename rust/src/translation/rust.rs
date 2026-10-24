@@ -43,6 +43,7 @@ mod formatting;
 pub(super) mod indirection_rules;
 mod inherent;
 mod items;
+mod ordinary_completions;
 mod owned_local_state;
 pub(crate) mod owned_local_state_rules;
 pub(crate) mod owned_tuple_call_rules;

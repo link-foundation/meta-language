@@ -198,6 +198,291 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_completion_model(model: &str) -> bool {
+    ((model).is_empty()) || (model == "closed guarded function returns 1")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub const fn accept_rust_return_ownership(proven: bool, indirected: bool) -> bool {
+    proven && !indirected
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_conditional_completion(
+    then_kind: &str,
+    otherwise_kind: &str,
+    has_else: bool,
+    continuation: bool,
+) -> String {
+    if (((then_kind == "returned") && ((otherwise_kind).is_empty())) && (has_else == (false)))
+        && (continuation == (true))
+    {
+        String::from("guarded continuation")
+    } else if (((then_kind == "returned") && (otherwise_kind == "returned"))
+        && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("returned conditional")
+    } else if (((then_kind == "value") && (otherwise_kind == "value")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("conditional value")
+    } else if (((then_kind == "returned") && (otherwise_kind == "returned"))
+        && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("unreachable continuation")
+    } else if (((then_kind == "value") && (otherwise_kind == "value")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("discarded conditional value")
+    } else if (((then_kind == "returned") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("returned conditional")
+    } else if (((then_kind == "returned") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("unreachable continuation")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "returned")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("returned conditional")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "returned")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("unreachable continuation")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("aborted conditional")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("unreachable continuation")
+    } else if (((then_kind == "value") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("conditional value")
+    } else if (((then_kind == "value") && (otherwise_kind == "aborted")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("discarded conditional value")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "value")) && (has_else == (true)))
+        && (continuation == (false))
+    {
+        String::from("conditional value")
+    } else if (((then_kind == "aborted") && (otherwise_kind == "value")) && (has_else == (true)))
+        && (continuation == (true))
+    {
+        String::from("discarded conditional value")
+    } else if (((then_kind == "aborted") && ((otherwise_kind).is_empty())) && (has_else == (false)))
+        && (continuation == (true))
+    {
+        String::from("guarded continuation")
+    } else {
+        String::from("unsupported completion")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_completion_kind(action: &str, then_kind: &str, otherwise_kind: &str) -> String {
+    if ((action == "returned conditional") && (then_kind == "returned"))
+        && (otherwise_kind == "returned")
+    {
+        String::from("returned")
+    } else if ((action == "conditional value") && (then_kind == "value"))
+        && (otherwise_kind == "value")
+    {
+        String::from("value")
+    } else if (action == "returned conditional")
+        && (((then_kind == "returned") && (otherwise_kind == "aborted"))
+            || ((then_kind == "aborted") && (otherwise_kind == "returned")))
+    {
+        String::from("returned")
+    } else if ((action == "aborted conditional") && (then_kind == "aborted"))
+        && (otherwise_kind == "aborted")
+    {
+        String::from("aborted")
+    } else if ((((action == "conditional value") && (then_kind == "value"))
+        && (otherwise_kind == "aborted"))
+        || (((action == "conditional value") && (then_kind == "aborted"))
+            && (otherwise_kind == "value")))
+        || (((action == "guarded continuation") && (then_kind == "returned"))
+            && (otherwise_kind == "value"))
+    {
+        String::from("value")
+    } else if ((action == "guarded continuation") && (then_kind == "returned"))
+        && ((otherwise_kind == "returned") || (otherwise_kind == "aborted"))
+    {
+        String::from("returned")
+    } else if ((action == "guarded continuation") && (then_kind == "aborted"))
+        && (otherwise_kind == "value")
+    {
+        String::from("value")
+    } else if ((action == "guarded continuation") && (then_kind == "aborted"))
+        && (otherwise_kind == "returned")
+    {
+        String::from("returned")
+    } else if ((action == "guarded continuation") && (then_kind == "aborted"))
+        && (otherwise_kind == "aborted")
+    {
+        String::from("aborted")
+    } else {
+        String::from("unsupported completion")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_completion_panic_arguments(
+    model: &str,
+    macro_name: &str,
+    first_kind: &str,
+    first_value: &str,
+    second_kind: &str,
+    count: &str,
+) -> bool {
+    (((((model == "closed guarded function returns 1") && (macro_name == "panic"))
+        && (first_kind == "str"))
+        && (first_value == "{}"))
+        && (second_kind == "str"))
+        && (count == "2")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_ordinary_completion_profiles(profiles: &[String]) -> bool {
+    {
+        let index = 0f64;
+        {
+            let source_ml_source1_s1 =
+                self::source_ml_temporary_accept_rust_ordinary_completion_profiles_loop1(
+                    profiles, index,
+                );
+            match source_ml_source1_s1 {
+                self::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Done => {
+                    true
+                }
+                self::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Return(source_ml_temporary_result1) => {
+                    source_ml_temporary_result1
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_function_return_presence(values: &[String]) -> f64 {
+    if {
+        let source_ml_source1_comparison_operand2 =
+            self::ml_array::optional_at(values, self::ml_array::number_index(0f64));
+        {
+            let source_ml_source1_comparison_operand3 = String::from("{");
+            !(match (
+                source_ml_source1_comparison_operand2,
+                source_ml_source1_comparison_operand3,
+            ) {
+                (Some(ml_left), ml_right) => ml_left == ml_right,
+                _ => false,
+            })
+        }
+    } {
+        0f64
+    } else {
+        {
+            let depth = 0f64;
+            {
+                let index = 0f64;
+                {
+                    let source_ml_source1_s4 =
+                        self::source_ml_temporary_read_rust_function_return_presence_loop2(
+                            values, depth, index,
+                        );
+                    match source_ml_source1_s4 {
+                        self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result::MlTemporaryReadRustFunctionReturnPresenceLoop2Done => {
+                            -1f64
+                        }
+                        self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result::MlTemporaryReadRustFunctionReturnPresenceLoop2Return(source_ml_temporary_result2) => {
+                            source_ml_temporary_result2
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_ordinary_conditional_completion(
+    first: &str,
+    second: &str,
+    has_else: bool,
+    continuation: bool,
+    terminated: bool,
+) -> String {
+    {
+        let original =
+            self::read_rust_conditional_completion(first, second, has_else, continuation);
+        if original == "unsupported completion" {
+            {
+                let first_known = (((first == "returned") || (first == "aborted"))
+                    || (first == "value"))
+                    || (first == "mixed");
+                {
+                    let second_known = (((second == "returned") || (second == "aborted"))
+                        || (second == "value"))
+                        || (second == "mixed");
+                    if (!continuation && !has_else) && first_known {
+                        String::from("implicit Unit fallback")
+                    } else if (((!continuation && has_else) && !terminated) && first_known)
+                        && second_known
+                    {
+                        String::from("terminal mixed conditional")
+                    } else {
+                        original
+                    }
+                }
+            }
+        } else {
+            original
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_ordinary_completion_kind(action: &str, first: &str, second: &str) -> String {
+    if action == "terminal mixed conditional" {
+        String::from("mixed")
+    } else if action == "implicit Unit fallback" {
+        if first == "value" {
+            String::from("value")
+        } else {
+            String::from("mixed")
+        }
+    } else if (action == "guarded continuation")
+        && ((second == "mixed") || ((first == "returned") && (second == "value")))
+    {
+        String::from("mixed")
+    } else {
+        self::read_rust_completion_kind(action, first, second)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_ordinary_else_if(first: &str) -> bool {
+    (first == "returned") || (first == "aborted")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_unit_statement_disposition(
     kind: &str,
     collecting: bool,
@@ -237,16 +522,16 @@ pub fn find_rust_terminal_return_boundary(values: &[String], start: f64) -> f64 
             {
                 let at = start + 1f64;
                 {
-                    let source_ml_source1_s1 =
-                        self::source_ml_temporary_find_rust_terminal_return_boundary_loop1(
+                    let source_ml_source1_s5 =
+                        self::source_ml_temporary_find_rust_terminal_return_boundary_loop3(
                             values, stack, at,
                         );
-                    match source_ml_source1_s1 {
-                        self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Done => {
+                    match source_ml_source1_s5 {
+                        self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Done => {
                             -2f64
                         }
-                        self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(source_ml_temporary_result1) => {
-                            source_ml_temporary_result1
+                        self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(source_ml_temporary_result3) => {
+                            source_ml_temporary_result3
                         }
                     }
                 }
@@ -255,27 +540,132 @@ pub fn find_rust_terminal_return_boundary(values: &[String], start: f64) -> f64 
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryFindRustTerminalReturnBoundaryLoop1Result {
-    MlTemporaryFindRustTerminalReturnBoundaryLoop1Done,
-    MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(f64),
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result {
+    MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Done,
+    MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop2(
+pub fn source_ml_temporary_accept_rust_ordinary_completion_profiles_loop1(
+    profiles: &[String],
+    mut index: f64,
+) -> self::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result {
+    loop {
+        return if index < (profiles.len() as f64) {
+            if {
+                let source_ml_source1_comparison_operand6 =
+                    self::ml_array::optional_at(profiles, self::ml_array::number_index(index));
+                {
+                    let source_ml_source1_comparison_operand7 = String::new();
+                    !(match (
+                        source_ml_source1_comparison_operand6,
+                        source_ml_source1_comparison_operand7,
+                    ) {
+                        (Some(ml_left), ml_right) => ml_left == ml_right,
+                        _ => false,
+                    })
+                }
+            } {
+                self::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Return(false)
+            } else {
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Result::MlTemporaryAcceptRustOrdinaryCompletionProfilesLoop1Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadRustFunctionReturnPresenceLoop2Result {
+    MlTemporaryReadRustFunctionReturnPresenceLoop2Done,
+    MlTemporaryReadRustFunctionReturnPresenceLoop2Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_rust_function_return_presence_loop2(
+    values: &[String],
+    mut depth: f64,
+    mut index: f64,
+) -> self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result {
+    loop {
+        return if index < (values.len() as f64) {
+            {
+                let value =
+                    (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+                        .unwrap_or_else(|| String::new());
+                if value == "return" {
+                    self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result::MlTemporaryReadRustFunctionReturnPresenceLoop2Return(1f64)
+                } else {
+                    {
+                        let depth_3 = if value == "{" {
+                            { depth + 1f64 }
+                        } else {
+                            depth
+                        };
+                        if value == "}" {
+                            {
+                                let depth_4 = depth_3 - 1f64;
+                                if depth_4 == 0f64 {
+                                    self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result::MlTemporaryReadRustFunctionReturnPresenceLoop2Return(0f64)
+                                } else {
+                                    {
+                                        let index_2 = index + 1f64;
+                                        {
+                                            (depth, index) = (depth_4, index_2);
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            {
+                                let index_3 = index + 1f64;
+                                {
+                                    (depth, index) = (depth_3, index_3);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadRustFunctionReturnPresenceLoop2Result::MlTemporaryReadRustFunctionReturnPresenceLoop2Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryFindRustTerminalReturnBoundaryLoop3Result {
+    MlTemporaryFindRustTerminalReturnBoundaryLoop3Done,
+    MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop4(
     values: &[String],
     mut end: f64,
 ) -> f64 {
     loop {
         return if {
-            let source_ml_source1_comparison_operand2 =
+            let source_ml_source1_comparison_operand8 =
                 self::ml_array::optional_at(values, self::ml_array::number_index(end));
             {
-                let source_ml_source1_comparison_operand3 = String::from(";");
+                let source_ml_source1_comparison_operand9 = String::from(";");
                 match (
-                    source_ml_source1_comparison_operand2,
-                    source_ml_source1_comparison_operand3,
+                    source_ml_source1_comparison_operand8,
+                    source_ml_source1_comparison_operand9,
                 ) {
                     (Some(ml_left), ml_right) => ml_left == ml_right,
                     _ => false,
@@ -297,11 +687,11 @@ pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop2(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop1(
+pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop3(
     values: &[String],
     mut stack: Vec<String>,
     mut at: f64,
-) -> self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result {
+) -> self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result {
     loop {
         return if at < (values.len() as f64) {
             {
@@ -327,30 +717,30 @@ pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop1(
                         {
                             let end = at;
                             {
-                                let end_2 = self::source_ml_temporary_find_rust_terminal_return_boundary_loop2(values, end);
+                                let end_2 = self::source_ml_temporary_find_rust_terminal_return_boundary_loop4(values, end);
                                 if end_2 >= (values.len() as f64) {
-                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(-2f64)
+                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(-2f64)
                                 } else if {
-                                    let source_ml_source1_comparison_operand4 =
+                                    let source_ml_source1_comparison_operand10 =
                                         self::ml_array::optional_at(
                                             values,
                                             self::ml_array::number_index(end_2),
                                         );
                                     {
-                                        let source_ml_source1_comparison_operand5 =
+                                        let source_ml_source1_comparison_operand11 =
                                             String::from("}");
                                         match (
-                                            source_ml_source1_comparison_operand4,
-                                            source_ml_source1_comparison_operand5,
+                                            source_ml_source1_comparison_operand10,
+                                            source_ml_source1_comparison_operand11,
                                         ) {
                                             (Some(ml_left), ml_right) => ml_left == ml_right,
                                             _ => false,
                                         }
                                     }
                                 } {
-                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(end_2)
+                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(end_2)
                                 } else {
-                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(-1f64)
+                                    self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(-1f64)
                                 }
                             }
                         }
@@ -365,7 +755,7 @@ pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop1(
                                 || ((value == "]") && (previous != "[")))
                                 || ((value == "}") && (previous != "{"))
                             {
-                                self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Return(-1f64)
+                                self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Return(-1f64)
                             } else {
                                 {
                                     let stack_3 = self::ml_array::slice(&stack, 0f64, -1f64);
@@ -391,7 +781,7 @@ pub fn source_ml_temporary_find_rust_terminal_return_boundary_loop1(
                 }
             }
         } else {
-            self::MlTemporaryFindRustTerminalReturnBoundaryLoop1Result::MlTemporaryFindRustTerminalReturnBoundaryLoop1Done
+            self::MlTemporaryFindRustTerminalReturnBoundaryLoop3Result::MlTemporaryFindRustTerminalReturnBoundaryLoop3Done
         };
     }
 }

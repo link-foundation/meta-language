@@ -517,7 +517,7 @@ impl RustParser {
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
         self.block_with_context(path, false)
     }
-    fn is_terminal_return(&self) -> bool {
+    pub(super) fn is_terminal_return(&self) -> bool {
         let mut count = 64usize;
         loop {
             let values = self
@@ -580,25 +580,8 @@ impl RustParser {
                     &token.value,
                 ) == "print"
             {
-                let SEffect::Print {
-                    expr,
-                    style,
-                    span: place,
-                } = self.main_macro_with_path(path)?
-                else {
-                    unreachable!("source print macro disposition")
-                };
-                let unit = SExpr::new(SNode::Unit, place);
-                let origin = self.origins.origin(&unit, path);
-                let printed = SExpr::new(
-                    SNode::Print {
-                        expr: Box::new(expr),
-                        style,
-                        body: Box::new(unit),
-                    },
-                    place,
-                );
-                self.origins.mark(&printed, origin);
+                let printed = self.function_print_value(path)?;
+                let place = printed.span;
                 if self.cursor.eat(";").is_some() {
                     lets.push(Binding {
                         name: self.fresh_product_binding(),
@@ -817,6 +800,28 @@ impl RustParser {
 
     pub(super) fn main_macro(&mut self) -> Result<SEffect> {
         self.main_macro_with_path(&[])
+    }
+    pub(super) fn function_print_value(&mut self, path: &[String]) -> Result<SExpr> {
+        let SEffect::Print {
+            expr,
+            style,
+            span: place,
+        } = self.main_macro_with_path(path)?
+        else {
+            unreachable!("source print macro disposition")
+        };
+        let unit = SExpr::new(SNode::Unit, place);
+        let origin = self.origins.origin(&unit, path);
+        let printed = SExpr::new(
+            SNode::Print {
+                expr: Box::new(expr),
+                style,
+                body: Box::new(unit),
+            },
+            place,
+        );
+        self.origins.mark(&printed, origin);
+        Ok(printed)
     }
     fn main_macro_with_path(&mut self, path: &[String]) -> Result<SEffect> {
         let token = self.cursor.advance();
