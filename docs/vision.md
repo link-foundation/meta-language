@@ -6199,3 +6199,26 @@ ignored argument effects. None executed. Host exotic values, arbitrary
 iterators, wrappers/new Boolean, full source constructs and every earlier
 requirement remain. Native inference observation transport moved to its
 existing child module to retain the root size limit.
+
+### Ordinary Rust Unit values and call statements draft
+
+The ordinary source frontend now drafts implicit Unit function results, empty
+blocks, terminal Unit returns at the function boundary, inert semicolons and
+ordered direct Unit expression/call statements. Named call results use the
+complete actual declaration catalog: collecting passes defer direct calls;
+the final pass requires proven direct Unit ownership. Existing hygienic
+bindings preserve each call before its continuation, including ordinary main
+statements and Unit tails. This follows the Rust Reference's
+[implicit result](https://doc.rust-lang.org/reference/items/functions.html#items.fn.implicit-return),
+[block value](https://doc.rust-lang.org/reference/expressions/block-expr.html#expr.block.value-no-trailing-expr)
+and [return](https://doc.rust-lang.org/reference/expressions/return-expr.html) rules.
+
+The two obsolete default-frontend refusal inputs and their exact original
+assertions/span remain recorded beside active value/call/graph controls. Full
+emitted wrapper inputs retain their next actual standard-library obligation;
+selected closed Unit proof profiles retain all of their original guards.
+General nonlocal returns and discarded non-Unit values/destructor effects
+remain required. An unrepresented unreachable continuation cannot move a Unit
+call before an abort. Shared source selection rules generate native code and
+editable Links; all new original/native/codec/emission controls remain
+unexecuted, with explicit Rust and Node ranges.

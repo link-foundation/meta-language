@@ -444,3 +444,12 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
         assert_eq!(error.reason, row["reason"].as_str().unwrap());
     }
 }
+
+#[test]
+fn implicit_unit_and_empty_blocks_preserve_values_source_parity_and_codecs() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/unit-values.mjs",
+        "Rust implicit Unit values",
+        create_rust_record_program_links,
+    );
+}

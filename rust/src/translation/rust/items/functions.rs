@@ -118,14 +118,12 @@ impl RustParser {
             }
         }
         self.cursor.expect(")", Some("fn"))?;
-        if self.cursor.eat("->").is_none() {
-            return Err(unsupported(
-                "function without a result",
-                &format!("{name} returns (); only value-returning functions are portable"),
-                span(&start, self.cursor.peek()),
-            ));
-        }
-        let ret = self.parse_type()?;
+        let explicit_result = self.cursor.eat("->").is_some();
+        let ret = if explicit_result {
+            self.parse_type()?
+        } else {
+            self.origins.typed(Type::Unit, path, Vec::new())
+        };
         let mut source_result = self.origins.current_type.clone();
         if !self.shared_array_handle_source_model.is_empty()
             && (!mutable_params.is_empty() || !self.lifetime_bindings.is_empty())
@@ -273,7 +271,7 @@ impl RustParser {
             source_local_state = Some(Box::new(proof));
             body
         } else if self.completion_model.is_empty() {
-            self.block(path)?
+            self.block_with_context(path, true)?
         } else {
             self.closed_function_completion(path)?
         };

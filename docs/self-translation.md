@@ -944,3 +944,13 @@ over represented values, with ordered raw argument capture, missing false and
 ignored extra effects. Complete optional-value source rules generate native
 code and public editable graphs. All future original/native/graph controls
 remain unexecuted; host exotic values and iterator/wrapper behavior retain scope.
+
+Ordinary Rust source drafts now retain implicit Unit results and empty blocks,
+terminal Unit returns, inert semicolons and sequences of proven direct Unit
+calls. Collecting passes defer call ownership to the actual declaration catalog;
+the final source pass requires its real direct Unit result. Hygienic ordinary
+bindings preserve call order in functions and main, with Unit tails admitted.
+Former default refusal inputs/assertions remain recorded beside stronger
+source/graph/call controls. The standard environment wrapper and closed source
+profiles keep their remaining obligations. General nonlocal returns and
+discarded values/destructors still need implementation; no control ran.

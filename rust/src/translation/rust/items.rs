@@ -4,8 +4,8 @@ use super::array_rules::accept_rust_source_array_owner;
 use super::indirection_rules::accept_rust_source_box_owner;
 use super::read_only_query_rules::accept_rust_read_only_query_owner;
 use super::{
-    FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison, SCtor,
-    SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
+    Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison,
+    SCtor, SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
     ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError, Type, absolute,
     format, is_if_or_match, prop_of, span, unsupported,
 };
@@ -515,15 +515,51 @@ impl RustParser {
     /// A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
     /// expression. Statements with effects are not values of the portable core.
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
+        self.block_with_context(path, false)
+    }
+    pub(super) fn block_with_context(
+        &mut self,
+        path: &[String],
+        function_body: bool,
+    ) -> Result<SExpr> {
         let open = self.cursor.expect("{", Some("block"))?;
         let previous = self.origins.enter(None);
         let mut lets = Vec::new();
         let mut tail: Option<SExpr> = None;
         while !self.cursor.is("}") {
+            if self.cursor.eat(";").is_some() {
+                continue;
+            }
             let token = self.peek();
+            if tail
+                .as_ref()
+                .is_some_and(|value| matches!(value.node, SNode::Abort { .. }))
+            {
+                return Err(unsupported(
+                    "unreachable continuation",
+                    "statements after an abort are not removed by this model",
+                    span(&token, &token),
+                ));
+            }
             if self.cursor.is("let") {
                 lets.extend(self.let_statement(path)?);
                 continue;
+            }
+            if function_body
+                && self.cursor.is("return")
+                && (self.cursor.is_at(";", 1) || self.cursor.is_at("}", 1))
+            {
+                self.cursor.advance();
+                while self.cursor.eat(";").is_some() {}
+                if !self.cursor.is("}") {
+                    return Err(unsupported(
+                        "unreachable continuation",
+                        "statements after a completed return are not removed by this model",
+                        span(&token, self.cursor.peek()),
+                    ));
+                }
+                tail = Some(SExpr::new(SNode::Unit, span(&token, &token)));
+                break;
             }
             if self.cursor.is("return") {
                 return Err(unsupported(
@@ -549,8 +585,26 @@ impl RustParser {
                 },
             )?;
             if self.cursor.eat(";").is_some() {
-                if matches!(expr.node, SNode::Abort { .. }) {
+                let origin = self.origins.origin(&expr, path);
+                let disposition =
+                    crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition(
+                        expr.node.kind(),
+                        self.origins.collecting,
+                        origin.proven,
+                        origin.ty.as_ref().map_or("", Type::kind),
+                        !origin.wrappers.is_empty(),
+                    );
+                if disposition == "abort" {
                     tail = Some(expr);
+                    continue;
+                }
+                if disposition == "bind" {
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: None,
+                        span: expr.span,
+                        value: expr,
+                    });
                     continue;
                 }
                 return Err(unsupported(
@@ -574,13 +628,7 @@ impl RustParser {
             }
         }
         let close = self.cursor.expect("}", Some("block"))?;
-        let Some(tail) = tail else {
-            return Err(unsupported(
-                "block without a value",
-                "the block evaluates to (), which is not a portable result",
-                span(&open, &close),
-            ));
-        };
+        let tail = tail.unwrap_or_else(|| SExpr::new(SNode::Unit, span(&open, &close)));
         let origin = self.origins.origin(&tail, path);
         let result = lets.into_iter().rev().fold(tail, |body, binding| {
             SExpr::new(
@@ -618,6 +666,9 @@ impl RustParser {
         self.cursor.expect("{", Some("fn main"))?;
         let mut effects = Vec::new();
         while !self.cursor.is("}") {
+            if self.cursor.eat(";").is_some() {
+                continue;
+            }
             let token = self.peek();
             if self.cursor.is("let") {
                 for binding in self.let_statement(&[])? {
@@ -638,11 +689,39 @@ impl RustParser {
                 self.cursor.expect(";", Some(&token.value))?;
                 continue;
             }
-            return Err(unsupported(
-                "main statement",
-                "main may only print, bind and assert",
-                span(&token, &token),
-            ));
+            let value = self.expr(
+                &[],
+                Options {
+                    statement: true,
+                    no_struct: false,
+                },
+            )?;
+            let origin = self.origins.origin(&value, &[]);
+            if crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition(
+                value.node.kind(),
+                self.origins.collecting,
+                origin.proven,
+                origin.ty.as_ref().map_or("", Type::kind),
+                !origin.wrappers.is_empty(),
+            ) != "bind"
+            {
+                return Err(unsupported(
+                    "main statement",
+                    "main may only print, bind, assert and evaluate direct Unit calls",
+                    span(&token, &token),
+                ));
+            }
+            if self.cursor.eat(";").is_none() && !self.cursor.is("}") {
+                return Err(Self::fail("expected ; or }", self.cursor.peek()));
+            }
+            effects.push(SEffect::Let {
+                name: self.fresh_product_binding(),
+                ty: None,
+                span: value.span,
+                value,
+                constant: false,
+                source_pure_unit_call: None,
+            });
         }
         let close = self.cursor.expect("}", Some("fn main"))?;
         self.origins.scope = previous;

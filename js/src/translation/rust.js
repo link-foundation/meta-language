@@ -1,3 +1,4 @@
+import {readRustUnitStatementDisposition} from './rust-unit-value-rules.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
@@ -641,9 +642,10 @@ class RustParser {
         if (!c.eat(',')) break;
       }
       c.expect(')', 'fn');
-      if (!c.eat('->')) throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start, c.peek()));
+      const explicitResult=Boolean(c.eat('->'));
+      if(!explicitResult&&this.emptyOptionSourceModel)throw unsupported('function without a result', `${name} returns (); only value-returning functions are portable`, span(start,c.peek()));
       const resultToken=c.peek();
-      const ret = this.type();
+      const ret = explicitResult?this.type():this.origins.typed(UNIT,path);
       const sourceResult = this.origins.type;
       if(this.sharedArrayHandleSourceModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust shared array handle source','mutable parameters and named lifetime binders need another source profile',span(start,c.peek()));
       if(this.constFunctionModel&&(mutableParams.length||this.lifetimeBindings.size))throw unsupported('Rust const function interface','mutable parameters and lifetime binders require an independent interpretation');
@@ -677,7 +679,7 @@ class RustParser {
         else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
-      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path));
+      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
@@ -721,17 +723,24 @@ class RustParser {
    * A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
    * expression. Statements with effects are not values of the portable core.
    */
-  block(path) {
+  block(path,functionBody=false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
     const previous = this.origins.enter();
     const lets = [];
     let tail = null;
     while (!c.is('}')) {
+      if(c.eat(';'))continue;
       const token = c.peek();
+      if(tail?.k==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',span(token,token));
       if (c.is('let')) {
         lets.push(...this.letStatement(path));
         continue;
+      }
+      if(functionBody&&c.is('return')&&(c.is(';',1)||c.is('}',1))){
+        c.next();while(c.eat(';')){}
+        if(!c.is('}'))throw unsupported('unreachable continuation','statements after a completed return are not removed by this model',span(token,c.peek()));
+        tail={k:'unit',span:span(token,token)};break;
       }
       if (c.is('return')) throw unsupported('early return', 'write the result as the tail expression of the block', span(token, token));
       if (['while', 'loop', 'for'].includes(token.value) && token.kind === 'identifier') {
@@ -739,10 +748,10 @@ class RustParser {
       }
       const expr = this.expr(path, { statement: true });
       if (c.eat(';')) {
-        if (expr.k === 'abort') {
-          tail = expr;
-          continue;
-        }
+        const origin=this.origins.origin(expr,path);
+        const disposition=readRustUnitStatementDisposition(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+        if(disposition==='abort'){tail=expr;continue;}
+        if(disposition==='bind'){lets.push({name:this.freshProductBinding(),type:null,value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
       }
       tail = expr;
@@ -752,7 +761,7 @@ class RustParser {
       }
     }
     const close = c.expect('}', 'block');
-    if (!tail) throw unsupported('block without a value', 'the block evaluates to (), which is not a portable result', span(open, close));
+    if(!tail)tail={k:'unit',span:span(open,close)};
     const origin = this.origins.origin(tail, path);
     const result = lets.reduceRight((body, binding) => ({ k: 'let', ...binding, body, span: binding.span }), tail);
     this.origins.scope = previous;
@@ -888,6 +897,7 @@ class RustParser {
     c.expect('{', 'fn main');
     const effects = [];
     while (!c.is('}')) {
+      if(c.eat(';'))continue;
       const token = c.peek();
       if (c.is('let')) {
         for (const binding of this.letStatement([])) effects.push({ k: 'let', name: binding.name, ...(binding.type === undefined && this.typeNamespaceModel ? {} : {type: binding.type}), value: binding.value, span: binding.span });
@@ -898,7 +908,9 @@ class RustParser {
         c.expect(';', token.value);
         continue;
       }
-      throw unsupported('main statement', 'main may only print, bind and assert', span(token, token));
+      const value=this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
+      if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
+      if(!c.eat(';')&&!c.is('}'))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),type:null,value,span:value.span});
     }
     c.expect('}', 'fn main');
     this.origins.scope = previous;
