@@ -92,6 +92,11 @@ impl RustEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+            "math", op,
+        ) {
+            return self.javascript_number_conversion(e);
+        }
         if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
             let values = args
                 .iter()

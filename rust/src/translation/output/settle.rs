@@ -65,6 +65,13 @@ pub(super) const fn division(op: BinaryOp) -> bool {
 #[must_use]
 pub(super) fn aborts(e: &Expr) -> bool {
     match &e.node {
+        Node::Math { op, args } => args.first().is_some_and(|argument| {
+            !crate::translation::string_number_rules::read_java_script_number_conversion_failure(
+                op,
+                argument.ty.kind(),
+            )
+            .is_empty()
+        }),
         Node::Abort { .. } => true,
         Node::Cast {
             flavor: Flavor::Checked,

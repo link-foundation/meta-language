@@ -382,6 +382,20 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_java_script_whitespace_unit(unit: f64) -> bool {
+    (((((((((((9f64..=13f64).contains(&unit)) || (unit == 32f64)) || (unit == 160f64))
+        || (unit == 5760f64))
+        || ((8192f64..=8202f64).contains(&unit)))
+        || (unit == 8232f64))
+        || (unit == 8233f64))
+        || (unit == 8239f64))
+        || (unit == 8287f64))
+        || (unit == 12_288f64))
+        || (unit == 65_279f64)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> {
     {
         let depth = 0f64;
@@ -454,15 +468,7 @@ pub fn read_callable_statement_role(kind: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_callable_type_whitespace(unit: f64) -> bool {
-    (((((((((((9f64..=13f64).contains(&unit)) || (unit == 32f64)) || (unit == 160f64))
-        || (unit == 5760f64))
-        || ((8192f64..=8202f64).contains(&unit)))
-        || (unit == 8232f64))
-        || (unit == 8233f64))
-        || (unit == 8239f64))
-        || (unit == 8287f64))
-        || (unit == 12_288f64))
-        || (unit == 65_279f64)
+    self::accept_java_script_whitespace_unit(unit)
 }
 
 /// Execute the checked shared source algorithm.

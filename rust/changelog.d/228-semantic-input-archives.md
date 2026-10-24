@@ -134,3 +134,10 @@ Draft automatic dependency alias composition through resolved CST binding
 renames. Keep original sources and alias correspondences in editable Links
 provenance, generate the actual assignment library through that path, and expose
 the drafted definition factories, Unicode and allocation TypeScript signatures.
+
+Draft exact JavaScript primitive Number conversion and coercing global predicates
+with shared StringNumericLiteral syntax, ties-to-even binary64 rounding, BigInt
+conversion and UTF-16/UTF-8 transport. Automatically emit native Rust, Lean, Rocq
+and editable Links definitions; retain optional absence, argument order and
+implicit BigInt errors. Author public APIs and future source/native/codec/unit
+controls without executing them; retain explicit formatting and coverage debt.

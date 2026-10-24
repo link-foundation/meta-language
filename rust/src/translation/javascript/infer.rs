@@ -753,6 +753,13 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                let conversion = crate::translation::string_number_rules::read_java_script_number_conversion_result(op);
+                if !conversion.is_empty() {
+                    for item in args {
+                        self.expr(&item.value, env)?;
+                    }
+                    return Ok(Term::Known(if conversion == "bool" { BOOL } else { FLOAT }));
+                }
                 if (crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(
                     op,
                 ) > 0.0

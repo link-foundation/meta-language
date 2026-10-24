@@ -21,6 +21,11 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if !crate::translation::string_number_rules::read_java_script_number_conversion_result(op)
+            .is_empty()
+        {
+            return self.javascript_number_builtin(op, args, span, env, path);
+        }
         let bitwise_arity =
             crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(op);
         if bitwise_arity > 0.0

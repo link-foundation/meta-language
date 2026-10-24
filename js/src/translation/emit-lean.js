@@ -1,6 +1,8 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {STRING_NUMBER_LEAN_PRELUDE} from './string-number-formal-runtime.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -33,6 +35,7 @@ import { LEAN_ROOT_NAMES } from './lean-root-names.js';
 import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
+  'MLStringNumber',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -241,6 +244,7 @@ class LeanEmitter {
       'set_option linter.constructorNameAsVariable false',
       '',
       ...['jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat', 'stringIncludes'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
+      ...(this.helpers.has('stringNumber')?[STRING_NUMBER_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -639,6 +643,12 @@ class LeanEmitter {
   }
 
   math(e, depth) {
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
+      if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');
+      const text=renderJavaScriptNumberScalarConversion('Lean',e.op,e.args[0].type.kind,this.expr(e.args[0],depth),false);
+      if(!text)throw unsupported('numeric conversion operand','the checked conversion must retain its total value or threaded abort',e.span);
+      return text;
+    }
     const args = e.args.map((arg) => this.expr(arg, depth));
     const native = { abs: 'Float.abs', floor: 'Float.floor', ceil: 'Float.ceil', sqrt: 'Float.sqrt', isFinite: 'Float.isFinite', isNaN: 'Float.isNaN' }[e.op];
     if (native) return `(${native} ${args[0]})`;

@@ -5771,3 +5771,36 @@ assertion remain intact; snapshots are not shared across unrelated builds.
 Provenance-only refresh updates selected native provider digests while refusing
 changed source identities, provider versions or independent oracle receipts.
 It retains all expected trees; CI still recomputes the complete fixture checks.
+
+### Exact JavaScript primitive numeric conversion draft
+
+`Number`, global `isFinite` and global `isNaN` share an inspectable source
+definition with distinct explicit and implicit BigInt conversion. The complete
+StringNumericLiteral grammar reads actual UTF-16 units, trims ECMAScript white
+space and line terminators, accepts decimal and unsigned radix forms, preserves
+signed zero, and rejects trailing syntax as NaN. Exact integer arithmetic and
+binary long division round once to binary64, including ties to even, subnormals
+and overflow. No host decimal parser or intermediate decimal rounding supplies
+the algorithm. Input length has no artificial semantic cutoff. A total UTF-8
+transport definition supports targets whose strings are byte sequences.
+
+The same JavaScript definitions generate native Rust and editable typed Links,
+plus complete namespaced Rust, Lean and Rocq source runtimes. Stable formal entry
+aliases derive from actual emitter binding mappings. Primitive and optional
+conversion adapters retain evaluated arguments, null versus undefined, lazy
+absence branches and implicit BigInt aborts. Global predicates convert their
+input; `Number.isFinite` and `Number.isNaN` retain their non-coercing behavior.
+Extra arguments run in order before conversion. String conversion requires the
+UTF-16 representation in the Rust emitter, including constant emission. Shared
+ECMAScript whitespace also serves callable type syntax through its old API.
+
+The public string conversion and complete-definition entry points, source
+fixtures, unit transport controls, independent original-Node producers, native
+controls and codec/emission controls are authored but unexecuted. They are not
+evidence. Numeric controls retain their original source and add actual source
+`String` observation wrappers rather than relying on Rust Display spellings.
+Object and Symbol conversion, iterator spreads, source error classes, complete
+isolated-surrogate source/IR transport, all remaining language constructs and
+deferred ledger/source/naming/dependency/parity registration remain obligations.
+The existing formatter failed internally on this generated library; its author
+preserves complete output and records the formatting debt without changing gates.

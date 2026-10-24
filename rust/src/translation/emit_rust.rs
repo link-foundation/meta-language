@@ -37,6 +37,7 @@ mod declarations;
 mod expressions;
 mod externals;
 mod math;
+mod number_conversions;
 mod number_prelude;
 mod optional_values;
 mod primitive_methods;
@@ -746,6 +747,8 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
         return Ok(None);
     }
     let mut emitter = rust_emitter(program);
+    emitter.utf16_strings = program.utf16_strings.unwrap_or(false)
+        || primitive_methods::program_requires_method_units(program);
     let form = constant_binding_form(
         if matches!(value.node, Node::Lit { .. }) {
             "lit"
@@ -775,6 +778,7 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::Optional => super::structured_type_rules::read_rust_optional_prelude(),
             Prelude::NumberBitwise => include_str!("runtime/number-bitwise.rs").to_owned(),
             Prelude::BigIntegerBitwise => include_str!("runtime/big-integer-bitwise.rs").to_owned(),
+            Prelude::StringNumber => include_str!("runtime/string-number.rs").to_owned(),
         })
         .collect();
     let mut output = emitter.state.finish(
@@ -817,6 +821,7 @@ enum Prelude {
     Optional,
     NumberBitwise,
     BigIntegerBitwise,
+    StringNumber,
 }
 
 /// Inspectable records captured during normal complete block emission.

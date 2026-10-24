@@ -2,6 +2,7 @@
 // identify the actual input values; they are never source text or host callbacks.
 
 import { readRequiredNumberFact, readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
+import { acceptJavaScriptWhitespaceUnit } from './javascript-whitespace-rules.js';
 import { readTypeSeparatorPositions } from './type-syntax-rules.js';
 
 // Linked policy decisions begin.
@@ -23,7 +24,7 @@ export function readCallableStatementRole(kind) {
 // Linked callable type whitespace decisions begin.
 /** @param {number} unit @returns {boolean} */
 export function acceptCallableTypeWhitespace(unit) {
-  return unit >= 9 && unit <= 13 || unit === 32 || unit === 160 || unit === 5760 || unit >= 8192 && unit <= 8202 || unit === 8232 || unit === 8233 || unit === 8239 || unit === 8287 || unit === 12288 || unit === 65279;
+  return acceptJavaScriptWhitespaceUnit(unit);
 }
 // Linked callable type whitespace decisions end.
 

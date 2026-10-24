@@ -2601,3 +2601,8 @@ export class LanguageProfileViolation extends Error {
 }
 
 // --- query algebra (link rules) ---
+
+/** Complete editable source-derived JavaScript numeric conversion definitions. */
+export function createStringNumberProgramLinks(): TypedProgramLinks;
+/** ECMAScript StringNumericLiteral conversion, preserving binary64 signed zero. */
+export function convertJavaScriptStringNumber(text: string): number;

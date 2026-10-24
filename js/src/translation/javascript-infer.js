@@ -7,6 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import {readJavaScriptNumberConversionResult} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
@@ -952,6 +953,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(readJavaScriptNumberConversionResult(node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return readJavaScriptNumberConversionResult(node.op)==='bool'?BOOL:FLOAT;
+        }
         if ((readJavaScriptNumberBitwiseArity(node.op) || readBigIntegerBitwiseArity(node.op)) && node.args.length > 0) {
           const values = node.args.map(item => this.expr(item.value, env)), result = this.fresh();
           this.arithmetic.push({ left: values[0], right: values[1], result, where: node.span });

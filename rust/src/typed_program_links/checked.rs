@@ -179,6 +179,9 @@ fn validate_type_record(
             && !crate::translation::big_integer_bitwise_rules::accept_linked_big_integer_bitwise_operation(
                 kind, value["op"].as_str().unwrap_or_default(),
             )
+            && !crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",

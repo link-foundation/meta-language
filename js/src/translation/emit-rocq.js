@@ -16,6 +16,8 @@ import { renderCollectionSizeExpression, renderCollectionReadExpression } from '
 // so assertions about Numbers are still theorems closed by computation.
 
 import { typeError, unsupported } from './diagnostics.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {STRING_NUMBER_ROCQ_PRELUDE} from './string-number-formal-runtime.js';
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
@@ -32,6 +34,7 @@ import { threadOutput } from './output.js';
 import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-common.js';
 
 const KEYWORDS = new Set([
+  'MLStringNumber',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -335,6 +338,7 @@ class RocqEmitter {
       ...(this.usesFloat ? FLOAT_PRELUDE : ROCQ_PRELUDE),
       '',
       ...helperText.flatMap((helper) => [helper, '']),
+      ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
@@ -891,6 +895,13 @@ class RocqEmitter {
   }
 
   math(e) {
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
+      this.floats();
+      if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');
+      const text=renderJavaScriptNumberScalarConversion('Rocq',e.op,e.args[0].type.kind,this.expr(e.args[0]),false);
+      if(!text)throw unsupported('numeric conversion operand','the checked conversion must retain its total value or threaded abort',e.span);
+      return text;
+    }
     if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rocq',e,argument=>this.expr(argument));
     if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rocq', e, argument => this.expr(argument));
     if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Rocq', e.op, e.args.map(argument => this.expr(argument)));

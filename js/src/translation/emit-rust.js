@@ -25,6 +25,9 @@ import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
 import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
+import {STRING_NUMBER_PRELUDE} from './string-number-runtime.js';
+import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
+import {emitRustJavaScriptNumberConversion} from './javascript-number-conversion.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -721,8 +724,11 @@ export function emitRustConstants(program) {
     ...(emitter.usesNumber ? [NUMBER_PRELUDE] : []),
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
     ...(emitter.usesArray ? [readRustArrayPrelude(emitter.usesStandardArray)] : []),
+    ...(emitter.utf16Strings ? [STRING_PRELUDE] : []),
+    ...(emitter.usesOptional ? [OPTIONAL_PRELUDE] : []),
     ...(emitter.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
     ...(emitter.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
+    ...(emitter.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -750,10 +756,12 @@ class RustEmitter {
     this.usesMath = false;
     this.usesNumberBitwise = false;
     this.usesBigIntegerBitwise = false;
+    this.usesStringNumber = false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
       if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
+      if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -787,6 +795,7 @@ class RustEmitter {
       ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE, ''] : []),
       ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE, ''] : []),
+      ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -799,6 +808,7 @@ class RustEmitter {
       ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
       ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
+      ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1471,6 +1481,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return emitRustJavaScriptNumberConversion(this,e);
     if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rust',e,argument=>this.expr(argument));
     if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rust', e, argument => this.expr(argument));
     if (readBigIntegerBitwiseArity(e.op)) {

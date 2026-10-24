@@ -18,6 +18,7 @@ import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
+import {readJavaScriptNumberBuiltinOperation} from './string-number-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -73,7 +74,6 @@ const MATH = {
   'Math.abs': 'abs', 'Math.floor': 'floor', 'Math.ceil': 'ceil', 'Math.trunc': 'trunc', 'Math.round': 'round',
   'Math.sign': 'sign', 'Math.sqrt': 'sqrt', 'Math.max': 'max', 'Math.min': 'min',
   'Number.isInteger': 'isInteger', 'Number.isSafeInteger': 'isSafeInteger', 'Number.isFinite': 'isFinite', 'Number.isNaN': 'isNaN',
-  isFinite: 'isFinite', isNaN: 'isNaN',
 };
 // Their constants, as the source text of the Number each one is.
 const CONSTANTS = {
@@ -2479,6 +2479,8 @@ class JavaScriptParser {
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
+    const numericBuiltin=standardOwner?readJavaScriptNumberBuiltinOperation(name):'';
+    if(numericBuiltin&&c.is('('))return{k:'math',op:numericBuiltin,name,args:this.spreadArguments(name),span:span(token,c.peek())};
     if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);
       return { k: 'math', op: MATH[name], name, args, span: span(token, c.peek()) };

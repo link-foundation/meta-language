@@ -8,6 +8,23 @@ impl LeanEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+            "math", op,
+        ) {
+            if matches!(args[0].ty.kind(), "string" | "int" | "nat") {
+                self.helpers.insert("stringNumber");
+            }
+            let value = self.expr(&args[0], depth)?;
+            let text = crate::translation::string_number_rules::render_java_script_number_scalar_conversion("Lean", op, args[0].ty.kind(), &value, false);
+            if text.is_empty() {
+                return Err(super::unsupported(
+                    "numeric conversion operand",
+                    "the checked conversion must retain its total value or threaded abort",
+                    e.span,
+                ));
+            }
+            return Ok(text);
+        }
         if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
             let values = args
                 .iter()

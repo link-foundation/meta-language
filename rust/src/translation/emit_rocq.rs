@@ -46,6 +46,7 @@ use self::math::MATH;
 use self::mutual::Mutual;
 
 const KEYWORDS: &[&str] = &[
+    "MLStringNumber",
     "as",
     "at",
     "cofix",
@@ -238,10 +239,11 @@ enum Helper {
     Tactics,
     Decide,
     Emit,
+    StringNumber,
 }
 
 impl Helper {
-    const ALL: [Self; 18] = [
+    const ALL: [Self; 19] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -260,6 +262,7 @@ impl Helper {
         Self::Tactics,
         Self::Decide,
         Self::Emit,
+        Self::StringNumber,
     ];
 
     fn render_definition(self) -> String {
@@ -295,6 +298,7 @@ impl Helper {
             Self::Tactics => TACTICS,
             Self::Decide => DECIDE,
             Self::Emit => EMIT,
+            Self::StringNumber => include_str!("runtime/string-number.v"),
         }
     }
 }

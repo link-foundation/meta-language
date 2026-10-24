@@ -91,3 +91,6 @@ export { structuredDataRecordToLino, readStructuredDataRecords } from './structu
 export * from './transform.js';
 export * from './translation.js';
 export { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, sliceSourceTextBytes } from './translation/source-text-bytes.js';
+
+export {createStringNumberProgramLinks} from './string-number-program.js';
+export {convertJavaScriptStringNumber} from './string-number.js';

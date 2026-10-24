@@ -5,6 +5,7 @@ import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordF
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -614,6 +615,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return renderJavaScriptNumberScalarConversion('JavaScript',e.op,'float',this.expr(e.args[0]),false);
         if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('JavaScript',e,argument=>this.expr(argument));
         if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('JavaScript', e, argument => this.expr(argument));
         if (readBigIntegerBitwiseArity(e.op)) {

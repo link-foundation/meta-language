@@ -72,6 +72,7 @@ impl<'p> RustEmitter<'p> {
                 Prelude::BigIntegerBitwise => {
                     include_str!("../runtime/big-integer-bitwise.rs").to_owned()
                 }
+                Prelude::StringNumber => include_str!("../runtime/string-number.rs").to_owned(),
             })
             .collect();
         for prelude in &preludes {

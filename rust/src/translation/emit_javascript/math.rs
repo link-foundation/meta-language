@@ -8,6 +8,11 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
+            "math", op,
+        ) {
+            return Ok(crate::translation::string_number_rules::render_java_script_number_scalar_conversion("JavaScript", op, "float", &args[0], false));
+        }
         if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
             return Ok(crate::translation::rust_shifts::emit_rust_checked_shift(
                 "JavaScript",

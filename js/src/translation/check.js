@@ -10,6 +10,8 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import {readJavaScriptNumberConversionResult} from './string-number-rules.js';
+import {checkJavaScriptNumberBuiltin} from './javascript-number-conversion.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
 import { readSourceIdentifierSupply, collectSourceIdentifierTexts } from './source-identifiers.js';
 import { renderSourceGeneratedIdentifier } from './source-identifier-rules.js';
@@ -1197,6 +1199,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(readJavaScriptNumberConversionResult(node.op))return checkJavaScriptNumberBuiltin(this,node,env,path);
     if (readRustShiftCheckedOperation(node.op)) return checkRustShift(this,node,env,path,expected);
     if (readRustPrimitiveBitwiseArity(node.op)) return checkRustPrimitiveBitwise(this, node, env, path, expected);
     const numberArity=readJavaScriptNumberBitwiseArity(node.op);

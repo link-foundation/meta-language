@@ -820,3 +820,19 @@ path for its real bitwise dependency. Existing scalar source/native/codec
 controls cover the resulting library but remain unexecuted. Public source
 factory, Unicode and allocation signatures are also drafted in TypeScript.
 Broader module/state and semantic token obligations remain explicit.
+
+Primitive numeric conversion now has one source algorithm for exact
+StringNumericLiteral parsing, positive rational rounding and explicit BigInt
+conversion, with shared whitespace and UTF-8/UTF-16 transport. Its author emits
+complete Rust, Lean, Rocq and typed Links definitions; formal namespace aliases
+come from actual binding mappings. Checkers lower optional conversion through
+existing typed lets, absence comparisons and unwrapping, while formal output
+threading retains implicit BigInt errors and operand evaluation. No host decimal
+parser or handwritten native replacement supplies numeric meaning.
+
+Future source, direct-unit, native, original-Node, codec and emission controls are
+declared but unexecuted. The source writer retains complete unformatted output
+after an internal formatter failure; formatter and metadata debt remains. Whole
+source surrogate transport, objects, Symbols, spreads, error classes and every
+other unmet requirement remain required. No tests begin before the complete
+requirements implementation draft exists.

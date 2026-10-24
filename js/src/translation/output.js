@@ -14,6 +14,7 @@ import { readOptionalOutputAbsences } from './optional-value-rules.js';
 import { acceptCallableCreationEffectTraversal, readCallableOutputTargetRefusal } from './callable-emission-rules.js';
 import { readCallableOutputAnalysis } from './callable-emission.js';
 import { unsupported } from './diagnostics.js';
+import {readJavaScriptNumberConversionFailure} from './string-number-rules.js';
 import { BOOL, INT, NAT, OUTPUT, STRING, data, fixedBounds, typeKey } from './types.js';
 import { readProgramExpressionEntryOperandField } from '../typed-program-link-rules.js';
 
@@ -32,6 +33,8 @@ function integerLiteral(node) {
 /** True when the node itself, apart from its operands, may abort. */
 export function aborts(node) {
   switch (node.k) {
+    case 'math':
+      return Boolean(readJavaScriptNumberConversionFailure(node.op,node.args[0]?.type.kind??''));
     case 'abort':
       return true;
     case 'cast': {
@@ -359,6 +362,10 @@ class Threader {
    */
   complete(out, e) {
     if (!aborts(e)) return this.make(out, e);
+    if(e.k==='math'){
+      const body=this.fail(out,literal(STRING,readJavaScriptNumberConversionFailure(e.op,e.args[0].type.kind)),e.type);
+      return{k:'let',name:this.fresh('numeric_argument'),value:e.args[0],body,type:body.type};
+    }
     const operands = [];
     const name = (value) => {
       if (value.k === 'var' || value.k === 'lit') return value;

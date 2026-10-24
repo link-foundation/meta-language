@@ -45,6 +45,7 @@ mod javascript_property_calls;
 mod matches;
 mod math;
 mod number_bitwise;
+mod number_conversions;
 mod optional_values;
 mod primitive_methods;
 mod record_writes;

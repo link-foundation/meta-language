@@ -467,3 +467,8 @@ pub use verification::{VerificationIssue, VerificationIssueKind, VerificationRep
 mod native_grammar_parser;
 mod self_description;
 mod tree_sitter_adapter;
+
+pub use translation::string_number::{
+    convert_javascript_string_number, convert_javascript_string_number_units,
+};
+pub use translation::string_number_program::create_string_number_program_links;

@@ -20,7 +20,7 @@ const program=checkProgram(parseJavaScript(fixture.source)),packet=encodeTypedPr
 const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.entry).target);
 const functions=runInNewContext('"use strict";\n'+js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');
 const observe=call=>{try{return{kind:'value',value:String(call())};}catch(error){return{kind:'abort',value:error.message};}};
-const cases=fixture.cases.map((row,index)=>({...row,observed:observe(()=>functions[index]()),originalObserved:observe(()=>runInNewContext('"use strict";\n'+row.source.replace(/^export /gmu,'')+'\ncompute();',{}, {timeout:1000})),nativeTarget:rust.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.entry).target}));
+const cases=fixture.cases.map((row,index)=>({...row,module:row.module??'',observed:observe(()=>functions[index]()),originalObserved:observe(()=>runInNewContext('"use strict";\n'+row.source.replace(/^export /gmu,'')+'\ncompute();',{}, {timeout:1000})),nativeTarget:rust.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.entry).target}));
 const header=rust.text.split('\n').find(line=>line.startsWith('#![allow('));
 if(!header)throw new TypeError('complete library attributes are required');
 const definition=createDefinition();

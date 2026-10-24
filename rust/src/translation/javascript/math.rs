@@ -5,7 +5,7 @@ use super::{FLOAT, GLOBALS};
 use super::{JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token, node, span, unsupported};
 
 /// The functions, by the path a program calls them by, and the op each is.
-const MATH: [(&str, &str); 15] = [
+const MATH: [(&str, &str); 13] = [
     ("Math.abs", "abs"),
     ("Math.floor", "floor"),
     ("Math.ceil", "ceil"),
@@ -19,8 +19,6 @@ const MATH: [(&str, &str); 15] = [
     ("Number.isSafeInteger", "isSafeInteger"),
     ("Number.isFinite", "isFinite"),
     ("Number.isNaN", "isNaN"),
-    ("isFinite", "isFinite"),
-    ("isNaN", "isNaN"),
 ];
 
 /// Their constants, as the source text of the Number each one is.
@@ -56,6 +54,21 @@ impl JavaScriptParser {
     pub(super) fn math(&mut self, token: &Token, name: &str) -> Result<Option<SExpr>> {
         let called = self.cursor.is("(");
         let standard_owner = self.has_standard_builtin_owner(token);
+        let numeric_builtin =
+            crate::translation::string_number_rules::read_java_script_number_builtin_operation(
+                name,
+            );
+        if called && standard_owner && !numeric_builtin.is_empty() {
+            let args = self.spread_arguments(name)?;
+            return Ok(Some(node(
+                SNode::Math {
+                    op: numeric_builtin,
+                    name: name.to_owned(),
+                    args,
+                },
+                self.to_here(token),
+            )));
+        }
         if let Some(value) = lookup(&CONSTANTS, name).filter(|_| !called) {
             if !standard_owner {
                 return Err(unsupported(

@@ -42,6 +42,7 @@ mod types;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
+    "MLStringNumber",
     "abbrev",
     "at",
     "attribute",
@@ -264,6 +265,10 @@ impl LeanEmitter<'_> {
                 });
                 lines.push(String::new());
             }
+        }
+        if self.helpers.contains("stringNumber") {
+            lines.push(include_str!("runtime/string-number.lean").to_owned());
+            lines.push(String::new());
         }
         for block in blocks {
             lines.push(block);

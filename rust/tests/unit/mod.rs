@@ -366,6 +366,7 @@ mod translation_record_values;
 mod translation_reference_array_projections;
 mod translation_scalar_assignments;
 mod translation_source_identifiers;
+mod translation_string_number;
 mod translation_unicode_identifiers;
 mod typed_program_number_projection;
 mod typed_program_record_projection;

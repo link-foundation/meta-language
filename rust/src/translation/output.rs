@@ -491,6 +491,23 @@ impl Threader<'_> {
         if !aborts(&e) {
             return self.make(out, e);
         }
+        if let Node::Math { op, args } = &e.node {
+            let message = super::string_number_rules::read_java_script_number_conversion_failure(
+                op,
+                args[0].ty.kind(),
+            );
+            let body = self.fail(out, literal(STRING, &message), &e.ty);
+            let ty = body.ty.clone();
+            let name = self.fresh("numeric_argument");
+            return Expr::new(
+                Node::Let {
+                    name,
+                    value: Box::new(args[0].clone()),
+                    body: Box::new(body),
+                },
+                ty,
+            );
+        }
         let mut operands: Vec<(String, Expr)> = Vec::new();
         let mut name = |this: &mut Self, value: Expr| -> Expr {
             if matches!(value.node, Node::Var { .. } | Node::Lit { .. }) {
