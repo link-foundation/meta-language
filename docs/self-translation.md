@@ -1040,3 +1040,12 @@ character templates. Complete prior assertion files are retained with hashes
 while same-input controls correct obsolete refusals. No control executes before
 the full draft. Changing source lowering also requires final full source-product
 regeneration and history/ledger reconciliation after the complete draft.
+
+Literal replace/replaceAll reuse the complete UTF16 source-runtime author. A
+shared no-capture substitution plan executes over unchanged original unit
+columns. Native/JavaScript/formal target bridges contain only transport; source
+checker adapters capture raw operands before primitive conversions. Complete
+source closures, typed Links and four target runtimes are regenerated together.
+Legacy helper contexts remain qualified; no equivalence proof is invented.
+Future behavior controls remain unexecuted; protocol/callable/resource and all
+previous requirements remain.

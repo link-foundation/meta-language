@@ -25,6 +25,13 @@ export function checkJavaScriptStringUnitCall(checker,node,receiver,env,path){
  let body;
  if(readJavaScriptStringUnitCallForm(node.op)==='position'){
   body=checker.materializePrimitiveMethod(node,bound[0],[numeric(checker,bound[1],number('0'),node.span)],path);
+ }else if(readJavaScriptStringUnitCallForm(node.op)==='replacement'){
+  const searchName=checker.freshName('ml_string_replace_search'),replacementName=checker.freshName('ml_string_replace_template');
+  const missing={k:'unit',type:{kind:'unit'}};
+  const search=materializeJavaScriptPrimitiveText(bound[1]??missing,node.span),replacement=materializeJavaScriptPrimitiveText(bound[2]??missing,node.span);
+  body=checker.materializePrimitiveMethod(node,bound[0],[variable(searchName,STRING),variable(replacementName,STRING)],path);
+  body={k:'let',name:replacementName,value:replacement,body,type:STRING};
+  body={k:'let',name:searchName,value:search,body,type:STRING};
  }else{
   const type=array(STRING),limitName=checker.freshName('ml_string_split_limit');
   const limit=numeric(checker,bound[2],number('4294967295'),node.span),limitValue=variable(limitName,FLOAT);

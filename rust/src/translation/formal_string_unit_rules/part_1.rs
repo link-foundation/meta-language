@@ -675,6 +675,34 @@ pub fn render_formal_string_unit_operation(
                                 )
                             }
                         }
+                    } else if (operation == "replace") || (operation == "replaceAll") {
+                        self::render_formal_string_units_from_numbers(
+                            target,
+                            &(format!(
+                                "(MLUtf16Text.replace {text} {} {} {})",
+                                self::render_formal_string_unit_numbers(
+                                    target,
+                                    &((self::ml_array::optional_at(
+                                        values,
+                                        self::ml_array::number_index(1f64)
+                                    ))
+                                    .unwrap_or_else(|| String::new()))
+                                ),
+                                self::render_formal_string_unit_numbers(
+                                    target,
+                                    &((self::ml_array::optional_at(
+                                        values,
+                                        self::ml_array::number_index(2f64)
+                                    ))
+                                    .unwrap_or_else(|| String::new()))
+                                ),
+                                if operation == "replaceAll" {
+                                    String::from("true")
+                                } else {
+                                    String::from("false")
+                                }
+                            )),
+                        )
                     } else if operation == "split" {
                         {
                             let missing = ((self::ml_array::optional_at(

@@ -17,3 +17,12 @@ fn literal_string_split_keeps_utf16_fields_missing_separator_and_unsigned_limits
         meta_language::create_utf16_text_program_links,
     );
 }
+
+#[test]
+fn literal_replacement_keeps_original_context_dollar_templates_units_and_source_arguments() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/string-replacement.mjs",
+        "JavaScript literal UTF16 replacement",
+        meta_language::create_utf16_text_program_links,
+    );
+}

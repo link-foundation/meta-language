@@ -114,6 +114,7 @@ export function renderFormalStringUnitOperation(target,operation,values){
   const result='(MLUtf16Text.points '+text+')';
   return target==='Lean'?'(('+result+').map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+'))':'(List.map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+') '+result+')';
  }
+ if(operation==='replace'||operation==='replaceAll')return renderFormalStringUnitsFromNumbers(target,'(MLUtf16Text.replace '+text+' '+renderFormalStringUnitNumbers(target,values[1]??'')+' '+renderFormalStringUnitNumbers(target,values[2]??'')+' '+(operation==='replaceAll'?'true':'false')+')');
  if(operation==='split'){
   const missing=(values[1]??'')==='';
   const separator=missing?(target==='Lean'?'(#[] : Array Float)':'(@nil float)'):renderFormalStringUnitNumbers(target,values[1]??'');

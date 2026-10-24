@@ -298,7 +298,9 @@ pub fn read_java_script_string_search_result_kind(operation: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_string_unit_call_form(operation: &str) -> String {
-    if operation == "split" {
+    if (operation == "replace") || (operation == "replaceAll") {
+        String::from("replacement")
+    } else if operation == "split" {
         String::from("split")
     } else if (((operation == "charCodeAt") || (operation == "charAt")) || (operation == "at"))
         || (operation == "codePointAt")

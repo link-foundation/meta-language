@@ -6480,3 +6480,31 @@ original BigInt position becomes a runtime TypeError control. These corrections
 follow [String unit methods](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.charat)
 under explicit Node22.15/24 and Rust1.90–1.99 future control ranges. No code
 controls executed. Broader source domains and every earlier requirement remain.
+
+
+### Shared literal UTF16 replacement draft
+
+Literal replace/replaceAll now use a complete shared source substitution plan
+and unit-column executor across JavaScript, Rust, Lean and Rocq. Template dollar,
+matched-text, original-prefix and original-suffix roles read the unchanged
+original text. Capture-looking templates remain literal when the actual search
+has no captures. Matching is nonoverlapping; empty all-search advances one code
+unit through the final boundary, preserving surrogate halves. Template parsing
+runs once, followed by ordered output-unit construction without repeatedly
+copying the whole input for every segment. This follows
+[GetSubstitution](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-getsubstitution).
+
+Actual String source calls capture receiver and all arguments before primitive
+search/template conversion. Omitted operands convert to undefined text; ignored
+extras retain effects. Own record methods keep their callable meaning. Target
+bridges transport strings/columns and borrowed temporaries; generated runtimes
+and full editable definitions own the algorithm. Existing legacy Text helper
+definitions are retained as separate source contexts, without an equivalence
+or deduplication claim.
+
+Future declarations retain template roles, original context, empty boundaries,
+UTF16 units, primitive conversion, argument order and name hygiene. Both codecs,
+all emissions and native products are drafted but unexecuted. This domain uses
+literal searches, primitive templates and successful allocation. Callable
+replacements, RegExp/Symbol.replace, generic receivers/unions, complete resource
+limits/failures and every preceding requirement remain required.

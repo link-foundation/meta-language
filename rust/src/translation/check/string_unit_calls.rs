@@ -94,6 +94,44 @@ impl Checker {
                 path,
                 span,
             )?
+        } else if rules::read_java_script_string_unit_call_form(operation) == "replacement" {
+            let search_name = self.fresh_name("ml_string_replace_search");
+            let replacement_name = self.fresh_name("ml_string_replace_template");
+            let missing = Expr::new(Node::Unit, Type::Unit);
+            let search = super::string_search::primitive_text(
+                bound.get(1).unwrap_or(&missing).clone(),
+                span,
+            )?;
+            let replacement = super::string_search::primitive_text(
+                bound.get(2).unwrap_or(&missing).clone(),
+                span,
+            )?;
+            let call = self.materialize_primitive_method(
+                bound[0].clone(),
+                operation,
+                vec![
+                    Some(Expr::var(search_name.clone(), STRING)),
+                    Some(Expr::var(replacement_name.clone(), STRING)),
+                ],
+                path,
+                span,
+            )?;
+            let call = Expr::new(
+                Node::Let {
+                    name: replacement_name,
+                    value: Box::new(replacement),
+                    body: Box::new(call),
+                },
+                STRING,
+            );
+            Expr::new(
+                Node::Let {
+                    name: search_name,
+                    value: Box::new(search),
+                    body: Box::new(call),
+                },
+                STRING,
+            )
         } else {
             let ty = array(STRING);
             let limit_name = self.fresh_name("ml_string_split_limit");

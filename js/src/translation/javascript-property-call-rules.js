@@ -60,6 +60,7 @@ export function readJavaScriptStringSearchResultKind(operation){return operation
 /** Source unit methods normalize primitives after every raw argument evaluation.
  * @param {string} operation @returns {string} */
 export function readJavaScriptStringUnitCallForm(operation){
+ if(operation==='replace'||operation==='replaceAll')return 'replacement';
  if(operation==='split')return 'split';
  return operation==='charCodeAt'||operation==='charAt'||operation==='at'||operation==='codePointAt'?'position':'';
 }

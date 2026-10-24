@@ -178,3 +178,48 @@ export function displayUtf8FromUtf16Text(text){
   }
   return bytes;
 }
+
+/** Complete GetSubstitution template plan for a literal search with no captures.
+ * Triples select replacement ranges (0), matched text (1), original prefix (2)
+ * or original suffix (3). Capture-looking forms remain literal in this domain.
+ * @param {number[]} replacement @returns {number[]} */
+export function planUtf16TextSubstitution(replacement){
+ const result=[];
+ let start=0,at=0;
+ while(at<replacement.length){
+  const next=replacement[at+1]?? -1;
+  if((replacement[at]??0)===36&&(next===36||next===38||next===96||next===39)){
+   if(start<at)result.push(0,start,at);
+   if(next===36)result.push(0,at,at+1);
+   else result.push(next===38?1:next===96?2:3,0,0);
+   at+=2;start=at;
+  }else at+=1;
+ }
+ if(start<replacement.length)result.push(0,start,replacement.length);
+ return result;
+}
+
+/** Literal source replacement. Every substitution reads the unchanged original
+ * text. Empty all-search advances one code unit, including the final boundary.
+ * @param {number[]} text @param {number[]} search @param {number[]} replacement
+ * @param {boolean} all @returns {number[]} */
+export function replaceUtf16Text(text,search,replacement,all){
+ const result=[],plan=planUtf16TextSubstitution(replacement);
+ let start=0,from=0;
+ for(;;){
+  const found=indexUtf16Text(text,search,from);
+  if(found<0)break;
+  for(let at=start;at<found;at+=1)result.push(text[at]??0);
+  for(let instruction=0;instruction<plan.length;instruction+=3){
+   const kind=plan[instruction]??0;
+   const first=kind===0?(plan[instruction+1]??0):kind===2?0:kind===1?found:found+search.length;
+   const last=kind===0?(plan[instruction+2]??0):kind===2?found:kind===1?found+search.length:text.length;
+   for(let at=first;at<last;at+=1)result.push(kind===0?(replacement[at]??0):(text[at]??0));
+  }
+  start=found+search.length;
+  if(!all||search.length===0&&found===text.length)break;
+  from=start+(search.length===0?1:0);
+ }
+ for(let at=start;at<text.length;at+=1)result.push(text[at]??0);
+ return result;
+}

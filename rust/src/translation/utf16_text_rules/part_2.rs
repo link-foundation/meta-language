@@ -1,11 +1,131 @@
 // Generated from complete js/src/translation/utf16-text-rules.js. Do not edit by hand.
-use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
+use super::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3;
+use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
+use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result;
 use super::accept_java_script_whitespace_unit;
 use super::index_utf16_text;
 use super::match_utf16_text;
 use super::ml_array;
 use super::ml_math;
 use super::slice_utf16_text;
+use super::source_ml_temporary_read_java_script_utf8_string_units_loop4;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_utf8_string_units_loop2(
+    bytes: &[f64],
+    mut units: Vec<f64>,
+    mut index: f64,
+) -> self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result {
+    loop {
+        return if index < (bytes.len() as f64) {
+            {
+                let scalar =
+                    (self::ml_array::optional_at(bytes, self::ml_array::number_index(index)))
+                        .unwrap_or_else(|| -1f64);
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        let remaining = 0f64;
+                        {
+                            let minimum = 0f64;
+                            {
+                                let source_ml_source1_s11 = if (194f64..=223f64).contains(&scalar) {
+                                    {
+                                        let scalar_2 = scalar - 192f64;
+                                        {
+                                            let remaining_2 = 1f64;
+                                            {
+                                                let minimum_2 = 128f64;
+                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_2, remaining_2, minimum_2)
+                                            }
+                                        }
+                                    }
+                                } else if (224f64..=239f64).contains(&scalar) {
+                                    {
+                                        let scalar_3 = scalar - 224f64;
+                                        {
+                                            let remaining_3 = 2f64;
+                                            {
+                                                let minimum_3 = 2048f64;
+                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_3, remaining_3, minimum_3)
+                                            }
+                                        }
+                                    }
+                                } else if (240f64..=244f64).contains(&scalar) {
+                                    {
+                                        let scalar_4 = scalar - 240f64;
+                                        {
+                                            let remaining_4 = 3f64;
+                                            {
+                                                let minimum_4 = 65_536f64;
+                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_4, remaining_4, minimum_4)
+                                            }
+                                        }
+                                    }
+                                } else if scalar >= 128f64 {
+                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(vec![-1f64])
+                                } else {
+                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar, remaining, minimum)
+                                };
+                                match source_ml_source1_s11 {
+                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_5, remaining_5, minimum_5) => {
+                                        {
+                                            let source_ml_source1_s12 = self::source_ml_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
+                                            match source_ml_source1_s12 {
+                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index_3, scalar_6) => {
+                                                    if ((scalar_6 < minimum_5) || (scalar_6 > 1_114_111f64)) || ((55_296f64..=57_343f64).contains(&scalar_6)) {
+                                                        self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(vec![-1f64])
+                                                    } else {
+                                                        if scalar_6 <= 65_535f64 {
+                                                            {
+                                                                let units_2 = { let (ml_append_right, ml_append_left) = (vec![scalar_6], units); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                {
+                                                                    (units, index) = (units_2, index_3);
+                                                                    continue;
+                                                                }
+                                                            }
+                                                        }
+{
+                                                            {
+                                                                let units_3 = { let (ml_append_right, ml_append_left) = (vec![(55_296f64 + ((scalar_6 - 65_536f64) / 1024f64).floor())], units); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                {
+                                                                    let units_4 = { let (ml_append_right, ml_append_left) = (vec![(56_320f64 + ((scalar_6 - 65_536f64) % 1024f64))], units_3); self::ml_array::append(ml_append_left, ml_append_right) };
+                                                                    {
+                                                                        (units, index) = (units_4, index_3);
+                                                                        continue;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Return(source_ml_temporary_result4) => {
+                                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_temporary_result4)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(source_ml_temporary_result4_2) => {
+                                        self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_temporary_result4_2)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Done(units)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result {
+    MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Done,
+    MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -229,14 +349,14 @@ pub fn source_ml_temporary_match_utf16_text_loop9(
     loop {
         return if at < (search.len() as f64) {
             if {
-                let source_ml_source1_comparison_operand11 =
+                let source_ml_source1_comparison_operand13 =
                     self::ml_array::optional_at(text, self::ml_array::number_index(start + at));
                 {
-                    let source_ml_source1_comparison_operand12 =
+                    let source_ml_source1_comparison_operand14 =
                         self::ml_array::optional_at(search, self::ml_array::number_index(at));
                     !(match (
-                        source_ml_source1_comparison_operand11,
-                        source_ml_source1_comparison_operand12,
+                        source_ml_source1_comparison_operand13,
+                        source_ml_source1_comparison_operand14,
                     ) {
                         (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
                         (None, None) => true,
@@ -686,7 +806,7 @@ pub fn source_ml_temporary_display_points_utf16_text_loop20(
                 let point = (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
                     .unwrap_or_else(|| 65_533f64);
                 {
-                    let source_ml_source1_s13 = if (55_296f64..=56_319f64).contains(&point) {
+                    let source_ml_source1_s15 = if (55_296f64..=56_319f64).contains(&point) {
                         {
                             let low = (self::ml_array::optional_at(
                                 text,
@@ -718,7 +838,7 @@ pub fn source_ml_temporary_display_points_utf16_text_loop20(
                     } else {
                         self::MlTemporaryDisplayPointsUtf16TextJoin21::MlTemporaryDisplayPointsUtf16TextJoin21Next(at, point)
                     };
-                    match source_ml_source1_s13 {
+                    match source_ml_source1_s15 {
                         self::MlTemporaryDisplayPointsUtf16TextJoin21::MlTemporaryDisplayPointsUtf16TextJoin21Next(at_3, point_5) => {
                             {
                                 let result_2 = { let (ml_append_right, ml_append_left) = (vec![point_5], result); self::ml_array::append(ml_append_left, ml_append_right) };
@@ -737,108 +857,5 @@ pub fn source_ml_temporary_display_points_utf16_text_loop20(
         } else {
             result
         };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_display_utf8_from_utf16_text_loop22(
-    mut bytes: Vec<f64>,
-    points: &[f64],
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < (points.len() as f64) {
-            {
-                let point = (self::ml_array::optional_at(points, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| 65_533f64);
-                if point < 128f64 {
-                    {
-                        let bytes_2 = {
-                            let (ml_append_right, ml_append_left) = (vec![point], bytes);
-                            self::ml_array::append(ml_append_left, ml_append_right)
-                        };
-                        {
-                            let at_2 = at + 1f64;
-                            {
-                                (bytes, at) = (bytes_2, at_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-                {
-                    if point < 2048f64 {
-                        {
-                            let bytes_3 = {
-                                let (ml_append_right, ml_append_left) = (
-                                    vec![
-                                        (192f64 + (point / 64f64).floor()),
-                                        (128f64 + (point % 64f64)),
-                                    ],
-                                    bytes,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let at_3 = at + 1f64;
-                                {
-                                    (bytes, at) = (bytes_3, at_3);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    {
-                        if point < 65_536f64 {
-                            {
-                                let bytes_4 = {
-                                    let (ml_append_right, ml_append_left) = (
-                                        vec![
-                                            (224f64 + (point / 4096f64).floor()),
-                                            (128f64 + ((point / 64f64).floor() % 64f64)),
-                                            (128f64 + (point % 64f64)),
-                                        ],
-                                        bytes,
-                                    );
-                                    self::ml_array::append(ml_append_left, ml_append_right)
-                                };
-                                {
-                                    let at_4 = at + 1f64;
-                                    {
-                                        (bytes, at) = (bytes_4, at_4);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            {
-                                let bytes_5 = {
-                                    let (ml_append_right, ml_append_left) = (
-                                        vec![
-                                            (240f64 + (point / 262_144f64).floor()),
-                                            (128f64 + ((point / 4096f64).floor() % 64f64)),
-                                            (128f64 + ((point / 64f64).floor() % 64f64)),
-                                            (128f64 + (point % 64f64)),
-                                        ],
-                                        bytes,
-                                    );
-                                    self::ml_array::append(ml_append_left, ml_append_right)
-                                };
-                                {
-                                    let at_5 = at + 1f64;
-                                    {
-                                        (bytes, at) = (bytes_5, at_5);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { bytes };
     }
 }

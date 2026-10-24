@@ -1,144 +1,10 @@
 // Generated from complete js/src/translation/utf16-text-rules.js. Do not edit by hand.
-use super::MlTemporaryCodePointUnitsUtf16TextLoop21Result;
+use super::index_utf16_text;
 use super::ml_array;
-use super::ml_math;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_code_point_units_utf16_text_loop21(
-    values: &[f64],
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> self::MlTemporaryCodePointUnitsUtf16TextLoop21Result {
-    loop {
-        return if at < (values.len() as f64) {
-            {
-                let value = (self::ml_array::optional_at(values, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| -1f64);
-                if (!(self::ml_math::is_integer(value)) || (value < 0f64)) || (value > 1_114_111f64)
-                {
-                    self::MlTemporaryCodePointUnitsUtf16TextLoop21Result::MlTemporaryCodePointUnitsUtf16TextLoop21Return(vec![at])
-                } else {
-                    if value < 65_536f64 {
-                        {
-                            let result_2 = {
-                                let (ml_append_right, ml_append_left) =
-                                    (vec![if value == 0f64 { 0f64 } else { value }], result);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let at_2 = at + 1f64;
-                                {
-                                    (result, at) = (result_2, at_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    {
-                        {
-                            let result_3 = {
-                                let (ml_append_right, ml_append_left) = (
-                                    vec![
-                                        (55_296f64 + ((value - 65_536f64) / 1024f64).floor()),
-                                        (56_320f64 + ((value - 65_536f64) % 1024f64)),
-                                    ],
-                                    result,
-                                );
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                let at_3 = at + 1f64;
-                                {
-                                    (result, at) = (result_3, at_3);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryCodePointUnitsUtf16TextLoop21Result::MlTemporaryCodePointUnitsUtf16TextLoop21Done(result)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryDisplayPointsUtf16TextJoin23 {
-    MlTemporaryDisplayPointsUtf16TextJoin23Next(f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_display_points_utf16_text_loop22(
-    text: &[f64],
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        return if at < (text.len() as f64) {
-            {
-                let point = (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| 65_533f64);
-                {
-                    let source_ml_source1_s13 = if (55_296f64..=56_319f64).contains(&point) {
-                        {
-                            let low = (self::ml_array::optional_at(
-                                text,
-                                self::ml_array::number_index(at + 1f64),
-                            ))
-                            .unwrap_or_else(|| -1f64);
-                            if (56_320f64..=57_343f64).contains(&low) {
-                                {
-                                    let point_2 = ((65_536f64 + ((point - 55_296f64) * 1024f64))
-                                        + low)
-                                        - 56_320f64;
-                                    {
-                                        let at_2 = at + 1f64;
-                                        self::MlTemporaryDisplayPointsUtf16TextJoin23::MlTemporaryDisplayPointsUtf16TextJoin23Next(at_2, point_2)
-                                    }
-                                }
-                            } else {
-                                {
-                                    let point_3 = 65_533f64;
-                                    self::MlTemporaryDisplayPointsUtf16TextJoin23::MlTemporaryDisplayPointsUtf16TextJoin23Next(at, point_3)
-                                }
-                            }
-                        }
-                    } else if (56_320f64..=57_343f64).contains(&point) {
-                        {
-                            let point_4 = 65_533f64;
-                            self::MlTemporaryDisplayPointsUtf16TextJoin23::MlTemporaryDisplayPointsUtf16TextJoin23Next(at, point_4)
-                        }
-                    } else {
-                        self::MlTemporaryDisplayPointsUtf16TextJoin23::MlTemporaryDisplayPointsUtf16TextJoin23Next(at, point)
-                    };
-                    match source_ml_source1_s13 {
-                        self::MlTemporaryDisplayPointsUtf16TextJoin23::MlTemporaryDisplayPointsUtf16TextJoin23Next(at_3, point_5) => {
-                            {
-                                let result_2 = { let (ml_append_right, ml_append_left) = (vec![point_5], result); self::ml_array::append(ml_append_left, ml_append_right) };
-                                {
-                                    let at_4 = at_3 + 1f64;
-                                    {
-                                        (result, at) = (result_2, at_4);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            result
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_display_utf8_from_utf16_text_loop24(
+pub fn source_ml_temporary_display_utf8_from_utf16_text_loop22(
     mut bytes: Vec<f64>,
     points: &[f64],
     mut at: f64,
@@ -236,5 +102,365 @@ pub fn source_ml_temporary_display_utf8_from_utf16_text_loop24(
             }
         }
         return { bytes };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryPlanUtf16TextSubstitutionLoop23Result {
+    MlTemporaryPlanUtf16TextSubstitutionLoop23Done(Vec<f64>, f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_plan_utf16_text_substitution_loop23(
+    replacement: &[f64],
+    mut result: Vec<f64>,
+    mut start: f64,
+    mut at: f64,
+) -> self::MlTemporaryPlanUtf16TextSubstitutionLoop23Result {
+    loop {
+        if at < (replacement.len() as f64) {
+            {
+                let next = (self::ml_array::optional_at(
+                    replacement,
+                    self::ml_array::number_index(at + 1f64),
+                ))
+                .unwrap_or_else(|| -1f64);
+                if (((self::ml_array::optional_at(replacement, self::ml_array::number_index(at)))
+                    .unwrap_or_else(|| 0f64))
+                    == 36f64)
+                    && ((((next == 36f64) || (next == 38f64)) || (next == 96f64))
+                        || (next == 39f64))
+                {
+                    {
+                        let result_3 = if start < at {
+                            {
+                                {
+                                    let (ml_append_right, ml_append_left) =
+                                        (vec![0f64, start, at], result);
+                                    self::ml_array::append(ml_append_left, ml_append_right)
+                                }
+                            }
+                        } else {
+                            result
+                        };
+                        {
+                            let result_6 = if next == 36f64 {
+                                {
+                                    {
+                                        let (ml_append_right, ml_append_left) =
+                                            (vec![0f64, at, (at + 1f64)], result_3);
+                                        self::ml_array::append(ml_append_left, ml_append_right)
+                                    }
+                                }
+                            } else {
+                                {
+                                    {
+                                        let (ml_append_right, ml_append_left) = (
+                                            vec![
+                                                if next == 38f64 {
+                                                    1f64
+                                                } else if next == 96f64 {
+                                                    2f64
+                                                } else {
+                                                    3f64
+                                                },
+                                                0f64,
+                                                0f64,
+                                            ],
+                                            result_3,
+                                        );
+                                        self::ml_array::append(ml_append_left, ml_append_right)
+                                    }
+                                }
+                            };
+                            {
+                                let at_2 = at + 2f64;
+                                {
+                                    let start_2 = at_2;
+                                    {
+                                        (result, start, at) = (result_6, start_2, at_2);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                {
+                    {
+                        let at_3 = at + 1f64;
+                        {
+                            at = at_3;
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return {
+            self::MlTemporaryPlanUtf16TextSubstitutionLoop23Result::MlTemporaryPlanUtf16TextSubstitutionLoop23Done(result, start)
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_replace_utf16_text_loop25(
+    text: &[f64],
+    mut result: Vec<f64>,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if at < (text.len() as f64) {
+            {
+                let result_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![
+                            (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
+                                .unwrap_or_else(|| 0f64),
+                        ],
+                        result,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (result, at) = (result_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryReplaceUtf16TextLoop24Result {
+    MlTemporaryReplaceUtf16TextLoop24Done(Vec<f64>, f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_replace_utf16_text_loop26(
+    text: &[f64],
+    mut result: Vec<f64>,
+    mut found: f64,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if at < found {
+            {
+                let result_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![
+                            (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
+                                .unwrap_or_else(|| 0f64),
+                        ],
+                        result,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (result, at) = (result_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_replace_utf16_text_loop28(
+    text: &[f64],
+    replacement: &[f64],
+    mut result: Vec<f64>,
+    mut kind: f64,
+    mut last: f64,
+    mut at: f64,
+) -> Vec<f64> {
+    loop {
+        if at < last {
+            {
+                let result_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![if kind == 0f64 {
+                            (self::ml_array::optional_at(
+                                replacement,
+                                self::ml_array::number_index(at),
+                            ))
+                            .unwrap_or_else(|| 0f64)
+                        } else {
+                            (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
+                                .unwrap_or_else(|| 0f64)
+                        }],
+                        result,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        (result, at) = (result_2, at_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_replace_utf16_text_loop27(
+    text: &[f64],
+    search: &[f64],
+    replacement: &[f64],
+    mut result: Vec<f64>,
+    plan: &[f64],
+    mut found: f64,
+    mut instruction: f64,
+) -> Vec<f64> {
+    loop {
+        if instruction < (plan.len() as f64) {
+            {
+                let kind =
+                    (self::ml_array::optional_at(plan, self::ml_array::number_index(instruction)))
+                        .unwrap_or_else(|| 0f64);
+                {
+                    let first = if kind == 0f64 {
+                        (self::ml_array::optional_at(
+                            plan,
+                            self::ml_array::number_index(instruction + 1f64),
+                        ))
+                        .unwrap_or_else(|| 0f64)
+                    } else if kind == 2f64 {
+                        0f64
+                    } else if kind == 1f64 {
+                        found
+                    } else {
+                        found + (search.len() as f64)
+                    };
+                    {
+                        let last = if kind == 0f64 {
+                            (self::ml_array::optional_at(
+                                plan,
+                                self::ml_array::number_index(instruction + 2f64),
+                            ))
+                            .unwrap_or_else(|| 0f64)
+                        } else if kind == 2f64 {
+                            found
+                        } else if kind == 1f64 {
+                            found + (search.len() as f64)
+                        } else {
+                            text.len() as f64
+                        };
+                        {
+                            let at = first;
+                            {
+                                let result_2 = self::source_ml_temporary_replace_utf16_text_loop28(
+                                    text,
+                                    replacement,
+                                    result,
+                                    kind,
+                                    last,
+                                    at,
+                                );
+                                {
+                                    let instruction_2 = instruction + 3f64;
+                                    {
+                                        (result, instruction) = (result_2, instruction_2);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn source_ml_temporary_replace_utf16_text_loop24(
+    text: &[f64],
+    search: &[f64],
+    replacement: &[f64],
+    mut all: bool,
+    mut result: Vec<f64>,
+    plan: &[f64],
+    mut start: f64,
+    mut from: f64,
+) -> self::MlTemporaryReplaceUtf16TextLoop24Result {
+    loop {
+        return {
+            let found = self::index_utf16_text(text, search, from);
+            if found < 0f64 {
+                self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(
+                    result, start,
+                )
+            } else {
+                {
+                    let at = start;
+                    {
+                        let result_2 = self::source_ml_temporary_replace_utf16_text_loop26(
+                            text, result, found, at,
+                        );
+                        {
+                            let instruction = 0f64;
+                            {
+                                let result_3 = self::source_ml_temporary_replace_utf16_text_loop27(
+                                    text,
+                                    search,
+                                    replacement,
+                                    result_2,
+                                    plan,
+                                    found,
+                                    instruction,
+                                );
+                                {
+                                    let start_2 = found + (search.len() as f64);
+                                    if !all
+                                        || (((search.len() as f64) == 0f64)
+                                            && (found == (text.len() as f64)))
+                                    {
+                                        self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_3, start_2)
+                                    } else {
+                                        {
+                                            let from_2 = start_2
+                                                + if (search.len() as f64) == 0f64 {
+                                                    1f64
+                                                } else {
+                                                    0f64
+                                                };
+                                            {
+                                                (result, start, from) = (result_3, start_2, from_2);
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
     }
 }

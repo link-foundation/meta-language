@@ -99,7 +99,7 @@ partial def source_ml_temporary_readJavaScriptUtf8StringUnits_loop2 (bytes : (Ar
     (let index_2 := (index + (1 : Float));
       (let remaining := (0 : Float);
         (let minimum := (0 : Float);
-          (let source_ml_source1_s9 := (if ((decide (scalar ≥ (194 : Float))) && (decide (scalar ≤ (223 : Float)))) then (let scalar_2 := (scalar - (192 : Float));
+          (let source_ml_source1_s11 := (if ((decide (scalar ≥ (194 : Float))) && (decide (scalar ≤ (223 : Float)))) then (let scalar_2 := (scalar - (192 : Float));
             (let remaining_2 := (1 : Float);
               (let minimum_2 := (128 : Float);
                 (source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_2 remaining_2 minimum_2)))) else (if ((decide (scalar ≥ (224 : Float))) && (decide (scalar ≤ (239 : Float)))) then (let scalar_3 := (scalar - (224 : Float));
@@ -109,9 +109,9 @@ partial def source_ml_temporary_readJavaScriptUtf8StringUnits_loop2 (bytes : (Ar
             (let remaining_4 := (3 : Float);
               (let minimum_4 := (65536 : Float);
                 (source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_4 remaining_4 minimum_4)))) else (if (decide (scalar ≥ (128 : Float))) then (source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_return (#[(-1 : Float)] : (Array Float))) else (source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_next scalar remaining minimum)))));
-            (match source_ml_source1_s9 with
-              | source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_5 remaining_5 minimum_5 => (let source_ml_source1_s10 := (source_ml_temporary_readJavaScriptUtf8StringUnits_loop4 bytes index_2 scalar_5 remaining_5);
-                  (match source_ml_source1_s10 with
+            (match source_ml_source1_s11 with
+              | source_ml_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_5 remaining_5 minimum_5 => (let source_ml_source1_s12 := (source_ml_temporary_readJavaScriptUtf8StringUnits_loop4 bytes index_2 scalar_5 remaining_5);
+                  (match source_ml_source1_s12 with
                     | source_ml_temporary_readJavaScriptUtf8StringUnits_loop4_result.source_ml_temporary_readJavaScriptUtf8StringUnits_loop4_done index_3 scalar_6 => (if (((decide (scalar_6 < minimum_5)) || (decide (scalar_6 > (1114111 : Float)))) || ((decide (scalar_6 ≥ (55296 : Float))) && (decide (scalar_6 ≤ (57343 : Float))))) then (source_ml_temporary_readJavaScriptUtf8StringUnits_loop2_result.source_ml_temporary_readJavaScriptUtf8StringUnits_loop2_return (#[(-1 : Float)] : (Array Float))) else (if (decide (scalar_6 ≤ (65535 : Float))) then (let units_2 := (units ++ (#[scalar_6] : (Array Float)));
                         (source_ml_temporary_readJavaScriptUtf8StringUnits_loop2 bytes units_2 index_3)) else (let units_3 := (units ++ (#[((55296 : Float) + (Float.floor ((scalar_6 - (65536 : Float)) / (1024 : Float))))] : (Array Float)));
                         (let units_4 := (units_3 ++ (#[((56320 : Float) + (ml_float_rem (scalar_6 - (65536 : Float)) (1024 : Float)))] : (Array Float)));
@@ -194,9 +194,9 @@ inductive source_ml_temporary_matchUtf16Text_loop9_result where
   deriving Repr, DecidableEq, Inhabited
 
 partial def source_ml_temporary_matchUtf16Text_loop9 (text : (Array Float)) (search : (Array Float)) (start : Float) («at» : Float) : source_ml_temporary_matchUtf16Text_loop9_result :=
-  (if (decide («at» < (Float.ofNat search.size))) then (if (let source_ml_source1_comparison_operand11 := (let ml_index := (start + «at»); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none);
-    (let source_ml_source1_comparison_operand12 := (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then search[ml_index.toUInt64.toNat]? else none);
-      (!(match (source_ml_source1_comparison_operand11, source_ml_source1_comparison_operand12) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false)))) then (source_ml_temporary_matchUtf16Text_loop9_result.source_ml_temporary_matchUtf16Text_loop9_return false) else (let at_2 := («at» + (1 : Float));
+  (if (decide («at» < (Float.ofNat search.size))) then (if (let source_ml_source1_comparison_operand13 := (let ml_index := (start + «at»); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none);
+    (let source_ml_source1_comparison_operand14 := (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then search[ml_index.toUInt64.toNat]? else none);
+      (!(match (source_ml_source1_comparison_operand13, source_ml_source1_comparison_operand14) with | (some ml_left, some ml_right) => (ml_left == ml_right) | (none, none) => true | _ => false)))) then (source_ml_temporary_matchUtf16Text_loop9_result.source_ml_temporary_matchUtf16Text_loop9_return false) else (let at_2 := («at» + (1 : Float));
     (source_ml_temporary_matchUtf16Text_loop9 text search start at_2))) else source_ml_temporary_matchUtf16Text_loop9_result.source_ml_temporary_matchUtf16Text_loop9_done)
 
 def matchUtf16Text (text : (Array Float)) (search : (Array Float)) (start : Float) : Bool :=
@@ -371,13 +371,13 @@ inductive source_ml_temporary_displayPointsUtf16Text_join21 where
 
 partial def source_ml_temporary_displayPointsUtf16Text_loop20 (text : (Array Float)) (result : (Array Float)) («at» : Float) : (Array Float) :=
   (if (decide («at» < (Float.ofNat text.size))) then (let point := (match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (65533 : Float));
-    (let source_ml_source1_s13 := (if ((decide (point ≥ (55296 : Float))) && (decide (point ≤ (56319 : Float)))) then (let low := (match (let ml_index := («at» + (1 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (-1 : Float));
+    (let source_ml_source1_s15 := (if ((decide (point ≥ (55296 : Float))) && (decide (point ≤ (56319 : Float)))) then (let low := (match (let ml_index := («at» + (1 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (-1 : Float));
       (if ((decide (low ≥ (56320 : Float))) && (decide (low ≤ (57343 : Float)))) then (let point_2 := ((((65536 : Float) + ((point - (55296 : Float)) * (1024 : Float))) + low) - (56320 : Float));
         (let at_2 := («at» + (1 : Float));
           (source_ml_temporary_displayPointsUtf16Text_join21.source_ml_temporary_displayPointsUtf16Text_join21_next at_2 point_2))) else (let point_3 := (65533 : Float);
         (source_ml_temporary_displayPointsUtf16Text_join21.source_ml_temporary_displayPointsUtf16Text_join21_next «at» point_3)))) else (if ((decide (point ≥ (56320 : Float))) && (decide (point ≤ (57343 : Float)))) then (let point_4 := (65533 : Float);
       (source_ml_temporary_displayPointsUtf16Text_join21.source_ml_temporary_displayPointsUtf16Text_join21_next «at» point_4)) else (source_ml_temporary_displayPointsUtf16Text_join21.source_ml_temporary_displayPointsUtf16Text_join21_next «at» point)));
-      (match source_ml_source1_s13 with
+      (match source_ml_source1_s15 with
         | source_ml_temporary_displayPointsUtf16Text_join21.source_ml_temporary_displayPointsUtf16Text_join21_next at_3 point_5 => (let result_2 := (result ++ (#[point_5] : (Array Float)));
             (let at_4 := (at_3 + (1 : Float));
               (source_ml_temporary_displayPointsUtf16Text_loop20 text result_2 at_4)))))) else result)
@@ -407,9 +407,86 @@ def displayUtf8FromUtf16Text (text : (Array Float)) : (Array Float) :=
         (let bytes_2 := (source_ml_temporary_displayUtf8FromUtf16Text_loop22 bytes points «at»);
           bytes_2))))
 
+inductive source_ml_temporary_planUtf16TextSubstitution_loop23_result where
+  | source_ml_temporary_planUtf16TextSubstitution_loop23_done (result : (Array Float)) (start : Float) : source_ml_temporary_planUtf16TextSubstitution_loop23_result
+  deriving Repr, Inhabited
+
+partial def source_ml_temporary_planUtf16TextSubstitution_loop23 (replacement : (Array Float)) (result : (Array Float)) (start : Float) («at» : Float) : source_ml_temporary_planUtf16TextSubstitution_loop23_result :=
+  (if (decide («at» < (Float.ofNat replacement.size))) then (let next := (match (let ml_index := («at» + (1 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then replacement[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (-1 : Float));
+    (if (((match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then replacement[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) == (36 : Float)) && ((((next == (36 : Float)) || (next == (38 : Float))) || (next == (96 : Float))) || (next == (39 : Float)))) then (let result_3 := (if (decide (start < «at»)) then (let result_2 := (result ++ (#[(0 : Float), start, «at»] : (Array Float)));
+      result_2) else result);
+      (let result_6 := (if (next == (36 : Float)) then (let result_4 := (result_3 ++ (#[(0 : Float), «at», («at» + (1 : Float))] : (Array Float)));
+        result_4) else (let result_5 := (result_3 ++ (#[(if (next == (38 : Float)) then (1 : Float) else (if (next == (96 : Float)) then (2 : Float) else (3 : Float))), (0 : Float), (0 : Float)] : (Array Float)));
+        result_5));
+        (let at_2 := («at» + (2 : Float));
+          (let start_2 := at_2;
+            (source_ml_temporary_planUtf16TextSubstitution_loop23 replacement result_6 start_2 at_2))))) else (let at_3 := («at» + (1 : Float));
+      (source_ml_temporary_planUtf16TextSubstitution_loop23 replacement result start at_3)))) else (source_ml_temporary_planUtf16TextSubstitution_loop23_result.source_ml_temporary_planUtf16TextSubstitution_loop23_done result start))
+
+def planUtf16TextSubstitution (replacement : (Array Float)) : (Array Float) :=
+  (let result := (#[] : (Array Float));
+    (let start := (0 : Float);
+      (let «at» := (0 : Float);
+        (let source_ml_source1_s9 := (source_ml_temporary_planUtf16TextSubstitution_loop23 replacement result start «at»);
+          (match source_ml_source1_s9 with
+            | source_ml_temporary_planUtf16TextSubstitution_loop23_result.source_ml_temporary_planUtf16TextSubstitution_loop23_done result_2 start_2 => (let result_4 := (if (decide (start_2 < (Float.ofNat replacement.size))) then (let result_3 := (result_2 ++ (#[(0 : Float), start_2, (Float.ofNat replacement.size)] : (Array Float)));
+                result_3) else result_2);
+                result_4))))))
+
+partial def source_ml_temporary_replaceUtf16Text_loop25 (text : (Array Float)) (result : (Array Float)) («at» : Float) : (Array Float) :=
+  (if (decide («at» < (Float.ofNat text.size))) then (let result_2 := (result ++ (#[(match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float))] : (Array Float)));
+    (let at_2 := («at» + (1 : Float));
+      (source_ml_temporary_replaceUtf16Text_loop25 text result_2 at_2))) else result)
+
+inductive source_ml_temporary_replaceUtf16Text_loop24_result where
+  | source_ml_temporary_replaceUtf16Text_loop24_done (result : (Array Float)) (start : Float) : source_ml_temporary_replaceUtf16Text_loop24_result
+  deriving Repr, Inhabited
+
+partial def source_ml_temporary_replaceUtf16Text_loop26 (text : (Array Float)) (result : (Array Float)) (found : Float) («at» : Float) : (Array Float) :=
+  (if (decide («at» < found)) then (let result_2 := (result ++ (#[(match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float))] : (Array Float)));
+    (let at_2 := («at» + (1 : Float));
+      (source_ml_temporary_replaceUtf16Text_loop26 text result_2 found at_2))) else result)
+
+partial def source_ml_temporary_replaceUtf16Text_loop28 (text : (Array Float)) (replacement : (Array Float)) (result : (Array Float)) (kind : Float) (last : Float) («at» : Float) : (Array Float) :=
+  (if (decide («at» < last)) then (let result_2 := (result ++ (#[(if (kind == (0 : Float)) then (match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then replacement[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (match (let ml_index := «at»; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then text[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)))] : (Array Float)));
+    (let at_2 := («at» + (1 : Float));
+      (source_ml_temporary_replaceUtf16Text_loop28 text replacement result_2 kind last at_2))) else result)
+
+partial def source_ml_temporary_replaceUtf16Text_loop27 (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (result : (Array Float)) (plan : (Array Float)) (found : Float) (instruction : Float) : (Array Float) :=
+  (if (decide (instruction < (Float.ofNat plan.size))) then (let kind := (match (let ml_index := instruction; if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float));
+    (let first := (if (kind == (0 : Float)) then (match (let ml_index := (instruction + (1 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (if (kind == (2 : Float)) then (0 : Float) else (if (kind == (1 : Float)) then found else (found + (Float.ofNat search.size)))));
+      (let last := (if (kind == (0 : Float)) then (match (let ml_index := (instruction + (2 : Float)); if ml_index ≥ 0 && ml_index.floor == ml_index && ml_index < 9007199254740992 then plan[ml_index.toUInt64.toNat]? else none) with | some ml_value => ml_value | _ => (0 : Float)) else (if (kind == (2 : Float)) then found else (if (kind == (1 : Float)) then (found + (Float.ofNat search.size)) else (Float.ofNat text.size))));
+        (let «at» := first;
+          (let result_2 := (source_ml_temporary_replaceUtf16Text_loop28 text replacement result kind last «at»);
+            (let instruction_2 := (instruction + (3 : Float));
+              (source_ml_temporary_replaceUtf16Text_loop27 text search replacement result_2 plan found instruction_2))))))) else result)
+
+partial def source_ml_temporary_replaceUtf16Text_loop24 (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (all : Bool) (result : (Array Float)) (plan : (Array Float)) (start : Float) («from» : Float) : source_ml_temporary_replaceUtf16Text_loop24_result :=
+  (let found := (indexUtf16Text text search «from»);
+    (if (decide (found < (0 : Float))) then (source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result start) else (let «at» := start;
+      (let result_2 := (source_ml_temporary_replaceUtf16Text_loop26 text result found «at»);
+        (let instruction := (0 : Float);
+          (let result_3 := (source_ml_temporary_replaceUtf16Text_loop27 text search replacement result_2 plan found instruction);
+            (let start_2 := (found + (Float.ofNat search.size));
+              (if ((!all) || (((Float.ofNat search.size) == (0 : Float)) && (found == (Float.ofNat text.size)))) then (source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result_3 start_2) else (let from_2 := (start_2 + (if ((Float.ofNat search.size) == (0 : Float)) then (1 : Float) else (0 : Float)));
+                (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result_3 plan start_2 from_2))))))))))
+
+def replaceUtf16Text (text : (Array Float)) (search : (Array Float)) (replacement : (Array Float)) (all : Bool) : (Array Float) :=
+  (let result := (#[] : (Array Float));
+    (let plan := (planUtf16TextSubstitution replacement);
+      (let start := (0 : Float);
+        (let «from» := (0 : Float);
+          (let source_ml_source1_s10 := (source_ml_temporary_replaceUtf16Text_loop24 text search replacement all result plan start «from»);
+            (match source_ml_source1_s10 with
+              | source_ml_temporary_replaceUtf16Text_loop24_result.source_ml_temporary_replaceUtf16Text_loop24_done result_2 start_2 => (let «at» := start_2;
+                  (let result_3 := (source_ml_temporary_replaceUtf16Text_loop25 text result_2 «at»);
+                    result_3))))))))
+
 def main : IO Unit := do
   pure ()
 
+def replace := replaceUtf16Text
+def substitutionPlan := planUtf16TextSubstitution
 def split := splitUtf16Text
 def slicePosition := readUtf16TextSlicePosition
 def slice := sliceUtf16Text

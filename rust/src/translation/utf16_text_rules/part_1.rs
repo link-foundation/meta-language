@@ -4,6 +4,9 @@ use super::MlTemporaryCompareUtf16TextLoop12Result;
 use super::MlTemporaryIndexUtf16TextLoop10Result;
 use super::MlTemporaryLastIndexUtf16TextLoop11Result;
 use super::MlTemporaryMatchUtf16TextLoop9Result;
+use super::MlTemporaryPlanUtf16TextSubstitutionLoop23Result;
+use super::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
+use super::MlTemporaryReplaceUtf16TextLoop24Result;
 use super::MlTemporarySplitUtf16TextLoop8Result;
 use super::source_ml_temporary_character_units_utf16_text_loop18;
 use super::source_ml_temporary_code_point_units_utf16_text_loop19;
@@ -14,8 +17,12 @@ use super::source_ml_temporary_index_utf16_text_loop10;
 use super::source_ml_temporary_join_utf16_text_loop13;
 use super::source_ml_temporary_last_index_utf16_text_loop11;
 use super::source_ml_temporary_match_utf16_text_loop9;
+use super::source_ml_temporary_plan_utf16_text_substitution_loop23;
 use super::source_ml_temporary_points_utf16_text_loop6;
 use super::source_ml_temporary_read_java_script_utf8_string_units_loop1;
+use super::source_ml_temporary_read_java_script_utf8_string_units_loop2;
+use super::source_ml_temporary_replace_utf16_text_loop24;
+use super::source_ml_temporary_replace_utf16_text_loop25;
 use super::source_ml_temporary_slice_utf16_text_loop5;
 use super::source_ml_temporary_split_utf16_text_loop7;
 use super::source_ml_temporary_split_utf16_text_loop8;
@@ -726,6 +733,87 @@ pub fn display_utf8_from_utf16_text(text: &[f64]) -> Vec<f64> {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_utf16_text_substitution(replacement: &[f64]) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let start = 0f64;
+            {
+                let at = 0f64;
+                {
+                    let source_ml_source1_s9 =
+                        self::source_ml_temporary_plan_utf16_text_substitution_loop23(
+                            replacement,
+                            result,
+                            start,
+                            at,
+                        );
+                    match source_ml_source1_s9 {
+                        self::MlTemporaryPlanUtf16TextSubstitutionLoop23Result::MlTemporaryPlanUtf16TextSubstitutionLoop23Done(result_2, start_2) => {
+                            {
+                                if start_2 < (replacement.len() as f64) {
+                                    {
+                                        { let (ml_append_right, ml_append_left) = (vec![0f64, start_2, (replacement.len() as f64)], result_2); self::ml_array::append(ml_append_left, ml_append_right) }
+                                    }
+                                } else {
+                                    result_2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn replace_utf16_text(
+    text: &[f64],
+    search: &[f64],
+    replacement: &[f64],
+    all: bool,
+) -> Vec<f64> {
+    {
+        let result = Vec::<f64>::new();
+        {
+            let plan = self::plan_utf16_text_substitution(replacement);
+            {
+                let start = 0f64;
+                {
+                    let from = 0f64;
+                    {
+                        let source_ml_source1_s10 =
+                            self::source_ml_temporary_replace_utf16_text_loop24(
+                                text,
+                                search,
+                                replacement,
+                                all,
+                                result,
+                                &(plan),
+                                start,
+                                from,
+                            );
+                        match source_ml_source1_s10 {
+                            self::MlTemporaryReplaceUtf16TextLoop24Result::MlTemporaryReplaceUtf16TextLoop24Done(result_2, start_2) => {
+                                {
+                                    let at = start_2;
+                                    {
+                                        self::source_ml_temporary_replace_utf16_text_loop25(text, result_2, at)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result {
     MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Done(Vec<f64>),
@@ -780,121 +868,4 @@ pub fn source_ml_temporary_read_java_script_utf8_string_units_loop4(
 pub enum MlTemporaryReadJavaScriptUtf8StringUnitsJoin3 {
     MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(f64, f64, f64),
     MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_read_java_script_utf8_string_units_loop2(
-    bytes: &[f64],
-    mut units: Vec<f64>,
-    mut index: f64,
-) -> self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result {
-    loop {
-        return if index < (bytes.len() as f64) {
-            {
-                let scalar =
-                    (self::ml_array::optional_at(bytes, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
-                {
-                    let index_2 = index + 1f64;
-                    {
-                        let remaining = 0f64;
-                        {
-                            let minimum = 0f64;
-                            {
-                                let source_ml_source1_s9 = if (194f64..=223f64).contains(&scalar) {
-                                    {
-                                        let scalar_2 = scalar - 192f64;
-                                        {
-                                            let remaining_2 = 1f64;
-                                            {
-                                                let minimum_2 = 128f64;
-                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_2, remaining_2, minimum_2)
-                                            }
-                                        }
-                                    }
-                                } else if (224f64..=239f64).contains(&scalar) {
-                                    {
-                                        let scalar_3 = scalar - 224f64;
-                                        {
-                                            let remaining_3 = 2f64;
-                                            {
-                                                let minimum_3 = 2048f64;
-                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_3, remaining_3, minimum_3)
-                                            }
-                                        }
-                                    }
-                                } else if (240f64..=244f64).contains(&scalar) {
-                                    {
-                                        let scalar_4 = scalar - 240f64;
-                                        {
-                                            let remaining_4 = 3f64;
-                                            {
-                                                let minimum_4 = 65_536f64;
-                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_4, remaining_4, minimum_4)
-                                            }
-                                        }
-                                    }
-                                } else if scalar >= 128f64 {
-                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(vec![-1f64])
-                                } else {
-                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar, remaining, minimum)
-                                };
-                                match source_ml_source1_s9 {
-                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_5, remaining_5, minimum_5) => {
-                                        {
-                                            let source_ml_source1_s10 = self::source_ml_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
-                                            match source_ml_source1_s10 {
-                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index_3, scalar_6) => {
-                                                    if ((scalar_6 < minimum_5) || (scalar_6 > 1_114_111f64)) || ((55_296f64..=57_343f64).contains(&scalar_6)) {
-                                                        self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(vec![-1f64])
-                                                    } else {
-                                                        if scalar_6 <= 65_535f64 {
-                                                            {
-                                                                let units_2 = { let (ml_append_right, ml_append_left) = (vec![scalar_6], units); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                {
-                                                                    (units, index) = (units_2, index_3);
-                                                                    continue;
-                                                                }
-                                                            }
-                                                        }
-{
-                                                            {
-                                                                let units_3 = { let (ml_append_right, ml_append_left) = (vec![(55_296f64 + ((scalar_6 - 65_536f64) / 1024f64).floor())], units); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                {
-                                                                    let units_4 = { let (ml_append_right, ml_append_left) = (vec![(56_320f64 + ((scalar_6 - 65_536f64) % 1024f64))], units_3); self::ml_array::append(ml_append_left, ml_append_right) };
-                                                                    {
-                                                                        (units, index) = (units_4, index_3);
-                                                                        continue;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Return(source_ml_temporary_result4) => {
-                                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_temporary_result4)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Return(source_ml_temporary_result4_2) => {
-                                        self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_temporary_result4_2)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Done(units)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result {
-    MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Done,
-    MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Return(Vec<f64>),
 }
