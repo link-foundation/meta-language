@@ -81,6 +81,15 @@ fn preceding_tuple_match_input_retains_complete_corrected_controls() {
     );
 }
 
+#[test]
+fn conditional_patterns_preserve_scopes_graphs_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/pattern-conditions.mjs",
+        "Rust conditional patterns",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,

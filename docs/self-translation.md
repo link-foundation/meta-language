@@ -654,6 +654,13 @@ explicit source wildcard intervals. Existing tuple ownership guards remain.
 Thirty-eight future nominal-binding values/aborts and eight refusals include
 raw Boolean-keyword identifiers and all earlier controls. No control ran.
 
+Value-returning Rust conditional patterns reuse the ordinary checked match
+algebra and all four emitters. Source adapters retain successful pattern scopes,
+the outer fallback scope and result origins. Fifteen future values/aborts and
+three refusals add full paired graph/codec/emission/original-Rust controls.
+None ran; chained conditions and the remaining control/effect forms still need
+complete scope-preserving source lowering.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

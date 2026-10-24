@@ -2,6 +2,7 @@
 
 mod completion_panic;
 mod completions;
+mod conditional_patterns;
 mod literal_matches;
 
 use super::{
@@ -115,11 +116,7 @@ impl RustParser {
     pub(in super::super) fn if_expr(&mut self, path: &[String]) -> Result<SExpr> {
         let token = self.cursor.advance();
         if self.cursor.is("let") {
-            return Err(unsupported(
-                "if let",
-                "write a match",
-                span(&token, self.cursor.peek()),
-            ));
+            return self.conditional_pattern_value(path, &token);
         }
         let cond = self.expr(
             path,

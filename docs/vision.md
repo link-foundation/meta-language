@@ -2890,6 +2890,18 @@ nested patterns, borrowed fields and exact initializer failures. The full
 paired graph/codec/four-emission/original-Rust controls remain unexecuted.
 Ref/mut/@ and full ownership/drop still require their source drafts.
 
+Ordinary value-returning `if let` now transports source alternatives, aliases
+and scrutinee evaluation into the existing exhaustive match representation.
+The matched branch gets its pattern scope; `else` is parsed in the original
+outer scope. Source field/borrow origins and result joins remain explicit.
+The [conditional pattern rules](https://doc.rust-lang.org/reference/expressions/if-expr.html#if-let-patterns)
+define the interpretation. Fifteen future values/aborts and three refusals add
+complete paired graph, codec, four-emission and original/emitted Rust controls;
+none ran. Chained conditions require additional short-circuit scope lowering,
+particularly when a matched name shadows an outer name used by `else`.
+Missing-else unit/effect statements, let-else, loops and complete ownership
+remain source obligations, without a fallback that assumes those meanings.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

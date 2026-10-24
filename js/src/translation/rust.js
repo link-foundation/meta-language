@@ -8,6 +8,7 @@ import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
 import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding, expandRustConstructorRest } from './rust-records.js';
 import { planTuplePatternFields } from './rust-record-rules.js';
+import { readRustConditionalPattern } from './rust-pattern-conditions.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -1473,7 +1474,7 @@ class RustParser {
   ifExpr(path) {
     const c = this.cursor;
     const token = c.next();
-    if (c.is('let')) throw unsupported('if let', 'write a match', span(token, c.peek()));
+    if (c.is('let')) return readRustConditionalPattern(this,path,token);
     const cond = this.expr(path, { noStruct: true });
     this.origins.direct(cond, path, cond.span);
     const then = this.block(path);
