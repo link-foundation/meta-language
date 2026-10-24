@@ -144,3 +144,10 @@ export function createJavaScriptDensePropertyKeyTexts(length){
  for(let index=0;index<length;index+=1)result=result.concat([String(index)]);
  return result;
 }
+/** String wrappers enumerate individual code units, not code points.
+ * @param {string} text @returns {string[]} */
+export function createJavaScriptStringOwnPropertyValues(text){
+ let result=[];
+ for(let index=0;index<text.length;index+=1)result=result.concat([text.charAt(index)]);
+ return result;
+}

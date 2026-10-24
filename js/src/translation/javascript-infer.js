@@ -106,6 +106,7 @@ class Inference {
     this.coalesces = [];
     this.arrayBindingDefaults = [];
     this.recordSpreads = [];
+    this.enumerations=[];
     this.collections = new Map();
     this.iterables = [];
     this.indices = [];
@@ -524,6 +525,14 @@ class Inference {
           progress = true;
         }
       }
+      for(const constraint of [...this.enumerations]){
+        let object=this.resolve(constraint.object);
+        while(object.kind==='option')object=this.resolve(object.element);
+        if(object.kind==='var'||object.kind==='record'&&object.open)continue;
+        const members=object.kind==='record'?object.fields.map(field=>field.type):object.kind==='tuple'?object.elements:object.kind==='array'?[object.element]:object.kind==='string'?[STRING]:[];
+        for(const member of members)this.unify(constraint.element,member,constraint.where);
+        this.enumerations.splice(this.enumerations.indexOf(constraint),1);progress=true;
+      }
       // Preserve the original string default only after actual call arguments,
       // annotations and other constraints have selected the receiver.
       if (!progress && this.includes.length) {
@@ -586,6 +595,7 @@ class Inference {
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
     if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
+    if(this.enumerations.length)throw typeError('object value enumeration needs its actual complete value domain',this.enumerations[0].where);
   }
 
   plusStep({ left, right, result, where }, force) {
@@ -989,6 +999,10 @@ class Inference {
         return BOOL;
       case 'math':
         if(readJavaScriptEnumerationForm(node.op)==='keys'){for(const argument of node.args)this.expr(argument.value,env);return {kind:'array',element:STRING};}
+        if(readJavaScriptEnumerationForm(node.op)==='values'){
+          const values=node.args.map(argument=>this.expr(argument.value,env)),element=this.fresh();
+          this.enumerations.push({object:values[0]??UNIT,element,where:node.span});return {kind:'array',element};
+        }
         if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
         if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
         if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'||node.op==='testJavaScriptOwnedProperty'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}

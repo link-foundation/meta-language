@@ -16,6 +16,7 @@ mod array_from;
 mod arrays;
 mod callables;
 mod collections;
+mod enumerations;
 mod expressions;
 mod fields;
 mod methods;
@@ -266,6 +267,7 @@ struct Inference {
     empty_arrays: HashMap<*const SExpr, (Term, Option<Span>)>,
     records: HashMap<*const SExpr, Term>,
     record_spreads: Vec<records::RecordSpread>,
+    enumerations: Vec<enumerations::Enumeration>,
     expression_terms: HashMap<*const SExpr, (Term, Option<Span>)>,
     lambdas: HashMap<*const SExpr, Term>,
     lambda_places: HashMap<*const SExpr, (Option<Span>, Vec<Option<Span>>)>,
@@ -312,6 +314,7 @@ impl Inference {
             empty_arrays: HashMap::new(),
             records: HashMap::new(),
             record_spreads: Vec::new(),
+            enumerations: Vec::new(),
             expression_terms: HashMap::new(),
             lambdas: HashMap::new(),
             lambda_places: HashMap::new(),

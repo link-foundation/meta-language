@@ -19,24 +19,28 @@ export function readJavaScriptEnumerationForm(operation){
 }
 /** @param {string} operation @returns {number} */
 export function readJavaScriptRecordOrderKernelArity(operation){
+ if(operation==='reorderJavaScriptRecordPropertyValues')return 2;
  if(operation==='createJavaScriptRecordPropertyOrder'||operation==='mergeJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeys'||operation==='acceptJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeyTexts')return 2;
  if(operation==='rebaseJavaScriptRecordPropertyOrder')return 3;
- return operation==='createJavaScriptDensePropertyKeyTexts'?1:0;
+ return operation==='createJavaScriptDensePropertyKeyTexts'||operation==='createJavaScriptStringOwnPropertyValues'?1:0;
 }
 /** @param {string} operation @param {number} index @returns {string} */
 export function readJavaScriptRecordOrderKernelParameter(operation,index){
  const count=readJavaScriptRecordOrderKernelArity(operation);
  if(!Number.isInteger(index)||index<0||index>=count)return '';
+ if(operation==='reorderJavaScriptRecordPropertyValues')return index===0?'values':'positions';
  if(operation==='createJavaScriptDensePropertyKeyTexts')return 'number';
+ if(operation==='createJavaScriptStringOwnPropertyValues')return 'text';
  if(index===0||operation==='mergeJavaScriptRecordPropertyOrder'||operation==='rebaseJavaScriptRecordPropertyOrder'&&index===1)return 'name rows';
  return 'positions';
 }
 /** @param {string} operation @returns {string} */
 export function readJavaScriptRecordOrderKernelResult(operation){
  if(!readJavaScriptRecordOrderKernelArity(operation))return '';
+ if(operation==='reorderJavaScriptRecordPropertyValues')return 'values';
  if(operation==='readJavaScriptRecordPropertyKeys')return 'name rows';
  if(operation==='acceptJavaScriptRecordPropertyOrder')return 'boolean';
- if(operation==='readJavaScriptRecordPropertyKeyTexts'||operation==='createJavaScriptDensePropertyKeyTexts')return 'key texts';
+ if(operation==='readJavaScriptRecordPropertyKeyTexts'||operation==='createJavaScriptDensePropertyKeyTexts'||operation==='createJavaScriptStringOwnPropertyValues')return 'key texts';
  return 'positions';
 }
 /** @param {string} expression @param {string} operation @param {string} kind

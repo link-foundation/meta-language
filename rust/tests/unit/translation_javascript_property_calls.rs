@@ -3,6 +3,15 @@ use super::translation_rust_records::assert_nominal_translation_product;
 use meta_language::create_java_script_property_call_program_links;
 
 #[test]
+fn own_values_retain_source_order_nullable_payloads_and_shallow_identities() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/object-values.mjs",
+        "actual JavaScript own-field value enumeration",
+        meta_language::create_java_script_record_order_program_links,
+    );
+}
+
+#[test]
 fn own_key_enumeration_preserves_dynamic_record_order_spreads_and_source_errors() {
     assert_nominal_translation_product(
         "../experiments/javascript-program/object-keys.mjs",

@@ -1285,7 +1285,7 @@ class Checker {
   math(node, env, path, expected) {
     const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
     if(enumeration)return enumeration;
-    const order=checkRecordOrderOperation(this,node,env,path);
+    const order=checkRecordOrderOperation(this,node,env,path,expected);
     if(order)return order;
     if(node.op==='testJavaScriptOwnedProperty')return checkJavaScriptOwnProperty(this,node,env,path);
     if(node.op===readJavaScriptOptionalChainOperation())return checkJavaScriptOptionalChain(this,node,env,path);

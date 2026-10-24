@@ -6916,8 +6916,8 @@ explicit schema versions; unknown versions and unrecorded whole-source edits
 refuse. Their original receipt inputs and assertions remain available. These
 are source drafts with deferred controls, not observations. Source profile
 propagation, ordered spreads and own-key enumeration follow the protocol below.
-Object.values/entries, descriptors, Symbols and all preceding complete-language
-requirements remain obligations.
+Heterogeneous value domains, mutable Object.entries pairs, descriptors, Symbols
+and all preceding complete-language requirements remain obligations.
 Deferred controls compare every valid case against actual ordinary JavaScript
 objects, plus native results/errors and complete definition graph/codec/emission
 parity. They cover overwrites, spreads, numeric endpoints and noncanonical
@@ -6965,6 +6965,52 @@ spreads, native graph parity, both codecs and all four emissions. A name longer
 than the existing Rocq recursion fuel explicitly remains in the input controls:
 the current fixed-fuel fallback is an unresolved semantic obligation, not an
 accepted truncation. No source/product controls have run. Full value/entry
-enumeration, mutable pair domains, descriptors/proxies/Symbols, dynamic fields,
+domains, mutable pair domains, descriptors/proxies/Symbols, dynamic fields,
 separate module interfaces, all source character domains and all earlier
 requirements remain mandatory.
+
+### Opaque payload source specialization and own values draft
+
+A source template may declare one actual datatype payload field as a type
+parameter in shared Links data. Instantiation changes that owned field's type
+and checks the complete source program in a fresh private module. The wrapper
+stays present. An undefined or null payload is therefore distinct from an
+absent wrapper array entry; treating the payload itself as the array sentinel
+would change meaning. All original source declarations and bodies remain in
+the linked template. Concrete instances retain their qualified identities and
+actual type bindings; this construction does not certify semantic equivalence
+between different concepts or erase source domains.
+
+The own-value draft uses this protocol to reorder canonical field values by
+the actual record order. Complete ordinary source validates the order's length,
+positions, positive zero and uniqueness and returns wrappers in that order.
+The compiler captures both actual operands before applying the internal
+wrapper/unwrapper representation. Pure callbacks only construct or unpack the
+private wrapper; source error behavior stays in ordinary checked declarations
+before formal effect analysis. One instance is reused for each actual payload
+type. Its wrapper is internal and its identity is not a source observation.
+The compiler does not generate a separate selector chain for every record
+shape or replace the source algorithm with native ordering code.
+
+Object.values snapshots closed record fields after all argument effects,
+retains their actual own-field order, and keeps referenced payload aliases.
+Dense Array values form a separate shallow array; String values are individual
+UTF16 units. The homogeneous value domain includes primitive and nullable
+payloads and represented compound types. Heterogeneous fields require the
+shared dynamic value union; a guessed common type cannot replace it. Current
+source inference retains actual value-owner constraints until they resolve.
+The behavior follows
+[Object.values](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.values).
+
+Ordered record storage contains a Number position vector even when its named
+fields contain only strings. Target trait derivation and numeric dependence
+must account for that actual representation. This does not make the record a
+numeric operand. Source occurrences keep separate binding scopes during target
+preparation, including occurrences that share a graph record.
+
+All source/native/codec/emission and original controls remain unexecuted. They
+retain undefined/null, false, empty text, negative zero, aliases, argument
+mutation, UTF16 units, malformed positions and full 100-unit inputs. Full
+heterogeneous and mutable entry domains, callable data fields, general heap
+protocols, unlimited faithful formal recursion and every preceding translation,
+grammar and architecture requirement remain mandatory.

@@ -1537,6 +1537,13 @@ function createJavaScriptDensePropertyKeyTexts(length) {
   }
 }
 
+function createJavaScriptStringOwnPropertyValues(text) {
+  const result = [];
+  const index = 0;
+  const result_2 = source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40(text, result, index);
+  return result_2;
+}
+
 function source_ml_temporary_readRecordValueOrder_loop1(count, reverse, order, index) {
   for (;;) {
     if ((index < count)) {
@@ -2354,6 +2361,39 @@ function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39(length
       })();
       const index_2 = (index + 1);
       [length, result, index] = [length, result_2, index_2];
+      continue;
+    } else {
+      return result;
+    }
+  }
+}
+
+function source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40(text, result, index) {
+  for (;;) {
+    if ((index < text.length)) {
+      const result_2 = (() => {
+        const source_ml_source1_concat_value51 = result;
+        const source_ml_source1_concat_value52 = [(() => {
+          const source_ml_source1_string_unit_operand44 = text;
+          const source_ml_source1_string_unit_operand45 = index;
+          return (((text_2, position) => (() => {
+            const index_2 = (Number.isNaN(position) ? 0 : Math.trunc(position));
+            if (((index_2 < 0) || (index_2 >= text_2.length))) {
+              return "";
+            } else {
+              const source_ml_source1_string_range_operand46 = text_2;
+              const source_ml_source1_string_range_operand47 = index_2;
+              const source_ml_source1_string_range_operand48 = (index_2 + 1);
+              const source_ml_source1_string_range_position49 = (+(source_ml_source1_string_range_operand47));
+              const source_ml_source1_string_range_position50 = (+(source_ml_source1_string_range_operand48));
+              return (source_ml_source1_string_range_operand46).slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50);
+            }
+          })()))(source_ml_source1_string_unit_operand44, (+(source_ml_source1_string_unit_operand45)));
+        })()];
+        return [...[...[], ...source_ml_source1_concat_value51], ...source_ml_source1_concat_value52];
+      })();
+      const index_2 = (index + 1);
+      [text, result, index] = [text, result_2, index_2];
       continue;
     } else {
       return result;

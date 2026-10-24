@@ -166,6 +166,7 @@ impl Inference {
             progress |= self.solve_joins_and_results()?;
             progress |= self.solve_record_spreads()?;
             progress |= self.solve_equalities(false)?;
+            progress |= self.solve_enumerations()?;
             if !progress && !self.includes.is_empty() {
                 progress |= self.solve_includes(true)?;
             }
@@ -245,6 +246,12 @@ impl Inference {
         if let Some(constraint) = self.array_binding_defaults.first() {
             return Err(super::type_error(
                 "array binding default needs a known array element type",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.enumerations.first() {
+            return Err(super::type_error(
+                "object value enumeration needs its actual complete value domain",
                 constraint.place,
             ));
         }

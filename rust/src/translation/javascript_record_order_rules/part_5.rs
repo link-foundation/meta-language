@@ -249,3 +249,71 @@ pub fn source_ml_temporary_create_java_script_dense_property_key_texts_loop39(
         return { result };
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_create_java_script_string_own_property_values_loop40(
+    text: &self::ml_string::Text,
+    mut result: Vec<self::ml_string::Text>,
+    mut index: f64,
+) -> Vec<self::ml_string::Text> {
+    loop {
+        if index < (text.length()) {
+            {
+                let result_2 = {
+                    let source_ml_source1_concat_value51 = result;
+                    {
+                        let source_ml_source1_concat_value52 = vec![{
+                            let source_ml_source1_string_unit_operand44 = text.clone();
+                            {
+                                let source_ml_source1_string_unit_operand45 = index;
+                                (std::rc::Rc::new(move |text_2: self::ml_string::Text, position: f64| -> self::ml_string::Text { {
+                                    let index_2 = if position.is_nan() {
+                                        0f64
+                                    } else {
+                                        position.trunc()
+                                    };
+                                    if (index_2 < 0f64) || (index_2 >= (text_2.length())) {
+                                        self::ml_string::Text::from_units(vec![])
+                                    } else {
+                                        {
+                                            let source_ml_source1_string_range_operand46 = text_2.clone();
+                                            {
+                                                let source_ml_source1_string_range_operand47 = index_2;
+                                                {
+                                                    let source_ml_source1_string_range_operand48 = index_2 + 1f64;
+                                                    {
+                                                        let source_ml_source1_string_range_position49 = source_ml_source1_string_range_operand47;
+                                                        {
+                                                            let source_ml_source1_string_range_position50 = source_ml_source1_string_range_operand48;
+                                                            source_ml_source1_string_range_operand46.slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } }))(source_ml_source1_string_unit_operand44, source_ml_source1_string_unit_operand45)
+                            }
+                        }];
+                        self::ml_array::append(
+                            self::ml_array::append(
+                                Vec::<self::ml_string::Text>::new(),
+                                source_ml_source1_concat_value51,
+                            ),
+                            source_ml_source1_concat_value52,
+                        )
+                    }
+                };
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        (result, index) = (result_2, index_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}

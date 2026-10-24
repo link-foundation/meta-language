@@ -383,6 +383,12 @@ pub fn render_record_type(target: &str, fields: &[String]) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_ordered_record_number_storage(kind: &str, ordered: bool) -> bool {
+    (kind == "record") && ordered
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_ordered_record_type(target: &str, payload: &str, order: &str) -> String {
     if target == "Rust" {
         format!("({}, {})", payload.to_owned(), order.to_owned())

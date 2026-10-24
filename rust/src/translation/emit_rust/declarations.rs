@@ -428,6 +428,14 @@ impl<'p> RustEmitter<'p> {
     }
 
     fn type_contains(&self, ty: &Type, kind: &str, seen: &mut BTreeSet<String>) -> bool {
+        if kind == "float"
+            && crate::translation::ordered_record_layout_rules::accept_ordered_record_number_storage(
+                ty.kind(),
+                matches!(ty, Type::Record { ordered: true, .. }),
+            )
+        {
+            return true;
+        }
         if ty.kind() == kind {
             return true;
         }

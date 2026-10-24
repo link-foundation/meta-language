@@ -163,16 +163,19 @@ pub fn read_java_script_enumeration_form(operation: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_record_order_kernel_arity(operation: &str) -> f64 {
-    if ((((operation == "createJavaScriptRecordPropertyOrder")
-        || (operation == "mergeJavaScriptRecordPropertyOrder"))
-        || (operation == "readJavaScriptRecordPropertyKeys"))
-        || (operation == "acceptJavaScriptRecordPropertyOrder"))
-        || (operation == "readJavaScriptRecordPropertyKeyTexts")
+    if (operation == "reorderJavaScriptRecordPropertyValues")
+        || (((((operation == "createJavaScriptRecordPropertyOrder")
+            || (operation == "mergeJavaScriptRecordPropertyOrder"))
+            || (operation == "readJavaScriptRecordPropertyKeys"))
+            || (operation == "acceptJavaScriptRecordPropertyOrder"))
+            || (operation == "readJavaScriptRecordPropertyKeyTexts"))
     {
         2f64
     } else if operation == "rebaseJavaScriptRecordPropertyOrder" {
         3f64
-    } else if operation == "createJavaScriptDensePropertyKeyTexts" {
+    } else if (operation == "createJavaScriptDensePropertyKeyTexts")
+        || (operation == "createJavaScriptStringOwnPropertyValues")
+    {
         1f64
     } else {
         0f64
@@ -186,8 +189,16 @@ pub fn read_java_script_record_order_kernel_parameter(operation: &str, index: f6
         let count = self::read_java_script_record_order_kernel_arity(operation);
         if (!(self::ml_math::is_integer(index)) || (index < 0f64)) || (index >= count) {
             String::new()
+        } else if operation == "reorderJavaScriptRecordPropertyValues" {
+            if index == 0f64 {
+                String::from("values")
+            } else {
+                String::from("positions")
+            }
         } else if operation == "createJavaScriptDensePropertyKeyTexts" {
             String::from("number")
+        } else if operation == "createJavaScriptStringOwnPropertyValues" {
+            String::from("text")
         } else if ((index == 0f64) || (operation == "mergeJavaScriptRecordPropertyOrder"))
             || ((operation == "rebaseJavaScriptRecordPropertyOrder") && (index == 1f64))
         {
@@ -207,12 +218,15 @@ pub fn read_java_script_record_order_kernel_result(operation: &str) -> String {
             ml_value != 0f64 && !ml_value.is_nan()
         };
         if ml_product_condition_1 {
-            if operation == "readJavaScriptRecordPropertyKeys" {
+            if operation == "reorderJavaScriptRecordPropertyValues" {
+                String::from("values")
+            } else if operation == "readJavaScriptRecordPropertyKeys" {
                 String::from("name rows")
             } else if operation == "acceptJavaScriptRecordPropertyOrder" {
                 String::from("boolean")
-            } else if (operation == "readJavaScriptRecordPropertyKeyTexts")
-                || (operation == "createJavaScriptDensePropertyKeyTexts")
+            } else if ((operation == "readJavaScriptRecordPropertyKeyTexts")
+                || (operation == "createJavaScriptDensePropertyKeyTexts"))
+                || (operation == "createJavaScriptStringOwnPropertyValues")
             {
                 String::from("key texts")
             } else {

@@ -1267,6 +1267,27 @@ def createJavaScriptDensePropertyKeyTexts (length : Float) : (Array (Array Nat))
       (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result index);
         result_2))))
 
+partial def source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 (text : (Array Nat)) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < (Float.ofNat (text).size))) then (let result_2 := (let source_ml_source1_concat_value51 := result;
+    (let source_ml_source1_concat_value52 := (#[(let source_ml_source1_string_unit_operand44 := text;
+      (let source_ml_source1_string_unit_operand45 := index;
+        ((fun (text_2 : (Array Nat)) (position : Float) => (let index_2 := (if (Float.isNaN position) then (0 : Float) else (ml_trunc position));
+          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text_2).size)))) then (#[] : Array Nat) else (let source_ml_source1_string_range_operand46 := text_2;
+            (let source_ml_source1_string_range_operand47 := index_2;
+              (let source_ml_source1_string_range_operand48 := (index_2 + (1 : Float));
+                (let source_ml_source1_string_range_position49 := source_ml_source1_string_range_operand47;
+                  (let source_ml_source1_string_range_position50 := source_ml_source1_string_range_operand48;
+                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand46).map Float.ofNat) source_ml_source1_string_range_position49 source_ml_source1_string_range_position50)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))))))) source_ml_source1_string_unit_operand44 source_ml_source1_string_unit_operand45)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value51) ++ source_ml_source1_concat_value52)));
+    (let index_2 := (index + (1 : Float));
+      (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 text result_2 index_2))) else result)
+
+def createJavaScriptStringOwnPropertyValues (text : (Array Nat)) : (Array (Array Nat)) :=
+  (let result := (#[] : (Array (Array Nat)));
+    (let index := (0 : Float);
+      (let result_2 := (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 text result index);
+        result_2)))
+
 def main : IO Unit := do
   pure ()
 

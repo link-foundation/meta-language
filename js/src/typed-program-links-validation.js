@@ -320,7 +320,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if(readJavaScriptRecordOrderKernelArity(node.op??'')){
+      if(node.op==='reorderJavaScriptRecordPropertyValues'){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[0].type.kind!=='array'||node.args[0].type.reference===true)throw new TypeError('record value ordering needs its actual owned value array');
+        same(node.args[1].type,{kind:'array',element:{kind:'float'}},'record value ordering positions');
+        same(node.type,node.args[0].type,'record value ordering result');
+      }else if(readJavaScriptRecordOrderKernelArity(node.op??'')){
         const count=readJavaScriptRecordOrderKernelArity(node.op);
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==count)throw new TypeError('an ordinary record order operation needs every owned source operand');
         for(const [index,argument]of node.args.entries())same(argument.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelParameter(node.op,index)),'record order operand type');

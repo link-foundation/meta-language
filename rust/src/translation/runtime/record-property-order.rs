@@ -4283,6 +4283,23 @@ pub mod ml_record_property_order {
 
     /// Execute the checked shared source algorithm.
     #[must_use]
+    pub fn create_java_script_string_own_property_values(
+        text: &self::ml_string::Text,
+    ) -> Vec<self::ml_string::Text> {
+        {
+            let result = Vec::<self::ml_string::Text>::new();
+            {
+                let index = 0f64;
+                {
+                    let result_2 = self::source_ml_temporary_create_java_script_string_own_property_values_loop40(text, result, index);
+                    result_2
+                }
+            }
+        }
+    }
+
+    /// Execute the checked shared source algorithm.
+    #[must_use]
     pub fn source_ml_temporary_read_record_value_order_loop1(
         mut count: f64,
         mut reverse: bool,
@@ -6200,6 +6217,75 @@ pub mod ml_record_property_order {
                                     source_ml_source1_concat_value42,
                                 ),
                                 source_ml_source1_concat_value43,
+                            )
+                        }
+                    };
+                    {
+                        let index_2 = (index + 1f64);
+                        {
+                            (result, index) = (result_2, index_2);
+                            continue;
+                        }
+                    }
+                }
+            } else {
+                result
+            };
+        }
+    }
+
+    /// Execute the checked shared source algorithm.
+    #[must_use]
+    pub fn source_ml_temporary_create_java_script_string_own_property_values_loop40(
+        text: &self::ml_string::Text,
+        mut result: Vec<self::ml_string::Text>,
+        mut index: f64,
+    ) -> Vec<self::ml_string::Text> {
+        loop {
+            return if (index < (text.length())) {
+                {
+                    let result_2 = {
+                        let source_ml_source1_concat_value51 = result;
+                        {
+                            let source_ml_source1_concat_value52 = vec![{
+                                let source_ml_source1_string_unit_operand44 = text.clone();
+                                {
+                                    let source_ml_source1_string_unit_operand45 = index;
+                                    (std::rc::Rc::new(move |text_2: self::ml_string::Text, position: f64| -> self::ml_string::Text { {
+                                    let index_2 = if position.is_nan() {
+                                        0f64
+                                    } else {
+                                        position.trunc()
+                                    };
+                                    if ((index_2 < (0f64)) || (index_2 >= (text_2.length()))) {
+                                        self::ml_string::Text::from_units(vec![])
+                                    } else {
+                                        {
+                                            let source_ml_source1_string_range_operand46 = text_2.clone();
+                                            {
+                                                let source_ml_source1_string_range_operand47 = index_2;
+                                                {
+                                                    let source_ml_source1_string_range_operand48 = (index_2 + 1f64);
+                                                    {
+                                                        let source_ml_source1_string_range_position49 = source_ml_source1_string_range_operand47;
+                                                        {
+                                                            let source_ml_source1_string_range_position50 = source_ml_source1_string_range_operand48;
+                                                            source_ml_source1_string_range_operand46.slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } }))(source_ml_source1_string_unit_operand44.clone(), source_ml_source1_string_unit_operand45)
+                                }
+                            }];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    Vec::<self::ml_string::Text>::new(),
+                                    source_ml_source1_concat_value51,
+                                ),
+                                source_ml_source1_concat_value52,
                             )
                         }
                     };

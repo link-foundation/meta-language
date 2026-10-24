@@ -8,3 +8,8 @@ Draft actual own-key enumeration and source-ordered spread merging. Spread
 fields are captured before later expressions, preserving shallow aliases.
 Shared source libraries now support automatic bounded nested-module placement.
 
+Draft homogeneous own-value enumeration through complete source templates with
+one opaque payload type slot. Keep nullish payloads separate from absent array
+entries, retain shallow aliases and UTF16 String units, and include stored
+record-order Numbers in target trait analysis. All controls remain deferred.
+

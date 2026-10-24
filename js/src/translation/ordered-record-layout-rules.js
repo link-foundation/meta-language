@@ -1,6 +1,9 @@
 // Complete target syntax over actual rendered payload/order operands. Order
 // admission and enumeration algorithms remain in the shared source runtime.
 import {renderRecordValue} from './record-emission-rules.js';
+/** Ordered record storage includes its canonical Number position vector.
+ * @param {string} kind @param {boolean} ordered @returns {boolean} */
+export function acceptOrderedRecordNumberStorage(kind,ordered){return kind==='record'&&ordered;}
 /** @param {string} target @param {string} payload @param {string} order @returns {string} */
 export function renderOrderedRecordType(target,payload,order){
  if(target==='Rust')return '('+payload+', '+order+')';

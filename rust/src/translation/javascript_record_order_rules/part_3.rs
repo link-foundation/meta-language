@@ -10,6 +10,7 @@ use super::read_required_number_fact;
 use super::read_required_record_name;
 use super::read_required_text_fact;
 use super::source_ml_temporary_create_java_script_dense_property_key_texts_loop39;
+use super::source_ml_temporary_create_java_script_string_own_property_values_loop40;
 use super::source_ml_temporary_read_java_script_record_property_key_texts_loop37;
 use super::source_ml_temporary_read_java_script_record_property_keys_loop36;
 
@@ -91,6 +92,24 @@ pub fn create_java_script_dense_property_key_texts(length: f64) -> Vec<self::ml_
                         length, result, index,
                     )
                 }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn create_java_script_string_own_property_values(
+    text: &self::ml_string::Text,
+) -> Vec<self::ml_string::Text> {
+    {
+        let result = Vec::<self::ml_string::Text>::new();
+        {
+            let index = 0f64;
+            {
+                self::source_ml_temporary_create_java_script_string_own_property_values_loop40(
+                    text, result, index,
+                )
             }
         }
     }

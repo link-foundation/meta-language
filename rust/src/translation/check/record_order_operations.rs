@@ -5,6 +5,7 @@ use crate::translation::javascript_enumeration_rules as rules;
 pub(in super::super) fn role_type(role: &str) -> Result<Type> {
     match role {
         "number" => Ok(Type::Float),
+        "text" => Ok(Type::String),
         "boolean" => Ok(Type::Bool),
         "positions" => Ok(array(Type::Float)),
         "name rows" => Ok(array(array(Type::Float))),
@@ -16,6 +17,50 @@ pub(in super::super) fn role_type(role: &str) -> Result<Type> {
     }
 }
 impl Checker {
+    pub(super) fn record_value_order_operation(
+        &mut self,
+        args: &[SArrayItem],
+        env: &Env,
+        path: &[String],
+        span: Option<Span>,
+        expected: Option<&Type>,
+    ) -> Result<Expr> {
+        if self.language != super::Language::JavaScript
+            || args.len() != 2
+            || args.iter().any(|argument| argument.spread)
+        {
+            return Err(type_error(
+                "an ordinary record order operation needs every owned source operand",
+                span,
+            ));
+        }
+        let expected = expected.filter(|ty| matches!(ty, Type::Array { .. }));
+        let values = self.expr(&args[0].value, env, path, expected, false)?;
+        let values = Self::reference_value(values);
+        if !matches!(
+            values.ty,
+            Type::Array {
+                reference: false,
+                ..
+            }
+        ) {
+            return Err(type_error(
+                "record value ordering needs its actual owned value array",
+                span,
+            ));
+        }
+        let positions = array(Type::Float);
+        let order = self.expr(&args[1].value, env, path, Some(&positions), false)?;
+        let order = self.coerce(Self::reference_value(order), &positions, span)?;
+        let ty = values.ty.clone();
+        Ok(Expr::new(
+            Node::Math {
+                op: "reorderJavaScriptRecordPropertyValues".to_owned(),
+                args: vec![values, order],
+            },
+            ty,
+        ))
+    }
     pub(super) fn record_order_operation(
         &mut self,
         operation: &str,

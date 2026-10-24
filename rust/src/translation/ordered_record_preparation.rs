@@ -38,6 +38,10 @@ fn transport(error: impl std::fmt::Display) -> super::diagnostics::TranslationEr
 }
 
 struct Lowerer {
+    specializations: Vec<(
+        String,
+        super::record_value_order_specialization::Specialization,
+    )>,
     operations: HashSet<String>,
     prefix: String,
     namespace: String,
@@ -69,6 +73,41 @@ impl Lowerer {
             ),
             _ => value.clone(),
         };
+        if value["k"] == "math" && value["op"] == "reorderJavaScriptRecordPropertyValues" {
+            let element: Type =
+                serde_json::from_value(result["args"][0]["type"]["element"].clone())
+                    .map_err(transport)?;
+            let key = element.key();
+            let index = if let Some(index) = self
+                .specializations
+                .iter()
+                .position(|(identity, _)| identity == &key)
+            {
+                index
+            } else {
+                let namespace = format!(
+                    "{}recordValues{}",
+                    self.prefix,
+                    self.specializations.len() + 1
+                );
+                let specialization =
+                    super::record_value_order_specialization::specialize(&element, &namespace)?;
+                self.specializations.push((key, specialization));
+                self.specializations.len() - 1
+            };
+            return super::record_value_order_specialization::lower(
+                value,
+                result["args"].as_array().ok_or_else(|| {
+                    type_error(
+                        "record value ordering needs every actual owned operand",
+                        None,
+                    )
+                })?,
+                &self.specializations[index].1,
+                &self.prefix,
+                &mut self.ordinal,
+            );
+        }
         if value["k"] == "math"
             && super::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(
                 value["op"].as_str().unwrap_or_default(),
@@ -248,6 +287,7 @@ pub(super) fn prepare(program: &Program) -> Result<Cow<'_, Program>> {
         }
     }
     let mut lowerer = Lowerer {
+        specializations: Vec::new(),
         operations: library
             .declarations
             .iter()
@@ -285,5 +325,24 @@ pub(super) fn prepare(program: &Program) -> Result<Cow<'_, Program>> {
     }
     result.items.extend(library.items);
     result.declarations.extend(library.declarations);
+    for (_, specialization) in lowerer.specializations {
+        for declaration in &specialization.library.declarations {
+            if result.declaration(declaration.full_name()).is_some()
+                || program
+                    .externals
+                    .iter()
+                    .any(|external| external.name() == declaration.full_name())
+            {
+                return Err(type_error(
+                    "a record value specialization collides with an actual declaration",
+                    None,
+                ));
+            }
+        }
+        result.items.extend(specialization.library.items);
+        result
+            .declarations
+            .extend(specialization.library.declarations);
+    }
     Ok(Cow::Owned(result))
 }

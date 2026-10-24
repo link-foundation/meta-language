@@ -651,6 +651,10 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if op == "reorderJavaScriptRecordPropertyValues" {
+                    return self.record_value_order_operation(args, env, path, span, expected);
+                }
+                if !crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op).is_empty(){return self.javascript_object_enumeration(op,args,span,env,path,expected);}
                 if op == "exponentiateJavaScriptNumericValue" {
                     return self.javascript_exponentiation(args, span, env, path, expected);
                 }

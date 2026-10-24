@@ -118,6 +118,7 @@ mod program_string_representation_rules;
 pub mod proof;
 pub(crate) mod record_emission_rules;
 pub(crate) mod record_type_syntax_rules;
+mod record_value_order_specialization;
 pub(crate) mod record_value_rules;
 pub(crate) mod record_write_program;
 pub(crate) mod record_write_rules;
