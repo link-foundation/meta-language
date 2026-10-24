@@ -477,7 +477,7 @@ pub use translation::big_integer_conversion::{
     JavaScriptBigInteger, JavaScriptBigIntegerArithmeticError, JavaScriptBigIntegerConversionError,
     convert_javascript_boolean_big_integer, convert_javascript_number_big_integer,
     convert_javascript_string_big_integer, convert_javascript_string_big_integer_units,
-    divide_javascript_big_integer,
+    divide_javascript_big_integer, power_javascript_big_integer, power_javascript_number,
 };
 pub use translation::big_integer_conversion_program::create_big_integer_conversion_program_links;
 

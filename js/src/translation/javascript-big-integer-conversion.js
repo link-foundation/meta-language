@@ -1,9 +1,10 @@
 // Actual checked type and intrinsic result-column adapters.
 import {INT,FLOAT,BOOL,STRING,array,option} from './types.js';
+import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {readJavaScriptBigIntegerConversionForm,readJavaScriptBigIntegerResultOperation,
   readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces,
-  requireJavaScriptBigIntegerDivision,readJavaScriptBigIntegerDivisionMessage} from './big-integer-conversion-rules.js';
+  requireJavaScriptBigIntegerDivision,readJavaScriptBigIntegerDivisionMessage,readJavaScriptBigIntegerExponentMessage} from './big-integer-conversion-rules.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
 import {readOptionalOutputAbsences} from './optional-value-rules.js';
 
@@ -49,17 +50,35 @@ export function checkJavaScriptBigIntegerBuiltin(checker,node,env,path) {
   return body;
 }
 export function checkJavaScriptBigIntegerResult(checker,node,env,path) {
-  if(readJavaScriptBigIntegerResultOperation(node.op)==='division'){
+  if(['division','power','number-power'].includes(readJavaScriptBigIntegerResultOperation(node.op))){
     if(checker.language!=='JavaScript'||node.args.length!==2||node.args.some(argument=>argument.spread))throw typeError('a JavaScript BigInt division intrinsic needs two owned source operands',node.span);
-    const args=node.args.map(argument=>checker.expr(argument.value,env,path,INT));
-    if(args.some(argument=>argument.type.kind!=='int'))throw typeError('a JavaScript BigInt division intrinsic needs its actual integer operands',node.span);
-    return{k:'math',op:node.op,args,type:array(INT)};
+    const numeric=readJavaScriptBigIntegerResultOperation(node.op)==='number-power',operand=numeric?FLOAT:INT;
+    const args=node.args.map(argument=>checker.expr(argument.value,env,path,operand));
+    if(args.some(argument=>argument.type.kind!==operand.kind))throw typeError('a JavaScript numeric arithmetic intrinsic needs its actual operand types',node.span);
+    return{k:'math',op:node.op,args,type:numeric?FLOAT:array(INT)};
   }
   if(checker.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript BigInt intrinsic needs one owned source operand',node.span);
   const form=readJavaScriptBigIntegerResultOperation(node.op),value=checker.expr(node.args[0].value,env,path,undefined);
   const kind=form==='string'?'string':form==='number'?'float':'bool';
   if(value.type.kind!==kind)throw typeError('a JavaScript BigInt intrinsic needs its actual operand type',node.span);
   return{k:'math',op:node.op,args:[value],type:form==='boolean'?INT:array(INT)};
+}
+
+export function checkJavaScriptExponentiation(checker,node,env,path,expected){
+ if(checker.language!=='JavaScript'||node.args.length!==2||node.args.some(argument=>argument.spread))throw typeError('JavaScript exponentiation needs two actual source operands',node.span);
+ const values=node.args.map(argument=>checker.expr(argument.value,env,path,undefined));
+ const args=values.map(value=>checker.numberValue(value,node.span));
+ const failure=materializeJavaScriptNumericFailure(checker,'exponentiation',args,expected);
+ if(failure)return failure;
+ if(args.every(value=>value.type.kind==='float'))return{k:'math',op:'powerJavaScriptNumberValue',args,type:FLOAT};
+ if(!args.every(value=>value.type.kind==='int'||value.type.kind==='nat'))throw unsupported('exponentiation primitive conversion','the actual primitive operations must be represented',node.span);
+ const integers=args.map(value=>value.type.kind==='int'?value:{k:'cast',arg:value,from:value.type,to:INT,flavor:'exact',type:INT});
+ const name=checker.freshName('ml_integer_power'),result={k:'var',name,type:array(INT)};
+ const operation={k:'math',op:'powerJavaScriptBigIntegerResult',args:integers,type:array(INT)};
+ const condition={k:'binary',op:'eq',left:{k:'length',array:result,type:FLOAT},right:{k:'lit',value:'1',type:FLOAT},type:BOOL,domain:FLOAT};
+ const value={k:'coalesce',left:{k:'optionalIndex',array:result,index:{k:'lit',value:'0',type:FLOAT},type:option(INT,'undefined')},right:{k:'lit',value:'0',type:INT},type:INT};
+ const invalid={k:'math',op:'raiseJavaScriptRangeError',args:[text(readJavaScriptBigIntegerExponentMessage()),{k:'lit',value:true,type:BOOL}],type:INT};
+ return{k:'let',name,value:operation,body:{k:'if',cond:condition,then:value,else:invalid,type:INT},type:INT};
 }
 
 /** Build actual checked IR; shared source rules own admission and division. */

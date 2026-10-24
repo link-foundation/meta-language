@@ -208,6 +208,24 @@ pub(super) fn assert_nominal_translation_product(
     }
     .unwrap();
     let program = check_program(&surface).unwrap();
+    if let Some(rows) = expected["syntaxCases"].as_array() {
+        for row in rows {
+            let error = meta_language::translation::javascript::parse_javascript(
+                row["source"].as_str().unwrap(),
+            )
+            .unwrap_err();
+            assert_eq!(error.kind.as_str(), row["kind"].as_str().unwrap());
+            assert_eq!(row["originalSyntax"]["source"], row["source"]);
+            assert_ne!(row["originalSyntax"]["exitCode"], 0);
+            assert!(row["originalSyntax"]["signal"].is_null());
+            assert!(
+                row["originalSyntax"]["stderr"]
+                    .as_str()
+                    .unwrap()
+                    .contains("SyntaxError")
+            );
+        }
+    }
     let packet = encode_typed_program_links(&program).unwrap();
     assert_eq!(packet.root.as_u64(), expected["root"].as_u64().unwrap());
     assert_eq!(

@@ -1,21 +1,27 @@
 // Generated from complete js/src/translation/big-integer-conversion-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8;
-use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9;
-use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result;
-use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result;
+use super::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result;
+use super::MlSource1TemporaryConvertStringNumberRationalJoin9;
+use super::MlSource1TemporaryConvertStringNumberRationalJoin10;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop11Result;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop12Result;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop15Result;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop16Result;
 use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
 use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
-use super::source_ml_source1_temporary_convert_java_script_number_big_integer_loop11;
-use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop5;
-use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop6;
-use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop7;
-use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop10;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop12;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop13;
+use super::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Result;
+use super::source_ml_source1_temporary_accept_string_number_infinity_loop17;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop11;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop12;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop13;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop14;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop15;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop16;
 use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1;
 use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2;
+use super::source_ml_source1_temporary_read_string_number_binary_power_loop7;
+use super::source_ml_source1_temporary_read_string_number_binary_power_loop8;
+use super::source_ml_source1_temporary_read_string_number_decimal_power_loop5;
+use super::source_ml_source1_temporary_read_string_number_exact_mantissa_loop6;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -619,125 +625,163 @@ pub fn read_java_script_utf8_string_units(bytes: &[f64]) -> Vec<f64> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn convert_java_script_string_big_integer_units(units: &[f64]) -> Vec<self::ml::Big> {
+pub fn read_string_number_digit(unit: f64) -> f64 {
+    self::read_java_script_numeric_digit_unit(unit)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_string_number_decimal_power(exponent: f64) -> self::ml::Big {
     {
-        let index = 0f64;
+        let value = self::ml::Big::from_i128(1);
         {
-            let source_ml_source2_s3 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop5(units, index);
+            let base = self::ml::Big::from_i128(10);
+            {
+                self::source_ml_source1_temporary_read_string_number_decimal_power_loop5(
+                    exponent, value, base,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_string_number_exact_mantissa(value: self::ml::Big) -> f64 {
+    {
+        let result = 0f64;
+        {
+            let scale = 1f64;
+            {
+                self::source_ml_source1_temporary_read_string_number_exact_mantissa_loop6(
+                    value.clone(),
+                    result,
+                    scale,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_string_number_binary_power(exponent: f64) -> f64 {
+    {
+        let result = 1f64;
+        {
+            let source_ml_source2_s3 =
+                self::source_ml_source1_temporary_read_string_number_binary_power_loop7(
+                    exponent, result,
+                );
             match source_ml_source2_s3 {
-                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Done => {
+                self::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Result::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Done(exponent_2, result_2) => {
                     {
-                        let start = 0f64;
+                        self::source_ml_source1_temporary_read_string_number_binary_power_loop8(exponent_2, result_2)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: self::ml::Big) -> f64 {
+    if (numerator < (self::ml::Big::from_i128(0))) || (denominator <= (self::ml::Big::from_i128(0)))
+    {
+        f64::NAN
+    } else if numerator == (self::ml::Big::from_i128(0)) {
+        0f64
+    } else {
+        {
+            let exponent = 0f64;
+            {
+                let source_ml_source2_s6 = if numerator >= denominator {
+                    {
+                        let scale = denominator.clone();
                         {
-                            let end = units.len() as f64;
+                            let source_ml_source2_s7 = self::source_ml_source1_temporary_convert_string_number_rational_loop15(numerator.clone(), exponent, scale);
+                            match source_ml_source2_s7 {
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Done(exponent_2) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_2)
+                                    }
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Return(source_ml_source1_temporary_result15) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result15)
+                                    }
+                                }
+                        }
+                    }
+                } else {
+                    {
+                        let scale_2 = numerator.clone();
+                        {
+                            let source_ml_source2_s8 = self::source_ml_source1_temporary_convert_string_number_rational_loop16(denominator.clone(), exponent, scale_2);
+                            match source_ml_source2_s8 {
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Done(exponent_3) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_3)
+                                    }
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Return(source_ml_source1_temporary_result16) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result16)
+                                    }
+                                }
+                        }
+                    }
+                };
+                match source_ml_source2_s6 {
+                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_4) => {
                             {
-                                let start_2 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop6(units, start, end);
+                                let shift = if exponent_4 >= -1022f64 {
+                                    52f64 - exponent_4
+                                } else {
+                                    1074f64
+                                };
                                 {
-                                    let end_2 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop7(units, start_2, end);
-                                    if start_2 == end_2 {
-                                        vec![self::ml::Big::from_i128(0)]
+                                    let source_ml_source2_s9 = if shift >= 0f64 {
+                                        {
+                                            let index = 0f64;
+                                            {
+                                                let numerator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop13(numerator.clone(), shift, index);
+                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_2, denominator.clone())
+                                            }
+                                        }
                                     } else {
                                         {
-                                            let negative = false;
+                                            let index_2 = 0f64;
                                             {
-                                                let signed = false;
+                                                let denominator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop14(denominator.clone(), shift, index_2);
+                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator.clone(), denominator_2)
+                                            }
+                                        }
+                                    };
+                                    match source_ml_source2_s9 {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_3, denominator_3) => {
+                                            {
+                                                let quotient = self::ml::Big::from_i128(0);
                                                 {
-                                                    let sign = (self::ml_array::optional_at(units, self::ml_array::number_index(start_2))).unwrap_or_else(|| -1f64);
+                                                    let remainder = numerator_3.clone();
                                                     {
-                                                        let source_ml_source2_s4 = if (sign == 43f64) || (sign == 45f64) {
+                                                        let scale_3 = denominator_3.clone();
+                                                        {
+                                                            let weight = self::ml::Big::from_i128(1);
                                                             {
-                                                                let negative_2 = sign == 45f64;
-                                                                {
-                                                                    let signed_2 = true;
-                                                                    {
-                                                                        let start_3 = start_2 + 1f64;
-                                                                        self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_3, negative_2, signed_2)
-                                                                    }
-                                                                }
-                                                            }
-                                                        } else {
-                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_2, negative, signed)
-                                                        };
-                                                        match source_ml_source2_s4 {
-                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_4, negative_3, signed_3) => {
-                                                                if start_4 == end_2 {
-                                                                    Vec::<self::ml::Big>::new()
-                                                                } else {
-                                                                    {
-                                                                        let radix = 10f64;
+                                                                let source_ml_source2_s10 = self::source_ml_source1_temporary_convert_string_number_rational_loop11(remainder.clone(), scale_3, weight);
+                                                                match source_ml_source2_s10 {
+                                                                    self::MlSource1TemporaryConvertStringNumberRationalLoop11Result::MlSource1TemporaryConvertStringNumberRationalLoop11Done(scale_4, weight_2) => {
                                                                         {
-                                                                            let base = self::ml::Big::from_i128(10);
-                                                                            {
-                                                                                let source_ml_source2_s5 = if (!signed_3 && (((self::ml_array::optional_at(units, self::ml_array::number_index(start_4))).unwrap_or_else(|| -1f64)) == 48f64)) && ((end_2 - start_4) >= 2f64) {
+                                                                            let source_ml_source2_s11 = self::source_ml_source1_temporary_convert_string_number_rational_loop12(quotient, remainder.clone(), scale_4.clone(), weight_2.clone());
+                                                                            match source_ml_source2_s11 {
+                                                                                self::MlSource1TemporaryConvertStringNumberRationalLoop12Result::MlSource1TemporaryConvertStringNumberRationalLoop12Done(quotient_2, remainder_2) => {
                                                                                     {
-                                                                                        let marker = (self::ml_array::optional_at(units, self::ml_array::number_index(start_4 + 1f64))).unwrap_or_else(|| -1f64);
+                                                                                        let twice = remainder_2.mul(&self::ml::Big::from_i128(2));
                                                                                         {
-                                                                                            let selected = if (marker == 120f64) || (marker == 88f64) {
-                                                                                                16f64
-                                                                                            } else if (marker == 98f64) || (marker == 66f64) {
-                                                                                                    2f64
-                                                                                                } else if (marker == 111f64) || (marker == 79f64) {
-                                                                                                        8f64
-                                                                                                    } else {
-                                                                                                        0f64
-                                                                                                    };
-                                                                                            {
-let ml_library_inequality_1 = selected != 0f64 ;
-if ml_library_inequality_1 {
+                                                                                            let quotient_4 = if (twice > denominator_3) || ((twice == denominator_3) && ((self::ml::divide(&quotient_2, &self::ml::Big::from_i128(2), "trunc", Some("Division by zero"), true)) == (self::ml::Big::from_i128(1)))) {
                                                                                                 {
-                                                                                                    let radix_2 = selected;
-                                                                                                    {
-                                                                                                        let base_2 = if selected == 16f64 {
-                                                                                                            self::ml::Big::from_i128(16)
-                                                                                                        } else if selected == 8f64 {
-                                                                                                                self::ml::Big::from_i128(8)
-                                                                                                            } else {
-                                                                                                                self::ml::Big::from_i128(2)
-                                                                                                            };
-                                                                                                        {
-                                                                                                            let start_5 = start_4 + 2f64;
-                                                                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_5, radix_2, base_2)
-                                                                                                        }
-                                                                                                    }
+                                                                                                    quotient_2.add(&self::ml::Big::from_i128(1))
                                                                                                 }
                                                                                             } else {
-                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_4, radix, base.clone())
-                                                                                            }
-}
-                                                                                        }
-                                                                                    }
-                                                                                } else {
-                                                                                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_4, radix, base.clone())
-                                                                                };
-                                                                                match source_ml_source2_s5 {
-                                                                                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_6, radix_3, base_3) => {
-                                                                                        if start_6 == end_2 {
-                                                                                            Vec::<self::ml::Big>::new()
-                                                                                        } else {
-                                                                                            {
-                                                                                                let digits = vec![self::ml::Big::from_i128(0), self::ml::Big::from_i128(1), self::ml::Big::from_i128(2), self::ml::Big::from_i128(3), self::ml::Big::from_i128(4), self::ml::Big::from_i128(5), self::ml::Big::from_i128(6), self::ml::Big::from_i128(7), self::ml::Big::from_i128(8), self::ml::Big::from_i128(9), self::ml::Big::from_i128(10), self::ml::Big::from_i128(11), self::ml::Big::from_i128(12), self::ml::Big::from_i128(13), self::ml::Big::from_i128(14), self::ml::Big::from_i128(15)];
-                                                                                                {
-                                                                                                    let value = self::ml::Big::from_i128(0);
-                                                                                                    {
-                                                                                                        let index_2 = start_6;
-                                                                                                        {
-                                                                                                            let source_ml_source2_s6 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop10(units, end_2, radix_3, base_3.clone(), digits, value, index_2);
-                                                                                                            match source_ml_source2_s6 {
-                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Done(value_2) => {
-                                                                                                                    vec![if negative_3 {
-                                                                                                                        value_2.neg()
-                                                                                                                    } else {
-                                                                                                                        value_2.clone()
-                                                                                                                    }]
-                                                                                                                }
-                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Return(source_ml_source1_temporary_result10) => {
-                                                                                                                    source_ml_source1_temporary_result10
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
+                                                                                                quotient_2.clone()
+                                                                                            };
+                                                                                            (self::read_string_number_exact_mantissa(quotient_4) * self::read_string_number_binary_power(-shift))
                                                                                         }
                                                                                     }
                                                                                 }
@@ -755,142 +799,48 @@ if ml_library_inequality_1 {
                                 }
                             }
                         }
-                    }
-                }
-                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Return(source_ml_source1_temporary_result10_2) => {
-                    source_ml_source1_temporary_result10_2
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_java_script_utf8_big_integer(bytes: &[f64]) -> Vec<self::ml::Big> {
-    self::convert_java_script_string_big_integer_units(
-        &(self::read_java_script_utf8_string_units(bytes)),
-    )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn convert_java_script_number_big_integer(value: f64) -> Vec<self::ml::Big> {
-    if (self::ml_math::is_integer(value)) {
-        {
-            let negative = value < 0f64;
-            {
-                let value_2 = value.abs();
-                {
-                    let integer = self::ml::Big::from_i128(0);
-                    {
-                        let weight = self::ml::Big::from_i128(1);
-                        {
-                            let integer_2 = self::source_ml_source1_temporary_convert_java_script_number_big_integer_loop11(value_2, integer, weight);
-                            vec![if negative {
-                                integer_2.neg()
-                            } else {
-                                integer_2.clone()
-                            }]
+                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result14) => {
+                            source_ml_source1_temporary_result14
                         }
                     }
-                }
             }
         }
-    } else {
-        Vec::<self::ml::Big>::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn convert_java_script_boolean_big_integer(value: bool) -> self::ml::Big {
-    if value {
-        self::ml::Big::from_i128(1)
-    } else {
-        self::ml::Big::from_i128(0)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn divide_java_script_big_integer(
-    left: self::ml::Big,
-    right: self::ml::Big,
-) -> Vec<self::ml::Big> {
-    if right == (self::ml::Big::from_i128(0)) {
-        Vec::<self::ml::Big>::new()
-    } else {
-        {
-            let remaining = if left < (self::ml::Big::from_i128(0)) {
-                left.neg()
-            } else {
-                left.clone()
-            };
+pub fn accept_string_number_infinity(units: &[f64], start: f64, end: f64) -> bool {
+    {
+        let ml_library_inequality_1 = (end - start) != 8f64;
+        if ml_library_inequality_1 {
+            false
+        } else {
             {
-                let divisor = if right < (self::ml::Big::from_i128(0)) {
-                    right.neg()
-                } else {
-                    right.clone()
-                };
+                let expected = vec![
+                    73f64, 110f64, 102f64, 105f64, 110f64, 105f64, 116f64, 121f64,
+                ];
                 {
-                    let shifted = divisor;
+                    let index = 0f64;
                     {
-                        let weight = self::ml::Big::from_i128(1);
-                        {
-                            let quotient = self::ml::Big::from_i128(0);
-                            {
-                                let source_ml_source2_s7 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop12(remaining.clone(), shifted, weight);
-                                match source_ml_source2_s7 {
-                                    self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Done(shifted_2, weight_2) => {
-                                        {
-                                            let source_ml_source2_s8 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop13(remaining.clone(), shifted_2.clone(), weight_2.clone(), quotient);
-                                            match source_ml_source2_s8 {
-                                                self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Done(remaining_2, quotient_2) => {
-                                                    vec![if (left < (self::ml::Big::from_i128(0))) != (right < (self::ml::Big::from_i128(0))) {
-                                                        quotient_2.neg()
-                                                    } else {
-                                                        quotient_2.clone()
-                                                    }, if left < (self::ml::Big::from_i128(0)) {
-                                                        remaining_2.neg()
-                                                    } else {
-                                                        remaining_2.clone()
-                                                    }]
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        let source_ml_source2_s12 =
+                            self::source_ml_source1_temporary_accept_string_number_infinity_loop17(
+                                units,
+                                start,
+                                &(expected),
+                                index,
+                            );
+                        match source_ml_source2_s12 {
+                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Done => {
+                            true
                         }
+                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Return(source_ml_source1_temporary_result17) => {
+                            source_ml_source1_temporary_result17
+                        }
+                    }
                     }
                 }
             }
         }
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_nonzero_java_script_integer_literal(value: &str) -> bool {
-    ((!(value).is_empty()) && (value != "0")) && (value != "-0")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn require_java_script_big_integer_division(
-    language: &str,
-    operation: &str,
-    kind: &str,
-    literal: &str,
-) -> bool {
-    (((language == "JavaScript") && (kind == "int"))
-        && ((operation == "div") || (operation == "rem")))
-        && !(self::accept_nonzero_java_script_integer_literal(literal))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_big_integer_division_message() -> String {
-    String::from("Division by zero")
 }

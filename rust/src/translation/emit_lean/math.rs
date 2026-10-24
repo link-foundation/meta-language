@@ -17,6 +17,14 @@ impl LeanEmitter<'_> {
             self.helpers.insert("bigIntegerConversion");
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
             let value=self.expr(&args[0],depth)?;
+            if form=="number-power" {
+                let right=self.expr(&args[1],depth)?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_number_power("Lean",&value,&right));
+            }
+            if form=="power" {
+                let right=self.expr(&args[1],depth)?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_power("Lean",&value,&right));
+            }
             if form=="division" {
                 let right=self.expr(&args[1],depth)?;
                 return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_division("Lean",&value,&right));

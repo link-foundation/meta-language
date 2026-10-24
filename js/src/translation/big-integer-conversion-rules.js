@@ -4,6 +4,7 @@
 import {acceptJavaScriptWhitespaceUnit} from './javascript-whitespace-rules.js';
 import {readJavaScriptNumericDigitUnit} from './numeric-digit-rules.js';
 import {readJavaScriptUtf8StringUnits} from './utf8-string-unit-rules.js';
+import {convertStringNumberRational} from './string-number-rules.js';
 
 /** Complete StringIntegerLiteral, without a Number intermediate or size cap.
  * @param {number[]} units @returns {bigint[]} */
@@ -76,6 +77,142 @@ export function divideJavaScriptBigInteger(left,right) {
   }
   return [(left<0n)!==(right<0n)?-quotient:quotient,left<0n?-remaining:remaining];
 }
+/** Repeated squaring over exact integers. Empty is a negative exponent.
+ * @param {bigint} base @param {bigint} exponent @returns {bigint[]} */
+export function powerJavaScriptBigInteger(base,exponent){
+ if(exponent<0n)return [];
+ let result=1n,weight=base,remaining=exponent;
+ while(remaining>0n){
+  if(remaining%2n===1n)result*=weight;
+  remaining/=2n;
+  if(remaining>0n)weight*=weight;
+ }
+ return [result];
+}
+
+/** Directed fixed-point bounds use independent normalized exponents. This
+ * keeps every significand bounded by precision even for enormous powers.
+ * @param {bigint} value @param {bigint} exponent @param {bigint} scale @param {boolean} upward @returns {bigint[]} */
+function normalizeNumberPowerBound(value,exponent,scale,upward){
+ if(value<=0n)return [0n,0n];
+ while(value>=scale*2n){value=(value+(upward?1n:0n))/2n;exponent+=1n;}
+ while(value<scale){value*=2n;exponent-=1n;}
+ return [value,exponent];
+}
+/** @param {bigint} numerator @param {bigint} denominator @param {boolean} upward @returns {bigint} */
+function divideNumberPowerBound(numerator,denominator,upward){
+ const result=divideJavaScriptBigInteger(numerator,denominator);
+ const quotient=result[0]??0n,remainder=result[1]??0n;
+ return quotient+(upward&&remainder!==0n?1n:0n);
+}
+/** @param {bigint} value @returns {bigint} */
+function rootNumberPowerInteger(value){
+ if(value<=0n)return 0n;
+ let root=1n,remaining=value;
+ while(remaining>1n){remaining/=4n;root*=2n;}
+ root*=2n;
+ while(true){
+  const next=(root+divideNumberPowerBound(value,root,false))/2n;
+  if(next>=root)return root;
+  root=next;
+ }
+}
+/** @param {bigint[]} left @param {bigint[]} right @param {bigint} scale @returns {bigint[]} */
+function multiplyNumberPowerInterval(left,right,scale){
+ const lower=normalizeNumberPowerBound(divideNumberPowerBound((left[0]??0n)*(right[0]??0n),scale,false),(left[1]??0n)+(right[1]??0n),scale,false);
+ const upper=normalizeNumberPowerBound(divideNumberPowerBound((left[2]??0n)*(right[2]??0n),scale,true),(left[3]??0n)+(right[3]??0n),scale,true);
+ return [lower[0]??0n,lower[1]??0n,upper[0]??0n,upper[1]??0n];
+}
+/** @param {bigint} value @param {bigint} exponent @param {bigint} scale @param {boolean} upward @returns {bigint[]} */
+function rootNumberPowerBound(value,exponent,scale,upward){
+ if(exponent%2n!==0n){value*=2n;exponent-=1n;}
+ const square=value*scale;
+ let root=rootNumberPowerInteger(square);
+ if(upward&&root*root<square)root+=1n;
+ return normalizeNumberPowerBound(root,exponent/2n,scale,upward);
+}
+/** @param {bigint[]} interval @param {bigint} scale @returns {bigint[]} */
+function rootNumberPowerInterval(interval,scale){
+ const lower=rootNumberPowerBound(interval[0]??0n,interval[1]??0n,scale,false);
+ const upper=rootNumberPowerBound(interval[2]??0n,interval[3]??0n,scale,true);
+ return [lower[0]??0n,lower[1]??0n,upper[0]??0n,upper[1]??0n];
+}
+/** @param {bigint[]} interval @param {bigint} scale @returns {bigint[]} */
+function invertNumberPowerInterval(interval,scale){
+ const lower=normalizeNumberPowerBound(divideNumberPowerBound(scale*scale,interval[2]??0n,false),-(interval[3]??0n),scale,false);
+ const upper=normalizeNumberPowerBound(divideNumberPowerBound(scale*scale,interval[0]??0n,true),-(interval[1]??0n),scale,true);
+ return [lower[0]??0n,lower[1]??0n,upper[0]??0n,upper[1]??0n];
+}
+/** Positive finite binary64 decomposition: exact integer significand and scale.
+ * @param {number} value @returns {bigint[]} */
+function decomposeNumberPowerMagnitude(value){
+ let exponent=0n;
+ while(value>=2){value/=2;exponent+=1n;}
+ while(value<1){value*=2;exponent-=1n;}
+ return [convertJavaScriptNumberBigInteger(value*4503599627370496)[0]??0n,exponent-52n];
+}
+/** @param {bigint} value @param {bigint} exponent @param {bigint} precision @returns {number} */
+function roundNumberPowerBound(value,exponent,precision){
+ if(value===0n||exponent< -1076n)return 0;
+ if(exponent>1024n)return Infinity;
+ const shift=exponent-precision;
+ if(shift>=0n)return convertStringNumberRational(value*(powerJavaScriptBigInteger(2n,shift)[0]??0n),1n);
+ return convertStringNumberRational(value,powerJavaScriptBigInteger(2n,-shift)[0]??0n);
+}
+/** A canonical correctly rounded dyadic-power implementation. Every positive
+ * finite result is enclosed by directed integer intervals; precision increases
+ * until both ends round identically. No host pow/log/exp or precision ceiling.
+ * @param {number} base @param {number} exponent @returns {number} */
+export function powerJavaScriptNumber(base,exponent){
+ if(Number.isNaN(exponent))return NaN;
+ if(exponent===0)return 1;
+ if(Number.isNaN(base))return NaN;
+ const magnitude=Math.abs(base);
+ if(!Number.isFinite(exponent)){
+  if(magnitude===1)return NaN;
+  return magnitude>1?(exponent>0?Infinity:0):(exponent>0?0:Infinity);
+ }
+ const odd=Number.isInteger(exponent)&&Math.abs(exponent)%2===1;
+ const negative=(base<0||base===0&&1/base<0)&&odd;
+ if(base===0){const value=exponent>0?0:Infinity;return negative?-value:value;}
+ if(!Number.isFinite(base)){const value=exponent>0?Infinity:0;return negative?-value:value;}
+ if(base<0&&!Number.isInteger(exponent))return NaN;
+ if(magnitude===1)return negative?-1:1;
+ const input=decomposeNumberPowerMagnitude(magnitude),power=decomposeNumberPowerMagnitude(Math.abs(exponent));
+ let precision=192n;
+ while(true){
+  const scale=powerJavaScriptBigInteger(2n,precision)[0]??0n;
+  const value=(input[0]??0n)*(powerJavaScriptBigInteger(2n,precision-52n)[0]??0n);
+  const initialExponent=(input[1]??0n)+52n;
+  let interval=[value,initialExponent,value,initialExponent];
+  if(exponent<0)interval=invertNumberPowerInterval(interval,scale);
+  let shift=power[1]??0n;
+  while(shift>0n){interval=multiplyNumberPowerInterval(interval,interval,scale);shift-=1n;}
+  while(shift<0n){interval=rootNumberPowerInterval(interval,scale);shift+=1n;}
+  let result=[scale,0n,scale,0n],remaining=power[0]??0n;
+  while(remaining>0n){
+   if(remaining%2n===1n)result=multiplyNumberPowerInterval(result,interval,scale);
+   remaining/=2n;
+   if(remaining>0n)interval=multiplyNumberPowerInterval(interval,interval,scale);
+  }
+  const lower=roundNumberPowerBound(result[0]??0n,result[1]??0n,precision);
+  const upper=roundNumberPowerBound(result[2]??0n,result[3]??0n,precision);
+  if(lower===upper)return negative?-lower:lower;
+  precision*=2n;
+ }
+}
+/** @param {string} prefix @param {boolean} parenthesized @returns {boolean} */
+export function acceptJavaScriptExponentiationBase(prefix,parenthesized){
+ return parenthesized||!['+','-','!','~','typeof','void','delete','await'].includes(prefix);
+}
+/** @returns {string} */
+export function readJavaScriptBigIntegerExponentMessage(){return 'Exponent must be positive';}
+/** @param {string} target @param {string} base @param {string} exponent @returns {string} */
+export function renderJavaScriptBigIntegerPower(target,base,exponent){
+ if(target==='JavaScript')return 'ml_big_integer_conversion.power('+base+','+exponent+')';
+ if(target==='Rust')return 'crate::ml_big_integer_conversion::power_java_script_big_integer('+base+','+exponent+')';
+ return target==='Lean'||target==='Rocq'?'(MLBigIntegerConversion.power '+base+' '+exponent+')':'';
+}
 /** Checked integer nodes already own canonical signed decimal text; empty
  * denotes a nonliteral. Zero spellings cannot prove a nonzero divisor.
  * @param {string} value @returns {boolean} */
@@ -131,6 +268,8 @@ export function readJavaScriptBigIntegerBuiltinOperation(name) {
 }
 /** @param {string} operation @returns {string} */
 export function readJavaScriptBigIntegerResultOperation(operation) {
+  if(operation==='powerJavaScriptNumberValue')return 'number-power';
+  if(operation==='powerJavaScriptBigIntegerResult')return 'power';
   if(operation==='divideJavaScriptBigIntegerResult')return 'division';
   if(operation==='parseJavaScriptStringBigInteger')return 'string';
   if(operation==='convertJavaScriptBooleanBigIntegerValue')return 'boolean';
@@ -139,6 +278,12 @@ export function readJavaScriptBigIntegerResultOperation(operation) {
 /** @param {string} kind @param {string} operation @returns {boolean} */
 export function acceptLinkedJavaScriptBigIntegerResult(kind,operation) {
   return kind==='math'&&readJavaScriptBigIntegerResultOperation(operation)!=='';
+}
+/** @param {string} target @param {string} base @param {string} exponent @returns {string} */
+export function renderJavaScriptNumberPower(target,base,exponent){
+ if(target==='JavaScript')return 'ml_big_integer_conversion.powerNumber('+base+','+exponent+')';
+ if(target==='Rust')return 'crate::ml_big_integer_conversion::power_java_script_number('+base+','+exponent+')';
+ return target==='Lean'||target==='Rocq'?'(MLBigIntegerConversion.powerNumber '+base+' '+exponent+')':'';
 }
 /** @param {string} target @param {string} form @param {string} value @param {boolean} utf16 @returns {string} */
 export function renderJavaScriptBigIntegerResultExpression(target,form,value,utf16) {

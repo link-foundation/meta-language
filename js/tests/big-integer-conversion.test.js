@@ -7,7 +7,7 @@ import {createBigIntegerConversionProgramLinks} from '../src/big-integer-convers
 import {emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {divideJavaScriptBigInteger} from '../src/translation/big-integer-conversion-rules.js';
+import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,powerJavaScriptNumber} from '../src/translation/big-integer-conversion-rules.js';
 import {divideJavaScriptBigInteger as divideInteger} from '../src/big-integer-conversion.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/big-integer-conversion.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
@@ -29,6 +29,19 @@ test('every exact BigInt fixture agrees with independent built-in conversions an
  assert.throws(()=>convertJavaScriptStringBigInteger(1),TypeError);
  assert.throws(()=>convertJavaScriptNumberBigInteger('1'),TypeError);
  assert.throws(()=>convertJavaScriptBooleanBigInteger(1),TypeError);
+});
+test('power kernels retain independent integer results and exact Number boundary values',()=>{
+ for(const base of [-7n,-3n,-1n,0n,1n,2n,7n])for(let exponent=-2n;exponent<=80n;exponent+=1n){
+  const actual=powerJavaScriptBigInteger(base,exponent);
+  if(exponent<0n){assert.deepEqual(actual,[]);assert.throws(()=>base**exponent,RangeError);}
+  else assert.deepEqual(actual,[base**exponent]);
+ }
+ const values=[NaN,-Infinity,-3,-1,-0,0,1,2,9,Infinity];
+ const powers=[NaN,-Infinity,-1075,-1074,-3,-0.5,-0,0,0.5,1,2,3,64,1024,Infinity];
+ for(const base of values)for(const exponent of powers){
+  const actual=powerJavaScriptNumber(base,exponent),expected=base**exponent;
+  assert.ok(Object.is(actual,expected),String(base)+' ** '+String(exponent));
+ }
 });
 test('the full editable BigInt definition retains all emission and codec fields',()=>{
  const packet=createBigIntegerConversionProgramLinks();

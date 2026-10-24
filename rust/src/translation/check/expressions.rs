@@ -631,6 +631,18 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if op == "exponentiateJavaScriptNumericValue" {
+                    return self.javascript_exponentiation(args, span, env, path, expected);
+                }
+                if crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(
+                    op,
+                ) > 0.0
+                    || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(
+                        op,
+                    ) > 0.0
+                {
+                    return self.check_number_bitwise_operands(op, args, span, env, path, expected);
+                }
                 if !crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty(){return self.javascript_source_exception(op,args,span,env,path,expected);}
                 if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op) {
                     return self.javascript_source_exception_value(op,args,span,env,path,expected);
@@ -642,7 +654,7 @@ impl Checker {
                 }
                 if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
                     self.rust_primitive_bitwise(op, args, env, path, expected, span)
-                } else { self.math(op, name, args, span, env, path, expected) }
+                } else { self.math(op, name, args, span, env, path) }
             }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),

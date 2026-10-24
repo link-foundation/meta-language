@@ -298,6 +298,8 @@ pub fn read_scalar_assignment_operation(operator: &str) -> String {
         String::from("div")
     } else if operator == "%=" {
         String::from("rem")
+    } else if operator == "**=" {
+        String::from("exponentiateJavaScriptNumericValue")
     } else if operator == "&&=" {
         String::from("and")
     } else if operator == "||=" {

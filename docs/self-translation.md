@@ -892,3 +892,11 @@ actual IR; source policies, operations and rendering rules generate Rust.
 Complete formal exception payloads, the native default String parameter ABI,
 other String/state operations and all earlier obligations remain required.
 Future controls remain unexecuted; no behavioral or validation gate ran.
+
+Numeric source exponentiation now has a draft complete source closure for
+BigInt repeated squaring and canonical dyadic Number interval evaluation. The
+existing runtime author retains every dependency, actual binding and generated
+body across all four targets. Formal array membership is an actual shared
+emission rule, including optional primitive SameValueZero and relative bounds.
+These additions are unexecuted drafts; exact V8 approximation parity, proofs
+and formal general-recursion budgets remain required.

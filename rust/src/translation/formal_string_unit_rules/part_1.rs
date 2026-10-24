@@ -171,6 +171,95 @@ pub fn render_formal_array_slice(target: &str, value: &str, start: &str, end: &s
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn render_formal_primitive_same_value_zero(
+    target: &str,
+    kind: &str,
+    signed: bool,
+    units: bool,
+    left: &str,
+    right: &str,
+) -> String {
+    if kind == "unit" {
+        String::from("true")
+    } else if (kind == "string") && units {
+        self::render_formal_string_unit_comparison(target, "eq", left, right)
+    } else if (((((kind != "bool") && (kind != "float")) && (kind != "int")) && (kind != "nat"))
+        && (kind != "fixed"))
+        && (kind != "string")
+    {
+        String::new()
+    } else if target == "Lean" {
+        if kind == "float" {
+            format!(
+                "(({} == {}) || (({}).isNaN && ({}).isNaN))",
+                left.to_owned(),
+                right.to_owned(),
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else {
+            format!("({} == {})", left.to_owned(), right.to_owned())
+        }
+    } else if target == "Rocq" {
+        if kind == "float" {
+            format!(
+                "(orb (PrimFloat.eqb {} {}) (andb (PrimFloat.is_nan {}) (PrimFloat.is_nan {})))",
+                left.to_owned(),
+                right.to_owned(),
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else {
+            {
+                let module = if kind == "bool" {
+                    String::from("Bool")
+                } else if kind == "string" {
+                    String::from("String")
+                } else if (kind == "int") || ((kind == "fixed") && signed) {
+                    String::from("Z")
+                } else {
+                    String::from("N")
+                };
+                format!("({module}.eqb {} {})", left.to_owned(), right.to_owned())
+            }
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_formal_array_inclusion(
+    target: &str,
+    value: &str,
+    search: &str,
+    position: &str,
+    equality: &str,
+) -> String {
+    if target == "Lean" {
+        format!(
+            "(let ml_values := {}; let ml_search := {}; let ml_start := {}; let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => {}))",
+            value.to_owned(),
+            search.to_owned(),
+            position.to_owned(),
+            equality.to_owned()
+        )
+    } else if target == "Rocq" {
+        format!(
+            "(let ml_values := {} in let ml_search := {} in let ml_start := {} in let ml_length := PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_values))) in let ml_first := Z.to_nat (ml_float_index (MLUtf16Text.slicePosition ml_start ml_length)) in List.existsb (fun ml_candidate => {}) (List.skipn ml_first ml_values))",
+            value.to_owned(),
+            search.to_owned(),
+            position.to_owned(),
+            equality.to_owned()
+        )
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_formal_string_unit_literal(target: &str, units: &[String]) -> String {
     if target == "Lean" {
         format!(

@@ -19,3 +19,12 @@ pub use part_1::*;
 #[path = "big_integer_conversion_rules/part_2.rs"]
 mod part_2;
 pub use part_2::*;
+#[path = "big_integer_conversion_rules/part_3.rs"]
+mod part_3;
+pub use part_3::*;
+#[path = "big_integer_conversion_rules/part_4.rs"]
+mod part_4;
+pub use part_4::*;
+#[path = "big_integer_conversion_rules/part_5.rs"]
+mod part_5;
+pub use part_5::*;

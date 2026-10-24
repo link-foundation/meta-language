@@ -54,6 +54,40 @@ pub(super) trait Emitter {
     fn unit_text(&mut self, value: &Expr, depth: usize, console: bool) -> Result<String>;
     fn unit_helper(&mut self, name: &'static str);
 }
+
+fn inclusion_equality(
+    target: &str,
+    ty: &Type,
+    units: bool,
+    left: &str,
+    right: &str,
+) -> Result<String> {
+    if let Type::Option { element, absence } = ty {
+        let compare = inclusion_equality(target, element, units, "ml_left", "ml_right")?;
+        return Ok(
+            super::optional_value_rules::render_optional_strict_equality(
+                target, "option", absence, "option", absence, &compare, left, right, false,
+            ),
+        );
+    }
+    let signed = matches!(ty, Type::Fixed { signed: true, .. });
+    let result = rules::render_formal_primitive_same_value_zero(
+        target,
+        ty.kind(),
+        signed,
+        units,
+        left,
+        right,
+    );
+    if result.is_empty() {
+        return Err(unsupported(
+            "formal array includes element",
+            "the element needs its source SameValueZero interpretation",
+            None,
+        ));
+    }
+    Ok(result)
+}
 pub(super) fn literal(target: &str, text: &str) -> String {
     rules::render_formal_string_unit_literal(
         target,
@@ -125,6 +159,33 @@ pub(super) fn expression<E: Emitter>(
     depth: usize,
 ) -> Result<Option<String>> {
     if let Node::Method { object, op, args } = &value.node {
+        if let Type::Array { element, .. } = &object.ty
+            && op == "includes"
+        {
+            emitter.unit_helper("utf16Text");
+            if emitter.unit_target() == "Rocq" {
+                emitter.unit_helper("floatIndex");
+            }
+            let equality = inclusion_equality(
+                emitter.unit_target(),
+                element,
+                emitter.unit_enabled(),
+                "ml_candidate",
+                "ml_search",
+            )?;
+            let object = emitter.unit_expr(object, depth)?;
+            let search =
+                emitter.unit_expr(args[0].as_ref().expect("checked includes search"), depth)?;
+            let position =
+                emitter.unit_expr(args[1].as_ref().expect("checked includes position"), depth)?;
+            return Ok(Some(rules::render_formal_array_inclusion(
+                emitter.unit_target(),
+                &object,
+                &search,
+                &position,
+                &equality,
+            )));
+        }
         if object.ty.kind() == "array" && op == "slice" {
             emitter.unit_helper("utf16Text");
             if emitter.unit_target() == "Rocq" {

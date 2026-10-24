@@ -325,10 +325,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         if(units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw new TypeError('a JavaScript UTF16 literal needs complete integral code units');
       }else if(acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)){
         const form=readJavaScriptBigIntegerResultOperation(node.op);
-        if(form==='division'){
+        if(form==='division'||form==='power'||form==='number-power'){
           if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2)throw new TypeError('a BigInt division intrinsic needs two actual source operands');
-          for(const argument of node.args)same(argument.type,{kind:'int'},'BigInt division operand type');
-          same(node.type,{kind:'array',element:{kind:'int'}},'BigInt division result column type');
+          for(const argument of node.args)same(argument.type,{kind:form==='number-power'?'float':'int'},'numeric arithmetic operand type');
+          same(node.type,form==='number-power'?{kind:'float'}:{kind:'array',element:{kind:'int'}},'numeric arithmetic result type');
         }else{
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a BigInt intrinsic needs one actual source operand');
         same(node.args[0].type,{kind:form==='string'?'string':form==='number'?'float':'bool'},'BigInt intrinsic operand type');

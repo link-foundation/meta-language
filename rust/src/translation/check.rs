@@ -38,6 +38,7 @@ mod callables;
 mod collection_access;
 mod collections;
 mod expectation;
+mod exponentiation;
 mod expressions;
 mod externals;
 mod items;

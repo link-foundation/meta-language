@@ -20,7 +20,7 @@ import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import {readJavaScriptNumberBuiltinOperation,readJavaScriptPrimitiveUnaryOperation} from './string-number-rules.js';
 import {readJavaScriptExceptionConstructorOperation} from './source-exception-rules.js';
-import {readJavaScriptBigIntegerBuiltinOperation} from './big-integer-conversion-rules.js';
+import {readJavaScriptBigIntegerBuiltinOperation,acceptJavaScriptExponentiationBase} from './big-integer-conversion-rules.js';
 import {createJavaScriptStringLiteral} from './javascript-string-literals.js';
 import {readJavaScriptStringConstructionOperation} from './string-construction-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
@@ -1234,6 +1234,9 @@ class JavaScriptParser {
     } else if (COMPOUND[op]) {
       const right = this.expr();
       value = { k: 'binary', op: COMPOUND[op], left: read, right, span: joined(read, right, start) };
+    } else if(op==='**='){
+      const right=this.expr();
+      value={k:'math',op:'exponentiateJavaScriptNumericValue',name:op,args:[{value:read,spread:false},{value:right,spread:false}],span:joined(read,right,start)};
     } else if (readJavaScriptNumberBitwiseAssignment(op)) {
       const right = this.expr();
       value = {k:'math', op:readJavaScriptNumberBitwiseAssignment(op), name:op,
@@ -2122,8 +2125,13 @@ class JavaScriptParser {
 
   exponent() {
     const c = this.cursor;
+    const start=c.peek();
     const left = this.unary();
-    if (c.is('**')) throw unsupported('exponentiation', 'powers are outside the portable core; use recursion', span(c.peek(), c.peek()));
+    if(c.eat('**')){
+      if(!acceptJavaScriptExponentiationBase(start.value,Boolean(left.parenthesized)))throw new TranslationError('syntax','an unparenthesized unary expression cannot be the left operand of exponentiation',span(start,start));
+      const right=this.exponent();
+      return{k:'math',op:'exponentiateJavaScriptNumericValue',name:'**',args:[{value:left,spread:false},{value:right,spread:false}],span:joined(left,right,start)};
+    }
     return left;
   }
 

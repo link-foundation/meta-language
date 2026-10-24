@@ -3,7 +3,9 @@ import {convertJavaScriptStringBigIntegerUnits as readStringIntegerResult,
   convertJavaScriptNumberBigInteger as readNumberIntegerResult,
   convertJavaScriptBooleanBigInteger as readBooleanIntegerResult,
   readJavaScriptBigIntegerConversionErrorClass,renderJavaScriptBigIntegerConversionMessage,
-  divideJavaScriptBigInteger as readDivisionResult,readJavaScriptBigIntegerDivisionMessage} from './translation/big-integer-conversion-rules.js';
+  divideJavaScriptBigInteger as readDivisionResult,readJavaScriptBigIntegerDivisionMessage,
+  powerJavaScriptBigInteger as readPowerResult,readJavaScriptBigIntegerExponentMessage,
+  powerJavaScriptNumber as readNumberPower} from './translation/big-integer-conversion-rules.js';
 
 const unitsOf=text=>Array.from({length:text.length},(_,index)=>text.charCodeAt(index));
 function conversionError(form,value) {
@@ -52,4 +54,15 @@ export function divideJavaScriptBigInteger(left,right){
   const result=readDivisionResult(left,right);
   if(result.length!==2)throw new RangeError(readJavaScriptBigIntegerDivisionMessage());
   return result;
+}
+
+export function powerJavaScriptBigInteger(base,exponent){
+ if(typeof base!=='bigint'||typeof exponent!=='bigint')throw new TypeError('BigInt exponentiation needs actual BigInt operands');
+ const result=readPowerResult(base,exponent);
+ if(result.length!==1)throw new RangeError(readJavaScriptBigIntegerExponentMessage());
+ return result[0];
+}
+export function powerJavaScriptNumber(base,exponent){
+ if(typeof base!=='number'||typeof exponent!=='number')throw new TypeError('Number exponentiation needs actual Number operands');
+ return readNumberPower(base,exponent);
 }

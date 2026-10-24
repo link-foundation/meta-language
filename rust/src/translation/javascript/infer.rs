@@ -710,8 +710,9 @@ impl Inference {
                 if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
                     for item in args {
                         let value=self.expr(&item.value,env)?;
-                        if crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="division" {self.unify(&value,&Term::Known(INT),expr.span)?;}
+                        if matches!(crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op).as_str(),"division"|"power"|"number-power") {self.unify(&value,&Term::Known(if crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="number-power"{FLOAT}else{INT}),expr.span)?;}
                     }
+                    if crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="number-power"{return Ok(Term::Known(FLOAT));}
                     return Ok(if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="boolean" {Term::Known(INT)}else{Term::Array(Box::new(Term::Known(INT)))});
                 }
                 if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op)||!crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty() {
@@ -730,7 +731,8 @@ impl Inference {
                 ) > 0.0
                     || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(
                         op,
-                    ) > 0.0)
+                    ) > 0.0
+                    || op == "exponentiateJavaScriptNumericValue")
                     && !args.is_empty()
                 {
                     let values = args

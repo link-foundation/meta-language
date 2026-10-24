@@ -29,6 +29,7 @@ if(!header)throw new TypeError('complete library attributes are required');
 const definition=createDefinition();
 process.stdout.write(structuredDataToLino({sourceLanguage:'JavaScript',source:fixture.source,cases,refusals,...(fixture.sourceSyntaxOracle?{sourceSyntaxOracle:true}:{}),...(fixture.lexicalCases?{lexicalCases:fixture.lexicalCases,lexicalErrors:fixture.lexicalErrors}:{}),root:packet.root.asU64(),links:packet.network.toLino(),definitionRoot:definition.root.asU64(),definitionLinks:definition.network.toLino(),
  ...(fixture.unitLexicalCases?{unitLexicalCases:fixture.unitLexicalCases}:{}),
+ ...(fixture.syntaxCases?{syntaxCases:fixture.syntaxCases.map(row=>({...row,originalSyntax:readJavaScriptModuleSyntaxError(row.source)}))}:{}),
  emissions:Object.fromEntries(['JavaScript','Rust','Lean','Rocq'].map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)])),nativeLibrary:[header,...rust.preludes,...rust.definitions].join('\n\n')}));
 
 }

@@ -93,8 +93,11 @@ pub fn convert_javascript_boolean_big_integer(value: bool) -> JavaScriptBigInteg
 /// A source arithmetic error retaining class, units and own-message presence.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct JavaScriptBigIntegerArithmeticError {
+    /// Original ECMAScript error constructor.
     pub class_name: String,
+    /// Every source UTF-16 message unit.
     pub message_units: Vec<u16>,
+    /// Whether the source error owns its message property.
     pub message_present: bool,
 }
 impl std::fmt::Display for JavaScriptBigIntegerArithmeticError {
@@ -129,4 +132,32 @@ pub fn divide_javascript_big_integer(
         values.next().expect("complete quotient"),
         values.next().expect("complete remainder"),
     ))
+}
+
+/// Raise an exact integer to a nonnegative integer exponent.
+///
+/// # Errors
+/// Returns the source RangeError for a negative exponent.
+pub fn power_javascript_big_integer(
+    base: JavaScriptBigInteger,
+    exponent: JavaScriptBigInteger,
+) -> Result<JavaScriptBigInteger, JavaScriptBigIntegerArithmeticError> {
+    let mut result = rules::power_java_script_big_integer(base, exponent);
+    if result.len() != 1 {
+        return Err(JavaScriptBigIntegerArithmeticError {
+            class_name: super::source_exception_rules::read_java_script_source_exception_class(
+                "raiseJavaScriptRangeError",
+            ),
+            message_units: rules::read_java_script_big_integer_exponent_message()
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        });
+    }
+    Ok(result.pop().expect("complete power result"))
+}
+/// Canonical dyadic Number exponentiation through complete shared intervals.
+#[must_use]
+pub fn power_javascript_number(base: f64, exponent: f64) -> f64 {
+    rules::power_java_script_number(base, exponent)
 }

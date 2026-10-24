@@ -6022,3 +6022,41 @@ Assertions select explicit Node version ranges and refuse uncovered runtimes.
 These controls are authored only. Object/Symbol conversion, mixed numeric
 ordering, optional dynamic numeric domains, exponentiation and every remaining
 requirement still need implementation. No code tests or validation gates ran.
+
+### Exponentiation and formal membership draft
+
+Both source frontends now draft right-associative `**` and local `**=` through
+the actual shared assignment construction plan. Unparenthesized unary bases
+remain syntax errors; parenthesized bases and unary right operands keep their
+source grouping. Primitive ToNumeric selects Number or BigInt, retains mixed
+type errors and evaluates arguments before arithmetic validation.
+
+BigInt powers use complete unbounded repeated squaring and retain the source
+RangeError for a negative exponent. Number powers have a complete canonical
+dyadic algorithm: exact binary decomposition, independently normalized directed
+integer interval endpoints, integer square roots and repeated squaring. Exact
+rational conversion rounds both endpoints to binary64; precision increases
+until they agree. Exponents remain unbounded integers while significands stay
+bounded by the selected precision. No host pow/log/exp, floating intermediate
+approximation or semantic precision ceiling supplies the result. Special cases
+retain NaN, infinities, signed zero, negative bases, overflow and subnormals.
+The actual source generates native libraries, all runtime bodies and editable
+definition graphs. Public JavaScript and Rust APIs expose the same definitions.
+
+ECMAScript permits implementation-approximated Number exponentiation. The new
+canonical algorithm is a source draft; correct-rounding proofs, exact V8
+approximation parity over the required source domains, resource behavior and
+formal general-recursion budgets remain obligations. Existing exact original
+source oracles are not relaxed. Neither an authored algorithm nor generated
+source establishes that those obligations pass. The syntax and arithmetic
+follow [exponentiation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-exp-operator)
+and [the numeric definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-exponentiate).
+
+The source-runtime author also exposed the missing formal array membership
+path. Both formal hosts now draft includes for admitted primitive and optional
+elements, with SameValueZero at NaN and signed zero, distinct absence tags,
+exact unit-string equality and shared relative-position bounds. Receiver,
+search and start values bind once in order. Structured-object searches retain
+their identity obligation. Future original values/errors/grouping/syntax,
+primitive membership, program/definition codecs and four-emission controls are
+authored only. No code tests, oracles or validation gates ran.

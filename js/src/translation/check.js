@@ -13,7 +13,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
-import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision} from './javascript-big-integer-conversion.js';
+import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision,checkJavaScriptExponentiation} from './javascript-big-integer-conversion.js';
 import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
@@ -1216,6 +1216,7 @@ class Checker {
       return{k:'math',op:node.op,args:[units],type:STRING};
     }
     if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
+    if(node.op==='exponentiateJavaScriptNumericValue')return checkJavaScriptExponentiation(this,node,env,path,expected);
     if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
     if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);
     if(acceptLinkedJavaScriptSourceException('math',node.op))return checkJavaScriptSourceExceptionValue(this,node,env,path,expected);

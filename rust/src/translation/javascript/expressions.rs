@@ -349,13 +349,26 @@ impl JavaScriptParser {
     }
 
     pub(super) fn exponent(&mut self) -> Result<SExpr> {
+        let start = self.peek();
         let left = self.unary()?;
-        if self.cursor.is("**") {
-            let token = self.peek();
-            return Err(unsupported(
-                "exponentiation",
-                "powers are outside the portable core; use recursion",
-                Some(span(&token, &token)),
+        if self.cursor.eat("**").is_some() {
+            let parenthesized = left
+                .parenthesized
+                .as_ref()
+                .and_then(SurfaceRawMetadata::as_boolean)
+                .unwrap_or(false);
+            if !crate::translation::big_integer_conversion_rules::accept_java_script_exponentiation_base(&start.value,parenthesized){
+                return Err(Self::fail("an unparenthesized unary expression cannot be the left operand of exponentiation",&start));
+            }
+            let right = self.exponent()?;
+            let place = joined(&left, &right, &start);
+            return Ok(node(
+                SNode::Math {
+                    op: "exponentiateJavaScriptNumericValue".to_owned(),
+                    name: "**".to_owned(),
+                    args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
+                },
+                place,
             ));
         }
         Ok(left)

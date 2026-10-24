@@ -969,7 +969,8 @@ class Inference {
           return STRING;
         }
         if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
-          for(const item of node.args){const value=this.expr(item.value,env);if(readJavaScriptBigIntegerResultOperation(node.op)==='division')this.unify(value,INT,node.span);}
+          for(const item of node.args){const value=this.expr(item.value,env);if(['division','power','number-power'].includes(readJavaScriptBigIntegerResultOperation(node.op)))this.unify(value,readJavaScriptBigIntegerResultOperation(node.op)==='number-power'?FLOAT:INT,node.span);}
+          if(readJavaScriptBigIntegerResultOperation(node.op)==='number-power')return FLOAT;
           return node.op==='convertJavaScriptBigInteger'||readJavaScriptBigIntegerResultOperation(node.op)==='boolean'?INT:{kind:'array',element:INT};
         }
         if(acceptLinkedJavaScriptSourceException('math',node.op)||readJavaScriptExceptionConstructorClass(node.op)){
@@ -980,7 +981,7 @@ class Inference {
           for(const item of node.args)this.expr(item.value,env);
           return readJavaScriptNumberConversionResult(node.op)==='bool'?BOOL:FLOAT;
         }
-        if ((readJavaScriptNumberBitwiseArity(node.op) || readBigIntegerBitwiseArity(node.op)) && node.args.length > 0) {
+        if ((readJavaScriptNumberBitwiseArity(node.op) || readBigIntegerBitwiseArity(node.op)||node.op==='exponentiateJavaScriptNumericValue') && node.args.length > 0) {
           const values = node.args.map(item => this.expr(item.value, env)), result = this.fresh();
           this.arithmetic.push({ left: values[0], right: values[1], result, where: node.span,operation:node.op });
           return result;

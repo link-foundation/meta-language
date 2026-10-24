@@ -30,7 +30,7 @@ import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
 import {STRING_NUMBER_PRELUDE} from './string-number-runtime.js';
 import {SOURCE_EXCEPTION_PRELUDE} from './source-exception-runtime.js';
 import {BIG_INTEGER_CONVERSION_PRELUDE} from './big-integer-conversion-runtime.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower} from './big-integer-conversion-rules.js';
 import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
@@ -1506,7 +1506,9 @@ class RustEmitter {
     if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.usesBig=true;this.usesBigIntegerConversion=true;
-      if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+      if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);
     }
     if(acceptLinkedJavaScriptSourceException(e.k,e.op)){

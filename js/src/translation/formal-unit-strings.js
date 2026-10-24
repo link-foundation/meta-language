@@ -5,7 +5,8 @@ import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructio
 import {acceptLinkedJavaScriptNumberConversion} from './string-number-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
 import {unsupported} from './diagnostics.js';
-import {renderOptionalProjection} from './optional-value-rules.js';
+import {renderOptionalProjection,renderOptionalStrictEquality} from './optional-value-rules.js';
+import {renderFormalPrimitiveSameValueZero,renderFormalArrayInclusion} from './formal-string-unit-rules.js';
 
 export function requireFormalUnitStrings(program){
  if(program.utf16Strings)return true;
@@ -32,6 +33,17 @@ export function formalUnitLength(emitter,value){return emitter.target==='Lean'?'
 export function formalUnitTruth(emitter,value){return emitter.target==='Lean'?'(!('+value+').isEmpty)':'(match '+value+' with nil => false | _ => true end)';}
 
 export function readFormalUnitStringExpression(emitter,e,depth=0){
+ if(e.k==='method'&&e.object.type.kind==='array'&&e.op==='includes'){
+  emitter.helpers.add('utf16Text');
+  if(emitter.target==='Rocq'){emitter.floats();emitter.helpers.add('floatIndex');}
+  const equal=(type,left,right)=>{
+   if(type.kind==='option')return renderOptionalStrictEquality(emitter.target,'option',type.absence,'option',type.absence,equal(type.element,'ml_left','ml_right'),left,right,false);
+   const value=renderFormalPrimitiveSameValueZero(emitter.target,type.kind,Boolean(type.signed),emitter.utf16Strings,left,right);
+   if(!value)throw unsupported('formal array includes element','the element needs its source SameValueZero interpretation',e.span);
+   return value;
+  };
+  return renderFormalArrayInclusion(emitter.target,emitter.expr(e.object,depth),emitter.expr(e.args[0],depth),emitter.expr(e.args[1],depth),equal(e.object.type.element,'ml_candidate','ml_search'));
+ }
  if(e.k==='method'&&e.object.type.kind==='array'&&e.op==='slice'){
   emitter.helpers.add('utf16Text');
   if(emitter.target==='Rocq'){emitter.floats();emitter.helpers.add('floatIndex');}

@@ -18,6 +18,8 @@ impl JavaScriptEmitter<'_> {
         if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
             self.helpers.insert(super::Helper::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
+            if form=="number-power" {return Ok(crate::translation::big_integer_conversion_rules::render_java_script_number_power("JavaScript",&args[0],&args[1]));}
+            if form=="power" {return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_power("JavaScript",&args[0],&args[1]));}
             if form=="division" {return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_division("JavaScript",&args[0],&args[1]));}
             return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("JavaScript",&form,&args[0],false));
         }

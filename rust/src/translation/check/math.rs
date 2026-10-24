@@ -20,7 +20,6 @@ impl Checker {
         span: Option<Span>,
         env: &Env,
         path: &[String],
-        expected: Option<&Type>,
     ) -> Result<Expr> {
         if op == "constructJavaScriptStringFromCharacterCodes"
             || op == "constructJavaScriptStringFromCodePoints"
@@ -44,14 +43,6 @@ impl Checker {
             .is_empty()
         {
             return self.javascript_number_builtin(op, args, span, env, path);
-        }
-        let bitwise_arity =
-            crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(op);
-        if bitwise_arity > 0.0
-            || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(op)
-                > 0.0
-        {
-            return self.check_number_bitwise_operands(op, args, span, env, path, expected);
         }
         let ty = if PREDICATES.contains(&op) {
             BOOL

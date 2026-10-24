@@ -10,6 +10,7 @@ export function readScalarAssignmentOperation(operator) {
   if (operator === '*=') return 'mul';
   if (operator === '/=') return 'div';
   if (operator === '%=') return 'rem';
+  if (operator === '**=') return 'exponentiateJavaScriptNumericValue';
   if (operator === '&&=') return 'and';
   if (operator === '||=') return 'or';
   if (operator === '??=') return 'coalesce';

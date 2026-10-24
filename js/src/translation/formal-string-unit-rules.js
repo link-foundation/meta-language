@@ -16,6 +16,25 @@ export function renderFormalArraySlice(target,value,start,end){
  if(target==='Rocq')return '(let ml_values := '+value+' in let ml_begin := '+start+' in let ml_end := '+end+' in let ml_length := PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_values))) in let ml_first := Z.to_nat (ml_float_index (MLUtf16Text.slicePosition ml_begin ml_length)) in let ml_last := Z.to_nat (ml_float_index (MLUtf16Text.slicePosition ml_end ml_length)) in List.firstn (Nat.sub ml_last ml_first) (List.skipn ml_first ml_values))';
  return '';
 }
+/** SameValueZero differs from equality only at NaN in these primitive domains.
+ * @param {string} target @param {string} kind @param {boolean} signed @param {boolean} units @param {string} left @param {string} right @returns {string} */
+export function renderFormalPrimitiveSameValueZero(target,kind,signed,units,left,right){
+ if(kind==='unit')return 'true';
+ if(kind==='string'&&units)return renderFormalStringUnitComparison(target,'eq',left,right);
+ if(kind!=='bool'&&kind!=='float'&&kind!=='int'&&kind!=='nat'&&kind!=='fixed'&&kind!=='string')return '';
+ if(target==='Lean')return kind==='float'?'(('+left+' == '+right+') || (('+left+').isNaN && ('+right+').isNaN))':'('+left+' == '+right+')';
+ if(target!=='Rocq')return '';
+ if(kind==='float')return '(orb (PrimFloat.eqb '+left+' '+right+') (andb (PrimFloat.is_nan '+left+') (PrimFloat.is_nan '+right+')))';
+ const module=kind==='bool'?'Bool':kind==='string'?'String':kind==='int'||kind==='fixed'&&signed?'Z':'N';
+ return '('+module+'.eqb '+left+' '+right+')';
+}
+/** Bind receiver/search/position once, then use the shared relative bound.
+ * @param {string} target @param {string} value @param {string} search @param {string} position @param {string} equality @returns {string} */
+export function renderFormalArrayInclusion(target,value,search,position,equality){
+ if(target==='Lean')return '(let ml_values := '+value+'; let ml_search := '+search+'; let ml_start := '+position+'; let ml_length := Float.ofNat ml_values.size; let ml_first := (MLUtf16Text.slicePosition ml_start ml_length).toUInt64.toNat; (ml_values.extract ml_first ml_values.size).any (fun ml_candidate => '+equality+'))';
+ if(target==='Rocq')return '(let ml_values := '+value+' in let ml_search := '+search+' in let ml_start := '+position+' in let ml_length := PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length ml_values))) in let ml_first := Z.to_nat (ml_float_index (MLUtf16Text.slicePosition ml_start ml_length)) in List.existsb (fun ml_candidate => '+equality+') (List.skipn ml_first ml_values))';
+ return '';
+}
 /** @param {string} target @param {string[]} units @returns {string} */
 export function renderFormalStringUnitLiteral(target,units){
  if(target==='Lean')return '(#['+units.join(', ')+'] : Array Nat)';

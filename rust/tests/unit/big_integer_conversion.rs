@@ -16,6 +16,15 @@ fn source_big_integer_division_retains_signed_values_error_fields_and_argument_o
 }
 
 #[test]
+fn exponentiation_retains_original_powers_errors_signs_order_and_codecs() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/big-integer-conversion/power-source-oracle.mjs",
+        "JavaScript numeric exponentiation",
+        create_big_integer_conversion_program_links,
+    );
+}
+
+#[test]
 fn public_division_retains_exact_quotient_remainder_and_structured_source_error() {
     for (left, right, quotient, remainder) in [
         ("7", "3", "2", "1"),

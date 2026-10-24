@@ -257,7 +257,10 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
-        if rules::read_java_script_big_integer_result_operation(operation) == "division" {
+        if matches!(
+            rules::read_java_script_big_integer_result_operation(operation).as_str(),
+            "division" | "power" | "number-power"
+        ) {
             if self.language != Language::JavaScript
                 || arguments.len() != 2
                 || arguments.iter().any(|argument| argument.spread)
@@ -267,10 +270,13 @@ impl Checker {
                     span,
                 ));
             }
+            let numeric =
+                rules::read_java_script_big_integer_result_operation(operation) == "number-power";
+            let operand = if numeric { FLOAT } else { INT };
             let mut args = Vec::new();
             for argument in arguments {
-                let value = self.expr(&argument.value, env, path, Some(&INT), false)?;
-                if value.ty != INT {
+                let value = self.expr(&argument.value, env, path, Some(&operand), false)?;
+                if value.ty != operand {
                     return Err(type_error(
                         "a JavaScript BigInt division intrinsic needs its actual integer operands",
                         span,
@@ -283,7 +289,7 @@ impl Checker {
                     op: operation.to_owned(),
                     args,
                 },
-                array(INT),
+                if numeric { FLOAT } else { array(INT) },
             ));
         }
         if self.language != Language::JavaScript || arguments.len() != 1 || arguments[0].spread {
@@ -335,12 +341,34 @@ impl Checker {
         ) {
             return None;
         }
-        let name = self.fresh_name("ml_integer_division");
+        Some(self.big_integer_arithmetic_result(
+            "divideJavaScriptBigIntegerResult",
+            vec![left.clone(), right.clone()],
+            "2",
+            if operation == BinaryOp::Div { "0" } else { "1" },
+            rules::read_java_script_big_integer_division_message(),
+        ))
+    }
+
+    pub(super) fn big_integer_arithmetic_result(
+        &mut self,
+        operation: &str,
+        arguments: Vec<Expr>,
+        count: &str,
+        index: &str,
+        message: String,
+    ) -> Expr {
+        let stem = if operation == "powerJavaScriptBigIntegerResult" {
+            "ml_integer_power"
+        } else {
+            "ml_integer_division"
+        };
+        let name = self.fresh_name(stem);
         let result = Expr::var(name.clone(), array(INT));
         let conversion = Expr::new(
             Node::Math {
-                op: "divideJavaScriptBigIntegerResult".to_owned(),
-                args: vec![left.clone(), right.clone()],
+                op: operation.to_owned(),
+                args: arguments,
             },
             array(INT),
         );
@@ -354,7 +382,7 @@ impl Checker {
             binary_node(
                 BinaryOp::Eq,
                 Box::new(length),
-                Box::new(Expr::lit(FLOAT, LitValue::Text("2".to_owned()))),
+                Box::new(Expr::lit(FLOAT, LitValue::Text(count.to_owned()))),
                 Some(FLOAT),
                 None,
                 None,
@@ -362,10 +390,7 @@ impl Checker {
             ),
             BOOL,
         );
-        let index = Expr::lit(
-            FLOAT,
-            LitValue::Text(if operation == BinaryOp::Div { "0" } else { "1" }.to_owned()),
-        );
+        let index = Expr::lit(FLOAT, LitValue::Text(index.to_owned()));
         let optional = Expr::new(
             Node::OptionalIndex {
                 array: Box::new(result),
@@ -383,10 +408,7 @@ impl Checker {
         let failure = Expr::new(
             Node::Math {
                 op: "raiseJavaScriptRangeError".to_owned(),
-                args: vec![
-                    text(rules::read_java_script_big_integer_division_message()),
-                    Expr::lit(BOOL, LitValue::Bool(true)),
-                ],
+                args: vec![text(message), Expr::lit(BOOL, LitValue::Bool(true))],
             },
             INT,
         );
@@ -398,13 +420,13 @@ impl Checker {
             },
             INT,
         );
-        Some(Expr::new(
+        Expr::new(
             Node::Let {
                 name,
                 value: Box::new(conversion),
                 body: Box::new(body),
             },
             INT,
-        ))
+        )
     }
 }
