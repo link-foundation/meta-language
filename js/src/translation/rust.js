@@ -6,6 +6,7 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
+import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath } from './rust-records.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -105,6 +106,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
+  syntax.namedRecords = new Map(declarations.namedRecords);
   const surface = syntax.file();
   // Preserve syntax trees and the existing checker's diagnostic precedence
   // for programs that already cannot enter the canonical semantic core.
@@ -114,6 +116,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   }
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.aliases = syntax.aliases;
+  parser.namedRecords = new Map(syntax.namedRecords);
   return parser.file();
 }
 
@@ -147,6 +150,8 @@ class RustParser {
     this.primitiveImportNames=new Set();
     this.sourceOwnerFrames = [];
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
+    this.namedRecords = new Map();
+    this.hasRecordDeclarations = tokens.some(token => token.kind === 'identifier' && token.value === 'struct');
     this.productBindingCount = 0;
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = false;
@@ -281,6 +286,10 @@ class RustParser {
       }
       if (c.is('enum')) {
         items.push(this.enumItem(path,derivations));
+        continue;
+      }
+      if (c.is('struct')) {
+        items.push(readRustRecordItem(this,path));
         continue;
       }
       if (c.is('fn') || c.is('const')) {
@@ -1093,13 +1102,19 @@ class RustParser {
           const number = this.tupleIndexToken();
           const index = Number(number.raw);
           if (!Number.isSafeInteger(index)) throw unsupported('tuple index', 'the positional index exceeds the exact supported integer range', { start: number.start, end: number.end });
+          const recordProjection=readRustRecordProjection(this,value,number.raw,path,{start:value.span?.start??token.start,end:number.end});
+          if(recordProjection){value=recordProjection;continue;}
           value = this.origins.project({ k: 'tupleIndex', object: value, index, span: { start: value.span?.start ?? token.start, end: number.end } }, path, index);
           continue;
         }
         const method = c.identifier('method');
         const ascii = readRustAsciiTextPredicate(this, value, method, path);
         if (ascii) { value = ascii; continue; }
-        if (!c.is('(')) throw unsupported('field access', `field ${method.value} is outside the portable core`, span(token, method));
+        if (!c.is('(')) {
+          const recordProjection=readRustRecordProjection(this,value,method.value,path,span(token,method));
+          if(recordProjection){value=recordProjection;continue;}
+          throw unsupported('field access', `field ${method.value} is outside the portable core`, span(token, method));
+        }
         c.next();
         const args = [];
         while (!c.is(')')) {
@@ -1332,12 +1347,13 @@ class RustParser {
         return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element), path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
       }
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
-      if (c.is('{') && /^[A-Z]/u.test(segments.at(-1)) && !options.noStruct) {
-        throw unsupported('struct literal', 'named fields are outside the Rust frontend', span(token, c.peek()));
+      if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordDeclarations) && !options.noStruct) {
+        return readRustRecordConstruction(this,segments,path,token);
       }
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
       if(sharedConstruction)return sharedConstruction;
-      if (!c.is('(')) return noteRustSharedArrayHandleName(this,{ k: 'name', path: this.resolve(segments, path), span: span(token, token) },path);
+      const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
+      if (!c.is('(')) return noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??this.resolve(segments, path), span: span(token, token) },path);
       c.next();
       const args = [];
       while (!c.is(')')) {
@@ -1346,6 +1362,10 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      if(recordValuePath){
+        this.origins.call(recordValuePath,args,path,range);
+        return args.length?{k:'app',fn:{k:'name',path:recordValuePath,span:span(token,token)},args,span:range}:{k:'name',path:recordValuePath,span:range};
+      }
       const sharedCall=readRustSharedArrayHandleCall(this,segments,args,path,range);
       if(sharedCall)return sharedCall;
       const emptyString = readRustEmptyStringConstructor(this, segments, args, path, range);

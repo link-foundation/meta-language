@@ -40,3 +40,7 @@ parity controls.
 Draft checked Rust shifts with explicit overflow continuations, exact count
 owners, shared mathematical definitions and four target constructors; author
 complete original-Rust value and abort controls for later CI execution.
+Draft owned nominal Rust records through existing datatype and match concepts,
+retaining named/tuple/unit construction, source field order, qualified owners,
+aliases and nested projection; publish the complete shared rule definitions as
+typed Links and author original-Rust/codec/parity controls for later CI.

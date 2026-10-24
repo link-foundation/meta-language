@@ -48,6 +48,7 @@ mod product_rules;
 pub(crate) mod pure_unit_call_rules;
 mod pure_unit_calls;
 mod read_only_query_rules;
+mod records;
 mod scalar_loops;
 mod scalar_parameter_rules;
 mod scalar_parameters;
@@ -396,6 +397,7 @@ fn parse_rust_with_selected_profiles(
     );
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
+    syntax.named_records = declarations.named_records;
     let surface = syntax.file()?;
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
@@ -413,6 +415,7 @@ fn parse_rust_with_selected_profiles(
     parser.origins.unit_clone_facts = syntax.origins.unit_clone_facts;
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
+    parser.named_records = syntax.named_records;
     parser.file()
 }
 
@@ -506,6 +509,8 @@ struct RustParser {
     scalar_loop_active: bool,
     source_owner_frames: Vec<Vec<super::source_signatures::SourceOwner>>,
     reserved_binding_names: HashSet<String>,
+    named_records: HashMap<String, records::NamedRecord>,
+    has_record_declarations: bool,
     next_product_binding: usize,
     lifetime_bindings: HashSet<String>,
     lifetime_header: bool,
@@ -524,6 +529,9 @@ impl RustParser {
             .filter(|token| token.kind == TokenKind::Identifier)
             .map(|token| token.value.clone())
             .collect();
+        let has_record_declarations = tokens
+            .iter()
+            .any(|token| token.kind == TokenKind::Identifier && token.value == "struct");
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
@@ -575,6 +583,8 @@ impl RustParser {
             scalar_loop_active: false,
             source_owner_frames: Vec::new(),
             reserved_binding_names,
+            named_records: HashMap::new(),
+            has_record_declarations,
             next_product_binding: 0,
             lifetime_bindings: HashSet::new(),
             lifetime_header: false,

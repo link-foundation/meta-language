@@ -66,6 +66,7 @@ export { createBigIntegerBitwiseProgramLinks } from './big-integer-bitwise-progr
 export { createRustPrimitiveBitwiseProgramLinks } from './rust-primitive-bitwise-program.js';
 export { createArrayStateMethodProgramLinks } from './array-state-method-program.js';
 export { createRustShiftProgramLinks } from './rust-shift-program.js';
+export { createRustRecordProgramLinks } from './rust-record-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';

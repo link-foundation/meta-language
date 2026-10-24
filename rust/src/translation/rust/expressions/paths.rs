@@ -135,17 +135,14 @@ impl RustParser {
             .last()
             .and_then(|segment| segment.chars().next())
             .is_some_and(|first| first.is_ascii_uppercase());
-        if c.is("{") && last_is_upper && !options.no_struct {
-            return Err(unsupported(
-                "struct literal",
-                "named fields are outside the Rust frontend",
-                span(token, c.peek()),
-            ));
+        if c.is("{") && (last_is_upper || self.has_record_declarations) && !options.no_struct {
+            return self.record_construction(&segments, path, token);
         }
+        let record_path = self.record_value_path(&segments, path, c.is("("));
         if !c.is("(") {
             let node = SExpr::new(
                 SNode::Name {
-                    path: self.resolve(&segments, path),
+                    path: record_path.unwrap_or_else(|| self.resolve(&segments, path)),
                 },
                 span(token, token),
             );
@@ -156,6 +153,21 @@ impl RustParser {
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if let Some(record_path) = record_path {
+            self.origins.call(&record_path, &args, path, range)?;
+            let function = SExpr::new(SNode::Name { path: record_path }, span(token, token));
+            return Ok(if args.is_empty() {
+                SExpr::new(function.node, range)
+            } else {
+                SExpr::new(
+                    SNode::App {
+                        func: Box::new(function),
+                        args,
+                    },
+                    range,
+                )
+            });
+        }
         if let Some(shared) = self.shared_array_call(&segments, &args, path, range)? {
             return Ok(shared);
         }

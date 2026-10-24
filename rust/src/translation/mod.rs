@@ -101,6 +101,8 @@ pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_primitive_bitwise;
 pub(crate) mod rust_primitive_bitwise_program;
 pub(crate) mod rust_primitive_bitwise_rules;
+pub(crate) mod rust_record_program;
+pub(crate) mod rust_record_rules;
 pub(crate) mod rust_shared_array_handle_rules;
 pub(crate) mod rust_shift_program;
 pub(crate) mod rust_shift_rules;

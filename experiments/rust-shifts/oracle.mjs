@@ -10,7 +10,7 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../../js/src/typed-pro
 const[major,minor]=process.versions.node.split('.').map(Number);
 if(!(major===22&&minor>=15||major===24))throw new RangeError('uncovered Node '+process.versions.node);
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-shifts.lino',import.meta.url));
-const source=fixture.source+fixture.precedenceSource+fixture.contextualSource;
+const source=fixture.source+fixture.precedenceSource+fixture.contextualSource+'\nfn main(){}\n';
 const program=checkProgram(parseRust(source)),packet=encodeTypedProgramLinks(program),rust=emitRust(program),js=emitJavaScript(program);
 const names=fixture.functions.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.name).target);
 const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');

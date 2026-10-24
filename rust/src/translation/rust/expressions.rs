@@ -355,6 +355,10 @@ impl RustParser {
                         value.span.map_or(token.start, |range| range.start),
                         field.end,
                     ));
+                    if let Some(record) = self.record_projection(&value, &field.raw, path, range)? {
+                        value = record;
+                        continue;
+                    }
                     value = SExpr::new(
                         SNode::TupleIndex {
                             object: Box::new(value),
@@ -371,6 +375,12 @@ impl RustParser {
                     continue;
                 }
                 if !self.cursor.is("(") {
+                    if let Some(record) =
+                        self.record_projection(&value, &method.value, path, span(&token, &method))?
+                    {
+                        value = record;
+                        continue;
+                    }
                     return Err(unsupported(
                         "field access",
                         &format!("field {} is outside the portable core", method.value),

@@ -2689,6 +2689,30 @@ formatter text in distinct modules. The refusal log, original assertion and CI
 gates remain intact; scope-aware style repair is deferred rather than reported
 as complete.
 
+The nominal Rust record source draft represents named, tuple and unit structs
+through the existing owned datatype, constructor and exhaustive match algebra.
+Original concrete source remains in the default CST; field names and qualified
+owners remain in the semantic data declaration. A derived parser index joins
+actual source origins to those declarations across all discovery passes; it is
+reconstructed from source rather than an opaque authoritative meaning store.
+Source-order bindings evaluate each supplied field once before arranging the
+constructor's declared field order. Fresh names exclude every source identifier.
+Aliases, nested projections, borrowed nominal owners, numeric tuple fields and
+zero-field constructor distinctions retain their represented source ownership.
+The [Rust struct contract](https://doc.rust-lang.org/reference/items/structs.html)
+and [struct expression rules](https://doc.rust-lang.org/reference/expressions/struct-expr.html)
+govern that interpretation. Shared field admission, ordering and binding rules
+are JavaScript translated automatically to Rust and shipped as complete editable
+typed Links definitions in both packages. Future controls compare sixteen valid
+or abort cases, eight exact refusals, complete graphs, text/binary reload and
+all four emissions, then compile original and emitted Rust once in CI. None ran.
+Generic owners, traits, destructors, layout/FFI, mutable fields, functional
+update, complete namespace composition and record patterns remain obligations;
+this draft does not establish full Rust data-model support. Existing closed
+source profiles retain their guards. Static review also added the required
+empty main to previously authored primitive-bitwise and shift control inputs,
+preserving their functions, boundary values and every assertion.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

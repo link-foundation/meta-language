@@ -180,6 +180,10 @@ impl RustParser {
                 items.push(self.enum_item(path, &derivations)?);
                 continue;
             }
+            if c.is("struct") {
+                items.push(SItem::Data(self.record_item(path)?));
+                continue;
+            }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
                     if !self.const_function_model.is_empty() && self.empty_option_main_seen {

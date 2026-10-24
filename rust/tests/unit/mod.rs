@@ -259,6 +259,7 @@ mod translation_rust_products;
 mod translation_rust_pure_unit_calls;
 mod translation_rust_raw_string_literals;
 mod translation_rust_read_only_queries;
+mod translation_rust_records;
 mod translation_rust_runtime_shell;
 mod translation_rust_scalar_loop_declarations;
 mod translation_rust_scalar_loops;

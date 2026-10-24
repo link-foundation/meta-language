@@ -13,7 +13,7 @@ const fixture=readProjectData(new URL('../../parity/fixtures/rust-primitive-bitw
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 for(const type of fixture.types)test(type.name+': actual bit operations and four-target checked codecs',()=>{
-  const rows=fixture.functions.filter(row=>row.type===type.name), program=checkProgram(parseRust(rows.map(row=>row.source).join('\n')));
+  const rows=fixture.functions.filter(row=>row.type===type.name), program=checkProgram(parseRust(rows.map(row=>row.source).join('\n')+'\nfn main(){}\n'));
   const js=emitJavaScript(program), packet=encodeTypedProgramLinks(program);
   for(const target of ['JavaScript','Rust','Lean','Rocq']){
     const expected=emitTypedProgramLinks(packet.network,packet.root,target);
@@ -33,11 +33,11 @@ for(const type of fixture.types)test(type.name+': actual bit operations and four
   }
 });
 test('Rust bit precedence, contextual literals and eager Boolean failure',()=>{
-  const js=emitJavaScript(checkProgram(parseRust(fixture.precedenceSource+fixture.contextualSource)));
+  const js=emitJavaScript(checkProgram(parseRust(fixture.precedenceSource+fixture.contextualSource+'\nfn main(){}\n')));
   const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n[precedence,contextual];');
   assert.equal(functions[0](8n,3n),8n|(3n^(3n&5n)));
   assert.equal(functions[1](),0n);
-  const eager=emitJavaScript(checkProgram(parseRust(fixture.eagerSource)));
+  const eager=emitJavaScript(checkProgram(parseRust(fixture.eagerSource+'\nfn main(){}\n')));
   for(const name of ['eager_and','eager_or','eager_xor']){
     const target=eager.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===name).target;
     assert.throws(()=>runInNewContext(eager.text.replace(/^export /gmu,'')+'\n'+target+'();'),/eager right/u);

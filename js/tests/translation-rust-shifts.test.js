@@ -13,7 +13,7 @@ const fixture=readProjectData(new URL('../../parity/fixtures/rust-shifts.lino',i
 const[major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 for(const type of fixture.types)test(type.name+': exact shift values, aborts and complete codecs',()=>{
- const rows=fixture.functions.filter(row=>row.type===type.name),program=checkProgram(parseRust(rows.map(row=>row.source).join('\n')));
+ const rows=fixture.functions.filter(row=>row.type===type.name),program=checkProgram(parseRust(rows.map(row=>row.source).join('\n')+'\nfn main(){}\n'));
  const js=emitJavaScript(program),packet=encodeTypedProgramLinks(program);
  for(const target of['JavaScript','Rust','Lean','Rocq']){
   const original=emitTypedProgramLinks(packet.network,packet.root,target);
@@ -28,7 +28,7 @@ for(const type of fixture.types)test(type.name+': exact shift values, aborts and
  }
 });
 test('Rust shift precedence and contextual literal widths',()=>{
- const js=emitJavaScript(checkProgram(parseRust(fixture.precedenceSource+fixture.contextualSource)));
+ const js=emitJavaScript(checkProgram(parseRust(fixture.precedenceSource+fixture.contextualSource+'\nfn main(){}\n')));
  const names=['shift_precedence','shift_contextual'].map(name=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===name).target);
  const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');
  assert.equal(functions[0](2n,1n),6n);assert.equal(functions[1](),4n);

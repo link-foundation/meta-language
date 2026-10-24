@@ -10,7 +10,7 @@ import { encodeTypedProgramLinks, emitTypedProgramLinks } from '../../js/src/typ
 const [major,minor]=process.versions.node.split('.').map(Number);
 if (!(major===22&&minor>=15||major===24)) throw new RangeError('uncovered Node '+process.versions.node);
 const fixture=readProjectData(new URL('../../parity/fixtures/rust-primitive-bitwise.lino',import.meta.url));
-const source=fixture.source+fixture.precedenceSource+fixture.contextualSource;
+const source=fixture.source+fixture.precedenceSource+fixture.contextualSource+'\nfn main(){}\n';
 const program=checkProgram(parseRust(source)), packet=encodeTypedProgramLinks(program), rust=emitRust(program), js=emitJavaScript(program);
 const cases=[];
 for(const row of fixture.functions){
@@ -25,7 +25,7 @@ for(const row of fixture.functions){
 }
 const header=rust.text.split('\n').find(line=>line.startsWith('#![allow('));
 if(!header)throw new TypeError('the actual library attributes are required');
-const eager=emitRust(checkProgram(parseRust(fixture.eagerSource)));
+const eager=emitRust(checkProgram(parseRust(fixture.eagerSource+'\nfn main(){}\n')));
 process.stdout.write(structuredDataToLino({source,cases,root:packet.root.asU64(),links:packet.network.toLino(),
   emissions:Object.fromEntries(['JavaScript','Rust','Lean','Rocq'].map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)])),
   nativeLibrary:[header,...rust.preludes,...rust.definitions].join('\n\n'),

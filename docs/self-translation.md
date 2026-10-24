@@ -585,3 +585,17 @@ Native output retains its full unstylized source because the existing numeric
 style producer refuses duplicate formatter contexts. Its original guard and
 all CI gates remain; mechanical style repair is still required. Unchecked
 release behavior and overloaded shift traits remain separate drafts to supply.
+
+The nominal Rust record draft reuses existing datatype/constructor/match terms.
+Both frontends retain actual source owners, named fields, tuple positions and
+unit construction forms. Source-order bindings precede declared-order argument
+placement and reserve all source identifiers. The complete shared ordering,
+admission and binding definition generates native source and typed Links assets
+automatically. Host code transports tokens, source origins and graph ownership.
+Sixteen future positive/abort cases and eight exact refusals retain aliases,
+forward declarations, nested/borrowed fields and first-failure order. Whole
+graph/codec/four-target and original/emitted-Rust controls are authored for CI;
+none ran. Record patterns, generic/trait/layout/destructor behavior, updates and
+remaining ownership profiles still need implementation. Static source review
+also adds empty mains required by earlier primitive/shift control programs,
+retaining all existing inputs and assertions.
