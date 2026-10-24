@@ -960,7 +960,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
-        if(node.op==='convertJavaScriptBooleanValue'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
+        if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
         if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(acceptJavaScriptLooseEqualityOperation(node.op)){

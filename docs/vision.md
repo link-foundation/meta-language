@@ -6222,3 +6222,12 @@ remain required. An unrepresented unreachable continuation cannot move a Unit
 call before an abort. Shared source selection rules generate native code and
 editable Links; all new original/native/codec/emission controls remain
 unexecuted, with explicit Rust and Node ranges.
+
+The owned Array.isArray builtin now drafts the complete argument-evaluation
+shape around the existing represented-kind classification: missing input
+returns false, ignored extras still evaluate, and the first actual value is
+captured before later arguments. Optional arrays retain actual presence
+independently of length. Both source hosts and generated owner rules preserve
+lexical/module shadow guards. Future source/native/codec/emission controls
+remain unexecuted. Proxy/exotic and unrepresented dynamic union domains retain
+their complete operational obligations.

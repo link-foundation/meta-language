@@ -9,3 +9,12 @@ export function checkJavaScriptBooleanBuiltin(checker,node,env,path){
  for(let index=values.length-1;index>=0;index-=1)body={k:'let',name:names[index],value:values[index],body,type:BOOL};
  return body;
 }
+export function checkJavaScriptArrayBuiltin(checker,node,env,path){
+ if(checker.language!=='JavaScript'||node.args.some(argument=>argument.spread))throw unsupported('Array.isArray arguments','the complete actual iterator effects must be represented',node.span);
+ const values=node.args.map(argument=>checker.expr(argument.value,env,path,undefined));
+ const names=values.map(()=>checker.freshName('ml_array_argument'));
+ const inner=new Map(env);values.forEach((value,index)=>inner.set(names[index],value.type));
+ let body=values.length?checker.expr({k:'arrayIsArray',arg:{k:'name',path:[names[0]]},span:node.span},inner,path,undefined):{k:'lit',value:false,type:BOOL};
+ for(let index=values.length-1;index>=0;index-=1)body={k:'let',name:names[index],value:values[index],body,type:BOOL};
+ return body;
+}

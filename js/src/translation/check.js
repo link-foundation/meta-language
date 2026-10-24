@@ -52,7 +52,7 @@ import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArray
 import { acceptJavaScriptArrayRestReceiver } from './array-binding-rules.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import {checkJavaScriptBindingDefault} from './javascript-binding-defaults.js';
-import {checkJavaScriptBooleanBuiltin} from './javascript-boolean-conversion.js';
+import {checkJavaScriptBooleanBuiltin,checkJavaScriptArrayBuiltin} from './javascript-boolean-conversion.js';
 import {checkJavaScriptPrimitiveTextBuiltin} from './javascript-string-search.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
@@ -1207,6 +1207,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op==='testJavaScriptArrayValue')return checkJavaScriptArrayBuiltin(this,node,env,path);
     if(node.op==='convertJavaScriptBooleanValue')return checkJavaScriptBooleanBuiltin(this,node,env,path);
     if(node.op==='convertJavaScriptPrimitiveText')return checkJavaScriptPrimitiveTextBuiltin(this,node,env,path);
     if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints')return checkJavaScriptStringConstruction(this,node,env,path);

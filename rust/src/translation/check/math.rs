@@ -21,6 +21,9 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "testJavaScriptArrayValue" {
+            return self.javascript_array_builtin(args, span, env, path);
+        }
         if op == "convertJavaScriptBooleanValue" {
             return self.javascript_boolean_builtin(args, span, env, path);
         }

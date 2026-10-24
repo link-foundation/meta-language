@@ -954,3 +954,9 @@ Former default refusal inputs/assertions remain recorded beside stronger
 source/graph/call controls. The standard environment wrapper and closed source
 profiles keep their remaining obligations. General nonlocal returns and
 discarded values/destructors still need implementation; no control ran.
+
+Array.isArray source calls now retain missing inputs and every extra-argument
+effect, while reusing actual represented-kind and optional-presence decisions.
+Both source hosts preserve the first captured value and the standard owner
+guards. Complete rules and future source/native/codec controls are drafted
+without execution; proxy/exotic and dynamic union behavior remains required.

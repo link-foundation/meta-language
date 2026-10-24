@@ -697,7 +697,7 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
-                if op=="convertJavaScriptPrimitiveText"||op=="convertJavaScriptBooleanValue"||crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(op){return self.primitive_observation_term(op,args,env);}
+                if op=="convertJavaScriptPrimitiveText"||op=="convertJavaScriptBooleanValue"||op=="testJavaScriptArrayValue"||crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(op){return self.primitive_observation_term(op,args,env);}
                 if crate::translation::javascript_comparison_rules::accept_java_script_loose_equality_operation(op){return self.loose_comparison_term(args,env,expr.span);}
                 if op=="constructJavaScriptStringFromCharacterCodes"||op=="constructJavaScriptStringFromCodePoints"||crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
                     for item in args{self.expr(&item.value,env)?;}
