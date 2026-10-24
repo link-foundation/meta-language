@@ -348,6 +348,7 @@ mod grammar_included_range_transport;
 mod grammar_lexer_transport;
 mod grammar_output_equality;
 mod grammar_recursive_selection;
+mod link_allocation;
 mod link_foundation;
 mod root_types;
 mod translation_array_relative_element;

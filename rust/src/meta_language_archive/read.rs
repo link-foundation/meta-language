@@ -89,7 +89,7 @@ fn restore(
             return Err(fail("invalid or duplicate selected syntax"));
         }
     }
-    result.next_id = identity(&state["nextIdentity"])?.as_u64();
+    result.next_id = u128::from(identity(&state["nextIdentity"])?.as_u64());
     inspect(&result, limits)?;
     Ok(Arc::new(result))
 }

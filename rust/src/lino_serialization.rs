@@ -126,7 +126,7 @@ impl LinkNetwork {
             if registered && let Some(term) = metadata.term() {
                 network.terms.insert(Arc::from(term), link_id);
             }
-            network.next_id = network.next_id.max(link_id.0 + 1);
+            network.observe_identifier(link_id);
             network.links.insert(
                 link_id,
                 Arc::new(Link {

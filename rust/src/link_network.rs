@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::sync::Arc;
+mod allocation;
 
 use crate::configuration::ParseConfiguration;
 use crate::embedded_region_parser;
@@ -233,7 +234,8 @@ impl Link {
 /// Mutable links network for CST, AST, semantic, and self-description links.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkNetwork {
-    pub(crate) next_id: u64,
+    /// Every u64 identity and the distinct 2^64 exhausted marker.
+    pub(crate) next_id: u128,
     pub(crate) links: BTreeMap<LinkId, Arc<Link>>,
     pub(crate) terms: BTreeMap<Arc<str>, LinkId>,
     pub(crate) concept_syntax: BTreeMap<(Arc<str>, Arc<str>), Arc<str>>,
@@ -612,6 +614,7 @@ impl LinkNetwork {
 
     /// Inserts a labeled field relation as a regular link.
     pub fn insert_field(&mut self, parent: LinkId, label: &str, child: LinkId) -> LinkId {
+        self.require_allocation_capacity(if self.terms.contains_key(label) { 1 } else { 2 });
         let label_link = self.insert_typed_point(
             label,
             LinkType::Field,
@@ -844,8 +847,8 @@ impl LinkNetwork {
         link_type: LinkType,
         definition: Option<&str>,
     ) -> LinkId {
-        let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         if let Some(id) = self.terms.get(term).copied() {
+            let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
             if let Some(definition) = definition
                 && let Some(link) = self.links.get_mut(&id)
             {
@@ -855,6 +858,7 @@ impl LinkNetwork {
         }
 
         let id = self.allocate_id();
+        let definition = definition.map(|definition| self.intern_arc(Arc::from(definition)));
         let term = self.intern_arc(Arc::from(term));
         let mut metadata = LinkMetadata::new()
             .with_link_type(link_type)
@@ -955,12 +959,6 @@ impl LinkNetwork {
 
         self.strings.insert(Arc::clone(&value));
         value
-    }
-
-    const fn allocate_id(&mut self) -> LinkId {
-        let id = LinkId(self.next_id);
-        self.next_id += 1;
-        id
     }
 }
 

@@ -684,6 +684,14 @@ matrix has thirty-eight values/aborts and three refusals with all original and
 paired native/graph/codec/emission controls. None ran. Sparse/species/Symbol,
 widening, length limits and general coercions remain explicit obligations.
 
+The native allocation endpoint draft uses shared JavaScript scalar-word
+capacity rules, automatically generated into Rust and complete typed Links.
+Host glue retains the exact u64 domain and a separate exhausted cursor across
+real graph imports and allocation paths. Sixteen future decisions, three
+actual endpoint graph inputs, atomic insertion/storage controls and full paired
+definition graphs/codecs/four emissions are authored. None ran. The existing
+JavaScript safe-Number and shared binary/archive profiles remain bounded.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

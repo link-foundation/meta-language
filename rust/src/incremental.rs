@@ -115,7 +115,7 @@ fn remap_reparsed_network(
         .iter()
         .map(|id| id.as_u64())
         .max()
-        .map_or(1, |id| id + 1);
+        .map_or(1, |id| u128::from(id) + 1);
 
     LinkNetwork {
         next_id,
@@ -346,7 +346,7 @@ fn keep_tied_sibling_order(
     reparsed: &LinkNetwork,
     id_map: &mut BTreeMap<LinkId, LinkId>,
     used_targets: &mut BTreeSet<LinkId>,
-    next_id: &mut u64,
+    next_id: &mut u128,
 ) {
     let mut ties: BTreeMap<(Vec<LinkId>, usize, usize), Vec<LinkId>> = BTreeMap::new();
     for link in reparsed.links() {
@@ -373,10 +373,9 @@ fn keep_tied_sibling_order(
     }
 }
 
-fn next_unused_id(next_id: &mut u64, used_targets: &BTreeSet<LinkId>) -> LinkId {
+fn next_unused_id(next_id: &mut u128, used_targets: &BTreeSet<LinkId>) -> LinkId {
     loop {
-        let candidate = LinkId(*next_id);
-        *next_id += 1;
+        let candidate = LinkNetwork::allocate_cursor(next_id);
         if !used_targets.contains(&candidate) {
             return candidate;
         }

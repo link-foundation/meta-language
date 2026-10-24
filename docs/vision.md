@@ -2955,6 +2955,27 @@ control. None ran. Sparse arrays, species and Symbol overrides, heterogeneous
 or nullable widening, length limits, ToPrimitive effects and the other broader
 source requirements still need implementation drafts.
 
+Native identifier allocation now keeps a `u128` cursor for all `u64` identities
+and the distinct `2^64` exhausted marker. Each actual allocation passes a shared
+JavaScript capacity definition generated into native source and typed Links;
+native glue supplies exact sixteen-bit words without per-allocation arrays.
+Text import, storage restoration, concept/view copies and incremental remapping
+retain that marker instead of overflowing or saturating into a reusable ID.
+Object identities use the same allocator. Field insertion reserves its one or
+two actual slots before interning labels or changing links. New named points
+also check capacity before interning definitions. Infallible network insertion
+retains a clear panic on exhaustion; fallible storage creation returns
+`StorageError::IdentifierSpaceExhaustion`, including the doublets backend.
+Sixteen future capacity cases, three actual near-maximum text graph fixtures,
+and full graph/codec/four-emission definition controls remain unexecuted. The
+native controls exercise `u64::MAX`, self-link objects, final-slot consumption,
+two-slot field admission and unchanged graphs/caches/allocators after refusal.
+These are source drafts, not native execution evidence. JavaScript's current
+safe-Number identifier profile and the shared Number binary/archive limits stay
+explicit; complete exact-u64 JavaScript and matching interchange profiles still
+require code. Public policy/definition entry points expose this same capacity
+meaning in both packages.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners
@@ -5393,10 +5414,11 @@ gaps against the target above:
   Carrying
   the entire native unsigned 64-bit domain needs a broader exact representation
   and a separately versioned binary profile; that support is not established.
-  Actual native endpoint capture also needs checked identifier exhaustion: the
-  current native text importer and allocator still increment identifiers without
-  a checked transition at `u64::MAX`. Synthetic word-vector checks establish
-  neither an actual maximum-identifier graph import nor allocator safety.
+  The native endpoint source draft now retains a distinct exhausted cursor,
+  checks real allocation capacity before mutation and imports `u64::MAX`
+  without increment overflow. It includes actual graph/API endpoint controls;
+  neither those controls nor native compilation have run. Full JavaScript u64
+  identities and matching exact binary/archive profiles still require code.
 
 Archive-backed parser checks execute recursive grammars after discarding the
 original grammar maps, and compare one shipped JavaScript grammar against its

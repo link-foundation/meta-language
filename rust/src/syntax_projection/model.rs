@@ -46,7 +46,7 @@ pub(super) fn budget(network: &LinkNetwork, limits: SyntaxProjectionLimits) -> R
             bytes = bytes.saturating_add(text.len());
         }
     }
-    if network.next_id > 9_007_199_254_740_991 || network.next_id <= maximum {
+    if network.next_id > 9_007_199_254_740_991 || network.next_id <= u128::from(maximum) {
         return Err(fail("invalid allocator state"));
     }
     if network.len() > limits.graph.node_limit

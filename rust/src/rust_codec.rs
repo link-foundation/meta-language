@@ -324,8 +324,7 @@ impl LinkNetwork {
     /// identity link for shared and circular object graphs, and references the
     /// type shape second so the object's declaration remains queryable.
     pub fn insert_object_instance(&mut self, type_id: LinkId) -> LinkId {
-        let id = LinkId(self.next_id);
-        self.next_id += 1;
+        let id = self.allocate_id();
         self.links.insert(
             id,
             Arc::new(Link {

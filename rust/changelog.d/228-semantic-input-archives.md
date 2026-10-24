@@ -77,6 +77,10 @@ Draft dense array and primitive string concat with actual receiver dispatch.
 Capture all operand values before payload reads, retaining argument mutations
 and separate result identity through existing checked terms and runtimes.
 
+Draft native maximum-u64 allocation without cursor wrap. Check actual capacity
+through shared generated rules before point/field mutations, preserve the
+exhausted state through imports/copies, and return explicit storage exhaustion.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

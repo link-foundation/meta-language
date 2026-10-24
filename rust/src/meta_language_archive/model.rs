@@ -214,7 +214,13 @@ pub(super) fn state(network: &LinkNetwork) -> StructuredDataValue {
         .collect();
     object(vec![
         ("identities", array(identities)),
-        ("nextIdentity", number(network.next_id)),
+        (
+            "nextIdentity",
+            number(
+                u64::try_from(network.next_id)
+                    .expect("an inspected archive allocator fits the shared Number profile"),
+            ),
+        ),
         ("terms", array(terms)),
         ("syntax", array(syntax)),
     ])
@@ -271,7 +277,7 @@ pub(super) fn island(
         let link = network
             .link(id)
             .ok_or_else(|| fail("missing descriptor member"))?;
-        result.next_id = result.next_id.max(id.as_u64() + 1);
+        result.observe_identifier(id);
         result.links.insert(
             id,
             Arc::new(Link {

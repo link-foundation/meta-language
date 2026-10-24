@@ -68,6 +68,8 @@ export { createArrayStateMethodProgramLinks } from './array-state-method-program
 export { createRustShiftProgramLinks } from './rust-shift-program.js';
 export { createRustRecordProgramLinks } from './rust-record-program.js';
 export { createJavaScriptPropertyCallProgramLinks } from './javascript-property-call-program.js';
+export { createLinkAllocationProgramLinks } from './link-allocation-program.js';
+export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-allocation-rules.js';
 export { createRustInherentProgramLinks } from './rust-inherent-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
