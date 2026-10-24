@@ -25,16 +25,17 @@ export function materializeJavaScriptNumberConversion(checker,value,operation) {
 
 export function checkJavaScriptMathematicalArguments(checker,node,env,path,form) {
   const values=node.args.map(item=>checker.expr(item.value,env,path,undefined));
-  const capture=values.length>1&&(form==='unary'||values.some(value=>value.type.kind!=='float'));
+  const capture=values.length>1&&(form==='unary'||form==='binary'||values.some(value=>value.type.kind!=='float'));
   const names=capture?values.map(()=>checker.freshName('ml_mathematical_argument')):[];
   const bound=capture?values.map((value,index)=>({k:'var',name:names[index],type:value.type})):values;
-  const selected=form==='unary'?bound.slice(0,1):bound;
+  const selected=form==='unary'?bound.slice(0,1):form==='binary'?bound.slice(0,2):bound;
   const args=selected.map(value=>{
     if(!acceptJavaScriptNumberConversionType(value.type))throw unsupported('mathematical numeric conversion operand',
       'the actual object primitive conversion, union or symbol must have its own represented behavior',node.span);
     return value.type.kind==='float'?value:materializeJavaScriptNumberConversion(checker,value,'coerceJavaScriptNumber');
   });
-  let body=form==='unary'&&args.length===0?{k:'lit',value:'NaN',type:FLOAT}:{k:'math',op:node.op,args,type:FLOAT};
+  if(form==='binary')while(args.length<2)args.push({k:'lit',value:'NaN',type:FLOAT});
+  let body=form==='unary'&&args.length===0?{k:'lit',value:'NaN',type:FLOAT}:{k:'math',op:form==='binary'?'powerJavaScriptNumberValue':node.op,args,type:FLOAT};
   if(capture)for(let index=values.length-1;index>=0;index-=1)body={k:'let',name:names[index],value:values[index],body,type:FLOAT};
   else if(form==='unary')for(let index=values.length-1;index>=1;index-=1)body={k:'let',name:checker.freshName('ml_mathematical_argument_unused'),value:values[index],body,type:FLOAT};
   return body;

@@ -1,11 +1,11 @@
-//! The exactly specified part of `Math` and `Number`: each function is exact
-//! or correctly rounded, so every target computes the same binary64 value.
+//! Owned Math/Number builtins use shared kernels; power's canonical definition
+//! retains separate implementation-approximation obligations.
 
 use super::{FLOAT, GLOBALS};
 use super::{JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token, node, span, unsupported};
 
 /// The functions, by the path a program calls them by, and the op each is.
-const MATH: [(&str, &str); 13] = [
+const MATH: [(&str, &str); 14] = [
     ("Math.abs", "abs"),
     ("Math.floor", "floor"),
     ("Math.ceil", "ceil"),
@@ -13,6 +13,7 @@ const MATH: [(&str, &str); 13] = [
     ("Math.round", "round"),
     ("Math.sign", "sign"),
     ("Math.sqrt", "sqrt"),
+    ("Math.pow", "powerJavaScriptNumberArguments"),
     ("Math.max", "max"),
     ("Math.min", "min"),
     ("Number.isInteger", "isInteger"),

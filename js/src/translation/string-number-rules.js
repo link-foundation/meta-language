@@ -219,6 +219,7 @@ export function readJavaScriptPrimitiveUnaryOperation(symbol) {
 /** @param {string} language @param {string} operation @returns {string} */
 export function readJavaScriptMathematicalConversionForm(language,operation) {
   if(language!=='JavaScript')return '';
+  if(operation==='powerJavaScriptNumberArguments')return 'binary';
   if(operation==='max'||operation==='min')return 'variadic';
   return operation==='abs'||operation==='floor'||operation==='ceil'||operation==='trunc'||operation==='round'||operation==='sign'||operation==='sqrt'?'unary':'';
 }

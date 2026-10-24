@@ -27,8 +27,10 @@ impl Checker {
             .iter()
             .map(|item| self.expr(&item.value, env, path, None, false))
             .collect::<Result<Vec<_>>>()?;
-        let capture =
-            values.len() > 1 && (form == "unary" || values.iter().any(|value| value.ty != FLOAT));
+        let capture = values.len() > 1
+            && (form == "unary"
+                || form == "binary"
+                || values.iter().any(|value| value.ty != FLOAT));
         let names = if capture {
             values
                 .iter()
@@ -50,6 +52,8 @@ impl Checker {
             .collect::<Vec<_>>();
         let selected = if form == "unary" {
             &bound[..bound.len().min(1)]
+        } else if form == "binary" {
+            &bound[..bound.len().min(2)]
         } else {
             &bound[..]
         };
@@ -68,12 +72,21 @@ impl Checker {
                 self.materialize_number_conversion(value.clone(), "coerceJavaScriptNumber")
             });
         }
+        if form == "binary" {
+            while args.len() < 2 {
+                args.push(Expr::lit(FLOAT, LitValue::Text("NaN".to_owned())));
+            }
+        }
         let mut body = if form == "unary" && args.is_empty() {
             Expr::lit(FLOAT, LitValue::Text("NaN".to_owned()))
         } else {
             Expr::new(
                 Node::Math {
-                    op: operation.to_owned(),
+                    op: if form == "binary" {
+                        "powerJavaScriptNumberValue".to_owned()
+                    } else {
+                        operation.to_owned()
+                    },
                     args,
                 },
                 FLOAT,

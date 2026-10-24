@@ -564,13 +564,17 @@ function readJavaScriptMathematicalConversionForm(language, operation) {
   if ((language !== "JavaScript")) {
     return "";
   } else {
-    if (((operation === "max") || (operation === "min"))) {
-      return "variadic";
+    if ((operation === "powerJavaScriptNumberArguments")) {
+      return "binary";
     } else {
-      if ((((((((operation === "abs") || (operation === "floor")) || (operation === "ceil")) || (operation === "trunc")) || (operation === "round")) || (operation === "sign")) || (operation === "sqrt"))) {
-        return "unary";
+      if (((operation === "max") || (operation === "min"))) {
+        return "variadic";
       } else {
-        return "";
+        if ((((((((operation === "abs") || (operation === "floor")) || (operation === "ceil")) || (operation === "trunc")) || (operation === "round")) || (operation === "sign")) || (operation === "sqrt"))) {
+          return "unary";
+        } else {
+          return "";
+        }
       }
     }
   }

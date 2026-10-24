@@ -461,13 +461,15 @@ pub fn read_java_script_primitive_unary_operation(symbol: &str) -> String {
 #[must_use]
 pub fn read_java_script_mathematical_conversion_form(language: &str, operation: &str) -> String {
     if language == "JavaScript" {
- if (operation == "max") || (operation == "min") {
-            String::from("variadic")
-        } else if ((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt") {
-                String::from("unary")
-            } else {
-                String::new()
-            }
+ if operation == "powerJavaScriptNumberArguments" {
+            String::from("binary")
+        } else if (operation == "max") || (operation == "min") {
+                String::from("variadic")
+            } else if ((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt") {
+                    String::from("unary")
+                } else {
+                    String::new()
+                }
 } else {
         String::new()
     }

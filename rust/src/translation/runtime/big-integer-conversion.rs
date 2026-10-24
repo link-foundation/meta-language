@@ -872,13 +872,17 @@ pub fn read_java_script_mathematical_conversion_form(language: &str, operation: 
     if (language != "JavaScript") {
         String::from("")
     } else {
-        if ((operation == "max") || (operation == "min")) {
-            String::from("variadic")
+        if (operation == "powerJavaScriptNumberArguments") {
+            String::from("binary")
         } else {
-            if (((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt")) {
-                String::from("unary")
+            if ((operation == "max") || (operation == "min")) {
+                String::from("variadic")
             } else {
-                String::from("")
+                if (((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt")) {
+                    String::from("unary")
+                } else {
+                    String::from("")
+                }
             }
         }
     }

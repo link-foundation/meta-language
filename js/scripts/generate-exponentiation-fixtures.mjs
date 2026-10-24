@@ -23,6 +23,12 @@ const values=[
  ['negative infinite odd reciprocal sign','return 1/((-Infinity)**-3);','-Infinity'],
  ['positive overflow','return 2**1024;','Infinity'],['subnormal power','return 2**-1074;','5e-324'],
  ['underflow midpoint ties to even zero','return 2**-1075;','0'],
+ ['Math.pow string inputs','return Math.pow("3","4");','81'],
+ ['Math.pow missing inputs','return Math.pow();','NaN'],
+ ['Math.pow missing exponent','return Math.pow(2);','NaN'],
+ ['Math.pow undefined base and zero exponent','return Math.pow(undefined,0);','1'],
+ ['Math.pow ignores BigInt extra','return Math.pow(3,4,1n);','81'],
+ ['Math.pow captures first input before extras','let value=3;return Math.pow(value,2,value=9);','9'],
 ];
 for(const [name,body,value] of values)cases.push({name,source:'export function compute(){'+body+'}',entry:'exponentiation'+cases.length,value,abort:null});
 for(const [name,body,errorClass,message] of [
@@ -30,8 +36,11 @@ for(const [name,body,errorClass,message] of [
  ['negative BigInt zero exponent input','return 0n**-1n;','RangeError','Exponent must be positive'],
  ['mixed left BigInt','return 2n**3;','TypeError','Cannot mix BigInt and other types, use explicit conversions'],
  ['mixed right BigInt','return 2**3n;','TypeError','Cannot mix BigInt and other types, use explicit conversions'],
+ ['Math.pow rejects BigInt base','return Math.pow(2n,3);','TypeError','Cannot convert a BigInt value to a number'],
+ ['Math.pow rejects BigInt exponent after NaN base','return Math.pow(NaN,3n);','TypeError','Cannot convert a BigInt value to a number'],
 ])cases.push({name,source:'export function compute(){'+body+'}',entry:'exponentiation'+cases.length,value:null,abort:message,errorClass,messagePresent:true,messageUnits:Array.from(message,character=>character.charCodeAt(0))});
 cases.push({name:'exponent argument error precedes arithmetic validation',source:'/** @returns {bigint} */ function failPowerArgument(){throw new TypeError("power argument");}\nexport function compute(){return 0n**failPowerArgument();}',entry:'exponentiationArgumentError',value:null,abort:'power argument',errorClass:'TypeError',messagePresent:true,messageUnits:[112,111,119,101,114,32,97,114,103,117,109,101,110,116]});
+cases.push({name:'Math.pow extra argument error precedes BigInt conversion',source:'/** @returns {number} */ function failMathPowerExtra(){throw new RangeError("power extra");}\nexport function compute(){return Math.pow(2n,3,failMathPowerExtra());}',entry:'exponentiationMathExtraError',value:null,abort:'power extra',errorClass:'RangeError',messagePresent:true,messageUnits:[112,111,119,101,114,32,101,120,116,114,97]});
 writeProjectData(new URL('../../parity/fixtures/exponentiation.lino',import.meta.url),{
  schemaVersion:1,model:'JavaScript numeric exponentiation source operations 1',sourceLanguage:'JavaScript',cases,refusals:[],
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),

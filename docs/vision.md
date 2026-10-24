@@ -6060,3 +6060,12 @@ search and start values bind once in order. Structured-object searches retain
 their identity obligation. Future original values/errors/grouping/syntax,
 primitive membership, program/definition codecs and four-emission controls are
 authored only. No code tests, oracles or validation gates ran.
+
+Math.pow uses the same canonical Number power definition through its separate
+ToNumber argument path. Missing arguments become NaN, both selected conversions
+run in order, and every ignored extra expression evaluates before conversion.
+BigInt rejection therefore differs from the exponentiation operator's BigInt
+domain. Future controls retain missing values, primitive strings, ignored
+BigInts, captured inputs and an extra-argument error preceding conversion.
+This is a source draft with the same approximation/parity and execution
+obligations as the underlying Number power definition.

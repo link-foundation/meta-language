@@ -71,11 +71,12 @@ const GLOBALS = new Set([
   'Math', 'Number', 'BigInt', 'parseInt', 'parseFloat', 'JSON', 'Array', 'Object', 'Symbol', 'Date', 'Promise', 'Reflect',
   'Proxy', 'Map', 'Set', 'WeakMap', 'WeakSet', 'globalThis', 'process', 'require', 'console', 'setTimeout', 'isNaN', 'isFinite',
 ]);
-// The exactly specified part of Math and Number: each is exact or correctly
-// rounded, so every target computes the same binary64 value.
+// Owned Math and Number builtins use shared kernels. Power's canonical
+// definition retains its separate implementation-approximation obligations.
 const MATH = {
   'Math.abs': 'abs', 'Math.floor': 'floor', 'Math.ceil': 'ceil', 'Math.trunc': 'trunc', 'Math.round': 'round',
   'Math.sign': 'sign', 'Math.sqrt': 'sqrt', 'Math.max': 'max', 'Math.min': 'min',
+  'Math.pow': 'powerJavaScriptNumberArguments',
   'Number.isInteger': 'isInteger', 'Number.isSafeInteger': 'isSafeInteger', 'Number.isFinite': 'isFinite', 'Number.isNaN': 'isNaN',
 };
 // Their constants, as the source text of the Number each one is.
