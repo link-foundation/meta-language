@@ -2896,6 +2896,31 @@ refusal assertions elsewhere, generated-name snapshots, selected closed pattern
 and scalar-loop profiles, other frontend symbol supplies and full emitted-source
 reimport still need reconciliation; this draft does not declare them complete.
 
+Source array and required-record patterns now use ordinary hygienic BoundNames.
+The original closed array/record binding operations keep their prefix refusals;
+an additional ordinary record-plan entry point shares the complete syntax
+algorithm while selecting the new binding operation. Both source adapters carry
+actual token roles, duplicate-name facts and the complete reserved-word column.
+The original array-rest prefix-refusal input is retained with a corrected
+independent original/emitted value assertion. Five additional future cases cover
+array defaults, rest, mutable bindings, object declarations and record parameters.
+No control ran.
+
+The source-only library author can automatically capture an exact relative
+named-function dependency closure. It reads every whole module, checks actual
+exported owners, rejects duplicate imported bindings and aliases/unknown imports
+in this closed authoring profile and records the original source, hash and exact removed import spans.
+Symlink resolution stays inside the actual project. Modules and source bytes
+have explicit bounds; dependency cycles retain each module once. Original module
+ranges own every source/generated declaration, and calls can reference another
+module only through its actual imports. Complete bodies remain available to the
+checker for ownership/effect analysis; signature-only imports cannot establish
+those facts. Module initialization effects and unrepresented owners refuse in
+this closed authoring profile. The complete record-parameter closure now generates native source and one editable typed
+Links definition through this path. Independent generators/receipts, broader
+module imports, all remaining source profiles and metadata still need their
+separate reconciliation before testing begins.
+
 The struct-constructor namespace draft preserves the distinction between a
 source struct's value constructor and an associated item sharing its spelling.
 Before collecting that function, its synthetic constructor moves to a fresh

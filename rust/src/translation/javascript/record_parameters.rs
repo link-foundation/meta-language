@@ -250,8 +250,12 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
-        let values =
-            rules::plan_java_script_record_parameters(&kinds, &values, 0.0, reserved_names());
+        let values = rules::plan_java_script_source_record_parameters(
+            &kinds,
+            &values,
+            0.0,
+            reserved_names(),
+        );
         if values.first().is_some_and(|value| *value < 0.0) {
             let token = values
                 .get(1)

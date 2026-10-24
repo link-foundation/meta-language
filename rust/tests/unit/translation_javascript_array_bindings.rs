@@ -97,6 +97,16 @@ fn every_original_binding_refusal_remains_a_refusal() {
     assert_eq!(refused.len(), 13);
     for entry in refused {
         let source = entry[1].as_str().unwrap();
+        if entry[0].as_str() == Some("reserved-prefix") {
+            let runnable = format!("{source}\nconsole.log(f([2,3]));");
+            let checked = check_program(&parse_javascript(&runnable).unwrap()).unwrap();
+            assert_eq!(observe(&runnable), "1\n");
+            assert_eq!(
+                observe(&emit_javascript(&checked).unwrap().text),
+                observe(&runnable)
+            );
+            continue;
+        }
         assert!(
             parse_javascript(source)
                 .and_then(|program| check_program(&program))

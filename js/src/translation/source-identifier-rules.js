@@ -43,3 +43,17 @@ export function renderSourceGeneratedIdentifier(prefix, role, ordinal) {
 export function renderSourceCellParameter(prefix, name, reference) {
   return reference ? prefix + 'cell_' + name : name;
 }
+
+/** Ordinary BoundName admission after the actual token's lexical role check.
+ * Closed historical profiles remain separate operations.
+ * @param {string} kind @param {string} name @param {boolean} duplicate
+ * @param {string[]} reserved @returns {boolean} */
+export function acceptJavaScriptSourceBindingName(kind, name, duplicate, reserved) {
+  if (kind !== 'identifier' || name === '' || duplicate) return false;
+  for (let index = 0; index < reserved.length; index += 1) {
+    const word = reserved[index];
+    if (word === undefined) throw new Error('source binding reserved names need a complete text column');
+    if (word === name) return false;
+  }
+  return true;
+}

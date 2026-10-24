@@ -7,8 +7,9 @@ import { acceptRecordTypeBoundary, acceptRecordTypeOptionalName, readRecordTypeF
 import { readNullableTypeAbsence, readNullableTypeSyntax } from './nullable-type-syntax-rules.js';
 import { constructCallableSurfaceParameters, readCallableClosureConflicts, readCallableClosureScope, readCallableStatementCaptures } from './callable-source.js';
 import { planCallableTypeSyntax, readCallableClosureParameterError, readCallableClosurePrefixError, readCallableSurfaceConstructor, requireCallableAssignedCaptureField } from './callable-source-rules.js';
-import { acceptJavaScriptArrayBindingName, planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
+import { planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
+import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 
@@ -81,7 +82,7 @@ export function readArrayBinding(parser, path = [], state = null) {
     const names = new Set();
     for (const token of arrayBindingNames(parser, c.index)) {
       requireJavaScriptIdentifierRole(token, true);
-      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+      if (!acceptJavaScriptSourceBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
         throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
       }
       names.add(token.value);
@@ -105,7 +106,7 @@ export function readArrayBinding(parser, path = [], state = null) {
         continue;
       }
       const token = c.identifier('array binding');
-      if (!acceptJavaScriptArrayBindingName(token.kind, token.value, state.seen.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
+      if (!acceptJavaScriptSourceBindingName(token.kind, token.value, state.seen.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
         throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
       }
       state.seen.add(token.value);

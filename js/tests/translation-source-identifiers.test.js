@@ -7,19 +7,20 @@ import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
 import { emitJavaScript } from '../src/translation/emit-javascript.js';
 import { emitRust } from '../src/translation/emit-rust.js';
+import { createJavaScriptRecordParameterProgramLinks } from '../src/javascript-record-parameter-program.js';
 import { createSourceIdentifierProgramLinks } from '../src/source-identifier-program.js';
 import { encodeTypedProgramLinks, emitTypedProgramLinks } from '../src/typed-program-links.js';
 import { LinkNetwork } from '../src/network.js';
 import { encodeLinkNetworkBinary, decodeLinkNetworkBinary } from '../src/link-network-binary.js';
 import { readSourceIdentifierSupply } from '../src/translation/source-identifiers.js';
-import { readSourceIdentifierPrefixOrdinal, readSourceIdentifierPrefix, renderSourceTargetIdentifier, renderSourceGeneratedIdentifier } from '../src/translation/source-identifier-rules.js';
+import { readSourceIdentifierPrefixOrdinal, readSourceIdentifierPrefix, renderSourceTargetIdentifier, renderSourceGeneratedIdentifier, acceptJavaScriptSourceBindingName } from '../src/translation/source-identifier-rules.js';
 const fixture = readProjectData(new URL('../../parity/fixtures/source-identifiers.lino', import.meta.url));
 const [major, minor] = process.versions.node.split('.').map(Number);
 assert.ok(major === 22 && minor >= 15 || major === 24, 'uncovered Node ' + process.versions.node);
 const observe = call => { try { return { kind: 'value', value: String(call()) }; } catch (error) { return { kind: 'abort', value: error.message }; } };
 test('source identifiers remain capture free across checked graphs codecs four targets and native values', () => {
   const program = checkProgram(parseJavaScript(fixture.source)), packet = encodeTypedProgramLinks(program), js = emitJavaScript(program);
-  for (const actual of [packet, createSourceIdentifierProgramLinks()]) for (const target of ['JavaScript', 'Rust', 'Lean', 'Rocq']) {
+  for (const actual of [packet, createSourceIdentifierProgramLinks(), createJavaScriptRecordParameterProgramLinks()]) for (const target of ['JavaScript', 'Rust', 'Lean', 'Rocq']) {
     const expected = emitTypedProgramLinks(actual.network, actual.root, target);
     for (const network of [LinkNetwork.fromLino(actual.network.toLino()), decodeLinkNetworkBinary(encodeLinkNetworkBinary(actual.network))])
       assert.deepEqual(emitTypedProgramLinks(network, actual.root, target), expected);
@@ -54,4 +55,11 @@ test('the shared namespace rules retain canonical ordinals gaps validation and t
   assert.equal(renderSourceTargetIdentifier('source_ml_array'),'source_ml_array');
   assert.equal(renderSourceGeneratedIdentifier('ml_source2_','ml_array_test',3),'ml_source2_array_test3');
   for (const ordinal of [-1,0.5,NaN,Infinity,9007199254740992])assert.throws(()=>renderSourceGeneratedIdentifier('ml_','a',ordinal),/exact range/u);
+});
+test('ordinary source pattern names and closed historical names keep distinct profiles',()=>{
+  const reserved=['class','arguments','eval','await','yield'];
+  assert.equal(acceptJavaScriptSourceBindingName('identifier','ml_hidden',false,reserved),true);
+  for (const word of reserved)assert.equal(acceptJavaScriptSourceBindingName('identifier',word,false,reserved),false);
+  assert.equal(acceptJavaScriptSourceBindingName('identifier','ml_hidden',true,reserved),false);
+  assert.equal(acceptJavaScriptSourceBindingName('string','ml_hidden',false,reserved),false);
 });

@@ -1,5 +1,6 @@
 // Actual token plans for the first ordered record parameter source profile.
 // Native algorithms must be generated from the complete recorded closure.
+import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { acceptJavaScriptArrayBindingName } from './array-binding-rules.js';
 import { readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
 
@@ -43,6 +44,29 @@ export function acceptJavaScriptRecordParameterBinding(kind, name, names, reserv
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, false);
+}
+
+/** Source admission uses ordinary BoundNames and the actual hygienic supply.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @returns {number[]} */
+export function planJavaScriptSourceRecordParameters(kinds, values, start, reserved) {
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, true);
+}
+
+/** @param {string} kind @param {string} name @param {string[]} names
+ * @param {string[]} reserved @param {boolean} ordinary @returns {boolean} */
+function acceptJavaScriptRecordParameterBoundName(kind, name, names, reserved, ordinary) {
+  if (!ordinary) return acceptJavaScriptRecordParameterBinding(kind, name, names, reserved);
+  let duplicate = false;
+  for (let index = 0; index < names.length; index += 1)
+    if (readRequiredTextFact(names, index) === name) duplicate = true;
+  return acceptJavaScriptSourceBindingName(kind, name, duplicate, reserved);
+}
+
+/** @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @param {boolean} ordinary @returns {number[]} */
+function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary) {
   if (kinds.length !== values.length || !Number.isInteger(start) || start < 0 || start >= kinds.length) return [-1, start];
   let at = start;
   let slot = 0;
@@ -73,7 +97,7 @@ export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
           at += 1;
         }
         const name = readRequiredTextFact(values, binding);
-        if (!acceptJavaScriptRecordParameterBinding(readRequiredTextFact(kinds, binding), name, names, reserved)) return [-8, binding];
+        if (!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds, binding), name, names, reserved, ordinary)) return [-8, binding];
         names.push(name);
         pairs = pairs.concat([property, binding]);
         if (at >= kinds.length) return [-1, at];
@@ -87,7 +111,7 @@ export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
       at += 1;
     } else {
       const name = readRequiredTextFact(values, at);
-      if (!acceptJavaScriptRecordParameterBinding(readRequiredTextFact(kinds, at), name, names, reserved)) return [-8, at];
+      if (!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds, at), name, names, reserved, ordinary)) return [-8, at];
       names.push(name);
       instructions = instructions.concat([0, slot, at]);
       at += 1;

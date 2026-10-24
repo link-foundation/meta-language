@@ -12,13 +12,17 @@ import { readPortableSourceLintStyles } from './portable-source-lint-style.mjs';
 import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { writeProjectData } from './project-data.mjs';
 import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
+import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from './read-source-library-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
-  const source = readFileSync(new URL(sourcePath, root), 'utf8');
+  if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
+  const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath) : null;
+  const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
   const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
+  const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,program) : null;
   const emitted = emitRust(program, { arrayConsumption: true });
   const header = emitted.text.split('\n').find(line => line.startsWith('#![allow('));
   if (!header) throw new TypeError('the source translator omitted its library attributes');
@@ -64,9 +68,10 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
+    ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),
     emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings },
     files: files.map(file => ({ path: file.path ?? moduleName + '.rs', source: file.source })),
     boundary: 'Complete automatic source generation only. No fixture, behavior comparison, archive replay, product execution or native compilation.',

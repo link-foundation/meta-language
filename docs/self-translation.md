@@ -778,3 +778,14 @@ two retained refusal inputs with corrected positive expectations, and namespace
 boundary controls are drafted without execution. Generated snapshots and
 historical assertions still need reconciliation alongside closed source profiles
 and the inherited requirements. No tests, gates or Rust compilation ran.
+
+The source-only author now captures complete relative named-function dependency
+closures automatically. Exact source/hash/import intervals and actual exported
+owners remain recorded; aliases and other unrepresented imports refuse. The
+record-parameter kernel uses this path for all four actual modules, generates
+Rust plus a public editable program and retains its historical closed operations.
+Ordinary array/record source adapters select the additional hygienic BoundName
+operations. Five new future cases and the preserved original rest-prefix input
+add positive controls; all previous inputs and closed-policy checks remain.
+No control ran; old generator metadata and the broader module/source obligations
+still need reconciliation after the complete draft exists.

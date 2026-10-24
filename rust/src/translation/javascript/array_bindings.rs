@@ -8,6 +8,9 @@ use super::{
 };
 use crate::translation::array_binding_rules::{self as rules, ml_string::Text};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::source_identifier_rules::{
+    self as source_rules, ml_string::Text as SourceText,
+};
 
 pub(super) struct ArrayBinding {
     pub(super) name: String,
@@ -17,8 +20,8 @@ pub(super) struct ArrayBinding {
     default_value: Option<SExpr>,
 }
 
-fn reserved_names() -> &'static [Text] {
-    static NAMES: OnceLock<Vec<Text>> = OnceLock::new();
+fn reserved_names() -> &'static [SourceText] {
+    static NAMES: OnceLock<Vec<SourceText>> = OnceLock::new();
     NAMES.get_or_init(|| {
         let policy =
             crate::read_structured_data_lino(include_str!("../../data/array-bindings.lino"))
@@ -27,7 +30,7 @@ fn reserved_names() -> &'static [Text] {
             .as_array()
             .expect("reserved bindings are ordered names")
             .iter()
-            .map(|value| Text::from_text(value.as_str().expect("a reserved binding is text")))
+            .map(|value| SourceText::from_text(value.as_str().expect("a reserved binding is text")))
             .collect()
     })
 }
@@ -76,9 +79,9 @@ impl JavaScriptParser {
         let mut names = HashSet::new();
         for token in self.array_binding_names(self.cursor.index) {
             crate::translation::lexer::require_java_script_identifier_role(&token, true)?;
-            if !rules::accept_java_script_array_binding_name(
-                &Text::from_text(kind(&token)),
-                &Text::from_text(&token.value),
+            if !source_rules::accept_java_script_source_binding_name(
+                &SourceText::from_text(kind(&token)),
+                &SourceText::from_text(&token.value),
                 names.contains(&token.value),
                 reserved_names(),
             ) {
@@ -131,9 +134,9 @@ impl JavaScriptParser {
                 bindings.extend(self.read_array_binding_path(&position, seen)?);
             } else {
                 let token = self.cursor.identifier(Some("array binding"))?;
-                if !rules::accept_java_script_array_binding_name(
-                    &Text::from_text(kind(&token)),
-                    &Text::from_text(&token.value),
+                if !source_rules::accept_java_script_source_binding_name(
+                    &SourceText::from_text(kind(&token)),
+                    &SourceText::from_text(&token.value),
                     seen.contains(&token.value),
                     reserved_names(),
                 ) {

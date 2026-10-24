@@ -1,5 +1,8 @@
 // Generated from complete js/src/translation/source-identifier-rules.js. Do not edit by hand.
+use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
+use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
 use super::source_ml_source1_temporary_read_source_identifier_prefix_loop2;
+use super::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
@@ -811,61 +814,45 @@ pub fn render_source_cell_parameter(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_source_binding_name(
+    kind: &self::ml_string::Text,
+    name: &self::ml_string::Text,
+    duplicate: bool,
+    reserved: &[self::ml_string::Text],
+) -> bool {
+    if (((*kind)
+        != (self::ml_string::Text::from_units(vec![
+            105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
+        ])))
+        || ((*name) == (self::ml_string::Text::from_units(vec![]))))
+        || duplicate
+    {
+        false
+    } else {
+        {
+            let index = 0f64;
+            {
+                let source_ml_source2_s2 =
+                    self::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
+                        name, reserved, index,
+                    );
+                match source_ml_source2_s2 {
+                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done => {
+                        true
+                    }
+                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(source_ml_source1_temporary_result3) => {
+                        source_ml_source1_temporary_result3
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
     MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),
     MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(
-    name: &self::ml_string::Text,
-    mut index: f64,
-    mut ordinal: f64,
-) -> self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
-    loop {
-        return if index < (name.length()) {
-            {
-                let unit =
-                    (std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 {
-                        {
-                            let index_2 = if position.is_nan() {
-                                0f64
-                            } else {
-                                position.trunc()
-                            };
-                            if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                f64::NAN
-                            } else {
-                                ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
-                            }
-                        }
-                    }))(name.clone(), index);
-                if (unit < 48f64) || (unit > 57f64) {
-                    self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-                } else {
-                    {
-                        let ordinal_2 = ((ordinal * 10f64) + unit) - 48f64;
-                        if (self::ml_math::is_safe_integer(ordinal_2)) {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    (index, ordinal) = (index_2, ordinal_2);
-                                    continue;
-                                }
-                            }
-                        }
-                        {
-                            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(-1f64)
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-        };
-    }
 }

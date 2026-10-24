@@ -33,6 +33,14 @@ for (const fixture of accepted) test(fixture.id, () => {
 });
 
 for (const [id, source] of refused) test(id + ' retains an explicit obligation', () => {
+  if (id === 'reserved-prefix') {
+    // ECMAScript permits ml_; retain the original input and independent oracle.
+    const runnable = source + '\nconsole.log(f([2,3]));';
+    const checked = checkProgram(parseJavaScript(runnable));
+    assert.equal(execute(runnable),'1\n');
+    assert.equal(execute(emitJavaScript(checked).text),execute(runnable));
+    return;
+  }
   assert.throws(() => checkProgram(parseJavaScript(source)));
 });
 

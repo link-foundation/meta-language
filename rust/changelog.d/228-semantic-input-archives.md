@@ -115,3 +115,8 @@ Draft capture-free JavaScript source naming across parser lowering, mutable
 parameter cells, checker binders, natural recursion and target local/global
 allocation. Generate the shared naming definition as Rust/Links and author
 future original-Node/native/codec controls while retaining the old source inputs.
+
+Draft ordinary hygienic array/record pattern names while retaining the historical
+closed operations. Automatically capture complete local function dependencies
+for shared-rule generation, preserving actual source ownership and import spans;
+generate the record parameter closure as Rust and editable Links.

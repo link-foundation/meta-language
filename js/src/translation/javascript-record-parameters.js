@@ -2,7 +2,7 @@
 // unchanged. The shared plans own syntax/BoundNames/profile admission.
 import { unsupported } from './diagnostics.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
-import { findJavaScriptRecordParameterPattern, planJavaScriptRecordParameters,
+import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParameters,
   acceptJavaScriptRecordParameterProfile, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
@@ -23,7 +23,7 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', asynchronous,
     doc?.params.size ?? 0, false, false)) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
-  const plan = planJavaScriptRecordParameters(kinds, values, 0, JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  const plan = planJavaScriptSourceRecordParameters(kinds, values, 0, JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
   // Reason eight identifies the actual rejected BoundName, never a property.
   if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
   if (plan[0] < 0) throw unsupported('record parameter binding',

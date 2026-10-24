@@ -12,6 +12,10 @@ const values = [
   ['private loop binder', 'let ml_total=0;for(let ml_index=0;ml_index<4;ml_index+=1){ml_total+=ml_index;}return ml_total;', '6'],
   ['escaped private identifier', String.raw`const m\u006c_a1=5;return ml_a1;`, '5'],
   ['comment namespace facts', '/* ml_source1_temporary_result1 */ const ml_value=3;let result=0;for(let index=0;index<2;index+=1){result+=ml_value;}return result;', '6'],
+  ['private array defaults', 'const [ml_first=0,ml_second=0]=[3,4];return ml_first+ml_second;', '7'],
+  ['private array rest', 'const [ml_first=0,...ml_tail]=[1,2,3];return ml_first+ml_tail.length;', '3'],
+  ['private mutable array binding', 'let [ml_value=0]=[3];ml_value+=1;return ml_value;', '4'],
+  ['private object binding', 'const {length:ml_length}=[1,2];return ml_length;', '2'],
   ['prefix decimal spelling', 'const ml_source01_a1=3,ml_source9007199254740991_a1=4,ml_source9007199254740992_a1=5;return ml_source01_a1+ml_source9007199254740991_a1+ml_source9007199254740992_a1;', '12'],
   ['source and escaped target spelling', 'const ml_math=3,source_ml_math=4;return ml_math+source_ml_math+Math.floor(1.9);', '8'],
 ];
@@ -19,6 +23,7 @@ const cases = values.map(([name, body, value], index) => ({ name, source: 'expor
 cases.push({ name:'private parameter and capture', source:'/** @param {number} ml_value @returns {number} */ function readPrivateParameter(ml_value){const captured=()=>ml_value+1;return captured();}\nexport function compute(){return readPrivateParameter(4);}', entry:'sourceIdentifierParameter', value:'5', abort:null });
 cases.push({ name:'private function and mapped collision', source:'/** @param {number} value @returns {number} */ function ml_array(value){return value+1;}\n/** @param {number} value @returns {number} */ function source_ml_array(value){return value+2;}\nexport function compute(){return ml_array(3)+source_ml_array(3);}', entry:'sourceIdentifierDeclaration', value:'9', abort:null });
 cases.push({ name:'mutable parameter cell name', source:'/** @param {number} value @returns {number} */ function readPrivateCellParameter(value){const ml_cell_value=4;const increment=()=>{value+=1;return value;};return increment()+increment()+ml_cell_value;}\nexport function compute(){return readPrivateCellParameter(1);}', entry:'sourceIdentifierCellParameter', value:'9', abort:null });
+cases.push({ name:'private required record parameter', source:'function readPrivateRecordParameter({length:ml_length}){return ml_length+1;}\nexport function compute(){return readPrivateRecordParameter([3,4]);}', entry:'sourceIdentifierRecordParameter', value:'3', abort:null });
 writeProjectData(new URL('../../parity/fixtures/source-identifiers.lino', import.meta.url), {
   schemaVersion:1, model:'capture free source generated and target identifier namespaces 1', sourceLanguage:'JavaScript', cases, refusals:[],
   source:cases.map(row=>row.source.replace('function compute(', 'function '+row.entry+'(')).join('\n'),
