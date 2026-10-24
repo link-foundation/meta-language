@@ -6589,3 +6589,34 @@ AST equality, complete definition/program codecs and all four emissions are
 declared and unexecuted. General nominal/reference discards, default numeric
 inference and overflow, mixed value joins, custom destructor/borrow/mutable
 contexts and every preceding requirement remain required.
+
+
+### Lexical JavaScript optional callable draft
+
+Lexical/value optional calls now capture their actual callee once before any
+argument can change its binding. Absent callees produce undefined without
+evaluating arguments. Present callees use the existing checked fixed callable
+signature and ordered argument coercion. Direct calls preserve their ordinary
+result; guarded calls retain returned null, undefined, false, zero and empty
+text independently from receiver absence. Unit callback effects run before
+their result becomes undefined; nested optional results flatten through the
+existing shared absence algebra. Zero-argument factory calls remain calls,
+while actual function references retain their separate source term. This follows
+[optional chains](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-optional-chains).
+
+A private value record stores the actual callee, allowing guards and unwrapping
+to read owned callback values without moving the binding. It never escapes or
+changes the shared reference identity allocator. Its extra private allocation
+uses the existing successful-allocation observation scope. Adapters transport
+actual terms through core record, Let, If, Apply and optional operations;
+complete source rules generate native selections and public editable definition
+graphs in both packages. No new opaque runtime or persisted trust flag is used.
+
+Property references retain their original-this obligation. Continued optional
+chains retain a separate skipped-chain versus returned-value obligation; they
+are not flattened into this closed lexical call result. Dynamic non-callables,
+callable objects/proxies, spread/missing/extra argument protocols, full dead-code/
+TDZ inference, arbitrary effectful callable contexts and every preceding
+requirement remain required. Future original/native values, exception fields,
+source ASTs, both definition/program codecs and four emissions are declared;
+none executed.

@@ -67,6 +67,7 @@ export { createRustPrimitiveBitwiseProgramLinks } from './rust-primitive-bitwise
 export { createArrayStateMethodProgramLinks } from './array-state-method-program.js';
 export { createRustShiftProgramLinks } from './rust-shift-program.js';
 export { createRustRecordProgramLinks } from './rust-record-program.js';
+export { createJavaScriptOptionalCallProgramLinks } from './javascript-optional-call-program.js';
 export { createJavaScriptPropertyCallProgramLinks } from './javascript-property-call-program.js';
 export { createLinkAllocationProgramLinks } from './link-allocation-program.js';
 export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-allocation-rules.js';

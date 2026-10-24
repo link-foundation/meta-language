@@ -46,6 +46,7 @@ mod expressions;
 mod externals;
 mod items;
 mod javascript_concatenation;
+mod javascript_optional_calls;
 mod javascript_property_calls;
 mod matches;
 mod math;

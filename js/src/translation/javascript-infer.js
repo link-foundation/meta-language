@@ -1,3 +1,4 @@
+import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call-rules.js';
 // Types of JavaScript functions written without JSDoc. A parameter or result
 // without a declared type gets a type variable; the bodies, the calls and the
@@ -71,6 +72,7 @@ function hasStructuralInference(node) {
   if (!node || typeof node !== 'object') return false;
   if (Array.isArray(node)) return node.some(hasStructuralInference);
   if (node.k === 'arrayBindingRest' || node.k === 'arrayBindingDefault') return true;
+  if(node.k==='math'&&node.op===readJavaScriptOptionalCallOperation())return true;
   if (requireCallableStructuralInference(node.k ?? '', node.kind ?? '', node.op ?? '')) return true;
   return Object.entries(node).some(([key, value]) => key !== 'span' && hasStructuralInference(value));
 }
@@ -961,6 +963,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
         if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
         if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
@@ -1019,6 +1022,18 @@ class Inference {
       default:
         return this.fresh();
     }
+  }
+
+  optionalCall(node,env){
+    if(node.args.length===0)throw typeError('an optional call needs its actual receiver and ordered non-spread arguments',node.span);
+    const receiver=this.expr(node.args[0].value,env);
+    const resolved=this.resolve(receiver);
+    if(resolved.kind==='unit'||resolved.kind==='option'&&this.resolve(resolved.element).kind==='unit')return {kind:'option',element:UNIT,absence:'undefined'};
+    const args=node.args.slice(1).map(argument=>this.expr(argument.value,env)),ret=this.fresh();
+    const candidate=constructCallableFunctionType(args.map(type=>({type})),ret);
+    if(resolved.kind==='var')this.unify(receiver,{kind:'option',element:candidate,absence:'both'},node.span);
+    else this.unify(resolved.kind==='option'?resolved.element:receiver,candidate,node.span);
+    return resolved.kind==='function'?ret:this.join(ret,{kind:'option',element:UNIT,absence:'undefined'},node.span);
   }
 
   call(path, args, env, where) {

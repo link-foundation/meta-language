@@ -1,3 +1,4 @@
+import {readJavaScriptOptionalCallOperation,acceptJavaScriptOptionalCallHead,requireJavaScriptOptionalCallChain} from './javascript-optional-call-rules.js';
 import {readJavaScriptArrayClassificationBuiltinOperation} from './array-classification-rules.js';
 import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
 // JavaScript frontend for the portable core. It reads the subset of modern
@@ -2245,6 +2246,12 @@ class JavaScriptParser {
         continue;
       }
       if (c.eat('?.')) {
+        if(c.is('(')){
+          if(!acceptJavaScriptOptionalCallHead(expr.k,expr.path?.length??0))throw unsupported('optional method call','the property reference needs its complete original receiver and chain extent',joined(expr,token,token));
+          const args=this.arguments('optional callable');
+          if(requireJavaScriptOptionalCallChain(c.peek().value))throw unsupported('optional call chain','the chain needs its distinct skipped and returned value continuations',joined(expr,c.peek(),token));
+          expr={k:'math',op:readJavaScriptOptionalCallOperation(),name:'',args:[expr,...args].map(value=>({value,spread:false})),span:joined(expr,c.peek(),token)};continue;
+        }
         const field = c.identifier('optional field');
         expr = { k: 'optionalField', object: expr, field: field.value, span: joined(expr, field, token) };
         continue;

@@ -21,6 +21,7 @@ mod fields;
 mod methods;
 mod numbers;
 mod numeric_intrinsics;
+mod optional_calls;
 mod optional_values;
 mod patterns;
 mod products;
@@ -697,6 +698,7 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op==&crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(){return self.optional_call_term(args,env,expr.span);}
                 if op=="convertJavaScriptPrimitiveText"||op=="convertJavaScriptBooleanValue"||op=="testJavaScriptArrayValue"||crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(op){return self.primitive_observation_term(op,args,env);}
                 if crate::translation::javascript_comparison_rules::accept_java_script_loose_equality_operation(op){return self.loose_comparison_term(args,env,expr.span);}
                 if op=="constructJavaScriptStringFromCharacterCodes"||op=="constructJavaScriptStringFromCodePoints"||crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){

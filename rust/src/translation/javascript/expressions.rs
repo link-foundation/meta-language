@@ -598,6 +598,23 @@ impl JavaScriptParser {
             }
             let here = Some(span(&token, &token));
             if self.cursor.eat("?.").is_some() {
+                if self.cursor.is("(") {
+                    let path_length = match &expr.node {
+                        SNode::Name { path } | SNode::FunctionValue { path } => path.len(),
+                        _ => 0,
+                    };
+                    if !crate::translation::javascript_optional_call_rules::accept_java_script_optional_call_head(expr.node.kind(),super::callables::number(path_length)){
+                        return Err(unsupported("optional method call","the property reference needs its complete original receiver and chain extent",Some(joined(&expr,&node(SNode::Unit,token.span()),&token))));
+                    }
+                    let args = self.arguments("optional callable")?;
+                    if crate::translation::javascript_optional_call_rules::require_java_script_optional_call_chain(&self.cursor.peek().value){
+                        return Err(unsupported("optional call chain","the chain needs its distinct skipped and returned value continuations",Some(joined(&expr,&node(SNode::Unit,self.cursor.peek().span()),&token))));
+                    }
+                    let place =
+                        joined(&expr, &node(SNode::Unit, self.cursor.peek().span()), &token);
+                    expr=node(SNode::Math{op:crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(),name:String::new(),args:std::iter::once(expr).chain(args).map(|value|super::SArrayItem::new(value,false)).collect()},place);
+                    continue;
+                }
                 let field = self.cursor.identifier(Some("optional field"))?;
                 let place = Span::new(
                     expr.span.map_or(token.start, |place| place.start),

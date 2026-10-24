@@ -67,3 +67,12 @@ fn primitive_string_unit_calls_keep_actual_arity_coercions_absence_and_argument_
         create_java_script_property_call_program_links,
     );
 }
+
+#[test]
+fn lexical_optional_calls_keep_callee_capture_lazy_arguments_and_result_absence() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/optional-calls.mjs",
+        "JavaScript lexical optional calls",
+        meta_language::create_java_script_optional_call_program_links,
+    );
+}

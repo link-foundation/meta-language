@@ -22,7 +22,7 @@ pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
                     .unwrap_or_default()
                     .to_owned()
             };
-            rules::require_callable_structural_inference(
+            (fields.get("k").and_then(serde_json::Value::as_str)==Some("math") && text("op")==crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation()) || rules::require_callable_structural_inference(
                 &(text("k")),
                 &(text("kind")),
                 &(text("op")),

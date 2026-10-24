@@ -1,3 +1,5 @@
+import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
+import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
 import { acceptOptionalAnnotationTypes } from './optional-inference.js';
 import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
@@ -1220,6 +1222,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readJavaScriptOptionalCallOperation())return checkJavaScriptOptionalCall(this,node,env,path);
     if(node.op==='testJavaScriptArrayValue')return checkJavaScriptArrayBuiltin(this,node,env,path);
     if(node.op==='convertJavaScriptBooleanValue')return checkJavaScriptBooleanBuiltin(this,node,env,path);
     if(node.op==='convertJavaScriptPrimitiveText')return checkJavaScriptPrimitiveTextBuiltin(this,node,env,path);

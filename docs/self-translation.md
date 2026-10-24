@@ -1073,3 +1073,13 @@ missing-semicolon blocks carry an actual Unit annotation checked by the core.
 Ordinary source context selection is reused once per block, keeping selected
 profile policies exact. Full source rules generate native definitions and Links;
 all future value/trace/type/codec controls remain unexecuted.
+
+Lexical optional-call source syntax now selects a complete shared construction
+policy. Type adapters reuse callable unification and deferred optional joins;
+checker adapters capture actual callee values in private records and construct
+existing core application/guard/absence terms. Direct, nullish and nullable
+callables keep separate forms, and Unit results normalize to actual undefined.
+All selections are source-generated native code and editable Links exposed by
+createJavaScriptOptionalCallProgramLinks/create_java_script_optional_call_program_links.
+Property this references and uninterrupted optional chains retain their full
+requirements. Future independent controls remain unexecuted.

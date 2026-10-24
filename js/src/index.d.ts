@@ -975,6 +975,7 @@ export function createRustPrimitiveBitwiseProgramLinks(): TypedProgramLinks;
 export function createArrayStateMethodProgramLinks(): TypedProgramLinks;
 export function createRustShiftProgramLinks(): TypedProgramLinks;
 export function createRustRecordProgramLinks(): TypedProgramLinks;
+export function createJavaScriptOptionalCallProgramLinks(): TypedProgramLinks;
 export function createJavaScriptPropertyCallProgramLinks(): TypedProgramLinks;
 export function createLinkAllocationProgramLinks(): TypedProgramLinks;
 export function createRustInherentProgramLinks(): TypedProgramLinks;
