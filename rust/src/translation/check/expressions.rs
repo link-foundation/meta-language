@@ -222,7 +222,14 @@ impl Checker {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, None, false)?;
+                let arg = self.expr(arg, env, path, if self.language == Language::Rust { expected } else { None }, false)?;
+                if self.language == Language::Rust && matches!(arg.ty, Type::Fixed { .. }) {
+                    let ty = arg.ty.clone();
+                    return Ok(Expr::new(Node::Math {
+                        op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation("!"),
+                        args: vec![arg],
+                    }, ty));
+                }
                 let arg = self.boolean_value(arg, span)?;
                 Ok(Expr::new(
                     Node::Unary {
@@ -610,7 +617,11 @@ impl Checker {
                 path,
                 span,
             ),
-            SNode::Math { op, name, args } => self.math(op, name, args, span, env, path),
+            SNode::Math { op, name, args } => {
+                if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
+                    self.rust_primitive_bitwise(op, args, env, path, expected, span)
+                } else { self.math(op, name, args, span, env, path) }
+            }
             other => Err(type_error(
                 format!("unknown expression {}", other.kind()),
                 span,

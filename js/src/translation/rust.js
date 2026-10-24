@@ -4,6 +4,7 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
   noteRustSharedArrayHandleBorrow,readRustSharedArrayHandleMethod,readRustSharedArrayHandleConstructor,
   noteRustSharedArrayLiteral,readRustSharedArrayHandleCall,finishRustSharedArrayHandleSource,refuseRustSharedArrayHandleValueComparison,refuseRustSharedArrayHandleObservation} from './rust-shared-array-handles.js';
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
+import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -964,7 +965,7 @@ class RustParser {
 
   comparison(path, options) {
     const c = this.cursor;
-    const left = this.additive(path, options);
+    const left = this.primitiveBitwise(path, options, 0);
     const token = c.peek();
     const shift = (token.value === '<' || token.value === '>') && c.is(token.value, 1) && c.peek(1).start === token.end;
     const blockStatement = options.statement && ['if', 'match'].includes(left.k);
@@ -973,11 +974,23 @@ class RustParser {
     }
     if (token.kind === 'punct' && COMPARISON[token.value]) {
       c.next();
-      const right = this.additive(path, {});
+      const right = this.primitiveBitwise(path, {}, 0);
       refuseRustSharedArrayHandleValueComparison(this,left,right,path,joined(left,right,token));
       const after = c.peek();
       if (after.kind === 'punct' && COMPARISON[after.value]) throw this.fail('comparison operators cannot be chained', after);
       return { k: 'binary', op: COMPARISON[token.value], left, right, span: joined(left, right, token) };
+    }
+    return left;
+  }
+
+  primitiveBitwise(path, options, level) {
+    if (level === 3) return this.additive(path, options);
+    let left = this.primitiveBitwise(path, options, level + 1);
+    while (this.cursor.peek().kind === 'punct' && acceptRustPrimitiveBitwisePrecedence(this.cursor.peek().value, level)) {
+      if (options.statement && ['if', 'match'].includes(left.k)) return left;
+      const token = this.cursor.next(), right = this.primitiveBitwise(path, {}, level + 1);
+      left = { k: 'math', op: readRustPrimitiveBitwiseOperation(token.value), name: 'Rust primitive bitwise operation',
+        args: [{ value: left, spread: false }, { value: right, spread: false }], span: joined(left, right, token) };
     }
     return left;
   }

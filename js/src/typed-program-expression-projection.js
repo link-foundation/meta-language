@@ -11,6 +11,7 @@ import { readSurfaceReferenceProjectionForm, readSurfaceReferencePayloadOperand 
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
 import { acceptLinkedBigIntegerBitwiseOperation } from './translation/big-integer-bitwise-rules.js';
+import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-primitive-bitwise-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -32,7 +33,8 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     && !acceptProgramExpressionOperation(value.k, value.op) && !acceptLinkedNumberBitwiseOperation(value.k,value.op)
     && !acceptLinkedReferenceMethodOperation(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedRecordFieldWrite(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
-    && !acceptLinkedBigIntegerBitwiseOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
+    && !acceptLinkedBigIntegerBitwiseOperation(value.k, value.op)
+    && !acceptLinkedRustPrimitiveBitwiseOperation(value.k, value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
   for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {

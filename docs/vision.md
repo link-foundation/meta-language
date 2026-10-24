@@ -2627,6 +2627,25 @@ error equivalence and independent Rust source admission remain separate
 implementation obligations. The earlier Number profile and every original
 assertion/input remain available for later evidence-based reconciliation.
 
+Independent Rust parsing now has a source draft for eager `&`, `|` and `^`
+on Booleans and fixed integers, and integer `!`. The three precedence levels
+sit between arithmetic and comparison as specified by the
+[Rust precedence table](https://doc.rust-lang.org/reference/expressions.html#expression-precedence).
+Actual primitive type owners, matching widths, signedness and contextual literal
+types survive checking and linked reload. Source selection and all target
+construction rules are JavaScript translated automatically into native source,
+with complete editable typed definitions in both packages. JavaScript represents
+fixed integers as BigInt, with bounded complement; Boolean arguments are eager
+before the logical operation. Lean and Rocq reuse the common signed integer
+construction and explicit unsigned projection. These are drafts without target
+equivalence certificates. Future controls cover every represented signed and
+unsigned width, Booleans, all four operations, precedence, contextual literals,
+eager Boolean failure, both codecs and paired complete four-target emission.
+Native controls compare original Rust and emitted Rust with JavaScript over the
+complete declared input product. Shifts with their overflow modes, trait
+overloads, compound Rust state and the remaining full Rust grammar/library/
+ownership semantics remain separate implementation obligations.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

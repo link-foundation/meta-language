@@ -45,6 +45,19 @@ impl RocqEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op)
+            > 0.0
+        {
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(
+                crate::translation::rust_primitive_bitwise::emit_rust_primitive_bitwise(
+                    "Rocq", e, &values,
+                ),
+            );
+        }
         if crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(op) > 0.0 {
             let values = args
                 .iter()

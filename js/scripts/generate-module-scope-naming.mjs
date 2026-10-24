@@ -31,6 +31,7 @@ sources.push('js/src/translation/reference-method-rules.js', 'js/src/translation
 sources.push('js/src/translation/collection-access-rules.js', 'js/scripts/generate-collection-access-rules.mjs', 'js/scripts/generate-collection-access-fixtures.mjs');
 sources.push('js/src/translation/record-write-rules.js', 'js/src/translation/record-writes.js', 'js/scripts/generate-record-write-rules.mjs', 'js/scripts/generate-record-write-fixtures.mjs');
 sources.push('js/src/translation/big-integer-bitwise-rules.js', 'js/scripts/generate-big-integer-bitwise-rules.mjs', 'js/scripts/generate-big-integer-bitwise-fixtures.mjs');
+sources.push('js/src/translation/rust-primitive-bitwise-rules.js', 'js/src/translation/rust-primitive-bitwise.js', 'js/scripts/generate-rust-primitive-bitwise-rules.mjs', 'js/scripts/generate-rust-primitive-bitwise-fixtures.mjs');
 sources.push('js/src/resource-description-address-rules.js', 'js/src/resource-description-identifiers.js', 'js/scripts/generate-resource-description-address-rules.mjs', 'js/scripts/generate-resource-description-address-fixtures.mjs');
 const pin=value=>({bytes:Buffer.byteLength(value),sha256:createHash('sha256').update(value).digest('hex')});
 function operations(){

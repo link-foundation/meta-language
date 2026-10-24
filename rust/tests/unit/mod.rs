@@ -252,6 +252,7 @@ mod translation_rust_lifetimes;
 mod translation_rust_literal_matches;
 mod translation_rust_owned_local_state;
 mod translation_rust_owned_tuple_calls;
+mod translation_rust_primitive_bitwise;
 mod translation_rust_primitive_owners;
 mod translation_rust_products;
 mod translation_rust_pure_unit_calls;

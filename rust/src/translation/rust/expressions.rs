@@ -42,7 +42,7 @@ impl RustParser {
     }
 
     pub(super) fn comparison(&mut self, path: &[String], options: Options) -> Result<SExpr> {
-        let left = self.additive(path, options)?;
+        let left = self.primitive_bitwise(path, options, 0)?;
         let token = self.peek();
         let c = &self.cursor;
         let shift = (token.value == "<" || token.value == ">")
@@ -68,7 +68,7 @@ impl RustParser {
             && let Some(op) = comparison_op(&token.value)
         {
             self.cursor.advance();
-            let right = self.additive(path, Options::default())?;
+            let right = self.primitive_bitwise(path, Options::default(), 0)?;
             self.refuse_shared_value_observation(
                 &left,
                 Some(&right),
@@ -82,6 +82,30 @@ impl RustParser {
             return Ok(binary(op, left, right, &token));
         }
         Ok(left)
+    }
+
+    fn primitive_bitwise(&mut self, path: &[String], options: Options, level: u8) -> Result<SExpr> {
+        if level == 3 {
+            return self.additive(path, options);
+        }
+        let mut left = self.primitive_bitwise(path, options, level + 1)?;
+        loop {
+            let token = self.peek();
+            if token.kind != TokenKind::Punct || !crate::translation::rust_primitive_bitwise_rules::accept_rust_primitive_bitwise_precedence(&token.value, f64::from(level)) {
+                return Ok(left);
+            }
+            if options.statement && is_if_or_match(&left) {
+                return Ok(left);
+            }
+            self.cursor.advance();
+            let right = self.primitive_bitwise(path, Options::default(), level + 1)?;
+            let range = joined(left.span, right.span, &token);
+            left = SExpr::new(SNode::Math {
+                op: crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_operation(&token.value),
+                name: "Rust primitive bitwise operation".to_owned(),
+                args: vec![SArrayItem { value: left, spread: false }, SArrayItem { value: right, spread: false }],
+            }, range);
+        }
     }
 
     pub(super) fn additive(&mut self, path: &[String], options: Options) -> Result<SExpr> {

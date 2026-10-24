@@ -12,6 +12,8 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import { typeError, unsupported } from './diagnostics.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
+import { readRustPrimitiveBitwiseArity, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
+import { checkRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
@@ -756,7 +758,7 @@ class Checker {
         return { k: 'stringPoints', object, type: array(STRING) };
       }
       case 'math':
-        return this.math(node, env, path);
+        return this.math(node, env, path, expected);
       case 'index': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
@@ -791,7 +793,10 @@ class Checker {
       }
       case 'unary': {
         if (node.op === 'not') {
-          return { k: 'unary', op: 'not', arg: this.booleanValue(this.expr(node.arg, env, path, undefined), node.span), type: BOOL };
+          const arg = this.expr(node.arg, env, path, this.language === 'Rust' ? expected : undefined);
+          if (this.language === 'Rust' && arg.type.kind === 'fixed') return {
+            k: 'math', op: readRustPrimitiveBitwiseOperation('!'), args: [arg], type: arg.type };
+          return { k: 'unary', op: 'not', arg: this.booleanValue(arg, node.span), type: BOOL };
         }
         if (node.op === 'neg') {
           if (node.arg.k === 'num') {
@@ -1176,7 +1181,8 @@ class Checker {
    * arguments are Numbers, which none of them converts, and a spread
    * argument makes `max` and `min` a fold over one array.
    */
-  math(node, env, path) {
+  math(node, env, path, expected) {
+    if (readRustPrimitiveBitwiseArity(node.op)) return checkRustPrimitiveBitwise(this, node, env, path, expected);
     const numberArity=readJavaScriptNumberBitwiseArity(node.op);
     const bitwiseArity=numberArity || readBigIntegerBitwiseArity(node.op);
     if(bitwiseArity){

@@ -5,6 +5,8 @@ import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordF
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
@@ -603,6 +605,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('JavaScript', e, argument => this.expr(argument));
         if (readBigIntegerBitwiseArity(e.op)) {
           const text = renderBigIntegerBitwiseExpression('JavaScript', e.op, e.args.map(argument => this.expr(argument)));
           if (!text) throw unsupported('BigInt bitwise arity', 'the operation requires its exact checked operand inventory', e.span);

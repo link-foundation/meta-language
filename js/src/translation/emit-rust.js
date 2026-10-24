@@ -23,6 +23,8 @@ import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
 import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
+import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
+import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -1452,6 +1454,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rust', e, argument => this.expr(argument));
     if (readBigIntegerBitwiseArity(e.op)) {
       this.usesBig = true; this.usesBigIntegerBitwise = true;
       const text = renderBigIntegerBitwiseExpression('Rust', e.op, e.args.map(argument => this.expr(argument)));

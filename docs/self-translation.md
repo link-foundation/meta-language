@@ -550,3 +550,14 @@ boundary products, compound locals, large right-shift saturation, both codecs,
 paired complete emissions and native CI execution. None has run. Mixed-domain
 error encodings, coercions, resource-error equivalence and independent Rust
 syntax still require the remaining implementation drafts.
+
+The Rust primitive bitwise draft adds three source precedence levels and
+integer complement, preserving actual fixed widths and contextual literals.
+Eager Boolean arguments remain distinct from short-circuit operators. Both
+checkers and all four emitters use one automatically translated admission and
+construction library; typed Links reload retains the actual primitive owners.
+Future controls compare every Boolean/integer-width/operator product with
+original Rust, translated JavaScript and emitted Rust, plus both codecs and
+complete four-target parity. Precedence, contextual literals and eager Boolean
+failure have independent controls. None ran. Shift overflow, overloaded traits
+and compound Rust local state retain their implementation obligations.

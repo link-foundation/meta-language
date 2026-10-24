@@ -31,3 +31,6 @@ alias and evaluation-order controls.
 Draft exact BigInt bitwise operations and signed shifts with one automatically
 translated algorithm, shared integer runtime ownership, four target constructors
 and future complete boundary/native execution controls.
+Draft independent Rust Boolean and fixed integer bit operations, exact source
+precedence, contextual literal types and shared four-target constructors, with
+future controls against original Rust and eager Boolean failures.

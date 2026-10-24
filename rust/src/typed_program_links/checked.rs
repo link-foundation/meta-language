@@ -165,6 +165,9 @@ fn validate_type_record(
                 value["object"]["type"]["kind"].as_str().unwrap_or_default(),
                 value["object"]["type"]["reference"].as_bool() == Some(true),
             )
+            && !crate::translation::rust_primitive_bitwise_rules::accept_linked_rust_primitive_bitwise_operation(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
             && !crate::translation::big_integer_bitwise_rules::accept_linked_big_integer_bitwise_operation(
                 kind, value["op"].as_str().unwrap_or_default(),
             )
