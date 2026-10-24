@@ -333,6 +333,11 @@ pub struct SPattern {
 #[serde(tag = "k", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum SPatternNode {
     Wild,
+    Tuple {
+        args: Vec<SPattern>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rest: Option<usize>,
+    },
     /// A lone name: a nullary constructor when the scrutinee type has one, else a binder.
     BindOrCtor {
         name: String,

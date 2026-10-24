@@ -70,6 +70,39 @@ impl SourceOrigins {
             ));
         }
         match &pattern.node {
+            SPatternNode::Tuple { args, rest } => {
+                let fields = origin.fields.as_deref().unwrap_or_default();
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
+                    count(fields.len()),
+                    count(args.len()),
+                    rest.map_or(-1.0, count),
+                );
+                let borrowed = !origin.wrappers.is_empty()
+                    && origin.wrappers.iter().all(|layer| layer == "reference");
+                for (index, item) in args.iter().enumerate() {
+                    let position = if plan.first() == Some(&0.0) {
+                        plan.iter()
+                            .skip(1)
+                            .position(|actual| *actual == count(index))
+                    } else {
+                        None
+                    };
+                    let mut field = position
+                        .and_then(|position| fields.get(position))
+                        .cloned()
+                        .unwrap_or_else(SourceOrigin::unknown);
+                    if borrowed && position.is_some() {
+                        field.wrappers.insert(0, "reference".to_owned());
+                    }
+                    self.pattern(item, &field, path, result, item.span.or(source_span))?;
+                }
+            }
             SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
                 if !self
                     .lookup(std::slice::from_ref(name), path)
@@ -77,6 +110,13 @@ impl SourceOrigins {
                         matches!(entry.declaration, SourceDeclaration::Constructor { .. })
                     })
                 {
+                    if result.contains_key(name) {
+                        return Err(unsupported(
+                            "duplicate source pattern binding",
+                            "each pattern binds a source name at most once",
+                            source_span,
+                        ));
+                    }
                     result.insert(name.clone(), origin);
                 }
             }

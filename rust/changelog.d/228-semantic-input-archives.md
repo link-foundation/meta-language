@@ -56,6 +56,10 @@ Draft irrefutable nominal Rust let patterns using ordinary matches, with exact
 field origins, one initializer evaluation and shared single-constructor rules.
 Retain nested records, source scopes and fresh internal names.
 
+Draft nested Rust tuple match patterns and rest positions through shared field
+plans and ordinary match columns. Preserve borrowed field origins, fresh column
+names, duplicate-name refusals and exact corrected predecessor inputs.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

@@ -2863,6 +2863,21 @@ Complete paired graphs, both codecs, four emissions and original/emitted Rust
 controls remain unexecuted. Nominal fields containing tuple patterns, ref/mut/@
 bindings and broader move/borrow/drop semantics still need source work.
 
+Tuple match patterns now normalize into positional columns and ordinary
+projections before the existing literal/constructor match compiler. Grouping,
+unit and one-field patterns, nested tuple/record patterns and any single `..`
+position use one shared field plan; native source and typed Links are generated
+from JavaScript. Borrowed fields retain their reference origins. Column names
+exclude actual pattern/body names, and duplicate source binders refuse. The
+[tuple rules](https://doc.rust-lang.org/reference/patterns.html#tuple-patterns)
+and [rest rules](https://doc.rust-lang.org/reference/patterns.html#rest-patterns)
+define the source interpretation. Twenty future values/aborts and five refusals
+exercise these paths. Two additional products retain exact former tuple-struct
+and tuple-match refusal inputs and historical expectations with independent
+value assertions. All complete paired graph/codec/four-emission/original-Rust
+controls remain unexecuted. No new checked term or target runtime is needed.
+Tuple-struct rest, ref/mut/@ forms and full ownership/drop remain obligations.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

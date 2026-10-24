@@ -54,6 +54,33 @@ fn nominal_bindings_preserve_complete_graphs_codecs_and_original_values() {
     );
 }
 
+#[test]
+fn tuple_patterns_preserve_complete_products_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/tuple-patterns.mjs",
+        "Rust tuple patterns",
+        create_rust_record_program_links,
+    );
+}
+
+#[test]
+fn preceding_tuple_struct_input_retains_complete_corrected_controls() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/product-correction-tuple-struct.mjs",
+        "preceding tuple struct",
+        create_rust_record_program_links,
+    );
+}
+
+#[test]
+fn preceding_tuple_match_input_retains_complete_corrected_controls() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/product-correction-tuple-match.mjs",
+        "preceding tuple match",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,
@@ -194,25 +221,34 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
                     .unwrap()
                     .starts_with(row["source"].as_str().unwrap())
             );
-            let preceding_reason = match row.get("correctionKind").and_then(Value::as_str) {
-                None => {
-                    "Rust record update: update syntax needs complete move and field provenance"
+            let correction = row.get("correctionKind").and_then(Value::as_str);
+            let preceding = match correction {
+                Some("tuple-struct") => {
+                    json!({"kind":"unsupported","messagePattern":"Rust struct item"})
                 }
-                Some("named lifetime receiver") => {
-                    "Rust mutable or explicit lifetime receiver: receiver mutation and named regions need an explicit ownership interpretation"
+                Some("tuple-match") => {
+                    json!({"kind":"unsupported","messagePattern":"tuple match pattern"})
                 }
-                Some("explicit receiver type") => {
-                    "Rust explicit receiver type: explicit receiver types need their complete arbitrary-self interpretation"
+                _ => {
+                    let preceding_reason = match correction {
+                        None => {
+                            "Rust record update: update syntax needs complete move and field provenance"
+                        }
+                        Some("named lifetime receiver") => {
+                            "Rust mutable or explicit lifetime receiver: receiver mutation and named regions need an explicit ownership interpretation"
+                        }
+                        Some("explicit receiver type") => {
+                            "Rust explicit receiver type: explicit receiver types need their complete arbitrary-self interpretation"
+                        }
+                        Some("boxed receiver needs dereference model") => {
+                            "Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver"
+                        }
+                        Some(other) => panic!("unregistered expectation correction: {other}"),
+                    };
+                    json!({"kind":"unsupported","reason":preceding_reason})
                 }
-                Some("boxed receiver needs dereference model") => {
-                    "Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver"
-                }
-                Some(other) => panic!("unregistered expectation correction: {other}"),
             };
-            assert_eq!(
-                row["previousExpectation"],
-                json!({"kind":"unsupported","reason":preceding_reason})
-            );
+            assert_eq!(row["previousExpectation"], preceding);
         }
         let native = row["nativeTarget"].as_str().unwrap().replace('.', "::");
         let (kind, value) = if let Some(message) = row["abort"].as_str() {

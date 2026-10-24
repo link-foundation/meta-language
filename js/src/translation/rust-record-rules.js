@@ -43,8 +43,20 @@ export function acceptRustRecordUpdateOwner(structure, known, actual, expected, 
 }
 /** @param {string} kind @param {boolean} known @param {number} variants @param {number} arity @param {number} fields @returns {boolean} */
 export function acceptRustIrrefutablePatternNode(kind, known, variants, arity, fields) {
-  if (kind === 'wild' || kind === 'bind') return true;
+  if (kind === 'wild' || kind === 'bind' || kind === 'tuple') return true;
   return kind === 'ctor' && known && variants === 1 && arity === fields;
+}
+/** @param {number} width @param {number} count @param {number} rest @returns {number[]} */
+export function planTuplePatternFields(width, count, rest) {
+  if (!Number.isSafeInteger(width) || !Number.isSafeInteger(count) || !Number.isSafeInteger(rest)
+      || width < 0 || count < 0 || rest < -1 || rest > count || count > width || rest < 0 && count !== width) return [-1];
+  const result = [0];
+  for (let index = 0; index < width; index += 1) {
+    if (rest < 0 || index < rest) result.push(index);
+    else if (index < width - count + rest) result.push(-1);
+    else result.push(index - width + count);
+  }
+  return result;
 }
 /** @param {string[]} reserved @param {number} count @returns {string[]} */
 export function readRustRecordBindingNames(reserved, count) {

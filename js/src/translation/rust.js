@@ -1537,7 +1537,22 @@ class RustParser {
       c.next();
       return { k: 'boolLit', value: token.value === 'true', span: span(token, token) };
     }
-    if (c.is('(')) throw unsupported('tuple match pattern', 'tuple match coverage is not represented; use an immutable destructuring let', span(token, token));
+    if (c.eat('(')) {
+      const args=[];let rest=null,comma=false;
+      this.recordPatternDepth+=1;
+      try{
+        while(!c.is(')')){
+          if(c.eat('..')){
+            if(rest!==null)throw unsupported('tuple rest pattern','a tuple pattern has at most one rest position',span(token,c.peek()));
+            rest=args.length;
+          }else args.push(this.pattern(path,aliases));
+          if(!c.eat(','))break;
+          comma=true;
+        }
+        c.expect(')','tuple pattern');
+      }finally{this.recordPatternDepth-=1;}
+      return args.length===1&&rest===null&&!comma?args[0]:{k:'tuple',args,...(rest===null?{}:{rest}),span:span(token,c.peek())};
+    }
     if (token.kind !== 'identifier') throw unsupported('pattern', `${describe(token)} is outside the portable pattern language`, span(token, token));
     const segments = this.pathSegments('pattern');
     if (c.eat('@')) {

@@ -2,6 +2,7 @@
 // parser collects declarations before validating bodies, retaining its own
 // type, path and pattern records rather than inferring a second typed program.
 import { unsupported } from './diagnostics.js';
+import { planTuplePatternFields } from './rust-record-rules.js';
 import {acceptRustSharedArrayHandleTransfer} from './rust-shared-array-handle-rules.js';
 import { rustFixedType } from './types.js';
 import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgument, acceptRustSourceBoxCoercionLayer, acceptRustSourceBoxOwner, acceptRustSourceBoxAvailability, acceptRustSourceTextEquality, readRustSourceExpressionOrigin } from './rust-indirection-rules.js';
@@ -311,7 +312,19 @@ export class RustSourceOrigins {
       throw unsupported('source pattern', 'an owned Box requires an explicit dereference before a constructor or literal pattern', sourceSpan);
     }
     if (pattern.k === 'bindOrCtor' || pattern.k === 'bind') {
-      if (!this.lookup([pattern.name], path)?.fields) result.set(pattern.name, origin);
+      if (!this.lookup([pattern.name], path)?.fields) {
+        if(result.has(pattern.name))throw unsupported('duplicate source pattern binding','each pattern binds a source name at most once',sourceSpan);
+        result.set(pattern.name, origin);
+      }
+    } else if (pattern.k === 'tuple') {
+      const fields=origin.fields??[],plan=planTuplePatternFields(fields.length,pattern.args.length,pattern.rest??-1);
+      const borrowed=origin.wrappers.length>0&&origin.wrappers.every(layer=>layer==='reference');
+      const actual=new Map(plan[0]===0?plan.slice(1).map((index,position)=>[index,position]):[]);
+      for(const[index,item]of pattern.args.entries()){
+        const position=actual.get(index),field=position===undefined?unknown():clone(fields[position]);
+        if(borrowed&&position!==undefined)field.wrappers.unshift('reference');
+        this.pattern(item,field,path,result,item.span??sourceSpan);
+      }
     } else if (pattern.k === 'ctor') {
       const entry = this.lookup(pattern.path, path);
       const typeEntry = origin.type?.kind === 'named' ? this.lookup(origin.type.path, origin.path) : null;

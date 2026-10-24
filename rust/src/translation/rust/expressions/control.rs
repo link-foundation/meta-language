@@ -330,12 +330,42 @@ impl RustParser {
                 span: span(&token, &token),
             });
         }
-        if self.cursor.is("(") {
-            return Err(unsupported(
-                "tuple match pattern",
-                "tuple match coverage is not represented; use an immutable destructuring let",
-                span(&token, &token),
-            ));
+        if self.cursor.eat("(").is_some() {
+            self.record_pattern_depth += 1;
+            let result = (|| -> Result<(Vec<SPattern>, Option<usize>, bool)> {
+                let mut args = Vec::new();
+                let mut rest = None;
+                let mut comma = false;
+                while !self.cursor.is(")") {
+                    if self.cursor.eat("..").is_some() {
+                        if rest.is_some() {
+                            return Err(unsupported(
+                                "tuple rest pattern",
+                                "a tuple pattern has at most one rest position",
+                                span(&token, self.cursor.peek()),
+                            ));
+                        }
+                        rest = Some(args.len());
+                    } else {
+                        args.push(self.pattern(path, aliases)?);
+                    }
+                    if self.cursor.eat(",").is_none() {
+                        break;
+                    }
+                    comma = true;
+                }
+                self.cursor.expect(")", Some("tuple pattern"))?;
+                Ok((args, rest, comma))
+            })();
+            self.record_pattern_depth -= 1;
+            let (mut args, rest, comma) = result?;
+            if args.len() == 1 && rest.is_none() && !comma {
+                return Ok(args.remove(0));
+            }
+            return Ok(SPattern {
+                node: SPatternNode::Tuple { args, rest },
+                span: span(&token, self.cursor.peek()),
+            });
         }
         if token.kind != TokenKind::Identifier {
             return Err(unsupported(

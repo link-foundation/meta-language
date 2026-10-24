@@ -56,6 +56,7 @@ impl RustParser {
                 &[][..],
             ),
             SPatternNode::Bind { .. } => ("bind", None, &[][..]),
+            SPatternNode::Tuple { args, .. } => ("tuple", None, args.as_slice()),
             SPatternNode::Wild => ("wild", None, &[][..]),
             _ => ("refutable", None, &[][..]),
         };

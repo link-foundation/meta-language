@@ -641,6 +641,13 @@ retain source patterns, field ownership and fresh temporary names. Twenty
 future values/aborts and four refusals add complete paired graph, codec,
 four-emission and independent original-Rust controls. None executed.
 
+Tuple patterns expand through a shared rest/position plan before the existing
+match compiler. The native planner and editable typed Links are generated from
+JavaScript. Hosts transport actual product types, columns and borrowed field
+origins; checked terms and all target runtimes stay shared. Twenty future
+values/aborts, five refusals and two corrected historical input products retain
+complete paired graph, codec, emission and original-Rust controls. None ran.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

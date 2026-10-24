@@ -19,3 +19,6 @@ pub use part_1::*;
 #[path = "rust_record_rules/part_2.rs"]
 mod part_2;
 pub use part_2::*;
+#[path = "rust_record_rules/part_3.rs"]
+mod part_3;
+pub use part_3::*;

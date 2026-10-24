@@ -52,6 +52,7 @@ mod rust_primitive_bitwise;
 mod rust_shifts;
 mod string_code_unit_template;
 mod strings;
+mod tuple_patterns;
 mod type_queries;
 pub use self::recursion::*;
 
@@ -363,6 +364,7 @@ enum NPat {
     Bind(String),
     Nat { succ: bool, args: Vec<Self> },
     Data { ctor: String, args: Vec<Self> },
+    Tuple { args: Vec<Self> },
     Lit { value: Box<SExpr>, key: String },
 }
 
@@ -381,7 +383,7 @@ impl NPat {
 
     fn args(&self) -> &[Self] {
         match self {
-            Self::Nat { args, .. } | Self::Data { args, .. } => args,
+            Self::Nat { args, .. } | Self::Data { args, .. } | Self::Tuple { args } => args,
             _ => &[],
         }
     }

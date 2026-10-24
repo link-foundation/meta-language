@@ -715,7 +715,7 @@ pub(super) fn pattern_names(pattern: &SPattern, names: &mut HashSet<String>) {
         SPatternNode::BindOrCtor { name } | SPatternNode::Bind { name } => {
             names.insert(name.clone());
         }
-        SPatternNode::Ctor { args, .. } => {
+        SPatternNode::Ctor { args, .. } | SPatternNode::Tuple { args, .. } => {
             for arg in args {
                 pattern_names(arg, names);
             }

@@ -25,6 +25,8 @@ use super::types::{BOOL, FLOAT, STRING, Type, UNIT, rust_fixed_type};
 use super::{Language, Span};
 
 mod array_rules;
+mod binding_patterns;
+use binding_patterns::ProductBindingPattern;
 mod cast_syntax_rules;
 mod completion_rules;
 pub(crate) mod const_function_rules;
@@ -450,30 +452,6 @@ struct Binding {
     ty: Option<Type>,
     value: SExpr,
     span: Option<Span>,
-}
-
-/// An irrefutable source pattern, lowered to ordinary ordered value bindings.
-enum ProductBindingPattern {
-    Name(Token),
-    Wildcard(Token),
-    Tuple {
-        items: Vec<Self>,
-        span: Option<Span>,
-    },
-    Unit {
-        span: Option<Span>,
-    },
-    Nominal(SPattern),
-}
-
-impl ProductBindingPattern {
-    const fn source_span(&self) -> Option<Span> {
-        match self {
-            Self::Name(token) | Self::Wildcard(token) => Some(token.span()),
-            Self::Tuple { span, .. } | Self::Unit { span } => *span,
-            Self::Nominal(pattern) => pattern.span,
-        }
-    }
 }
 
 struct RustParser {

@@ -126,6 +126,9 @@ impl Checker {
             .filter(|(index, _)| *index != refutable)
             .map(|(_, column)| column.clone())
             .collect();
+        if matches!(pivot, NPat::Tuple { .. }) {
+            return self.compile_tuple_pattern_column(columns, &normalised, refutable, span);
+        }
         // A natural column that also holds successor patterns splits on zero and
         // successor, which decrements its literal patterns.
         let nat = column.ty == Type::Nat
@@ -331,6 +334,49 @@ impl Checker {
         };
         match pattern.node {
             SPatternNode::Wild => Ok(NPat::Wild),
+            SPatternNode::Tuple { args, rest } => {
+                let width = match ty {
+                    Type::Tuple { elements } => Some(elements.len()),
+                    Type::Unit => Some(0),
+                    _ => None,
+                };
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
+                    width.map_or(-1.0, count),
+                    count(args.len()),
+                    rest.map_or(-1.0, count),
+                );
+                if plan.first() != Some(&0.0) {
+                    return Err(type_error(
+                        "tuple pattern has the wrong type or number of fields",
+                        at,
+                    ));
+                }
+                let Type::Tuple { elements } = ty else {
+                    return Ok(NPat::Wild);
+                };
+                let mut normalised = Vec::new();
+                for (position, index) in plan.into_iter().skip(1).enumerate() {
+                    normalised.push(if index < 0.0 {
+                        NPat::Wild
+                    } else {
+                        let source_index = index.to_string().parse::<usize>().map_err(|_| {
+                            type_error("tuple pattern plan has an invalid source index", at)
+                        })?;
+                        self.normalise_pattern(
+                            NPat::Surface(args[source_index].clone()),
+                            &elements[position],
+                            span,
+                        )?
+                    });
+                }
+                Ok(NPat::Tuple { args: normalised })
+            }
             SPatternNode::Bind { name } => Ok(NPat::Bind(name)),
             SPatternNode::BindOrCtor { name } => {
                 if let Type::Data { name: data_name } = ty

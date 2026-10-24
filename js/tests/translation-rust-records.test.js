@@ -11,7 +11,7 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-l
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const[major,minor]=process.versions.node.split('.').map(Number);
-for(const filename of['rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings']){
+for(const filename of['rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match']){
 const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':filename==='rust-raw-identifiers'?'Rust raw identifiers retain complete paired controls':'Rust irrefutable nominal bindings retain complete paired controls',()=>{
@@ -31,7 +31,8 @@ test(filename==='rust-records'?'nominal Rust records retain order, actual type o
  for(const[index,row]of fixture.cases.entries()){
   if(row.previousExpectation){
    assert.ok(fixture.source.startsWith(row.source));
-   assert.deepEqual(row.previousExpectation,{kind:'unsupported',reason:'Rust record update: update syntax needs complete move and field provenance'});
+   const previous=row.correctionKind==='tuple-struct'?{kind:'unsupported',messagePattern:'Rust struct item'}:row.correctionKind==='tuple-match'?{kind:'unsupported',messagePattern:'tuple match pattern'}:{kind:'unsupported',reason:'Rust record update: update syntax needs complete move and field provenance'};
+   assert.deepEqual(row.previousExpectation,previous);
   }
   if(row.abort!==null)assert.throws(()=>functions[index](),error=>error.message===row.abort,row.name);
   else assert.equal(String(functions[index]()),row.value,row.name);

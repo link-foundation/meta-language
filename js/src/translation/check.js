@@ -10,6 +10,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { planTuplePatternFields } from './rust-record-rules.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
@@ -1595,6 +1596,25 @@ class Checker {
       const pattern = row.patterns[refutable];
       return pattern.k === 'bind' ? [...row.binds, [pattern.name, column.name]] : row.binds;
     };
+    if(pivot.k==='tuple'){
+      const reserved=new Set(columns.map(item=>item.name));
+      const collect=value=>{
+        if(typeof value==='string'){if(value.startsWith('ml_tuple_field'))reserved.add(value);return;}
+        if(value&&typeof value==='object')for(const item of Object.values(value))collect(item);
+      };
+      for(const row of normalised)collect(row);
+      const fields=column.type.elements.map(type=>{
+        let name;do{name=this.freshName('ml_tuple_field');}while(reserved.has(name));
+        reserved.add(name);return{name,type};
+      });
+      const expanded=normalised.map(row=>{
+        const pattern=row.patterns[refutable];
+        return{...row,patterns:[...(pattern.k==='tuple'?pattern.args:fields.map(()=>({k:'wild'}))),...rest(row.patterns)],binds:bindColumn(row)};
+      });
+      let body=this.compileRows([...fields,...columns.filter((_,index)=>index!==refutable)],expanded,span);
+      for(let index=fields.length-1;index>=0;index-=1)body={k:'let',name:fields[index].name,value:{k:'tupleIndex',object:{k:'name',path:[column.name]},index},body,span};
+      return body;
+    }
     // A natural column that also holds successor patterns splits on zero and
     // successor, which decrements its literal patterns.
     const natural = column.type.kind === 'nat' && normalised.some((row) => row.patterns[refutable].k === 'nat');
@@ -1700,6 +1720,13 @@ class Checker {
       }
       case 'boolLit':
         return this.literalPattern({ k: 'bool', value: pattern.value }, type, span);
+      case 'tuple':{
+        const width=type.kind==='tuple'?type.elements.length:type.kind==='unit'?0:-1;
+        const plan=planTuplePatternFields(width,pattern.args.length,pattern.rest??-1);
+        if(plan[0]<0)throw typeError('tuple pattern has the wrong type or number of fields',pattern.span??span);
+        if(type.kind==='unit')return{k:'wild'};
+        return{k:'tuple',args:plan.slice(1).map((index,position)=>index<0?{k:'wild'}:this.normalisePattern(pattern.args[index],type.elements[position],span))};
+      }
       case 'strLit':
         return this.literalPattern({ k: 'str', value: pattern.value }, type, span);
       case 'natAdd': {
