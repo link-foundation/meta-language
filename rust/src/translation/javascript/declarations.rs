@@ -125,6 +125,7 @@ impl JavaScriptParser {
                             Some(range),
                         ));
                     }
+                    self.require_scalar_string_token(&value, "datatype constructor tag")?;
                     tag = Some(value.value);
                 } else {
                     let mut ty = c.identifier(Some("field type"))?.value;

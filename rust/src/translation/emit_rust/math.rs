@@ -92,6 +92,10 @@ impl RustEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction("math",op){
+            let units=self.expr(&args[0])?;
+            return Ok(crate::translation::javascript_string_unit_rules::render_java_script_string_unit_construction("Rust",&units));
+        }
         if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
             self.preludes.insert(Prelude::Big);self.preludes.insert(Prelude::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);

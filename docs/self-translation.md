@@ -868,3 +868,14 @@ Future independent controls cover class, units, property presence, argument
 evaluation and original source. Full formal exception payloads, uncaught native
 process behavior, arbitrary thrown objects and source isolated-surrogate
 transport remain required. No source behavior or tests have run.
+
+Source composition now captures actual JSDoc datatype declarations and their
+complete owned comments. It keeps datatype source ownership distinct from
+generated callable products. The shared JavaScript UTF-16 escape source generates
+its native enum and decisions automatically; lexer hosts project actual unit
+columns. Isolated literal/template values lower through a checked unit intrinsic
+instead of a scalar host string. JavaScript and Rust retain every unit through
+codecs and emission. Formal unit representations, non-value unit names and the
+remaining source operations still need implementation; future controls remain
+unexecuted. Earlier source inputs and wrong refusal diagnostics are retained
+with sourced corrected expectations and bounded active runtime profiles.

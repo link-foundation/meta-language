@@ -17,6 +17,7 @@ import { readRustSourceRawIdentifierError } from './unicode-scalar-rules.js';
 import { acceptSourceIdentifierAt, normalizeRustSourceIdentifier, readSourceIdentifierWidth, readJavaScriptSourceIdentifier, acceptRustSourceLifetimeAt } from './unicode-identifiers.js';
 import { acceptJavaScriptSourceKeywordToken, acceptJavaScriptBindingIdentifierContext, readJavaScriptSourceTokenGoalValue, acceptJavaScriptNumberIdentifierBoundary } from './javascript-identifier-rules.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {decodeJavaScriptStringUnicodeEscape,requireJavaScriptStringUnitTransport} from './javascript-string-unit-rules.js';
 export { SOURCE_IDENTIFIER_UNICODE_VERSION } from './unicode-identifiers.js';
 
 const OPERATORS = {
@@ -295,8 +296,14 @@ function blockCommentEnd(source, index, comments) {
 
 // A \u escape at `at`: \u{X..} in JavaScript and Rust, and \uXXXX in
 // JavaScript, where a surrogate pair of two such escapes is one code point.
-// A lone surrogate is refused, because Rust strings cannot hold it.
+// JavaScript strings retain isolated surrogate units; Rust requires scalars.
 function unicodeEscape(source, at, language, encoding = { units: null }) {
+  if(language==='JavaScript'){
+    encoding.units??=Array.from({length:source.length},(_,index)=>source.charCodeAt(index));
+    const escape=decodeJavaScriptStringUnicodeEscape(encoding.units,at);
+    if(escape.$==='malformed')throw new TranslationError('syntax','malformed unicode escape',{start:at,end:at+2});
+    return{text:escape.units.map(unit=>String.fromCharCode(unit)).join(''),end:at+escape.end};
+  }
   let escape;
   if (language === 'Rust') {
     encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
@@ -325,7 +332,9 @@ function stringToken(source, index, language, encoding) {
         cursor += 2;
         continue;
       }
-      return { kind: 'string', value, start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
+      const stringUnits=Array.from({length:value.length},(_,at)=>value.charCodeAt(at));
+      const transport=language==='JavaScript'&&requireJavaScriptStringUnitTransport(stringUnits);
+      return { kind: 'string', value:transport?value.toWellFormed():value,...(transport?{stringUnits}:{}),start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
     }
     if (char === '\\' && language !== 'Rocq') {
       const escaped = source[cursor + 1];
@@ -378,6 +387,11 @@ function stringToken(source, index, language, encoding) {
   throw new TranslationError('syntax', 'unterminated string literal', { start: index, end: source.length });
 }
 
+function javascriptTemplatePart(text) {
+  const stringUnits=Array.from({length:text.length},(_,at)=>text.charCodeAt(at));
+  return requireJavaScriptStringUnitTransport(stringUnits)?{text:text.toWellFormed(),stringUnits}:{text};
+}
+
 function templateToken(source, index, encoding) {
   const parts = [];
   let cursor = index + 1;
@@ -385,7 +399,7 @@ function templateToken(source, index, encoding) {
   while (cursor < source.length) {
     const char = source[cursor];
     if (char === '`') {
-      parts.push({ text });
+      parts.push(javascriptTemplatePart(text));
       return { kind: 'template', parts, start: index, end: cursor + 1, raw: source.slice(index, cursor + 1) };
     }
     if (char === '\\') {
@@ -418,7 +432,7 @@ function templateToken(source, index, encoding) {
     }
     if (source.startsWith('${', cursor)) {
       const close = matchingBrace(source, cursor + 1, encoding);
-      parts.push({ text, expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
+      parts.push({ ...javascriptTemplatePart(text), expression: { source: source.slice(cursor + 2, close), offset: cursor + 2 } });
       text = '';
       cursor = close + 1;
       continue;

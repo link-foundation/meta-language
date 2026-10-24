@@ -2617,3 +2617,5 @@ export function convertJavaScriptBooleanBigInteger(value: boolean): bigint;
 
 /** Complete source exception constructor, class, message and presence definitions. */
 export function createSourceExceptionProgramLinks(): TypedProgramLinks;
+/** Complete editable UTF-16 literal, escape and unit construction definitions. */
+export function createJavaScriptStringUnitProgramLinks(): TypedProgramLinks;

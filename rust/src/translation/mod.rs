@@ -65,6 +65,8 @@ pub(crate) mod javascript_property_call_program;
 pub(crate) mod javascript_property_call_rules;
 pub(crate) mod javascript_record_parameter_program;
 pub(crate) mod javascript_record_parameter_rules;
+pub(crate) mod javascript_string_unit_program;
+pub mod javascript_string_unit_rules;
 pub(crate) mod javascript_tag_context_rules;
 pub mod js_number;
 pub mod lean;

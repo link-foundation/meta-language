@@ -21,6 +21,14 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction("math",op){
+            if self.language!=super::Language::JavaScript||args.len()!=1||args[0].spread{return Err(type_error("a JavaScript UTF16 literal needs one owned unit column",span));}
+            let units=self.expr(&args[0].value,env,path,Some(&array(FLOAT)),false)?;
+            let Node::Array{items}=&units.node else{return Err(type_error("a JavaScript UTF16 literal needs explicit checked integral code units",span))};
+            let values=items.iter().map(|item|match &item.node{Node::Lit{value:LitValue::Text(value)} if item.ty==FLOAT=>value.parse::<f64>().ok(),_=>None}).collect::<Option<Vec<_>>>();
+            if !values.as_ref().is_some_and(|values|crate::translation::javascript_string_unit_rules::accept_java_script_string_units(values)){return Err(type_error("a JavaScript UTF16 literal needs explicit checked integral code units",span));}
+            return Ok(Expr::new(Node::Math{op:op.to_owned(),args:vec![units]},Type::String));
+        }
         if op == "convertJavaScriptBigInteger" {
             return self.javascript_big_integer_builtin(args, span, env, path);
         }

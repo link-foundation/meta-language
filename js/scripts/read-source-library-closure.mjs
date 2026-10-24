@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { relative, sep } from 'node:path';
 import { composeSourceLibraryAliases } from './compose-source-library-aliases.mjs';
 import { tokenize } from '../src/translation/lexer.js';
+import {readJavaScriptDocumentationTags} from '../src/translation/javascript.js';
 
 const root = new URL('../../', import.meta.url);
 const rootPath = realpathSync(fileURLToPath(root));
@@ -120,13 +121,17 @@ export function readSourceLibraryDeclarationOwnership(closure,program) {
   for (const [name,entry] of program.declarations) {
     const input = closure.inputs.find(input=>Number.isSafeInteger(entry.span?.start)
       && entry.span.start >= input.closureRange.start && entry.span.start < input.closureRange.end);
-    if (!input || !['fn','data'].includes(entry.k) || entry.k === 'data' && !entry.generated)
+    if (!input || !['fn','data'].includes(entry.k))
       throw new TypeError('source dependency needs a represented declaration owner: '+name);
-    if (!entry.generated && !(input.compiledDeclarations??input.declarations).includes(name))
+    const declaredType=entry.k==='data'&&!entry.generated;
+    const declarationSource=declaredType?closure.source.slice(entry.span.start,entry.span.end):undefined;
+    if(declaredType&&(!declarationSource.startsWith('/**')||!readJavaScriptDocumentationTags({text:declarationSource,start:entry.span.start,end:entry.span.end}).some(tag=>tag.tag==='typedef'&&tag.name===name)))
+      throw new TypeError('a source datatype needs its actual complete documentation declaration: '+name);
+    if (!entry.generated && !declaredType && !(input.compiledDeclarations??input.declarations).includes(name))
       throw new TypeError('source dependency declaration has no actual original module owner: '+name);
     owners.set(name,input);
     const sourceName=input.compiledDeclarations&&!entry.generated?input.declarations[input.compiledDeclarations.indexOf(name)]:undefined;
-    rows.push({name,path:input.path,generated:entry.generated===true,...(sourceName!==undefined?{sourceName}:{})});
+    rows.push({name,path:input.path,generated:entry.generated===true,...(declaredType?{declarationSource,span:entry.span}:{}),...(sourceName!==undefined?{sourceName}:{})});
   }
   for (const [name,entry] of program.declarations) {
     const input = owners.get(name), imports = new Set(input.compiledImportNames??input.removedImports.flatMap(imported=>imported.names));

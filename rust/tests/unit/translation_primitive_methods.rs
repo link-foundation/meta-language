@@ -323,11 +323,12 @@ fn code_unit_conversion_keeps_unrepresented_source_and_internal_domains_explicit
     assert!(failure.reason.contains("0 to 1 arguments"));
     let escaped = r"console.log('\ud800'.charCodeAt(0));";
     assert_eq!(javascript(escaped), "55296\n");
-    assert!(
-        parse_javascript(escaped)
-            .unwrap_err()
-            .reason
-            .contains("not a scalar value")
+    // ECMAScript 2025 StringLiteral SV replaces the preceding
+    // "not a scalar value" refusal while retaining its original source.
+    let literal = check_program(&parse_javascript(escaped).unwrap()).unwrap();
+    assert_eq!(
+        javascript(&emit_javascript(&literal).unwrap().text),
+        "55296\n"
     );
     let annotated = "/** @returns {string} */function receiver(){console.log('receiver');return 'A😀B';}\n/** @returns {number} */function index(){console.log('index');return 1.9;}\n/** @returns {undefined} */function absent(){console.log('absent');return undefined;}\nconsole.log(receiver().charCodeAt(index()));\nconsole.log(receiver().charCodeAt(absent()));\nconsole.log(receiver().charCodeAt());";
     assert_eq!(

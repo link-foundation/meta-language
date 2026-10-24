@@ -99,3 +99,4 @@ export {createBigIntegerConversionProgramLinks} from './big-integer-conversion-p
 export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger} from './big-integer-conversion.js';
 
 export {createSourceExceptionProgramLinks} from './source-exception-program.js';
+export {createJavaScriptStringUnitProgramLinks} from './javascript-string-unit-program.js';

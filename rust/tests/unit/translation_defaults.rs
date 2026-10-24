@@ -139,14 +139,18 @@ fn unicode_escape_scalars_match_the_javascript_oracle_and_rust_frontend() {
         "😀éé\n"
     );
     parse_rust("fn main() { println!(\"\\u{1f600}\\u{e9}\"); }").unwrap();
-    for source in ["console.log('\\ud83d');", "console.log('\\u{110000}');"] {
-        assert!(
-            parse_javascript(source)
-                .unwrap_err()
-                .message()
-                .contains("scalar values only")
-        );
-    }
+    // ECMAScript 2025 StringLiteral SV retains isolated UTF-16 units and
+    // classifies values above 0x10FFFF as syntax errors. Both original
+    // inputs formerly expected "scalar values only" and remain here.
+    let isolated = "console.log('\\ud83d');";
+    let literal = check_program(&parse_javascript(isolated).unwrap()).unwrap();
+    assert_eq!(
+        javascript_output(&emit_javascript(&literal).unwrap().text),
+        javascript_output(isolated)
+    );
+    let failure = parse_javascript("console.log('\\u{110000}');").unwrap_err();
+    assert_eq!(failure.kind.as_str(), "syntax");
+    assert!(failure.message().contains("malformed unicode escape"));
     assert!(
         parse_javascript("console.log('\\uXYZZ');")
             .unwrap_err()

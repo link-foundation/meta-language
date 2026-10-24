@@ -43,8 +43,7 @@ console.log(nullableUnit('ABC', null), nullableUnit('ABC', undefined), nullableU
 `;
 const escapedExpected = ['65 65 65', '55357 56832 66', '55296 57343', '65 66 65', 'NaN NaN NaN', 'NaN NaN', '65 65 67'];
 // Retain the exact escaped-source fixture and all of its original VM
-// observations below. Its unsupported literal decoder is distinct from
-// passing the same UTF-16 values to a represented String parameter.
+// observations below, alongside the preceding scalar-only input projection.
 const escapedLiteralLine = escapedSource.split('\n').find(line => line.includes('ud800'));
 assert.ok(escapedLiteralLine);
 const source = escapedSource.split('\n').filter(line => line !== escapedLiteralLine).join('\n');
@@ -62,7 +61,7 @@ test('portable code unit source preserves numeric ToIntegerOrInfinity and indivi
   assert.notEqual(readStringCodeUnit('😀', 0), '😀'.codePointAt(0));
 });
 
-test('charCodeAt checking preserves numeric defaults and surrogate parameters while source escapes remain explicit refusals', () => {
+test('charCodeAt checking preserves numeric defaults parameters and isolated source escapes', () => {
   assert.equal(readPrimitiveMethodMinimumArguments('string', 'charCodeAt'), 0);
   assert.equal(readPrimitiveMethodMaximumArguments('string', 'charCodeAt'), 1);
   assert.equal(readPrimitiveMethodDefaultForm('string', 'charCodeAt', 0), 'float');
@@ -75,8 +74,11 @@ test('charCodeAt checking preserves numeric defaults and surrogate parameters wh
     assert.equal(readPrimitiveMethodLoweringForm(receiver, operation), receiver === 'string' && operation === 'charCodeAt' ? 'code-unit-template' : 'method');
   }
   assert.deepEqual(observe(escapedSource), escapedExpected);
-  assert.throws(() => parseJavaScript(escapedSource), error => error.kind === 'unsupported'
-    && error.reason.includes('not a scalar value') && error.span.start === escapedSource.indexOf('\\ud800'));
+  // Previous refusal: unsupported /not a scalar value/ at \\ud800.
+  // ECMAScript 2025 StringLiteral SV retains this complete original input.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  assert.deepEqual(observe(emitJavaScript(checkProgram(parseJavaScript(escapedSource))).text),escapedExpected);
   const program = checkProgram(parseJavaScript(source));
   assert.deepEqual(observe(source), expected);
   assert.deepEqual(observe(emitJavaScript(program).text), expected);

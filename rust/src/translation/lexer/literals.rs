@@ -143,7 +143,22 @@ fn read_unicode_escape(
     cursor: usize,
     language: Language,
     units: &mut Option<Vec<f64>>,
-) -> Result<(char, usize)> {
+) -> Result<(Vec<u16>, usize)> {
+    if language == Language::JavaScript {
+        let encoded =
+            units.get_or_insert_with(|| source.units().iter().copied().map(f64::from).collect());
+        let start = serde_json::Number::from(cursor)
+            .as_f64()
+            .expect("UTF-16 source offset");
+        return match crate::translation::javascript_string_unit_rules::decode_java_script_string_unicode_escape(encoded,start) {
+            crate::translation::javascript_string_unit_rules::JavaScriptStringEscape::Units(value,end)=>{
+                let value=value.into_iter().map(|unit|crate::translation::frontend_rules::ml_array::number_index(unit).and_then(|unit|u16::try_from(unit).ok()).expect("generated UTF-16 unit")).collect();
+                let end=crate::translation::frontend_rules::ml_array::number_index(end).expect("generated relative escape offset");
+                Ok((value,end))
+            }
+            crate::translation::javascript_string_unit_rules::JavaScriptStringEscape::Malformed=>Err(TranslationError::syntax("malformed unicode escape",Some(span(cursor,cursor+2)))),
+        };
+    }
     let escape = if language == Language::Rust {
         let encoded = units
             .get_or_insert_with(|| source.units().iter().map(|unit| f64::from(*unit)).collect());
@@ -165,7 +180,7 @@ fn read_unicode_escape(
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             let character = char::from_u32(code as u32).expect("decoded Unicode scalar");
             #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-            Ok((character, end as usize))
+            Ok((character.encode_utf16(&mut [0; 2]).to_vec(), end as usize))
         }
         UnicodeEscape::Malformed => Err(TranslationError::syntax(
             "malformed unicode escape",
@@ -355,6 +370,9 @@ fn string_token(
                 cursor + 1,
             );
             token.raw = source.slice(index, cursor + 1);
+            if language == Language::JavaScript && String::from_utf16(&value).is_err() {
+                token.string_units = Some(value);
+            }
             return Ok(token);
         }
         if unit == u16::from(b'\\') && language != Language::Rocq {
@@ -404,9 +422,8 @@ fn string_token(
                 }
             }
             if escaped == Some('u') || (language == Language::JavaScript && escaped == Some('x')) {
-                let (character, end) = read_unicode_escape(source, cursor, language, units)?;
-                let mut encoded = [0; 2];
-                value.extend_from_slice(character.encode_utf16(&mut encoded));
+                let (decoded, end) = read_unicode_escape(source, cursor, language, units)?;
+                value.extend(decoded);
                 cursor += end;
                 continue;
             }
@@ -505,6 +522,7 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
         if unit == u16::from(b'`') {
             parts.push(TemplatePart {
                 text: String::from_utf16_lossy(&text),
+                string_units: String::from_utf16(&text).is_err().then(|| text.clone()),
                 expression: None,
             });
             let raw = source.slice(index, cursor + 1);
@@ -514,10 +532,9 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
         }
         if unit == u16::from(b'\\') {
             if matches!(source.char_at(cursor + 1), Some('u' | 'x')) {
-                let (character, end) =
+                let (decoded, end) =
                     read_unicode_escape(source, cursor, Language::JavaScript, units)?;
-                let mut encoded = [0; 2];
-                text.extend_from_slice(character.encode_utf16(&mut encoded));
+                text.extend(decoded);
                 cursor += end;
                 continue;
             }
@@ -584,6 +601,7 @@ fn template_token(source: &Source, index: usize, units: &mut Option<Vec<f64>>) -
             let close = interpolation_boundary(source, cursor + 1, units)?;
             parts.push(TemplatePart {
                 text: String::from_utf16_lossy(&text),
+                string_units: String::from_utf16(&text).is_err().then(|| text.clone()),
                 expression: Some(TemplateExpression {
                     source: source.slice(cursor + 2, close),
                     offset: cursor + 2,

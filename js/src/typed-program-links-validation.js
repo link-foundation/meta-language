@@ -7,6 +7,7 @@ import {acceptLinkedJavaScriptNumberConversion} from './translation/string-numbe
 import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './translation/big-integer-conversion-rules.js';
 import {acceptJavaScriptNumberConversionType} from './translation/javascript-number-conversion.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './translation/javascript-string-unit-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
@@ -162,6 +163,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedJavaScriptNumberConversion(node.k,node.op)
       && !acceptLinkedJavaScriptSourceException(node.k,node.op)
       && !acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)
+      && !acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)
       && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
       && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedRustCheckedShift(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
@@ -309,7 +311,13 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if(acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)){
+      if(acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1||node.args[0].k!=='array')throw new TypeError('a JavaScript UTF16 literal needs its explicit unit column');
+        const units=node.args[0];
+        same(units.type,{kind:'array',element:{kind:'float'}},'UTF16 literal unit column type');
+        same(node.type,{kind:'string'},'UTF16 literal type');
+        if(units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw new TypeError('a JavaScript UTF16 literal needs complete integral code units');
+      }else if(acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)){
         const form=readJavaScriptBigIntegerResultOperation(node.op);
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a BigInt intrinsic needs one actual source operand');
         same(node.args[0].type,{kind:form==='string'?'string':form==='number'?'float':'bool'},'BigInt intrinsic operand type');

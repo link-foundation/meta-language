@@ -160,6 +160,37 @@ pub(super) fn assert_nominal_translation_product(
             assert_eq!(cursor.peek().kind, TokenKind::Eof);
         }
     }
+    if let Some(rows) = expected["unitLexicalCases"].as_array() {
+        for row in rows {
+            let tokens = tokenize(row["source"].as_str().unwrap(), source_language)
+                .unwrap()
+                .tokens;
+            assert_eq!(tokens.len(), 2);
+            let token = &tokens[0];
+            let (value, units) = if row["kind"] == "template" {
+                assert_eq!(token.kind, TokenKind::Template);
+                assert_eq!(token.parts.len(), 1);
+                let part = &token.parts[0];
+                (
+                    &part.text,
+                    part.string_units
+                        .clone()
+                        .unwrap_or_else(|| part.text.encode_utf16().collect()),
+                )
+            } else {
+                assert_eq!(token.kind, TokenKind::String);
+                (
+                    &token.value,
+                    token
+                        .string_units
+                        .clone()
+                        .unwrap_or_else(|| token.value.encode_utf16().collect()),
+                )
+            };
+            assert_eq!(value, row["value"].as_str().unwrap());
+            assert_eq!(serde_json::to_value(units).unwrap(), row["units"]);
+        }
+    }
     if let Some(rows) = expected["lexicalErrors"].as_array() {
         for row in rows {
             let error = tokenize(row["source"].as_str().unwrap(), source_language).unwrap_err();

@@ -516,6 +516,7 @@ impl JavaScriptParser {
                 ));
             }
             self.cursor.advance();
+            self.require_scalar_string_token(&token, "datatype switch tag")?;
             return Ok(CaseTest::Tag {
                 tag: token.value.clone(),
                 span: span(&token, &token),

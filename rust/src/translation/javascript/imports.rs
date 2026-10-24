@@ -82,6 +82,7 @@ impl JavaScriptParser {
         if module.kind != TokenKind::String {
             return Err(Self::fail("expected a module name", &module));
         }
+        self.require_scalar_string_token(&module, "module specifier")?;
         self.cursor.eat(";");
         let specifier = module.value.clone();
         let place = Some(span(&start, &module));

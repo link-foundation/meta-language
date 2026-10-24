@@ -8,6 +8,9 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        if crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction("math",op){
+            return Ok(crate::translation::javascript_string_unit_rules::render_java_script_string_unit_construction("JavaScript",&args[0]));
+        }
         if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
             self.helpers.insert(super::Helper::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);

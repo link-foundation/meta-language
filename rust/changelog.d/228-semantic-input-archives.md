@@ -160,3 +160,10 @@ own-message presence and argument order, including calls without new. Native
 implicit BigInt numeric errors use the same class-bearing transport. Future
 controls are declarations only; formal payload and uncaught process behavior
 remain required.
+
+Draft lossless JavaScript literal/template UTF-16 transport, complete braced
+escape parsing and exact JS/Rust string construction through linked unit
+columns. Preserve original refusal inputs with sourced corrected assertions.
+Source dependency authoring now retains actual owned documentation datatype
+declarations. Formal unit representations and non-value unit names remain
+required; new controls are unexecuted declarations.

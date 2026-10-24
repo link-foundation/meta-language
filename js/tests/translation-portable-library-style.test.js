@@ -165,7 +165,15 @@ test('actual UTF16 text columns borrow vectors while preserving isolated surroga
   const source = readFileSync(new URL('../src/translation/fact-column-rules.js', import.meta.url), 'utf8')
     + '/** @param {string[]} values @param {number} index @returns {string} */ function selected(values,index){return readRequiredTextFact(values,index);}'
     + '/** @returns {string} */ function isolated(){return "\\ud800";}';
-  assert.throws(() => parseJavaScript(source, {referenceSemantics: false}), /unicode escape \\ud800 is not a scalar value/u, 'the original literal input retains the existing lexer refusal');
+  // ECMAScript 2025 StringLiteral SV corrects the preceding
+  // /unicode escape \\ud800 is not a scalar value/u refusal, retaining its input.
+  const [major,minor]=process.versions.node.split('.').map(Number);
+  assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
+  const literalProgram=checkProgram(parseJavaScript(source,{referenceSemantics:false}));
+  const literalContext={};
+  runInNewContext(emitJavaScript(literalProgram).text,literalContext,{timeout:1000});
+  assert.equal(literalContext.isolated().charCodeAt(0),0xd800);
+  assert.ok(emitRust(literalProgram,{arrayConsumption:true}).text.includes('ml_string::Text'));
   const valid = source.replace('"\\ud800"', '"😀".slice(0,1)');
   const checked = checkProgram(parseJavaScript(valid, {referenceSemantics: false}));
   const raw = emitRust(checked, { arrayConsumption: true }).definitions.join('\n\n').replaceAll('crate::ml_string::Text', 'self::ml_string::Text');

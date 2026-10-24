@@ -6,6 +6,20 @@ use super::{
 };
 
 impl JavaScriptParser {
+    pub(in super::super) fn require_scalar_string_token(
+        &self,
+        token: &Token,
+        role: &str,
+    ) -> Result<()> {
+        if token.string_units.is_some() {
+            return Err(unsupported(
+                &format!("isolated UTF16 {role}"),
+                "this name requires its complete code-unit identity instead of scalar text",
+                Some(token.span()),
+            ));
+        }
+        Ok(())
+    }
     pub(in super::super) fn primary(&mut self) -> Result<SExpr> {
         let token = self.peek();
         match token.kind {
@@ -15,10 +29,9 @@ impl JavaScriptParser {
             }
             TokenKind::String => {
                 self.cursor.advance();
-                return Ok(node(
-                    SNode::Str {
-                        value: token.value.clone(),
-                    },
+                return Ok(self.string_literal(
+                    &token.value,
+                    token.string_units.as_deref(),
                     span(&token, &token),
                 ));
             }
@@ -61,6 +74,54 @@ impl JavaScriptParser {
             ));
         }
         Err(self.fail_here("expected an expression"))
+    }
+
+    fn string_literal(
+        &self,
+        value: &str,
+        units: Option<&[u16]>,
+        place: super::super::Span,
+    ) -> SExpr {
+        let Some(units) = units else {
+            return node(
+                SNode::Str {
+                    value: value.to_owned(),
+                },
+                place,
+            );
+        };
+        let items = units
+            .iter()
+            .map(|unit| {
+                SArrayItem::new(
+                    node(
+                        SNode::Num {
+                            value: unit.to_string(),
+                            ty: Some(FLOAT),
+                            negative: false,
+                            unit: false,
+                        },
+                        place,
+                    ),
+                    false,
+                )
+            })
+            .collect();
+        let column = node(
+            SNode::Array {
+                items,
+                element: None,
+            },
+            place,
+        );
+        node(
+            SNode::Math {
+                op: "createJavaScriptStringFromUnits".to_owned(),
+                name: "JavaScript UTF16 literal".to_owned(),
+                args: vec![SArrayItem::new(column, false)],
+            },
+            place,
+        )
     }
 
     /// `[a, ...xs, b]`: ordered values and the elements of each supported iterable.
@@ -130,13 +191,13 @@ impl JavaScriptParser {
         let whole = span(token, token);
         let mut pieces = Vec::new();
         for part in &token.parts {
-            if !part.text.is_empty() {
-                pieces.push(node(
-                    SNode::Str {
-                        value: part.text.clone(),
-                    },
-                    whole,
-                ));
+            if !part.text.is_empty()
+                || part
+                    .string_units
+                    .as_ref()
+                    .is_some_and(|units| !units.is_empty())
+            {
+                pieces.push(self.string_literal(&part.text, part.string_units.as_deref(), whole));
             }
             if let Some(expression) = &part.expression {
                 let value = self.subexpression(&expression.source, expression.offset)?;

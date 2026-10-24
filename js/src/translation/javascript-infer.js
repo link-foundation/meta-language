@@ -956,6 +956,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op==='createJavaScriptStringFromUnits'){
+          for(const item of node.args)this.expr(item.value,env);
+          return STRING;
+        }
         if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
           for(const item of node.args)this.expr(item.value,env);
           return node.op==='convertJavaScriptBigInteger'||readJavaScriptBigIntegerResultOperation(node.op)==='boolean'?INT:{kind:'array',element:INT};

@@ -30,6 +30,7 @@ import {SOURCE_EXCEPTION_PRELUDE} from './source-exception-runtime.js';
 import {BIG_INTEGER_CONVERSION_PRELUDE} from './big-integer-conversion-runtime.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
 import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
 import {emitRustJavaScriptNumberConversion} from './javascript-number-conversion.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
@@ -768,7 +769,7 @@ class RustEmitter {
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
-      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
+      if (requireStringOrderUnits(node.k ?? '', node.op ?? '')||acceptLinkedJavaScriptStringUnitConstruction(node.k??'',node.op??'')) return true;
       if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
       if(acceptLinkedJavaScriptBigIntegerResult(node.k??'',node.op??'')&&readJavaScriptBigIntegerResultOperation(node.op)==='string')return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
@@ -1494,6 +1495,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.usesBig=true;this.usesBigIntegerConversion=true;
       return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);

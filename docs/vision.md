@@ -5824,6 +5824,35 @@ These additions are source drafts, not execution evidence. Iterator spreads,
 dynamic type-changing cells, mixed Number/BigInt errors and broader comparisons
 remain required alongside the previously named gaps.
 
+### Lossless JavaScript source literal unit draft
+
+JavaScript cooked string and template literals preserve every UTF-16 unit,
+including isolated surrogates, through their actual tokens and typed Links.
+Tokens expose a separate complete unit column when scalar text cannot represent
+the value; their scalar display projection never supplies the source meaning.
+The shared escape decoder reads complete fixed or braced syntax, accepts
+arbitrarily long leading zeroes, and rejects code points above 0x10FFFF as syntax
+errors. Rust and Lean scalar escape profiles retain their separate definitions.
+This follows [ECMAScript 2025 StringLiteral SV](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-literals-string-literals).
+
+Source values that require unit transport lower to a checked unit-construction
+intrinsic with explicit integral units. JavaScript builds the exact string and
+Rust uses its existing UTF-16 Text representation. Rechecking retains every
+unit and rejects unproven dynamic columns. Both source frontends preserve
+literal and template chunks, numeric conversion inputs and exception messages.
+Non-value property/module/datatype names still need a complete unit-identity
+representation; their current source adapters refuse rather than accepting the
+scalar display as a name. Formal-target string representation remains required.
+
+Automatic source-library composition also retains declared documentation
+datatypes, attached to their actual complete source comment and module owner.
+It does not relabel user declarations as generated data or infer ownership from
+spelling alone. Future exhaustive unit-decoder controls and original-source,
+token, codec, emission and native controls are declarations only. Corrected
+surrogate assertions retain their original inputs, former diagnostics and
+independent expected values under explicit runtime version profiles. No tests,
+behavioral oracles or validation gates have run in the current draft phase.
+
 ### Exact BigInt conversion definitions and error transport draft
 
 Source builtin lowering uses the same complete conversion definitions for

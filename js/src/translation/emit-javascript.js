@@ -50,6 +50,7 @@ import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
 import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
 import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 
 const KEYWORDS = new Set([
   'TypeError','SyntaxError','ReferenceError','URIError','EvalError',
@@ -620,6 +621,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
           this.helpers.add('bigIntegerConversion');
           return renderJavaScriptBigIntegerResultExpression('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);

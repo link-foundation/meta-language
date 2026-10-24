@@ -753,6 +753,12 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op == "createJavaScriptStringFromUnits" {
+                    for item in args {
+                        self.expr(&item.value, env)?;
+                    }
+                    return Ok(Term::Known(STRING));
+                }
                 if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
                     for item in args { self.expr(&item.value,env)?; }
                     return Ok(if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="boolean" {Term::Known(INT)}else{Term::Array(Box::new(Term::Known(INT)))});

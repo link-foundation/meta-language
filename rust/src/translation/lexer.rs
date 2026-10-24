@@ -141,6 +141,7 @@ pub struct TemplateExpression {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TemplatePart {
     pub text: String,
+    pub string_units: Option<Vec<u16>>,
     pub expression: Option<TemplateExpression>,
 }
 
@@ -148,6 +149,8 @@ pub struct TemplatePart {
 pub struct Token {
     pub kind: TokenKind,
     pub value: String,
+    /// Complete cooked UTF-16 value when scalar text cannot represent it.
+    pub string_units: Option<Vec<u16>>,
     /// The letters after a number's digits (`n`, `u32`, `x1fn`).
     pub suffix: String,
     /// A decimal or explicitly suffixed binary floating-point literal.
@@ -167,6 +170,7 @@ impl Token {
         Self {
             kind,
             value,
+            string_units: None,
             suffix: String::new(),
             floating: false,
             raw,

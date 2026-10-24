@@ -30,11 +30,13 @@ function truthy(program){
  walk(program);assert.ok(found.length,'actual source checker creates a Boolean conversion');return found;
 }
 
-test('all original literal oracles remain and unsupported lone escapes retain the exact existing boundary',()=>{
+test('all original literal oracles and lone source escapes retain their exact values',()=>{
  for(const input of TRUTHY_PROJECTION_CASES)assert.deepEqual(observe(input.source),input.expected,input.id+' complete original JavaScript oracle');
  const source=TRUTHY_PROJECTION_LITERAL_INPUT.source;
- assert.throws(()=>parseJavaScript(source),error=>error.kind==='unsupported'&&error.reason.includes('not a scalar value')
-  &&error.span.start===source.indexOf('\\ud800'));
+ // ECMAScript 2025 StringLiteral SV supersedes the preceding unsupported
+ // /not a scalar value/ expectation; every original input/value stays intact.
+ const checked=checkProgram(parseJavaScript(source)),packet=encodeTypedProgramLinks(checked);
+ for(const network of archives(packet.network))assert.deepEqual(observe(emitTypedProgramLinks(network,packet.root,'JavaScript').code),TRUTHY_PROJECTION_LITERAL_INPUT.expected);
  assert.deepEqual(TRUTHY_PROJECTION_HOST_PARAMETER_VALUES.slice(0,6).map(input=>String(input.expected)),TRUTHY_PROJECTION_LITERAL_INPUT.expected);
 });
 

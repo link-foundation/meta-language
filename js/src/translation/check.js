@@ -14,6 +14,7 @@ import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructor
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult} from './javascript-big-integer-conversion.js';
+import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumberOperand,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import {checkJavaScriptNumberBuiltin,materializeJavaScriptNumberConversion,checkJavaScriptMathematicalArguments} from './javascript-number-conversion.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
@@ -1203,6 +1204,12 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(acceptLinkedJavaScriptStringUnitConstruction('math',node.op)){
+      if(this.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript UTF16 literal needs one owned unit column',node.span);
+      const units=this.expr(node.args[0].value,env,path,array(FLOAT));
+      if(units.k!=='array'||units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw typeError('a JavaScript UTF16 literal needs explicit checked integral code units',node.span);
+      return{k:'math',op:node.op,args:[units],type:STRING};
+    }
     if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
     if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
     if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);

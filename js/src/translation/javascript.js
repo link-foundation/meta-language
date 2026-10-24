@@ -21,6 +21,7 @@ import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignme
 import {readJavaScriptNumberBuiltinOperation,readJavaScriptPrimitiveUnaryOperation} from './string-number-rules.js';
 import {readJavaScriptExceptionConstructorOperation} from './source-exception-rules.js';
 import {readJavaScriptBigIntegerBuiltinOperation} from './big-integer-conversion-rules.js';
+import {createJavaScriptStringLiteral} from './javascript-string-literals.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -400,6 +401,7 @@ class JavaScriptParser {
     c.expect('from', 'import');
     const module = c.next();
     if (module.kind !== 'string') throw this.fail('expected a module name', module);
+    this.requireScalarStringToken(module,'module specifier');
     c.eat(';');
     const specifier = module.value;
     if (braced && !names.length) throw unsupported(`import {} from '${specifier}'`, 'an import names the items it imports', span(start, module));
@@ -462,6 +464,7 @@ class JavaScriptParser {
             if (key.value === '$') {
               const value = c.next();
               if (value.kind !== 'string') throw unsupported(`@typedef ${tag.name}`, 'the $ tag must be a string literal type', range);
+              this.requireScalarStringToken(value,'datatype constructor tag');
               name = value.value;
             } else {
               let type = c.identifier('field type').value;
@@ -1478,6 +1481,7 @@ class JavaScriptParser {
     const token = c.peek();
     if (tagged) {
       if (!c.isKind('string')) throw unsupported('case test', 'the cases of a tag switch are string literal tags', span(token, token));
+      this.requireScalarStringToken(token,'datatype switch tag');
       c.next();
       return { k: 'tag', tag: token.value, span: span(token, token) };
     }
@@ -2248,7 +2252,7 @@ class JavaScriptParser {
         return this.numberLiteral(token);
       case 'string':
         c.next();
-        return { k: 'str', value: token.value, span: span(token, token) };
+        return createJavaScriptStringLiteral(token.value,span(token,token),token.stringUnits);
       case 'template':
         c.next();
         return this.template(token);
@@ -2314,7 +2318,7 @@ class JavaScriptParser {
   template(token) {
     const pieces = [];
     for (const part of token.parts) {
-      if (part.text) pieces.push({ k: 'str', value: part.text, span: span(token, token) });
+      if (part.text||part.stringUnits?.length) pieces.push(createJavaScriptStringLiteral(part.text,span(token,token),part.stringUnits));
       if (part.expression) {
         const value = this.subexpression(part.expression);
         pieces.push({ k: 'show', arg: value, style: 'js-template', span: value.span });
@@ -2339,6 +2343,10 @@ class JavaScriptParser {
   }
 
   /** `{ $: 'node', left, value: v }` constructs the `node` alternative of a data type. */
+  requireScalarStringToken(token,role) {
+    if(token.stringUnits)throw unsupported('isolated UTF16 '+role,'this name requires its complete code-unit identity instead of scalar text',span(token,token));
+  }
+
   objectLiteral() {
     const c = this.cursor;
     const start = c.next();
@@ -2350,6 +2358,7 @@ class JavaScriptParser {
     let propertyIndex = 0;
     while (!c.is('}')) {
       let key = c.peek();
+      this.requireScalarStringToken(key,'record property key');
       const index = propertyIndex++;
       if (c.eat('...')) {
         entries.push({ spread: true, value: this.expr() });
@@ -2375,6 +2384,7 @@ class JavaScriptParser {
         c.expect(':', 'object');
         const value = c.next();
         if (value.kind !== 'string') throw unsupported('computed tag', 'the $ tag is a string literal', span(value, value));
+        this.requireScalarStringToken(value,'datatype constructor tag');
         tag = value.value;
       } else {
         if (Object.hasOwn(fields, key.value)) duplicate ??= key;
@@ -2649,6 +2659,10 @@ function guardedParameter(statement, params) {
  * JSDoc tags of a comment: `@tag {type} name`. Leading `*` of each line is
  * decoration.
  */
+export function readJavaScriptDocumentationTags(comment) {
+  return jsdocTags(comment);
+}
+
 function jsdocTags(comment) {
   const text = comment.text.slice(3, -2).split('\n').map((line) => line.replace(/^\s*\*?/u, '')).join('\n');
   const tags = [];
