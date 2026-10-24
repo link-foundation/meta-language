@@ -71,6 +71,7 @@ pub mod query;
 pub mod query_algebra;
 pub mod query_plan;
 mod reconstruction;
+mod record_property_order;
 mod resource_description_address_rules;
 mod resource_description_graphs;
 mod resource_description_ntriples;
@@ -104,6 +105,12 @@ mod unsigned_link_identity_rules;
 mod unsigned_link_network;
 pub use link_allocation_program::create_link_allocation_program_links;
 pub use link_allocation_rules::{accept_link_allocation_capacity, accept_link_allocation_word};
+pub use record_property_order::{
+    RecordPropertyOrderError, accept_java_script_record_order_names,
+    accept_java_script_record_order_permutation, accept_java_script_record_property_order,
+    create_java_script_record_property_order, merge_java_script_record_property_order,
+    read_java_script_record_property_keys, rebase_java_script_record_property_order,
+};
 pub use translation::array_state_method_program::create_array_state_method_program_links;
 pub use translation::big_integer_bitwise_program::create_big_integer_bitwise_program_links;
 pub use translation::callable_source_program::create_callable_source_program_links;
@@ -115,6 +122,7 @@ pub use translation::javascript_optional_call_program::create_java_script_option
 pub use translation::javascript_optional_chain_program::create_java_script_optional_chain_program_links;
 pub use translation::javascript_own_property_program::create_java_script_own_property_program_links;
 pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;
+pub use translation::javascript_record_order_program::create_java_script_record_order_program_links;
 pub use translation::javascript_record_parameter_program::create_javascript_record_parameter_program_links;
 pub use translation::lexer::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 pub use translation::module_binding_program::create_module_binding_program_links;

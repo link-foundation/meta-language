@@ -73,6 +73,8 @@ export { createRustRecordProgramLinks } from './rust-record-program.js';
 export { createJavaScriptOptionalCallProgramLinks } from './javascript-optional-call-program.js';
 export { createJavaScriptOptionalChainProgramLinks } from './javascript-optional-chain-program.js';
 export { createJavaScriptNullishFieldProgramLinks } from './javascript-nullish-field-program.js';
+export { createJavaScriptRecordOrderProgramLinks } from './javascript-record-order-program.js';
+export { acceptJavaScriptRecordOrderNames, acceptJavaScriptRecordOrderPermutation, acceptJavaScriptRecordPropertyOrder, createJavaScriptRecordPropertyOrder, mergeJavaScriptRecordPropertyOrder, rebaseJavaScriptRecordPropertyOrder, readJavaScriptRecordPropertyKeys } from './translation/javascript-record-order-rules.js';
 export { createJavaScriptOwnPropertyProgramLinks } from './javascript-own-property-program.js';
 export { createJavaScriptLiteralPropertyProgramLinks } from './javascript-literal-property-program.js';
 export { createUnsignedLinkIdentityProgramLinks } from './unsigned-link-identity-program.js';

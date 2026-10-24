@@ -6861,3 +6861,39 @@ no sorted list or declaration-only order can replace it. General key coercion,
 Symbols, descriptors/prototypes, property addition/deletion and all preceding
 translation and architecture obligations remain required. Future source/native,
 graph, codec and four-target controls for this batch are unexecuted.
+
+
+### Independent own-field order values and source definitions draft
+
+The public record-property-order operations keep canonical structural names
+and actual value order as separate inspectable operands. Names are exact UTF16
+unit vectors, including isolated surrogates. Field positions are canonical
+nonnegative finite Number indices, with positive zero. A complete insertion
+permutation creates the property's enumeration order: Array index names come
+first in numeric order, then other String names in first insertion order.
+Replacing an existing value retains that first position. Spread rebasing maps
+the actual source's complete order into its target layout; merge chunks retain
+overwrite positions and require every target field. Missing fields, invalid
+units, noncanonical names and malformed positions produce the source TypeError,
+never fabricated names or replacement fields.
+
+The complete algorithms and error selectors are ordinary JavaScript source,
+automatically translated together into native Rust and full editable typed
+Links programs. Public JavaScript operations throw the actual source error;
+Rust adapters call the same generated admission definitions and return its
+class/message in RecordPropertyOrderError. They contain no replacement ordering
+algorithm. Native and JavaScript expose creation, merge, rebase, validation and
+exact-key projection. The underlying rule graph remains editable through both
+codecs and all four target emitters.
+
+The order rule follows
+[OrdinaryOwnPropertyKeys](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinaryownpropertykeys).
+Deferred controls compare every valid case against actual ordinary JavaScript
+objects, plus native results/errors and complete definition graph/codec/emission
+parity. They cover overwrites, spreads, numeric endpoints and noncanonical
+spellings, empty/NUL/astral/isolated-surrogate names and malformed/nonfinite/
+negative-zero positions. No control has executed. These operations supply the
+order data model and algorithms; carrying that data with every translated
+record value across construction, parameters, branches, aliases and emissions
+still needs code. Symbols, descriptors, dynamic add/delete and every preceding
+requirement remain obligations. This is not completed source enumeration support.

@@ -177,6 +177,7 @@ mod query_algebra;
 mod query_matching;
 mod query_plan;
 mod query_transform;
+mod record_property_order;
 mod recursive_embedded_regions;
 mod regular_grammar_inference;
 mod resource_description_addresses;

@@ -77,6 +77,8 @@ pub mod javascript_own_property_program;
 pub(crate) mod javascript_own_property_rules;
 pub(crate) mod javascript_property_call_program;
 pub(crate) mod javascript_property_call_rules;
+pub mod javascript_record_order_program;
+pub(crate) mod javascript_record_order_rules;
 pub(crate) mod javascript_record_parameter_program;
 pub(crate) mod javascript_record_parameter_rules;
 pub(crate) mod javascript_string_unit_program;

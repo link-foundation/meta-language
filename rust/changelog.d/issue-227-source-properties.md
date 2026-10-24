@@ -1,0 +1,1 @@
+Draft JavaScript nullable and computed property reads, bracket methods, UTF16 String indices, optional property calls and closed Object.hasOwn translation. Add matching public own-field order creation, merge, rebase, validation and key-projection APIs with complete source-derived Links definitions; full source enumeration integration remains in development.

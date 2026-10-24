@@ -1,0 +1,125 @@
+// Complete ordered own-field algorithms. Names are exact UTF16 unit vectors;
+// layouts are canonical structural fields, orders are separate value data.
+import {acceptRecordFieldName,compareRecordFieldNames,readRecordFieldPosition} from './record-value-rules.js';
+import {readJavaScriptLiteralPropertyIndex} from './javascript-literal-property-rules.js';
+
+/** @returns {number[]} */
+function refuseJavaScriptRecordOrderName(){throw new TypeError('an ordered record needs every actual own field name');}
+/** @returns {number} */
+function refuseJavaScriptRecordOrderPosition(){throw new TypeError('an ordered record needs every actual field position');}
+/** @param {number[][]} names @param {number} index @returns {number[]} */
+function readJavaScriptRecordOrderName(names,index){return names[index]??refuseJavaScriptRecordOrderName();}
+/** @param {number[]} positions @param {number} index @returns {number} */
+function readJavaScriptRecordOrderPosition(positions,index){return positions[index]??refuseJavaScriptRecordOrderPosition();}
+
+/** @param {number[][]} names @returns {boolean} */
+export function acceptJavaScriptRecordOrderNames(names){
+ for(let index=0;index<names.length;index+=1){
+  const name=readJavaScriptRecordOrderName(names,index);
+  if(!acceptRecordFieldName(name))return false;
+  if(index>0&&compareRecordFieldNames(readJavaScriptRecordOrderName(names,index-1),name)>=0)return false;
+ }
+ return true;
+}
+/** @param {number} count @param {number[]} order @returns {boolean} */
+export function acceptJavaScriptRecordOrderPermutation(count,order){
+ if(!Number.isSafeInteger(count)||count<0||count===0&&1/count<0||order.length!==count)return false;
+ for(let index=0;index<order.length;index+=1){
+  const value=readJavaScriptRecordOrderPosition(order,index);
+  if(!Number.isInteger(value)||value<0||value>=count||value===0&&1/value<0)return false;
+  for(let previous=0;previous<index;previous+=1)if(readJavaScriptRecordOrderPosition(order,previous)===value)return false;
+ }
+ return true;
+}
+/** @param {number[][]} names @param {number[]} insertion @returns {string} */
+export function readJavaScriptRecordOrderCreationError(names,insertion){
+ return !acceptJavaScriptRecordOrderNames(names)||!acceptJavaScriptRecordOrderPermutation(names.length,insertion)?'invalid ordered record field sequence':'';
+}
+/** Numeric keys precede other Strings, in ascending numeric order. Other
+ * String keys retain first insertion, including after a value overwrite.
+ * @param {number[][]} names @param {number[]} insertion @returns {number[]} */
+export function createJavaScriptRecordPropertyOrder(names,insertion){
+ const error=readJavaScriptRecordOrderCreationError(names,insertion);
+ if(error)throw new TypeError(error);
+ let numeric=[];
+ for(let field=0;field<names.length;field+=1){
+  const key=readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names,field));
+  if(key<0)continue;
+  let position=0;
+  while(position<numeric.length&&readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names,readJavaScriptRecordOrderPosition(numeric,position)))<key)position+=1;
+  numeric=numeric.slice(0,position).concat([field],numeric.slice(position));
+ }
+ let result=numeric;
+ for(let index=0;index<insertion.length;index+=1){
+  const field=readJavaScriptRecordOrderPosition(insertion,index);
+  if(readJavaScriptLiteralPropertyIndex(readJavaScriptRecordOrderName(names,field))<0)result=result.concat([field]);
+ }
+ return result;
+}
+/** @param {number[][]} names @param {number[]} order @returns {boolean} */
+export function acceptJavaScriptRecordPropertyOrder(names,order){
+ if(!acceptJavaScriptRecordOrderNames(names)||!acceptJavaScriptRecordOrderPermutation(names.length,order))return false;
+ const expected=createJavaScriptRecordPropertyOrder(names,order);
+ for(let index=0;index<order.length;index+=1)if(readJavaScriptRecordOrderPosition(order,index)!==readJavaScriptRecordOrderPosition(expected,index))return false;
+ return true;
+}
+/** @param {number[][]} names @param {number[][]} chunks @returns {string} */
+export function readJavaScriptRecordOrderMergeError(names,chunks){
+ if(!acceptJavaScriptRecordOrderNames(names))return 'invalid ordered record field names';
+ let insertion=[];
+ for(let chunk=0;chunk<chunks.length;chunk+=1){
+  const values=readJavaScriptRecordOrderName(chunks,chunk);
+  for(let index=0;index<values.length;index+=1){
+   const field=readJavaScriptRecordOrderPosition(values,index);
+   if(!Number.isInteger(field)||field<0||field>=names.length||field===0&&1/field<0)return 'invalid ordered record source field';
+   if(!insertion.includes(field))insertion=insertion.concat([field]);
+  }
+ }
+ return readJavaScriptRecordOrderCreationError(names,insertion);
+}
+/** Chunks come from actual field definitions and actual spread value orders.
+ * A repeated field keeps its first position while its separately stored value
+ * can be replaced. No absent field or placeholder name is manufactured.
+ * @param {number[][]} names @param {number[][]} chunks @returns {number[]} */
+export function mergeJavaScriptRecordPropertyOrder(names,chunks){
+ const error=readJavaScriptRecordOrderMergeError(names,chunks);
+ if(error)throw new TypeError(error);
+ let insertion=[];
+ for(let chunk=0;chunk<chunks.length;chunk+=1){
+  const values=readJavaScriptRecordOrderName(chunks,chunk);
+  for(let index=0;index<values.length;index+=1){
+   const field=readJavaScriptRecordOrderPosition(values,index);
+   if(!insertion.includes(field))insertion=insertion.concat([field]);
+  }
+ }
+ return createJavaScriptRecordPropertyOrder(names,insertion);
+}
+/** @param {number[][]} target @param {number[][]} source @param {number[]} order @returns {string} */
+export function readJavaScriptRecordOrderRebaseError(target,source,order){
+ if(!acceptJavaScriptRecordOrderNames(target)||!acceptJavaScriptRecordPropertyOrder(source,order))return 'invalid ordered record spread source';
+ for(let index=0;index<source.length;index+=1)if(readRecordFieldPosition(target,readJavaScriptRecordOrderName(source,index))<0)return 'an ordered record spread field is missing from its target';
+ return '';
+}
+/** Rebase an actual spread's own-field order into the new complete layout.
+ * @param {number[][]} target @param {number[][]} source @param {number[]} order @returns {number[]} */
+export function rebaseJavaScriptRecordPropertyOrder(target,source,order){
+ const error=readJavaScriptRecordOrderRebaseError(target,source,order);
+ if(error)throw new TypeError(error);
+ let result=[];
+ for(let index=0;index<order.length;index+=1){
+  const name=readJavaScriptRecordOrderName(source,readJavaScriptRecordOrderPosition(order,index));
+  const field=readRecordFieldPosition(target,name);
+  result=result.concat([field]);
+ }
+ return result;
+}
+/** @param {number[][]} names @param {number[]} order @returns {string} */
+export function readJavaScriptRecordOrderKeyError(names,order){return acceptJavaScriptRecordPropertyOrder(names,order)?'':'invalid ordered record property order';}
+/** @param {number[][]} names @param {number[]} order @returns {number[][]} */
+export function readJavaScriptRecordPropertyKeys(names,order){
+ const error=readJavaScriptRecordOrderKeyError(names,order);
+ if(error)throw new TypeError(error);
+ let result=[];
+ for(let index=0;index<order.length;index+=1)result=result.concat([readJavaScriptRecordOrderName(names,readJavaScriptRecordOrderPosition(order,index))]);
+ return result;
+}
