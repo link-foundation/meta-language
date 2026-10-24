@@ -6,6 +6,7 @@ use super::{
     own, rename_main, rounding_text, rust_string, snake, unsupported,
 };
 use crate::translation::aborts::{cast_message, overflow_message, zero_divisor_message};
+use crate::translation::rust_record_rules::render_rust_constructor_fields;
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
@@ -281,7 +282,17 @@ impl RustEmitter<'_> {
                 for arg in args {
                     texts.push(self.expr(arg)?);
                 }
-                Ok(format!("{head}({})", texts.join(", ")))
+                let fields = declared
+                    .fields
+                    .iter()
+                    .map(|field| field.name.clone().unwrap_or_default())
+                    .collect::<Vec<_>>();
+                Ok(render_rust_constructor_fields(
+                    self.program.source_language.as_str(),
+                    &head,
+                    &fields,
+                    &texts,
+                ))
             }
             Node::Ctor {
                 data, ctor, args, ..
@@ -712,9 +723,9 @@ impl RustEmitter<'_> {
                             .find(|candidate| candidate.name == *ctor)
                             .expect("the checker resolves every constructor");
                         let head = format!("crate::{}", self.state.ctor_ref(data, ctor, "::"));
-                        let names: Vec<&str> = binds
+                        let names: Vec<String> = binds
                             .iter()
-                            .map(|bind| bind.as_deref().unwrap_or("_"))
+                            .map(|bind| bind.clone().unwrap_or_else(|| "_".to_owned()))
                             .collect();
                         let mut lines: Vec<String> = binds
                             .iter()
@@ -727,11 +738,17 @@ impl RustEmitter<'_> {
                             })
                             .collect();
                         lines.push(self.expr(&kase.body)?);
-                        let text = if names.is_empty() {
-                            head
-                        } else {
-                            format!("{head}({})", names.join(", "))
-                        };
+                        let fields = declared
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone().unwrap_or_default())
+                            .collect::<Vec<_>>();
+                        let text = render_rust_constructor_fields(
+                            self.program.source_language.as_str(),
+                            &head,
+                            &fields,
+                            &names,
+                        );
                         format!("{text} => {}", block(&lines.join("\n")))
                     }
                     Pattern::NatZero | Pattern::NatSucc { .. } => {

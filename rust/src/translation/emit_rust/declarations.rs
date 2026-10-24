@@ -1,5 +1,8 @@
 //! Modules, data, functions, theorem runners and propositions.
 
+use crate::translation::rust_record_rules::{
+    render_rust_constructor_fields, render_rust_data_field_encoding,
+};
 use crate::translation::structured_type_rules::{
     read_rust_optional_prelude, render_rust_compound_type, render_rust_reference_type,
 };
@@ -254,7 +257,7 @@ impl<'p> RustEmitter<'p> {
         self.state.map(entry, &name);
         self.state.encode(
             "data",
-            "a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally",
+            &render_rust_data_field_encoding(self.named_constructor_fields),
         );
         // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
         let derives = if self.holds_float(&data.full_name, &mut BTreeSet::new()) {
@@ -271,16 +274,25 @@ impl<'p> RustEmitter<'p> {
                 .state
                 .ctor_local(&data.full_name, &ctor.name)
                 .to_owned();
-            if ctor.fields.is_empty() {
-                lines.push(format!("    {local},"));
-                continue;
-            }
             let fields: Vec<String> = ctor
                 .fields
                 .iter()
                 .map(|field| self.field_type(&field.ty))
                 .collect::<Result<_>>()?;
-            lines.push(format!("    {local}({}),", fields.join(", ")));
+            let names = ctor
+                .fields
+                .iter()
+                .map(|field| field.name.clone().unwrap_or_default())
+                .collect::<Vec<_>>();
+            lines.push(format!(
+                "    {},",
+                render_rust_constructor_fields(
+                    self.program.source_language.as_str(),
+                    &local,
+                    &names,
+                    &fields
+                )
+            ));
         }
         lines.push("}".to_owned());
         Ok(lines.join("\n"))
@@ -587,11 +599,20 @@ impl<'p> RustEmitter<'p> {
                         "crate::{}",
                         self.state.ctor_ref(&entry.full_name, &ctor.name, "::")
                     );
-                    let mut statement = if args.is_empty() {
-                        format!("values.push({head});")
-                    } else {
-                        format!("values.push({head}({}));", args.join(", "))
-                    };
+                    let fields = ctor
+                        .fields
+                        .iter()
+                        .map(|field| field.name.clone().unwrap_or_default())
+                        .collect::<Vec<_>>();
+                    let mut statement = format!(
+                        "values.push({});",
+                        render_rust_constructor_fields(
+                            self.program.source_language.as_str(),
+                            &head,
+                            &fields,
+                            &args
+                        )
+                    );
                     for (field, name) in ctor.fields.iter().zip(&names).rev() {
                         let inner_depth = if matches!(field.ty, Type::Data { .. }) {
                             depth - 1

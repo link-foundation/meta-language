@@ -636,3 +636,14 @@ with an additive caller and active graph, codec and original-Rust controls;
 the correction records its preceding expectation and authoritative source basis.
 None ran. Full ownership/drop/resource proofs, borrowed bases, mutation,
 generics and the remaining language scope still need their drafts.
+
+The named-constructor emission draft uses one generated shared renderer for
+declarations, applications, patterns and bounded value enumeration. Nonempty
+ordinary ASCII Rust field names survive in the target syntax; actual field
+types and boxing stay in the existing checked graph. A program-wide cached
+decision supplies consistent mixed-layout metadata. Full typed definitions ship
+through the existing record-rule factories. A separate independent layout
+fixture reuses every paired graph, codec, four-target and original/native value
+control, adding literal syntax and encoding assertions. None ran. Raw/Unicode
+identifiers, zero-field syntax provenance and full emitted-source reimport still
+need their implementations; no complete round-trip claim follows from this draft.

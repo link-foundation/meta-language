@@ -25,6 +25,15 @@ fn nominal_records_preserve_complete_graphs_owners_order_and_original_values() {
     );
 }
 
+#[test]
+fn named_fields_preserve_declarations_calls_patterns_and_mixed_encoding() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/layout.mjs",
+        "Rust named constructor fields",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,
@@ -93,6 +102,23 @@ pub(super) fn assert_nominal_translation_product(
         .collect::<Vec<_>>()
         .join("\n\n");
     assert_eq!(library, expected["nativeLibrary"].as_str().unwrap());
+    if let Some(layout) = expected.get("layout") {
+        for piece in layout["pieces"].as_array().unwrap() {
+            assert!(emitted.text.contains(piece.as_str().unwrap()), "{piece}");
+        }
+        assert!(emitted.text.lines().any(|line| {
+            line.contains(layout["patternPrefix"].as_str().unwrap()) && line.contains(" } => ")
+        }));
+        assert_eq!(
+            emitted
+                .encodings
+                .iter()
+                .find(|encoding| encoding.id == "data")
+                .unwrap()
+                .statement,
+            layout["encoding"].as_str().unwrap()
+        );
+    }
     let mut main = r#"
 fn ml_record_result(result:std::thread::Result<String>)->(&'static str,String){
  match result{Ok(value)=>("value",value),Err(error)=>{

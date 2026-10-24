@@ -29,6 +29,7 @@ import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
 import { emitRustCheckedShift } from './rust-shifts.js';
+import { acceptRustNamedConstructorFields, renderRustConstructorFields, renderRustDataFieldEncoding } from './rust-record-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -728,6 +729,7 @@ export function emitRustConstants(program) {
 class RustEmitter {
   constructor(program, state, sourceHeaders = null, borrowedCallTargets = null, arrayConsumption = false, recordDefinitionOwnership = false) {
     this.program = program;
+    this.namedConstructorFields = program.sourceLanguage === 'Rust' && [...program.declarations.values()].some(entry=>entry.k==='data'&&entry.ctors.some(ctor=>acceptRustNamedConstructorFields(program.sourceLanguage,ctor.fields.map(field=>field.name??''))));
     this.state = state;
     this.definitionOwnership = recordDefinitionOwnership ? { schemaVersion: 1, blocks: [], externalTargets: [] } : null;
     this.sourceHeaders = sourceHeaders;
@@ -917,11 +919,10 @@ class RustEmitter {
     if (typeContains(this.program, { kind: 'data', name: entry.fullName }, 'function')) throw unsupported('callable data field', 'callable fields need their own identity, debug and equality encodings before this target derives structural traits', entry.span);
     const name = this.state.localName(entry.fullName);
     this.state.map(entry, name);
-    this.state.encode('data', 'a data type is an enum with one tuple variant per constructor; data-typed fields are boxed, and values are compared structurally');
+    this.state.encode('data', renderRustDataFieldEncoding(this.namedConstructorFields));
     const variants = entry.ctors.map((ctor) => {
       const local = this.state.ctorLocal(entry.fullName, ctor.name);
-      if (!ctor.fields.length) return `    ${local},`;
-      return `    ${local}(${ctor.fields.map((field) => this.fieldType(field.type)).join(', ')}),`;
+      return `    ${renderRustConstructorFields(this.program.sourceLanguage,local,ctor.fields.map(field=>field.name??''),ctor.fields.map(field=>this.fieldType(field.type)))},`;
     });
     // f64 is not `Eq`, so a data type that holds a Number, directly or through another data type, derives `PartialEq` alone.
     const derives = this.holdsFloat(entry.fullName) ? 'Clone, Debug, PartialEq' : 'Clone, Debug, PartialEq, Eq';
@@ -1050,7 +1051,7 @@ class RustEmitter {
           const names = ctor.fields.map((_, index) => `f${index}`);
           const args = ctor.fields.map((field, index) => (field.type.kind === 'data' ? `Box::new(${names[index]}.clone())` : `${names[index]}.clone()`));
           const head = `crate::${this.state.ctorRef(entry.fullName, ctor.name, '::')}`;
-          let statement = `values.push(${args.length ? `${head}(${args.join(', ')})` : head});`;
+          let statement = `values.push(${renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),args)});`;
           for (let index = ctor.fields.length - 1; index >= 0; index -= 1) {
             const field = ctor.fields[index];
             statement = `for ${names[index]} in ${this.domain(field.type, field.type.kind === 'data' ? depth - 1 : 1)} {\n${indent(statement, 1)}\n}`;
@@ -1383,7 +1384,7 @@ class RustEmitter {
         const head = `crate::${this.state.ctorRef(e.data, e.ctor, '::')}`;
         if (!e.args.length) return head;
         const args = e.args.map((arg, index) => (ctor.fields[index].type.kind === 'data' ? `Box::new(${this.expr(arg)})` : this.expr(arg)));
-        return `${head}(${args.join(', ')})`;
+        return renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),args);
       }
       case 'unary':
         if (e.op === 'not') return `!${this.receiver(e.arg)}`;
@@ -1633,7 +1634,7 @@ class RustEmitter {
         const unbox = pattern.binds
           .map((bind, index) => (bind && ctor.fields[index].type.kind === 'data' ? `let ${bind} = *${bind};` : null))
           .filter(Boolean);
-        const text = binds.length ? `${head}(${binds.join(', ')})` : head;
+        const text = renderRustConstructorFields(this.program.sourceLanguage,head,ctor.fields.map(field=>field.name??''),binds);
         return `${text} => ${block([...unbox, this.expr(kase.body)].join('\n'))}`;
       });
       return `match ${this.expr(e.scrutinee)} {\n${indent(arms.join('\n'), 1)}\n}`;

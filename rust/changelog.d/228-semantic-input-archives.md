@@ -54,3 +54,6 @@ original-Rust/parity controls.
 Draft functional record updates with ordered fields, one base evaluation and
 one constructor match; preserve the formerly refused source with additive
 value, codec and original-Rust controls and its documented assertion correction.
+Draft named Rust constructor fields consistently across definitions, calls,
+patterns and enumeration, with shared generated renderers, mixed-layout metadata
+and independent future graph, codec and original-Rust controls.

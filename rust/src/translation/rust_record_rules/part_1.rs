@@ -1,4 +1,341 @@
 // Generated from complete js/src/translation/rust-record-rules.js. Do not edit by hand.
+/// Unbounded integers for the portable core's naturals and integers.
+pub mod ml {
+    use std::cmp::Ordering;
+    use std::fmt;
+
+    /// Sign and magnitude; the magnitude is little-endian base 2^32 without
+    /// leading zero limbs, and zero is never negative.
+    #[derive(Clone, Debug, PartialEq, Eq, Hash)]
+    pub struct Big {
+        negative: bool,
+        magnitude: Vec<u32>,
+    }
+
+    fn trim(mut magnitude: Vec<u32>) -> Vec<u32> {
+        while magnitude.last() == Some(&0) {
+            magnitude.pop();
+        }
+        magnitude
+    }
+
+    fn compare_magnitude(a: &[u32], b: &[u32]) -> Ordering {
+        a.len()
+            .cmp(&b.len())
+            .then_with(|| a.iter().rev().cmp(b.iter().rev()))
+    }
+
+    fn add_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len().max(b.len()) + 1);
+        let mut carry = 0u64;
+        for index in 0..a.len().max(b.len()) {
+            let sum = u64::from(*a.get(index).unwrap_or(&0))
+                + u64::from(*b.get(index).unwrap_or(&0))
+                + carry;
+            out.push(sum as u32);
+            carry = sum >> 32;
+        }
+        if carry > 0 {
+            out.push(carry as u32);
+        }
+        out
+    }
+
+    /// |a| - |b| where |a| >= |b|.
+    fn sub_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = Vec::with_capacity(a.len());
+        let mut borrow = 0i64;
+        for (index, limb) in a.iter().enumerate() {
+            let mut difference = i64::from(*limb) - i64::from(*b.get(index).unwrap_or(&0)) - borrow;
+            borrow = 0;
+            if difference < 0 {
+                difference += 1 << 32;
+                borrow = 1;
+            }
+            out.push(difference as u32);
+        }
+        trim(out)
+    }
+
+    fn mul_magnitude(a: &[u32], b: &[u32]) -> Vec<u32> {
+        let mut out = vec![0u32; a.len() + b.len()];
+        for (i, x) in a.iter().enumerate() {
+            let mut carry = 0u64;
+            for (j, y) in b.iter().enumerate() {
+                let product = u64::from(out[i + j]) + u64::from(*x) * u64::from(*y) + carry;
+                out[i + j] = product as u32;
+                carry = product >> 32;
+            }
+            let mut index = i + b.len();
+            while carry > 0 {
+                let sum = u64::from(out[index]) + carry;
+                out[index] = sum as u32;
+                carry = sum >> 32;
+                index += 1;
+            }
+        }
+        trim(out)
+    }
+
+    /// Quotient and remainder of magnitudes; the divisor is not zero.
+    fn divmod_magnitude(a: &[u32], b: &[u32]) -> (Vec<u32>, Vec<u32>) {
+        let mut quotient = vec![0u32; a.len()];
+        if b.len() == 1 {
+            let divisor = u64::from(b[0]);
+            let mut remainder = 0u64;
+            for index in (0..a.len()).rev() {
+                let current = (remainder << 32) | u64::from(a[index]);
+                quotient[index] = (current / divisor) as u32;
+                remainder = current % divisor;
+            }
+            return (trim(quotient), trim(vec![remainder as u32]));
+        }
+        let mut remainder: Vec<u32> = Vec::new();
+        for bit in (0..a.len() * 32).rev() {
+            let mut carry = (a[bit / 32] >> (bit % 32)) & 1;
+            for limb in &mut remainder {
+                let next = *limb >> 31;
+                *limb = (*limb << 1) | carry;
+                carry = next;
+            }
+            if carry != 0 {
+                remainder.push(carry);
+            }
+            if compare_magnitude(&remainder, b) != Ordering::Less {
+                remainder = sub_magnitude(&remainder, b);
+                quotient[bit / 32] |= 1 << (bit % 32);
+            }
+        }
+        (trim(quotient), remainder)
+    }
+
+    impl Big {
+        fn from_parts(negative: bool, magnitude: Vec<u32>) -> Self {
+            let magnitude = trim(magnitude);
+            Self {
+                negative: negative && !magnitude.is_empty(),
+                magnitude,
+            }
+        }
+
+        #[must_use]
+        pub fn zero() -> Self {
+            Self::from_parts(false, Vec::new())
+        }
+
+        #[must_use]
+        pub fn from_i128(value: i128) -> Self {
+            let mut big = Self::from_u128(value.unsigned_abs());
+            big.negative = value < 0;
+            big
+        }
+
+        #[must_use]
+        pub fn from_u128(mut value: u128) -> Self {
+            let mut magnitude = Vec::new();
+            while value > 0 {
+                magnitude.push(value as u32);
+                value >>= 32;
+            }
+            Self::from_parts(false, magnitude)
+        }
+
+        /// A decimal literal with an optional leading minus sign.
+        #[must_use]
+        pub fn parse(text: &str) -> Self {
+            let (negative, digits) = text
+                .strip_prefix('-')
+                .map_or((false, text), |rest| (true, rest));
+            let ten = Self::from_i128(10);
+            let mut value = Self::zero();
+            for digit in digits.chars() {
+                let digit = digit.to_digit(10).expect("decimal literal");
+                value = value.mul(&ten).add(&Self::from_i128(i128::from(digit)));
+            }
+            if negative { value.neg() } else { value }
+        }
+
+        #[must_use]
+        pub const fn is_zero(&self) -> bool {
+            self.magnitude.is_empty()
+        }
+
+        #[must_use]
+        pub const fn is_negative(&self) -> bool {
+            self.negative
+        }
+
+        /// The array index this names, if it is one.
+        #[must_use]
+        pub fn to_index(&self) -> Option<usize> {
+            if self.negative || self.magnitude.len() > 2 {
+                return None;
+            }
+            let value = self
+                .magnitude
+                .iter()
+                .rev()
+                .fold(0u64, |acc, &digit| (acc << 32) | u64::from(digit));
+            usize::try_from(value).ok()
+        }
+
+        #[must_use]
+        pub fn neg(&self) -> Self {
+            Self::from_parts(!self.negative, self.magnitude.clone())
+        }
+
+        #[must_use]
+        pub fn add(&self, other: &Self) -> Self {
+            if self.negative == other.negative {
+                return Self::from_parts(
+                    self.negative,
+                    add_magnitude(&self.magnitude, &other.magnitude),
+                );
+            }
+            match compare_magnitude(&self.magnitude, &other.magnitude) {
+                Ordering::Less => Self::from_parts(
+                    other.negative,
+                    sub_magnitude(&other.magnitude, &self.magnitude),
+                ),
+                _ => Self::from_parts(
+                    self.negative,
+                    sub_magnitude(&self.magnitude, &other.magnitude),
+                ),
+            }
+        }
+
+        #[must_use]
+        pub fn sub(&self, other: &Self) -> Self {
+            self.add(&other.neg())
+        }
+
+        #[must_use]
+        pub fn mul(&self, other: &Self) -> Self {
+            Self::from_parts(
+                self.negative != other.negative,
+                mul_magnitude(&self.magnitude, &other.magnitude),
+            )
+        }
+
+        /// Division rounding toward zero; the divisor is not zero.
+        #[must_use]
+        pub fn divmod_trunc(&self, other: &Self) -> (Self, Self) {
+            let (quotient, remainder) = divmod_magnitude(&self.magnitude, &other.magnitude);
+            (
+                Self::from_parts(self.negative != other.negative, quotient),
+                Self::from_parts(self.negative, remainder),
+            )
+        }
+    }
+
+    impl Ord for Big {
+        fn cmp(&self, other: &Self) -> Ordering {
+            match (self.negative, other.negative) {
+                (false, true) => Ordering::Greater,
+                (true, false) => Ordering::Less,
+                (false, false) => compare_magnitude(&self.magnitude, &other.magnitude),
+                (true, true) => compare_magnitude(&other.magnitude, &self.magnitude),
+            }
+        }
+    }
+
+    impl PartialOrd for Big {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+
+    impl fmt::Display for Big {
+        fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            if self.is_zero() {
+                return formatter.write_str("0");
+            }
+            let billion = [1_000_000_000u32];
+            let mut chunks = Vec::new();
+            let mut rest = self.magnitude.clone();
+            while !rest.is_empty() {
+                let (quotient, remainder) = divmod_magnitude(&rest, &billion);
+                chunks.push(remainder.first().copied().unwrap_or(0));
+                rest = quotient;
+            }
+            let mut text = String::new();
+            if self.negative {
+                text.push('-');
+            }
+            text.push_str(&chunks.pop().unwrap_or(0).to_string());
+            for chunk in chunks.iter().rev() {
+                std::fmt::Write::write_fmt(&mut text, format_args!("{chunk:09}"))
+                    .expect("writing to a String cannot fail");
+            }
+            formatter.write_str(&text)
+        }
+    }
+
+    /// Natural subtraction: truncated at zero.
+    #[must_use]
+    pub fn nat_sub(a: &Big, b: &Big) -> Big {
+        if a > b { a.sub(b) } else { Big::zero() }
+    }
+
+    #[must_use]
+    pub fn pred(a: &Big) -> Big {
+        a.sub(&Big::from_i128(1))
+    }
+
+    /// Integer division with the source's rounding ("trunc", "floor" or
+    /// "euclid"); by zero it aborts with the source's message or is total
+    /// (x / 0 = 0, x % 0 = x).
+    #[must_use]
+    pub fn divide(a: &Big, b: &Big, rounding: &str, by_zero: Option<&str>, remainder: bool) -> Big {
+        if b.is_zero() {
+            if let Some(message) = by_zero {
+                panic!("{message}");
+            }
+            return if remainder { a.clone() } else { Big::zero() };
+        }
+        let one = Big::from_i128(1);
+        let (mut quotient, rest) = a.divmod_trunc(b);
+        if !rest.is_zero() {
+            if rounding == "floor" && rest.is_negative() != b.is_negative() {
+                quotient = quotient.sub(&one);
+            }
+            if rounding == "euclid" && rest.is_negative() {
+                quotient = if b.is_negative() {
+                    quotient.add(&one)
+                } else {
+                    quotient.sub(&one)
+                };
+            }
+        }
+        if remainder {
+            a.sub(&quotient.mul(b))
+        } else {
+            quotient
+        }
+    }
+
+    #[must_use]
+    pub fn to_nat_checked(value: Big, message: &str) -> Big {
+        assert!(!value.is_negative(), "{message}");
+        value
+    }
+
+    #[must_use]
+    pub fn clamp_nat(value: Big) -> Big {
+        if value.is_negative() {
+            Big::zero()
+        } else {
+            value
+        }
+    }
+
+    /// Bounded domains for executable theorem checks.
+    #[must_use]
+    pub fn range(low: i128, high: i128) -> Vec<Big> {
+        (low..=high).map(Big::from_i128).collect()
+    }
+}
+
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
     /// ECMAScript `Number::toString`: the shortest decimal that reads back as
@@ -219,385 +556,332 @@ pub mod ml_array {
     }
 }
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_record_fields(declared: &[String], supplied: &[String]) -> Vec<f64> {
-    {
-        let index = 0f64;
-        {
-            let ml_s1 = self::ml_plan_rust_record_fields_loop1(declared, index);
-            match ml_s1 {
-                self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Done => {
-                    let index_2 = 0f64;
-                    {
-                        let ml_s2 =
-                            self::ml_plan_rust_record_fields_loop2(declared, supplied, index_2);
-                        match ml_s2 {
-                                self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Done => {
-                                    {
-                                        let result = Vec::<f64>::new();
-                                        {
-                                            let index_3 = 0f64;
-                                            {
-                                                let ml_s3 = self::ml_plan_rust_record_fields_loop3(declared, supplied, result, index_3);
-                                                match ml_s3 {
-                                                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Done(result_2) => {
-                                                        result_2
-                                                    }
-                                                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Return(ml_result3) => {
-                                                        ml_result3
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(ml_result3_2) => {
-                                    ml_result3_2
-                                }
-                            }
-                    }
-                }
-                self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Return(
-                    ml_result3_3,
-                ) => ml_result3_3,
-            }
+/// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
+pub mod ml_string {
+    #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct Text(pub Vec<u16>);
+
+    impl std::fmt::Display for Text {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.0))
         }
     }
-}
 
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_record_field_position(declared: &[String], field: &str) -> f64 {
-    self::ml_array::index_of(declared, &field.to_owned(), 0f64, false, |a, b| a == b)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_record_pattern_fields(
-    declared: &[String],
-    supplied: &[String],
-    rest: bool,
-) -> Vec<f64> {
-    {
-        let checked = self::plan_rust_record_fields(declared, supplied);
-        {
-            let code = (self::ml_array::optional_at(&checked, self::ml_array::number_index(0f64)))
-                .unwrap_or_else(|| 0f64);
-            if (code < 0f64) && !((code == -4f64) && rest) {
-                checked
+    impl Text {
+        #[must_use]
+        pub fn from_text(text: &str) -> Self {
+            Self(text.encode_utf16().collect())
+        }
+        #[must_use]
+        pub const fn from_units(units: Vec<u16>) -> Self {
+            Self(units)
+        }
+        #[must_use]
+        pub const fn length(&self) -> f64 {
+            self.0.len() as f64
+        }
+        #[must_use]
+        pub fn concat(&self, other: &Self) -> Self {
+            let mut units = self.0.clone();
+            units.extend_from_slice(&other.0);
+            Self(units)
+        }
+        #[must_use]
+        pub fn starts_with(&self, search: &Self) -> bool {
+            self.0.starts_with(&search.0)
+        }
+        #[must_use]
+        pub fn ends_with(&self, search: &Self) -> bool {
+            self.0.ends_with(&search.0)
+        }
+        #[must_use]
+        pub fn contains(&self, search: &Self) -> bool {
+            self.index_of(search, 0.0) >= 0.0
+        }
+        #[must_use]
+        pub fn slice(&self, start: f64, end: f64) -> Self {
+            let first = relative(start, self.0.len());
+            let last = relative(end, self.0.len());
+            Self(self.0[first..last.max(first)].to_vec())
+        }
+        #[must_use]
+        pub fn index_of(&self, search: &Self, position: f64) -> f64 {
+            let start = absolute(position, self.0.len());
+            if search.0.is_empty() {
+                return start as f64;
+            }
+            if search.0.len() > self.0.len() {
+                return -1.0;
+            }
+            (start..=self.0.len() - search.0.len())
+                .find(|&index| self.0[index..].starts_with(&search.0))
+                .map_or(-1.0, |index| index as f64)
+        }
+        #[must_use]
+        pub fn last_index_of(&self, search: &Self, position: f64) -> f64 {
+            let position = if position.is_nan() {
+                f64::INFINITY
             } else {
-                {
-                    let result = vec![0f64];
-                    {
-                        let index = 0f64;
-                        {
-                            self::ml_plan_rust_record_pattern_fields_loop4(
-                                declared, supplied, result, index,
-                            )
-                        }
-                    }
-                }
+                position
+            };
+            let start = absolute(position, self.0.len());
+            if search.0.is_empty() {
+                return start as f64;
             }
+            if search.0.len() > self.0.len() {
+                return -1.0;
+            }
+            (0..=start.min(self.0.len() - search.0.len()))
+                .rev()
+                .find(|&index| self.0[index..].starts_with(&search.0))
+                .map_or(-1.0, |index| index as f64)
         }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_rust_record_update_fields(declared: &[String], supplied: &[String]) -> Vec<f64> {
-    self::plan_rust_record_pattern_fields(declared, supplied, true)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_record_update_owner(
-    structure: bool,
-    known: bool,
-    actual: &str,
-    expected: &str,
-    wrappers: f64,
-    diverging: bool,
-) -> bool {
-    structure && (diverging || ((known && (actual == expected)) && (wrappers == 0f64)))
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_rust_record_binding_names(reserved: &[String], count: f64) -> Vec<String> {
-    {
-        let names = Vec::<String>::new();
-        {
-            let suffix = 0f64;
-            { self::ml_read_rust_record_binding_names_loop5(reserved, count, names, suffix) }
+        #[must_use]
+        pub fn split(&self, separator: Option<&Self>, limit: f64) -> Vec<Self> {
+            let maximum = uint32(limit) as usize;
+            if maximum == 0 {
+                return Vec::new();
+            }
+            let Some(separator) = separator else {
+                return vec![self.clone()];
+            };
+            if separator.0.is_empty() {
+                return self
+                    .0
+                    .iter()
+                    .take(maximum)
+                    .map(|&unit| Self(vec![unit]))
+                    .collect();
+            }
+            let mut out = Vec::new();
+            let mut start = 0;
+            loop {
+                let index = self.index_of(separator, start as f64);
+                if index < 0.0 {
+                    break;
+                }
+                out.push(Self(self.0[start..index as usize].to_vec()));
+                if out.len() == maximum {
+                    return out;
+                }
+                start = index as usize + separator.0.len();
+            }
+            out.push(Self(self.0[start..].to_vec()));
+            out
         }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_rust_record_source_name(name: &str) -> bool {
-    !(self::ml_array::includes(
-        &vec![
-            String::from("bool"),
-            String::from("char"),
-            String::from("str"),
-            String::from("String"),
-            String::from("Vec"),
-            String::from("Box"),
-            String::from("f32"),
-            String::from("f64"),
-            String::from("usize"),
-            String::from("isize"),
-            String::from("u8"),
-            String::from("i8"),
-            String::from("u16"),
-            String::from("i16"),
-            String::from("u32"),
-            String::from("i32"),
-            String::from("u64"),
-            String::from("i64"),
-            String::from("u128"),
-            String::from("i128"),
-            String::from("std"),
-            String::from("core"),
-            String::from("alloc"),
-        ],
-        &name.to_owned(),
-        0f64,
-        false,
-        |a, b| a == b,
-    ))
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop3Result {
-    MlPlanRustRecordFieldsLoop3Done(Vec<f64>),
-    MlPlanRustRecordFieldsLoop3Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_rust_record_fields_loop3(
-    declared: &[String],
-    supplied: &[String],
-    mut result: Vec<f64>,
-    mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop3Result {
-    loop {
-        return if index < (declared.len() as f64) {
+        #[must_use]
+        pub fn code_point_at(&self, position: f64) -> Option<f64> {
+            let index = integer(position);
+            if index < 0.0 || index >= self.0.len() as f64 {
+                return None;
+            }
+            let index = index as usize;
+            let first = self.0[index];
+            if (0xd800..=0xdbff).contains(&first)
+                && let Some(&second) = self.0.get(index + 1)
+                && (0xdc00..=0xdfff).contains(&second)
             {
-                let position = self::ml_array::index_of(
-                    supplied,
-                    &(self::ml_array::optional_at(declared, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| String::new()),
-                    0f64,
-                    false,
-                    |a, b| a == b,
-                );
-                if position < 0f64 {
-                    self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Return(
-                        vec![-4f64, index],
-                    )
+                return Some(f64::from(
+                    (u32::from(first) - 0xd800) * 1024 + u32::from(second) - 0xdc00 + 0x10000,
+                ));
+            }
+            Some(f64::from(first))
+        }
+        #[must_use]
+        pub fn code_points(&self) -> Vec<Self> {
+            let mut out = Vec::new();
+            let mut index = 0;
+            while index < self.0.len() {
+                let first = self.0[index];
+                let width = if (0xd800..=0xdbff).contains(&first)
+                    && self
+                        .0
+                        .get(index + 1)
+                        .is_some_and(|second| (0xdc00..=0xdfff).contains(second))
+                {
+                    2
                 } else {
-                    {
-                        let result_2 = {
-                            let (ml_append_right, ml_append_left) = (vec![position], result);
-                            self::ml_array::append(ml_append_left, ml_append_right)
-                        };
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                (result, index) = (result_2, index_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlPlanRustRecordFieldsLoop3Result::MlPlanRustRecordFieldsLoop3Done(result)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop2Result {
-    MlPlanRustRecordFieldsLoop2Done,
-    MlPlanRustRecordFieldsLoop2Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_rust_record_fields_loop2(
-    declared: &[String],
-    supplied: &[String],
-    mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop2Result {
-    loop {
-        return if index < (supplied.len() as f64) {
-            {
-                let name =
-                    (self::ml_array::optional_at(supplied, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| String::new());
-                {
-                    let ml_library_inequality_1 =
-                        (self::ml_array::index_of(supplied, &name.clone(), 0f64, false, |a, b| {
-                            a == b
-                        })) != index;
-                    if ml_library_inequality_1 {
-                        self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(
-                            vec![-2f64, index],
-                        )
-                    } else {
-                        if (self::ml_array::includes(
-                            declared,
-                            &name.clone(),
-                            0f64,
-                            false,
-                            |a, b| a == b,
-                        )) {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    index = index_2;
-                                    continue;
-                                }
-                            }
-                        }
-                        {
-                            self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Return(vec![-3f64, index])
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlPlanRustRecordFieldsLoop2Result::MlPlanRustRecordFieldsLoop2Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlPlanRustRecordFieldsLoop1Result {
-    MlPlanRustRecordFieldsLoop1Done,
-    MlPlanRustRecordFieldsLoop1Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_rust_record_fields_loop1(
-    declared: &[String],
-    mut index: f64,
-) -> self::MlPlanRustRecordFieldsLoop1Result {
-    loop {
-        return if index < (declared.len() as f64) {
-            {
-                let name =
-                    (self::ml_array::optional_at(declared, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| String::new());
-                {
-                    let ml_library_inequality_1 =
-                        (self::ml_array::index_of(declared, &name, 0f64, false, |a, b| a == b))
-                            != index;
-                    if ml_library_inequality_1 {
-                        self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Return(
-                            vec![-1f64, index],
-                        )
-                    } else {
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                index = index_2;
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlPlanRustRecordFieldsLoop1Result::MlPlanRustRecordFieldsLoop1Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_plan_rust_record_pattern_fields_loop4(
-    declared: &[String],
-    supplied: &[String],
-    mut result: Vec<f64>,
-    mut index: f64,
-) -> Vec<f64> {
-    loop {
-        if index < (declared.len() as f64) {
-            {
-                let result_2 = {
-                    let (ml_append_right, ml_append_left) = (
-                        vec![self::ml_array::index_of(
-                            supplied,
-                            &(self::ml_array::optional_at(
-                                declared,
-                                self::ml_array::number_index(index),
-                            ))
-                            .unwrap_or_else(|| String::new()),
-                            0f64,
-                            false,
-                            |a, b| a == b,
-                        )],
-                        result,
-                    );
-                    self::ml_array::append(ml_append_left, ml_append_right)
+                    1
                 };
-                {
-                    let index_2 = index + 1f64;
-                    {
-                        (result, index) = (result_2, index_2);
+                out.push(Self(self.0[index..index + width].to_vec()));
+                index += width;
+            }
+            out
+        }
+        #[must_use]
+        pub fn repeat(&self, count: f64) -> Self {
+            let count = integer(count);
+            assert!(
+                count >= 0.0 && count.is_finite(),
+                "Invalid count value: {count}"
+            );
+            if self.0.is_empty() {
+                return Self(Vec::new());
+            }
+            let size = count * self.0.len() as f64;
+            assert!(size <= 536_870_888.0, "Invalid string length");
+            Self(self.0.repeat(count as usize))
+        }
+        #[must_use]
+        pub fn pad(&self, length: f64, fill: &Self, start: bool) -> Self {
+            let length = integer(length).max(0.0);
+            if length <= self.0.len() as f64 || fill.0.is_empty() {
+                return self.clone();
+            }
+            assert!(length <= 536_870_888.0, "Invalid string length");
+            let count = length as usize - self.0.len();
+            let padding: Vec<u16> = fill.0.iter().copied().cycle().take(count).collect();
+            let pad = Self(padding);
+            if start {
+                pad.concat(self)
+            } else {
+                self.concat(&pad)
+            }
+        }
+        #[must_use]
+        pub fn replace(&self, search: &Self, replacement: &Self, all: bool) -> Self {
+            let mut out = Vec::new();
+            let mut start = 0;
+            let mut from = 0;
+            loop {
+                let index = self.index_of(search, from as f64);
+                if index < 0.0 {
+                    break;
+                }
+                let index = index as usize;
+                out.extend_from_slice(&self.0[start..index]);
+                substitute(&mut out, &self.0, &search.0, &replacement.0, index);
+                start = index + search.0.len();
+                if !all || (search.0.is_empty() && index == self.0.len()) {
+                    break;
+                }
+                from = start + usize::from(search.0.is_empty());
+            }
+            out.extend_from_slice(&self.0[start..]);
+            Self(out)
+        }
+        #[must_use]
+        pub fn trim(&self, start: bool, end: bool, rust: bool) -> Self {
+            let whitespace = |unit: u16| {
+                char::from_u32(u32::from(unit)).is_some_and(|c| {
+                    if rust {
+                        c.is_whitespace()
+                    } else {
+                        (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}'
+                    }
+                })
+            };
+            let mut first = 0;
+            let mut last = self.0.len();
+            if start {
+                while first < last && whitespace(self.0[first]) {
+                    first += 1;
+                }
+            }
+            if end {
+                while last > first && whitespace(self.0[last - 1]) {
+                    last -= 1;
+                }
+            }
+            Self(self.0[first..last].to_vec())
+        }
+        #[must_use]
+        pub fn map_case(&self, upper: bool) -> Self {
+            let mut out = Vec::new();
+            let mut run = String::new();
+            let flush = |run: &mut String, out: &mut Vec<u16>| {
+                let mapped = if upper {
+                    run.to_uppercase()
+                } else {
+                    run.to_lowercase()
+                };
+                out.extend(mapped.encode_utf16());
+                run.clear();
+            };
+            for scalar in char::decode_utf16(self.0.iter().copied()) {
+                match scalar {
+                    Ok(c) => run.push(c),
+                    Err(error) => {
+                        flush(&mut run, &mut out);
+                        out.push(error.unpaired_surrogate());
+                    }
+                }
+            }
+            flush(&mut run, &mut out);
+            Self(out)
+        }
+    }
+    #[must_use]
+    pub fn join(values: &[Text], separator: &Text) -> Text {
+        let mut units = Vec::new();
+        for (index, value) in values.iter().enumerate() {
+            if index != 0 {
+                units.extend_from_slice(&separator.0);
+            }
+            units.extend_from_slice(&value.0);
+        }
+        Text(units)
+    }
+    #[must_use]
+    pub const fn integer(value: f64) -> f64 {
+        if value.is_nan() { 0.0 } else { value.trunc() }
+    }
+    #[must_use]
+    pub const fn absolute(value: f64, length: usize) -> usize {
+        integer(value).max(0.0).min(length as f64) as usize
+    }
+    #[must_use]
+    pub fn relative(value: f64, length: usize) -> usize {
+        let value = integer(value);
+        if value < 0.0 {
+            (length as f64 + value).max(0.0) as usize
+        } else {
+            value.min(length as f64) as usize
+        }
+    }
+    fn uint32(value: f64) -> u32 {
+        if !value.is_finite() || value == 0.0 {
+            0
+        } else {
+            value.trunc().rem_euclid(4_294_967_296.0) as u32
+        }
+    }
+    fn substitute(
+        out: &mut Vec<u16>,
+        text: &[u16],
+        search: &[u16],
+        replacement: &[u16],
+        position: usize,
+    ) {
+        let mut index = 0;
+        while index < replacement.len() {
+            if replacement[index] == 36 && index + 1 < replacement.len() {
+                match replacement[index + 1] {
+                    36 => {
+                        out.push(36);
+                        index += 2;
                         continue;
                     }
+                    38 => {
+                        out.extend_from_slice(search);
+                        index += 2;
+                        continue;
+                    }
+                    96 => {
+                        out.extend_from_slice(&text[..position]);
+                        index += 2;
+                        continue;
+                    }
+                    39 => {
+                        out.extend_from_slice(&text[position + search.len()..]);
+                        index += 2;
+                        continue;
+                    }
+                    _ => {}
                 }
             }
+            out.push(replacement[index]);
+            index += 1;
         }
-        return { result };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_read_rust_record_binding_names_loop5(
-    reserved: &[String],
-    mut count: f64,
-    mut names: Vec<String>,
-    mut suffix: f64,
-) -> Vec<String> {
-    loop {
-        if (names.len() as f64) < count {
-            {
-                let name = format!("ml_record_value{}", self::ml_number::js_number(suffix));
-                {
-                    let suffix_2 = suffix + 1f64;
-                    if !(self::ml_array::includes(reserved, &name.clone(), 0f64, false, |a, b| {
-                        a == b
-                    })) {
-                        {
-                            let names_2 = {
-                                let (ml_append_right, ml_append_left) = (vec![name.clone()], names);
-                                self::ml_array::append(ml_append_left, ml_append_right)
-                            };
-                            {
-                                (names, suffix) = (names_2, suffix_2);
-                                continue;
-                            }
-                        }
-                    }
-                    {
-                        {
-                            suffix = suffix_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        return { names };
     }
 }

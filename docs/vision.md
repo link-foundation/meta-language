@@ -2776,6 +2776,22 @@ moved base proofs, mutable fields, generic owners and the remaining Rust scope
 still require implementation and verification; the existing value encoding is
 not a complete Rust ownership checker.
 
+The named-constructor emission draft keeps nonempty ordinary ASCII Rust field
+names in enum declarations, constructor applications, match patterns and value
+enumeration. One shared renderer supplies every form in both runtime packages;
+its complete definitions generate native source and ship as typed Links. Field
+types and recursive boxing remain the existing checked values. Positional
+constructors retain positional syntax. A single program-wide layout decision
+keeps mixed-layout encoding metadata correct without rescanning all declarations
+for each emitted type. Existing JavaScript/Rocq/Lean source profiles retain their
+previous Rust data layout. A shared independent layout fixture now checks actual
+named syntax, mixed positional/named metadata, complete paired graphs, both
+codecs, all four emissions and original/emitted Rust values in CI. It reuses
+the complete control driver without removing any preceding assertion. None ran.
+Raw and Unicode identifiers, zero-field source-form provenance and unrestricted
+reimport of emitted helpers/clone operations remain implementation obligations;
+this improvement does not establish complete source round-trip fidelity.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

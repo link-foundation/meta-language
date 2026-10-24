@@ -679,6 +679,22 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
     }
     RustEmitter {
         program,
+        named_constructor_fields: program.source_language == super::Language::Rust
+            && program.declarations.iter().any(|entry| {
+                let Decl::Data(data) = entry else {
+                    return false;
+                };
+                data.ctors.iter().any(|ctor| {
+                    super::rust_record_rules::accept_rust_named_constructor_fields(
+                        program.source_language.as_str(),
+                        &ctor
+                            .fields
+                            .iter()
+                            .map(|field| field.name.clone().unwrap_or_default())
+                            .collect::<Vec<_>>(),
+                    )
+                })
+            }),
         state,
         temporaries: 0,
         theorem_checks: Vec::new(),
@@ -829,6 +845,7 @@ pub struct OwnedExternalTarget {
 
 struct RustEmitter<'p> {
     program: &'p Program,
+    named_constructor_fields: bool,
     state: EmitState<'p>,
     definition_ownership: Option<DefinitionOwnership>,
     temporaries: usize,

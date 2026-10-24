@@ -88,3 +88,12 @@ writeProjectData(new URL('../../parity/fixtures/rust-records.lino',import.meta.u
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
  boundary:'Execute every declared constructor, projection, pattern, update, owner, order and refusal cell in both runtimes; compare whole typed graphs, both codecs, four complete emissions, original Rust and emitted Rust. Reordered reference wildcards retain their own source identities. The original update refusal input remains exact and gains active value/codec/native assertions. These are future declarations, not observations. Traits, layout, destructors, generic owners, field writes, complete move tracking, borrowed bases, irrefutable let patterns and remaining pattern forms remain separate implementation obligations.',
 });
+const layoutSource='struct TupleLayout(i64,i64); struct NamedLayout{x:i64,y:i64} pub fn result()->i64{let p=NamedLayout{x:1,y:2};p.x+p.y} fn main(){}';
+writeProjectData(new URL('../../parity/fixtures/rust-record-layout.lino',import.meta.url),{
+ schemaVersion:1,model:'Rust named constructor field layout 1',source:layoutSource,
+ cases:[{name:'mixed positional and named layout',module:'',source:layoutSource,value:'3',abort:null}],refusals:[],
+ layout:{pieces:['    TupleLayout(i64, i64),','    NamedLayout { x: i64, y: i64 },','crate::NamedLayout::NamedLayout { x:'],patternPrefix:'crate::NamedLayout::NamedLayout { x:',
+  encoding:'a data type is an enum whose constructors retain named or positional fields; data-typed fields are boxed, and values are compared structurally'},
+ versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
+ boundary:'Both runtimes execute every named declaration/application/pattern and mixed-layout encoding assertion, complete graph/codec/four-target comparisons and original/emitted Rust value checks. This is a declaration, not an observation. Raw/Unicode identifiers, zero-field syntax provenance and unrestricted emitted-source reimport remain separate obligations.',
+});

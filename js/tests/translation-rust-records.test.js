@@ -9,14 +9,21 @@ import{emitJavaScript}from'../src/translation/emit-javascript.js';
 import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-links.js';
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
-const fixture=readProjectData(new URL('../../parity/fixtures/rust-records.lino',import.meta.url));
 const[major,minor]=process.versions.node.split('.').map(Number);
+for(const filename of['rust-records','rust-record-layout']){
+const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
-test('nominal Rust records retain order, actual type owners and four-target codecs',()=>{
+test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':'Rust named constructor layout retains complete paired controls',()=>{
  const program=checkProgram(parseRust(fixture.source)),js=emitJavaScript(program),packet=encodeTypedProgramLinks(program);
  for(const target of['JavaScript','Rust','Lean','Rocq']){
   const original=emitTypedProgramLinks(packet.network,packet.root,target);
   for(const network of[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),original);
+ }
+ if(fixture.layout){
+  const rust=emitTypedProgramLinks(packet.network,packet.root,'Rust');
+  for(const piece of fixture.layout.pieces)assert.ok(rust.code.includes(piece),piece);
+  assert.ok(rust.code.split('\n').some(line=>line.includes(fixture.layout.patternPrefix)&&line.includes(' } => ')));
+  assert.equal(rust.encodings.find(encoding=>encoding.id==='data').statement,fixture.layout.encoding);
  }
  const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===(row.module?row.module+'.result':'result')).target);
  const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');
@@ -30,3 +37,4 @@ test('nominal Rust records retain order, actual type owners and four-target code
  }
 });
 for(const row of fixture.refusals)test('nominal record refusal: '+row.name,()=>assert.throws(()=>checkProgram(parseRust(row.source)),error=>error.kind===row.kind&&error.reason===row.reason));
+}
