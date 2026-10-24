@@ -4,7 +4,7 @@ import {acceptProgramStringRepresentationFlag} from './translation/program-strin
 // The adapter carries declarations and shared projection instructions; it
 // does not assign meaning to types, operators, patterns or recursion.
 import {checkRustConstFunctionContainers} from './translation/rust-const-functions.js';
-import { checkProgram } from './translation/check.js';
+import { checkProjectedProgram } from './translation/check.js';
 import {checkRustOwnedLocalStateRecordShapes} from './translation/rust-owned-local-state.js';
 import { validateRustTypeNamespace, checkRustTypeNamespaceRecordShapes } from './translation/rust-type-namespace.js';
 import { projectLinkedProgramExpression, projectLinkedProgramDeclarationPath } from './typed-program-expression-projection.js';
@@ -112,7 +112,7 @@ export function recheckLinkedTypedProgram(program, {wholeProgram=false}={}) {
     ...(program.referenceSemantics !== undefined ? { referenceSemantics: program.referenceSemantics } : {}),
     ...(program.sourcePureUnitCalls!==undefined?{sourcePureUnitCalls:program.sourcePureUnitCalls}:{}),
   };
-  const checked = checkProgram(surface);
+  const checked = checkProjectedProgram(surface);
   if (Object.hasOwn(program, 'utf16Strings')) {
     if (!acceptProgramStringRepresentationFlag(typeof program.utf16Strings, true)) throw new TypeError('a program string representation flag must be an explicit boolean');
     checked.utf16Strings = program.utf16Strings;

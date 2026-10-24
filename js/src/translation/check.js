@@ -144,13 +144,20 @@ function immutableProductValue(value, bindings = new Map()) {
   }
 }
 
-export function checkProgram(surface) {
+export function checkProgram(surface) { return checkSurfaceProgram(surface, false); }
+
+// Internal graph boundary: terms already carry normalized primitive operations.
+// All core type/arity/ownership/proof checks still run; source-call desugaring
+// must not run again and change the represented operation or fresh bindings.
+export function checkProjectedProgram(surface) { return checkSurfaceProgram(surface, true); }
+
+function checkSurfaceProgram(surface, checkedProjection) {
   const sourceProofSelected=checkRustConstFunctionContainers(surface);
   if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
   checkRustRuntimeShellContainers(surface);
   checkRustTypeNamespaceRecordShapes(surface);
   checkRustOwnedLocalStateContainers(surface);
-  const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics));
+  const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics), checkedProjection);
   return checker.program(surface);
 }
 
@@ -192,7 +199,8 @@ function externalEntry(external) {
 }
 
 class Checker {
-  constructor(language, externals, referenceSemantics = false) {
+  constructor(language, externals, referenceSemantics = false, checkedProjection = false) {
+    this.checkedProjection = checkedProjection;
     this.language = language;
     this.referenceSemantics = referenceSemantics;
     this.items = new Map();
@@ -736,7 +744,7 @@ class Checker {
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
-        return checkJavaScriptSourcePropertyCall(this,node,env,path)??this.method(node, env, path, expected);
+        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,env,path))??this.method(node, env, path, expected);
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':

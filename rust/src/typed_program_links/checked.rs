@@ -1,7 +1,7 @@
 //! Adapt the supported typed IR to the existing checker, preserving policies.
 use super::projection::{project as expression, project_type};
 use super::{Result, error, typed_program_links_schema};
-use crate::translation::check::check_program;
+use crate::translation::check::check_projected_program;
 use crate::translation::ir::{Decl, Effect, Item, Program};
 use crate::translation::primitive_value_rules::{
     accept_linked_text_conversion_kind, read_number_display_refusal,
@@ -415,7 +415,8 @@ pub(super) fn validate(program: &Program) -> Result<()> {
         source_pure_unit_calls: program.source_pure_unit_calls.clone(),
         source_runtime_shell: program.source_runtime_shell.clone(),
     };
-    let mut checked = check_program(&surface).map_err(|failure| error(failure.to_string()))?;
+    let mut checked =
+        check_projected_program(&surface).map_err(|failure| error(failure.to_string()))?;
     checked.utf16_strings = program.utf16_strings;
     if checked != *program {
         let retained_records =

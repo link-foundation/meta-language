@@ -6508,3 +6508,22 @@ all emissions and native products are drafted but unexecuted. This domain uses
 literal searches, primitive templates and successful allocation. Callable
 replacements, RegExp/Symbol.replace, generic receivers/unions, complete resource
 limits/failures and every preceding requirement remain required.
+
+
+### Normalized method reconstruction boundary draft
+
+Source calls and normalized typed operations have distinct checker entry paths.
+The internal graph reconstruction path preserves the already represented
+primitive method while running the same core type, operation, arity, binding,
+ownership, source-proof and complete-program comparison checks. It does not
+repeat source property-call desugaring, introduce new captures or interpret a
+missing typed split separator as a missing raw source argument. The ordinary
+source entry keeps all raw argument normalization. Both runtimes make this
+distinction in ephemeral checker state; no serialized trust/completion flag is
+accepted and the Links schema is unchanged.
+
+Future controls retain exact complete rechecks after both codecs and all four
+emissions for split, ranges, searches, replacements and character templates.
+Forged operations, excess arity and false result types must still fail. These
+controls remain unexecuted. Other checked source projections and all earlier
+source, grammar, proof and resource obligations retain their full scope.

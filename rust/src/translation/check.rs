@@ -76,9 +76,20 @@ pub use self::recursion::*;
 /// # Errors
 /// On name, type and exhaustiveness errors, and on constructs outside the portable core.
 pub fn check_program(surface: &SProgram) -> Result<Program> {
+    check_surface_program(surface, false)
+}
+
+// Internal graph reconstruction retains normalized primitive operations. Core
+// type/arity/ownership/proof checks remain identical to ordinary checking.
+pub(crate) fn check_projected_program(surface: &SProgram) -> Result<Program> {
+    check_surface_program(surface, true)
+}
+fn check_surface_program(surface: &SProgram, checked_projection: bool) -> Result<Program> {
     super::source_diagnostic_attributes::validate_surface(surface)?;
     super::source_unit_clone_derivations::validate_surface_unit_clone_derivations(surface)?;
-    Checker::new(surface.language, surface.externals.clone()).program(surface)
+    let mut checker = Checker::new(surface.language, surface.externals.clone());
+    checker.checked_projection = checked_projection;
+    checker.program(surface)
 }
 
 /// Reuse checked pattern semantics at the source-free graph boundary.
@@ -492,6 +503,7 @@ fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExp
 struct Checker {
     language: Language,
     reference_semantics: bool,
+    checked_projection: bool,
     /// Declaration full names in declaration order.
     order: Vec<String>,
     decls: HashMap<String, Decl>,
@@ -511,6 +523,7 @@ impl Checker {
         Self {
             language,
             reference_semantics: false,
+            checked_projection: false,
             order: Vec::new(),
             decls: HashMap::new(),
             signatures: HashSet::new(),

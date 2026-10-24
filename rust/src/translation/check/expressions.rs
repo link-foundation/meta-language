@@ -410,7 +410,10 @@ impl Checker {
             SNode::StringMap { .. } => self.string_map(node, env, path),
             SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
             SNode::Method { object, op, args } => {
-                if let Some(value) = self.source_property_call(object, op, args, env, path, span)? {
+                if !self.checked_projection
+                    && let Some(value) =
+                        self.source_property_call(object, op, args, env, path, span)?
+                {
                     return Ok(value);
                 }
                 let form =

@@ -1049,3 +1049,10 @@ source closures, typed Links and four target runtimes are regenerated together.
 Legacy helper contexts remain qualified; no equivalence proof is invented.
 Future behavior controls remain unexecuted; protocol/callable/resource and all
 previous requirements remain.
+
+Graph rechecking now invokes an internal normalized-surface checker path. It
+shares every core validation with ordinary source checking, while avoiding a
+second source property-call normalization over already normalized method terms.
+The distinction is not a serializable proof or trust flag. No gate, comparison
+or source requirement is bypassed. Future exact archive reconstruction and
+malformed-operation/arity/type controls remain unexecuted.
