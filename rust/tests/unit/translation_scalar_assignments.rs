@@ -1,6 +1,15 @@
 //! Future complete source controls; compilation and execution belong to CI.
 use super::translation_rust_records::assert_nominal_translation_product;
 #[test]
+fn comma_values_and_statement_lists_preserve_all_ordered_effects() {
+    assert_nominal_translation_product(
+        "../experiments/scalar-assignments/sequence-oracle.mjs",
+        "ordered JavaScript comma expressions and for lists",
+        meta_language::create_scalar_assignment_program_links,
+    );
+}
+
+#[test]
 fn scalar_expression_assignments_retain_order_cells_and_results() {
     assert_nominal_translation_product(
         "../experiments/scalar-assignments/oracle.mjs",

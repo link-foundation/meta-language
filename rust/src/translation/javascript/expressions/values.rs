@@ -48,7 +48,7 @@ impl JavaScriptParser {
                 return self.read_closure(false);
             }
             self.cursor.advance();
-            let mut inner = self.expr()?;
+            let mut inner = self.sequence()?;
             self.cursor.expect(")", Some("parenthesised expression"))?;
             inner.parenthesized = Some(
                 crate::translation::surface_raw_metadata_rules::accept_surface_raw_metadata_field(
@@ -249,7 +249,7 @@ impl JavaScriptParser {
     }
 
     pub(in super::super) fn substitution(&mut self) -> Result<SExpr> {
-        let expr = self.expr()?;
+        let expr = self.sequence()?;
         if !self.cursor.at_end() {
             return Err(self.fail_here("expected } after the template substitution"));
         }

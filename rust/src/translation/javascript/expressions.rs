@@ -609,7 +609,7 @@ impl JavaScriptParser {
             }
             if self.cursor.is("[") {
                 self.cursor.advance();
-                let index = self.expr()?;
+                let index = self.sequence()?;
                 let close = self.cursor.expect("]", Some("index"))?;
                 let place = Span::new(
                     expr.span.map_or(token.start, |place| place.start),

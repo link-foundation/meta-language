@@ -18,6 +18,13 @@ export function readScalarAssignmentOperation(operator) {
   if (operator === '--') return 'sub';
   return readScalarAssignmentBitwiseOperation(operator);
 }
+
+/** Comma evaluates/GetValues the left operand before returning the right value.
+ * Uses the same source-term plan schema: two actual operands and one let.
+ * @returns {number[]} */
+export function planJavaScriptSequenceExpression() {
+  return [0,0,0,0, 0,1,0,0, 7,0,0,1];
+}
 /** Each node is [operation,first,second,third]; references name earlier nodes.
  * 0 operand(cell/right),1 temporary-name(previous/updated),2 cell read,
  * 3 numeric unit,4 binary,5 math,6 coalesce,7 let,8 cell write,9 conditional,10 unary negation.

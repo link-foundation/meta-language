@@ -969,3 +969,12 @@ unchanged. Three former refusal sources/assertions remain beside stronger
 original/graph/native controls. Full source rules generate native code and
 editable graphs; no controls executed. Parameter/var/accessor generality and
 formal mutable-cell execution retain their full remaining scope.
+
+Comma source expressions reuse the complete shared scalar construction plan
+schema and existing Let terms. Both parser adapters transport actual left/right
+source terms in evaluation order, using the whole-module hygienic name supply.
+Expression roles retain list separator grammar. Ordered statement/for lists
+reuse ordinary lowering, including ignored values and calls. Complete source
+rules generate native definitions and Links; future source/native/codec/target
+controls are declared but remain unexecuted. General references, arbitrary
+completions and every preceding obligation remain.

@@ -751,7 +751,7 @@ class RustParser {
         const origin=this.origins.origin(expr,path);
         const disposition=readRustUnitStatementDisposition(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
-        if(disposition==='bind'){lets.push({name:this.freshProductBinding(),type:null,value:expr,span:expr.span});continue;}
+        if(disposition==='bind'){lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
       }
       tail = expr;
@@ -910,7 +910,7 @@ class RustParser {
       }
       const value=this.expr([],{statement:true}),origin=this.origins.origin(value,[]);
       if(readRustUnitStatementDisposition(value.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('main statement','main may only print, bind, assert and evaluate direct Unit calls',span(token,token));
-      if(!c.eat(';')&&!c.is('}'))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),type:null,value,span:value.span});
+      if(!c.eat(';')&&!c.is('}'))throw this.fail('expected ; or }');effects.push({k:'let',name:this.freshProductBinding(),value,span:value.span});
     }
     c.expect('}', 'fn main');
     this.origins.scope = previous;

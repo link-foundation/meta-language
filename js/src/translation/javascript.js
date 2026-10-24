@@ -15,7 +15,7 @@ import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
-import { constructScalarAssignmentExpression } from './scalar-assignments.js';
+import { constructScalarAssignmentExpression, constructJavaScriptSequenceExpression } from './scalar-assignments.js';
 import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
@@ -975,7 +975,7 @@ class JavaScriptParser {
       }
       // An async function returning a call of another adopts the Promise it
       // returns, which awaits it.
-      const expr = this.inAsync ? this.awaited(() => this.expr()) : this.expr();
+      const expr = this.inAsync ? this.awaited(() => this.sequence()) : this.sequence();
       c.eat(';');
       return { s: 'return', expr, span: span(token, c.peek()) };
     }
@@ -988,29 +988,32 @@ class JavaScriptParser {
     if (c.is('do')) return this.doStatement();
     if (c.is('for')) return this.forStatement();
     if (c.is('break') || c.is('continue')) return this.jumpStatement();
-    if (c.is('console') && c.is('.', 1)) {
-      const { expr, style, span: where } = this.consoleStatement();
-      return { s: 'print', expr, style, span: where };
-    }
     if (['try', 'function', 'class', 'with', 'debugger'].includes(token.value) && token.kind === 'identifier') {
       throw unsupported(`${token.value} statement`, 'outside the portable core', span(token, token));
     }
     if (token.kind === 'identifier' && c.peek(1).kind === 'punct' && c.peek(1).value === ':') {
       throw unsupported(`label ${token.value}`, 'labels are outside the portable core; a break or continue applies to the innermost loop', span(token, c.peek(1)));
     }
-    if (this.startsReferenceAssignment()) {
-      const statement = this.referenceAssignment();
-      c.eat(';');
-      return statement;
-    }
-    if (this.startsAssignment()) {
-      const statement = this.assignment();
-      c.eat(';');
-      return statement;
-    }
-    const expr = this.expr();
+    const statements = this.expressionStatements();
     c.eat(';');
-    return { s: 'expr', expr, span: span(token, c.peek()) };
+    return statements.length === 1 ? statements[0] : {s:'block',inline:true,body:statements,span:span(token,c.peek())};
+  }
+
+  expressionStatements() {
+    const c = this.cursor, statements = [];
+    do {
+      const start = c.peek();
+      if (c.is('console') && c.is('.',1)) {
+        const {expr,style,span:where} = this.consoleStatement(false);
+        statements.push({s:'print',expr,style,span:where});
+      } else if (this.startsReferenceAssignment()) statements.push(this.referenceAssignment());
+      else if (this.startsAssignment()) statements.push(this.assignment());
+      else {
+        const expr = this.expr();
+        statements.push({s:'expr',expr,span:span(start,c.peek())});
+      }
+    } while (c.eat(','));
+    return statements;
   }
 
   constStatement(readonly = false) {
@@ -1188,7 +1191,7 @@ class JavaScriptParser {
         field = member.value;
         index = null;
       } else if (c.eat('[')) {
-        index = this.expr();
+        index = this.sequence();
         c.expect(']', 'reference index');
         field = null;
       } else throw this.fail('expected a field or index in reference assignment');
@@ -1266,7 +1269,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     c.expect('(', 'while');
-    const cond = this.expr();
+    const cond = this.sequence();
     c.expect(')', 'while');
     const body = this.loopBody();
     return { s: 'while', cond, body, span: span(start, c.peek()) };
@@ -1278,7 +1281,7 @@ class JavaScriptParser {
     const body = this.loopBody();
     c.expect('while', 'do');
     c.expect('(', 'do');
-    const cond = this.expr();
+    const cond = this.sequence();
     c.expect(')', 'do');
     c.eat(';');
     return { s: 'doWhile', body, cond, span: span(start, c.peek()) };
@@ -1311,21 +1314,13 @@ class JavaScriptParser {
       } else if (c.is('const') || c.is('var')) {
         throw unsupported(`for with ${c.peek().value}`, 'declare the loop variables with let', span(c.peek(), c.peek()));
       } else {
-        while (!c.is(';')) {
-          if (!this.startsAssignment()) throw this.fail('expected an assignment in the for initialiser');
-          init.push(this.assignment());
-          if (!c.eat(',')) break;
-        }
+        if (!c.is(';')) init.push(...this.expressionStatements());
       }
       c.expect(';', 'for');
-      const cond = c.is(';') ? null : this.expr();
+      const cond = c.is(';') ? null : this.sequence();
       c.expect(';', 'for');
       const update = [];
-      while (!c.is(')')) {
-        if (!this.startsAssignment()) throw unsupported('for update', 'the update of a for loop is a list of assignments', span(c.peek(), c.peek()));
-        update.push(this.assignment());
-        if (!c.eat(',')) break;
-      }
+      if (!c.is(')')) update.push(...this.expressionStatements());
       c.expect(')', 'for');
       const body = this.loopBody();
       return { s: 'for', init, cond, update, body, span: span(start, c.peek()) };
@@ -1425,7 +1420,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     c.expect('(', 'if');
-    const cond = this.expr();
+    const cond = this.sequence();
     c.expect(')', 'if');
     const then = this.branch();
     const otherwise = c.eat('else') ? this.branch() : null;
@@ -1447,7 +1442,7 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.next();
     c.expect('(', 'switch');
-    const discriminant = this.expr();
+    const discriminant = this.sequence();
     c.expect(')', 'switch');
     c.expect('{', 'switch');
     const tagged = discriminant.k === 'field' && discriminant.field === '$';
@@ -1494,6 +1489,8 @@ class JavaScriptParser {
       c.next();
       return { k: 'tag', tag: token.value, span: span(token, token) };
     }
+    const literal = c.is(':',c.is('-') ? 2 : 1);
+    if (!literal) return {k:'value',value:this.sequence(),span:span(token,c.peek())};
     const negative = Boolean(c.eat('-'));
     const value = c.peek();
     const form = readJavaScriptValueCaseForm(value.kind, value.value, value.suffix ?? '', negative);
@@ -1508,7 +1505,7 @@ class JavaScriptParser {
       c.next();
       return { k: 'boolLit', value: token.value === 'true', span: span(token, token) };
     }
-    if (form === 'value') return { k: 'value', value: this.expr(), span: span(token, c.peek()) };
+    if (form === 'value') return { k: 'value', value: this.sequence(), span: span(token, c.peek()) };
     throw unsupported('case test', 'the cases of a value switch are BigInt or boolean literals', span(token, value));
   }
 
@@ -1577,7 +1574,7 @@ class JavaScriptParser {
     return { k: 'let', name: `${this.generatedPrefix}temporary_main_ignored${this.generatedCount}`, value: expr, span: span(token, c.peek()) };
   }
 
-  consoleStatement() {
+  consoleStatement(consumeSemicolon = true) {
     const c = this.cursor;
     const start = c.next();
     this.lexicalRead(start);
@@ -1589,7 +1586,7 @@ class JavaScriptParser {
       throw unsupported(`console.${method.value}`, 'console.log, which writes a line to standard output, is the portable output', span(start, method));
     }
     const args = this.arguments('console.log');
-    c.eat(';');
+    if (consumeSemicolon) c.eat(';');
     const where = span(start, c.peek());
     const expr = args.length > 1 ? consoleFormat(args) : (args[0] ?? { k: 'str', value: '', span: where });
     return { k: 'print', expr, style: 'js-console', span: where };
@@ -1899,6 +1896,18 @@ class JavaScriptParser {
   }
 
   /** Expressions, by JavaScript precedence. */
+  sequence() {
+    const c = this.cursor;
+    let value = this.expr();
+    while (c.is(',')) {
+      const comma = c.next(), right = this.expr();
+      const name = this.generatedPrefix+'temporary_sequence'+(++this.generatedCount);
+      value = constructJavaScriptSequenceExpression(value,right,name,joined(value,right,comma));
+    }
+    return value;
+  }
+
+  /** AssignmentExpression: list separators belong to the caller. */
   expr() {
     const c = this.cursor;
     const start = c.peek();
@@ -2235,7 +2244,7 @@ class JavaScriptParser {
       }
       if (c.is('[')) {
         c.next();
-        const index = this.expr();
+        const index = this.sequence();
         const close = c.expect(']', 'index');
         expr = { k: 'index', object: expr, index, span: joined(expr, close, token) };
         if (c.peek().kind === 'punct' && (ASSIGNMENTS.has(c.peek().value) || c.is('++') || c.is('--'))) {
@@ -2278,7 +2287,7 @@ class JavaScriptParser {
     }
     if (c.is('(')) {
       c.next();
-      const inner = this.expr();
+      const inner = this.sequence();
       c.expect(')', 'parenthesised expression');
       return { ...inner, parenthesized: acceptSurfaceRawMetadataField('expression', 'parenthesized'), span: span(token, c.peek()) };
     }
@@ -2349,7 +2358,7 @@ class JavaScriptParser {
     const outer = this.cursor;
     this.cursor = new TokenCursor(shifted, 'JavaScript');
     try {
-      const expr = this.expr();
+      const expr = this.sequence();
       if (!this.cursor.atEnd()) throw this.fail('expected } after the template substitution');
       return expr;
     } finally {

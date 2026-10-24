@@ -1,10 +1,19 @@
 // Mechanical source-node construction from the complete shared term plan.
-import { planScalarAssignmentExpression, readScalarAssignmentOperation } from './scalar-assignment-rules.js';
+import { planScalarAssignmentExpression, planJavaScriptSequenceExpression, readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { unsupported } from './diagnostics.js';
 
 export function constructScalarAssignmentExpression(cell, right, operator, postfix, names, span) {
-  const plan = planScalarAssignmentExpression(operator,postfix), operation = readScalarAssignmentOperation(operator), nodes = [];
+  const plan = planScalarAssignmentExpression(operator,postfix), operation = readScalarAssignmentOperation(operator);
   if (!plan.length || names.length !== 2) throw unsupported('scalar assignment expression','this operator needs its complete source operation',span);
+  return materializeSourcePlan(plan,cell,right,operator,operation,names,span);
+}
+
+export function constructJavaScriptSequenceExpression(left,right,name,span) {
+  return materializeSourcePlan(planJavaScriptSequenceExpression(),left,right,',','',[name],span);
+}
+
+function materializeSourcePlan(plan,cell,right,operator,operation,names,span) {
+  const nodes = [];
   const actual = position => {
     if (!Number.isSafeInteger(position) || position < 0 || position >= nodes.length) throw new TypeError('a scalar assignment plan needs an earlier actual source term');
     return nodes[position];

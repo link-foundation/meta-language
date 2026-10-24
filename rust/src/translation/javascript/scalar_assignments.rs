@@ -8,14 +8,13 @@ use crate::translation::{
 };
 
 fn materialize(
+    plan: Vec<f64>,
     cell: SExpr,
     right: Option<SExpr>,
     operator: &str,
-    postfix: bool,
     names: &[String; 2],
     place: Span,
 ) -> Result<SExpr> {
-    let plan = rules::plan_scalar_assignment_expression(operator, postfix);
     let operation = rules::read_scalar_assignment_operation(operator);
     if plan.is_empty() || !plan.len().is_multiple_of(4) {
         return Err(unsupported(
@@ -179,6 +178,29 @@ fn materialize(
 }
 
 impl JavaScriptParser {
+    pub(super) fn sequence(&mut self) -> Result<SExpr> {
+        let mut value = self.expr()?;
+        while self.cursor.is(",") {
+            let comma = self.cursor.advance();
+            let right = self.expr()?;
+            let place = super::joined(&value, &right, &comma);
+            self.generated_count += 1;
+            let name = format!(
+                "{}temporary_sequence{}",
+                self.generated_prefix, self.generated_count
+            );
+            value = materialize(
+                rules::plan_java_script_sequence_expression(),
+                value,
+                Some(right),
+                ",",
+                &[name, String::new()],
+                place,
+            )?;
+        }
+        Ok(value)
+    }
+
     pub(super) fn scalar_assignment_expression(
         &mut self,
         target: SExpr,
@@ -270,10 +292,10 @@ impl JavaScriptParser {
             ),
         ];
         materialize(
+            rules::plan_scalar_assignment_expression(&operator.value, postfix),
             node(SNode::Name { path: vec![name] }, token.span()),
             right,
             &operator.value,
-            postfix,
             &names,
             place,
         )

@@ -61,9 +61,9 @@ impl JavaScriptParser {
             // An async function returning a call of another adopts the Promise
             // it returns, which awaits it.
             let expr = if self.in_async {
-                self.awaited(Self::expr)?
+                self.awaited(Self::sequence)?
             } else {
-                self.expr()?
+                self.sequence()?
             };
             self.cursor.eat(";");
             return Ok(Stmt::Return {
@@ -103,14 +103,6 @@ impl JavaScriptParser {
         if self.cursor.is("break") || self.cursor.is("continue") {
             return self.jump_statement();
         }
-        if self.cursor.is("console") && self.cursor.is_at(".", 1) {
-            let (expr, place) = self.console_call()?;
-            return Ok(Stmt::Print {
-                expr,
-                style: ShowStyle::JsConsole,
-                span: place,
-            });
-        }
         if token.kind == TokenKind::Identifier {
             let statements = ["try", "function", "class", "with", "debugger"];
             if statements.contains(&token.value.as_str()) {
@@ -129,17 +121,43 @@ impl JavaScriptParser {
                 ));
             }
         }
-        if self.starts_assignment() {
-            let statement = self.assignment()?;
-            self.cursor.eat(";");
-            return Ok(statement);
-        }
-        let expr = self.expr()?;
+        let mut statements = self.expression_statements()?;
         self.cursor.eat(";");
-        Ok(Stmt::Expr {
-            expr,
+        if statements.len() == 1 {
+            return Ok(statements.remove(0));
+        }
+        Ok(Stmt::Block {
+            body: statements,
+            inline: true,
             span: self.to_here(&token),
         })
+    }
+
+    pub(super) fn expression_statements(&mut self) -> Result<Vec<Stmt>> {
+        let mut statements = Vec::new();
+        loop {
+            let start = self.peek();
+            let statement = if self.cursor.is("console") && self.cursor.is_at(".", 1) {
+                let (expr, place) = self.console_call(false)?;
+                Stmt::Print {
+                    expr,
+                    style: ShowStyle::JsConsole,
+                    span: place,
+                }
+            } else if self.starts_assignment() {
+                self.assignment()?
+            } else {
+                let expr = self.expr()?;
+                Stmt::Expr {
+                    expr,
+                    span: self.to_here(&start),
+                }
+            };
+            statements.push(statement);
+            if self.cursor.eat(",").is_none() {
+                return Ok(statements);
+            }
+        }
     }
 
     pub(super) fn const_statement(&mut self) -> Result<Stmt> {
@@ -393,7 +411,7 @@ impl JavaScriptParser {
     pub(super) fn if_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("if"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("if"))?;
         let then = self.branch()?;
         let otherwise = if self.cursor.eat("else").is_some() {
@@ -424,7 +442,7 @@ impl JavaScriptParser {
     pub(super) fn switch_statement(&mut self) -> Result<Switch> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("switch"))?;
-        let discriminant = self.expr()?;
+        let discriminant = self.sequence()?;
         self.cursor.expect(")", Some("switch"))?;
         self.cursor.expect("{", Some("switch"))?;
         let tag_object = match discriminant.node {
@@ -522,6 +540,16 @@ impl JavaScriptParser {
                 span: span(&token, &token),
             });
         }
+        let literal = self
+            .cursor
+            .is_at(":", if self.cursor.is("-") { 2 } else { 1 });
+        if !literal {
+            let value = self.sequence()?;
+            return Ok(CaseTest::Value {
+                value: Box::new(value),
+                span: self.to_here(&token),
+            });
+        }
         let negative = self.cursor.eat("-").is_some();
         let value = self.peek();
         let form = super::surface_rules::read_java_script_value_case_form(
@@ -562,7 +590,7 @@ impl JavaScriptParser {
             });
         }
         if form == "value" {
-            let value = self.expr()?;
+            let value = self.sequence()?;
             return Ok(CaseTest::Value {
                 value: Box::new(value),
                 span: self.to_here(&token),
@@ -750,7 +778,7 @@ impl JavaScriptParser {
     }
 
     pub(super) fn console_statement(&mut self) -> Result<SEffect> {
-        let (expr, place) = self.console_call()?;
+        let (expr, place) = self.console_call(true)?;
         Ok(SEffect::Print {
             expr,
             style: ShowStyle::JsConsole,
@@ -759,7 +787,7 @@ impl JavaScriptParser {
     }
 
     /// `console.log(expr);`: the printed expression and the statement's span.
-    fn console_call(&mut self) -> Result<(SExpr, Span)> {
+    fn console_call(&mut self, consume_semicolon: bool) -> Result<(SExpr, Span)> {
         let start = self.cursor.advance();
         self.lexical.read(&start, false, start.span());
         if !self.has_standard_builtin_owner(&start) {
@@ -779,7 +807,9 @@ impl JavaScriptParser {
             ));
         }
         let mut args = self.arguments("console.log")?;
-        self.cursor.eat(";");
+        if consume_semicolon {
+            self.cursor.eat(";");
+        }
         let place = self.to_here(&start);
         if args.len() > 1 {
             return Ok((console_format(args)?, place));

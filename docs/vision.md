@@ -6252,3 +6252,27 @@ boundaries. Future controls include alias names, captured writes, per-call
 cells and nested shadows; none executed. General parameter patterns/defaults,
 var environments, getters/proxies, complete formal mutable-cell execution and
 all earlier requirements remain required.
+
+
+### Ordered JavaScript comma values draft
+
+Comma expressions now lower through a shared source construction plan over the
+existing binding algebra: evaluate and GetValue the left operand once, then
+evaluate and return the right value. Both source hosts distinguish Expression
+from AssignmentExpression, admitting commas in returns, parentheses, conditions,
+computed indexes, template substitutions and value switch tests while retaining
+argument, initializer, array and conditional-branch separators. Existing CST
+retains every original token and source interval. The meaning follows the
+[ECMAScript comma operator](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-comma-operator).
+
+Statement and for expression lists use ordered ordinary statements, including
+existing assignment/print paths; arbitrary represented expressions can appear
+in a for initializer or update. Hygienic source bindings share the actual
+module-wide supply with assignment temporaries. The complete scalar/sequence
+source closure generates native code and editable Links graphs. Declared
+original-source, native, codec and four-target controls retain argument/list
+separation, lazy branches, abrupt completion and nested effects without running
+them. General reference receivers/this, direct eval, unresolvable-reference
+operations, arbitrary throws, dynamic unions and all earlier requirements remain.
+Private ordinary Rust Unit statement bindings omit absent type annotations,
+matching native source serialization without changing value semantics.

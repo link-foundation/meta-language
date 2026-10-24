@@ -205,7 +205,7 @@ impl JavaScriptParser {
     pub(super) fn while_statement(&mut self) -> Result<Stmt> {
         let start = self.cursor.advance();
         self.cursor.expect("(", Some("while"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("while"))?;
         let body = self.loop_body()?;
         Ok(Stmt::While {
@@ -220,7 +220,7 @@ impl JavaScriptParser {
         let body = self.loop_body()?;
         self.cursor.expect("while", Some("do"))?;
         self.cursor.expect("(", Some("do"))?;
-        let cond = self.expr()?;
+        let cond = self.sequence()?;
         self.cursor.expect(")", Some("do"))?;
         self.cursor.eat(";");
         Ok(Stmt::DoWhile {
@@ -294,37 +294,20 @@ impl JavaScriptParser {
                 Some(span(&token, &token)),
             ));
         } else {
-            while !self.cursor.is(";") {
-                if !self.starts_assignment() {
-                    return Err(self.fail_here("expected an assignment in the for initialiser"));
-                }
-                init.push(self.assignment()?);
-                if self.cursor.eat(",").is_none() {
-                    break;
-                }
+            if !self.cursor.is(";") {
+                init.extend(self.expression_statements()?);
             }
         }
         self.cursor.expect(";", Some("for"))?;
         let cond = if self.cursor.is(";") {
             None
         } else {
-            Some(self.expr()?)
+            Some(self.sequence()?)
         };
         self.cursor.expect(";", Some("for"))?;
         let mut update = Vec::new();
-        while !self.cursor.is(")") {
-            if !self.starts_assignment() {
-                let token = self.peek();
-                return Err(unsupported(
-                    "for update",
-                    "the update of a for loop is a list of assignments",
-                    Some(span(&token, &token)),
-                ));
-            }
-            update.push(self.assignment()?);
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
+        if !self.cursor.is(")") {
+            update.extend(self.expression_statements()?);
         }
         self.cursor.expect(")", Some("for"))?;
         let body = self.loop_body()?;
