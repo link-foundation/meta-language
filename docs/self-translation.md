@@ -900,3 +900,12 @@ body across all four targets. Formal array membership is an actual shared
 emission rule, including optional primitive SameValueZero and relative bounds.
 These additions are unexecuted drafts; exact V8 approximation parity, proofs
 and formal general-recursion budgets remain required.
+
+The primitive comparison source draft also admits the actual unshadowed
+Object.is builtin. A shared operator plan preserves binary64 NaN/signed-zero
+SameValue, primitive type distinctions, nullable tags and the common BigInt
+domain. Both actual checker hosts capture all arguments before selecting the
+first two, preserve ignored argument effects and supply missing undefined
+values. Complete rule source and Links are generated automatically; prepared
+source/codec/emission/native controls remain unexecuted. Object/Symbol identity
+and argument iterator effects retain their scope.

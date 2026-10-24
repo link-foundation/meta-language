@@ -171,3 +171,45 @@ pub fn read_java_script_primitive_loose_equality_form(left: &str, right: &str) -
         }
     }
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_same_value_operation(operation: &str) -> bool {
+    operation == "testJavaScriptPrimitiveSameValue"
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_primitive_same_value(left: &str, right: &str) -> Vec<String> {
+    if ((left == "int") || (left == "nat")) && ((right == "int") || (right == "nat")) {
+        vec![String::from("integer")]
+    } else if (left != "float") || (right != "float") {
+        vec![String::from("strict")]
+    } else {
+        vec![
+            String::from("left"),
+            String::from("right"),
+            String::from("eq"),
+            String::from("left"),
+            String::from("zero"),
+            String::from("ne"),
+            String::from("one"),
+            String::from("left"),
+            String::from("div"),
+            String::from("one"),
+            String::from("right"),
+            String::from("div"),
+            String::from("eq"),
+            String::from("or"),
+            String::from("and"),
+            String::from("left"),
+            String::from("left"),
+            String::from("ne"),
+            String::from("right"),
+            String::from("right"),
+            String::from("ne"),
+            String::from("and"),
+            String::from("or"),
+        ]
+    }
+}

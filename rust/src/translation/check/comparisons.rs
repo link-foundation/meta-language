@@ -29,6 +29,190 @@ fn strict_value(value: Expr) -> Expr {
 }
 
 impl Checker {
+    pub(super) fn javascript_same_value(
+        &mut self,
+        args: &[SArrayItem],
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
+        if self.language != Language::JavaScript || args.iter().any(|argument| argument.spread) {
+            return Err(unsupported(
+                "Object.is arguments",
+                "spread arguments require the complete actual iterator effects",
+                span,
+            ));
+        }
+        let values = args
+            .iter()
+            .map(|argument| self.expr(&argument.value, env, path, None, false))
+            .collect::<Result<Vec<_>>>()?;
+        if values.iter().take(2).any(|value| !accepts(&value.ty)) {
+            return Err(unsupported(
+                "Object.is operand",
+                "the actual object or symbol needs its complete identity representation",
+                span,
+            ));
+        }
+        let names = values
+            .iter()
+            .map(|_| self.fresh_name("ml_same_value_operand"))
+            .collect::<Vec<_>>();
+        let missing = Expr::new(
+            Node::None {
+                absence: "undefined".to_owned(),
+            },
+            crate::translation::types::option(UNIT, "undefined"),
+        );
+        let operands = (0..2)
+            .map(|index| {
+                values.get(index).map_or_else(
+                    || missing.clone(),
+                    |value| Expr::var(names[index].clone(), value.ty.clone()),
+                )
+            })
+            .collect::<Vec<_>>();
+        let mut body = self.primitive_same_value(operands[0].clone(), operands[1].clone())?;
+        for index in (0..values.len()).rev() {
+            body = Expr::new(
+                Node::Let {
+                    name: names[index].clone(),
+                    value: Box::new(values[index].clone()),
+                    body: Box::new(body),
+                },
+                BOOL,
+            );
+        }
+        Ok(body)
+    }
+    fn primitive_same_value(&mut self, left: Expr, right: Expr) -> Result<Expr> {
+        let first =
+            matches!(left.ty, Type::Option { .. }) && !matches!(left.node, Node::None { .. });
+        let second =
+            matches!(right.ty, Type::Option { .. }) && !matches!(right.node, Node::None { .. });
+        if first || second {
+            let value = if first { left.clone() } else { right.clone() };
+            let Type::Option { element, absence } = &value.ty else {
+                unreachable!("actual optional operand")
+            };
+            let present = Expr::new(
+                Node::UnwrapOption {
+                    arg: Box::new(value.clone()),
+                },
+                (**element).clone(),
+            );
+            let mut body = if first {
+                self.primitive_same_value(present, right.clone())?
+            } else {
+                self.primitive_same_value(left.clone(), present)?
+            };
+            for absence in
+                crate::translation::optional_value_rules::read_optional_output_absences(absence)
+                    .into_iter()
+                    .rev()
+            {
+                let empty = Expr::new(
+                    Node::None {
+                        absence: absence.clone(),
+                    },
+                    crate::translation::types::option(UNIT, &absence),
+                );
+                let condition = Expr::new(
+                    Node::StrictEqual {
+                        left: Box::new(value.clone()),
+                        right: Box::new(Expr::new(Node::None { absence }, value.ty.clone())),
+                        negate: false,
+                    },
+                    BOOL,
+                );
+                let selected = if first {
+                    self.primitive_same_value(empty, right.clone())?
+                } else {
+                    self.primitive_same_value(left.clone(), empty)?
+                };
+                body = Expr::new(
+                    Node::If {
+                        cond: Box::new(condition),
+                        then: Box::new(selected),
+                        otherwise: Box::new(body),
+                    },
+                    BOOL,
+                );
+            }
+            return Ok(body);
+        }
+        let mut stack: Vec<Expr> = Vec::new();
+        for instruction in
+            rules::plan_java_script_primitive_same_value(left.ty.kind(), right.ty.kind())
+        {
+            match instruction.as_str() {
+                "integer" => {
+                    let left = self.coerce(left, &INT, None)?;
+                    let right = self.coerce(right, &INT, None)?;
+                    return Ok(Expr::new(
+                        Node::StrictEqual {
+                            left: Box::new(left),
+                            right: Box::new(right),
+                            negate: false,
+                        },
+                        BOOL,
+                    ));
+                }
+                "strict" => {
+                    return Ok(Expr::new(
+                        Node::StrictEqual {
+                            left: Box::new(strict_value(left)),
+                            right: Box::new(strict_value(right)),
+                            negate: false,
+                        },
+                        BOOL,
+                    ));
+                }
+                "left" => stack.push(left.clone()),
+                "right" => stack.push(right.clone()),
+                "one" => stack.push(literal(FLOAT, "1")),
+                "zero" => stack.push(literal(FLOAT, "0")),
+                instruction => {
+                    let b = stack
+                        .pop()
+                        .expect("shared checked-operator plan right operand");
+                    let a = stack
+                        .pop()
+                        .expect("shared checked-operator plan left operand");
+                    let operation = match instruction {
+                        "eq" => BinaryOp::Eq,
+                        "ne" => BinaryOp::Ne,
+                        "div" => BinaryOp::Div,
+                        "and" => BinaryOp::And,
+                        "or" => BinaryOp::Or,
+                        _ => unreachable!("shared checked-operator instruction"),
+                    };
+                    stack.push(Expr::new(
+                        binary_node(
+                            operation,
+                            Box::new(a),
+                            Box::new(b),
+                            if matches!(operation, BinaryOp::And | BinaryOp::Or) {
+                                None
+                            } else {
+                                Some(FLOAT)
+                            },
+                            None,
+                            None,
+                            None,
+                        ),
+                        if operation == BinaryOp::Div {
+                            FLOAT
+                        } else {
+                            BOOL
+                        },
+                    ));
+                }
+            }
+        }
+        Ok(stack.pop().expect("shared complete SameValue plan"))
+    }
+
     pub(super) fn javascript_loose_comparison(
         &mut self,
         operation: &str,

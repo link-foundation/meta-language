@@ -46,10 +46,23 @@ for(const [operator,value,expected] of [['===','undefined','true'],['!==','null'
   source:'function comparisonVoidValue'+index+'(){return;}\nexport function compute(){return comparisonVoidValue'+index+'()'+operator+value+';}',value:expected,abort:null});
 }
 cases.push({name:'optional absence equals actual void result',entry:'optionalVoidPrimitiveComparison',source:'/** @param {string|undefined} value @returns {string|undefined} */ function comparisonOptionalVoidValue(value){return value;}\nfunction comparisonUndefinedValue(){return;}\nexport function compute(){return comparisonOptionalVoidValue(undefined)===comparisonUndefinedValue();}',value:'true',abort:null});
+for(const [argumentsText,equal] of [
+ ['',true],['undefined',true],['null',false],['NaN,NaN',true],['0,-0',false],['-0,-0',true],['Infinity,Infinity',true],
+ ['1,1n',false],['1n,1n',true],['true,1',false],['null,undefined',false],['"\\ud800","\\ud800"',true],
+ ['NaN,NaN,1n',true],
+])cases.push({name:'Object.is('+argumentsText+')',entry:'primitiveSameValue'+cases.length,
+ source:'export function compute(){return Object.is('+argumentsText+');}',value:String(equal),abort:null});
+for(const [value,expected] of [['-0','false'],['0','true'],['NaN','false'],['null','false'],['undefined','false']]){
+ const index=cases.length;
+ cases.push({name:'nullable Number SameValue '+value,entry:'nullableSameValue'+index,
+  source:'/** @param {number|null|undefined} value @returns {boolean} */ function sameOptionalNumber'+index+'(value){return Object.is(value,0);}'+'\nexport function compute(){return sameOptionalNumber'+index+'('+value+');}',value:expected,abort:null});
+}
+cases.push({name:'Object.is captures every argument before selection',entry:'sameValueCapture',source:'export function compute(){let value=0;return Object.is(value,value,value=1)&&value===1;}',value:'true',abort:null});
+cases.push({name:'Object.is evaluates ignored throwing argument',entry:'sameValueExtraError',source:'function sameValueFailure(){throw new TypeError("ignored argument evaluated");}\nexport function compute(){return Object.is(0,0,sameValueFailure());}',value:null,abort:'ignored argument evaluated',errorClass:'TypeError',messagePresent:true,messageUnits:Array.from('ignored argument evaluated',character=>character.charCodeAt(0))});
 writeProjectData(new URL('../../parity/fixtures/primitive-comparisons.lino',import.meta.url),{
  schemaVersion:1,model:'JavaScript primitive equality and relational comparison 1',sourceLanguage:'JavaScript',cases,refusals:[],
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript 2025',Rust:'>=1.90.0 <1.100.0; edition 2024'},
- sourceBasis:'https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islessthan ; https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-isstrictlyequal',
- boundary:'Declared original source results, exact mixed Number/BigInt and StringIntegerLiteral order, strict and loose equality, nullable lexical/absence branches, operand capture and full definition/program codec/emission/native controls. No observations. Object/Symbol coercion, heterogeneous dynamic unions and all inherited requirements remain obligations.',
+ sourceBasis:'https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islessthan ; https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-isstrictlyequal ; https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.is',
+ boundary:'Declared original source results, exact mixed Number/BigInt and StringIntegerLiteral order, strict, loose and SameValue equality, nullable lexical/absence branches, operand capture and full definition/program codec/emission/native controls. No observations. Object/Symbol coercion, heterogeneous dynamic unions and all inherited requirements remain obligations.',
 });

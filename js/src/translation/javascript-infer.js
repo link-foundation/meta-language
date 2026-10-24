@@ -10,7 +10,7 @@ import { typeError } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './big-integer-conversion-rules.js';
 import {readJavaScriptNumericOperationFailure} from './source-exception-rules.js';
-import {readJavaScriptComparisonInferenceStep,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
+import {readJavaScriptComparisonInferenceStep,acceptJavaScriptSameValueOperation,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './string-construction-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
@@ -960,6 +960,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(acceptJavaScriptLooseEqualityOperation(node.op)){
           const values=node.args.map(argument=>this.expr(argument.value,env));
           if(values.length===2)this.equalities.push({left:values[0],right:values[1],where:node.span});

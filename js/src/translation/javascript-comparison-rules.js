@@ -68,3 +68,15 @@ export function readJavaScriptPrimitiveLooseEqualityForm(left,right){
  if(left==='float'&&b)return 'number-integer';
  return a&&right==='float'?'integer-number':'different';
 }
+
+/** The actual owned builtin; no argument is converted to another primitive.
+ * @param {string} operation @returns {boolean} */
+export function acceptJavaScriptSameValueOperation(operation){return operation==='testJavaScriptPrimitiveSameValue';}
+/** Postfix checked-operator plan for SameValue on two binary64 values.
+ * Other admitted primitive domains use their actual strict comparison.
+ * @param {string} left @param {string} right @returns {string[]} */
+export function planJavaScriptPrimitiveSameValue(left,right){
+ if((left==='int'||left==='nat')&&(right==='int'||right==='nat'))return ['integer'];
+ if(left!=='float'||right!=='float')return ['strict'];
+ return ['left','right','eq','left','zero','ne','one','left','div','one','right','div','eq','or','and','left','left','ne','right','right','ne','and','or'];
+}

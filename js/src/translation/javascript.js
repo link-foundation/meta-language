@@ -75,6 +75,7 @@ const GLOBALS = new Set([
 // Owned Math and Number builtins use shared kernels. Power's canonical
 // definition retains its separate implementation-approximation obligations.
 const MATH = {
+  'Object.is': 'testJavaScriptPrimitiveSameValue',
   'Math.abs': 'abs', 'Math.floor': 'floor', 'Math.ceil': 'ceil', 'Math.trunc': 'trunc', 'Math.round': 'round',
   'Math.sign': 'sign', 'Math.sqrt': 'sqrt', 'Math.max': 'max', 'Math.min': 'min',
   'Math.pow': 'powerJavaScriptNumberArguments',

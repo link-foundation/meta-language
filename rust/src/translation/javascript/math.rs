@@ -5,7 +5,8 @@ use super::{FLOAT, GLOBALS};
 use super::{JavaScriptParser, Result, SArrayItem, SExpr, SNode, Token, node, span, unsupported};
 
 /// The functions, by the path a program calls them by, and the op each is.
-const MATH: [(&str, &str); 14] = [
+const MATH: [(&str, &str); 15] = [
+    ("Object.is", "testJavaScriptPrimitiveSameValue"),
     ("Math.abs", "abs"),
     ("Math.floor", "floor"),
     ("Math.ceil", "ceil"),

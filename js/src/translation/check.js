@@ -15,8 +15,8 @@ import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision,checkJavaScriptExponentiation} from './javascript-big-integer-conversion.js';
 import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
-import {materializeJavaScriptPrimitiveComparison,checkJavaScriptLooseComparison} from './javascript-comparisons.js';
-import {acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
+import {materializeJavaScriptPrimitiveComparison,checkJavaScriptLooseComparison,checkJavaScriptSameValue} from './javascript-comparisons.js';
+import {acceptJavaScriptSameValueOperation,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
 import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
@@ -1218,6 +1218,7 @@ class Checker {
       return{k:'math',op:node.op,args:[units],type:STRING};
     }
     if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
+    if(acceptJavaScriptSameValueOperation(node.op))return checkJavaScriptSameValue(this,node,env,path);
     if(acceptJavaScriptLooseEqualityOperation(node.op))return checkJavaScriptLooseComparison(this,node,env,path);
     if(node.op==='exponentiateJavaScriptNumericValue')return checkJavaScriptExponentiation(this,node,env,path,expected);
     if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);

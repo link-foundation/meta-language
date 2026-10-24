@@ -6107,3 +6107,14 @@ optional domains branch with their actual absence tags before conversion.
 Both parsers, inference hosts and checked adapters carry this operation; the
 result uses existing inspectable typed operations. These rules follow
 [IsLooselyEqual](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islooselyequal).
+
+The owned `Object.is` source builtin drafts SameValue through a shared checked
+operator plan. Numbers retain NaN equality and distinguish positive and negative
+zero; other admitted primitives retain their actual strict identity and BigInt
+subdomains retain one integer domain. Nullable values branch with separate
+absence tags. Every argument evaluates once in source order, including ignored
+extras, before selection; missing arguments supply undefined. This follows
+[Object.is](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.is).
+Source rules generate native rules and complete editable Links. Future controls
+are declared without execution. Object/Symbol identity, iterator spreads and
+the remaining translation requirements still need implementation.

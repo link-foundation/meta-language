@@ -3,7 +3,7 @@ import {BOOL,FLOAT,INT,UNIT,option} from './types.js';
 import {acceptJavaScriptComparisonPrimitive,requireJavaScriptPrimitiveComparison,readJavaScriptPrimitiveComparisonForm,readJavaScriptComparisonAcceptedOrders,readJavaScriptComparisonAbsentNumber,readJavaScriptComparisonUnitAbsence} from './javascript-comparison-rules.js';
 import {readOptionalOutputAbsences} from './optional-value-rules.js';
 import {readStringOrderOperation} from './string-order-rules.js';
-import {readJavaScriptPrimitiveLooseEqualityForm,requireJavaScriptLooseEqualityNegation} from './javascript-comparison-rules.js';
+import {planJavaScriptPrimitiveSameValue,readJavaScriptPrimitiveLooseEqualityForm,requireJavaScriptLooseEqualityNegation} from './javascript-comparison-rules.js';
 import {typeError,unsupported} from './diagnostics.js';
 
 const literal=(type,value)=>({k:'lit',type,value});
@@ -83,5 +83,38 @@ export function checkJavaScriptLooseComparison(checker,node,env,path){
  let body=looselyEqual(checker,variable(names[0],values[0].type),variable(names[1],values[1].type));
  if(requireJavaScriptLooseEqualityNegation(node.op))body={k:'unary',op:'not',arg:body,type:BOOL};
  for(let index=1;index>=0;index-=1)body={k:'let',name:names[index],value:values[index],body,type:BOOL};
+ return body;
+}
+
+function sameValue(checker,left,right){
+ const first=left.type.kind==='option'&&left.k!=='none',second=right.type.kind==='option'&&right.k!=='none';
+ if(first||second){
+  const value=first?left:right,present={k:'unwrapOption',arg:value,type:value.type.element};
+  let body=first?sameValue(checker,present,right):sameValue(checker,left,present);
+  for(const absence of readOptionalOutputAbsences(value.type.absence).reverse()){
+   const empty={k:'none',absence,type:option(UNIT,absence)};
+   body={k:'if',cond:{k:'strictEqual',left:value,right:{k:'none',absence,type:value.type},negate:false,type:BOOL},
+    then:first?sameValue(checker,empty,right):sameValue(checker,left,empty),else:body,type:BOOL};
+  }
+  return body;
+ }
+ const stack=[];
+ for(const operation of planJavaScriptPrimitiveSameValue(left.type.kind,right.type.kind)){
+  if(operation==='strict'||operation==='integer')return{k:'strictEqual',left:operation==='integer'?integer(left):strictValue(left),right:operation==='integer'?integer(right):strictValue(right),negate:false,type:BOOL};
+  if(operation==='left'||operation==='right'){stack.push(operation==='left'?left:right);continue;}
+  if(operation==='one'||operation==='zero'){stack.push(literal(FLOAT,operation==='one'?'1':'0'));continue;}
+  const b=stack.pop(),a=stack.pop(),boolean=operation==='and'||operation==='or';
+  stack.push({k:'binary',op:operation,left:a,right:b,type:operation==='div'?FLOAT:BOOL,...(!boolean&&{domain:FLOAT})});
+ }
+ return stack[0];
+}
+export function checkJavaScriptSameValue(checker,node,env,path){
+ if(checker.language!=='JavaScript'||node.args.some(argument=>argument.spread))throw unsupported('Object.is arguments','spread arguments require the complete actual iterator effects',node.span);
+ const values=node.args.map(argument=>checker.expr(argument.value,env,path,undefined));
+ if(values.slice(0,2).some(value=>!accepts(value.type)))throw unsupported('Object.is operand','the actual object or symbol needs its complete identity representation',node.span);
+ const names=values.map(()=>checker.freshName('ml_same_value_operand'));
+ const missing={k:'none',absence:'undefined',type:option(UNIT,'undefined')};
+ let body=sameValue(checker,values[0]?variable(names[0],values[0].type):missing,values[1]?variable(names[1],values[1].type):missing);
+ for(let index=values.length-1;index>=0;index-=1)body={k:'let',name:names[index],value:values[index],body,type:BOOL};
  return body;
 }
