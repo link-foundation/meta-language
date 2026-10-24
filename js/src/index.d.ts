@@ -2633,3 +2633,7 @@ export function createJavaScriptStringRangeProgramLinks(): TypedProgramLinks;
 
 /** Complete shared optional-value and Boolean owner definitions. */
 export function createOptionalValueProgramLinks(): TypedProgramLinks;
+
+/** Full Unicode 16 default case conversion over UTF16 units. */
+export function mapUnicodeCaseUtf16Text(text: readonly number[], upper: boolean): number[];
+export function createUnicodeCaseProgramLinks(): TypedProgramLinks;

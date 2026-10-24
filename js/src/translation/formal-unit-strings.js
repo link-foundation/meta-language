@@ -7,6 +7,7 @@ import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOpe
 import {unsupported} from './diagnostics.js';
 import {renderOptionalProjection,renderOptionalStrictEquality} from './optional-value-rules.js';
 import {renderFormalPrimitiveSameValueZero,renderFormalArrayInclusion} from './formal-string-unit-rules.js';
+import {acceptUnicodeCaseMappingOperation,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
 
 export function requireFormalUnitStrings(program){
  if(program.utf16Strings)return true;
@@ -83,7 +84,10 @@ export function readFormalUnitStringExpression(emitter,e,depth=0){
   return operations[e.op]?renderFormalStringUnitComparison(target,operations[e.op],expression(e.string),expression(e.search))
    :renderFormalStringUnitOperation(target,e.op,[expression(e.string),expression(e.search)])||null;
  }
- if(e.k==='stringMap')return renderFormalStringUnitOperation(target,e.op,[expression(e.string)])||null;
+ if(e.k==='stringMap'){
+  if(acceptUnicodeCaseMappingOperation(e.op)){emitter.helpers.add('unicodeCase');emitter.state.encode('unicode-default-case-16',readUnicodeCaseEncodingStatement());}
+  return renderFormalStringUnitOperation(target,e.op,[expression(e.string)])||null;
+ }
  if(e.k==='method'&&e.object.type.kind==='string'){
   const values=[expression(e.object),...e.args.map(value=>value===null?'':expression(value))];
   const result=renderFormalStringUnitOperation(target,e.op,values);

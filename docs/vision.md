@@ -6297,3 +6297,43 @@ input's complete ordered plan and Number/BigInt source values. Future void,
 constant-for, shadow and abrupt-completion controls remain unexecuted. General
 reference operations, throw/completion behavior, complete lexical iteration
 environments, dynamic unions and every preceding requirement retain scope.
+
+
+### Shared Unicode default case conversion draft
+
+JavaScript-source lower/upper case emission now uses a complete Unicode 16.0.0
+source definition across JavaScript, Rust, Lean and Rocq. Official UnicodeData,
+SpecialCasing and DerivedCoreProperties declarations are automatically converted
+to compact inspectable Links tables and source array declarations, retaining
+source URLs, hashes, license and conditional mapping declarations. Source files
+are downloaded into a temporary task directory; numeric declarations and
+algorithms are generated automatically, without deriving expected values from
+a local host case implementation.
+
+The shared algorithm decodes the original UTF16 units, preserves unpaired
+surrogates, applies full mappings and multi-point expansions, then encodes the
+result back to units. Binary searches select compressed stride/delta ranges
+and explicit expansions; expansions take precedence over gaps inside ranges.
+Contextual final sigma reads the original string, with forward/backward context
+passes and the possessive Case_Ignorable rule, including its overlap with Cased.
+This follows [Unicode default casing](https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-3/#G33992)
+and [ECMAScript case conversion](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.tolowercase).
+
+Public UTF16-unit and full editable definition-graph entry points expose this
+explicit Unicode 16 profile. Target contracts name the same profile. Actual
+text/unit adapters only transport values around the generated algorithms; no
+host character mapping supplies their meaning. Ordinary Rust-source scalar
+case behavior retains its existing separate standard-library version scope;
+explicit formal unit-string casing selects the declared shared profile.
+Alternate Unicode releases, locale-specific casing, complete Rust library
+profiles, generic receivers and the inherited full default UTF16 input-domain
+requirement remain required. The column algorithm also takes actual data
+arguments for independently declared additional profiles.
+
+Future controls retain scalar, expansion, final-sigma/ignorable overlap,
+supplementary, isolated-unit, owner and argument-order cases. Both archives and
+four emissions retain complete source definitions. An exhaustive original-Node
+comparison over every code point is CI-only, reusing imported tables within
+that run; it selects Node >=24 <25 with actual Unicode 16.0 and refuses uncovered
+versions. Native products use generated data instead of the Rust host's case
+tables. No new control or oracle executed in the complete draft phase.

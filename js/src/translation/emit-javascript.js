@@ -1,3 +1,5 @@
+import {UNICODE_CASE_JAVASCRIPT_PRELUDE} from './unicode-case-javascript-runtime.js';
+import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
 import {UTF16_TEXT_JAVASCRIPT_PRELUDE} from './utf16-text-javascript-runtime.js';
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
@@ -55,6 +57,7 @@ import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 
 const KEYWORDS = new Set([
+  'ml_unicode_case',
   'TypeError','SyntaxError','ReferenceError','URIError','EvalError',
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
   'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null',
@@ -67,6 +70,7 @@ const KEYWORDS = new Set([
 
 const HELPERS = {
   utf16Text:UTF16_TEXT_JAVASCRIPT_PRELUDE,
+  unicodeCase:UNICODE_CASE_JAVASCRIPT_PRELUDE,
   bigIntegerConversion: BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE,
   ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
@@ -191,7 +195,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text','unicodeCase'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -595,6 +599,7 @@ class JavaScriptEmitter {
         }
         return e.arg.type.kind === 'string' ? this.expr(e.arg) : this.toText(e.arg);
       case 'stringMap': {
+        if(this.program.sourceLanguage==='JavaScript'&&acceptUnicodeCaseMappingOperation(e.op)){this.helpers.add('unicodeCase');this.state.encode('unicode-default-case-16',readUnicodeCaseEncodingStatement());return renderUnicodeCaseStringMap('JavaScript',e.op,false,this.expr(e.string));}
         const string = e.string.k === 'var' || e.string.k === 'lit' ? this.expr(e.string) : `(${this.expr(e.string)})`;
         if (e.op === 'rustTrim') return `${string}.replace(/^\\p{White_Space}+|\\p{White_Space}+$/gu, '')`;
         if (e.op === 'rustTrimStart') return `${string}.replace(/^\\p{White_Space}+/u, '')`;

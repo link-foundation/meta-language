@@ -46,6 +46,7 @@ const KEYWORDS: &[&str] = &[
     "MLStringNumber",
     "MLBigIntegerConversion",
     "MLUtf16Text",
+    "MLUnicodeCase",
     "abbrev",
     "at",
     "attribute",
@@ -289,6 +290,10 @@ impl LeanEmitter<'_> {
         }
         if self.helpers.contains("utf16Text") {
             lines.push(include_str!("runtime/utf16-text.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("unicodeCase") {
+            lines.push(include_str!("runtime/unicode-case.lean").to_owned());
             lines.push(String::new());
         }
         for block in blocks {

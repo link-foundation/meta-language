@@ -118,6 +118,103 @@ pub mod ml_array {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_unicode_case_mapping_operation(operation: &str) -> bool {
+    (operation == "toLowerCase") || (operation == "toUpperCase")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_unicode_case_encoding_statement() -> String {
+    String::from(
+        "Unicode 16.0.0 full locale-insensitive case mappings, contextual final sigma and preserved isolated UTF16 units; alternate Unicode/locale profiles require their own declared tables",
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_unicode_case_column_mapping(target: &str, operation: &str, value: &str) -> String {
+    if (self::accept_unicode_case_mapping_operation(operation)) {
+        {
+            let upper = if operation == "toUpperCase" {
+                String::from("true")
+            } else {
+                String::from("false")
+            };
+            if target == "JavaScript" {
+                format!("ml_unicode_case.mapCase({}, {upper})", value.to_owned())
+            } else if target == "Rust" {
+                format!(
+                    "crate::ml_unicode_case::map_unicode_case_utf16_text(&({}), {upper})",
+                    value.to_owned()
+                )
+            } else if (target == "Lean") || (target == "Rocq") {
+                format!("(MLUnicodeCase.mapCase {} {upper})", value.to_owned())
+            } else {
+                String::new()
+            }
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_unicode_case_string_map(
+    target: &str,
+    operation: &str,
+    units: bool,
+    value: &str,
+) -> String {
+    if (self::accept_unicode_case_mapping_operation(operation)) {
+        if target == "JavaScript" {
+            {
+                let input = String::from(
+                    "Array.from({length:ml_text.length}, (_,ml_index)=>ml_text.charCodeAt(ml_index))",
+                );
+                format!(
+                    "((ml_text)=>{}.map(ml_unit=>String.fromCharCode(ml_unit)).join(\"\"))({})",
+                    self::render_unicode_case_column_mapping(target, operation, &(input)),
+                    value.to_owned()
+                )
+            }
+        } else if target == "Rust" {
+            {
+                let input_2 = if units {
+                    format!(
+                        "({}).0.iter().map(|ml_unit| f64::from(*ml_unit)).collect::<Vec<f64>>()",
+                        value.to_owned()
+                    )
+                } else {
+                    format!(
+                        "({}).encode_utf16().map(f64::from).collect::<Vec<f64>>()",
+                        value.to_owned()
+                    )
+                };
+                {
+                    let result = format!(
+                        "{}.into_iter().map(|ml_unit| ml_unit as u16).collect::<Vec<u16>>()",
+                        self::render_unicode_case_column_mapping(target, operation, &(input_2))
+                    );
+                    if units {
+                        format!("crate::ml_string::Text::from_units({result})")
+                    } else {
+                        format!(
+                            "String::from_utf16(&({result})).expect(\"Unicode case conversion preserves scalar string input\")"
+                        )
+                    }
+                }
+            }
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn require_formal_string_unit_representation(
     kind: &str,
     operation: &str,
@@ -467,142 +564,162 @@ pub fn render_formal_string_unit_operation(
                 &((self::ml_array::optional_at(values, self::ml_array::number_index(0f64)))
                     .unwrap_or_else(|| String::new())),
             );
-            {
-                let position =
-                    (self::ml_array::optional_at(values, self::ml_array::number_index(1f64)))
-                        .unwrap_or_else(|| String::new());
-                if ((operation == "slice") || (operation == "substring")) || (operation == "charAt")
+            if (operation == "toLowerCase") || (operation == "toUpperCase") {
+                self::render_formal_string_units_from_numbers(
+                    target,
+                    &(self::render_unicode_case_column_mapping(target, operation, &(text))),
+                )
+            } else {
                 {
+                    let position =
+                        (self::ml_array::optional_at(values, self::ml_array::number_index(1f64)))
+                            .unwrap_or_else(|| String::new());
+                    if ((operation == "slice") || (operation == "substring"))
+                        || (operation == "charAt")
                     {
-                        let name = if operation == "charAt" {
-                            String::from("character")
-                        } else {
-                            operation.to_owned()
-                        };
+                        {
+                            let name = if operation == "charAt" {
+                                String::from("character")
+                            } else {
+                                operation.to_owned()
+                            };
+                            self::render_formal_string_units_from_numbers(
+                                target,
+                                &(format!(
+                                    "(MLUtf16Text.{name} {text} {position}{})",
+                                    if operation == "charAt" {
+                                        String::new()
+                                    } else {
+                                        format!(
+                                            "{}{}",
+                                            (String::from(" ")),
+                                            ((self::ml_array::optional_at(
+                                                values,
+                                                self::ml_array::number_index(2f64)
+                                            ))
+                                            .unwrap_or_else(|| String::new()))
+                                        )
+                                    }
+                                )),
+                            )
+                        }
+                    } else if operation == "at" {
+                        {
+                            let result =
+                                format!("(MLUtf16Text.relativeCharacter {text} {position})");
+                            if target == "Lean" {
+                                format!(
+                                    "(({result})[0]?.map (fun ml_units => {}))",
+                                    self::render_formal_string_units_from_numbers(
+                                        target, "ml_units"
+                                    )
+                                )
+                            } else {
+                                format!(
+                                    "(match {result} with nil => None | cons ml_units _ => Some {} end)",
+                                    self::render_formal_string_units_from_numbers(
+                                        target, "ml_units"
+                                    )
+                                )
+                            }
+                        }
+                    } else if operation == "codePointAt" {
+                        {
+                            let result_2 = format!("(MLUtf16Text.codePoint {text} {position})");
+                            if target == "Lean" {
+                                format!("({result_2})[0]?")
+                            } else {
+                                format!(
+                                    "(match {result_2} with nil => None | cons ml_point _ => Some ml_point end)"
+                                )
+                            }
+                        }
+                    } else if (operation == "indexOf") || (operation == "lastIndexOf") {
+                        format!(
+                            "(MLUtf16Text.{} {text} {} {})",
+                            if operation == "indexOf" {
+                                String::from("index")
+                            } else {
+                                String::from("lastIndex")
+                            },
+                            self::render_formal_string_unit_numbers(
+                                target,
+                                &((self::ml_array::optional_at(
+                                    values,
+                                    self::ml_array::number_index(1f64)
+                                ))
+                                .unwrap_or_else(|| String::new()))
+                            ),
+                            (self::ml_array::optional_at(
+                                values,
+                                self::ml_array::number_index(2f64)
+                            ))
+                            .unwrap_or_else(|| String::new())
+                        )
+                    } else if operation == "points" {
+                        {
+                            let result_3 = format!("(MLUtf16Text.points {text})");
+                            if target == "Lean" {
+                                format!(
+                                    "(({result_3}).map (fun ml_units => {}))",
+                                    self::render_formal_string_units_from_numbers(
+                                        target, "ml_units"
+                                    )
+                                )
+                            } else {
+                                format!(
+                                    "(List.map (fun ml_units => {}) {result_3})",
+                                    self::render_formal_string_units_from_numbers(
+                                        target, "ml_units"
+                                    )
+                                )
+                            }
+                        }
+                    } else if ((operation == "trim") || (operation == "trimStart"))
+                        || (operation == "trimEnd")
+                    {
                         self::render_formal_string_units_from_numbers(
                             target,
                             &(format!(
-                                "(MLUtf16Text.{name} {text} {position}{})",
-                                if operation == "charAt" {
-                                    String::new()
+                                "(MLUtf16Text.trim {text} {} {})",
+                                if operation == "trimEnd" {
+                                    String::from("false")
                                 } else {
-                                    format!(
-                                        "{}{}",
-                                        (String::from(" ")),
-                                        ((self::ml_array::optional_at(
-                                            values,
-                                            self::ml_array::number_index(2f64)
-                                        ))
-                                        .unwrap_or_else(|| String::new()))
-                                    )
+                                    String::from("true")
+                                },
+                                if operation == "trimStart" {
+                                    String::from("false")
+                                } else {
+                                    String::from("true")
                                 }
                             )),
                         )
-                    }
-                } else if operation == "at" {
-                    {
-                        let result = format!("(MLUtf16Text.relativeCharacter {text} {position})");
-                        if target == "Lean" {
-                            format!(
-                                "(({result})[0]?.map (fun ml_units => {}))",
-                                self::render_formal_string_units_from_numbers(target, "ml_units")
-                            )
-                        } else {
-                            format!(
-                                "(match {result} with nil => None | cons ml_units _ => Some {} end)",
-                                self::render_formal_string_units_from_numbers(target, "ml_units")
-                            )
-                        }
-                    }
-                } else if operation == "codePointAt" {
-                    {
-                        let result_2 = format!("(MLUtf16Text.codePoint {text} {position})");
-                        if target == "Lean" {
-                            format!("({result_2})[0]?")
-                        } else {
-                            format!(
-                                "(match {result_2} with nil => None | cons ml_point _ => Some ml_point end)"
-                            )
-                        }
-                    }
-                } else if (operation == "indexOf") || (operation == "lastIndexOf") {
-                    format!(
-                        "(MLUtf16Text.{} {text} {} {})",
-                        if operation == "indexOf" {
-                            String::from("index")
-                        } else {
-                            String::from("lastIndex")
-                        },
-                        self::render_formal_string_unit_numbers(
-                            target,
-                            &((self::ml_array::optional_at(
-                                values,
-                                self::ml_array::number_index(1f64)
-                            ))
-                            .unwrap_or_else(|| String::new()))
-                        ),
-                        (self::ml_array::optional_at(values, self::ml_array::number_index(2f64)))
-                            .unwrap_or_else(|| String::new())
-                    )
-                } else if operation == "points" {
-                    {
-                        let result_3 = format!("(MLUtf16Text.points {text})");
-                        if target == "Lean" {
-                            format!(
-                                "(({result_3}).map (fun ml_units => {}))",
-                                self::render_formal_string_units_from_numbers(target, "ml_units")
-                            )
-                        } else {
-                            format!(
-                                "(List.map (fun ml_units => {}) {result_3})",
-                                self::render_formal_string_units_from_numbers(target, "ml_units")
-                            )
-                        }
-                    }
-                } else if ((operation == "trim") || (operation == "trimStart"))
-                    || (operation == "trimEnd")
-                {
-                    self::render_formal_string_units_from_numbers(
-                        target,
-                        &(format!(
-                            "(MLUtf16Text.trim {text} {} {})",
-                            if operation == "trimEnd" {
-                                String::from("false")
+                    } else {
+                        {
+                            let name_2 = if operation == "startsWith" {
+                                String::from("starts")
+                            } else if operation == "endsWith" {
+                                String::from("ends")
+                            } else if operation == "includes" {
+                                String::from("includes")
                             } else {
-                                String::from("true")
-                            },
-                            if operation == "trimStart" {
-                                String::from("false")
+                                String::new()
+                            };
+                            if name_2.is_empty() {
+                                String::new()
                             } else {
-                                String::from("true")
-                            }
-                        )),
-                    )
-                } else {
-                    {
-                        let name_2 = if operation == "startsWith" {
-                            String::from("starts")
-                        } else if operation == "endsWith" {
-                            String::from("ends")
-                        } else if operation == "includes" {
-                            String::from("includes")
-                        } else {
-                            String::new()
-                        };
-                        if name_2.is_empty() {
-                            String::new()
-                        } else {
-                            format!(
-                                "(MLUtf16Text.{name_2} {text} {})",
-                                self::render_formal_string_unit_numbers(
-                                    target,
-                                    &((self::ml_array::optional_at(
-                                        values,
-                                        self::ml_array::number_index(1f64)
-                                    ))
-                                    .unwrap_or_else(|| String::new()))
+                                format!(
+                                    "(MLUtf16Text.{name_2} {text} {})",
+                                    self::render_formal_string_unit_numbers(
+                                        target,
+                                        &((self::ml_array::optional_at(
+                                            values,
+                                            self::ml_array::number_index(1f64)
+                                        ))
+                                        .unwrap_or_else(|| String::new()))
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                 }

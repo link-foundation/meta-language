@@ -1,5 +1,6 @@
 // Formal String representation and mechanical bridges to complete shared
 // UTF-16 operations. Internal strings remain unit columns until display.
+import {renderUnicodeCaseColumnMapping} from './unicode-case-emission-rules.js';
 /** @param {string} kind @param {string} operation @param {string} receiver @returns {boolean} */
 export function requireFormalStringUnitRepresentation(kind,operation,receiver){
  if(kind==='type')return operation==='string';
@@ -93,6 +94,7 @@ export function renderFormalStringUnitOperation(target,operation,values){
   return renderFormalStringUnitsFromNumbers(target,'(MLUtf16Text.join '+texts+' '+renderFormalStringUnitNumbers(target,values[1]??'')+')');
  }
  const text=renderFormalStringUnitNumbers(target,values[0]??'');
+ if(operation==='toLowerCase'||operation==='toUpperCase')return renderFormalStringUnitsFromNumbers(target,renderUnicodeCaseColumnMapping(target,operation,text));
  const position=values[1]??'';
  if(operation==='slice'||operation==='substring'||operation==='charAt'){
   const name=operation==='charAt'?'character':operation;

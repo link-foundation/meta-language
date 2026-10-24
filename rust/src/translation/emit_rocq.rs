@@ -50,6 +50,7 @@ const KEYWORDS: &[&str] = &[
     "MLStringNumber",
     "MLBigIntegerConversion",
     "MLUtf16Text",
+    "MLUnicodeCase",
     "as",
     "at",
     "cofix",
@@ -245,11 +246,12 @@ enum Helper {
     StringNumber,
     BigIntegerConversion,
     Utf16Text,
+    UnicodeCase,
     SourceExceptionObservation,
 }
 
 impl Helper {
-    const ALL: [Self; 22] = [
+    const ALL: [Self; 23] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -271,6 +273,7 @@ impl Helper {
         Self::StringNumber,
         Self::BigIntegerConversion,
         Self::Utf16Text,
+        Self::UnicodeCase,
         Self::SourceExceptionObservation,
     ];
 
@@ -310,6 +313,7 @@ impl Helper {
             Self::StringNumber => include_str!("runtime/string-number.v"),
             Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
             Self::Utf16Text => include_str!("runtime/utf16-text.v"),
+            Self::UnicodeCase => include_str!("runtime/unicode-case.v"),
             Self::SourceExceptionObservation => include_str!("runtime/source-exception.v"),
         }
     }

@@ -111,3 +111,6 @@ export {createArrayBindingProgramLinks} from './array-binding-program.js';
 export {createJavaScriptStringRangeProgramLinks} from './javascript-string-range-program.js';
 
 export {createOptionalValueProgramLinks} from './optional-value-program.js';
+
+export {mapUnicodeCaseUtf16Text} from './translation/unicode-case-rules.js';
+export {createUnicodeCaseProgramLinks} from './unicode-case-program.js';

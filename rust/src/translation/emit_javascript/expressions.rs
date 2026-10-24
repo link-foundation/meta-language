@@ -297,6 +297,13 @@ impl JavaScriptEmitter<'_> {
                 )
             }
             Node::StringMap { op, string } => {
+                if self.program.source_language == crate::translation::Language::JavaScript
+                    && crate::translation::unicode_case_emission_rules::accept_unicode_case_mapping_operation(op) {
+                    self.helpers.insert(Helper::UnicodeCase);
+                    self.state.encode("unicode-default-case-16",&crate::translation::unicode_case_emission_rules::read_unicode_case_encoding_statement());
+                    let value = self.expr(string)?;
+                    return Ok(crate::translation::unicode_case_emission_rules::render_unicode_case_string_map("JavaScript",op,false,&value));
+                }
                 let value = self.expr(string)?;
                 let object = if matches!(string.node, Node::Var { .. } | Node::Lit { .. }) {
                     value

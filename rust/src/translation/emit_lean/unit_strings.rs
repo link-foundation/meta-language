@@ -1,6 +1,14 @@
 //! Actual Lean emitter bindings for shared formal unit adapters.
 use super::{Expr, LeanEmitter, Result, Type, unsupported};
 impl crate::translation::formal_unit_strings::Emitter for LeanEmitter<'_> {
+    fn unit_unicode_case(&mut self) {
+        self.helpers.insert("unicodeCase");
+        self.state.encode(
+            "unicode-default-case-16",
+            &crate::translation::unicode_case_emission_rules::read_unicode_case_encoding_statement(
+            ),
+        );
+    }
     fn unit_enabled(&self) -> bool {
         self.utf16_strings
     }

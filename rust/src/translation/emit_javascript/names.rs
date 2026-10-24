@@ -2,6 +2,7 @@
 //! word the emitter reserves.
 
 pub(super) const KEYWORDS: &[&str] = &[
+    "ml_unicode_case",
     "break",
     "case",
     "catch",

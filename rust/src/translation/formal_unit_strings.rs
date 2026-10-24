@@ -48,6 +48,7 @@ pub(super) fn requires(program: &Program) -> bool {
 }
 
 pub(super) trait Emitter {
+    fn unit_unicode_case(&mut self);
     fn unit_enabled(&self) -> bool;
     fn unit_target(&self) -> &'static str;
     fn unit_expr(&mut self, value: &Expr, depth: usize) -> Result<String>;
@@ -244,6 +245,7 @@ pub(super) fn expression<E: Emitter>(
    if result.is_empty(){return Ok(None);}result
   }
   Node::StringMap{op,string}=>{
+   if super::unicode_case_emission_rules::accept_unicode_case_mapping_operation(op){emitter.unit_unicode_case();}
    let text=emitter.unit_expr(string,depth)?;let result=rules::render_formal_string_unit_operation(target,op,&[text]);if result.is_empty(){return Ok(None);}result
   }
   Node::Method{object,op,args} if object.ty==Type::String=>{

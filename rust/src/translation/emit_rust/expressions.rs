@@ -358,6 +358,13 @@ impl RustEmitter<'_> {
             Node::Match { .. } => self.match_expr(expr),
             Node::Method { .. } => self.primitive_method(expr),
             Node::StringMap { op, string } => {
+                if self.program.source_language == crate::translation::Language::JavaScript
+                    && crate::translation::unicode_case_emission_rules::accept_unicode_case_mapping_operation(op) {
+                    self.preludes.insert(Prelude::UnicodeCase);
+                    self.state.encode("unicode-default-case-16",&crate::translation::unicode_case_emission_rules::read_unicode_case_encoding_statement());
+                    let value = self.expr(string)?;
+                    return Ok(crate::translation::unicode_case_emission_rules::render_unicode_case_string_map("Rust",op,self.utf16_strings,&value));
+                }
                 let object = self.receiver(string)?;
                 if self.utf16_strings {
                     return Ok(crate::translation::primitive_method_rules::render_primitive_string_representation(true, "map", &object, "", op));

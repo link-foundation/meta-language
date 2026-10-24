@@ -1,3 +1,4 @@
+import {UNICODE_CASE_LEAN_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
 import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
@@ -44,7 +45,7 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion','MLUtf16Text',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -259,6 +260,7 @@ class LeanEmitter {
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_LEAN_PRELUDE,'']:[]),
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_LEAN_PRELUDE,'']:[]),
       ...(this.helpers.has('utf16Text')?[UTF16_TEXT_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');

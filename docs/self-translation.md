@@ -985,3 +985,14 @@ both native rules and editable Links. Ordinary const-for bindings reuse lexical
 declaration construction with header punctuation owned by the loop. The exact
 former **= plan refusal remains recorded beside its normative correction and
 stronger original-input/source controls. No behavior or checks executed.
+
+Full Unicode 16 casing is now a complete shared source algorithm plus compact
+array declarations automatically converted from official Unicode data. The same
+checked closure emits native library rules, standalone JavaScript/Rust/Lean/Rocq
+runtimes and editable Links graphs. Target bridges convert strings to actual
+unit columns and back, retaining the profile in contracts. Context reads original
+points and possessively ignores Case_Ignorable, including Cased overlap. No
+host case conversion implements JavaScript-source mappings. Alternate Unicode/
+locale and complete Rust standard-library version profiles remain required.
+Future source/native/codec/context/scalar controls are declared without execution;
+the exhaustive independent Node comparison belongs only in CI.

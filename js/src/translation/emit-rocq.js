@@ -1,3 +1,4 @@
+import {UNICODE_CASE_ROCQ_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
 import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
@@ -43,7 +44,7 @@ import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-c
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion','MLUtf16Text',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -353,6 +354,7 @@ class RocqEmitter {
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('utf16Text')?[UTF16_TEXT_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('sourceExceptionObservation')?[readSourceExceptionRocqOutputPrelude(),'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),

@@ -493,3 +493,6 @@ pub use translation::javascript_comparison_program::create_java_script_compariso
 pub use translation::javascript_string_range_program::create_java_script_string_range_program_links;
 
 pub use translation::optional_value_program::create_optional_value_program_links;
+
+pub use translation::unicode_case_program::create_unicode_case_program_links;
+pub use translation::unicode_case_rules::map_unicode_case_utf16_text;

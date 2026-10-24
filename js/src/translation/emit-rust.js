@@ -1,3 +1,5 @@
+import {UNICODE_CASE_PRELUDE} from './unicode-case-runtime.js';
+import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm,renderJavaScriptStringConstruction} from './string-construction-rules.js';
 import {UTF16_TEXT_PRELUDE} from './utf16-text-runtime.js';
 import {rustEscape,rustString} from './rust-string-literals.js';
@@ -73,6 +75,7 @@ import { RUST_BORROWED_CALL_INTERFACE_POLICY, readRustBorrowedCallInterface, ren
 import { acceptRustBorrowedCallInterfaceModel, renderRustBorrowedCallHeaderReference } from './rust-borrowed-call-interface-rules.js';
 
 const KEYWORDS = new Set([
+  'ml_unicode_case',
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
   'let', 'loop', 'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'static', 'struct', 'super',
   'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while', 'async', 'await', 'dyn', 'abstract', 'become', 'box',
@@ -739,6 +742,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
     ...(emitter.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
     ...(emitter.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
+    ...(emitter.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -770,6 +774,7 @@ class RustEmitter {
     this.usesSourceException = false;
     this.usesBigIntegerConversion = false;
     this.usesUtf16Text=false;
+    this.usesUnicodeCase=false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if(acceptLinkedJavaScriptStringConstruction(node?.k??'',node?.op??'')&&readJavaScriptStringConstructionForm(node.op)==='characters')return true;
@@ -814,6 +819,7 @@ class RustEmitter {
       ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE, ''] : []),
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE, ''] : []),
     ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE, ''] : []),
+      ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -830,6 +836,7 @@ class RustEmitter {
       ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
       ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
+      ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1447,6 +1454,7 @@ class RustEmitter {
         }
         return renderPrimitiveStringRepresentation(this.utf16Strings, 'text', `${this.receiver(e.arg)}.to_string()`, '', '');
       case 'stringMap':
+        if(this.program.sourceLanguage==='JavaScript'&&acceptUnicodeCaseMappingOperation(e.op)){this.usesUnicodeCase=true;this.state.encode('unicode-default-case-16',readUnicodeCaseEncodingStatement());return renderUnicodeCaseStringMap('Rust',e.op,this.utf16Strings,this.expr(e.string));}
         if (this.utf16Strings) {
           return renderPrimitiveStringRepresentation(true, 'map', this.receiver(e.string), '', e.op);
         }
