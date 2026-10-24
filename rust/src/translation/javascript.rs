@@ -51,6 +51,7 @@ mod product_source_rules;
 mod products;
 mod record_parameters;
 mod reference_analysis;
+mod scalar_assignments;
 mod scalar_loops;
 mod statements;
 mod surface_rules;

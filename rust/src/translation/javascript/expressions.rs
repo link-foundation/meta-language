@@ -17,30 +17,27 @@ impl JavaScriptParser {
         if start.kind == TokenKind::Identifier && self.cursor.is_at("=>", 1) {
             return self.read_closure(false);
         }
-        let cond = self.or()?;
+        let mut value = self.or()?;
+        if self.cursor.eat("?").is_some() {
+            let then = self.expr()?;
+            self.cursor.expect(":", Some("conditional expression"))?;
+            let otherwise = self.expr()?;
+            let place = joined(&value, &otherwise, &start);
+            value = node(
+                SNode::If {
+                    cond: Box::new(value),
+                    then: Box::new(then),
+                    otherwise: Box::new(otherwise),
+                },
+                place,
+            );
+        }
         let next = self.cursor.peek();
         if next.kind == TokenKind::Punct && ASSIGNMENTS.contains(&next.value.as_str()) {
-            return Err(unsupported(
-                "assignment",
-                "mutation is outside the portable core",
-                Some(self.to_here(&start)),
-            ));
+            let operator = self.cursor.advance();
+            return self.scalar_assignment_expression(value, &operator, false, Some(Self::expr));
         }
-        if self.cursor.eat("?").is_none() {
-            return Ok(cond);
-        }
-        let then = self.expr()?;
-        self.cursor.expect(":", Some("conditional expression"))?;
-        let otherwise = self.expr()?;
-        let place = joined(&cond, &otherwise, &start);
-        Ok(node(
-            SNode::If {
-                cond: Box::new(cond),
-                then: Box::new(then),
-                otherwise: Box::new(otherwise),
-            },
-            place,
-        ))
+        Ok(value)
     }
 
     pub(super) fn or(&mut self) -> Result<SExpr> {
@@ -397,11 +394,9 @@ impl JavaScriptParser {
             return Ok(Self::number_bitwise(&token, arg, None));
         }
         if self.cursor.is("++") || self.cursor.is("--") {
-            return Err(unsupported(
-                &format!("{} operator", token.value),
-                "mutation is outside the portable core",
-                here,
-            ));
+            let operator = self.cursor.advance();
+            let target = self.unary()?;
+            return self.scalar_assignment_expression(target, &operator, false, None);
         }
         if token.kind == TokenKind::Identifier && token.value == "await" {
             if !self.in_async {
@@ -657,11 +652,15 @@ impl JavaScriptParser {
                 ));
             }
             if self.cursor.is("++") || self.cursor.is("--") {
-                return Err(unsupported(
-                    &format!("{} operator", token.value),
-                    "mutation is outside the portable core",
-                    here,
-                ));
+                let end = self.cursor.tokens[self.cursor.index - 1].end;
+                if self.source.units()[end..token.start]
+                    .iter()
+                    .any(|unit| super::accept_java_script_line_terminator(f64::from(*unit)))
+                {
+                    return Ok(expr);
+                }
+                self.cursor.advance();
+                return self.scalar_assignment_expression(expr, &token, true, None);
             }
             return Ok(expr);
         }

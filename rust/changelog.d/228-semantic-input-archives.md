@@ -120,3 +120,8 @@ Draft ordinary hygienic array/record pattern names while retaining the historica
 closed operations. Automatically capture complete local function dependencies
 for shared-rule generation, preserving actual source ownership and import spans;
 generate the record parameter closure as Rust and editable Links.
+
+Draft scalar assignment expressions and prefix/postfix updates through existing
+shared cells, preserving compound read order, lazy logical writes and update
+results. Generate shared construction/capture rules as Rust and editable Links;
+author future complete original-Node/native/codec controls without executing them.

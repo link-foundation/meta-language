@@ -13,6 +13,8 @@
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
+import { constructScalarAssignmentExpression } from './scalar-assignments.js';
+import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
@@ -1199,7 +1201,8 @@ class JavaScriptParser {
     const start = c.peek();
     const prefix = c.is('++') || c.is('--') ? c.next() : null;
     const target = c.identifier('assignment');
-    const op = prefix ? prefix.value : c.next().value;
+    const operator = prefix ?? c.next();
+    const op = operator.value;
     const where = span(start, c.peek());
     this.lexicalRead(target, true, where);
     if (this.scope.tdz.has(target.value)) {
@@ -1212,6 +1215,10 @@ class JavaScriptParser {
       throw unsupported(`assignment of constant ${target.value}`, 'assigning a const binding throws a TypeError; declare it with let', where);
     }
     const read = { k: 'name', path: [target.value], span: span(target, target) };
+    if (op === '??=') {
+      const expr = this.scalarAssignmentExpression(read,operator,false,()=>this.expr());
+      return {s:'expr',expr,span:span(start,c.peek())};
+    }
     let value;
     if (op === '++' || op === '--') {
       // One of the variable's own type: a Number or a BigInt.
@@ -1885,15 +1892,37 @@ class JavaScriptParser {
     const c = this.cursor;
     const start = c.peek();
     if (this.startsFunction(c.index)) return this.closure();
-    const cond = this.or();
-    if (ASSIGNMENTS.has(c.peek().value) && c.peek().kind === 'punct') {
-      throw unsupported('assignment', 'mutation is outside the portable core', span(start, c.peek()));
+    let value = this.or();
+    if (c.eat('?')) {
+      const then = this.expr();
+      c.expect(':', 'conditional expression');
+      const otherwise = this.expr();
+      value = {k:'if',cond:value,then,else:otherwise,span:joined(value,otherwise,start)};
     }
-    if (!c.eat('?')) return cond;
-    const then = this.expr();
-    c.expect(':', 'conditional expression');
-    const otherwise = this.expr();
-    return { k: 'if', cond, then, else: otherwise, span: joined(cond, otherwise, start) };
+    if (ASSIGNMENTS.has(c.peek().value) && c.peek().kind === 'punct') {
+      const operator = c.next();
+      return this.scalarAssignmentExpression(value,operator,false,()=>this.expr());
+    }
+    return value;
+  }
+
+  scalarAssignmentExpression(target, operator, postfix, readRight) {
+    const c = this.cursor, name = target.k === 'name' && target.path.length === 1 ? target.path[0] : null;
+    const where = {start:Math.min(target.span?.start ?? operator.start,operator.start),end:Math.max(target.span?.end ?? operator.end,operator.end)};
+    if (!name) throw unsupported('assignment expression target','this target needs its actual reference and property state operation',where);
+    const token = c.tokens.find(token=>token.kind === 'identifier' && token.value === name && token.start >= (target.span?.start ?? 0) && token.end <= (target.span?.end ?? operator.start));
+    if (!token) throw unsupported('assignment expression source','the target needs its actual identifier token',where);
+    this.lexicalRead(token,true,where);
+    if (this.scope.tdz.has(name)) throw unsupported('assignment of '+name+' before its declaration','the binding is in its temporal dead zone, where assigning it throws a ReferenceError',where);
+    if (!this.scope.locals.has(name)) throw unsupported('assignment of '+name,'only local variables declared with let, and parameters, are assignable',where);
+    if (!this.scope.mutable.has(name)) throw unsupported('assignment of constant '+name,'assigning a const binding throws a TypeError; declare it with let',where);
+    if (!this.referenceSemanticsEnabled || !readScalarAssignmentOperation(operator.value)) throw unsupported('scalar assignment expression','the selected source profile needs the complete shared cell operation',where);
+    this.referenceSemantics = true;this.referenceSemanticsForced = true;
+    const right = readRight ? readRight() : null;
+    where.end = Math.max(where.end,right?.span?.end ?? 0);
+    const ordinal = ++this.generatedCount;
+    const names = [this.generatedPrefix+'temporary_assignment_previous'+ordinal,this.generatedPrefix+'temporary_assignment_updated'+ordinal];
+    return constructScalarAssignmentExpression({k:'name',path:[name],span:span(token,token)},right,operator.value,postfix,names,where);
   }
 
   or() {
@@ -2115,7 +2144,10 @@ class JavaScriptParser {
       const arg=this.unary();
       return{k:'math',op:readJavaScriptNumberBitwiseOperation('~'),name:'~',args:[{value:arg,spread:false}],span:joined(token,arg,token)};
     }
-    if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
+    if (c.is('++') || c.is('--')) {
+      const operator=c.next(),target=this.unary();
+      return this.scalarAssignmentExpression(target,operator,false,null);
+    }
     if (token.kind === 'identifier' && token.value === 'await') {
       if (!this.inAsync) {
         throw unsupported('await outside an async function', 'await is only valid in async functions and at the top level of a module', span(token, token));
@@ -2197,7 +2229,10 @@ class JavaScriptParser {
         continue;
       }
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
-      if (c.is('++') || c.is('--')) throw unsupported(`${token.value} operator`, 'mutation is outside the portable core', span(token, token));
+      if (c.is('++') || c.is('--')) {
+        if (findJavaScriptLineTerminator(this.source,c.tokens[c.index-1].end,token.start)<token.start) return expr;
+        c.next();return this.scalarAssignmentExpression(expr,token,true,null);
+      }
       return expr;
     }
   }

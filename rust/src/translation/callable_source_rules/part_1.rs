@@ -1,22 +1,21 @@
-// Generated from complete callable-source-rules.js through the checked translator.
-// Do not edit by hand.
-use super::MlCallableBoundLoop14Result;
-use super::MlCallableFieldLoop13Result;
-use super::MlCallableTypeParametersLoop5Result;
-use super::MlPlanCallableTypeSyntaxJoin7;
-use super::MlPlanCallableTypeSyntaxJoin9;
-use super::MlPlanCallableTypeSyntaxLoop10Result;
-use super::ml_callable_bound_loop14;
-use super::ml_callable_field_loop13;
-use super::ml_callable_parameter_names_loop15;
-use super::ml_callable_type_parameter_segments_loop4;
-use super::ml_callable_type_parameters_loop5;
-use super::ml_callable_type_trim_end_loop3;
-use super::ml_callable_type_trim_start_loop2;
-use super::ml_plan_callable_type_syntax_loop8;
-use super::ml_plan_callable_type_syntax_loop10;
-use super::ml_plan_callable_type_syntax_loop11;
-use super::ml_read_type_separator_positions_loop1;
+// Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
+use super::MlSource1TemporaryCallableBoundLoop14Result;
+use super::MlSource1TemporaryCallableFieldLoop13Result;
+use super::MlSource1TemporaryCallableTypeParametersLoop5Result;
+use super::MlSource1TemporaryPlanCallableTypeSyntaxJoin7;
+use super::MlSource1TemporaryPlanCallableTypeSyntaxJoin9;
+use super::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Result;
+use super::source_ml_source1_temporary_callable_bound_loop14;
+use super::source_ml_source1_temporary_callable_field_loop13;
+use super::source_ml_source1_temporary_callable_parameter_names_loop15;
+use super::source_ml_source1_temporary_callable_type_parameter_segments_loop4;
+use super::source_ml_source1_temporary_callable_type_parameters_loop5;
+use super::source_ml_source1_temporary_callable_type_trim_end_loop3;
+use super::source_ml_source1_temporary_callable_type_trim_start_loop2;
+use super::source_ml_source1_temporary_plan_callable_type_syntax_loop8;
+use super::source_ml_source1_temporary_plan_callable_type_syntax_loop10;
+use super::source_ml_source1_temporary_plan_callable_type_syntax_loop11;
+use super::source_ml_source1_temporary_read_type_separator_positions_loop1;
 
 /// JavaScript's Number operations that Rust's f64 does not share.
 pub mod ml_number {
@@ -318,25 +317,25 @@ pub mod ml_array {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
     panic!("{}", "missing required Number fact column value")
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
     panic!("{}", "missing required text fact column value")
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
     panic!("{}", "missing required Boolean fact column value")
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
     {
@@ -351,7 +350,7 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
     {
@@ -366,7 +365,7 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
     {
@@ -381,7 +380,7 @@ pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> {
     {
@@ -391,7 +390,7 @@ pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> 
             {
                 let at = 0f64;
                 {
-                    self::ml_read_type_separator_positions_loop1(
+                    self::source_ml_source1_temporary_read_type_separator_positions_loop1(
                         units, separator, depth, positions, at,
                     )
                 }
@@ -400,19 +399,19 @@ pub fn read_type_separator_positions(units: &[f64], separator: f64) -> Vec<f64> 
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_union_type_field(field: &str) -> bool {
     (field == "kind") || (field == "alternatives")
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_union_type_count(count: f64) -> bool {
     self::ml_math::is_safe_integer(count) && (count >= 2f64)
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_union_target_refusal(target: &str) -> String {
     if target == "Rust" {
@@ -426,7 +425,7 @@ pub fn read_union_target_refusal(target: &str) -> String {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_statement_role(kind: &str) -> String {
     if (kind == "const") || (kind == "let") {
@@ -452,7 +451,7 @@ pub fn read_callable_statement_role(kind: &str) -> String {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_callable_type_whitespace(unit: f64) -> bool {
     (((((((((((9f64..=13f64).contains(&unit)) || (unit == 32f64)) || (unit == 160f64))
@@ -466,25 +465,25 @@ pub fn accept_callable_type_whitespace(unit: f64) -> bool {
         || (unit == 65_279f64)
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_type_trim_start(units: &[f64], start: f64, end: f64) -> f64 {
     {
         let at = start;
-        { self::ml_callable_type_trim_start_loop2(units, end, at) }
+        { self::source_ml_source1_temporary_callable_type_trim_start_loop2(units, end, at) }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_type_trim_end(units: &[f64], start: f64, end: f64) -> f64 {
     {
         let at = end;
-        { self::ml_callable_type_trim_end_loop3(units, start, at) }
+        { self::source_ml_source1_temporary_callable_type_trim_end_loop3(units, start, at) }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_type_parameter_segments(
     units: &[f64],
@@ -513,16 +512,21 @@ pub fn callable_type_parameter_segments(
                             {
                                 let segments = Vec::<f64>::new();
                                 {
-                                    let segments_2 =
-                                        self::ml_callable_type_parameter_segments_loop4(
-                                            start,
-                                            &(part),
-                                            &(colons),
-                                            from,
-                                            at,
-                                            segments,
-                                        );
-                                    self::ml_array::append(vec![(colons.len() as f64)], segments_2)
+                                    let segments_2 = self::source_ml_source1_temporary_callable_type_parameter_segments_loop4(start, &(part), &(colons), from, at, segments);
+                                    {
+                                        let source_ml_source2_concat_value1 =
+                                            vec![(colons.len() as f64)];
+                                        {
+                                            let source_ml_source2_concat_value2 = segments_2;
+                                            self::ml_array::append(
+                                                self::ml_array::append(
+                                                    Vec::<f64>::new(),
+                                                    source_ml_source2_concat_value1,
+                                                ),
+                                                source_ml_source2_concat_value2,
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -535,7 +539,7 @@ pub fn callable_type_parameter_segments(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_type_parameters(units: &[f64], start: f64, end: f64, named: bool) -> Vec<f64> {
     {
@@ -551,20 +555,16 @@ pub fn callable_type_parameters(units: &[f64], start: f64, end: f64, named: bool
                         {
                             let plan = Vec::<f64>::new();
                             {
-                                let ml_s1 = self::ml_callable_type_parameters_loop5(
-                                    units,
-                                    start,
-                                    named,
-                                    &(part),
-                                    &(commas),
-                                    from,
-                                    at,
-                                    count,
-                                    plan,
-                                );
-                                match ml_s1 {
-                                    self::MlCallableTypeParametersLoop5Result::MlCallableTypeParametersLoop5Done(count_2, plan_2) => {
-                                        self::ml_array::append(vec![count_2], plan_2)
+                                let source_ml_source2_s3 = self::source_ml_source1_temporary_callable_type_parameters_loop5(units, start, named, &(part), &(commas), from, at, count, plan);
+                                match source_ml_source2_s3 {
+                                    self::MlSource1TemporaryCallableTypeParametersLoop5Result::MlSource1TemporaryCallableTypeParametersLoop5Done(count_2, plan_2) => {
+                                        {
+                                            let source_ml_source2_concat_value4 = vec![count_2];
+                                            {
+                                                let source_ml_source2_concat_value5 = plan_2;
+                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value4), source_ml_source2_concat_value5)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -576,7 +576,7 @@ pub fn callable_type_parameters(units: &[f64], start: f64, end: f64, named: bool
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
     {
@@ -586,7 +586,9 @@ pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
         };
         if ml_product_condition_1 {
             {
-                let ml_s2 = if (self::read_required_number_fact(units, 0f64)) == 40f64 {
+                let source_ml_source2_s8 = if (self::read_required_number_fact(units, 0f64))
+                    == 40f64
+                {
                     {
                         let depth = 0f64;
                         {
@@ -594,9 +596,7 @@ pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
                             {
                                 let at = 0f64;
                                 {
-                                    let close_2 = self::ml_plan_callable_type_syntax_loop11(
-                                        units, depth, close, at,
-                                    );
+                                    let close_2 = self::source_ml_source1_temporary_plan_callable_type_syntax_loop11(units, depth, close, at);
                                     {
                                         let arrow = self::callable_type_trim_start(
                                             units,
@@ -624,15 +624,21 @@ pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
                                                         start,
                                                         (units.len() as f64),
                                                     );
-                                                    self::MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Return(if start == end {
+                                                    self::MlSource1TemporaryPlanCallableTypeSyntaxJoin7::MlSource1TemporaryPlanCallableTypeSyntaxJoin7Return(if start == end {
                                                     vec![-1f64]
                                                 } else {
-                                                    self::ml_array::append(vec![1f64, start, end], self::callable_type_parameters(units, 1f64, close_2, true))
+                                                    {
+                                                        let source_ml_source2_concat_value9 = vec![1f64, start, end];
+                                                        {
+                                                            let source_ml_source2_concat_value10 = self::callable_type_parameters(units, 1f64, close_2, true);
+                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value9), source_ml_source2_concat_value10)
+                                                        }
+                                                    }
                                                 })
                                                 }
                                             }
                                         } else {
-                                            self::MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Next
+                                            self::MlSource1TemporaryPlanCallableTypeSyntaxJoin7::MlSource1TemporaryPlanCallableTypeSyntaxJoin7Next
                                         }
                                     }
                                 }
@@ -640,74 +646,63 @@ pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
                         }
                     }
                 } else {
-                    self::MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Next
+                    self::MlSource1TemporaryPlanCallableTypeSyntaxJoin7::MlSource1TemporaryPlanCallableTypeSyntaxJoin7Next
                 };
-                match ml_s2 {
-                    self::MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Next => {
-                        let prefix = vec![
-                            102f64, 117f64, 110f64, 99f64, 116f64, 105f64, 111f64, 110f64,
-                        ];
+                match source_ml_source2_s8 {
+                self::MlSource1TemporaryPlanCallableTypeSyntaxJoin7::MlSource1TemporaryPlanCallableTypeSyntaxJoin7Next => {
+                    {
+                        let prefix = vec![102f64, 117f64, 110f64, 99f64, 116f64, 105f64, 111f64, 110f64];
                         {
                             let at_2 = 0f64;
                             {
-                                let at_3 = self::ml_plan_callable_type_syntax_loop8(
-                                    units,
-                                    &(prefix),
-                                    at_2,
-                                );
+                                let at_3 = self::source_ml_source1_temporary_plan_callable_type_syntax_loop8(units, &(prefix), at_2);
                                 {
-                                    let ml_s4 = if at_3 == (prefix.len() as f64) {
+                                    let source_ml_source2_s12 = if at_3 == (prefix.len() as f64) {
                                         {
-                                            let open = self::callable_type_trim_start(
-                                                units,
-                                                at_3,
-                                                (units.len() as f64),
-                                            );
-                                            if (open < (units.len() as f64))
-                                                && ((self::read_required_number_fact(units, open))
-                                                    == 40f64)
-                                            {
+                                            let open = self::callable_type_trim_start(units, at_3, (units.len() as f64));
+                                            if (open < (units.len() as f64)) && ((self::read_required_number_fact(units, open)) == 40f64) {
                                                 {
                                                     let close_3 = units.len() as f64;
                                                     {
-                                                        let ml_s5 = self::ml_plan_callable_type_syntax_loop10(units, open, close_3);
-                                                        match ml_s5 {
-                                                            self::MlPlanCallableTypeSyntaxLoop10Result::MlPlanCallableTypeSyntaxLoop10Done => {
-                                                                self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Next
+                                                        let source_ml_source2_s13 = self::source_ml_source1_temporary_plan_callable_type_syntax_loop10(units, open, close_3);
+                                                        match source_ml_source2_s13 {
+                                                            self::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Result::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Done => {
+                                                                self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Next
                                                             }
-                                                            self::MlPlanCallableTypeSyntaxLoop10Result::MlPlanCallableTypeSyntaxLoop10Return(ml_result10) => {
-                                                                self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Return(ml_result10)
+                                                            self::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Result::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Return(source_ml_source1_temporary_result10) => {
+                                                                self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Return(source_ml_source1_temporary_result10)
                                                             }
                                                         }
                                                     }
                                                 }
                                             } else {
-                                                self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Next
+                                                self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Next
                                             }
                                         }
                                     } else {
-                                        self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Next
+                                        self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Next
                                     };
-                                    match ml_s4 {
-                                        self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Next => {
+                                    match source_ml_source2_s12 {
+                                        self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Next => {
                                             if ((self::read_required_number_fact(units, 0f64)) == 40f64) && ((self::read_required_number_fact(units, ((units.len() as f64) - 1f64))) == 41f64) {
                                                 vec![0f64, 1f64, ((units.len() as f64) - 1f64)]
                                             } else {
                                                 Vec::<f64>::new()
                                             }
                                         }
-                                        self::MlPlanCallableTypeSyntaxJoin9::MlPlanCallableTypeSyntaxJoin9Return(ml_result9) => {
-                                            ml_result9
+                                        self::MlSource1TemporaryPlanCallableTypeSyntaxJoin9::MlSource1TemporaryPlanCallableTypeSyntaxJoin9Return(source_ml_source1_temporary_result9) => {
+                                            source_ml_source1_temporary_result9
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                    self::MlPlanCallableTypeSyntaxJoin7::MlPlanCallableTypeSyntaxJoin7Return(
-                        ml_result10_2,
-                    ) => ml_result10_2,
                 }
+                self::MlSource1TemporaryPlanCallableTypeSyntaxJoin7::MlSource1TemporaryPlanCallableTypeSyntaxJoin7Return(source_ml_source1_temporary_result10_2) => {
+                    source_ml_source1_temporary_result10_2
+                }
+            }
             }
         } else {
             Vec::<f64>::new()
@@ -715,7 +710,7 @@ pub fn plan_callable_type_syntax(units: &[f64]) -> Vec<f64> {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_linked_application_error(
     kind: &str,
@@ -733,7 +728,7 @@ pub fn read_callable_linked_application_error(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_field(
     starts: &[f64],
@@ -749,13 +744,15 @@ pub fn callable_field(
         {
             let at = self::read_required_number_fact(starts, node);
             {
-                let ml_s6 = self::ml_callable_field_loop13(
+                let source_ml_source2_s14 = self::source_ml_source1_temporary_callable_field_loop13(
                     starts, counts, labels, targets, node, field, at,
                 );
-                match ml_s6 {
-                    self::MlCallableFieldLoop13Result::MlCallableFieldLoop13Done => -1f64,
-                    self::MlCallableFieldLoop13Result::MlCallableFieldLoop13Return(ml_result13) => {
-                        ml_result13
+                match source_ml_source2_s14 {
+                    self::MlSource1TemporaryCallableFieldLoop13Result::MlSource1TemporaryCallableFieldLoop13Done => {
+                        -1f64
+                    }
+                    self::MlSource1TemporaryCallableFieldLoop13Result::MlSource1TemporaryCallableFieldLoop13Return(source_ml_source1_temporary_result13) => {
+                        source_ml_source1_temporary_result13
                     }
                 }
             }
@@ -763,7 +760,7 @@ pub fn callable_field(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_text(texts: &[String], node: f64) -> String {
     if (node < 0f64) || (node >= (texts.len() as f64)) {
@@ -773,7 +770,7 @@ pub fn callable_text(texts: &[String], node: f64) -> String {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_truthy(forms: &[String], texts: &[String], node: f64) -> bool {
     if (node < 0f64) || (node >= (forms.len() as f64)) {
@@ -794,24 +791,27 @@ pub fn callable_truthy(forms: &[String], texts: &[String], node: f64) -> bool {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_bound(names: &[String], name: &str) -> bool {
     {
         let at = names.len() as f64;
         {
-            let ml_s7 = self::ml_callable_bound_loop14(names, name, at);
-            match ml_s7 {
-                self::MlCallableBoundLoop14Result::MlCallableBoundLoop14Done => false,
-                self::MlCallableBoundLoop14Result::MlCallableBoundLoop14Return(ml_result14) => {
-                    ml_result14
+            let source_ml_source2_s15 =
+                self::source_ml_source1_temporary_callable_bound_loop14(names, name, at);
+            match source_ml_source2_s15 {
+                self::MlSource1TemporaryCallableBoundLoop14Result::MlSource1TemporaryCallableBoundLoop14Done => {
+                    false
+                }
+                self::MlSource1TemporaryCallableBoundLoop14Result::MlSource1TemporaryCallableBoundLoop14Return(source_ml_source1_temporary_result14) => {
+                    source_ml_source1_temporary_result14
                 }
             }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_element(
     starts: &[f64],
@@ -832,7 +832,7 @@ pub fn callable_element(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_tag(
     texts: &[String],
@@ -849,7 +849,7 @@ pub fn callable_tag(
     )
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_parameter_names(
     texts: &[String],
@@ -867,7 +867,7 @@ pub fn callable_parameter_names(
             {
                 let at = 0f64;
                 {
-                    self::ml_callable_parameter_names_loop15(
+                    self::source_ml_source1_temporary_callable_parameter_names_loop15(
                         texts, starts, counts, labels, targets, parameters, names, at,
                     )
                 }

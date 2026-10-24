@@ -2601,6 +2601,34 @@ reuse those same checked operations, preserving the read before the right
 operand and the final write. Constant, temporal-dead-zone, property and BigInt
 assignment semantics keep their separate admission obligations.
 
+Scalar assignment expressions now have a source draft over the existing shared
+cell algebra. A JavaScript definition constructs a complete topological plan of
+source terms; both frontend adapters only materialize those terms with actual
+operands, source spans and fresh binders. Simple assignments evaluate the RHS
+once. Compound assignments capture the previous value before the RHS; logical
+and nullish assignments select their write continuation lazily. Prefix/postfix
+updates preserve their different returned values, using double numeric negation
+to perform the supported ToNumeric conversion before retaining the old result.
+The source parser retains right associativity, conditional precedence and the
+postfix no-LineTerminator boundary after the actual last consumed token, including
+parenthesized targets. Mutable local nullish assignment statements use the same
+plan. Function-local writable targets select shared cells; generalized property,
+constant short-circuit, module-state and coercion domains still require code.
+These decisions follow the [assignment algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators)
+and [update algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-update-expressions).
+
+The callable source definition now tracks expression writes through actual let
+and lambda scopes, captures assigned outer owners and selects their shared
+cells. JavaScript liveness uses the same existing fact-plan adapter as native
+liveness. Both complete dependency closures generate Rust and public editable
+Links definitions. Forty-one future values/aborts cover sequencing, nested
+writes, argument order, captures, loop conditions, lexical shadowing, nullish
+values, Number/BigInt operations and prefix/postfix conversion. Exact paired
+program/definition graphs, both codecs and four emissions remain required; no
+controls ran. General primitive coercions, errors, property/index assignment
+expressions, exponentiation, top-level cell composition, historical generated
+snapshots and all broader language requirements remain source work.
+
 The next shared primitive draft distinguishes actual Number and BigInt operand
 domains during inference and checking, with no binary64 conversion of integers.
 Exact conjunction, disjunction, exclusive disjunction, complement and signed

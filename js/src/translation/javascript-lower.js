@@ -15,7 +15,7 @@ import { TranslationError, unsupported } from './diagnostics.js';
 import { mutableClosureCells } from './javascript-cells.js';
 import { readCallableCellLowering } from './callable-source-rules.js';
 import { renderSourceCellParameter } from './source-identifier-rules.js';
-import { renameCallableSourceExpression } from './callable-source.js';
+import { renameCallableSourceExpression, readCallableStatementUsage } from './callable-source.js';
 import { requireJavaScriptBranchContinuation } from './frontend-rules.js';
 import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
   readJavaScriptValueSwitchPosition } from './javascript-surface-rules.js';
@@ -42,74 +42,7 @@ export function imperative(statements, parser) {
  * without declaring them first, so the ones they share with their context.
  */
 export function statementUses(statements, declared = new Set()) {
-  const uses = { free: new Set(), assigned: new Set() };
-  useList(statements, new Set(declared), uses);
-  return uses;
-}
-
-function useList(statements, scope, uses) {
-  for (const statement of statements) useStatement(statement, scope, uses);
-}
-
-function useStatement(statement, scope, uses) {
-  const read = (expr) => {
-    const names = new Set();
-    references(expr, names);
-    for (const name of names) if (!scope.has(name)) uses.free.add(name);
-  };
-  switch (statement.s) {
-    case 'const':
-    case 'let':
-      read(statement.value);
-      scope.add(statement.name);
-      return;
-    case 'assign':
-      read(statement.value);
-      if (!scope.has(statement.name)) {
-        uses.free.add(statement.name);
-        uses.assigned.add(statement.name);
-      }
-      return;
-    case 'assignReference':
-      read(statement.object);
-      if (statement.index) read(statement.index);
-      read(statement.value);
-      return;
-    case 'return':
-    case 'expr':
-    case 'print':
-      read(statement.expr);
-      return;
-    case 'block':
-      useList(statement.body, statement.inline ? scope : new Set(scope), uses);
-      return;
-    case 'if':
-      read(statement.cond);
-      useList(statement.then, new Set(scope), uses);
-      if (statement.else) useList(statement.else, new Set(scope), uses);
-      return;
-    case 'switch':
-      read(statement.discriminant);
-      for (const clause of statement.clauses) useList(clause.body, new Set(scope), uses);
-      return;
-    case 'while':
-    case 'doWhile':
-      read(statement.cond);
-      useList(statement.body, new Set(scope), uses);
-      return;
-    case 'for': {
-      const inner = new Set(scope);
-      useList(statement.init, inner, uses);
-      if (statement.cond) {
-        const names = new Set();
-        references(statement.cond, names);
-        for (const name of names) if (!inner.has(name)) uses.free.add(name);
-      }
-      useList([...statement.update, { s: 'block', body: statement.body }], inner, uses);
-      return;
-    }
-    default:
-  }
+  return readCallableStatementUsage(statements,declared);
 }
 
 /** Local variables an expression reads. */

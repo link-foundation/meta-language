@@ -363,6 +363,7 @@ mod translation_owned_array_moves;
 mod translation_primitive_methods;
 mod translation_record_values;
 mod translation_reference_array_projections;
+mod translation_scalar_assignments;
 mod translation_source_identifiers;
 mod translation_unicode_identifiers;
 mod typed_program_number_projection;

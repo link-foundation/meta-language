@@ -95,10 +95,8 @@ impl JavaScriptParser {
         let start = self.peek();
         let prefix = (self.cursor.is("++") || self.cursor.is("--")).then(|| self.cursor.advance());
         let target = self.cursor.identifier(Some("assignment"))?;
-        let op = match prefix {
-            Some(prefix) => prefix.value,
-            None => self.cursor.advance().value,
-        };
+        let operator = prefix.unwrap_or_else(|| self.cursor.advance());
+        let op = operator.value.clone();
         let place = self.to_here(&start);
         self.lexical.read(&target, true, place);
         if self.scope.tdz.contains(&target.value) {
@@ -128,6 +126,14 @@ impl JavaScriptParser {
             },
             span(&target, &target),
         );
+        if op == "??=" {
+            let expr =
+                self.scalar_assignment_expression(read, &operator, false, Some(Self::expr))?;
+            return Ok(Stmt::Expr {
+                expr,
+                span: self.to_here(&start),
+            });
+        }
         let binary = |op, left: SExpr, right: SExpr, place| {
             node(
                 SNode::Binary {

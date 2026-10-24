@@ -277,6 +277,55 @@ function callableReadEvents(references) {
   return events;
 }
 
+/** Assigned cell carriers retain lexical lambda/let boundaries just like reads.
+ * @param {string[]} forms @param {string[]} texts @param {number[]} starts
+ * @param {number[]} counts @param {string[]} labels @param {number[]} targets
+ * @param {number} node @param {string[]} bound @returns {number[]} */
+function callableAssignedExpressionReferences(forms, texts, starts, counts, labels, targets, node, bound) {
+  if (node < 0 || readRequiredTextFact(forms, node) !== 'object' && readRequiredTextFact(forms, node) !== 'array') return [];
+  const kind = callableTag(texts, starts, counts, labels, targets, node, 'k');
+  if (kind === 'let') {
+    const value = callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'value'),bound);
+    return value.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'body'),bound.concat([callableTag(texts,starts,counts,labels,targets,node,'name')])));
+  }
+  if (kind === 'lambda') {
+    const params = callableField(starts,counts,labels,targets,node,'params');
+    let assigned = callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,node,'body'),bound.concat(callableParameterNames(texts,starts,counts,labels,targets,params)));
+    let index = 0;
+    while (params >= 0 && index < readRequiredNumberFact(counts,params)) {
+      const parameter = callableElement(starts,counts,targets,params,index);
+      assigned = assigned.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,parameter,'default'),bound));
+      index += 1;
+    }
+    return assigned;
+  }
+  let assigned = [];
+  if (kind === 'cellWrite') {
+    const cell = callableField(starts,counts,labels,targets,node,'cell');
+    const path = callableField(starts,counts,labels,targets,cell,'path');
+    if (callableTag(texts,starts,counts,labels,targets,cell,'k') === 'name' && path >= 0 && readRequiredNumberFact(counts,path) === 1) {
+      const name = callableElement(starts,counts,targets,path,0);
+      if (!callableBound(bound,callableText(texts,name))) assigned = [1,name];
+    }
+  }
+  let at = readRequiredNumberFact(starts,node);
+  while (at < readRequiredNumberFact(starts,node) + readRequiredNumberFact(counts,node)) {
+    const label = readRequiredTextFact(labels,at);
+    if (label !== 'span' && label !== 'type' && label !== 'data')
+      assigned = assigned.concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,readRequiredNumberFact(targets,at),bound));
+    at += 1;
+  }
+  return assigned;
+}
+
+/** @param {string[]} forms @param {string[]} texts @param {number[]} starts
+ * @param {number[]} counts @param {string[]} labels @param {number[]} targets
+ * @param {number} node @param {string[]} bound @returns {number[]} */
+function callableExpressionEvents(forms,texts,starts,counts,labels,targets,node,bound) {
+  return callableReadEvents(readCallableFreeReferences(forms,texts,starts,counts,labels,targets,node,bound,false))
+    .concat(callableAssignedExpressionReferences(forms,texts,starts,counts,labels,targets,node,bound));
+}
+
 /**
  * Event pairs are [0, free name], [1, assigned name], [2, declaration].
  * Declaration events are visible to the following statement, and leave a
@@ -319,30 +368,30 @@ function callableStatementUses(forms, texts, starts, counts, labels, targets, st
   const role = readCallableStatementRole(callableTag(texts, starts, counts, labels, targets, statement, 's'));
   const name = callableField(starts, counts, labels, targets, statement, 'name');
   const value = callableField(starts, counts, labels, targets, statement, 'value');
-  if (role === 'declare') return callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false)).concat([2, name]);
+  if (role === 'declare') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, value, bound).concat([2, name]);
   if (role === 'assign') {
-    const reads = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false));
+    const reads = callableExpressionEvents(forms, texts, starts, counts, labels, targets, value, bound);
     return callableBound(bound, callableText(texts, name)) ? reads : reads.concat([0, name, 1, name]);
   }
-  if (role === 'read') return callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'expr'), bound, false));
+  if (role === 'read') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'expr'), bound);
   if (role === 'reference') {
-    let references = readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'object'), bound, false);
-    references = references.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'index'), bound, false));
-    return callableReadEvents(references.concat(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, value, bound, false)));
+    return callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'object'),bound)
+      .concat(callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'index'),bound),
+        callableExpressionEvents(forms,texts,starts,counts,labels,targets,value,bound));
   }
   if (role === 'block') {
     const events = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'body'), bound);
     return callableTruthy(forms, texts, callableField(starts, counts, labels, targets, statement, 'inline')) ? events : callableNestedEvents(events);
   }
   if (role === 'branch' || role === 'loop') {
-    const reads = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), bound, false));
+    const reads = callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), bound);
     if (role === 'loop') return reads.concat(callableNestedEvents(readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'body'), bound)));
     const yes = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'then'), bound);
     const no = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'else'), bound);
     return reads.concat(callableNestedEvents(yes), callableNestedEvents(no));
   }
   if (role === 'switch') {
-    let events = callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'discriminant'), bound, false));
+    let events = callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'discriminant'), bound);
     const clauses = callableField(starts, counts, labels, targets, statement, 'clauses');
     let at = 0;
     while (clauses >= 0 && at < readRequiredNumberFact(counts, clauses)) {
@@ -361,7 +410,7 @@ function callableStatementUses(forms, texts, starts, counts, labels, targets, st
       at += 2;
     }
     let events = callableNestedEvents(initial);
-    events = events.concat(callableReadEvents(readCallableFreeReferences(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), inner, false)));
+    events = events.concat(callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'cond'), inner));
     const update = readCallableStatementUses(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'update'), inner);
     at = 0;
     while (at < update.length) {
@@ -785,6 +834,14 @@ function callableCellObservations(forms, texts, starts, counts, labels, targets,
   if (node < 0 || readRequiredTextFact(forms, node) !== 'object' && readRequiredTextFact(forms, node) !== 'array') return [];
   let events = [];
   if (callableTag(texts, starts, counts, labels, targets, node, 's') === 'assign') events = [1, callableField(starts, counts, labels, targets, node, 'name')];
+  if (callableTag(texts,starts,counts,labels,targets,node,'k') === 'cellWrite') {
+    const cell = callableField(starts,counts,labels,targets,node,'cell');
+    const path = callableField(starts,counts,labels,targets,cell,'path');
+    if (callableTag(texts,starts,counts,labels,targets,cell,'k') === 'name' && path >= 0 && readRequiredNumberFact(counts,path) === 1) {
+      const name = callableElement(starts,counts,targets,path,0);
+      events = events.concat([0,name,1,name]);
+    }
+  }
   if (callableTag(texts, starts, counts, labels, targets, node, 'k') === 'lambda') {
     const captured = callableField(starts, counts, labels, targets, node, 'captures');
     const assigned = callableField(starts, counts, labels, targets, node, 'assignedCaptures');

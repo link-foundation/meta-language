@@ -789,3 +789,14 @@ operations. Five new future cases and the preserved original rest-prefix input
 add positive controls; all previous inputs and closed-policy checks remain.
 No control ran; old generator metadata and the broader module/source obligations
 still need reconciliation after the complete draft exists.
+
+Scalar assignment expressions use a shared topological source-term plan that
+materializes only existing lets, reads, writes, arithmetic and conditionals.
+Source capture order, logical write selection, numeric update conversion and
+returned values belong to the JavaScript definition generated as Rust/Links.
+The complete callable definition also records expression assignment/capture
+facts through lexical scopes; source liveness shares its mechanical adapter.
+Both definitions have public editable program factories. Forty-one future
+source value/abort controls, full paired graphs/codecs/four emissions and native
+CI runners are drafted without execution. General coercions/errors, constant
+logical targets, properties, module state and other source requirements remain.

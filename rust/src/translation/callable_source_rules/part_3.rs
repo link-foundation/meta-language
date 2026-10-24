@@ -1,44 +1,306 @@
-// Generated from complete callable-source-rules.js through the checked translator.
-// Do not edit by hand.
-use super::MlCallableAppendNameLoop42Result;
-use super::MlCallableCellObservationsLoop55Result;
-use super::MlPlanCallableClosureScopeLoop45Result;
-use super::MlPlanCallableClosureScopeLoop46Result;
-use super::MlPlanCallableClosureScopeLoop47Result;
-use super::MlPlanCallableClosureScopeLoop48Result;
-use super::MlPlanCallableClosureScopeLoop49Result;
-use super::MlPlanCallableMutableCellsLoop52Result;
-use super::MlPlanCallableStatementCapturesLoop43Result;
-use super::MlReadCallableClosureParameterErrorLoop39Result;
-use super::MlReadCallableClosureParameterErrorLoop40Result;
+// Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
+use super::MlSource1TemporaryCallableAppendNameLoop44Result;
+use super::MlSource1TemporaryPlanCallableClosureScopeLoop47Result;
+use super::MlSource1TemporaryPlanCallableClosureScopeLoop48Result;
+use super::MlSource1TemporaryPlanCallableClosureScopeLoop49Result;
+use super::MlSource1TemporaryPlanCallableClosureScopeLoop50Result;
+use super::MlSource1TemporaryPlanCallableClosureScopeLoop51Result;
+use super::MlSource1TemporaryPlanCallableMutableCellsLoop54Result;
+use super::MlSource1TemporaryPlanCallableStatementCapturesLoop45Result;
+use super::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Result;
+use super::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Result;
+use super::callable_cell_observations;
 use super::callable_field;
 use super::callable_tag;
 use super::callable_truthy;
 use super::ml_array;
-use super::ml_callable_append_name_loop42;
-use super::ml_callable_cell_observations_loop55;
-use super::ml_callable_cell_observations_loop56;
-use super::ml_callable_cell_observations_loop57;
-use super::ml_plan_callable_closure_scope_loop45;
-use super::ml_plan_callable_closure_scope_loop46;
-use super::ml_plan_callable_closure_scope_loop47;
-use super::ml_plan_callable_closure_scope_loop48;
-use super::ml_plan_callable_closure_scope_loop49;
-use super::ml_plan_callable_mutable_cells_loop52;
-use super::ml_plan_callable_mutable_cells_loop53;
-use super::ml_plan_callable_parameter_ownership_loop37;
-use super::ml_plan_callable_statement_captures_loop43;
-use super::ml_plan_callable_surface_parameters_loop50;
-use super::ml_read_callable_closure_parameter_error_loop39;
-use super::ml_read_callable_closure_parameter_error_loop40;
-use super::ml_read_callable_function_children_loop38;
-use super::ml_render_callable_parameters_loop51;
-use super::plan_callable_parameter_types;
+use super::ml_number;
 use super::read_callable_statement_uses;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+use super::source_ml_source1_temporary_callable_append_name_loop44;
+use super::source_ml_source1_temporary_callable_outer_assignments_loop34;
+use super::source_ml_source1_temporary_plan_callable_application_constraints_loop38;
+use super::source_ml_source1_temporary_plan_callable_closure_scope_loop47;
+use super::source_ml_source1_temporary_plan_callable_closure_scope_loop48;
+use super::source_ml_source1_temporary_plan_callable_closure_scope_loop49;
+use super::source_ml_source1_temporary_plan_callable_closure_scope_loop50;
+use super::source_ml_source1_temporary_plan_callable_closure_scope_loop51;
+use super::source_ml_source1_temporary_plan_callable_function_type_loop36;
+use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop54;
+use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop55;
+use super::source_ml_source1_temporary_plan_callable_parameter_ownership_loop39;
+use super::source_ml_source1_temporary_plan_callable_parameter_types_loop35;
+use super::source_ml_source1_temporary_plan_callable_statement_captures_loop45;
+use super::source_ml_source1_temporary_plan_callable_surface_parameters_loop52;
+use super::source_ml_source1_temporary_plan_callable_type_constraints_loop37;
+use super::source_ml_source1_temporary_read_callable_closure_parameter_error_loop41;
+use super::source_ml_source1_temporary_read_callable_closure_parameter_error_loop42;
+use super::source_ml_source1_temporary_read_callable_function_children_loop40;
+use super::source_ml_source1_temporary_render_callable_parameters_loop53;
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn callable_outer_assignments(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+) -> Vec<f64> {
+    if (node < 0f64)
+        || (((self::read_required_text_fact(forms, node)) != "object")
+            && ((self::read_required_text_fact(forms, node)) != "array"))
+    {
+        Vec::<f64>::new()
+    } else if (self::callable_tag(texts, starts, counts, labels, targets, node, "k")) == "lambda" {
+        vec![1f64, node]
+    } else {
+        {
+            let result = Vec::<f64>::new();
+            {
+                let result_3 =
+                    if (self::callable_tag(texts, starts, counts, labels, targets, node, "s"))
+                        == "assign"
+                    {
+                        {
+                            vec![
+                                0f64,
+                                self::callable_field(starts, counts, labels, targets, node, "name"),
+                            ]
+                        }
+                    } else {
+                        result
+                    };
+                {
+                    let at = self::read_required_number_fact(starts, node);
+                    {
+                        self::source_ml_source1_temporary_callable_outer_assignments_loop34(
+                            forms, texts, starts, counts, labels, targets, node, result_3, at,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_callable_function_reference(
+    surface_kind: &str,
+    expected_kind: &str,
+    declaration_kind: &str,
+) -> bool {
+    (declaration_kind == "fn")
+        && ((surface_kind == "functionValue")
+            || ((surface_kind == "name") && (expected_kind == "function")))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn require_callable_computed_application(
+    head_kind: &str,
+    path_length: f64,
+    local_kind: &str,
+) -> bool {
+    ((head_kind != "name") && (head_kind != "dotCtor"))
+        || (((head_kind == "name") && (path_length == 1f64)) && (local_kind == "function"))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_callable_application_error(
+    kind: &str,
+    parameters: f64,
+    arguments_count: f64,
+) -> String {
+    if kind == "function" {
+        if parameters == arguments_count {
+            String::new()
+        } else {
+            format!(
+                "function expects {} arguments",
+                self::ml_number::js_number(parameters)
+            )
+        }
+    } else {
+        String::from("the called value is not a function")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn plan_callable_parameter_types(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    parameters: f64,
+    expected: f64,
+) -> Vec<f64> {
+    {
+        let expected_kind =
+            self::callable_tag(texts, starts, counts, labels, targets, expected, "kind");
+        {
+            let expected_params =
+                self::callable_field(starts, counts, labels, targets, expected, "params");
+            {
+                let result = Vec::<f64>::new();
+                {
+                    let at = 0f64;
+                    {
+                        self::source_ml_source1_temporary_plan_callable_parameter_types_loop35(
+                            forms,
+                            texts,
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            parameters,
+                            &(expected_kind),
+                            expected_params,
+                            result,
+                            at,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_callable_function_type(
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    parameters: f64,
+    result: f64,
+) -> Vec<f64> {
+    {
+        let plan = vec![result];
+        {
+            let at = 0f64;
+            {
+                self::source_ml_source1_temporary_plan_callable_function_type_loop36(
+                    starts, counts, labels, targets, parameters, plan, at,
+                )
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_callable_type_constraints(
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    left: f64,
+    right: f64,
+) -> Vec<f64> {
+    {
+        let left_params = self::callable_field(starts, counts, labels, targets, left, "params");
+        {
+            let right_params =
+                self::callable_field(starts, counts, labels, targets, right, "params");
+            if ((left_params < 0f64) || (right_params < 0f64))
+                || ((self::read_required_number_fact(counts, left_params))
+                    != (self::read_required_number_fact(counts, right_params)))
+            {
+                vec![-1f64]
+            } else {
+                {
+                    let pairs = Vec::<f64>::new();
+                    {
+                        let at = 0f64;
+                        {
+                            let pairs_2 = self::source_ml_source1_temporary_plan_callable_type_constraints_loop37(starts, counts, targets, left_params, right_params, pairs, at);
+                            {
+                                let source_ml_source2_concat_value49 = pairs_2;
+                                {
+                                    let source_ml_source2_concat_value50 = vec![
+                                        self::callable_field(
+                                            starts, counts, labels, targets, left, "ret",
+                                        ),
+                                        self::callable_field(
+                                            starts, counts, labels, targets, right, "ret",
+                                        ),
+                                    ];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<f64>::new(),
+                                            source_ml_source2_concat_value49,
+                                        ),
+                                        source_ml_source2_concat_value50,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+// The checked primitive-column interface retains every ordered source argument.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "checked source arguments and captured continuation state retain their original order"
+)]
+pub fn plan_callable_application_constraints(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    fn_: f64,
+    arguments_node: f64,
+    candidate: f64,
+) -> Vec<f64> {
+    {
+        let params = self::callable_field(starts, counts, labels, targets, fn_, "params");
+        if ((((self::callable_tag(texts, starts, counts, labels, targets, fn_, "kind"))
+            != "function")
+            || (params < 0f64))
+            || (arguments_node < 0f64))
+            || ((self::read_required_number_fact(counts, params))
+                != (self::read_required_number_fact(counts, arguments_node)))
+        {
+            vec![-1f64, fn_, candidate]
+        } else {
+            {
+                let plan = vec![self::callable_field(
+                    starts, counts, labels, targets, fn_, "ret",
+                )];
+                {
+                    let at = 0f64;
+                    {
+                        self::source_ml_source1_temporary_plan_callable_application_constraints_loop38(starts, counts, targets, arguments_node, params, plan, at)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn require_callable_structural_inference(kind: &str, type_kind: &str, operation: &str) -> bool {
     if ((((kind == "lambda") || (kind == "functionValue")) || (type_kind == "function"))
@@ -70,7 +332,7 @@ pub fn require_callable_structural_inference(kind: &str, type_kind: &str, operat
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn require_callable_named_inference(
     head_kind: &str,
@@ -80,7 +342,7 @@ pub fn require_callable_named_inference(
     (head_kind == "name") && ((path_length != 1f64) || !local_present)
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_callable_application_inference_result(
     kind: &str,
@@ -91,7 +353,7 @@ pub fn accept_callable_application_inference_result(
         && ((parameters).partial_cmp(&(arguments_count)) == Some(std::cmp::Ordering::Equal))
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_callable_parameter_ownership(
     starts: &[f64],
@@ -107,7 +369,7 @@ pub fn plan_callable_parameter_ownership(
             {
                 let at = 0f64;
                 {
-                    self::ml_plan_callable_parameter_ownership_loop37(
+                    self::source_ml_source1_temporary_plan_callable_parameter_ownership_loop39(
                         starts, counts, targets, owner, parameters, plan, at,
                     )
                 }
@@ -116,7 +378,7 @@ pub fn plan_callable_parameter_ownership(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_function_children(
     starts: &[f64],
@@ -132,17 +394,24 @@ pub fn read_callable_function_children(
             {
                 let at = 0f64;
                 {
-                    let children_2 = self::ml_read_callable_function_children_loop38(
-                        starts, counts, targets, params, children, at,
-                    );
-                    {
-                        let (ml_append_right, ml_append_left) = (
-                            vec![self::callable_field(
-                                starts, counts, labels, targets, type_, "ret",
-                            )],
-                            children_2,
+                    let children_2 =
+                        self::source_ml_source1_temporary_read_callable_function_children_loop40(
+                            starts, counts, targets, params, children, at,
                         );
-                        self::ml_array::append(ml_append_left, ml_append_right)
+                    {
+                        let source_ml_source2_concat_value51 = children_2;
+                        {
+                            let source_ml_source2_concat_value52 = vec![self::callable_field(
+                                starts, counts, labels, targets, type_, "ret",
+                            )];
+                            self::ml_array::append(
+                                self::ml_array::append(
+                                    Vec::<f64>::new(),
+                                    source_ml_source2_concat_value51,
+                                ),
+                                source_ml_source2_concat_value52,
+                            )
+                        }
                     }
                 }
             }
@@ -150,7 +419,7 @@ pub fn read_callable_function_children(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 // The checked primitive-column interface retains every ordered source argument.
 #[expect(
@@ -194,7 +463,20 @@ pub fn plan_callable_lambda_inference(
                             self::callable_field(starts, counts, labels, targets, lambda, "params"),
                             expected,
                         );
-                        self::ml_array::append(vec![ret, if present { 1f64 } else { 0f64 }], params)
+                        {
+                            let source_ml_source2_concat_value53 =
+                                vec![ret, if present { 1f64 } else { 0f64 }];
+                            {
+                                let source_ml_source2_concat_value54 = params;
+                                self::ml_array::append(
+                                    self::ml_array::append(
+                                        Vec::<f64>::new(),
+                                        source_ml_source2_concat_value53,
+                                    ),
+                                    source_ml_source2_concat_value54,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -202,7 +484,7 @@ pub fn plan_callable_lambda_inference(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_closure_prefix_error(
     expression: bool,
@@ -218,59 +500,70 @@ pub fn read_callable_closure_prefix_error(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_closure_parameter_error(names: &[String], defaults: &[bool]) -> String {
     {
         let at = 0f64;
         {
-            let ml_s10 = self::ml_read_callable_closure_parameter_error_loop39(names, at);
-            match ml_s10 {
-                self::MlReadCallableClosureParameterErrorLoop39Result::MlReadCallableClosureParameterErrorLoop39Done(at_2) => {
+            let source_ml_source2_s55 =
+                self::source_ml_source1_temporary_read_callable_closure_parameter_error_loop41(
+                    names, at,
+                );
+            match source_ml_source2_s55 {
+                self::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Result::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Done(at_2) => {
                     {
                         let at_3 = 0f64;
                         {
-                            let ml_s11 = self::ml_read_callable_closure_parameter_error_loop40(defaults, at_3);
-                            match ml_s11 {
-                                self::MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Done => {
+                            let source_ml_source2_s56 = self::source_ml_source1_temporary_read_callable_closure_parameter_error_loop42(defaults, at_3);
+                            match source_ml_source2_s56 {
+                                self::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Result::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Done => {
                                     String::new()
                                 }
-                                self::MlReadCallableClosureParameterErrorLoop40Result::MlReadCallableClosureParameterErrorLoop40Return(ml_result40) => {
-                                    ml_result40
+                                self::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Result::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Return(source_ml_source1_temporary_result42) => {
+                                    source_ml_source1_temporary_result42
                                 }
                             }
                         }
                     }
                 }
-                self::MlReadCallableClosureParameterErrorLoop39Result::MlReadCallableClosureParameterErrorLoop39Return(ml_result40_2) => {
-                    ml_result40_2
+                self::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Result::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Return(source_ml_source1_temporary_result42_2) => {
+                    source_ml_source1_temporary_result42_2
                 }
             }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn callable_append_name(texts: &[String], identities: &[f64], identity: f64) -> Vec<f64> {
     {
         let at = 0f64;
         {
-            let ml_s12 = self::ml_callable_append_name_loop42(texts, identities, identity, at);
-            match ml_s12 {
-                self::MlCallableAppendNameLoop42Result::MlCallableAppendNameLoop42Done => {
-                    let (ml_append_right, ml_append_left) = (vec![identity], identities.to_vec());
-                    self::ml_array::append(ml_append_left, ml_append_right)
+            let source_ml_source2_s57 =
+                self::source_ml_source1_temporary_callable_append_name_loop44(
+                    texts, identities, identity, at,
+                );
+            match source_ml_source2_s57 {
+                self::MlSource1TemporaryCallableAppendNameLoop44Result::MlSource1TemporaryCallableAppendNameLoop44Done => {
+                    {
+                        let source_ml_source2_concat_value58 = identities.to_vec();
+                        {
+                            let source_ml_source2_concat_value59 = vec![identity];
+                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value58), source_ml_source2_concat_value59)
+                        }
+                    }
                 }
-                self::MlCallableAppendNameLoop42Result::MlCallableAppendNameLoop42Return(
-                    ml_result42,
-                ) => ml_result42,
+                self::MlSource1TemporaryCallableAppendNameLoop44Result::MlSource1TemporaryCallableAppendNameLoop44Return(source_ml_source1_temporary_result44) => {
+                    source_ml_source1_temporary_result44
+                }
             }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 // The checked primitive-column interface retains every ordered source argument.
 #[expect(
@@ -299,17 +592,19 @@ pub fn plan_callable_statement_captures(
                 {
                     let at = 0f64;
                     {
-                        let ml_s13 = self::ml_plan_callable_statement_captures_loop43(
-                            texts,
-                            outer,
-                            &(events),
-                            assigned,
-                            free,
-                            at,
-                        );
-                        match ml_s13 {
-                            self::MlPlanCallableStatementCapturesLoop43Result::MlPlanCallableStatementCapturesLoop43Done(assigned_2, free_2) => {
-                                self::ml_array::append(self::ml_array::append(vec![(assigned_2.len() as f64)], assigned_2), free_2)
+                        let source_ml_source2_s60 = self::source_ml_source1_temporary_plan_callable_statement_captures_loop45(texts, outer, &(events), assigned, free, at);
+                        match source_ml_source2_s60 {
+                            self::MlSource1TemporaryPlanCallableStatementCapturesLoop45Result::MlSource1TemporaryPlanCallableStatementCapturesLoop45Done(assigned_2, free_2) => {
+                                {
+                                    let source_ml_source2_concat_value61 = vec![(assigned_2.len() as f64)];
+                                    {
+                                        let source_ml_source2_concat_value62 = assigned_2;
+                                        {
+                                            let source_ml_source2_concat_value63 = free_2;
+                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value61), source_ml_source2_concat_value62), source_ml_source2_concat_value63)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -319,7 +614,7 @@ pub fn plan_callable_statement_captures(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_callable_closure_scope(
     texts: &[String],
@@ -348,37 +643,46 @@ pub fn plan_callable_closure_scope(
                                 {
                                     let at = 0f64;
                                     {
-                                        let ml_s14 = self::ml_plan_callable_closure_scope_loop45(
-                                            texts, starts, counts, labels, targets, tokens, names,
-                                            at,
-                                        );
-                                        match ml_s14 {
-                                            self::MlPlanCallableClosureScopeLoop45Result::MlPlanCallableClosureScopeLoop45Done(names_2, at_2) => {
+                                        let source_ml_source2_s64 = self::source_ml_source1_temporary_plan_callable_closure_scope_loop47(texts, starts, counts, labels, targets, tokens, names, at);
+                                        match source_ml_source2_s64 {
+                                            self::MlSource1TemporaryPlanCallableClosureScopeLoop47Result::MlSource1TemporaryPlanCallableClosureScopeLoop47Done(names_2, at_2) => {
                                                 {
                                                     let at_3 = 0f64;
                                                     {
-                                                        let ml_s15 = self::ml_plan_callable_closure_scope_loop46(texts, starts, counts, targets, old_locals, locals, at_3);
-                                                        match ml_s15 {
-                                                            self::MlPlanCallableClosureScopeLoop46Result::MlPlanCallableClosureScopeLoop46Done(locals_2, at_4) => {
+                                                        let source_ml_source2_s65 = self::source_ml_source1_temporary_plan_callable_closure_scope_loop48(texts, starts, counts, targets, old_locals, locals, at_3);
+                                                        match source_ml_source2_s65 {
+                                                            self::MlSource1TemporaryPlanCallableClosureScopeLoop48Result::MlSource1TemporaryPlanCallableClosureScopeLoop48Done(locals_2, at_4) => {
                                                                 {
                                                                     let at_5 = 0f64;
                                                                     {
-                                                                        let ml_s16 = self::ml_plan_callable_closure_scope_loop47(texts, starts, counts, targets, old_temporal, temporal, &(names_2), at_5);
-                                                                        match ml_s16 {
-                                                                            self::MlPlanCallableClosureScopeLoop47Result::MlPlanCallableClosureScopeLoop47Done(temporal_2, at_6) => {
+                                                                        let source_ml_source2_s66 = self::source_ml_source1_temporary_plan_callable_closure_scope_loop49(texts, starts, counts, targets, old_temporal, temporal, &(names_2), at_5);
+                                                                        match source_ml_source2_s66 {
+                                                                            self::MlSource1TemporaryPlanCallableClosureScopeLoop49Result::MlSource1TemporaryPlanCallableClosureScopeLoop49Done(temporal_2, at_6) => {
                                                                                 {
                                                                                     let at_7 = 0f64;
                                                                                     {
-                                                                                        let ml_s17 = self::ml_plan_callable_closure_scope_loop48(texts, starts, counts, targets, old_mutable, mutable, at_7);
-                                                                                        match ml_s17 {
-                                                                                            self::MlPlanCallableClosureScopeLoop48Result::MlPlanCallableClosureScopeLoop48Done(mutable_2, at_8) => {
+                                                                                        let source_ml_source2_s67 = self::source_ml_source1_temporary_plan_callable_closure_scope_loop50(texts, starts, counts, targets, old_mutable, mutable, at_7);
+                                                                                        match source_ml_source2_s67 {
+                                                                                            self::MlSource1TemporaryPlanCallableClosureScopeLoop50Result::MlSource1TemporaryPlanCallableClosureScopeLoop50Done(mutable_2, at_8) => {
                                                                                                 {
                                                                                                     let at_9 = 0f64;
                                                                                                     {
-                                                                                                        let ml_s18 = self::ml_plan_callable_closure_scope_loop49(texts, starts, counts, labels, targets, tokens, locals_2, mutable_2, at_9);
-                                                                                                        match ml_s18 {
-                                                                                                            self::MlPlanCallableClosureScopeLoop49Result::MlPlanCallableClosureScopeLoop49Done(locals_3, mutable_3) => {
-                                                                                                                self::ml_array::append(self::ml_array::append(self::ml_array::append(vec![(locals_3.len() as f64), (temporal_2.len() as f64), (mutable_3.len() as f64)], locals_3), temporal_2), mutable_3)
+                                                                                                        let source_ml_source2_s68 = self::source_ml_source1_temporary_plan_callable_closure_scope_loop51(texts, starts, counts, labels, targets, tokens, locals_2, mutable_2, at_9);
+                                                                                                        match source_ml_source2_s68 {
+                                                                                                            self::MlSource1TemporaryPlanCallableClosureScopeLoop51Result::MlSource1TemporaryPlanCallableClosureScopeLoop51Done(locals_3, mutable_3) => {
+                                                                                                                {
+                                                                                                                    let source_ml_source2_concat_value69 = vec![(locals_3.len() as f64), (temporal_2.len() as f64), (mutable_3.len() as f64)];
+                                                                                                                    {
+                                                                                                                        let source_ml_source2_concat_value70 = locals_3;
+                                                                                                                        {
+                                                                                                                            let source_ml_source2_concat_value71 = temporal_2;
+                                                                                                                            {
+                                                                                                                                let source_ml_source2_concat_value72 = mutable_3;
+                                                                                                                                self::ml_array::append(self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value69), source_ml_source2_concat_value70), source_ml_source2_concat_value71), source_ml_source2_concat_value72)
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                    }
+                                                                                                                }
                                                                                                             }
                                                                                                         }
                                                                                                     }
@@ -408,7 +712,7 @@ pub fn plan_callable_closure_scope(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_callable_surface_parameters(
     starts: &[f64],
@@ -422,7 +726,7 @@ pub fn plan_callable_surface_parameters(
         {
             let at = 0f64;
             {
-                self::ml_plan_callable_surface_parameters_loop50(
+                self::source_ml_source1_temporary_plan_callable_surface_parameters_loop52(
                     starts, counts, labels, targets, tokens, plan, at,
                 )
             }
@@ -430,13 +734,13 @@ pub fn plan_callable_surface_parameters(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn require_callable_assigned_capture_field(count: f64) -> bool {
     count > 0f64
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_callable_surface_constructor(form: &str, known_function: bool) -> String {
     if form == "closure" {
@@ -450,7 +754,7 @@ pub fn read_callable_surface_constructor(form: &str, known_function: bool) -> St
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_callable_function_reference(format: &str, fn_: &str) -> String {
     if format == "Rust" {
@@ -460,7 +764,7 @@ pub fn render_callable_function_reference(format: &str, fn_: &str) -> String {
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_callable_application(format: &str, fn_: &str, args: &[String]) -> String {
     if (format == "Rust") || (format == "JavaScript") {
@@ -478,7 +782,7 @@ pub fn render_callable_application(format: &str, fn_: &str, args: &[String]) -> 
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_callable_lambda(
     format: &str,
@@ -531,26 +835,36 @@ pub fn render_callable_lambda(
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_callable_parameters(format: &str, names: &[String], types: &[String]) -> Vec<String> {
     {
         let parameters = Vec::<String>::new();
         {
             let at = 0f64;
-            { self::ml_render_callable_parameters_loop51(format, names, types, parameters, at) }
+            {
+                self::source_ml_source1_temporary_render_callable_parameters_loop53(
+                    format, names, types, parameters, at,
+                )
+            }
         }
     }
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn render_callable_function_type(format: &str, parameters: &[String], ret: &str) -> String {
     format!(
         "({})",
         ({
-            let (ml_append_right, ml_append_left) = (vec![ret.to_owned()], parameters.to_vec());
-            self::ml_array::append(ml_append_left, ml_append_right)
+            let source_ml_source2_concat_value73 = parameters.to_vec();
+            {
+                let source_ml_source2_concat_value74 = vec![ret.to_owned()];
+                self::ml_array::append(
+                    self::ml_array::append(Vec::<String>::new(), source_ml_source2_concat_value73),
+                    source_ml_source2_concat_value74,
+                )
+            }
         })
         .join(
             (if format == "Lean" {
@@ -563,7 +877,7 @@ pub fn render_callable_function_type(format: &str, parameters: &[String], ret: &
     )
 }
 
-/// Execute the complete checked source algorithm.
+/// Execute the checked shared source algorithm.
 #[must_use]
 pub fn plan_callable_mutable_cells(
     forms: &[String],
@@ -584,21 +898,22 @@ pub fn plan_callable_mutable_cells(
                 {
                     let at = 0f64;
                     {
-                        let ml_s19 = self::ml_plan_callable_mutable_cells_loop52(
-                            texts,
-                            &(events),
-                            captures,
-                            assigned,
-                            at,
-                        );
-                        match ml_s19 {
-                            self::MlPlanCallableMutableCellsLoop52Result::MlPlanCallableMutableCellsLoop52Done(captures_2, assigned_2, at_2) => {
+                        let source_ml_source2_s75 =
+                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop54(
+                                texts,
+                                &(events),
+                                captures,
+                                assigned,
+                                at,
+                            );
+                        match source_ml_source2_s75 {
+                            self::MlSource1TemporaryPlanCallableMutableCellsLoop54Result::MlSource1TemporaryPlanCallableMutableCellsLoop54Done(captures_2, assigned_2, at_2) => {
                                 {
                                     let cells = Vec::<f64>::new();
                                     {
                                         let at_3 = 0f64;
                                         {
-                                            self::ml_plan_callable_mutable_cells_loop53(texts, &(captures_2), &(assigned_2), at_3, cells)
+                                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop55(texts, &(captures_2), &(assigned_2), at_3, cells)
                                         }
                                     }
                                 }
@@ -608,322 +923,5 @@ pub fn plan_callable_mutable_cells(
                 }
             }
         }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn callable_cell_observations(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-) -> Vec<f64> {
-    if (node < 0f64)
-        || (((self::read_required_text_fact(forms, node)) != "object")
-            && ((self::read_required_text_fact(forms, node)) != "array"))
-    {
-        Vec::<f64>::new()
-    } else {
-        {
-            let events = Vec::<f64>::new();
-            {
-                let events_3 =
-                    if (self::callable_tag(texts, starts, counts, labels, targets, node, "s"))
-                        == "assign"
-                    {
-                        {
-                            vec![
-                                1f64,
-                                self::callable_field(starts, counts, labels, targets, node, "name"),
-                            ]
-                        }
-                    } else {
-                        events
-                    };
-                {
-                    let events_6 = if (self::callable_tag(
-                        texts, starts, counts, labels, targets, node, "k",
-                    )) == "lambda"
-                    {
-                        {
-                            let captured = self::callable_field(
-                                starts, counts, labels, targets, node, "captures",
-                            );
-                            {
-                                let assigned = self::callable_field(
-                                    starts,
-                                    counts,
-                                    labels,
-                                    targets,
-                                    node,
-                                    "assignedCaptures",
-                                );
-                                {
-                                    let at = 0f64;
-                                    {
-                                        let ml_s20 = self::ml_callable_cell_observations_loop55(
-                                            starts, counts, targets, events_3, captured, at,
-                                        );
-                                        match ml_s20 {
-                                            self::MlCallableCellObservationsLoop55Result::MlCallableCellObservationsLoop55Done(events_4, at_2) => {
-                                                {
-                                                    let at_3 = 0f64;
-                                                    {
-                                                        self::ml_callable_cell_observations_loop56(starts, counts, targets, events_4, assigned, at_3)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        events_3
-                    };
-                    {
-                        let at_4 = self::read_required_number_fact(starts, node);
-                        {
-                            self::ml_callable_cell_observations_loop57(
-                                forms, texts, starts, counts, labels, targets, node, events_6, at_4,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_cell_lowering(operation: &str, reference: bool) -> String {
-    if reference {
-        if operation == "read" {
-            String::from("cellRead")
-        } else if operation == "assign" {
-            String::from("cellWrite")
-        } else if operation == "declare" {
-            String::from("cellAllocate")
-        } else {
-            String::new()
-        }
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn render_callable_cell_parameter_name(source: &str, reference: bool) -> String {
-    if reference {
-        format!("ml_cell_{}", source.to_owned())
-    } else {
-        source.to_owned()
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_cell_error(kind: &str, operation: &str) -> String {
-    if kind == "cell" {
-        String::new()
-    } else if operation == "cellRead" {
-        String::from("reading a value requires a reference cell")
-    } else {
-        String::from("writing a value requires a reference cell")
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn plan_callable_cell_element(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-    expected: f64,
-) -> Vec<f64> {
-    {
-        let type_ = self::callable_field(starts, counts, labels, targets, node, "type");
-        {
-            let element = self::callable_field(starts, counts, labels, targets, type_, "element");
-            if self::callable_truthy(forms, texts, element) {
-                vec![element, 1f64]
-            } else {
-                vec![
-                    self::callable_field(starts, counts, labels, targets, expected, "element"),
-                    0f64,
-                ]
-            }
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn plan_callable_cell_read_inference(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    cell: f64,
-    resolved: f64,
-) -> Vec<f64> {
-    if (self::callable_tag(texts, starts, counts, labels, targets, resolved, "kind")) == "cell" {
-        vec![self::callable_field(
-            starts, counts, labels, targets, resolved, "element",
-        )]
-    } else {
-        vec![-1f64, cell]
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn plan_callable_cell_option_binding(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    resolved: f64,
-    value: f64,
-) -> Vec<f64> {
-    {
-        let element = self::callable_field(starts, counts, labels, targets, resolved, "element");
-        if (((self::callable_tag(texts, starts, counts, labels, targets, resolved, "kind"))
-            != "cell")
-            || ((self::callable_tag(texts, starts, counts, labels, targets, element, "kind"))
-                != "var"))
-            || ((self::callable_tag(texts, starts, counts, labels, targets, value, "kind"))
-                != "option")
-        {
-            Vec::<f64>::new()
-        } else {
-            vec![
-                self::callable_field(starts, counts, labels, targets, element, "id"),
-                value,
-            ]
-        }
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn render_callable_cell_operation(
-    format: &str,
-    operation: &str,
-    cell: &str,
-    value: &str,
-    body: &str,
-    cell_name: &str,
-    value_name: &str,
-) -> String {
-    if format == "JavaScript" {
-        if operation == "cellAllocate" {
-            format!("({{ value: {} }})", value.to_owned())
-        } else if operation == "cellRead" {
-            format!("({}).value", cell.to_owned())
-        } else {
-            format!(
-                "(({}).value = {}, {})",
-                cell.to_owned(),
-                value.to_owned(),
-                body.to_owned()
-            )
-        }
-    } else if operation == "cellAllocate" {
-        format!(
-            "std::rc::Rc::new(std::cell::RefCell::new({}))",
-            value.to_owned()
-        )
-    } else if operation == "cellRead" {
-        format!(
-            "{{ let ml_cell_value = {}.borrow().clone(); ml_cell_value }}",
-            cell.to_owned()
-        )
-    } else {
-        format!(
-            "{{ let {} = {}; let {} = {}; *{}.borrow_mut() = {}; {} }}",
-            cell_name.to_owned(),
-            cell.to_owned(),
-            value_name.to_owned(),
-            value.to_owned(),
-            cell_name.to_owned(),
-            value_name.to_owned(),
-            body.to_owned()
-        )
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_reference_obligation(temporal: bool, local: bool) -> String {
-    if temporal {
-        String::from(
-            "the binding is in its temporal dead zone, where reading it throws a ReferenceError",
-        )
-    } else if local {
-        String::new()
-    } else {
-        String::from("functions are only portable when called")
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_reference_construct(name: &str, temporal: bool) -> String {
-    if temporal {
-        format!("use of {} before its declaration", name.to_owned())
-    } else {
-        format!("function value {}", name.to_owned())
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_renaming_field(field: f64) -> String {
-    if field == 0f64 {
-        String::from("path")
-    } else if field == 1f64 {
-        String::from("params")
-    } else if field == 2f64 {
-        String::from("body")
-    } else if field == 3f64 {
-        String::from("cell")
-    } else if field == 4f64 {
-        String::from("value")
-    } else if field == 5f64 {
-        String::from("default")
-    } else if field == 6f64 {
-        String::from("k")
-    } else if field == 7f64 {
-        String::from("span")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the complete checked source algorithm.
-#[must_use]
-pub fn read_callable_renaming_constant(constant: f64) -> String {
-    if constant == 0f64 {
-        String::from("cellRead")
-    } else {
-        String::new()
     }
 }
