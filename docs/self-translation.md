@@ -634,6 +634,13 @@ three corrected refusals with exact historical expectations and independent
 original-Rust value controls. Complete paired graphs, codecs and all four
 emissions remain mandatory. No control executed during this draft.
 
+Irrefutable nominal let bindings reuse the same ordinary match and product
+terms. One shared source rule requires actual single-constructor owners and
+irrefutable children; the native rule is generated automatically. Host adapters
+retain source patterns, field ownership and fresh temporary names. Twenty
+future values/aborts and four refusals add complete paired graph, codec,
+four-emission and independent original-Rust controls. None executed.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

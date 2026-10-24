@@ -17,7 +17,7 @@ impl RustParser {
         }
         let pattern = self.product_binding_pattern()?;
         let mut names = std::collections::HashSet::new();
-        Self::validate_product_binding_names(&pattern, &mut names)?;
+        self.validate_product_binding_names(&pattern, &mut names)?;
         let ty = if self.cursor.eat(":").is_some() {
             Some(self.parse_type()?)
         } else {
@@ -95,6 +95,9 @@ impl RustParser {
                 span(&token, &token),
             ));
         }
+        if let Some(pattern) = self.nominal_binding_pattern()? {
+            return Ok(ProductBindingPattern::Nominal(pattern));
+        }
         let name = self.cursor.identifier(Some("let"))?;
         if name.value == "true" || name.value == "false" {
             return Err(unsupported(
@@ -119,6 +122,7 @@ impl RustParser {
     }
 
     pub(super) fn validate_product_binding_names(
+        &self,
         pattern: &ProductBindingPattern,
         names: &mut std::collections::HashSet<String>,
     ) -> Result<()> {
@@ -134,10 +138,21 @@ impl RustParser {
             }
             ProductBindingPattern::Tuple { items, .. } => {
                 for item in items {
-                    Self::validate_product_binding_names(item, names)?;
+                    self.validate_product_binding_names(item, names)?;
                 }
             }
             ProductBindingPattern::Wildcard(_) | ProductBindingPattern::Unit { .. } => {}
+            ProductBindingPattern::Nominal(pattern) => {
+                for (name, range) in self.nominal_binding_names(pattern, false)? {
+                    if !names.insert(name) {
+                        return Err(unsupported(
+                            "duplicate tuple binding",
+                            "each name occurs only once in a destructuring pattern",
+                            range,
+                        ));
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -184,6 +199,9 @@ impl RustParser {
         bindings: &mut Vec<Binding>,
     ) -> Result<()> {
         match pattern {
+            ProductBindingPattern::Nominal(pattern) => {
+                self.lower_nominal_binding(pattern, value, path, bindings)?;
+            }
             ProductBindingPattern::Name(token) => {
                 self.origins.bind(&token.value, &value, path, None)?;
                 bindings.push(Binding {

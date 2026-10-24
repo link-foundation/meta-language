@@ -41,6 +41,11 @@ export function planRustRecordUpdateFields(declared, supplied) {
 export function acceptRustRecordUpdateOwner(structure, known, actual, expected, wrappers, diverging) {
   return structure && (diverging || known && actual === expected && wrappers === 0);
 }
+/** @param {string} kind @param {boolean} known @param {number} variants @param {number} arity @param {number} fields @returns {boolean} */
+export function acceptRustIrrefutablePatternNode(kind, known, variants, arity, fields) {
+  if (kind === 'wild' || kind === 'bind') return true;
+  return kind === 'ctor' && known && variants === 1 && arity === fields;
+}
 /** @param {string[]} reserved @param {number} count @returns {string[]} */
 export function readRustRecordBindingNames(reserved, count) {
   const names = [];

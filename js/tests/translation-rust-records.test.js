@@ -11,10 +11,10 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-l
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const[major,minor]=process.versions.node.split('.').map(Number);
-for(const filename of['rust-records','rust-record-layout','rust-raw-identifiers']){
+for(const filename of['rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings']){
 const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
-test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':'Rust raw identifiers retain complete paired controls',()=>{
+test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':filename==='rust-raw-identifiers'?'Rust raw identifiers retain complete paired controls':'Rust irrefutable nominal bindings retain complete paired controls',()=>{
  const program=checkProgram(parseRust(fixture.source)),js=emitJavaScript(program),packet=encodeTypedProgramLinks(program);
  for(const target of['JavaScript','Rust','Lean','Rocq']){
   const original=emitTypedProgramLinks(packet.network,packet.root,target);

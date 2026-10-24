@@ -6,7 +6,7 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
-import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern } from './rust-records.js';
+import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding } from './rust-records.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -764,6 +764,10 @@ class RustParser {
     const pattern = this.productBindingPattern();
     const names = new Set();
     const validateNames = binding => {
+      if(binding.k==='nominal'){
+        for(const item of rustNominalBindingNames(this,binding.pattern))validateNames({k:'name',...item});
+        return;
+      }
       if (binding.k === 'name') {
         if (names.has(binding.name)) throw unsupported('duplicate tuple binding', 'each name occurs only once in a destructuring pattern', binding.span);
         names.add(binding.name);
@@ -803,6 +807,8 @@ class RustParser {
     const mutable=Boolean(allowMutable&&this.localValueStateModel&&c.eat('mut'));
     if (c.is('mut')) throw unsupported('mutable tuple binding', 'mutation is outside the immutable product model', span(token, token));
     if (c.is('ref') || c.is('&')) throw unsupported('reference tuple binding', 'product bindings must retain direct Copy values', span(token, token));
+    const nominal=readRustNominalBindingPattern(this);
+    if(nominal)return nominal;
     if (c.eat('_')) return { k: 'wild', span: { start: token.start, end: token.end } };
     if (c.eat('(')) {
       if (c.eat(')')) return { k: 'unit', span: { start: token.start, end: c.tokens[c.index - 1].end } };
@@ -826,6 +832,7 @@ class RustParser {
   }
 
   lowerProductBinding(pattern, value, path, bindings) {
+    if(pattern.k==='nominal'){lowerRustNominalBinding(this,pattern.pattern,value,path,bindings);return;}
     if (pattern.k === 'wild') return;
     if (pattern.k === 'name') {
       this.origins.bind(pattern.name, value, path);

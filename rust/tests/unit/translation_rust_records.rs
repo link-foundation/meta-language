@@ -45,6 +45,15 @@ fn raw_identifiers_preserve_names_tokens_cursor_meaning_and_original_values() {
     );
 }
 
+#[test]
+fn nominal_bindings_preserve_complete_graphs_codecs_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/bindings.mjs",
+        "Rust nominal bindings",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,

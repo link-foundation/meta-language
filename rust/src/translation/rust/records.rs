@@ -8,6 +8,7 @@ use crate::translation::rust_record_rules::{
     read_rust_record_constructor_name, read_rust_record_field_position,
 };
 
+mod bindings;
 mod namespaces;
 mod patterns;
 mod updates;

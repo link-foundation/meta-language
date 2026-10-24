@@ -118,6 +118,26 @@ pub fn accept_rust_record_update_owner(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_rust_irrefutable_pattern_node(
+    kind: &self::ml_string::Text,
+    known: bool,
+    variants: f64,
+    arity: f64,
+    fields: f64,
+) -> bool {
+    if ((*kind) == (self::ml_string::Text::from_units(vec![119, 105, 108, 100])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![98, 105, 110, 100])))
+    {
+        true
+    } else {
+        ((((*kind) == (self::ml_string::Text::from_units(vec![99, 116, 111, 114]))) && known)
+            && (variants == 1f64))
+            && ((arity).partial_cmp(&(fields)) == Some(std::cmp::Ordering::Equal))
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_record_binding_names(
     reserved: &[self::ml_string::Text],
     count: f64,

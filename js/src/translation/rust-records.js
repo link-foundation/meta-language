@@ -1,7 +1,7 @@
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
-import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
+import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -200,4 +200,46 @@ export function readRustRecordPattern(parser,segments,path,aliases,start){
  if(plan[0]<0)throw typeError('a Rust record pattern has duplicate, unknown or missing fields',where);
  return{k:'ctor',path:['crate',...record.constructor.split('.')],
   args:plan.slice(1).map(index=>index<0?{k:'wild',span:{start:rest.start,end:rest.end}}:patterns[index]),span:where};
+}
+
+export function readRustNominalBindingPattern(parser){
+ const c=parser.cursor;
+ if(c.peek().kind!=='identifier')return null;
+ const candidate=parser.origins.lookup(parser.resolve([c.peek().value],parser.modulePath),parser.modulePath);
+ if(!['::','(','{'].includes(c.peek(1).value)&&candidate?.k!=='ctor'&&candidate?.k!=='data')return null;
+ const aliases=[];parser.recordPatternDepth+=1;
+ let pattern;
+ try{pattern=parser.pattern(parser.modulePath,aliases);}finally{parser.recordPatternDepth-=1;}
+ if(aliases.length)throw unsupported('Rust nominal binding alias','whole-value aliases require their complete move and borrow interpretation',pattern.span);
+ return{k:'nominal',pattern,span:pattern.span};
+}
+
+export function rustNominalBindingNames(parser,pattern,validate=false){
+ const names=[];
+ const visit=node=>{
+  const entry=node.k==='ctor'?parser.origins.lookup(node.path,parser.modulePath,['ctor']):node.k==='bindOrCtor'?parser.origins.lookup([node.name],parser.modulePath,['ctor']):null;
+  const kind=entry?'ctor':node.k==='bindOrCtor'?'bind':node.k;
+  const variants=entry?[...parser.origins.catalog.values()].filter(item=>item.k==='ctor'&&item.owner===entry.owner).length:0;
+  if(validate&&!parser.origins.collecting&&!acceptRustIrrefutablePatternNode(kind,Boolean(entry),variants,node.args?.length??0,entry?.fields.length??0))throw unsupported('refutable product binding','only immutable names, ignored fields and anonymous tuple products are admitted',node.span);
+  if(kind==='bind')names.push({name:node.name,span:node.span});
+  for(const item of node.args??[])visit(item);
+ };
+ visit(pattern);return names;
+}
+
+export function lowerRustNominalBinding(parser,pattern,value,path,bindings){
+ const names=rustNominalBindingNames(parser,pattern,true),scope=parser.origins.cases([pattern],value,path);
+ const members=names.map(item=>({k:'name',path:[item.name],span:item.span}));
+ const body=members.length===1?members[0]:members.length?{k:'tuple',items:members,span:pattern.span}:{k:'unit',span:pattern.span};
+ const matched={k:'match',scrutinees:[value],rows:[{patterns:[pattern],body}],span:pattern.span};
+ const bundle=parser.freshProductBinding();
+ bindings.push({name:bundle,value:matched,span:pattern.span});
+ for(const[index,item]of names.entries()){
+  const object={k:'name',path:[bundle],span:item.span};
+  const projection=members.length===1?object:{k:'tupleIndex',object,index,span:item.span};
+  const origin=scope.get(item.name);
+  if(origin)parser.origins.mark(projection,origin);
+  parser.origins.bind(item.name,projection,path);
+  bindings.push({name:item.name,value:projection,span:item.span});
+ }
 }

@@ -463,6 +463,7 @@ enum ProductBindingPattern {
     Unit {
         span: Option<Span>,
     },
+    Nominal(SPattern),
 }
 
 impl ProductBindingPattern {
@@ -470,6 +471,7 @@ impl ProductBindingPattern {
         match self {
             Self::Name(token) | Self::Wildcard(token) => Some(token.span()),
             Self::Tuple { span, .. } | Self::Unit { span } => *span,
+            Self::Nominal(pattern) => pattern.span,
         }
     }
 }

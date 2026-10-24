@@ -2846,6 +2846,23 @@ original/emitted Rust execution. None ran. Mutable/custom dereference, full
 move/drop/Copy reasoning, Rc/Arc/Pin and escaping-region behavior remain
 implementation obligations; immutable value encoding does not establish them.
 
+Irrefutable nominal local bindings now use that same constructor/pattern
+algebra. Recursive admission requires one actual constructor per nominal owner,
+matching arity, immutable binders and irrefutable children. The source initializer
+is bound once, one match returns the bound values, and internal projections
+carry each actual field origin into later source operations. Fresh internal
+names exclude source identifiers; source scopes retain ordinary shadowing.
+No new checked term or target runtime is introduced. The shared admission
+definition generates native source and typed Links. The
+[let statement rules](https://doc.rust-lang.org/reference/statements.html#let-statements)
+and [refutability rules](https://doc.rust-lang.org/reference/patterns.html#refutability)
+define this interpretation. Twenty future values/aborts and four exact refusals
+cover named/tuple/unit records, nested records, single-variant enums, aliases,
+annotations, strings, borrowed fields, hygiene and initializer failure order.
+Complete paired graphs, both codecs, four emissions and original/emitted Rust
+controls remain unexecuted. Nominal fields containing tuple patterns, ref/mut/@
+bindings and broader move/borrow/drop semantics still need source work.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

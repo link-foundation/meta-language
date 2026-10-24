@@ -52,6 +52,10 @@ ordinary typed functions, including explicit immutable receiver lifetimes and
 nested standard Box/reference layers with shared candidate selection. Preserve
 three corrected refusal inputs in future independent source products.
 
+Draft irrefutable nominal Rust let patterns using ordinary matches, with exact
+field origins, one initializer evaluation and shared single-constructor rules.
+Retain nested records, source scopes and fresh internal names.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future
