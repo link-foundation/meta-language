@@ -6527,3 +6527,41 @@ emissions for split, ranges, searches, replacements and character templates.
 Forged operations, excess arity and false result types must still fail. These
 controls remain unexecuted. Other checked source projections and all earlier
 source, grammar, proof and resource obligations retain their full scope.
+
+
+### Ordinary Rust completion carriers draft
+
+Ordinary source functions now parse a private control tree before constructing
+core terms. Shared source decisions distinguish function results, statement
+fallthrough, bindings, conditionals and sequenced joins. A join reads its first
+statement through an explicit FunctionResult/StatementContinuation sum and
+places the single continuation in its sibling match arm, outside every branch's
+local bindings. Else-if parsing never consumes an enclosing continuation.
+False, zero, empty strings and Unit returned values remain distinct from
+fallthrough; no truthiness or absence sentinel represents completion.
+
+Carrier datatypes are generated lazily with hygienic names and the actual
+function return type, then installed in their owning module. Source leaf origins
+are retained while their lexical scopes are live. Every actual return/tail
+keeps the existing source ownership/result checks; aggregate source evidence
+comes from those actual leaves. Target AST assembly transports the shared
+construction decisions. All four emitters use the existing datatype/match
+algebra; no runtime callback or duplicated tail is required. Private type
+instantiations retain qualified identities pending complete contextual
+equivalence, while their construction definition is shared editable Links data.
+The source CST continues to retain its original tokens and spans independently.
+
+Selection uses actual return keywords or panic macro tokens, never literal
+keyword text, under the ordinary source context. Explicit source/completion
+profiles retain their original paths and composition obligations. Statement
+fallthrough currently needs actual direct Unit source evidence. General
+discarded value joins, nested expression returns, pattern control, loops,
+mutable/borrow/drop contexts and complete profile composition remain required.
+
+Two exact preceding mixed-exit/continuing-else-if refusal sources and all prior
+reader/assertion bytes remain in Links correction history. Current future
+controls require their admission, complete original/translated/native traces,
+source AST parity, both program/definition codecs and all four emissions. New
+values and aborts retain branch shadows, multiple joins, Boolean/zero results,
+owned and nominal payloads, nested modules and source name collisions. None
+executed; source/metadata regeneration and all earlier requirements remain.

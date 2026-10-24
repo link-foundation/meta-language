@@ -1,13 +1,73 @@
-//! Ordinary source control flow; actual terms follow shared source decisions.
+//! Actual token/term transport into the shared ordinary completion constructions.
 use super::{
-    Binding, Options, Result, RustParser, SExpr, SNode, Token, TokenKind, is_if_or_match, span,
-    unsupported,
+    Binding, Options, Result, RustParser, SCtor, SData, SExpr, SField, SItem, SNode, SourceOrigin,
+    Span, Token, TokenKind, Type, is_if_or_match, span, unsupported,
 };
 use crate::translation::rust_unit_value_rules as rules;
+use crate::translation::surface::{SCase, SCasePattern};
 
-struct Completion {
+struct CompletionTree {
     kind: String,
-    expression: SExpr,
+    node: CompletionNode,
+}
+enum CompletionNode {
+    Value(SExpr, SourceOrigin),
+    Return(SExpr, SourceOrigin),
+    Abort(SExpr, SourceOrigin),
+    Binding(Binding, Box<CompletionTree>),
+    Conditional {
+        condition: SExpr,
+        first: Box<CompletionTree>,
+        second: Box<CompletionTree>,
+        span: Option<Span>,
+    },
+    Sequence {
+        first: Box<CompletionTree>,
+        rest: Box<CompletionTree>,
+        span: Option<Span>,
+    },
+}
+impl CompletionNode {
+    fn name(&self) -> &str {
+        match self {
+            Self::Value(..) => "value",
+            Self::Return(..) => "return",
+            Self::Abort(..) => "abort",
+            Self::Binding(..) => "binding",
+            Self::Conditional { .. } => "conditional",
+            Self::Sequence { .. } => "sequence",
+        }
+    }
+}
+struct CompletionContext {
+    path: Vec<String>,
+    ret: Type,
+    source_result: SourceOrigin,
+    outputs: Vec<SourceOrigin>,
+    data: Option<Vec<String>>,
+}
+fn name(path: Vec<String>) -> SExpr {
+    SExpr::new(SNode::Name { path }, None)
+}
+fn binding(name: String, value: SExpr, body: SExpr, span: Option<Span>) -> SExpr {
+    SExpr::new(
+        SNode::Let {
+            name,
+            ty: None,
+            value: Box::new(value),
+            body: Box::new(body),
+        },
+        span,
+    )
+}
+fn tree_span(tree: &CompletionTree) -> Option<Span> {
+    match &tree.node {
+        CompletionNode::Value(expr, _)
+        | CompletionNode::Return(expr, _)
+        | CompletionNode::Abort(expr, _) => expr.span,
+        CompletionNode::Binding(binding, _) => binding.span,
+        CompletionNode::Conditional { span, .. } | CompletionNode::Sequence { span, .. } => *span,
+    }
 }
 
 impl RustParser {
@@ -41,6 +101,8 @@ impl RustParser {
                     if token.kind == TokenKind::Punct && (token.value == "{" || token.value == "}")
                     {
                         token.value.clone()
+                    } else if token.kind == TokenKind::Macro && token.value == "panic" {
+                        "abort".to_owned()
                     } else if self.cursor.is_at("return", index) {
                         "return".to_owned()
                     } else {
@@ -48,7 +110,7 @@ impl RustParser {
                     }
                 })
                 .collect::<Vec<_>>();
-            let presence = rules::read_rust_function_return_presence(&values);
+            let presence = rules::read_rust_function_completion_presence(&values);
             if presence != -1.0 {
                 return presence == 1.0;
             }
@@ -58,17 +120,45 @@ impl RustParser {
             count = count.saturating_mul(2);
         }
     }
-    pub(super) fn ordinary_function_completion(&mut self, path: &[String]) -> Result<SExpr> {
-        Ok(self.ordinary_completion_block(path)?.expression)
+    pub(super) fn ordinary_function_completion(
+        &mut self,
+        path: &[String],
+        ret: &Type,
+        source_result: &SourceOrigin,
+    ) -> Result<SExpr> {
+        let tree = self.ordinary_completion_block(path)?;
+        let mut context = CompletionContext {
+            path: path.to_vec(),
+            ret: ret.clone(),
+            source_result: source_result.clone(),
+            outputs: Vec::new(),
+            data: None,
+        };
+        let expression = self.lower_ordinary_completion(tree, true, &mut context)?;
+        let origin = self.origins.join(&context.outputs);
+        self.origins.mark(&expression, origin);
+        Ok(expression)
     }
-    fn ordinary_completion_block(&mut self, path: &[String]) -> Result<Completion> {
+    fn completion_leaf(&self, kind: &str, expression: SExpr, path: &[String]) -> CompletionTree {
+        let origin = self.origins.origin(&expression, path);
+        let (kind, node) = match kind {
+            "return" => ("returned", CompletionNode::Return(expression, origin)),
+            "abort" => ("aborted", CompletionNode::Abort(expression, origin)),
+            _ => ("value", CompletionNode::Value(expression, origin)),
+        };
+        CompletionTree {
+            kind: kind.to_owned(),
+            node,
+        }
+    }
+    fn ordinary_completion_block(&mut self, path: &[String]) -> Result<CompletionTree> {
         let open = self.cursor.expect("{", Some("block"))?;
         let previous = self.origins.enter(None);
         let result = self
             .ordinary_completion_sequence(path, &open)
-            .and_then(|result| {
+            .and_then(|tree| {
                 self.cursor.expect("}", Some("block"))?;
-                Ok(result)
+                Ok(tree)
             });
         self.origins.scope = previous;
         result
@@ -77,7 +167,7 @@ impl RustParser {
         &mut self,
         path: &[String],
         open: &Token,
-    ) -> Result<Completion> {
+    ) -> Result<CompletionTree> {
         let mut bindings = Vec::new();
         let mut result = loop {
             if self.cursor.eat(";").is_some() {
@@ -89,10 +179,11 @@ impl RustParser {
             }
             let token = self.peek();
             if self.cursor.is("}") {
-                break Completion {
-                    kind: "value".into(),
-                    expression: SExpr::new(SNode::Unit, span(open, &token)),
-                };
+                break self.completion_leaf(
+                    "value",
+                    SExpr::new(SNode::Unit, span(open, &token)),
+                    path,
+                );
             }
             if self.cursor.is("return") {
                 let bare = self.cursor.is_at(";", 1) || self.cursor.is_at("}", 1);
@@ -120,13 +211,37 @@ impl RustParser {
                         span(&token, self.cursor.peek()),
                     ));
                 }
-                break Completion {
-                    kind: "returned".into(),
-                    expression,
-                };
+                break self.completion_leaf("return", expression, path);
             }
             if self.cursor.is("if") {
-                break self.ordinary_conditional_completion(path, open)?;
+                let first = self.ordinary_conditional_completion(path)?;
+                let terminated = self.cursor.eat(";").is_some();
+                let continuation = !self.cursor.is("}");
+                if rules::accept_rust_ordinary_completed_alternative(&first.kind) {
+                    if continuation {
+                        return Err(unsupported(
+                            "unreachable continuation",
+                            "statements after a completed return are not removed by this model",
+                            tree_span(&first),
+                        ));
+                    }
+                    break first;
+                }
+                if continuation || terminated {
+                    let rest = self.ordinary_completion_sequence(path, open)?;
+                    let kind =
+                        rules::read_rust_ordinary_completion_sequence_kind(&first.kind, &rest.kind);
+                    let range = tree_span(&first);
+                    break CompletionTree {
+                        kind,
+                        node: CompletionNode::Sequence {
+                            first: Box::new(first),
+                            rest: Box::new(rest),
+                            span: range,
+                        },
+                    };
+                }
+                break first;
             }
             if token.kind == TokenKind::Identifier
                 && ["while", "loop", "for"].contains(&token.value.as_str())
@@ -154,26 +269,25 @@ impl RustParser {
             let abort = matches!(expression.node, SNode::Abort { .. });
             if terminated && !abort {
                 let origin = self.origins.origin(&expression, path);
-                let disposition = rules::read_rust_unit_statement_disposition(
+                if rules::read_rust_unit_statement_disposition(
                     expression.node.kind(),
                     self.origins.collecting,
                     origin.proven,
-                    origin.ty.as_ref().map_or("", super::Type::kind),
+                    origin.ty.as_ref().map_or("", Type::kind),
                     !origin.wrappers.is_empty(),
-                );
-                if disposition != "bind" {
+                ) != "bind"
+                {
                     return Err(unsupported(
                         "expression statement",
                         "statements with effects are outside the portable core in function bodies",
                         expression.span,
                     ));
                 }
-                let place = expression.span;
                 bindings.push(Binding {
                     name: self.fresh_product_binding(),
                     ty: None,
+                    span: expression.span,
                     value: expression,
-                    span: place,
                 });
                 continue;
             }
@@ -194,31 +308,18 @@ impl RustParser {
                 }
                 return Err(Self::fail("expected }", self.cursor.peek()));
             }
-            break Completion {
-                kind: if abort { "aborted" } else { "value" }.into(),
-                expression,
-            };
+            break self.completion_leaf(if abort { "abort" } else { "value" }, expression, path);
         };
-        let origin = self.origins.origin(&result.expression, path);
         for binding in bindings.into_iter().rev() {
-            result.expression = SExpr::new(
-                SNode::Let {
-                    name: binding.name,
-                    ty: binding.ty.map(Into::into),
-                    value: Box::new(binding.value),
-                    body: Box::new(result.expression),
-                },
-                binding.span,
-            );
+            let kind = result.kind.clone();
+            result = CompletionTree {
+                kind,
+                node: CompletionNode::Binding(binding, Box::new(result)),
+            };
         }
-        self.origins.mark(&result.expression, origin);
         Ok(result)
     }
-    fn ordinary_conditional_completion(
-        &mut self,
-        path: &[String],
-        open: &Token,
-    ) -> Result<Completion> {
+    fn ordinary_conditional_completion(&mut self, path: &[String]) -> Result<CompletionTree> {
         let token = self.cursor.advance();
         if self.cursor.is("let") {
             return Err(unsupported(
@@ -227,103 +328,244 @@ impl RustParser {
                 span(&token, self.cursor.peek()),
             ));
         }
-        let cond = self.expr(
+        let condition = self.expr(
             path,
             Options {
                 statement: false,
                 no_struct: true,
             },
         )?;
-        self.origins.direct(&cond, path, cond.span)?;
-        let then = self.ordinary_completion_block(path)?;
+        self.origins.direct(&condition, path, condition.span)?;
+        let first = self.ordinary_completion_block(path)?;
         let has_else = self.cursor.eat("else").is_some();
-        if has_else && self.cursor.is("if") && !rules::accept_rust_ordinary_else_if(&then.kind) {
-            return Err(unsupported(
-                "guarded return completion",
-                "an else-if after a continuing alternative needs its complete joined completion carrier",
-                span(&token, self.cursor.peek()),
-            ));
-        }
-        let mut otherwise = if has_else {
-            Some(if self.cursor.is("if") {
-                self.ordinary_conditional_completion(path, open)?
+        let second = if has_else {
+            if self.cursor.is("if") {
+                self.ordinary_conditional_completion(path)?
             } else {
                 self.ordinary_completion_block(path)?
-            })
-        } else {
-            None
-        };
-        let terminated = self.cursor.eat(";").is_some();
-        let action = rules::read_rust_ordinary_conditional_completion(
-            &then.kind,
-            otherwise.as_ref().map_or("", |value| value.kind.as_str()),
-            has_else,
-            !self.cursor.is("}"),
-            terminated,
-        );
-        match action.as_str() {
-            "guarded continuation" => {
-                otherwise = Some(self.ordinary_completion_sequence(path, open)?)
             }
-            "implicit Unit fallback" => {
-                otherwise = Some(Completion {
-                    kind: "value".into(),
-                    expression: SExpr::new(SNode::Unit, span(&token, &token)),
+        } else {
+            self.completion_leaf("value", SExpr::new(SNode::Unit, span(&token, &token)), path)
+        };
+        let kind = rules::read_rust_ordinary_completion_alternative_kind(&first.kind, &second.kind);
+        Ok(CompletionTree {
+            kind,
+            node: CompletionNode::Conditional {
+                condition,
+                first: Box::new(first),
+                second: Box::new(second),
+                span: span(&token, self.cursor.peek()),
+            },
+        })
+    }
+    fn ordinary_completion_data(&mut self, context: &mut CompletionContext) -> Vec<String> {
+        if let Some(path) = &context.data {
+            return path.clone();
+        }
+        let identifier = self.fresh_product_binding();
+        let declaration = SData {
+            name: identifier.clone(),
+            generated: true,
+            span: None,
+            source_unit_clone_derivation: None,
+            ctors: vec![
+                SCtor {
+                    name: "FunctionResult".to_owned(),
+                    fields: vec![SField {
+                        name: Some("result".to_owned()),
+                        ty: context.ret.clone(),
+                        rocq_type: None,
+                        span: None,
+                    }],
+                },
+                SCtor {
+                    name: "StatementContinuation".to_owned(),
+                    fields: Vec::new(),
+                },
+            ],
+        };
+        let mut path = context.path.clone();
+        path.push(identifier);
+        context.data = Some(path.clone());
+        self.ordinary_completion_declarations
+            .push((context.path.clone(), declaration));
+        path
+    }
+    fn ordinary_completion_constructor(
+        &mut self,
+        context: &mut CompletionContext,
+        variant: &str,
+        args: Vec<SExpr>,
+        span: Option<Span>,
+    ) -> SExpr {
+        let mut path = vec!["crate".to_owned()];
+        path.extend(self.ordinary_completion_data(context));
+        path.push(variant.to_owned());
+        SExpr::new(
+            SNode::App {
+                func: Box::new(name(path)),
+                args,
+            },
+            span,
+        )
+    }
+    fn lower_ordinary_completion(
+        &mut self,
+        tree: CompletionTree,
+        terminal: bool,
+        context: &mut CompletionContext,
+    ) -> Result<SExpr> {
+        let form = rules::read_rust_ordinary_completion_construction(tree.node.name(), terminal);
+        match tree.node {
+            CompletionNode::Value(expression, origin)
+            | CompletionNode::Return(expression, origin)
+            | CompletionNode::Abort(expression, origin)
+                if form == "value" || form == "completed" =>
+            {
+                self.origins
+                    .argument(&origin, &context.source_result, expression.span)?;
+                context.outputs.push(origin);
+                Ok(if form == "completed" {
+                    let span = expression.span;
+                    self.ordinary_completion_constructor(
+                        context,
+                        "FunctionResult",
+                        vec![expression],
+                        span,
+                    )
+                } else {
+                    expression
                 })
             }
-            "returned conditional" | "aborted conditional" | "terminal mixed conditional" => {}
-            "conditional value" => {
-                if terminated {
+            CompletionNode::Value(expression, origin) if form == "continuation" => {
+                if rules::read_rust_unit_statement_disposition(
+                    expression.node.kind(),
+                    self.origins.collecting,
+                    origin.proven,
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    !origin.wrappers.is_empty(),
+                ) != "bind"
+                {
                     return Err(unsupported(
-                        "expression statement",
-                        "statements with effects are outside the portable core in function bodies",
-                        span(&token, self.cursor.peek()),
+                        "ordinary Rust statement completion",
+                        "a falling-through branch needs an actual direct Unit result before its enclosing continuation",
+                        expression.span,
                     ));
                 }
+                let span = expression.span;
+                let binding_name = self.fresh_product_binding();
+                let body = self.ordinary_completion_constructor(
+                    context,
+                    "StatementContinuation",
+                    Vec::new(),
+                    span,
+                );
+                Ok(binding(binding_name, expression, body, span))
             }
-            "unreachable continuation" => {
-                return Err(unsupported(
-                    "unreachable continuation",
-                    "statements after a completed return are not removed by this model",
-                    span(&token, self.cursor.peek()),
-                ));
+            CompletionNode::Binding(value, body) if form == "binding" => {
+                let body = self.lower_ordinary_completion(*body, terminal, context)?;
+                Ok(SExpr::new(
+                    SNode::Let {
+                        name: value.name,
+                        ty: value.ty.map(Into::into),
+                        value: Box::new(value.value),
+                        body: Box::new(body),
+                    },
+                    value.span,
+                ))
             }
-            "discarded conditional value" => {
-                return Err(unsupported(
-                    "expression statement",
-                    "a block value must be its last expression",
-                    span(&token, self.cursor.peek()),
-                ));
+            CompletionNode::Conditional {
+                condition,
+                first,
+                second,
+                span,
+            } if form == "conditional" => {
+                let first = self.lower_ordinary_completion(*first, terminal, context)?;
+                let second = self.lower_ordinary_completion(*second, terminal, context)?;
+                Ok(SExpr::new(
+                    SNode::If {
+                        cond: Box::new(condition),
+                        then: Box::new(first),
+                        otherwise: Box::new(second),
+                    },
+                    span,
+                ))
             }
-            _ => {
-                return Err(unsupported(
-                    "guarded return completion",
-                    "every guard branch must complete a return or abort, with an enclosing continuation; mixed return/value branches need a separate completion proof",
-                    span(&token, self.cursor.peek()),
-                ));
+            CompletionNode::Sequence { first, rest, span } if form == "join" => {
+                let first = self.lower_ordinary_completion(*first, false, context)?;
+                let binding_name = self.fresh_product_binding();
+                let result_name = self.fresh_product_binding();
+                let completed = if terminal {
+                    name(vec![result_name.clone()])
+                } else {
+                    self.ordinary_completion_constructor(
+                        context,
+                        "FunctionResult",
+                        vec![name(vec![result_name.clone()])],
+                        span,
+                    )
+                };
+                let rest = self.lower_ordinary_completion(*rest, terminal, context)?;
+                let mut owner = vec!["crate".to_owned()];
+                owner.extend(self.ordinary_completion_data(context));
+                let mut result_path = owner.clone();
+                result_path.push("FunctionResult".to_owned());
+                owner.push("StatementContinuation".to_owned());
+                let body = SExpr::new(
+                    SNode::Match1 {
+                        scrutinee: Box::new(name(vec![binding_name.clone()])),
+                        cases: vec![
+                            SCase {
+                                pattern: SCasePattern::Ctor {
+                                    path: result_path,
+                                    binds: vec![Some(result_name)],
+                                },
+                                body: completed,
+                                span: None,
+                            },
+                            SCase {
+                                pattern: SCasePattern::Ctor {
+                                    path: owner,
+                                    binds: Vec::new(),
+                                },
+                                body: rest,
+                                span: None,
+                            },
+                        ],
+                    },
+                    None,
+                );
+                Ok(binding(binding_name, first, body, span))
             }
+            _ => unreachable!(
+                "the complete shared ordinary construction matches every private tree node"
+            ),
         }
-        let otherwise = otherwise.ok_or_else(|| {
-            unsupported(
-                "guarded return completion",
-                "the selected source action needs an actual alternative",
-                span(&token, self.cursor.peek()),
-            )
-        })?;
-        let origin = self.origins.join(&[
-            self.origins.origin(&then.expression, path),
-            self.origins.origin(&otherwise.expression, path),
-        ]);
-        let kind = rules::read_rust_ordinary_completion_kind(&action, &then.kind, &otherwise.kind);
-        let expression = SExpr::new(
-            SNode::If {
-                cond: Box::new(cond),
-                then: Box::new(then.expression),
-                otherwise: Box::new(otherwise.expression),
-            },
-            span(&token, self.cursor.peek()),
-        );
-        self.origins.mark(&expression, origin);
-        Ok(Completion { kind, expression })
+    }
+    pub(super) fn install_ordinary_completion_declarations(
+        &mut self,
+        items: &mut Vec<SItem>,
+    ) -> Result<()> {
+        for (path, declaration) in std::mem::take(&mut self.ordinary_completion_declarations) {
+            let mut target = &mut *items;
+            for component in path {
+                let module = target
+                    .iter_mut()
+                    .find_map(|item| match item {
+                        SItem::Module(module) if module.name == component => Some(module),
+                        _ => None,
+                    })
+                    .ok_or_else(|| {
+                        unsupported(
+                            "ordinary Rust completion carrier",
+                            "the generated carrier needs its actual owning module",
+                            None,
+                        )
+                    })?;
+                target = &mut module.items;
+            }
+            target.push(SItem::Data(declaration));
+        }
+        Ok(())
     }
 }

@@ -272,7 +272,7 @@ impl RustParser {
             body
         } else if self.completion_model.is_empty() {
             if self.ordinary_completion_selected() {
-                self.ordinary_function_completion(path)?
+                self.ordinary_function_completion(path, &ret, &source_result)?
             } else {
                 self.block_with_context(path, true)?
             }

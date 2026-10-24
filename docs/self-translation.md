@@ -1056,3 +1056,13 @@ second source property-call normalization over already normalized method terms.
 The distinction is not a serializable proof or trust flag. No gate, comparison
 or source requirement is bypassed. Future exact archive reconstruction and
 malformed-operation/arity/type controls remain unexecuted.
+
+Ordinary Rust mixed completions now use shared source construction decisions
+over a private control tree. Adapters preserve actual terms/origins and lower
+joins through lazily generated result/continuation datatypes and existing match
+terms. Continuations remain outside branch scopes and occur once. Full decisions
+generate native rules and editable Links; no closed source proof is invented.
+Original reader/negative-control sources are retained with hashes beside
+stronger same-input admission and full trace controls. These remain unexecuted.
+General statement value joins, expression-level returns, loops, mutable/borrow/
+drop semantics and final complete regeneration/reconciliation remain required.

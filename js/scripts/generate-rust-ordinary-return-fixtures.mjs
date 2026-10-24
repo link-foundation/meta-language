@@ -23,7 +23,8 @@ cases.push({name:'selected guarded abort preserves its payload',module:'ordinary
 writeProjectData(new URL('../../parity/fixtures/rust-ordinary-returns.lino',import.meta.url),{
  schemaVersion:1,model:'ordinary Rust guarded function completion source values 1',sourceLanguage:'Rust',cases,
  source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n'),
- refusals:[
+ refusals:[],
+ originalRefusals:[
   {name:'continuing else-if needs a whole joined carrier',source:'fn report(first:bool,second:bool){if first{println!("first");}else if second{return;}println!("after");return;}fn main(){}',kind:'unsupported',reason:'guarded return completion: an else-if after a continuing alternative needs its complete joined completion carrier'},
   {name:'nested partial exits cannot be mistaken for ordinary Unit values',source:'fn report(first:bool,second:bool){if first{if second{return;}();}else{();}println!("after");return;}fn main(){}',kind:'unsupported',reason:'guarded return completion: every guard branch must complete a return or abort, with an enclosing continuation; mixed return/value branches need a separate completion proof'},
  ],

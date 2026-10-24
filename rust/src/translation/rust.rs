@@ -502,6 +502,7 @@ struct RustParser {
     has_record_constructions: bool,
     record_pattern_depth: usize,
     next_product_binding: usize,
+    ordinary_completion_declarations: Vec<(Vec<String>, SData)>,
     lifetime_bindings: HashSet<String>,
     lifetime_header: bool,
 }
@@ -589,6 +590,7 @@ impl RustParser {
             has_record_constructions,
             record_pattern_depth: 0,
             next_product_binding: 0,
+            ordinary_completion_declarations: Vec::new(),
             lifetime_bindings: HashSet::new(),
             lifetime_header: false,
         }

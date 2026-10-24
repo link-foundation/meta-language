@@ -85,3 +85,45 @@ export function findRustTerminalReturnBoundary(values,start){
  }
  return -2;
 }
+
+/** Complete private control-tree construction selection. Values at a function
+ * tail are results; statement values continue. A join lowers its first tree
+ * to the explicit result/continuation sum and keeps its continuation outside
+ * every branch's lexical bindings.
+ * @param {string} kind @param {boolean} terminal @returns {string} */
+export function readRustOrdinaryCompletionConstruction(kind,terminal){
+ if(kind==='abort')return 'value';
+ if(kind==='return')return terminal?'value':'completed';
+ if(kind==='value')return terminal?'value':'continuation';
+ if(kind==='binding')return 'binding';
+ if(kind==='conditional')return 'conditional';
+ return kind==='sequence'?'join':'';
+}
+/** @param {string} first @param {string} second @returns {string} */
+export function readRustOrdinaryCompletionAlternativeKind(first,second){
+ if(first==='aborted'&&second==='aborted')return 'aborted';
+ if((first==='returned'||first==='aborted')&&(second==='returned'||second==='aborted'))return 'returned';
+ return first==='value'&&second==='value'?'value':'mixed';
+}
+/** @param {string} kind @returns {boolean} */
+export function acceptRustOrdinaryCompletedAlternative(kind){return kind==='returned'||kind==='aborted';}
+/** @param {string} first @param {string} second @returns {string} */
+export function readRustOrdinaryCompletionSequenceKind(first,second){
+ if(first==='value')return second;
+ if(first==='returned'||first==='aborted')return first;
+ return second==='returned'||second==='aborted'?'returned':'mixed';
+}
+/** Ordinary control can also be selected by an actual aborting panic macro.
+ * Columns contain only owned keyword/macro markers and brace punctuation.
+ * @param {string[]} values @returns {number} */
+export function readRustFunctionCompletionPresence(values){
+ if(values[0]!=='{')return 0;
+ let depth=0;
+ for(let index=0;index<values.length;index+=1){
+  const value=values[index]??'';
+  if(value==='return'||value==='abort')return 1;
+  if(value==='{')depth+=1;
+  if(value==='}'){depth-=1;if(depth===0)return 0;}
+ }
+ return -1;
+}

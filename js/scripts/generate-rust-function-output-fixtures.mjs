@@ -1,5 +1,5 @@
 // Source and expected trace declarations only; no represented call is executed.
-import {writeProjectData} from './project-data.mjs';
+import {readProjectData,writeProjectData} from './project-data.mjs';
 if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
 const inputs=[
  ['ordinary function output','fn report(value:i64){println!("value {}",value);}fn main(){report(7);report(8);}', ['value 7','value 8']],
@@ -21,8 +21,12 @@ const inputs=[
  ['output before and after a selected guard','fn report(flag:bool)->i64{println!("before");if flag{return 7;}println!("after");9}fn main(){println!("{}",report(true));println!("{}",report(false));}', ['before','7','before','after','9']],
  ['implicit Unit fallback after a terminal return branch','fn report(flag:bool){if flag{return;}}fn main(){report(true);report(false);println!("done");}', ['done']],
 ];
-const cases=inputs.map(([name,source,lines],index)=>({name,source,lines,module:'function_output_'+index,marker:'META_FUNCTION_OUTPUT_'+index}));
-const source=cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\npub fn invoke(){main();}\n}').join('\n')+'\nfn main(){\n'+cases.map(row=>'println!("'+row.marker+'");'+row.module+'::invoke();').join('\n')+'\n}';
+const corrected=readProjectData(new URL('../../parity/fixtures/rust-ordinary-returns.lino',import.meta.url)).originalRefusals;
+inputs.push(['original continuing else-if source gains its complete trace',corrected[0].source,['first','after','after'],'report(true,false);report(false,true);report(false,false);']);
+inputs.push(['original nested partial exits retain every outer continuation',corrected[1].source,['after','after','after'],'report(true,true);report(true,false);report(false,true);report(false,false);']);
+inputs.push(['nested Unit return differs from continuing Unit', 'fn report(first:bool,second:bool){if first{if second{return;}();}else{();}println!("after");}fn main(){report(true,true);report(true,false);report(false,true);report(false,false);}', ['after','after','after']]);
+const cases=inputs.map(([name,source,lines,invocation],index)=>({name,source,lines,invocation:invocation??'main();',module:'function_output_'+index,marker:'META_FUNCTION_OUTPUT_'+index}));
+const source=cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\npub fn invoke(){'+row.invocation+'}\n}').join('\n')+'\nfn main(){\n'+cases.map(row=>'println!("'+row.marker+'");'+row.module+'::invoke();').join('\n')+'\n}';
 writeProjectData(new URL('../../parity/fixtures/rust-function-output.lino',import.meta.url),{
  schemaVersion:1,model:'Rust function print and shared Display formatting source traces 1',sourceLanguage:'Rust',cases,source,lines:cases.flatMap(row=>[row.marker,...row.lines]),
  refusals:[

@@ -1,7 +1,7 @@
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
-import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionReturnPresence} from './rust-unit-value-rules.js';
-import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
+import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
+import {readRustOrdinaryFunctionCompletion,installRustOrdinaryCompletionDeclarations} from './rust-ordinary-completions.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
@@ -167,6 +167,7 @@ class RustParser {
     this.hasRecordConstructions = this.hasRecordDeclarations || tokens.some(token => token.kind === 'identifier' && token.value === 'enum');
     this.recordPatternDepth = 0;
     this.productBindingCount = 0;
+    this.ordinaryCompletionDeclarations = [];
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = false;
   }
@@ -183,6 +184,7 @@ class RustParser {
     if(this.localValueStateModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceLocalState')||RUST_OWNED_LOCAL_STATE_POLICY.reservedOwners.includes(item.name))||root.main?.effects.length))throw unsupported('Rust owned local state','only flat functions with an empty main and unshadowed standard owners are admitted');
     if(this.constFunctionModel&&(!root.items.length||root.items.some(item=>item.k!=='fn'||!Object.hasOwn(item,'sourceConstFunction'))||root.main?.effects.length))throw unsupported('Rust const function source','only closed flat const predicates and an empty ordinary main are admitted');
     if (!root.main&&!this.sharedArrayHandleSourceModel) throw new TranslationError('syntax', 'a Rust program needs fn main', this.cursor.peek());
+    installRustOrdinaryCompletionDeclarations(this,root.items);
     finishRustEmptyOptionSource(this,root);
     finishRustPureUnitSource(this,root);
     finishRustSharedArrayHandleSource(this,root);
@@ -682,7 +684,7 @@ class RustParser {
         else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
-      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path):this.block(path,true));
+      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;
@@ -743,8 +745,8 @@ class RustParser {
     const c=this.cursor;
     let count=64;
     for(;;){
-      const values=c.tokens.slice(c.index,c.index+count).map((token,index)=>token.kind==='punct'&&(token.value==='{'||token.value==='}')?token.value:c.is('return',index)?'return':'');
-      const presence=readRustFunctionReturnPresence(values);
+      const values=c.tokens.slice(c.index,c.index+count).map((token,index)=>token.kind==='punct'&&(token.value==='{'||token.value==='}')?token.value:token.kind==='macro'&&token.value==='panic'?'abort':c.is('return',index)?'return':'');
+      const presence=readRustFunctionCompletionPresence(values);
       if(presence!==-1)return presence===1;
       if(count>=c.tokens.length-c.index)return false;
       count*=2;

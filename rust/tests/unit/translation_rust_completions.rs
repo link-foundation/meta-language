@@ -552,3 +552,12 @@ fn terminal_divergent_branches_do_not_hide_actual_function_return_paths() {
     );
     assert_eq!(javascript_output(&javascript), ["safe", "first", "second"]);
 }
+
+#[test]
+fn ordinary_completion_carriers_keep_mixed_exits_lexical_scopes_values_and_all_archives() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/rust-records/completion-carriers.mjs",
+        "Rust ordinary completion carriers",
+        meta_language::create_rust_unit_value_program_links,
+    );
+}

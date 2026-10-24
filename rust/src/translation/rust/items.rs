@@ -21,6 +21,7 @@ impl RustParser {
     pub(super) fn file(&mut self) -> Result<SProgram> {
         self.inner_attributes()?;
         let mut items = self.items(&[], ItemsEnd::File)?;
+        self.install_ordinary_completion_declarations(&mut items)?;
         let main = self.main.take();
         if !self.shared_array_handle_source_model.is_empty() {
             self.finish_shared_array_source(&items, main.as_ref())?;

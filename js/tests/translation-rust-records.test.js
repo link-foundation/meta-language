@@ -11,7 +11,7 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-l
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const[major,minor]=process.versions.node.split('.').map(Number);
-for(const filename of['rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-let-else','unicode-rust-identifiers','rust-unicode-lifetimes']){
+for(const filename of['rust-completion-carriers','rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-let-else','unicode-rust-identifiers','rust-unicode-lifetimes']){
 const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':filename==='rust-raw-identifiers'?'Rust raw identifiers retain complete paired controls':'Rust irrefutable nominal bindings retain complete paired controls',()=>{
@@ -36,6 +36,14 @@ test(filename==='rust-records'?'nominal Rust records retain order, actual type o
   }
   if(row.abort!==null)assert.throws(()=>functions[index](),error=>error.message===row.abort,row.name);
   else assert.equal(String(functions[index]()),row.value,row.name);
+ }
+});
+for(const row of fixture.originalRefusals??[])test('same original completion input now admits complete graphs: '+row.name,()=>{
+ assert.equal(row.kind,'unsupported');assert.match(row.reason,/guarded return completion/u);
+ const program=checkProgram(parseRust(row.source)),packet=encodeTypedProgramLinks(program);
+ for(const target of ['JavaScript','Rust','Lean','Rocq']){
+  const expected=emitTypedProgramLinks(packet.network,packet.root,target);
+  for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
  }
 });
 for(const row of fixture.refusals)test('nominal record refusal: '+row.name,()=>assert.throws(()=>checkProgram(parseRust(row.source)),error=>error.kind===row.kind&&error.reason===row.reason));
