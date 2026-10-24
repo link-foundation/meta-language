@@ -929,3 +929,10 @@ String map extras still evaluate. Existing own record methods keep their
 actual meanings. Generated source and future full graph/emission/native
 controls are drafts, with no behavior executed. Objects, Symbols/RegExp,
 generic receiver/lookup semantics and all previous scope remain required.
+
+String range source lowering now uses one generated checked-operator plan for
+slice, substring and the Node Annex B substr profile. Captured arguments retain
+sequential numeric conversion and undefined defaults; NaN normalization, swapped
+substring endpoints and relative/count substr bounds select the exact existing
+UTF-16 slice operation. Complete public source graphs and both runtime adapters
+are drafted, with original/native/codec/emission controls left unexecuted.

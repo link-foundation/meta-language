@@ -62,6 +62,7 @@ mod rust_shifts;
 mod source_exceptions;
 mod string_code_unit_template;
 mod string_construction;
+mod string_ranges;
 mod string_search;
 mod strings;
 mod tuple_patterns;

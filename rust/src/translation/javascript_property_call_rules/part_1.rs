@@ -119,7 +119,9 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_source_property_operation_kind(operation: &str) -> String {
-    if (operation == "indexOf") || (operation == "lastIndexOf") {
+    if ((operation == "slice") || (operation == "substring")) || (operation == "substr") {
+        String::from("range")
+    } else if (operation == "indexOf") || (operation == "lastIndexOf") {
         String::from("index")
     } else if ((operation == "includes") || (operation == "startsWith"))
         || (operation == "endsWith")

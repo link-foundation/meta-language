@@ -107,3 +107,5 @@ export {createFormalStringUnitProgramLinks} from './formal-string-unit-program.j
 export {createJavaScriptComparisonProgramLinks} from './javascript-comparison-program.js';
 
 export {createArrayBindingProgramLinks} from './array-binding-program.js';
+
+export {createJavaScriptStringRangeProgramLinks} from './javascript-string-range-program.js';

@@ -6160,3 +6160,22 @@ Complete source decisions generate native rules and editable Links; future
 original/native/full-codec/emission controls remain unexecuted. Objects,
 Symbols/RegExp hooks, generic method receivers, method lookup/accessors, iterator
 spreads, full Unicode case mapping and every earlier obligation remain.
+
+### String range source draft
+
+Both actual source hosts now draft slice/substring/Annex B substr over String
+receivers through one complete checked-operator plan. Raw arguments evaluate
+once before sequential primitive numeric conversions; undefined end/length
+values retain their distinct defaults. Substring normalizes NaN before
+nonnegative endpoint ordering; substr retains relative starts and nonnegative
+lengths. Existing exact UTF-16 slice operations retain selected surrogate units.
+Own record methods retain actual callable dispatch. The plans follow
+[substring](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.substring)
+and [the Node-supported Annex B substr profile](https://tc39.es/ecma262/2025/multipage/additional-ecmascript-features-for-web-browsers.html#sec-string.prototype.substr).
+
+Complete JavaScript rules generate native rules and public editable definition
+graphs in both packages. Future original/native/full-codec/emission controls
+are declared without execution, with explicit Node ranges. TypeScript
+declarations include these factories and the preceding comparison/binding
+factories. Object conversions, generic receivers, method lookup/accessors and
+all earlier requirements remain.

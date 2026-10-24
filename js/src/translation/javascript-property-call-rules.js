@@ -1,6 +1,7 @@
 // Source property spelling never proves that a receiver owns a builtin method.
 /** @param {string} operation @returns {string} */
 export function readJavaScriptSourcePropertyOperationKind(operation) {
+  if(operation==='slice'||operation==='substring'||operation==='substr')return 'range';
   if(operation==='indexOf'||operation==='lastIndexOf')return 'index';
   if (operation === 'includes' || operation === 'startsWith' || operation === 'endsWith') return 'test';
   if (operation === 'trim' || operation === 'trimStart' || operation === 'trimEnd'

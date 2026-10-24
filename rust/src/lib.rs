@@ -489,3 +489,5 @@ pub use translation::utf16_text_program::create_utf16_text_program_links;
 
 pub use translation::array_binding_program::create_array_binding_program_links;
 pub use translation::javascript_comparison_program::create_java_script_comparison_program_links;
+
+pub use translation::javascript_string_range_program::create_java_script_string_range_program_links;

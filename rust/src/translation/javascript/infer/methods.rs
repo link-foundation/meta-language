@@ -533,6 +533,13 @@ impl Inference {
         }
         if kind == "string"
             && property_rules::read_java_script_source_property_operation_kind(&method.operation)
+                == "range"
+        {
+            self.unify(&method.result, &Term::Known(STRING), method.place)?;
+            return Ok(true);
+        }
+        if kind == "string"
+            && property_rules::read_java_script_source_property_operation_kind(&method.operation)
                 == "index"
         {
             self.unify(&method.result, &Term::Known(FLOAT), method.place)?;

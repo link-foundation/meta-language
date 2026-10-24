@@ -1191,6 +1191,7 @@ class Inference {
     }
     if (receiver.kind === 'string') {
       const selected=readJavaScriptSourcePropertyOperationKind(op);
+      if(selected==='range'){this.unify(result,STRING,where);return true;}
       if(selected==='index'){this.unify(result,FLOAT,where);return true;}
       if(selected==='test'){if(node&&args.length===1&&this.resolve(args[0]).kind==='string')this.propertyMethods.set(node,'test');this.unify(result,BOOL,where);return true;}
       if(node&&(selected==='test'&&args.length===1||selected==='map'&&args.length===0))this.propertyMethods.set(node,selected);

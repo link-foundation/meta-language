@@ -25,6 +25,11 @@ impl Checker {
         let form = rules::read_java_script_resolved_property_call_form(object.ty.kind(), operation);
         let node = match form.as_str() {
             "record" | "" => return Ok(None),
+            "range" => {
+                return self
+                    .javascript_string_range(operation, object, args, span, env, path)
+                    .map(Some);
+            }
             "test" | "index" => {
                 return self
                     .javascript_string_search(operation, object, args, span, env, path)

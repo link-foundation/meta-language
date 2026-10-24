@@ -2623,3 +2623,10 @@ export function createJavaScriptStringUnitProgramLinks(): TypedProgramLinks;
 export function createStringConstructionProgramLinks(): TypedProgramLinks;
 export function createUtf16TextProgramLinks(): TypedProgramLinks;
 export function createFormalStringUnitProgramLinks(): TypedProgramLinks;
+
+/** Complete source-derived primitive comparison decisions. */
+export function createJavaScriptComparisonProgramLinks(): TypedProgramLinks;
+/** Complete source-derived represented binding initializer decisions. */
+export function createArrayBindingProgramLinks(): TypedProgramLinks;
+/** Complete source-derived String range checked-operator plans. */
+export function createJavaScriptStringRangeProgramLinks(): TypedProgramLinks;

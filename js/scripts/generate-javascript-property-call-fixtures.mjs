@@ -71,6 +71,27 @@ inputs.push(
  ['String concat void result','function propertyVoidValue(){return;} export function compute(){return "x".concat(propertyVoidValue());}','xundefined'],
  ['later search argument error precedes position conversion','/** @returns {number} */ function failedSearchExtra(){throw new RangeError("search extra");} export function compute(){return "abc".includes("a",1n,failedSearchExtra());}',null,'search extra'],
 );
+for(const [name,expression,value] of [
+ ['slice missing bounds','"abc".slice()','abc'],
+ ['slice coerces bounds','"abcdef".slice("1",true)',''],
+ ['slice retains relative negative bound','"abcdef".slice(-2,undefined)','ef'],
+ ['slice null end selects zero','"abcdef".slice(0,null)',''],
+ ['substring swaps bounds','"abcdef".substring(4,1)','bcd'],
+ ['substring normalizes NaN before ordering','"abcdef".substring(NaN,2)','ab'],
+ ['substring clamps negative first','"abcdef".substring(-7,2)','ab'],
+ ['substring infinite swapped endpoint','"abcdef".substring(Infinity,-Infinity)','abcdef'],
+ ['substring fractional bounds','"abcdef".substring(1.9,4.9)','bcd'],
+ ['substring explicit undefined end','"abcdef".substring(2,undefined)','cdef'],
+ ['substr negative start and length','"abcdef".substr(-3,2)','de'],
+ ['substr negative length','"abcdef".substr(1,-2)',''],
+ ['substr missing length','"abcdef".substr(2)','cdef'],
+ ['substr infinite negative start','"abcdef".substr(-Infinity,2)','ab'],
+ ['substr NaN length','"abcdef".substr(1,NaN)',''],
+ ['range UTF16 position','"😀x".substring(2,3)','x'],
+ ['range retains selected isolated unit','"😀x".substring(0,1).charCodeAt(0)','55357'],
+])inputs.push([name,'export function compute(){return '+expression+';}',value]);
+inputs.push(['range captures all argument values','export function compute(){let start=1;return "abcdef".substring(start,4,start=2);}','bcd']);
+inputs.push(['own substring retains callable meaning','export function compute(){const item={substring(value){return value+1;}};return item.substring(7);}','8']);
 const cases=inputs.map(([name,source,value,abort],index)=>({name,module:'',entry:'compute'+index,source:source.replace('export function compute','\nexport function compute'),value,abort:abort??null}));
 const refusals=[
  {name:'actual non-callable property',source:'export function compute(){const item={trim:3};return item.trim();}',kind:'type',reason:'record has no method trim'},

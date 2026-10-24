@@ -8,6 +8,7 @@ import{checkProgram}from'../src/translation/check.js';
 import{emitJavaScript}from'../src/translation/emit-javascript.js';
 import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-links.js';
 import{LinkNetwork}from'../src/network.js';
+import{createJavaScriptStringRangeProgramLinks}from'../src/javascript-string-range-program.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/javascript-property-calls.lino',import.meta.url));
 const[major,minor]=process.versions.node.split('.').map(Number);
@@ -28,3 +29,11 @@ test('actual property owners retain original calls, codecs and all four emission
  }
 });
 for(const row of fixture.refusals)test(row.name,()=>assert.throws(()=>checkProgram(parseJavaScript(row.source)),error=>error.kind===row.kind&&error.reason===row.reason));
+
+test('complete range rule graphs retain all codecs and target emissions',()=>{
+ const packet=createJavaScriptStringRangeProgramLinks();
+ for(const target of ['JavaScript','Rust','Lean','Rocq']){
+  const expected=emitTypedProgramLinks(packet.network,packet.root,target);
+  for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
+ }
+});
