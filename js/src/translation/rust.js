@@ -7,7 +7,7 @@ import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
 import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern } from './rust-records.js';
-import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod } from './rust-inherent.js';
+import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -438,6 +438,7 @@ class RustParser {
    * is immutable.
    */
   type() {
+    splitRustReferenceToken(this);
     // Actual source owners also prove readonly method dispatch. Capturing a
     // public source-signature facet remains opt-in, independently of this fact.
     const head = readRustSourceTypeHead(this.cursor);

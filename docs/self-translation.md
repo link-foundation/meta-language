@@ -625,6 +625,15 @@ ran. Trait/generic and mutable receiver behavior, additional dereference/region
 profiles, cross-module placement, associated constants/types/macros and closed
 profile composition still need their implementation drafts.
 
+Explicit immutable inherent receivers now carry their complete reference/Box
+layers into one shared candidate planner. The same JavaScript definition
+generates native source and typed Links; host adapters only transport actual
+types, lifetimes, nominal owners and type-context `&&` tokens. Forty-three
+future values/aborts and eleven refusals retain every former input, including
+three corrected refusals with exact historical expectations and independent
+original-Rust value controls. Complete paired graphs, codecs and all four
+emissions remain mandatory. No control executed during this draft.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

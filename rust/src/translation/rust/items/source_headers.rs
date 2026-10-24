@@ -118,6 +118,7 @@ impl RustParser {
     }
 
     pub(in super::super) fn parse_type(&mut self) -> Result<Type> {
+        self.split_reference_type_token();
         // Readonly dispatch also needs actual owners; publishing the captured
         // header facet remains independently opt-in.
         let head = self.source_type_head();

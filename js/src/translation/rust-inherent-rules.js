@@ -35,3 +35,35 @@ export function readRustInherentParentPath(module, depth, count, names) {
   for (const name of names) path.push(name);
   return path;
 }
+/** @param {string[]} layers @returns {number} */
+export function readRustInherentReceiverLayerMode(layers) {
+  if (layers.length === 0) return 1;
+  if (layers[0] === 'reference') return 2;
+  if (layers[0] === 'box') return 3;
+  return 0;
+}
+/** @param {string[]} actual @param {string[]} expected @returns {number[]} */
+export function planRustInherentReceiverLayers(actual, expected) {
+  for (const layer of actual) if (layer !== 'reference' && layer !== 'box') return [0];
+  const result = [1];
+  for (const layer of expected) {
+    if (layer !== 'reference' && layer !== 'box') return [0];
+    result.push(layer === 'reference' ? 1 : 2);
+  }
+  let throughReference = false;
+  for (let skipped = 0; skipped <= actual.length; skipped += 1) {
+    const remaining = actual.length - skipped;
+    if (remaining === expected.length && (!throughReference || expected.length > 0 && expected[0] === 'reference')) {
+      let same = true;
+      for (let index = 0; index < remaining; index += 1) if (actual[skipped + index] !== expected[index]) same = false;
+      if (same) return result;
+    }
+    if (remaining + 1 === expected.length && expected[0] === 'reference') {
+      let same = true;
+      for (let index = 0; index < remaining; index += 1) if (actual[skipped + index] !== expected[index + 1]) same = false;
+      if (same) return result;
+    }
+    if (skipped < actual.length && actual[skipped] === 'reference') throughReference = true;
+  }
+  return [0];
+}

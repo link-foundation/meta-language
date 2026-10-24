@@ -2829,6 +2829,23 @@ execution from an accidental constructor call. None ran. Enum constructor
 homographs refuse until their full associated-item resolution is supplied;
 general type/value namespace composition remains an implementation obligation.
 
+The immutable inherent-receiver draft now reads explicit `self: Self`, standard
+`Box` and nested immutable reference types, plus declared receiver lifetimes.
+One shared layer planner selects actual receiver candidates by dereference and
+autoborrow while forbidding an owned move through a reference. Token adapters
+split `&&` only in type positions and preserve both source intervals. The
+ordinary typed function application still evaluates the receiver before its
+arguments. JavaScript generates the native planner and full typed Links.
+The [receiver grammar](https://doc.rust-lang.org/reference/items/associated-items.html#associated-functions-and-methods)
+and [candidate ordering](https://doc.rust-lang.org/reference/expressions/method-call-expr.html)
+justify three corrected refusal expectations. Each exact former input and
+expectation remains in a separate future product with an independent value
+assertion. Together the inherent controls declare forty-three values/aborts and
+eleven refusals, complete paired graphs, both codecs, four emissions and
+original/emitted Rust execution. None ran. Mutable/custom dereference, full
+move/drop/Copy reasoning, Rc/Arc/Pin and escaping-region behavior remain
+implementation obligations; immutable value encoding does not establish them.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

@@ -1,11 +1,12 @@
 //! Source owner and token transport into ordinary module/function definitions.
+use super::indirection_rules::accept_rust_source_lifetime_reference;
 use super::{
     Result, RustParser, SItem, SModule, SParam, SourceDeclaration, SourceOrigin, Type, span,
     unsupported,
 };
 use crate::translation::rust_inherent_rules::{
     accept_rust_inherent_owner_module, accept_rust_inherent_source_profiles,
-    read_rust_inherent_receiver_mode,
+    read_rust_inherent_receiver_layer_mode,
 };
 
 mod dispatch;
@@ -21,9 +22,25 @@ pub(super) struct InherentOwner {
 pub(super) struct InherentMethod {
     pub(super) owner: String,
     pub(super) mode: f64,
+    pub(super) receiver: Vec<String>,
 }
 
 impl RustParser {
+    pub(super) fn split_reference_type_token(&mut self) {
+        if !self.cursor.is("&&") {
+            return;
+        }
+        let mut first = self.cursor.peek().clone();
+        let mut second = first.clone();
+        first.value = "&".to_owned();
+        first.raw = "&".to_owned();
+        first.end = first.start + 1;
+        second.value = "&".to_owned();
+        second.raw = "&".to_owned();
+        second.start += 1;
+        let index = self.cursor.index;
+        self.cursor.tokens.splice(index..index + 1, [first, second]);
+    }
     pub(super) fn inherent_item(&mut self, path: &[String]) -> Result<SModule> {
         let start = self.cursor.advance();
         let models = [
@@ -149,6 +166,7 @@ impl RustParser {
                         InherentMethod {
                             owner: owner.join("."),
                             mode: 0.0,
+                            receiver: Vec::new(),
                         },
                     );
                 }
@@ -190,7 +208,22 @@ impl RustParser {
             ));
         }
         let borrowed = self.cursor.eat("&").is_some();
-        if self.cursor.is("mut") || self.cursor.is("'") {
+        let mut lifetime = None;
+        if borrowed && self.cursor.eat("'").is_some() {
+            let token = self.cursor.identifier(Some("lifetime"))?;
+            if !accept_rust_source_lifetime_reference(
+                &token.value,
+                self.lifetime_bindings.contains(&token.value),
+            ) {
+                return Err(unsupported(
+                    "lifetime parameter",
+                    "a reference needs a declared function lifetime, an elided placeholder, or 'static",
+                    span(&start, &token),
+                ));
+            }
+            lifetime = Some(token.value);
+        }
+        if self.cursor.is("mut") {
             return Err(unsupported(
                 "Rust mutable or explicit lifetime receiver",
                 "receiver mutation and named regions need an explicit ownership interpretation",
@@ -198,28 +231,62 @@ impl RustParser {
             ));
         }
         self.cursor.expect("self", Some("method receiver"))?;
-        if self.cursor.is(":") {
+        let ty = if self.cursor.eat(":").is_some() {
+            if borrowed {
+                return Err(unsupported(
+                    "Rust receiver syntax",
+                    "an explicitly typed receiver uses an unprefixed self binding",
+                    span(&start, self.cursor.peek()),
+                ));
+            }
+            let ty = self.parse_type()?;
+            let origin = &self.origins.current_type;
+            let actual = if let Type::Named { path, .. } = &ty {
+                self.origins
+                    .lookup(path, &origin.path)
+                    .filter(|entry| matches!(entry.declaration, SourceDeclaration::Data))
+            } else {
+                None
+            };
+            if !self.inherent_discovery
+                && actual.is_none_or(|actual| actual.full_name != owner.path.join("."))
+            {
+                return Err(unsupported(
+                    "Rust explicit receiver owner",
+                    "an explicit receiver must resolve to its actual implementing datatype",
+                    span(&start, self.cursor.peek()),
+                ));
+            }
+            ty
+        } else {
+            let mut rooted = vec!["crate".to_owned()];
+            rooted.extend(owner.path.clone());
+            let ty = self.origins.typed(
+                Type::Named {
+                    path: rooted,
+                    span: None,
+                },
+                &owner.module_path,
+                if borrowed {
+                    vec!["reference".to_owned()]
+                } else {
+                    Vec::new()
+                },
+            );
+            if borrowed {
+                self.origins.current_type.source_lifetimes = vec![lifetime];
+            }
+            ty
+        };
+        let receiver = self.origins.current_type.wrappers.clone();
+        let mode = read_rust_inherent_receiver_layer_mode(&receiver);
+        if mode == 0.0 {
             return Err(unsupported(
-                "Rust explicit receiver type",
-                "explicit receiver types need their complete arbitrary-self interpretation",
+                "Rust explicit receiver layers",
+                "the receiver needs represented owned, immutable reference or standard Box layers",
                 span(&start, self.cursor.peek()),
             ));
         }
-        let mode = read_rust_inherent_receiver_mode(if borrowed { "&self" } else { "self" });
-        let mut rooted = vec!["crate".to_owned()];
-        rooted.extend(owner.path.clone());
-        let ty = self.origins.typed(
-            Type::Named {
-                path: rooted,
-                span: None,
-            },
-            &owner.module_path,
-            if borrowed {
-                vec!["reference".to_owned()]
-            } else {
-                Vec::new()
-            },
-        );
         let key = path
             .iter()
             .cloned()
@@ -231,6 +298,7 @@ impl RustParser {
             InherentMethod {
                 owner: owner.path.join("."),
                 mode,
+                receiver,
             },
         );
         Ok(Some((

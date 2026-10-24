@@ -1,4 +1,10 @@
 // Generated from complete js/src/translation/rust-inherent-rules.js. Do not edit by hand.
+use super::MlPlanRustInherentReceiverLayersLoop10Result;
+use super::MlPlanRustInherentReceiverLayersLoop11Result;
+use super::ml_plan_rust_inherent_receiver_layers_loop10;
+use super::ml_plan_rust_inherent_receiver_layers_loop11;
+use super::ml_plan_rust_inherent_receiver_layers_loop12;
+
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
     use std::cmp::Ordering;
@@ -584,6 +590,90 @@ pub fn read_rust_inherent_parent_path(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_rust_inherent_receiver_layer_mode(layers: &[String]) -> f64 {
+    if (layers.len() as f64) == 0f64 {
+        1f64
+    } else if match (
+        self::ml_array::optional_at(layers, self::ml_array::number_index(0f64)),
+        String::from("reference"),
+    ) {
+        (Some(ml_left), ml_right) => ml_left == ml_right,
+        _ => false,
+    } {
+        2f64
+    } else if match (
+        self::ml_array::optional_at(layers, self::ml_array::number_index(0f64)),
+        String::from("box"),
+    ) {
+        (Some(ml_left), ml_right) => ml_left == ml_right,
+        _ => false,
+    } {
+        3f64
+    } else {
+        0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_rust_inherent_receiver_layers(actual: &[String], expected: &[String]) -> Vec<f64> {
+    {
+        let ml_values8 = actual.to_vec();
+        {
+            let ml_index8 = self::ml::Big::from_i128(0);
+            {
+                let ml_s3 =
+                    self::ml_plan_rust_inherent_receiver_layers_loop10(&(ml_values8), ml_index8);
+                match ml_s3 {
+                    self::MlPlanRustInherentReceiverLayersLoop10Result::MlPlanRustInherentReceiverLayersLoop10Done => {
+                        {
+                            let result = vec![1f64];
+                            {
+                                let ml_values9 = expected.to_vec();
+                                {
+                                    let ml_index9 = self::ml::Big::from_i128(0);
+                                    {
+                                        let ml_s4 = self::ml_plan_rust_inherent_receiver_layers_loop11(result, &(ml_values9), ml_index9);
+                                        match ml_s4 {
+                                            self::MlPlanRustInherentReceiverLayersLoop11Result::MlPlanRustInherentReceiverLayersLoop11Done(result_2) => {
+                                                {
+                                                    let through_reference = false;
+                                                    {
+                                                        let skipped = 0f64;
+                                                        {
+                                                            let ml_s5 = self::ml_plan_rust_inherent_receiver_layers_loop12(actual, expected, &(result_2), through_reference, skipped);
+                                                            match ml_s5 {
+                                                                self::MlPlanRustInherentReceiverLayersLoop12Result::MlPlanRustInherentReceiverLayersLoop12Done => {
+                                                                    vec![0f64]
+                                                                }
+                                                                self::MlPlanRustInherentReceiverLayersLoop12Result::MlPlanRustInherentReceiverLayersLoop12Return(ml_result12) => {
+                                                                    ml_result12
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            self::MlPlanRustInherentReceiverLayersLoop11Result::MlPlanRustInherentReceiverLayersLoop11Return(ml_result16) => {
+                                                ml_result16
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    self::MlPlanRustInherentReceiverLayersLoop10Result::MlPlanRustInherentReceiverLayersLoop10Return(ml_result16_2) => {
+                        ml_result16_2
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlAcceptRustInherentSourceProfilesLoop2Result {
     MlAcceptRustInherentSourceProfilesLoop2Done,
@@ -752,5 +842,62 @@ pub fn ml_read_rust_inherent_parent_path_loop7(
             }
         }
         return { path };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlPlanRustInherentReceiverLayersLoop12Result {
+    MlPlanRustInherentReceiverLayersLoop12Done,
+    MlPlanRustInherentReceiverLayersLoop12Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlPlanRustInherentReceiverLayersJoin14 {
+    MlPlanRustInherentReceiverLayersJoin14Next,
+    MlPlanRustInherentReceiverLayersJoin14Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_plan_rust_inherent_receiver_layers_loop15(
+    actual: &[String],
+    expected: &[String],
+    mut skipped: f64,
+    mut remaining: f64,
+    mut same: bool,
+    mut index: f64,
+) -> bool {
+    loop {
+        if index < remaining {
+            if !(match (
+                self::ml_array::optional_at(actual, self::ml_array::number_index(skipped + index)),
+                self::ml_array::optional_at(expected, self::ml_array::number_index(index + 1f64)),
+            ) {
+                (Some(ml_left), Some(ml_right)) => ml_left == ml_right,
+                (None, None) => true,
+                _ => false,
+            }) {
+                {
+                    let same_2 = false;
+                    {
+                        let index_2 = index + 1f64;
+                        {
+                            (same, index) = (same_2, index_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let index_3 = index + 1f64;
+                    {
+                        index = index_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { same };
     }
 }

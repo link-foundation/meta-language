@@ -48,6 +48,11 @@ Draft named enum variants and record patterns with rest, stable reference
 wildcard identities and contextual field types, reusing shared constructor
 plans and retaining all prior future controls.
 Draft inherent Rust associated functions and owned/immutable methods through
+ordinary typed functions, including explicit immutable receiver lifetimes and
+nested standard Box/reference layers with shared candidate selection. Preserve
+three corrected refusal inputs in future independent source products.
+
+Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future
 original-Rust/parity controls.

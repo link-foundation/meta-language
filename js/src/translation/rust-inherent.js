@@ -1,8 +1,15 @@
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
 import{prepareRustRecordMethodNamespace}from'./rust-records.js';
-import{acceptRustInherentSourceProfiles,readRustInherentReceiverMode,acceptRustInherentReceiver,requireRustInherentReceiverBorrow,acceptRustInherentOwnerModule,readRustInherentParentPath}from'./rust-inherent-rules.js';
+import{acceptRustSourceLifetimeReference}from'./rust-indirection-rules.js';
+import{acceptRustInherentSourceProfiles,readRustInherentReceiverLayerMode,planRustInherentReceiverLayers,acceptRustInherentOwnerModule,readRustInherentParentPath}from'./rust-inherent-rules.js';
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
+
+export function splitRustReferenceToken(parser){
+ const c=parser.cursor;if(!c.is('&&'))return;
+ const token=c.peek();
+ c.tokens.splice(c.index,1,{...token,value:'&',raw:'&',end:token.start+1},{...token,value:'&',raw:'&',start:token.start+1});
+}
 
 export function readRustInherentItem(parser,path){
  const c=parser.cursor,start=c.next();
@@ -43,13 +50,30 @@ export function readRustInherentReceiver(parser,name,path,index){
  if(!(c.is('self')||c.is('&')||c.is('mut')&&c.is('self',1)))return null;
  if(index!==0)throw unsupported('Rust receiver position','a receiver must be the first associated function parameter',span(start,start));
  const borrowed=Boolean(c.eat('&'));
- if(c.is('mut')||c.is("'"))throw unsupported('Rust mutable or explicit lifetime receiver','receiver mutation and named regions need an explicit ownership interpretation',span(start,c.peek()));
+ let lifetime=null;
+ if(borrowed&&c.eat("'")){
+  const token=c.identifier('lifetime');
+  if(!acceptRustSourceLifetimeReference(token.value,parser.lifetimeBindings.has(token.value)))throw unsupported('lifetime parameter','a reference needs a declared function lifetime, an elided placeholder, or \'static',span(start,token));
+  lifetime=token.value;
+ }
+ if(c.is('mut'))throw unsupported('Rust mutable or explicit lifetime receiver','receiver mutation and named regions need an explicit ownership interpretation',span(start,c.peek()));
  c.expect('self','method receiver');
- if(c.is(':'))throw unsupported('Rust explicit receiver type','explicit receiver types need their complete arbitrary-self interpretation',span(start,c.peek()));
- const mode=readRustInherentReceiverMode(borrowed?'&self':'self'),type={kind:'named',path:['crate',...parser.inherentOwner.path]};
- parser.origins.typed(type,parser.inherentOwner.modulePath,borrowed?['reference']:[]);
+ let type;
+ if(c.eat(':')){
+  if(borrowed)throw unsupported('Rust receiver syntax','an explicitly typed receiver uses an unprefixed self binding',span(start,c.peek()));
+  type=parser.type();
+  const origin=parser.origins.type;
+  const owner=type.kind==='named'?parser.origins.lookup(type.path,origin.path,['data']):null;
+  if((!owner||owner.fullName!==parser.inherentOwner.path.join('.'))&&!parser.inherentDiscovery)throw unsupported('Rust explicit receiver owner','an explicit receiver must resolve to its actual implementing datatype',span(start,c.peek()));
+ }else{
+  type={kind:'named',path:['crate',...parser.inherentOwner.path]};
+  parser.origins.typed(type,parser.inherentOwner.modulePath,borrowed?['reference']:[]);
+  if(borrowed)parser.origins.type.sourceLifetimes=[lifetime];
+ }
  const origin=parser.origins.type;
- parser.inherentMethods.set([...path,name].join('.'),{owner:parser.inherentOwner.path.join('.'),mode});
+ const mode=readRustInherentReceiverLayerMode(origin.wrappers);
+ if(!mode)throw unsupported('Rust explicit receiver layers','the receiver needs represented owned, immutable reference or standard Box layers',span(start,c.peek()));
+ parser.inherentMethods.set([...path,name].join('.'),{owner:parser.inherentOwner.path.join('.'),mode,receiver:[...origin.wrappers]});
  return{parameter:{name:'self',type,span:span(start,c.peek())},origin};
 }
 
@@ -84,8 +108,10 @@ export function readRustInherentMethod(parser,receiver,method,args,where,path){
  const methodPath=owner?[...owner.fullName.split('.'),method.value]:null;
  const selected=methodPath?parser.inherentMethods.get(methodPath.join('.')):null;
  if(selected?.mode){
-  if(!acceptRustInherentReceiver(selected.mode,origin.wrappers.length,origin.wrappers.every(wrapper=>wrapper==='reference'),owner.fullName,selected.owner))throw unsupported('Rust inherent receiver','the method needs its actual owned or single immutable borrowed receiver',where);
-  const argument=requireRustInherentReceiverBorrow(selected.mode,origin.wrappers.length)?parser.origins.wrap(receiver,path,'reference'):receiver;
+  const plan=planRustInherentReceiverLayers(origin.wrappers,selected.receiver);
+  if(owner.fullName!==selected.owner||plan[0]!==1)throw unsupported('Rust inherent receiver','the method needs its actual nominal receiver and supported immutable dereference or borrow layers',where);
+  const argument={...receiver};
+  parser.origins.mark(argument,{...origin,wrappers:plan.slice(1).map(layer=>layer===1?'reference':'box')});
   const values=[argument,...args],rooted=['crate',...methodPath];
   parser.origins.call(rooted,values,path,where);
   return{k:'app',fn:{k:'name',path:rooted,span:where},args:values,span:where};

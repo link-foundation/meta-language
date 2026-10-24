@@ -2,9 +2,7 @@
 use super::super::{
     Result, RustParser, SExpr, SNode, SourceDeclaration, Span, Token, Type, unsupported,
 };
-use crate::translation::rust_inherent_rules::{
-    accept_rust_inherent_receiver, require_rust_inherent_receiver_borrow,
-};
+use crate::translation::rust_inherent_rules::plan_rust_inherent_receiver_layers;
 
 impl RustParser {
     pub(in super::super) fn inherent_method(
@@ -37,27 +35,28 @@ impl RustParser {
             .cloned();
         if let Some(selected) = selected.filter(|selected| selected.mode != 0.0) {
             let owner = owner.unwrap();
-            let wrappers = f64::from(
-                u32::try_from(origin.wrappers.len())
-                    .expect("source indirection fits the shared array limit"),
-            );
-            if !accept_rust_inherent_receiver(
-                selected.mode,
-                wrappers,
-                origin.wrappers.iter().all(|wrapper| wrapper == "reference"),
-                &owner.full_name,
-                &selected.owner,
-            ) {
+            let plan = plan_rust_inherent_receiver_layers(&origin.wrappers, &selected.receiver);
+            if owner.full_name != selected.owner || plan.first() != Some(&1.0) {
                 return Err(unsupported(
                     "Rust inherent receiver",
-                    "the method needs its actual owned or single immutable borrowed receiver",
+                    "the method needs its actual nominal receiver and supported immutable dereference or borrow layers",
                     range,
                 ));
             }
             let argument = receiver.clone();
-            if require_rust_inherent_receiver_borrow(selected.mode, wrappers) {
-                self.origins.wrap(&argument, path, "reference");
-            }
+            let mut origin = origin;
+            origin.wrappers = plan
+                .iter()
+                .skip(1)
+                .map(|layer| {
+                    if *layer == 1.0 {
+                        "reference".to_owned()
+                    } else {
+                        "box".to_owned()
+                    }
+                })
+                .collect();
+            self.origins.mark(&argument, origin);
             let mut values = vec![argument];
             values.extend_from_slice(args);
             let mut rooted = vec!["crate".to_owned()];

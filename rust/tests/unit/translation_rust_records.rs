@@ -185,9 +185,24 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
                     .unwrap()
                     .starts_with(row["source"].as_str().unwrap())
             );
+            let preceding_reason = match row.get("correctionKind").and_then(Value::as_str) {
+                None => {
+                    "Rust record update: update syntax needs complete move and field provenance"
+                }
+                Some("named lifetime receiver") => {
+                    "Rust mutable or explicit lifetime receiver: receiver mutation and named regions need an explicit ownership interpretation"
+                }
+                Some("explicit receiver type") => {
+                    "Rust explicit receiver type: explicit receiver types need their complete arbitrary-self interpretation"
+                }
+                Some("boxed receiver needs dereference model") => {
+                    "Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver"
+                }
+                Some(other) => panic!("unregistered expectation correction: {other}"),
+            };
             assert_eq!(
                 row["previousExpectation"],
-                json!({"kind":"unsupported","reason":"Rust record update: update syntax needs complete move and field provenance"})
+                json!({"kind":"unsupported","reason":preceding_reason})
             );
         }
         let native = row["nativeTarget"].as_str().unwrap().replace('.', "::");
