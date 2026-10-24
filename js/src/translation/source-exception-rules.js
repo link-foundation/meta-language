@@ -61,3 +61,21 @@ export function renderJavaScriptSourceExceptionExpression(target,operation,messa
   if(target==='Rust')return '(crate::ml_source_exception::SourceException { class_name: String::from("'+name+'"), message_units: '+(utf16?'('+message+').0':'('+message+').encode_utf16().collect()')+', message_present: '+present+' }).raise()';
   return '';
 }
+/** Legacy output pairs have two fields; source exceptions have four.
+ * @param {number} fields @returns {string} */
+export function readSourceExceptionIgnoredPatternFields(fields){return fields===4?' _ _':'';}
+/** @param {boolean} output @param {string[]} names @param {string[]} kinds @returns {boolean} */
+export function acceptSourceExceptionPayloadFields(output,names,kinds){
+ return output&&names.length===4&&kinds.length===4&&names[0]==='output'&&kinds[0]==='output'
+  &&names[1]==='message'&&kinds[1]==='string'&&names[2]==='className'&&kinds[2]==='string'
+  &&names[3]==='messagePresent'&&kinds[3]==='bool';
+}
+/** @returns {string} */
+export function readSourceExceptionObservationStatement(){
+ return 'ml_source_exception_observation retains the source exception constructor class, exact UTF-16 message and own-message property presence; main projects the display message at its ordinary process boundary';
+}
+/** Generic output append preserves every exception component.
+ * @returns {string} */
+export function readSourceExceptionRocqOutputPrelude(){
+ return 'Definition ml_emit_source_exception {E : Type} (lines : list string) (next : list string * option E) : list string * option E := (List.app lines (fst next), snd next).';
+}

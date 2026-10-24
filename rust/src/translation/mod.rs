@@ -137,6 +137,7 @@ pub(crate) mod semantic_input_rules;
 pub(crate) mod source_const_functions;
 pub(crate) mod source_diagnostic_attributes;
 pub(crate) mod source_empty_options;
+mod source_exception_observation;
 pub(crate) mod source_exception_program;
 pub(crate) mod source_exception_rules;
 pub(crate) mod source_header_emission;

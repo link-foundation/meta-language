@@ -1,5 +1,7 @@
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
+import {readSourceExceptionObservationStatement,readSourceExceptionRocqOutputPrelude} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
 import {UTF16_TEXT_ROCQ_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
@@ -351,6 +353,7 @@ class RocqEmitter {
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('utf16Text')?[UTF16_TEXT_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('sourceExceptionObservation')?[readSourceExceptionRocqOutputPrelude(),'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
@@ -1168,24 +1171,28 @@ class RocqEmitter {
     const theorems = [];
     // A program that may abort is the lines it prints and the message of the abort that stops it, if one does.
     const aborts = this.program.abortsThreaded;
+    const sourceExceptions=hasSourceExceptionOutput(this.program);
+    if(sourceExceptions)this.helpers.add('sourceExceptionObservation');
+    const emitOutput=sourceExceptions?'ml_emit_source_exception':'ml_emit';
     if (aborts) this.helpers.add('emit');
     const arms = (effect, made, aborted) => {
       const [mk, abort] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-      return `match ${this.expr(effect.pair)} with ${mk} _ ${effect.name} => ${made} | ${abort} _ ${aborted.bind} => ${aborted.body} end`;
+      const rich=hasSourceExceptionPayload(this.program.declarations.get(effect.data));
+      return `match ${this.expr(effect.pair)} with ${mk} _ ${effect.name} => ${made} | ${abort} _ ${aborted.bind}${rich?' ml_class ml_present':sourceExceptionPatternSuffix(this.program,effect.data)} => ${aborted.body} end`;
     };
     const build = (index) => {
       if (index >= effects.length) return aborts ? '(nil, None)' : 'nil';
       const effect = effects[index];
       if (effect.k === 'print') {
-        if(this.utf16Strings){const text=formalUnitDisplay(this,this.expr(effect.expr));return aborts?`ml_emit (${text} :: nil)\n  (${build(index+1)})`:`${text} ::\n  ${build(index+1)}`;}
+        if(this.utf16Strings){const text=formalUnitDisplay(this,this.expr(effect.expr));return aborts?`${emitOutput} (${text} :: nil)\n  (${build(index+1)})`:`${text} ::\n  ${build(index+1)}`;}
         return aborts ? `ml_emit (${this.expr(effect.expr)} :: nil)\n  (${build(index + 1)})` : `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
       }
       if (effect.k === 'output') {
-        if(this.utf16Strings){const lines=`(List.map (fun ml_line => ${formalUnitDisplay(this,'ml_line')}) (List.rev ${this.expr(effect.expr)}))`;return `${aborts?'ml_emit':'app'} ${lines}\n  (${build(index+1)})`;}
+        if(this.utf16Strings){const lines=`(List.map (fun ml_line => ${formalUnitDisplay(this,'ml_line')}) (List.rev ${this.expr(effect.expr)}))`;return `${aborts?emitOutput:'app'} ${lines}\n  (${build(index+1)})`;}
         return `${aborts ? 'ml_emit' : 'app'} (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
       }
       if (effect.k === 'let') return `let ${effect.name} := ${this.expr(effect.value)} in\n  ${build(index + 1)}`;
-      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: this.utf16Strings?'(nil, Some '+formalUnitDisplay(this,'ml_m')+')':'(nil, Some ml_m)' })})`;
+      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: sourceExceptions?'(nil, Some (ml_class, ml_m, ml_present))':this.utf16Strings?'(nil, Some '+formalUnitDisplay(this,'ml_m')+')':'(nil, Some ml_m)' })})`;
       assertion += 1;
       // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
       const statement = effects.slice(0, index).reduceRight((rest, item) => {
@@ -1204,6 +1211,12 @@ class RocqEmitter {
     this.state.encode('program-output', 'main is the list of lines the source program prints, in order; evaluating it with vm_compute runs the program');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main lists the lines of each step in the order they were printed');
     if (aborts) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main is the pair of the lines printed and Some message when the program aborts, None when it does not');
+    if(sourceExceptions){
+      this.state.encode('source-exception-observation',readSourceExceptionObservationStatement());
+      const type=this.type({kind:'string'}),message=this.utf16Strings?formalUnitDisplay(this,'(snd (fst ml_error))'):'(snd (fst ml_error))';
+      return [...theorems,`Definition ml_source_exception_observation : (list string * option (${type} * ${type} * bool)%type)%type :=\n  ${body}.`,
+       `Definition main : list string * option string :=\n  let ml_result := ml_source_exception_observation in (fst ml_result, match snd ml_result with None => None | Some ml_error => Some ${message} end).`].join('\n\n');
+    }
     return [...theorems, `Definition main : ${aborts ? 'list string * option string' : 'list string'} :=\n  ${body}.`].join('\n\n');
   }
 }

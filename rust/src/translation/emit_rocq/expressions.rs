@@ -690,6 +690,11 @@ impl RocqEmitter<'_> {
         if aborts {
             self.helpers.insert(Helper::Emit);
         }
+        let source_exceptions =
+            crate::translation::source_exception_observation::has_output(self.program);
+        if source_exceptions {
+            self.helpers.insert(Helper::SourceExceptionObservation);
+        }
         let body = self.build(&effects, 0, &mut assertion, &mut theorems)?;
         if main.sequential_async {
             self.state.encode(
@@ -718,7 +723,22 @@ impl RocqEmitter<'_> {
         } else {
             "list string"
         };
-        theorems.push(format!("Definition main : {result} :=\n  {body}."));
+        if source_exceptions {
+            self.state.encode("source-exception-observation",&crate::translation::source_exception_rules::read_source_exception_observation_statement());
+            let ty = self.ty(&Type::String)?;
+            let message = if self.utf16_strings {
+                crate::translation::formal_string_unit_rules::render_formal_string_scalar_display(
+                    "Rocq",
+                    "(snd (fst ml_error))",
+                )
+            } else {
+                "(snd (fst ml_error))".to_owned()
+            };
+            theorems.push(format!("Definition ml_source_exception_observation : (list string * option ({ty} * {ty} * bool)%type)%type :=\n  {body}."));
+            theorems.push(format!("Definition main : list string * option string :=\n  let ml_result := ml_source_exception_observation in (fst ml_result, match snd ml_result with None => None | Some ml_error => Some {message} end)."));
+        } else {
+            theorems.push(format!("Definition main : {result} :=\n  {body}."));
+        }
         Ok(theorems.join("\n\n"))
     }
 
@@ -736,8 +756,15 @@ impl RocqEmitter<'_> {
         };
         let mk = self.state.ctor_ref(data, &ctors[0], ".");
         let abort = self.state.ctor_ref(data, &ctors[1], ".");
+        let suffix = if crate::translation::source_exception_observation::has_payload(
+            self.program.data(data),
+        ) {
+            " ml_class ml_present".to_owned()
+        } else {
+            crate::translation::source_exception_observation::pattern_suffix(self.program, data)
+        };
         Ok(format!(
-            "match {} with {mk} _ {name} => {made} | {abort} _ {bind} => {body} end",
+            "match {} with {mk} _ {name} => {made} | {abort} _ {bind}{suffix} => {body} end",
             self.expr(pair)?
         ))
     }
@@ -751,6 +778,13 @@ impl RocqEmitter<'_> {
         theorems: &mut Vec<String>,
     ) -> Result<String> {
         let aborts = self.program.aborts_threaded;
+        let source_exceptions =
+            crate::translation::source_exception_observation::has_output(self.program);
+        let emit_output = if source_exceptions {
+            "ml_emit_source_exception"
+        } else {
+            "ml_emit"
+        };
         let Some(effect) = effects.get(index) else {
             return Ok(if aborts { "(nil, None)" } else { "nil" }.to_owned());
         };
@@ -764,13 +798,13 @@ impl RocqEmitter<'_> {
                 };
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
                 Ok(if aborts {
-                    format!("ml_emit ({expr} :: nil)\n  ({rest})")
+                    format!("{emit_output} ({expr} :: nil)\n  ({rest})")
                 } else {
                     format!("{expr} ::\n  {rest}")
                 })
             }
             Effect::Output { expr, .. } => {
-                let head = if aborts { "ml_emit" } else { "app" };
+                let head = if aborts { emit_output } else { "app" };
                 let expr = self.expr(expr)?;
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
                 if self.utf16_strings {
@@ -788,7 +822,9 @@ impl RocqEmitter<'_> {
             }
             Effect::Unwrap { .. } => {
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
-                let message = if self.utf16_strings {
+                let message = if source_exceptions {
+                    "(nil, Some (ml_class, ml_m, ml_present))".to_owned()
+                } else if self.utf16_strings {
                     format!("(nil, Some {})",crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq","ml_m"))
                 } else {
                     "(nil, Some ml_m)".to_owned()

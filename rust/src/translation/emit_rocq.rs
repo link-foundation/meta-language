@@ -245,10 +245,11 @@ enum Helper {
     StringNumber,
     BigIntegerConversion,
     Utf16Text,
+    SourceExceptionObservation,
 }
 
 impl Helper {
-    const ALL: [Self; 21] = [
+    const ALL: [Self; 22] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -270,6 +271,7 @@ impl Helper {
         Self::StringNumber,
         Self::BigIntegerConversion,
         Self::Utf16Text,
+        Self::SourceExceptionObservation,
     ];
 
     fn render_definition(self) -> String {
@@ -308,6 +310,7 @@ impl Helper {
             Self::StringNumber => include_str!("runtime/string-number.v"),
             Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
             Self::Utf16Text => include_str!("runtime/utf16-text.v"),
+            Self::SourceExceptionObservation => include_str!("runtime/source-exception.v"),
         }
     }
 }

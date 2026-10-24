@@ -13,6 +13,8 @@ import {createStringConstructionProgramLinks} from '../src/string-construction-p
 import {encodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {threadOutput} from '../src/translation/output.js';
+import {hasSourceExceptionPayload} from '../src/translation/source-exception-observation.js';
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
 const observe=(call,row)=>{try{return{kind:'value',value:String(call())};}catch(error){return{kind:'abort',value:row.errorClass===undefined?error.message:error.message.toWellFormed(),...(row.errorClass===undefined?{}:{errorClass:error.name,messageUnits:Array.from({length:error.message.length},(_,at)=>error.message.charCodeAt(at)),messagePresent:Object.hasOwn(error,'message')})};}};
@@ -29,5 +31,30 @@ for(const [fixtureName,createDefinition] of [['source-exceptions',createSourceEx
   const expected={kind:row.abort===null?'value':'abort',value:row.abort??row.value,...(row.errorClass===undefined?{}:{errorClass:row.errorClass,messageUnits:row.messageUnits,messagePresent:row.messagePresent})};
   assert.deepEqual(observe(()=>runInNewContext('"use strict";\n'+row.source.replace(/^export /gmu,'')+'\ncompute();',{}, {timeout:1000}),row),expected,row.name);
   assert.deepEqual(observe(()=>functions[index](),row),expected,row.name);
+ }
+});
+
+test('formal exception transport retains every component through nested calls without capturing source names',()=>{
+ const fixture=readProjectData(new URL('../../parity/fixtures/source-exceptions.lino',import.meta.url));
+ const original=checkProgram(parseJavaScript(fixture.source+'\nconsole.log(sourceExceptionNested0());'));
+ for(const target of ['Lean','Rocq']){
+  const threaded=threadOutput(original,target),pairs=[...threaded.declarations.values()].filter(entry=>entry.output);
+  assert.ok(pairs.length>0);
+  for(const pair of pairs){
+   assert.ok(hasSourceExceptionPayload(pair));
+   assert.deepEqual(pair.ctors[1].fields.map(field=>[field.name,field.type.kind]),[['output','output'],['message','string'],['className','string'],['messagePresent','bool']]);
+   assert.ok(!original.declarations.has(pair.fullName),'generated pair captures '+pair.fullName);
+  }
+  const pairsByName=new Map(pairs.map(entry=>[entry.fullName,entry]));
+  const visit=node=>{
+   if(!node||typeof node!=='object')return;
+   if(Array.isArray(node)){node.forEach(visit);return;}
+   if(node.k==='ctor'&&pairsByName.get(node.data)?.ctors[1].name===node.ctor)assert.equal(node.args.length,4);
+   if(node.k==='match')for(const arm of node.cases)if(pairsByName.get(arm.pattern.data)?.ctors[1].name===arm.pattern.ctor)assert.equal(arm.pattern.binds.length,4);
+   for(const [key,value] of Object.entries(node))if(!['type','domain','span'].includes(key))visit(value);
+  };
+  for(const declaration of threaded.declarations.values())if(declaration.k==='fn')visit(declaration.body);
+  const packet=encodeTypedProgramLinks(original),emitted=emitTypedProgramLinks(packet.network,packet.root,target);
+  assert.match(emitted.code,/ml_source_exception_observation/);
  }
 });

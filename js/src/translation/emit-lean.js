@@ -1,5 +1,7 @@
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {hasSourceExceptionOutput,hasSourceExceptionPayload,sourceExceptionPatternSuffix} from './source-exception-observation.js';
+import {readSourceExceptionObservationStatement} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
 import {UTF16_TEXT_LEAN_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
@@ -819,6 +821,7 @@ class LeanEmitter {
     const lines = [];
     const theorems = [];
     let assertion = 0;
+    const sourceExceptions=hasSourceExceptionOutput(this.program);
     effects.forEach((effect, index) => {
       if (effect.k === 'print') lines.push(`  IO.println ${this.utf16Strings?formalUnitDisplay(this,this.expr(effect.expr,1)):this.expr(effect.expr, 1)}`);
       else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ${this.utf16Strings?formalUnitDisplay(this,'ml_line'):'ml_line'}`);
@@ -826,7 +829,10 @@ class LeanEmitter {
       else if (effect.k === 'unwrap') {
         // The value of a step, or the source's abort: its message, uncaught, ends main.
         const [made, aborted] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m => throw (IO.userError ${this.utf16Strings?formalUnitDisplay(this,'ml_m'):'ml_m'}))`);
+        const rich=sourceExceptions&&hasSourceExceptionPayload(this.program.declarations.get(effect.data));
+        const message=this.utf16Strings?formalUnitDisplay(this,'ml_m'):'ml_m';
+        const failure=rich?'throw (ml_class, ml_m, ml_present)':`throw (IO.userError ${message})`;
+        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m${rich?' ml_class ml_present':sourceExceptionPatternSuffix(this.program,effect.data)} => ${failure})`);
       } else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
         // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;
@@ -841,7 +847,7 @@ class LeanEmitter {
           if (item.k === 'let') return `let ${item.name} := ${this.expr(item.value, 1)}; ${rest}`;
           if (item.k !== 'unwrap') return rest;
           const [made, aborted] = item.ctors.map((ctor) => this.state.ctorRef(item.data, ctor));
-          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _ => ${threaded ? 'true' : 'True'})`;
+          return `(match ${this.expr(item.pair, 1)} with | ${made} _ ${item.name} => ${rest} | ${aborted} _ _${sourceExceptionPatternSuffix(this.program,item.data)} => ${threaded ? 'true' : 'True'})`;
         }, threaded ? `decide (${this.prop(effect.prop)})` : this.prop(effect.prop));
         const statement = threaded ? `(${body}) = true` : body;
         const name = `ml_assertion_${assertion}`;
@@ -853,6 +859,12 @@ class LeanEmitter {
     this.state.encode('program-output', 'main prints the lines the source program prints, in order, with IO.println');
     if (this.program.outputThreaded) this.state.encode('output-threading', 'a function that prints, directly or through a function it calls, takes the lines printed before it and returns them, with its own in front, paired with its value in a generated ml_io data type; main prints the lines of each step in the order they were printed');
     if (this.program.abortsThreaded) this.state.encode('abort-threading', 'a function that may abort, directly or through a function it calls, returns the source\'s abort message with the lines printed before it in the generated ml_io data type; main prints those lines and throws IO.userError with the message, which lean --run reports as "uncaught exception: <message>" with exit code 1');
+    if(sourceExceptions){
+      this.state.encode('source-exception-observation',readSourceExceptionObservationStatement());
+      const type=this.type({kind:'string'}),message=this.utf16Strings?formalUnitDisplay(this,'ml_error.2.1'):'ml_error.2.1';
+      return [...theorems,`def ml_source_exception_observation : ExceptT (${type} × ${type} × Bool) IO Unit := do\n${[...lines,'  pure ()'].join('\n')}`,
+        `def main : IO Unit := do\n  let ml_result ← ml_source_exception_observation.run\n  match ml_result with\n  | .ok _ => pure ()\n  | .error ml_error => throw (IO.userError ${message})`].join('\n\n');
+    }
     return [...theorems, `def main : IO Unit := do\n${lines.length ? lines.join('\n') : '  pure ()'}`].join('\n\n');
   }
 

@@ -14,6 +14,8 @@ impl LeanEmitter<'_> {
         let mut lines = Vec::new();
         let mut theorems = Vec::new();
         let mut assertion = 0;
+        let source_exceptions =
+            crate::translation::source_exception_observation::has_output(self.program);
         for (index, effect) in effects.iter().enumerate() {
             match effect {
                 Effect::Print { expr, .. } => {
@@ -54,8 +56,25 @@ impl LeanEmitter<'_> {
                     } else {
                         "ml_m".to_owned()
                     };
+                    let rich = source_exceptions
+                        && crate::translation::source_exception_observation::has_payload(
+                            self.program.data(data),
+                        );
+                    let suffix = if rich {
+                        " ml_class ml_present".to_owned()
+                    } else {
+                        crate::translation::source_exception_observation::pattern_suffix(
+                            self.program,
+                            data,
+                        )
+                    };
+                    let failure = if rich {
+                        "throw (ml_class, ml_m, ml_present)".to_owned()
+                    } else {
+                        format!("throw (IO.userError {message})")
+                    };
                     lines.push(format!(
-                        "  let {name} ← (match {} with\n    | {made} _ ml_v => pure ml_v\n    | {aborted} _ ml_m => throw (IO.userError {message}))",
+                        "  let {name} ← (match {} with\n    | {made} _ ml_v => pure ml_v\n    | {aborted} _ ml_m{suffix} => {failure})",
                         self.expr(pair, 1)?
                     ));
                 }
@@ -100,8 +119,9 @@ impl LeanEmitter<'_> {
                             } => {
                                 let made = self.state.ctor_ref(data, &ctors[0], ".");
                                 let aborted = self.state.ctor_ref(data, &ctors[1], ".");
+                                let suffix=crate::translation::source_exception_observation::pattern_suffix(self.program,data);
                                 statement = format!(
-                                    "(match {} with | {made} _ {name} => {statement} | {aborted} _ _ => {unreached})",
+                                    "(match {} with | {made} _ {name} => {statement} | {aborted} _ _{suffix} => {unreached})",
                                     self.expr(pair, 1)?
                                 );
                             }
@@ -146,7 +166,27 @@ impl LeanEmitter<'_> {
                 "a function that may abort, directly or through a function it calls, returns the source's abort message with the lines printed before it in the generated ml_io data type; main prints those lines and throws IO.userError with the message, which lean --run reports as \"uncaught exception: <message>\" with exit code 1",
             );
         }
-        theorems.push(format!("def main : IO Unit := do\n{body}"));
+        if source_exceptions {
+            self.state.encode("source-exception-observation",&crate::translation::source_exception_rules::read_source_exception_observation_statement());
+            let ty = self.ty(&crate::translation::types::STRING)?;
+            let message = if self.utf16_strings {
+                crate::translation::formal_string_unit_rules::render_formal_string_scalar_display(
+                    "Lean",
+                    "ml_error.2.1",
+                )
+            } else {
+                "ml_error.2.1".to_owned()
+            };
+            let body = if lines.is_empty() {
+                "  pure ()".to_owned()
+            } else {
+                format!("{body}\n  pure ()")
+            };
+            theorems.push(format!("def ml_source_exception_observation : ExceptT ({ty} × {ty} × Bool) IO Unit := do\n{body}"));
+            theorems.push(format!("def main : IO Unit := do\n  let ml_result ← ml_source_exception_observation.run\n  match ml_result with\n  | .ok _ => pure ()\n  | .error ml_error => throw (IO.userError {message})"));
+        } else {
+            theorems.push(format!("def main : IO Unit := do\n{body}"));
+        }
         Ok(theorems.join("\n\n"))
     }
 

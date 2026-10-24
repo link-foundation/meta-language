@@ -5882,9 +5882,13 @@ definition, rather than limiting it to JavaScript Math methods.
 Native exception transport carries the universal class/message-unit/presence
 tuple, including across separately embedded generated modules. Implicit BigInt
 ToNumber failures use the same TypeError transport. Future controls declare
-all three error fields and original-source argument order. Formal targets
-currently thread the dynamic message but still need the complete exception
-payload, and native uncaught process/stack behavior remains required. Arbitrary
+all three error fields and original-source argument order. Formal output pairs
+now draft the complete exception payload through nested calls. The structured
+`ml_source_exception_observation` entry retains class, exact message units and
+own-property presence; ordinary `main` projects the message for process display.
+Historical two-field pairs retain their actual fields without inventing class
+or property facts from their message. Native uncaught process/stack behavior
+remains required. Arbitrary
 thrown values, error objects/cause, catch/finally, AggregateError and complete
 non-value UTF-16 names remain obligations. These are code drafts;
 no behavior, test, oracle, compilation or validation gate has run in this phase.
@@ -5947,7 +5951,7 @@ UTF-8 bytes. The original Rust-source scalar profile remains distinct. Native
 Rust emission already selects its Text profile for unit-sensitive operations;
 its complete default public JavaScript String parameter domain still needs
 review alongside explicit scalar-library interfaces. Complete formal error
-class/property payloads, all remaining String methods and stateful features
+arithmetic error identities, all remaining String methods and stateful features
 remain requirements. This representation draft supplies no native observations.
 
 Unshadowed String.fromCharCode and String.fromCodePoint source calls lower through
@@ -5967,3 +5971,10 @@ direct unit algorithms, all program/definition codecs and emissions, and native
 execution. Corrected former formal-order refusals retain their original inputs,
 diagnostics and independent value/unit controls. No behavior tests, native
 compilation, validation gates, CI or push have run in this draft phase.
+
+Output threading uses the existing shared source-name census and private-name
+supply for pair declarations, output parameters and local bindings. Source
+names such as `ml_io1` and `ml_out` therefore retain their identities through
+formal effect lowering. Future controls declare nested standard errors with
+absent messages and deliberate private-name collisions. Full source arithmetic
+errors, assertion payloads and effectful callable values remain obligations.
