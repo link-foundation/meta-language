@@ -7,6 +7,10 @@ use crate::translation::ir::RecordEntry;
 use crate::translation::javascript_nullish_field_rules as rules;
 use crate::translation::types::TypeField;
 
+pub(super) enum JavaScriptPropertyAccess<'a> {
+    Field(&'a str),
+    Method(&'a str, &'a [Option<SExpr>]),
+}
 impl Checker {
     pub(super) fn javascript_nullish_field(
         &mut self,
@@ -17,7 +21,30 @@ impl Checker {
         expected: Option<&Type>,
         span: Option<Span>,
     ) -> Result<Option<Expr>> {
+        self.javascript_nullish_access(
+            operand,
+            JavaScriptPropertyAccess::Field(field),
+            env,
+            path,
+            expected,
+            span,
+        )
+    }
+    pub(super) fn javascript_nullish_access(
+        &mut self,
+        operand: (&Expr, &SExpr),
+        access: JavaScriptPropertyAccess<'_>,
+        env: &Env,
+        path: &[String],
+        expected: Option<&Type>,
+        span: Option<Span>,
+    ) -> Result<Option<Expr>> {
         let (value, source) = operand;
+        let field = match &access {
+            JavaScriptPropertyAccess::Field(field) | JavaScriptPropertyAccess::Method(field, _) => {
+                *field
+            }
+        };
         if self.language != Language::JavaScript {
             return Ok(None);
         }
@@ -62,13 +89,18 @@ impl Checker {
                 },
                 source.span,
             );
-            let field_source = SExpr::new(
-                SNode::Field {
+            let operation = match &access {
+                JavaScriptPropertyAccess::Field(_) => SNode::Field {
                     object: Box::new(read),
                     field: field.to_owned(),
                 },
-                span,
-            );
+                JavaScriptPropertyAccess::Method(_, args) => SNode::Method {
+                    object: Box::new(read),
+                    op: field.to_owned(),
+                    args: args.to_vec(),
+                },
+            };
+            let field_source = SExpr::new(operation, span);
             let body = self.expr(&field_source, &scope, path, expected, false)?;
             ty = body.ty.clone();
             let actual = Expr::new(

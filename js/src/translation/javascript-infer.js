@@ -941,8 +941,11 @@ class Inference {
       case 'stringPoints':
         this.unify(this.expr(node.object, env), STRING, node.span);
         return { kind: 'array', element: STRING };
-      case 'copySlice':
-        return this.expr(node.object, env, expected);
+      case 'copySlice': {
+        const object=this.expr(node.object,env),result=this.fresh();
+        this.methods.push({node:undefined,object,args:[],op:'slice',result,where:node.span});
+        return result;
+      }
       case 'forOfIterable': {
         const object = this.expr(node.object, env);
         // Keep the original array term and its optional-element owner. The
@@ -1200,6 +1203,9 @@ class Inference {
 
   methodStep({ node, object, args, op, result, where }, force=false) {
     let receiver = this.resolve(object);
+    const form=readJavaScriptNullishFieldForm(receiver.kind,receiver.element?this.resolve(receiver.element).kind:'');
+    if(form==='absent')return true;
+    if(form==='guarded'){this.methods.push({node:undefined,object:receiver.element,args,op,result,where});return true;}
     if (receiver.kind === 'var') {
       if(!force)return false;
       const kind = readJavaScriptPropertyCallFallbackKind(op,readJavaScriptMethodReceiverKind(op));

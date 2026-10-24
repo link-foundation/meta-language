@@ -76,14 +76,19 @@ impl Inference {
                 self.unify(&value, &Term::Known(STRING), object.span)?;
                 Ok(Term::Known(STRING))
             }
-            SNode::CopySlice { object } => self.expr(object, env),
+            SNode::CopySlice { object } => self.method(None, object, "slice", &[], env, expr.span),
             SNode::ArrayFrom { args, .. } => self.array_from(expr, args, env, None),
             SNode::Set { items, .. } | SNode::Map { entries: items, .. } => {
                 self.collection_construction(expr, items, env, None)
             }
-            SNode::Method { object, op, args } => {
-                self.method(std::ptr::from_ref(expr), object, op, args, env, expr.span)
-            }
+            SNode::Method { object, op, args } => self.method(
+                Some(std::ptr::from_ref(expr)),
+                object,
+                op,
+                args,
+                env,
+                expr.span,
+            ),
             SNode::StringTest { op, object, search } if op == "includes" => {
                 self.includes(expr, object, search, env)
             }

@@ -1,5 +1,6 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
-import {checkJavaScriptNullishField} from './javascript-nullish-fields.js';
+import {checkJavaScriptNullishField,checkJavaScriptNullishAccess} from './javascript-nullish-fields.js';
+import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
@@ -670,9 +671,13 @@ class Checker {
       }
       case 'copySlice': {
         const object = this.expr(node.object, env, path, undefined);
+        const source={...node,k:'method',op:'slice',args:[]};
+        const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,source,object,env,path,expected);
+        if(nullable)return nullable;
+        if(requireJavaScriptSliceReferenceCopy(this.language,object.type.kind,object.type.reference===true))return this.method(source,env,path,expected,object);
         const form = readPrimitiveCopySliceForm(object.type.kind);
         if (form === 'identity') return object;
-        if (form === 'method') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected);
+        if (form === 'method') return this.method({ ...node, k: 'method', op: 'slice', args: [] }, env, path, expected, object);
         throw unsupported('method call .slice()', 'this value has no string or array slice method', node.span);
       }
       case 'record':
@@ -751,7 +756,7 @@ class Checker {
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
-        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,env,path))??this.method(node, env, path, expected);
+        return (this.checkedProjection ? null : checkJavaScriptSourcePropertyCall(this,node,env,path,expected))??this.method(node, env, path, expected);
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':
@@ -1084,8 +1089,10 @@ class Checker {
     return { k: 'method', object, op: node.op, args: values, type, span: node.span };
   }
 
-  method(node, env, path, expected) {
-    const receiver = this.expr(node.object, env, path, undefined);
+  method(node, env, path, expected, preparedReceiver) {
+    const receiver = preparedReceiver??this.expr(node.object, env, path, undefined);
+    const nullable=this.checkedProjection?null:checkJavaScriptNullishAccess(this,node,receiver,env,path,expected);
+    if(nullable)return nullable;
     const recordWrite = checkRecordFieldWrite(this, node, receiver, env, path);
     if (recordWrite) return recordWrite;
     const arrayStateMethod = checkArrayStateMethod(this, node, receiver, env, path);

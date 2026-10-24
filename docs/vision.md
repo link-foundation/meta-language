@@ -6704,3 +6704,32 @@ with the declared Node 22/24 assertion ranges. Other engine wording is uncovered
 Future source/native/codec controls are unexecuted. Nullable methods, computed
 keys and protocols, unknown fields/prototypes, proxies/accessors, complete
 abrupt/unreachable inference and every earlier requirement remain required.
+
+
+### Nullable method receivers and reference slice draft
+
+Ordinary JavaScript method calls now reuse the nullish property-read branch
+before evaluating any argument. Existing receiver checks in property, concat,
+primitive and callback construction supply their actual value; no additional
+receiver evaluation or speculative callback is introduced. The present branch
+reuses the ordinary checked method with its original arguments and reference
+handle. The absent branch raises the actual property-load TypeError, including
+for a zero-argument slice. Optional-chain skipping remains a separate operation.
+
+Method inference refines the actual present receiver and retains that pending
+constraint. Such a constraint has no source node to rewrite; actual source node
+owners stay explicit. Nullable toString calls therefore remain method calls,
+rather than becoming the distinct optional-value text conversion. String(null)
+and String(undefined) retain their constructor conversion semantics. Receiver
+error paths retain the surrounding expected result type.
+
+Zero-argument slice checks the actual callable property on records and uses its
+actual return type. A live JavaScript Array slice goes through the existing
+slice implementation and allocates a distinct handle; shallow element identity
+is retained. The complete source-derived selector is shared across hosts. Other
+languages keep their separately defined copy profiles. Future controls cover
+receiver/argument errors, null/undefined messages, parenthesized and continuous
+chains, callback and collection methods, Unit results, distinct slice handles,
+slot snapshots and shallow shared elements. All are unexecuted. Arbitrary this,
+accessors/proxies, inherited or unknown properties, dynamic protocols, full
+abrupt/unreachable inference and every prior requirement remain obligations.

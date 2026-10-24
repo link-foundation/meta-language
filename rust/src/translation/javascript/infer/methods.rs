@@ -160,7 +160,7 @@ fn replay_property_call(node: &mut SExpr, form: &str, observed: &mut HashMap<*co
 }
 
 pub(super) struct Method {
-    node: *const SExpr,
+    node: Option<*const SExpr>,
     object: Term,
     args: Vec<Term>,
     operation: String,
@@ -319,7 +319,7 @@ impl Inference {
     }
     pub(super) fn method(
         &mut self,
-        node: *const SExpr,
+        node: Option<*const SExpr>,
         object: &SExpr,
         operation: &str,
         args: &[Option<SExpr>],
@@ -357,6 +357,7 @@ impl Inference {
                 waiting.push(constraint);
             }
         }
+        waiting.extend(std::mem::take(&mut self.methods));
         self.methods = waiting;
         Ok(progress)
     }
@@ -395,6 +396,41 @@ impl Inference {
             read_java_script_string_method_result_form,
         };
         let mut receiver = self.resolve(&method.object);
+        let kind = match &receiver {
+            Term::Known(ty) => ty.kind(),
+            Term::Option { .. } => "option",
+            _ => "value",
+        };
+        let element = match &receiver {
+            Term::Option { element, .. }
+                if matches!(self.resolve(element), Term::Known(Type::Unit)) =>
+            {
+                "unit"
+            }
+            _ => "",
+        };
+        let form =
+            crate::translation::javascript_nullish_field_rules::read_java_script_nullish_field_form(
+                kind, element,
+            );
+        if form == "absent" {
+            return Ok(true);
+        }
+        if form == "guarded" {
+            let Term::Option { element, .. } = receiver else {
+                unreachable!("the shared source method form has its actual optional term")
+            };
+            self.methods.push(Method {
+                node: None,
+                object: *element,
+                args: method.args.clone(),
+                operation: method.operation.clone(),
+                result: method.result.clone(),
+                place: method.place,
+            });
+            return Ok(true);
+        }
+
         if let Term::Known(ty) = &receiver
             && matches!(
                 ty,
@@ -415,7 +451,9 @@ impl Inference {
             {
                 "scalar" => {
                     if method.args.is_empty() {
-                        self.property_methods.insert(method.node, "text".to_owned());
+                        if let Some(node) = method.node {
+                            self.property_methods.insert(node, "text".to_owned());
+                        }
                     }
                     self.unify(&method.result, &Term::Known(STRING), method.place)?;
                     return Ok(true);
@@ -473,7 +511,9 @@ impl Inference {
         }
         if method.operation == "toString" {
             if method.args.is_empty() {
-                self.property_methods.insert(method.node, "text".to_owned());
+                if let Some(node) = method.node {
+                    self.property_methods.insert(node, "text".to_owned());
+                }
             }
             self.unify(&method.result, &Term::Known(STRING), method.place)?;
             return Ok(true);
@@ -576,7 +616,9 @@ impl Inference {
             if method.args.len() == 1
                 && matches!(self.resolve(&method.args[0]), Term::Known(Type::String))
             {
-                self.property_methods.insert(method.node, "test".to_owned());
+                if let Some(node) = method.node {
+                    self.property_methods.insert(node, "test".to_owned());
+                }
             }
             self.unify(&method.result, &Term::Known(BOOL), method.place)?;
             return Ok(true);
@@ -614,7 +656,9 @@ impl Inference {
             if selected == "test" && method.args.len() == 1
                 || selected == "map" && method.args.is_empty()
             {
-                self.property_methods.insert(method.node, selected);
+                if let Some(node) = method.node {
+                    self.property_methods.insert(node, selected);
+                }
             }
             let form = if crate::translation::primitive_method_rules::read_primitive_method_minimum_arguments(kind, &method.operation) >= 0.0 {
                 crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation)

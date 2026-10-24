@@ -1,4 +1,5 @@
 //! Source handle/value transport into existing ordered lets, reads and appends.
+use super::javascript_nullish_fields::JavaScriptPropertyAccess;
 use super::{
     BinaryOp, Checker, Env, Expr, Node, Result, SExpr, STRING, Span, Type, array, plain_binary,
     type_error, unsupported,
@@ -8,13 +9,24 @@ use crate::translation::javascript_property_call_rules as rules;
 impl Checker {
     pub(super) fn source_concatenation(
         &mut self,
-        source: &SExpr,
+        subject: (&SExpr, Option<&Type>),
         args: &[Option<SExpr>],
         env: &Env,
         path: &[String],
         span: Option<Span>,
     ) -> Result<Option<Expr>> {
+        let (source, expected) = subject;
         let receiver = self.expr(source, env, path, None, false)?;
+        if let Some(value) = self.javascript_nullish_access(
+            (&receiver, source),
+            JavaScriptPropertyAccess::Method("concat", args),
+            env,
+            path,
+            expected,
+            span,
+        )? {
+            return Ok(Some(value));
+        }
         let kind = receiver.ty.kind();
         if kind != "array" && kind != "string" {
             return Ok(None);

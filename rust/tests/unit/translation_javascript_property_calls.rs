@@ -94,3 +94,12 @@ fn ordinary_nullish_fields_keep_actual_errors_and_optional_chain_boundaries() {
         meta_language::create_java_script_nullish_field_program_links,
     );
 }
+
+#[test]
+fn nullable_methods_keep_property_errors_argument_order_and_slice_identity() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/nullish-methods.mjs",
+        "nullable method property loads",
+        meta_language::create_java_script_nullish_field_program_links,
+    );
+}

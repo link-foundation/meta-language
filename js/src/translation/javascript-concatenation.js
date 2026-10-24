@@ -1,3 +1,4 @@
+import {checkJavaScriptNullishAccess} from './javascript-nullish-fields.js';
 // Capture actual handles/values before reading payloads; existing IR supplies
 // evaluation, reference reads, primitive text conversion and array append.
 import{coerce}from'./check.js';
@@ -6,8 +7,10 @@ import{STRING,array}from'./types.js';
 import{materializeJavaScriptPrimitiveText}from'./javascript-string-search.js';
 import{readJavaScriptConcatenationArgumentRole}from'./javascript-property-call-rules.js';
 
-export function checkJavaScriptConcatenation(checker,node,env,path){
+export function checkJavaScriptConcatenation(checker,node,env,path,expected){
  const receiver=checker.expr(node.object,env,path,undefined),kind=receiver.type.kind;
+ const nullable=checkJavaScriptNullishAccess(checker,node,receiver,env,path,expected);
+ if(nullable)return nullable;
  if(kind!=='array'&&kind!=='string')return null;
  const values=[receiver];
  for(const arg of node.args){

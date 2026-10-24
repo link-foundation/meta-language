@@ -408,18 +408,29 @@ impl Checker {
                 self.match_cases(scrutinee, cases, span, env, path, context)
             }
             SNode::StringMap { .. } => self.string_map(node, env, path),
-            SNode::CopySlice { object } => self.copy_slice(object, env, path, span),
+            SNode::CopySlice { object } => self.copy_slice((object, expected), env, path, span),
             SNode::Method { object, op, args } => {
                 if !self.checked_projection
                     && let Some(value) =
-                        self.source_property_call(object, op, args, env, path, span)?
+                        self.source_property_call((object, expected), op, args, env, path, span)?
                 {
                     return Ok(value);
                 }
                 let form =
                     crate::translation::array_callback_rules::read_array_callback_result_form(op);
                 if form.is_empty() || form == "mapped array" {
-                    self.primitive_method(object, op, args, env, path, span)
+                    if expected.is_none() {
+                        self.primitive_method(object, op, args, env, path, span)
+                    } else {
+                        self.primitive_method_with_context(
+                            (object, expected),
+                            op,
+                            args,
+                            env,
+                            path,
+                            span,
+                        )
+                    }
                 } else {
                     self.array_callback_method(node, env, path, context, &form)
                 }

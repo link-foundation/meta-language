@@ -141,3 +141,13 @@ pub fn read_java_script_nullish_field_message(absence: &str, field: &str) -> Str
 pub fn read_java_script_nullish_field_capture() -> String {
     String::from("receiver")
 }
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn require_java_script_slice_reference_copy(
+    language: &str,
+    kind: &str,
+    reference: bool,
+) -> bool {
+    ((language == "JavaScript") && (kind == "array")) && reference
+}

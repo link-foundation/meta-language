@@ -8,3 +8,6 @@ export function readJavaScriptNullishFieldForm(kind,element){return readJavaScri
 export function readJavaScriptNullishFieldMessage(absence,field){return "Cannot read properties of "+absence+" (reading '"+field+"')";}
 /** @returns {string} */
 export function readJavaScriptNullishFieldCapture(){return 'receiver';}
+/** A live JavaScript Array slice allocates a different reference handle.
+ * @param {string} language @param {string} kind @param {boolean} reference @returns {boolean} */
+export function requireJavaScriptSliceReferenceCopy(language,kind,reference){return language==='JavaScript'&&kind==='array'&&reference;}
