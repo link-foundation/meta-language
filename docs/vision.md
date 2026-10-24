@@ -6767,3 +6767,33 @@ The evaluation order follows
 and [GetValue](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-getvalue).
 This is an unexecuted source draft; arbitrary coercions/prototypes, dynamic
 properties, full abrupt/unreachable inference and all prior obligations remain.
+
+
+### Literal bracket properties and indexed String draft
+
+A literal bracket key retains its original source representation. Shared rules
+classify exact UTF16 units and canonical Array indices (0 through 2^32-2);
+leading zeros and arbitrary named properties are not numeric slot witnesses.
+Actual record owners retain their own names, including numeric-looking names.
+Known literal names use the existing checked field path. Actual literal bracket
+calls use the ordinary method owner and arguments. Nullable receiver handling
+precedes every argument, while continuous optional chains keep their skip scope.
+
+Numeric String indexing evaluates the actual receiver and key once in order,
+then returns one UTF16 code unit or undefined. Integer/range predicates precede
+the existing character construction; fractional, negative, infinite and NaN
+indices are not truncated. Explicit BigInt conversion occurs only on the
+captured present key. An absent optional numeric key remains an absent property,
+not numeric zero. The immutable receiver/key capture also retains effects on
+Unit keys. This implements the represented own-index behavior of
+[StringGetOwnProperty](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-stringgetownproperty);
+unknown/inherited properties still need their complete protocol.
+
+Inference queues retain actual literal names until the receiver resolves, then
+use ordinary field or index constraints. Optional refinement keeps this key
+information. The shared classifier has complete editable native/Links programs;
+UTF16 units cross the host boundary explicitly. Future declarations retain
+preceding full source definitions and cover actual Node/native values, source
+ASTs, graphs, codecs and all four emissions. They are unexecuted. Dynamic
+String-key unions/coercion, unknown/prototype properties, accessors/proxies,
+this, descriptors and every earlier requirement remain required.

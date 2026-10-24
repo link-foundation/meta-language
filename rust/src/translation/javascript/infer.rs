@@ -217,6 +217,7 @@ struct FieldOf {
 
 struct IndexOf {
     object: Term,
+    property: Option<String>,
     index: f64,
     literal: bool,
     optional: bool,

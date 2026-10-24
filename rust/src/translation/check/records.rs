@@ -225,6 +225,14 @@ impl Checker {
         {
             return Ok(field);
         }
+        Self::checked_named_property(value, field, span)
+    }
+
+    pub(super) fn checked_named_property(
+        value: Expr,
+        field: &str,
+        span: Option<Span>,
+    ) -> Result<Expr> {
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
             return Ok(record);
         }

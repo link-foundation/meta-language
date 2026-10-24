@@ -364,13 +364,38 @@ impl Inference {
     pub(super) fn solve_product_indices(&mut self) -> Result<bool> {
         let mut progress = false;
         let mut waiting = Vec::new();
-        for constraint in std::mem::take(&mut self.indices) {
-            match self.resolve(&constraint.object) {
+        for mut constraint in std::mem::take(&mut self.indices) {
+            let object = self.resolve(&constraint.object);
+            if matches!(object, Term::Var(_)) {
+                waiting.push(constraint);
+                continue;
+            }
+            if !matches!(object, Term::Option { .. })
+                && let Some(key) = constraint.property.take()
+            {
+                let kind = match &object {
+                    Term::Array(_) => "array",
+                    Term::Tuple(_) => "tuple",
+                    Term::Known(ty) => ty.kind(),
+                    _ => "value",
+                };
+                let units = key.encode_utf16().map(f64::from).collect::<Vec<_>>();
+                let index = crate::translation::javascript_literal_property_rules::read_java_script_literal_property_index(&units);
+                if crate::translation::javascript_literal_property_rules::read_java_script_literal_property_form(kind, index) == "field" {
+                    self.fields.push(super::FieldOf { object: constraint.object, field: key, result: constraint.result, place: constraint.place });
+                    progress = true;
+                    continue;
+                }
+                constraint.index = index;
+                constraint.literal = true;
+            }
+            match object {
                 Term::Var(_) => waiting.push(constraint),
                 Term::Option { element, .. } => {
                     if !matches!(self.resolve(&element), Term::Known(Type::Unit)) {
                         self.indices.push(super::IndexOf {
                             object: *element,
+                            property: constraint.property,
                             index: constraint.index,
                             literal: constraint.literal,
                             optional: constraint.optional,
@@ -390,6 +415,17 @@ impl Inference {
                         .and_then(|index| elements.get(index))
                         .ok_or_else(|| type_error("tuple index out of range", constraint.place))?;
                         self.unify(&constraint.result, element, constraint.place)?;
+                    }
+                    progress = true;
+                }
+                Term::Known(Type::String) => {
+                    let value = super::optional_values::optional(
+                        Term::Known(crate::translation::types::STRING),
+                        "undefined",
+                    );
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
                     }
                     progress = true;
                 }

@@ -746,6 +746,19 @@ impl JavaScriptParser {
             if self.cursor.is("(") {
                 let args = self.arguments("function value")?;
                 let place = joined(&expr, &node(SNode::Unit, self.cursor.peek().span()), &token);
+                if let SNode::Index { object, index, .. } = &expr.node
+                    && let SNode::Str { value } = &index.node
+                {
+                    expr = node(
+                        SNode::Method {
+                            object: object.clone(),
+                            op: value.clone(),
+                            args,
+                        },
+                        place,
+                    );
+                    continue;
+                }
                 expr = node(
                     SNode::App {
                         func: Box::new(expr),

@@ -46,6 +46,7 @@ mod expressions;
 mod externals;
 mod items;
 mod javascript_concatenation;
+mod javascript_indexed_properties;
 mod javascript_nullish_fields;
 mod javascript_optional_calls;
 mod javascript_optional_chains;

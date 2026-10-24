@@ -1,5 +1,6 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
+import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
@@ -619,17 +620,7 @@ class Checker {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        if (value.type.kind === 'record') {
-          const field = value.type.fields.find((field) => field.name === node.field);
-          if (!field) throw typeError(`record has no field ${node.field}`, node.span);
-          return { k: 'recordField', object: value, field: node.field, index: value.type.fields.indexOf(field), type: field.type };
-        }
-        if (node.field === 'size' && ['map', 'set'].includes(value.type.kind)) return { k: 'collectionSize', object: value, type: FLOAT };
-        if (node.field === 'length') {
-          const object = value;
-          if (object.type.kind === 'array' || object.type.kind === 'string') return { k: 'length', array: object, type: FLOAT };
-        }
-        throw unsupported('field access', `field ${node.field} is only portable inside a constructor match`, node.span);
+        return checkJavaScriptNamedProperty(value,node.field,node.span);
       }
       case 'length': {
         const object = this.expr(node.object, env, path, undefined);
@@ -803,6 +794,12 @@ class Checker {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
         const nullable=this.checkedProjection?null:checkJavaScriptNullishIndex(this,node,object,env,path,expected);
         if(nullable)return nullable;
+        if(this.language==='JavaScript'&&!this.checkedProjection){
+          const literal=readJavaScriptLiteralIndexSource(node,object.type.kind);
+          if(literal?.k==='field')return checkJavaScriptNamedProperty(object,literal.field,node.span);
+          if(literal)node=literal;
+          if(object.type.kind==='string')return checkJavaScriptStringIndex(this,node,object,env,path);
+        }
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
           const index = readTuplePosition(Number(node.index.value) * (node.index.negative ? -1 : 1));
           if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);

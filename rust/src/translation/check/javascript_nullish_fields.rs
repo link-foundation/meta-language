@@ -298,7 +298,7 @@ impl Checker {
                     else {
                         unreachable!("the source index is retained")
                     };
-                    let literal = matches!(&index.node, SNode::Num { .. })
+                    let literal = matches!(&index.node, SNode::Num { .. } | SNode::Str { .. })
                         || matches!(&index.node, SNode::Unary { op: UnaryOp::Neg, arg } if matches!(&arg.node, SNode::Num { .. }));
                     let actual_key = if literal {
                         index.as_ref().clone()

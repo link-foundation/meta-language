@@ -112,3 +112,12 @@ fn computed_reads_keep_key_order_nullish_diagnostics_and_live_array_handles() {
         meta_language::create_java_script_nullish_field_program_links,
     );
 }
+
+#[test]
+fn literal_brackets_and_string_indices_keep_owners_utf16_units_and_source_order() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/indexed-properties.mjs",
+        "literal bracket properties and String indices",
+        meta_language::create_java_script_literal_property_program_links,
+    );
+}

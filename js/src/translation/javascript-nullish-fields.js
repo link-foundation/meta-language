@@ -54,7 +54,7 @@ export function checkJavaScriptNullishAccess(checker,node,value,env,path,expecte
   present=value.type.element;
   const binding=checker.freshName('ml_nullish_field_present'),scope=new Map(sourceScope);bindLocal(scope,binding,present);
   const object={k:'name',path:[binding],span:node.object.span};
-  const index=computed&&(node.index.k==='num'||node.index.k==='unary'&&node.index.op==='neg'&&node.index.arg.k==='num')?node.index:computed?{k:'name',path:[keyName],span:node.index.span}:null;
+  const index=computed&&(node.index.k==='str'||node.index.k==='num'||node.index.k==='unary'&&node.index.op==='neg'&&node.index.arg.k==='num')?node.index:computed?{k:'name',path:[keyName],span:node.index.span}:null;
   const source=node.k==='method'?{...node,object}:computed?{...node,object,index}:{k:'field',object,field:member,span:node.span};
   const body=checker.expr(source,scope,path,expected);
   type=body.type;

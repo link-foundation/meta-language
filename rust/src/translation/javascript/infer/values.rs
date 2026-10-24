@@ -309,6 +309,10 @@ impl Inference {
                     || matches!(&index.node, SNode::Unary { op: UnaryOp::Neg, arg } if matches!(arg.node, SNode::Num { .. }));
                 self.indices.push(IndexOf {
                     object: object_type,
+                    property: match &index.node {
+                        SNode::Str { value } => Some(value.clone()),
+                        _ => None,
+                    },
                     index: position,
                     literal,
                     optional: optional
@@ -331,6 +335,7 @@ impl Inference {
                 let position = *index as f64;
                 self.indices.push(IndexOf {
                     object: object_type,
+                    property: None,
                     index: position,
                     literal: true,
                     optional: false,

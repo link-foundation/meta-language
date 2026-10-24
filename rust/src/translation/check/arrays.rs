@@ -377,6 +377,31 @@ impl Checker {
         {
             return Ok(value);
         }
+        let literal = if self.language == Language::JavaScript && !self.checked_projection {
+            super::javascript_indexed_properties::literal_index_source(node, array.ty.kind())
+        } else {
+            None
+        };
+        if let Some(SExpr {
+            node: super::SNode::Field { field, .. },
+            ..
+        }) = &literal
+        {
+            return Self::checked_named_property(array, field, span);
+        }
+        let index = match &literal {
+            Some(SExpr {
+                node: super::SNode::Index { index, .. },
+                ..
+            }) => index.as_ref(),
+            _ => index.as_ref(),
+        };
+        if self.language == Language::JavaScript
+            && !self.checked_projection
+            && array.ty == Type::String
+        {
+            return self.javascript_string_index(array, (index, span), env, path);
+        }
         if let Type::Tuple { elements } = &array.ty
             && let super::SNode::Num {
                 value, negative, ..

@@ -2284,7 +2284,9 @@ class JavaScriptParser {
       }
       if (c.is('(')) {
         const args = this.arguments('function value');
-        expr = { k: readCallableSurfaceConstructor('computed-call', false), fn: expr, args, span: joined(expr, c.peek(), token) };
+        expr = expr.k==='index'&&expr.index.k==='str'
+          ?{k:'method',object:expr.object,op:expr.index.value,args,span:joined(expr,c.peek(),token)}
+          :{ k: readCallableSurfaceConstructor('computed-call', false), fn: expr, args, span: joined(expr, c.peek(), token) };
         continue;
       }
       if (c.isKind('template')) throw unsupported('tagged template', 'template tags are functions as values', span(token, token));
