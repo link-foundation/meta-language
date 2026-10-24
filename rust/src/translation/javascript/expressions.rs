@@ -161,12 +161,20 @@ impl JavaScriptParser {
         let mut left = self.relational()?;
         loop {
             let token = self.peek();
-            if self.cursor.is("==") || self.cursor.is("!=") {
-                return Err(unsupported(
-                    &format!("loose equality {}", token.value),
-                    "use === or !==",
-                    Some(span(&token, &token)),
-                ));
+            let loose=crate::translation::javascript_comparison_rules::read_java_script_loose_equality_operation(if token.kind==TokenKind::Punct{&token.value}else{""});
+            if !loose.is_empty() {
+                self.cursor.advance();
+                let right = self.relational()?;
+                let place = joined(&left, &right, &token);
+                left = node(
+                    SNode::Math {
+                        op: loose,
+                        name: token.value,
+                        args: vec![SArrayItem::new(left, false), SArrayItem::new(right, false)],
+                    },
+                    place,
+                );
+                continue;
             }
             let op = match (token.kind, token.value.as_str()) {
                 (TokenKind::Punct, "===") => BinaryOp::Eq,

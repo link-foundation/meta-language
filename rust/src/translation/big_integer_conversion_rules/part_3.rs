@@ -1,23 +1,112 @@
 // Generated from complete js/src/translation/big-integer-conversion-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryDecomposeNumberPowerMagnitudeLoop45Result;
 use super::MlSource1TemporaryDecomposeNumberPowerMagnitudeLoop46Result;
+use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Result;
+use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Result;
 use super::MlSource1TemporaryNormalizeNumberPowerBoundLoop40Result;
 use super::MlSource1TemporaryNormalizeNumberPowerBoundLoop41Result;
 use super::MlSource1TemporaryRootNumberPowerBoundJoin44;
 use super::convert_java_script_number_big_integer;
 use super::convert_string_number_rational;
-use super::divide_java_script_big_integer;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
-use super::power_java_script_big_integer;
 use super::source_ml_source1_temporary_decompose_number_power_magnitude_loop45;
 use super::source_ml_source1_temporary_decompose_number_power_magnitude_loop46;
+use super::source_ml_source1_temporary_divide_java_script_big_integer_loop37;
+use super::source_ml_source1_temporary_divide_java_script_big_integer_loop38;
 use super::source_ml_source1_temporary_normalize_number_power_bound_loop40;
 use super::source_ml_source1_temporary_normalize_number_power_bound_loop41;
+use super::source_ml_source1_temporary_power_java_script_big_integer_loop39;
 use super::source_ml_source1_temporary_power_java_script_number_loop47;
 use super::source_ml_source1_temporary_root_number_power_integer_loop42;
 use super::source_ml_source1_temporary_root_number_power_integer_loop43;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn divide_java_script_big_integer(
+    left: self::ml::Big,
+    right: self::ml::Big,
+) -> Vec<self::ml::Big> {
+    if right == (self::ml::Big::from_i128(0)) {
+        Vec::<self::ml::Big>::new()
+    } else {
+        {
+            let remaining = if left < (self::ml::Big::from_i128(0)) {
+                left.neg()
+            } else {
+                left.clone()
+            };
+            {
+                let divisor = if right < (self::ml::Big::from_i128(0)) {
+                    right.neg()
+                } else {
+                    right.clone()
+                };
+                {
+                    let shifted = divisor;
+                    {
+                        let weight = self::ml::Big::from_i128(1);
+                        {
+                            let quotient = self::ml::Big::from_i128(0);
+                            {
+                                let source_ml_source2_s29 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop37(remaining.clone(), shifted, weight);
+                                match source_ml_source2_s29 {
+                                    self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Done(shifted_2, weight_2) => {
+                                        {
+                                            let source_ml_source2_s30 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop38(remaining.clone(), shifted_2.clone(), weight_2.clone(), quotient);
+                                            match source_ml_source2_s30 {
+                                                self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Done(remaining_2, quotient_2) => {
+                                                    vec![if (left < (self::ml::Big::from_i128(0))) != (right < (self::ml::Big::from_i128(0))) {
+                                                        quotient_2.neg()
+                                                    } else {
+                                                        quotient_2.clone()
+                                                    }, if left < (self::ml::Big::from_i128(0)) {
+                                                        remaining_2.neg()
+                                                    } else {
+                                                        remaining_2.clone()
+                                                    }]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn power_java_script_big_integer(
+    base: self::ml::Big,
+    exponent: self::ml::Big,
+) -> Vec<self::ml::Big> {
+    if exponent < (self::ml::Big::from_i128(0)) {
+        Vec::<self::ml::Big>::new()
+    } else {
+        {
+            let result = self::ml::Big::from_i128(1);
+            {
+                let weight = base.clone();
+                {
+                    let remaining = exponent.clone();
+                    {
+                        let result_2 =
+                            self::source_ml_source1_temporary_power_java_script_big_integer_loop39(
+                                result, weight, remaining,
+                            );
+                        vec![result_2]
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -633,7 +722,11 @@ pub fn read_java_script_big_integer_builtin_operation(name: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_big_integer_result_operation(operation: &str) -> String {
-    if operation == "powerJavaScriptNumberValue" {
+    if operation == "compareJavaScriptNumberBigIntegerValue" {
+        String::from("number-compare")
+    } else if operation == "compareJavaScriptStringBigIntegerValue" {
+        String::from("string-compare")
+    } else if operation == "powerJavaScriptNumberValue" {
         String::from("number-power")
     } else if operation == "powerJavaScriptBigIntegerResult" {
         String::from("power")
@@ -655,6 +748,124 @@ pub fn read_java_script_big_integer_result_operation(operation: &str) -> String 
 pub fn accept_linked_java_script_big_integer_result(kind: &str, operation: &str) -> bool {
     (kind == "math")
         && (!(self::read_java_script_big_integer_result_operation(operation)).is_empty())
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_intrinsic_operand_kinds(operation: &str) -> Vec<String> {
+    {
+        let form = self::read_java_script_big_integer_result_operation(operation);
+        if (form == "division") || (form == "power") {
+            vec![String::from("int"), String::from("int")]
+        } else if form == "number-power" {
+            vec![String::from("float"), String::from("float")]
+        } else if form == "number-compare" {
+            vec![String::from("float"), String::from("int")]
+        } else if form == "string-compare" {
+            vec![String::from("string"), String::from("int")]
+        } else if form == "string" {
+            vec![String::from("string")]
+        } else if form == "number" {
+            vec![String::from("float")]
+        } else if form == "boolean" {
+            vec![String::from("bool")]
+        } else {
+            Vec::<String>::new()
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_intrinsic_result_kind(operation: &str) -> String {
+    {
+        let form = self::read_java_script_big_integer_result_operation(operation);
+        if ((form == "number-power") || (form == "number-compare")) || (form == "string-compare") {
+            String::from("float")
+        } else if form == "boolean" {
+            String::from("int")
+        } else if (form).is_empty() {
+            String::new()
+        } else {
+            String::from("array-integer")
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_big_integer_comparison(
+    target: &str,
+    form: &str,
+    left: &str,
+    right: &str,
+    utf16: bool,
+) -> String {
+    if form == "number-compare" {
+        if target == "JavaScript" {
+            format!(
+                "ml_big_integer_conversion.compareNumber({},{})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else if target == "Rust" {
+            format!(
+                "crate::ml_big_integer_conversion::compare_java_script_number_big_integer({},{})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else if (target == "Lean") || (target == "Rocq") {
+            format!(
+                "(MLBigIntegerConversion.compareNumber {} {})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else {
+            String::new()
+        }
+    } else if form == "string-compare" {
+        if target == "JavaScript" {
+            format!(
+                "((ml_text,ml_integer)=>ml_big_integer_conversion.compareUnits(Array.from({{length:ml_text.length}},(_,index)=>ml_text.charCodeAt(index)),ml_integer))({},{})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else if target == "Rust" {
+            format!(
+                "crate::ml_big_integer_conversion::compare_java_script_string_big_integer_units(&{}.map(f64::from).collect::<Vec<f64>>(),{})",
+                if utf16 {
+                    format!(
+                        "{}{}",
+                        (format!("{}{}", (String::from("(")), left.to_owned())),
+                        (String::from(").0.iter().copied()"))
+                    )
+                } else {
+                    format!(
+                        "{}{}",
+                        (format!("{}{}", (String::from("(")), left.to_owned())),
+                        (String::from(").encode_utf16()"))
+                    )
+                },
+                right.to_owned()
+            )
+        } else if target == "Lean" {
+            format!(
+                "(MLBigIntegerConversion.compareUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] {}) {})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else if target == "Rocq" {
+            format!(
+                "(MLBigIntegerConversion.compareUtf8 ((fix ml_compare_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_compare_bytes rest) end) {}) {})",
+                left.to_owned(),
+                right.to_owned()
+            )
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    }
 }
 
 /// Execute the checked shared source algorithm.
@@ -681,148 +892,4 @@ pub fn render_java_script_number_power(target: &str, base: &str, exponent: &str)
     } else {
         String::new()
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_java_script_big_integer_result_expression(
-    target: &str,
-    form: &str,
-    value: &str,
-    utf16: bool,
-) -> String {
-    if form == "boolean" {
-        if target == "JavaScript" {
-            format!(
-                "ml_big_integer_conversion.convertBoolean({})",
-                value.to_owned()
-            )
-        } else if target == "Rust" {
-            format!(
-                "crate::ml_big_integer_conversion::convert_java_script_boolean_big_integer({})",
-                value.to_owned()
-            )
-        } else if (target == "Lean") || (target == "Rocq") {
-            format!(
-                "(MLBigIntegerConversion.convertBoolean {})",
-                value.to_owned()
-            )
-        } else {
-            String::new()
-        }
-    } else if (form != "string") && (form != "number") {
-        String::new()
-    } else if target == "JavaScript" {
-        if form == "number" {
-            format!(
-                "ml_big_integer_conversion.convertNumber({})",
-                value.to_owned()
-            )
-        } else {
-            format!(
-                "((ml_text)=>ml_big_integer_conversion.convertUnits(Array.from({{length:ml_text.length}}, (_,index)=>ml_text.charCodeAt(index))))({})",
-                value.to_owned()
-            )
-        }
-    } else if target == "Rust" {
-        if form == "number" {
-            format!(
-                "crate::ml_big_integer_conversion::convert_java_script_number_big_integer({})",
-                value.to_owned()
-            )
-        } else {
-            {
-                let units = if utf16 {
-                    format!("({}).0.iter().copied()", value.to_owned())
-                } else {
-                    format!("({}).encode_utf16()", value.to_owned())
-                };
-                format!(
-                    "crate::ml_big_integer_conversion::convert_java_script_string_big_integer_units(&{units}.map(f64::from).collect::<Vec<f64>>())"
-                )
-            }
-        }
-    } else if target == "Lean" {
-        if form == "number" {
-            format!(
-                "(MLBigIntegerConversion.convertNumber {})",
-                value.to_owned()
-            )
-        } else {
-            format!(
-                "(MLBigIntegerConversion.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] {}))",
-                value.to_owned()
-            )
-        }
-    } else if target == "Rocq" {
-        if form == "number" {
-            format!(
-                "(MLBigIntegerConversion.convertNumber {})",
-                value.to_owned()
-            )
-        } else {
-            format!(
-                "(MLBigIntegerConversion.convertUtf8 ((fix ml_integer_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_integer_bytes rest) end) {}))",
-                value.to_owned()
-            )
-        }
-    } else {
-        String::new()
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result {
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Done(Vec<f64>),
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result {
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Done(f64, f64),
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_java_script_utf8_string_units_loop4(
-    bytes: &[f64],
-    mut index: f64,
-    mut scalar: f64,
-    mut remaining: f64,
-) -> self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result {
-    loop {
-        return if remaining > 0f64 {
-            {
-                let next =
-                    (self::ml_array::optional_at(bytes, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
-                if (next < 128f64) || (next > 191f64) {
-                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Return(vec![-1f64])
-                } else {
-                    {
-                        let scalar_2 = ((scalar * 64f64) + next) - 128f64;
-                        {
-                            let index_2 = index + 1f64;
-                            {
-                                let remaining_2 = remaining - 1f64;
-                                {
-                                    (index, scalar, remaining) = (index_2, scalar_2, remaining_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index, scalar)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3 {
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Next(f64, f64, f64),
-    MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Return(Vec<f64>),
 }

@@ -12,8 +12,6 @@ use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result;
 use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result;
 use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result;
 use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Result;
-use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Result;
 use super::accept_string_number_infinity;
 use super::convert_string_number_rational;
 use super::ml;
@@ -34,9 +32,6 @@ use super::source_ml_source1_temporary_convert_java_script_string_number_units_l
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop26;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop28;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop29;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop37;
-use super::source_ml_source1_temporary_divide_java_script_big_integer_loop38;
-use super::source_ml_source1_temporary_power_java_script_big_integer_loop39;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -827,56 +822,30 @@ pub fn convert_java_script_boolean_big_integer(value: bool) -> self::ml::Big {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn divide_java_script_big_integer(
-    left: self::ml::Big,
-    right: self::ml::Big,
-) -> Vec<self::ml::Big> {
-    if right == (self::ml::Big::from_i128(0)) {
-        Vec::<self::ml::Big>::new()
+pub fn compare_java_script_number_big_integer(value: f64, integer: self::ml::Big) -> f64 {
+    if value.is_nan() {
+        2f64
+    } else if value == (f64::INFINITY) {
+        1f64
+    } else if value == (f64::NEG_INFINITY) {
+        -1f64
     } else {
         {
-            let remaining = if left < (self::ml::Big::from_i128(0)) {
-                left.neg()
-            } else {
-                left.clone()
-            };
+            let floor = value.floor();
             {
-                let divisor = if right < (self::ml::Big::from_i128(0)) {
-                    right.neg()
+                let lower = (self::ml_array::optional_at(
+                    &self::convert_java_script_number_big_integer(floor),
+                    self::ml_array::number_index(0f64),
+                ))
+                .unwrap_or_else(|| self::ml::Big::from_i128(0));
+                if lower < integer {
+                    -1f64
+                } else if lower > integer {
+                    1f64
+                } else if value == floor {
+                    0f64
                 } else {
-                    right.clone()
-                };
-                {
-                    let shifted = divisor;
-                    {
-                        let weight = self::ml::Big::from_i128(1);
-                        {
-                            let quotient = self::ml::Big::from_i128(0);
-                            {
-                                let source_ml_source2_s29 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop37(remaining.clone(), shifted, weight);
-                                match source_ml_source2_s29 {
-                                    self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop37Done(shifted_2, weight_2) => {
-                                        {
-                                            let source_ml_source2_s30 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop38(remaining.clone(), shifted_2.clone(), weight_2.clone(), quotient);
-                                            match source_ml_source2_s30 {
-                                                self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop38Done(remaining_2, quotient_2) => {
-                                                    vec![if (left < (self::ml::Big::from_i128(0))) != (right < (self::ml::Big::from_i128(0))) {
-                                                        quotient_2.neg()
-                                                    } else {
-                                                        quotient_2.clone()
-                                                    }, if left < (self::ml::Big::from_i128(0)) {
-                                                        remaining_2.neg()
-                                                    } else {
-                                                        remaining_2.clone()
-                                                    }]
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    1f64
                 }
             }
         }
@@ -885,28 +854,33 @@ pub fn divide_java_script_big_integer(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn power_java_script_big_integer(
-    base: self::ml::Big,
-    exponent: self::ml::Big,
-) -> Vec<self::ml::Big> {
-    if exponent < (self::ml::Big::from_i128(0)) {
-        Vec::<self::ml::Big>::new()
-    } else {
-        {
-            let result = self::ml::Big::from_i128(1);
+pub fn compare_java_script_string_big_integer_units(units: &[f64], integer: self::ml::Big) -> f64 {
+    {
+        let result = self::convert_java_script_string_big_integer_units(units);
+        if (result.len() as f64) == 1f64 {
             {
-                let weight = base.clone();
-                {
-                    let remaining = exponent.clone();
-                    {
-                        let result_2 =
-                            self::source_ml_source1_temporary_power_java_script_big_integer_loop39(
-                                result, weight, remaining,
-                            );
-                        vec![result_2]
-                    }
+                let value =
+                    (self::ml_array::optional_at(&result, self::ml_array::number_index(0f64)))
+                        .unwrap_or_else(|| self::ml::Big::from_i128(0));
+                if value < integer {
+                    -1f64
+                } else if value > integer {
+                    1f64
+                } else {
+                    0f64
                 }
             }
+        } else {
+            2f64
         }
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn compare_java_script_utf8_big_integer(bytes: &[f64], integer: self::ml::Big) -> f64 {
+    self::compare_java_script_string_big_integer_units(
+        &(self::read_java_script_utf8_string_units(bytes)),
+        integer.clone(),
+    )
 }

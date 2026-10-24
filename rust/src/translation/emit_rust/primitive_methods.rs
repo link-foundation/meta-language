@@ -20,7 +20,7 @@ pub(super) fn program_requires_method_units(program: &crate::translation::ir::Pr
                 (crate::translation::string_construction_rules::accept_linked_java_script_string_construction(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&crate::translation::string_construction_rules::read_java_script_string_construction_form(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))=="characters")
                     || crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))
                     || rules::require_primitive_method_utf16(expression, receiver)
-                    || (crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))=="string")
+                    || (crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&matches!(crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or("")).as_str(),"string"|"string-compare"))
                     || crate::translation::string_number_rules::require_java_script_number_conversion_units(
                         expression,
                         fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""),

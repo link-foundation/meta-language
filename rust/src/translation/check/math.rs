@@ -21,6 +21,7 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if crate::translation::javascript_comparison_rules::accept_java_script_loose_equality_operation(op){return self.javascript_loose_comparison(op,args,span,env,path);}
         if op == "constructJavaScriptStringFromCharacterCodes"
             || op == "constructJavaScriptStringFromCodePoints"
         {

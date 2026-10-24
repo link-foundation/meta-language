@@ -60,6 +60,27 @@ export function convertJavaScriptNumberBigInteger(value) {
 export function convertJavaScriptBooleanBigInteger(value) {
   return value?1n:0n;
 }
+/** Exact Number/BigInt order; two denotes the unordered NaN case.
+ * @param {number} value @param {bigint} integer @returns {number} */
+export function compareJavaScriptNumberBigInteger(value,integer){
+ if(Number.isNaN(value))return 2;
+ if(value===Infinity)return 1;
+ if(value===-Infinity)return -1;
+ const floor=Math.floor(value),lower=convertJavaScriptNumberBigInteger(floor)[0]??0n;
+ if(lower<integer)return -1;
+ if(lower>integer)return 1;
+ return value===floor?0:1;
+}
+/** String/BigInt uses StringIntegerLiteral rather than StringNumericLiteral.
+ * @param {number[]} units @param {bigint} integer @returns {number} */
+export function compareJavaScriptStringBigIntegerUnits(units,integer){
+ const result=convertJavaScriptStringBigIntegerUnits(units);
+ if(result.length!==1)return 2;
+ const value=result[0]??0n;
+ return value<integer?-1:value>integer?1:0;
+}
+/** @param {number[]} bytes @param {bigint} integer @returns {number} */
+export function compareJavaScriptUtf8BigInteger(bytes,integer){return compareJavaScriptStringBigIntegerUnits(readJavaScriptUtf8StringUnits(bytes),integer);}
 
 /** Truncating signed division and dividend-signed remainder. Empty means a
  * zero divisor. Only division by the literal two is a primitive here, so the
@@ -268,6 +289,8 @@ export function readJavaScriptBigIntegerBuiltinOperation(name) {
 }
 /** @param {string} operation @returns {string} */
 export function readJavaScriptBigIntegerResultOperation(operation) {
+  if(operation==='compareJavaScriptNumberBigIntegerValue')return 'number-compare';
+  if(operation==='compareJavaScriptStringBigIntegerValue')return 'string-compare';
   if(operation==='powerJavaScriptNumberValue')return 'number-power';
   if(operation==='powerJavaScriptBigIntegerResult')return 'power';
   if(operation==='divideJavaScriptBigIntegerResult')return 'division';
@@ -278,6 +301,36 @@ export function readJavaScriptBigIntegerResultOperation(operation) {
 /** @param {string} kind @param {string} operation @returns {boolean} */
 export function acceptLinkedJavaScriptBigIntegerResult(kind,operation) {
   return kind==='math'&&readJavaScriptBigIntegerResultOperation(operation)!=='';
+}
+/** @param {string} operation @returns {string[]} */
+export function readJavaScriptBigIntegerIntrinsicOperandKinds(operation){
+ const form=readJavaScriptBigIntegerResultOperation(operation);
+ if(form==='division'||form==='power')return ['int','int'];
+ if(form==='number-power')return ['float','float'];
+ if(form==='number-compare')return ['float','int'];
+ if(form==='string-compare')return ['string','int'];
+ if(form==='string')return ['string'];
+ if(form==='number')return ['float'];
+ return form==='boolean'?['bool']:[];
+}
+/** @param {string} operation @returns {string} */
+export function readJavaScriptBigIntegerIntrinsicResultKind(operation){
+ const form=readJavaScriptBigIntegerResultOperation(operation);
+ if(form==='number-power'||form==='number-compare'||form==='string-compare')return 'float';
+ return form==='boolean'?'int':form===''?'':'array-integer';
+}
+/** @param {string} target @param {string} form @param {string} left @param {string} right @param {boolean} utf16 @returns {string} */
+export function renderJavaScriptBigIntegerComparison(target,form,left,right,utf16){
+ if(form==='number-compare'){
+  if(target==='JavaScript')return 'ml_big_integer_conversion.compareNumber('+left+','+right+')';
+  if(target==='Rust')return 'crate::ml_big_integer_conversion::compare_java_script_number_big_integer('+left+','+right+')';
+  return target==='Lean'||target==='Rocq'?'(MLBigIntegerConversion.compareNumber '+left+' '+right+')':'';
+ }
+ if(form!=='string-compare')return '';
+ if(target==='JavaScript')return '((ml_text,ml_integer)=>ml_big_integer_conversion.compareUnits(Array.from({length:ml_text.length},(_,index)=>ml_text.charCodeAt(index)),ml_integer))('+left+','+right+')';
+ if(target==='Rust')return 'crate::ml_big_integer_conversion::compare_java_script_string_big_integer_units(&'+(utf16?'('+left+').0.iter().copied()':'('+left+').encode_utf16()')+'.map(f64::from).collect::<Vec<f64>>(),'+right+')';
+ if(target==='Lean')return '(MLBigIntegerConversion.compareUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] '+left+') '+right+')';
+ return target==='Rocq'?'(MLBigIntegerConversion.compareUtf8 ((fix ml_compare_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_compare_bytes rest) end) '+left+') '+right+')':'';
 }
 /** @param {string} target @param {string} base @param {string} exponent @returns {string} */
 export function renderJavaScriptNumberPower(target,base,exponent){

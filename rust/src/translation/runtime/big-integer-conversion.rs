@@ -1185,6 +1185,72 @@ pub fn convert_java_script_boolean_big_integer(value: bool) -> crate::ml::Big {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn compare_java_script_number_big_integer(value: f64, integer: crate::ml::Big) -> f64 {
+    if value.is_nan() {
+        2f64
+    } else {
+        if (value == (f64::INFINITY)) {
+            1f64
+        } else {
+            if (value == (f64::NEG_INFINITY)) {
+                (-1f64)
+            } else {
+                {
+                    let floor = value.floor();
+                    {
+                        let lower = (self::ml_array::optional_at(&self::convert_java_script_number_big_integer(floor), self::ml_array::number_index(0f64))).clone().unwrap_or_else(|| crate::ml::Big::from_i128(0));
+                        if (lower < integer) {
+                            (-1f64)
+                        } else {
+                            if (lower > integer) {
+                                1f64
+                            } else {
+                                if (value == floor) {
+                                    0f64
+                                } else {
+                                    1f64
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn compare_java_script_string_big_integer_units(units: &[f64], integer: crate::ml::Big) -> f64 {
+    {
+        let result = self::convert_java_script_string_big_integer_units(units);
+        if (((result.len() as f64)) != (1f64)) {
+            2f64
+        } else {
+            {
+                let value = (self::ml_array::optional_at(&result, self::ml_array::number_index(0f64))).clone().unwrap_or_else(|| crate::ml::Big::from_i128(0));
+                if (value < integer) {
+                    (-1f64)
+                } else {
+                    if (value > integer) {
+                        1f64
+                    } else {
+                        0f64
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn compare_java_script_utf8_big_integer(bytes: &[f64], integer: crate::ml::Big) -> f64 {
+    self::compare_java_script_string_big_integer_units(&(self::read_java_script_utf8_string_units(bytes)), integer.clone())
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn divide_java_script_big_integer(left: crate::ml::Big, right: crate::ml::Big) -> Vec<crate::ml::Big> {
     if (right == (crate::ml::Big::from_i128(0))) {
         Vec::<crate::ml::Big>::new()
@@ -1696,25 +1762,33 @@ pub fn read_java_script_big_integer_builtin_operation(name: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_big_integer_result_operation(operation: &str) -> String {
-    if (operation == "powerJavaScriptNumberValue") {
-        String::from("number-power")
+    if (operation == "compareJavaScriptNumberBigIntegerValue") {
+        String::from("number-compare")
     } else {
-        if (operation == "powerJavaScriptBigIntegerResult") {
-            String::from("power")
+        if (operation == "compareJavaScriptStringBigIntegerValue") {
+            String::from("string-compare")
         } else {
-            if (operation == "divideJavaScriptBigIntegerResult") {
-                String::from("division")
+            if (operation == "powerJavaScriptNumberValue") {
+                String::from("number-power")
             } else {
-                if (operation == "parseJavaScriptStringBigInteger") {
-                    String::from("string")
+                if (operation == "powerJavaScriptBigIntegerResult") {
+                    String::from("power")
                 } else {
-                    if (operation == "convertJavaScriptBooleanBigIntegerValue") {
-                        String::from("boolean")
+                    if (operation == "divideJavaScriptBigIntegerResult") {
+                        String::from("division")
                     } else {
-                        if (operation == "convertJavaScriptNumberBigIntegerResult") {
-                            String::from("number")
+                        if (operation == "parseJavaScriptStringBigInteger") {
+                            String::from("string")
                         } else {
-                            String::from("")
+                            if (operation == "convertJavaScriptBooleanBigIntegerValue") {
+                                String::from("boolean")
+                            } else {
+                                if (operation == "convertJavaScriptNumberBigIntegerResult") {
+                                    String::from("number")
+                                } else {
+                                    String::from("")
+                                }
+                            }
                         }
                     }
                 }
@@ -1727,6 +1801,110 @@ pub fn read_java_script_big_integer_result_operation(operation: &str) -> String 
 #[must_use]
 pub fn accept_linked_java_script_big_integer_result(kind: &str, operation: &str) -> bool {
     ((kind == "math") && ((self::read_java_script_big_integer_result_operation(operation)) != ""))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_intrinsic_operand_kinds(operation: &str) -> Vec<String> {
+    {
+        let form = self::read_java_script_big_integer_result_operation(operation);
+        if ((form == "division") || (form == "power")) {
+            vec![String::from("int"), String::from("int")]
+        } else {
+            if (form == "number-power") {
+                vec![String::from("float"), String::from("float")]
+            } else {
+                if (form == "number-compare") {
+                    vec![String::from("float"), String::from("int")]
+                } else {
+                    if (form == "string-compare") {
+                        vec![String::from("string"), String::from("int")]
+                    } else {
+                        if (form == "string") {
+                            vec![String::from("string")]
+                        } else {
+                            if (form == "number") {
+                                vec![String::from("float")]
+                            } else {
+                                if (form == "boolean") {
+                                    vec![String::from("bool")]
+                                } else {
+                                    Vec::<String>::new()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_intrinsic_result_kind(operation: &str) -> String {
+    {
+        let form = self::read_java_script_big_integer_result_operation(operation);
+        if (((form == "number-power") || (form == "number-compare")) || (form == "string-compare")) {
+            String::from("float")
+        } else {
+            if (form == "boolean") {
+                String::from("int")
+            } else {
+                if (form == "") {
+                    String::from("")
+                } else {
+                    String::from("array-integer")
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_big_integer_comparison(target: &str, form: &str, left: &str, right: &str, utf16: bool) -> String {
+    if (form == "number-compare") {
+        if (target == "JavaScript") {
+            format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("ml_big_integer_conversion.compareNumber(")), left.to_owned())), (String::from(",")))), right.to_owned())), (String::from(")")))
+        } else {
+            if (target == "Rust") {
+                format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("crate::ml_big_integer_conversion::compare_java_script_number_big_integer(")), left.to_owned())), (String::from(",")))), right.to_owned())), (String::from(")")))
+            } else {
+                if ((target == "Lean") || (target == "Rocq")) {
+                    format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("(MLBigIntegerConversion.compareNumber ")), left.to_owned())), (String::from(" ")))), right.to_owned())), (String::from(")")))
+                } else {
+                    String::from("")
+                }
+            }
+        }
+    } else {
+        if (form != "string-compare") {
+            String::from("")
+        } else {
+            if (target == "JavaScript") {
+                format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("((ml_text,ml_integer)=>ml_big_integer_conversion.compareUnits(Array.from({length:ml_text.length},(_,index)=>ml_text.charCodeAt(index)),ml_integer))(")), left.to_owned())), (String::from(",")))), right.to_owned())), (String::from(")")))
+            } else {
+                if (target == "Rust") {
+                    format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("crate::ml_big_integer_conversion::compare_java_script_string_big_integer_units(&")), (if utf16 {
+                        format!("{}{}", (format!("{}{}", (String::from("(")), left.to_owned())), (String::from(").0.iter().copied()")))
+                    } else {
+                        format!("{}{}", (format!("{}{}", (String::from("(")), left.to_owned())), (String::from(").encode_utf16()")))
+                    }))), (String::from(".map(f64::from).collect::<Vec<f64>>(),")))), right.to_owned())), (String::from(")")))
+                } else {
+                    if (target == "Lean") {
+                        format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("(MLBigIntegerConversion.compareUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] ")), left.to_owned())), (String::from(") ")))), right.to_owned())), (String::from(")")))
+                    } else {
+                        if (target == "Rocq") {
+                            format!("{}{}", (format!("{}{}", (format!("{}{}", (format!("{}{}", (String::from("(MLBigIntegerConversion.compareUtf8 ((fix ml_compare_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_compare_bytes rest) end) ")), left.to_owned())), (String::from(") ")))), right.to_owned())), (String::from(")")))
+                        } else {
+                            String::from("")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Execute the checked shared source algorithm.

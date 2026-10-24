@@ -9,7 +9,7 @@ import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
 import {BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE} from './big-integer-conversion-javascript-runtime.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
@@ -628,6 +628,7 @@ class JavaScriptEmitter {
         if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
           this.helpers.add('bigIntegerConversion');
+          if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),false);
           if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));

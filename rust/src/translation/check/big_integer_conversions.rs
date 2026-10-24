@@ -257,68 +257,47 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
-        if matches!(
-            rules::read_java_script_big_integer_result_operation(operation).as_str(),
-            "division" | "power" | "number-power"
-        ) {
-            if self.language != Language::JavaScript
-                || arguments.len() != 2
-                || arguments.iter().any(|argument| argument.spread)
-            {
+        let kinds = rules::read_java_script_big_integer_intrinsic_operand_kinds(operation);
+        if self.language != Language::JavaScript
+            || arguments.len() != kinds.len()
+            || arguments.iter().any(|argument| argument.spread)
+        {
+            return Err(type_error(
+                "a JavaScript numeric intrinsic needs its complete owned operands",
+                span,
+            ));
+        }
+        let mut args = Vec::new();
+        for (argument, kind) in arguments.iter().zip(&kinds) {
+            let ty = match kind.as_str() {
+                "float" => FLOAT,
+                "int" => INT,
+                "string" => STRING,
+                "bool" => BOOL,
+                _ => unreachable!("registered intrinsic operand"),
+            };
+            let value = self.expr(&argument.value, env, path, Some(&ty), false)?;
+            if value.ty.kind() != kind.as_str() {
                 return Err(type_error(
-                    "a JavaScript BigInt division intrinsic needs two owned source operands",
+                    "a JavaScript numeric intrinsic needs its actual operand types",
                     span,
                 ));
             }
-            let numeric =
-                rules::read_java_script_big_integer_result_operation(operation) == "number-power";
-            let operand = if numeric { FLOAT } else { INT };
-            let mut args = Vec::new();
-            for argument in arguments {
-                let value = self.expr(&argument.value, env, path, Some(&operand), false)?;
-                if value.ty != operand {
-                    return Err(type_error(
-                        "a JavaScript BigInt division intrinsic needs its actual integer operands",
-                        span,
-                    ));
-                }
-                args.push(value);
-            }
-            return Ok(Expr::new(
-                Node::Math {
-                    op: operation.to_owned(),
-                    args,
-                },
-                if numeric { FLOAT } else { array(INT) },
-            ));
+            args.push(value);
         }
-        if self.language != Language::JavaScript || arguments.len() != 1 || arguments[0].spread {
-            return Err(type_error(
-                "a JavaScript BigInt intrinsic needs one owned source operand",
-                span,
-            ));
-        }
-        let form = rules::read_java_script_big_integer_result_operation(operation);
-        let value = self.expr(&arguments[0].value, env, path, None, false)?;
-        let kind = if form == "string" {
-            "string"
-        } else if form == "number" {
-            "float"
-        } else {
-            "bool"
+        let result = rules::read_java_script_big_integer_intrinsic_result_kind(operation);
+        let ty = match result.as_str() {
+            "float" => FLOAT,
+            "int" => INT,
+            "array-integer" => array(INT),
+            _ => unreachable!("registered intrinsic result"),
         };
-        if value.ty.kind() != kind {
-            return Err(type_error(
-                "a JavaScript BigInt intrinsic needs its actual operand type",
-                span,
-            ));
-        }
         Ok(Expr::new(
             Node::Math {
                 op: operation.to_owned(),
-                args: vec![value],
+                args,
             },
-            if form == "boolean" { INT } else { array(INT) },
+            ty,
         ))
     }
 

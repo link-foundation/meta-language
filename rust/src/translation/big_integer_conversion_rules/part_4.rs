@@ -1,12 +1,152 @@
 // Generated from complete js/src/translation/big-integer-conversion-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3;
-use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
-use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result;
 use super::accept_java_script_whitespace_unit;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
-use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop4;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_big_integer_result_expression(
+    target: &str,
+    form: &str,
+    value: &str,
+    utf16: bool,
+) -> String {
+    if form == "boolean" {
+        if target == "JavaScript" {
+            format!(
+                "ml_big_integer_conversion.convertBoolean({})",
+                value.to_owned()
+            )
+        } else if target == "Rust" {
+            format!(
+                "crate::ml_big_integer_conversion::convert_java_script_boolean_big_integer({})",
+                value.to_owned()
+            )
+        } else if (target == "Lean") || (target == "Rocq") {
+            format!(
+                "(MLBigIntegerConversion.convertBoolean {})",
+                value.to_owned()
+            )
+        } else {
+            String::new()
+        }
+    } else if (form != "string") && (form != "number") {
+        String::new()
+    } else if target == "JavaScript" {
+        if form == "number" {
+            format!(
+                "ml_big_integer_conversion.convertNumber({})",
+                value.to_owned()
+            )
+        } else {
+            format!(
+                "((ml_text)=>ml_big_integer_conversion.convertUnits(Array.from({{length:ml_text.length}}, (_,index)=>ml_text.charCodeAt(index))))({})",
+                value.to_owned()
+            )
+        }
+    } else if target == "Rust" {
+        if form == "number" {
+            format!(
+                "crate::ml_big_integer_conversion::convert_java_script_number_big_integer({})",
+                value.to_owned()
+            )
+        } else {
+            {
+                let units = if utf16 {
+                    format!("({}).0.iter().copied()", value.to_owned())
+                } else {
+                    format!("({}).encode_utf16()", value.to_owned())
+                };
+                format!(
+                    "crate::ml_big_integer_conversion::convert_java_script_string_big_integer_units(&{units}.map(f64::from).collect::<Vec<f64>>())"
+                )
+            }
+        }
+    } else if target == "Lean" {
+        if form == "number" {
+            format!(
+                "(MLBigIntegerConversion.convertNumber {})",
+                value.to_owned()
+            )
+        } else {
+            format!(
+                "(MLBigIntegerConversion.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] {}))",
+                value.to_owned()
+            )
+        }
+    } else if target == "Rocq" {
+        if form == "number" {
+            format!(
+                "(MLBigIntegerConversion.convertNumber {})",
+                value.to_owned()
+            )
+        } else {
+            format!(
+                "(MLBigIntegerConversion.convertUtf8 ((fix ml_integer_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_integer_bytes rest) end) {}))",
+                value.to_owned()
+            )
+        }
+    } else {
+        String::new()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result {
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Done(Vec<f64>),
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result {
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Done(f64, f64),
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Return(Vec<f64>),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_java_script_utf8_string_units_loop4(
+    bytes: &[f64],
+    mut index: f64,
+    mut scalar: f64,
+    mut remaining: f64,
+) -> self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result {
+    loop {
+        return if remaining > 0f64 {
+            {
+                let next =
+                    (self::ml_array::optional_at(bytes, self::ml_array::number_index(index)))
+                        .unwrap_or_else(|| -1f64);
+                if (next < 128f64) || (next > 191f64) {
+                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Return(vec![-1f64])
+                } else {
+                    {
+                        let scalar_2 = ((scalar * 64f64) + next) - 128f64;
+                        {
+                            let index_2 = index + 1f64;
+                            {
+                                let remaining_2 = remaining - 1f64;
+                                {
+                                    (index, scalar, remaining) = (index_2, scalar_2, remaining_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index, scalar)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3 {
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Next(f64, f64, f64),
+    MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Return(Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -724,129 +864,4 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin24 {
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop28(
-    units: &[f64],
-    mut end: f64,
-    mut at: f64,
-    mut exponent: f64,
-    mut exponent_limit: f64,
-) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result {
-    loop {
-        return if at < end {
-            {
-                let digit = (self::ml_array::optional_at(units, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| -1f64)
-                    - 48f64;
-                if (digit < 0f64) || (digit > 9f64) {
-                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(at, exponent)
-                } else {
-                    {
-                        let exponent_3 = if exponent < exponent_limit {
-                            { self::ml_math::min(exponent_limit, ((exponent * 10f64) + digit)) }
-                        } else {
-                            exponent
-                        };
-                        {
-                            let at_2 = at + 1f64;
-                            {
-                                (at, exponent) = (at_2, exponent_3);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(at, exponent)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27 {
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27Next(f64, bool),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result {
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(f64, f64, f64, f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop23(
-    units: &[f64],
-    mut end: f64,
-    mut at: f64,
-    mut fraction: f64,
-    mut digits: f64,
-    mut significant: f64,
-    mut dot: bool,
-) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result {
-    loop {
-        return if at < end {
-            {
-                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(at)))
-                    .unwrap_or_else(|| -1f64);
-                if (48f64..=57f64).contains(&unit) {
-                    {
-                        let digits_2 = digits + 1f64;
-                        {
-                            let fraction_3 = if dot { { fraction + 1f64 } } else { fraction };
-                            {
-                                let significant_3 = if (unit != 48f64) || (significant > 0f64) {
-                                    { significant + 1f64 }
-                                } else {
-                                    significant
-                                };
-                                {
-                                    let at_2 = at + 1f64;
-                                    {
-                                        (at, fraction, digits, significant) =
-                                            (at_2, fraction_3, digits_2, significant_3);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                {
-                    if (unit == 46f64) && !dot {
-                        {
-                            let dot_2 = true;
-                            {
-                                let at_3 = at + 1f64;
-                                {
-                                    (at, dot) = (at_3, dot_2);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                    {
-                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(at, fraction, digits, significant)
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(at, fraction, digits, significant)
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22 {
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Next(f64),
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(f64),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result {
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Done(self::ml::Big, bool),
-    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Return(f64),
 }

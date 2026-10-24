@@ -103,3 +103,5 @@ export {createJavaScriptStringUnitProgramLinks} from './javascript-string-unit-p
 export {createStringConstructionProgramLinks} from './string-construction-program.js';
 export {createUtf16TextProgramLinks} from './utf16-text-program.js';
 export {createFormalStringUnitProgramLinks} from './formal-string-unit-program.js';
+
+export {createJavaScriptComparisonProgramLinks} from './javascript-comparison-program.js';

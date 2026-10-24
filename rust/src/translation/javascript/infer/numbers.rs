@@ -2,7 +2,7 @@
 use super::{
     Arithmetic, BOOL, BinaryOp, Env, Equality, Inference, Plus, Result, SExpr, STRING, Span, Term,
 };
-use crate::translation::javascript::surface_rules::read_java_script_equality_inference_step;
+use crate::translation::javascript_comparison_rules::read_java_script_comparison_inference_step;
 
 impl Inference {
     pub(super) fn binary(
@@ -22,7 +22,6 @@ impl Inference {
             }
             BinaryOp::Eq | BinaryOp::Ne => {
                 self.equalities.push(Equality {
-                    operation: op,
                     left: left_term,
                     right: right_term,
                     place,
@@ -30,7 +29,11 @@ impl Inference {
                 Ok(Term::Known(BOOL))
             }
             BinaryOp::Lt | BinaryOp::Le | BinaryOp::Gt | BinaryOp::Ge => {
-                self.unify(&left_term, &right_term, place)?;
+                self.equalities.push(Equality {
+                    left: left_term,
+                    right: right_term,
+                    place,
+                });
                 Ok(Term::Known(BOOL))
             }
             BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Rem => {
@@ -98,8 +101,7 @@ impl Inference {
     fn equality_step(&mut self, constraint: &Equality, force: bool) -> Result<bool> {
         let left = self.resolve(&constraint.left);
         let right = self.resolve(&constraint.right);
-        let step = read_java_script_equality_inference_step(
-            constraint.operation.name(),
+        let step = read_java_script_comparison_inference_step(
             super::optional_values::kind(&left),
             super::optional_values::kind(&right),
             force,

@@ -23,6 +23,7 @@ import {readJavaScriptExceptionConstructorOperation} from './source-exception-ru
 import {readJavaScriptBigIntegerBuiltinOperation,acceptJavaScriptExponentiationBase} from './big-integer-conversion-rules.js';
 import {createJavaScriptStringLiteral} from './javascript-string-literals.js';
 import {readJavaScriptStringConstructionOperation} from './string-construction-rules.js';
+import {readJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -1986,7 +1987,8 @@ class JavaScriptParser {
     let left = this.relational();
     for (;;) {
       const token = c.peek();
-      if (c.is('==') || c.is('!=')) throw unsupported(`loose equality ${token.value}`, 'use === or !==', span(token, token));
+      const loose=readJavaScriptLooseEqualityOperation(token.kind==='punct'?token.value:'');
+      if(loose){c.next();const right=this.relational();left={k:'math',op:loose,name:token.value,args:[{value:left,spread:false},{value:right,spread:false}],span:joined(left,right,token)};continue;}
       const op = token.kind === 'punct' ? EQUALITY[token.value] : undefined;
       if (!op) return left;
       c.next();

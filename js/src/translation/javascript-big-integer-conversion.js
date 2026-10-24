@@ -2,9 +2,9 @@
 import {INT,FLOAT,BOOL,STRING,array,option} from './types.js';
 import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
 import {unsupported,typeError} from './diagnostics.js';
-import {readJavaScriptBigIntegerConversionForm,readJavaScriptBigIntegerResultOperation,
+import {readJavaScriptBigIntegerConversionForm,
   readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces,
-  requireJavaScriptBigIntegerDivision,readJavaScriptBigIntegerDivisionMessage,readJavaScriptBigIntegerExponentMessage} from './big-integer-conversion-rules.js';
+  requireJavaScriptBigIntegerDivision,readJavaScriptBigIntegerDivisionMessage,readJavaScriptBigIntegerExponentMessage,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './big-integer-conversion-rules.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
 import {readOptionalOutputAbsences} from './optional-value-rules.js';
 
@@ -50,18 +50,12 @@ export function checkJavaScriptBigIntegerBuiltin(checker,node,env,path) {
   return body;
 }
 export function checkJavaScriptBigIntegerResult(checker,node,env,path) {
-  if(['division','power','number-power'].includes(readJavaScriptBigIntegerResultOperation(node.op))){
-    if(checker.language!=='JavaScript'||node.args.length!==2||node.args.some(argument=>argument.spread))throw typeError('a JavaScript BigInt division intrinsic needs two owned source operands',node.span);
-    const numeric=readJavaScriptBigIntegerResultOperation(node.op)==='number-power',operand=numeric?FLOAT:INT;
-    const args=node.args.map(argument=>checker.expr(argument.value,env,path,operand));
-    if(args.some(argument=>argument.type.kind!==operand.kind))throw typeError('a JavaScript numeric arithmetic intrinsic needs its actual operand types',node.span);
-    return{k:'math',op:node.op,args,type:numeric?FLOAT:array(INT)};
-  }
-  if(checker.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript BigInt intrinsic needs one owned source operand',node.span);
-  const form=readJavaScriptBigIntegerResultOperation(node.op),value=checker.expr(node.args[0].value,env,path,undefined);
-  const kind=form==='string'?'string':form==='number'?'float':'bool';
-  if(value.type.kind!==kind)throw typeError('a JavaScript BigInt intrinsic needs its actual operand type',node.span);
-  return{k:'math',op:node.op,args:[value],type:form==='boolean'?INT:array(INT)};
+  const kinds=readJavaScriptBigIntegerIntrinsicOperandKinds(node.op);
+  if(checker.language!=='JavaScript'||node.args.length!==kinds.length||node.args.some(argument=>argument.spread))throw typeError('a JavaScript numeric intrinsic needs its complete owned operands',node.span);
+  const args=node.args.map((argument,index)=>checker.expr(argument.value,env,path,{kind:kinds[index]}));
+  if(args.some((argument,index)=>argument.type.kind!==kinds[index]))throw typeError('a JavaScript numeric intrinsic needs its actual operand types',node.span);
+  const result=readJavaScriptBigIntegerIntrinsicResultKind(node.op);
+  return{k:'math',op:node.op,args,type:result==='array-integer'?array(INT):{kind:result}};
 }
 
 export function checkJavaScriptExponentiation(checker,node,env,path,expected){

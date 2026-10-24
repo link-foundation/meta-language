@@ -15,6 +15,8 @@ import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision,checkJavaScriptExponentiation} from './javascript-big-integer-conversion.js';
 import {materializeJavaScriptNumericFailure} from './javascript-numeric-failures.js';
+import {materializeJavaScriptPrimitiveComparison,checkJavaScriptLooseComparison} from './javascript-comparisons.js';
+import {acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
 import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
@@ -1216,6 +1218,7 @@ class Checker {
       return{k:'math',op:node.op,args:[units],type:STRING};
     }
     if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
+    if(acceptJavaScriptLooseEqualityOperation(node.op))return checkJavaScriptLooseComparison(this,node,env,path);
     if(node.op==='exponentiateJavaScriptNumericValue')return checkJavaScriptExponentiation(this,node,env,path,expected);
     if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
     if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);
@@ -1315,6 +1318,8 @@ class Checker {
         let right = this.expr(node.right, env, path, undefined, true);
         if (left.type.kind === 'literal') left = this.expr(node.left, env, path, this.defaultNumber());
         if (right.type.kind === 'literal') right = this.expr(node.right, env, path, this.defaultNumber());
+        const comparison=materializeJavaScriptPrimitiveComparison(this,op,left,right);
+        if(comparison)return comparison;
         if (left.type.kind === 'option' || right.type.kind === 'option') {
           const a = left.type.kind === 'option' ? left.type.element : left.type;
           const b = right.type.kind === 'option' ? right.type.element : right.type;

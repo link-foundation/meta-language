@@ -105,6 +105,10 @@ impl RustEmitter<'_> {
             self.preludes.insert(Prelude::Big);self.preludes.insert(Prelude::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
             let value=self.expr(&args[0])?;
+            if form=="number-compare"||form=="string-compare" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_comparison("Rust",&form,&value,&right,self.utf16_strings));
+            }
             if form=="number-power" {
                 let right=self.expr(&args[1])?;
                 return Ok(crate::translation::big_integer_conversion_rules::render_java_script_number_power("Rust",&value,&right));

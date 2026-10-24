@@ -37,6 +37,7 @@ mod big_integer_conversions;
 mod callables;
 mod collection_access;
 mod collections;
+mod comparisons;
 mod expectation;
 mod exponentiation;
 mod expressions;

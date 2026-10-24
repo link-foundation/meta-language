@@ -7,7 +7,7 @@ import {createBigIntegerConversionProgramLinks} from '../src/big-integer-convers
 import {emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
-import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,powerJavaScriptNumber} from '../src/translation/big-integer-conversion-rules.js';
+import {divideJavaScriptBigInteger,powerJavaScriptBigInteger,powerJavaScriptNumber,compareJavaScriptNumberBigInteger,compareJavaScriptStringBigIntegerUnits} from '../src/translation/big-integer-conversion-rules.js';
 import {divideJavaScriptBigInteger as divideInteger} from '../src/big-integer-conversion.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/big-integer-conversion.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
@@ -41,6 +41,17 @@ test('power kernels retain independent integer results and exact Number boundary
  for(const base of values)for(const exponent of powers){
   const actual=powerJavaScriptNumber(base,exponent),expected=base**exponent;
   assert.ok(Object.is(actual,expected),String(base)+' ** '+String(exponent));
+ }
+});
+test('mixed ordering retains exact mathematical values and StringIntegerLiteral distinctions',()=>{
+ const integers=[-(1n<<1024n),-9007199254740993n,-2n,-1n,0n,1n,2n,9007199254740993n,1n<<1024n];
+ for(const value of [NaN,-Infinity,-Number.MAX_VALUE,-1.5,-0.5,-0,0,Number.MIN_VALUE,0.5,1.5,9007199254740992,Number.MAX_VALUE,Infinity])for(const integer of integers){
+  const expected=value<integer?-1:value>integer?1:value==integer?0:2;
+  assert.equal(compareJavaScriptNumberBigInteger(value,integer),expected);
+ }
+ for(const text of ['', '0','-0',' 0x10 ','9007199254740993','-9007199254740993','1.0','NaN','Infinity','invalid','\ud800'])for(const integer of integers){
+  const expected=text<integer?-1:text>integer?1:text==integer?0:2;
+  assert.equal(compareJavaScriptStringBigIntegerUnits(units(text),integer),expected);
  }
 });
 test('the full editable BigInt definition retains all emission and codec fields',()=>{

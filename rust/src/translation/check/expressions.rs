@@ -702,6 +702,11 @@ impl Checker {
                             self.expr(right, env, path, Some(&self.default_number()), false)?;
                     }
                     if let Some(value) =
+                        self.primitive_comparison(op, &checked_left, &checked_right)?
+                    {
+                        return Ok(value);
+                    }
+                    if let Some(value) =
                         self.optional_comparison(op, checked_left, checked_right, span)?
                     {
                         return Ok(value);

@@ -54,6 +54,10 @@ impl RocqEmitter<'_> {
             self.floats();self.helpers.insert(super::Helper::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
             let value=self.expr(&args[0])?;
+            if form=="number-compare"||form=="string-compare" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_comparison("Rocq",&form,&value,&right,false));
+            }
             if form=="number-power" {
                 let right=self.expr(&args[1])?;
                 return Ok(crate::translation::big_integer_conversion_rules::render_java_script_number_power("Rocq",&value,&right));

@@ -25,7 +25,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {STRING_NUMBER_ROCQ_PRELUDE} from './string-number-formal-runtime.js';
 import {BIG_INTEGER_CONVERSION_ROCQ_PRELUDE} from './big-integer-conversion-formal-runtime.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
@@ -916,7 +916,8 @@ class RocqEmitter {
     if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Rocq',e.op,this.expr(e.args[0]));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.floats();this.helpers.add('bigIntegerConversion');
-      if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
+      if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),false);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rocq',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);

@@ -5,7 +5,7 @@ import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.j
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './translation/big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './translation/big-integer-conversion-rules.js';
 import {acceptJavaScriptNumberConversionType} from './translation/javascript-number-conversion.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './translation/javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './translation/string-construction-rules.js';
@@ -324,16 +324,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         same(node.type,{kind:'string'},'UTF16 literal type');
         if(units.items.some(item=>item.k!=='lit'||item.type.kind!=='float')||!acceptJavaScriptStringUnits(units.items.map(item=>Number(item.value))))throw new TypeError('a JavaScript UTF16 literal needs complete integral code units');
       }else if(acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)){
-        const form=readJavaScriptBigIntegerResultOperation(node.op);
-        if(form==='division'||form==='power'||form==='number-power'){
-          if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2)throw new TypeError('a BigInt division intrinsic needs two actual source operands');
-          for(const argument of node.args)same(argument.type,{kind:form==='number-power'?'float':'int'},'numeric arithmetic operand type');
-          same(node.type,form==='number-power'?{kind:'float'}:{kind:'array',element:{kind:'int'}},'numeric arithmetic result type');
-        }else{
-        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a BigInt intrinsic needs one actual source operand');
-        same(node.args[0].type,{kind:form==='string'?'string':form==='number'?'float':'bool'},'BigInt intrinsic operand type');
-        same(node.type,form==='boolean'?{kind:'int'}:{kind:'array',element:{kind:'int'}},'BigInt intrinsic result column type');
-        }
+        const kinds=readJavaScriptBigIntegerIntrinsicOperandKinds(node.op),result=readJavaScriptBigIntegerIntrinsicResultKind(node.op);
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==kinds.length)throw new TypeError('a numeric intrinsic needs its complete owned operands');
+        for(const [index,argument] of node.args.entries())same(argument.type,{kind:kinds[index]},'numeric intrinsic operand type');
+        same(node.type,result==='array-integer'?{kind:'array',element:{kind:'int'}}:{kind:result},'numeric intrinsic result type');
       } else if(acceptLinkedJavaScriptSourceException(node.k,node.op)){
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2)throw new TypeError('a source exception needs its checked message and property presence');
         same(node.args[0].type,{kind:'string'},'source exception message type');

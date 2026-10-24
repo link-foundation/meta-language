@@ -30,7 +30,7 @@ import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
 import {STRING_NUMBER_PRELUDE} from './string-number-runtime.js';
 import {SOURCE_EXCEPTION_PRELUDE} from './source-exception-runtime.js';
 import {BIG_INTEGER_CONVERSION_PRELUDE} from './big-integer-conversion-runtime.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision,renderJavaScriptBigIntegerPower,renderJavaScriptNumberPower,renderJavaScriptBigIntegerComparison} from './big-integer-conversion-rules.js';
 import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
@@ -776,7 +776,7 @@ class RustEmitter {
       if (!node || typeof node !== 'object') return false;
       if (requireStringOrderUnits(node.k ?? '', node.op ?? '')||acceptLinkedJavaScriptStringUnitConstruction(node.k??'',node.op??'')) return true;
       if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
-      if(acceptLinkedJavaScriptBigIntegerResult(node.k??'',node.op??'')&&readJavaScriptBigIntegerResultOperation(node.op)==='string')return true;
+      if(acceptLinkedJavaScriptBigIntegerResult(node.k??'',node.op??'')&&['string','string-compare'].includes(readJavaScriptBigIntegerResultOperation(node.op)))return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -1506,7 +1506,8 @@ class RustEmitter {
     if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.usesBig=true;this.usesBigIntegerConversion=true;
-      if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
+      if(['number-compare','string-compare'].includes(readJavaScriptBigIntegerResultOperation(e.op)))return renderJavaScriptBigIntegerComparison('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.expr(e.args[1]),this.utf16Strings);
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='number-power')return renderJavaScriptNumberPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='power')return renderJavaScriptBigIntegerPower('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
           if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Rust',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);

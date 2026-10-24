@@ -219,6 +219,9 @@ pub(super) fn expression<E: Emitter>(
    }else if super::string_number_rules::accept_linked_java_script_number_conversion("math",op)&&args[0].ty==Type::String{
     emitter.unit_helper("stringNumber");let text=emitter.unit_expr(&args[0],depth)?;
     format!("(MLStringNumber.convertUnits {})",rules::render_formal_string_unit_numbers(target,&text))
+   }else if super::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op)&&super::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="string-compare"{
+    emitter.unit_helper("bigIntegerConversion");let text=emitter.unit_expr(&args[0],depth)?;let other=emitter.unit_expr(&args[1],depth)?;
+    format!("(MLBigIntegerConversion.compareUnits {} {})",rules::render_formal_string_unit_numbers(target,&text),other)
    }else if super::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op)&&super::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="string"{
     emitter.unit_helper("bigIntegerConversion");let text=emitter.unit_expr(&args[0],depth)?;
     format!("(MLBigIntegerConversion.convertUnits {})",rules::render_formal_string_unit_numbers(target,&text))

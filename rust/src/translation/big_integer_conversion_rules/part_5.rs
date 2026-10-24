@@ -1,17 +1,139 @@
 // Generated from complete js/src/translation/big-integer-conversion-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result;
+use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result;
 use super::accept_java_script_whitespace_unit;
 use super::divide_number_power_bound;
-use super::invert_number_power_interval;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
 use super::multiply_number_power_interval;
-use super::power_java_script_big_integer;
 use super::read_java_script_numeric_digit_unit;
 use super::read_string_number_digit;
 use super::root_number_power_interval;
-use super::round_number_power_bound;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop28(
+    units: &[f64],
+    mut end: f64,
+    mut at: f64,
+    mut exponent: f64,
+    mut exponent_limit: f64,
+) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result {
+    loop {
+        return if at < end {
+            {
+                let digit = (self::ml_array::optional_at(units, self::ml_array::number_index(at)))
+                    .unwrap_or_else(|| -1f64)
+                    - 48f64;
+                if (digit < 0f64) || (digit > 9f64) {
+                    self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(at, exponent)
+                } else {
+                    {
+                        let exponent_3 = if exponent < exponent_limit {
+                            { self::ml_math::min(exponent_limit, ((exponent * 10f64) + digit)) }
+                        } else {
+                            exponent
+                        };
+                        {
+                            let at_2 = at + 1f64;
+                            {
+                                (at, exponent) = (at_2, exponent_3);
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop28Done(at, exponent)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27 {
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin27Next(f64, bool),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result {
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(f64, f64, f64, f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop23(
+    units: &[f64],
+    mut end: f64,
+    mut at: f64,
+    mut fraction: f64,
+    mut digits: f64,
+    mut significant: f64,
+    mut dot: bool,
+) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result {
+    loop {
+        return if at < end {
+            {
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(at)))
+                    .unwrap_or_else(|| -1f64);
+                if (48f64..=57f64).contains(&unit) {
+                    {
+                        let digits_2 = digits + 1f64;
+                        {
+                            let fraction_3 = if dot { { fraction + 1f64 } } else { fraction };
+                            {
+                                let significant_3 = if (unit != 48f64) || (significant > 0f64) {
+                                    { significant + 1f64 }
+                                } else {
+                                    significant
+                                };
+                                {
+                                    let at_2 = at + 1f64;
+                                    {
+                                        (at, fraction, digits, significant) =
+                                            (at_2, fraction_3, digits_2, significant_3);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                {
+                    if (unit == 46f64) && !dot {
+                        {
+                            let dot_2 = true;
+                            {
+                                let at_3 = at + 1f64;
+                                {
+                                    (at, dot) = (at_3, dot_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    {
+                        self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(at, fraction, digits, significant)
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop23Done(at, fraction, digits, significant)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22 {
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Next(f64),
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin22Return(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Result {
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Done(self::ml::Big, bool),
+    MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop29Return(f64),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -767,112 +889,6 @@ pub fn source_ml_source1_temporary_power_java_script_number_loop48(
         }
         return {
             self::MlSource1TemporaryPowerJavaScriptNumberLoop48Result::MlSource1TemporaryPowerJavaScriptNumberLoop48Done(interval, shift.clone())
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_power_java_script_number_loop47(
-    mut exponent: f64,
-    mut negative: bool,
-    mut input: Vec<self::ml::Big>,
-    mut power: Vec<self::ml::Big>,
-    mut precision: self::ml::Big,
-) -> f64 {
-    loop {
-        return {
-            let scale = (self::ml_array::optional_at(
-                &self::power_java_script_big_integer(
-                    self::ml::Big::from_i128(2),
-                    precision.clone(),
-                ),
-                self::ml_array::number_index(0f64),
-            ))
-            .unwrap_or_else(|| self::ml::Big::from_i128(0));
-            {
-                let value =
-                    ((self::ml_array::optional_at(&input, self::ml_array::number_index(0f64)))
-                        .unwrap_or_else(|| self::ml::Big::from_i128(0)))
-                    .mul(
-                        &(self::ml_array::optional_at(
-                            &self::power_java_script_big_integer(
-                                self::ml::Big::from_i128(2),
-                                precision.sub(&self::ml::Big::from_i128(52)),
-                            ),
-                            self::ml_array::number_index(0f64),
-                        ))
-                        .unwrap_or_else(|| self::ml::Big::from_i128(0)),
-                    );
-                {
-                    let initial_exponent =
-                        ((self::ml_array::optional_at(&input, self::ml_array::number_index(1f64)))
-                            .unwrap_or_else(|| self::ml::Big::from_i128(0)))
-                        .add(&self::ml::Big::from_i128(52));
-                    {
-                        let interval = vec![
-                            value.clone(),
-                            initial_exponent.clone(),
-                            value.clone(),
-                            initial_exponent.clone(),
-                        ];
-                        {
-                            let interval_3 = if exponent < 0f64 {
-                                { self::invert_number_power_interval(interval, scale.clone()) }
-                            } else {
-                                interval
-                            };
-                            {
-                                let shift = (self::ml_array::optional_at(
-                                    &power,
-                                    self::ml_array::number_index(1f64),
-                                ))
-                                .unwrap_or_else(|| self::ml::Big::from_i128(0));
-                                {
-                                    let source_ml_source2_s38 = self::source_ml_source1_temporary_power_java_script_number_loop48(scale.clone(), interval_3, shift);
-                                    match source_ml_source2_s38 {
-                                        self::MlSource1TemporaryPowerJavaScriptNumberLoop48Result::MlSource1TemporaryPowerJavaScriptNumberLoop48Done(interval_4, shift_2) => {
-                                            {
-                                                let interval_5 = self::source_ml_source1_temporary_power_java_script_number_loop49(scale.clone(), interval_4, shift_2.clone());
-                                                {
-                                                    let result = vec![scale.clone(), self::ml::Big::from_i128(0), scale.clone(), self::ml::Big::from_i128(0)];
-                                                    {
-                                                        let remaining = (self::ml_array::optional_at(&power, self::ml_array::number_index(0f64))).unwrap_or_else(|| self::ml::Big::from_i128(0));
-                                                        {
-                                                            let result_2 = self::source_ml_source1_temporary_power_java_script_number_loop50(scale.clone(), interval_5, result, remaining);
-                                                            {
-                                                                let lower = self::round_number_power_bound((self::ml_array::optional_at(&result_2, self::ml_array::number_index(0f64))).unwrap_or_else(|| self::ml::Big::from_i128(0)), (self::ml_array::optional_at(&result_2, self::ml_array::number_index(1f64))).unwrap_or_else(|| self::ml::Big::from_i128(0)), precision.clone());
-                                                                {
-                                                                    let upper = self::round_number_power_bound((self::ml_array::optional_at(&result_2, self::ml_array::number_index(2f64))).unwrap_or_else(|| self::ml::Big::from_i128(0)), (self::ml_array::optional_at(&result_2, self::ml_array::number_index(3f64))).unwrap_or_else(|| self::ml::Big::from_i128(0)), precision.clone());
-                                                                    if lower == upper {
-                                                                        if negative {
-                                                                            -lower
-                                                                        } else {
-                                                                            lower
-                                                                        }
-                                                                    } else {
-                                                                        {
-                                                                            let precision_2 = precision.mul(&self::ml::Big::from_i128(2));
-                                                                            {
-                                                                                precision = precision_2;
-                                                                                continue;
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         };
     }
 }

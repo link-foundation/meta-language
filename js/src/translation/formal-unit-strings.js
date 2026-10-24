@@ -64,6 +64,10 @@ export function readFormalUnitStringExpression(emitter,e,depth=0){
    emitter.helpers.add('stringNumber');
    return '(MLStringNumber.convertUnits '+renderFormalStringUnitNumbers(target,expression(e.args[0]))+')';
   }
+  if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)&&readJavaScriptBigIntegerResultOperation(e.op)==='string-compare'){
+   emitter.helpers.add('bigIntegerConversion');
+   return '(MLBigIntegerConversion.compareUnits '+renderFormalStringUnitNumbers(target,expression(e.args[0]))+' '+expression(e.args[1])+')';
+  }
   if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)&&readJavaScriptBigIntegerResultOperation(e.op)==='string'){
    emitter.helpers.add('bigIntegerConversion');
    return '(MLBigIntegerConversion.convertUnits '+renderFormalStringUnitNumbers(target,expression(e.args[0]))+')';

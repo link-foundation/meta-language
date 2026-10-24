@@ -25,6 +25,15 @@ fn exponentiation_retains_original_powers_errors_signs_order_and_codecs() {
 }
 
 #[test]
+fn primitive_comparisons_keep_exact_mixed_domains_nullable_branches_and_operand_order() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/big-integer-conversion/comparison-source-oracle.mjs",
+        "JavaScript primitive comparisons",
+        meta_language::create_java_script_comparison_program_links,
+    );
+}
+
+#[test]
 fn public_division_retains_exact_quotient_remainder_and_structured_source_error() {
     for (left, right, quotient, remainder) in [
         ("7", "3", "2", "1"),

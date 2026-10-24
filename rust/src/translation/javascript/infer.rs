@@ -20,6 +20,7 @@ mod expressions;
 mod fields;
 mod methods;
 mod numbers;
+mod numeric_intrinsics;
 mod optional_values;
 mod patterns;
 mod products;
@@ -192,7 +193,6 @@ struct Arithmetic {
 }
 
 struct Equality {
-    operation: BinaryOp,
     left: Term,
     right: Term,
     place: Option<Span>,
@@ -697,6 +697,7 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if crate::translation::javascript_comparison_rules::accept_java_script_loose_equality_operation(op){return self.loose_comparison_term(args,env,expr.span);}
                 if op=="constructJavaScriptStringFromCharacterCodes"||op=="constructJavaScriptStringFromCodePoints"||crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
                     for item in args{self.expr(&item.value,env)?;}
                     return Ok(if crate::translation::string_construction_rules::read_java_script_string_construction_form(op)=="points"{Term::Array(Box::new(Term::Known(FLOAT)))}else{Term::Known(STRING)});
@@ -708,12 +709,7 @@ impl Inference {
                     return Ok(Term::Known(STRING));
                 }
                 if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
-                    for item in args {
-                        let value=self.expr(&item.value,env)?;
-                        if matches!(crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op).as_str(),"division"|"power"|"number-power") {self.unify(&value,&Term::Known(if crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="number-power"{FLOAT}else{INT}),expr.span)?;}
-                    }
-                    if crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="number-power"{return Ok(Term::Known(FLOAT));}
-                    return Ok(if op=="convertJavaScriptBigInteger"||crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op)=="boolean" {Term::Known(INT)}else{Term::Array(Box::new(Term::Known(INT)))});
+                    return self.numeric_intrinsic_term(op,args,env,expr.span);
                 }
                 if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op)||!crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty() {
                     for item in args { self.expr(&item.value, env)?; }

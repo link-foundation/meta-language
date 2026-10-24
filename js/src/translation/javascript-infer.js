@@ -8,8 +8,9 @@
 
 import { typeError } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './big-integer-conversion-rules.js';
 import {readJavaScriptNumericOperationFailure} from './source-exception-rules.js';
+import {readJavaScriptComparisonInferenceStep,acceptJavaScriptLooseEqualityOperation} from './javascript-comparison-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './string-construction-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
@@ -36,8 +37,7 @@ import { markSharedReferenceTypes } from './javascript-cells.js';
 import { readJavaScriptProductIndex, requiresJavaScriptProductProof } from './javascript-products.js';
 import { acceptJavaScriptArrayTupleContext } from './product-source-rules.js';
 import { readJavaScriptMethodReceiverKind, readJavaScriptMethodArgumentKind,
-  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm,
-  readJavaScriptEqualityInferenceStep } from './javascript-surface-rules.js';
+  readJavaScriptStringMethodResultForm, readJavaScriptIncludesReceiverForm } from './javascript-surface-rules.js';
 import {readPrimitiveMethodMinimumArguments,readPrimitiveMethodArgumentCount,
   readPrimitiveMethodCheckedArgumentKind,readPrimitiveMethodCheckedResultForm} from './primitive-method-rules.js';
 
@@ -602,8 +602,8 @@ class Inference {
     return true;
   }
 
-  equalityStep({ operation, left, right, where }, force) {
-    const step = readJavaScriptEqualityInferenceStep(operation, this.resolve(left).kind, this.resolve(right).kind, force);
+  equalityStep({ left, right, where }, force) {
+    const step = readJavaScriptComparisonInferenceStep(this.resolve(left).kind,this.resolve(right).kind,force);
     if (step === 'defer') return false;
     if (step === 'unify') this.unify(left, right, where);
     return true;
@@ -960,6 +960,11 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(acceptJavaScriptLooseEqualityOperation(node.op)){
+          const values=node.args.map(argument=>this.expr(argument.value,env));
+          if(values.length===2)this.equalities.push({left:values[0],right:values[1],where:node.span});
+          return BOOL;
+        }
         if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints'||acceptLinkedJavaScriptStringConstruction('math',node.op)){
           for(const item of node.args)this.expr(item.value,env);
           return readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:FLOAT}:STRING;
@@ -969,9 +974,10 @@ class Inference {
           return STRING;
         }
         if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
-          for(const item of node.args){const value=this.expr(item.value,env);if(['division','power','number-power'].includes(readJavaScriptBigIntegerResultOperation(node.op)))this.unify(value,readJavaScriptBigIntegerResultOperation(node.op)==='number-power'?FLOAT:INT,node.span);}
-          if(readJavaScriptBigIntegerResultOperation(node.op)==='number-power')return FLOAT;
-          return node.op==='convertJavaScriptBigInteger'||readJavaScriptBigIntegerResultOperation(node.op)==='boolean'?INT:{kind:'array',element:INT};
+          const kinds=readJavaScriptBigIntegerIntrinsicOperandKinds(node.op);
+          for(const [index,item] of node.args.entries()){const value=this.expr(item.value,env);if(kinds[index])this.unify(value,{kind:kinds[index]},node.span);}
+          const result=readJavaScriptBigIntegerIntrinsicResultKind(node.op);
+          return node.op==='convertJavaScriptBigInteger'?INT:result==='array-integer'?{kind:'array',element:INT}:{kind:result};
         }
         if(acceptLinkedJavaScriptSourceException('math',node.op)||readJavaScriptExceptionConstructorClass(node.op)){
           for(const item of node.args)this.expr(item.value,env);
@@ -1036,8 +1042,7 @@ class Inference {
       return this.join(left, right, node.span);
     }
     if (ORDER.has(node.op)) {
-      if (node.op === 'eq' || node.op === 'ne') this.equalities.push({ operation: node.op, left, right, where: node.span });
-      else this.unify(left, right, node.span);
+      this.equalities.push({ operation: node.op, left, right, where: node.span });
       return BOOL;
     }
     if (ARITHMETIC.has(node.op)) {

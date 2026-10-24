@@ -486,3 +486,5 @@ pub use translation::javascript_string_unit_program::create_java_script_string_u
 pub use translation::source_exception_program::create_source_exception_program_links;
 pub use translation::string_construction_program::create_string_construction_program_links;
 pub use translation::utf16_text_program::create_utf16_text_program_links;
+
+pub use translation::javascript_comparison_program::create_java_script_comparison_program_links;

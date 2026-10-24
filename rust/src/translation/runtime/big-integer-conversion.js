@@ -778,6 +778,58 @@ function convertJavaScriptBooleanBigInteger(value) {
   }
 }
 
+function compareJavaScriptNumberBigInteger(value, integer) {
+  if (Number.isNaN(value)) {
+    return 2;
+  } else {
+    if ((value === Infinity)) {
+      return 1;
+    } else {
+      if ((value === (-Infinity))) {
+        return (-1);
+      } else {
+        const floor = Math.floor(value);
+        const lower = ((convertJavaScriptNumberBigInteger(floor))[0] ?? 0n);
+        if ((lower < integer)) {
+          return (-1);
+        } else {
+          if ((lower > integer)) {
+            return 1;
+          } else {
+            if ((value === floor)) {
+              return 0;
+            } else {
+              return 1;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function compareJavaScriptStringBigIntegerUnits(units, integer) {
+  const result = convertJavaScriptStringBigIntegerUnits(units);
+  if ((result.length !== 1)) {
+    return 2;
+  } else {
+    const value = ((result)[0] ?? 0n);
+    if ((value < integer)) {
+      return (-1);
+    } else {
+      if ((value > integer)) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+  }
+}
+
+function compareJavaScriptUtf8BigInteger(bytes, integer) {
+  return compareJavaScriptStringBigIntegerUnits(readJavaScriptUtf8StringUnits(bytes), integer);
+}
+
 function divideJavaScriptBigInteger(left, right) {
   if ((right === 0n)) {
     return [];
@@ -1152,25 +1204,33 @@ function readJavaScriptBigIntegerBuiltinOperation(name) {
 }
 
 function readJavaScriptBigIntegerResultOperation(operation) {
-  if ((operation === "powerJavaScriptNumberValue")) {
-    return "number-power";
+  if ((operation === "compareJavaScriptNumberBigIntegerValue")) {
+    return "number-compare";
   } else {
-    if ((operation === "powerJavaScriptBigIntegerResult")) {
-      return "power";
+    if ((operation === "compareJavaScriptStringBigIntegerValue")) {
+      return "string-compare";
     } else {
-      if ((operation === "divideJavaScriptBigIntegerResult")) {
-        return "division";
+      if ((operation === "powerJavaScriptNumberValue")) {
+        return "number-power";
       } else {
-        if ((operation === "parseJavaScriptStringBigInteger")) {
-          return "string";
+        if ((operation === "powerJavaScriptBigIntegerResult")) {
+          return "power";
         } else {
-          if ((operation === "convertJavaScriptBooleanBigIntegerValue")) {
-            return "boolean";
+          if ((operation === "divideJavaScriptBigIntegerResult")) {
+            return "division";
           } else {
-            if ((operation === "convertJavaScriptNumberBigIntegerResult")) {
-              return "number";
+            if ((operation === "parseJavaScriptStringBigInteger")) {
+              return "string";
             } else {
-              return "";
+              if ((operation === "convertJavaScriptBooleanBigIntegerValue")) {
+                return "boolean";
+              } else {
+                if ((operation === "convertJavaScriptNumberBigIntegerResult")) {
+                  return "number";
+                } else {
+                  return "";
+                }
+              }
             }
           }
         }
@@ -1181,6 +1241,96 @@ function readJavaScriptBigIntegerResultOperation(operation) {
 
 function acceptLinkedJavaScriptBigIntegerResult(kind, operation) {
   return ((kind === "math") && (readJavaScriptBigIntegerResultOperation(operation) !== ""));
+}
+
+function readJavaScriptBigIntegerIntrinsicOperandKinds(operation) {
+  const form = readJavaScriptBigIntegerResultOperation(operation);
+  if (((form === "division") || (form === "power"))) {
+    return ["int", "int"];
+  } else {
+    if ((form === "number-power")) {
+      return ["float", "float"];
+    } else {
+      if ((form === "number-compare")) {
+        return ["float", "int"];
+      } else {
+        if ((form === "string-compare")) {
+          return ["string", "int"];
+        } else {
+          if ((form === "string")) {
+            return ["string"];
+          } else {
+            if ((form === "number")) {
+              return ["float"];
+            } else {
+              if ((form === "boolean")) {
+                return ["bool"];
+              } else {
+                return [];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function readJavaScriptBigIntegerIntrinsicResultKind(operation) {
+  const form = readJavaScriptBigIntegerResultOperation(operation);
+  if ((((form === "number-power") || (form === "number-compare")) || (form === "string-compare"))) {
+    return "float";
+  } else {
+    if ((form === "boolean")) {
+      return "int";
+    } else {
+      if ((form === "")) {
+        return "";
+      } else {
+        return "array-integer";
+      }
+    }
+  }
+}
+
+function renderJavaScriptBigIntegerComparison(target, form, left, right, utf16) {
+  if ((form === "number-compare")) {
+    if ((target === "JavaScript")) {
+      return (((("ml_big_integer_conversion.compareNumber(" + left) + ",") + right) + ")");
+    } else {
+      if ((target === "Rust")) {
+        return (((("crate::ml_big_integer_conversion::compare_java_script_number_big_integer(" + left) + ",") + right) + ")");
+      } else {
+        if (((target === "Lean") || (target === "Rocq"))) {
+          return (((("(MLBigIntegerConversion.compareNumber " + left) + " ") + right) + ")");
+        } else {
+          return "";
+        }
+      }
+    }
+  } else {
+    if ((form !== "string-compare")) {
+      return "";
+    } else {
+      if ((target === "JavaScript")) {
+        return (((("((ml_text,ml_integer)=>ml_big_integer_conversion.compareUnits(Array.from({length:ml_text.length},(_,index)=>ml_text.charCodeAt(index)),ml_integer))(" + left) + ",") + right) + ")");
+      } else {
+        if ((target === "Rust")) {
+          return (((("crate::ml_big_integer_conversion::compare_java_script_string_big_integer_units(&" + (utf16 ? (("(" + left) + ").0.iter().copied()") : (("(" + left) + ").encode_utf16()"))) + ".map(f64::from).collect::<Vec<f64>>(),") + right) + ")");
+        } else {
+          if ((target === "Lean")) {
+            return (((("(MLBigIntegerConversion.compareUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] " + left) + ") ") + right) + ")");
+          } else {
+            if ((target === "Rocq")) {
+              return (((("(MLBigIntegerConversion.compareUtf8 ((fix ml_compare_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_compare_bytes rest) end) " + left) + ") ") + right) + ")");
+            } else {
+              return "";
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 function renderJavaScriptNumberPower(target, base, exponent) {
@@ -2005,5 +2155,5 @@ function main() {
 
 main();
 
-return { convertUnits: convertJavaScriptStringBigIntegerUnits, convertNumber: convertJavaScriptNumberBigInteger, convertBoolean: convertJavaScriptBooleanBigInteger, convertUtf8: convertJavaScriptUtf8BigInteger, divide: divideJavaScriptBigInteger, power: powerJavaScriptBigInteger, powerNumber: powerJavaScriptNumber };
+return { convertUnits: convertJavaScriptStringBigIntegerUnits, convertNumber: convertJavaScriptNumberBigInteger, convertBoolean: convertJavaScriptBooleanBigInteger, convertUtf8: convertJavaScriptUtf8BigInteger, divide: divideJavaScriptBigInteger, power: powerJavaScriptBigInteger, powerNumber: powerJavaScriptNumber, compareNumber: compareJavaScriptNumberBigInteger, compareUnits: compareJavaScriptStringBigIntegerUnits, compareUtf8: compareJavaScriptUtf8BigInteger };
 })();

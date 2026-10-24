@@ -6069,3 +6069,41 @@ domain. Future controls retain missing values, primitive strings, ignored
 BigInts, captured inputs and an extra-argument error preceding conversion.
 This is a source draft with the same approximation/parity and execution
 obligations as the underlying Number power definition.
+
+### Primitive comparison draft
+
+Both checked source hosts now draft strict primitive equality and relational
+comparisons across Number, BigInt, String, Boolean, null and undefined, including
+their declared optional domains. Raw operands bind once in source order before
+primitive conversion. Same-domain operations retain their existing encoding;
+new shared decisions select mixed domains and optional branches. Inference waits
+for actual call-site types and keeps known, distinct primitive domains separate.
+
+Number/BigInt ordering compares exact unbounded integers against the finite
+Number's exact integral floor and fractional distinction, with separate NaN
+and infinity cases. String/BigInt ordering uses the complete StringIntegerLiteral
+definition without a Number intermediate. Invalid integer strings remain
+unordered; every ordering operator then returns false. Nullable String/String
+ordering selects lexical UTF-16 comparison only when both values are strings;
+the absent branches retain numeric conversion. Strict equality keeps language
+type distinctions and separate null/undefined tags. Shared intrinsic signatures
+now select every operand and result type in both recheckers and inference hosts.
+These rules follow [IsLessThan](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islessthan)
+and [IsStrictlyEqual](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-isstrictlyequal).
+
+Complete comparison decisions, exact numeric kernels and runtime renderers are
+source-derived definitions. Future independent controls retain large integer
+boundaries, fractional Numbers, radices, invalid strings, isolated units, null,
+undefined, NaN, signed zero, argument capture and every program/definition codec
+and target emission. They have not executed. Object/Symbol conversion,
+heterogeneous dynamic unions and all inherited requirements remain.
+
+Primitive loose equality (`==`/`!=`) uses the same captured operand and exact
+mixed-domain machinery. Shared decisions retain same-type strict equality,
+Boolean/Number conversion, StringNumericLiteral or StringIntegerLiteral as
+selected by the other operand, and null/undefined equivalence. Null does not
+become zero merely because it is compared loosely with a Number. Declared
+optional domains branch with their actual absence tags before conversion.
+Both parsers, inference hosts and checked adapters carry this operation; the
+result uses existing inspectable typed operations. These rules follow
+[IsLooselyEqual](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-islooselyequal).
