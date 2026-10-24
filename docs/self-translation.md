@@ -676,6 +676,14 @@ twenty original/emitted values/aborts, two refusals, exact program/definition
 graphs, both codecs and four emissions, plus CI-only native Rust execution.
 All earlier Rust-source products remain unchanged in scope. None executed.
 
+Concatenation now reuses checked lets, reference reads, appends and primitive
+text terms after actual receiver dispatch. All operand values precede payload
+reads; the result gets a distinct array identity. Shared role/default decisions
+generate Rust and complete typed Links. The expanded future property-call
+matrix has thirty-eight values/aborts and three refusals with all original and
+paired native/graph/codec/emission controls. None ran. Sparse/species/Symbol,
+widening, length limits and general coercions remain explicit obligations.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

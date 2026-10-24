@@ -2133,6 +2133,10 @@ class JavaScriptParser {
         const arrayForm = readArrayMethodForm(field.value);
         if (c.is('(') && arrayForm !== '') {
           const args = this.arguments(field.value);
+          if(field.value==='concat'){
+            expr={k:'method',object:expr,op:field.value,args,span:joined(expr,{span:span(token,c.peek())},token)};
+            continue;
+          }
           const form = readJavaScriptArrayMethodSurfaceForm(field.value, args.length);
           if (form === 'copySlice') {
             expr = { k: 'copySlice', object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };

@@ -25,3 +25,14 @@ export function readJavaScriptPropertyCallFallbackKind(operation, selected) {
   if (operation === 'toString') return 'scalar';
   return selected;
 }
+/** @param {string} operation @param {string} selected @returns {string} */
+export function readJavaScriptConcatenationFallbackKind(operation, selected) {
+  return operation === 'concat' ? 'array' : readJavaScriptPropertyCallFallbackKind(operation, selected);
+}
+/** @param {string} receiver @param {string} argument @param {boolean} force @returns {string} */
+export function readJavaScriptConcatenationArgumentRole(receiver, argument, force) {
+  if (argument === 'var' && !force) return 'defer';
+  if (receiver === 'array') return argument === 'array' ? 'spread' : 'item';
+  if (receiver !== 'string') return '';
+  return ['string','float','bool','int','nat','fixed'].includes(argument) ? 'text' : 'unsupported';
+}

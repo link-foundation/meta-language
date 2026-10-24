@@ -12,6 +12,9 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Option<Expr>> {
+        if self.language == Language::JavaScript && operation == "concat" {
+            return self.source_concatenation(source, args, env, path, span);
+        }
         if self.language != Language::JavaScript
             || rules::read_java_script_source_property_operation_kind(operation).is_empty()
         {

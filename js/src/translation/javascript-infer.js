@@ -7,7 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
-import { readJavaScriptRecordMethodInferenceStep, readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind } from './javascript-property-call-rules.js';
+import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
 import { readArrayStateMethodResult, readArrayStateMethodArgumentRole } from './array-state-method-rules.js';
@@ -504,7 +504,7 @@ class Inference {
         progress = true;
       }
       if(!progress){
-        const method=this.methods.find(item=>this.resolve(item.object).kind==='var'&&readJavaScriptPropertyCallFallbackKind(item.op,readJavaScriptMethodReceiverKind(item.op))!=='');
+        const method=this.methods.find(item=>this.resolve(item.object).kind==='var'&&readJavaScriptPropertyCallFallbackKind(item.op,readJavaScriptMethodReceiverKind(item.op))!==''||item.op==='concat'&&item.args.some(arg=>this.resolve(arg).kind==='var'));
         if(method&&this.methodStep(method,true)){this.methods.splice(this.methods.indexOf(method),1);progress=true;}
       }
       // `.length` of a value nothing else fixes reads an array.
@@ -1145,6 +1145,12 @@ class Inference {
       return true;
     }
     if(op==='toString'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}
+    if(receiver.kind==='array'&&op==='concat'){
+      const roles=args.map(arg=>readJavaScriptConcatenationArgumentRole('array',this.resolve(arg).kind,force));
+      if(roles.includes('defer'))return false;
+      args.forEach((arg,index)=>this.unify(arg,roles[index]==='spread'?{kind:'array',element:receiver.element}:receiver.element,where));
+      this.unify(result,receiver,where);return true;
+    }
     if (receiver.kind === 'string') {
       const selected=readJavaScriptSourcePropertyOperationKind(op);
       if(node&&(selected==='test'&&args.length===1||selected==='map'&&args.length===0))this.propertyMethods.set(node,selected);

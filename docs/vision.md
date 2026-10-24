@@ -2937,6 +2937,24 @@ Rust-source control and adds explicit JavaScript-source products. Dynamic
 `this`, prototype/accessor behavior, classes/inheritance, concat ownership,
 remaining coercions and complete errors still require implementation drafts.
 
+Concatenation now dispatches by the actual record, string or array receiver.
+Dense homogeneous arrays capture the receiver handle and every argument value
+before reading any payload. Existing ordered lets, reference reads and appends
+then construct a distinct result, so argument-side mutations of the receiver or
+earlier array arguments remain observable. Scalars become individual elements;
+array arguments spread once. Primitive string arguments use the existing text
+conversion and concatenation terms. Actual callable record fields retain their
+own signatures. Shared source role/default rules generate native source and
+typed Links; no new checked node or target runtime is introduced. The
+[array concatenation rules](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.concat)
+and [string concatenation rules](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.concat)
+define this interpretation. The future property-call matrix now declares
+thirty-eight values/aborts and three refusals, preserving every earlier input
+and original Node/emitted JavaScript/native Rust, graph, codec and four-emission
+control. None ran. Sparse arrays, species and Symbol overrides, heterogeneous
+or nullable widening, length limits, ToPrimitive effects and the other broader
+source requirements still need implementation drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

@@ -1,8 +1,10 @@
 // Type/child transport into the existing checked string or callable algebra.
 import{unsupported}from'./diagnostics.js';
+import{checkJavaScriptConcatenation}from'./javascript-concatenation.js';
 import{readJavaScriptSourcePropertyOperationKind,readJavaScriptResolvedPropertyCallForm}from'./javascript-property-call-rules.js';
 
 export function checkJavaScriptSourcePropertyCall(checker,node,env,path){
+ if(checker.language==='JavaScript'&&node.op==='concat')return checkJavaScriptConcatenation(checker,node,env,path);
  if(checker.language!=='JavaScript'||!readJavaScriptSourcePropertyOperationKind(node.op))return null;
  const receiver=checker.expr(node.object,env,path,undefined),object=checker.referenceValue(receiver);
  const form=readJavaScriptResolvedPropertyCallForm(object.type.kind,node.op);

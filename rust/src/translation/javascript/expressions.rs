@@ -466,6 +466,17 @@ impl JavaScriptParser {
                         crate::translation::frontend_rules::read_array_method_form(&field.value);
                     if !array_form.is_empty() {
                         let args = self.arguments(&field.value)?;
+                        if field.value == "concat" {
+                            expr = node(
+                                SNode::Method {
+                                    object: Box::new(expr),
+                                    op: field.value,
+                                    args: args.into_iter().map(Some).collect(),
+                                },
+                                Span::new(start, self.to_here(&token).end),
+                            );
+                            continue;
+                        }
                         let place = Span::new(start, self.to_here(&token).end);
                         #[allow(clippy::cast_precision_loss)]
                         let count = args.len() as f64;

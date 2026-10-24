@@ -364,13 +364,18 @@ impl Inference {
     pub(super) fn force_method_owner(&mut self) -> Result<bool> {
         let position = self.methods.iter().position(|method| {
             matches!(self.resolve(&method.object), Term::Var(_))
-                && !property_rules::read_java_script_property_call_fallback_kind(
+                && !property_rules::read_java_script_concatenation_fallback_kind(
                     &method.operation,
                     &super::super::surface_rules::read_java_script_method_receiver_kind(
                         &method.operation,
                     ),
                 )
                 .is_empty()
+                || method.operation == "concat"
+                    && method
+                        .args
+                        .iter()
+                        .any(|argument| matches!(self.resolve(argument), Term::Var(_)))
         });
         let Some(position) = position else {
             return Ok(false);
@@ -402,7 +407,7 @@ impl Inference {
             if !force {
                 return Ok(false);
             }
-            match property_rules::read_java_script_property_call_fallback_kind(
+            match property_rules::read_java_script_concatenation_fallback_kind(
                 &method.operation,
                 &read_java_script_method_receiver_kind(&method.operation),
             )
@@ -471,6 +476,37 @@ impl Inference {
                 self.property_methods.insert(method.node, "text".to_owned());
             }
             self.unify(&method.result, &Term::Known(STRING), method.place)?;
+            return Ok(true);
+        }
+        if let Term::Array(element) = &receiver
+            && method.operation == "concat"
+        {
+            let mut roles = Vec::new();
+            for argument in &method.args {
+                let actual = self.resolve(argument);
+                let kind = match &actual {
+                    Term::Var(_) => "var",
+                    Term::Array(_) => "array",
+                    Term::Known(ty) => ty.kind(),
+                    _ => "item",
+                };
+                let role = property_rules::read_java_script_concatenation_argument_role(
+                    "array", kind, force,
+                );
+                if role == "defer" {
+                    return Ok(false);
+                }
+                roles.push(role);
+            }
+            for (argument, role) in method.args.iter().zip(roles) {
+                let expected = if role == "spread" {
+                    Term::Array(element.clone())
+                } else {
+                    element.as_ref().clone()
+                };
+                self.unify(argument, &expected, method.place)?;
+            }
+            self.unify(&method.result, &receiver, method.place)?;
             return Ok(true);
         }
         if self.infer_shared_collection_method(method, &receiver)? {

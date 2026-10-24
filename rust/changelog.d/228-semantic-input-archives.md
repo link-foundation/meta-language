@@ -73,6 +73,10 @@ Draft receiver-based JavaScript property-call selection and callable record
 method inference. Keep own trim/includes/toString meanings and canonical
 primitive calls through shared generated rules and complete typed Links.
 
+Draft dense array and primitive string concat with actual receiver dispatch.
+Capture all operand values before payload reads, retaining argument mutations
+and separate result identity through existing checked terms and runtimes.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

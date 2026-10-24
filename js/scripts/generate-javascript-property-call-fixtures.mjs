@@ -22,16 +22,35 @@ const inputs=[
  ['array includes retains actual owner','export function compute(){return [27,28].includes(27)?27:0;}','27'],
  ['receiver failure precedes argument','/** @returns {{trim: (number)=>number}} */ function failedPropertyReceiver(){throw new Error("receiver first");} function failedPropertyArgument(){throw new Error("argument later");return 0;} export function compute(){return failedPropertyReceiver().trim(failedPropertyArgument());}',null,'receiver first'],
  ['call argument order','function failedFirstPropertyArgument(){throw new Error("first argument");return 0;} function failedSecondPropertyArgument(){throw new Error("second argument");return 0;} export function compute(){const item={endsWith(left,right){return left+right;}};return item.endsWith(failedFirstPropertyArgument(),failedSecondPropertyArgument());}',null,'first argument'],
+ ['own concat callable','export function compute(){const item={concat(value){return value+21;}};return item.concat(7);}','28'],
+ ['string concat String arguments','export function compute(){return "ab".concat("cd","ef")==="abcdef"?29:0;}','29'],
+ ['string concat primitive arguments','export function compute(){return "v".concat(1,true,2n)==="v1true2"?30:0;}','30'],
+ ['string concat no arguments','export function compute(){return "abc".concat()==="abc"?31:0;}','31'],
+ ['array concat array arguments','export function compute(){return [1].concat([2,3],[4]).join(",")==="1,2,3,4"?32:0;}','32'],
+ ['array concat scalar arguments','export function compute(){return [1].concat(2,[3],4).join(",")==="1,2,3,4"?33:0;}','33'],
+ ['array concat empty arguments','export function compute(){return [1,2].concat().length+32;}','34'],
+ ['array concat new identity','export function compute(){const original=[1];const copied=original.concat();return copied===original?0:35;}','35'],
+ ['concat source mutation during argument','function extendConcatReceiver(values){values.push(3);return [4];} export function compute(){const original=[1,2];const copied=original.concat(extendConcatReceiver(original));return copied.length*10+original.length;}','43'],
+ ['concat earlier argument mutation','function extendConcatArgument(values){values.push(5);return [6];} export function compute(){const first=[2];const copied=[1].concat(first,extendConcatArgument(first));return copied.length*10+first.length;}','42'],
+ ['concat receiver evaluated once','export function compute(){const calls=[];const receiver=()=>{calls.push(1);return [1];};const copied=receiver().concat([2]);return copied.length*10+calls.length;}','21'],
+ ['concat arguments evaluated once in order','export function compute(){const calls=[];const argument=value=>{calls.push(value);return [value];};const copied=[0].concat(argument(1),argument(2));return (calls[0]??0)*10+(calls[1]??0)+copied.length;}','15'],
+ ['concat no alias of result payload','export function compute(){const original=[1];const copied=original.concat([2]);copied.push(3);return original.length*10+copied.length;}','13'],
+ ['concat receiver and argument share identity','export function compute(){const original=[1,2];const copied=original.concat(original);return copied.join(",")==="1,2,1,2"?36:0;}','36'],
+ ['concat temporary hygiene','export function compute(){const ml_concat_value1=17;const ml_concat_value2=18;return [1].concat(2).length+ml_concat_value1+ml_concat_value2;}','37'],
+ ['concat split surrogate units','export function compute(){return "\\uD800".concat("\\uDC00").length+36;}','38'],
+ ['concat uncalled string receiver annotation','/** @param {string} value @returns {string} */ function concatenateDeclaredString(value){return value.concat("x");} export function compute(){return concatenateDeclaredString("ab")==="abx"?39:0;}','39'],
+ ['concat record argument shape','export function compute(){const item={concat(left,right){return left+right;}};return item.concat(18,22);}','40'],
 ];
 const cases=inputs.map(([name,source,value,abort],index)=>({name,module:'',entry:'compute'+index,source:source.replace('export function compute','\nexport function compute'),value,abort:abort??null}));
 const refusals=[
  {name:'actual non-callable property',source:'export function compute(){const item={trim:3};return item.trim();}',kind:'type',reason:'record has no method trim'},
  {name:'own method actual arity',source:'export function compute(){const item={trim(value){return value;}};return item.trim();}',kind:'type',reason:'.trim() expects 1 arguments'},
+ {name:'String concat object needs explicit conversion model',source:'export function compute(){return "x".concat({value:1});}',kind:'unsupported',reason:'String concat coercion: this argument needs its complete ToPrimitive interpretation'},
 ];
 writeProjectData(new URL('../../parity/fixtures/javascript-property-calls.lino',import.meta.url),{
- schemaVersion:1,model:'actual JavaScript property call owner 1',sourceLanguage:'JavaScript',cases,refusals,
+ schemaVersion:1,model:'actual JavaScript property call owner and concatenation 2',sourceLanguage:'JavaScript',cases,refusals,
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript modules',Rust:'>=1.90.0 <1.100.0; edition 2024'},
  sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-function-calls ; resolve the actual property value before invoking it; its spelling does not establish builtin ownership.',
- boundary:'Future original Node and emitted JavaScript values/aborts, native Rust execution, exact paired program/definition graphs, text/binary codecs and all four emissions. No observations. Dynamic this/prototypes/accessors, class construction/inheritance, array concat ownership, full coercion and error objects retain their remaining obligations.',
+ boundary:'Future original Node and emitted JavaScript values/aborts, native Rust execution, exact paired program/definition graphs, text/binary codecs and all four emissions. No observations. Dynamic this/prototypes/accessors, class construction/inheritance, sparse/species/Symbol concat behavior, heterogeneous/nullable widening, length limits, full coercion and error objects retain their remaining obligations.',
 });
