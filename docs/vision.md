@@ -6118,3 +6118,24 @@ extras, before selection; missing arguments supply undefined. This follows
 Source rules generate native rules and complete editable Links. Future controls
 are declared without execution. Object/Symbol identity, iterator spreads and
 the remaining translation requirements still need implementation.
+
+### Represented binding initializer draft
+
+JavaScript array binding initializers now use undefined-only selection over
+represented primitive and structured present domains. The selected element
+evaluates once; null survives, a present value skips its initializer, and a
+missing/undefined value evaluates that initializer in binding order. Result
+types retain the union of surviving null and initializer absence tags. Shared
+inference plans collapse nested optional wrappers while retaining original
+base-term identities; source adapters build only existing typed links.
+
+Complete JavaScript decisions generate native rules and editable program
+graphs. The two previous nullable/structured refusal inputs and assertions
+remain recorded; their active controls now require their original source
+results, supported by the normative
+[binding initialization algorithms](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization).
+All other refusal inputs and existing independent outputs remain. New future
+controls include lazy effects, signed zero, NaN, absence fallbacks and
+structured values in both runtimes and every complete codec/emission. None
+executed. Arbitrary iterators, nested pattern protocols, heterogeneous present
+value unions, and every earlier source/grammar requirement remain obligations.

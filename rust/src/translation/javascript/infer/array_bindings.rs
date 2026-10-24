@@ -48,11 +48,14 @@ impl Inference {
         let mut progress = false;
         let mut waiting = Vec::new();
         for constraint in std::mem::take(&mut self.array_binding_defaults) {
-            let facts = TermFacts::new(&[
-                Some(self.resolve(&constraint.value)),
-                Some(constraint.fallback.clone()),
-                Some(constraint.result.clone()),
-            ]);
+            let facts = TermFacts::resolved(
+                &[
+                    Some(constraint.value.clone()),
+                    Some(constraint.fallback.clone()),
+                    Some(constraint.result.clone()),
+                ],
+                &|term| self.resolve(term),
+            );
             let texts: Vec<Text> = facts
                 .texts
                 .iter()
@@ -63,7 +66,7 @@ impl Inference {
                 .iter()
                 .map(|text| Text::from_text(text))
                 .collect();
-            let plan = rules::plan_java_script_array_default_inference(
+            let plan = rules::plan_java_script_binding_default_inference(
                 &texts,
                 &facts.starts,
                 &facts.counts,
@@ -71,7 +74,6 @@ impl Inference {
                 &facts.targets,
                 facts.position(0),
                 facts.position(1),
-                facts.position(2),
             );
             if plan.is_empty() {
                 waiting.push(constraint);
@@ -79,11 +81,11 @@ impl Inference {
             }
             if plan[0] < 0.0 {
                 return Err(type_error(
-                    "array binding default needs an undefined-only element read",
+                    "array binding default needs actual compatible present domains",
                     constraint.place,
                 ));
             }
-            for pair in plan.as_chunks::<2>().0 {
+            for pair in plan[2..].as_chunks::<2>().0 {
                 let left = facts
                     .term(pair[0])
                     .expect("an actual planned type endpoint");
@@ -92,6 +94,14 @@ impl Inference {
                     .expect("an actual planned type endpoint");
                 self.unify(&left, &right, constraint.place)?;
             }
+            let element = facts.term(plan[1]).expect("an actual default result base");
+            let absence = rules::read_java_script_binding_default_absence_name(plan[0]).to_string();
+            let result = if absence.is_empty() {
+                element
+            } else {
+                super::optional_values::optional(element, &absence)
+            };
+            self.unify(&constraint.result, &result, constraint.place)?;
             progress = true;
         }
         self.array_binding_defaults = waiting;

@@ -219,4 +219,5 @@ impl Language {
     }
 }
 
+pub(crate) mod array_binding_program;
 pub(crate) mod javascript_comparison_program;

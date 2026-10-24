@@ -11,6 +11,7 @@ import {createBigIntegerConversionProgramLinks} from '../src/big-integer-convers
 import {createJavaScriptStringUnitProgramLinks} from '../src/javascript-string-unit-program.js';
 import {createStringConstructionProgramLinks} from '../src/string-construction-program.js';
 import {createJavaScriptComparisonProgramLinks} from '../src/javascript-comparison-program.js';
+import {createArrayBindingProgramLinks} from '../src/array-binding-program.js';
 import {encodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
@@ -19,7 +20,7 @@ import {hasSourceExceptionPayload} from '../src/translation/source-exception-obs
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
 const observe=(call,row)=>{try{return{kind:'value',value:String(call())};}catch(error){return{kind:'abort',value:row.errorClass===undefined?error.message:error.message.toWellFormed(),...(row.errorClass===undefined?{}:{errorClass:error.name,messageUnits:Array.from({length:error.message.length},(_,at)=>error.message.charCodeAt(at)),messagePresent:Object.hasOwn(error,'message')})};}};
-for(const [fixtureName,createDefinition] of [['source-exceptions',createSourceExceptionProgramLinks],['numeric-operation-errors',createSourceExceptionProgramLinks],['big-integer-source',createBigIntegerConversionProgramLinks],['big-integer-division',createBigIntegerConversionProgramLinks],['exponentiation',createBigIntegerConversionProgramLinks],['primitive-comparisons',createJavaScriptComparisonProgramLinks],['javascript-string-units',createJavaScriptStringUnitProgramLinks],['string-construction',createStringConstructionProgramLinks]])test(fixtureName+' retains every source value exception field and complete codec/emission result',()=>{
+for(const [fixtureName,createDefinition] of [['source-exceptions',createSourceExceptionProgramLinks],['numeric-operation-errors',createSourceExceptionProgramLinks],['big-integer-source',createBigIntegerConversionProgramLinks],['big-integer-division',createBigIntegerConversionProgramLinks],['exponentiation',createBigIntegerConversionProgramLinks],['primitive-comparisons',createJavaScriptComparisonProgramLinks],['binding-defaults',createArrayBindingProgramLinks],['javascript-string-units',createJavaScriptStringUnitProgramLinks],['string-construction',createStringConstructionProgramLinks]])test(fixtureName+' retains every source value exception field and complete codec/emission result',()=>{
  const fixture=readProjectData(new URL('../../parity/fixtures/'+fixtureName+'.lino',import.meta.url));
  const program=checkProgram(parseJavaScript(fixture.source)),packet=encodeTypedProgramLinks(program),output=emitJavaScript(program);
  for(const actual of [packet,createDefinition()])for(const target of ['JavaScript','Rust','Lean','Rocq']){

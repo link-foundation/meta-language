@@ -57,3 +57,15 @@ export const refused = [
   ['nested-rest-unproved', 'function f(rows){const [[head,...tail]]=rows;return tail.length;}'],
   ['structured-default-unproved', 'function f(){const [value=[7]]=[];return value.length;}console.log(f());'],
 ];
+
+// Exact former inputs/assertions stay above; these source-qualified successors
+// require actual successful behavior under ECMAScript 2025 binding initialization.
+export const correctedBindingRefusals = [
+ {id:'nullable-default-unproved',expected:'null\n',previousAssertion:'checkProgram throws for the original input'},
+ {id:'structured-default-unproved',expected:'1\n',previousAssertion:'checkProgram throws for the original input'},
+];
+export const bindingAssertionCorrectionBasis = {
+ source:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization',
+ versions:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',
+ reason:'An initializer selects only undefined; null remains null, and represented structured values use the same rule. Former unsupported implementation expectations do not describe the source language.',
+};

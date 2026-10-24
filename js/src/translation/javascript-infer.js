@@ -21,7 +21,7 @@ import { readReferenceMethodResult } from './reference-method-rules.js';
 import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
 import { readArrayFromCallbackConstraints, readArrayFromInferenceInputs, readArrayFromIterableType } from './array-from.js';
-import { readJavaScriptArrayDefaultConstraints } from './array-binding-inference.js';
+import { readJavaScriptBindingDefaultConstraints } from './array-binding-inference.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { readInferenceTermIdentity, readOptionalAdditionalAbsence, readOptionalCoalescingConstraints, readOptionalFieldInference, readOptionalJoinConstraints, readOptionalTypeConstraints } from './optional-inference.js';
 import { mergeOptionalAbsence } from './structured-type-rules.js';
@@ -425,9 +425,9 @@ class Inference {
         progress = true;
       }
       for (const constraint of [...this.arrayBindingDefaults]) {
-        const plan = readJavaScriptArrayDefaultConstraints(this.resolve(constraint.value), constraint.fallback, constraint.result);
+        const plan = readJavaScriptBindingDefaultConstraints(constraint.value, constraint.fallback, constraint.result,term=>this.resolve(term));
         if (!plan) continue;
-        if (plan.refused) throw typeError('array binding default needs an undefined-only element read', constraint.where);
+        if (plan.refused) throw typeError('array binding default needs actual compatible present domains', constraint.where);
         for (const [left, right] of plan.pairs) this.unify(left, right, constraint.where);
         this.arrayBindingDefaults.splice(this.arrayBindingDefaults.indexOf(constraint), 1);
         progress = true;

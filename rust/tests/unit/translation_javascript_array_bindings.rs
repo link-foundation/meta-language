@@ -97,6 +97,43 @@ fn every_original_binding_refusal_remains_a_refusal() {
     assert_eq!(refused.len(), 13);
     for entry in refused {
         let source = entry[1].as_str().unwrap();
+        if let Some(correction) = fixture["correctedBindingRefusals"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["id"] == entry[0])
+        {
+            assert_eq!(
+                correction["previousAssertion"],
+                "checkProgram throws for the original input"
+            );
+            assert!(
+                fixture["bindingAssertionCorrectionBasis"]["source"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("https://tc39.es/")
+            );
+            let expected = correction["expected"].as_str().unwrap();
+            assert_eq!(observe(source), expected);
+            let program = check_program(&parse_javascript(source).unwrap()).unwrap();
+            assert_eq!(observe(&emit_javascript(&program).unwrap().text), expected);
+            let rust = emit_rust(&program).unwrap().text;
+            let saved = encode_typed_program_links(&program).unwrap();
+            for network in [
+                LinkNetwork::from_lino(&saved.network.to_lino()).unwrap(),
+                decode_link_network_binary(
+                    &encode_link_network_binary(&saved.network, BinaryLinksOptions::default())
+                        .unwrap(),
+                    BinaryLinksOptions::default(),
+                )
+                .unwrap(),
+            ] {
+                let restored = decode_typed_program_links(&network, saved.root).unwrap();
+                assert_eq!(observe(&emit_javascript(&restored).unwrap().text), expected);
+                assert_eq!(emit_rust(&restored).unwrap().text, rust);
+            }
+            continue;
+        }
         if entry[0].as_str() == Some("reserved-prefix") {
             let runnable = format!("{source}\nconsole.log(f([2,3]));");
             let checked = check_program(&parse_javascript(&runnable).unwrap()).unwrap();
@@ -510,5 +547,14 @@ fn mutable_literal_binding_owners_preserve_shadows_and_refuse_redeclarations() {
     require_declaration_list_refusal(
         "let [left,right]=[1,2];console.log(left+right);",
         "mutable literal bindings require a function-owned lexical scope",
+    );
+}
+
+#[test]
+fn represented_defaults_keep_actual_absence_and_lazy_initializer_effects() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/binding-default-oracle.mjs",
+        "JavaScript represented binding defaults",
+        meta_language::create_array_binding_program_links,
     );
 }

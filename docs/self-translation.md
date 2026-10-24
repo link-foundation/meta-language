@@ -909,3 +909,13 @@ first two, preserve ignored argument effects and supply missing undefined
 values. Complete rule source and Links are generated automatically; prepared
 source/codec/emission/native controls remain unexecuted. Object/Symbol identity
 and argument iterator effects retain their scope.
+
+Binding defaults now have a complete shared inference/selection draft for
+represented primitive and structured domains, with null retained and only
+undefined selecting the initializer. Actual term endpoints survive nested
+optional inference; existing typed conditionals, absence tags, unwraps and
+wrappers preserve lazy effects. Shared source generates native rules and the
+public complete ArrayBindingProgramLinks graph. Two obsolete refusal
+expectations retain original inputs and assertions beside source-qualified
+replacement results. Future controls are declared, not executed. Iterator
+protocols and heterogeneous present-value unions retain their full scope.

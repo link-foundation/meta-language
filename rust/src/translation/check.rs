@@ -34,6 +34,7 @@ mod array_source_operands;
 mod array_state_methods;
 mod arrays;
 mod big_integer_conversions;
+mod binding_defaults;
 mod callables;
 mod collection_access;
 mod collections;

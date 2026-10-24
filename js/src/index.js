@@ -105,3 +105,5 @@ export {createUtf16TextProgramLinks} from './utf16-text-program.js';
 export {createFormalStringUnitProgramLinks} from './formal-string-unit-program.js';
 
 export {createJavaScriptComparisonProgramLinks} from './javascript-comparison-program.js';
+
+export {createArrayBindingProgramLinks} from './array-binding-program.js';

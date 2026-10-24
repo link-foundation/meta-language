@@ -487,4 +487,5 @@ pub use translation::source_exception_program::create_source_exception_program_l
 pub use translation::string_construction_program::create_string_construction_program_links;
 pub use translation::utf16_text_program::create_utf16_text_program_links;
 
+pub use translation::array_binding_program::create_array_binding_program_links;
 pub use translation::javascript_comparison_program::create_java_script_comparison_program_links;

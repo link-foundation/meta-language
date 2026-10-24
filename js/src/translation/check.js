@@ -49,8 +49,9 @@ import { readArrayFromExpectedElement, readArrayFromIterableType, readArrayFromM
 import { readArrayCallbackResultForm, readArrayCallbackSignatureError, readArrayCallbackParameterRole,
   readArrayCallbackArgumentCountError, readArrayCallbackCheckedResultContext,
   readArrayCallbackResultError, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
-import { acceptJavaScriptArrayRestReceiver, readJavaScriptArrayDefaultOperation } from './array-binding-rules.js';
+import { acceptJavaScriptArrayRestReceiver } from './array-binding-rules.js';
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
+import {checkJavaScriptBindingDefault} from './javascript-binding-defaults.js';
 import { createStringCodeUnitTemplateExpression } from './string-code-unit-template.js';
 import { requirePartialCallableResultInference } from './partial-callable-rules.js';
 import { constructCallableFunctionType, readCallableCellElement, readCallableParameterTypes, readCallableLambdaInference } from './callable-source.js';
@@ -553,12 +554,7 @@ class Checker {
       }
       case 'arrayBindingDefault': {
         checkJavaScriptArrayBindingWrapper(node);
-        const left = this.expr(node.value, env, path, undefined);
-        const operation = readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence ?? '', left.type.element?.kind ?? '', true);
-        if (operation !== 'coalesce') throw unsupported('array binding default', 'the selected default needs an undefined-only primitive element read', node.span);
-        const right = this.expr(node.fallback, env, path, left.type.element);
-        if (readJavaScriptArrayDefaultOperation(this.language, left.type.kind, left.type.absence, left.type.element.kind, sameType(left.type.element, right.type)) !== 'coalesce') throw typeError('array binding default and present element need exactly the same type', node.span);
-        return { k: 'coalesce', left, right, type: left.type.element };
+        return checkJavaScriptBindingDefault(this,node,env,path);
       }
       case 'num': {
         // A JavaScript Number literal: its canonical text, `String(value)`, with the sign applied.
