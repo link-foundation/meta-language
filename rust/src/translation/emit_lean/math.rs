@@ -8,6 +8,15 @@ impl LeanEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument, depth))
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(crate::translation::rust_shifts::emit_rust_checked_shift(
+                "Lean", e, &values,
+            ));
+        }
         if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op)
             > 0.0
         {

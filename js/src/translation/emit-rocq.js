@@ -3,6 +3,8 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
@@ -889,6 +891,7 @@ class RocqEmitter {
   }
 
   math(e) {
+    if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rocq',e,argument=>this.expr(argument));
     if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rocq', e, argument => this.expr(argument));
     if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Rocq', e.op, e.args.map(argument => this.expr(argument)));
     this.floats();

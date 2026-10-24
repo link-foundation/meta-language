@@ -5,6 +5,7 @@ import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.j
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
+import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -155,7 +156,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedBigIntegerBitwiseOperation(node.k, node.op)
       && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
-      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)) throw new TypeError('a linked expression operation is unsupported');
+      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
+      && !acceptLinkedRustCheckedShift(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -300,7 +302,13 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if (rustArity) {
+      if (acceptLinkedRustCheckedShift(node.k, node.op)) {
+        if (program.sourceLanguage !== 'Rust' || !Array.isArray(node.args) || node.args.length !== 2
+          || node.type.kind !== 'option' || node.type.absence !== 'undefined' || node.type.element?.kind !== 'fixed'
+          || node.args[1]?.type?.kind !== 'fixed' || !acceptRustPrimitiveBitwiseType('fixed', node.type.element.bits)
+          || !acceptRustPrimitiveBitwiseType('fixed', node.args[1].type.bits)) throw new TypeError('a linked checked shift has inconsistent integer owners, result or arity');
+        same(node.args[0].type, node.type.element, 'checked shift value owner');
+      } else if (rustArity) {
         if (program.sourceLanguage !== 'Rust' || !Array.isArray(node.args) || node.args.length !== rustArity
           || !acceptRustPrimitiveBitwiseType(node.type.kind, node.type.bits ?? 0)) throw new TypeError('a linked Rust bit operation has inconsistent primitive owners or arity');
         for (const argument of node.args) same(argument.type, node.type, 'Rust bitwise operand type');

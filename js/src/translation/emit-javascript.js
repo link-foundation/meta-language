@@ -7,6 +7,8 @@ import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
 import { acceptLinkedArrayStateMethod, renderArrayStateMethodExpression,
   readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
@@ -612,6 +614,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('JavaScript',e,argument=>this.expr(argument));
         if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('JavaScript', e, argument => this.expr(argument));
         if (readBigIntegerBitwiseArity(e.op)) {
           const text = renderBigIntegerBitwiseExpression('JavaScript', e.op, e.args.map(argument => this.expr(argument)));

@@ -222,7 +222,17 @@ impl Checker {
                 op: UnaryOp::Not,
                 arg,
             } => {
-                let arg = self.expr(arg, env, path, if self.language == Language::Rust { expected } else { None }, false)?;
+                let arg = self.expr(
+                    arg,
+                    env,
+                    path,
+                    if self.language == Language::Rust {
+                        expected
+                    } else {
+                        None
+                    },
+                    false,
+                )?;
                 if self.language == Language::Rust && matches!(arg.ty, Type::Fixed { .. }) {
                     let ty = arg.ty.clone();
                     return Ok(Expr::new(Node::Math {
@@ -618,6 +628,11 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if !crate::translation::rust_shift_rules::read_rust_shift_checked_operation(op)
+                    .is_empty()
+                {
+                    return self.rust_shift(op, args, env, path, expected, span);
+                }
                 if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op) > 0.0 {
                     self.rust_primitive_bitwise(op, args, env, path, expected, span)
                 } else { self.math(op, name, args, span, env, path) }

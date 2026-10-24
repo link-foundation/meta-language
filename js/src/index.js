@@ -65,6 +65,7 @@ export { createRecordFieldWriteProgramLinks } from './record-write-program.js';
 export { createBigIntegerBitwiseProgramLinks } from './big-integer-bitwise-program.js';
 export { createRustPrimitiveBitwiseProgramLinks } from './rust-primitive-bitwise-program.js';
 export { createArrayStateMethodProgramLinks } from './array-state-method-program.js';
+export { createRustShiftProgramLinks } from './rust-shift-program.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';

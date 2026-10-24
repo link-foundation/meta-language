@@ -14,6 +14,8 @@ import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { checkRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { readRustShiftCheckedOperation } from './rust-shift-rules.js';
+import { checkRustShift } from './rust-shifts.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
@@ -1185,6 +1187,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if (readRustShiftCheckedOperation(node.op)) return checkRustShift(this,node,env,path,expected);
     if (readRustPrimitiveBitwiseArity(node.op)) return checkRustPrimitiveBitwise(this, node, env, path, expected);
     const numberArity=readJavaScriptNumberBitwiseArity(node.op);
     const bitwiseArity=numberArity || readBigIntegerBitwiseArity(node.op);

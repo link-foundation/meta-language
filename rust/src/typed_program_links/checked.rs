@@ -165,6 +165,9 @@ fn validate_type_record(
                 value["object"]["type"]["kind"].as_str().unwrap_or_default(),
                 value["object"]["type"]["reference"].as_bool() == Some(true),
             )
+            && !crate::translation::rust_shift_rules::accept_linked_rust_checked_shift(
+                kind,value["op"].as_str().unwrap_or_default(),
+            )
             && !crate::translation::array_state_method_rules::accept_linked_array_state_method(
                 kind,value["op"].as_str().unwrap_or_default(),
                 value["object"]["type"]["kind"].as_str().unwrap_or_default(),

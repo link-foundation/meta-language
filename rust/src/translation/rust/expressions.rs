@@ -86,7 +86,7 @@ impl RustParser {
 
     fn primitive_bitwise(&mut self, path: &[String], options: Options, level: u8) -> Result<SExpr> {
         if level == 3 {
-            return self.additive(path, options);
+            return self.shift(path, options);
         }
         let mut left = self.primitive_bitwise(path, options, level + 1)?;
         loop {
@@ -105,6 +105,45 @@ impl RustParser {
                 name: "Rust primitive bitwise operation".to_owned(),
                 args: vec![SArrayItem { value: left, spread: false }, SArrayItem { value: right, spread: false }],
             }, range);
+        }
+    }
+
+    fn shift(&mut self, path: &[String], options: Options) -> Result<SExpr> {
+        let mut left = self.additive(path, options)?;
+        loop {
+            let token = self.peek();
+            if !(token.value == "<" || token.value == ">")
+                || !self.cursor.is_at(&token.value, 1)
+                || self.cursor.peek_at(1).start != token.end
+            {
+                return Ok(left);
+            }
+            if options.statement && is_if_or_match(&left) {
+                return Ok(left);
+            }
+            self.cursor.advance();
+            self.cursor.advance();
+            let right = self.additive(path, Options::default())?;
+            let range = joined(left.span, right.span, &token);
+            left = SExpr::new(
+                SNode::Math {
+                    op: crate::translation::rust_shift_rules::read_rust_shift_source_operation(
+                        &token.value.repeat(2),
+                    ),
+                    name: "Rust primitive shift".to_owned(),
+                    args: vec![
+                        SArrayItem {
+                            value: left,
+                            spread: false,
+                        },
+                        SArrayItem {
+                            value: right,
+                            spread: false,
+                        },
+                    ],
+                },
+                range,
+            );
         }
     }
 

@@ -14,7 +14,7 @@ import { writeProjectData } from './project-data.mjs';
 import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, referenceSemantics = false, sourceFormatting = 'rustfmt' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   const source = readFileSync(new URL(sourcePath, root), 'utf8');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
@@ -25,7 +25,11 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   const relocation = readPortableLibraryRelocation([header, ...emitted.preludes, ...emitted.definitions].join('\n\n'));
   const names = [...relocation.source.matchAll(/^pub fn (\w+)\(/gmu)].map(match => match[1]);
   const loans = readPortableSourceParameterStyles(relocation.source, { publicNames: names });
-  const styles = readPortableSourceLintStyles(loans.source);
+  if (!['apply', 'preserve'].includes(sourceLints)) throw new TypeError('unknown source lint authoring selection');
+  // Retain complete unstylized output when the existing style producer cannot
+  // distinguish its generated contexts. Its guard and every CI gate stay exact;
+  // authoring this source does not report the deferred style as repaired.
+  const styles = sourceLints === 'preserve' ? { source: loans.source, actions: [] } : readPortableSourceLintStyles(loans.source);
   if (!['rustfmt', 'preserve'].includes(sourceFormatting)) throw new TypeError('unknown source formatting selection');
   let output;
   try { output = sourceFormatting === 'preserve' ? styles.source : formatProductRuleSource(styles.source); }
@@ -60,7 +64,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     emitted: { text: emitted.text, definitions: emitted.definitions, preludes: emitted.preludes, mappings: emitted.mappings },

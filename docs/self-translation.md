@@ -572,3 +572,16 @@ are additive. Future twenty-four-case controls and two refusals compare actual
 builtins, both codecs, complete paired source translation and one native CI
 product. They have not run. Sparse/described arrays, additional coercion domains,
 missing element widening and live callback mutation remain to draft.
+
+Rust checked shifts now have a separate total optional-result definition and
+an ordinary explicit overflow-abort continuation. Source precedence, actual
+left/count owners, range guards before narrowing, bit truncation and sign
+extension survive both checker adapters and four shared target constructors.
+Complete arithmetic and constructor source generates native code and editable
+typed Links data. Future controls compare all declared values/counts against
+original Rust with overflow checks enabled, emitted Rust and JavaScript, plus
+both codecs and complete target emission parity. These controls have not run.
+Native output retains its full unstylized source because the existing numeric
+style producer refuses duplicate formatter contexts. Its original guard and
+all CI gates remain; mechanical style repair is still required. Unchecked
+release behavior and overloaded shift traits remain separate drafts to supply.

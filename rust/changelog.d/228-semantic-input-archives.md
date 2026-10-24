@@ -37,3 +37,6 @@ future controls against original Rust and eager Boolean failures.
 Draft shared dense-array splice, fill and overlapping range copy with precise
 optional boundaries, aliases, fresh removed arrays and future builtin/native
 parity controls.
+Draft checked Rust shifts with explicit overflow continuations, exact count
+owners, shared mathematical definitions and four target constructors; author
+complete original-Rust value and abort controls for later CI execution.

@@ -49,6 +49,7 @@ mod records;
 mod recursion;
 mod reference_methods;
 mod rust_primitive_bitwise;
+mod rust_shifts;
 mod string_code_unit_template;
 mod strings;
 mod type_queries;

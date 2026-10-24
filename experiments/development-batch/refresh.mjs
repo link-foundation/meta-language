@@ -36,6 +36,8 @@ export function readDevelopmentAuthoringPlan(){
    stage('total Rust primitive bitwise fixture inputs','js/scripts/generate-rust-primitive-bitwise-fixtures.mjs',['--draft']),
    stage('dense shared array range native rules','js/scripts/generate-array-state-method-rules.mjs',['--draft']),
    stage('dense shared array range fixture inputs','js/scripts/generate-array-state-method-fixtures.mjs',['--draft']),
+   stage('checked Rust shift native rules','js/scripts/generate-rust-shift-rules.mjs',['--draft']),
+   stage('checked Rust shift fixture inputs','js/scripts/generate-rust-shift-fixtures.mjs',['--draft']),
    stage('resource identifier address native rules','js/scripts/generate-resource-description-address-rules.mjs',['--draft']),
    stage('resource identifier address fixture inputs','js/scripts/generate-resource-description-address-fixtures.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),

@@ -3,6 +3,8 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Lean 4 emitter. Naturals are `Nat`, integers `Int`; machine integers are
@@ -581,6 +583,7 @@ class LeanEmitter {
         if (e.array.type.kind === 'string') return renderStringLengthExpression('Lean', this.expr(e.array, depth));
         return `(${e.type.kind === 'float' ? 'Float.ofNat' : 'Int.ofNat'} ${this.expr(e.array, depth)}.size)`;
       case 'math':
+        if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Lean',e,argument=>this.expr(argument,depth));
         if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Lean', e, argument => this.expr(argument, depth));
         if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Lean', e.op, e.args.map(argument => this.expr(argument, depth)));
         return this.math(e, depth);

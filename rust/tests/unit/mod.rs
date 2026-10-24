@@ -263,6 +263,7 @@ mod translation_rust_runtime_shell;
 mod translation_rust_scalar_loop_declarations;
 mod translation_rust_scalar_loops;
 mod translation_rust_scalar_parameters;
+mod translation_rust_shifts;
 mod translation_rust_source_header_emission;
 mod translation_rust_source_signatures;
 mod translation_rust_string_continuations;

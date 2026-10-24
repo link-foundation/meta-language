@@ -8,6 +8,13 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        if crate::translation::rust_shift_rules::accept_linked_rust_checked_shift("math", op) {
+            return Ok(crate::translation::rust_shifts::emit_rust_checked_shift(
+                "JavaScript",
+                e,
+                &args,
+            ));
+        }
         if crate::translation::rust_primitive_bitwise_rules::read_rust_primitive_bitwise_arity(op)
             > 0.0
         {

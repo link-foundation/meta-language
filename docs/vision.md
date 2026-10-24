@@ -2666,6 +2666,29 @@ object or string index coercions, missing fill values outside the represented
 element type, live callback mutation and the remaining state model still need
 their implementation drafts.
 
+The checked Rust shift draft separates a total optional-result operation from
+the source operator's explicit abort continuation. Actual source `<<`/`>>`
+retains its precedence between addition and bitwise conjunction. The left
+integer width/signedness and the independently typed count remain exact; no
+count narrows before its negative/width guards. Valid left shifts truncate bits,
+and signed right shifts extend the sign. The checked leaf remains an inspectable
+qualified operation; ordinary coalescing with an abort represents overflow in
+the graph and participates in existing effect processing and rechecking.
+This profile selects `-C overflow-checks=on`, following the
+[Rust overflow contract](https://doc.rust-lang.org/reference/expressions/operator-expr.html#overflow).
+The complete arithmetic definition and four target constructors are JavaScript
+translated automatically into native source, with editable typed programs in
+both packages. Future controls cover every represented left width, six count
+types, both directions and every declared value/count pair, including failures.
+One native CI product compares original Rust, emitted Rust and JavaScript;
+codec controls compare the complete four-target emissions. None ran. Unchecked
+release profiles, overloaded shifts and the remaining source/ownership effects
+remain implementation obligations. The source author preserves complete
+unstylized native output after a numeric-style producer refused duplicate
+formatter text in distinct modules. The refusal log, original assertion and CI
+gates remain intact; scope-aware style repair is deferred rather than reported
+as complete.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

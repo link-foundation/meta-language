@@ -27,6 +27,8 @@ import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
 import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
+import { emitRustCheckedShift } from './rust-shifts.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
@@ -1465,6 +1467,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rust',e,argument=>this.expr(argument));
     if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rust', e, argument => this.expr(argument));
     if (readBigIntegerBitwiseArity(e.op)) {
       this.usesBig = true; this.usesBigIntegerBitwise = true;
