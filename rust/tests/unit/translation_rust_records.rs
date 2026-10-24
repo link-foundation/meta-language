@@ -1,10 +1,12 @@
 //! Future complete paired graph/codec/original-Rust controls. CI compilation only.
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use meta_language::translation::rust::parse_rust_with_source_signature_model;
 use meta_language::translation::{check::check_program, emit_rust::emit_rust, rust::parse_rust};
 use meta_language::{
-    BinaryLinksOptions, LinkNetwork, TypedProgramLinksEmission, create_rust_record_program_links,
-    decode_link_network_binary, emit_typed_program_links, encode_link_network_binary,
-    encode_typed_program_links, read_structured_data_lino,
+    BinaryLinksOptions, LinkNetwork, TypedProgramLinks, TypedProgramLinksEmission,
+    TypedProgramLinksError, create_rust_record_program_links, decode_link_network_binary,
+    emit_typed_program_links, encode_link_network_binary, encode_typed_program_links,
+    read_structured_data_lino,
 };
 use serde_json::{Value, json};
 use std::fs;
@@ -16,6 +18,18 @@ fn emission(value: TypedProgramLinksEmission) -> Value {
 
 #[test]
 fn nominal_records_preserve_complete_graphs_owners_order_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/oracle.mjs",
+        "Rust nominal records",
+        create_rust_record_program_links,
+    );
+}
+
+pub(super) fn assert_nominal_translation_product(
+    producer_path: &str,
+    product_label: &str,
+    create_definition: fn() -> Result<TypedProgramLinks, TypedProgramLinksError>,
+) {
     let version = run(Command::new("rustc").arg("--version"));
     assert!(version.ok, "{}", version.stderr);
     let version = version.stdout.split_whitespace().nth(1).unwrap();
@@ -32,7 +46,7 @@ fn nominal_records_preserve_complete_graphs_owners_order_and_original_values() {
         .args([
             "--max-old-space-size=352",
             "--max-semi-space-size=1",
-            "../experiments/rust-records/oracle.mjs",
+            producer_path,
         ]));
     assert!(producer.ok, "{}", producer.stderr);
     let expected = read_structured_data_lino(&producer.stdout).unwrap();
@@ -57,7 +71,7 @@ fn nominal_records_preserve_complete_graphs_owners_order_and_original_values() {
             );
         }
     }
-    let definition = create_rust_record_program_links().unwrap();
+    let definition = create_definition().unwrap();
     assert_eq!(
         definition.root.as_u64(),
         expected["definitionRoot"].as_u64().unwrap()
@@ -109,12 +123,13 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
             main.push_str(&format!("{{let observed=ml_record_result(std::panic::catch_unwind(||({call}).to_string()));if observed!=({kind:?},{value:?}.to_owned()){{failures.push(format!(\"{owner} {module}: {{:?}}\",observed));}}}}\n"));
         }
     }
-    main.push_str("if !failures.is_empty(){eprintln!(\"{}\",failures.join(\"\n\"));}assert!(failures.is_empty());println!(\"Rust nominal records\");}\n");
+    main.push_str("if !failures.is_empty(){eprintln!(\"{}\",failures.join(\"\n\"));}assert!(failures.is_empty());");
+    main.push_str(&format!("println!({product_label:?});}}\n"));
     let original = format!(
         "\nmod original{{\n{}\n}}\n",
         expected["source"].as_str().unwrap()
     );
-    let directory = TemporaryDirectory::new("rust-nominal-record-product");
+    let directory = TemporaryDirectory::new(product_label);
     let source = directory.0.join("product.rs");
     let binary = directory.0.join(if cfg!(windows) {
         "product.exe"
@@ -132,10 +147,14 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
     assert!(built.ok, "{}", built.stderr);
     let observed = run(&mut Command::new(&binary));
     assert!(observed.ok, "{}", observed.stderr);
-    assert_eq!(observed.stdout, "Rust nominal records\n");
+    assert_eq!(observed.stdout, format!("{product_label}\n"));
     for row in expected["refusals"].as_array().unwrap() {
-        let result =
-            parse_rust(row["source"].as_str().unwrap()).and_then(|surface| check_program(&surface));
+        let surface = if let Some(model) = row["sourceSignatureModel"].as_str() {
+            parse_rust_with_source_signature_model(row["source"].as_str().unwrap(), model)
+        } else {
+            parse_rust(row["source"].as_str().unwrap())
+        };
+        let result = surface.and_then(|surface| check_program(&surface));
         let error = result.expect_err(row["name"].as_str().unwrap());
         assert_eq!(error.kind.as_str(), row["kind"].as_str().unwrap());
         assert_eq!(error.reason, row["reason"].as_str().unwrap());

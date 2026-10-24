@@ -38,6 +38,7 @@ mod expressions;
 mod float_predicate_rules;
 mod float_predicates;
 pub(super) mod indirection_rules;
+mod inherent;
 mod items;
 mod owned_local_state;
 pub(crate) mod owned_local_state_rules;
@@ -398,6 +399,7 @@ fn parse_rust_with_selected_profiles(
     syntax.aliases = declarations.aliases;
     syntax.primitive_imports = declarations.primitive_imports;
     syntax.named_records = declarations.named_records;
+    syntax.inherent_methods = declarations.inherent_methods;
     let surface = syntax.file()?;
     // Preserve the existing checker's rejection and syntax-tree contract;
     // every public Rust source pipeline checks this identical Surface again.
@@ -416,6 +418,7 @@ fn parse_rust_with_selected_profiles(
     parser.aliases = syntax.aliases;
     parser.primitive_imports = syntax.primitive_imports;
     parser.named_records = syntax.named_records;
+    parser.inherent_methods = syntax.inherent_methods;
     parser.file()
 }
 
@@ -510,6 +513,9 @@ struct RustParser {
     source_owner_frames: Vec<Vec<super::source_signatures::SourceOwner>>,
     reserved_binding_names: HashSet<String>,
     named_records: HashMap<String, records::NamedRecord>,
+    inherent_owner: Option<inherent::InherentOwner>,
+    inherent_methods: HashMap<String, inherent::InherentMethod>,
+    inherent_discovery: bool,
     has_record_declarations: bool,
     has_record_constructions: bool,
     record_pattern_depth: usize,
@@ -534,6 +540,10 @@ impl RustParser {
         let has_record_declarations = tokens
             .iter()
             .any(|token| token.kind == TokenKind::Identifier && token.value == "struct");
+        let inherent_discovery = initial_discovery
+            && tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::Identifier && token.value == "impl");
         let has_record_constructions = has_record_declarations
             || tokens
                 .iter()
@@ -590,6 +600,9 @@ impl RustParser {
             source_owner_frames: Vec::new(),
             reserved_binding_names,
             named_records: HashMap::new(),
+            inherent_owner: None,
+            inherent_methods: HashMap::new(),
+            inherent_discovery,
             has_record_declarations,
             has_record_constructions,
             record_pattern_depth: 0,

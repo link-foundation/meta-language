@@ -184,6 +184,10 @@ impl RustParser {
                 items.push(SItem::Data(self.record_item(path)?));
                 continue;
             }
+            if c.is("impl") {
+                items.push(SItem::Module(self.inherent_item(path)?));
+                continue;
+            }
             if c.is("fn") || c.is("const") {
                 if c.is("fn") && c.is_at("main", 1) && path.is_empty() {
                     if !self.const_function_model.is_empty() && self.empty_option_main_seen {
@@ -372,6 +376,9 @@ impl RustParser {
 
     /// A `use` alias is visible only in the module that declares it.
     pub(super) fn resolve(&self, segments: &[String], path: &[String]) -> Vec<String> {
+        if let Some(inherent) = self.inherent_path(segments, path) {
+            return inherent;
+        }
         self.aliases
             .get(&path.join("."))
             .and_then(|aliases| aliases.get(&segments[0]))

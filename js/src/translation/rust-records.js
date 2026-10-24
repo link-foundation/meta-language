@@ -108,6 +108,7 @@ export function readRustRecordProjection(parser,object,field,path,where){
 }
 
 export function readRustRecordValuePath(parser,segments,path,called){
+ if(segments.length===1&&parser.origins.scope.has(segments[0]))return null;
  const record=nominal(parser,segments,path);
  return record&&(called?record.syntax==='tuple':record.syntax==='unit')?['crate',...record.constructor.split('.')]:null;
 }

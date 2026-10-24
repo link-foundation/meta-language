@@ -97,6 +97,8 @@ pub mod rust;
 pub(crate) mod rust_character_rules;
 mod rust_const_branch_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;
+pub(crate) mod rust_inherent_program;
+pub(crate) mod rust_inherent_rules;
 pub(crate) mod rust_literal_match_rules;
 pub(crate) mod rust_primitive_bitwise;
 pub(crate) mod rust_primitive_bitwise_program;

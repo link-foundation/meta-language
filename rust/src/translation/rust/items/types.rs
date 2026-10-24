@@ -16,6 +16,9 @@ impl RustParser {
     /// is immutable.
     pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
+        if let Some(inherent) = self.inherent_self_type() {
+            return Ok(inherent);
+        }
         if self.cursor.eat("&").is_some() {
             let source_lifetime = if self.cursor.is("'") {
                 self.cursor.advance();

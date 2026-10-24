@@ -399,6 +399,16 @@ impl RustParser {
                     value = shared;
                     continue;
                 }
+                if let Some(inherent) = self.inherent_method(
+                    &value,
+                    &method,
+                    &args,
+                    span(&token, self.cursor.peek()),
+                    path,
+                )? {
+                    value = inherent;
+                    continue;
+                }
                 self.require_type_namespace_body_method(
                     &value,
                     &method.value,

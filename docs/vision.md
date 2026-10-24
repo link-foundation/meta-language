@@ -2730,6 +2730,31 @@ input and assertion. None ran. Irrefutable let patterns, remaining reference and
 alias-pattern forms, functional update and the other recorded Rust obligations
 still require their implementation drafts.
 
+The inherent Rust source draft lowers same-module inherent implementations to
+ordinary modules sharing their datatype owner, and lowers methods to ordinary
+typed functions with an explicit receiver. Associated constructors and `Self`
+retain the actual qualified datatype. Unqualified, `self::` and `super::` paths
+inside those functions resolve in their original Rust module, independently of
+the normalized owner namespace. Actual source method metadata is rederived
+across discovery passes; dispatch requires the same nominal owner and the
+represented owned `self` or single immutable `&self` receiver. Receiver and
+argument evaluation remain the existing ordered function application. All four
+emitters consume those ordinary terms. Shared admission, receiver mode,
+borrowing and source-parent traversal rules are JavaScript automatically
+translated into native source and complete typed Links definitions.
+The [inherent implementation rules](https://doc.rust-lang.org/reference/items/implementations.html#inherent-implementations)
+and [method lookup rules](https://doc.rust-lang.org/reference/expressions/method-call-expr.html)
+define the source interpretation. Twenty-two future value/abort cases and
+eleven exact refusals cover constructors, methods, aliases, forward declarations,
+multiple blocks, actual module paths, enum methods, contextual fields and first
+failure order. They reuse the complete paired graph/codec/four-target and
+original/emitted Rust product controls without dropping preceding assertions.
+None ran. Generic/trait dispatch, mutable/boxed/multiple-reference and arbitrary
+receivers, named region models, implementation placement in another module,
+associated constants/types/macros and closed source-profile composition remain
+separate implementation obligations. No method is admitted by merely sharing
+its spelling with another type's method.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

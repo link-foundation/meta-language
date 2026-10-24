@@ -611,3 +611,16 @@ future value/abort cases and twelve exact refusals retain all earlier controls.
 None ran. Irrefutable let patterns, further ownership/reference/alias forms,
 functional update, generic/trait/layout behavior and other project requirements
 still need their source drafts.
+
+The inherent Rust method draft uses ordinary owner modules and functions with
+an explicit receiver, so the existing four emitters remain the single semantic
+path. Host adapters transport source owners, `Self`, receiver tokens and actual
+module context. Shared admission, borrowing and parent-path decisions generate
+native source from JavaScript and ship as complete editable typed Links data.
+Twenty-two future values/aborts and eleven exact refusals retain forward and
+aliased owners, multiple implementation blocks, enum methods, field contexts,
+source module lookup and receiver/argument order. The preceding record matrix
+keeps every input and assertion through a common future product control. None
+ran. Trait/generic and mutable receiver behavior, additional dereference/region
+profiles, cross-module placement, associated constants/types/macros and closed
+profile composition still need their implementation drafts.

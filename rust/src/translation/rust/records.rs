@@ -76,7 +76,12 @@ impl RustParser {
             .iter()
             .cloned()
             .collect::<Vec<_>>();
-        read_rust_record_binding_names(&reserved, count as f64)
+        read_rust_record_binding_names(
+            &reserved,
+            f64::from(
+                u32::try_from(count).expect("a source binding count fits the shared array limit"),
+            ),
+        )
     }
 
     pub(super) fn record_item(&mut self, path: &[String]) -> Result<SData> {
@@ -450,6 +455,9 @@ impl RustParser {
         path: &[String],
         called: bool,
     ) -> Option<Vec<String>> {
+        if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
+            return None;
+        }
         let record = self.record_owner(segments, path)?;
         if if called {
             record.syntax != "tuple"

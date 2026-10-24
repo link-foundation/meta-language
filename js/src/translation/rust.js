@@ -7,6 +7,7 @@ import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
 import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern } from './rust-records.js';
+import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -107,6 +108,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   syntax.origins.collecting = true;
   syntax.aliases = declarations.aliases;
   syntax.namedRecords = new Map(declarations.namedRecords);
+  syntax.inherentMethods = new Map(declarations.inherentMethods);
   const surface = syntax.file();
   // Preserve syntax trees and the existing checker's diagnostic precedence
   // for programs that already cannot enter the canonical semantic core.
@@ -117,6 +119,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
   const parser = new RustParser(tokens, syntax.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
   parser.aliases = syntax.aliases;
   parser.namedRecords = new Map(syntax.namedRecords);
+  parser.inherentMethods = new Map(syntax.inherentMethods);
   return parser.file();
 }
 
@@ -151,6 +154,9 @@ class RustParser {
     this.sourceOwnerFrames = [];
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.namedRecords = new Map();
+    this.inherentOwner = null;
+    this.inherentMethods = new Map();
+    this.inherentDiscovery = catalog === null && tokens.some(token => token.kind === 'identifier' && token.value === 'impl');
     this.hasRecordDeclarations = tokens.some(token => token.kind === 'identifier' && token.value === 'struct');
     this.hasRecordConstructions = this.hasRecordDeclarations || tokens.some(token => token.kind === 'identifier' && token.value === 'enum');
     this.recordPatternDepth = 0;
@@ -294,6 +300,10 @@ class RustParser {
         items.push(readRustRecordItem(this,path));
         continue;
       }
+      if (c.is('impl')) {
+        items.push(readRustInherentItem(this,path));
+        continue;
+      }
       if (c.is('fn') || c.is('const')) {
         if (c.is('fn') && c.is('main', 1) && path.length === 0) {
           if(this.pureUnitCallModel&&this.emptyOptionMainSeen)throw unsupported('Rust pure Unit-call source','the complete source must have one owned main declaration',span(start,c.peek()));
@@ -376,6 +386,8 @@ class RustParser {
 
   /** A `use` alias is visible only in the module that declares it. */
   resolve(segments, path) {
+    const inherent=resolveRustInherentPath(this,segments,path);
+    if(inherent)return inherent;
     const aliases = this.aliases.get(path.join('.'));
     return aliases?.has(segments[0]) ? [...aliases.get(segments[0]), ...segments.slice(1)] : segments;
   }
@@ -455,6 +467,8 @@ class RustParser {
   typeValue() {
     const c = this.cursor;
     const token = c.peek();
+    const inherentSelf=readRustInherentSelfType(this);
+    if(inherentSelf)return inherentSelf;
     if (c.eat('&')) {
       let sourceLifetime = null;
       if (c.is('\'')) {
@@ -607,6 +621,12 @@ class RustParser {
       const mutableParams = [];
       while (!c.is(')')) {
         const paramToken = c.peek();
+        const receiver=readRustInherentReceiver(this,name,path,params.length);
+        if(receiver){
+          params.push(receiver.parameter);sourceParams.push(receiver.origin);
+          if(!c.eat(','))break;
+          continue;
+        }
         const mutable = Boolean(c.eat('mut'));
         if (c.is('self') || c.is('&')) throw unsupported('method', 'methods are outside the Rust frontend; declare a free function', span(paramToken, paramToken));
         const paramName = c.identifier('parameter').value;
@@ -1125,7 +1145,7 @@ class RustParser {
           if (!c.eat(',')) break;
         }
         c.expect(')', method.value);
-        value = this.method(value, method, args, span(token, c.peek()));
+        value = this.method(value, method, args, span(token, c.peek()),path);
         continue;
       }
       if (c.is('?')) throw unsupported('? operator', 'Result and Option are outside the portable core', span(token, token));
@@ -1169,9 +1189,11 @@ class RustParser {
       ? this.origins.mark(node, {...left, type: FLOAT}) : node;
   }
 
-  method(receiver, method, args, range) {
+  method(receiver, method, args, range, path=this.modulePath) {
     const sharedMethod=readRustSharedArrayHandleMethod(this,receiver,method,args,range);
     if(sharedMethod)return sharedMethod;
+    const inherent=readRustInherentMethod(this,receiver,method,args,range,path);
+    if(inherent)return inherent;
     const discovery=acceptRustTypeNamespaceMethodDiscovery(this.typeNamespaceDiscovery,method.value);
     if (!acceptRustTypeNamespaceBodyMethod(Boolean(this.typeNamespaceModel)&&!discovery, method.value, acceptRustUnitCloneReceiver(this,receiver))) throw unsupported('Rust type namespace body method', `${method.value} requires a separate actual method owner proof`, range);
     const expect = (count) => {

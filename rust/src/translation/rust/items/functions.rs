@@ -75,6 +75,14 @@ impl RustParser {
         let mut mutable_params = Vec::new();
         while !self.cursor.is(")") {
             let param_token = self.peek();
+            if let Some((parameter, origin)) = self.inherent_receiver(&name, path, params.len())? {
+                params.push(parameter);
+                source_params.push(origin);
+                if self.cursor.eat(",").is_none() {
+                    break;
+                }
+                continue;
+            }
             let mutable = self.cursor.eat("mut").is_some();
             if self.cursor.is("self") || self.cursor.is("&") {
                 return Err(unsupported(
