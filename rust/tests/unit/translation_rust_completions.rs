@@ -561,3 +561,28 @@ fn ordinary_completion_carriers_keep_mixed_exits_lexical_scopes_values_and_all_a
         meta_language::create_rust_unit_value_program_links,
     );
 }
+
+#[test]
+fn ordinary_primitive_statement_results_and_unit_blocks_keep_effect_order_and_all_archives() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/rust-records/statement-values.mjs",
+        "Rust ordinary statement values",
+        meta_language::create_rust_unit_value_program_links,
+    );
+}
+
+#[test]
+fn implicit_block_statements_retain_their_actual_unit_constraint() {
+    for source in [
+        "fn bad(){if true{7i64}else{8i64}println!(\"after\");}fn main(){}",
+        "fn bad(){if true{true}else{false}println!(\"after\");}fn main(){}",
+        "fn bad(flag:bool)->i64{{7i64}if flag{return 1;}2}fn main(){}",
+    ] {
+        assert!(
+            parse_rust(source)
+                .and_then(|surface| check_program(&surface))
+                .is_err(),
+            "{source}"
+        );
+    }
+}

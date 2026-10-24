@@ -6565,3 +6565,27 @@ source AST parity, both program/definition codecs and all four emissions. New
 values and aborts retain branch shadows, multiple joins, Boolean/zero results,
 owned and nominal payloads, nested modules and source name collisions. None
 executed; source/metadata regeneration and all earlier requirements remain.
+
+
+### Ordinary Rust statement values draft
+
+Ordinary semicolon statements can now discard represented direct primitive
+results, preserving actual evaluation and its output/abort order through core
+Let terms. The original direct-Unit decision remains separate for selected
+source profiles and statement-completion branches. Calls, explicit fixed
+values, Boolean values and owned standard strings retain their actual source
+types; this extension does not infer a default type for an unknown numeral.
+
+An ordinary expression-with-block followed by more statements can omit its
+semicolon when its actual result is direct Unit. Its generated discarded
+binding carries an explicit Unit type constraint, so the core checker enforces
+the source rule even during forward declaration collection. Final source facts
+retain indirection checks. Both regular blocks and ordinary completion trees
+transport these shared decisions. This follows
+[Rust expression statements](https://doc.rust-lang.org/reference/statements.html#expression-statements).
+
+Future values, original/native output traces, invalid non-Unit blocks, source
+AST equality, complete definition/program codecs and all four emissions are
+declared and unexecuted. General nominal/reference discards, default numeric
+inference and overflow, mixed value joins, custom destructor/borrow/mutable
+contexts and every preceding requirement remain required.

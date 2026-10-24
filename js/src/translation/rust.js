@@ -1,6 +1,6 @@
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
-import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
+import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
 import {readRustOrdinaryFunctionCompletion,installRustOrdinaryCompletionDeclarations} from './rust-ordinary-completions.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
@@ -740,8 +740,12 @@ class RustParser {
     }
   }
 
+  ordinaryCompletionContext() {
+    return acceptRustOrdinaryCompletionProfiles([this.completionModel,this.sourceSignatureModel,this.scalarLoopModel,this.primitiveOwnerModel,this.emptyOptionSourceModel,this.typeNamespaceModel,this.pureUnitCallModel,this.localValueStateModel,this.constFunctionModel,this.sharedArrayHandleSourceModel,this.origins.arrayResultModel]);
+  }
+
   ordinaryCompletionSelected() {
-    if(!acceptRustOrdinaryCompletionProfiles([this.completionModel,this.sourceSignatureModel,this.scalarLoopModel,this.primitiveOwnerModel,this.emptyOptionSourceModel,this.typeNamespaceModel,this.pureUnitCallModel,this.localValueStateModel,this.constFunctionModel,this.sharedArrayHandleSourceModel,this.origins.arrayResultModel]))return false;
+    if(!this.ordinaryCompletionContext())return false;
     const c=this.cursor;
     let count=64;
     for(;;){
@@ -763,6 +767,7 @@ class RustParser {
     const open = c.expect('{', 'block');
     const previous = this.origins.enter();
     const lets = [];
+    const ordinary = this.ordinaryCompletionContext();
     let tail = null;
     while (!c.is('}')) {
       if(c.eat(';'))continue;
@@ -792,10 +797,15 @@ class RustParser {
       const expr = this.expr(path, { statement: true });
       if (c.eat(';')) {
         const origin=this.origins.origin(expr,path);
-        const disposition=readRustUnitStatementDisposition(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+        const disposition=(ordinary?readRustOrdinaryStatementDisposition:readRustUnitStatementDisposition)(expr.k,this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
         if(disposition==='abort'){tail=expr;continue;}
         if(disposition==='bind'){lets.push({name:this.freshProductBinding(),value:expr,span:expr.span});continue;}
         throw unsupported('expression statement', 'statements with effects are outside the portable core in function bodies', expr.span);
+      }
+      if(ordinary){
+        const origin=this.origins.origin(expr,path);
+        const disposition=readRustImplicitBlockStatementDisposition(expr.k,expr.block===true,!c.is('}'),this.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+        if(disposition==='bind'){lets.push({name:this.freshProductBinding(),type:UNIT,value:expr,span:expr.span});continue;}
       }
       tail = expr;
       if (!c.is('}')) {

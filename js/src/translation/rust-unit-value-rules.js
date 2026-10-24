@@ -127,3 +127,24 @@ export function readRustFunctionCompletionPresence(values){
  }
  return -1;
 }
+
+/** Ordinary semicolon statements discard represented direct primitive values.
+ * The preceding direct-Unit/collecting-call policy stays independently exact.
+ * @param {string} kind @param {boolean} collecting @param {boolean} proven
+ * @param {string} type @param {boolean} indirected @returns {string} */
+export function readRustOrdinaryStatementDisposition(kind,collecting,proven,type,indirected){
+ const original=readRustUnitStatementDisposition(kind,collecting,proven,type,indirected);
+ if(original!=='refuse')return original;
+ if(!proven||indirected)return 'refuse';
+ return type==='bool'||type==='fixed'||type==='float'||type==='int'||type==='nat'||type==='string'?'bind':'refuse';
+}
+/** An expression-with-block statement without a semicolon must have Unit.
+ * Hosts attach the actual Unit type constraint to its discarded binding.
+ * @param {string} kind @param {boolean} block @param {boolean} continuation
+ * @param {boolean} collecting @param {boolean} proven @param {string} type
+ * @param {boolean} indirected @returns {string} */
+export function readRustImplicitBlockStatementDisposition(kind,block,continuation,collecting,proven,type,indirected){
+ if(!continuation||!(block||kind==='if'||kind==='match'||kind==='match1'))return '';
+ if(indirected)return 'refuse';
+ return collecting||proven&&type==='unit'?'bind':'refuse';
+}

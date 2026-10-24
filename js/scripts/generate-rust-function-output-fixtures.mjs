@@ -21,6 +21,12 @@ const inputs=[
  ['output before and after a selected guard','fn report(flag:bool)->i64{println!("before");if flag{return 7;}println!("after");9}fn main(){println!("{}",report(true));println!("{}",report(false));}', ['before','7','before','after','9']],
  ['implicit Unit fallback after a terminal return branch','fn report(flag:bool){if flag{return;}}fn main(){report(true);report(false);println!("done");}', ['done']],
 ];
+inputs.push(
+ ['discarded integer result retains call output', 'fn value()->i64{println!("value");7}fn report(){value();println!("after");}fn main(){report();}', ['value','after']],
+ ['discarded owned string result retains call output', 'fn value()->String{println!("text");String::from("x")}fn report(){value();println!("after");}fn main(){report();}', ['text','after']],
+ ['Unit if statement retains its following output', 'fn report(flag:bool){if flag{println!("first");}else{println!("second");}println!("after");}fn main(){report(true);report(false);}', ['first','after','second','after']],
+ ['Unit block statement retains its following output', 'fn report(){{println!("inner");}println!("after");}fn main(){report();}', ['inner','after']],
+);
 const corrected=readProjectData(new URL('../../parity/fixtures/rust-ordinary-returns.lino',import.meta.url)).originalRefusals;
 inputs.push(['original continuing else-if source gains its complete trace',corrected[0].source,['first','after','after'],'report(true,false);report(false,true);report(false,false);']);
 inputs.push(['original nested partial exits retain every outer continuation',corrected[1].source,['after','after','after'],'report(true,true);report(true,false);report(false,true);report(false,false);']);

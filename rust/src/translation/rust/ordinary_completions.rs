@@ -71,7 +71,7 @@ fn tree_span(tree: &CompletionTree) -> Option<Span> {
 }
 
 impl RustParser {
-    pub(super) fn ordinary_completion_selected(&self) -> bool {
+    pub(super) fn ordinary_completion_context(&self) -> bool {
         let profiles = [
             self.completion_model.clone(),
             self.source_signature_model.clone(),
@@ -85,7 +85,10 @@ impl RustParser {
             self.shared_array_handle_source_model.clone(),
             self.origins.array_result_model.clone(),
         ];
-        if !rules::accept_rust_ordinary_completion_profiles(&profiles) {
+        rules::accept_rust_ordinary_completion_profiles(&profiles)
+    }
+    pub(super) fn ordinary_completion_selected(&self) -> bool {
+        if !self.ordinary_completion_context() {
             return false;
         }
         let mut count = 64usize;
@@ -269,7 +272,7 @@ impl RustParser {
             let abort = matches!(expression.node, SNode::Abort { .. });
             if terminated && !abort {
                 let origin = self.origins.origin(&expression, path);
-                if rules::read_rust_unit_statement_disposition(
+                if rules::read_rust_ordinary_statement_disposition(
                     expression.node.kind(),
                     self.origins.collecting,
                     origin.proven,
@@ -286,6 +289,25 @@ impl RustParser {
                 bindings.push(Binding {
                     name: self.fresh_product_binding(),
                     ty: None,
+                    span: expression.span,
+                    value: expression,
+                });
+                continue;
+            }
+            let origin = self.origins.origin(&expression, path);
+            let implicit = rules::read_rust_implicit_block_statement_disposition(
+                expression.node.kind(),
+                expression.block,
+                !self.cursor.is("}"),
+                self.origins.collecting,
+                origin.proven,
+                origin.ty.as_ref().map_or("", Type::kind),
+                !origin.wrappers.is_empty(),
+            );
+            if implicit == "bind" {
+                bindings.push(Binding {
+                    name: self.fresh_product_binding(),
+                    ty: Some(super::UNIT),
                     span: expression.span,
                     value: expression,
                 });

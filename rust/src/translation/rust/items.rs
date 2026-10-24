@@ -556,6 +556,7 @@ impl RustParser {
         let open = self.cursor.expect("{", Some("block"))?;
         let previous = self.origins.enter(None);
         let mut lets = Vec::new();
+        let ordinary = self.ordinary_completion_context();
         let mut tail: Option<SExpr> = None;
         while !self.cursor.is("}") {
             if self.cursor.eat(";").is_some() {
@@ -645,14 +646,17 @@ impl RustParser {
             )?;
             if self.cursor.eat(";").is_some() {
                 let origin = self.origins.origin(&expr, path);
-                let disposition =
-                    crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition(
-                        expr.node.kind(),
-                        self.origins.collecting,
-                        origin.proven,
-                        origin.ty.as_ref().map_or("", Type::kind),
-                        !origin.wrappers.is_empty(),
-                    );
+                let disposition = (if ordinary {
+                    crate::translation::rust_unit_value_rules::read_rust_ordinary_statement_disposition
+                } else {
+                    crate::translation::rust_unit_value_rules::read_rust_unit_statement_disposition
+                })(
+                    expr.node.kind(),
+                    self.origins.collecting,
+                    origin.proven,
+                    origin.ty.as_ref().map_or("", Type::kind),
+                    !origin.wrappers.is_empty(),
+                );
                 if disposition == "abort" {
                     tail = Some(expr);
                     continue;
@@ -671,6 +675,19 @@ impl RustParser {
                     "statements with effects are outside the portable core in function bodies",
                     expr.span,
                 ));
+            }
+            if ordinary {
+                let origin = self.origins.origin(&expr, path);
+                let implicit=crate::translation::rust_unit_value_rules::read_rust_implicit_block_statement_disposition(expr.node.kind(),expr.block,!self.cursor.is("}"),self.origins.collecting,origin.proven,origin.ty.as_ref().map_or("",Type::kind),!origin.wrappers.is_empty());
+                if implicit == "bind" {
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: Some(super::UNIT),
+                        span: expr.span,
+                        value: expr,
+                    });
+                    continue;
+                }
             }
             let ends_block_statement = is_if_or_match(&expr);
             let expr_span = expr.span;

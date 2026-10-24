@@ -1066,3 +1066,10 @@ Original reader/negative-control sources are retained with hashes beside
 stronger same-input admission and full trace controls. These remain unexecuted.
 General statement value joins, expression-level returns, loops, mutable/borrow/
 drop semantics and final complete regeneration/reconciliation remain required.
+
+Ordinary Rust primitive statement discards and implicit Unit block statements
+use complete shared source decisions. Host adapters only bind actual terms;
+missing-semicolon blocks carry an actual Unit annotation checked by the core.
+Ordinary source context selection is reused once per block, keeping selected
+profile policies exact. Full source rules generate native definitions and Links;
+all future value/trace/type/codec controls remain unexecuted.

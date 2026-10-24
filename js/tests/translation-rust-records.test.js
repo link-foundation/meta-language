@@ -11,7 +11,7 @@ import{encodeTypedProgramLinks,emitTypedProgramLinks}from'../src/typed-program-l
 import{LinkNetwork}from'../src/network.js';
 import{encodeLinkNetworkBinary,decodeLinkNetworkBinary}from'../src/link-network-binary.js';
 const[major,minor]=process.versions.node.split('.').map(Number);
-for(const filename of['rust-completion-carriers','rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-let-else','unicode-rust-identifiers','rust-unicode-lifetimes']){
+for(const filename of['rust-statement-values','rust-completion-carriers','rust-ordinary-returns','rust-terminal-returns','rust-unit-values','rust-records','rust-record-layout','rust-raw-identifiers','rust-record-bindings','rust-tuple-patterns','rust-product-correction-tuple-struct','rust-product-correction-tuple-match','rust-pattern-conditions','rust-let-else','unicode-rust-identifiers','rust-unicode-lifetimes']){
 const fixture=readProjectData(new URL('../../parity/fixtures/'+filename+'.lino',import.meta.url));
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node+'; '+fixture.versions.JavaScript);
 test(filename==='rust-records'?'nominal Rust records retain order, actual type owners and four-target codecs':filename==='rust-record-layout'?'Rust named constructor layout retains complete paired controls':filename==='rust-raw-identifiers'?'Rust raw identifiers retain complete paired controls':'Rust irrefutable nominal bindings retain complete paired controls',()=>{
@@ -63,3 +63,9 @@ for(const row of fixture.lexicalErrors??[])test('raw identifier lexical refusal:
  assert.equal(error.kind,row.kind);assert.equal(error.reason,row.reason);assert.deepEqual(error.span,row.span);return true;
 }));
 }
+
+for(const source of [
+ 'fn bad(){if true{7i64}else{8i64}println!("after");}fn main(){}',
+ 'fn bad(){if true{true}else{false}println!("after");}fn main(){}',
+ 'fn bad(flag:bool)->i64{{7i64}if flag{return 1;}2}fn main(){}',
+])test('implicit block statements retain their actual Unit constraint: '+source,()=>assert.throws(()=>checkProgram(parseRust(source))));

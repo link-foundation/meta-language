@@ -1,6 +1,6 @@
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
-import {readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
+import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
 const range=(from,to)=>({start:from.start,end:Math.max(from.end,to?.kind==='eof'?from.end:to.start)});
 const name=path=>({k:'name',path});
 function leaf(parser,kind,expression,path){return {node:kind,kind:kind==='return'?'returned':kind==='abort'?'aborted':'value',expression,origin:parser.origins.origin(expression,path)};}
@@ -47,9 +47,12 @@ function sequence(parser,path,open){
   const terminated=Boolean(c.eat(';'));
   if(terminated&&expression.k!=='abort'){
    const origin=parser.origins.origin(expression,path);
-   if(readRustUnitStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
+   if(readRustOrdinaryStatementDisposition(expression.k,parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0)!=='bind')throw unsupported('expression statement','statements with effects are outside the portable core in function bodies',expression.span);
    bindings.push({name:parser.freshProductBinding(),value:expression,span:expression.span});continue;
   }
+  const origin=parser.origins.origin(expression,path);
+  const implicit=readRustImplicitBlockStatementDisposition(expression.k,expression.block===true,!c.is('}'),parser.origins.collecting,origin.proven,origin.type?.kind??'',origin.wrappers.length>0);
+  if(implicit==='bind'){bindings.push({name:parser.freshProductBinding(),type:{kind:'unit'},value:expression,span:expression.span});continue;}
   if(!c.is('}')){
    if(expression.k==='abort')throw unsupported('unreachable continuation','statements after an abort are not removed by this model',expression.span);
    if(['if','match','block'].includes(expression.k))throw unsupported('expression statement','a block value must be its last expression',expression.span);
