@@ -3009,6 +3009,33 @@ explicit; complete exact-u64 JavaScript and matching interchange profiles still
 require code. Public policy/definition entry points expose this same capacity
 meaning in both packages.
 
+Shared-array source reads now have an ordered-capture draft: evaluate and
+retain the actual receiver, evaluate the complete key once, then read the
+current payload and element. A key that extends, shrinks or updates the array
+affects that lookup; rebinding its source variable keeps the captured receiver.
+Receiver/key failures keep their order. Existing typed lets and read nodes
+represent this meaning, following
+[ECMAScript property evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-property-accessors).
+The source-capture decision is shared JavaScript, automatically translated to
+Rust and complete typed Links; native glue transports actual operands only.
+
+The same shared definition drafts borrowed Rust projections for array length
+and scalar element reads when the remaining typed key has no effects. It
+evaluates the receiver once, retains the original array bounds/Number/BigInt/
+absence behavior and clones only a returned ownership-bearing element. It
+releases the borrow before returning the value, preserving subsequent writes
+and shallow reference identity. Numeric literal/variable/arithmetic/cast/math
+keys require recursively pure operands. Effectful typed keys keep their
+existing native payload-copy path. Fresh names exclude every actual operand.
+The Unicode kernel is regenerated through this emitter, avoiding whole-table
+copies for those projections. This is a source change, not a measured runtime
+improvement. Twenty-two future original Node/emitted JavaScript/native Rust
+value/abort cases, exact graphs, both codecs and four emissions remain
+unexecuted. Shared future JavaScript product-oracle code retains every preceding
+property-call and Unicode fixture. Full source languages, arbitrary typed
+snapshot parity, other state operations and inherited requirements still need
+their remaining drafts; all metadata/check execution remains deferred.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

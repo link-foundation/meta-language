@@ -237,7 +237,11 @@ pub fn accept_unicode_property_scalar(
         {
             let low = 0f64;
             {
-                let high = ((({ ranges.borrow().clone() }).len() as f64) / 2f64).floor();
+                let high = ({
+                    let ml_reference_array1 = ranges.clone();
+                    ml_reference_array1.borrow().len() as f64
+                } / 2f64)
+                    .floor();
                 {
                     let ml_s1 = self::ml_accept_unicode_property_scalar_loop1(
                         ranges.clone(),
@@ -322,7 +326,11 @@ pub fn find_unicode_table_row(
     {
         let low = 0f64;
         {
-            let high = ((({ rows.borrow().clone() }).len() as f64) / stride).floor();
+            let high = ({
+                let ml_reference_array2 = rows.clone();
+                ml_reference_array2.borrow().len() as f64
+            } / stride)
+                .floor();
             {
                 let ml_s2 =
                     self::ml_find_unicode_table_row_loop2(rows.clone(), stride, key, low, high);
@@ -348,10 +356,21 @@ pub fn read_unicode_combining_class(
         if row < 0f64 {
             0f64
         } else {
-            (self::ml_array::optional_at(
-                &{ classes.borrow().clone() },
-                self::ml_array::number_index(row + 1f64),
-            ))
+            ({
+                let ml_array_read_value3 = classes.clone();
+                {
+                    let ml_array_read_index4 = row + 1f64;
+                    {
+                        let ml_reference_array3 = ml_array_read_value3;
+                        let ml_reference_position3 = ml_array_read_index4;
+                        self::ml_array::optional_at(
+                            &*ml_reference_array3.borrow(),
+                            self::ml_array::number_index(ml_reference_position3),
+                        )
+                    }
+                }
+            })
+            .clone()
             .unwrap_or_else(|| 0f64)
         }
     }
@@ -382,10 +401,21 @@ pub fn compose_unicode_scalars(
             if row < 0f64 {
                 -1f64
             } else {
-                (self::ml_array::optional_at(
-                    &{ pairs.borrow().clone() },
-                    self::ml_array::number_index(row + 1f64),
-                ))
+                ({
+                    let ml_array_read_value5 = pairs.clone();
+                    {
+                        let ml_array_read_index6 = row + 1f64;
+                        {
+                            let ml_reference_array4 = ml_array_read_value5;
+                            let ml_reference_position4 = ml_array_read_index6;
+                            self::ml_array::optional_at(
+                                &*ml_reference_array4.borrow(),
+                                self::ml_array::number_index(ml_reference_position4),
+                            )
+                        }
+                    }
+                })
+                .clone()
                 .unwrap_or_else(|| -1f64)
             }
         }
@@ -402,33 +432,36 @@ pub fn normalize_unicode_scalars(
     pairs: std::rc::Rc<std::cell::RefCell<Vec<f64>>>,
     limit: f64,
 ) -> std::rc::Rc<std::cell::RefCell<Vec<f64>>> {
+    if (!(self::ml_math::is_safe_integer(limit)) || (limit < 1f64))
+        || (({
+            let ml_reference_array5 = input.clone();
+            ml_reference_array5.borrow().len() as f64
+        }) > limit)
     {
-        assert!(
-            !((!(self::ml_math::is_safe_integer(limit)) || (limit < 1f64))
-                || ((({ input.borrow().clone() }).len() as f64) > limit)),
-            "{}",
-            "Unicode normalization resource limit exceeded"
-        );
-
+        panic!("{}", "Unicode normalization resource limit exceeded")
+    } else {
         {
             let stack = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
             {
-                let index = ({ input.borrow().clone() }).len() as f64;
+                let index = {
+                    let ml_reference_array6 = input.clone();
+                    ml_reference_array6.borrow().len() as f64
+                };
                 {
-                    let ml_s3 = self::ml_normalize_unicode_scalars_loop3(
+                    let ml_s7 = self::ml_normalize_unicode_scalars_loop3(
                         input.clone(),
                         stack.clone(),
                         index,
                     );
-                    match ml_s3 {
+                    match ml_s7 {
                         self::MlNormalizeUnicodeScalarsLoop3Result::MlNormalizeUnicodeScalarsLoop3Done => {
                             {
                                 let ordered = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
                                 {
                                     let steps = 0f64;
                                     {
-                                        let ml_s4 = self::ml_normalize_unicode_scalars_loop4(classes.clone(), decompositions.clone(), values.clone(), limit, stack.clone(), ordered.clone(), steps);
-                                        match ml_s4 {
+                                        let ml_s8 = self::ml_normalize_unicode_scalars_loop4(classes.clone(), decompositions.clone(), values.clone(), limit, stack.clone(), ordered.clone(), steps);
+                                        match ml_s8 {
                                             self::MlNormalizeUnicodeScalarsLoop4Result::MlNormalizeUnicodeScalarsLoop4Done => {
                                                 {
                                                     let result = std::rc::Rc::new(std::cell::RefCell::new(Vec::<f64>::new()));
@@ -439,8 +472,8 @@ pub fn normalize_unicode_scalars(
                                                             {
                                                                 let index_2 = 0f64;
                                                                 {
-                                                                    let ml_s5 = self::ml_normalize_unicode_scalars_loop5(classes.clone(), pairs.clone(), ordered.clone(), result.clone(), starter, previous_class, index_2);
-                                                                    match ml_s5 {
+                                                                    let ml_s9 = self::ml_normalize_unicode_scalars_loop5(classes.clone(), pairs.clone(), ordered.clone(), result.clone(), starter, previous_class, index_2);
+                                                                    match ml_s9 {
                                                                         self::MlNormalizeUnicodeScalarsLoop5Result::MlNormalizeUnicodeScalarsLoop5Done => {
                                                                             result.clone()
                                                                         }
@@ -482,16 +515,38 @@ pub fn ml_accept_unicode_property_scalar_loop1(
             {
                 let middle = ((low + high) / 2f64).floor();
                 {
-                    let first = (self::ml_array::optional_at(
-                        &{ ranges.borrow().clone() },
-                        self::ml_array::number_index(middle * 2f64),
-                    ))
+                    let first = ({
+                        let ml_array_read_value10 = ranges.clone();
+                        {
+                            let ml_array_read_index11 = middle * 2f64;
+                            {
+                                let ml_reference_array7 = ml_array_read_value10;
+                                let ml_reference_position7 = ml_array_read_index11;
+                                self::ml_array::optional_at(
+                                    &*ml_reference_array7.borrow(),
+                                    self::ml_array::number_index(ml_reference_position7),
+                                )
+                            }
+                        }
+                    })
+                    .clone()
                     .unwrap_or_else(|| -1f64);
                     {
-                        let last = (self::ml_array::optional_at(
-                            &{ ranges.borrow().clone() },
-                            self::ml_array::number_index((middle * 2f64) + 1f64),
-                        ))
+                        let last = ({
+                            let ml_array_read_value12 = ranges.clone();
+                            {
+                                let ml_array_read_index13 = (middle * 2f64) + 1f64;
+                                {
+                                    let ml_reference_array8 = ml_array_read_value12;
+                                    let ml_reference_position8 = ml_array_read_index13;
+                                    self::ml_array::optional_at(
+                                        &*ml_reference_array8.borrow(),
+                                        self::ml_array::number_index(ml_reference_position8),
+                                    )
+                                }
+                            }
+                        })
+                        .clone()
                         .unwrap_or_else(|| -1f64);
                         if scalar < first {
                             {
@@ -545,10 +600,21 @@ pub fn ml_find_unicode_table_row_loop2(
             {
                 let middle = ((low + high) / 2f64).floor();
                 {
-                    let value = (self::ml_array::optional_at(
-                        &{ rows.borrow().clone() },
-                        self::ml_array::number_index(middle * stride),
-                    ))
+                    let value = ({
+                        let ml_array_read_value14 = rows.clone();
+                        {
+                            let ml_array_read_index15 = middle * stride;
+                            {
+                                let ml_reference_array9 = ml_array_read_value14;
+                                let ml_reference_position9 = ml_array_read_index15;
+                                self::ml_array::optional_at(
+                                    &*ml_reference_array9.borrow(),
+                                    self::ml_array::number_index(ml_reference_position9),
+                                )
+                            }
+                        }
+                    })
+                    .clone()
                     .unwrap_or_else(|| -1f64);
                     if key < value {
                         {
@@ -600,12 +666,28 @@ pub fn ml_normalize_unicode_scalars_loop5(
     mut index: f64,
 ) -> self::MlNormalizeUnicodeScalarsLoop5Result {
     loop {
-        if index < (({ ordered.borrow().clone() }).len() as f64) {
+        if index
+            < ({
+                let ml_reference_array10 = ordered.clone();
+                ml_reference_array10.borrow().len() as f64
+            })
+        {
             {
-                let scalar = (self::ml_array::optional_at(
-                    &{ ordered.borrow().clone() },
-                    self::ml_array::number_index(index),
-                ))
+                let scalar = ({
+                    let ml_array_read_value16 = ordered.clone();
+                    {
+                        let ml_array_read_index17 = index;
+                        {
+                            let ml_reference_array11 = ml_array_read_value16;
+                            let ml_reference_position11 = ml_array_read_index17;
+                            self::ml_array::optional_at(
+                                &*ml_reference_array11.borrow(),
+                                self::ml_array::number_index(ml_reference_position11),
+                            )
+                        }
+                    }
+                })
+                .clone()
                 .unwrap_or_else(|| -1f64);
                 {
                     let combining = self::read_unicode_combining_class(classes.clone(), scalar);
@@ -615,10 +697,23 @@ pub fn ml_normalize_unicode_scalars_loop5(
                         } else {
                             self::compose_unicode_scalars(
                                 pairs.clone(),
-                                (self::ml_array::optional_at(
-                                    &{ result.borrow().clone() },
-                                    self::ml_array::number_index(starter),
-                                ))
+                                ({
+                                    let ml_array_read_value18 = result.clone();
+                                    {
+                                        let ml_array_read_index19 = starter;
+                                        {
+                                            let ml_reference_array12 = ml_array_read_value18;
+                                            let ml_reference_position12 = ml_array_read_index19;
+                                            self::ml_array::optional_at(
+                                                &*ml_reference_array12.borrow(),
+                                                self::ml_array::number_index(
+                                                    ml_reference_position12,
+                                                ),
+                                            )
+                                        }
+                                    }
+                                })
+                                .clone()
                                 .unwrap_or_else(|| -1f64),
                                 scalar,
                             )
@@ -627,7 +722,11 @@ pub fn ml_normalize_unicode_scalars_loop5(
                             && ((previous_class == 0f64) || (previous_class < combining))
                         {
                             if (starter >= 0f64)
-                                && (starter < (({ result.borrow().clone() }).len() as f64))
+                                && (starter
+                                    < ({
+                                        let ml_reference_array13 = result.clone();
+                                        ml_reference_array13.borrow().len() as f64
+                                    }))
                             {
                                 {
                                     let ml_normalize_unicode_scalars_ignored6 = {
@@ -694,7 +793,12 @@ pub fn ml_normalize_unicode_scalars_loop5(
                         {
                             {
                                 let starter_3 = if combining == 0f64 {
-                                    { ({ result.borrow().clone() }).len() as f64 }
+                                    {
+                                        {
+                                            let ml_reference_array15 = result.clone();
+                                            ml_reference_array15.borrow().len() as f64
+                                        }
+                                    }
                                 } else {
                                     starter
                                 };
@@ -747,57 +851,4 @@ pub enum MlNormalizeUnicodeScalarsJoin8 {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlNormalizeUnicodeScalarsLoop12Result {
     MlNormalizeUnicodeScalarsLoop12Done,
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn ml_normalize_unicode_scalars_loop12(
-    mut values: std::rc::Rc<std::cell::RefCell<Vec<f64>>>,
-    mut stack: std::rc::Rc<std::cell::RefCell<Vec<f64>>>,
-    mut offset: f64,
-    mut index: f64,
-) -> self::MlNormalizeUnicodeScalarsLoop12Result {
-    loop {
-        if index > 0f64 {
-            {
-                let ml_normalize_unicode_scalars_ignored13 = {
-                    let ml_method_owner17 = stack.clone();
-                    let ml_method_argument17_0 = (self::ml_array::optional_at(
-                        &{ values.borrow().clone() },
-                        self::ml_array::number_index((offset + index) - 1f64),
-                    ))
-                    .unwrap_or_else(|| -1f64);
-                    let ml_inserted = vec![ml_method_argument17_0];
-                    let mut ml_method_values17 = ml_method_owner17.borrow_mut();
-                    let ml_length = ml_method_values17
-                        .len()
-                        .checked_add(ml_inserted.len())
-                        .filter(|length| *length <= 4_294_967_295usize)
-                        .expect("Invalid array length");
-                    ml_method_values17.extend(ml_inserted);
-                    ml_length as f64
-                };
-                {
-                    let index_2 = index - 1f64;
-                    {
-                        index = index_2;
-                        continue;
-                    }
-                }
-            }
-        }
-        return {
-            self::MlNormalizeUnicodeScalarsLoop12Result::MlNormalizeUnicodeScalarsLoop12Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlNormalizeUnicodeScalarsLoop15Result {
-    MlNormalizeUnicodeScalarsLoop15Done(f64, f64),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlNormalizeUnicodeScalarsJoin17 {
-    MlNormalizeUnicodeScalarsJoin17Next,
 }

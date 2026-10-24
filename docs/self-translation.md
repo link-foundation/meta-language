@@ -746,3 +746,13 @@ full official corpus runners remain unexecuted. Older Unicode/edition profiles,
 escaped JavaScript identifiers, Unicode lifetimes and the inherited broader
 translation requirements still need source work. Metadata and CI integration
 remain deferred until the complete requirements draft exists.
+
+Shared-array source reads capture receiver and key in existing typed lets
+before loading the payload. One generated definition also selects safe native
+borrowed length/index projections and excludes effectful typed keys. Both
+emitter adapters transport actual shapes, operands and unchanged prelude flags;
+the shared renderer owns emitted source and hygiene. Regenerating the Unicode
+kernel applies these projections automatically. Twenty-two future values/aborts
+and full graph/codec/four-target controls use the common original-Node product
+oracle, preserving its previous fixtures. No controls ran; arbitrary typed
+snapshot parity and the inherited full-language/resource obligations remain.

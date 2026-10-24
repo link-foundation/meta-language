@@ -30,6 +30,7 @@ mod array_bindings;
 mod array_callbacks;
 mod array_from;
 mod array_relative_element_template;
+mod array_source_operands;
 mod array_state_methods;
 mod arrays;
 mod callables;

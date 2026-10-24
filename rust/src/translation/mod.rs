@@ -89,6 +89,8 @@ pub(crate) mod record_type_syntax_rules;
 pub(crate) mod record_value_rules;
 pub(crate) mod record_write_program;
 pub(crate) mod record_write_rules;
+pub(crate) mod reference_array_projection_program;
+pub(crate) mod reference_array_projection_rules;
 pub(crate) mod reference_identity_rules;
 pub(crate) mod reference_method_program;
 pub(crate) mod reference_method_rules;

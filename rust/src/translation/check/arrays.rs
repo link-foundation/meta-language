@@ -408,12 +408,16 @@ impl Checker {
                 place,
             ));
         }
-        Ok(self.array_index_result(
+        let (array, index, bindings) = self.capture_array_source_operands(array, index, env);
+        let result = self.array_index_result(
             array,
             index,
             element,
             (optional, proven_in_bounds),
             expected,
+        );
+        Ok(super::array_source_operands::wrap_array_source_operands(
+            result, bindings,
         ))
     }
 

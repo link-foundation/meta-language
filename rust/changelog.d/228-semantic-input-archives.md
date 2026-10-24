@@ -102,3 +102,7 @@ spelling and UTF-16 spans in both lexers, Unicode type namespaces and distinct
 JavaScript names. Automatically convert official Unicode declarations to
 licensed Links tables and generate native source plus editable typed definitions;
 add future original-language, normalization, codec and full corpus controls.
+Draft ordered JavaScript array receiver/key capture and safe borrowed native
+length/index projections, retaining aliases, bounds, absence and errors. Generate
+their shared Rust/Links definitions, regenerate the Unicode kernel automatically
+and add future complete original-Node/native/codec controls without running them.

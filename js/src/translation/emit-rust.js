@@ -36,6 +36,7 @@ import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
 import { renderPrimitiveMethodArgument, renderPrimitiveMethodExpression, requirePrimitiveMethodUtf16, renderPrimitiveArraySearchExpression, renderPrimitiveStringRepresentation, readPrimitiveArrayJoinElementForm, readPrimitiveArrayJoinOperandForm, renderPrimitiveArrayJoinElement, renderPrimitiveArrayJoinExpression } from './primitive-method-rules.js';
 import { readSurfaceReferenceEmissionOperation, readSurfaceReferenceEmissionRefusal, renderSurfaceReferenceOperation } from './surface-reference-analysis-rules.js';
+import { emitReferenceArrayProjection } from './reference-array-projections.js';
 import { renderRecordField, renderRecordValue } from './record-emission-rules.js';
 import { readUnionTargetRefusal } from './type-syntax-rules.js';
 import { readCallableCapturedBindings } from './callable-source.js';
@@ -1217,6 +1218,8 @@ class RustEmitter {
   }
 
   expr(e) {
+    const projection = emitReferenceArrayProjection(this, e);
+    if (projection !== null) return projection;
     if (e.k === 'method' && acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
       this.temporaries += 1;
       const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));

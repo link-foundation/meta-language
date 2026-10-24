@@ -10,6 +10,9 @@ use crate::translation::rust_record_rules::render_rust_constructor_fields;
 
 impl RustEmitter<'_> {
     pub(super) fn expr(&mut self, expr: &Expr) -> Result<String> {
+        if let Some(projection) = self.reference_array_projection(expr)? {
+            return Ok(projection);
+        }
         if let Node::Method { object, op, .. } = &expr.node
             && crate::translation::array_state_method_rules::accept_linked_array_state_method(
                 "method",

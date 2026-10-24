@@ -42,6 +42,7 @@ mod optional_values;
 mod primitive_methods;
 mod record_writes;
 mod records;
+mod reference_array_projections;
 mod reference_callbacks;
 mod reference_methods;
 

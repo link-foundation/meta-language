@@ -10,6 +10,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
 import { planTuplePatternFields } from './rust-record-rules.js';
 import { checkJavaScriptSourcePropertyCall } from './javascript-property-calls.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
@@ -779,8 +780,11 @@ class Checker {
         if (!isFloat(index.type) && index.type.kind !== 'int' && index.type.kind !== 'nat') {
           throw typeError(`array index of type ${typeKey(index.type)}; an index is a Number or a BigInt`, node.index.span ?? node.span);
         }
-        if (selectOptionalArrayRead(this.language, node.optional === true, node.provenInBounds === true, expected?.kind === 'option' && sameType(expected.element, object.type.element))) return flattenOption({ k: 'optionalIndex', array: object, index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } });
-        return { k: 'index', array: object, index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
+        const captured = captureArraySourceOperands(this, object, index, env);
+        const result = selectOptionalArrayRead(this.language, node.optional === true, node.provenInBounds === true, expected?.kind === 'option' && sameType(expected.element, object.type.element))
+          ? flattenOption({ k: 'optionalIndex', array: captured.array, index: captured.index, type: { kind: 'option', element: object.type.element, absence: 'undefined' } })
+          : { k: 'index', array: captured.array, index: captured.index, type: object.type.element, ...(node.provenInBounds && { provenInBounds: true }) };
+        return wrapArraySourceOperands(result, captured.bindings);
       }
       case 'typeOf': {
         const arg = this.expr(node.arg, env, path, undefined);

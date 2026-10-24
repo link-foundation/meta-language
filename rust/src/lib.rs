@@ -108,6 +108,7 @@ pub use translation::javascript_property_call_program::create_java_script_proper
 pub use translation::lexer::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 pub use translation::number_bitwise_program::create_number_bitwise_program_links;
 pub use translation::record_write_program::create_record_field_write_program_links;
+pub use translation::reference_array_projection_program::create_reference_array_projection_program_links;
 pub use translation::reference_method_program::create_reference_method_program_links;
 pub use translation::rust_inherent_program::create_rust_inherent_program_links;
 pub use translation::rust_primitive_bitwise_program::create_rust_primitive_bitwise_program_links;

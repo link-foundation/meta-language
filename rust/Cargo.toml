@@ -33,6 +33,7 @@ include = [
     "src/data/unicode-source-tables.lino",
     "src/data/LICENSE-UNICODE.txt",
     "src/data/unicode-scalar-program.lino",
+    "src/data/reference-array-projection-program.lino",
     "src/data/typed-program-links-schema.lino",
     "src/data/array-values.lino",
     "src/data/array-bindings.lino",
