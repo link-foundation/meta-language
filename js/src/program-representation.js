@@ -1,3 +1,5 @@
+import { readModuleBindingFields } from './module-binding-fields.js';
+import { readSourceModuleBindingRangeRole, readSourceBindingRenameAffixes } from './translation/module-binding-rules.js';
 import { decoratorSet } from './decorators.js';
 import { languageSupport } from './language-support.js';
 import {
@@ -86,7 +88,7 @@ export class ProgramRepresentation {
 
     const syntax = decorateSyntaxFacts(syntaxFacts(this.network, this.source), this.source, options.decorators);
     const tokens = semanticTokens(this.source, this.language, syntax);
-    const resolution = resolveBindings(tokens, syntax, this.source, this.language);
+    const resolution = resolveBindings(tokens, syntax, this.source, this.language, readModuleBindingFields(this.network,syntax,this.language));
     this.scopes = Object.freeze(resolution.scopes.map(freezeRecord));
     this.bindings = Object.freeze(resolution.bindings.map(freezeBinding));
     this.unresolvedReferences = Object.freeze(resolution.unresolved.map(freezeRecord));
@@ -215,11 +217,14 @@ export class ProgramRepresentation {
       );
     }
 
+    const moduleBindings = readModuleBindingFields(this.network,this.sourceMappings,this.language);
     const edits = [binding.declaration, ...binding.references]
       .map(({ start, end }) => {
         const shorthand = this.sourceMappings.some(({ term, start: termStart, end: termEnd }) =>
           termStart === start && termEnd === end && SHORTHAND_TERMS[this.language]?.has(term));
-        return { start, end, text: shorthand ? `${binding.name}: ${replacement}` : replacement };
+        const role = readSourceModuleBindingRangeRole(moduleBindings,start,end);
+        const [prefix,suffix] = readSourceBindingRenameAffixes(role,Boolean(shorthand),binding.name);
+        return {start,end,text:prefix+replacement+suffix,replacementOffset:prefix.length};
       })
       .sort((left, right) => right.start - left.start);
     let edited = this.source;
@@ -297,7 +302,7 @@ function firstResolutionChange(original, renamed, binding, replacement, edits) {
     edit.end <= offset ? total + edit.text.length - (edit.end - edit.start) : total, offset);
   const moved = ({ start, end }) => {
     const edit = edits.find((candidate) => candidate.start === start && candidate.end === end);
-    const from = shift(start) + (edit ? edit.text.length - replacement.length : 0);
+    const from = shift(start) + (edit ? edit.replacementOffset : 0);
     return { start: from, end: from + (edit ? replacement.length : end - start) };
   };
   const expected = [
@@ -402,7 +407,7 @@ function semanticTokens(source, language, syntax) {
   return tokens;
 }
 
-function resolveBindings(tokens, syntax, source, language) {
+function resolveBindings(tokens, syntax, source, language, moduleBindings = []) {
   const scopes = [{ id: 'scope:0', parent: null, start: 0, end: source.length, depth: 0 }];
   const stack = [scopes[0]];
   const braceScopes = new Map();
@@ -523,7 +528,7 @@ function resolveBindings(tokens, syntax, source, language) {
 
   const unresolved = [];
   for (const [index, token] of tokens.entries()) {
-    if (token.kind !== 'identifier' || byToken.has(index) || ignored.has(`${token.start}:${token.end}`)) continue;
+    if (token.kind !== 'identifier' || byToken.has(index) || ignored.has(`${token.start}:${token.end}`) || readSourceModuleBindingRangeRole(moduleBindings,token.start,token.end) === 3) continue;
     if (language === 'Rust' && tokens[index - 1]?.text === '::') {
       // Qualified paths resolve through module bodies; paths into external
       // crates or types are outside the analyzed program.

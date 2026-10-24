@@ -800,3 +800,13 @@ Both definitions have public editable program factories. Forty-one future
 source value/abort controls, full paired graphs/codecs/four emissions and native
 CI runners are drafted without execution. General coercions/errors, constant
 logical targets, properties, module state and other source requirements remain.
+
+Module lexical roles now derive from actual CST field relations rather than
+identifier spellings. The shared definition generates native/Links import,
+export, reexport and rename prefix/suffix decisions; hosts transport syntax
+owners and their own coordinate widths. Both public definition factories and
+twelve future original/renamed Node/native/source/codec controls are drafted.
+No control ran. The frozen formatter reported an internal trailing-whitespace
+error during authoring; the source writer explicitly retains complete output
+with formatting preserved. Its guard and all CI gates stay unchanged. Broader
+alias composition, semantic token profiles and module state remain required.

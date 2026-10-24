@@ -128,6 +128,11 @@ impl ProgramRepresentation {
                 offset: reference.range.start,
             });
         }
+        let module_bindings = super::module_bindings::read_fields(
+            &self.network,
+            &self.source_mappings,
+            self.language,
+        )?;
         let mut edits = std::iter::once(binding.declaration)
             .chain(binding.references.iter().copied())
             .map(|range| {
@@ -135,17 +140,19 @@ impl ProgramRepresentation {
                     mapping.range == range
                         && shorthand_terms(self.language).contains(&mapping.term.as_str())
                 });
-                let text = if shorthand {
-                    format!("{}: {replacement}", binding.name)
-                } else {
-                    replacement.to_string()
-                };
-                (range, text)
+                let role = super::module_bindings::role(&module_bindings, range);
+                let affixes = super::module_bindings::affixes(role, shorthand, &binding.name)?;
+                let offset = affixes[0].len();
+                Ok((
+                    range,
+                    format!("{}{replacement}{}", affixes[0], affixes[1]),
+                    offset,
+                ))
             })
-            .collect::<Vec<_>>();
-        edits.sort_by_key(|(range, _)| std::cmp::Reverse(range.start));
+            .collect::<Result<Vec<_>, ProgramRepresentationError>>()?;
+        edits.sort_by_key(|(range, _, _)| std::cmp::Reverse(range.start));
         let mut edited = self.source.clone();
-        for (range, text) in &edits {
+        for (range, text, _) in &edits {
             edited.replace_range(range.start..range.end, text);
         }
         let renamed = self.reparse_edit(&edited)?;
@@ -226,19 +233,19 @@ fn first_resolution_change(
     renamed: &ProgramRepresentation,
     binding_id: &str,
     replacement: &str,
-    edits: &[(ProgramRange, String)],
+    edits: &[(ProgramRange, String, usize)],
 ) -> Option<usize> {
     let shift = |offset: usize| {
         edits
             .iter()
-            .filter(|(range, _)| range.end <= offset)
-            .fold(offset, |total, (range, text)| {
+            .filter(|(range, _, _)| range.end <= offset)
+            .fold(offset, |total, (range, text, _)| {
                 total + text.len() - (range.end - range.start)
             })
     };
     let moved = |range: ProgramRange| {
-        let edit = edits.iter().find(|(candidate, _)| *candidate == range);
-        let from = shift(range.start) + edit.map_or(0, |(_, text)| text.len() - replacement.len());
+        let edit = edits.iter().find(|(candidate, _, _)| *candidate == range);
+        let from = shift(range.start) + edit.map_or(0, |(_, _, offset)| *offset);
         let length = edit.map_or(range.end - range.start, |_| replacement.len());
         ProgramRange::new(from, from + length)
     };

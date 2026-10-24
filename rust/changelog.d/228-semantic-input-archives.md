@@ -125,3 +125,7 @@ Draft scalar assignment expressions and prefix/postfix updates through existing
 shared cells, preserving compound read order, lazy logical writes and update
 results. Generate shared construction/capture rules as Rust and editable Links;
 author future complete original-Node/native/codec controls without executing them.
+
+Draft CST-field-based JavaScript module binding roles. Preserve external import
+and export names during local binding renames, retain exact rename offsets,
+generate shared native/Links rules and author independent future module controls.

@@ -68,6 +68,8 @@ pub mod lean;
 pub mod lean_root_names;
 pub mod lexer;
 pub(crate) mod link_network_binary_buffer_rules;
+pub(crate) mod module_binding_program;
+pub(crate) mod module_binding_rules;
 pub(crate) mod network_projection_rules;
 pub(crate) mod nullable_type_syntax_rules;
 pub(crate) mod number_bitwise_program;

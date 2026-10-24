@@ -39,6 +39,7 @@ pub(super) fn resolve_references(
     language: &str,
     scopes: &[ProgramScope],
     declarations: &[Declaration],
+    module_bindings: &[f64],
 ) -> (Vec<Vec<ProgramRange>>, Vec<ProgramFact>) {
     let mut resolver = Resolver {
         tokens,
@@ -107,6 +108,7 @@ pub(super) fn resolve_references(
         if token.kind != TokenKind::Identifier
             || declared.contains(&index)
             || ignored.contains(&token.range)
+            || super::super::module_bindings::role(module_bindings, token.range) == 3.0
         {
             continue;
         }

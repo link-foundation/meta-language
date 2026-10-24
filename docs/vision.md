@@ -3386,6 +3386,31 @@ translation or project-wide semantics contract.
 
 ## Structured transformation and binding safety
 
+The module binding draft reads actual `name`, `alias` and `source` CST field
+links. Imported/exported external names do not become lexical references merely
+because a local binding has the same spelling. Named import shorthand expands
+to an explicit local alias during renaming; local export shorthand retains its
+public export spelling. Existing import/export aliases, default/namespace imports,
+reexports and namespace exports keep their respective source roles. The shared
+JavaScript definition generates native Rust and an editable typed Links program;
+host adapters only transport actual syntax nodes, field relations and source
+coordinates. Rename edits retain the new identifier's explicit offset within
+their generated prefix/suffix, preserving both UTF-16 and UTF-8 correspondence.
+This follows the [ECMAScript import entries](https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-imports)
+and [export entries](https://tc39.es/ecma262/2025/multipage/ecmascript-language-scripts-and-modules.html#sec-exports).
+
+Twelve future module controls retain exact original/renamed sources, independent
+Node namespace observations, lexical shadowing, comments/string spellings and
+Unicode rename offsets. Native controls execute the actual native-produced
+JavaScript artifact. Both codecs and all four emissions retain the complete
+shared definition; none ran. The existing native formatter reported an internal
+trailing-whitespace failure while authoring this definition. Complete generated
+source is retained under an explicit preserve-format selection; that failure,
+its log and the original formatting gate remain unresolved. Dependency alias
+composition, contextual/escaped semantic token analysis, full module state and
+all inherited semantic translation requirements still need drafts.
+
+
 Parse → links → structured transform → emit or translate is one path. Along it,
 the following work end to end on the common representation:
 

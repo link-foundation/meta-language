@@ -2,6 +2,7 @@
 
 mod analysis;
 mod edit;
+mod module_bindings;
 mod module_resolution;
 mod project;
 mod snapshot;
@@ -337,6 +338,8 @@ pub enum ProgramRepresentationError {
     InvalidEdit,
     /// A serialized program snapshot is malformed or inconsistent.
     InvalidSnapshot(String),
+    /// Actual CST module name fields have no supported lexical role.
+    InvalidModuleBindings(String),
 }
 
 impl fmt::Display for ProgramRepresentationError {
@@ -367,6 +370,7 @@ impl fmt::Display for ProgramRepresentationError {
                 formatter.write_str("move destination is inside the moved range")
             }
             Self::InvalidEdit => formatter.write_str("structured edit does not reparse cleanly"),
+            Self::InvalidModuleBindings(reason) => formatter.write_str(reason),
             Self::InvalidSnapshot(reason) => {
                 write!(formatter, "invalid program snapshot: {reason}")
             }
@@ -420,8 +424,15 @@ impl ProgramRepresentation {
         let network = LinkNetwork::parse(source, support.name, ParseConfiguration::default());
         let source_mappings = decorate_syntax_facts(syntax_facts(&network), source, decorators);
         let tokens = semantic_tokens(source, support.name, &source_mappings);
-        let (scopes, bindings, unresolved_references) =
-            resolve_bindings(&tokens, &source_mappings, source.len(), support.name);
+        let module_bindings =
+            module_bindings::read_fields(&network, &source_mappings, support.name)?;
+        let (scopes, bindings, unresolved_references) = resolve_bindings(
+            &tokens,
+            &source_mappings,
+            source.len(),
+            support.name,
+            &module_bindings,
+        );
         let context = project::project_semantics(
             support.name,
             source,

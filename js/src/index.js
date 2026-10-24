@@ -73,6 +73,7 @@ export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-a
 export { createRustInherentProgramLinks } from './rust-inherent-program.js';
 export { createUnicodeScalarProgramLinks } from './unicode-scalar-program.js';
 export { createJavaScriptRecordParameterProgramLinks } from './javascript-record-parameter-program.js';
+export { createModuleBindingProgramLinks } from './module-binding-program.js';
 export { createCallableSourceProgramLinks } from './callable-source-program.js';
 export { createScalarAssignmentProgramLinks } from './scalar-assignment-program.js';
 export { createSourceIdentifierProgramLinks } from './source-identifier-program.js';

@@ -109,6 +109,7 @@ pub(super) fn resolve_bindings(
     syntax: &[ProgramSourceMapping],
     source_len: usize,
     language: &str,
+    module_bindings: &[f64],
 ) -> (Vec<ProgramScope>, Vec<ProgramBinding>, Vec<ProgramFact>) {
     let mut tokens = input.to_vec();
     let mut scopes = vec![ProgramScope {
@@ -181,8 +182,14 @@ pub(super) fn resolve_bindings(
     }
     apply_binding_extents(&mut declarations, &tokens, syntax, language, &brace_scopes);
     declarations.sort_by_key(|declaration| tokens[declaration.token].range.start);
-    let (references, unresolved) =
-        resolution::resolve_references(&tokens, syntax, language, &scopes, &declarations);
+    let (references, unresolved) = resolution::resolve_references(
+        &tokens,
+        syntax,
+        language,
+        &scopes,
+        &declarations,
+        module_bindings,
+    );
     let bindings = declarations
         .into_iter()
         .zip(references)

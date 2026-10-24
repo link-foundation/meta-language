@@ -350,6 +350,7 @@ mod grammar_output_equality;
 mod grammar_recursive_selection;
 mod link_allocation;
 mod link_foundation;
+mod program_module_binding_roles;
 mod root_types;
 mod translation_array_relative_element;
 mod translation_callable_expected_context;
