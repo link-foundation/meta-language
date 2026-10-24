@@ -451,6 +451,18 @@ def readJavaScriptNumericDigitUnit (unit : Float) : Float :=
 def convertJavaScriptBooleanBigInteger (value : Bool) : Int :=
   (if value then (1 : Int) else (0 : Int))
 
+def acceptNonzeroJavaScriptIntegerLiteral (value : (Array Nat)) : Bool :=
+  ((((MLUtf16Text.compare ((value).map Float.ofNat) (((#[] : Array Nat)).map Float.ofNat)) != (0 : Float)) && ((MLUtf16Text.compare ((value).map Float.ofNat) (((#[48] : Array Nat)).map Float.ofNat)) != (0 : Float))) && ((MLUtf16Text.compare ((value).map Float.ofNat) (((#[45, 48] : Array Nat)).map Float.ofNat)) != (0 : Float)))
+
+def requireJavaScriptBigIntegerDivision (language : (Array Nat)) (operation : (Array Nat)) (kind : (Array Nat)) (literal : (Array Nat)) : Bool :=
+  (((((MLUtf16Text.compare ((language).map Float.ofNat) (((#[74, 97, 118, 97, 83, 99, 114, 105, 112, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) && ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[105, 110, 116] : Array Nat)).map Float.ofNat)) == (0 : Float))) && (((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[100, 105, 118] : Array Nat)).map Float.ofNat)) == (0 : Float)) || ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[114, 101, 109] : Array Nat)).map Float.ofNat)) == (0 : Float)))) && (!(acceptNonzeroJavaScriptIntegerLiteral literal)))
+
+def readJavaScriptBigIntegerDivisionMessage : (Array Nat) :=
+  (#[68, 105, 118, 105, 115, 105, 111, 110, 32, 98, 121, 32, 122, 101, 114, 111] : Array Nat)
+
+def renderJavaScriptBigIntegerDivision (target : (Array Nat)) (left : (Array Nat)) (right : (Array Nat)) : (Array Nat) :=
+  (if ((MLUtf16Text.compare ((target).map Float.ofNat) (((#[74, 97, 118, 97, 83, 99, 114, 105, 112, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (((((#[109, 108, 95, 98, 105, 103, 95, 105, 110, 116, 101, 103, 101, 114, 95, 99, 111, 110, 118, 101, 114, 115, 105, 111, 110, 46, 100, 105, 118, 105, 100, 101, 40] : Array Nat) ++ left) ++ (#[44] : Array Nat)) ++ right) ++ (#[41] : Array Nat)) else (if ((MLUtf16Text.compare ((target).map Float.ofNat) (((#[82, 117, 115, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (((((#[99, 114, 97, 116, 101, 58, 58, 109, 108, 95, 98, 105, 103, 95, 105, 110, 116, 101, 103, 101, 114, 95, 99, 111, 110, 118, 101, 114, 115, 105, 111, 110, 58, 58, 100, 105, 118, 105, 100, 101, 95, 106, 97, 118, 97, 95, 115, 99, 114, 105, 112, 116, 95, 98, 105, 103, 95, 105, 110, 116, 101, 103, 101, 114, 40] : Array Nat) ++ left) ++ (#[44] : Array Nat)) ++ right) ++ (#[41] : Array Nat)) else (if (((MLUtf16Text.compare ((target).map Float.ofNat) (((#[76, 101, 97, 110] : Array Nat)).map Float.ofNat)) == (0 : Float)) || ((MLUtf16Text.compare ((target).map Float.ofNat) (((#[82, 111, 99, 113] : Array Nat)).map Float.ofNat)) == (0 : Float))) then (((((#[40, 77, 76, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 67, 111, 110, 118, 101, 114, 115, 105, 111, 110, 46, 100, 105, 118, 105, 100, 101, 32] : Array Nat) ++ left) ++ (#[32] : Array Nat)) ++ right) ++ (#[41] : Array Nat)) else (#[] : Array Nat))))
+
 def readJavaScriptBigIntegerConversionForm (kind : (Array Nat)) : (Array Nat) :=
   (if (((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[105, 110, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) || ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[110, 97, 116] : Array Nat)).map Float.ofNat)) == (0 : Float))) then (#[105, 100, 101, 110, 116, 105, 116, 121] : Array Nat) else (if ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[102, 108, 111, 97, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[110, 117, 109, 98, 101, 114] : Array Nat) else (if ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[115, 116, 114, 105, 110, 103] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[115, 116, 114, 105, 110, 103] : Array Nat) else (if ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[98, 111, 111, 108] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[98, 111, 111, 108, 101, 97, 110] : Array Nat) else (if ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[117, 110, 105, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[117, 110, 100, 101, 102, 105, 110, 101, 100] : Array Nat) else (if ((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[111, 112, 116, 105, 111, 110] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[111, 112, 116, 105, 111, 110, 97, 108] : Array Nat) else (#[117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100] : Array Nat)))))))
 
@@ -468,7 +480,7 @@ def readJavaScriptBigIntegerBuiltinOperation (name : (Array Nat)) : (Array Nat) 
   (if ((MLUtf16Text.compare ((name).map Float.ofNat) (((#[66, 105, 103, 73, 110, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[99, 111, 110, 118, 101, 114, 116, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114] : Array Nat) else (#[] : Array Nat))
 
 def readJavaScriptBigIntegerResultOperation (operation : (Array Nat)) : (Array Nat) :=
-  (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[112, 97, 114, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 83, 116, 114, 105, 110, 103, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[115, 116, 114, 105, 110, 103] : Array Nat) else (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[99, 111, 110, 118, 101, 114, 116, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 66, 111, 111, 108, 101, 97, 110, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 86, 97, 108, 117, 101] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[98, 111, 111, 108, 101, 97, 110] : Array Nat) else (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[99, 111, 110, 118, 101, 114, 116, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 78, 117, 109, 98, 101, 114, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 82, 101, 115, 117, 108, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[110, 117, 109, 98, 101, 114] : Array Nat) else (#[] : Array Nat))))
+  (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[100, 105, 118, 105, 100, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 82, 101, 115, 117, 108, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[100, 105, 118, 105, 115, 105, 111, 110] : Array Nat) else (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[112, 97, 114, 115, 101, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 83, 116, 114, 105, 110, 103, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[115, 116, 114, 105, 110, 103] : Array Nat) else (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[99, 111, 110, 118, 101, 114, 116, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 66, 111, 111, 108, 101, 97, 110, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 86, 97, 108, 117, 101] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[98, 111, 111, 108, 101, 97, 110] : Array Nat) else (if ((MLUtf16Text.compare ((operation).map Float.ofNat) (((#[99, 111, 110, 118, 101, 114, 116, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 78, 117, 109, 98, 101, 114, 66, 105, 103, 73, 110, 116, 101, 103, 101, 114, 82, 101, 115, 117, 108, 116] : Array Nat)).map Float.ofNat)) == (0 : Float)) then (#[110, 117, 109, 98, 101, 114] : Array Nat) else (#[] : Array Nat)))))
 
 def acceptLinkedJavaScriptBigIntegerResult (kind : (Array Nat)) (operation : (Array Nat)) : Bool :=
   (((MLUtf16Text.compare ((kind).map Float.ofNat) (((#[109, 97, 116, 104] : Array Nat)).map Float.ofNat)) == (0 : Float)) && ((MLUtf16Text.compare (((readJavaScriptBigIntegerResultOperation operation)).map Float.ofNat) (((#[] : Array Nat)).map Float.ofNat)) != (0 : Float)))
@@ -504,7 +516,7 @@ partial def source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2 (byt
     (let index_2 := (index + (1 : Float));
       (let remaining := (0 : Float);
         (let minimum := (0 : Float);
-          (let source_ml_source2_s7 := (if ((decide (scalar ≥ (194 : Float))) && (decide (scalar ≤ (223 : Float)))) then (let scalar_2 := (scalar - (192 : Float));
+          (let source_ml_source2_s9 := (if ((decide (scalar ≥ (194 : Float))) && (decide (scalar ≤ (223 : Float)))) then (let scalar_2 := (scalar - (192 : Float));
             (let remaining_2 := (1 : Float);
               (let minimum_2 := (128 : Float);
                 (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_2 remaining_2 minimum_2)))) else (if ((decide (scalar ≥ (224 : Float))) && (decide (scalar ≤ (239 : Float)))) then (let scalar_3 := (scalar - (224 : Float));
@@ -514,9 +526,9 @@ partial def source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2 (byt
             (let remaining_4 := (3 : Float);
               (let minimum_4 := (65536 : Float);
                 (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_4 remaining_4 minimum_4)))) else (if (decide (scalar ≥ (128 : Float))) then (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_return (#[(-1 : Float)] : (Array Float))) else (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next scalar remaining minimum)))));
-            (match source_ml_source2_s7 with
-              | source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_5 remaining_5 minimum_5 => (let source_ml_source2_s8 := (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4 bytes index_2 scalar_5 remaining_5);
-                  (match source_ml_source2_s8 with
+            (match source_ml_source2_s9 with
+              | source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next scalar_5 remaining_5 minimum_5 => (let source_ml_source2_s10 := (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4 bytes index_2 scalar_5 remaining_5);
+                  (match source_ml_source2_s10 with
                     | source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4_result.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4_done index_3 scalar_6 => (if (((decide (scalar_6 < minimum_5)) || (decide (scalar_6 > (1114111 : Float)))) || ((decide (scalar_6 ≥ (55296 : Float))) && (decide (scalar_6 ≤ (57343 : Float))))) then (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2_result.source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2_return (#[(-1 : Float)] : (Array Float))) else (if (decide (scalar_6 ≤ (65535 : Float))) then (let units_2 := (units ++ (#[scalar_6] : (Array Float)));
                         (source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2 bytes units_2 index_3)) else (let units_3 := (units ++ (#[((55296 : Float) + (Float.floor ((scalar_6 - (65536 : Float)) / (1024 : Float))))] : (Array Float)));
                         (let units_4 := (units_3 ++ (#[((56320 : Float) + (ml_float_rem (scalar_6 - (65536 : Float)) (1024 : Float)))] : (Array Float)));
@@ -635,6 +647,38 @@ def convertJavaScriptNumberBigInteger (value : Float) : (Array Int) :=
           (let integer_2 := (source_ml_source1_temporary_convertJavaScriptNumberBigInteger_loop11 value_2 integer weight);
             (#[(if negative then (-integer_2) else integer_2)] : (Array Int))))))))
 
+inductive source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_result where
+  | source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_done (remaining : Int) (quotient : Int) : source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_source1_temporary_divideJavaScriptBigInteger_loop13 (remaining : Int) (shifted : Int) (weight : Int) (quotient : Int) : source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_result :=
+  (if (decide (weight > (1 : Int))) then (let shifted_2 := (Int.tdiv shifted (2 : Int));
+    (let weight_2 := (Int.tdiv weight (2 : Int));
+      (if (decide (shifted_2 ≤ remaining)) then (let remaining_2 := (remaining - shifted_2);
+        (let quotient_2 := (quotient + weight_2);
+          (source_ml_source1_temporary_divideJavaScriptBigInteger_loop13 remaining_2 shifted_2 weight_2 quotient_2))) else (source_ml_source1_temporary_divideJavaScriptBigInteger_loop13 remaining shifted_2 weight_2 quotient)))) else (source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_result.source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_done remaining quotient))
+
+inductive source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_result where
+  | source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_done (shifted : Int) (weight : Int) : source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_result
+  deriving Repr, DecidableEq, Inhabited
+
+partial def source_ml_source1_temporary_divideJavaScriptBigInteger_loop12 (remaining : Int) (shifted : Int) (weight : Int) : source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_result :=
+  (if (decide (shifted ≤ remaining)) then (let shifted_2 := (shifted * (2 : Int));
+    (let weight_2 := (weight * (2 : Int));
+      (source_ml_source1_temporary_divideJavaScriptBigInteger_loop12 remaining shifted_2 weight_2))) else (source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_result.source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_done shifted weight))
+
+def divideJavaScriptBigInteger (left : Int) (right : Int) : (Array Int) :=
+  (if (right == (0 : Int)) then (#[] : (Array Int)) else (let remaining := (if (decide (left < (0 : Int))) then (-left) else left);
+    (let divisor := (if (decide (right < (0 : Int))) then (-right) else right);
+      (let shifted := divisor;
+        (let weight := (1 : Int);
+          (let quotient := (0 : Int);
+            (let source_ml_source2_s7 := (source_ml_source1_temporary_divideJavaScriptBigInteger_loop12 remaining shifted weight);
+              (match source_ml_source2_s7 with
+                | source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_result.source_ml_source1_temporary_divideJavaScriptBigInteger_loop12_done shifted_2 weight_2 => (let source_ml_source2_s8 := (source_ml_source1_temporary_divideJavaScriptBigInteger_loop13 remaining shifted_2 weight_2 quotient);
+                    (match source_ml_source2_s8 with
+                      | source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_result.source_ml_source1_temporary_divideJavaScriptBigInteger_loop13_done remaining_2 quotient_2 => (#[(if ((decide (left < (0 : Int))) != (decide (right < (0 : Int)))) then (-quotient_2) else quotient_2), (if (decide (left < (0 : Int))) then (-remaining_2) else remaining_2)] : (Array Int))))))))))))
+
 def main : IO Unit := do
   pure ()
 
@@ -642,4 +686,5 @@ def convertUnits := convertJavaScriptStringBigIntegerUnits
 def convertNumber := convertJavaScriptNumberBigInteger
 def convertBoolean := convertJavaScriptBooleanBigInteger
 def convertUtf8 := convertJavaScriptUtf8BigInteger
+def divide := divideJavaScriptBigInteger
 end MLBigIntegerConversion

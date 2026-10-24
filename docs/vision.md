@@ -5950,8 +5950,8 @@ display alone replaces isolated surrogates and encodes Unicode characters or
 UTF-8 bytes. The original Rust-source scalar profile remains distinct. Native
 Rust emission already selects its Text profile for unit-sensitive operations;
 its complete default public JavaScript String parameter domain still needs
-review alongside explicit scalar-library interfaces. Complete formal error
-arithmetic error identities, all remaining String methods and stateful features
+review alongside explicit scalar-library interfaces. Complete source arithmetic
+error identities, all remaining String methods and stateful features
 remain requirements. This representation draft supplies no native observations.
 
 Unshadowed String.fromCharCode and String.fromCodePoint source calls lower through
@@ -5978,3 +5978,25 @@ names such as `ml_io1` and `ml_out` therefore retain their identities through
 formal effect lowering. Future controls declare nested standard errors with
 absent messages and deliberate private-name collisions. Full source arithmetic
 errors, assertion payloads and effectful callable values remain obligations.
+
+### Shared BigInt division draft
+
+The complete signed integer division definition returns quotient and remainder
+or an explicit zero-divisor result. It uses binary long division over unbounded
+integers and a nonzero literal primitive, without floating intermediates or a
+semantic input-width limit. Source lowering preserves both operand evaluations
+before inspecting the result, then raises the original RangeError with exact
+message units and property presence. Checked canonical nonzero literals keep
+their direct primitive form. The same complete source generates every runtime
+and editable definition graph; actual host adapters only construct typed IR or
+transport values. Public JavaScript and Rust APIs expose both results and the
+source error. These rules follow
+[ECMAScript BigInt division](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-divide)
+and [remainder](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-numeric-types-bigint-remainder).
+
+Future controls retain independent operators, both signs, zero, large bit widths,
+argument capture, exact errors and complete program/definition codecs/emissions.
+No behavior has executed. Formal general-recursion fuel remains an explicit
+obligation for inputs beyond the existing evaluation budget; generated source
+alone does not prove unbounded formal evaluation. Mixed numeric type errors,
+exponentiation, unsigned shifts and every preceding gap remain requirements.

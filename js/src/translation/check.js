@@ -13,7 +13,7 @@ import { typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
-import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult} from './javascript-big-integer-conversion.js';
+import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision} from './javascript-big-integer-conversion.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
 import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
@@ -1399,6 +1399,8 @@ class Checker {
     }
     [left, right] = unify(left, right, this.language, node.span);
     if (!isOrdered(left.type)) throw typeError(`arithmetic on ${typeKey(left.type)}`, node.span);
+    const division=materializeJavaScriptBigIntegerDivision(this,op,left,right);
+    if(division)return division;
     const semantics = arithmeticSemantics(this.language, op, left.type, node);
     return { k: 'binary', op, left, right, type: left.type, domain: left.type, ...semantics };
   }

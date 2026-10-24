@@ -105,6 +105,10 @@ impl RustEmitter<'_> {
             self.preludes.insert(Prelude::Big);self.preludes.insert(Prelude::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
             let value=self.expr(&args[0])?;
+            if form=="division" {
+                let right=self.expr(&args[1])?;
+                return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_division("Rust",&value,&right));
+            }
             return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("Rust",&form,&value,self.utf16_strings));
         }
         if crate::translation::source_exception_rules::accept_linked_java_script_source_exception(

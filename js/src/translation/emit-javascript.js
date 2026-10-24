@@ -9,7 +9,7 @@ import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision} from './big-integer-conversion-rules.js';
 import {BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE} from './big-integer-conversion-javascript-runtime.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
@@ -628,6 +628,7 @@ class JavaScriptEmitter {
         if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
           this.helpers.add('bigIntegerConversion');
+          if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('JavaScript',this.expr(e.args[0]),this.expr(e.args[1]));
           return renderJavaScriptBigIntegerResultExpression('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
         }
         if(acceptLinkedJavaScriptSourceException(e.k,e.op))return renderJavaScriptSourceExceptionExpression('JavaScript',e.op,this.expr(e.args[0]),this.expr(e.args[1]),false);

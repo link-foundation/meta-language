@@ -2,6 +2,24 @@ const ml_big_integer_conversion = (() => {
 // Translated from JavaScript by meta-language: portable core, JavaScript target.
 'use strict';
 
+// Integer division with the source's rounding; by zero it aborts with the message `zero`
+// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
+// out of [min, max] aborts with `overflow`, the remainder too.
+function ml_divide(a, b, rounding, zero, remainder, bounds) {
+  if (b === 0n) {
+    if (zero !== null) throw new RangeError(zero);
+    return remainder ? a : 0n;
+  }
+  let q = a / b;
+  const r = a - q * b;
+  if (r !== 0n) {
+    if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
+    if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
+  }
+  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);
+  return remainder ? a - q * b : q;
+}
+
 function acceptJavaScriptWhitespaceUnit(unit) {
   return ((((((((((((unit >= 9) && (unit <= 13)) || (unit === 32)) || (unit === 160)) || (unit === 5760)) || ((unit >= 8192) && (unit <= 8202))) || (unit === 8232)) || (unit === 8233)) || (unit === 8239)) || (unit === 8287)) || (unit === 12288)) || (unit === 65279));
 }
@@ -171,6 +189,67 @@ function convertJavaScriptBooleanBigInteger(value) {
   }
 }
 
+function divideJavaScriptBigInteger(left, right) {
+  if ((right === 0n)) {
+    return [];
+  } else {
+    const remaining = ((left < 0n) ? -left : left);
+    const divisor = ((right < 0n) ? -right : right);
+    const shifted = divisor;
+    const weight = 1n;
+    const quotient = 0n;
+    const source_ml_source2_s7 = source_ml_source1_temporary_divideJavaScriptBigInteger_loop12(remaining, shifted, weight);
+    switch (source_ml_source2_s7.$) {
+      case "ml_source1_temporary_divideJavaScriptBigInteger_loop12_done": {
+        const shifted_2 = source_ml_source2_s7["shifted"];
+        const weight_2 = source_ml_source2_s7["weight"];
+        const source_ml_source2_s8 = source_ml_source1_temporary_divideJavaScriptBigInteger_loop13(remaining, shifted_2, weight_2, quotient);
+        switch (source_ml_source2_s8.$) {
+          case "ml_source1_temporary_divideJavaScriptBigInteger_loop13_done": {
+            const remaining_2 = source_ml_source2_s8["remaining"];
+            const quotient_2 = source_ml_source2_s8["quotient"];
+            return [(((left < 0n) !== (right < 0n)) ? -quotient_2 : quotient_2), ((left < 0n) ? -remaining_2 : remaining_2)];
+          }
+          default: {
+            throw new TypeError(`unexpected constructor ${source_ml_source2_s8.$}`);
+          }
+        }
+      }
+      default: {
+        throw new TypeError(`unexpected constructor ${source_ml_source2_s7.$}`);
+      }
+    }
+  }
+}
+
+function acceptNonzeroJavaScriptIntegerLiteral(value) {
+  return (((value !== "") && (value !== "0")) && (value !== "-0"));
+}
+
+function requireJavaScriptBigIntegerDivision(language, operation, kind, literal) {
+  return ((((language === "JavaScript") && (kind === "int")) && ((operation === "div") || (operation === "rem"))) && !acceptNonzeroJavaScriptIntegerLiteral(literal));
+}
+
+function readJavaScriptBigIntegerDivisionMessage() {
+  return "Division by zero";
+}
+
+function renderJavaScriptBigIntegerDivision(target, left, right) {
+  if ((target === "JavaScript")) {
+    return (((("ml_big_integer_conversion.divide(" + left) + ",") + right) + ")");
+  } else {
+    if ((target === "Rust")) {
+      return (((("crate::ml_big_integer_conversion::divide_java_script_big_integer(" + left) + ",") + right) + ")");
+    } else {
+      if (((target === "Lean") || (target === "Rocq"))) {
+        return (((("(MLBigIntegerConversion.divide " + left) + " ") + right) + ")");
+      } else {
+        return "";
+      }
+    }
+  }
+}
+
 function readJavaScriptBigIntegerConversionForm(kind) {
   if (((kind === "int") || (kind === "nat"))) {
     return "identity";
@@ -245,16 +324,20 @@ function readJavaScriptBigIntegerBuiltinOperation(name) {
 }
 
 function readJavaScriptBigIntegerResultOperation(operation) {
-  if ((operation === "parseJavaScriptStringBigInteger")) {
-    return "string";
+  if ((operation === "divideJavaScriptBigIntegerResult")) {
+    return "division";
   } else {
-    if ((operation === "convertJavaScriptBooleanBigIntegerValue")) {
-      return "boolean";
+    if ((operation === "parseJavaScriptStringBigInteger")) {
+      return "string";
     } else {
-      if ((operation === "convertJavaScriptNumberBigIntegerResult")) {
-        return "number";
+      if ((operation === "convertJavaScriptBooleanBigIntegerValue")) {
+        return "boolean";
       } else {
-        return "";
+        if ((operation === "convertJavaScriptNumberBigIntegerResult")) {
+          return "number";
+        } else {
+          return "";
+        }
       }
     }
   }
@@ -347,7 +430,7 @@ function source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, 
       const index_2 = (index + 1);
       const remaining = 0;
       const minimum = 0;
-      const source_ml_source2_s7 = (((scalar >= 194) && (scalar <= 223)) ? (() => {
+      const source_ml_source2_s9 = (((scalar >= 194) && (scalar <= 223)) ? (() => {
         const scalar_2 = (scalar - 192);
         const remaining_2 = 1;
         const minimum_2 = 128;
@@ -363,16 +446,16 @@ function source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, 
         const minimum_4 = 65536;
         return ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next", ["scalar"]: scalar_4, ["remaining"]: remaining_4, ["minimum"]: minimum_4 });
       })() : ((scalar >= 128) ? ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_return", ["ml_source1_temporary_result4"]: [(-1)] }) : ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next", ["scalar"]: scalar, ["remaining"]: remaining, ["minimum"]: minimum })))));
-      switch (source_ml_source2_s7.$) {
+      switch (source_ml_source2_s9.$) {
         case "ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_next": {
-          const scalar_5 = source_ml_source2_s7["scalar"];
-          const remaining_5 = source_ml_source2_s7["remaining"];
-          const minimum_5 = source_ml_source2_s7["minimum"];
-          const source_ml_source2_s8 = source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4(bytes, index_2, scalar_5, remaining_5);
-          switch (source_ml_source2_s8.$) {
+          const scalar_5 = source_ml_source2_s9["scalar"];
+          const remaining_5 = source_ml_source2_s9["remaining"];
+          const minimum_5 = source_ml_source2_s9["minimum"];
+          const source_ml_source2_s10 = source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4(bytes, index_2, scalar_5, remaining_5);
+          switch (source_ml_source2_s10.$) {
             case "ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4_done": {
-              const index_3 = source_ml_source2_s8["index"];
-              const scalar_6 = source_ml_source2_s8["scalar"];
+              const index_3 = source_ml_source2_s10["index"];
+              const scalar_6 = source_ml_source2_s10["scalar"];
               if ((((scalar_6 < minimum_5) || (scalar_6 > 1114111)) || ((scalar_6 >= 55296) && (scalar_6 <= 57343)))) {
                 return ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_source1_temporary_result2"]: [(-1)] });
               } else {
@@ -389,20 +472,20 @@ function source_ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, 
               }
             }
             case "ml_source1_temporary_readJavaScriptUtf8StringUnits_loop4_return": {
-              const source_ml_source1_temporary_result4 = source_ml_source2_s8["ml_source1_temporary_result4"];
+              const source_ml_source1_temporary_result4 = source_ml_source2_s10["ml_source1_temporary_result4"];
               return ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_source1_temporary_result2"]: source_ml_source1_temporary_result4 });
             }
             default: {
-              throw new TypeError(`unexpected constructor ${source_ml_source2_s8.$}`);
+              throw new TypeError(`unexpected constructor ${source_ml_source2_s10.$}`);
             }
           }
         }
         case "ml_source1_temporary_readJavaScriptUtf8StringUnits_join3_return": {
-          const source_ml_source1_temporary_result4_2 = source_ml_source2_s7["ml_source1_temporary_result4"];
+          const source_ml_source1_temporary_result4_2 = source_ml_source2_s9["ml_source1_temporary_result4"];
           return ({ $: "ml_source1_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_source1_temporary_result2"]: source_ml_source1_temporary_result4_2 });
         }
         default: {
-          throw new TypeError(`unexpected constructor ${source_ml_source2_s7.$}`);
+          throw new TypeError(`unexpected constructor ${source_ml_source2_s9.$}`);
         }
       }
     } else {
@@ -504,11 +587,44 @@ function source_ml_source1_temporary_convertJavaScriptNumberBigInteger_loop11(va
   }
 }
 
+function source_ml_source1_temporary_divideJavaScriptBigInteger_loop13(remaining, shifted, weight, quotient) {
+  for (;;) {
+    if ((weight > 1n)) {
+      const shifted_2 = ml_divide(shifted, 2n, 'trunc', "Division by zero", false);
+      const weight_2 = ml_divide(weight, 2n, 'trunc', "Division by zero", false);
+      if ((shifted_2 <= remaining)) {
+        const remaining_2 = (remaining - shifted_2);
+        const quotient_2 = (quotient + weight_2);
+        [remaining, shifted, weight, quotient] = [remaining_2, shifted_2, weight_2, quotient_2];
+        continue;
+      } else {
+        [remaining, shifted, weight, quotient] = [remaining, shifted_2, weight_2, quotient];
+        continue;
+      }
+    } else {
+      return ({ $: "ml_source1_temporary_divideJavaScriptBigInteger_loop13_done", ["remaining"]: remaining, ["quotient"]: quotient });
+    }
+  }
+}
+
+function source_ml_source1_temporary_divideJavaScriptBigInteger_loop12(remaining, shifted, weight) {
+  for (;;) {
+    if ((shifted <= remaining)) {
+      const shifted_2 = (shifted * 2n);
+      const weight_2 = (weight * 2n);
+      [remaining, shifted, weight] = [remaining, shifted_2, weight_2];
+      continue;
+    } else {
+      return ({ $: "ml_source1_temporary_divideJavaScriptBigInteger_loop12_done", ["shifted"]: shifted, ["weight"]: weight });
+    }
+  }
+}
+
 function main() {
 
 }
 
 main();
 
-return { convertUnits: convertJavaScriptStringBigIntegerUnits, convertNumber: convertJavaScriptNumberBigInteger, convertBoolean: convertJavaScriptBooleanBigInteger, convertUtf8: convertJavaScriptUtf8BigInteger };
+return { convertUnits: convertJavaScriptStringBigIntegerUnits, convertNumber: convertJavaScriptNumberBigInteger, convertBoolean: convertJavaScriptBooleanBigInteger, convertUtf8: convertJavaScriptUtf8BigInteger, divide: divideJavaScriptBigInteger };
 })();

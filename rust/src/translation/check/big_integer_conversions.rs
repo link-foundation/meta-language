@@ -257,6 +257,35 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if rules::read_java_script_big_integer_result_operation(operation) == "division" {
+            if self.language != Language::JavaScript
+                || arguments.len() != 2
+                || arguments.iter().any(|argument| argument.spread)
+            {
+                return Err(type_error(
+                    "a JavaScript BigInt division intrinsic needs two owned source operands",
+                    span,
+                ));
+            }
+            let mut args = Vec::new();
+            for argument in arguments {
+                let value = self.expr(&argument.value, env, path, Some(&INT), false)?;
+                if value.ty != INT {
+                    return Err(type_error(
+                        "a JavaScript BigInt division intrinsic needs its actual integer operands",
+                        span,
+                    ));
+                }
+                args.push(value);
+            }
+            return Ok(Expr::new(
+                Node::Math {
+                    op: operation.to_owned(),
+                    args,
+                },
+                array(INT),
+            ));
+        }
         if self.language != Language::JavaScript || arguments.len() != 1 || arguments[0].spread {
             return Err(type_error(
                 "a JavaScript BigInt intrinsic needs one owned source operand",
@@ -284,6 +313,98 @@ impl Checker {
                 args: vec![value],
             },
             if form == "boolean" { INT } else { array(INT) },
+        ))
+    }
+
+    /// Actual IR adapter; complete division is generated from the shared source.
+    pub(super) fn materialize_big_integer_division(
+        &mut self,
+        operation: BinaryOp,
+        left: &Expr,
+        right: &Expr,
+    ) -> Option<Expr> {
+        let literal = match &right.node {
+            Node::Lit { value } => value.text(),
+            _ => String::new(),
+        };
+        if !rules::require_java_script_big_integer_division(
+            self.language.as_str(),
+            operation.name(),
+            left.ty.kind(),
+            &literal,
+        ) {
+            return None;
+        }
+        let name = self.fresh_name("ml_integer_division");
+        let result = Expr::var(name.clone(), array(INT));
+        let conversion = Expr::new(
+            Node::Math {
+                op: "divideJavaScriptBigIntegerResult".to_owned(),
+                args: vec![left.clone(), right.clone()],
+            },
+            array(INT),
+        );
+        let length = Expr::new(
+            Node::Length {
+                array: Box::new(result.clone()),
+            },
+            FLOAT,
+        );
+        let condition = Expr::new(
+            binary_node(
+                BinaryOp::Eq,
+                Box::new(length),
+                Box::new(Expr::lit(FLOAT, LitValue::Text("2".to_owned()))),
+                Some(FLOAT),
+                None,
+                None,
+                None,
+            ),
+            BOOL,
+        );
+        let index = Expr::lit(
+            FLOAT,
+            LitValue::Text(if operation == BinaryOp::Div { "0" } else { "1" }.to_owned()),
+        );
+        let optional = Expr::new(
+            Node::OptionalIndex {
+                array: Box::new(result),
+                index: Box::new(index),
+            },
+            option(INT, "undefined"),
+        );
+        let value = Expr::new(
+            Node::Coalesce {
+                left: Box::new(optional),
+                right: Box::new(Expr::lit(INT, LitValue::Text("0".to_owned()))),
+            },
+            INT,
+        );
+        let failure = Expr::new(
+            Node::Math {
+                op: "raiseJavaScriptRangeError".to_owned(),
+                args: vec![
+                    text(rules::read_java_script_big_integer_division_message()),
+                    Expr::lit(BOOL, LitValue::Bool(true)),
+                ],
+            },
+            INT,
+        );
+        let body = Expr::new(
+            Node::If {
+                cond: Box::new(condition),
+                then: Box::new(value),
+                otherwise: Box::new(failure),
+            },
+            INT,
+        );
+        Some(Expr::new(
+            Node::Let {
+                name,
+                value: Box::new(conversion),
+                body: Box::new(body),
+            },
+            INT,
         ))
     }
 }

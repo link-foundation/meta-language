@@ -966,7 +966,7 @@ class Inference {
           return STRING;
         }
         if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
-          for(const item of node.args)this.expr(item.value,env);
+          for(const item of node.args){const value=this.expr(item.value,env);if(readJavaScriptBigIntegerResultOperation(node.op)==='division')this.unify(value,INT,node.span);}
           return node.op==='convertJavaScriptBigInteger'||readJavaScriptBigIntegerResultOperation(node.op)==='boolean'?INT:{kind:'array',element:INT};
         }
         if(acceptLinkedJavaScriptSourceException('math',node.op)||readJavaScriptExceptionConstructorClass(node.op)){

@@ -474,9 +474,10 @@ pub use translation::string_number::{
 pub use translation::string_number_program::create_string_number_program_links;
 
 pub use translation::big_integer_conversion::{
-    JavaScriptBigInteger, JavaScriptBigIntegerConversionError,
+    JavaScriptBigInteger, JavaScriptBigIntegerArithmeticError, JavaScriptBigIntegerConversionError,
     convert_javascript_boolean_big_integer, convert_javascript_number_big_integer,
     convert_javascript_string_big_integer, convert_javascript_string_big_integer_units,
+    divide_javascript_big_integer,
 };
 pub use translation::big_integer_conversion_program::create_big_integer_conversion_program_links;
 

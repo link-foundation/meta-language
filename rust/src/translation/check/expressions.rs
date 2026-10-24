@@ -952,6 +952,9 @@ impl Checker {
         if !left.ty.is_ordered() {
             return Err(type_error(format!("arithmetic on {}", left.ty.key()), span));
         }
+        if let Some(division) = self.materialize_big_integer_division(op, &left, &right) {
+            return Ok(division);
+        }
         let ty = left.ty.clone();
         let (semantics, rounding, by_zero) = arithmetic_semantics(self.language, op, &ty, rounding);
         Ok(Expr::new(

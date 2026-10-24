@@ -7,6 +7,8 @@ import {createBigIntegerConversionProgramLinks} from '../src/big-integer-convers
 import {emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
+import {divideJavaScriptBigInteger} from '../src/translation/big-integer-conversion-rules.js';
+import {divideJavaScriptBigInteger as divideInteger} from '../src/big-integer-conversion.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/big-integer-conversion.lino',import.meta.url));
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
@@ -34,4 +36,15 @@ test('the full editable BigInt definition retains all emission and codec fields'
   const expected=emitTypedProgramLinks(packet.network,packet.root,target);
   for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
  }
+});
+test('shared BigInt division agrees with independent operators over signs, zero and arbitrary bit widths',()=>{
+ const values=[];
+ for(let value=-96n;value<=96n;value+=1n)values.push(value);
+ for(const bits of [53n,64n,127n,256n,1024n])for(const sign of [-1n,1n])for(const delta of [-1n,0n,1n])values.push(sign*((1n<<bits)+delta));
+ for(const left of values)for(const right of [-97n,-3n,-1n,0n,1n,2n,7n,99n,1n<<256n]){
+  const actual=divideJavaScriptBigInteger(left,right);
+  if(right===0n){assert.deepEqual(actual,[]);assert.throws(()=>left/right,RangeError);assert.throws(()=>left%right,RangeError);assert.throws(()=>divideInteger(left,right),{name:'RangeError',message:'Division by zero'});}
+  else {assert.deepEqual(actual,[left/right,left%right]);assert.deepEqual(divideInteger(left,right),[left/right,left%right]);}
+ }
+ for(const [left,right] of [[1,1n],[1n,1],[undefined,1n],[1n,null]])assert.throws(()=>divideInteger(left,right),TypeError);
 });

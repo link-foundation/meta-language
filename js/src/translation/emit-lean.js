@@ -10,7 +10,7 @@ import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from '.
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {STRING_NUMBER_LEAN_PRELUDE} from './string-number-formal-runtime.js';
 import {BIG_INTEGER_CONVERSION_LEAN_PRELUDE} from './big-integer-conversion-formal-runtime.js';
-import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression,renderJavaScriptBigIntegerDivision} from './big-integer-conversion-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -663,7 +663,8 @@ class LeanEmitter {
     if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Lean',e.op,this.expr(e.args[0],depth));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.helpers.add('bigIntegerConversion');
-      return renderJavaScriptBigIntegerResultExpression('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),false);
+      if(readJavaScriptBigIntegerResultOperation(e.op)==='division')return renderJavaScriptBigIntegerDivision('Lean',this.expr(e.args[0],depth),this.expr(e.args[1],depth));
+          return renderJavaScriptBigIntegerResultExpression('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),false);
     }
     if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
       if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');

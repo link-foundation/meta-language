@@ -2,7 +2,8 @@
 import {INT,FLOAT,BOOL,STRING,array,option} from './types.js';
 import {unsupported,typeError} from './diagnostics.js';
 import {readJavaScriptBigIntegerConversionForm,readJavaScriptBigIntegerResultOperation,
-  readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces} from './big-integer-conversion-rules.js';
+  readJavaScriptBigIntegerConversionErrorClass,readJavaScriptBigIntegerConversionMessagePieces,
+  requireJavaScriptBigIntegerDivision,readJavaScriptBigIntegerDivisionMessage} from './big-integer-conversion-rules.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
 import {readOptionalOutputAbsences} from './optional-value-rules.js';
 
@@ -48,9 +49,26 @@ export function checkJavaScriptBigIntegerBuiltin(checker,node,env,path) {
   return body;
 }
 export function checkJavaScriptBigIntegerResult(checker,node,env,path) {
+  if(readJavaScriptBigIntegerResultOperation(node.op)==='division'){
+    if(checker.language!=='JavaScript'||node.args.length!==2||node.args.some(argument=>argument.spread))throw typeError('a JavaScript BigInt division intrinsic needs two owned source operands',node.span);
+    const args=node.args.map(argument=>checker.expr(argument.value,env,path,INT));
+    if(args.some(argument=>argument.type.kind!=='int'))throw typeError('a JavaScript BigInt division intrinsic needs its actual integer operands',node.span);
+    return{k:'math',op:node.op,args,type:array(INT)};
+  }
   if(checker.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript BigInt intrinsic needs one owned source operand',node.span);
   const form=readJavaScriptBigIntegerResultOperation(node.op),value=checker.expr(node.args[0].value,env,path,undefined);
   const kind=form==='string'?'string':form==='number'?'float':'bool';
   if(value.type.kind!==kind)throw typeError('a JavaScript BigInt intrinsic needs its actual operand type',node.span);
   return{k:'math',op:node.op,args:[value],type:form==='boolean'?INT:array(INT)};
+}
+
+/** Build actual checked IR; shared source rules own admission and division. */
+export function materializeJavaScriptBigIntegerDivision(checker,operation,left,right){
+  if(!requireJavaScriptBigIntegerDivision(checker.language,operation,left.type.kind,right.k==='lit'?String(right.value):''))return null;
+  const name=checker.freshName('ml_integer_division'),result={k:'var',name,type:array(INT)};
+  const conversion={k:'math',op:'divideJavaScriptBigIntegerResult',args:[left,right],type:array(INT)};
+  const condition={k:'binary',op:'eq',left:{k:'length',array:result,type:FLOAT},right:{k:'lit',value:'2',type:FLOAT},type:BOOL,domain:FLOAT};
+  const value={k:'coalesce',left:{k:'optionalIndex',array:result,index:{k:'lit',value:operation==='div'?'0':'1',type:FLOAT},type:option(INT,'undefined')},right:{k:'lit',value:'0',type:INT},type:INT};
+  const failure={k:'math',op:'raiseJavaScriptRangeError',args:[text(readJavaScriptBigIntegerDivisionMessage()),{k:'lit',value:true,type:BOOL}],type:INT};
+  return{k:'let',name,value:conversion,body:{k:'if',cond:condition,then:value,else:failure,type:INT},type:INT};
 }

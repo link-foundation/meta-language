@@ -7,6 +7,137 @@ use super::read_java_script_numeric_digit_unit;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn render_java_script_big_integer_division(target: &str, left: &str, right: &str) -> String {
+    if target == "JavaScript" {
+        format!(
+            "ml_big_integer_conversion.divide({},{})",
+            left.to_owned(),
+            right.to_owned()
+        )
+    } else if target == "Rust" {
+        format!(
+            "crate::ml_big_integer_conversion::divide_java_script_big_integer({},{})",
+            left.to_owned(),
+            right.to_owned()
+        )
+    } else if (target == "Lean") || (target == "Rocq") {
+        format!(
+            "(MLBigIntegerConversion.divide {} {})",
+            left.to_owned(),
+            right.to_owned()
+        )
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_conversion_form(kind: &str) -> String {
+    if (kind == "int") || (kind == "nat") {
+        String::from("identity")
+    } else if kind == "float" {
+        String::from("number")
+    } else if kind == "string" {
+        String::from("string")
+    } else if kind == "bool" {
+        String::from("boolean")
+    } else if kind == "unit" {
+        String::from("undefined")
+    } else if kind == "option" {
+        String::from("optional")
+    } else {
+        String::from("unsupported")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_conversion_error_class(form: &str) -> String {
+    if form == "string" {
+        String::from("SyntaxError")
+    } else if form == "number" {
+        String::from("RangeError")
+    } else if (form == "undefined") || (form == "null") {
+        String::from("TypeError")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_big_integer_conversion_message(form: &str, value: &str) -> String {
+    {
+        let pieces = self::read_java_script_big_integer_conversion_message_pieces(form);
+        if (pieces.len() as f64) == 2f64 {
+            format!(
+                "{}{}{}",
+                (self::ml_array::optional_at(&pieces, self::ml_array::number_index(0f64)))
+                    .unwrap_or_else(|| String::new()),
+                value.to_owned(),
+                (self::ml_array::optional_at(&pieces, self::ml_array::number_index(1f64)))
+                    .unwrap_or_else(|| String::new())
+            )
+        } else {
+            String::new()
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_conversion_message_pieces(form: &str) -> Vec<String> {
+    if form == "number" {
+        vec![
+            String::from("The number "),
+            String::from(" cannot be converted to a BigInt because it is not an integer"),
+        ]
+    } else if ((form == "string") || (form == "undefined")) || (form == "null") {
+        vec![
+            String::from("Cannot convert "),
+            String::from(" to a BigInt"),
+        ]
+    } else {
+        Vec::<String>::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_builtin_operation(name: &str) -> String {
+    if name == "BigInt" {
+        String::from("convertJavaScriptBigInteger")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_result_operation(operation: &str) -> String {
+    if operation == "divideJavaScriptBigIntegerResult" {
+        String::from("division")
+    } else if operation == "parseJavaScriptStringBigInteger" {
+        String::from("string")
+    } else if operation == "convertJavaScriptBooleanBigIntegerValue" {
+        String::from("boolean")
+    } else if operation == "convertJavaScriptNumberBigIntegerResult" {
+        String::from("number")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_java_script_big_integer_result(kind: &str, operation: &str) -> bool {
+    (kind == "math")
+        && (!(self::read_java_script_big_integer_result_operation(operation)).is_empty())
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_java_script_big_integer_result_expression(
     target: &str,
     form: &str,
@@ -169,7 +300,7 @@ pub fn source_ml_source1_temporary_read_java_script_utf8_string_units_loop2(
                         {
                             let minimum = 0f64;
                             {
-                                let source_ml_source2_s7 = if (194f64..=223f64).contains(&scalar) {
+                                let source_ml_source2_s9 = if (194f64..=223f64).contains(&scalar) {
                                     {
                                         let scalar_2 = scalar - 192f64;
                                         {
@@ -207,11 +338,11 @@ pub fn source_ml_source1_temporary_read_java_script_utf8_string_units_loop2(
                                 } else {
                                     self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3::MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar, remaining, minimum)
                                 };
-                                match source_ml_source2_s7 {
+                                match source_ml_source2_s9 {
                                     self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3::MlSource1TemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_5, remaining_5, minimum_5) => {
                                         {
-                                            let source_ml_source2_s8 = self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
-                                            match source_ml_source2_s8 {
+                                            let source_ml_source2_s10 = self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
+                                            match source_ml_source2_s10 {
                                                 self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index_3, scalar_6) => {
                                                     if ((scalar_6 < minimum_5) || (scalar_6 > 1_114_111f64)) || ((55_296f64..=57_343f64).contains(&scalar_6)) {
                                                         self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Return(vec![-1f64])
@@ -474,5 +605,99 @@ pub fn source_ml_source1_temporary_convert_java_script_number_big_integer_loop11
             }
         }
         return { integer.clone() };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result {
+    MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Done(self::ml::Big, self::ml::Big),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_divide_java_script_big_integer_loop13(
+    mut remaining: self::ml::Big,
+    mut shifted: self::ml::Big,
+    mut weight: self::ml::Big,
+    mut quotient: self::ml::Big,
+) -> self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result {
+    loop {
+        if weight > (self::ml::Big::from_i128(1)) {
+            {
+                let shifted_2 = self::ml::divide(
+                    &shifted,
+                    &self::ml::Big::from_i128(2),
+                    "trunc",
+                    Some("Division by zero"),
+                    false,
+                );
+                {
+                    let weight_2 = self::ml::divide(
+                        &weight,
+                        &self::ml::Big::from_i128(2),
+                        "trunc",
+                        Some("Division by zero"),
+                        false,
+                    );
+                    if shifted_2 <= remaining {
+                        {
+                            let remaining_2 = remaining.sub(&shifted_2);
+                            {
+                                let quotient_2 = quotient.add(&weight_2);
+                                {
+                                    (remaining, shifted, weight, quotient) = (
+                                        remaining_2,
+                                        shifted_2.clone(),
+                                        weight_2.clone(),
+                                        quotient_2,
+                                    );
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    {
+                        {
+                            (shifted, weight) = (shifted_2.clone(), weight_2.clone());
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+        return {
+            self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Done(remaining.clone(), quotient.clone())
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result {
+    MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Done(self::ml::Big, self::ml::Big),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_divide_java_script_big_integer_loop12(
+    mut remaining: self::ml::Big,
+    mut shifted: self::ml::Big,
+    mut weight: self::ml::Big,
+) -> self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result {
+    loop {
+        if shifted <= remaining {
+            {
+                let shifted_2 = shifted.mul(&self::ml::Big::from_i128(2));
+                {
+                    let weight_2 = weight.mul(&self::ml::Big::from_i128(2));
+                    {
+                        (shifted, weight) = (shifted_2, weight_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return {
+            self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Done(shifted.clone(), weight.clone())
+        };
     }
 }

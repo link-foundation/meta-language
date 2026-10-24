@@ -89,3 +89,44 @@ pub fn convert_javascript_number_big_integer(
 pub fn convert_javascript_boolean_big_integer(value: bool) -> JavaScriptBigInteger {
     rules::convert_java_script_boolean_big_integer(value)
 }
+
+/// A source arithmetic error retaining class, units and own-message presence.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct JavaScriptBigIntegerArithmeticError {
+    pub class_name: String,
+    pub message_units: Vec<u16>,
+    pub message_present: bool,
+}
+impl std::fmt::Display for JavaScriptBigIntegerArithmeticError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&String::from_utf16_lossy(&self.message_units))
+    }
+}
+impl std::error::Error for JavaScriptBigIntegerArithmeticError {}
+
+/// Return the exact quotient and dividend-signed remainder.
+///
+/// # Errors
+/// Returns the source RangeError for a zero divisor.
+pub fn divide_javascript_big_integer(
+    left: JavaScriptBigInteger,
+    right: JavaScriptBigInteger,
+) -> Result<(JavaScriptBigInteger, JavaScriptBigInteger), JavaScriptBigIntegerArithmeticError> {
+    let result = rules::divide_java_script_big_integer(left, right);
+    if result.len() != 2 {
+        return Err(JavaScriptBigIntegerArithmeticError {
+            class_name: super::source_exception_rules::read_java_script_source_exception_class(
+                "raiseJavaScriptRangeError",
+            ),
+            message_units: rules::read_java_script_big_integer_division_message()
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        });
+    }
+    let mut values = result.into_iter();
+    Ok((
+        values.next().expect("complete quotient"),
+        values.next().expect("complete remainder"),
+    ))
+}

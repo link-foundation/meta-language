@@ -2,7 +2,8 @@
 import {convertJavaScriptStringBigIntegerUnits as readStringIntegerResult,
   convertJavaScriptNumberBigInteger as readNumberIntegerResult,
   convertJavaScriptBooleanBigInteger as readBooleanIntegerResult,
-  readJavaScriptBigIntegerConversionErrorClass,renderJavaScriptBigIntegerConversionMessage} from './translation/big-integer-conversion-rules.js';
+  readJavaScriptBigIntegerConversionErrorClass,renderJavaScriptBigIntegerConversionMessage,
+  divideJavaScriptBigInteger as readDivisionResult,readJavaScriptBigIntegerDivisionMessage} from './translation/big-integer-conversion-rules.js';
 
 const unitsOf=text=>Array.from({length:text.length},(_,index)=>text.charCodeAt(index));
 function conversionError(form,value) {
@@ -43,4 +44,12 @@ export function convertJavaScriptNumberBigInteger(value) {
 export function convertJavaScriptBooleanBigInteger(value) {
   if(typeof value!=='boolean')throw new TypeError('BigInt boolean conversion needs an actual Boolean');
   return readBooleanIntegerResult(value);
+}
+
+/** Return [quotient,remainder] with exact source signed integer behavior. */
+export function divideJavaScriptBigInteger(left,right){
+  if(typeof left!=='bigint'||typeof right!=='bigint')throw new TypeError('BigInt division needs actual BigInt operands');
+  const result=readDivisionResult(left,right);
+  if(result.length!==2)throw new RangeError(readJavaScriptBigIntegerDivisionMessage());
+  return result;
 }

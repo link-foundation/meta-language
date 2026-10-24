@@ -60,6 +60,41 @@ export function convertJavaScriptBooleanBigInteger(value) {
   return value?1n:0n;
 }
 
+/** Truncating signed division and dividend-signed remainder. Empty means a
+ * zero divisor. Only division by the literal two is a primitive here, so the
+ * full definition self-translates without recursively calling itself.
+ * @param {bigint} left @param {bigint} right @returns {bigint[]} */
+export function divideJavaScriptBigInteger(left,right) {
+  if(right===0n)return [];
+  let remaining=left<0n?-left:left;
+  const divisor=right<0n?-right:right;
+  let shifted=divisor,weight=1n,quotient=0n;
+  while(shifted<=remaining){shifted*=2n;weight*=2n;}
+  while(weight>1n){
+    shifted/=2n;weight/=2n;
+    if(shifted<=remaining){remaining-=shifted;quotient+=weight;}
+  }
+  return [(left<0n)!==(right<0n)?-quotient:quotient,left<0n?-remaining:remaining];
+}
+/** Checked integer nodes already own canonical signed decimal text; empty
+ * denotes a nonliteral. Zero spellings cannot prove a nonzero divisor.
+ * @param {string} value @returns {boolean} */
+export function acceptNonzeroJavaScriptIntegerLiteral(value){
+  return value!==''&&value!=='0'&&value!=='-0';
+}
+/** @param {string} language @param {string} operation @param {string} kind @param {string} literal @returns {boolean} */
+export function requireJavaScriptBigIntegerDivision(language,operation,kind,literal){
+  return language==='JavaScript'&&kind==='int'&&(operation==='div'||operation==='rem')&&!acceptNonzeroJavaScriptIntegerLiteral(literal);
+}
+/** @returns {string} */
+export function readJavaScriptBigIntegerDivisionMessage(){return 'Division by zero';}
+/** @param {string} target @param {string} left @param {string} right @returns {string} */
+export function renderJavaScriptBigIntegerDivision(target,left,right){
+  if(target==='JavaScript')return 'ml_big_integer_conversion.divide('+left+','+right+')';
+  if(target==='Rust')return 'crate::ml_big_integer_conversion::divide_java_script_big_integer('+left+','+right+')';
+  return target==='Lean'||target==='Rocq'?'(MLBigIntegerConversion.divide '+left+' '+right+')':'';
+}
+
 /** @param {string} kind @returns {string} */
 export function readJavaScriptBigIntegerConversionForm(kind) {
   if(kind==='int'||kind==='nat')return 'identity';
@@ -96,6 +131,7 @@ export function readJavaScriptBigIntegerBuiltinOperation(name) {
 }
 /** @param {string} operation @returns {string} */
 export function readJavaScriptBigIntegerResultOperation(operation) {
+  if(operation==='divideJavaScriptBigIntegerResult')return 'division';
   if(operation==='parseJavaScriptStringBigInteger')return 'string';
   if(operation==='convertJavaScriptBooleanBigIntegerValue')return 'boolean';
   return operation==='convertJavaScriptNumberBigIntegerResult'?'number':'';

@@ -96,7 +96,7 @@ export {createStringNumberProgramLinks} from './string-number-program.js';
 export {convertJavaScriptStringNumber} from './string-number.js';
 
 export {createBigIntegerConversionProgramLinks} from './big-integer-conversion-program.js';
-export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger} from './big-integer-conversion.js';
+export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger,divideJavaScriptBigInteger} from './big-integer-conversion.js';
 
 export {createSourceExceptionProgramLinks} from './source-exception-program.js';
 export {createJavaScriptStringUnitProgramLinks} from './javascript-string-unit-program.js';

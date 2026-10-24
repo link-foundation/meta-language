@@ -3,6 +3,8 @@ use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8;
 use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9;
 use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result;
 use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result;
+use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result;
+use super::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result;
 use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
 use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
 use super::source_ml_source1_temporary_convert_java_script_number_big_integer_loop11;
@@ -10,6 +12,8 @@ use super::source_ml_source1_temporary_convert_java_script_string_big_integer_un
 use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop6;
 use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop7;
 use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop10;
+use super::source_ml_source1_temporary_divide_java_script_big_integer_loop12;
+use super::source_ml_source1_temporary_divide_java_script_big_integer_loop13;
 use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1;
 use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2;
 
@@ -810,103 +814,83 @@ pub fn convert_java_script_boolean_big_integer(value: bool) -> self::ml::Big {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_big_integer_conversion_form(kind: &str) -> String {
-    if (kind == "int") || (kind == "nat") {
-        String::from("identity")
-    } else if kind == "float" {
-        String::from("number")
-    } else if kind == "string" {
-        String::from("string")
-    } else if kind == "bool" {
-        String::from("boolean")
-    } else if kind == "unit" {
-        String::from("undefined")
-    } else if kind == "option" {
-        String::from("optional")
+pub fn divide_java_script_big_integer(
+    left: self::ml::Big,
+    right: self::ml::Big,
+) -> Vec<self::ml::Big> {
+    if right == (self::ml::Big::from_i128(0)) {
+        Vec::<self::ml::Big>::new()
     } else {
-        String::from("unsupported")
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_big_integer_conversion_error_class(form: &str) -> String {
-    if form == "string" {
-        String::from("SyntaxError")
-    } else if form == "number" {
-        String::from("RangeError")
-    } else if (form == "undefined") || (form == "null") {
-        String::from("TypeError")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_java_script_big_integer_conversion_message(form: &str, value: &str) -> String {
-    {
-        let pieces = self::read_java_script_big_integer_conversion_message_pieces(form);
-        if (pieces.len() as f64) == 2f64 {
-            format!(
-                "{}{}{}",
-                (self::ml_array::optional_at(&pieces, self::ml_array::number_index(0f64)))
-                    .unwrap_or_else(|| String::new()),
-                value.to_owned(),
-                (self::ml_array::optional_at(&pieces, self::ml_array::number_index(1f64)))
-                    .unwrap_or_else(|| String::new())
-            )
-        } else {
-            String::new()
+        {
+            let remaining = if left < (self::ml::Big::from_i128(0)) {
+                left.neg()
+            } else {
+                left.clone()
+            };
+            {
+                let divisor = if right < (self::ml::Big::from_i128(0)) {
+                    right.neg()
+                } else {
+                    right.clone()
+                };
+                {
+                    let shifted = divisor;
+                    {
+                        let weight = self::ml::Big::from_i128(1);
+                        {
+                            let quotient = self::ml::Big::from_i128(0);
+                            {
+                                let source_ml_source2_s7 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop12(remaining.clone(), shifted, weight);
+                                match source_ml_source2_s7 {
+                                    self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop12Done(shifted_2, weight_2) => {
+                                        {
+                                            let source_ml_source2_s8 = self::source_ml_source1_temporary_divide_java_script_big_integer_loop13(remaining.clone(), shifted_2.clone(), weight_2.clone(), quotient);
+                                            match source_ml_source2_s8 {
+                                                self::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Result::MlSource1TemporaryDivideJavaScriptBigIntegerLoop13Done(remaining_2, quotient_2) => {
+                                                    vec![if (left < (self::ml::Big::from_i128(0))) != (right < (self::ml::Big::from_i128(0))) {
+                                                        quotient_2.neg()
+                                                    } else {
+                                                        quotient_2.clone()
+                                                    }, if left < (self::ml::Big::from_i128(0)) {
+                                                        remaining_2.neg()
+                                                    } else {
+                                                        remaining_2.clone()
+                                                    }]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_big_integer_conversion_message_pieces(form: &str) -> Vec<String> {
-    if form == "number" {
-        vec![
-            String::from("The number "),
-            String::from(" cannot be converted to a BigInt because it is not an integer"),
-        ]
-    } else if ((form == "string") || (form == "undefined")) || (form == "null") {
-        vec![
-            String::from("Cannot convert "),
-            String::from(" to a BigInt"),
-        ]
-    } else {
-        Vec::<String>::new()
-    }
+pub fn accept_nonzero_java_script_integer_literal(value: &str) -> bool {
+    ((!(value).is_empty()) && (value != "0")) && (value != "-0")
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_big_integer_builtin_operation(name: &str) -> String {
-    if name == "BigInt" {
-        String::from("convertJavaScriptBigInteger")
-    } else {
-        String::new()
-    }
+pub fn require_java_script_big_integer_division(
+    language: &str,
+    operation: &str,
+    kind: &str,
+    literal: &str,
+) -> bool {
+    (((language == "JavaScript") && (kind == "int"))
+        && ((operation == "div") || (operation == "rem")))
+        && !(self::accept_nonzero_java_script_integer_literal(literal))
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_big_integer_result_operation(operation: &str) -> String {
-    if operation == "parseJavaScriptStringBigInteger" {
-        String::from("string")
-    } else if operation == "convertJavaScriptBooleanBigIntegerValue" {
-        String::from("boolean")
-    } else if operation == "convertJavaScriptNumberBigIntegerResult" {
-        String::from("number")
-    } else {
-        String::new()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_linked_java_script_big_integer_result(kind: &str, operation: &str) -> bool {
-    (kind == "math")
-        && (!(self::read_java_script_big_integer_result_operation(operation)).is_empty())
+pub fn read_java_script_big_integer_division_message() -> String {
+    String::from("Division by zero")
 }

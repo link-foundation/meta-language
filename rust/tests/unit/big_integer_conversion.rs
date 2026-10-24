@@ -7,6 +7,48 @@ use meta_language::{
 use serde_json::json;
 
 #[test]
+fn source_big_integer_division_retains_signed_values_error_fields_and_argument_order() {
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/big-integer-conversion/division-source-oracle.mjs",
+        "JavaScript BigInt division and remainder",
+        create_big_integer_conversion_program_links,
+    );
+}
+
+#[test]
+fn public_division_retains_exact_quotient_remainder_and_structured_source_error() {
+    for (left, right, quotient, remainder) in [
+        ("7", "3", "2", "1"),
+        ("-7", "3", "-2", "-1"),
+        ("7", "-3", "-2", "1"),
+        ("-7", "-3", "2", "-1"),
+        ("9007199254740993", "2", "4503599627370496", "1"),
+        ("18446744073709551615", "3", "6148914691236517205", "0"),
+    ] {
+        let actual = meta_language::divide_javascript_big_integer(
+            meta_language::convert_javascript_string_big_integer(left).unwrap(),
+            meta_language::convert_javascript_string_big_integer(right).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            (actual.0.to_string(), actual.1.to_string()),
+            (quotient.to_owned(), remainder.to_owned())
+        );
+    }
+    let error = meta_language::divide_javascript_big_integer(
+        meta_language::convert_javascript_boolean_big_integer(true),
+        meta_language::convert_javascript_boolean_big_integer(false),
+    )
+    .unwrap_err();
+    assert_eq!(error.class_name, "RangeError");
+    assert_eq!(
+        error.message_units,
+        "Division by zero".encode_utf16().collect::<Vec<_>>()
+    );
+    assert!(error.message_present);
+}
+
+#[test]
 fn exact_big_integer_conversion_matches_independent_node_and_complete_definition() {
     let version = std::process::Command::new("rustc")
         .arg("--version")
