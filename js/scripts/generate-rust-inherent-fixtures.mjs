@@ -24,6 +24,13 @@ const cases=[
  ['unit receiver retains variable','struct Marker; impl Marker{fn identity(self)->Self{self} fn read(&self)->i64{25}} pub fn result()->i64{Marker.identity().read()}', '25'],
  ['tuple receiver field','struct Pair(i64,i64); impl Pair{fn read(&self)->i64{self.0*10+self.1}} pub fn result()->i64{Pair(2,6).read()}', '26'],
  ['contextual fixed fields in Self','struct Pair{left:u8,right:u16} impl Pair{fn new()->Self{Self{right:7,left:2}} fn read(&self)->i64{self.left as i64*10+self.right as i64}} pub fn result()->i64{Pair::new().read()}', '27'],
+ ['associated function shares source type name','struct Point{x:i64} impl Point{fn Point(x:i64)->Self{Self{x:x+1}}} pub fn result()->i64{Point::Point(9).x}', '10'],
+ ['method shares source type name','struct Point{x:i64} impl Point{fn Point(&self)->i64{self.x+2}} pub fn result()->i64{Point{x:9}.Point()}', '11'],
+ ['forward homograph implementation','impl Point{fn Point(x:i64)->Self{Self{x:x+3}}} struct Point{x:i64} pub fn result()->i64{Point::Point(9).x}', '12'],
+ ['constructor name excludes source methods','struct Point{x:i64} impl Point{fn Value()->i64{13} fn Point()->Self{Self{x:Self::Value()}}} pub fn result()->i64{Point::Point().x}', '13'],
+ ['constructor name excludes all reserved source names','struct Point{x:i64} impl Point{fn Value()->i64{14} fn Value2()->i64{2} fn Point()->Self{Self{x:Self::Value()+Self::Value2()}}} pub fn result()->i64{Point::Point().x}', '16'],
+ ['unit struct associated namespace','struct Marker; impl Marker{fn Marker()->Self{Marker} fn read(&self)->i64{17}} pub fn result()->i64{Marker::Marker().read()}', '17'],
+ ['tuple struct associated namespace','struct Pair(i64); impl Pair{fn Pair(x:i64)->Self{Self(x+10)}} pub fn result()->i64{Pair::Pair(8).0}', '18'],
 ];
 const rows=cases.map(([name,source,value,abort],index)=>({name,module:'inherent_case_'+index,source,value,abort:abort??null}));
 const refusals=[
@@ -37,6 +44,7 @@ const refusals=[
  ['unknown nominal owner','impl Unknown{fn read()->i64{1}} fn main(){}','Rust implementation owner: an inherent implementation needs its actual source datatype'],
  ['owned method through borrowed receiver','struct Point{x:i64} impl Point{fn read(self)->i64{self.x}} fn read(p:&Point)->i64{p.read()} fn main(){}','Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver'],
  ['boxed receiver needs dereference model','struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} pub fn result()->i64{Box::new(Point{x:1}).read()} fn main(){}','Rust inherent receiver: the method needs its actual owned or single immutable borrowed receiver'],
+ ['enum constructor homograph needs resolution','enum Event{Value(i64)} impl Event{fn Value(self)->i64{0}} fn main(){}','Rust associated item namespace: an enum constructor homograph needs its complete associated-item resolution'],
 ].map(([name,source,reason])=>({name,source,kind:'unsupported',reason}));
 refusals.push({name:'closed signature profile needs composition',source:'struct Point{x:i64} impl Point{fn read(&self)->i64{self.x}} fn main(){}',kind:'unsupported',reason:'Rust inherent profile composition: closed source models need an explicit method composition proof',sourceSignatureModel:'Rust source function signature 1'});
 writeProjectData(new URL('../../parity/fixtures/rust-inherent.lino',import.meta.url),{

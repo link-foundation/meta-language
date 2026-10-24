@@ -126,6 +126,12 @@ impl RustParser {
                         span(self.cursor.peek(), self.cursor.peek()),
                     ));
                 }
+                let name = self.cursor.peek_at(1).value.clone();
+                self.prepare_record_method_namespace(
+                    &owner,
+                    &name,
+                    span(self.cursor.peek(), self.cursor.peek_at(1)),
+                )?;
                 let function = self.function(&owner)?;
                 let key = owner
                     .iter()

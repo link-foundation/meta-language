@@ -60,3 +60,6 @@ and independent future graph, codec and original-Rust controls.
 Draft ASCII Rust raw identifiers with preserved spelling/offsets, normalized
 names, keyword distinction, reserved-name errors and escaped constructor fields;
 author shared lexical, graph, codec and original-Rust controls for later CI.
+Draft distinct struct constructor/associated-item namespaces with generated
+fresh-name rules and independent future values that detect accidental
+constructor selection instead of method execution.

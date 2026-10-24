@@ -2811,6 +2811,24 @@ emitted Rust execution. None ran. Unicode XID/NFC, older edition profiles,
 raw lifetime/generic/trait forms, zero-field provenance and complete generated
 source reimport still need their implementation drafts.
 
+The struct-constructor namespace draft preserves the distinction between a
+source struct's value constructor and an associated item sharing its spelling.
+Before collecting that function, its synthetic constructor moves to a fresh
+owner-qualified value name; subsequent discovery passes derive the same name
+from the actual method register. The shared hygiene plan excludes every source
+identifier. Source constructor and method references therefore retain separate
+definitions instead of allowing a catalog overwrite or selecting a constructor
+for a method call. Host code transports those actual catalog entries; the name
+selection definition generates native source and complete typed Links.
+The source distinction follows the [Rust namespace rules](https://doc.rust-lang.org/reference/names/namespaces.html)
+and [associated item paths](https://doc.rust-lang.org/reference/items/associated-items.html).
+The inherent matrix now has twenty-nine future values/aborts and twelve exact
+refusals, including same-name functions/methods, forward blocks, occupied value
+names and unit/tuple structs. Independent value assertions distinguish method
+execution from an accidental constructor call. None ran. Enum constructor
+homographs refuse until their full associated-item resolution is supplied;
+general type/value namespace composition remains an implementation obligation.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

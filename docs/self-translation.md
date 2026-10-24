@@ -657,3 +657,13 @@ values/aborts, four token/cursor cases, five exact lexical errors and five
 program refusals reuse the paired definition/graph/codec/four-target and native
 product controls. No control ran. Unicode/NFC, other edition profiles, further
 source forms and complete generated-source reimport remain to draft.
+
+The struct namespace draft prevents a same-name associated item from overwriting
+the normalized constructor. One shared fresh-name definition generates native
+source and the complete typed Links program; host adapters move actual catalog
+entries and preserve the source owners. Every discovery pass derives the same
+constructor name from the completed method register. The inherent matrix gains
+seven value cases and one exact refusal, retaining all preceding controls.
+Independent values require actual method execution, including occupied fresh
+names, forward blocks and unit/tuple owners. None ran. Enum homographs and
+remaining type/value namespace composition still need implementation.

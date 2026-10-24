@@ -1,7 +1,7 @@
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
-import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,readRustRecordFieldPosition,readRustRecordBindingNames,acceptRustRecordSourceName}from'./rust-record-rules.js';
+import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -51,12 +51,25 @@ export function readRustRecordItem(parser,path){
  }else c.expect(';','struct');
  const order=planRustRecordFields(names,names);
  if(order[0]<0)throw typeError('a Rust record declares a duplicate field',span(start,c.peek()));
- const fullName=[...path,name].join('.'),constructor=fullName+'.'+name;
+ const fullName=[...path,name].join('.');
+ const constructorName=readRustRecordConstructorName(name,parser.inherentMethods.has(fullName+'.'+name),[...parser.reservedNames]);
+ const constructor=fullName+'.'+constructorName;
  parser.namedRecords.set(fullName,{owner:fullName,constructor,names,syntax,update:true});
  parser.origins.declaration(name,path,{k:'data',unitFields:fields.length===0});
- parser.origins.declaration(name,[...path,name],{k:'ctor',owner:fullName,fields:origins,
+ parser.origins.declaration(constructorName,[...path,name],{k:'ctor',owner:fullName,fields:origins,
   result:{wrappers:[],type:{kind:'named',path:['crate',...path,name]},path:[]}});
- return{k:'data',name,ctors:[{name,fields}],span:span(start,c.peek())};
+ return{k:'data',name,ctors:[{name:constructorName,fields}],span:span(start,c.peek())};
+}
+
+export function prepareRustRecordMethodNamespace(parser,owner,method,where){
+ const key=[...owner,method].join('.'),existing=parser.origins.catalog.get(key);
+ if(existing?.k!=='ctor')return;
+ const record=parser.namedRecords.get(owner.join('.'));
+ if(!record||!record.update)throw unsupported('Rust associated item namespace','an enum constructor homograph needs its complete associated-item resolution',where);
+ const constructorName=readRustRecordConstructorName(owner.at(-1),true,[...parser.reservedNames]);
+ const next=[...owner,constructorName].join('.');
+ if(parser.origins.collecting){parser.origins.catalog.delete(key);parser.origins.catalog.set(next,existing);}
+ record.constructor=next;
 }
 
 export function readRustRecordConstruction(parser,segments,path,start){

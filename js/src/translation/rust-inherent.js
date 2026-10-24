@@ -1,5 +1,6 @@
 // Tokens and source origins are transported into ordinary module/function terms.
 import{unsupported}from'./diagnostics.js';
+import{prepareRustRecordMethodNamespace}from'./rust-records.js';
 import{acceptRustInherentSourceProfiles,readRustInherentReceiverMode,acceptRustInherentReceiver,requireRustInherentReceiverBorrow,acceptRustInherentOwnerModule,readRustInherentParentPath}from'./rust-inherent-rules.js';
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -26,6 +27,7 @@ export function readRustInherentItem(parser,path){
   while(!c.is('}')){
    parser.modulePath=[...path];parser.attributes();parser.visibility();
    if(!c.is('fn'))throw unsupported('Rust associated item','associated constants, types, macros and modified functions need their own source interpretation',span(c.peek(),c.peek()));
+   prepareRustRecordMethodNamespace(parser,owner,c.peek(1).value,span(c.peek(),c.peek(1)));
    const fn=parser.fn(owner);items.push(fn);
    const mode=fn.params[0]?.name==='self'?parser.inherentMethods.get([...owner,fn.name].join('.'))?.mode??0:0;
    if(!mode)parser.inherentMethods.set([...owner,fn.name].join('.'),{owner:owner.join('.'),mode:0});

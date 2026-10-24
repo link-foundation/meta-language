@@ -52,6 +52,14 @@ export function readRustRecordBindingNames(reserved, count) {
   }
   return names;
 }
+/** @param {string} name @param {boolean} collision @param {string[]} reserved @returns {string} */
+export function readRustRecordConstructorName(name, collision, reserved) {
+  if (!collision) return name;
+  let candidate = 'Value';
+  let suffix = 2;
+  while (reserved.includes(candidate)) { candidate = 'Value' + suffix; suffix += 1; }
+  return candidate;
+}
 /** @param {string} name @returns {boolean} */
 export function acceptRustRecordSourceName(name) {
   return !['bool','char','str','String','Vec','Box','f32','f64','usize','isize',

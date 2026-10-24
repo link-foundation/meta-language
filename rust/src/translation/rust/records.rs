@@ -5,9 +5,10 @@ use super::{
 };
 use crate::translation::rust_record_rules::{
     accept_rust_record_source_name, plan_rust_record_fields, read_rust_record_binding_names,
-    read_rust_record_field_position,
+    read_rust_record_constructor_name, read_rust_record_field_position,
 };
 
+mod namespaces;
 mod patterns;
 mod updates;
 mod variants;
@@ -167,7 +168,18 @@ impl RustParser {
         let mut owner_path = path.to_vec();
         owner_path.push(name.clone());
         let full_name = owner_path.join(".");
-        let constructor = format!("{full_name}.{name}");
+        let reserved = self
+            .reserved_binding_names
+            .iter()
+            .cloned()
+            .collect::<Vec<_>>();
+        let constructor_name = read_rust_record_constructor_name(
+            &name,
+            self.inherent_methods
+                .contains_key(&format!("{full_name}.{name}")),
+            &reserved,
+        );
+        let constructor = format!("{full_name}.{constructor_name}");
         self.named_records.insert(
             full_name.clone(),
             NamedRecord {
@@ -183,7 +195,7 @@ impl RustParser {
         let mut result_path = vec!["crate".to_owned()];
         result_path.extend(owner_path.clone());
         self.origins.declaration(
-            &name,
+            &constructor_name,
             &owner_path,
             SourceDeclaration::Constructor {
                 owner: full_name,
@@ -200,7 +212,10 @@ impl RustParser {
         )?;
         Ok(SData {
             name: name.clone(),
-            ctors: vec![SCtor { name, fields }],
+            ctors: vec![SCtor {
+                name: constructor_name,
+                fields,
+            }],
             span: span(&start, self.cursor.peek()),
             generated: false,
             source_unit_clone_derivation: None,
