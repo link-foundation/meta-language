@@ -648,6 +648,12 @@ origins; checked terms and all target runtimes stay shared. Twenty future
 values/aborts, five refusals and two corrected historical input products retain
 complete paired graph, codec, emission and original-Rust controls. None ran.
 
+Tuple-local and constructor rest adapters now consume that same generated
+position plan. Actual constructor fields supply widths; omitted fields retain
+explicit source wildcard intervals. Existing tuple ownership guards remain.
+Thirty-eight future nominal-binding values/aborts and eight refusals include
+raw Boolean-keyword identifiers and all earlier controls. No control ran.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

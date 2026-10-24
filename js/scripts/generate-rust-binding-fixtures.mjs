@@ -22,6 +22,24 @@ const inputs=[
  ['nested field keeps nominal owner','struct Inner{x:i64} struct Outer{inner:Inner} pub fn result()->i64{let Outer{inner}=Outer{inner:Inner{x:37}};inner.x}','37'],
  ['source order across bindings','struct Point{x:i64} pub fn result()->i64{let Point{x:first}=Point{x:3};let Point{x:second}=Point{x:first+5};first*10+second}','38'],
  ['forward constructor declaration','pub fn result()->i64{let Pair(a,b)=Pair(3,9);a*10+b} struct Pair(i64,i64);','39'],
+ ['tuple local middle rest','pub fn result()->i64{let (a,..,b)=(2,8,9,4);a*10+b}','24'],
+ ['tuple local prefix rest','pub fn result()->i64{let (..,b)=(2,8,25);b}','25'],
+ ['tuple local suffix rest','pub fn result()->i64{let (a,..)=(26,8,9);a}','26'],
+ ['tuple local all rest','pub fn result()->i64{let (..)=(2,8,9);27}','27'],
+ ['tuple local zero-width rest','pub fn result()->i64{let (a,..,b)=(2,8);a*10+b}','28'],
+ ['nested tuple local rest','pub fn result()->i64{let ((a,..),..,b)=((2,3),4,9);a*10+b}','29'],
+ ['tuple struct local middle rest','struct Values(i64,i64,i64,i64); pub fn result()->i64{let Values(a,..,b)=Values(3,7,8,0);a*10+b}','30'],
+ ['tuple struct local all rest','struct Values(i64,i64); pub fn result()->i64{let Values(..)=Values(3,1);31}','31'],
+ ['tuple struct local prefix rest','struct Values(i64,i64,i64); pub fn result()->i64{let Values(..,b)=Values(1,2,32);b}','32'],
+ ['tuple struct local suffix rest','struct Values(i64,i64,i64); pub fn result()->i64{let Values(a,..)=Values(33,2,3);a}','33'],
+ ['tuple struct match rest','struct Values(i64,i64,i64); pub fn result()->i64{match Values(3,2,4){Values(a,..,b)=>a*10+b}}','34'],
+ ['enum tuple variant rest','enum Event{Values(i64,i64,i64),Empty} pub fn result()->i64{match Event::Values(3,2,5){Event::Values(a,..,b)=>a*10+b,Event::Empty=>0}}','35'],
+ ['nested constructor rest','struct Values(i64,i64,i64); struct Outer{value:Values} pub fn result()->i64{let Outer{value:Values(a,..,b)}=Outer{value:Values(3,2,6)};a*10+b}','36'],
+ ['contextual fixed rest fields','struct Values(u8,u16,u32); pub fn result()->i64{let Values(a,..,b)=Values(3,2,7);a as i64*10+b as i64}','37'],
+ ['borrowed constructor match rest','struct Values(i64,i64,i64); fn read(p:&Values)->i64{match p{Values(a,..,b)=>*a*10+*b}} pub fn result()->i64{read(&Values(3,2,8))}','38'],
+ ['tuple rest initializer failure','fn source()->(i64,i64){panic!("rest source first")} pub fn result()->i64{let (..)=source();panic!("tail later")}',null,'rest source first'],
+ ['raw Boolean local binding','pub fn result()->i64{let r#true=39;r#true}','39'],
+ ['raw Boolean tuple binding','pub fn result()->i64{let (r#true,r#false)=(3,10);r#true*10+r#false}','40'],
 ];
 const cases=inputs.map(([name,source,value,abort],index)=>({name,module:'binding_case_'+index,source,value,abort:abort??null}));
 const reason='refutable product binding: only immutable names, ignored fields and anonymous tuple products are admitted';
@@ -30,11 +48,15 @@ const refusals=[
  {name:'literal field remains refutable',source:'struct Point{x:i64} fn read(p:Point)->i64{let Point{x:1}=p;0} fn main(){}',kind:'unsupported',reason},
  {name:'duplicate local name',source:'struct Point{x:i64,y:i64} fn read(p:Point)->i64{let Point{x:a,y:a}=p;a} fn main(){}',kind:'unsupported',reason:'duplicate tuple binding: each name occurs only once in a destructuring pattern'},
  {name:'whole record alias needs move proof',source:'struct Point{x:i64} fn read(p:Point)->i64{let Point{x:a@x}=p;a} fn main(){}',kind:'unsupported',reason:'Rust nominal binding alias: whole-value aliases require their complete move and borrow interpretation'},
+ {name:'multiple tuple local rest positions',source:'pub fn result()->i64{let (..,..)=(1,2);0} fn main(){}',kind:'unsupported',reason:'tuple rest binding: a tuple binding has at most one rest position'},
+ {name:'too many local tuple rest fields',source:'pub fn result()->i64{let (a,..,b,c)=(1,2);a+b+c} fn main(){}',kind:'type',reason:'tuple binding has the wrong number of fields'},
+ {name:'multiple constructor rest positions',source:'struct Values(i64,i64); fn read(p:Values)->i64{let Values(..,..)=p;0} fn main(){}',kind:'unsupported',reason:'constructor rest pattern: a constructor pattern has at most one rest position'},
+ {name:'too many constructor rest fields',source:'struct Values(i64,i64); fn read(p:Values)->i64{let Values(a,..,b,c)=p;a+b+c} fn main(){}',kind:'type',reason:'a Rust constructor rest pattern has too many fields'},
 ];
 writeProjectData(new URL('../../parity/fixtures/rust-record-bindings.lino',import.meta.url),{
  schemaVersion:1,model:'owned nominal Rust record field order 1',cases,refusals,
  source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
  sourceBasis:'https://doc.rust-lang.org/reference/statements.html#let-statements ; https://doc.rust-lang.org/reference/patterns.html#refutability ; single-constructor recursive patterns are irrefutable; the source value is evaluated once before binding names.',
- boundary:'Future paired complete program/definition graphs, both codecs, four emissions, independent original/emitted Rust values and exact refusals. No observations. Tuple fields nested inside nominal patterns, ref/mut/@ patterns and broader move/borrow/drop semantics require further source work.',
+ boundary:'Future paired complete program/definition graphs, both codecs, four emissions, independent original/emitted Rust values and exact refusals. No observations. Ref/mut/@ patterns and broader move/borrow/drop semantics require further source work.',
 });

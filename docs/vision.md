@@ -2878,6 +2878,18 @@ value assertions. All complete paired graph/codec/four-emission/original-Rust
 controls remain unexecuted. No new checked term or target runtime is needed.
 Tuple-struct rest, ref/mut/@ forms and full ownership/drop remain obligations.
 
+Tuple-local and tuple-constructor rest patterns now reuse the same field plan.
+Local patterns retain the existing recursively immutable source-product guard;
+constructor patterns obtain their width from the actual source constructor and
+insert explicit wildcard intervals for omitted fields. Initializer order and
+field origins stay unchanged. Duplicate rest positions and excess fields
+refuse. Raw `r#true` and `r#false` local bindings retain identifier semantics.
+The nominal-binding matrix now declares thirty-eight values/aborts and eight
+refusals, including tuple/constructor prefix, middle, suffix and empty rest,
+nested patterns, borrowed fields and exact initializer failures. The full
+paired graph/codec/four-emission/original-Rust controls remain unexecuted.
+Ref/mut/@ and full ownership/drop still require their source drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

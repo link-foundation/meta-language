@@ -63,21 +63,34 @@ impl RustParser {
                     span: Some(Span::new(token.start, close.end)),
                 });
             }
-            let first = self.product_binding_pattern()?;
-            if self.cursor.eat(",").is_none() {
-                self.cursor.expect(")", Some("parenthesised binding"))?;
-                return Ok(first);
-            }
-            let mut items = vec![first];
+            let mut items = Vec::new();
+            let mut rest = None;
+            let mut comma = false;
             while !self.cursor.is(")") {
-                items.push(self.product_binding_pattern()?);
+                if self.cursor.eat("..").is_some() {
+                    if rest.is_some() {
+                        return Err(unsupported(
+                            "tuple rest binding",
+                            "a tuple binding has at most one rest position",
+                            span(&token, self.cursor.peek()),
+                        ));
+                    }
+                    rest = Some(items.len());
+                } else {
+                    items.push(self.product_binding_pattern()?);
+                }
                 if self.cursor.eat(",").is_none() {
                     break;
                 }
+                comma = true;
             }
             let close = self.cursor.expect(")", Some("tuple binding"))?;
+            if items.len() == 1 && rest.is_none() && !comma {
+                return Ok(items.remove(0));
+            }
             return Ok(ProductBindingPattern::Tuple {
                 items,
+                rest,
                 span: Some(Span::new(token.start, close.end)),
             });
         }
@@ -99,7 +112,7 @@ impl RustParser {
             return Ok(ProductBindingPattern::Nominal(pattern));
         }
         let name = self.cursor.identifier(Some("let"))?;
-        if name.value == "true" || name.value == "false" {
+        if !name.raw.starts_with("r#") && (name.value == "true" || name.value == "false") {
             return Err(unsupported(
                 "refutable product binding",
                 "only immutable names, ignored fields and anonymous tuple products are admitted",
@@ -223,20 +236,39 @@ impl RustParser {
                     ));
                 }
             }
-            ProductBindingPattern::Tuple { items, span } => {
+            ProductBindingPattern::Tuple { items, rest, span } => {
                 self.origins.require_product_origin(origin, span)?;
-                if !self.origins.collecting
-                    && origin
-                        .fields
-                        .as_ref()
-                        .is_none_or(|fields| fields.len() != items.len())
-                {
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source tuple width fits the shared array limit"),
+                    )
+                };
+                let width = origin.fields.as_ref().map_or(items.len(), Vec::len);
+                let plan = crate::translation::rust_record_rules::plan_tuple_pattern_fields(
+                    count(width),
+                    count(items.len()),
+                    rest.map_or(-1.0, count),
+                );
+                if !self.origins.collecting && plan.first() != Some(&0.0) {
                     return Err(type_error(
                         "tuple binding has the wrong number of fields",
                         span,
                     ));
                 }
-                for (index, item) in items.into_iter().enumerate() {
+                let mut positions = (0..items.len()).collect::<Vec<_>>();
+                if !self.origins.collecting {
+                    for (position, index) in plan.into_iter().skip(1).enumerate() {
+                        if index >= 0.0 {
+                            let index = index.to_string().parse::<usize>().map_err(|_| {
+                                type_error("tuple binding plan has an invalid source index", span)
+                            })?;
+                            positions[index] = position;
+                        }
+                    }
+                }
+                for (source, item) in items.into_iter().enumerate() {
+                    let index = positions[source];
                     let range = item.source_span();
                     let projection = SExpr::new(
                         SNode::TupleIndex {

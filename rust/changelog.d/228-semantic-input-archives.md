@@ -60,6 +60,9 @@ Draft nested Rust tuple match patterns and rest positions through shared field
 plans and ordinary match columns. Preserve borrowed field origins, fresh column
 names, duplicate-name refusals and exact corrected predecessor inputs.
 
+Reuse the same shared rest plan for local tuple and tuple-constructor patterns,
+including nested and borrowed fields. Preserve raw Boolean-keyword bindings.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

@@ -1,7 +1,7 @@
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
-import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
+import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,acceptRustIrrefutablePatternNode,planTuplePatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,readRustRecordConstructorName,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -242,4 +242,16 @@ export function lowerRustNominalBinding(parser,pattern,value,path,bindings){
   parser.origins.bind(item.name,projection,path);
   bindings.push({name:item.name,value:projection,span:item.span});
  }
+}
+
+export function expandRustConstructorRest(parser,resolved,args,rest,path){
+ if(!rest)return args;
+ const entry=parser.origins.lookup(resolved,path,['ctor']);
+ if(!entry){
+  if(parser.origins.collecting)return args;
+  throw unsupported('Rust constructor rest pattern','the constructor needs its actual source field count',{start:rest.token.start,end:rest.token.end});
+ }
+ const plan=planTuplePatternFields(entry.fields.length,args.length,rest.index);
+ if(plan[0]<0)throw typeError('a Rust constructor rest pattern has too many fields',{start:rest.token.start,end:rest.token.end});
+ return plan.slice(1).map(index=>index<0?{k:'wild',span:{start:rest.token.start,end:rest.token.end}}:args[index]);
 }

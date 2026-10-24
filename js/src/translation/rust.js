@@ -6,7 +6,8 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
-import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding } from './rust-records.js';
+import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding, expandRustConstructorRest } from './rust-records.js';
+import { planTuplePatternFields } from './rust-record-rules.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -812,21 +813,21 @@ class RustParser {
     if (c.eat('_')) return { k: 'wild', span: { start: token.start, end: token.end } };
     if (c.eat('(')) {
       if (c.eat(')')) return { k: 'unit', span: { start: token.start, end: c.tokens[c.index - 1].end } };
-      const first = this.productBindingPattern(allowMutable);
-      if (!c.eat(',')) {
-        c.expect(')', 'parenthesised binding');
-        return first;
-      }
-      const items = [first];
+      const items=[];let rest=null,comma=false;
       while (!c.is(')')) {
-        items.push(this.productBindingPattern(allowMutable));
+        if(c.eat('..')){
+          if(rest!==null)throw unsupported('tuple rest binding','a tuple binding has at most one rest position',span(token,c.peek()));
+          rest=items.length;
+        }else items.push(this.productBindingPattern(allowMutable));
         if (!c.eat(',')) break;
+        comma=true;
       }
       const close = c.expect(')', 'tuple binding');
-      return { k: 'tuple', items, span: { start: token.start, end: close.end } };
+      if(items.length===1&&rest===null&&!comma)return items[0];
+      return { k: 'tuple', items,...(rest===null?{}:{rest}), span: { start: token.start, end: close.end } };
     }
     const name = c.identifier('let');
-    if (name.value === 'true' || name.value === 'false') throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', { start: name.start, end: name.end });
+    if (!name.raw.startsWith('r#')&&(name.value === 'true' || name.value === 'false')) throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', { start: name.start, end: name.end });
     if (c.is('::') || c.is('(') || c.is('{') || c.is('@')) throw unsupported('refutable product binding', 'only immutable names, ignored fields and anonymous tuple products are admitted', span(token, c.peek()));
     return { k: 'name', name: name.value, ...(mutable?{mutable:true}:{}),span: { start: name.start, end: name.end } };
   }
@@ -847,10 +848,13 @@ class RustParser {
       return;
     }
     this.origins.requireProduct(origin, pattern.span);
-    if (!this.origins.collecting && pattern.items.length !== origin.fields.length) {
+    const plan=planTuplePatternFields(origin.fields?.length??pattern.items.length,pattern.items.length,pattern.rest??-1);
+    if (!this.origins.collecting && plan[0]<0) {
       throw new TranslationError('type', 'tuple binding has the wrong number of fields', pattern.span);
     }
-    for (const [index, item] of pattern.items.entries()) {
+    const positions=new Map(this.origins.collecting?pattern.items.map((_,index)=>[index,index]):plan.slice(1).map((index,position)=>[index,position]));
+    for (const [source, item] of pattern.items.entries()) {
+      const index=positions.get(source);
       const projection = this.origins.project({ k: 'tupleIndex', object: value, index, span: item.span }, path, index, item.span);
       this.lowerProductBinding(item, projection, path, bindings);
     }
@@ -1565,13 +1569,16 @@ class RustParser {
     const resolved = readRustRecordValuePath(this,segments,path,c.is('('))??this.resolve(segments, path);
     if (c.eat('(')) {
       const args = [];
+      let rest=null;
       while (!c.is(')')) {
-        if (c.is('..')) throw unsupported('rest pattern', 'name every field', span(c.peek(), c.peek()));
-        args.push(this.pattern(path, aliases));
+        if(c.is('..')){
+          if(rest)throw unsupported('constructor rest pattern','a constructor pattern has at most one rest position',span(token,c.peek()));
+          rest={index:args.length,token:c.next()};
+        }else args.push(this.pattern(path, aliases));
         if (!c.eat(',')) break;
       }
       c.expect(')', 'pattern');
-      return { k: 'ctor', path: resolved, args, span: span(token, c.peek()) };
+      return { k: 'ctor', path: resolved, args:expandRustConstructorRest(this,resolved,args,rest,path), span: span(token, c.peek()) };
     }
     if (segments.length === 1 && resolved.length === 1) return { k: token.raw.startsWith('r#')?'bind':'bindOrCtor', name: segments[0], span: span(token, token) };
     return { k: 'ctor', path: resolved, args: [], span: span(token, token) };

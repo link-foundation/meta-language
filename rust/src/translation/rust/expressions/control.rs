@@ -398,21 +398,26 @@ impl RustParser {
             .unwrap_or_else(|| self.resolve(&segments, path));
         if self.cursor.eat("(").is_some() {
             let mut args = Vec::new();
+            let mut rest = None;
             while !self.cursor.is(")") {
                 if self.cursor.is("..") {
-                    let rest = self.cursor.peek();
-                    return Err(unsupported(
-                        "rest pattern",
-                        "name every field",
-                        span(rest, rest),
-                    ));
+                    if rest.is_some() {
+                        return Err(unsupported(
+                            "constructor rest pattern",
+                            "a constructor pattern has at most one rest position",
+                            span(&token, self.cursor.peek()),
+                        ));
+                    }
+                    rest = Some((args.len(), self.cursor.advance()));
+                } else {
+                    args.push(self.pattern(path, aliases)?);
                 }
-                args.push(self.pattern(path, aliases)?);
                 if self.cursor.eat(",").is_none() {
                     break;
                 }
             }
             self.cursor.expect(")", Some("pattern"))?;
+            let args = self.expand_constructor_rest(&resolved, args, rest, path)?;
             return Ok(SPattern {
                 node: SPatternNode::Ctor {
                     path: resolved,

@@ -6,6 +6,7 @@ pub(super) enum ProductBindingPattern {
     Wildcard(Token),
     Tuple {
         items: Vec<Self>,
+        rest: Option<usize>,
         span: Option<Span>,
     },
     Unit {
