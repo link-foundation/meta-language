@@ -517,6 +517,36 @@ impl RustParser {
     pub(super) fn block(&mut self, path: &[String]) -> Result<SExpr> {
         self.block_with_context(path, false)
     }
+    fn is_terminal_return(&self) -> bool {
+        let mut count = 64usize;
+        loop {
+            let values = self
+                .cursor
+                .tokens
+                .iter()
+                .skip(self.cursor.index)
+                .take(count)
+                .map(|token| {
+                    if token.kind == TokenKind::Punct {
+                        token.value.clone()
+                    } else {
+                        String::new()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let boundary =
+                crate::translation::rust_unit_value_rules::find_rust_terminal_return_boundary(
+                    &values, 0.0,
+                );
+            if boundary != -2.0 {
+                return boundary >= 0.0;
+            }
+            if count >= self.cursor.tokens.len() - self.cursor.index {
+                return false;
+            }
+            count = count.saturating_mul(2);
+        }
+    }
     pub(super) fn block_with_context(
         &mut self,
         path: &[String],
@@ -547,9 +577,16 @@ impl RustParser {
             }
             if function_body
                 && self.cursor.is("return")
-                && (self.cursor.is_at(";", 1) || self.cursor.is_at("}", 1))
+                && (self.cursor.is_at(";", 1)
+                    || self.cursor.is_at("}", 1)
+                    || self.is_terminal_return())
             {
                 self.cursor.advance();
+                tail = Some(if self.cursor.is(";") || self.cursor.is("}") {
+                    SExpr::new(SNode::Unit, span(&token, &token))
+                } else {
+                    self.expr(path, Options::default())?
+                });
                 while self.cursor.eat(";").is_some() {}
                 if !self.cursor.is("}") {
                     return Err(unsupported(
@@ -558,7 +595,6 @@ impl RustParser {
                         span(&token, self.cursor.peek()),
                     ));
                 }
-                tail = Some(SExpr::new(SNode::Unit, span(&token, &token)));
                 break;
             }
             if self.cursor.is("return") {

@@ -1,7 +1,7 @@
 // Original source pairs and independent results, never regenerated oracles.
 // Native original and target compiler execution belongs exclusively to CI.
 import {fileURLToPath} from 'node:url';
-import {checkProjectData,writeProjectData} from './project-data.mjs';
+import {checkProjectData,writeProjectData,readProjectData} from './project-data.mjs';
 import {parseRust} from '../src/translation/rust.js';
 import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
@@ -66,6 +66,13 @@ const legacySources=[
 ];
 function refusal(id,source,options){try{checkProgram(parseRust(source,options));}catch(error){return{id,source,kind:error.kind,reason:error.reason,span:error.span??null};}throw new Error('unexpected admission: '+id);}
 export function rustCompletionFixture(){
+ const originalTerminalRefusal=readProjectData(new URL('../../parity/fixtures/rust-terminal-returns.lino',import.meta.url)).originalRefusal;
+ const legacy=legacySources.map(([id,source],index)=>{
+  if(index!==0)return refusal(id,source);
+  if(originalTerminalRefusal.id!==id||originalTerminalRefusal.source!==source)throw new Error('the original terminal-return source must remain exact');
+  checkProgram(parseRust(source));
+  return originalTerminalRefusal;
+ });
  const cases=pairs.map(([id,source,originalJavaScript,output,selectedArray])=>{
   const options={completionModel,...(selectedArray?{arrayResultModel:selectedArray}:{})};
   const surface=parseRust(source,options),program=checkProgram(surface);
@@ -74,7 +81,7 @@ export function rustCompletionFixture(){
   const emitted=emitRust(program),reverse=emitRust(original);
   return{id,source,originalJavaScript,output,...(selectedArray?{arrayResultModel:selectedArray}:{}),surface:JSON.parse(JSON.stringify(surface)),javascript:emitJavaScript(program).text,rust:emitted.text,reverseRust:reverse.text,rustDefinitions:emitted.definitions.join('\n\n'),reverseRustDefinitions:reverse.definitions.join('\n\n'),main:source.slice(source.lastIndexOf('fn main')),archive:links.network.toLino(),root:links.root.asU64()};
  });
- return{schemaVersion:1,id:'rust-closed-completions',completionModel,premises:['explicit selected source profile','direct function body and conditional branch completions','proved direct return values','scope restored before parsing each enclosing continuation','unreachable source statements are refused'],legacy:legacySources.map(([id,source])=>refusal(id,source)),cases,invalid:failures.map(([id,body])=>refusal(id,body+suffix,{completionModel}))};
+ return{schemaVersion:1,id:'rust-closed-completions',completionModel,premises:['explicit selected source profile','direct function body and conditional branch completions','proved direct return values','scope restored before parsing each enclosing continuation','unreachable source statements are refused'],legacy,cases,invalid:failures.map(([id,body])=>refusal(id,body+suffix,{completionModel}))};
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const path=new URL('../../parity/fixtures/rust-completions.lino',import.meta.url),value=rustCompletionFixture();

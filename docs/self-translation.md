@@ -996,3 +996,11 @@ host case conversion implements JavaScript-source mappings. Alternate Unicode/
 locale and complete Rust standard-library version profiles remain required.
 Future source/native/codec/context/scalar controls are declared without execution;
 the exhaustive independent Node comparison belongs only in CI.
+
+Ordinary Rust terminal return values now use a complete source-owned delimiter/
+continuation decision. Both adapters grow actual punctuation windows only as
+needed, then retain existing value ownership checks and ordinary tail lowering.
+No nested/earlier return is converted to an initializer value or closed proof.
+The exact former refusal row remains historical beside current same-input
+value controls. Complete decisions generate native code and public editable
+graphs; all behavior and metadata reconciliation remain deferred.

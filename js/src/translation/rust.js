@@ -1,4 +1,4 @@
-import {readRustUnitStatementDisposition} from './rust-unit-value-rules.js';
+import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary} from './rust-unit-value-rules.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
@@ -723,6 +723,18 @@ class RustParser {
    * A block `{ let x = e; …; tail }` is a chain of lets ending in its tail
    * expression. Statements with effects are not values of the portable core.
    */
+  isTerminalReturn() {
+    const c=this.cursor;
+    let count=64;
+    for(;;){
+      const values=c.tokens.slice(c.index,c.index+count).map(token=>token.kind==='punct'?token.value:'');
+      const boundary=findRustTerminalReturnBoundary(values,0);
+      if(boundary!==-2)return boundary>=0;
+      if(count>=c.tokens.length-c.index)return false;
+      count*=2;
+    }
+  }
+
   block(path,functionBody=false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
@@ -737,10 +749,12 @@ class RustParser {
         lets.push(...this.letStatement(path));
         continue;
       }
-      if(functionBody&&c.is('return')&&(c.is(';',1)||c.is('}',1))){
-        c.next();while(c.eat(';')){}
+      if(functionBody&&c.is('return')&&(c.is(';',1)||c.is('}',1)||this.isTerminalReturn())){
+        c.next();
+        tail=c.is(';')||c.is('}')?{k:'unit',span:span(token,token)}:this.expr(path);
+        while(c.eat(';')){}
         if(!c.is('}'))throw unsupported('unreachable continuation','statements after a completed return are not removed by this model',span(token,c.peek()));
-        tail={k:'unit',span:span(token,token)};break;
+        break;
       }
       if (c.is('return')) throw unsupported('early return', 'write the result as the tail expression of the block', span(token, token));
       if (['while', 'loop', 'for'].includes(token.value) && token.kind === 'identifier') {

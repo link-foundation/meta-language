@@ -6337,3 +6337,27 @@ comparison over every code point is CI-only, reusing imported tables within
 that run; it selects Node >=24 <25 with actual Unicode 16.0 and refuses uncovered
 versions. Native products use generated data instead of the Rust host's case
 tables. No new control or oracle executed in the complete draft phase.
+
+
+### Ordinary terminal Rust return values draft
+
+The ordinary source frontend now projects an actual terminal function-boundary
+return to the same result expression used by its tail-value form. Existing
+source ownership/result checks still apply, and no closed-completion proof is
+invented. A shared source decision inspects actual punctuation, balanced
+delimiters and the absence of any continuation before that function block
+closes. Both adapters supply progressively larger token windows, avoiding a
+whole-module column allocation for each function. Literal string contents
+cannot supply delimiters. Earlier and nested returns retain their existing
+completion obligations; direct Unit continuation diagnostics remain exact.
+This follows [Rust return expressions](https://doc.rust-lang.org/reference/expressions/return-expr.html).
+
+The original default terminal-return refusal source, kind, reason and span
+remain historical declarations in the original completion fixture and the new
+Links correction fixture. Current controls require admission and actual values
+for that same input, retaining all unsafe/escaping and return-expression
+refusals. Future source/native/codec/four-emission cases include returned
+conditionals, structures, tuples, strings, forward calls and long expressions.
+The full current source decisions are available as editable typed Links in
+both packages. None of these controls executed. General completions, lexical
+continuations, drop/borrow effects and every preceding requirement remain.

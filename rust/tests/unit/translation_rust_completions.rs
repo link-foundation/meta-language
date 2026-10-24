@@ -120,13 +120,24 @@ fn default_refusals_and_selected_unsafe_completions_keep_exact_diagnostics() {
     let data = fixture();
     let model = data["completionModel"].as_str().unwrap();
     for (key, selected) in [("legacy", false), ("invalid", true)] {
-        for case in data[key].as_array().unwrap() {
+        for (index, case) in data[key].as_array().unwrap().iter().enumerate() {
             let source = case["source"].as_str().unwrap();
             let surface = if selected {
                 parse_rust_with_completion_model(source, model)
             } else {
                 parse_rust(source)
             };
+            if key == "legacy" && index == 0 && !selected {
+                // Exact preceding refusal source/reason/span remain historical
+                // declarations; terminal-return value controls are additive.
+                assert_eq!(
+                    case["reason"],
+                    "early return: write the result as the tail expression of the block"
+                );
+                assert_eq!(case["span"], serde_json::json!({"start":22,"end":28}));
+                check_program(&surface.expect("original terminal return is admitted")).unwrap();
+                continue;
+            }
             let error = surface
                 .and_then(|surface| check_program(&surface))
                 .expect_err("the unchanged source obligation is required");

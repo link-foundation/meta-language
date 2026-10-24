@@ -453,3 +453,12 @@ fn implicit_unit_and_empty_blocks_preserve_values_source_parity_and_codecs() {
         create_rust_record_program_links,
     );
 }
+
+#[test]
+fn terminal_returns_preserve_actual_source_values_and_function_boundary() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/terminal-returns.mjs",
+        "Rust terminal function return values",
+        meta_language::create_rust_unit_value_program_links,
+    );
+}

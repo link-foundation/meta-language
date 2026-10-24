@@ -2637,3 +2637,5 @@ export function createOptionalValueProgramLinks(): TypedProgramLinks;
 /** Full Unicode 16 default case conversion over UTF16 units. */
 export function mapUnicodeCaseUtf16Text(text: readonly number[], upper: boolean): number[];
 export function createUnicodeCaseProgramLinks(): TypedProgramLinks;
+
+export function createRustUnitValueProgramLinks(): TypedProgramLinks;
