@@ -110,8 +110,9 @@ impl RustParser {
         value: SExpr,
         path: &[String],
         bindings: &mut Vec<Binding>,
+        fallback: Option<SExpr>,
     ) -> Result<()> {
-        let names = self.nominal_binding_names(&pattern, true)?;
+        let names = self.nominal_binding_names(&pattern, fallback.is_none())?;
         let scope = self
             .origins
             .cases(std::slice::from_ref(&pattern), &value, path)?;
@@ -139,14 +140,25 @@ impl RustParser {
                 range,
             ),
         };
+        let mut rows = vec![SRow {
+            patterns: vec![pattern],
+            body,
+            span: range,
+        }];
+        if let Some(body) = fallback {
+            rows.push(SRow {
+                patterns: vec![SPattern {
+                    node: SPatternNode::Wild,
+                    span: None,
+                }],
+                body,
+                span: None,
+            });
+        }
         let matched = SExpr::new(
             SNode::Match {
                 scrutinees: vec![value],
-                rows: vec![SRow {
-                    patterns: vec![pattern],
-                    body,
-                    span: range,
-                }],
+                rows,
             },
             range,
         );
@@ -188,5 +200,58 @@ impl RustParser {
             });
         }
         Ok(())
+    }
+
+    pub(in super::super) fn let_else_pattern(
+        &mut self,
+        path: &[String],
+    ) -> Result<Option<SPattern>> {
+        let mut depth = 0_usize;
+        let mut initializer = false;
+        let mut found = false;
+        let mut offset = 0;
+        while self.cursor.peek_at(offset).kind != TokenKind::Eof {
+            let token = self.cursor.peek_at(offset);
+            if depth == 0 && token.kind == TokenKind::Punct && token.value == ";" {
+                break;
+            }
+            if depth == 0 && token.kind == TokenKind::Punct && token.value == "=" {
+                initializer = true;
+            }
+            if initializer
+                && depth == 0
+                && token.kind == TokenKind::Identifier
+                && self.cursor.is_at("else", offset)
+                && offset > 0
+                && self.cursor.peek_at(offset - 1).value != "}"
+            {
+                found = true;
+                break;
+            }
+            if token.kind == TokenKind::Punct {
+                if ["(", "[", "{"].contains(&token.value.as_str()) {
+                    depth += 1;
+                } else if [")", "]", "}"].contains(&token.value.as_str()) {
+                    if depth == 0 {
+                        break;
+                    }
+                    depth -= 1;
+                }
+            }
+            offset += 1;
+        }
+        if !found {
+            return Ok(None);
+        }
+        let mut aliases = Vec::new();
+        let pattern = self.pattern(path, &mut aliases)?;
+        if !aliases.is_empty() {
+            return Err(unsupported(
+                "Rust nominal binding alias",
+                "whole-value aliases require their complete move and borrow interpretation",
+                pattern.span,
+            ));
+        }
+        Ok(Some(pattern))
     }
 }

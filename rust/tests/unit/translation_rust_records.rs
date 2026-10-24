@@ -90,6 +90,15 @@ fn conditional_patterns_preserve_scopes_graphs_and_original_values() {
     );
 }
 
+#[test]
+fn let_else_preserves_fallback_scopes_graphs_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/let-else.mjs",
+        "Rust let-else",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,

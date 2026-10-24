@@ -661,6 +661,13 @@ three refusals add full paired graph/codec/emission/original-Rust controls.
 None ran; chained conditions and the remaining control/effect forms still need
 complete scope-preserving source lowering.
 
+Let-else transports refutable patterns through the existing one-initializer
+match/binding path, retaining an outer-scope diverging fallback. Its initializer
+grammar guard is shared JavaScript automatically generated to native source and
+typed Links. Fifteen future values/aborts and three exact refusals add full
+paired graph/codec/emission/original-Rust controls. None executed. Remaining
+early-return, effect/ownership and divergence inference work stays explicit.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

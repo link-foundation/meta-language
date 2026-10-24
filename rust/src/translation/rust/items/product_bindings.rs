@@ -15,7 +15,11 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
-        let pattern = self.product_binding_pattern()?;
+        let pattern = if let Some(pattern) = self.let_else_pattern(path)? {
+            ProductBindingPattern::Nominal(pattern)
+        } else {
+            self.product_binding_pattern()?
+        };
         let mut names = std::collections::HashSet::new();
         self.validate_product_binding_names(&pattern, &mut names)?;
         let ty = if self.cursor.eat(":").is_some() {
@@ -31,14 +35,49 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        let initializer_start = self.cursor.index;
         let value = self.expr(path, Options::default())?;
         if self.cursor.is("else") {
-            return Err(unsupported(
-                "let-else",
-                "refutable bindings are outside the portable core",
-                span(&start, self.cursor.peek()),
-            ));
+            let tokens = &self.cursor.tokens[initializer_start..self.cursor.index];
+            let kinds = tokens
+                .iter()
+                .map(|token| {
+                    if token.kind == super::super::TokenKind::Punct {
+                        "punct".to_owned()
+                    } else {
+                        "atom".to_owned()
+                    }
+                })
+                .collect::<Vec<_>>();
+            let spellings = tokens
+                .iter()
+                .map(|token| token.value.clone())
+                .collect::<Vec<_>>();
+            let reason =
+                crate::translation::rust_record_rules::read_rust_let_else_initializer_error(
+                    &kinds, &spellings,
+                );
+            if !reason.is_empty() {
+                return Err(unsupported(
+                    "Rust let-else initializer",
+                    &reason,
+                    span(&start, self.cursor.peek()),
+                ));
+            }
         }
+        let fallback = if self.cursor.eat("else").is_some() {
+            let body = self.block(path)?;
+            if !self.origins.origin(&body, path).diverging {
+                return Err(unsupported(
+                    "Rust let-else fallback",
+                    "the fallback needs a represented diverging completion",
+                    body.span,
+                ));
+            }
+            Some(body)
+        } else {
+            None
+        };
         self.cursor.expect(";", Some("let"))?;
         let range = span(&start, self.cursor.peek());
         if let ProductBindingPattern::Name(token) = pattern {
@@ -50,6 +89,32 @@ impl RustParser {
                 value,
                 span: range,
             }]);
+        }
+        if let Some(fallback) = fallback {
+            let ProductBindingPattern::Nominal(pattern) = pattern else {
+                return Err(unsupported(
+                    "let-else",
+                    "refutable bindings are outside the portable core",
+                    range,
+                ));
+            };
+            let name = self.fresh_product_binding();
+            self.origins
+                .bind(&name, &value, path, source_type.as_ref())?;
+            let reference = SExpr::new(
+                SNode::Name {
+                    path: vec![name.clone()],
+                },
+                range,
+            );
+            let mut bindings = vec![Binding {
+                name,
+                ty,
+                value,
+                span: range,
+            }];
+            self.lower_nominal_binding(pattern, reference, path, &mut bindings, Some(fallback))?;
+            return Ok(bindings);
         }
         self.lower_product_binding(pattern, value, ty, source_type.as_ref(), path, range)
     }
@@ -213,7 +278,7 @@ impl RustParser {
     ) -> Result<()> {
         match pattern {
             ProductBindingPattern::Nominal(pattern) => {
-                self.lower_nominal_binding(pattern, value, path, bindings)?;
+                self.lower_nominal_binding(pattern, value, path, bindings, None)?;
             }
             ProductBindingPattern::Name(token) => {
                 self.origins.bind(&token.value, &value, path, None)?;

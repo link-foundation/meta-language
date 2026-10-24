@@ -2902,6 +2902,23 @@ particularly when a matched name shadows an outer name used by `else`.
 Missing-else unit/effect statements, let-else, loops and complete ownership
 remain source obligations, without a fallback that assumes those meanings.
 
+The let-else draft now uses the same one-initializer match/binding path for
+refutable local patterns. Only the successful arm publishes new bindings; the
+fallback is parsed in the outer scope and must have represented divergence.
+The shared JavaScript initializer grammar guard generates native source and
+complete typed Links, preserving the required parentheses around a lazy
+Boolean or block-ending initializer. The
+[let statement rules](https://doc.rust-lang.org/reference/statements.html#let-statements)
+define these restrictions. Fifteen future values/aborts and three exact
+refusals retain full paired graphs, both codecs, four emissions and independent
+original/emitted Rust controls. None ran. General early return, resource/drop
+effects, outlives and divergence inference, loops and source-profile composition
+remain obligations. The latest instruction to continue until every code draft
+is complete is captured verbatim in
+[`parity/sources/continue-complete-draft-2026-10-24.txt`](../parity/sources/continue-complete-draft-2026-10-24.txt).
+Source registration and ledger regeneration stay deferred with the other
+validation gates until all actual code requirements have their drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

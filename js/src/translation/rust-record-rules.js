@@ -58,6 +58,23 @@ export function planTuplePatternFields(width, count, rest) {
   }
   return result;
 }
+/** @param {string[]} kinds @param {string[]} spellings @returns {string} */
+export function readRustLetElseInitializerError(kinds, spellings) {
+  if (kinds.length !== spellings.length) return 'initializer token columns have different lengths';
+  let depth = 0;
+  for (let index = 0; index < spellings.length; index += 1) {
+    if (kinds[index] !== 'punct') continue;
+    const spelling = spellings[index] ?? '';
+    if (depth === 0 && (spelling === '&&' || spelling === '||')) return 'a lazy Boolean initializer must be parenthesized';
+    if (spelling === '(' || spelling === '[' || spelling === '{') depth += 1;
+    else if (spelling === ')' || spelling === ']' || spelling === '}') {
+      if (depth === 0) return 'initializer delimiters are unbalanced';
+      depth -= 1;
+      if (depth === 0 && spelling === '}' && index === spellings.length - 1) return 'a block-ending initializer must be parenthesized';
+    }
+  }
+  return depth === 0 ? '' : 'initializer delimiters are unbalanced';
+}
 /** @param {string[]} reserved @param {number} count @returns {string[]} */
 export function readRustRecordBindingNames(reserved, count) {
   const names = [];

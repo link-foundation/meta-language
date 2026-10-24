@@ -6,8 +6,8 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
-import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding, expandRustConstructorRest } from './rust-records.js';
-import { planTuplePatternFields } from './rust-record-rules.js';
+import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding, expandRustConstructorRest, readRustLetElsePattern } from './rust-records.js';
+import { planTuplePatternFields, readRustLetElseInitializerError } from './rust-record-rules.js';
 import { readRustConditionalPattern } from './rust-pattern-conditions.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
@@ -763,7 +763,7 @@ class RustParser {
     const c = this.cursor;
     const start = c.next();
     if (c.is('mut')) throw unsupported('mutable binding', 'mutation is outside the portable core', span(start, c.peek()));
-    const pattern = this.productBindingPattern();
+    const pattern = readRustLetElsePattern(this,path)??this.productBindingPattern();
     const names = new Set();
     const validateNames = binding => {
       if(binding.k==='nominal'){
@@ -780,8 +780,17 @@ class RustParser {
     const type = c.eat(':') ? this.type() : undefined;
     const sourceType = type ? this.origins.type : null;
     if (!c.eat('=')) throw unsupported('uninitialised binding', 'every binding needs its value', span(start, c.peek()));
+    const initializerStart=c.index;
     const value = this.expr(path);
-    if (c.is('else')) throw unsupported('let-else', 'refutable bindings are outside the portable core', span(start, c.peek()));
+    let fallback=null;
+    if(c.is('else')){
+      const tokens=c.tokens.slice(initializerStart,c.index),reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
+      if(reason)throw unsupported('Rust let-else initializer',reason,span(start,c.peek()));
+    }
+    if(c.eat('else')){
+      fallback=this.block(path);
+      if(!this.origins.origin(fallback,path).diverging)throw unsupported('Rust let-else fallback','the fallback needs a represented diverging completion',fallback.span);
+    }
     c.expect(';', 'let');
     const range = span(start, c.peek());
     if (pattern.k === 'name') {
@@ -792,6 +801,11 @@ class RustParser {
     const name = this.freshProductBinding();
     this.origins.bind(name, value, path, sourceType);
     bindings.push({ name, ...(type === undefined && this.typeNamespaceModel ? {} : {type}), value, span: range });
+    if(fallback!==null){
+      if(pattern.k!=='nominal')throw unsupported('let-else','refutable bindings are outside the portable core',range);
+      lowerRustNominalBinding(this,pattern.pattern,{k:'name',path:[name],span:range},path,bindings,fallback);
+      return bindings;
+    }
     this.lowerProductBinding(pattern, { k: 'name', path: [name], span: range }, path, bindings);
     return bindings;
   }

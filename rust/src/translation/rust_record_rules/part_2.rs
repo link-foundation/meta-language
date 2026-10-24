@@ -1,19 +1,21 @@
 // Generated from complete js/src/translation/rust-record-rules.js. Do not edit by hand.
-use super::MlAcceptRustNamedConstructorFieldsLoop10Result;
-use super::MlAcceptRustRawIdentifierNameLoop8Result;
+use super::MlAcceptRustNamedConstructorFieldsLoop11Result;
+use super::MlAcceptRustRawIdentifierNameLoop9Result;
 use super::MlPlanRustRecordFieldsLoop1Result;
+use super::MlReadRustLetElseInitializerErrorLoop6Result;
 use super::ml;
-use super::ml_accept_rust_named_constructor_fields_loop10;
-use super::ml_accept_rust_raw_identifier_name_loop8;
+use super::ml_accept_rust_named_constructor_fields_loop11;
+use super::ml_accept_rust_raw_identifier_name_loop9;
 use super::ml_array;
 use super::ml_math;
 use super::ml_plan_rust_record_fields_loop1;
 use super::ml_plan_rust_record_fields_loop2;
 use super::ml_plan_rust_record_pattern_fields_loop4;
 use super::ml_plan_tuple_pattern_fields_loop5;
-use super::ml_read_rust_record_binding_names_loop6;
-use super::ml_read_rust_record_constructor_name_loop7;
-use super::ml_render_rust_constructor_fields_loop11;
+use super::ml_read_rust_let_else_initializer_error_loop6;
+use super::ml_read_rust_record_binding_names_loop7;
+use super::ml_read_rust_record_constructor_name_loop8;
+use super::ml_render_rust_constructor_fields_loop12;
 
 /// JavaScript strings retain every UTF-16 code unit, including isolated surrogates.
 pub mod ml_string {
@@ -505,6 +507,48 @@ pub fn plan_tuple_pattern_fields(width: f64, count: f64, rest: f64) -> Vec<f64> 
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_let_else_initializer_error(
+    kinds: &[self::ml_string::Text],
+    spellings: &[self::ml_string::Text],
+) -> self::ml_string::Text {
+    {
+        let ml_library_inequality_1 = (kinds.len() as f64) != (spellings.len() as f64);
+        if ml_library_inequality_1 {
+            self::ml_string::Text::from_units(vec![
+                105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 116, 111, 107, 101, 110,
+                32, 99, 111, 108, 117, 109, 110, 115, 32, 104, 97, 118, 101, 32, 100, 105, 102,
+                102, 101, 114, 101, 110, 116, 32, 108, 101, 110, 103, 116, 104, 115,
+            ])
+        } else {
+            {
+                let depth = 0f64;
+                {
+                    let index = 0f64;
+                    {
+                        let ml_s4 = self::ml_read_rust_let_else_initializer_error_loop6(
+                            kinds, spellings, depth, index,
+                        );
+                        match ml_s4 {
+                        self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Done(depth_2) => {
+                            if depth_2 == 0f64 {
+                                self::ml_string::Text::from_units(vec![])
+                            } else {
+                                self::ml_string::Text::from_units(vec![105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 100, 101, 108, 105, 109, 105, 116, 101, 114, 115, 32, 97, 114, 101, 32, 117, 110, 98, 97, 108, 97, 110, 99, 101, 100])
+                            }
+                        }
+                        self::MlReadRustLetElseInitializerErrorLoop6Result::MlReadRustLetElseInitializerErrorLoop6Return(ml_result6) => {
+                            ml_result6
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_record_binding_names(
     reserved: &[self::ml_string::Text],
     count: f64,
@@ -513,7 +557,7 @@ pub fn read_rust_record_binding_names(
         let names = Vec::<self::ml_string::Text>::new();
         {
             let suffix = 0f64;
-            { self::ml_read_rust_record_binding_names_loop6(reserved, count, names, suffix) }
+            { self::ml_read_rust_record_binding_names_loop7(reserved, count, names, suffix) }
         }
     }
 }
@@ -530,7 +574,7 @@ pub fn read_rust_record_constructor_name(
             let candidate = self::ml_string::Text::from_units(vec![86, 97, 108, 117, 101]);
             {
                 let suffix = 2f64;
-                { self::ml_read_rust_record_constructor_name_loop7(reserved, candidate, suffix) }
+                { self::ml_read_rust_record_constructor_name_loop8(reserved, candidate, suffix) }
             }
         }
     } else {
@@ -663,13 +707,13 @@ pub fn accept_rust_raw_identifier_name(name: &self::ml_string::Text) -> bool {
         {
             let index = 0f64;
             {
-                let ml_s4 = self::ml_accept_rust_raw_identifier_name_loop8(name, index);
-                match ml_s4 {
-                    self::MlAcceptRustRawIdentifierNameLoop8Result::MlAcceptRustRawIdentifierNameLoop8Done => {
+                let ml_s5 = self::ml_accept_rust_raw_identifier_name_loop9(name, index);
+                match ml_s5 {
+                    self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Done => {
                         true
                     }
-                    self::MlAcceptRustRawIdentifierNameLoop8Result::MlAcceptRustRawIdentifierNameLoop8Return(ml_result8) => {
-                        ml_result8
+                    self::MlAcceptRustRawIdentifierNameLoop9Result::MlAcceptRustRawIdentifierNameLoop9Return(ml_result9) => {
+                        ml_result9
                     }
                 }
             }
@@ -723,20 +767,20 @@ pub fn accept_rust_named_constructor_fields(
         false
     } else {
         {
-            let ml_values9 = names.to_vec();
+            let ml_values10 = names.to_vec();
             {
-                let ml_index9 = self::ml::Big::from_i128(0);
+                let ml_index10 = self::ml::Big::from_i128(0);
                 {
-                    let ml_s5 = self::ml_accept_rust_named_constructor_fields_loop10(
-                        &(ml_values9),
-                        ml_index9,
+                    let ml_s6 = self::ml_accept_rust_named_constructor_fields_loop11(
+                        &(ml_values10),
+                        ml_index10,
                     );
-                    match ml_s5 {
-                        self::MlAcceptRustNamedConstructorFieldsLoop10Result::MlAcceptRustNamedConstructorFieldsLoop10Done => {
+                    match ml_s6 {
+                        self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Done => {
                             true
                         }
-                        self::MlAcceptRustNamedConstructorFieldsLoop10Result::MlAcceptRustNamedConstructorFieldsLoop10Return(ml_result10) => {
-                            ml_result10
+                        self::MlAcceptRustNamedConstructorFieldsLoop11Result::MlAcceptRustNamedConstructorFieldsLoop11Return(ml_result11) => {
+                            ml_result11
                         }
                     }
                 }
@@ -761,7 +805,7 @@ pub fn render_rust_constructor_fields(
             {
                 let index = 0f64;
                 {
-                    let fields_2 = self::ml_render_rust_constructor_fields_loop11(
+                    let fields_2 = self::ml_render_rust_constructor_fields_loop12(
                         names, values, fields, index,
                     );
                     ((head.concat(&self::ml_string::Text::from_units(vec![32, 123, 32]))).concat(

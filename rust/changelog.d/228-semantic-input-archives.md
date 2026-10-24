@@ -66,6 +66,9 @@ including nested and borrowed fields. Preserve raw Boolean-keyword bindings.
 Draft value-returning Rust if-let alternatives through ordinary match terms,
 preserving matched scopes, outer fallback names and first failure order.
 
+Draft Rust let-else with outer-scope diverging fallbacks and shared initializer
+grammar rules, reusing ordinary match/binding terms and all four emitters.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

@@ -227,11 +227,13 @@ export function rustNominalBindingNames(parser,pattern,validate=false){
  visit(pattern);return names;
 }
 
-export function lowerRustNominalBinding(parser,pattern,value,path,bindings){
- const names=rustNominalBindingNames(parser,pattern,true),scope=parser.origins.cases([pattern],value,path);
+export function lowerRustNominalBinding(parser,pattern,value,path,bindings,fallback=null){
+ const names=rustNominalBindingNames(parser,pattern,fallback===null),scope=parser.origins.cases([pattern],value,path);
  const members=names.map(item=>({k:'name',path:[item.name],span:item.span}));
  const body=members.length===1?members[0]:members.length?{k:'tuple',items:members,span:pattern.span}:{k:'unit',span:pattern.span};
- const matched={k:'match',scrutinees:[value],rows:[{patterns:[pattern],body}],span:pattern.span};
+ const rows=[{patterns:[pattern],body}];
+ if(fallback!==null)rows.push({patterns:[{k:'wild'}],body:fallback});
+ const matched={k:'match',scrutinees:[value],rows,span:pattern.span};
  const bundle=parser.freshProductBinding();
  bindings.push({name:bundle,value:matched,span:pattern.span});
  for(const[index,item]of names.entries()){
@@ -242,6 +244,22 @@ export function lowerRustNominalBinding(parser,pattern,value,path,bindings){
   parser.origins.bind(item.name,projection,path);
   bindings.push({name:item.name,value:projection,span:item.span});
  }
+}
+
+export function readRustLetElsePattern(parser,path){
+ const c=parser.cursor;let depth=0,initializer=false,found=false;
+ for(let offset=0;c.peek(offset).kind!=='eof';offset+=1){
+  const token=c.peek(offset);
+  if(depth===0&&token.kind==='punct'&&token.value===';')break;
+  if(depth===0&&token.kind==='punct'&&token.value==='=')initializer=true;
+  if(initializer&&depth===0&&token.kind==='identifier'&&c.is('else',offset)&&c.peek(offset-1).value!=='}'){found=true;break;}
+  if(token.kind==='punct'&&['(','[','{'].includes(token.value))depth+=1;
+  else if(token.kind==='punct'&&[')',']','}'].includes(token.value)){if(depth===0)break;depth-=1;}
+ }
+ if(!found)return null;
+ const aliases=[],pattern=parser.pattern(path,aliases);
+ if(aliases.length)throw unsupported('Rust nominal binding alias','whole-value aliases require their complete move and borrow interpretation',pattern.span);
+ return{k:'nominal',pattern,span:pattern.span};
 }
 
 export function expandRustConstructorRest(parser,resolved,args,rest,path){
