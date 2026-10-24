@@ -305,6 +305,25 @@ pub fn plan_rust_record_pattern_fields(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn plan_rust_record_update_fields(declared: &[String], supplied: &[String]) -> Vec<f64> {
+    self::plan_rust_record_pattern_fields(declared, supplied, true)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_record_update_owner(
+    structure: bool,
+    known: bool,
+    actual: &str,
+    expected: &str,
+    wrappers: f64,
+    diverging: bool,
+) -> bool {
+    structure && (diverging || ((known && (actual == expected)) && (wrappers == 0f64)))
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_record_binding_names(reserved: &[String], count: f64) -> Vec<String> {
     {
         let names = Vec::<String>::new();

@@ -624,3 +624,15 @@ keeps every input and assertion through a common future product control. None
 ran. Trait/generic and mutable receiver behavior, additional dereference/region
 profiles, cross-module placement, associated constants/types/macros and closed
 profile composition still need their implementation drafts.
+
+The functional record-update source draft reuses shared partial-field and
+actual-owner decisions. JavaScript generates native source and the full typed
+definition. Ordered field bindings precede one typed base binding and one
+ordinary constructor match, preserving evaluation order without repeated base
+projections. Named/tuple/empty and qualified owners, contextual fields, failures
+and hygiene expand the record matrix to fifty-one values/aborts and sixteen
+exact refusals. The exact previous refusal input remains in the complete source
+with an additive caller and active graph, codec and original-Rust controls;
+the correction records its preceding expectation and authoritative source basis.
+None ran. Full ownership/drop/resource proofs, borrowed bases, mutation,
+generics and the remaining language scope still need their drafts.

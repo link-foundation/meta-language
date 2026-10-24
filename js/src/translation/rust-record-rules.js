@@ -33,6 +33,14 @@ export function planRustRecordPatternFields(declared, supplied, rest) {
   }
   return result;
 }
+/** @param {string[]} declared @param {string[]} supplied @returns {number[]} */
+export function planRustRecordUpdateFields(declared, supplied) {
+  return planRustRecordPatternFields(declared, supplied, true);
+}
+/** @param {boolean} structure @param {boolean} known @param {string} actual @param {string} expected @param {number} wrappers @param {boolean} diverging @returns {boolean} */
+export function acceptRustRecordUpdateOwner(structure, known, actual, expected, wrappers, diverging) {
+  return structure && (diverging || known && actual === expected && wrappers === 0);
+}
 /** @param {string[]} reserved @param {number} count @returns {string[]} */
 export function readRustRecordBindingNames(reserved, count) {
   const names = [];

@@ -40,6 +40,18 @@ const cases=[
  ['contextual unsigned wide field','struct Bits{tiny:u8,big:u64} pub fn result()->u64{let p=Bits{big:18446744073709551615,tiny:3};p.big}', '18446744073709551615'],
  ['contextual tuple field','struct Pair{value:(u8,u16)} pub fn result()->i64{let p=Pair{value:(3,7)};p.value.0 as i64*10+p.value.1 as i64}', '37'],
  ['qualified field annotation','mod owner{pub struct Inner{pub x:u8} pub struct Outer{pub inner:Inner}} fn make()->owner::Outer{owner::Outer{inner:owner::Inner{x:9}}} pub fn result()->i64{make().inner.x as i64}', '9'],
+ ['functional record update','struct Point{x:i64,y:i64} pub fn result()->i64{let p=Point{x:1,y:3};let q=Point{x:2,..p};q.x*10+q.y}', '23'],
+ ['functional tuple update','struct Point(u8,u16); pub fn result()->i64{let p=Point(2,8);let q=Point{0:3,..p};q.0 as i64*10+q.1 as i64}', '38'],
+ ['update all from base','struct Point{x:i64,y:i64} pub fn result()->i64{let p=Point{x:4,y:2};let q=Point{..p};q.x*10+q.y}', '42'],
+ ['update zero-field owner','struct Marker; fn read(_:Marker)->i64{43} pub fn result()->i64{read(Marker{..Marker})}', '43'],
+ ['nested update value','struct Inner{x:i64} struct Outer{left:Inner,right:Inner} pub fn result()->i64{let p=Outer{left:Inner{x:1},right:Inner{x:4}};let q=Outer{left:Inner{x:5},..p};q.left.x*10+q.right.x}', '54'],
+ ['forward base function','struct Point{x:i64,y:i64} pub fn result()->i64{let p=Point{x:6,..base()};p.x*10+p.y} fn base()->Point{Point{x:1,y:7}}', '67'],
+ ['all fields still evaluate base','struct Point{x:i64,y:i64} fn base()->Point{panic!("base still evaluates")} pub fn result()->i64{let p=Point{y:2,x:1,..base()};p.x+p.y}', null,'base still evaluates'],
+ ['explicit fields fail before base','struct Point{x:i64,y:i64} fn base()->Point{panic!("base later")} pub fn result()->i64{let p=Point{x:panic!("field first"),..base()};p.x}', null,'field first'],
+ ['reordered explicit update failure','struct Point{x:i64,y:i64} fn base()->Point{Point{x:1,y:2}} pub fn result()->i64{let p=Point{y:panic!("y first"),x:panic!("x later"),..base()};p.x}', null,'y first'],
+ ['hygienic update bindings','struct Point{x:i64,y:i64} pub fn result()->i64{let ml_record_value0=6;let ml_record_value1=8;let p=Point{x:1,y:ml_record_value1};let q=Point{x:ml_record_value0,..p};q.x*10+q.y}', '68'],
+ ['qualified update owner','mod owner{pub struct Point{pub x:u8,pub y:u16}} use self::owner::Point as Pair; pub fn result()->i64{let p=Pair{x:1,y:9};let q=Pair{x:7,..p};q.x as i64*10+q.y as i64}', '79'],
+ ['parenthesized update base','struct Point{x:i64,y:i64} pub fn result()->i64{let p=Point{x:1,y:3};let q=Point{x:8,..(p)};q.x*10+q.y}', '83'],
 ];
 const rows=cases.map(([name,source,value,abort],index)=>({name,module:'record_case_'+index,source,value,abort:abort??null}));
 const refusals=[
@@ -55,10 +67,24 @@ const refusals=[
  ['duplicate pattern field','struct Point{x:i64} fn f(p:Point)->i64{match p{Point{x:a,x:b}=>a+b}} fn main(){}','type','a Rust record pattern has duplicate, unknown or missing fields'],
  ['unknown pattern field','struct Point{x:i64} fn f(p:Point)->i64{match p{Point{y,..}=>y}} fn main(){}','type','a Rust record pattern has duplicate, unknown or missing fields'],
  ['duplicate enum declaration field','enum Event{Point{x:i64,x:i64}} fn main(){}','type','a Rust record declares a duplicate field'],
+ ['duplicate update field','struct Point{x:i64} fn f(p:Point)->Point{Point{x:1,x:2,..p}} fn main(){}','type','a Rust record update has duplicate or unknown fields'],
+ ['unknown update field','struct Point{x:i64} fn f(p:Point)->Point{Point{y:1,..p}} fn main(){}','type','a Rust record update has duplicate or unknown fields'],
+ ['wrong nominal update base','struct Left{x:i64} struct Right{x:i64} fn f(p:Right)->Left{Left{..p}} fn main(){}','unsupported','Rust record update owner: an update needs the same owned source struct; borrowed and enum bases need another interpretation'],
+ ['borrowed update base','struct Point{x:i64} fn f(p:&Point)->Point{Point{..p}} fn main(){}','unsupported','Rust record update owner: an update needs the same owned source struct; borrowed and enum bases need another interpretation'],
+ ['enum update base','enum Event{Point{x:i64}} fn f(p:Event)->Event{Event::Point{x:1,..p}} fn main(){}','unsupported','Rust record update owner: an update needs the same owned source struct; borrowed and enum bases need another interpretation'],
 ].map(([name,source,kind,reason])=>({name,source,kind,reason}));
+const formerIndex=refusals.findIndex(row=>row.name==='functional update needs move model');
+if(formerIndex<0)throw new TypeError('preserve the original update input');
+const former=refusals.splice(formerIndex,1)[0];
+const correction={name:former.name,module:'',source:former.source,
+ callerSource:'\npub fn result()->i64{let p=f(Point{x:1,y:3});p.x*10+p.y}\n',value:'23',abort:null,
+ previousExpectation:{kind:former.kind,reason:former.reason},
+ correctionBasis:'https://doc.rust-lang.org/reference/expressions/struct-expr.html#functional-update-syntax; pinned Rust 1.90 compiler/rustc_mir_build/src/builder/expr/into.rs lines 508-550; the exact formerly refused input remains at the beginning of the complete source, with an additive caller.',
+};
+rows.push(correction);
 writeProjectData(new URL('../../parity/fixtures/rust-records.lino',import.meta.url),{
  schemaVersion:1,model:'owned nominal Rust records 1',cases:rows,refusals,
- source:rows.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',
+ source:correction.source+correction.callerSource+rows.filter(row=>row.module!=='').map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n'),
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
- boundary:'Execute every declared constructor, projection, pattern, owner, order and refusal cell in both runtimes; compare whole typed graphs, both codecs, four complete emissions, original Rust and emitted Rust. Reordered reference wildcards retain their own source identities. These are future declarations, not observations. Traits, layout, destructors, generic owners, field writes, functional update, irrefutable let patterns and remaining pattern forms remain separate implementation obligations.',
+ boundary:'Execute every declared constructor, projection, pattern, update, owner, order and refusal cell in both runtimes; compare whole typed graphs, both codecs, four complete emissions, original Rust and emitted Rust. Reordered reference wildcards retain their own source identities. The original update refusal input remains exact and gains active value/codec/native assertions. These are future declarations, not observations. Traits, layout, destructors, generic owners, field writes, complete move tracking, borrowed bases, irrefutable let patterns and remaining pattern forms remain separate implementation obligations.',
 });

@@ -1,7 +1,7 @@
 // Token and source-origin transport. Shared plans decide field order/bindings;
 // ordinary constructors and exhaustive matches retain all checked value owners.
 import{unsupported,typeError}from'./diagnostics.js';
-import{planRustRecordFields,planRustRecordPatternFields,readRustRecordFieldPosition,readRustRecordBindingNames,acceptRustRecordSourceName}from'./rust-record-rules.js';
+import{planRustRecordFields,planRustRecordPatternFields,planRustRecordUpdateFields,acceptRustRecordUpdateOwner,readRustRecordFieldPosition,readRustRecordBindingNames,acceptRustRecordSourceName}from'./rust-record-rules.js';
 
 function span(from,to){return{start:from.start,end:Math.max(from.end,to&&to.kind!=='eof'?to.start:from.end)};}
 
@@ -24,7 +24,7 @@ function braceOwner(parser,segments,path){
  const record=nominal(parser,segments,path);
  if(record)return record;
  const found=parser.origins.lookup(parser.resolve(segments,path),path,['ctor']);
- return found?{owner:found.owner,constructor:found.fullName,names:found.fields.map((_,index)=>String(index)),syntax:found.fields.length?'tuple':'unit'}:null;
+ return found?{owner:found.owner,constructor:found.fullName,names:found.fields.map((_,index)=>String(index)),syntax:found.fields.length?'tuple':'unit',update:false}:null;
 }
 
 export function readRustRecordItem(parser,path){
@@ -52,7 +52,7 @@ export function readRustRecordItem(parser,path){
  const order=planRustRecordFields(names,names);
  if(order[0]<0)throw typeError('a Rust record declares a duplicate field',span(start,c.peek()));
  const fullName=[...path,name].join('.'),constructor=fullName+'.'+name;
- parser.namedRecords.set(fullName,{owner:fullName,constructor,names,syntax});
+ parser.namedRecords.set(fullName,{owner:fullName,constructor,names,syntax,update:true});
  parser.origins.declaration(name,path,{k:'data',unitFields:fields.length===0});
  parser.origins.declaration(name,[...path,name],{k:'ctor',owner:fullName,fields:origins,
   result:{wrappers:[],type:{kind:'named',path:['crate',...path,name]},path:[]}});
@@ -61,9 +61,10 @@ export function readRustRecordItem(parser,path){
 
 export function readRustRecordConstruction(parser,segments,path,start){
  const c=parser.cursor,record=braceOwner(parser,segments,path),entries=[];
+ let base=null;
  c.expect('{','record construction');
  while(!c.is('}')){
-  if(c.is('..'))throw unsupported('Rust record update','update syntax needs complete move and field provenance',span(start,c.peek()));
+  if(c.eat('..')){base=parser.expr(path);break;}
   parser.attributes();
   const numeric=c.peek().kind==='number'&&/^(0|[1-9][0-9]*)$/u.test(c.peek().raw);
   const field=numeric?c.next():c.identifier('record field'),name=numeric?field.raw:field.value;
@@ -77,6 +78,7 @@ export function readRustRecordConstruction(parser,segments,path,start){
   if(!parser.origins.collecting)throw unsupported('Rust record constructor','the complete source must own its nominal record declaration',span(start,c.peek()));
   return{k:'app',fn:{k:'name',path:[...parser.resolve(segments,path),segments.at(-1)]},args:entries.map(entry=>entry.value),span:span(start,c.peek())};
  }
+ if(base)return readRecordUpdate(parser,record,entries,base,path,span(start,c.peek()));
  const plan=planRustRecordFields(record.names,entries.map(entry=>entry.name));
  if(plan[0]<0)throw typeError('a Rust record construction has duplicate, unknown or missing fields',span(start,c.peek()));
  const bindings=recordNames(parser,entries.length),where=span(start,c.peek());
@@ -99,12 +101,39 @@ export function readRustRecordProjection(parser,object,field,path,where){
  if(!record)return parser.origins.collecting&&parser.hasRecordDeclarations?{k:'field',object,field,span:where}:null;
  const index=readRustRecordFieldPosition(record.names,field);
  if(index<0)throw typeError('a Rust record has no field '+field,where);
- const binds=recordNames(parser,record.names.length);
- const node={k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:['crate',...record.constructor.split('.')],args:binds.map(name=>({k:'bind',name}))}],
-  body:{k:'name',path:[binds[index]],span:where}}],span:where};
+ const node=recordProjectionNode(parser,record,object,index,where);
  const constructor=parser.origins.lookup(record.constructor.split('.'),[],['ctor']);
  if(constructor?.fields[index])parser.origins.mark(node,constructor.fields[index]);
  return node;
+}
+
+function recordProjectionNode(parser,record,object,index,where){
+ const binds=recordNames(parser,record.names.length);
+ return{k:'match',scrutinees:[object],rows:[{patterns:[{k:'ctor',path:['crate',...record.constructor.split('.')],args:binds.map(name=>({k:'bind',name}))}],
+  body:{k:'name',path:[binds[index]],span:where}}],span:where};
+}
+
+function readRecordUpdate(parser,record,entries,base,path,where){
+ const plan=planRustRecordUpdateFields(record.names,entries.map(entry=>entry.name));
+ if(plan[0]<0)throw typeError('a Rust record update has duplicate or unknown fields',where);
+ const origin=parser.origins.origin(base,path);
+ const owner=origin.type?.kind==='named'?parser.origins.lookup(origin.type.path,origin.path,['data']):null;
+ const admitted=acceptRustRecordUpdateOwner(record.update,Boolean(owner),owner?.fullName??'',record.owner,origin.wrappers.length,Boolean(origin.diverging));
+ if(!admitted&&(!parser.origins.collecting||origin.type||origin.proven||!record.update))throw unsupported('Rust record update owner','an update needs the same owned source struct; borrowed and enum bases need another interpretation',where);
+ const bindings=recordNames(parser,entries.length+1+record.names.length),baseName=bindings[entries.length],constructor=parser.origins.lookup(record.constructor.split('.'),[],['ctor']);
+ const positions=plan.slice(1),baseReference={k:'name',path:[baseName],span:where};
+ const args=positions.map((position,index)=>({k:'name',path:[bindings[position<0?entries.length+1+index:position]],span:where}));
+ const fn={k:'name',path:['crate',...record.constructor.split('.')],span:where};
+ let body=args.length?{k:'app',fn,args,span:where}:fn;
+ body={k:'match',scrutinees:[baseReference],rows:[{patterns:[{k:'ctor',path:fn.path,args:positions.map((position,index)=>position<0?{k:'bind',name:bindings[entries.length+1+index]}:{k:'wild'})}],body}],span:where};
+ body={k:'let',name:baseName,type:{kind:'named',path:['crate',...record.owner.split('.')]},value:base,body,span:where};
+ for(let index=entries.length-1;index>=0;index-=1){
+  const field=constructor?.fields[positions.indexOf(index)],type=field?sourceType(parser,field.type,field.path):undefined;
+  if(field)parser.origins.argument(parser.origins.origin(entries[index].value,path),field,where);
+  body={k:'let',name:bindings[index],...(type?{type}:{}),value:entries[index].value,body,span:where};
+ }
+ if(constructor)parser.origins.mark(body,constructor.result);
+ return body;
 }
 
 export function readRustRecordValuePath(parser,segments,path,called){
@@ -124,7 +153,7 @@ export function readRustNamedVariantFields(parser,path,name,variant){
  c.expect('}','record variant');
  if(planRustRecordFields(names,names)[0]<0)throw typeError('a Rust record declares a duplicate field',span(variant,c.peek()));
  const constructor=[...path,name,variant.value].join('.');
- parser.namedRecords.set(constructor,{owner:[...path,name].join('.'),constructor,names,syntax:'named'});
+ parser.namedRecords.set(constructor,{owner:[...path,name].join('.'),constructor,names,syntax:'named',update:false});
  return{fields,origins};
 }
 

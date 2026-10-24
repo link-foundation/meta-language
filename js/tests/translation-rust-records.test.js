@@ -18,9 +18,13 @@ test('nominal Rust records retain order, actual type owners and four-target code
   const original=emitTypedProgramLinks(packet.network,packet.root,target);
   for(const network of[LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),original);
  }
- const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.module+'.result').target);
+ const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===(row.module?row.module+'.result':'result')).target);
  const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');
  for(const[index,row]of fixture.cases.entries()){
+  if(row.previousExpectation){
+   assert.ok(fixture.source.startsWith(row.source));
+   assert.deepEqual(row.previousExpectation,{kind:'unsupported',reason:'Rust record update: update syntax needs complete move and field provenance'});
+  }
   if(row.abort!==null)assert.throws(()=>functions[index](),error=>error.message===row.abort,row.name);
   else assert.equal(String(functions[index]()),row.value,row.name);
  }

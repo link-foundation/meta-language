@@ -50,9 +50,16 @@ impl RustParser {
         self.named_records.insert(
             constructor.clone(),
             NamedRecord {
+                owner: path
+                    .iter()
+                    .map(String::as_str)
+                    .chain(std::iter::once(name))
+                    .collect::<Vec<_>>()
+                    .join("."),
                 constructor,
                 names,
                 syntax: "named",
+                update: false,
             },
         );
         Ok((fields, origins))

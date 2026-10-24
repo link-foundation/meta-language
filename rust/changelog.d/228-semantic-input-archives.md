@@ -51,3 +51,6 @@ Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future
 original-Rust/parity controls.
+Draft functional record updates with ordered fields, one base evaluation and
+one constructor match; preserve the formerly refused source with additive
+value, codec and original-Rust controls and its documented assertion correction.

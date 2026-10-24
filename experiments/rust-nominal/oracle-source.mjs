@@ -13,11 +13,11 @@ const[major,minor]=process.versions.node.split('.').map(Number);
 if(!(major===22&&minor>=15||major===24))throw new RangeError('uncovered Node '+process.versions.node);
 const fixture=readProjectData(fixtureUrl);
 const program=checkProgram(parseRust(fixture.source)),packet=encodeTypedProgramLinks(program),rust=emitRust(program),js=emitJavaScript(program);
-const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.module+'.result').target);
+const names=fixture.cases.map(row=>js.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===(row.module?row.module+'.result':'result')).target);
 const functions=runInNewContext(js.text.replace(/^export /gmu,'')+'\n['+names.join(',')+'];');
 const cases=fixture.cases.map((row,index)=>{
  let result;try{result={kind:'value',value:String(functions[index]())};}catch(error){result={kind:'abort',value:error.message};}
- return{...row,observed:result,nativeTarget:rust.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===row.module+'.result').target};
+ return{...row,observed:result,nativeTarget:rust.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===(row.module?row.module+'.result':'result')).target};
 });
 const header=rust.text.split('\n').find(line=>line.startsWith('#![allow('));
 if(!header)throw new TypeError('complete library attributes are required');

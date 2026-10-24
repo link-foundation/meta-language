@@ -104,6 +104,18 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
 "#.to_owned();
     for row in expected["cases"].as_array().unwrap() {
         let module = row["module"].as_str().unwrap();
+        if row.get("previousExpectation").is_some() {
+            assert!(
+                expected["source"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with(row["source"].as_str().unwrap())
+            );
+            assert_eq!(
+                row["previousExpectation"],
+                json!({"kind":"unsupported","reason":"Rust record update: update syntax needs complete move and field provenance"})
+            );
+        }
         let native = row["nativeTarget"].as_str().unwrap().replace('.', "::");
         let (kind, value) = if let Some(message) = row["abort"].as_str() {
             ("abort", message)
@@ -117,7 +129,14 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
             row["name"]
         );
         for (owner, call) in [
-            ("original", format!("original::{module}::result()")),
+            (
+                "original",
+                if module.is_empty() {
+                    "original::result()".to_owned()
+                } else {
+                    format!("original::{module}::result()")
+                },
+            ),
             ("translated", format!("{native}()")),
         ] {
             main.push_str(&format!("{{let observed=ml_record_result(std::panic::catch_unwind(||({call}).to_string()));if observed!=({kind:?},{value:?}.to_owned()){{failures.push(format!(\"{owner} {module}: {{:?}}\",observed));}}}}\n"));

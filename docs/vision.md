@@ -2755,6 +2755,27 @@ associated constants/types/macros and closed source-profile composition remain
 separate implementation obligations. No method is admitted by merely sharing
 its spelling with another type's method.
 
+The functional record-update draft evaluates supplied fields in source order,
+then evaluates the base once. One ordinary constructor match reads all remaining
+fields together, avoiding repeated whole-base projections. Typed field and base
+bindings retain contextual literals and the actual qualified struct owner;
+syntactically distinct enum updates and borrowed bases refuse. Source struct
+metadata is rederived from its declaration and is not inferred from shape.
+The shared partial-field and owner rules generate native source automatically
+and remain editable typed Links data in both packages. This follows the
+[functional update contract](https://doc.rust-lang.org/reference/expressions/struct-expr.html#functional-update-syntax)
+and the [Rust 1.90 compiler lowering](https://github.com/rust-lang/rust/blob/1.90.0/compiler/rustc_mir_build/src/builder/expr/into.rs#L508-L550).
+Fifty-one future value/abort cases and sixteen exact refusals now cover named,
+tuple, empty, nested, aliased and contextual updates, base/field failure order
+and binding hygiene. The earlier update-refusal input stays byte for byte at
+the beginning of the full source and gains an additive caller, all codecs and
+original/emitted Rust value assertions. Its old expected refusal is retained
+as a documented correction, rather than executed as the current contract.
+No control ran. Complete move/drop/resource behavior, borrowed or partially
+moved base proofs, mutable fields, generic owners and the remaining Rust scope
+still require implementation and verification; the existing value encoding is
+not a complete Rust ownership checker.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

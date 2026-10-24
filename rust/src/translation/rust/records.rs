@@ -9,13 +9,16 @@ use crate::translation::rust_record_rules::{
 };
 
 mod patterns;
+mod updates;
 mod variants;
 
 #[derive(Clone)]
 pub(super) struct NamedRecord {
+    owner: String,
     constructor: String,
     names: Vec<String>,
     syntax: &'static str,
+    update: bool,
 }
 
 impl RustParser {
@@ -60,13 +63,15 @@ impl RustParser {
             return Some(record);
         }
         let found = self.origins.lookup(&self.resolve(segments, path), path)?;
-        let SourceDeclaration::Constructor { fields, .. } = found.declaration else {
+        let SourceDeclaration::Constructor { owner, fields, .. } = found.declaration else {
             return None;
         };
         Some(NamedRecord {
+            owner,
             constructor: found.full_name,
             names: (0..fields.len()).map(|index| index.to_string()).collect(),
             syntax: if fields.is_empty() { "unit" } else { "tuple" },
+            update: false,
         })
     }
 
@@ -166,9 +171,11 @@ impl RustParser {
         self.named_records.insert(
             full_name.clone(),
             NamedRecord {
+                owner: full_name.clone(),
                 constructor,
                 names,
                 syntax,
+                update: true,
             },
         );
         self.origins
@@ -210,13 +217,11 @@ impl RustParser {
         self.cursor.expect("{", Some("record construction"))?;
         let mut names = Vec::new();
         let mut values = Vec::new();
+        let mut base = None;
         while !self.cursor.is("}") {
-            if self.cursor.is("..") {
-                return Err(unsupported(
-                    "Rust record update",
-                    "update syntax needs complete move and field provenance",
-                    span(start, self.cursor.peek()),
-                ));
+            if self.cursor.eat("..").is_some() {
+                base = Some(self.expr(path, Options::default())?);
+                break;
             }
             self.attributes(None)?;
             let next = self.cursor.peek();
@@ -274,6 +279,9 @@ impl RustParser {
                 range,
             ));
         };
+        if let Some(base) = base {
+            return self.record_update(&record, &names, values, base, path, range);
+        }
         let plan = plan_rust_record_fields(&record.names, &names);
         if plan.first().is_some_and(|code| *code < 0.0) {
             return Err(type_error(
