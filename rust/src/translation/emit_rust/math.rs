@@ -92,6 +92,28 @@ impl RustEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(op) > 0.0 {
+            self.preludes.insert(Prelude::Big);
+            self.preludes.insert(Prelude::BigIntegerBitwise);
+            let values = args
+                .iter()
+                .map(|argument| self.expr(argument))
+                .collect::<Result<Vec<_>>>()?;
+            let text = crate::translation::big_integer_bitwise_rules::render_big_integer_bitwise_expression("Rust", op, &values);
+            if text.is_empty() {
+                return Err(super::unsupported(
+                    "BigInt bitwise arity",
+                    "the operation requires its exact checked operand inventory",
+                    e.span,
+                ));
+            }
+            self.state.encode(
+                "big-integer-bitwise",
+                &crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_statement(
+                ),
+            );
+            return Ok(text);
+        }
         self.floats();
         let code = crate::translation::number_bitwise_rules::read_java_script_number_bitwise_operation_code(op);
         if code >= 0.0 {

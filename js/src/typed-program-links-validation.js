@@ -2,6 +2,7 @@ import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
+import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -149,7 +150,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
           : 'a linked expression contains an unrecognized semantic field');
     if (operationKinds.has(node.k) && !acceptProgramExpressionOperation(node.k, node.op) && !acceptLinkedNumberBitwiseOperation(node.k,node.op)
       && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
-      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)) throw new TypeError('a linked expression operation is unsupported');
+      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
+      && !acceptLinkedBigIntegerBitwiseOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -293,12 +295,13 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       if (refusal) throw new TypeError(`Rust Float display: ${refusal}`);
     }
     if (node.k === 'math') {
-      const arity=readJavaScriptNumberBitwiseArity(node.op);
+      const integerArity=readBigIntegerBitwiseArity(node.op);
+      const arity=readJavaScriptNumberBitwiseArity(node.op)||integerArity;
       const spread = node.op === 'maxOf' || node.op === 'minOf';
       const variadic = node.op === 'max' || node.op === 'min';
       if (!Array.isArray(node.args) || (!variadic && node.args.length !== (arity||1))) throw new TypeError('a linked math operation has the wrong number of arguments');
-      for (const argument of node.args) same(argument.type, spread ? { kind: 'array', element: { kind: 'float' } } : { kind: 'float' }, 'math argument type');
-      same(node.type, { kind: acceptProgramExpressionOperation('optionalPredicate', node.op) ? 'bool' : 'float' }, 'math result type');
+      for (const argument of node.args) same(argument.type, spread ? { kind: 'array', element: { kind: 'float' } } : { kind: integerArity ? 'int' : 'float' }, 'math argument type');
+      same(node.type, { kind: integerArity ? 'int' : acceptProgramExpressionOperation('optionalPredicate', node.op) ? 'bool' : 'float' }, 'math result type');
     }
     if (node.k === 'stringMap' || node.k === 'stringTest') {
       same(node.string.type, { kind: 'string' }, 'string operation receiver type');

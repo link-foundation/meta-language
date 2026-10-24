@@ -1,5 +1,6 @@
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
 // Rocq emitter. Naturals become binary `N` and integers `Z`, so programs
@@ -886,6 +887,7 @@ class RocqEmitter {
   }
 
   math(e) {
+    if (readBigIntegerBitwiseArity(e.op)) return renderBigIntegerBitwiseExpression('Rocq', e.op, e.args.map(argument => this.expr(argument)));
     this.floats();
     const args = e.args.map((arg) => this.expr(arg));
     const native = { abs: 'PrimFloat.abs', sqrt: 'PrimFloat.sqrt', isNaN: 'PrimFloat.is_nan' }[e.op];

@@ -66,6 +66,9 @@ impl<'p> RustEmitter<'p> {
                 Prelude::String => crate::self_translation::representation::string_prelude(),
                 Prelude::Optional => read_rust_optional_prelude(),
                 Prelude::NumberBitwise => include_str!("../runtime/number-bitwise.rs").to_owned(),
+                Prelude::BigIntegerBitwise => {
+                    include_str!("../runtime/big-integer-bitwise.rs").to_owned()
+                }
             })
             .collect();
         for prelude in &preludes {

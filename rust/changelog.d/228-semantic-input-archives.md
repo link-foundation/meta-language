@@ -28,3 +28,6 @@ Behavioral checks remain deferred until the complete requirements draft.
 Draft shared own-record field assignments, Number compound state updates and
 capture-avoiding native construction, with editable typed definitions and future
 alias and evaluation-order controls.
+Draft exact BigInt bitwise operations and signed shifts with one automatically
+translated algorithm, shared integer runtime ownership, four target constructors
+and future complete boundary/native execution controls.

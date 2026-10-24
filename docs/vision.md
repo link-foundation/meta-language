@@ -2601,6 +2601,32 @@ reuse those same checked operations, preserving the read before the right
 operand and the final write. Constant, temporal-dead-zone, property and BigInt
 assignment semantics keep their separate admission obligations.
 
+The next shared primitive draft distinguishes actual Number and BigInt operand
+domains during inference and checking, with no binary64 conversion of integers.
+Exact conjunction, disjunction, exclusive disjunction, complement and signed
+shifts use a complete checked JavaScript arithmetic definition. Infinite sign
+extension, negative shift reversal, large counts and arithmetic right-shift
+saturation remain explicit. Its native library and complete emitted runtime are
+generated from that definition. The runtime reuses the ordinary integer owner;
+lexical relocation preserves every literal and records its actual source edits,
+declarations and supporting preludes. Both packages expose the full editable
+typed definition graph. Source operators and local compound assignments select
+this qualified profile only for actual integer operands; linked reload checks
+the exact arity, integer owners and result through the existing whole checker.
+JavaScript uses its native operators. Lean constructs signed operations through
+the core natural bitwise definitions, and Rocq uses its integer operations.
+These mappings follow the [ECMAScript BigInt model](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-bigintbitwiseop),
+[Lean core bitwise definitions](https://github.com/leanprover/lean4/blob/v4.19.0/src/Init/Data/Nat/Bitwise/Basic.lean)
+and [Rocq integer operations](https://rocq-prover.org/doc/V9.0.0/stdlib/Stdlib.ZArith.BinIntDef.html).
+The target definitions and native controls are drafts, not checked equivalence
+certificates. Future controls retain every declared sign/limb-boundary product,
+compound assignment, huge right shift, both codecs and complete four-target
+emission. Rust and proof-assistant execution belongs to CI. Mixed Number/BigInt
+errors, unsupported primitive coercions, unsigned BigInt shifts, host resource
+error equivalence and independent Rust source admission remain separate
+implementation obligations. The earlier Number profile and every original
+assertion/input remain available for later evidence-based reconciliation.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

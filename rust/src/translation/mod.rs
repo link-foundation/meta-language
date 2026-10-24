@@ -18,6 +18,8 @@ pub(crate) mod array_classification_rules;
 pub(crate) mod array_from_rules;
 pub(crate) mod array_value_rules;
 pub(crate) mod ascii_text_predicate_rules;
+pub(crate) mod big_integer_bitwise_program;
+pub(crate) mod big_integer_bitwise_rules;
 pub(crate) mod boolean_declaration_value_rules;
 pub(crate) mod borrowed_call_interface;
 pub(crate) mod borrowed_call_interface_rules;

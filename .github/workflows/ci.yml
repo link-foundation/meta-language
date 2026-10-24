@@ -1168,6 +1168,12 @@ jobs:
           node js/scripts/check-translation-corpus-native.mjs
           --target "${{ matrix.target }}" --fixture string-length
 
+      - name: Verify exact BigInt bitwise execution
+        if: ${{ !cancelled() }}
+        run: >-
+          node js/scripts/check-big-integer-bitwise-native.mjs
+          --target "${{ matrix.target }}"
+
       # The record, execution records, logs and artifacts are uploaded even when
       # the stage fails: the aggregate reports the failure as one gate error.
       - name: Upload the stage outputs

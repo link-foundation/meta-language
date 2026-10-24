@@ -30,6 +30,8 @@ export function readDevelopmentAuthoringPlan(){
    stage('insertion ordered collection access fixture inputs','js/scripts/generate-collection-access-fixtures.mjs',['--draft']),
    stage('shared own record field write native rules','js/scripts/generate-record-write-rules.mjs',['--draft']),
    stage('shared own record field write fixture inputs','js/scripts/generate-record-write-fixtures.mjs',['--draft']),
+   stage('exact BigInt bitwise native and runtime rules','js/scripts/generate-big-integer-bitwise-rules.mjs',['--draft']),
+   stage('exact BigInt bitwise fixture inputs','js/scripts/generate-big-integer-bitwise-fixtures.mjs',['--draft']),
    stage('resource identifier address native rules','js/scripts/generate-resource-description-address-rules.mjs',['--draft']),
    stage('resource identifier address fixture inputs','js/scripts/generate-resource-description-address-fixtures.mjs',['--draft']),
    stage('grammar selection mappings','js/scripts/generate-grammar-selection-mapping-rules.mjs',['--native']),

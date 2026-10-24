@@ -8,6 +8,17 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        if crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(op) > 0.0 {
+            let text = crate::translation::big_integer_bitwise_rules::render_big_integer_bitwise_expression("JavaScript", op, &args);
+            if text.is_empty() {
+                return Err(super::unsupported(
+                    "BigInt bitwise arity",
+                    "the operation requires its exact checked operand inventory",
+                    e.span,
+                ));
+            }
+            return Ok(text);
+        }
         let symbol =
             crate::translation::number_bitwise_rules::read_java_script_number_bitwise_symbol(op);
         if !symbol.is_empty() {

@@ -202,6 +202,7 @@ mod substitution;
 mod translation;
 mod translation_arrays;
 mod translation_ascii_text_predicates;
+mod translation_big_integer_bitwise;
 mod translation_collection_access;
 mod translation_concrete_program_graphs;
 mod translation_console_format;

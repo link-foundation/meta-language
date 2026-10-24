@@ -4,6 +4,7 @@ import { renderCollectionSizeExpression, renderCollectionReadExpression } from '
 import { acceptLinkedRecordFieldWrite, readRecordFieldWriteOperator, readRecordFieldWriteName, renderRecordFieldWrite, readRecordFieldWriteStatement } from './record-write-rules.js';
 import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMethodStatement, renderReferenceMethodExpression } from './reference-method-rules.js';
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
@@ -602,6 +603,11 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if (readBigIntegerBitwiseArity(e.op)) {
+          const text = renderBigIntegerBitwiseExpression('JavaScript', e.op, e.args.map(argument => this.expr(argument)));
+          if (!text) throw unsupported('BigInt bitwise arity', 'the operation requires its exact checked operand inventory', e.span);
+          return text;
+        }
         const args = e.args.map((arg) => this.expr(arg));
         const bitwise=readJavaScriptNumberBitwiseSymbol(e.op);
         if(bitwise){

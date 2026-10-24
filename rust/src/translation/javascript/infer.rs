@@ -749,6 +749,27 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if (crate::translation::number_bitwise_rules::read_java_script_number_bitwise_arity(
+                    op,
+                ) > 0.0
+                    || crate::translation::big_integer_bitwise_rules::read_big_integer_bitwise_arity(
+                        op,
+                    ) > 0.0)
+                    && !args.is_empty()
+                {
+                    let values = args
+                        .iter()
+                        .map(|argument| self.expr(&argument.value, env))
+                        .collect::<Result<Vec<_>>>()?;
+                    let result = self.fresh(false);
+                    self.arithmetic.push(Arithmetic {
+                        left: values[0].clone(),
+                        right: values.get(1).cloned(),
+                        result: result.clone(),
+                        place: expr.span,
+                    });
+                    return Ok(result);
+                }
                 // Math takes Numbers: an argument of no known type is one, and the checker refuses any other.
                 for item in args {
                     let ty = self.expr(&item.value, env)?;

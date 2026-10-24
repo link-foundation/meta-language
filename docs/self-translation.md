@@ -538,3 +538,15 @@ borrows end before the right operand; generated names reserve complete operands.
 Future fourteen-case and three-refusal controls remain unexecuted. Dynamic
 properties, slots, prototype behavior and coercing compound writes still need
 their implementation drafts.
+
+BigInt bitwise operations and signed shifts now have one complete arithmetic
+source draft. The checker selects actual Number or integer owners; native
+library and runtime generation preserve the source algorithm, all supporting
+preludes and the existing integer representation. Relocation is token based
+and preserves literals, with complete edits retained as Links data. All four
+target constructors use that same shared rule library. Public factories expose
+editable typed definitions in both packages. Future controls retain full signed
+boundary products, compound locals, large right-shift saturation, both codecs,
+paired complete emissions and native CI execution. None has run. Mixed-domain
+error encodings, coercions, resource-error equivalence and independent Rust
+syntax still require the remaining implementation drafts.

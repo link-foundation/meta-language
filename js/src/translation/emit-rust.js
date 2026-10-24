@@ -22,6 +22,8 @@ import {requireStringOrderUnits,renderStringOrderExpression} from './string-orde
 import { castMessage, overflowMessage, zeroDivisorMessage } from './aborts.js';
 import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
+import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
+import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression, readBigIntegerBitwiseStatement } from './big-integer-bitwise-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead, renderStringPointIteration } from './array-value-rules.js';
 import { renderArrayFromMapping } from './array-from-rules.js';
 import { renderArrayCallbackExpression, renderArrayCallbackReferenceExpression, readArrayCallbackCheckedArgumentPosition } from './array-callback-rules.js';
@@ -712,6 +714,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesMath ? [MATH_PRELUDE] : []),
     ...(emitter.usesArray ? [readRustArrayPrelude(emitter.usesStandardArray)] : []),
     ...(emitter.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
+    ...(emitter.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -737,6 +740,7 @@ class RustEmitter {
     this.usesStandardArray = false;
     this.usesMath = false;
     this.usesNumberBitwise = false;
+    this.usesBigIntegerBitwise = false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
@@ -773,6 +777,7 @@ class RustEmitter {
       ...(this.utf16Strings ? [STRING_PRELUDE, ''] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE, ''] : []),
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE, ''] : []),
+      ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -784,6 +789,7 @@ class RustEmitter {
       ...(this.utf16Strings ? [STRING_PRELUDE] : []),
       ...(this.usesOptional ? [OPTIONAL_PRELUDE] : []),
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
+      ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1446,6 +1452,13 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if (readBigIntegerBitwiseArity(e.op)) {
+      this.usesBig = true; this.usesBigIntegerBitwise = true;
+      const text = renderBigIntegerBitwiseExpression('Rust', e.op, e.args.map(argument => this.expr(argument)));
+      if (!text) throw unsupported('BigInt bitwise arity', 'the operation requires its exact checked operand inventory', e.span);
+      this.state.encode('big-integer-bitwise', readBigIntegerBitwiseStatement());
+      return text;
+    }
     this.floats();
     const bitwiseCode=readJavaScriptNumberBitwiseOperationCode(e.op);
     if(bitwiseCode>=0){

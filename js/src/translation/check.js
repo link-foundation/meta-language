@@ -11,6 +11,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
+import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
 import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
@@ -1176,15 +1177,16 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path) {
-    const bitwiseArity=readJavaScriptNumberBitwiseArity(node.op);
+    const numberArity=readJavaScriptNumberBitwiseArity(node.op);
+    const bitwiseArity=numberArity || readBigIntegerBitwiseArity(node.op);
     if(bitwiseArity){
       if(node.args.length!==bitwiseArity||node.args.some(item=>item.spread))throw typeError('a Number bitwise operation requires its exact unspread operands',node.span);
-      const args=node.args.map(({value})=>{
-        const arg=this.expr(value,env,path,FLOAT);
-        if(!isFloat(arg.type))throw unsupported('Number bitwise operand','this interpretation requires Number operands; other primitive conversions and BigInt bitwise operations retain their own obligations',value.span??node.span);
-        return arg;
-      });
-      return{k:'math',op:node.op,args,type:FLOAT};
+      const args=node.args.map(({value})=>this.expr(value,env,path,undefined));
+      const domain=readPrimitiveBitwiseDomain(args.map(argument=>argument.type.kind));
+      const operation=domain==='BigInt'?readBigIntegerBitwiseOperation(node.op):'';
+      if(operation) return{k:'math',op:operation,args:args.map(argument=>coerce(argument,INT,this.language,node.span)),type:INT};
+      if(domain==='Number'&&numberArity) return{k:'math',op:node.op,args,type:FLOAT};
+      throw unsupported('primitive bitwise operand','the actual operands need one complete Number or BigInt domain; implicit coercions and unsigned BigInt shifts retain their own obligations',node.span);
     }
     const type = PREDICATES.has(node.op) ? BOOL : FLOAT;
     const variadic = node.op === 'max' || node.op === 'min';
