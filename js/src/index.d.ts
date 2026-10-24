@@ -978,6 +978,7 @@ export function createRustRecordProgramLinks(): TypedProgramLinks;
 export function createJavaScriptOptionalCallProgramLinks(): TypedProgramLinks;
 export function createJavaScriptOptionalChainProgramLinks(): TypedProgramLinks;
 export function createJavaScriptNullishFieldProgramLinks(): TypedProgramLinks;
+export function createJavaScriptOwnPropertyProgramLinks(): TypedProgramLinks;
 export function createJavaScriptLiteralPropertyProgramLinks(): TypedProgramLinks;
 export function createJavaScriptPropertyCallProgramLinks(): TypedProgramLinks;
 export function createLinkAllocationProgramLinks(): TypedProgramLinks;

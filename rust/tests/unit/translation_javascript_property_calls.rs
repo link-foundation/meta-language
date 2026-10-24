@@ -130,3 +130,12 @@ fn receiver_independent_optional_property_calls_keep_loaded_callees_and_lazy_arg
         meta_language::create_java_script_optional_call_program_links,
     );
 }
+
+#[test]
+fn own_property_membership_keeps_coercion_order_closed_fields_and_live_indices() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/own-properties.mjs",
+        "own property membership",
+        meta_language::create_java_script_own_property_program_links,
+    );
+}

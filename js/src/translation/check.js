@@ -1,4 +1,5 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
+import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
@@ -1233,6 +1234,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op==='testJavaScriptOwnedProperty')return checkJavaScriptOwnProperty(this,node,env,path);
     if(node.op===readJavaScriptOptionalChainOperation())return checkJavaScriptOptionalChain(this,node,env,path);
     if(node.op===readJavaScriptOptionalCallOperation())return checkJavaScriptOptionalCall(this,node,env,path);
     if(node.op==='testJavaScriptArrayValue')return checkJavaScriptArrayBuiltin(this,node,env,path);

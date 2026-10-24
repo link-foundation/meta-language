@@ -1,7 +1,7 @@
 //! Actual literal keys and String operands into ordinary checked field/unit IR.
 use super::{
-    BOOL, BinaryOp, Checker, Env, Expr, FLOAT, Node, Result, SExpr, SNode, STRING, Span,
-    Type, binary_node, plain_binary, text_lit, unsupported,
+    BOOL, BinaryOp, Checker, Env, Expr, FLOAT, Node, Result, SExpr, SNode, STRING, Span, Type,
+    binary_node, plain_binary, text_lit, unsupported,
 };
 use crate::translation::ir::RecordEntry;
 use crate::translation::javascript_literal_property_rules as rules;
@@ -114,7 +114,7 @@ impl Checker {
         let captured_type = Type::Record {
             fields: vec![
                 TypeField {
-                    name: "receiver".to_owned(),
+                    name: "base".to_owned(),
                     ty: receiver.ty.clone(),
                 },
                 TypeField {
@@ -135,7 +135,7 @@ impl Checker {
                 ty,
             )
         };
-        let text = read("receiver", 0, receiver.ty.clone());
+        let text = read("base", 0, receiver.ty.clone());
         let raw = read("key", 1, key.ty.clone());
         let name = self.fresh_name("ml_string_index_number");
         let at = Expr::var(name.clone(), FLOAT);
@@ -196,7 +196,7 @@ impl Checker {
             Node::Record {
                 entries: vec![
                     RecordEntry {
-                        name: "receiver".to_owned(),
+                        name: "base".to_owned(),
                         value: receiver,
                     },
                     RecordEntry {

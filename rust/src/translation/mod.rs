@@ -73,6 +73,8 @@ pub(crate) mod javascript_optional_call_program;
 pub(crate) mod javascript_optional_call_rules;
 pub mod javascript_optional_chain_program;
 pub(crate) mod javascript_optional_chain_rules;
+pub mod javascript_own_property_program;
+pub(crate) mod javascript_own_property_rules;
 pub(crate) mod javascript_property_call_program;
 pub(crate) mod javascript_property_call_rules;
 pub(crate) mod javascript_record_parameter_program;

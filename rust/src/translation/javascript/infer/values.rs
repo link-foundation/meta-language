@@ -163,7 +163,7 @@ impl Inference {
             SNode::Math { op, args, .. } => {
                 if op==&crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.optional_chain_term(args,env,expr.span);}
                 if op==&crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(){return self.optional_call_term(args,env,expr.span);}
-                if op=="convertJavaScriptPrimitiveText"||op=="convertJavaScriptBooleanValue"||op=="testJavaScriptArrayValue"||crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(op){return self.primitive_observation_term(op,args,env);}
+                if op=="convertJavaScriptPrimitiveText"||op=="convertJavaScriptBooleanValue"||op=="testJavaScriptArrayValue"||op=="testJavaScriptOwnedProperty"||crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(op){return self.primitive_observation_term(op,args,env);}
                 if crate::translation::javascript_comparison_rules::accept_java_script_loose_equality_operation(op){return self.loose_comparison_term(args,env,expr.span);}
                 if op=="constructJavaScriptStringFromCharacterCodes"||op=="constructJavaScriptStringFromCodePoints"||crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
                     for item in args{self.expr(&item.value,env)?;}

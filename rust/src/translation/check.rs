@@ -50,6 +50,7 @@ mod javascript_indexed_properties;
 mod javascript_nullish_fields;
 mod javascript_optional_calls;
 mod javascript_optional_chains;
+mod javascript_own_properties;
 mod javascript_property_calls;
 mod matches;
 mod math;

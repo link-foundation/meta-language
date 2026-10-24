@@ -6822,3 +6822,42 @@ and [call evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language
 Future Node/native/graph/codec/emission controls are unexecuted. Dynamic this,
 foreign callable/proxy/accessor protocols, missing record properties, general
 noncallable diagnostics and every preceding obligation remain required.
+
+
+### Closed own-property membership and canonical operand captures draft
+
+The unshadowed Object.hasOwn built-in evaluates all actual arguments, including
+extras, before object coercion. Missing arguments retain JavaScript undefined.
+A nullish object raises its source TypeError before key conversion. Present
+closed records distinguish actual own membership from a property's value and
+from inherited names. Dense arrays/products and primitive Strings retain length
+and canonical own numeric indices; String lengths count UTF16 units. Primitive
+Number/Boolean/BigInt wrappers and represented Map/Set values have no own fields
+in this source domain. Unknown/open/nominal/callable/proxy domains require their
+complete own-property protocol before admission.
+
+Primitive keys use the existing exact conversion definitions, including null,
+undefined, negative zero, BigInt and optional primitive values. Numeric property
+keys require an exact text round trip, integrality, nonnegative bounds and the
+Array index limit where applicable. Leading zeros, whitespace, radix notation
+and scientific spellings cannot become numeric property witnesses. Actual Array
+length is read after argument effects, through the original shared handle.
+The construction follows
+[Object.hasOwn](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.hasown).
+Diagnostic spelling is qualified to the existing Node 22.15+/24 profiles.
+
+Private operand captures preserve source evaluation order and the typed codec's
+canonical UTF16 field order together. Distinct base/key names and zero-padded
+argument ordinals keep layouts canonical even beyond ten arguments. Source
+model four corrects two earlier receiver/key capture layouts; complete preceding
+hosts stay in the new fixture history. Deferred controls inspect every actual
+record and require its entry order to match its actual checked type.
+
+Object enumeration still requires runtime insertion order in addition to the
+canonical structural record layout. A canonical shape alone cannot supply
+Object.keys/values/entries ordering. This information must be carried with the
+value across branches, parameters, shared aliases, codecs and target runtimes;
+no sorted list or declaration-only order can replace it. General key coercion,
+Symbols, descriptors/prototypes, property addition/deletion and all preceding
+translation and architecture obligations remain required. Future source/native,
+graph, codec and four-target controls for this batch are unexecuted.

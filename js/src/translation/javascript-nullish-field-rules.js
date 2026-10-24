@@ -22,7 +22,7 @@ export function readJavaScriptNullishKeyDescription(kind,ownsToString,ownsConstr
  return kind==='set'?'set':'unsupported';
 }
 /** @returns {string} */
-export function readJavaScriptNullishIndexKeyField(){return 'key';}
+export function readJavaScriptNullishIndexKeyField(){return 'sourceKey';}
 /** Object diagnostics require the actual literal/collection constructor;
  * structural parameter types alone do not prove their runtime prototype.
  * @param {string} form @param {string} kind @returns {boolean} */

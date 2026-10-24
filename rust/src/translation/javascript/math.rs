@@ -72,6 +72,9 @@ impl JavaScriptParser {
         if numeric_builtin.is_empty() {
             numeric_builtin=crate::translation::array_classification_rules::read_java_script_array_classification_builtin_operation(name);
         }
+        if numeric_builtin.is_empty() {
+            numeric_builtin = crate::translation::javascript_own_property_rules::read_java_script_own_property_builtin_operation(name);
+        }
         if called && standard_owner && !numeric_builtin.is_empty() {
             let args = self.spread_arguments(name)?;
             return Ok(Some(node(

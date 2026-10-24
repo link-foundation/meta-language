@@ -33,9 +33,9 @@ function numeric(checker,value,span){
 }
 export function checkJavaScriptStringIndex(checker,node,receiver,env,path){
  const key=checker.expr(node.index,env,path,undefined),capture=checker.freshName('ml_string_index_operands');
- const capturedType={kind:'record',fields:[{name:'receiver',type:receiver.type},{name:'key',type:key.type}]};
+ const capturedType={kind:'record',fields:[{name:'base',type:receiver.type},{name:'key',type:key.type}]};
  const read=(field,index,type)=>({k:'recordField',object:variable(capture,capturedType),field,index,type});
- const text=read('receiver',0,receiver.type),raw=read('key',1,key.type);
+ const text=read('base',0,receiver.type),raw=read('key',1,key.type);
  const name=checker.freshName('ml_string_index_number'),at=variable(name,FLOAT),number=numeric(checker,raw,node.index.span??node.span);
  const integral={k:'math',op:'isInteger',args:[at],type:BOOL};
  const bounds=binary('and',binary('ge',at,literal(FLOAT,'0'),FLOAT,BOOL),binary('lt',at,{k:'length',array:text,type:FLOAT},FLOAT,BOOL),null,BOOL);
@@ -43,5 +43,5 @@ export function checkJavaScriptStringIndex(checker,node,receiver,env,path){
  const character=checker.materializePrimitiveMethod({k:'method',op:'charAt',span:node.span},text,[at],path);
  const selected={k:'if',cond:condition,then:{k:'some',value:character,type},else:{k:'none',absence:'undefined',type},type};
  const body={k:'let',name,value:number,body:selected,type};
- return {k:'let',name:capture,value:{k:'record',entries:[{name:'receiver',value:receiver},{name:'key',value:key}],type:capturedType},body,type};
+ return {k:'let',name:capture,value:{k:'record',entries:[{name:'base',value:receiver},{name:'key',value:key}],type:capturedType},body,type};
 }

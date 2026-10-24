@@ -1,3 +1,4 @@
+import {createJavaScriptOwnPropertyProgramLinks} from '../src/javascript-own-property-program.js';
 import {createJavaScriptLiteralPropertyProgramLinks} from '../src/javascript-literal-property-program.js';
 import {createJavaScriptNullishFieldProgramLinks} from '../src/javascript-nullish-field-program.js';
 import {createJavaScriptOptionalChainProgramLinks} from '../src/javascript-optional-chain-program.js';
@@ -29,10 +30,22 @@ import {hasSourceExceptionPayload} from '../src/translation/source-exception-obs
 const [major,minor]=process.versions.node.split('.').map(Number);
 assert.ok(major===22&&minor>=15||major===24,'uncovered Node '+process.versions.node);
 const observe=(call,row)=>{try{return{kind:'value',value:String(call())};}catch(error){return{kind:'abort',value:row.errorClass===undefined?error.message:error.message.toWellFormed(),...(row.errorClass===undefined?{}:{errorClass:error.name,messageUnits:Array.from({length:error.message.length},(_,at)=>error.message.charCodeAt(at)),messagePresent:Object.hasOwn(error,'message')})};}};
-for(const [fixtureName,createDefinition] of [['source-exceptions',createSourceExceptionProgramLinks],['numeric-operation-errors',createSourceExceptionProgramLinks],['big-integer-source',createBigIntegerConversionProgramLinks],['big-integer-division',createBigIntegerConversionProgramLinks],['exponentiation',createBigIntegerConversionProgramLinks],['primitive-comparisons',createJavaScriptComparisonProgramLinks],['binding-defaults',createArrayBindingProgramLinks],['record-parameter-writes',createJavaScriptRecordParameterProgramLinks],['sequence-expressions',createScalarAssignmentProgramLinks],['string-split',createUtf16TextProgramLinks],['string-replacement',createUtf16TextProgramLinks],['string-unit-calls',createJavaScriptPropertyCallProgramLinks],['javascript-optional-calls',createJavaScriptOptionalCallProgramLinks],['javascript-optional-property-calls',createJavaScriptOptionalCallProgramLinks],['javascript-optional-chains',createJavaScriptOptionalChainProgramLinks],['javascript-nullish-fields',createJavaScriptNullishFieldProgramLinks],['javascript-nullish-methods',createJavaScriptNullishFieldProgramLinks],['javascript-computed-reads',createJavaScriptNullishFieldProgramLinks],['javascript-indexed-properties',createJavaScriptLiteralPropertyProgramLinks],['javascript-string-units',createJavaScriptStringUnitProgramLinks],['string-construction',createStringConstructionProgramLinks]])test(fixtureName+' retains every source value exception field and complete codec/emission result',()=>{
+for(const [fixtureName,createDefinition] of [['source-exceptions',createSourceExceptionProgramLinks],['numeric-operation-errors',createSourceExceptionProgramLinks],['big-integer-source',createBigIntegerConversionProgramLinks],['big-integer-division',createBigIntegerConversionProgramLinks],['exponentiation',createBigIntegerConversionProgramLinks],['primitive-comparisons',createJavaScriptComparisonProgramLinks],['binding-defaults',createArrayBindingProgramLinks],['record-parameter-writes',createJavaScriptRecordParameterProgramLinks],['sequence-expressions',createScalarAssignmentProgramLinks],['string-split',createUtf16TextProgramLinks],['string-replacement',createUtf16TextProgramLinks],['string-unit-calls',createJavaScriptPropertyCallProgramLinks],['javascript-optional-calls',createJavaScriptOptionalCallProgramLinks],['javascript-optional-property-calls',createJavaScriptOptionalCallProgramLinks],['javascript-optional-chains',createJavaScriptOptionalChainProgramLinks],['javascript-nullish-fields',createJavaScriptNullishFieldProgramLinks],['javascript-nullish-methods',createJavaScriptNullishFieldProgramLinks],['javascript-computed-reads',createJavaScriptNullishFieldProgramLinks],['javascript-indexed-properties',createJavaScriptLiteralPropertyProgramLinks],['javascript-own-properties',createJavaScriptOwnPropertyProgramLinks],['javascript-string-units',createJavaScriptStringUnitProgramLinks],['string-construction',createStringConstructionProgramLinks]])test(fixtureName+' retains every source value exception field and complete codec/emission result',()=>{
  const fixture=readProjectData(new URL('../../parity/fixtures/'+fixtureName+'.lino',import.meta.url));
  if(fixture.oracleArchitectures)assert.ok(fixture.oracleArchitectures.includes(process.arch),'uncovered source architecture '+process.arch);
  const program=checkProgram(parseJavaScript(fixture.source)),packet=encodeTypedProgramLinks(program),output=emitJavaScript(program);
+ const inspectedCaptures=new WeakSet();
+ const inspectCapture=value=>{
+  if(!value||typeof value!=='object')return;
+  if(inspectedCaptures.has(value))return;inspectedCaptures.add(value);
+  if(value.k==='record'){
+   const names=value.entries.map(entry=>entry.name);
+   assert.deepEqual(names,[...names].sort(),'every checked record keeps canonical UTF16 field order');
+   assert.deepEqual(value.type.fields.map(field=>field.name),names,'every record projection uses its actual canonical layout');
+  }
+  for(const child of value instanceof Map?value.values():Object.values(value))inspectCapture(child);
+ };
+ inspectCapture(program);
  for(const actual of [packet,createDefinition()])for(const target of ['JavaScript','Rust','Lean','Rocq']){
   const expected=emitTypedProgramLinks(actual.network,actual.root,target);
   for(const network of [LinkNetwork.fromLino(actual.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(actual.network))])assert.deepEqual(emitTypedProgramLinks(network,actual.root,target),expected);

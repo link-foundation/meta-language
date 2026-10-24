@@ -989,7 +989,7 @@ class Inference {
       case 'math':
         if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
         if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
-        if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
+        if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'||node.op==='testJavaScriptOwnedProperty'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
         if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(acceptJavaScriptLooseEqualityOperation(node.op)){

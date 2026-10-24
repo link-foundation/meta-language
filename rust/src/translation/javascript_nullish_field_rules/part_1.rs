@@ -8,14 +8,16 @@ pub fn read_java_script_optional_call_operation() -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_java_script_optional_call_head(kind: &str, path_length: f64) -> bool {
-    (((((((((kind == "name") && (path_length >= 1f64)) || (kind == "functionValue"))
+    (((((((((((kind == "name") && (path_length >= 1f64)) || (kind == "functionValue"))
         || (kind == "lambda"))
         || (kind == "app"))
         || (kind == "let"))
         || (kind == "if"))
         || (kind == "math"))
         || (kind == "none"))
-        || (kind == "unit")
+        || (kind == "unit"))
+        || (kind == "field"))
+        || (kind == "index")
 }
 
 /// Execute the checked shared source algorithm.
@@ -196,7 +198,7 @@ pub fn read_java_script_nullish_key_description(
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_nullish_index_key_field() -> String {
-    String::from("key")
+    String::from("sourceKey")
 }
 
 /// Execute the checked shared source algorithm.

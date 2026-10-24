@@ -21,6 +21,9 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "testJavaScriptOwnedProperty" {
+            return self.javascript_own_property(args, span, env, path);
+        }
         if op==crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.javascript_optional_chain(args,span,env,path);}
         if op==crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(){return self.javascript_optional_call(args,span,env,path);}
         if op == "testJavaScriptArrayValue" {
