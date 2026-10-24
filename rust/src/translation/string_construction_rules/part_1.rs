@@ -2,7 +2,9 @@
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_string_construction_operation(name: &str) -> String {
-    if name == "String.fromCharCode" {
+    if name == "String" {
+        String::from("convertJavaScriptPrimitiveText")
+    } else if name == "String.fromCharCode" {
         String::from("constructJavaScriptStringFromCharacterCodes")
     } else if name == "String.fromCodePoint" {
         String::from("constructJavaScriptStringFromCodePoints")

@@ -1,6 +1,7 @@
 // Shared source owner identities and complete-runtime target adapters.
 /** @param {string} name @returns {string} */
 export function readJavaScriptStringConstructionOperation(name){
+  if(name==='String')return 'convertJavaScriptPrimitiveText';
   if(name==='String.fromCharCode')return 'constructJavaScriptStringFromCharacterCodes';
   return name==='String.fromCodePoint'?'constructJavaScriptStringFromCodePoints':'';
 }

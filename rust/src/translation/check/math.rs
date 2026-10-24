@@ -21,6 +21,9 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "convertJavaScriptPrimitiveText" {
+            return self.javascript_primitive_text_builtin(args, span, env, path);
+        }
         if crate::translation::javascript_comparison_rules::accept_java_script_same_value_operation(
             op,
         ) {

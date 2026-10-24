@@ -1,6 +1,7 @@
 // Source property spelling never proves that a receiver owns a builtin method.
 /** @param {string} operation @returns {string} */
 export function readJavaScriptSourcePropertyOperationKind(operation) {
+  if(operation==='indexOf'||operation==='lastIndexOf')return 'index';
   if (operation === 'includes' || operation === 'startsWith' || operation === 'endsWith') return 'test';
   if (operation === 'trim' || operation === 'trimStart' || operation === 'trimEnd'
       || operation === 'toLowerCase' || operation === 'toUpperCase') return 'map';
@@ -34,5 +35,22 @@ export function readJavaScriptConcatenationArgumentRole(receiver, argument, forc
   if (argument === 'var' && !force) return 'defer';
   if (receiver === 'array') return argument === 'array' ? 'spread' : 'item';
   if (receiver !== 'string') return '';
-  return ['string','float','bool','int','nat','fixed'].includes(argument) ? 'text' : 'unsupported';
+  return ['string','float','bool','int','nat','fixed','unit','option'].includes(argument) ? 'text' : 'unsupported';
 }
+
+/** @param {string} kind @returns {string} */
+export function readJavaScriptPrimitiveTextForm(kind){
+ if(kind==='string')return 'identity';
+ if(kind==='unit')return 'undefined';
+ if(kind==='option')return 'optional';
+ return kind==='float'||kind==='bool'||kind==='int'||kind==='nat'||kind==='fixed'?'convert':'refuse';
+}
+/** Missing/undefined end positions select the complete receiver.
+ * @param {string} operation @returns {string} */
+export function readJavaScriptStringSearchDefaultPosition(operation){return operation==='endsWith'?'Infinity':operation==='lastIndexOf'?'NaN':'0';}
+/** Slicing uses an explicitly nonnegative position, never a relative offset.
+ * @param {string} operation @returns {string[]} */
+export function planJavaScriptStringSearchWindow(operation){return operation==='endsWith'?['0','position']:['position','Infinity'];}
+
+/** @param {string} operation @returns {string} */
+export function readJavaScriptStringSearchResultKind(operation){return operation==='indexOf'||operation==='lastIndexOf'?'float':'bool';}

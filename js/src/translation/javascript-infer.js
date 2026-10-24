@@ -960,6 +960,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op==='convertJavaScriptPrimitiveText'){for(const argument of node.args)this.expr(argument.value,env);return STRING;}
         if(acceptJavaScriptSameValueOperation(node.op)){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}
         if(acceptJavaScriptLooseEqualityOperation(node.op)){
           const values=node.args.map(argument=>this.expr(argument.value,env));
@@ -1190,6 +1191,8 @@ class Inference {
     }
     if (receiver.kind === 'string') {
       const selected=readJavaScriptSourcePropertyOperationKind(op);
+      if(selected==='index'){this.unify(result,FLOAT,where);return true;}
+      if(selected==='test'){if(node&&args.length===1&&this.resolve(args[0]).kind==='string')this.propertyMethods.set(node,'test');this.unify(result,BOOL,where);return true;}
       if(node&&(selected==='test'&&args.length===1||selected==='map'&&args.length===0))this.propertyMethods.set(node,selected);
       const primitive = readPrimitiveMethodMinimumArguments(receiver.kind, op) >= 0;
       args.forEach((arg, index) => {

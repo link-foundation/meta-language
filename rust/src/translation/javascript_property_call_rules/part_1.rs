@@ -119,7 +119,11 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_source_property_operation_kind(operation: &str) -> String {
-    if ((operation == "includes") || (operation == "startsWith")) || (operation == "endsWith") {
+    if (operation == "indexOf") || (operation == "lastIndexOf") {
+        String::from("index")
+    } else if ((operation == "includes") || (operation == "startsWith"))
+        || (operation == "endsWith")
+    {
         String::from("test")
     } else if ((((operation == "trim") || (operation == "trimStart")) || (operation == "trimEnd"))
         || (operation == "toLowerCase"))
@@ -219,6 +223,8 @@ pub fn read_java_script_concatenation_argument_role(
                 String::from("int"),
                 String::from("nat"),
                 String::from("fixed"),
+                String::from("unit"),
+                String::from("option"),
             ],
             &argument.to_owned(),
             0f64,
@@ -229,5 +235,55 @@ pub fn read_java_script_concatenation_argument_role(
         } else {
             String::from("unsupported")
         }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_text_form(kind: &str) -> String {
+    if kind == "string" {
+        String::from("identity")
+    } else if kind == "unit" {
+        String::from("undefined")
+    } else if kind == "option" {
+        String::from("optional")
+    } else if ((((kind == "float") || (kind == "bool")) || (kind == "int")) || (kind == "nat"))
+        || (kind == "fixed")
+    {
+        String::from("convert")
+    } else {
+        String::from("refuse")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_string_search_default_position(operation: &str) -> String {
+    if operation == "endsWith" {
+        String::from("Infinity")
+    } else if operation == "lastIndexOf" {
+        String::from("NaN")
+    } else {
+        String::from("0")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_string_search_window(operation: &str) -> Vec<String> {
+    if operation == "endsWith" {
+        vec![String::from("0"), String::from("position")]
+    } else {
+        vec![String::from("position"), String::from("Infinity")]
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_string_search_result_kind(operation: &str) -> String {
+    if (operation == "indexOf") || (operation == "lastIndexOf") {
+        String::from("float")
+    } else {
+        String::from("bool")
     }
 }

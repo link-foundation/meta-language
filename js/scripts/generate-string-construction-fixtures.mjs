@@ -19,6 +19,17 @@ const rows=[
  ['null point becomes zero','return String.fromCodePoint(null).charCodeAt(0);','0'],
  ['all arguments captured first','let value=1;const text=String.fromCodePoint(value,value=65);return text.charCodeAt(0)*100+text.charCodeAt(1);','165'],
 ];
+rows.push(
+ ['String without arguments','return String();',''],
+ ['String undefined argument','return String(undefined);','undefined'],
+ ['String null argument','return String(null);','null'],
+ ['String Boolean argument','return String(false);','false'],
+ ['String BigInt argument','return String(9007199254740993n);','9007199254740993'],
+ ['String ignores extra BigInt','return String(0,1n);','0'],
+ ['String captures first before later assignments','let value=1;return String(value,value=7);','1'],
+ ['String ignored extras evaluate','let value=0;const text=String("first",value=7);return text==="first"&&value===7;','true'],
+ ['String preserves isolated units','return String("\\ud800").charCodeAt(0);','55296'],
+);
 const cases=rows.map(([name,body,value],index)=>({name,source:'export function compute(){'+body+'}',entry:'stringConstructionCase'+index,value,abort:null}));
 for(const[name,body,errorClass,abort]of[
  ['point above maximum','return String.fromCodePoint(1114112);','RangeError','Invalid code point 1114112'],
@@ -32,6 +43,7 @@ for(const[name,body,errorClass,abort]of[
 ])cases.push({name,source:'export function compute(){'+body+'}',entry:'stringConstructionError'+cases.length,value:null,abort,errorClass,messagePresent:true,messageUnits:Array.from({length:abort.length},(_,at)=>abort.charCodeAt(at))});
 const abort='later argument';
 cases.push({name:'later argument exception precedes range validation',source:'/** @returns {number} */ function failStringConstructionArgument(){throw new SyntaxError("later argument");}\nexport function compute(){return String.fromCodePoint(1114112,failStringConstructionArgument());}',entry:'stringConstructionLaterArgument',value:null,abort,errorClass:'SyntaxError',messagePresent:true,messageUnits:Array.from({length:abort.length},(_,at)=>abort.charCodeAt(at))});
+cases.push({name:'String converts void call to undefined text',entry:'stringConstructionVoid',source:'function stringVoidResult(){return;}\nexport function compute(){return String(stringVoidResult());}',value:'undefined',abort:null});
 writeProjectData(new URL('../../parity/fixtures/string-construction.lino',import.meta.url),{
  schemaVersion:1,model:'JavaScript source string construction intrinsics 1',sourceLanguage:'JavaScript',cases,refusals:[],
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),

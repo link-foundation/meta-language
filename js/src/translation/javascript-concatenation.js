@@ -3,6 +3,7 @@
 import{coerce}from'./check.js';
 import{unsupported,typeError}from'./diagnostics.js';
 import{STRING,array}from'./types.js';
+import{materializeJavaScriptPrimitiveText}from'./javascript-string-search.js';
 import{readJavaScriptConcatenationArgumentRole}from'./javascript-property-call-rules.js';
 
 export function checkJavaScriptConcatenation(checker,node,env,path){
@@ -25,7 +26,7 @@ export function checkJavaScriptConcatenation(checker,node,env,path){
   const role=readJavaScriptConcatenationArgumentRole(kind,values[index].type.kind,true);
   if(role==='unsupported')throw unsupported('String concat coercion','this argument needs its complete ToPrimitive interpretation',node.span);
   if(kind==='string'){
-   const text=checker.expr({k:'toString',arg:{k:'name',path:[bindings[index].name]},span:node.span},inner,path,undefined);
+   const text=materializeJavaScriptPrimitiveText(variable(index),node.span);
    body={k:'binary',op:'concat',left:body,right:text,type};
   }else{
    const value=role==='spread'?coerce(checker.referenceValue(variable(index)),type,checker.language,node.span):coerce(variable(index),receiver.type.element,checker.language,node.span);

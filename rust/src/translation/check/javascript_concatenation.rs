@@ -1,7 +1,7 @@
 //! Source handle/value transport into existing ordered lets, reads and appends.
 use super::{
-    BinaryOp, Checker, Env, Expr, Node, Result, SExpr, SNode, STRING, Span, Type, array,
-    plain_binary, type_error, unsupported,
+    BinaryOp, Checker, Env, Expr, Node, Result, SExpr, STRING, Span, Type, array, plain_binary,
+    type_error, unsupported,
 };
 use crate::translation::javascript_property_call_rules as rules;
 
@@ -97,18 +97,7 @@ impl Checker {
                     ty.clone(),
                 );
             } else {
-                let text = self.expr(
-                    &SExpr::new(
-                        SNode::ToString {
-                            arg: Box::new(SExpr::name(&bindings[index])),
-                        },
-                        span,
-                    ),
-                    &inner,
-                    path,
-                    None,
-                    false,
-                )?;
+                let text = super::string_search::primitive_text(variable(index), span)?;
                 body = plain_binary(BinaryOp::Concat, body, text, STRING);
             }
         }

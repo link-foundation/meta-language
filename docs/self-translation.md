@@ -919,3 +919,13 @@ public complete ArrayBindingProgramLinks graph. Two obsolete refusal
 expectations retain original inputs and assertions beside source-qualified
 replacement results. Future controls are declared, not executed. Iterator
 protocols and heterogeneous present-value unions retain their full scope.
+
+The String/search source draft captures all raw arguments before primitive
+text and position conversion. It admits primitive String() calls, nullable
+String concat values and positions for includes/startsWith/endsWith/indexOf/
+lastIndexOf, retaining UTF-16 indexing and missing/undefined/NaN distinctions.
+Both checker/inference hosts select the same source-derived rules; ignored
+String map extras still evaluate. Existing own record methods keep their
+actual meanings. Generated source and future full graph/emission/native
+controls are drafts, with no behavior executed. Objects, Symbols/RegExp,
+generic receiver/lookup semantics and all previous scope remain required.

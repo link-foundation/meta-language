@@ -6139,3 +6139,24 @@ controls include lazy effects, signed zero, NaN, absence fallbacks and
 structured values in both runtimes and every complete codec/emission. None
 executed. Arbitrary iterators, nested pattern protocols, heterogeneous present
 value unions, and every earlier source/grammar requirement remain obligations.
+
+### Primitive text and positioned string search draft
+
+The actual String owner now drafts primitive conversion with missing arguments,
+ignored extras and complete argument evaluation before conversion. Shared text
+classification retains exact strings, Number/Boolean/BigInt text, Unit as
+undefined, and nullable tags. String concat reuses that classification.
+
+String includes/startsWith/endsWith/indexOf/lastIndexOf now retain raw receiver
+and arguments once before search text and position conversions in that order.
+Shared windows/defaults retain nonnegative clamping, missing/undefined end
+positions, fractional and nonfinite values, UTF-16 code-unit positions and
+lastIndexOf's distinct NaN rule. Existing checked operations and complete
+UTF-16 definitions supply the behavior; own record methods keep their actual
+callable meanings. String maps evaluate ignored arguments. These drafts
+follow the [String algorithms](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-properties-of-the-string-prototype-object).
+
+Complete source decisions generate native rules and editable Links; future
+original/native/full-codec/emission controls remain unexecuted. Objects,
+Symbols/RegExp hooks, generic method receivers, method lookup/accessors, iterator
+spreads, full Unicode case mapping and every earlier obligation remain.

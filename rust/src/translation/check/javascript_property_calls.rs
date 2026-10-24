@@ -25,36 +25,15 @@ impl Checker {
         let form = rules::read_java_script_resolved_property_call_form(object.ty.kind(), operation);
         let node = match form.as_str() {
             "record" | "" => return Ok(None),
-            "test" => {
-                if args.len() != 1 || args[0].is_none() {
-                    return Err(unsupported(
-                        &format!(".{operation}() with {} arguments", args.len()),
-                        "search the whole string, with one argument",
-                        span,
-                    ));
-                }
-                SNode::StringTest {
-                    op: operation.to_owned(),
-                    object: Box::new(source.clone()),
-                    search: Box::new(
-                        args[0]
-                            .clone()
-                            .expect("a source method supplies its actual argument"),
-                    ),
-                }
+            "test" | "index" => {
+                return self
+                    .javascript_string_search(operation, object, args, span, env, path)
+                    .map(Some);
             }
             "map" => {
-                if !args.is_empty() {
-                    return Err(unsupported(
-                        &format!(".{operation}() with {} arguments", args.len()),
-                        "string maps take no arguments",
-                        span,
-                    ));
-                }
-                SNode::StringMap {
-                    op: operation.to_owned(),
-                    object: Box::new(source.clone()),
-                }
+                return self
+                    .javascript_string_map_call(operation, object, args, span, env, path)
+                    .map(Some);
             }
             "text" => {
                 if !args.is_empty() {

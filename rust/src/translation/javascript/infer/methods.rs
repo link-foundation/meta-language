@@ -531,6 +531,25 @@ impl Inference {
         {
             return Ok(true);
         }
+        if kind == "string"
+            && property_rules::read_java_script_source_property_operation_kind(&method.operation)
+                == "index"
+        {
+            self.unify(&method.result, &Term::Known(FLOAT), method.place)?;
+            return Ok(true);
+        }
+        if kind == "string"
+            && property_rules::read_java_script_source_property_operation_kind(&method.operation)
+                == "test"
+        {
+            if method.args.len() == 1
+                && matches!(self.resolve(&method.args[0]), Term::Known(Type::String))
+            {
+                self.property_methods.insert(method.node, "test".to_owned());
+            }
+            self.unify(&method.result, &Term::Known(BOOL), method.place)?;
+            return Ok(true);
+        }
         for (index, argument) in method.args.iter().enumerate() {
             #[allow(clippy::cast_precision_loss)]
             let position = index as f64;
