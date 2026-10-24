@@ -1,5 +1,9 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
 import {checkJavaScriptOwnProperty} from './javascript-own-properties.js';
+import {prepareJavaScriptRecordOrderProfile} from './javascript-record-order-profile.js';
+import {checkJavaScriptObjectEnumeration} from './javascript-object-enumeration.js';
+import {checkRecordOrderOperation,checkOrderedRecordOrderRead} from './record-order-operations.js';
+import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
@@ -160,12 +164,15 @@ export function checkProgram(surface) { return checkSurfaceProgram(surface, fals
 export function checkProjectedProgram(surface) { return checkSurfaceProgram(surface, true); }
 
 function checkSurfaceProgram(surface, checkedProjection) {
+  const orderProfile=prepareJavaScriptRecordOrderProfile(surface);
+  surface=orderProfile.surface;
   const sourceProofSelected=checkRustConstFunctionContainers(surface);
   if(sourceProofSelected)checkRustDiagnosticAttributePlacement(surface);
   checkRustRuntimeShellContainers(surface);
   checkRustTypeNamespaceRecordShapes(surface);
   checkRustOwnedLocalStateContainers(surface);
   const checker = new Checker(surface.language, surface.externals ?? [], Boolean(surface.referenceSemantics), checkedProjection);
+  checker.orderedRecordSource=orderProfile.selected;
   return checker.program(surface);
 }
 
@@ -981,6 +988,7 @@ class Checker {
     if(!expected&&node.type?.kind==='record'&&node.type.ordered===true)expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];
+    const orderChunks=[];
     const units = name => Array.from({ length: name.length }, (_, index) => name.charCodeAt(index));
     const expectedNames = expected?.kind === 'record' ? expected.fields.map(field => units(field.name)) : [];
     if (Object.hasOwn(node, 'recordProjection')) {
@@ -1015,8 +1023,14 @@ class Checker {
         const name = this.freshName('ml_spread');
         bindings.push({ name, value });
         const object = { k: 'var', name, type: value.type };
-        for (const [index, field] of value.type.fields.entries()) entries.push({ name: field.name, value: { k: 'recordField', object, field: field.name, index, type: field.type } });
+        orderChunks.push({object});
+        for (const [index, field] of value.type.fields.entries()) {
+          const name=this.freshName('ml_spread_field');
+          bindings.push({name,value:{k:'recordField',object,field:field.name,index,type:field.type}});
+          entries.push({name:field.name,value:{k:'var',name,type:field.type}});
+        }
       } else {
+        orderChunks.push({name:entry.name});
         const position = readRecordFieldPosition(expectedNames, units(entry.name));
         const want = position < 0 ? undefined : expected.fields[position].type;
         const value = this.expr(entry.value, env, path, want);
@@ -1029,15 +1043,30 @@ class Checker {
     const fieldOrder = readRecordFieldOrder(entries.map(entry => units(entry.name)));
     if (fieldOrder[0] < 0) throw typeError('record fields contain an invalid UTF16 name', node.span);
     const selected = fieldOrder.map(index => entries[index]);
-    const ordered=node.propertyOrder!==undefined||expected?.ordered===true;
+    const ordered=node.propertyOrder!==undefined||expected?.ordered===true||this.orderedRecordSource===true;
     let order;
     if(node.propertyOrder!==undefined)order=coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span);
     else if(ordered){
-      if(node.entries.some(entry=>entry.spread))throw unsupported('ordered record spread','the actual source own-field order must be retained and rebased',node.span);
-      const insertion=readRecordFieldInsertionOrder(entries.map(entry=>units(entry.name)));
-      const positions=insertion.map(index=>selected.findIndex(field=>field.name===entries[index].name));
-      if(positions.some(index=>index<0))throw typeError('an ordered record needs every actual own field',node.span);
-      order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
+      if(node.entries.some(entry=>entry.spread)){
+        const target=constructRecordPropertyNameRows(selected);
+        const chunks=orderChunks.map(chunk=>{
+          if(chunk.object){
+            if(chunk.object.type.open||chunk.object.type.ordered!==true)throw unsupported('ordered record spread','the actual source own-field order must be retained and rebased',node.span);
+            const source=constructRecordPropertyNameRows(chunk.object.type.fields);
+            const actual={k:'method',op:'readJavaScriptRecordPropertyOrder',object:chunk.object,args:[],type:array(FLOAT)};
+            return {k:'math',op:'rebaseJavaScriptRecordPropertyOrder',args:[target,source,actual],type:array(FLOAT)};
+          }
+          const index=selected.findIndex(field=>field.name===chunk.name);
+          if(index<0)throw typeError('an ordered record needs every actual own field',node.span);
+          return {k:'array',items:[{k:'lit',value:String(index),type:FLOAT}],type:array(FLOAT)};
+        });
+        order={k:'math',op:'mergeJavaScriptRecordPropertyOrder',args:[target,{k:'array',items:chunks,type:array(array(FLOAT))}],type:array(FLOAT)};
+      }else{
+        const insertion=readRecordFieldInsertionOrder(entries.map(entry=>units(entry.name)));
+        const positions=insertion.map(index=>selected.findIndex(field=>field.name===entries[index].name));
+        if(positions.some(index=>index<0))throw typeError('an ordered record needs every actual own field',node.span);
+        order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
+      }
     }
     const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}) };
     let body = { k: 'record', entries: selected, ...(ordered?{order}:{}), type };
@@ -1118,6 +1147,8 @@ class Checker {
     const referenceMethod = checkReferenceMethod(this, node, receiver, env, path);
     if (referenceMethod) return flattenOption(referenceMethod);
     const object = this.referenceValue(receiver);
+    const ownOrder=checkOrderedRecordOrderRead(node,object);
+    if(ownOrder)return ownOrder;
     const args = node.args;
     const count = (minimum, maximum = minimum) => {
       if (args.length < minimum || args.length > maximum) throw unsupported(`method call .${node.op}()`, `.${node.op}() expects ${minimum === maximum ? minimum : `${minimum} to ${maximum}`} arguments`, node.span);
@@ -1252,6 +1283,10 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
+    if(enumeration)return enumeration;
+    const order=checkRecordOrderOperation(this,node,env,path);
+    if(order)return order;
     if(node.op==='testJavaScriptOwnedProperty')return checkJavaScriptOwnProperty(this,node,env,path);
     if(node.op===readJavaScriptOptionalChainOperation())return checkJavaScriptOptionalChain(this,node,env,path);
     if(node.op===readJavaScriptOptionalCallOperation())return checkJavaScriptOptionalCall(this,node,env,path);

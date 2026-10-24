@@ -48,6 +48,7 @@ mod items;
 mod javascript_concatenation;
 mod javascript_indexed_properties;
 mod javascript_nullish_fields;
+mod javascript_object_enumeration;
 mod javascript_optional_calls;
 mod javascript_optional_chains;
 mod javascript_own_properties;
@@ -59,6 +60,7 @@ mod number_conversions;
 mod numeric_failures;
 mod optional_values;
 mod primitive_methods;
+pub(super) mod record_order_operations;
 mod record_writes;
 mod records;
 mod recursion;
@@ -90,10 +92,14 @@ pub(crate) fn check_projected_program(surface: &SProgram) -> Result<Program> {
     check_surface_program(surface, true)
 }
 fn check_surface_program(surface: &SProgram, checked_projection: bool) -> Result<Program> {
+    let (prepared, ordered_record_source) =
+        super::javascript_record_order_profile::prepare(surface)?;
+    let surface = prepared.as_ref();
     super::source_diagnostic_attributes::validate_surface(surface)?;
     super::source_unit_clone_derivations::validate_surface_unit_clone_derivations(surface)?;
     let mut checker = Checker::new(surface.language, surface.externals.clone());
     checker.checked_projection = checked_projection;
+    checker.ordered_record_source = ordered_record_source;
     checker.program(surface)
 }
 
@@ -506,6 +512,7 @@ fn surface_let(name: &str, value: &str, body: SExpr, span: Option<Span>) -> SExp
 }
 
 struct Checker {
+    ordered_record_source: bool,
     language: Language,
     reference_semantics: bool,
     checked_projection: bool,
@@ -526,6 +533,7 @@ impl Checker {
         let mut modules = HashMap::new();
         modules.insert(String::new(), Scope::default());
         Self {
+            ordered_record_source: false,
             language,
             reference_semantics: false,
             checked_projection: false,

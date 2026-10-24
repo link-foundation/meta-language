@@ -1,6 +1,6 @@
 import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
-import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_ROCQ_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
@@ -874,6 +874,7 @@ class RocqEmitter {
 
   /** Math and Number functions: PrimFloat's where they agree with JavaScript, the math helpers otherwise. */
   method(e) {
+    const order=emitOrderedRecordOrderRead(this,e,'Rocq');if(order!==null)return order;
     if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Rocq', e.object.type.kind, e.op), e.span);
     if (e.op === 'join') {
       const text = (name, type) => {

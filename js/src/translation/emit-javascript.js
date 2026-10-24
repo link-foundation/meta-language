@@ -1,6 +1,6 @@
 import {RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE} from './record-property-order-javascript-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
-import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_JAVASCRIPT_PRELUDE} from './unicode-case-javascript-runtime.js';
 import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
@@ -498,6 +498,7 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if(e.op==='readJavaScriptRecordPropertyOrder')return emitOrderedRecordOrderRead(this,e,'JavaScript');
         if (acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
           const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
           this.state.encode(readArrayStateMethodIdentity(e.op), readArrayStateMethodStatement());

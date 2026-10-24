@@ -253,6 +253,20 @@ test('complete sibling placement imports only actual sibling declarations', () =
   assert.equal(formatted.stdout, selected, 'new sibling imports already follow the active 2024 formatter');
 });
 
+test('large inline generated modules split recursively while complete bodies and size gates remain',()=>{
+ const functions=Array.from({length:24},(_,index)=>'    pub fn item'+index+'() -> bool {\n        '+(index?'self::item'+(index-1)+'()':'true')+'\n    }\n').join('');
+ const source='pub mod runtime {\n'+functions+'}\npub fn selected() -> bool {\n    self::runtime::item23()\n}\n';
+ const files=partitionPortableRustLibrary(source,{directory:'nested_controls',maximumLines:12});
+ assert.ok(files.some(file=>file.path==='nested_controls/runtime.rs'));
+ assert.ok(files.some(file=>file.path?.startsWith('nested_controls/runtime/part_')));
+ const all=files.map(file=>file.source).join('\n');
+ for(let index=0;index<24;index+=1)assert.equal([...all.matchAll(new RegExp('pub fn item'+index+'\\(','gu'))].length,1);
+ assert.ok(all.includes('#[path = "runtime.rs"]\npub mod runtime;'));
+ assert.ok(files.every(file=>file.source.split('\n').length<1000));
+ assert.throws(()=>partitionPortableRustLibrary('pub fn large() -> bool {\n'+Array.from({length:20},()=> '    let value = true;').join('\n')+'\n    true\n}\n',{directory:'unsplit_body',maximumLines:12}));
+ assert.throws(()=>partitionPortableRustLibrary('pub mod runtime {\n'+functions+'    pub fn parent() -> bool { super::value() }\n}\n',{directory:'parent_path',maximumLines:12}));
+});
+
 test('complete mechanical library expressions preserve opaque macros and lazy refusal paths', () => {
   const source = 'pub fn refuse() -> f64 { panic!("missing") }\n'
     + 'pub fn select(value: Option<f64>, invalid: bool) -> f64 {\n'

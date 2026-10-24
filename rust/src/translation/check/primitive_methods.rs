@@ -124,6 +124,9 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if operation == "readJavaScriptRecordPropertyOrder" {
+            return Self::ordered_record_order_read(object, operation, args.len(), span);
+        }
         if matches!(object.ty, Type::Record { .. }) {
             return self
                 .checked_record_method_application(object, operation, args, env, path, span);

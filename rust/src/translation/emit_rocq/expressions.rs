@@ -183,6 +183,7 @@ impl RocqEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases),
             Node::Method { object, op, args } => {
+                if op=="readJavaScriptRecordPropertyOrder"{let rendered=self.expr(object)?;return crate::translation::ordered_record_values::order_read("Rocq",e,&rendered);}
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args.first().and_then(Option::as_ref).expect("the checked map has its actual callback");
                     let Type::Function { params, .. } = &callback.ty else {

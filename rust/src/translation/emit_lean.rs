@@ -718,6 +718,12 @@ impl LeanEmitter<'_> {
             }
             Node::Match { scrutinee, cases } => self.match_expr(scrutinee, cases, depth)?,
             Node::Method { object, op, args } => {
+                if op == "readJavaScriptRecordPropertyOrder" {
+                    let rendered = self.expr(object, depth)?;
+                    return crate::translation::ordered_record_values::order_read(
+                        "Lean", e, &rendered,
+                    );
+                }
                 if matches!(object.ty, Type::Array { .. }) && op == "map" {
                     let callback = args
                         .first()

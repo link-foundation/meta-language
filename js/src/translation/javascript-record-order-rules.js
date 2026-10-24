@@ -123,3 +123,24 @@ export function readJavaScriptRecordPropertyKeys(names,order){
  for(let index=0;index<order.length;index+=1)result=result.concat([readJavaScriptRecordOrderName(names,readJavaScriptRecordOrderPosition(order,index))]);
  return result;
 }
+
+/** Exact source String keys, including isolated UTF16 units.
+ * @param {number[][]} names @param {number[]} order @returns {string[]} */
+export function readJavaScriptRecordPropertyKeyTexts(names,order){
+ const rows=readJavaScriptRecordPropertyKeys(names,order);
+ let result=[];
+ for(let index=0;index<rows.length;index+=1){
+  const units=readJavaScriptRecordOrderName(rows,index);let key='';
+  for(let at=0;at<units.length;at+=1)key+=String.fromCharCode(readJavaScriptRecordOrderPosition(units,at));
+  result=result.concat([key]);
+ }
+ return result;
+}
+/** Dense Array/tuple indices and String virtual enumerable properties.
+ * @param {number} length @returns {string[]} */
+export function createJavaScriptDensePropertyKeyTexts(length){
+ if(!Number.isSafeInteger(length)||length<0||length===0&&1/length<0)throw new TypeError('invalid dense own-field length');
+ let result=[];
+ for(let index=0;index<length;index+=1)result=result.concat([String(index)]);
+ return result;
+}

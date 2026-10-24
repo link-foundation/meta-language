@@ -9,11 +9,19 @@ use super::{
 };
 use serde_json::{Value, json};
 use std::borrow::Cow;
+use std::collections::HashSet;
 
 fn excluded(key: &str) -> bool {
     matches!(key, "type" | "from" | "to" | "domain" | "span") || key.starts_with("source")
 }
 fn selected(value: &Value) -> bool {
+    if value["k"] == "math"
+        && super::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(
+            value["op"].as_str().unwrap_or_default(),
+        ) > 0.0
+    {
+        return true;
+    }
     if value["k"] == "record" && value.get("order").is_some_and(|order| !order.is_null()) {
         return true;
     }
@@ -30,6 +38,7 @@ fn transport(error: impl std::fmt::Display) -> super::diagnostics::TranslationEr
 }
 
 struct Lowerer {
+    operations: HashSet<String>,
     prefix: String,
     namespace: String,
     ordinal: usize,
@@ -60,6 +69,26 @@ impl Lowerer {
             ),
             _ => value.clone(),
         };
+        if value["k"] == "math"
+            && super::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(
+                value["op"].as_str().unwrap_or_default(),
+            ) > 0.0
+        {
+            if !self
+                .operations
+                .contains(value["op"].as_str().unwrap_or_default())
+            {
+                return Err(type_error(
+                    "an ordinary record order operation has no complete source definition",
+                    None,
+                ));
+            }
+            let mut call = json!({"k":"call","fn":format!("{}.{}",self.namespace,value["op"].as_str().unwrap()),"args":result["args"],"type":result["type"]});
+            if let Some(span) = value.get("span").filter(|span| !span.is_null()) {
+                call["span"] = span.clone();
+            }
+            return Ok(call);
+        }
         if value["k"] != "record" || value.get("order").is_none_or(Value::is_null) {
             return Ok(result);
         }
@@ -183,7 +212,49 @@ pub(super) fn prepare(program: &Program) -> Result<Cow<'_, Program>> {
             None,
         ));
     }
+    for declaration in &library.declarations {
+        let operation = declaration.name();
+        let arity = super::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(
+            operation,
+        );
+        if arity == 0.0 {
+            continue;
+        }
+        let Decl::Fn(entry) = declaration else {
+            return Err(type_error(
+                "an ordinary record order library operation needs its complete owned signature",
+                None,
+            ));
+        };
+        if serde_json::Number::from(entry.params.len()).as_f64() != Some(arity)
+            || !entry
+                .ret
+                .same(&super::check::record_order_operations::role_type(
+                &super::javascript_enumeration_rules::read_java_script_record_order_kernel_result(
+                    operation,
+                ),
+            )?)
+        {
+            return Err(type_error(
+                "an ordinary record order library operation needs its complete owned signature",
+                None,
+            ));
+        }
+        for (index, parameter) in entry.params.iter().enumerate() {
+            let index = serde_json::Number::from(index)
+                .as_f64()
+                .expect("a bounded library arity is a Number");
+            if !parameter.ty.same(&super::check::record_order_operations::role_type(&super::javascript_enumeration_rules::read_java_script_record_order_kernel_parameter(operation,index))?){return Err(type_error("an ordinary record order library operation needs its complete owned signature",None));}
+        }
+    }
     let mut lowerer = Lowerer {
+        operations: library
+            .declarations
+            .iter()
+            .filter_map(|declaration| {
+                matches!(declaration, Decl::Fn(_)).then(|| declaration.name().to_owned())
+            })
+            .collect(),
         prefix,
         namespace,
         ordinal: 0,

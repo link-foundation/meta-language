@@ -16,6 +16,7 @@ import {acceptLinkedJavaScriptSourceException} from './translation/source-except
 import {acceptLinkedJavaScriptBigIntegerResult} from './translation/big-integer-conversion-rules.js';
 import {acceptLinkedJavaScriptStringUnitConstruction} from './translation/javascript-string-unit-rules.js';
 import {acceptLinkedJavaScriptStringConstruction} from './translation/string-construction-rules.js';
+import {readJavaScriptRecordOrderKernelArity,acceptLinkedOrderedRecordOrderRead} from './translation/javascript-enumeration-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
@@ -46,6 +47,8 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     && !acceptLinkedJavaScriptBigIntegerResult(value.k,value.op)
     && !acceptLinkedJavaScriptStringUnitConstruction(value.k,value.op)
     && !acceptLinkedJavaScriptStringConstruction(value.k,value.op)
+    && !(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??''))
+    && !acceptLinkedOrderedRecordOrderRead(value.k,value.op,value.object?.type?.kind??'',value.object?.type?.ordered===true,value.object?.type?.reference===true)
     && !acceptLinkedRustPrimitiveBitwiseOperation(value.k, value.op)
     && !acceptLinkedArrayStateMethod(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedRustCheckedShift(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');

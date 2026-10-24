@@ -1229,6 +1229,44 @@ def readJavaScriptRecordPropertyKeys (names : (Array (Array Float))) (order : (A
         (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36 names order result index);
           result_2)))))
 
+partial def source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38 (units : (Array Float)) (key : (Array Nat)) («at» : Float) : (Array Nat) :=
+  (if (decide («at» < (Float.ofNat units.size))) then (let key_2 := (key ++ (let source_ml_source1_character_argument38 := (readJavaScriptRecordOrderPosition units «at»);
+    (((MLUtf16Text.characterUnits (#[source_ml_source1_character_argument38] : (Array Float)))).map (fun ml_unit => ml_unit.toUInt64.toNat))));
+    (let at_2 := («at» + (1 : Float));
+      (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38 units key_2 at_2))) else key)
+
+partial def source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 (rows : (Array (Array Float))) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < (Float.ofNat rows.size))) then (let units := (readJavaScriptRecordOrderName rows index);
+    (let key := (#[] : Array Nat);
+      (let «at» := (0 : Float);
+        (let key_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38 units key «at»);
+          (let result_2 := (let source_ml_source1_concat_value39 := result;
+            (let source_ml_source1_concat_value40 := (#[key_2] : (Array (Array Nat)));
+              (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value39) ++ source_ml_source1_concat_value40)));
+            (let index_2 := (index + (1 : Float));
+              (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 rows result_2 index_2))))))) else result)
+
+def readJavaScriptRecordPropertyKeyTexts (names : (Array (Array Float))) (order : (Array Float)) : (Array (Array Nat)) :=
+  (let rows := (readJavaScriptRecordPropertyKeys names order);
+    (let result := (#[] : (Array (Array Nat)));
+      (let index := (0 : Float);
+        (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 rows result index);
+          result_2))))
+
+partial def source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 (length : Float) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < length)) then (let result_2 := (let source_ml_source1_concat_value42 := result;
+    (let source_ml_source1_concat_value43 := (#[(let source_ml_source1_string_argument41 := index;
+      (String.foldl (fun (ml_units : Array Nat) ml_character => if ml_character.toNat < 65536 then ml_units.push ml_character.toNat else (ml_units.push (55296 + (ml_character.toNat - 65536) / 1024)).push (56320 + (ml_character.toNat - 65536) % 1024)) #[] (ml_js_number source_ml_source1_string_argument41)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value42) ++ source_ml_source1_concat_value43)));
+    (let index_2 := (index + (1 : Float));
+      (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result_2 index_2))) else result)
+
+def createJavaScriptDensePropertyKeyTexts (length : Float) : (Array (Array Nat)) :=
+  (if (((!(ml_is_safe_integer length)) || (decide (length < (0 : Float)))) || ((length == (0 : Float)) && (decide (((1 : Float) / length) < (0 : Float))))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 100, 101, 110, 115, 101, 32, 111, 119, 110, 45, 102, 105, 101, 108, 100, 32, 108, 101, 110, 103, 116, 104] : Array Nat)) else (let result := (#[] : (Array (Array Nat)));
+    (let index := (0 : Float);
+      (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result index);
+        result_2))))
+
 def main : IO Unit := do
   pure ()
 

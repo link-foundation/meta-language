@@ -7,11 +7,14 @@ import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {collectSourceIdentifierTexts,readSourceIdentifierSupply} from './source-identifiers.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {FLOAT,array,sameType} from './types.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult} from './javascript-enumeration-rules.js';
+import {readRecordOrderRoleType} from './record-order-operations.js';
 const excluded=new Set(['type','from','to','domain','span']);
 function containsOrderedRecord(value,seen=new Set()){
  if(!value||typeof value!=='object'||seen.has(value))return false;
  seen.add(value);
  if(value.k==='record'&&value.order)return true;
+ if(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??''))return true;
  return (Array.isArray(value)?value:Object.entries(value).filter(([key])=>!excluded.has(key)&&!key.startsWith('source')).map(([,child])=>child)).some(child=>containsOrderedRecord(child,seen));
 }
 export function prepareOrderedRecordValues(program){
@@ -26,6 +29,10 @@ export function prepareOrderedRecordValues(program){
  for(const name of library.declarations.keys())if(program.declarations.has(name)||(program.externals??[]).some(entry=>entry.name===name))throw typeError('an ordered record library namespace collides with an actual declaration');
  const constructor=library.declarations.get(namespace+'.createJavaScriptRecordPropertyOrder');
  if(constructor?.k!=='fn'||constructor.params.length!==2||!sameType(constructor.params[0].type,array(array(FLOAT)))||!sameType(constructor.params[1].type,array(FLOAT))||!sameType(constructor.ret,array(FLOAT)))throw typeError('an ordered record constructor needs its complete owned signature');
+ for(const entry of library.declarations.values()){
+  const arity=readJavaScriptRecordOrderKernelArity(entry.name??'');if(!arity)continue;
+  if(entry.k!=='fn'||entry.params.length!==arity||entry.params.some((parameter,index)=>!sameType(parameter.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelParameter(entry.name,index))))||!sameType(entry.ret,readRecordOrderRoleType(readJavaScriptRecordOrderKernelResult(entry.name))))throw typeError('an ordinary record order library operation needs its complete owned signature');
+ }
  let ordinal=0;
  const memo=new WeakMap();
  function lower(value){
@@ -33,6 +40,11 @@ export function prepareOrderedRecordValues(program){
   if(memo.has(value))return memo.get(value);
   if(Array.isArray(value)){const result=value.map(lower);memo.set(value,result);return result;}
   let result=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,excluded.has(key)||key.startsWith('source')?child:lower(child)]));
+  if(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??'')){
+   const name=namespace+'.'+value.op;
+   if(!library.declarations.has(name))throw typeError('an ordinary record order operation has no complete source definition');
+   result={k:'call',fn:name,args:result.args,type:result.type,...(value.span?{span:value.span}:{})};
+  }
   if(value.k==='record'&&value.order){
    if(value.type.kind!=='record'||value.type.ordered!==true)throw typeError('an ordered record needs matching payload and order types',value.span);
    const bindings=result.entries.map(entry=>({name:prefix+'recordField'+String(++ordinal),value:entry.value}));

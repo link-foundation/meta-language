@@ -1,6 +1,6 @@
 import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
-import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_PRELUDE} from './unicode-case-runtime.js';
@@ -1213,6 +1213,7 @@ class RustEmitter {
   }
 
   method(e) {
+    const order=emitOrderedRecordOrderRead(this,e,'Rust');if(order!==null)return order;
     if (e.object.k === 'referenceRead' && e.object.reference.type.reference && readArrayCallbackResultForm(e.op)) {
       const callback = e.args[0];
       if (!callback || !acceptSnapshotCallbackParameters(e.op, callback.type.params.length)

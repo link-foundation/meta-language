@@ -4,3 +4,7 @@ order, preserved by typed Links codecs and all target layouts. Constructor
 admission uses complete shared ordinary declarations before effect analysis.
 Dynamic order inputs and source errors have deferred source/native controls.
 
+Draft actual own-key enumeration and source-ordered spread merging. Spread
+fields are captured before later expressions, preserving shallow aliases.
+Shared source libraries now support automatic bounded nested-module placement.
+

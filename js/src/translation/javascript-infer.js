@@ -1,4 +1,5 @@
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
+import {readJavaScriptEnumerationForm} from './javascript-enumeration-rules.js';
 import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
 import {readJavaScriptLiteralPropertyIndex,readJavaScriptLiteralPropertyForm} from './javascript-literal-property-rules.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
@@ -987,6 +988,7 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(readJavaScriptEnumerationForm(node.op)==='keys'){for(const argument of node.args)this.expr(argument.value,env);return {kind:'array',element:STRING};}
         if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
         if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);
         if(node.op==='convertJavaScriptBooleanValue'||node.op==='testJavaScriptArrayValue'||node.op==='testJavaScriptOwnedProperty'){for(const argument of node.args)this.expr(argument.value,env);return BOOL;}

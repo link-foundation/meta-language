@@ -2,6 +2,8 @@ import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead} from './translation/javascript-enumeration-rules.js';
+import {readRecordOrderRoleType} from './translation/record-order-operations.js';
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
 import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
@@ -169,6 +171,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)
       && !acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)
       && !acceptLinkedJavaScriptStringConstruction(node.k,node.op)
+      && !(node.k==='math'&&readJavaScriptRecordOrderKernelArity(node.op??''))
+      && !acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object?.type?.kind??'',node.object?.type?.ordered===true,node.object?.type?.reference===true)
       && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
       && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedRustCheckedShift(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
@@ -316,7 +320,12 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if(acceptLinkedJavaScriptStringConstruction(node.k,node.op)){
+      if(readJavaScriptRecordOrderKernelArity(node.op??'')){
+        const count=readJavaScriptRecordOrderKernelArity(node.op);
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==count)throw new TypeError('an ordinary record order operation needs every owned source operand');
+        for(const [index,argument]of node.args.entries())same(argument.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelParameter(node.op,index)),'record order operand type');
+        same(node.type,readRecordOrderRoleType(readJavaScriptRecordOrderKernelResult(node.op)),'record order result type');
+      }else if(acceptLinkedJavaScriptStringConstruction(node.k,node.op)){
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a JavaScript string construction needs one complete Number column');
         same(node.args[0].type,{kind:'array',element:{kind:'float'}},'string construction Number column type');
         same(node.type,readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:{kind:'float'}}:{kind:'string'},'string construction result type');
@@ -364,9 +373,14 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       same(node.type, { kind: node.k === 'stringMap' ? 'string' : 'bool' }, 'string operation result type');
     }
     if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)
+      && !acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object.type?.kind??'',node.object.type?.ordered===true,node.object.type?.reference===true)
       && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
       && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
       && !acceptLinkedArrayStateMethod(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)) throw new TypeError('a linked method has an unsupported receiver type');
+    if(node.k==='method'&&node.op==='readJavaScriptRecordPropertyOrder'){
+      if(!acceptLinkedOrderedRecordOrderRead(node.k,node.op,node.object.type?.kind??'',node.object.type?.ordered===true,node.object.type?.reference===true)||!Array.isArray(node.args)||node.args.length)throw new TypeError('own-field order projection needs one actual owned ordered record');
+      same(node.type,{kind:'array',element:{kind:'float'}},'record order projection type');
+    }
     if (node.k === 'optionalPredicate') {
       if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');
       same(node.type, { kind: 'bool' }, 'optional predicate result type');

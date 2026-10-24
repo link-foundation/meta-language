@@ -90,6 +90,12 @@ impl RustEmitter<'_> {
         let Node::Method { object, op, args } = &expression.node else {
             unreachable!("primitive method dispatch")
         };
+        if op == "readJavaScriptRecordPropertyOrder" {
+            let rendered = self.expr(object)?;
+            return crate::translation::ordered_record_values::order_read(
+                "Rust", expression, &rendered,
+            );
+        }
         if let Node::ReferenceRead { reference } = &object.node
             && reference.ty.is_reference()
             && !crate::translation::array_callback_rules::read_array_callback_result_form(op)

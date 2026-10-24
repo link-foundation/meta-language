@@ -190,6 +190,8 @@ fn validate_type_record(
             )
             && !crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction(kind,value["op"].as_str().unwrap_or_default())
             && !crate::translation::string_construction_rules::accept_linked_java_script_string_construction(kind,value["op"].as_str().unwrap_or_default())
+            && !(kind=="math"&&crate::translation::javascript_enumeration_rules::read_java_script_record_order_kernel_arity(value["op"].as_str().unwrap_or_default())>0.0)
+            && !crate::translation::javascript_enumeration_rules::accept_linked_ordered_record_order_read(kind,value["op"].as_str().unwrap_or_default(),value["object"]["type"]["kind"].as_str().unwrap_or_default(),value["object"]["type"]["ordered"]==true,value["object"]["type"]["reference"]==true)
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",

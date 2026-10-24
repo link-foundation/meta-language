@@ -1,6 +1,6 @@
 import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
-import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_LEAN_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
@@ -624,6 +624,7 @@ class LeanEmitter {
 
   /** Math and Number functions: Float's where they agree with JavaScript, the math helpers otherwise. */
   method(e, depth) {
+    const order=emitOrderedRecordOrderRead(this,e,'Lean',depth);if(order!==null)return order;
     if (e.object.type.kind !== 'array') throw unsupported(`.${e.op}()`, readPrimitiveMethodRenderingRefusal('Lean', e.object.type.kind, e.op), e.span);
     const object = this.expr(e.object, depth);
     if (e.op === 'join') {

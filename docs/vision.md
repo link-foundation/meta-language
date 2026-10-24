@@ -6914,15 +6914,57 @@ successor preserves the complete earlier schema and native type source. The
 historical five-facet source guard and active six-facet guard have separate,
 explicit schema versions; unknown versions and unrecorded whole-source edits
 refuse. Their original receipt inputs and assertions remain available. These
-are source drafts with deferred controls, not observations. Automatic source
-profile propagation, ordered spreads, Object.keys/values/entries, descriptors,
-Symbols and all preceding complete-language requirements remain obligations.
+are source drafts with deferred controls, not observations. Source profile
+propagation, ordered spreads and own-key enumeration follow the protocol below.
+Object.values/entries, descriptors, Symbols and all preceding complete-language
+requirements remain obligations.
 Deferred controls compare every valid case against actual ordinary JavaScript
 objects, plus native results/errors and complete definition graph/codec/emission
 parity. They cover overwrites, spreads, numeric endpoints and noncanonical
 spellings, empty/NUL/astral/isolated-surrogate names and malformed/nonfinite/
-negative-zero positions. No control has executed. These operations supply the
-order data model and algorithms; carrying that data with every translated
-record value across construction, parameters, branches, aliases and emissions
-still needs code. Symbols, descriptors, dynamic add/delete and every preceding
-requirement remain obligations. This is not completed source enumeration support.
+negative-zero positions. No control has executed. Complete-language support is
+not established by these drafts. Symbols, descriptors, dynamic add/delete and
+every preceding requirement remain obligations.
+
+### Own-key source enumeration and ordered spreads draft
+
+Actual unshadowed Object.keys/values/entries source operations select ordered
+record types throughout one complete source program. Local Object bindings
+retain their actual callable meaning. An imported structural record cannot
+silently acquire a new target ABI: its actual foreign signature must already
+carry order. Values keep independent orders across equal shapes, function
+parameters and branches. This selection is not a claim that every enumeration
+operation has been implemented or that separate module interfaces are complete.
+
+The Object.keys draft evaluates every actual argument before object coercion,
+retaining extra-argument effects and source nullish errors. Closed records use
+their actual order; dense arrays/tuples use own indices; Strings use virtual
+UTF16 index names. Primitive Number/Boolean/BigInt and represented Map/Set
+objects have no own enumerable fields in this domain. Names are constructed by
+ordinary source definitions from exact units or dense positions. Order/key
+operations become ordinary checked calls before formal effect analysis, and
+their graph adapters enforce their exact owned operand/result roles.
+
+Ordered spreads capture each actual source field before subsequent field
+expressions execute. Referenced field values remain shallow aliases. The source
+order is rebased into the target's actual canonical layout; ordered chunks are
+merged in source order, with first insertion retained after overwrites and
+numeric keys enumerated first. No declaration-only order substitutes for the
+source value's order. These operations follow
+[Object.keys](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.keys)
+and [EnumerableOwnProperties](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-enumerableownproperties).
+
+Automatic native source placement may recursively extract a complete oversized
+inline module into bounded child files. Function/type bodies remain complete;
+existing file-size gates remain. Parent-relative paths require a separate
+relocation proof and currently refuse this extraction. The full original
+emission and generated files remain in the source receipt.
+
+Deferred controls retain ordinary source observations, dynamic orders and
+spreads, native graph parity, both codecs and all four emissions. A name longer
+than the existing Rocq recursion fuel explicitly remains in the input controls:
+the current fixed-fuel fallback is an unresolved semantic obligation, not an
+accepted truncation. No source/product controls have run. Full value/entry
+enumeration, mutable pair domains, descriptors/proxies/Symbols, dynamic fields,
+separate module interfaces, all source character domains and all earlier
+requirements remain mandatory.

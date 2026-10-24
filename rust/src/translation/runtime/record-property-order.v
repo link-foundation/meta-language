@@ -931,6 +931,27 @@ Definition source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36 (names : 
 Definition readJavaScriptRecordPropertyKeys (names : (list (list float))) (order : (list float)) : (list (list float)) :=
   (let error := (readJavaScriptRecordOrderKeyError names order) in (if (match error with nil => false | _ => true end) then (ml_raiseJavaScriptTypeError error) else (let result := (@nil (list float)) in (let index := 0%float in (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeys_loop36 names order result index) in result_2))))).
 
+Definition source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38 (units : (list float)) (key : (list N)) (at_ : float) : (list N) :=
+  ml_fix 64 (fun (ml_rec : (list float) * (list N) * float -> (list N)) (ml_args : (list float) * (list N) * float) =>
+    let '(units, key, at_) := ml_args in (if (PrimFloat.ltb at_ (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length units))))) then (let key_2 := (List.app key (let source_ml_source1_character_argument38 := (readJavaScriptRecordOrderPosition units at_) in (List.map (fun ml_unit => Z.to_N (ml_float_index ml_unit)) (MLUtf16Text.characterUnits (source_ml_source1_character_argument38 :: @nil float))))) in (let at_2 := (PrimFloat.add at_ 1%float) in (ml_rec (units, key_2, at_2)))) else key))
+    (fun _ => (@nil N)) (units, key, at_).
+
+Definition source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 (rows : (list (list float))) (result : (list (list N))) (index : float) : (list (list N)) :=
+  ml_fix 64 (fun (ml_rec : (list (list float)) * (list (list N)) * float -> (list (list N))) (ml_args : (list (list float)) * (list (list N)) * float) =>
+    let '(rows, result, index) := ml_args in (if (PrimFloat.ltb index (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (List.length rows))))) then (let units := (readJavaScriptRecordOrderName rows index) in (let key := ((@nil N)) in (let at_ := 0%float in (let key_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop38 units key at_) in (let result_2 := (let source_ml_source1_concat_value39 := result in (let source_ml_source1_concat_value40 := (key_2 :: @nil (list N)) in (List.app (List.app (@nil (list N)) source_ml_source1_concat_value39) source_ml_source1_concat_value40))) in (let index_2 := (PrimFloat.add index 1%float) in (ml_rec (rows, result_2, index_2)))))))) else result))
+    (fun _ => (@nil (list N))) (rows, result, index).
+
+Definition readJavaScriptRecordPropertyKeyTexts (names : (list (list float))) (order : (list float)) : (list (list N)) :=
+  (let rows := (readJavaScriptRecordPropertyKeys names order) in (let result := (@nil (list N)) in (let index := 0%float in (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 rows result index) in result_2)))).
+
+Definition source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 (length : float) (result : (list (list N))) (index : float) : (list (list N)) :=
+  ml_fix 64 (fun (ml_rec : float * (list (list N)) * float -> (list (list N))) (ml_args : float * (list (list N)) * float) =>
+    let '(length, result, index) := ml_args in (if (PrimFloat.ltb index length) then (let result_2 := (let source_ml_source1_concat_value42 := result in (let source_ml_source1_concat_value43 := ((let source_ml_source1_string_argument41 := index in (List.map (fun ml_unit => Z.to_N (ml_float_index ml_unit)) (MLUtf16Text.fromUtf8 ((fix ml_text_bytes (ml_text : string) : list float := match ml_text with EmptyString => nil | String ml_character ml_rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii ml_character)))) (ml_text_bytes ml_rest) end) (ml_js_number source_ml_source1_string_argument41))))) :: @nil (list N)) in (List.app (List.app (@nil (list N)) source_ml_source1_concat_value42) source_ml_source1_concat_value43))) in (let index_2 := (PrimFloat.add index 1%float) in (ml_rec (length, result_2, index_2)))) else result))
+    (fun _ => (@nil (list N))) (length, result, index).
+
+Definition createJavaScriptDensePropertyKeyTexts (length : float) : (list (list N)) :=
+  (if (orb (orb (negb (ml_is_safe_integer length)) (PrimFloat.ltb length 0%float)) (andb (PrimFloat.eqb length 0%float) (PrimFloat.ltb (PrimFloat.div 1%float length) 0%float))) then (ml_raiseJavaScriptTypeError (105%N :: 110%N :: 118%N :: 97%N :: 108%N :: 105%N :: 100%N :: 32%N :: 100%N :: 101%N :: 110%N :: 115%N :: 101%N :: 32%N :: 111%N :: 119%N :: 110%N :: 45%N :: 102%N :: 105%N :: 101%N :: 108%N :: 100%N :: 32%N :: 108%N :: 101%N :: 110%N :: 103%N :: 116%N :: 104%N :: (@nil N))) else (let result := (@nil (list N)) in (let index := 0%float in (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result index) in result_2)))).
+
 Definition main : list string :=
   nil.
 
