@@ -106,3 +106,7 @@ Draft ordered JavaScript array receiver/key capture and safe borrowed native
 length/index projections, retaining aliases, bounds, absence and errors. Generate
 their shared Rust/Links definitions, regenerate the Unicode kernel automatically
 and add future complete original-Node/native/codec controls without running them.
+Draft JavaScript identifier escapes with exact scalar, keyword, binding, property
+and numeric-boundary decisions, preserving source positions. Generate shared
+Rust/Links definitions; extend Unicode lifetime recognition and author complete
+future original-module syntax, value, lexical and codec controls.

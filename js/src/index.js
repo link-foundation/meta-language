@@ -73,6 +73,7 @@ export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-a
 export { createRustInherentProgramLinks } from './rust-inherent-program.js';
 export { createUnicodeScalarProgramLinks } from './unicode-scalar-program.js';
 export { createReferenceArrayProjectionProgramLinks } from './reference-array-projection-program.js';
+export { createJavaScriptIdentifierProgramLinks } from './javascript-identifier-program.js';
 export { SOURCE_IDENTIFIER_UNICODE_VERSION, normalizeUnicodeText } from './translation/unicode-identifiers.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';

@@ -54,6 +54,8 @@ pub(crate) mod guarded_private_array_write_rules;
 pub(crate) mod inert_module_binding_rules;
 pub mod ir;
 pub mod javascript;
+pub(crate) mod javascript_identifier_program;
+pub(crate) mod javascript_identifier_rules;
 mod javascript_line_terminator_rules;
 pub(crate) mod javascript_property_call_program;
 pub(crate) mod javascript_property_call_rules;

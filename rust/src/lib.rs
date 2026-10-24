@@ -104,6 +104,7 @@ pub use link_allocation_rules::{accept_link_allocation_capacity, accept_link_all
 pub use translation::array_state_method_program::create_array_state_method_program_links;
 pub use translation::big_integer_bitwise_program::create_big_integer_bitwise_program_links;
 pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
+pub use translation::javascript_identifier_program::create_java_script_identifier_program_links;
 pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;
 pub use translation::lexer::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 pub use translation::number_bitwise_program::create_number_bitwise_program_links;

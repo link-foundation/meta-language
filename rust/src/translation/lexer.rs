@@ -28,6 +28,7 @@ mod raw_strings;
 mod source_whitespace;
 mod unicode_escapes;
 pub(crate) use identifiers::accept_rust_source_identifier_name;
+pub(crate) use identifiers::require_java_script_identifier_role;
 pub use identifiers::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
@@ -446,8 +447,8 @@ fn tokenize_region(
             } else {
                 kind
             };
-            let value = previous.map_or("", |token| token.value.as_str());
-            if closed || start_regular_expression(kind, value) {
+            let value = identifiers::javascript_goal_value(previous);
+            if closed || start_regular_expression(kind, &value) {
                 let units = units.get_or_insert_with(|| {
                     source.units().iter().map(|unit| f64::from(*unit)).collect()
                 });
@@ -523,6 +524,7 @@ fn tokenize_region(
         }
         if language == Language::Rust
             && (ch == Some('\'') || (ch == Some('b') && source.is_char(index + 1, '\'')))
+            && !identifiers::lifetime_prefix(source, index)
             && let Some(token) = rust_character_token(source, index, units)?
         {
             index = token.end;
@@ -598,6 +600,14 @@ fn tokenize_region(
             index = stop;
             continue;
         }
+        if language == Language::JavaScript
+            && (ch == Some('\\') || is_identifier_start_at(source, index, language))
+        {
+            let token = identifiers::javascript_token(source, index, units)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
         if is_identifier_start_at(source, index, language) {
             let mut stop = index + identifiers::width(source, index);
             loop {
@@ -665,22 +675,26 @@ fn tokenize_region(
                     .rev()
                     .nth(1)
                     .is_some_and(|token| token.value == "." || token.value == "?.");
-                let declaration = tokens
-                    .iter()
-                    .rev()
-                    .nth(1)
-                    .is_some_and(|token| token.value == "function")
-                    && (tokens.len() == 2
-                        || tokens.iter().rev().nth(2).is_some_and(|token| {
-                            matches!(token.value.as_str(), ";" | "{" | "}" | "export" | "async")
-                        }));
+                let declaration = tokens.iter().rev().nth(1).is_some_and(|token| {
+                    identifiers::javascript_goal_value(Some(token)) == "function"
+                }) && (tokens.len() == 2
+                    || tokens.iter().rev().nth(2).is_some_and(|token| {
+                        matches!(
+                            identifiers::javascript_goal_value(Some(token)).as_str(),
+                            ";" | "{" | "}" | "export" | "async"
+                        )
+                    }));
                 let control = tokens.last().is_some_and(|token| {
                     let kind = if token.kind == TokenKind::Identifier {
                         "identifier"
                     } else {
                         "other"
                     };
-                    accept_control_parenthesis(kind, &token.value, qualified)
+                    accept_control_parenthesis(
+                        kind,
+                        &identifiers::javascript_goal_value(Some(token)),
+                        qualified,
+                    )
                 });
                 scopes.push((control, declaration));
             }
@@ -698,10 +712,10 @@ fn tokenize_region(
                             _ => "other",
                         },
                     );
-                let value = tokens.last().map_or("", |token| token.value.as_str());
+                let value = identifiers::javascript_goal_value(tokens.last());
                 statement_blocks.push(accept_statement_brace(
                     kind,
-                    value,
+                    &value,
                     control_closed,
                     declaration_body,
                 ));

@@ -45,6 +45,8 @@ export function readRustSourceRawIdentifierError(name, admitted) {
   return !admitted || name === '_' || name === 'crate' || name === 'self' || name === 'Self' || name === 'super'
     ? 'invalid Rust raw identifier r#' + name : '';
 }
+/** @param {boolean} first @param {boolean} quoted @returns {boolean} */
+export function acceptRustSourceLifetimeToken(first, quoted) { return first && !quoted; }
 /** @param {number[]} rows @param {number} stride @param {number} key @returns {number} */
 export function findUnicodeTableRow(rows, stride, key) {
   let low = 0;

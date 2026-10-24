@@ -6,6 +6,8 @@ import { findJavaScriptRecordParameterPattern, planJavaScriptRecordParameters,
   acceptJavaScriptRecordParameterProfile, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   const c = parser.cursor;
   const start = c.index, opening = c.tokens[start - 1];
@@ -22,6 +24,8 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
     doc?.params.size ?? 0, false, false)) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
   const plan = planJavaScriptRecordParameters(kinds, values, 0, JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  // Reason eight identifies the actual rejected BoundName, never a property.
+  if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
   if (plan[0] < 0) throw unsupported('record parameter binding',
     'a nonempty flat required object pattern needs distinct lexical names; defaults, arrays, nested/rest/computed patterns are separate obligations (reason ' + (-plan[0]) + ')',
     interval[plan[1]] ?? c.peek());
@@ -43,6 +47,7 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
     if (slot !== parameters.length) throw unsupported('record parameter source transport', 'logical arguments retain their actual ordered slots', opening);
     if (form === 0) {
       const position = plan[cursor++], token = actual(position);
+      requireJavaScriptIdentifierRole(token, true);
       parameters.push({ name: token.value, type: null, span: { start: token.start, end: token.end } });
       sourceNames.push(token.value);sourcePlan.push(0, slot, start + position);continue;
     }
@@ -66,6 +71,7 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
     for (let index = 0; index < count; index += 1) {
       const propertyPosition = plan[cursor++], localPosition = plan[cursor++];
       const property = actual(propertyPosition), local = actual(localPosition);
+      requireJavaScriptIdentifierRole(local, true);
       bindings.push({ parameter: name, property: property.value, name: local.value,
         parameterSpan, span: { start: property.start, end: local.end },
         bindingSpan: { start: local.start, end: local.end } });

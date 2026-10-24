@@ -756,3 +756,13 @@ kernel applies these projections automatically. Twenty-two future values/aborts
 and full graph/codec/four-target controls use the common original-Node product
 oracle, preserving its previous fixtures. No controls ran; arbitrary typed
 snapshot parity and the inherited full-language/resource obligations remain.
+
+The escaped-identifier draft generates its full decoder, strict module role,
+keyword and lexical-goal decisions as Rust and typed Links. Host adapters retain
+actual raw tokens, source units, source positions and binding owners; no native
+replacement classifier is added. Array/record plans transport the actual
+rejected BoundName before choosing an escaped-name syntax error. Unicode
+lifetime/character selection extends the shared Unicode program. Future paired
+controls include independent Node module syntax rejection and every original
+value, exact lexical assertion, graph, codec and emission; none ran. Source
+header Unicode profiles, source symbol hygiene and inherited requirements remain.

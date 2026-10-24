@@ -23,6 +23,24 @@ fn unicode_javascript_identifiers_preserve_distinct_names_and_original_values() 
 }
 
 #[test]
+fn escaped_javascript_identifiers_preserve_lexical_roles_original_syntax_and_values() {
+    assert_nominal_translation_product(
+        "../experiments/unicode-identifiers/escaped-javascript.mjs",
+        "escaped JavaScript identifiers",
+        meta_language::create_java_script_identifier_program_links,
+    );
+}
+
+#[test]
+fn unicode_lifetimes_preserve_names_intervals_and_character_boundaries() {
+    assert_nominal_translation_product(
+        "../experiments/unicode-identifiers/rust-lifetimes.mjs",
+        "Unicode Rust lifetimes",
+        create_unicode_scalar_program_links,
+    );
+}
+
+#[test]
 fn canonical_normalization_retains_exclusions_order_hangul_and_compatibility_distinctions() {
     let fixture = read_structured_data_lino(include_str!(
         "../../../parity/fixtures/unicode-source-scalars.lino"

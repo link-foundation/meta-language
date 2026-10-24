@@ -131,12 +131,12 @@ pub(super) fn assert_nominal_translation_product(
     };
     if let Some(rows) = expected["lexicalCases"].as_array() {
         for row in rows {
-            let tokens = tokenize(row["source"].as_str().unwrap(), Language::Rust)
+            let tokens = tokenize(row["source"].as_str().unwrap(), source_language)
                 .unwrap()
                 .tokens;
             let declared = row["tokens"].as_array().unwrap();
             assert_eq!(tokens.len(), declared.len() + 1);
-            let mut cursor = TokenCursor::new(tokens, Language::Rust);
+            let mut cursor = TokenCursor::new(tokens, source_language);
             for expected in declared {
                 let token = cursor.peek();
                 let kind = match token.kind {
@@ -144,6 +144,7 @@ pub(super) fn assert_nominal_translation_product(
                     TokenKind::Macro => "macro",
                     TokenKind::String => "string",
                     TokenKind::Punct => "punct",
+                    TokenKind::Character => "char",
                     _ => panic!("unexpected declared token {token:?}"),
                 };
                 assert_eq!(
@@ -161,7 +162,7 @@ pub(super) fn assert_nominal_translation_product(
     }
     if let Some(rows) = expected["lexicalErrors"].as_array() {
         for row in rows {
-            let error = tokenize(row["source"].as_str().unwrap(), Language::Rust).unwrap_err();
+            let error = tokenize(row["source"].as_str().unwrap(), source_language).unwrap_err();
             assert_eq!(error.kind.as_str(), row["kind"].as_str().unwrap());
             assert_eq!(error.reason, row["reason"].as_str().unwrap());
             assert_eq!(serde_json::to_value(error.span).unwrap(), row["span"]);
@@ -346,6 +347,15 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, format!("{product_label}\n"));
     for row in expected["refusals"].as_array().unwrap() {
+        if expected["sourceSyntaxOracle"] == Value::Bool(true) {
+            assert_eq!(source_language, Language::JavaScript);
+            assert_eq!(row["kind"], "syntax");
+            let original = &row["originalSyntax"];
+            assert_eq!(original["source"], row["source"]);
+            assert_ne!(original["exitCode"].as_i64().unwrap(), 0);
+            assert!(original["signal"].is_null());
+            assert!(original["stderr"].as_str().unwrap().contains("SyntaxError"));
+        }
         let surface = if source_language == Language::JavaScript {
             meta_language::translation::javascript::parse_javascript(
                 row["source"].as_str().unwrap(),

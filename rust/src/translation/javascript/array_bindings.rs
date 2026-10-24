@@ -75,6 +75,7 @@ impl JavaScriptParser {
     pub(super) fn read_array_binding(&mut self) -> Result<Vec<ArrayBinding>> {
         let mut names = HashSet::new();
         for token in self.array_binding_names(self.cursor.index) {
+            crate::translation::lexer::require_java_script_identifier_role(&token, true)?;
             if !rules::accept_java_script_array_binding_name(
                 &Text::from_text(kind(&token)),
                 &Text::from_text(&token.value),

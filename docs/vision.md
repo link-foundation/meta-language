@@ -2840,9 +2840,38 @@ eight JavaScript values, ten exact token/cursor sequences, thirteen NFC cases
 and eleven scalar-name cases have future paired graph/codec/four-emission and
 independent original-language controls. Separate JavaScript and native runners
 cover every column of the authenticated temporary official normalization
-corpus. None ran. Older configurable Unicode/edition profiles, escaped
-JavaScript identifiers, Unicode lifetimes, fully faithful emitted-source
+corpus. None ran. Older configurable Unicode/edition profiles, fully faithful emitted-source
 reimport and the inherited broader language requirements still require drafts.
+
+The following source draft adds JavaScript identifier escapes and Rust Unicode
+lifetimes. A separate complete shared definition decodes each fixed or braced
+identifier escape as one scalar, admits arbitrary leading zeroes within the
+source bound, rejects surrogate escapes and checks the actual ID property.
+Raw spelling and UTF-16 intervals remain unchanged. Reserved/contextual keyword
+selection retains escaped spelling; reference and strict module binding roles
+have distinct errors, while IdentifierName properties remain admitted. Function,
+closure, array, object and named record parameter adapters carry actual binding
+tokens to that definition. Regex/division and control/body lexical goals use
+the same distinction. Numeric boundaries reject following identifier starts,
+digits or backslashes, retaining complete astral diagnostic intervals.
+These decisions follow the
+[identifier lexical rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-names-and-keywords)
+and [strict module early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-identifiers-static-semantics-early-errors).
+
+Rust lifetime recognition uses actual XID scalar boundaries before character
+decoding, retaining ordinary character literals and NFC-normalized names with
+their original spans. This follows the
+[lifetime token grammar](https://doc.rust-lang.org/reference/tokens.html#lifetimes-and-loop-labels).
+Twenty-two future JavaScript values, thirteen exact syntax refusals, nine token
+sequences and twelve lexical errors join five Rust lifetime values and six
+lifetime/character token sequences. Future native controls preserve every
+preceding input and execute independent Node module syntax observations for
+every newly declared syntax refusal, as well as program/definition graphs,
+both codecs and four emissions. None ran. Script/sloppy/generator roles and a
+Unicode variant of the separately selected ASCII source-header profile still
+need their source drafts. The valid `ml_` local names in an earlier projection
+fixture remain blocked by the existing source reservation; completing that
+case requires capture-free symbol allocation throughout source lowering.
 
 The struct-constructor namespace draft preserves the distinction between a
 source struct's value constructor and an associated item sharing its spelling.

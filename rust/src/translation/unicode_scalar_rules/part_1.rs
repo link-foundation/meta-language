@@ -318,6 +318,12 @@ pub fn read_rust_source_raw_identifier_error(name: &str, admitted: bool) -> Stri
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub const fn accept_rust_source_lifetime_token(first: bool, quoted: bool) -> bool {
+    first && !quoted
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn find_unicode_table_row(
     rows: std::rc::Rc<std::cell::RefCell<Vec<f64>>>,
     stride: f64,

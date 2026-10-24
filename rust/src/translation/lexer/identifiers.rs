@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::BTreeMap, panic::AssertUnwindSafe, rc::Rc}
 
 use serde::Deserialize;
 
-use super::{Language, Source, Span};
+use super::{Language, Source, Span, Token, TokenKind};
 use crate::translation::{
     diagnostics::{Result, TranslationError},
     unicode_scalar_rules,
@@ -70,7 +70,9 @@ pub(super) fn scalar(source: &Source, index: usize) -> f64 {
     )
 }
 pub(super) fn width(source: &Source, index: usize) -> usize {
-    if unicode_scalar_rules::read_unicode_source_scalar_width(scalar(source, index)) == 2.0 {
+    if unicode_scalar_rules::read_unicode_source_scalar_width(scalar(source, index)).to_bits()
+        == 2f64.to_bits()
+    {
         2
     } else {
         1
@@ -78,6 +80,9 @@ pub(super) fn width(source: &Source, index: usize) -> usize {
 }
 pub(super) fn accepts(source: &Source, index: usize, language: Language, first: bool) -> bool {
     let point = scalar(source, index);
+    accepts_point(point, language, first)
+}
+fn accepts_point(point: f64, language: Language, first: bool) -> bool {
     let name = if language == Language::Rust {
         "Rust"
     } else {
@@ -106,6 +111,103 @@ pub(super) fn accepts(source: &Source, index: usize, language: Language, first: 
             point,
             data.properties[&(prefix.to_owned() + "Start")].clone(),
             data.properties[&(prefix.to_owned() + "Continue")].clone(),
+        )
+    })
+}
+pub(super) fn lifetime_prefix(source: &Source, index: usize) -> bool {
+    if !source.is_char(index, '\'') {
+        return false;
+    }
+    let first = accepts(source, index + 1, Language::Rust, true);
+    let mut end = index + 1;
+    if first {
+        end += width(source, end);
+        while end < source.len() && accepts(source, end, Language::Rust, false) {
+            end += width(source, end);
+        }
+    }
+    unicode_scalar_rules::accept_rust_source_lifetime_token(first, source.is_char(end, '\''))
+}
+pub(super) fn javascript_token(
+    source: &Source,
+    start: usize,
+    units: &mut Option<Vec<f64>>,
+) -> Result<Token> {
+    let mut end = start;
+    let mut segment = start;
+    let mut value = String::new();
+    while end < source.len() {
+        if source.is_char(end, '\\') {
+            let encoded = units.get_or_insert_with(|| {
+                source.units().iter().map(|&unit| f64::from(unit)).collect()
+            });
+            let offset = serde_json::Number::from(end)
+                .as_f64()
+                .expect("a bounded UTF-16 source offset");
+            let decoded = crate::translation::javascript_identifier_rules::decode_java_script_identifier_escape(encoded, offset);
+            if decoded[0] < 0.0 || !accepts_point(decoded[1], Language::JavaScript, end == start) {
+                let limit = if decoded[0] < 0.0 {
+                    decoded[1]
+                } else {
+                    decoded[0]
+                };
+                let limit = crate::translation::frontend_rules::ml_array::number_index(limit)
+                    .expect("a decoder source offset");
+                return Err(TranslationError::syntax(
+                    "invalid Unicode escape in a JavaScript identifier",
+                    Some(Span {
+                        start: end,
+                        end: limit,
+                    }),
+                ));
+            }
+            // The shared property decision above admits only actual scalars.
+            #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            let point = decoded[1] as u32;
+            value.push_str(&source.slice(segment, end));
+            value.push(char::from_u32(point).expect("an admitted identifier scalar"));
+            end = crate::translation::frontend_rules::ml_array::number_index(decoded[0])
+                .expect("a decoder source offset");
+            segment = end;
+        } else {
+            if !accepts(source, end, Language::JavaScript, end == start) {
+                break;
+            }
+            end += width(source, end);
+        }
+    }
+    value.push_str(&source.slice(segment, end));
+    Ok(Token::new(
+        TokenKind::Identifier,
+        value,
+        source.slice(start, end),
+        start,
+        end,
+    ))
+}
+pub(crate) fn require_java_script_identifier_role(token: &Token, binding: bool) -> Result<()> {
+    let message =
+        crate::translation::javascript_identifier_rules::read_java_script_escaped_identifier_error(
+            &token.value,
+            &token.raw,
+            binding,
+        );
+    if message.is_empty() {
+        Ok(())
+    } else {
+        Err(TranslationError::syntax(message, Some(token.span())))
+    }
+}
+pub(super) fn javascript_goal_value(token: Option<&Token>) -> String {
+    token.map_or_else(String::new, |token| {
+        crate::translation::javascript_identifier_rules::read_java_script_source_token_goal_value(
+            if token.kind == TokenKind::Identifier {
+                "identifier"
+            } else {
+                ""
+            },
+            &token.value,
+            &token.raw,
         )
     })
 }

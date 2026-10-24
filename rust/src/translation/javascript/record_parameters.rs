@@ -259,6 +259,10 @@ impl JavaScriptParser {
                 .and_then(number_index)
                 .and_then(|at| interval.get(at))
                 .unwrap_or_else(|| self.cursor.peek());
+            // Reason eight carries the actual rejected BoundName position.
+            if values[0].to_bits() == (-8f64).to_bits() {
+                crate::translation::lexer::require_java_script_identifier_role(token, true)?;
+            }
             return Err(unsupported(
                 "record parameter binding",
                 &format!(
@@ -314,6 +318,7 @@ impl JavaScriptParser {
             }
             if form == 0 {
                 let token = plan.token(&interval)?;
+                crate::translation::lexer::require_java_script_identifier_role(&token, true)?;
                 syntax
                     .parameters
                     .push(parameter(token.value.clone(), token.span()));
@@ -356,6 +361,7 @@ impl JavaScriptParser {
             for _ in 0..pairs {
                 let property = plan.token(&interval)?;
                 let local = plan.token(&interval)?;
+                crate::translation::lexer::require_java_script_identifier_role(&local, true)?;
                 syntax.bindings.push(RecordBinding {
                     parameter: name.clone(),
                     property: property.value.clone(),

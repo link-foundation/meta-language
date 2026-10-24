@@ -70,9 +70,12 @@ fn javascript_number(source: &Source, index: usize) -> Result<Token> {
     let found = javascript_number_regex().find(&rest);
     let raw = found.map_or_else(|| source.slice(index, index + 1), |m| m.as_str().to_owned());
     let end = index + raw.len();
-    let next = source.char_at(end);
     let malformed = || {
-        let stop = if end < source.len() { end + 1 } else { end };
+        let stop = if end < source.len() {
+            end + identifiers::width(source, end)
+        } else {
+            end
+        };
         TranslationError::syntax(
             format!("malformed number {}", source.slice(index, stop)),
             Some(span(index, stop)),
@@ -80,7 +83,10 @@ fn javascript_number(source: &Source, index: usize) -> Result<Token> {
     };
     // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
     if found.is_none()
-        || next.is_some_and(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '$')
+        || !super::javascript_identifier_rules::accept_java_script_number_identifier_boundary(
+            identifiers::accepts(source, end, Language::JavaScript, true),
+            source.at(end).map_or(-1.0, f64::from),
+        )
     {
         return Err(malformed());
     }
@@ -681,6 +687,11 @@ impl TokenCursor {
                     &token.value,
                     &token.raw,
                 ))
+            && (self.language != Language::JavaScript
+                || super::javascript_identifier_rules::accept_java_script_source_keyword_token(
+                    &token.value,
+                    &token.raw,
+                ))
     }
 
     #[must_use]
@@ -737,6 +748,13 @@ impl TokenCursor {
                 ),
                 Some(token.span()),
             ));
+        }
+        if self.language == Language::JavaScript
+            && super::javascript_identifier_rules::accept_java_script_binding_identifier_context(
+                context.unwrap_or(""),
+            )
+        {
+            require_java_script_identifier_role(token, true)?;
         }
         Ok(self.advance())
     }

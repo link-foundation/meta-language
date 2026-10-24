@@ -535,6 +535,7 @@ impl JavaScriptParser {
 
 /// Local names with the translator's `ml_` prefix could meet the names it makes up.
 pub(super) fn reserved(token: &Token) -> Result<()> {
+    crate::translation::lexer::require_java_script_identifier_role(token, true)?;
     if token.value.starts_with("ml_") {
         return Err(unsupported(
             "reserved identifier",

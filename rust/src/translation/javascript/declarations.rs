@@ -385,6 +385,9 @@ impl JavaScriptParser {
         let Some(mut token) = tokens.get(index) else {
             return false;
         };
+        if token.kind == TokenKind::Identifier
+            && !crate::translation::javascript_identifier_rules::accept_java_script_source_keyword_token(&token.value, &token.raw)
+            && tokens.get(index + 1).map(|next| next.value.as_str()) != Some("=>") { return false; }
         let mut index = index;
         if token.kind == TokenKind::Identifier
             && token.value == "async"

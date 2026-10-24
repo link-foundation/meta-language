@@ -197,6 +197,7 @@ impl JavaScriptParser {
 
     pub(in super::super) fn identifier(&mut self) -> Result<SExpr> {
         let token = self.peek();
+        crate::translation::lexer::require_java_script_identifier_role(&token, false)?;
         let here = Some(span(&token, &token));
         if token.value == "true" || token.value == "false" {
             self.cursor.advance();
@@ -470,6 +471,7 @@ impl JavaScriptParser {
 
     /// A local variable; reading one before its declaration throws in JavaScript.
     pub(in super::super) fn reference(&mut self, token: &Token) -> Result<SExpr> {
+        crate::translation::lexer::require_java_script_identifier_role(token, false)?;
         let here = span(token, token);
         self.lexical.read(token, false, here);
         let temporal = self.scope.tdz.contains(&token.value);

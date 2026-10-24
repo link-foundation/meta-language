@@ -14,7 +14,9 @@ import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 import { acceptRustSourceKeywordToken } from './rust-record-rules.js';
 import { readRustSourceRawIdentifierError } from './unicode-scalar-rules.js';
-import { acceptSourceIdentifierAt, normalizeRustSourceIdentifier, readSourceIdentifierWidth } from './unicode-identifiers.js';
+import { acceptSourceIdentifierAt, normalizeRustSourceIdentifier, readSourceIdentifierWidth, readJavaScriptSourceIdentifier, acceptRustSourceLifetimeAt } from './unicode-identifiers.js';
+import { acceptJavaScriptSourceKeywordToken, acceptJavaScriptBindingIdentifierContext, readJavaScriptSourceTokenGoalValue, acceptJavaScriptNumberIdentifierBoundary } from './javascript-identifier-rules.js';
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 export { SOURCE_IDENTIFIER_UNICODE_VERSION } from './unicode-identifiers.js';
 
 const OPERATORS = {
@@ -33,6 +35,7 @@ const COMMENTS = {
   Lean: { line: '--', block: ['/-', '-/'], nested: true },
   Rocq: { line: null, block: ['(*', '*)'], nested: true },
 };
+const javascriptGoalValue = token => readJavaScriptSourceTokenGoalValue(token?.kind ?? '', token?.value ?? '', token?.raw ?? '');
 
 export function tokenize(source, language) {
   return tokenizeRegion(source, language, 0, false, { units: null });
@@ -79,7 +82,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       continue;
     }
     const start = index;
-    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? ''))) {
+    if (language === 'JavaScript' && char === '/' && (closed || startRegularExpression(['.', '?.'].includes(tokens.at(-2)?.value) ? 'member' : tokens.at(-1)?.kind ?? '', javascriptGoalValue(tokens.at(-1))))) {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const end = regularExpressionEnd(encoding.units, index);
       if (end < 0) throw new TranslationError('syntax', 'unterminated regular expression literal', { start, end: source.length });
@@ -127,7 +130,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
     }
     // Select only Rust apostrophe/byte-apostrophe prefixes. A notCharacter
     // result consumes nothing, so existing lifetime and label paths stay exact.
-    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'"))) {
+    if (language === 'Rust' && (char === "'" || (char === 'b' && source[index + 1] === "'")) && !acceptRustSourceLifetimeAt(source, index)) {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
       const literal = decodeRustCharacterLiteral(encoding.units, index);
       if (literal.$ === 'malformed') throw new TranslationError('syntax', 'malformed Rust character literal', { start: literal.at, end: literal.end });
@@ -189,6 +192,10 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       index += raw.length;
       continue;
     }
+    if (language === 'JavaScript' && (char === '\\' || isIdentifierStartAt(source, index, language))) {
+      const token = readJavaScriptSourceIdentifier(source, index, encoding);
+      tokens.push(token); index = token.end; continue;
+    }
     if (isIdentifierStartAt(source, index, language)) {
       let stop = index + (language === 'Rust' || language === 'JavaScript' ? readSourceIdentifierWidth(source, index) : char.length);
       for (;;) {
@@ -214,15 +221,15 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
     if (braced && text === '}') depth -= 1;
     if (language === 'JavaScript') {
       if (text === '(') {
-        const declaration = tokens.at(-2)?.value === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(tokens.at(-3)?.value));
-        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', tokens.at(-1)?.value ?? '', ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
+        const declaration = javascriptGoalValue(tokens.at(-2)) === 'function' && (tokens.length === 2 || [';', '{', '}', 'export', 'async'].includes(javascriptGoalValue(tokens.at(-3))));
+        scopes.push({ control: acceptControlParenthesis(tokens.at(-1)?.kind ?? '', javascriptGoalValue(tokens.at(-1)), ['.', '?.'].includes(tokens.at(-2)?.value)), declaration });
       }
       if (text === ')') {
         const scope = scopes.pop();
         closed = scope?.control ?? false;
         declarationBody = scope?.declaration ?? false;
       } else if (text === '{') {
-        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), tokens.at(-1)?.value ?? '', controlClosed, declarationBody));
+        braces.push(acceptStatementBrace(tokens.at(-1)?.kind ?? (braced ? 'expression' : ''), javascriptGoalValue(tokens.at(-1)), controlClosed, declarationBody));
         declarationBody = false;
       } else if (text === '}') closed = braces.pop() ?? false;
       else declarationBody = false;
@@ -252,10 +259,10 @@ function javascriptNumber(source, index) {
   const match = JS_NUMBER.exec(source.slice(index));
   const raw = match?.[0] ?? source[index];
   const end = index + raw.length;
-  const next = source[end] ?? '';
+  const next = end < source.length ? String.fromCodePoint(source.codePointAt(end)) : '';
   const malformed = () => new TranslationError('syntax', `malformed number ${source.slice(index, end + next.length)}`, { start: index, end: end + next.length });
   // `08`, `1_`, `3in` and `1.5n` are SyntaxErrors in JavaScript.
-  if (!match || /[0-9A-Za-z_$]/u.test(next)) throw malformed();
+  if (!match || !acceptJavaScriptNumberIdentifierBoundary(acceptSourceIdentifierAt(source, end, 'JavaScript', true), end < source.length ? source.charCodeAt(end) : -1)) throw malformed();
   const text = raw.replaceAll('_', '');
   if (text.endsWith('n')) {
     if (/[.eE]/u.test(text) && !/^0[xX]/u.test(text)) throw malformed();
@@ -467,7 +474,8 @@ export class TokenCursor {
   is(value, offset = 0) {
     const token = this.peek(offset);
     return (token.kind === 'punct' || token.kind === 'identifier') && token.value === value
-      && (this.language!=='Rust'||acceptRustSourceKeywordToken(token.value,token.raw));
+      && (this.language!=='Rust'||acceptRustSourceKeywordToken(token.value,token.raw))
+      && (this.language!=='JavaScript'||acceptJavaScriptSourceKeywordToken(token.value,token.raw));
   }
 
   isKind(kind, offset = 0) {
@@ -494,6 +502,7 @@ export class TokenCursor {
     if (token.kind !== 'identifier') {
       throw new TranslationError('syntax', `expected identifier${context ? ` in ${context}` : ''} but found ${describe(token)}`, token);
     }
+    if (this.language === 'JavaScript' && acceptJavaScriptBindingIdentifierContext(context ?? '')) requireJavaScriptIdentifierRole(token, true);
     return this.next();
   }
 

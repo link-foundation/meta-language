@@ -11,6 +11,8 @@
 // obligation.
 
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
@@ -351,6 +353,7 @@ class JavaScriptParser {
     const tokens = this.cursor.tokens;
     let token = tokens[index];
     if (!token) return false;
+    if (token.kind === 'identifier' && !acceptJavaScriptSourceKeywordToken(token.value, token.raw) && tokens[index + 1]?.value !== '=>') return false;
     if (token.kind === 'identifier' && token.value === 'async' && tokens[index + 1]?.value !== '=>') {
       index += 1;
       token = tokens[index];
@@ -380,12 +383,14 @@ class JavaScriptParser {
         // A refused named import of node:assert ends at the token after its name.
         const after = c.peek();
         const alias = c.eat('as') ? c.identifier('import') : null;
+        requireJavaScriptIdentifierRole(alias ?? imported, true);
         names.push({ imported: imported.value, local: (alias ?? imported).value, aliased: alias !== null, after });
         if (!c.eat(',')) break;
       }
       c.expect('}', 'import');
     } else {
       local = c.identifier('import');
+      requireJavaScriptIdentifierRole(local, true);
     }
     c.expect('from', 'import');
     const module = c.next();
@@ -890,6 +895,7 @@ class JavaScriptParser {
   }
 
   lexicalRead(token, assignment = false, where = span(token, token)) {
+    requireJavaScriptIdentifierRole(token, assignment);
     this.lexicalReads.push({ scope: this.lexicalScope, name: token.value, start: token.start, span: where, assignment });
   }
 
@@ -2373,6 +2379,7 @@ class JavaScriptParser {
   identifier() {
     const c = this.cursor;
     const token = c.peek();
+    requireJavaScriptIdentifierRole(token, false);
     if (token.value === 'true' || token.value === 'false') {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
@@ -2570,6 +2577,7 @@ function consoleFormat([first, ...values]) {
 }
 
 function reserved(token) {
+  requireJavaScriptIdentifierRole(token, true);
   if (/^ml_/u.test(token.value)) {
     throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, span(token, token));
   }

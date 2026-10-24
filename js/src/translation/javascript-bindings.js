@@ -9,6 +9,7 @@ import { constructCallableSurfaceParameters, readCallableClosureConflicts, readC
 import { planCallableTypeSyntax, readCallableClosureParameterError, readCallableClosurePrefixError, readCallableSurfaceConstructor, requireCallableAssignedCaptureField } from './callable-source-rules.js';
 import { acceptJavaScriptArrayBindingName, planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, readJavaScriptArrayRestBindingError } from './array-binding-rules.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
+import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 
 export function readClosure(parser, method = false) {
@@ -79,6 +80,7 @@ export function readArrayBinding(parser, path = [], state = null) {
   if (root) {
     const names = new Set();
     for (const token of arrayBindingNames(parser, c.index)) {
+      requireJavaScriptIdentifierRole(token, true);
       if (!acceptJavaScriptArrayBindingName(token.kind, token.value, names.has(token.value), JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)) {
         throw unsupported('array binding name', 'every binding needs a distinct admitted lexical identifier', token);
       }
