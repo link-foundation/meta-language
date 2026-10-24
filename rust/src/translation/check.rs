@@ -39,6 +39,7 @@ mod expectation;
 mod expressions;
 mod externals;
 mod items;
+mod javascript_property_calls;
 mod matches;
 mod math;
 mod number_bitwise;

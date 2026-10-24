@@ -11,6 +11,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { planTuplePatternFields } from './rust-record-rules.js';
+import { checkJavaScriptSourcePropertyCall } from './javascript-property-calls.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseOperation, readBigIntegerBitwiseArity, readPrimitiveBitwiseDomain } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
@@ -720,7 +721,7 @@ class Checker {
         return { k: 'lambda', params, body, type: constructCallableFunctionType(params, body.type) };
       }
       case 'method':
-        return this.method(node, env, path, expected);
+        return checkJavaScriptSourcePropertyCall(this,node,env,path)??this.method(node, env, path, expected);
       case 'booleanValue':
         return this.booleanValue(this.expr(node.arg, env, path, undefined), node.span);
       case 'numberValue':

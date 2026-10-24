@@ -55,6 +55,8 @@ pub(crate) mod inert_module_binding_rules;
 pub mod ir;
 pub mod javascript;
 mod javascript_line_terminator_rules;
+pub(crate) mod javascript_property_call_program;
+pub(crate) mod javascript_property_call_rules;
 pub(crate) mod javascript_record_parameter_rules;
 pub(crate) mod javascript_tag_context_rules;
 pub mod js_number;

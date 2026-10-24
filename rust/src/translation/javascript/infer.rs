@@ -243,6 +243,7 @@ struct Inference {
     arithmetic: Vec<Arithmetic>,
     equalities: Vec<Equality>,
     methods: Vec<methods::Method>,
+    property_methods: HashMap<*const SExpr, String>,
     includes: Vec<methods::Includes>,
     array_includes: HashSet<*const SExpr>,
     fields: Vec<FieldOf>,
@@ -292,6 +293,7 @@ impl Inference {
             arithmetic: Vec::new(),
             equalities: Vec::new(),
             methods: Vec::new(),
+            property_methods: HashMap::new(),
             includes: Vec::new(),
             array_includes: HashSet::new(),
             fields: Vec::new(),
@@ -676,7 +678,9 @@ impl Inference {
             SNode::Set { items, .. } | SNode::Map { entries: items, .. } => {
                 self.collection_construction(expr, items, env, None)
             }
-            SNode::Method { object, op, args } => self.method(object, op, args, env, expr.span),
+            SNode::Method { object, op, args } => {
+                self.method(std::ptr::from_ref(expr), object, op, args, env, expr.span)
+            }
             SNode::StringTest { op, object, search } if op == "includes" => {
                 self.includes(expr, object, search, env)
             }

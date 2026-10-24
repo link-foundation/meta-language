@@ -109,6 +109,7 @@ fn infer_javascript_types_with_observations(
     super::methods::fill_methods(
         &mut program,
         &inference.array_includes,
+        &inference.property_methods,
         &mut expression_types,
     );
     super::super::reference_analysis::mark_shared_reference_types(

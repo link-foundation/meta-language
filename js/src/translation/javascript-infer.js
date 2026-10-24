@@ -7,6 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import { readJavaScriptRecordMethodInferenceStep, readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
 import { readArrayStateMethodResult, readArrayStateMethodArgumentRole } from './array-state-method-rules.js';
@@ -88,6 +89,7 @@ class Inference {
     this.lambdas = new Map();
     this.records = new Map();
     this.methods = [];
+    this.propertyMethods = new Map();
     this.includes = [];
     this.coalesces = [];
     this.arrayBindingDefaults = [];
@@ -324,6 +326,13 @@ class Inference {
       else if (effect.k === 'assert') this.prop(effect.prop, env);
     }
     this.solve();
+    for(const[node,form]of this.propertyMethods){
+      const object=node.object,args=node.args;
+      delete node.object;delete node.args;
+      if(form==='test'){node.k='stringTest';node.object=object;node.search=args[0];}
+      else if(form==='map'){node.k='stringMap';node.object=object;}
+      else{node.k='toString';node.arg=object;delete node.op;}
+    }
     for (const [node, term] of this.expressionTerms) this.expressionTypes.set(node, this.surface(term, node.span));
     for (const [node] of this.expressionTerms) {
       const value = node.k === 'let' && !node.type ? this.expressionTypes.get(node.value) : null;
@@ -493,6 +502,10 @@ class Inference {
       if (!progress && this.includes.length) {
         this.includesStep(this.includes.shift(), true);
         progress = true;
+      }
+      if(!progress){
+        const method=this.methods.find(item=>this.resolve(item.object).kind==='var'&&readJavaScriptPropertyCallFallbackKind(item.op,readJavaScriptMethodReceiverKind(item.op))!=='');
+        if(method&&this.methodStep(method,true)){this.methods.splice(this.methods.indexOf(method),1);progress=true;}
       }
       // `.length` of a value nothing else fixes reads an array.
       const length = this.fields.find(({ object, field }) => field === 'length' && this.resolve(object).kind === 'var');
@@ -906,7 +919,7 @@ class Inference {
         const object = this.expr(node.object, env);
         const args = node.args.map((arg) => this.expr(arg, env));
         const result = this.fresh();
-        this.methods.push({ object, args, op: node.op, result, where: node.span });
+        this.methods.push({ node, object, args, op: node.op, result, where: node.span });
         return result;
       }
       case 'stringPoints':
@@ -1111,10 +1124,12 @@ class Inference {
     return true;
   }
 
-  methodStep({ object, args, op, result, where }) {
+  methodStep({ node, object, args, op, result, where }, force=false) {
     let receiver = this.resolve(object);
     if (receiver.kind === 'var') {
-      const kind = readJavaScriptMethodReceiverKind(op);
+      if(!force)return false;
+      const kind = readJavaScriptPropertyCallFallbackKind(op,readJavaScriptMethodReceiverKind(op));
+      if(kind==='scalar'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}
       if (kind === 'array') {
         this.unify(object, { kind: 'array', element: this.fresh() }, where);
       } else if (kind === 'string') {
@@ -1122,7 +1137,17 @@ class Inference {
       } else return false;
       receiver = this.resolve(object);
     }
+    if(receiver.kind==='record'){
+      const field=receiver.fields.find(field=>field.name===op);
+      if(!field)return true;
+      const callable=this.resolve(field.type),step=readJavaScriptRecordMethodInferenceStep(callable.kind,callable.params?.length??0,args.length);
+      if(step==='apply'||step==='infer')this.unify(field.type,constructCallableFunctionType(args.map(type=>({type})),result),where);
+      return true;
+    }
+    if(op==='toString'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}
     if (receiver.kind === 'string') {
+      const selected=readJavaScriptSourcePropertyOperationKind(op);
+      if(node&&(selected==='test'&&args.length===1||selected==='map'&&args.length===0))this.propertyMethods.set(node,selected);
       const primitive = readPrimitiveMethodMinimumArguments(receiver.kind, op) >= 0;
       args.forEach((arg, index) => {
         const kind = primitive && index < readPrimitiveMethodArgumentCount(receiver.kind, op)

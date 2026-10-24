@@ -2148,22 +2148,17 @@ class JavaScriptParser {
         }
         if (c.is('(') && readStringTestOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
-          if (args.length !== 1) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'search the whole string, with one argument', span(token, c.peek()));
-          expr = { k: 'stringTest', op: field.value, object: expr, search: args[0], span: joined(expr, { span: span(token, c.peek()) }, token) };
+          expr = { k: 'method', op: field.value, object: expr, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         if (c.is('(') && readStringMapOperation('JavaScript', field.value) !== '') {
           const args = this.arguments(field.value);
-          if (args.length !== 0) throw unsupported(`.${field.value}() with ${args.length} arguments`, 'string maps take no arguments', span(token, c.peek()));
-          expr = { k: 'stringMap', op: field.value, object: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
+          expr = { k: 'method', op: field.value, object: expr, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         if (c.is('(')) {
           const args = this.arguments(field.value);
-          if (field.value === 'toString') {
-            if (args.length) throw unsupported('toString with a radix', 'only decimal text is portable', span(token, c.peek()));
-            expr = { k: 'toString', arg: expr, span: joined(expr, { span: span(token, c.peek()) }, token) };
-          } else expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
+          expr = { k: 'method', object: expr, op: field.value, args, span: joined(expr, { span: span(token, c.peek()) }, token) };
           continue;
         }
         expr = { k: 'field', object: expr, field: field.value, span: joined(expr, { span: span(field, field) }, token) };

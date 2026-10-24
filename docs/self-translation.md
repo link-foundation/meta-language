@@ -668,6 +668,14 @@ typed Links. Fifteen future values/aborts and three exact refusals add full
 paired graph/codec/emission/original-Rust controls. None executed. Remaining
 early-return, effect/ownership and divergence inference work stays explicit.
 
+JavaScript property-call owner selection now has one shared source definition,
+generated native source and complete typed Links. Callable record fields infer
+their actual signatures before primitive defaults; proven primitive receivers
+retain the preceding canonical surface forms. A new future paired matrix keeps
+twenty original/emitted values/aborts, two refusals, exact program/definition
+graphs, both codecs and four emissions, plus CI-only native Rust execution.
+All earlier Rust-source products remain unchanged in scope. None executed.
+
 The functional record-update source draft reuses shared partial-field and
 actual-owner decisions. JavaScript generates native source and the full typed
 definition. Ordered field bindings precede one typed base binding and one

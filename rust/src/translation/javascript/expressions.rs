@@ -502,19 +502,13 @@ impl JavaScriptParser {
                     );
                     if !mapping.is_empty() {
                         let args = self.arguments(&field.value)?;
-                        if !args.is_empty() {
-                            return Err(unsupported(
-                                &format!(".{}() with {} arguments", field.value, args.len()),
-                                "string maps take no arguments",
-                                Some(self.to_here(&token)),
-                            ));
-                        }
                         expr = node(
-                            SNode::StringMap {
-                                op: mapping,
+                            SNode::Method {
+                                op: field.value,
                                 object: Box::new(expr),
+                                args: args.into_iter().map(Some).collect(),
                             },
-                            self.to_here(&token),
+                            Span::new(start, self.to_here(&token).end),
                         );
                         continue;
                     }
@@ -524,21 +518,12 @@ impl JavaScriptParser {
                     );
                     if !operation.is_empty() {
                         let args = self.arguments(&field.value)?;
-                        if args.len() != 1 {
-                            return Err(unsupported(
-                                &format!(".{}() with {} arguments", field.value, args.len()),
-                                "search the whole string, with one argument",
-                                Some(self.to_here(&token)),
-                            ));
-                        }
                         let place = Span::new(start, self.to_here(&token).end);
                         expr = node(
-                            SNode::StringTest {
-                                op: operation,
+                            SNode::Method {
+                                op: field.value,
                                 object: Box::new(expr),
-                                search: Box::new(
-                                    args.into_iter().next().expect("one search argument"),
-                                ),
+                                args: args.into_iter().map(Some).collect(),
                             },
                             place,
                         );
@@ -557,17 +542,12 @@ impl JavaScriptParser {
                         continue;
                     }
                     let args = self.arguments("toString")?;
-                    if !args.is_empty() {
-                        return Err(unsupported(
-                            "toString with a radix",
-                            "only decimal text is portable",
-                            Some(self.to_here(&token)),
-                        ));
-                    }
                     let place = Span::new(start, self.to_here(&token).end);
                     expr = node(
-                        SNode::ToString {
-                            arg: Box::new(expr),
+                        SNode::Method {
+                            object: Box::new(expr),
+                            op: field.value,
+                            args: args.into_iter().map(Some).collect(),
                         },
                         place,
                     );

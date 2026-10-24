@@ -100,6 +100,7 @@ mod typed_program_links;
 pub use translation::array_state_method_program::create_array_state_method_program_links;
 pub use translation::big_integer_bitwise_program::create_big_integer_bitwise_program_links;
 pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
+pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;
 pub use translation::number_bitwise_program::create_number_bitwise_program_links;
 pub use translation::record_write_program::create_record_field_write_program_links;
 pub use translation::reference_method_program::create_reference_method_program_links;

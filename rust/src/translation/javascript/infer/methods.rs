@@ -4,16 +4,19 @@ use super::{
     BOOL, Env, FLOAT, HashMap, HashSet, Inference, Rc, RefCell, Result, SEffect, SExpr, SItem,
     SNode, SProgram, SProp, SPropNode, STRING, Span, Term, Type,
 };
+use crate::translation::javascript_property_call_rules as property_rules;
 
 /// Replay actual solved receiver selections without rebuilding unrelated nodes.
 pub(super) fn fill_methods(
     program: &mut SProgram,
     owners: &HashSet<*const SExpr>,
+    forms: &HashMap<*const SExpr, String>,
     observed: &mut HashMap<*const SExpr, Type>,
 ) {
     fn walk(
         node: &mut SExpr,
         owners: &HashSet<*const SExpr>,
+        forms: &HashMap<*const SExpr, String>,
         observed: &mut HashMap<*const SExpr, Type>,
     ) {
         if let SNode::CtorObject {
@@ -23,15 +26,18 @@ pub(super) fn fill_methods(
         } = &mut node.node
         {
             for (_, value) in fields {
-                walk(value, owners, observed);
+                walk(value, owners, forms, observed);
             }
             if let Some(definition) = prototype_definition {
-                walk(&mut definition.value, owners, observed);
+                walk(&mut definition.value, owners, forms, observed);
             }
         } else {
             for child in super::super::lowering::children_mut(node) {
-                walk(child, owners, observed);
+                walk(child, owners, forms, observed);
             }
+        }
+        if let Some(form) = forms.get(&std::ptr::from_ref::<SExpr>(node)) {
+            replay_property_call(node, form, observed);
         }
         if owners.contains(&std::ptr::from_ref::<SExpr>(node)) {
             let original = std::mem::replace(&mut node.node, SNode::Unit);
@@ -58,6 +64,7 @@ pub(super) fn fill_methods(
     fn items(
         entries: &mut [SItem],
         owners: &HashSet<*const SExpr>,
+        forms: &HashMap<*const SExpr, String>,
         observed: &mut HashMap<*const SExpr, Type>,
     ) {
         for item in entries {
@@ -65,12 +72,12 @@ pub(super) fn fill_methods(
                 SItem::Fn(function) => {
                     for param in &mut function.params {
                         if let Some(value) = &mut param.default_value {
-                            walk(value, owners, observed);
+                            walk(value, owners, forms, observed);
                         }
                     }
-                    walk(&mut function.body, owners, observed);
+                    walk(&mut function.body, owners, forms, observed);
                 }
-                SItem::Module(module) => items(&mut module.items, owners, observed),
+                SItem::Module(module) => items(&mut module.items, owners, forms, observed),
                 SItem::Data(_) | SItem::Theorem(_) => {}
             }
         }
@@ -78,6 +85,7 @@ pub(super) fn fill_methods(
     fn prop(
         proposition: &mut SProp,
         owners: &HashSet<*const SExpr>,
+        forms: &HashMap<*const SExpr, String>,
         observed: &mut HashMap<*const SExpr, Type>,
     ) {
         match &mut proposition.node {
@@ -87,34 +95,72 @@ pub(super) fn fill_methods(
             | SPropNode::Le(value)
             | SPropNode::Gt(value)
             | SPropNode::Ge(value) => {
-                walk(&mut value.left, owners, observed);
-                walk(&mut value.right, owners, observed);
+                walk(&mut value.left, owners, forms, observed);
+                walk(&mut value.right, owners, forms, observed);
             }
             SPropNode::And { left, right }
             | SPropNode::Or { left, right }
             | SPropNode::Implies { left, right } => {
-                prop(left, owners, observed);
-                prop(right, owners, observed);
+                prop(left, owners, forms, observed);
+                prop(right, owners, forms, observed);
             }
             SPropNode::Not { arg } | SPropNode::Forall { body: arg, .. } => {
-                prop(arg, owners, observed);
+                prop(arg, owners, forms, observed);
             }
-            SPropNode::Bool { expr } => walk(expr, owners, observed),
+            SPropNode::Bool { expr } => walk(expr, owners, forms, observed),
         }
     }
-    items(&mut program.items, owners, observed);
+    items(&mut program.items, owners, forms, observed);
     if let Some(main) = &mut program.main {
         for effect in &mut main.effects {
             match effect {
-                SEffect::Let { value, .. } => walk(value, owners, observed),
-                SEffect::Print { expr, .. } => walk(expr, owners, observed),
-                SEffect::Assert { prop: value, .. } => prop(value, owners, observed),
+                SEffect::Let { value, .. } => walk(value, owners, forms, observed),
+                SEffect::Print { expr, .. } => walk(expr, owners, forms, observed),
+                SEffect::Assert { prop: value, .. } => prop(value, owners, forms, observed),
             }
         }
     }
 }
 
+fn replay_property_call(node: &mut SExpr, form: &str, observed: &mut HashMap<*const SExpr, Type>) {
+    let original = std::mem::replace(&mut node.node, SNode::Unit);
+    let SNode::Method { object, op, args } = original else {
+        unreachable!("the retained property owner is an actual source method")
+    };
+    let old = if form == "test" {
+        Some(std::ptr::from_ref(
+            args[0].as_ref().expect("the actual source search operand"),
+        ))
+    } else {
+        None
+    };
+    node.node = match form {
+        "test" => SNode::StringTest {
+            object,
+            op,
+            search: Box::new(
+                args.into_iter()
+                    .next()
+                    .flatten()
+                    .expect("the actual source search operand"),
+            ),
+        },
+        "map" => SNode::StringMap { object, op },
+        "text" => SNode::ToString { arg: object },
+        _ => unreachable!("the source property form is complete"),
+    };
+    if let Some(old) = old {
+        if let Some(ty) = observed.remove(&old) {
+            let SNode::StringTest { search, .. } = &node.node else {
+                unreachable!()
+            };
+            observed.insert(std::ptr::from_ref(search.as_ref()), ty);
+        }
+    }
+}
+
 pub(super) struct Method {
+    node: *const SExpr,
     object: Term,
     args: Vec<Term>,
     operation: String,
@@ -273,6 +319,7 @@ impl Inference {
     }
     pub(super) fn method(
         &mut self,
+        node: *const SExpr,
         object: &SExpr,
         operation: &str,
         args: &[Option<SExpr>],
@@ -290,6 +337,7 @@ impl Inference {
         }
         let result = self.fresh(false);
         self.methods.push(Method {
+            node,
             object,
             args: actual,
             operation: operation.to_owned(),
@@ -303,7 +351,7 @@ impl Inference {
         let mut progress = false;
         let mut waiting = Vec::new();
         for constraint in std::mem::take(&mut self.methods) {
-            if self.method_step(&constraint)? {
+            if self.method_step(&constraint, false)? {
                 progress = true;
             } else {
                 waiting.push(constraint);
@@ -313,19 +361,60 @@ impl Inference {
         Ok(progress)
     }
 
-    fn method_step(&mut self, method: &Method) -> Result<bool> {
+    pub(super) fn force_method_owner(&mut self) -> Result<bool> {
+        let position = self.methods.iter().position(|method| {
+            matches!(self.resolve(&method.object), Term::Var(_))
+                && !property_rules::read_java_script_property_call_fallback_kind(
+                    &method.operation,
+                    &super::super::surface_rules::read_java_script_method_receiver_kind(
+                        &method.operation,
+                    ),
+                )
+                .is_empty()
+        });
+        let Some(position) = position else {
+            return Ok(false);
+        };
+        let method = self.methods.remove(position);
+        if self.method_step(&method, true)? {
+            Ok(true)
+        } else {
+            self.methods.insert(position, method);
+            Ok(false)
+        }
+    }
+
+    fn method_step(&mut self, method: &Method, force: bool) -> Result<bool> {
         use super::super::surface_rules::{
             read_java_script_method_argument_kind, read_java_script_method_receiver_kind,
             read_java_script_string_method_result_form,
         };
         let mut receiver = self.resolve(&method.object);
         if let Term::Known(ty) = &receiver
-            && matches!(ty, Type::Map { .. } | Type::Set { .. })
+            && matches!(
+                ty,
+                Type::Map { .. } | Type::Set { .. } | Type::Record { .. }
+            )
         {
             receiver = self.declared(Some(ty));
         }
         if matches!(receiver, Term::Var(_)) {
-            match read_java_script_method_receiver_kind(&method.operation).as_str() {
+            if !force {
+                return Ok(false);
+            }
+            match property_rules::read_java_script_property_call_fallback_kind(
+                &method.operation,
+                &read_java_script_method_receiver_kind(&method.operation),
+            )
+            .as_str()
+            {
+                "scalar" => {
+                    if method.args.is_empty() {
+                        self.property_methods.insert(method.node, "text".to_owned());
+                    }
+                    self.unify(&method.result, &Term::Known(STRING), method.place)?;
+                    return Ok(true);
+                }
                 "string" => self.unify(&method.object, &Term::Known(STRING), method.place)?,
                 "array" => {
                     let element = self.fresh(false);
@@ -338,6 +427,51 @@ impl Inference {
                 _ => return Ok(false),
             }
             receiver = self.resolve(&method.object);
+        }
+        if let Term::Record(record) = &receiver {
+            let field = record
+                .borrow()
+                .fields
+                .iter()
+                .find(|(name, _)| name == &method.operation)
+                .map(|(_, ty)| ty.clone());
+            if let Some(field) = field {
+                let callable = self.resolve(&field);
+                let (kind, parameters) = match &callable {
+                    Term::Var(_) => ("var", 0),
+                    Term::Function { params, .. } => ("function", params.len()),
+                    _ => ("other", 0),
+                };
+                let count = |value| {
+                    f64::from(
+                        u32::try_from(value)
+                            .expect("source call arity fits the shared array limit"),
+                    )
+                };
+                let step = property_rules::read_java_script_record_method_inference_step(
+                    kind,
+                    count(parameters),
+                    count(method.args.len()),
+                );
+                if step == "apply" || step == "infer" {
+                    self.unify(
+                        &field,
+                        &Term::Function {
+                            params: method.args.clone(),
+                            ret: Box::new(method.result.clone()),
+                        },
+                        method.place,
+                    )?;
+                }
+            }
+            return Ok(true);
+        }
+        if method.operation == "toString" {
+            if method.args.is_empty() {
+                self.property_methods.insert(method.node, "text".to_owned());
+            }
+            self.unify(&method.result, &Term::Known(STRING), method.place)?;
+            return Ok(true);
         }
         if self.infer_shared_collection_method(method, &receiver)? {
             return Ok(true);
@@ -389,6 +523,13 @@ impl Inference {
             }
         }
         if kind == "string" {
+            let selected =
+                property_rules::read_java_script_source_property_operation_kind(&method.operation);
+            if selected == "test" && method.args.len() == 1
+                || selected == "map" && method.args.is_empty()
+            {
+                self.property_methods.insert(method.node, selected);
+            }
             let form = if crate::translation::primitive_method_rules::read_primitive_method_minimum_arguments(kind, &method.operation) >= 0.0 {
                 crate::translation::primitive_method_rules::read_primitive_method_checked_result_form(kind, &method.operation)
             } else {

@@ -124,6 +124,11 @@ pub(super) fn assert_nominal_translation_product(
         ]));
     assert!(producer.ok, "{}", producer.stderr);
     let expected = read_structured_data_lino(&producer.stdout).unwrap();
+    let source_language = match expected.get("sourceLanguage").and_then(Value::as_str) {
+        None | Some("Rust") => Language::Rust,
+        Some("JavaScript") => Language::JavaScript,
+        Some(other) => panic!("unknown source control language: {other}"),
+    };
     if let Some(rows) = expected["lexicalCases"].as_array() {
         for row in rows {
             let tokens = tokenize(row["source"].as_str().unwrap(), Language::Rust)
@@ -161,8 +166,15 @@ pub(super) fn assert_nominal_translation_product(
             assert_eq!(serde_json::to_value(error.span).unwrap(), row["span"]);
         }
     }
-    let program =
-        check_program(&parse_rust(expected["source"].as_str().unwrap()).unwrap()).unwrap();
+    let surface = if source_language == Language::Rust {
+        parse_rust(expected["source"].as_str().unwrap())
+    } else {
+        meta_language::translation::javascript::parse_javascript(
+            expected["source"].as_str().unwrap(),
+        )
+    }
+    .unwrap();
+    let program = check_program(&surface).unwrap();
     let packet = encode_typed_program_links(&program).unwrap();
     assert_eq!(packet.root.as_u64(), expected["root"].as_u64().unwrap());
     assert_eq!(
@@ -280,26 +292,39 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
             "{}",
             row["name"]
         );
-        for (owner, call) in [
-            (
+        let mut calls = Vec::new();
+        if source_language == Language::Rust {
+            calls.push((
                 "original",
                 if module.is_empty() {
                     "original::result()".to_owned()
                 } else {
                     format!("original::{module}::result()")
                 },
-            ),
-            ("translated", format!("{native}()")),
-        ] {
+            ));
+        } else {
+            assert_eq!(
+                row["originalObserved"],
+                json!({"kind":kind,"value":value}),
+                "{}",
+                row["name"]
+            );
+        }
+        calls.push(("translated", format!("{native}()")));
+        for (owner, call) in calls {
             main.push_str(&format!("{{let observed=ml_record_result(std::panic::catch_unwind(||({call}).to_string()));if observed!=({kind:?},{value:?}.to_owned()){{failures.push(format!(\"{owner} {module}: {{:?}}\",observed));}}}}\n"));
         }
     }
     main.push_str("if !failures.is_empty(){eprintln!(\"{}\",failures.join(\"\n\"));}assert!(failures.is_empty());");
     main.push_str(&format!("println!({product_label:?});}}\n"));
-    let original = format!(
-        "\nmod original{{\n{}\n}}\n",
-        expected["source"].as_str().unwrap()
-    );
+    let original = if source_language == Language::Rust {
+        format!(
+            "\nmod original{{\n{}\n}}\n",
+            expected["source"].as_str().unwrap()
+        )
+    } else {
+        String::new()
+    };
     let directory = TemporaryDirectory::new(product_label);
     let source = directory.0.join("product.rs");
     let binary = directory.0.join(if cfg!(windows) {
@@ -320,7 +345,11 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
     assert!(observed.ok, "{}", observed.stderr);
     assert_eq!(observed.stdout, format!("{product_label}\n"));
     for row in expected["refusals"].as_array().unwrap() {
-        let surface = if let Some(model) = row["sourceSignatureModel"].as_str() {
+        let surface = if source_language == Language::JavaScript {
+            meta_language::translation::javascript::parse_javascript(
+                row["source"].as_str().unwrap(),
+            )
+        } else if let Some(model) = row["sourceSignatureModel"].as_str() {
             parse_rust_with_source_signature_model(row["source"].as_str().unwrap(), model)
         } else {
             parse_rust(row["source"].as_str().unwrap())

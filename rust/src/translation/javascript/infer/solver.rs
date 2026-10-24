@@ -166,6 +166,9 @@ impl Inference {
             if !progress && !self.includes.is_empty() {
                 progress |= self.solve_includes(true)?;
             }
+            if !progress {
+                progress |= self.force_method_owner()?;
+            }
             // `.length` of a value nothing else fixes reads an array.
             let length = self.fields.iter().find(|constraint| {
                 constraint.field == "length"

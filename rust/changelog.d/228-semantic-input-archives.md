@@ -69,6 +69,10 @@ preserving matched scopes, outer fallback names and first failure order.
 Draft Rust let-else with outer-scope diverging fallbacks and shared initializer
 grammar rules, reusing ordinary match/binding terms and all four emitters.
 
+Draft receiver-based JavaScript property-call selection and callable record
+method inference. Keep own trim/includes/toString meanings and canonical
+primitive calls through shared generated rules and complete typed Links.
+
 Draft inherent Rust associated functions and owned/immutable methods through
 ordinary typed functions, retaining `Self`, nominal dispatch, actual module
 lookup and evaluation order, with shared generated definitions and future

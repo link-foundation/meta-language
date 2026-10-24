@@ -2919,6 +2919,24 @@ is complete is captured verbatim in
 Source registration and ledger regeneration stay deferred with the other
 validation gates until all actual code requirements have their drafts.
 
+JavaScript property-call normalization now selects the actual inferred receiver
+before treating string predicates, case/trim maps or `toString` as builtins.
+A record's callable field keeps its own arity and return type. Actual record
+method signatures constrain arguments and results; unresolved receiver defaults
+wait until ordinary call/field constraints stop making progress. Proven string
+calls recover the preceding canonical predicate/map surface forms, preserving
+their existing assertions. Hosts transport actual inferred owners and source
+operands; shared JavaScript selection rules generate native source and complete
+editable typed Links through `createJavaScriptPropertyCallProgramLinks`.
+The [ECMAScript call rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-function-calls)
+define this distinction. Twenty future values/aborts and two refusals retain
+independent original Node, emitted JavaScript and native Rust behavior, exact
+paired program/definition graphs, both codecs and all four emissions. No
+control ran. The common future native product helper retains every preceding
+Rust-source control and adds explicit JavaScript-source products. Dynamic
+`this`, prototype/accessor behavior, classes/inheritance, concat ownership,
+remaining coercions and complete errors still require implementation drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners
