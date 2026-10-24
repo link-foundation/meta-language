@@ -2,6 +2,7 @@
 // are emitted from these definitions; host scalar strings supply no meaning.
 import {acceptJavaScriptWhitespaceUnit} from './javascript-whitespace-rules.js';
 import {readJavaScriptUtf8StringUnits} from './utf8-string-unit-rules.js';
+import {normalizeJavaScriptUnsignedInteger} from './unsigned-integer-rules.js';
 
 /** @param {number} value @returns {number} */
 export function readUtf16TextInteger(value){return Number.isNaN(value)?0:Math.trunc(value);}
@@ -49,6 +50,30 @@ export function pointsUtf16Text(text){
     else result.push([first]);
   }
   return result;
+}
+
+/** Literal separator splitting; limit is ToUint32 before missing-separator
+ * selection. An empty separator splits UTF16 units, including isolated halves.
+ * @param {number[]} text @param {number[]} separator @param {number} limit
+ * @param {boolean} missing @returns {number[][]} */
+export function splitUtf16Text(text,separator,limit,missing){
+ const count=normalizeJavaScriptUnsignedInteger(limit),result=[];
+ if(count===0)return result;
+ if(missing)return [sliceUtf16Text(text,0,text.length)];
+ if(separator.length===0){
+  for(let at=0;at<text.length&&result.length<count;at+=1)result.push([text[at]??0]);
+  return result;
+ }
+ let start=0;
+ for(;;){
+  const found=indexUtf16Text(text,separator,start);
+  if(found<0)break;
+  result.push(sliceUtf16Text(text,start,found));
+  if(result.length===count)return result;
+  start=found+separator.length;
+ }
+ result.push(sliceUtf16Text(text,start,text.length));
+ return result;
 }
 /** @param {number[]} text @param {number[]} search @param {number} start @returns {boolean} */
 export function matchUtf16Text(text,search,start){

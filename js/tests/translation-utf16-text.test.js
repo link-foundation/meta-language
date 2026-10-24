@@ -1,7 +1,7 @@
 // Future kernel controls. No execution before the complete requirements draft.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {sliceUtf16Text,substringUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,codePointUtf16Text,pointsUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text,codePointUnitsUtf16Text,displayUtf8FromUtf16Text} from '../src/translation/utf16-text-rules.js';
+import {splitUtf16Text,sliceUtf16Text,substringUtf16Text,characterUtf16Text,relativeCharacterUtf16Text,codePointUtf16Text,pointsUtf16Text,indexUtf16Text,lastIndexUtf16Text,compareUtf16Text,startsUtf16Text,endsUtf16Text,includesUtf16Text,trimUtf16Text,characterUnitsUtf16Text,codePointUnitsUtf16Text,displayUtf8FromUtf16Text} from '../src/translation/utf16-text-rules.js';
 import {createUtf16TextProgramLinks} from '../src/utf16-text-program.js';
 import {createStringConstructionProgramLinks} from '../src/string-construction-program.js';
 import {createFormalStringUnitProgramLinks} from '../src/formal-string-unit-program.js';
@@ -52,5 +52,13 @@ test('complete UTF16 operation graphs retain every definition in both codecs and
   const expected=emitTypedProgramLinks(packet.network,packet.root,language);
   for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,language),expected);
  }
+ }
+});
+
+test('literal split retains every code unit, missing separator and ToUint32 limit',()=>{
+ const limits=[0,-0,1,2,3,2.9,-0.9,-1,-4294967296,4294967296,4294967297,Infinity,-Infinity,NaN,4294967295];
+ for(const text of texts)for(const separator of [...texts,',','aa',undefined])for(const limit of limits){
+  const actual=splitUtf16Text(units(text),separator===undefined?[]:units(separator),limit,separator===undefined);
+  assert.deepEqual(actual,text.split(separator,limit).map(units));
  }
 });

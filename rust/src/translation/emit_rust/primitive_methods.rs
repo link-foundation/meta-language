@@ -273,6 +273,19 @@ impl RustEmitter<'_> {
                     &text,
                 ));
             }
+            if crate::translation::utf16_method_emission_rules::accept_utf16_text_method(
+                "method", receiver, op,
+            ) {
+                self.preludes.insert(Prelude::Utf16Text);
+                return Ok(
+                    crate::translation::utf16_method_emission_rules::render_utf16_text_method(
+                        "Rust",
+                        op,
+                        &object_text,
+                        &values.join(", "),
+                    ),
+                );
+            }
             return Ok(rules::render_primitive_method_expression(
                 "Rust",
                 receiver,

@@ -114,6 +114,12 @@ export function renderFormalStringUnitOperation(target,operation,values){
   const result='(MLUtf16Text.points '+text+')';
   return target==='Lean'?'(('+result+').map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+'))':'(List.map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+') '+result+')';
  }
+ if(operation==='split'){
+  const missing=(values[1]??'')==='';
+  const separator=missing?(target==='Lean'?'(#[] : Array Float)':'(@nil float)'):renderFormalStringUnitNumbers(target,values[1]??'');
+  const result='(MLUtf16Text.split '+text+' '+separator+' '+(values[2]??'')+' '+(missing?'true':'false')+')';
+  return target==='Lean'?'(('+result+').map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+'))':'(List.map (fun ml_units => '+renderFormalStringUnitsFromNumbers(target,'ml_units')+') '+result+')';
+ }
  if(operation==='trim'||operation==='trimStart'||operation==='trimEnd')return renderFormalStringUnitsFromNumbers(target,'(MLUtf16Text.trim '+text+' '+(operation==='trimEnd'?'false':'true')+' '+(operation==='trimStart'?'false':'true')+')');
  const name=operation==='startsWith'?'starts':operation==='endsWith'?'ends':operation==='includes'?'includes':'';
  return name?'(MLUtf16Text.'+name+' '+text+' '+renderFormalStringUnitNumbers(target,values[1]??'')+')':'';

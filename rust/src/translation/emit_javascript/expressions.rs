@@ -265,6 +265,7 @@ impl JavaScriptEmitter<'_> {
                         ),
                     );
                 }
+                let receiver_kind = object.ty.kind();
                 let object = self.expr(object)?;
                 let mut values = Vec::with_capacity(args.len());
                 for (index, argument) in args.iter().enumerate() {
@@ -283,6 +284,21 @@ impl JavaScriptEmitter<'_> {
                             position,
                             argument.is_none(),
                             &text,
+                        ),
+                    );
+                }
+                if crate::translation::utf16_method_emission_rules::accept_utf16_text_method(
+                    "method",
+                    receiver_kind,
+                    op,
+                ) {
+                    self.helpers.insert(Helper::Utf16Text);
+                    return Ok(
+                        crate::translation::utf16_method_emission_rules::render_utf16_text_method(
+                            "JavaScript",
+                            op,
+                            &object,
+                            &values.join(", "),
                         ),
                     );
                 }

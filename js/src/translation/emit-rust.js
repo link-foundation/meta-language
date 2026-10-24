@@ -1,3 +1,4 @@
+import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_PRELUDE} from './unicode-case-runtime.js';
 import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm,renderJavaScriptStringConstruction} from './string-construction-rules.js';
@@ -75,7 +76,7 @@ import { RUST_BORROWED_CALL_INTERFACE_POLICY, readRustBorrowedCallInterface, ren
 import { acceptRustBorrowedCallInterfaceModel, renderRustBorrowedCallHeaderReference } from './rust-borrowed-call-interface-rules.js';
 
 const KEYWORDS = new Set([
-  'ml_unicode_case',
+  'ml_unicode_case', 'ml_utf16_text',
   'as', 'break', 'const', 'continue', 'crate', 'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in',
   'let', 'loop', 'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'static', 'struct', 'super',
   'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while', 'async', 'await', 'dyn', 'abstract', 'become', 'box',
@@ -1211,6 +1212,10 @@ class RustEmitter {
       const object = this.receiver(e.object);
       const argumentsText = e.args.map((arg, index) => renderPrimitiveMethodArgument('Rust', 'string', e.op, index, arg === null,
         arg === null ? 'None' : arg.type.kind === 'string' ? this.borrow(arg) : this.expr(arg)));
+      if (acceptUtf16TextMethod(e.k, 'string', e.op)) {
+        this.usesUtf16Text = true;
+        return renderUtf16TextMethod('Rust', e.op, object, argumentsText.join(', '));
+      }
       return renderPrimitiveMethodExpression('Rust', 'string', e.op, object, argumentsText.join(', '));
     }
     if (e.object.type.kind === 'array') {

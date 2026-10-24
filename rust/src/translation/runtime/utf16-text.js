@@ -38,6 +38,24 @@ function readJavaScriptUtf8StringUnits(bytes) {
   }
 }
 
+function normalizeJavaScriptUnsignedInteger(value) {
+  if ((!Number.isFinite(value) || (value === 0))) {
+    return 0;
+  } else {
+    const integral = ((value < 0) ? -Math.floor(-value) : Math.floor(value));
+    const remainder = (integral % 4294967296);
+    if ((remainder < 0)) {
+      return (remainder + 4294967296);
+    } else {
+      if ((remainder === 0)) {
+        return 0;
+      } else {
+        return remainder;
+      }
+    }
+  }
+}
+
 function readUtf16TextInteger(value) {
   if (Number.isNaN(value)) {
     return 0;
@@ -107,22 +125,58 @@ function pointsUtf16Text(text) {
   return result_2;
 }
 
+function splitUtf16Text(text, separator, limit, missing) {
+  const count = normalizeJavaScriptUnsignedInteger(limit);
+  const result = [];
+  if ((count === 0)) {
+    return result;
+  } else {
+    if (missing) {
+      return [sliceUtf16Text(text, 0, text.length)];
+    } else {
+      if ((separator.length === 0)) {
+        const at = 0;
+        const result_2 = source_ml_temporary_splitUtf16Text_loop7(text, count, result, at);
+        return result_2;
+      } else {
+        const start = 0;
+        const source_ml_source1_s3 = source_ml_temporary_splitUtf16Text_loop8(text, separator, count, result, start);
+        switch (source_ml_source1_s3.$) {
+          case "ml_temporary_splitUtf16Text_loop8_done": {
+            const result_3 = source_ml_source1_s3["result"];
+            const start_2 = source_ml_source1_s3["start"];
+            const result_4 = [...result_3, ...[sliceUtf16Text(text, start_2, text.length)]];
+            return result_4;
+          }
+          case "ml_temporary_splitUtf16Text_loop8_return": {
+            const source_ml_temporary_result8 = source_ml_source1_s3["ml_temporary_result8"];
+            return source_ml_temporary_result8;
+          }
+          default: {
+            throw new TypeError(`unexpected constructor ${source_ml_source1_s3.$}`);
+          }
+        }
+      }
+    }
+  }
+}
+
 function matchUtf16Text(text, search, start) {
   if (((start < 0) || ((start + search.length) > text.length))) {
     return false;
   } else {
     const at = 0;
-    const source_ml_source1_s3 = source_ml_temporary_matchUtf16Text_loop7(text, search, start, at);
-    switch (source_ml_source1_s3.$) {
-      case "ml_temporary_matchUtf16Text_loop7_done": {
+    const source_ml_source1_s4 = source_ml_temporary_matchUtf16Text_loop9(text, search, start, at);
+    switch (source_ml_source1_s4.$) {
+      case "ml_temporary_matchUtf16Text_loop9_done": {
         return true;
       }
-      case "ml_temporary_matchUtf16Text_loop7_return": {
-        const source_ml_temporary_result7 = source_ml_source1_s3["ml_temporary_result7"];
-        return source_ml_temporary_result7;
+      case "ml_temporary_matchUtf16Text_loop9_return": {
+        const source_ml_temporary_result9 = source_ml_source1_s4["ml_temporary_result9"];
+        return source_ml_temporary_result9;
       }
       default: {
-        throw new TypeError(`unexpected constructor ${source_ml_source1_s3.$}`);
+        throw new TypeError(`unexpected constructor ${source_ml_source1_s4.$}`);
       }
     }
   }
@@ -131,17 +185,17 @@ function matchUtf16Text(text, search, start) {
 function indexUtf16Text(text, search, position) {
   const start = Math.min(Math.max(readUtf16TextInteger(position), 0), text.length);
   const at = start;
-  const source_ml_source1_s4 = source_ml_temporary_indexUtf16Text_loop8(text, search, at);
-  switch (source_ml_source1_s4.$) {
-    case "ml_temporary_indexUtf16Text_loop8_done": {
+  const source_ml_source1_s5 = source_ml_temporary_indexUtf16Text_loop10(text, search, at);
+  switch (source_ml_source1_s5.$) {
+    case "ml_temporary_indexUtf16Text_loop10_done": {
       return (-1);
     }
-    case "ml_temporary_indexUtf16Text_loop8_return": {
-      const source_ml_temporary_result8 = source_ml_source1_s4["ml_temporary_result8"];
-      return source_ml_temporary_result8;
+    case "ml_temporary_indexUtf16Text_loop10_return": {
+      const source_ml_temporary_result10 = source_ml_source1_s5["ml_temporary_result10"];
+      return source_ml_temporary_result10;
     }
     default: {
-      throw new TypeError(`unexpected constructor ${source_ml_source1_s4.$}`);
+      throw new TypeError(`unexpected constructor ${source_ml_source1_s5.$}`);
     }
   }
 }
@@ -150,17 +204,17 @@ function lastIndexUtf16Text(text, search, position) {
   const integer = (Number.isNaN(position) ? Infinity : readUtf16TextInteger(position));
   const start = Math.min(Math.max(integer, 0), (text.length - search.length));
   const at = start;
-  const source_ml_source1_s5 = source_ml_temporary_lastIndexUtf16Text_loop9(text, search, at);
-  switch (source_ml_source1_s5.$) {
-    case "ml_temporary_lastIndexUtf16Text_loop9_done": {
+  const source_ml_source1_s6 = source_ml_temporary_lastIndexUtf16Text_loop11(text, search, at);
+  switch (source_ml_source1_s6.$) {
+    case "ml_temporary_lastIndexUtf16Text_loop11_done": {
       return (-1);
     }
-    case "ml_temporary_lastIndexUtf16Text_loop9_return": {
-      const source_ml_temporary_result9 = source_ml_source1_s5["ml_temporary_result9"];
-      return source_ml_temporary_result9;
+    case "ml_temporary_lastIndexUtf16Text_loop11_return": {
+      const source_ml_temporary_result11 = source_ml_source1_s6["ml_temporary_result11"];
+      return source_ml_temporary_result11;
     }
     default: {
-      throw new TypeError(`unexpected constructor ${source_ml_source1_s5.$}`);
+      throw new TypeError(`unexpected constructor ${source_ml_source1_s6.$}`);
     }
   }
 }
@@ -168,9 +222,9 @@ function lastIndexUtf16Text(text, search, position) {
 function compareUtf16Text(left, right) {
   const count = Math.min(left.length, right.length);
   const at = 0;
-  const source_ml_source1_s6 = source_ml_temporary_compareUtf16Text_loop10(left, right, count, at);
-  switch (source_ml_source1_s6.$) {
-    case "ml_temporary_compareUtf16Text_loop10_done": {
+  const source_ml_source1_s7 = source_ml_temporary_compareUtf16Text_loop12(left, right, count, at);
+  switch (source_ml_source1_s7.$) {
+    case "ml_temporary_compareUtf16Text_loop12_done": {
       if ((left.length === right.length)) {
         return 0;
       } else {
@@ -181,12 +235,12 @@ function compareUtf16Text(left, right) {
         }
       }
     }
-    case "ml_temporary_compareUtf16Text_loop10_return": {
-      const source_ml_temporary_result10 = source_ml_source1_s6["ml_temporary_result10"];
-      return source_ml_temporary_result10;
+    case "ml_temporary_compareUtf16Text_loop12_return": {
+      const source_ml_temporary_result12 = source_ml_source1_s7["ml_temporary_result12"];
+      return source_ml_temporary_result12;
     }
     default: {
-      throw new TypeError(`unexpected constructor ${source_ml_source1_s6.$}`);
+      throw new TypeError(`unexpected constructor ${source_ml_source1_s7.$}`);
     }
   }
 }
@@ -206,7 +260,7 @@ function includesUtf16Text(text, search) {
 function joinUtf16Text(values, separator) {
   const result = [];
   const at = 0;
-  const result_2 = source_ml_temporary_joinUtf16Text_loop11(values, separator, result, at);
+  const result_2 = source_ml_temporary_joinUtf16Text_loop13(values, separator, result, at);
   return result_2;
 }
 
@@ -214,11 +268,11 @@ function trimUtf16Text(text, start, end) {
   const first = 0;
   const last = text.length;
   const first_3 = (start ? (() => {
-    const first_2 = source_ml_temporary_trimUtf16Text_loop14(text, first, last);
+    const first_2 = source_ml_temporary_trimUtf16Text_loop16(text, first, last);
     return first_2;
   })() : first);
   const last_3 = (end ? (() => {
-    const last_2 = source_ml_temporary_trimUtf16Text_loop15(text, first_3, last);
+    const last_2 = source_ml_temporary_trimUtf16Text_loop17(text, first_3, last);
     return last_2;
   })() : last);
   return sliceUtf16Text(text, first_3, last_3);
@@ -227,25 +281,25 @@ function trimUtf16Text(text, start, end) {
 function characterUnitsUtf16Text(values) {
   const result = [];
   const at = 0;
-  const result_2 = source_ml_temporary_characterUnitsUtf16Text_loop16(values, result, at);
+  const result_2 = source_ml_temporary_characterUnitsUtf16Text_loop18(values, result, at);
   return result_2;
 }
 
 function codePointUnitsUtf16Text(values) {
   const result = [(-1)];
   const at = 0;
-  const source_ml_source1_s7 = source_ml_temporary_codePointUnitsUtf16Text_loop17(values, result, at);
-  switch (source_ml_source1_s7.$) {
-    case "ml_temporary_codePointUnitsUtf16Text_loop17_done": {
-      const result_2 = source_ml_source1_s7["result"];
+  const source_ml_source1_s8 = source_ml_temporary_codePointUnitsUtf16Text_loop19(values, result, at);
+  switch (source_ml_source1_s8.$) {
+    case "ml_temporary_codePointUnitsUtf16Text_loop19_done": {
+      const result_2 = source_ml_source1_s8["result"];
       return result_2;
     }
-    case "ml_temporary_codePointUnitsUtf16Text_loop17_return": {
-      const source_ml_temporary_result17 = source_ml_source1_s7["ml_temporary_result17"];
-      return source_ml_temporary_result17;
+    case "ml_temporary_codePointUnitsUtf16Text_loop19_return": {
+      const source_ml_temporary_result19 = source_ml_source1_s8["ml_temporary_result19"];
+      return source_ml_temporary_result19;
     }
     default: {
-      throw new TypeError(`unexpected constructor ${source_ml_source1_s7.$}`);
+      throw new TypeError(`unexpected constructor ${source_ml_source1_s8.$}`);
     }
   }
 }
@@ -257,7 +311,7 @@ function readUtf8TextUnits(bytes) {
 function displayPointsUtf16Text(text) {
   const result = [];
   const at = 0;
-  const result_2 = source_ml_temporary_displayPointsUtf16Text_loop18(text, result, at);
+  const result_2 = source_ml_temporary_displayPointsUtf16Text_loop20(text, result, at);
   return result_2;
 }
 
@@ -265,7 +319,7 @@ function displayUtf8FromUtf16Text(text) {
   const bytes = [];
   const points = displayPointsUtf16Text(text);
   const at = 0;
-  const bytes_2 = source_ml_temporary_displayUtf8FromUtf16Text_loop20(bytes, points, at);
+  const bytes_2 = source_ml_temporary_displayUtf8FromUtf16Text_loop22(bytes, points, at);
   return bytes_2;
 }
 
@@ -295,7 +349,7 @@ function source_ml_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, units, i
       const index_2 = (index + 1);
       const remaining = 0;
       const minimum = 0;
-      const source_ml_source1_s8 = (((scalar >= 194) && (scalar <= 223)) ? (() => {
+      const source_ml_source1_s9 = (((scalar >= 194) && (scalar <= 223)) ? (() => {
         const scalar_2 = (scalar - 192);
         const remaining_2 = 1;
         const minimum_2 = 128;
@@ -311,16 +365,16 @@ function source_ml_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, units, i
         const minimum_4 = 65536;
         return ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_join3_next", ["scalar"]: scalar_4, ["remaining"]: remaining_4, ["minimum"]: minimum_4 });
       })() : ((scalar >= 128) ? ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_join3_return", ["ml_temporary_result4"]: [(-1)] }) : ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_join3_next", ["scalar"]: scalar, ["remaining"]: remaining, ["minimum"]: minimum })))));
-      switch (source_ml_source1_s8.$) {
+      switch (source_ml_source1_s9.$) {
         case "ml_temporary_readJavaScriptUtf8StringUnits_join3_next": {
-          const scalar_5 = source_ml_source1_s8["scalar"];
-          const remaining_5 = source_ml_source1_s8["remaining"];
-          const minimum_5 = source_ml_source1_s8["minimum"];
-          const source_ml_source1_s9 = source_ml_temporary_readJavaScriptUtf8StringUnits_loop4(bytes, index_2, scalar_5, remaining_5);
-          switch (source_ml_source1_s9.$) {
+          const scalar_5 = source_ml_source1_s9["scalar"];
+          const remaining_5 = source_ml_source1_s9["remaining"];
+          const minimum_5 = source_ml_source1_s9["minimum"];
+          const source_ml_source1_s10 = source_ml_temporary_readJavaScriptUtf8StringUnits_loop4(bytes, index_2, scalar_5, remaining_5);
+          switch (source_ml_source1_s10.$) {
             case "ml_temporary_readJavaScriptUtf8StringUnits_loop4_done": {
-              const index_3 = source_ml_source1_s9["index"];
-              const scalar_6 = source_ml_source1_s9["scalar"];
+              const index_3 = source_ml_source1_s10["index"];
+              const scalar_6 = source_ml_source1_s10["scalar"];
               if ((((scalar_6 < minimum_5) || (scalar_6 > 1114111)) || ((scalar_6 >= 55296) && (scalar_6 <= 57343)))) {
                 return ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_temporary_result2"]: [(-1)] });
               } else {
@@ -337,20 +391,20 @@ function source_ml_temporary_readJavaScriptUtf8StringUnits_loop2(bytes, units, i
               }
             }
             case "ml_temporary_readJavaScriptUtf8StringUnits_loop4_return": {
-              const source_ml_temporary_result4 = source_ml_source1_s9["ml_temporary_result4"];
+              const source_ml_temporary_result4 = source_ml_source1_s10["ml_temporary_result4"];
               return ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_temporary_result2"]: source_ml_temporary_result4 });
             }
             default: {
-              throw new TypeError(`unexpected constructor ${source_ml_source1_s9.$}`);
+              throw new TypeError(`unexpected constructor ${source_ml_source1_s10.$}`);
             }
           }
         }
         case "ml_temporary_readJavaScriptUtf8StringUnits_join3_return": {
-          const source_ml_temporary_result4_2 = source_ml_source1_s8["ml_temporary_result4"];
+          const source_ml_temporary_result4_2 = source_ml_source1_s9["ml_temporary_result4"];
           return ({ $: "ml_temporary_readJavaScriptUtf8StringUnits_loop2_return", ["ml_temporary_result2"]: source_ml_temporary_result4_2 });
         }
         default: {
-          throw new TypeError(`unexpected constructor ${source_ml_source1_s8.$}`);
+          throw new TypeError(`unexpected constructor ${source_ml_source1_s9.$}`);
         }
       }
     } else {
@@ -412,73 +466,108 @@ function source_ml_temporary_pointsUtf16Text_loop6(text, result, at) {
   }
 }
 
-function source_ml_temporary_matchUtf16Text_loop7(text, search, start, at) {
+function source_ml_temporary_splitUtf16Text_loop7(text, count, result, at) {
+  for (;;) {
+    if (((at < text.length) && (result.length < count))) {
+      const result_2 = [...result, ...[[((text)[at] ?? 0)]]];
+      const at_2 = (at + 1);
+      [text, count, result, at] = [text, count, result_2, at_2];
+      continue;
+    } else {
+      return result;
+    }
+  }
+}
+
+function source_ml_temporary_splitUtf16Text_loop8(text, separator, count, result, start) {
+  for (;;) {
+    const found = indexUtf16Text(text, separator, start);
+    if ((found < 0)) {
+      return ({ $: "ml_temporary_splitUtf16Text_loop8_done", ["result"]: result, ["start"]: start });
+    } else {
+      const result_2 = [...result, ...[sliceUtf16Text(text, start, found)]];
+      if ((result_2.length === count)) {
+        return ({ $: "ml_temporary_splitUtf16Text_loop8_return", ["ml_temporary_result8"]: result_2 });
+      } else {
+        const start_2 = (found + separator.length);
+        [text, separator, count, result, start] = [text, separator, count, result_2, start_2];
+        continue;
+      }
+    }
+  }
+}
+
+function source_ml_temporary_matchUtf16Text_loop9(text, search, start, at) {
   for (;;) {
     if ((at < search.length)) {
-      if (((text)[(start + at)] !== (search)[at])) {
-        return ({ $: "ml_temporary_matchUtf16Text_loop7_return", ["ml_temporary_result7"]: false });
+      if ((() => {
+        const source_ml_source1_comparison_operand11 = (text)[(start + at)];
+        const source_ml_source1_comparison_operand12 = (search)[at];
+        return (source_ml_source1_comparison_operand11 !== source_ml_source1_comparison_operand12);
+      })()) {
+        return ({ $: "ml_temporary_matchUtf16Text_loop9_return", ["ml_temporary_result9"]: false });
       } else {
         const at_2 = (at + 1);
         [text, search, start, at] = [text, search, start, at_2];
         continue;
       }
     } else {
-      return ({ $: "ml_temporary_matchUtf16Text_loop7_done" });
+      return ({ $: "ml_temporary_matchUtf16Text_loop9_done" });
     }
   }
 }
 
-function source_ml_temporary_indexUtf16Text_loop8(text, search, at) {
+function source_ml_temporary_indexUtf16Text_loop10(text, search, at) {
   for (;;) {
     if ((at <= (text.length - search.length))) {
       if (matchUtf16Text(text, search, at)) {
-        return ({ $: "ml_temporary_indexUtf16Text_loop8_return", ["ml_temporary_result8"]: at });
+        return ({ $: "ml_temporary_indexUtf16Text_loop10_return", ["ml_temporary_result10"]: at });
       } else {
         const at_2 = (at + 1);
         [text, search, at] = [text, search, at_2];
         continue;
       }
     } else {
-      return ({ $: "ml_temporary_indexUtf16Text_loop8_done" });
+      return ({ $: "ml_temporary_indexUtf16Text_loop10_done" });
     }
   }
 }
 
-function source_ml_temporary_lastIndexUtf16Text_loop9(text, search, at) {
+function source_ml_temporary_lastIndexUtf16Text_loop11(text, search, at) {
   for (;;) {
     if ((at >= 0)) {
       if (matchUtf16Text(text, search, at)) {
-        return ({ $: "ml_temporary_lastIndexUtf16Text_loop9_return", ["ml_temporary_result9"]: at });
+        return ({ $: "ml_temporary_lastIndexUtf16Text_loop11_return", ["ml_temporary_result11"]: at });
       } else {
         const at_2 = (at - 1);
         [text, search, at] = [text, search, at_2];
         continue;
       }
     } else {
-      return ({ $: "ml_temporary_lastIndexUtf16Text_loop9_done" });
+      return ({ $: "ml_temporary_lastIndexUtf16Text_loop11_done" });
     }
   }
 }
 
-function source_ml_temporary_compareUtf16Text_loop10(left, right, count, at) {
+function source_ml_temporary_compareUtf16Text_loop12(left, right, count, at) {
   for (;;) {
     if ((at < count)) {
       const a = ((left)[at] ?? 0);
       const b = ((right)[at] ?? 0);
       if ((a !== b)) {
-        return ({ $: "ml_temporary_compareUtf16Text_loop10_return", ["ml_temporary_result10"]: ((a < b) ? (-1) : 1) });
+        return ({ $: "ml_temporary_compareUtf16Text_loop12_return", ["ml_temporary_result12"]: ((a < b) ? (-1) : 1) });
       } else {
         const at_2 = (at + 1);
         [left, right, count, at] = [left, right, count, at_2];
         continue;
       }
     } else {
-      return ({ $: "ml_temporary_compareUtf16Text_loop10_done" });
+      return ({ $: "ml_temporary_compareUtf16Text_loop12_done" });
     }
   }
 }
 
-function source_ml_temporary_joinUtf16Text_loop12(separator, result, offset) {
+function source_ml_temporary_joinUtf16Text_loop14(separator, result, offset) {
   for (;;) {
     if ((offset < separator.length)) {
       const result_2 = [...result, ...[((separator)[offset] ?? 0)]];
@@ -491,7 +580,7 @@ function source_ml_temporary_joinUtf16Text_loop12(separator, result, offset) {
   }
 }
 
-function source_ml_temporary_joinUtf16Text_loop13(result, value, offset) {
+function source_ml_temporary_joinUtf16Text_loop15(result, value, offset) {
   for (;;) {
     if ((offset < value.length)) {
       const result_2 = [...result, ...[((value)[offset] ?? 0)]];
@@ -504,17 +593,17 @@ function source_ml_temporary_joinUtf16Text_loop13(result, value, offset) {
   }
 }
 
-function source_ml_temporary_joinUtf16Text_loop11(values, separator, result, at) {
+function source_ml_temporary_joinUtf16Text_loop13(values, separator, result, at) {
   for (;;) {
     if ((at < values.length)) {
       const result_3 = ((at !== 0) ? (() => {
         const offset = 0;
-        const result_2 = source_ml_temporary_joinUtf16Text_loop12(separator, result, offset);
+        const result_2 = source_ml_temporary_joinUtf16Text_loop14(separator, result, offset);
         return result_2;
       })() : result);
       const value = ((values)[at] ?? []);
       const offset_2 = 0;
-      const result_4 = source_ml_temporary_joinUtf16Text_loop13(result_3, value, offset_2);
+      const result_4 = source_ml_temporary_joinUtf16Text_loop15(result_3, value, offset_2);
       const at_2 = (at + 1);
       [values, separator, result, at] = [values, separator, result_4, at_2];
       continue;
@@ -524,7 +613,7 @@ function source_ml_temporary_joinUtf16Text_loop11(values, separator, result, at)
   }
 }
 
-function source_ml_temporary_trimUtf16Text_loop14(text, first, last) {
+function source_ml_temporary_trimUtf16Text_loop16(text, first, last) {
   for (;;) {
     if (((first < last) && acceptJavaScriptWhitespaceUnit(((text)[first] ?? (-1))))) {
       const first_2 = (first + 1);
@@ -536,7 +625,7 @@ function source_ml_temporary_trimUtf16Text_loop14(text, first, last) {
   }
 }
 
-function source_ml_temporary_trimUtf16Text_loop15(text, first, last) {
+function source_ml_temporary_trimUtf16Text_loop17(text, first, last) {
   for (;;) {
     if (((last > first) && acceptJavaScriptWhitespaceUnit(((text)[(last - 1)] ?? (-1))))) {
       const last_2 = (last - 1);
@@ -548,7 +637,7 @@ function source_ml_temporary_trimUtf16Text_loop15(text, first, last) {
   }
 }
 
-function source_ml_temporary_characterUnitsUtf16Text_loop16(values, result, at) {
+function source_ml_temporary_characterUnitsUtf16Text_loop18(values, result, at) {
   for (;;) {
     if ((at < values.length)) {
       const value = ((values)[at] ?? 0);
@@ -564,12 +653,12 @@ function source_ml_temporary_characterUnitsUtf16Text_loop16(values, result, at) 
   }
 }
 
-function source_ml_temporary_codePointUnitsUtf16Text_loop17(values, result, at) {
+function source_ml_temporary_codePointUnitsUtf16Text_loop19(values, result, at) {
   for (;;) {
     if ((at < values.length)) {
       const value = ((values)[at] ?? (-1));
       if (((!Number.isInteger(value) || (value < 0)) || (value > 1114111))) {
-        return ({ $: "ml_temporary_codePointUnitsUtf16Text_loop17_return", ["ml_temporary_result17"]: [at] });
+        return ({ $: "ml_temporary_codePointUnitsUtf16Text_loop19_return", ["ml_temporary_result19"]: [at] });
       } else {
         if ((value < 65536)) {
           const result_2 = [...result, ...[((value === 0) ? 0 : value)]];
@@ -584,40 +673,40 @@ function source_ml_temporary_codePointUnitsUtf16Text_loop17(values, result, at) 
         }
       }
     } else {
-      return ({ $: "ml_temporary_codePointUnitsUtf16Text_loop17_done", ["result"]: result });
+      return ({ $: "ml_temporary_codePointUnitsUtf16Text_loop19_done", ["result"]: result });
     }
   }
 }
 
-function source_ml_temporary_displayPointsUtf16Text_loop18(text, result, at) {
+function source_ml_temporary_displayPointsUtf16Text_loop20(text, result, at) {
   for (;;) {
     if ((at < text.length)) {
       const point = ((text)[at] ?? 65533);
-      const source_ml_source1_s10 = (((point >= 55296) && (point <= 56319)) ? (() => {
+      const source_ml_source1_s13 = (((point >= 55296) && (point <= 56319)) ? (() => {
         const low = ((text)[(at + 1)] ?? (-1));
         if (((low >= 56320) && (low <= 57343))) {
           const point_2 = (((65536 + ((point - 55296) * 1024)) + low) - 56320);
           const at_2 = (at + 1);
-          return ({ $: "ml_temporary_displayPointsUtf16Text_join19_next", ["at"]: at_2, ["point"]: point_2 });
+          return ({ $: "ml_temporary_displayPointsUtf16Text_join21_next", ["at"]: at_2, ["point"]: point_2 });
         } else {
           const point_3 = 65533;
-          return ({ $: "ml_temporary_displayPointsUtf16Text_join19_next", ["at"]: at, ["point"]: point_3 });
+          return ({ $: "ml_temporary_displayPointsUtf16Text_join21_next", ["at"]: at, ["point"]: point_3 });
         }
       })() : (((point >= 56320) && (point <= 57343)) ? (() => {
         const point_4 = 65533;
-        return ({ $: "ml_temporary_displayPointsUtf16Text_join19_next", ["at"]: at, ["point"]: point_4 });
-      })() : ({ $: "ml_temporary_displayPointsUtf16Text_join19_next", ["at"]: at, ["point"]: point })));
-      switch (source_ml_source1_s10.$) {
-        case "ml_temporary_displayPointsUtf16Text_join19_next": {
-          const at_3 = source_ml_source1_s10["at"];
-          const point_5 = source_ml_source1_s10["point"];
+        return ({ $: "ml_temporary_displayPointsUtf16Text_join21_next", ["at"]: at, ["point"]: point_4 });
+      })() : ({ $: "ml_temporary_displayPointsUtf16Text_join21_next", ["at"]: at, ["point"]: point })));
+      switch (source_ml_source1_s13.$) {
+        case "ml_temporary_displayPointsUtf16Text_join21_next": {
+          const at_3 = source_ml_source1_s13["at"];
+          const point_5 = source_ml_source1_s13["point"];
           const result_2 = [...result, ...[point_5]];
           const at_4 = (at_3 + 1);
           [text, result, at] = [text, result_2, at_4];
           continue;
         }
         default: {
-          throw new TypeError(`unexpected constructor ${source_ml_source1_s10.$}`);
+          throw new TypeError(`unexpected constructor ${source_ml_source1_s13.$}`);
         }
       }
     } else {
@@ -626,7 +715,7 @@ function source_ml_temporary_displayPointsUtf16Text_loop18(text, result, at) {
   }
 }
 
-function source_ml_temporary_displayUtf8FromUtf16Text_loop20(bytes, points, at) {
+function source_ml_temporary_displayUtf8FromUtf16Text_loop22(bytes, points, at) {
   for (;;) {
     if ((at < points.length)) {
       const point = ((points)[at] ?? 65533);
@@ -667,5 +756,5 @@ function main() {
 
 main();
 
-return { slicePosition: readUtf16TextSlicePosition, slice: sliceUtf16Text, substring: substringUtf16Text, character: characterUtf16Text, relativeCharacter: relativeCharacterUtf16Text, codePoint: codePointUtf16Text, points: pointsUtf16Text, index: indexUtf16Text, lastIndex: lastIndexUtf16Text, compare: compareUtf16Text, starts: startsUtf16Text, ends: endsUtf16Text, includes: includesUtf16Text, trim: trimUtf16Text, characterUnits: characterUnitsUtf16Text, codePointUnits: codePointUnitsUtf16Text, join: joinUtf16Text, displayUtf8: displayUtf8FromUtf16Text, displayPoints: displayPointsUtf16Text, fromUtf8: readUtf8TextUnits };
+return { split: splitUtf16Text, slicePosition: readUtf16TextSlicePosition, slice: sliceUtf16Text, substring: substringUtf16Text, character: characterUtf16Text, relativeCharacter: relativeCharacterUtf16Text, codePoint: codePointUtf16Text, points: pointsUtf16Text, index: indexUtf16Text, lastIndex: lastIndexUtf16Text, compare: compareUtf16Text, starts: startsUtf16Text, ends: endsUtf16Text, includes: includesUtf16Text, trim: trimUtf16Text, characterUnits: characterUnitsUtf16Text, codePointUnits: codePointUnitsUtf16Text, join: joinUtf16Text, displayUtf8: displayUtf8FromUtf16Text, displayPoints: displayPointsUtf16Text, fromUtf8: readUtf8TextUnits };
 })();

@@ -177,6 +177,7 @@ pub(crate) mod unicode_case_program;
 pub(crate) mod unicode_case_rules;
 pub(crate) mod unicode_scalar_program;
 pub(crate) mod unicode_scalar_rules;
+pub(crate) mod utf16_method_emission_rules;
 pub(crate) mod utf16_text_program;
 pub mod utf16_text_rules;
 

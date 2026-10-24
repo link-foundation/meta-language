@@ -54,6 +54,7 @@ use self::number_prelude::NUMBER_PRELUDE;
 
 const KEYWORDS: &[&str] = &[
     "ml_unicode_case",
+    "ml_utf16_text",
     "as",
     "break",
     "const",

@@ -1024,3 +1024,11 @@ profiles remain exact. Private mixed exits are distinguished; unresolved joins
 and continuing else-if alternatives require the full completion carrier and
 retain their refusal. Full source rules generate native code and editable
 graphs; future value/output/codec/parity controls remain unexecuted.
+
+Literal String split joins the complete UTF16 source runtime. All four targets
+receive the same ToUint32, matching and unit-field algorithm; host bridges only
+transport actual operands and returned columns. Its normalization dependency is
+a mechanically copied complete declaration with pinned source context and Links
+provenance, provisionally qualified until full equivalence admission. No broad
+renderer dependency or recursive runtime prelude is imported. Future controls
+remain unexecuted; generic coercion/protocol/termination obligations remain.

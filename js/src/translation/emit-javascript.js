@@ -1,3 +1,4 @@
+import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_JAVASCRIPT_PRELUDE} from './unicode-case-javascript-runtime.js';
 import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
 import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
@@ -57,7 +58,7 @@ import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
 
 const KEYWORDS = new Set([
-  'ml_unicode_case',
+  'ml_unicode_case', 'ml_utf16_text',
   'TypeError','SyntaxError','ReferenceError','URIError','EvalError',
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
   'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null',
@@ -513,6 +514,12 @@ class JavaScriptEmitter {
           return renderReferenceMethodExpression('JavaScript', e.object.type.kind, e.op, receiver, args, false, '');
         }
         if (e.op === 'map' && e.args.length === 1 && e.args[0] !== null) return renderArrayFromMapping('JavaScript', this.expr(e.object), this.expr(e.args[0]), 0, '');
+        if (acceptUtf16TextMethod(e.k, e.object.type.kind, e.op)) {
+          this.helpers.add('utf16Text');
+          const object = this.expr(e.object);
+          const values = e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg)));
+          return renderUtf16TextMethod('JavaScript', e.op, object, values.join(', '));
+        }
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
       case 'record':

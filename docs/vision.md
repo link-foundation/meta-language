@@ -6431,3 +6431,27 @@ adapters and full editable definition graphs are drafted; no control executed.
 General completion carriers, nested expression returns, pattern control, loops,
 mutable/drop/borrow effects, explicit profile composition and every earlier
 requirement remain required.
+
+
+### Shared literal UTF16 splitting draft
+
+Typed String split now uses one complete source column algorithm in JavaScript,
+Rust, Lean and Rocq. Literal separator matching is nonoverlapping; empty
+separators split code units, preserving isolated surrogate halves. ToUint32
+normalizes the limit before missing-separator selection. Missing and empty
+separators remain distinct, as do no fields and one empty field. This follows
+[String split](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.split).
+
+JavaScript/native emitters use thin string/column transport, evaluate normalized
+operands once and reserve the runtime helper name. Rust borrows receiver and
+separator through an immediately called closure, including temporary strings.
+The formal bridge maps actual unit columns directly. All runtimes and complete
+editable definition graphs are source-generated. An automatically copied, fully
+hashed ToUint32 declaration retains a qualified identity beside its original
+definition until complete equivalence permits deduplication; no generated
+arithmetic is maintained by hand.
+
+Future controls declare limits, empty/leading/trailing fields, overlap, surrogate
+halves, ownership and name hygiene, both codecs and all targets. None executed.
+Raw primitive argument coercions/effects, RegExp and Symbol.split protocols,
+generic receivers, formal termination and every preceding requirement remain.

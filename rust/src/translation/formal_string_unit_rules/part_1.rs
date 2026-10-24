@@ -675,6 +675,63 @@ pub fn render_formal_string_unit_operation(
                                 )
                             }
                         }
+                    } else if operation == "split" {
+                        {
+                            let missing = ((self::ml_array::optional_at(
+                                values,
+                                self::ml_array::number_index(1f64),
+                            ))
+                            .unwrap_or_else(|| String::new()))
+                                == "";
+                            {
+                                let separator = if missing {
+                                    if target == "Lean" {
+                                        String::from("(#[] : Array Float)")
+                                    } else {
+                                        String::from("(@nil float)")
+                                    }
+                                } else {
+                                    self::render_formal_string_unit_numbers(
+                                        target,
+                                        &((self::ml_array::optional_at(
+                                            values,
+                                            self::ml_array::number_index(1f64),
+                                        ))
+                                        .unwrap_or_else(|| String::new())),
+                                    )
+                                };
+                                {
+                                    let result_4 = format!(
+                                        "(MLUtf16Text.split {text} {separator} {} {})",
+                                        (self::ml_array::optional_at(
+                                            values,
+                                            self::ml_array::number_index(2f64)
+                                        ))
+                                        .unwrap_or_else(|| String::new()),
+                                        if missing {
+                                            String::from("true")
+                                        } else {
+                                            String::from("false")
+                                        }
+                                    );
+                                    if target == "Lean" {
+                                        format!(
+                                            "(({result_4}).map (fun ml_units => {}))",
+                                            self::render_formal_string_units_from_numbers(
+                                                target, "ml_units"
+                                            )
+                                        )
+                                    } else {
+                                        format!(
+                                            "(List.map (fun ml_units => {}) {result_4})",
+                                            self::render_formal_string_units_from_numbers(
+                                                target, "ml_units"
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     } else if ((operation == "trim") || (operation == "trimStart"))
                         || (operation == "trimEnd")
                     {

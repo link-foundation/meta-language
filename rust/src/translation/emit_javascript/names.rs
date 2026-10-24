@@ -3,6 +3,7 @@
 
 pub(super) const KEYWORDS: &[&str] = &[
     "ml_unicode_case",
+    "ml_utf16_text",
     "break",
     "case",
     "catch",

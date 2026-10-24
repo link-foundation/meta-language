@@ -1,21 +1,26 @@
 // Generated from complete js/src/translation/utf16-text-rules.js. Do not edit by hand.
-use super::MlTemporaryCodePointUnitsUtf16TextLoop17Result;
-use super::MlTemporaryCompareUtf16TextLoop10Result;
-use super::MlTemporaryIndexUtf16TextLoop8Result;
-use super::MlTemporaryLastIndexUtf16TextLoop9Result;
-use super::MlTemporaryMatchUtf16TextLoop7Result;
-use super::source_ml_temporary_character_units_utf16_text_loop16;
-use super::source_ml_temporary_code_point_units_utf16_text_loop17;
-use super::source_ml_temporary_compare_utf16_text_loop10;
-use super::source_ml_temporary_display_points_utf16_text_loop18;
-use super::source_ml_temporary_display_utf8_from_utf16_text_loop20;
-use super::source_ml_temporary_index_utf16_text_loop8;
-use super::source_ml_temporary_join_utf16_text_loop11;
-use super::source_ml_temporary_last_index_utf16_text_loop9;
-use super::source_ml_temporary_match_utf16_text_loop7;
+use super::MlTemporaryCodePointUnitsUtf16TextLoop19Result;
+use super::MlTemporaryCompareUtf16TextLoop12Result;
+use super::MlTemporaryIndexUtf16TextLoop10Result;
+use super::MlTemporaryLastIndexUtf16TextLoop11Result;
+use super::MlTemporaryMatchUtf16TextLoop9Result;
+use super::MlTemporarySplitUtf16TextLoop8Result;
+use super::source_ml_temporary_character_units_utf16_text_loop18;
+use super::source_ml_temporary_code_point_units_utf16_text_loop19;
+use super::source_ml_temporary_compare_utf16_text_loop12;
+use super::source_ml_temporary_display_points_utf16_text_loop20;
+use super::source_ml_temporary_display_utf8_from_utf16_text_loop22;
+use super::source_ml_temporary_index_utf16_text_loop10;
+use super::source_ml_temporary_join_utf16_text_loop13;
+use super::source_ml_temporary_last_index_utf16_text_loop11;
+use super::source_ml_temporary_match_utf16_text_loop9;
 use super::source_ml_temporary_points_utf16_text_loop6;
-use super::source_ml_temporary_trim_utf16_text_loop14;
-use super::source_ml_temporary_trim_utf16_text_loop15;
+use super::source_ml_temporary_read_java_script_utf8_string_units_loop1;
+use super::source_ml_temporary_slice_utf16_text_loop5;
+use super::source_ml_temporary_split_utf16_text_loop7;
+use super::source_ml_temporary_split_utf16_text_loop8;
+use super::source_ml_temporary_trim_utf16_text_loop16;
+use super::source_ml_temporary_trim_utf16_text_loop17;
 
 /// The Math functions that Rust's f64 methods do not share with JavaScript.
 pub mod ml_math {
@@ -266,6 +271,32 @@ pub fn read_java_script_utf8_string_units(bytes: &[f64]) -> Vec<f64> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn normalize_java_script_unsigned_integer(value: f64) -> f64 {
+    if !(value.is_finite()) || (value == 0f64) {
+        0f64
+    } else {
+        {
+            let integral = if value < 0f64 {
+                -((-value).floor())
+            } else {
+                value.floor()
+            };
+            {
+                let remainder = integral % 4_294_967_296f64;
+                if remainder < 0f64 {
+                    remainder + 4_294_967_296f64
+                } else if remainder == 0f64 {
+                    0f64
+                } else {
+                    remainder
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_utf16_text_integer(value: f64) -> f64 {
     if value.is_nan() { 0f64 } else { value.trunc() }
 }
@@ -408,6 +439,51 @@ pub fn points_utf16_text(text: &[f64]) -> Vec<Vec<f64>> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn split_utf16_text(
+    text: &[f64],
+    separator: &[f64],
+    limit: f64,
+    missing: bool,
+) -> Vec<Vec<f64>> {
+    {
+        let count = self::normalize_java_script_unsigned_integer(limit);
+        {
+            let result = Vec::<Vec<f64>>::new();
+            if count == 0f64 {
+                result
+            } else if missing {
+                vec![self::slice_utf16_text(text, 0f64, (text.len() as f64))]
+            } else if (separator.len() as f64) == 0f64 {
+                {
+                    let at = 0f64;
+                    { self::source_ml_temporary_split_utf16_text_loop7(text, count, result, at) }
+                }
+            } else {
+                {
+                    let start = 0f64;
+                    {
+                        let source_ml_source1_s3 = self::source_ml_temporary_split_utf16_text_loop8(
+                            text, separator, count, result, start,
+                        );
+                        match source_ml_source1_s3 {
+                                    self::MlTemporarySplitUtf16TextLoop8Result::MlTemporarySplitUtf16TextLoop8Done(result_3, start_2) => {
+                                        {
+                                            { let (ml_append_right, ml_append_left) = (vec![self::slice_utf16_text(text, start_2, (text.len() as f64))], result_3); self::ml_array::append(ml_append_left, ml_append_right) }
+                                        }
+                                    }
+                                    self::MlTemporarySplitUtf16TextLoop8Result::MlTemporarySplitUtf16TextLoop8Return(source_ml_temporary_result8) => {
+                                        source_ml_temporary_result8
+                                    }
+                                }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn match_utf16_text(text: &[f64], search: &[f64], start: f64) -> bool {
     if (start < 0f64) || ((start + (search.len() as f64)) > (text.len() as f64)) {
         false
@@ -415,14 +491,14 @@ pub fn match_utf16_text(text: &[f64], search: &[f64], start: f64) -> bool {
         {
             let at = 0f64;
             {
-                let source_ml_source1_s3 =
-                    self::source_ml_temporary_match_utf16_text_loop7(text, search, start, at);
-                match source_ml_source1_s3 {
-                    self::MlTemporaryMatchUtf16TextLoop7Result::MlTemporaryMatchUtf16TextLoop7Done => {
+                let source_ml_source1_s4 =
+                    self::source_ml_temporary_match_utf16_text_loop9(text, search, start, at);
+                match source_ml_source1_s4 {
+                    self::MlTemporaryMatchUtf16TextLoop9Result::MlTemporaryMatchUtf16TextLoop9Done => {
                         true
                     }
-                    self::MlTemporaryMatchUtf16TextLoop7Result::MlTemporaryMatchUtf16TextLoop7Return(source_ml_temporary_result7) => {
-                        source_ml_temporary_result7
+                    self::MlTemporaryMatchUtf16TextLoop9Result::MlTemporaryMatchUtf16TextLoop9Return(source_ml_temporary_result9) => {
+                        source_ml_temporary_result9
                     }
                 }
             }
@@ -441,14 +517,14 @@ pub fn index_utf16_text(text: &[f64], search: &[f64], position: f64) -> f64 {
         {
             let at = start;
             {
-                let source_ml_source1_s4 =
-                    self::source_ml_temporary_index_utf16_text_loop8(text, search, at);
-                match source_ml_source1_s4 {
-                    self::MlTemporaryIndexUtf16TextLoop8Result::MlTemporaryIndexUtf16TextLoop8Done => {
+                let source_ml_source1_s5 =
+                    self::source_ml_temporary_index_utf16_text_loop10(text, search, at);
+                match source_ml_source1_s5 {
+                    self::MlTemporaryIndexUtf16TextLoop10Result::MlTemporaryIndexUtf16TextLoop10Done => {
                         -1f64
                     }
-                    self::MlTemporaryIndexUtf16TextLoop8Result::MlTemporaryIndexUtf16TextLoop8Return(source_ml_temporary_result8) => {
-                        source_ml_temporary_result8
+                    self::MlTemporaryIndexUtf16TextLoop10Result::MlTemporaryIndexUtf16TextLoop10Return(source_ml_temporary_result10) => {
+                        source_ml_temporary_result10
                     }
                 }
             }
@@ -473,14 +549,14 @@ pub fn last_index_utf16_text(text: &[f64], search: &[f64], position: f64) -> f64
             {
                 let at = start;
                 {
-                    let source_ml_source1_s5 =
-                        self::source_ml_temporary_last_index_utf16_text_loop9(text, search, at);
-                    match source_ml_source1_s5 {
-                        self::MlTemporaryLastIndexUtf16TextLoop9Result::MlTemporaryLastIndexUtf16TextLoop9Done => {
+                    let source_ml_source1_s6 =
+                        self::source_ml_temporary_last_index_utf16_text_loop11(text, search, at);
+                    match source_ml_source1_s6 {
+                        self::MlTemporaryLastIndexUtf16TextLoop11Result::MlTemporaryLastIndexUtf16TextLoop11Done => {
                             -1f64
                         }
-                        self::MlTemporaryLastIndexUtf16TextLoop9Result::MlTemporaryLastIndexUtf16TextLoop9Return(source_ml_temporary_result9) => {
-                            source_ml_temporary_result9
+                        self::MlTemporaryLastIndexUtf16TextLoop11Result::MlTemporaryLastIndexUtf16TextLoop11Return(source_ml_temporary_result11) => {
+                            source_ml_temporary_result11
                         }
                     }
                 }
@@ -497,10 +573,10 @@ pub fn compare_utf16_text(left: &[f64], right: &[f64]) -> f64 {
         {
             let at = 0f64;
             {
-                let source_ml_source1_s6 =
-                    self::source_ml_temporary_compare_utf16_text_loop10(left, right, count, at);
-                match source_ml_source1_s6 {
-                    self::MlTemporaryCompareUtf16TextLoop10Result::MlTemporaryCompareUtf16TextLoop10Done => {
+                let source_ml_source1_s7 =
+                    self::source_ml_temporary_compare_utf16_text_loop12(left, right, count, at);
+                match source_ml_source1_s7 {
+                    self::MlTemporaryCompareUtf16TextLoop12Result::MlTemporaryCompareUtf16TextLoop12Done => {
                         if (left.len() as f64) == (right.len() as f64) {
                             0f64
                         } else if (left.len() as f64) < (right.len() as f64) {
@@ -509,8 +585,8 @@ pub fn compare_utf16_text(left: &[f64], right: &[f64]) -> f64 {
                                 1f64
                             }
                     }
-                    self::MlTemporaryCompareUtf16TextLoop10Result::MlTemporaryCompareUtf16TextLoop10Return(source_ml_temporary_result10) => {
-                        source_ml_temporary_result10
+                    self::MlTemporaryCompareUtf16TextLoop12Result::MlTemporaryCompareUtf16TextLoop12Return(source_ml_temporary_result12) => {
+                        source_ml_temporary_result12
                     }
                 }
             }
@@ -543,7 +619,7 @@ pub fn join_utf16_text(values: &[Vec<f64>], separator: &[f64]) -> Vec<f64> {
         let result = Vec::<f64>::new();
         {
             let at = 0f64;
-            { self::source_ml_temporary_join_utf16_text_loop11(values, separator, result, at) }
+            { self::source_ml_temporary_join_utf16_text_loop13(values, separator, result, at) }
         }
     }
 }
@@ -557,13 +633,13 @@ pub fn trim_utf16_text(text: &[f64], start: bool, end: bool) -> Vec<f64> {
             let last = text.len() as f64;
             {
                 let first_3 = if start {
-                    { self::source_ml_temporary_trim_utf16_text_loop14(text, first, last) }
+                    { self::source_ml_temporary_trim_utf16_text_loop16(text, first, last) }
                 } else {
                     first
                 };
                 {
                     let last_3 = if end {
-                        { self::source_ml_temporary_trim_utf16_text_loop15(text, first_3, last) }
+                        { self::source_ml_temporary_trim_utf16_text_loop17(text, first_3, last) }
                     } else {
                         last
                     };
@@ -581,7 +657,7 @@ pub fn character_units_utf16_text(values: &[f64]) -> Vec<f64> {
         let result = Vec::<f64>::new();
         {
             let at = 0f64;
-            { self::source_ml_temporary_character_units_utf16_text_loop16(values, result, at) }
+            { self::source_ml_temporary_character_units_utf16_text_loop18(values, result, at) }
         }
     }
 }
@@ -594,16 +670,16 @@ pub fn code_point_units_utf16_text(values: &[f64]) -> Vec<f64> {
         {
             let at = 0f64;
             {
-                let source_ml_source1_s7 =
-                    self::source_ml_temporary_code_point_units_utf16_text_loop17(
+                let source_ml_source1_s8 =
+                    self::source_ml_temporary_code_point_units_utf16_text_loop19(
                         values, result, at,
                     );
-                match source_ml_source1_s7 {
-                    self::MlTemporaryCodePointUnitsUtf16TextLoop17Result::MlTemporaryCodePointUnitsUtf16TextLoop17Done(result_2) => {
+                match source_ml_source1_s8 {
+                    self::MlTemporaryCodePointUnitsUtf16TextLoop19Result::MlTemporaryCodePointUnitsUtf16TextLoop19Done(result_2) => {
                         result_2
                     }
-                    self::MlTemporaryCodePointUnitsUtf16TextLoop17Result::MlTemporaryCodePointUnitsUtf16TextLoop17Return(source_ml_temporary_result17) => {
-                        source_ml_temporary_result17
+                    self::MlTemporaryCodePointUnitsUtf16TextLoop19Result::MlTemporaryCodePointUnitsUtf16TextLoop19Return(source_ml_temporary_result19) => {
+                        source_ml_temporary_result19
                     }
                 }
             }
@@ -624,7 +700,7 @@ pub fn display_points_utf16_text(text: &[f64]) -> Vec<f64> {
         let result = Vec::<f64>::new();
         {
             let at = 0f64;
-            { self::source_ml_temporary_display_points_utf16_text_loop18(text, result, at) }
+            { self::source_ml_temporary_display_points_utf16_text_loop20(text, result, at) }
         }
     }
 }
@@ -639,7 +715,7 @@ pub fn display_utf8_from_utf16_text(text: &[f64]) -> Vec<f64> {
             {
                 let at = 0f64;
                 {
-                    self::source_ml_temporary_display_utf8_from_utf16_text_loop20(
+                    self::source_ml_temporary_display_utf8_from_utf16_text_loop22(
                         bytes,
                         &(points),
                         at,
@@ -726,7 +802,7 @@ pub fn source_ml_temporary_read_java_script_utf8_string_units_loop2(
                         {
                             let minimum = 0f64;
                             {
-                                let source_ml_source1_s8 = if (194f64..=223f64).contains(&scalar) {
+                                let source_ml_source1_s9 = if (194f64..=223f64).contains(&scalar) {
                                     {
                                         let scalar_2 = scalar - 192f64;
                                         {
@@ -764,11 +840,11 @@ pub fn source_ml_temporary_read_java_script_utf8_string_units_loop2(
                                 } else {
                                     self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar, remaining, minimum)
                                 };
-                                match source_ml_source1_s8 {
+                                match source_ml_source1_s9 {
                                     self::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3::MlTemporaryReadJavaScriptUtf8StringUnitsJoin3Next(scalar_5, remaining_5, minimum_5) => {
                                         {
-                                            let source_ml_source1_s9 = self::source_ml_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
-                                            match source_ml_source1_s9 {
+                                            let source_ml_source1_s10 = self::source_ml_temporary_read_java_script_utf8_string_units_loop4(bytes, index_2, scalar_5, remaining_5);
+                                            match source_ml_source1_s10 {
                                                 self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop4Done(index_3, scalar_6) => {
                                                     if ((scalar_6 < minimum_5) || (scalar_6 > 1_114_111f64)) || ((55_296f64..=57_343f64).contains(&scalar_6)) {
                                                         self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop2Return(vec![-1f64])
@@ -821,68 +897,4 @@ pub fn source_ml_temporary_read_java_script_utf8_string_units_loop2(
 pub enum MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result {
     MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Done,
     MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_read_java_script_utf8_string_units_loop1(
-    bytes: &[f64],
-    mut index: f64,
-) -> self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result {
-    loop {
-        return if index < (bytes.len() as f64) {
-            {
-                let unit =
-                    (self::ml_array::optional_at(bytes, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
-                if (!(self::ml_math::is_safe_integer(unit)) || (unit < 0f64)) || (unit > 255f64) {
-                    self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Return(vec![-1f64])
-                } else {
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlTemporaryReadJavaScriptUtf8StringUnitsLoop1Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_slice_utf16_text_loop5(
-    text: &[f64],
-    mut last: f64,
-    mut result: Vec<f64>,
-    mut at: f64,
-) -> Vec<f64> {
-    loop {
-        if at < last {
-            {
-                let result_2 = {
-                    let (ml_append_right, ml_append_left) = (
-                        vec![
-                            (self::ml_array::optional_at(text, self::ml_array::number_index(at)))
-                                .unwrap_or_else(|| 0f64),
-                        ],
-                        result,
-                    );
-                    self::ml_array::append(ml_append_left, ml_append_right)
-                };
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        (result, at) = (result_2, at_2);
-                        continue;
-                    }
-                }
-            }
-        }
-        return { result };
-    }
 }
