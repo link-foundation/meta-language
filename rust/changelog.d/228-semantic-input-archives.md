@@ -129,3 +129,8 @@ author future complete original-Node/native/codec controls without executing the
 Draft CST-field-based JavaScript module binding roles. Preserve external import
 and export names during local binding renames, retain exact rename offsets,
 generate shared native/Links rules and author independent future module controls.
+
+Draft automatic dependency alias composition through resolved CST binding
+renames. Keep original sources and alias correspondences in editable Links
+provenance, generate the actual assignment library through that path, and expose
+the drafted definition factories, Unicode and allocation TypeScript signatures.

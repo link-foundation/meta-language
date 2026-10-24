@@ -112,7 +112,7 @@ pub fn read_java_script_number_bitwise_operation(symbol: &str) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_java_script_number_bitwise_assignment(symbol: &str) -> String {
+pub fn dependency_function1(symbol: &str) -> String {
     if symbol == "&=" {
         self::read_java_script_number_bitwise_operation("&")
     } else if symbol == "|=" {
@@ -309,7 +309,7 @@ pub fn read_scalar_assignment_operation(operator: &str) -> String {
     } else if operator == "--" {
         String::from("sub")
     } else {
-        self::read_java_script_number_bitwise_assignment(operator)
+        self::dependency_function1(operator)
     }
 }
 

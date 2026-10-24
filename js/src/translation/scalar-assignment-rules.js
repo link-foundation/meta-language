@@ -1,6 +1,6 @@
 // Existing source terms form a topologically ordered construction plan.
 // Hosts transport actual operands; this definition owns evaluation and writes.
-import { readJavaScriptNumberBitwiseAssignment } from './number-bitwise-rules.js';
+import { readJavaScriptNumberBitwiseAssignment as readScalarAssignmentBitwiseOperation } from './number-bitwise-rules.js';
 
 /** @param {string} operator @returns {string} */
 export function readScalarAssignmentOperation(operator) {
@@ -15,7 +15,7 @@ export function readScalarAssignmentOperation(operator) {
   if (operator === '??=') return 'coalesce';
   if (operator === '++') return 'add';
   if (operator === '--') return 'sub';
-  return readJavaScriptNumberBitwiseAssignment(operator);
+  return readScalarAssignmentBitwiseOperation(operator);
 }
 /** Each node is [operation,first,second,third]; references name earlier nodes.
  * 0 operand(cell/right),1 temporary-name(previous/updated),2 cell read,

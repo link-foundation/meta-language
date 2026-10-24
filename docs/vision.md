@@ -3386,6 +3386,26 @@ translation or project-wide semantics contract.
 
 ## Structured transformation and binding safety
 
+Automatic source dependency generation now has an explicit CST alias profile.
+It reads each actual imported/exported name, gives aliased or colliding dependency
+functions unused lexical names and rewrites only resolved declarations and
+references. Imported references are substituted as one batch before removing
+imports, so multiple aliases keep one provider identity without introducing
+duplicate local declarations. Root declaration names remain stable. The compiler retains every
+original module, import spelling, hash and interval alongside transformed source,
+actual removed imports, declaration correspondences and rename hash steps. The
+full typed Links definition carries this provenance directly. Source-owner checks
+still reject cross-module capture or initialization effects; unsupported module
+forms retain their original source. The actual scalar-assignment definition uses
+this automatic path for a real aliased dependency, without handwritten native
+replacement semantics. The source profile bounds binding rewrites to 1024 and
+retains the existing module/source limits. Broader imports, live module state,
+contextual/escaped semantic token handling and full module translation remain
+required work. Public TypeScript declarations now include the seventeen added
+source-definition factories, Unicode version/normalization and allocation rules;
+no type or behavior checks have run.
+
+
 The module binding draft reads actual `name`, `alias` and `source` CST field
 links. Imported/exported external names do not become lexical references merely
 because a local binding has the same spelling. Named import shorthand expands

@@ -959,9 +959,33 @@ export function encodeTypedProgramLinks(
   program: CheckedTypedProgram,
   options?: { provenance?: unknown },
 ): TypedProgramLinks;
+export const SOURCE_IDENTIFIER_UNICODE_VERSION: '17.0.0';
+export function normalizeUnicodeText(source: string): string;
+export function acceptLinkAllocationWord(value: number): boolean;
+export function acceptLinkAllocationCapacity(
+  first: number, second: number, third: number, fourth: number,
+  exhausted: boolean, count: number,
+): boolean;
 export function createNumberBitwiseProgramLinks(): TypedProgramLinks;
 export function createFixedIntegerCastProgramLinks(): TypedProgramLinks;
 export function createReferenceMethodProgramLinks(): TypedProgramLinks;
+export function createRecordFieldWriteProgramLinks(): TypedProgramLinks;
+export function createBigIntegerBitwiseProgramLinks(): TypedProgramLinks;
+export function createRustPrimitiveBitwiseProgramLinks(): TypedProgramLinks;
+export function createArrayStateMethodProgramLinks(): TypedProgramLinks;
+export function createRustShiftProgramLinks(): TypedProgramLinks;
+export function createRustRecordProgramLinks(): TypedProgramLinks;
+export function createJavaScriptPropertyCallProgramLinks(): TypedProgramLinks;
+export function createLinkAllocationProgramLinks(): TypedProgramLinks;
+export function createRustInherentProgramLinks(): TypedProgramLinks;
+export function createUnicodeScalarProgramLinks(): TypedProgramLinks;
+export function createJavaScriptRecordParameterProgramLinks(): TypedProgramLinks;
+export function createModuleBindingProgramLinks(): TypedProgramLinks;
+export function createCallableSourceProgramLinks(): TypedProgramLinks;
+export function createScalarAssignmentProgramLinks(): TypedProgramLinks;
+export function createSourceIdentifierProgramLinks(): TypedProgramLinks;
+export function createReferenceArrayProjectionProgramLinks(): TypedProgramLinks;
+export function createJavaScriptIdentifierProgramLinks(): TypedProgramLinks;
 export function createRegularGrammarInferenceProgramLinks(): TypedProgramLinks;
 export interface RegularGrammarInferenceOptions {
   strategy?: 'rpni' | 'edsm' | 'alergia'; alpha?: number;

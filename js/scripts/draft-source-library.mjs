@@ -15,10 +15,11 @@ import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from './read-source-library-closure.mjs';
 
 const root = new URL('../../', import.meta.url);
-export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
+export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
   if (!/^[a-z][a-z_0-9]*$/u.test(moduleName) || !['translation', ''].includes(directory)) throw new TypeError('invalid generated library location');
   if (typeof sourceDependencies !== 'boolean') throw new TypeError('source dependency capture needs an explicit Boolean');
-  const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath) : null;
+  if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
+  const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases}) : null;
   const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
   const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
@@ -56,7 +57,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
     if (!/^[a-z][a-z0-9-]*$/u.test(programAsset)) throw new TypeError('invalid typed source program asset');
     // Construct inspectable source IR. The encoder rechecks static typing;
     // nothing decodes/replays an archive or executes the represented program.
-    const linked = encodeTypedProgramLinks(program);
+    const linked = encodeTypedProgramLinks(program,sourceAliases?{provenance:{sourceModel:model,sourceClosure,sourceDeclarationOwners}}:{});
     const text = linked.network.toLino();
     writeFileSync(new URL('js/src/data/' + programAsset + '.lino', root), text);
     writeFileSync(new URL('rust/src/data/' + programAsset + '.lino', root), text);

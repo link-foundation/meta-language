@@ -810,3 +810,13 @@ No control ran. The frozen formatter reported an internal trailing-whitespace
 error during authoring; the source writer explicitly retains complete output
 with formatting preserved. Its guard and all CI gates stay unchanged. Broader
 alias composition, semantic token profiles and module state remain required.
+
+The optional source alias compiler now uses resolved CST binding renames to
+combine actual named-function dependencies automatically. Aliased/colliding
+dependency owners receive fresh names while root APIs stay stable; original
+bytes/imports, transformed sources, declaration mappings and rename hashes
+remain in the typed Links provenance. The scalar assignment library adopts the
+path for its real bitwise dependency. Existing scalar source/native/codec
+controls cover the resulting library but remain unexecuted. Public source
+factory, Unicode and allocation signatures are also drafted in TypeScript.
+Broader module/state and semantic token obligations remain explicit.
