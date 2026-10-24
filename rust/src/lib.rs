@@ -99,6 +99,9 @@ pub mod transform;
 pub mod translation;
 pub mod translation_rules;
 mod typed_program_links;
+mod unsigned_link_identity_program;
+mod unsigned_link_identity_rules;
+mod unsigned_link_network;
 pub use link_allocation_program::create_link_allocation_program_links;
 pub use link_allocation_rules::{accept_link_allocation_capacity, accept_link_allocation_word};
 pub use translation::array_state_method_program::create_array_state_method_program_links;
@@ -462,6 +465,12 @@ pub use typed_program_links::{
     create_typed_program_links_with_scalar_loop_profiles, decode_typed_program_links,
     emit_typed_program_links, emit_typed_program_links_with_options, encode_typed_program_links,
     read_typed_program_binding_identities, typed_program_links_schema,
+};
+pub use unsigned_link_identity_program::create_unsigned_link_identity_program_links;
+pub use unsigned_link_network::{
+    DenseUnsignedLinkNetwork, UnsignedLinksError, create_dense_unsigned_link_network,
+    decode_unsigned_link_network_binary, encode_unsigned_link_network_binary,
+    restore_dense_unsigned_link_network,
 };
 pub use verification::{VerificationIssue, VerificationIssueKind, VerificationReport};
 

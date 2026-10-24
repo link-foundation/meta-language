@@ -1993,6 +1993,59 @@ export class BinaryLinksError extends TypeError { constructor(message: string) }
 export function encodeLinkNetworkBinary(network: LinkNetwork, options?: BinaryLinksOptions): Uint8Array;
 export function decodeLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): LinkNetwork;
 
+/** Explicit complete positive u64 profile. Number inputs must already be safe;
+ * JSON uses exact decimal text. The existing LinkId profile is unchanged. */
+export type UnsignedLinkIdValue = UnsignedLinkId | LinkIdValue | bigint;
+export class UnsignedLinkId {
+  constructor(value: UnsignedLinkIdValue);
+  static from(value: UnsignedLinkIdValue): UnsignedLinkId;
+  static fromU64(value: bigint | number | string): UnsignedLinkId;
+  words(): number[];
+  asU64(): bigint;
+  equals(other: UnsignedLinkIdValue): boolean;
+  compare(other: UnsignedLinkIdValue): number;
+  toString(): string;
+  toJSON(): string;
+  valueOf(): bigint;
+}
+export class UnsignedLink {
+  constructor(id: UnsignedLinkIdValue, references?: UnsignedLinkIdValue[], metadata?: LinkMetadata);
+  id(): UnsignedLinkId;
+  references(): UnsignedLinkId[];
+  metadata(): LinkMetadata;
+  setReferences(references: UnsignedLinkIdValue[]): void;
+  setMetadata(metadata: LinkMetadata): void;
+  clone(): UnsignedLink;
+}
+export class UnsignedLinkNetwork {
+  readonly nextIdentity: UnsignedLinkId | null;
+  len(): number;
+  links(): UnsignedLink[];
+  link(id: UnsignedLinkIdValue): UnsignedLink | undefined;
+  findTerm(term: string): UnsignedLinkId | undefined;
+  insertLink(references?: UnsignedLinkIdValue[], metadata?: LinkMetadata): UnsignedLinkId;
+  insertLinkWithOptionalId(preferred?: UnsignedLinkIdValue, references?: UnsignedLinkIdValue[], metadata?: LinkMetadata): UnsignedLinkId;
+  insertTypedPoint(type: LinkTypeValue, term: string, definition?: string): UnsignedLinkId;
+  insertPoint(term: string): UnsignedLinkId;
+  insertObject(term: string): UnsignedLinkId;
+  insertField(term: string): UnsignedLinkId;
+  insertFieldRelation(parent: UnsignedLinkIdValue, label: string, child: UnsignedLinkIdValue): UnsignedLinkId;
+  deleteLink(id: UnsignedLinkIdValue): void;
+  clone(): UnsignedLinkNetwork;
+  toLino(): string;
+  static fromLino(text: string): UnsignedLinkNetwork;
+}
+export interface DenseUnsignedLinkNetwork {
+  network: LinkNetwork;
+  directory: UnsignedLinkId[];
+  nextIdentity: UnsignedLinkId | null;
+}
+export function createDenseUnsignedLinkNetwork(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): DenseUnsignedLinkNetwork;
+export function restoreDenseUnsignedLinkNetwork(dense: LinkNetwork, directory: UnsignedLinkIdValue[], nextIdentity: UnsignedLinkIdValue | null, options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function encodeUnsignedLinkNetworkBinary(source: UnsignedLinkNetwork, options?: BinaryLinksOptions): Uint8Array;
+export function decodeUnsignedLinkNetworkBinary(bytes: Uint8Array | readonly number[], options?: BinaryLinksOptions): UnsignedLinkNetwork;
+export function createUnsignedLinkIdentityProgramLinks(): TypedProgramLinks;
+
 export type MetaLanguageArchiveKind = 'concrete syntax' | 'abstract syntax' | 'grammar'
   | 'language configuration'
   | 'global concept space' | 'formal concept definition' | 'ontology' | 'taxonomy'

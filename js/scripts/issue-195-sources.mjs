@@ -27,6 +27,13 @@ const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 // rewrites an earlier live source, capture, timestamp or ledger mapping.
 export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
   {
+    id: 'continue-complete-requirements-draft-2026-10-25',
+    key: 'continueCompleteRequirementsDraftRequest',
+    title: 'Continue drafting until every inherited requirement has its complete code draft',
+    role: 'Direct user continuation of the complete-draft obligation, retaining the prohibition on code tests before all requirements are drafted and every inherited scope and delivery requirement.',
+    ledgerCoverage: ['I195-WORKFLOW-NO-CODE-TESTS-BEFORE-FULL-DRAFT', 'I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-TESTING'],
+  },
+  {
     id: 'modern-javascript-parity-expectations-2026-10-16',
     key: 'modernJavaScriptParityRequest',
     title: 'Use newer JavaScript behavior and correct obsolete native expectations',

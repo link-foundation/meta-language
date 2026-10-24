@@ -283,6 +283,7 @@ mod typed_program_source_spans;
 mod typescript_erasure;
 mod typescript_portable_typing;
 mod unicode_input_chunks;
+mod unsigned_link_network;
 
 #[path = "ci-cd/mod.rs"]
 mod ci_cd;

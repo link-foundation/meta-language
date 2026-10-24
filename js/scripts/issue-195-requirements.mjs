@@ -11,6 +11,8 @@ import { readProjectData, readProjectFileBytes } from './project-data.mjs';
 export const ISSUE_195_MANIFEST_SCHEMA_VERSION = 1;
 
 export const ISSUE_195_SOURCES = Object.freeze({
+  continueCompleteRequirementsDraftRequest:
+    'parity/sources/continue-complete-requirements-draft-2026-10-25.txt',
   issue: 'https://github.com/link-foundation/meta-language/issues/195',
   remainingScope: 'https://github.com/link-foundation/meta-language/issues/199',
   clarification:

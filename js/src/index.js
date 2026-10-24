@@ -24,6 +24,9 @@ export { inferRegularGrammar, readRegularGrammarInferenceLinks, acceptInferredGr
   createRegularGrammarInferenceProgramLinks } from './grammar-inference.js';
 export { createConceptViews, readConceptOntology, readConceptTaxonomy } from './concept-ontology.js';
 export { BinaryLinksError, encodeLinkNetworkBinary, decodeLinkNetworkBinary } from './link-network-binary.js';
+export { UnsignedLinkId, UnsignedLink, UnsignedLinkNetwork, createDenseUnsignedLinkNetwork,
+  restoreDenseUnsignedLinkNetwork, encodeUnsignedLinkNetworkBinary,
+  decodeUnsignedLinkNetworkBinary } from './unsigned-link-network.js';
 export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchiveToText,
   readMetaLanguageArchiveNetworkText,
   readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,
@@ -68,6 +71,7 @@ export { createArrayStateMethodProgramLinks } from './array-state-method-program
 export { createRustShiftProgramLinks } from './rust-shift-program.js';
 export { createRustRecordProgramLinks } from './rust-record-program.js';
 export { createJavaScriptOptionalCallProgramLinks } from './javascript-optional-call-program.js';
+export { createUnsignedLinkIdentityProgramLinks } from './unsigned-link-identity-program.js';
 export { createJavaScriptPropertyCallProgramLinks } from './javascript-property-call-program.js';
 export { createLinkAllocationProgramLinks } from './link-allocation-program.js';
 export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-allocation-rules.js';

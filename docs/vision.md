@@ -84,6 +84,22 @@ fixtures.
 
 ### Global concept space
 
+Exact graph identity includes every positive unsigned 64-bit identifier. The
+JavaScript `UnsignedLinkId`/`UnsignedLinkNetwork` profile keeps this domain
+explicit, alongside the original safe-Number profile. Identity arithmetic and
+decimal/byte conversions use inspectable shared limb definitions, automatically
+translated to Rust. The exhausted allocator is distinct from the largest link.
+`MLU64N01` snapshots preserve original identifiers, repeated and cyclic edges,
+metadata, exact term registrations, selected syntax and allocator history. A
+strictly ordered exact-ID directory reversibly changes coordinates for the
+existing complete `MLDSNP02` metadata/cache codec; it is not a new upstream
+binary standard. Dense views let existing graph algorithms process these
+coordinates while their complete inverse directory stays explicit. This proves
+neither concept meaning nor semantic equivalence. New dense nodes require
+explicit original-ID allocation; direct exact-ID integration throughout every
+parser, schema and CLI remains an obligation. The source draft and deferred
+fixtures do not establish runtime parity or completion.
+
 All grammars of all languages inhabit **one global concept space**. It includes
 programming languages, grammar-description languages, document formats and
 natural languages, together with the translation rules over their concepts.
@@ -5624,11 +5640,16 @@ gaps against the target above:
   Carrying
   the entire native unsigned 64-bit domain needs a broader exact representation
   and a separately versioned binary profile; that support is not established.
+  An explicit exact-ID JavaScript graph and matching native binary adapter now
+  have a source draft, with reversible dense views and full shared limb/framing
+  definitions. Default safe-Number boundaries and their original refusals stay
+  exact. Direct integration throughout source/CST/concept APIs, schemas and
+  CLI commands, plus all deferred runtime controls, still needs delivery.
   The native endpoint source draft now retains a distinct exhausted cursor,
   checks real allocation capacity before mutation and imports `u64::MAX`
   without increment overflow. It includes actual graph/API endpoint controls;
-  neither those controls nor native compilation have run. Full JavaScript u64
-  identities and matching exact binary/archive profiles still require code.
+  neither those controls nor native compilation have run. The new explicit
+  binary profile requires its deferred native/JavaScript execution evidence.
 
 Archive-backed parser checks execute recursive grammars after discarding the
 original grammar maps, and compare one shipped JavaScript grammar against its
