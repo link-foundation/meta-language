@@ -1,5 +1,5 @@
 // Mechanical source-node construction from the complete shared term plan.
-import { planScalarAssignmentExpression, planJavaScriptSequenceExpression, readScalarAssignmentOperation } from './scalar-assignment-rules.js';
+import { planScalarAssignmentExpression, planJavaScriptSequenceExpression, planJavaScriptVoidExpression, readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { unsupported } from './diagnostics.js';
 
 export function constructScalarAssignmentExpression(cell, right, operator, postfix, names, span) {
@@ -10,6 +10,10 @@ export function constructScalarAssignmentExpression(cell, right, operator, postf
 
 export function constructJavaScriptSequenceExpression(left,right,name,span) {
   return materializeSourcePlan(planJavaScriptSequenceExpression(),left,right,',','',[name],span);
+}
+
+export function constructJavaScriptVoidExpression(value,name,span) {
+  return materializeSourcePlan(planJavaScriptVoidExpression(),value,null,'void','',[name],span);
 }
 
 function materializeSourcePlan(plan,cell,right,operator,operation,names,span) {
@@ -32,6 +36,7 @@ function materializeSourcePlan(plan,cell,right,operator,operation,names,span) {
     else if (code === 8) node = {k:'cellWrite',cell:actual(first),value:actual(second),body:actual(third),span};
     else if (code === 9) node = {k:'if',cond:actual(first),then:actual(second),else:actual(third),span};
     else if (code === 10) node = {k:'unary',op:'neg',arg:actual(first),span};
+    else if (code === 11) node = {k:'none',absence:'undefined',span};
     else throw new TypeError('unknown scalar assignment construction operation');
     if (!node) throw new TypeError('scalar assignment source transport lost an actual operand');
     nodes.push(node);

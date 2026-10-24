@@ -25,9 +25,15 @@ export function readScalarAssignmentOperation(operator) {
 export function planJavaScriptSequenceExpression() {
   return [0,0,0,0, 0,1,0,0, 7,0,0,1];
 }
+
+/** Same construction schema; operation 11 is the undefined absence value.
+ * @returns {number[]} */
+export function planJavaScriptVoidExpression() {
+  return [0,0,0,0, 11,0,0,0, 7,0,0,1];
+}
 /** Each node is [operation,first,second,third]; references name earlier nodes.
  * 0 operand(cell/right),1 temporary-name(previous/updated),2 cell read,
- * 3 numeric unit,4 binary,5 math,6 coalesce,7 let,8 cell write,9 conditional,10 unary negation.
+ * 3 numeric unit,4 binary,5 math,6 coalesce,7 let,8 cell write,9 conditional,10 unary negation,11 undefined.
  * The final node is the root; operand one never appears for an update.
  * @param {string} operator @param {boolean} postfix @returns {number[]} */
 export function planScalarAssignmentExpression(operator, postfix) {

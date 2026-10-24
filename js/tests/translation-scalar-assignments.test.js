@@ -34,7 +34,7 @@ test('scalar assignment values writes and operand order survive codecs four targ
   assert.ok(emitRust(program).text.includes('.borrow_mut()'));
 });
 test('the construction plan keeps earlier operands and separate logical continuations',()=>{
-  for (const operator of ['=','+=','-=','*=','/=','%=','&&=','||=','??=','++','--','&=','|=','^=','<<=','>>=','>>>=']) {
+  for (const operator of ['=','+=','-=','*=','/=','%=','**=','&&=','||=','??=','++','--','&=','|=','^=','<<=','>>=','>>>=']) {
     const plan=planScalarAssignmentExpression(operator,false);
     assert.ok(readScalarAssignmentOperation(operator));assert.equal(plan.length%4,0);
     for(let at=0;at<plan.length;at+=4){
@@ -43,7 +43,9 @@ test('the construction plan keeps earlier operands and separate logical continua
       for(const reference of references)assert.ok(Number.isSafeInteger(reference)&&reference>=0&&reference<index,operator+' actual preceding operand');
     }
   }
-  for (const operator of ['**=','unknown',''])assert.deepEqual(planScalarAssignmentExpression(operator,false),[]);
+  // Exact former **= refusal retained in sequence-expressions.lino with its
+  // original input/assertion and the normative assignment-operator correction.
+  for (const operator of ['unknown',''])assert.deepEqual(planScalarAssignmentExpression(operator,false),[]);
   for (const operator of ['=','+=','&&=','??='])assert.deepEqual(planScalarAssignmentExpression(operator,true),[]);
   for (const operator of ['&&=','||='])assert.ok(planScalarAssignmentExpression(operator,false).filter((_,index)=>index%4===0).includes(9));
 });

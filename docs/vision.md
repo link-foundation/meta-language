@@ -6276,3 +6276,24 @@ them. General reference receivers/this, direct eval, unresolvable-reference
 operations, arbitrary throws, dynamic unions and all earlier requirements remain.
 Private ordinary Rust Unit statement bindings omit absent type annotations,
 matching native source serialization without changing value semantics.
+
+
+### JavaScript void values and constant for bindings draft
+
+The shared source construction algebra now defines void by capturing the actual
+operand once and returning its explicit undefined absence value. Both source
+hosts preserve operand effects, abrupt completions, unary precedence and the
+module-wide hygienic name supply; no conversion or reference to a shadowed
+undefined binding is introduced. Existing exponentiation-base restrictions
+remain. This follows [void evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-void-operator).
+Ordinary for headers admit const initializers through the same lexical binding
+reader as ordinary statements, retaining header semicolons and ordered
+declarators. The declaration belongs to the loop's lexical scope.
+
+The old scalar-plan refusal for **= contradicted the earlier exponentiation
+draft. Its exact operator/input/assertion and predecessor remain in the Links
+fixture beside the normative correction; active controls require the original
+input's complete ordered plan and Number/BigInt source values. Future void,
+constant-for, shadow and abrupt-completion controls remain unexecuted. General
+reference operations, throw/completion behavior, complete lexical iteration
+environments, dynamic unions and every preceding requirement retain scope.

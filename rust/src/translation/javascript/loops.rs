@@ -286,7 +286,15 @@ impl JavaScriptParser {
         let mut init = Vec::new();
         if self.cursor.is("let") {
             init.extend(self.let_declarations()?);
-        } else if self.cursor.is("const") || self.cursor.is("var") {
+        } else if self.cursor.is("const") {
+            let binding = self.const_declarations(false, false)?;
+            match binding {
+                Stmt::Block {
+                    body, inline: true, ..
+                } => init.extend(body),
+                binding => init.push(binding),
+            }
+        } else if self.cursor.is("var") {
             let token = self.peek();
             return Err(unsupported(
                 &format!("for with {}", token.value),

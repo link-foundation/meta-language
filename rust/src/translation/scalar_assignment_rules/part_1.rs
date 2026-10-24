@@ -325,6 +325,14 @@ pub fn plan_java_script_sequence_expression() -> Vec<f64> {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn plan_java_script_void_expression() -> Vec<f64> {
+    vec![
+        0f64, 0f64, 0f64, 0f64, 11f64, 0f64, 0f64, 0f64, 7f64, 0f64, 0f64, 1f64,
+    ]
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_scalar_assignment_expression(operator: &str, postfix: bool) -> Vec<f64> {
     {
         let operation = self::read_scalar_assignment_operation(operator);

@@ -384,6 +384,11 @@ impl JavaScriptParser {
 
     pub(super) fn unary(&mut self) -> Result<SExpr> {
         let token = self.peek();
+        if token.kind == TokenKind::Identifier && self.cursor.eat("void").is_some() {
+            let arg = self.unary()?;
+            let place = Span::new(token.start, arg.span.map_or(token.end, |arg| arg.end));
+            return self.void_expression(arg, place);
+        }
         if token.kind == TokenKind::Identifier && self.cursor.eat("typeof").is_some() {
             let arg = self.unary()?;
             let place = Span::new(token.start, arg.span.map_or(token.end, |arg| arg.end));

@@ -163,6 +163,12 @@ fn materialize(
                 },
                 place,
             ),
+            11 => node(
+                SNode::None {
+                    absence: "undefined".to_owned(),
+                },
+                place,
+            ),
             _ => {
                 return Err(type_error(
                     "unknown scalar assignment construction operation",
@@ -178,6 +184,22 @@ fn materialize(
 }
 
 impl JavaScriptParser {
+    pub(super) fn void_expression(&mut self, value: SExpr, place: Span) -> Result<SExpr> {
+        self.generated_count += 1;
+        let name = format!(
+            "{}temporary_void{}",
+            self.generated_prefix, self.generated_count
+        );
+        materialize(
+            rules::plan_java_script_void_expression(),
+            value,
+            None,
+            "void",
+            &[name, String::new()],
+            place,
+        )
+    }
+
     pub(super) fn sequence(&mut self) -> Result<SExpr> {
         let mut value = self.expr()?;
         while self.cursor.is(",") {

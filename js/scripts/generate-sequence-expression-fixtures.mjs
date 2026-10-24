@@ -29,15 +29,31 @@ const inputs=[
  ['final null remains null','return 1,null;','null'],
  ['left operand does not force numeric coercion','return (1n,2);','2'],
  ['return automatic semicolon insertion remains active','return\n(1,2);','undefined'],
+ ['void evaluates then returns undefined','let value=1;const ignored=void(value=3);return (ignored??0)*10+value;','3'],
+ ['void preserves undefined absence tag','return Object.is(void null,undefined);','true'],
+ ['void never resolves a shadowed undefined binding','const undefined=7;return String(void 0)+undefined;','undefined7'],
+ ['nested void operations retain effects','let value=0;return (void(void(value+=1)),value);','1'],
+ ['void skips ToPrimitive on an object','return String(void {value:1});','undefined'],
+ ['void BigInt does not convert its operand','return Number.isNaN(Number(void 1n));','true'],
+ ['void participates in lazy selection','let value=0;true||(void(value=4));return value;','0'],
+ ['void consumes only its unary operand','let value=0;void value,value=2;return value;','2'],
+ ['void temporary name remains hygienic','const ml_temporary_void1=7;return (void 0,ml_temporary_void1);','7'],
+ ['for const initializer retains its scope','let value=0;for(const limit=3;value<limit;value++){}return value;','3'],
+ ['for const initializer permits ordered bindings','let value=0;for(const first=2,second=3;value<first+second;value++){}return value;','5'],
+ ['for const shadows only its own lexical scope','const limit=9;let value=0;for(const limit=2;value<limit;value++){}return limit*10+value;','92'],
+ ['Number exponentiation assignment remains accepted','let value=2;return (value**=3)*10+value;','88'],
+ ['BigInt exponentiation assignment remains accepted','let value=2n;return (value**=3n)*10n+value;','88'],
 ];
 const cases=inputs.map(([name,body,value],index)=>({name,source:'export function compute(){'+body+'}',entry:'sequenceExpression'+index,value,abort:null}));
 cases.push({name:'call argument order with parenthesized sequence',source:'function sequenceArguments(first,second){return first*10+second;} export function compute(){let value=0;return sequenceArguments((value=2,value+=1),value);}',entry:'sequenceArgumentsValue',value:'33',abort:null});
 cases.push({name:'abrupt left operand prevents right evaluation',source:'/** @returns {number} */ function failSequenceLeft(){throw new Error("left sequence");} export function compute(){return failSequenceLeft(),1;}',entry:'sequenceLeftFailure',value:null,abort:'left sequence'});
+cases.push({name:'void preserves abrupt operand completion',source:'/** @returns {number} */ function failVoidOperand(){throw new Error("void operand");} export function compute(){return void failVoidOperand();}',entry:'sequenceVoidFailure',value:null,abort:'void operand'});
 cases.push({name:'for arbitrary call update retains effects',source:'function incrementSequenceArray(values){values.push(1);return values.length;} export function compute(){const values=[];for(let index=0;index<2;incrementSequenceArray(values),index++){}return values.length;}',entry:'sequenceForCallUpdate',value:'2',abort:null});
 writeProjectData(new URL('../../parity/fixtures/sequence-expressions.lino',import.meta.url),{
  schemaVersion:1,model:'ordered JavaScript comma expression values and statement lists 1',sourceLanguage:'JavaScript',cases,refusals:[],
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),
  versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0; ECMAScript 2025',Rust:'>=1.90.0 <1.100.0; edition 2024'},
- sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-comma-operator ; https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-for-statement',
+ sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-comma-operator ; https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-void-operator ; https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-for-statement',
+ correctedAssertions:[{input:{operator:'**=',postfix:false},previousAssertion:'planScalarAssignmentExpression(operator,false) deepEqual []',currentAssertion:'the original input returns a nonempty topologically ordered assignment construction plan',predecessorRevision:'51eecee8',sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-assignment-operators'}],
  boundary:'Future original Node/emitted JavaScript/native values and aborts, both program/definition codecs and four emissions. No observations. General reference receivers/this, direct eval, delete/typeof unresolvable references, arbitrary throws, property state, dynamic unions and every earlier requirement remain. Comma returns a value rather than an assignable reference.',
 });

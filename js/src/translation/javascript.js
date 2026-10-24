@@ -15,7 +15,7 @@ import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
-import { constructScalarAssignmentExpression, constructJavaScriptSequenceExpression } from './scalar-assignments.js';
+import { constructScalarAssignmentExpression, constructJavaScriptSequenceExpression, constructJavaScriptVoidExpression } from './scalar-assignments.js';
 import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
@@ -1016,7 +1016,7 @@ class JavaScriptParser {
     return statements;
   }
 
-  constStatement(readonly = false) {
+  constStatement(readonly = false, consumeSemicolon = true) {
     const c = this.cursor;
     const start = c.next();
     const statements = [];
@@ -1030,7 +1030,7 @@ class JavaScriptParser {
       }
       statements.push(...entries);
     } while (c.eat(','));
-    c.eat(';');
+    if (consumeSemicolon) c.eat(';');
     return statements.length === 1 ? statements[0] : { s: 'block', inline: true, body: statements, span: span(start, c.peek()) };
   }
 
@@ -1311,7 +1311,10 @@ class JavaScriptParser {
       const init = [];
       if (c.is('let')) {
         init.push(...this.letDeclarations());
-      } else if (c.is('const') || c.is('var')) {
+      } else if (c.is('const')) {
+        const binding = this.constStatement(false,false);
+        init.push(...(binding.s === 'block' && binding.inline ? binding.body : [binding]));
+      } else if (c.is('var')) {
         throw unsupported(`for with ${c.peek().value}`, 'declare the loop variables with let', span(c.peek(), c.peek()));
       } else {
         if (!c.is(';')) init.push(...this.expressionStatements());
@@ -2153,6 +2156,10 @@ class JavaScriptParser {
   unary() {
     const c = this.cursor;
     const token = c.peek();
+    if (token.kind === 'identifier' && c.eat('void')) {
+      const arg = this.unary(), name = this.generatedPrefix+'temporary_void'+(++this.generatedCount);
+      return constructJavaScriptVoidExpression(arg,name,joined(token,arg,token));
+    }
     if (token.kind === 'identifier' && c.eat('typeof')) {
       const arg = this.unary();
       return { k: 'typeOf', arg, span: joined(token, arg, token) };

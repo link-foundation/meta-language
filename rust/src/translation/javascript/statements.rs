@@ -161,10 +161,14 @@ impl JavaScriptParser {
     }
 
     pub(super) fn const_statement(&mut self) -> Result<Stmt> {
-        self.const_declarations(self.top_level && self.readonly_constants.module)
+        self.const_declarations(self.top_level && self.readonly_constants.module, true)
     }
 
-    fn const_declarations(&mut self, readonly: bool) -> Result<Stmt> {
+    pub(super) fn const_declarations(
+        &mut self,
+        readonly: bool,
+        consume_semicolon: bool,
+    ) -> Result<Stmt> {
         let start = self.cursor.advance();
         let mut statements = Vec::new();
         let mut names = HashSet::new();
@@ -192,7 +196,9 @@ impl JavaScriptParser {
                 break;
             }
         }
-        self.cursor.eat(";");
+        if consume_semicolon {
+            self.cursor.eat(";");
+        }
         if statements.len() == 1 {
             return Ok(statements.remove(0));
         }
@@ -702,7 +708,7 @@ impl JavaScriptParser {
                     Some(span(&token, self.cursor.peek_at(1))),
                 ));
             }
-            let binding = self.const_declarations(self.readonly_constants.module)?;
+            let binding = self.const_declarations(self.readonly_constants.module, true)?;
             if let Stmt::Block {
                 body, inline: true, ..
             } = binding

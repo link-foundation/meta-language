@@ -978,3 +978,10 @@ reuse ordinary lowering, including ignored values and calls. Complete source
 rules generate native definitions and Links; future source/native/codec/target
 controls are declared but remain unexecuted. General references, arbitrary
 completions and every preceding obligation remain.
+
+Void is another source-owned term plan over the same actual operand and Let
+transport, followed by explicit undefined. The complete source closure generates
+both native rules and editable Links. Ordinary const-for bindings reuse lexical
+declaration construction with header punctuation owned by the loop. The exact
+former **= plan refusal remains recorded beside its normative correction and
+stronger original-input/source controls. No behavior or checks executed.
