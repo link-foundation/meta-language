@@ -53,6 +53,12 @@ impl LeanEmitter<'_> {
             return self.optional_match(arg, "ml_present", &present, "false", "false", depth);
         }
 
+        if self.utf16_strings && arg.ty == Type::String {
+            return Ok(crate::translation::formal_unit_strings::truth(
+                "Lean",
+                &self.expr(arg, depth)?,
+            ));
+        }
         Ok(rules::render_optional_primitive_truth(
             "Lean",
             arg.ty.kind(),

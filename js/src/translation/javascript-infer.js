@@ -9,6 +9,7 @@
 import { typeError } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './string-construction-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
@@ -956,6 +957,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints'||acceptLinkedJavaScriptStringConstruction('math',node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:FLOAT}:STRING;
+        }
         if(node.op==='createJavaScriptStringFromUnits'){
           for(const item of node.args)this.expr(item.value,env);
           return STRING;

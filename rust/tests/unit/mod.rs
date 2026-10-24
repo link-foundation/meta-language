@@ -370,6 +370,7 @@ mod translation_reference_array_projections;
 mod translation_scalar_assignments;
 mod translation_source_exceptions;
 mod translation_source_identifiers;
+mod translation_string_construction;
 mod translation_string_number;
 mod translation_unicode_identifiers;
 mod typed_program_number_projection;

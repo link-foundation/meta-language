@@ -167,3 +167,11 @@ columns. Preserve original refusal inputs with sourced corrected assertions.
 Source dependency authoring now retains actual owned documentation datatype
 declarations. Formal unit representations and non-value unit names remain
 required; new controls are unexecuted declarations.
+
+Draft complete shared UTF-16 column operations and generated runtime bodies in
+all four targets. Formal JavaScript String representations now retain units
+through types, calls, optional values and output; Rocq uses binary integers.
+Draft source character/code-point construction with ordered primitive conversion
+and range errors, and generic formal array slicing through shared bounds.
+Retain original formal-order refusal inputs with corrected expectations. These
+are untested code drafts; broader string/state and exception payload work remains.

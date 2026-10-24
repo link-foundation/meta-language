@@ -46,6 +46,9 @@ pub mod emit_rust;
 pub(crate) mod external_emission_rules;
 pub(crate) mod fixed_integer_cast_program;
 mod fixed_integer_cast_rules;
+pub(crate) mod formal_string_unit_program;
+pub mod formal_string_unit_rules;
+mod formal_unit_strings;
 pub(crate) mod frontend_rules;
 pub(crate) mod grammar_attribute_order_rules;
 pub(crate) mod grammar_lexer_rules;
@@ -150,6 +153,8 @@ pub(crate) mod source_text_byte_rules;
 pub(crate) mod source_text_bytes;
 pub(crate) mod source_type_namespaces;
 pub(crate) mod source_unit_clone_derivations;
+pub(crate) mod string_construction_program;
+pub mod string_construction_rules;
 pub(crate) mod string_number;
 pub(crate) mod string_number_program;
 pub(crate) mod string_number_rules;
@@ -165,6 +170,8 @@ pub(crate) mod typed_program_link_rules;
 pub mod types;
 pub(crate) mod unicode_scalar_program;
 pub(crate) mod unicode_scalar_rules;
+pub(crate) mod utf16_text_program;
+pub mod utf16_text_rules;
 
 /// A source range in UTF-16 code units, as JavaScript string offsets count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

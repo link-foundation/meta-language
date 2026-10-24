@@ -15,6 +15,8 @@ import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult} from './javascript-big-integer-conversion.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction} from './string-construction-rules.js';
+import {checkJavaScriptStringConstruction,checkJavaScriptStringConstructionValue} from './javascript-string-construction.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumberOperand,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import {checkJavaScriptNumberBuiltin,materializeJavaScriptNumberConversion,checkJavaScriptMathematicalArguments} from './javascript-number-conversion.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
@@ -1204,6 +1206,8 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op==='constructJavaScriptStringFromCharacterCodes'||node.op==='constructJavaScriptStringFromCodePoints')return checkJavaScriptStringConstruction(this,node,env,path);
+    if(acceptLinkedJavaScriptStringConstruction('math',node.op))return checkJavaScriptStringConstructionValue(this,node,env,path);
     if(acceptLinkedJavaScriptStringUnitConstruction('math',node.op)){
       if(this.language!=='JavaScript'||node.args.length!==1||node.args[0].spread)throw typeError('a JavaScript UTF16 literal needs one owned unit column',node.span);
       const units=this.expr(node.args[0].value,env,path,array(FLOAT));

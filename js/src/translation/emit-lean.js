@@ -1,3 +1,7 @@
+import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
+import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_LEAN_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
@@ -38,7 +42,7 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion',
+  'MLBigIntegerConversion','MLUtf16Text',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -203,6 +207,8 @@ export function emitLean(source) {
 class LeanEmitter {
   constructor(program, state) {
     this.program = program;
+    this.target='Lean';
+    this.utf16Strings=requireFormalUnitStrings(program);
     this.state = state;
     this.helpers = new Set();
     // Inside \`| p + 1 =>\` of a match on \`x\`, \`x\` is written \`p + 1\`: Lean's
@@ -213,6 +219,7 @@ class LeanEmitter {
   }
 
   file() {
+    prepareFormalUnitStrings(this);
     const blocks = [];
     let open = [];
     const moveTo = (path) => {
@@ -249,6 +256,7 @@ class LeanEmitter {
       ...['jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat', 'stringIncludes'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_LEAN_PRELUDE,'']:[]),
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('utf16Text')?[UTF16_TEXT_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -279,11 +287,11 @@ class LeanEmitter {
       case 'bool':
         return 'Bool';
       case 'string':
-        return 'String';
+        return this.utf16Strings?readFormalStringUnitType('Lean'):'String';
       case 'unit':
         return 'Unit';
       case 'output':
-        return 'List String';
+        return this.utf16Strings?'List (Array Nat)': 'List String';
       case 'data':
         return this.state.ref(type.name);
       case 'array':
@@ -427,6 +435,8 @@ class LeanEmitter {
   }
 
   expr(e, depth) {
+    const units=readFormalUnitStringExpression(this,e,depth);
+    if(units!==null)return units;
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
       if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
@@ -636,6 +646,7 @@ class LeanEmitter {
   truthy(arg, depth) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }, depth), 'false', 'false', depth);
     const value = this.expr(arg, depth);
+    if(this.utf16Strings&&arg.type.kind==='string')return formalUnitTruth(this,value);
     return renderOptionalPrimitiveTruth('Lean', arg.type.kind, value, '', false, Boolean(arg.type.signed));
   }
 
@@ -647,6 +658,7 @@ class LeanEmitter {
   }
 
   math(e, depth) {
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Lean',e.op,this.expr(e.args[0],depth));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.helpers.add('bigIntegerConversion');
       return renderJavaScriptBigIntegerResultExpression('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),false);
@@ -694,15 +706,19 @@ class LeanEmitter {
   }
 
   toText(arg, depth, console = false) {
+    if(this.utf16Strings&&arg.type.kind==='string')return this.expr(arg,depth);
+    if(this.utf16Strings&&arg.type.kind==='unit')return formalUnitLiteral(this,'undefined');
     if (arg.type.kind === 'data' || arg.type.kind === 'unit') {
       throw unsupported('output of structured values', `a ${arg.type.kind} value has no portable textual form`, arg.span);
     }
     if (arg.type.kind === 'float') {
       this.helpers.add('jsNumber');
       if (console) this.helpers.add('jsConsole');
-      return `(${console ? 'ml_js_console' : 'ml_js_number'} ${this.expr(arg, depth)})`;
+      const text=`(${console ? 'ml_js_console' : 'ml_js_number'} ${this.expr(arg, depth)})`;
+      return this.utf16Strings?formalScalarUnits(this,text):text;
     }
-    return `(toString ${this.expr(arg, depth)})`;
+    const text=`(toString ${this.expr(arg, depth)})`;
+    return this.utf16Strings?formalScalarUnits(this,text):text;
   }
 
   binary(e, depth) {
@@ -804,13 +820,13 @@ class LeanEmitter {
     const theorems = [];
     let assertion = 0;
     effects.forEach((effect, index) => {
-      if (effect.k === 'print') lines.push(`  IO.println ${this.expr(effect.expr, 1)}`);
-      else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ml_line`);
+      if (effect.k === 'print') lines.push(`  IO.println ${this.utf16Strings?formalUnitDisplay(this,this.expr(effect.expr,1)):this.expr(effect.expr, 1)}`);
+      else if (effect.k === 'output') lines.push(`  for ml_line in ${this.expr(effect.expr, 1)}.reverse do IO.println ${this.utf16Strings?formalUnitDisplay(this,'ml_line'):'ml_line'}`);
       else if (effect.k === 'let') lines.push(`  let ${effect.name} := ${this.expr(effect.value, 1)}`);
       else if (effect.k === 'unwrap') {
         // The value of a step, or the source's abort: its message, uncaught, ends main.
         const [made, aborted] = effect.ctors.map((ctor) => this.state.ctorRef(effect.data, ctor));
-        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m => throw (IO.userError ml_m))`);
+        lines.push(`  let ${effect.name} ← (match ${this.expr(effect.pair, 1)} with\n    | ${made} _ ml_v => pure ml_v\n    | ${aborted} _ ml_m => throw (IO.userError ${this.utf16Strings?formalUnitDisplay(this,'ml_m'):'ml_m'}))`);
       } else if (this.usesNumber(effect.prop) || this.onPartial(effect.prop, effects.slice(0, index))) {
         // The kernel cannot evaluate Float or unfold a partial def, so the assertion runs where the source's does.
         assertion += 1;

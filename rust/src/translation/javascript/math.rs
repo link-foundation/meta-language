@@ -61,6 +61,9 @@ impl JavaScriptParser {
         if numeric_builtin.is_empty() {
             numeric_builtin=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_builtin_operation(name);
         }
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::string_construction_rules::read_java_script_string_construction_operation(name);
+        }
         if called && standard_owner && !numeric_builtin.is_empty() {
             let args = self.spread_arguments(name)?;
             return Ok(Some(node(

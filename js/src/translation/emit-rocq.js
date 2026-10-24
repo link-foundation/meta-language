@@ -1,3 +1,7 @@
+import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
+import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_ROCQ_PRELUDE} from './utf16-text-formal-runtime.js';
 import { renderStringLengthExpression, readStringMapRefusal, renderStringTestExpression, readStringTestHelper, readStringTestSupport } from './frontend-rules.js';
 import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
@@ -37,7 +41,7 @@ import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-c
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion',
+  'MLBigIntegerConversion','MLUtf16Text',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -301,6 +305,8 @@ function injection(index, count, text) {
 class RocqEmitter {
   constructor(program, state) {
     this.program = program;
+    this.target='Rocq';
+    this.utf16Strings=requireFormalUnitStrings(program);
     this.state = state;
     this.helpers = new Set(['tactics']);
     this.natFunctions = new Map();
@@ -309,6 +315,7 @@ class RocqEmitter {
   }
 
   file() {
+    prepareFormalUnitStrings(this);
     const blocks = [];
     const order = orderDeclarations(this.program, { requireContiguousModules: true });
     let openModules = [];
@@ -343,6 +350,7 @@ class RocqEmitter {
       ...helperText.flatMap((helper) => [helper, '']),
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('utf16Text')?[UTF16_TEXT_ROCQ_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
@@ -373,11 +381,11 @@ class RocqEmitter {
       case 'bool':
         return 'bool';
       case 'string':
-        return 'string';
+        return this.utf16Strings?readFormalStringUnitType('Rocq'):'string';
       case 'unit':
         return 'unit';
       case 'output':
-        return 'list string';
+        return this.utf16Strings?'list (list N)':'list string';
       case 'data':
         return this.state.ref(type.name);
       case 'array':
@@ -646,6 +654,8 @@ class RocqEmitter {
   }
 
   expr(e) {
+    const units=readFormalUnitStringExpression(this,e,0);
+    if(units!==null)return units;
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'tuple' && Object.hasOwn(e, 'productModel')) {
       if (!acceptProgramTupleProductModel(e.productModel, e.frozen)) throw unsupported('immutable tuple product model', 'the tuple model must be immutable value product with explicit frozen evidence', e.span);
@@ -887,6 +897,7 @@ class RocqEmitter {
   truthy(arg) {
     if (arg.type.kind === 'option') return this.optionalMatch(arg, 'ml_present', this.truthy({ k: 'var', name: 'ml_present', type: arg.type.element }), 'false', 'false');
     const value = this.expr(arg);
+    if(this.utf16Strings&&arg.type.kind==='string')return formalUnitTruth(this,value);
     if (arg.type.kind === 'float') this.floats();
     return renderOptionalPrimitiveTruth('Rocq', arg.type.kind, value, '', false, Boolean(arg.type.signed));
   }
@@ -899,6 +910,7 @@ class RocqEmitter {
   }
 
   math(e) {
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Rocq',e.op,this.expr(e.args[0]));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.floats();this.helpers.add('bigIntegerConversion');
       return renderJavaScriptBigIntegerResultExpression('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
@@ -967,13 +979,13 @@ class RocqEmitter {
       case 'bool':
         return 'false';
       case 'string':
-        return 'EmptyString';
+        return this.utf16Strings?'(@nil N)':'EmptyString';
       case 'float':
         return '0%float';
       case 'unit':
         return 'tt';
       case 'output':
-        return '(@nil string)';
+        return this.utf16Strings?'(@nil (list N))':'(@nil string)';
       case 'array':
         return `(@nil ${this.type(type.element)})`;
       case 'option':
@@ -1020,6 +1032,7 @@ class RocqEmitter {
   }
 
   comparison(op, domain, left, right) {
+    if(this.utf16Strings&&domain.kind==='string')return renderFormalStringUnitComparison('Rocq',op,left,right);
     let module;
     if (domain.kind === 'bool') module = 'Bool';
     else if (domain.kind === 'string') module = 'String';
@@ -1098,7 +1111,14 @@ class RocqEmitter {
     return `(match ${subject} with ${arms.join(' ')} end)`;
   }
 
-  toText(arg, console = false) {
+  toText(arg,console=false){
+    if(!this.utf16Strings)return this.scalarText(arg,console);
+    if(arg.type.kind==='string')return this.expr(arg);
+    if(arg.type.kind==='unit')return formalUnitLiteral(this,'undefined');
+    return formalScalarUnits(this,this.scalarText(arg,console));
+  }
+
+  scalarText(arg, console = false) {
     const text = this.expr(arg);
     switch (arg.type.kind) {
       case 'string':
@@ -1157,13 +1177,15 @@ class RocqEmitter {
       if (index >= effects.length) return aborts ? '(nil, None)' : 'nil';
       const effect = effects[index];
       if (effect.k === 'print') {
+        if(this.utf16Strings){const text=formalUnitDisplay(this,this.expr(effect.expr));return aborts?`ml_emit (${text} :: nil)\n  (${build(index+1)})`:`${text} ::\n  ${build(index+1)}`;}
         return aborts ? `ml_emit (${this.expr(effect.expr)} :: nil)\n  (${build(index + 1)})` : `${this.expr(effect.expr)} ::\n  ${build(index + 1)}`;
       }
       if (effect.k === 'output') {
+        if(this.utf16Strings){const lines=`(List.map (fun ml_line => ${formalUnitDisplay(this,'ml_line')}) (List.rev ${this.expr(effect.expr)}))`;return `${aborts?'ml_emit':'app'} ${lines}\n  (${build(index+1)})`;}
         return `${aborts ? 'ml_emit' : 'app'} (List.rev ${this.expr(effect.expr)})\n  (${build(index + 1)})`;
       }
       if (effect.k === 'let') return `let ${effect.name} := ${this.expr(effect.value)} in\n  ${build(index + 1)}`;
-      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: '(nil, Some ml_m)' })})`;
+      if (effect.k === 'unwrap') return `(${arms(effect, build(index + 1), { bind: 'ml_m', body: this.utf16Strings?'(nil, Some '+formalUnitDisplay(this,'ml_m')+')':'(nil, Some ml_m)' })})`;
       assertion += 1;
       // The assertion is stated of the values main computes before it; a run that aborts before it never reaches it.
       const statement = effects.slice(0, index).reduceRight((rest, item) => {

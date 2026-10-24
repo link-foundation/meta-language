@@ -22,6 +22,7 @@ import {readJavaScriptNumberBuiltinOperation,readJavaScriptPrimitiveUnaryOperati
 import {readJavaScriptExceptionConstructorOperation} from './source-exception-rules.js';
 import {readJavaScriptBigIntegerBuiltinOperation} from './big-integer-conversion-rules.js';
 import {createJavaScriptStringLiteral} from './javascript-string-literals.js';
+import {readJavaScriptStringConstructionOperation} from './string-construction-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -2490,7 +2491,7 @@ class JavaScriptParser {
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)):'';
+    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)||readJavaScriptStringConstructionOperation(name)):'';
     if(numericBuiltin&&c.is('('))return{k:'math',op:numericBuiltin,name,args:this.spreadArguments(name),span:span(token,c.peek())};
     if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);

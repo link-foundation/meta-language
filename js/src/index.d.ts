@@ -2619,3 +2619,7 @@ export function convertJavaScriptBooleanBigInteger(value: boolean): bigint;
 export function createSourceExceptionProgramLinks(): TypedProgramLinks;
 /** Complete editable UTF-16 literal, escape and unit construction definitions. */
 export function createJavaScriptStringUnitProgramLinks(): TypedProgramLinks;
+/** Complete editable source constructor and UTF-16 text operation definitions. */
+export function createStringConstructionProgramLinks(): TypedProgramLinks;
+export function createUtf16TextProgramLinks(): TypedProgramLinks;
+export function createFormalStringUnitProgramLinks(): TypedProgramLinks;

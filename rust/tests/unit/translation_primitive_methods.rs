@@ -737,18 +737,21 @@ fn explicit_unicode_order_matches_every_shared_case_and_every_single_code_unit()
     let expected = javascript(&(source.to_owned() + &driver));
     assert_unicode_order_fixture_observations(cases, &expected);
     let program = check_program(&parse_javascript(source).unwrap()).unwrap();
-    assert!(
-        meta_language::translation::emit_lean::emit_lean(&program)
-            .unwrap_err()
-            .reason
-            .contains("UTF-16 operational string encoding for lexical comparison")
-    );
-    assert!(
-        meta_language::translation::emit_rocq::emit_rocq(&program)
-            .unwrap_err()
-            .reason
-            .contains("UTF-16 operational string encoding for lexical comparison")
-    );
+    // Shared formal unit semantics replace the preceding "UTF-16 operational
+    // string encoding for lexical comparison" refusal. Keep every source,
+    // fixture and native/original-value assertion in this complete test.
+    for formal in [
+        meta_language::translation::emit_lean::emit_lean(&program).unwrap(),
+        meta_language::translation::emit_rocq::emit_rocq(&program).unwrap(),
+    ] {
+        assert!(
+            formal
+                .encodings
+                .iter()
+                .any(|entry| entry.id == "utf16-formal-strings")
+        );
+        assert!(formal.text.contains("MLUtf16Text.compare"));
+    }
     let native_source = "fn before(left: String,right: String)->bool {left<right} fn main() {}";
     let refusal = meta_language::translation::rust::parse_rust(native_source)
         .and_then(|surface| check_program(&surface))

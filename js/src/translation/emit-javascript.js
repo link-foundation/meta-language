@@ -1,3 +1,5 @@
+import {acceptLinkedJavaScriptStringConstruction,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_JAVASCRIPT_PRELUDE} from './utf16-text-javascript-runtime.js';
 import {checkRustRuntimeShell,recordRustRuntimeShellAssumptions,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
@@ -64,6 +66,7 @@ const KEYWORDS = new Set([
 ]);
 
 const HELPERS = {
+  utf16Text:UTF16_TEXT_JAVASCRIPT_PRELUDE,
   bigIntegerConversion: BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE,
   ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
@@ -188,7 +191,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -621,6 +624,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('JavaScript',e.op,this.expr(e.args[0]));}
         if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
           this.helpers.add('bigIntegerConversion');

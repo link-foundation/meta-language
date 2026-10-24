@@ -5,7 +5,7 @@ use super::{
 };
 use crate::translation::string_number_rules as rules;
 
-fn accepts(ty: &Type) -> bool {
+pub(super) fn accepts(ty: &Type) -> bool {
     match rules::read_java_script_number_conversion_form(ty.kind()).as_str() {
         "option" => matches!(ty, Type::Option { element, .. } if accepts(element)),
         "unsupported" => false,

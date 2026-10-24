@@ -15,8 +15,9 @@ export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,e
   const root=new URL('../../',import.meta.url);
   const header=emitted.text.split('\n').find(line=>line.startsWith('#![allow('));
   if(!header)throw new TypeError('the complete emitted library requires its actual attributes');
+  const integerRuntime=emitted.preludes.some(source=>/^pub mod ml \{/mu.test(source));
   const dependencies=emitted.preludes.filter(source=>!/^pub mod ml \{/mu.test(source));
-  const original=[header,'use crate::ml;',...dependencies,...emitted.definitions].join('\n\n');
+  const original=[header,...(integerRuntime?['use crate::ml;']:[]),...dependencies,...emitted.definitions].join('\n\n');
   const relocation=readPortableLibraryRelocation(original);
   const loans=readPortableSourceParameterStyles(relocation.source,{publicNames:[...relocation.source.matchAll(/^pub fn (\w+)\(/gmu)].map(match=>match[1])});
   const runtime='pub mod ml_'+runtimeStem.replaceAll('-','_')+' {\n'+loans.source+'\n}\n';
@@ -26,7 +27,7 @@ export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,e
   writeProjectData(new URL('parity/self-translation/'+runtimeStem+'-runtime.lino',root),{
     schemaVersion:1,model:'complete source runtime lexical relocation and loans 1',original,
     actions:[...relocation.actions,...loans.actions],edits:relocation.edits,runtime,
-    integerOwner:'ordinary emitted crate::ml; no replacement integer arithmetic',
+    integerOwner:integerRuntime?'ordinary emitted crate::ml; no replacement integer arithmetic':'no integer runtime dependency',
     boundary:'Complete source construction only; no represented invocation, fixture, target execution, test or native compilation.',
   });
   const formal={};

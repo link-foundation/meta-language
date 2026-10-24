@@ -5799,8 +5799,8 @@ fixtures, unit transport controls, independent original-Node producers, native
 controls and codec/emission controls are authored but unexecuted. They are not
 evidence. Numeric controls retain their original source and add actual source
 `String` observation wrappers rather than relying on Rust Display spellings.
-Object and Symbol conversion, iterator spreads, complete
-isolated-surrogate source/IR transport, all remaining language constructs and
+Object and Symbol conversion, iterator spreads, non-value UTF-16 names,
+all remaining language constructs and
 deferred ledger/source/naming/dependency/parity registration remain obligations.
 The existing formatter failed internally on this generated library; its author
 preserves complete output and records the formatting debt without changing gates.
@@ -5842,7 +5842,8 @@ unit and rejects unproven dynamic columns. Both source frontends preserve
 literal and template chunks, numeric conversion inputs and exception messages.
 Non-value property/module/datatype names still need a complete unit-identity
 representation; their current source adapters refuse rather than accepting the
-scalar display as a name. Formal-target string representation remains required.
+scalar display as a name. Formal targets use the shared unit representation
+described below.
 
 Automatic source-library composition also retains declared documentation
 datatypes, attached to their actual complete source comment and module owner.
@@ -5885,7 +5886,7 @@ all three error fields and original-source argument order. Formal targets
 currently thread the dynamic message but still need the complete exception
 payload, and native uncaught process/stack behavior remains required. Arbitrary
 thrown values, error objects/cause, catch/finally, AggregateError and complete
-source isolated-surrogate transport remain obligations. These are code drafts;
+non-value UTF-16 names remain obligations. These are code drafts;
 no behavior, test, oracle, compilation or validation gate has run in this phase.
 
 The shared BigInt conversion definition parses the complete StringIntegerLiteral
@@ -5916,3 +5917,53 @@ APIs and complete definition graph codecs/emissions. They have not executed.
 The source integration above is a draft and supplies no execution evidence.
 All previously named translation gaps and deferred source/ledger/naming metadata
 remain required.
+
+### Shared UTF-16 operations and formal string representation draft
+
+One complete portable JavaScript definition operates on code-unit columns for
+slicing, substring selection, characters, relative characters, code points,
+iteration, searches, prefix/suffix tests, lexical comparison, joining, trimming,
+character/code-point construction and scalar display transport. The same source
+generates native Rust, JavaScript, Lean and Rocq runtime bodies and full editable
+Links definitions. Actual emitted binding identities supply runtime entry aliases.
+The shared relative slice bound also serves arrays of every element type.
+Runtime authors include an integer dependency only when the actual source needs
+one; generated native module wrappers never import a nonexistent integer owner.
+
+JavaScript String types select full code-unit representation in formal output,
+including parameters, results, nested products and optional values. Lean stores
+arrays of natural numbers; Rocq stores lists of binary N values, avoiding unary
+allocation proportional to each code-unit value. The represented input domain
+is ordered units 0..65535. Checked literal construction and generated operations
+preserve that invariant. Bridges convert units to the complete generated
+numeric kernels without losing isolated surrogates. Generic array slicing keeps
+its element representation and uses the same exact relative-bound definition.
+
+Formal emission retains unit columns through literals, concatenation, optional
+text/type/length projections, predicates, String operations, collection joins,
+numeric conversion, BigInt parsing, function calls and threaded output. Scalar
+display alone replaces isolated surrogates and encodes Unicode characters or
+UTF-8 bytes. The original Rust-source scalar profile remains distinct. Native
+Rust emission already selects its Text profile for unit-sensitive operations;
+its complete default public JavaScript String parameter domain still needs
+review alongside explicit scalar-library interfaces. Complete formal error
+class/property payloads, all remaining String methods and stateful features
+remain requirements. This representation draft supplies no native observations.
+
+Unshadowed String.fromCharCode and String.fromCodePoint source calls lower through
+the shared Number conversion and UTF-16 kernels in both checked runtimes. All
+argument expressions evaluate before builtin conversion. Code-point validation
+happens immediately after each primitive conversion and before converting the
+next argument; errors therefore retain the source order. Character construction
+uses ToUint16 and canonicalizes zero. Surrogate code points remain valid String
+units. Code-point errors retain class, message units and property presence in
+the existing exception transport. Iterator spreads and object/Symbol conversion
+remain required. These rules follow
+[ECMAScript String.fromCharCode](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.fromcharcode)
+and [String.fromCodePoint](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.fromcodepoint).
+
+Future controls declare complete original source, argument/error ordering,
+direct unit algorithms, all program/definition codecs and emissions, and native
+execution. Corrected former formal-order refusals retain their original inputs,
+diagnostics and independent value/unit controls. No behavior tests, native
+compilation, validation gates, CI or push have run in this draft phase.

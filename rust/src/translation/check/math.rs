@@ -21,6 +21,12 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "constructJavaScriptStringFromCharacterCodes"
+            || op == "constructJavaScriptStringFromCodePoints"
+        {
+            return self.javascript_string_construction(op, args, span, env, path);
+        }
+        if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){return self.javascript_string_construction_value(op,args,span,env,path);}
         if crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction("math",op){
             if self.language!=super::Language::JavaScript||args.len()!=1||args[0].spread{return Err(type_error("a JavaScript UTF16 literal needs one owned unit column",span));}
             let units=self.expr(&args[0].value,env,path,Some(&array(FLOAT)),false)?;

@@ -38,6 +38,7 @@ mod mutual;
 mod optional_values;
 mod proofs;
 mod records;
+mod unit_strings;
 
 use self::arrays::{FLOAT_INDEX, LIST_AT};
 pub use self::floats::FLOAT_PRELUDE;
@@ -48,6 +49,7 @@ use self::mutual::Mutual;
 const KEYWORDS: &[&str] = &[
     "MLStringNumber",
     "MLBigIntegerConversion",
+    "MLUtf16Text",
     "as",
     "at",
     "cofix",
@@ -242,10 +244,11 @@ enum Helper {
     Emit,
     StringNumber,
     BigIntegerConversion,
+    Utf16Text,
 }
 
 impl Helper {
-    const ALL: [Self; 20] = [
+    const ALL: [Self; 21] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -266,6 +269,7 @@ impl Helper {
         Self::Emit,
         Self::StringNumber,
         Self::BigIntegerConversion,
+        Self::Utf16Text,
     ];
 
     fn render_definition(self) -> String {
@@ -303,6 +307,7 @@ impl Helper {
             Self::Emit => EMIT,
             Self::StringNumber => include_str!("runtime/string-number.v"),
             Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
+            Self::Utf16Text => include_str!("runtime/utf16-text.v"),
         }
     }
 }
@@ -361,6 +366,7 @@ fn internal(message: String) -> TranslationError {
 /// On constructs the target cannot express faithfully.
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
     let program = &*thread_output_for_target(source, "Rocq")?;
+    let utf16_strings = super::formal_unit_strings::requires(program);
     let state = EmitState::new(
         program,
         Language::Rocq,
@@ -375,10 +381,15 @@ pub fn emit_rocq(source: &Program) -> Result<Emitted> {
     RocqEmitter {
         program,
         state,
-        helpers: HashSet::from([Helper::Tactics]),
+        helpers: if utf16_strings {
+            HashSet::from([Helper::Tactics, Helper::Utf16Text, Helper::FloatIndex])
+        } else {
+            HashSet::from([Helper::Tactics])
+        },
+        utf16_strings,
         nat_functions: HashMap::new(),
         current: None,
-        uses_float: false,
+        uses_float: utf16_strings,
     }
     .file()
 }
@@ -397,6 +408,7 @@ struct Current {
 }
 
 struct RocqEmitter<'p> {
+    utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
     helpers: HashSet<Helper>,
@@ -408,6 +420,10 @@ struct RocqEmitter<'p> {
 
 impl RocqEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.floats();
+            self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
+        }
         let program = self.program;
         let mut blocks: Vec<String> = Vec::new();
         let order = order_declarations(program, true)?;
@@ -505,9 +521,20 @@ impl RocqEmitter<'_> {
                 "float".to_owned()
             }
             Type::Bool => "bool".to_owned(),
-            Type::String => "string".to_owned(),
+            Type::String => {
+                if self.utf16_strings {
+                    super::formal_string_unit_rules::read_formal_string_unit_type("Rocq")
+                } else {
+                    "string".to_owned()
+                }
+            }
             Type::Unit => "unit".to_owned(),
-            Type::Output => "list string".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "list (list N)"
+            } else {
+                "list string"
+            }
+            .to_owned(),
             Type::Option { element, absence } => {
                 let element = self.ty(element)?;
                 if absence == "both" {

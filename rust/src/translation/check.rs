@@ -57,6 +57,7 @@ mod rust_primitive_bitwise;
 mod rust_shifts;
 mod source_exceptions;
 mod string_code_unit_template;
+mod string_construction;
 mod strings;
 mod tuple_patterns;
 mod type_queries;

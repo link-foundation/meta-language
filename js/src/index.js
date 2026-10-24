@@ -100,3 +100,6 @@ export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits
 
 export {createSourceExceptionProgramLinks} from './source-exception-program.js';
 export {createJavaScriptStringUnitProgramLinks} from './javascript-string-unit-program.js';
+export {createStringConstructionProgramLinks} from './string-construction-program.js';
+export {createUtf16TextProgramLinks} from './utf16-text-program.js';
+export {createFormalStringUnitProgramLinks} from './formal-string-unit-program.js';

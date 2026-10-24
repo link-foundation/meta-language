@@ -8,6 +8,10 @@ impl JavaScriptEmitter<'_> {
             unreachable!("not a Math expression")
         };
         let args = self.exprs(args)?;
+        if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
+            self.helpers.insert(super::Helper::Utf16Text);
+            return Ok(crate::translation::string_construction_rules::render_java_script_string_construction("JavaScript",op,&args[0]));
+        }
         if crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction("math",op){
             return Ok(crate::translation::javascript_string_unit_rules::render_java_script_string_unit_construction("JavaScript",&args[0]));
         }

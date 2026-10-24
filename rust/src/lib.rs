@@ -480,5 +480,8 @@ pub use translation::big_integer_conversion::{
 };
 pub use translation::big_integer_conversion_program::create_big_integer_conversion_program_links;
 
+pub use translation::formal_string_unit_program::create_formal_string_unit_program_links;
 pub use translation::javascript_string_unit_program::create_java_script_string_unit_program_links;
 pub use translation::source_exception_program::create_source_exception_program_links;
+pub use translation::string_construction_program::create_string_construction_program_links;
+pub use translation::utf16_text_program::create_utf16_text_program_links;

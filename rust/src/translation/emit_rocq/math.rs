@@ -45,6 +45,11 @@ impl RocqEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
+            self.floats();self.helpers.insert(super::Helper::Utf16Text);
+            let value=self.expr(&args[0])?;
+            return Ok(crate::translation::string_construction_rules::render_java_script_string_construction("Rocq",op,&value));
+        }
         if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
             self.floats();self.helpers.insert(super::Helper::BigIntegerConversion);
             let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);

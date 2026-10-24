@@ -1,3 +1,5 @@
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm,renderJavaScriptStringConstruction} from './string-construction-rules.js';
+import {UTF16_TEXT_PRELUDE} from './utf16-text-runtime.js';
 import {rustEscape,rustString} from './rust-string-literals.js';
 import { renderWrappingFixedIntegerCast, readFixedIntegerCastStatement } from './fixed-integer-cast-rules.js';
 import { renderCollectionSizeExpression, renderCollectionReadExpression } from './collection-access-rules.js';
@@ -736,6 +738,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
     ...(emitter.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
     ...(emitter.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
+    ...(emitter.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -766,8 +769,10 @@ class RustEmitter {
     this.usesStringNumber = false;
     this.usesSourceException = false;
     this.usesBigIntegerConversion = false;
+    this.usesUtf16Text=false;
     this.usesOptional = false;
     const needsUnits = (node) => {
+      if(acceptLinkedJavaScriptStringConstruction(node?.k??'',node?.op??'')&&readJavaScriptStringConstructionForm(node.op)==='characters')return true;
       if (!node || typeof node !== 'object') return false;
       if (requireStringOrderUnits(node.k ?? '', node.op ?? '')||acceptLinkedJavaScriptStringUnitConstruction(node.k??'',node.op??'')) return true;
       if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
@@ -808,6 +813,7 @@ class RustEmitter {
       ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE, ''] : []),
       ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE, ''] : []),
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE, ''] : []),
+    ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -823,6 +829,7 @@ class RustEmitter {
       ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
       ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
+      ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1495,6 +1502,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.usesUtf16Text=true;return renderJavaScriptStringConstruction('Rust',e.op,this.expr(e.args[0]));}
     if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.usesBig=true;this.usesBigIntegerConversion=true;

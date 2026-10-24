@@ -17,11 +17,13 @@ pub(super) enum Helper {
     Forall,
     Domains,
     BigIntegerConversion,
+    Utf16Text,
 }
 
 impl Helper {
     pub(super) fn text(self) -> &'static str {
         match self {
+            Self::Utf16Text=>include_str!("../runtime/utf16-text.js"),
             Self::BigIntegerConversion => include_str!("../runtime/big-integer-conversion.js"),
             Self::OwnedTextInput => {
                 static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();

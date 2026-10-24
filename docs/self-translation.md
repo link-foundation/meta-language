@@ -879,3 +879,16 @@ codecs and emission. Formal unit representations, non-value unit names and the
 remaining source operations still need implementation; future controls remain
 unexecuted. Earlier source inputs and wrong refusal diagnostics are retained
 with sourced corrected expectations and bounded active runtime profiles.
+
+The UTF-16 operation source now generates complete runtime bodies in all four
+targets. Full formal String representations keep unit columns across parameters,
+results, nested types, optional values and output threading; Rocq units use
+binary N values. Shared bridges reach the numeric kernels and only the final
+scalar display replaces isolated units. A shared bound function also implements
+generic formal array slicing. Source String.fromCharCode/fromCodePoint adapters
+capture arguments first, then preserve each conversion/range-check step and
+error order through existing typed operations. Native host adapters construct
+actual IR; source policies, operations and rendering rules generate Rust.
+Complete formal exception payloads, the native default String parameter ABI,
+other String/state operations and all earlier obligations remain required.
+Future controls remain unexecuted; no behavioral or validation gate ran.

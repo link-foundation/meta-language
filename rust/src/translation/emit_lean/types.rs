@@ -27,9 +27,22 @@ impl LeanEmitter<'_> {
                 "Float".to_owned()
             }
             Type::Bool => "Bool".to_owned(),
-            Type::String => "String".to_owned(),
+            Type::String => {
+                if self.utf16_strings {
+                    crate::translation::formal_string_unit_rules::read_formal_string_unit_type(
+                        "Lean",
+                    )
+                } else {
+                    "String".to_owned()
+                }
+            }
             Type::Unit => "Unit".to_owned(),
-            Type::Output => "List String".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "List (Array Nat)"
+            } else {
+                "List String"
+            }
+            .to_owned(),
             Type::Option { element, absence } => {
                 let element = self.ty(element)?;
                 if absence == "both" {

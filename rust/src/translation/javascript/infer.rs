@@ -753,6 +753,10 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op=="constructJavaScriptStringFromCharacterCodes"||op=="constructJavaScriptStringFromCodePoints"||crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
+                    for item in args{self.expr(&item.value,env)?;}
+                    return Ok(if crate::translation::string_construction_rules::read_java_script_string_construction_form(op)=="points"{Term::Array(Box::new(Term::Known(FLOAT)))}else{Term::Known(STRING)});
+                }
                 if op == "createJavaScriptStringFromUnits" {
                     for item in args {
                         self.expr(&item.value, env)?;

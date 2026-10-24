@@ -8,6 +8,7 @@ import {acceptLinkedJavaScriptSourceException} from './translation/source-except
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './translation/big-integer-conversion-rules.js';
 import {acceptJavaScriptNumberConversionType} from './translation/javascript-number-conversion.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,acceptJavaScriptStringUnits} from './translation/javascript-string-unit-rules.js';
+import {acceptLinkedJavaScriptStringConstruction,readJavaScriptStringConstructionForm} from './translation/string-construction-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
@@ -164,6 +165,7 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedJavaScriptSourceException(node.k,node.op)
       && !acceptLinkedJavaScriptBigIntegerResult(node.k,node.op)
       && !acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)
+      && !acceptLinkedJavaScriptStringConstruction(node.k,node.op)
       && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
       && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedRustCheckedShift(node.k,node.op)) throw new TypeError('a linked expression operation is unsupported');
@@ -311,7 +313,11 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'math') {
       const rustArity = readRustPrimitiveBitwiseArity(node.op);
-      if(acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)){
+      if(acceptLinkedJavaScriptStringConstruction(node.k,node.op)){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1)throw new TypeError('a JavaScript string construction needs one complete Number column');
+        same(node.args[0].type,{kind:'array',element:{kind:'float'}},'string construction Number column type');
+        same(node.type,readJavaScriptStringConstructionForm(node.op)==='points'?{kind:'array',element:{kind:'float'}}:{kind:'string'},'string construction result type');
+      }else if(acceptLinkedJavaScriptStringUnitConstruction(node.k,node.op)){
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==1||node.args[0].k!=='array')throw new TypeError('a JavaScript UTF16 literal needs its explicit unit column');
         const units=node.args[0];
         same(units.type,{kind:'array',element:{kind:'float'}},'UTF16 literal unit column type');

@@ -189,6 +189,7 @@ fn validate_type_record(
                 kind, value["op"].as_str().unwrap_or_default(),
             )
             && !crate::translation::javascript_string_unit_rules::accept_linked_java_script_string_unit_construction(kind,value["op"].as_str().unwrap_or_default())
+            && !crate::translation::string_construction_rules::accept_linked_java_script_string_construction(kind,value["op"].as_str().unwrap_or_default())
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",

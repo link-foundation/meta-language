@@ -8,6 +8,9 @@ use super::{
 
 impl RocqEmitter<'_> {
     pub(super) fn expr(&mut self, e: &Expr) -> Result<String> {
+        if let Some(text) = crate::translation::formal_unit_strings::expression(self, e, 0)? {
+            return Ok(text);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&e.node, Node::Ctor { frozen: true, .. })
         {
@@ -294,10 +297,20 @@ impl RocqEmitter<'_> {
             Type::Nat | Type::Fixed { signed: false, .. } => "0%N".to_owned(),
             Type::Int | Type::Fixed { signed: true, .. } => "0%Z".to_owned(),
             Type::Bool => "false".to_owned(),
-            Type::String => "EmptyString".to_owned(),
+            Type::String => if self.utf16_strings {
+                "(@nil N)"
+            } else {
+                "EmptyString"
+            }
+            .to_owned(),
             Type::Float => "0%float".to_owned(),
             Type::Unit => "tt".to_owned(),
-            Type::Output => "(@nil string)".to_owned(),
+            Type::Output => if self.utf16_strings {
+                "(@nil (list N))"
+            } else {
+                "(@nil string)"
+            }
+            .to_owned(),
             Type::Array { element, .. } => format!("(@nil {})", self.ty(element)?),
             Type::Tuple { elements } => {
                 let mut parts = Vec::new();
@@ -432,6 +445,16 @@ impl RocqEmitter<'_> {
         left: &str,
         right: &str,
     ) -> Result<String> {
+        if self.utf16_strings && *domain == Type::String {
+            return Ok(
+                crate::translation::formal_string_unit_rules::render_formal_string_unit_comparison(
+                    "Rocq",
+                    op.name(),
+                    left,
+                    right,
+                ),
+            );
+        }
         let module = match domain {
             Type::Bool => "Bool",
             Type::String => "String",
@@ -527,6 +550,27 @@ impl RocqEmitter<'_> {
     }
 
     pub(super) fn text_of(&mut self, arg: &Expr, console: bool) -> Result<String> {
+        if !self.utf16_strings {
+            return self.scalar_text_of(arg, console);
+        }
+        if arg.ty == Type::String {
+            return self.expr(arg);
+        }
+        if arg.ty == Type::Unit {
+            return Ok(crate::translation::formal_unit_strings::literal(
+                "Rocq",
+                "undefined",
+            ));
+        }
+        let text = self.scalar_text_of(arg, console)?;
+        Ok(
+            crate::translation::formal_string_unit_rules::render_formal_string_units_from_scalar(
+                "Rocq", &text,
+            ),
+        )
+    }
+
+    fn scalar_text_of(&mut self, arg: &Expr, console: bool) -> Result<String> {
         let text = self.expr(arg)?;
         match &arg.ty {
             Type::String => Ok(text),
@@ -713,6 +757,11 @@ impl RocqEmitter<'_> {
         match effect {
             Effect::Print { expr, .. } => {
                 let expr = self.expr(expr)?;
+                let expr = if self.utf16_strings {
+                    crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq",&expr)
+                } else {
+                    expr
+                };
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
                 Ok(if aborts {
                     format!("ml_emit ({expr} :: nil)\n  ({rest})")
@@ -724,6 +773,12 @@ impl RocqEmitter<'_> {
                 let head = if aborts { "ml_emit" } else { "app" };
                 let expr = self.expr(expr)?;
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
+                if self.utf16_strings {
+                    let line=crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq","ml_line");
+                    return Ok(format!(
+                        "{head} (List.map (fun ml_line => {line}) (List.rev {expr}))\n  ({rest})"
+                    ));
+                }
                 Ok(format!("{head} (List.rev {expr})\n  ({rest})"))
             }
             Effect::Let { name, value, .. } => {
@@ -733,10 +788,12 @@ impl RocqEmitter<'_> {
             }
             Effect::Unwrap { .. } => {
                 let rest = self.build(effects, index + 1, assertion, theorems)?;
-                Ok(format!(
-                    "({})",
-                    self.arms(effect, &rest, "ml_m", "(nil, Some ml_m)")?
-                ))
+                let message = if self.utf16_strings {
+                    format!("(nil, Some {})",crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Rocq","ml_m"))
+                } else {
+                    "(nil, Some ml_m)".to_owned()
+                };
+                Ok(format!("({})", self.arms(effect, &rest, "ml_m", &message)?))
             }
             Effect::Assert { prop, .. } => {
                 *assertion += 1;

@@ -17,12 +17,23 @@ impl LeanEmitter<'_> {
         for (index, effect) in effects.iter().enumerate() {
             match effect {
                 Effect::Print { expr, .. } => {
-                    lines.push(format!("  IO.println {}", self.expr(expr, 1)?));
+                    let text = self.expr(expr, 1)?;
+                    let text = if self.utf16_strings {
+                        crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Lean",&text)
+                    } else {
+                        text
+                    };
+                    lines.push(format!("  IO.println {text}"));
                 }
                 Effect::Output { expr, .. } => {
+                    let text = self.expr(expr, 1)?;
+                    let line = if self.utf16_strings {
+                        crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Lean","ml_line")
+                    } else {
+                        "ml_line".to_owned()
+                    };
                     lines.push(format!(
-                        "  for ml_line in {}.reverse do IO.println ml_line",
-                        self.expr(expr, 1)?
+                        "  for ml_line in {text}.reverse do IO.println {line}"
                     ));
                 }
                 Effect::Let { name, value, .. } => {
@@ -38,8 +49,13 @@ impl LeanEmitter<'_> {
                     // The value of a step, or the source's abort: its message, uncaught, ends main.
                     let made = self.state.ctor_ref(data, &ctors[0], ".");
                     let aborted = self.state.ctor_ref(data, &ctors[1], ".");
+                    let message = if self.utf16_strings {
+                        crate::translation::formal_string_unit_rules::render_formal_string_scalar_display("Lean","ml_m")
+                    } else {
+                        "ml_m".to_owned()
+                    };
                     lines.push(format!(
-                        "  let {name} ← (match {} with\n    | {made} _ ml_v => pure ml_v\n    | {aborted} _ ml_m => throw (IO.userError ml_m))",
+                        "  let {name} ← (match {} with\n    | {made} _ ml_v => pure ml_v\n    | {aborted} _ ml_m => throw (IO.userError {message}))",
                         self.expr(pair, 1)?
                     ));
                 }

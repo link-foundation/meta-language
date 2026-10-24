@@ -39,11 +39,13 @@ mod math;
 mod optional_values;
 mod records;
 mod types;
+mod unit_strings;
 use self::helpers::HELPERS;
 
 const KEYWORDS: &[&str] = &[
     "MLStringNumber",
     "MLBigIntegerConversion",
+    "MLUtf16Text",
     "abbrev",
     "at",
     "attribute",
@@ -191,6 +193,7 @@ fn generated(name: &str) -> Vec<String> {
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
     let program = &*thread_output_for_target(source, "Lean")?;
+    let utf16_strings = super::formal_unit_strings::requires(program);
     let state = EmitState::new(
         program,
         Language::Lean,
@@ -206,7 +209,12 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
     LeanEmitter {
         program,
         state,
-        helpers: HashSet::new(),
+        helpers: if utf16_strings {
+            HashSet::from(["utf16Text"])
+        } else {
+            HashSet::new()
+        },
+        utf16_strings,
         successors: HashMap::new(),
         uses_number: Dependence::numbers(program),
         uses_partial: Dependence::partial(program),
@@ -215,6 +223,7 @@ pub fn emit_lean(source: &Program) -> Result<Emitted> {
 }
 
 struct LeanEmitter<'p> {
+    utf16_strings: bool,
     program: &'p Program,
     state: EmitState<'p>,
     helpers: HashSet<&'static str>,
@@ -227,6 +236,9 @@ struct LeanEmitter<'p> {
 
 impl LeanEmitter<'_> {
     fn file(mut self) -> Result<Emitted> {
+        if self.utf16_strings {
+            self.state.encode("utf16-formal-strings","source strings are ordered UTF-16 code-unit columns represented by natural numbers 0..65535; generated complete shared operations retain isolated units, and scalar display alone replaces unpaired surrogates");
+        }
         let mut blocks = Vec::new();
         let mut open: Vec<String> = Vec::new();
         let groups = mutual_groups(self.program);
@@ -273,6 +285,10 @@ impl LeanEmitter<'_> {
         }
         if self.helpers.contains("bigIntegerConversion") {
             lines.push(include_str!("runtime/big-integer-conversion.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("utf16Text") {
+            lines.push(include_str!("runtime/utf16-text.lean").to_owned());
             lines.push(String::new());
         }
         for block in blocks {
@@ -526,6 +542,9 @@ impl LeanEmitter<'_> {
     }
 
     fn expr(&mut self, e: &Expr, depth: usize) -> Result<String> {
+        if let Some(text) = super::formal_unit_strings::expression(self, e, depth)? {
+            return Ok(text);
+        }
         if self.program.source_language == crate::translation::Language::JavaScript
             && matches!(&e.node, Node::Ctor { frozen: true, .. })
         {
@@ -775,29 +794,6 @@ impl LeanEmitter<'_> {
             parts.push(self.expr(arg, depth)?);
         }
         Ok(format!("({})", parts.join(" ")))
-    }
-
-    fn text_of(&mut self, arg: &Expr, depth: usize, console: bool) -> Result<String> {
-        if matches!(arg.ty, Type::Data { .. } | Type::Unit) {
-            return Err(unsupported(
-                "output of structured values",
-                &format!("a {} value has no portable textual form", arg.ty.kind()),
-                arg.span,
-            ));
-        }
-        if arg.ty.is_float() {
-            self.helpers.insert("jsNumber");
-            if console {
-                self.helpers.insert("jsConsole");
-            }
-            let function = if console {
-                "ml_js_console"
-            } else {
-                "ml_js_number"
-            };
-            return Ok(format!("({function} {})", self.expr(arg, depth)?));
-        }
-        Ok(format!("(toString {})", self.expr(arg, depth)?))
     }
 
     fn binary(&mut self, e: &Expr, depth: usize) -> Result<String> {

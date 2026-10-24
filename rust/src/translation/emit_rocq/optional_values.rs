@@ -50,6 +50,12 @@ impl RocqEmitter<'_> {
         if arg.ty.is_float() {
             self.floats();
         }
+        if self.utf16_strings && arg.ty == Type::String {
+            return Ok(crate::translation::formal_unit_strings::truth(
+                "Rocq",
+                &self.expr(arg)?,
+            ));
+        }
         Ok(rules::render_optional_primitive_truth(
             "Rocq",
             arg.ty.kind(),
