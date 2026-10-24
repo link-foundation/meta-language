@@ -85,3 +85,12 @@ fn continuous_optional_chains_keep_scoped_suffixes_lazy_operands_and_graphs() {
         meta_language::create_java_script_optional_chain_program_links,
     );
 }
+
+#[test]
+fn ordinary_nullish_fields_keep_actual_errors_and_optional_chain_boundaries() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/nullish-fields.mjs",
+        "ordinary nullish fields",
+        meta_language::create_java_script_nullish_field_program_links,
+    );
+}

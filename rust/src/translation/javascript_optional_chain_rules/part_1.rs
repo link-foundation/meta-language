@@ -92,6 +92,20 @@ pub fn read_java_script_optional_chain_inference_form(kind: &str, element: &str)
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_optional_chain_presence_form(kind: &str) -> String {
+    if ((((((kind == "record") || (kind == "array")) || (kind == "tuple")) || (kind == "map"))
+        || (kind == "set"))
+        || (kind == "function"))
+        || (kind == "data")
+    {
+        String::from("truthy")
+    } else {
+        String::from("tag")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_optional_chain_result_form(kind: &str) -> String {
     self::read_java_script_optional_call_result_form(kind)
 }

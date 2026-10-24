@@ -16,6 +16,50 @@ fn absent(ty: Type) -> Expr {
     )
 }
 impl Checker {
+    pub(super) fn javascript_optional_presence(
+        receiver: Expr,
+        present: &Type,
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        if rules::read_java_script_optional_chain_presence_form(present.kind()) == "truthy" {
+            return Ok(Expr::new(
+                Node::Truthy {
+                    arg: Box::new(receiver),
+                },
+                BOOL,
+            ));
+        }
+        let tag = crate::translation::frontend_rules::read_type_query_result(present.kind());
+        if tag.is_empty() {
+            return Err(unsupported(
+                "optional chain receiver",
+                "the present source value needs its explicit nullish observation protocol",
+                span,
+            ));
+        }
+        let presence = Expr::new(
+            Node::OptionalTypeOf {
+                arg: Box::new(receiver),
+                present: tag.clone(),
+            },
+            STRING,
+        );
+        let literal = super::text_lit(STRING, tag);
+        let condition = Expr::new(
+            binary_node(
+                BinaryOp::Eq,
+                Box::new(presence),
+                Box::new(literal),
+                Some(STRING),
+                None,
+                None,
+                None,
+            ),
+            BOOL,
+        );
+        Ok(condition)
+    }
+
     pub(super) fn javascript_optional_chain(
         &mut self,
         args: &[SArrayItem],
@@ -109,15 +153,6 @@ impl Checker {
             if form == "direct" {
                 tail
             } else {
-                let tag =
-                    crate::translation::frontend_rules::read_type_query_result(present.kind());
-                if tag.is_empty() {
-                    return Err(unsupported(
-                        "optional chain receiver",
-                        "the present source value needs its explicit nullish observation protocol",
-                        span,
-                    ));
-                }
                 let outer = option(result.clone(), "undefined");
                 let result_form = rules::read_java_script_optional_chain_result_form(result.kind());
                 let success = if result_form == "undefined" {
@@ -130,26 +165,7 @@ impl Checker {
                         outer.clone(),
                     )
                 };
-                let presence = Expr::new(
-                    Node::OptionalTypeOf {
-                        arg: Box::new(receiver),
-                        present: tag.clone(),
-                    },
-                    STRING,
-                );
-                let literal = super::text_lit(STRING, tag);
-                let condition = Expr::new(
-                    binary_node(
-                        BinaryOp::Eq,
-                        Box::new(presence),
-                        Box::new(literal),
-                        Some(STRING),
-                        None,
-                        None,
-                        None,
-                    ),
-                    BOOL,
-                );
+                let condition = Self::javascript_optional_presence(receiver, &present, span)?;
                 let branch = Expr::new(
                     Node::If {
                         cond: Box::new(condition),

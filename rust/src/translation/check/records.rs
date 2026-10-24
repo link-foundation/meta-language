@@ -215,10 +215,16 @@ impl Checker {
         field: &str,
         env: &Env,
         path: &[String],
+        expected: Option<&Type>,
         span: Option<Span>,
     ) -> Result<Expr> {
         let value = self.expr(object, env, path, None, false)?;
         let value = Self::reference_value(value);
+        if let Some(field) =
+            self.javascript_nullish_field((&value, object), field, env, path, expected, span)?
+        {
+            return Ok(field);
+        }
         if let Some(record) = Self::record_field(value.clone(), field, span)? {
             return Ok(record);
         }

@@ -182,7 +182,7 @@ impl Checker {
             SNode::DotCtor { .. } => self.application(node, &[], env, path, expected, span),
             SNode::App { func, args } => self.application(func, args, env, path, expected, span),
             SNode::Field { field, object } => {
-                self.record_source_field(object, field, env, path, span)
+                self.record_source_field(object, field, env, path, expected, span)
             }
             SNode::TypeOf { arg } => self.type_query(arg, env, path, span),
             SNode::ArrayIsArray { arg } => {

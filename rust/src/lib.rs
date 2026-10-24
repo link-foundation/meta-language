@@ -109,6 +109,7 @@ pub use translation::big_integer_bitwise_program::create_big_integer_bitwise_pro
 pub use translation::callable_source_program::create_callable_source_program_links;
 pub use translation::fixed_integer_cast_program::create_fixed_integer_cast_program_links;
 pub use translation::javascript_identifier_program::create_java_script_identifier_program_links;
+pub use translation::javascript_nullish_field_program::create_java_script_nullish_field_program_links;
 pub use translation::javascript_optional_call_program::create_java_script_optional_call_program_links;
 pub use translation::javascript_optional_chain_program::create_java_script_optional_chain_program_links;
 pub use translation::javascript_property_call_program::create_java_script_property_call_program_links;

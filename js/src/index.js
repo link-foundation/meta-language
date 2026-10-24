@@ -72,6 +72,7 @@ export { createRustShiftProgramLinks } from './rust-shift-program.js';
 export { createRustRecordProgramLinks } from './rust-record-program.js';
 export { createJavaScriptOptionalCallProgramLinks } from './javascript-optional-call-program.js';
 export { createJavaScriptOptionalChainProgramLinks } from './javascript-optional-chain-program.js';
+export { createJavaScriptNullishFieldProgramLinks } from './javascript-nullish-field-program.js';
 export { createUnsignedLinkIdentityProgramLinks } from './unsigned-link-identity-program.js';
 export { createJavaScriptPropertyCallProgramLinks } from './javascript-property-call-program.js';
 export { createLinkAllocationProgramLinks } from './link-allocation-program.js';

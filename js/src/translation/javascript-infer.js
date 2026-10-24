@@ -1,4 +1,5 @@
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
+import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call-rules.js';
 // Types of JavaScript functions written without JSDoc. A parameter or result
@@ -646,6 +647,9 @@ class Inference {
 
   fieldStep({ object, field, result, where }) {
     const type = this.resolve(object);
+    const form=readJavaScriptNullishFieldForm(type.kind,type.element?this.resolve(type.element).kind:'');
+    if(form==='absent')return true;
+    if(form==='guarded'){this.fields.push({object:type.element,field,result,where});return true;}
     if ((type.kind === 'array' || type.kind === 'string' || type.kind === 'tuple') && field === 'length') {
       this.unify(result, FLOAT, where);
       return true;

@@ -65,6 +65,8 @@ pub(crate) mod javascript_comparison_rules;
 pub(crate) mod javascript_identifier_program;
 pub(crate) mod javascript_identifier_rules;
 mod javascript_line_terminator_rules;
+pub mod javascript_nullish_field_program;
+pub(crate) mod javascript_nullish_field_rules;
 pub(crate) mod javascript_optional_call_program;
 pub(crate) mod javascript_optional_call_rules;
 pub mod javascript_optional_chain_program;

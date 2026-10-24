@@ -6675,3 +6675,32 @@ access on a nullish returned value still needs its actual runtime TypeError,
 separately from the skipped-chain branch. General this/proxy/accessor protocols,
 dynamic keys/callables and argument protocols, whole-program integration and
 all preceding requirements remain obligations; this draft is not completion.
+
+
+### Ordinary nullish property access draft
+
+A nullable ordinary field read first captures its actual receiver, then reads
+its field in the present branch or raises its source TypeError in the absent
+branch. It never treats that failure as optional-chain skipping. The continuation
+of a present optional call can therefore fail on a returned null/undefined,
+while an absent callee skips that same continuation. Parentheses still finish
+the inner optional chain before a subsequent ordinary read. Present fields
+retain their own nullish, false, zero and empty-text values.
+
+Source construction uses the existing polymorphic exception operation with the
+actual message, TypeError class and message-property presence. Shared definitions
+select the receiver form and diagnostic text; native/JavaScript adapters supply
+actual type and source operands. Present-value field constraints stay in the
+ordinary deferred inference queue. Receiver captures preserve reference handles
+and are evaluated once. Object/function presence uses the truthiness guaranteed
+for those represented types; primitive presence uses its explicit known tag.
+The typeof-object tag alone is never a nullish-presence check.
+
+The TypeError follows [RequireObjectCoercible](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-requireobjectcoercible).
+Its diagnostic spelling uses the property-load template in pinned
+[Node 22.15 V8](https://raw.githubusercontent.com/nodejs/node/v22.15.0/deps/v8/src/common/message-template.h)
+and [Node 24 V8](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/common/message-template.h),
+with the declared Node 22/24 assertion ranges. Other engine wording is uncovered.
+Future source/native/codec controls are unexecuted. Nullable methods, computed
+keys and protocols, unknown fields/prototypes, proxies/accessors, complete
+abrupt/unreachable inference and every earlier requirement remain required.

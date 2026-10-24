@@ -1,4 +1,5 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
+import {checkJavaScriptNullishField} from './javascript-nullish-fields.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
@@ -615,6 +616,8 @@ class Checker {
         return this.application(node.k === 'app' ? node.fn : node, node.args ?? [], env, path, expected, node.span);
       case 'field': {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
+        const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
+        if(guarded)return guarded;
         if (value.type.kind === 'record') {
           const field = value.type.fields.find((field) => field.name === node.field);
           if (!field) throw typeError(`record has no field ${node.field}`, node.span);

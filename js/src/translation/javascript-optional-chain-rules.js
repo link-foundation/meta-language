@@ -13,6 +13,13 @@ export function readJavaScriptOptionalChainForm(kind,element){
 }
 /** @param {string} kind @param {string} element @returns {string} */
 export function readJavaScriptOptionalChainInferenceForm(kind,element){return kind==='var'?'unknown':readJavaScriptOptionalChainForm(kind,element);}
+/** Every represented object/function is truthy, including an empty container.
+ * Primitive false/zero/NaN/empty text require a tag test instead. In particular
+ * typeof null is object and must never pass an object receiver's guard.
+ * @param {string} kind @returns {string} */
+export function readJavaScriptOptionalChainPresenceForm(kind){
+ return kind==='record'||kind==='array'||kind==='tuple'||kind==='map'||kind==='set'||kind==='function'||kind==='data'?'truthy':'tag';
+}
 /** @param {string} kind @returns {string} */
 export function readJavaScriptOptionalChainResultForm(kind){return readJavaScriptOptionalCallResultForm(kind);}
 /** @param {number} argumentsCount @param {boolean} spread @param {string} name @returns {boolean} */

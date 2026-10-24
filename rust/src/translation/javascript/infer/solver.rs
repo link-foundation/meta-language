@@ -152,6 +152,9 @@ impl Inference {
                     waiting.push(constraint);
                 }
             }
+            // Field refinement appends its actual present-value constraint,
+            // just as the JavaScript snapshot iteration retains appended rows.
+            waiting.extend(std::mem::take(&mut self.fields));
             self.fields = waiting;
             progress |= self.solve_methods()?;
             progress |= self.solve_includes(false)?;

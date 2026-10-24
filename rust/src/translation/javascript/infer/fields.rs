@@ -3,6 +3,40 @@ use super::{FLOAT, FieldOf, Inference, Result, Term, Type};
 
 impl Inference {
     pub(super) fn field_step(&mut self, constraint: &FieldOf) -> Result<bool> {
+        let resolved = self.resolve(&constraint.object);
+        let kind = match &resolved {
+            Term::Known(ty) => ty.kind(),
+            Term::Option { .. } => "option",
+            _ => "value",
+        };
+        let element = match &resolved {
+            Term::Option { element, .. }
+                if matches!(self.resolve(element), Term::Known(Type::Unit)) =>
+            {
+                "unit"
+            }
+            _ => "",
+        };
+        let form =
+            crate::translation::javascript_nullish_field_rules::read_java_script_nullish_field_form(
+                kind, element,
+            );
+        if form == "absent" {
+            return Ok(true);
+        }
+        if form == "guarded" {
+            let Term::Option { element, .. } = resolved else {
+                unreachable!("the shared field form retains its actual optional term")
+            };
+            let next = FieldOf {
+                object: *element,
+                field: constraint.field.clone(),
+                result: constraint.result.clone(),
+                place: constraint.place,
+            };
+            self.fields.push(next);
+            return Ok(true);
+        }
         if let Term::Record(owner) = self.resolve(&constraint.object) {
             return self.record_field_constraint(
                 &owner,

@@ -5,8 +5,15 @@ import {coerce,bindLocal} from './check.js';
 import {readTypeQueryResult} from './frontend-rules.js';
 import {mergeOptionalAbsence} from './structured-type-rules.js';
 import {acceptJavaScriptOptionalChainOperands,readJavaScriptOptionalChainField,
- readJavaScriptOptionalChainForm,readJavaScriptOptionalChainResultForm} from './javascript-optional-chain-rules.js';
+ readJavaScriptOptionalChainForm,readJavaScriptOptionalChainResultForm,
+ readJavaScriptOptionalChainPresenceForm} from './javascript-optional-chain-rules.js';
 const absent=type=>({k:'none',absence:'undefined',type});
+export function constructJavaScriptOptionalPresence(receiver,present,span){
+ if(readJavaScriptOptionalChainPresenceForm(present.kind)==='truthy')return {k:'truthy',arg:receiver,type:BOOL};
+ const tag=readTypeQueryResult(present.kind);
+ if(!tag)throw unsupported('optional chain receiver','the present source value needs its explicit nullish observation protocol',span);
+ return {k:'binary',op:'eq',left:{k:'optionalTypeOf',arg:receiver,present:tag,type:STRING},right:{k:'lit',value:tag,type:STRING},domain:STRING,type:BOOL};
+}
 export function checkJavaScriptOptionalChain(checker,node,env,path){
  const scopeSource=node.args[0]?.value;
  if(checker.language!=='JavaScript'||scopeSource?.k!=='let'||scopeSource.type!==undefined||!acceptJavaScriptOptionalChainOperands(node.args.length,node.args.some(item=>item.spread),scopeSource.name))throw typeError('an optional chain needs its actual receiver, lexical binding and complete continuation',node.span);
@@ -25,11 +32,9 @@ export function checkJavaScriptOptionalChain(checker,node,env,path){
   const tail={k:'let',name:scopeSource.name,value:actual,body:continuation,type:continuation.type};
   if(form==='direct')body=tail;
   else{
-   const tag=readTypeQueryResult(present.kind);
-   if(!tag)throw unsupported('optional chain receiver','the present source value needs its explicit nullish observation protocol',node.span);
    const outer=option(tail.type,'undefined'),resultForm=readJavaScriptOptionalChainResultForm(tail.type.kind);
    const success=resultForm==='undefined'?coerce(tail,outer,checker.language,node.span):{k:'some',value:tail,type:outer};
-   const condition={k:'binary',op:'eq',left:{k:'optionalTypeOf',arg:receiver,present:tag,type:STRING},right:{k:'lit',value:tag,type:STRING},domain:STRING,type:BOOL};
+   const condition=constructJavaScriptOptionalPresence(receiver,present,node.span);
    body={k:'if',cond:condition,then:success,else:absent(outer),type:outer};
    if(resultForm==='flatten')body={k:'flattenOption',value:body,type:option(tail.type.element,mergeOptionalAbsence(tail.type.absence,'undefined'))};
   }
