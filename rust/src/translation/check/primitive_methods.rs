@@ -193,6 +193,18 @@ impl Checker {
                 }
             }
         }
+        self.materialize_primitive_method(object, operation, values, path, span)
+    }
+
+    pub(super) fn materialize_primitive_method(
+        &mut self,
+        object: Expr,
+        operation: &str,
+        values: Vec<Option<Expr>>,
+        path: &[String],
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let receiver = object.ty.kind();
         let lowering = rules::read_primitive_method_lowering_form(receiver, operation);
         if lowering == "relative-element-template" {
             let Type::Array { element, .. } = &object.ty else {

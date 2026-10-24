@@ -1032,3 +1032,11 @@ a mechanically copied complete declaration with pinned source context and Links
 provenance, provisionally qualified until full equivalence admission. No broad
 renderer dependency or recursive runtime prelude is imported. Future controls
 remain unexecuted; generic coercion/protocol/termination obligations remain.
+
+Source String unit calls now share operation/result decisions and actual operand
+transport. Checker adapters capture all raw operands, then normalize primitive
+Number/text/undefined domains into the existing method materializer and complete
+character templates. Complete prior assertion files are retained with hashes
+while same-input controls correct obsolete refusals. No control executes before
+the full draft. Changing source lowering also requires final full source-product
+regeneration and history/ledger reconciliation after the complete draft.

@@ -1,6 +1,7 @@
 // Source property spelling never proves that a receiver owns a builtin method.
 /** @param {string} operation @returns {string} */
 export function readJavaScriptSourcePropertyOperationKind(operation) {
+  if(readJavaScriptStringUnitCallForm(operation)!=='')return 'unit';
   if(operation==='slice'||operation==='substring'||operation==='substr')return 'range';
   if(operation==='indexOf'||operation==='lastIndexOf')return 'index';
   if (operation === 'includes' || operation === 'startsWith' || operation === 'endsWith') return 'test';
@@ -55,3 +56,17 @@ export function planJavaScriptStringSearchWindow(operation){return operation==='
 
 /** @param {string} operation @returns {string} */
 export function readJavaScriptStringSearchResultKind(operation){return operation==='indexOf'||operation==='lastIndexOf'?'float':'bool';}
+
+/** Source unit methods normalize primitives after every raw argument evaluation.
+ * @param {string} operation @returns {string} */
+export function readJavaScriptStringUnitCallForm(operation){
+ if(operation==='split')return 'split';
+ return operation==='charCodeAt'||operation==='charAt'||operation==='at'||operation==='codePointAt'?'position':'';
+}
+/** @param {string} operation @returns {string} */
+export function readJavaScriptStringUnitCallResultForm(operation){
+ if(operation==='split')return 'array-string';
+ if(operation==='charCodeAt')return 'float';
+ if(operation==='codePointAt')return 'optional-float';
+ return operation==='at'?'optional-string':'string';
+}

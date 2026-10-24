@@ -1,3 +1,4 @@
+import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call-rules.js';
 // Types of JavaScript functions written without JSDoc. A parameter or result
 // without a declared type gets a type variable; the bodies, the calls and the
 // top-level statements constrain the variables by unification, and each
@@ -1192,6 +1193,12 @@ class Inference {
     }
     if (receiver.kind === 'string') {
       const selected=readJavaScriptSourcePropertyOperationKind(op);
+      if(selected==='unit'){
+        const form=readJavaScriptStringUnitCallResultForm(op);
+        const output=form==='array-string'?{kind:'array',element:STRING}:form==='float'?FLOAT
+          :form==='optional-float'?{kind:'option',element:FLOAT,absence:'undefined'}:form==='optional-string'?{kind:'option',element:STRING,absence:'undefined'}:STRING;
+        this.unify(result,output,where);return true;
+      }
       if(selected==='range'){this.unify(result,STRING,where);return true;}
       if(selected==='index'){this.unify(result,FLOAT,where);return true;}
       if(selected==='test'){if(node&&args.length===1&&this.resolve(args[0]).kind==='string')this.propertyMethods.set(node,'test');this.unify(result,BOOL,where);return true;}

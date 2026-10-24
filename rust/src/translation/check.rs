@@ -65,6 +65,7 @@ mod string_code_unit_template;
 mod string_construction;
 mod string_ranges;
 mod string_search;
+mod string_unit_calls;
 mod strings;
 mod tuple_patterns;
 mod type_queries;

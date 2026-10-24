@@ -6455,3 +6455,28 @@ Future controls declare limits, empty/leading/trailing fields, overlap, surrogat
 halves, ownership and name hygiene, both codecs and all targets. None executed.
 Raw primitive argument coercions/effects, RegExp and Symbol.split protocols,
 generic receivers, formal termination and every preceding requirement remain.
+
+
+### Primitive source string unit calls draft
+
+Actual resolved String split/charAt/charCodeAt/codePointAt/at calls capture their
+receiver and every raw argument once, in source order. Ignored extras preserve
+effects before primitive conversions. Number positions use the shared ToNumber
+transport; omitted and undefined split limits select the full unsigned range.
+Split preserves missing versus text separators, including optional absence,
+while Number/Boolean/BigInt/null text separators use shared primitive ToString.
+The limit conversion precedes separator text conversion. Source inference keeps
+actual argument domains instead of forcing primitive positions to Number types.
+Record-owned methods continue through their own callable field. Generic objects,
+Symbols, protocols and dynamic unions remain required.
+
+Both checker adapters reuse the same existing checked method materializer and
+character templates. Complete source decisions generate native code and public
+editable definitions. Future controls retain original source effects, values,
+exception fields, codecs and all emissions. Complete preceding assertion files
+are retained with hashes in Links; obsolete primitive-position/extra-argument
+refusals become same-input source, translated and native value controls. The
+original BigInt position becomes a runtime TypeError control. These corrections
+follow [String unit methods](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-string.prototype.charat)
+under explicit Node22.15/24 and Rust1.90–1.99 future control ranges. No code
+controls executed. Broader source domains and every earlier requirement remain.

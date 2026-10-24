@@ -533,6 +533,30 @@ impl Inference {
         }
         if kind == "string"
             && property_rules::read_java_script_source_property_operation_kind(&method.operation)
+                == "unit"
+        {
+            let result = match property_rules::read_java_script_string_unit_call_result_form(
+                &method.operation,
+            )
+            .as_str()
+            {
+                "array-string" => Term::Array(Box::new(Term::Known(STRING))),
+                "float" => Term::Known(FLOAT),
+                "optional-float" => self.declared(Some(&Type::Option {
+                    element: Box::new(FLOAT),
+                    absence: "undefined".to_owned(),
+                })),
+                "optional-string" => self.declared(Some(&Type::Option {
+                    element: Box::new(STRING),
+                    absence: "undefined".to_owned(),
+                })),
+                _ => Term::Known(STRING),
+            };
+            self.unify(&method.result, &result, method.place)?;
+            return Ok(true);
+        }
+        if kind == "string"
+            && property_rules::read_java_script_source_property_operation_kind(&method.operation)
                 == "range"
         {
             self.unify(&method.result, &Term::Known(STRING), method.place)?;

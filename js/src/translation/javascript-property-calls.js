@@ -1,3 +1,4 @@
+import{checkJavaScriptStringUnitCall}from'./javascript-string-unit-calls.js';
 // Type/child transport into the existing checked string or callable algebra.
 import{unsupported}from'./diagnostics.js';
 import{checkJavaScriptStringRange}from'./javascript-string-ranges.js';
@@ -11,6 +12,7 @@ export function checkJavaScriptSourcePropertyCall(checker,node,env,path){
  const receiver=checker.expr(node.object,env,path,undefined),object=checker.referenceValue(receiver);
  const form=readJavaScriptResolvedPropertyCallForm(object.type.kind,node.op);
  if(form==='record'||form==='')return null;
+ if(form==='unit')return checkJavaScriptStringUnitCall(checker,node,object,env,path);
  if(form==='range')return checkJavaScriptStringRange(checker,node,object,env,path);
  if(form==='test'||form==='index')return checkJavaScriptStringSearch(checker,node,object,env,path);
  if(form==='map')return checkJavaScriptStringMapCall(checker,node,object,env,path);

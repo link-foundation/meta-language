@@ -119,23 +119,28 @@ pub mod ml_array {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_source_property_operation_kind(operation: &str) -> String {
-    if ((operation == "slice") || (operation == "substring")) || (operation == "substr") {
-        String::from("range")
-    } else if (operation == "indexOf") || (operation == "lastIndexOf") {
-        String::from("index")
-    } else if ((operation == "includes") || (operation == "startsWith"))
-        || (operation == "endsWith")
-    {
-        String::from("test")
-    } else if ((((operation == "trim") || (operation == "trimStart")) || (operation == "trimEnd"))
-        || (operation == "toLowerCase"))
-        || (operation == "toUpperCase")
-    {
-        String::from("map")
-    } else if operation == "toString" {
-        String::from("text")
+    if (self::read_java_script_string_unit_call_form(operation)) == "" {
+        if ((operation == "slice") || (operation == "substring")) || (operation == "substr") {
+            String::from("range")
+        } else if (operation == "indexOf") || (operation == "lastIndexOf") {
+            String::from("index")
+        } else if ((operation == "includes") || (operation == "startsWith"))
+            || (operation == "endsWith")
+        {
+            String::from("test")
+        } else if ((((operation == "trim") || (operation == "trimStart"))
+            || (operation == "trimEnd"))
+            || (operation == "toLowerCase"))
+            || (operation == "toUpperCase")
+        {
+            String::from("map")
+        } else if operation == "toString" {
+            String::from("text")
+        } else {
+            String::new()
+        }
     } else {
-        String::new()
+        String::from("unit")
     }
 }
 
@@ -287,5 +292,35 @@ pub fn read_java_script_string_search_result_kind(operation: &str) -> String {
         String::from("float")
     } else {
         String::from("bool")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_string_unit_call_form(operation: &str) -> String {
+    if operation == "split" {
+        String::from("split")
+    } else if (((operation == "charCodeAt") || (operation == "charAt")) || (operation == "at"))
+        || (operation == "codePointAt")
+    {
+        String::from("position")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_string_unit_call_result_form(operation: &str) -> String {
+    if operation == "split" {
+        String::from("array-string")
+    } else if operation == "charCodeAt" {
+        String::from("float")
+    } else if operation == "codePointAt" {
+        String::from("optional-float")
+    } else if operation == "at" {
+        String::from("optional-string")
+    } else {
+        String::from("string")
     }
 }

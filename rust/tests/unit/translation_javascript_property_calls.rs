@@ -58,3 +58,12 @@ fn optional_and_boolean_source_definitions_keep_all_codecs_and_emissions() {
         }
     }
 }
+
+#[test]
+fn primitive_string_unit_calls_keep_actual_arity_coercions_absence_and_argument_order() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/string-unit-calls.mjs",
+        "JavaScript primitive string unit calls",
+        create_java_script_property_call_program_links,
+    );
+}

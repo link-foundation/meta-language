@@ -1035,6 +1035,11 @@ class Checker {
           type, this.language, argument.span ?? node.span));
       }
     }
+    return this.materializePrimitiveMethod(node, object, values, path);
+  }
+
+  materializePrimitiveMethod(node, object, values, path) {
+    const receiver = object.type.kind;
     const lowering = readPrimitiveMethodLoweringForm(receiver, node.op);
     if (lowering === 'relative-element-template') {
       const result = { kind: 'option', element: object.type.element, absence: 'undefined' };
