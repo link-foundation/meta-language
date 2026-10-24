@@ -158,6 +158,7 @@ impl JavaScriptParser {
                     record_projection: None,
                     ty: None,
                     prototype_definition,
+                    property_order: None,
                 },
                 self.to_here(&start),
             ));

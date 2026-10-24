@@ -237,6 +237,7 @@ impl Checker {
             fields,
             open: false,
             reference: false,
+            ordered: false,
         };
         let key_name = key_value
             .as_ref()
@@ -435,7 +436,13 @@ impl Checker {
                 value: key,
             });
         }
-        let record = Expr::new(Node::Record { entries }, captured_type);
+        let record = Expr::new(
+            Node::Record {
+                entries,
+                order: None,
+            },
+            captured_type,
+        );
         Ok(Some(Expr::new(
             Node::Let {
                 name: capture,

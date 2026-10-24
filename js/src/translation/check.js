@@ -82,7 +82,7 @@ import { acceptTupleIndex, readNumberDisplayRefusal, readScalarCellOperation, re
 import { checkRustScalarLoopProof } from './rust-scalar-loops.js';
 import { acceptOptionalAbsence, mergeOptionalAbsence } from './structured-type-rules.js';
 import { acceptOptionalLiteralAbsence, acceptOptionalPrimitiveKind, readOptionalLogicalOperation, readOptionalComparisonOperation, readOptionalBooleanOperation, readOptionalCoercionOperation, readOptionalFieldOperation, readOptionalNumberOperation, requireOptionalCoalescing, requireOptionalFlattening } from './optional-value-rules.js';
-import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordMethodError } from './record-value-rules.js';
+import { readRecordValueOrder, readRecordProjectionError, readRecordFieldPosition, readRecordFieldOrder, readRecordFieldInsertionOrder, readRecordMethodError } from './record-value-rules.js';
 import { readPrimitiveCopySliceForm, readPrimitiveMethodMinimumArguments, readPrimitiveMethodMaximumArguments,
   readPrimitiveMethodArgumentCount, readPrimitiveMethodCheckedArgumentKind, readPrimitiveMethodDefaultForm,
   readPrimitiveMethodDefaultValue, readPrimitiveMethodCheckedResultForm, readPrimitiveMethodArgumentObligation,
@@ -358,7 +358,10 @@ class Checker {
     if (type.kind === 'option' || type.kind === 'set' || type.kind === 'cell') return { ...type, element: this.resolveType(type.element, path, span) };
     if (type.kind === 'tuple') return { ...type, elements: type.elements.map((element) => this.resolveType(element, path, span)) };
     if (type.kind === 'union') return { ...type, alternatives: type.alternatives.map(alternative => this.resolveType(alternative, path, span)) };
-    if (type.kind === 'record') return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+    if (type.kind === 'record') {
+      if(type.ordered!==undefined&&typeof type.ordered!=='boolean')throw typeError('record ordered facet must be a boolean',span);
+      return { ...type, fields: type.fields.map((field) => ({ ...field, type: this.resolveType(field.type, path, span) })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0) };
+    }
     if (type.kind === 'map') return { ...type, key: this.resolveType(type.key, path, span), value: this.resolveType(type.value, path, span) };
     if (type.kind === 'function') return { ...type, params: type.params.map((param) => this.resolveType(param.type ?? param, path, span)), ret: this.resolveType(type.ret, path, span) };
     if (type.kind !== 'named') return type;
@@ -975,6 +978,7 @@ class Checker {
    * ever mutated.
    */
   recordLiteral(node, env, path, expected) {
+    if(!expected&&node.type?.kind==='record'&&node.type.ordered===true)expected=this.resolveType(node.type,path,node.span);
     const entries = [];
     const bindings = [];
     const units = name => Array.from({ length: name.length }, (_, index) => name.charCodeAt(index));
@@ -995,14 +999,18 @@ class Checker {
         const value = this.expr(entry.value, env, path, want);
         entries.push({ name: entry.name, value });
       }
-      return { k: 'record', entries, type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })) } };
+      const ordered=node.propertyOrder!==undefined;
+      if(node.type?.kind==='record'&&Boolean(node.type.ordered)!==ordered)throw typeError(node.type.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
+      if(expected?.kind==='record'&&Boolean(expected.ordered)!==ordered)throw typeError(expected.ordered?'an ordered record projection needs its actual own-field order':'a structural record projection cannot contain an own-field order',node.span);
+      const order=ordered?coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span):null;
+      return { k: 'record', entries, ...(ordered?{order}:{}), type: { kind: 'record', fields: entries.map(entry => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}) } };
     }
     const evaluationOrder = readRecordValueOrder(node.entries.length, false);
     if (evaluationOrder[0] < 0) throw typeError('record entries need an exact ordered input length', node.span);
     for (const index of evaluationOrder) {
       const entry = node.entries[index];
       if (entry.spread) {
-        const value = this.expr(entry.value, env, path, undefined);
+        const value = this.referenceValue(this.expr(entry.value, env, path, undefined));
         if (value.type.kind !== 'record') throw typeError('record spread needs a record value', node.span);
         const name = this.freshName('ml_spread');
         bindings.push({ name, value });
@@ -1021,8 +1029,18 @@ class Checker {
     const fieldOrder = readRecordFieldOrder(entries.map(entry => units(entry.name)));
     if (fieldOrder[0] < 0) throw typeError('record fields contain an invalid UTF16 name', node.span);
     const selected = fieldOrder.map(index => entries[index]);
-    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })) };
-    let body = { k: 'record', entries: selected, type };
+    const ordered=node.propertyOrder!==undefined||expected?.ordered===true;
+    let order;
+    if(node.propertyOrder!==undefined)order=coerce(this.referenceValue(this.expr(node.propertyOrder,env,path,array(FLOAT))),array(FLOAT),this.language,node.span);
+    else if(ordered){
+      if(node.entries.some(entry=>entry.spread))throw unsupported('ordered record spread','the actual source own-field order must be retained and rebased',node.span);
+      const insertion=readRecordFieldInsertionOrder(entries.map(entry=>units(entry.name)));
+      const positions=insertion.map(index=>selected.findIndex(field=>field.name===entries[index].name));
+      if(positions.some(index=>index<0))throw typeError('an ordered record needs every actual own field',node.span);
+      order={k:'array',items:positions.map(index=>({k:'lit',value:String(index),type:FLOAT})),type:array(FLOAT)};
+    }
+    const type = { kind: 'record', fields: selected.map((entry) => ({ name: entry.name, type: entry.value.type })),...(ordered?{ordered:true}:{}) };
+    let body = { k: 'record', entries: selected, ...(ordered?{order}:{}), type };
     for (const index of readRecordValueOrder(bindings.length, true)) {
       const binding = bindings[index];
       body = { k: 'let', name: binding.name, value: binding.value, body, type };

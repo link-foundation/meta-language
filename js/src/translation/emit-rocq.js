@@ -1,3 +1,7 @@
+import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_ROCQ_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
@@ -44,7 +48,7 @@ import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-c
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase','MLRecordPropertyOrder',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -287,7 +291,7 @@ function ident(name) {
 }
 
 export function emitRocq(source) {
-  const program = threadOutput(source, 'Rocq');
+  const program = threadOutput(prepareOrderedRecordValues(source), 'Rocq');
   const state = new EmitState(program, 'Rocq', ident, KEYWORDS, {
     ctorStyle: 'module',
     // Rocq derives these from inductives and Functions in the same namespace.
@@ -355,6 +359,7 @@ class RocqEmitter {
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('utf16Text')?[UTF16_TEXT_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('recordPropertyOrder')?[RECORD_PROPERTY_ORDER_ROCQ_PRELUDE,'']:[]),
       ...(this.helpers.has('sourceExceptionObservation')?[readSourceExceptionRocqOutputPrelude(),'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
@@ -400,8 +405,10 @@ class RocqEmitter {
         return type.absence === 'both' ? `(option (option ${this.type(type.element)}))` : `(option ${this.type(type.element)})`;
       case 'tuple':
         return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' * ')})%type` : 'unit';
-      case 'record':
-        return renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
+      case 'record': {
+        const payload=renderRecordType('Rocq', type.fields.map(field => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Rocq',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderCallableFunctionType('Rocq', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
@@ -708,9 +715,9 @@ class RocqEmitter {
       case 'lambda':
         return renderCallableLambda('Rocq', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body), []);
       case 'record':
-        return renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'Rocq')??renderRecordValue('Rocq', [], e.entries.map(entry => this.expr(entry.value)));
       case 'recordField':
-        return renderRecordProductField('Rocq', this.expr(e.object), e.index, e.object.type.fields.length);
+        return renderRecordProductField('Rocq', (e.object.type.ordered?renderOrderedRecordPayload('Rocq',this.expr(e.object)):this.expr(e.object)), e.index, e.object.type.fields.length);
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
         let value = this.expr(e.object);
@@ -757,7 +764,7 @@ class RocqEmitter {
         return renderOptionalCoalescing('Rocq', e.left.type.absence, this.expr(e.left), '', this.expr(e.right));
       case 'optionalField': {
         const count = e.object.type.element.fields.length;
-        let field = 'ml_record';
+        let field = e.object.type.element.ordered?renderOrderedRecordPayload('Rocq','ml_record'):'ml_record';
         for (let index = count - 1; index > e.index; index -= 1) field = `(fst ${field})`;
         if (e.index > 0) field = `(snd ${field})`;
         return renderOptionalProjection('Rocq', e.object.type.absence, this.expr(e.object), '', 'ml_record', field, '');

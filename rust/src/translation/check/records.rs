@@ -30,12 +30,15 @@ impl Checker {
     pub(super) fn record_literal(
         &mut self,
         entries: &[SRecordEntry],
-        projection: Option<&serde_json::Value>,
+        transport: (Option<&serde_json::Value>, Option<&SExpr>, Option<&Type>),
         env: &Env,
         path: &[String],
         expected: Option<&Type>,
         span: Option<Span>,
     ) -> Result<Expr> {
+        let (projection, property_order, declared) = transport;
+        let expected = expected
+            .or_else(|| declared.filter(|ty| matches!(ty, Type::Record { ordered: true, .. })));
         let expected_fields = match expected {
             Some(Type::Record { fields, .. }) => fields.as_slice(),
             _ => &[],
@@ -88,6 +91,43 @@ impl Checker {
                     value,
                 });
             }
+            let ordered = property_order.is_some();
+            if let Some(Type::Record {
+                ordered: expected, ..
+            }) = declared
+                && *expected != ordered
+            {
+                return Err(type_error(
+                    if *expected {
+                        "an ordered record projection needs its actual own-field order"
+                    } else {
+                        "a structural record projection cannot contain an own-field order"
+                    },
+                    span,
+                ));
+            }
+            if let Some(Type::Record {
+                ordered: expected, ..
+            }) = expected
+                && *expected != ordered
+            {
+                return Err(type_error(
+                    if *expected {
+                        "an ordered record projection needs its actual own-field order"
+                    } else {
+                        "a structural record projection cannot contain an own-field order"
+                    },
+                    span,
+                ));
+            }
+            let order = property_order
+                .map(|source| {
+                    let ty = crate::translation::types::array(Type::Float);
+                    let value = self.expr(source, env, path, Some(&ty), false)?;
+                    self.coerce(Self::reference_value(value), &ty, span)
+                        .map(Box::new)
+                })
+                .transpose()?;
             let ty = Type::Record {
                 fields: values
                     .iter()
@@ -98,13 +138,21 @@ impl Checker {
                     .collect(),
                 open: false,
                 reference: false,
+                ordered,
             };
-            return Ok(Expr::new(Node::Record { entries: values }, ty));
+            return Ok(Expr::new(
+                Node::Record {
+                    entries: values,
+                    order,
+                },
+                ty,
+            ));
         }
         for selected in rules::read_record_value_order(number(entries.len()), false) {
             let entry = &entries[position(selected, entries.len(), span)?];
             if entry.spread {
                 let value = self.expr(&entry.value, env, path, None, false)?;
+                let value = Self::reference_value(value);
                 let Type::Record { fields, .. } = &value.ty else {
                     return Err(type_error("record spread needs a record value", span));
                 };
@@ -155,6 +203,45 @@ impl Checker {
             .into_iter()
             .map(|index| position(index, values.len(), span).map(|index| values[index].clone()))
             .collect::<Result<Vec<_>>>()?;
+        let ordered = property_order.is_some()
+            || matches!(expected, Some(Type::Record { ordered: true, .. }));
+        let order = if let Some(source) = property_order {
+            let ty = crate::translation::types::array(Type::Float);
+            let value = self.expr(source, env, path, Some(&ty), false)?;
+            Some(Box::new(self.coerce(
+                Self::reference_value(value),
+                &ty,
+                span,
+            )?))
+        } else if ordered {
+            if entries.iter().any(|entry| entry.spread) {
+                return Err(unsupported(
+                    "ordered record spread",
+                    "the actual source own-field order must be retained and rebased",
+                    span,
+                ));
+            }
+            let insertion = rules::read_record_field_insertion_order(&field_names);
+            let items = insertion
+                .into_iter()
+                .map(|index| {
+                    let index = position(index, values.len(), span)?;
+                    let at = selected
+                        .iter()
+                        .position(|field| field.name == values[index].name)
+                        .ok_or_else(|| {
+                            type_error("an ordered record needs every actual own field", span)
+                        })?;
+                    Ok(super::text_lit(Type::Float, at.to_string()))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            Some(Box::new(Expr::new(
+                Node::Array { items },
+                crate::translation::types::array(Type::Float),
+            )))
+        } else {
+            None
+        };
         let ty = Type::Record {
             fields: selected
                 .iter()
@@ -165,8 +252,15 @@ impl Checker {
                 .collect(),
             open: false,
             reference: false,
+            ordered,
         };
-        let mut body = Expr::new(Node::Record { entries: selected }, ty.clone());
+        let mut body = Expr::new(
+            Node::Record {
+                entries: selected,
+                order,
+            },
+            ty.clone(),
+        );
         for index in rules::read_record_value_order(number(bindings.len()), true) {
             let (name, value) = bindings[position(index, bindings.len(), span)?].clone();
             body = Expr::new(

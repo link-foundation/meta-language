@@ -95,6 +95,9 @@ pub enum Type {
     /// Named fields, whose declaration order does not affect type identity.
     Record {
         fields: Vec<TypeField>,
+        /// The value carries its own property order separately from its layout.
+        #[serde(default, skip_serializing_if = "is_false")]
+        ordered: bool,
         #[serde(default, skip_serializing_if = "is_false")]
         open: bool,
         #[serde(default, skip_serializing_if = "is_false")]
@@ -240,7 +243,12 @@ impl Type {
                     .map(&mut map)
                     .collect::<Result<_, _>>()?,
             },
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                ..
+            } => {
                 let mut fields: Vec<_> = fields
                     .iter()
                     .map(|field| {
@@ -257,6 +265,7 @@ impl Type {
                     fields,
                     open: *open,
                     reference: self.is_reference(),
+                    ordered: *ordered,
                 }
             }
             Self::Map { key, value, .. } => Self::Map {
@@ -305,7 +314,12 @@ impl Type {
                 std::string::String::new(),
                 alternatives.iter().map(Self::key).collect(),
             ),
-            Self::Record { fields, open, .. } => {
+            Self::Record {
+                fields,
+                open,
+                ordered,
+                ..
+            } => {
                 let mut sorted: Vec<_> = fields.iter().collect();
                 sorted.sort_by(|first, second| {
                     first.name.encode_utf16().cmp(second.name.encode_utf16())
@@ -318,11 +332,11 @@ impl Type {
                     })
                     .collect();
                 (
-                    if *open {
+                    (if *open {
                         "open:".to_owned()
                     } else {
                         std::string::String::new()
-                    },
+                    }) + if *ordered { "ordered:" } else { "" },
                     children,
                 )
             }

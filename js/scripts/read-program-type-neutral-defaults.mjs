@@ -1,4 +1,5 @@
 // Source guard for the finite false fields actually omitted by the Rust Type enum.
+import {restoreOrderedRecordTypeSource} from './ordered-record-schema-profile.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -7,8 +8,9 @@ import {readSourceTextRustBlock} from './source-text-byte-library-style.mjs';
 const root=new URL('../../',import.meta.url);
 const field=(node,name)=>{const selected=node.children.filter(child=>child.field===name);assert.ok(selected.length<=1);return selected[0]?.node;};
 
-export function readProgramTypeNeutralDefaults(){
-  const path='rust/src/translation/types.rs',bytes=readFileSync(new URL(path,root)),source=bytes.toString('utf8');
+export function readProgramTypeNeutralDefaults({version=1}={}){
+  if(version!==1&&version!==2)throw new RangeError("uncovered native Type source profile "+version);
+  const path='rust/src/translation/types.rs',actualBytes=readFileSync(new URL(path,root)),bytes=version===1?Buffer.from(restoreOrderedRecordTypeSource(actualBytes,path)):actualBytes,source=bytes.toString('utf8');
   const declaration=readSourceTextRustBlock(source,'enum','Type'),at=source.indexOf(declaration);
   assert.equal(source.indexOf(declaration,at+1),-1);
   assert.ok(source.slice(Math.max(0,at-100),at).includes('#[serde(tag = "kind", rename_all = "camelCase")]'));
@@ -37,7 +39,7 @@ export function readProgramTypeNeutralDefaults(){
   }
   const isFalse=readSourceTextRustBlock(source,'fn','is_false');
   assert.equal(isFalse,'fn is_false(value: impl std::ops::Not<Output = bool>) -> bool {\n    !value\n}');
-  assert.deepEqual(defaults,{array:{reference:'false'},record:{open:'false',reference:'false'},map:{reference:'false'},set:{reference:'false'}});
-  assert.equal(evidence.length,5);
+  assert.deepEqual(defaults,version===1?{array:{reference:'false'},record:{open:'false',reference:'false'},map:{reference:'false'},set:{reference:'false'}}:{array:{reference:'false'},record:{ordered:'false',open:'false',reference:'false'},map:{reference:'false'},set:{reference:'false'}});
+  assert.equal(evidence.length,version===1?5:6);
   return {defaults,source:{path,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),declaration,isFalse},fields:evidence};
 }

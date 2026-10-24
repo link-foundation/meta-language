@@ -150,6 +150,7 @@ const KEYWORDS: &[&str] = &[
     "ml_main",
     "ml_check_theorems",
     "ml_number",
+    "ml_record_property_order",
 ];
 
 const PRELUDE: &str = r#"/// Unbounded integers for the portable core's naturals and integers.
@@ -614,6 +615,8 @@ fn emit_rust_context_owned(
     array_consumption: bool,
     record_ownership: bool,
 ) -> Result<(Emitted, Option<DefinitionOwnership>)> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     super::source_type_namespaces::validate_source_type_namespaces(program)?;
     super::source_const_functions::validate_const_functions(program)?;
     super::owned_local_state::validate_owned_local_state(program)?;
@@ -721,6 +724,8 @@ fn rust_emitter(program: &Program) -> RustEmitter<'_> {
 /// # Errors
 /// On a constant value the target cannot express faithfully.
 pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let Some(main) = &program.main else {
         return Ok(None);
     };
@@ -783,6 +788,9 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::StringNumber => include_str!("runtime/string-number.rs").to_owned(),
             Prelude::Utf16Text => include_str!("runtime/utf16-text.rs").to_owned(),
             Prelude::UnicodeCase => include_str!("runtime/unicode-case.rs").to_owned(),
+            Prelude::RecordPropertyOrder => {
+                include_str!("runtime/record-property-order.rs").to_owned()
+            }
             Prelude::SourceException => include_str!("runtime/source-exception.rs").to_owned(),
             Prelude::BigIntegerConversion => {
                 include_str!("runtime/big-integer-conversion.rs").to_owned()
@@ -834,6 +842,7 @@ enum Prelude {
     BigIntegerConversion,
     Utf16Text,
     UnicodeCase,
+    RecordPropertyOrder,
 }
 
 /// Inspectable records captured during normal complete block emission.

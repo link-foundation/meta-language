@@ -166,7 +166,11 @@ impl Expr {
             | Node::TupleIndex { object: arg, .. }
             | Node::RecordField { object: arg, .. }
             | Node::Length { array: arg } => vec![arg],
-            Node::Record { entries } => entries.iter().map(|entry| &entry.value).collect(),
+            Node::Record { entries, order } => entries
+                .iter()
+                .map(|entry| &entry.value)
+                .chain(order.iter().map(AsRef::as_ref))
+                .collect(),
             Node::Method { object, args, .. } => std::iter::once(object.as_ref())
                 .chain(args.iter().flatten())
                 .collect(),
@@ -240,7 +244,7 @@ impl Expr {
             Node::Map { entries } => Node::Map {
                 entries: Box::new(visit(entries)),
             },
-            Node::Record { entries } => Node::Record {
+            Node::Record { entries, order } => Node::Record {
                 entries: entries
                     .iter()
                     .map(|entry| RecordEntry {
@@ -248,6 +252,7 @@ impl Expr {
                         value: visit(&entry.value),
                     })
                     .collect(),
+                order: order.as_ref().map(|value| Box::new(visit(value))),
             },
             Node::RecordField {
                 object,

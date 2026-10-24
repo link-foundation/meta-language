@@ -178,6 +178,7 @@ impl Checker {
             }],
             open: false,
             reference: false,
+            ordered: false,
         };
         let read = Expr::new(
             Node::RecordField {
@@ -194,6 +195,7 @@ impl Checker {
                     name: "key".to_owned(),
                     value: text,
                 }],
+                order: None,
             },
             ty,
         );
@@ -241,6 +243,7 @@ impl Checker {
                 .collect(),
             open: false,
             reference: false,
+            ordered: false,
         };
         let read = |index: usize| {
             Expr::new(
@@ -263,6 +266,7 @@ impl Checker {
                         value,
                     })
                     .collect(),
+                order: None,
             },
             ty,
         );

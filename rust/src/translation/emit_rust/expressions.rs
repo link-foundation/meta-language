@@ -78,7 +78,11 @@ impl RustEmitter<'_> {
             ));
         }
         match &expr.node {
-            Node::Record { entries } => self.record_value(entries),
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&expr.ty, Type::Record { ordered: true, .. }),
+            ),
             Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::Lit { value } => Ok(self.literal(expr, value)),
             Node::Unit => Ok("()".to_owned()),

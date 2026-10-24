@@ -120,6 +120,8 @@ pub fn emit_javascript_with_options(
     program: &Program,
     options: JavaScriptEmissionOptions<'_>,
 ) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(program)?;
+    let program = prepared.as_ref();
     let target_identifier = identifier_model::select(options.identifier_model)?;
     if options.identifier_model.is_some() && options.scoped_binding_model.is_some() {
         return Err(unsupported(

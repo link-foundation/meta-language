@@ -126,6 +126,8 @@ pub enum SNode {
         ty: Option<Type>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         prototype_definition: Option<ConstructorPrototypeDefinition>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        property_order: Option<Box<SExpr>>,
     },
     TypeOf {
         arg: Box<SExpr>,

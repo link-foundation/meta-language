@@ -51,6 +51,7 @@ const KEYWORDS: &[&str] = &[
     "MLBigIntegerConversion",
     "MLUtf16Text",
     "MLUnicodeCase",
+    "MLRecordPropertyOrder",
     "as",
     "at",
     "cofix",
@@ -247,11 +248,12 @@ enum Helper {
     BigIntegerConversion,
     Utf16Text,
     UnicodeCase,
+    RecordPropertyOrder,
     SourceExceptionObservation,
 }
 
 impl Helper {
-    const ALL: [Self; 23] = [
+    const ALL: [Self; 24] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -274,6 +276,7 @@ impl Helper {
         Self::BigIntegerConversion,
         Self::Utf16Text,
         Self::UnicodeCase,
+        Self::RecordPropertyOrder,
         Self::SourceExceptionObservation,
     ];
 
@@ -314,6 +317,7 @@ impl Helper {
             Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
             Self::Utf16Text => include_str!("runtime/utf16-text.v"),
             Self::UnicodeCase => include_str!("runtime/unicode-case.v"),
+            Self::RecordPropertyOrder => include_str!("runtime/record-property-order.v"),
             Self::SourceExceptionObservation => include_str!("runtime/source-exception.v"),
         }
     }
@@ -372,6 +376,8 @@ fn internal(message: String) -> TranslationError {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_rocq(source: &Program) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(source)?;
+    let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Rocq")?;
     let utf16_strings = super::formal_unit_strings::requires(program);
     let state = EmitState::new(
@@ -582,12 +588,23 @@ impl RocqEmitter<'_> {
                     format!("({})%type", parts.join(" * "))
                 }
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                super::record_emission_rules::render_record_type("Rocq", &children)
+                let payload = super::record_emission_rules::render_record_type("Rocq", &children);
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Rocq",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Union { .. } => {
                 return Err(crate::translation::diagnostics::type_error(

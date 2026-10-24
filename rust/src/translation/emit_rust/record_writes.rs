@@ -51,7 +51,11 @@ impl RustEmitter<'_> {
             &rules::read_record_field_write_operator(op),
             &receiver,
             "",
-            &index.to_string(),
+            &if matches!(&object.ty, Type::Record { ordered: true, .. }) {
+                format!("0.{index}")
+            } else {
+                index.to_string()
+            },
             &arguments,
             &suffix,
         ))

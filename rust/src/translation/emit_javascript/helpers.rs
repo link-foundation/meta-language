@@ -19,6 +19,7 @@ pub(super) enum Helper {
     BigIntegerConversion,
     Utf16Text,
     UnicodeCase,
+    RecordPropertyOrder,
 }
 
 impl Helper {
@@ -26,6 +27,7 @@ impl Helper {
         match self {
             Self::Utf16Text=>include_str!("../runtime/utf16-text.js"),
             Self::UnicodeCase=>include_str!("../runtime/unicode-case.js"),
+            Self::RecordPropertyOrder=>include_str!("../runtime/record-property-order.js"),
             Self::BigIntegerConversion => include_str!("../runtime/big-integer-conversion.js"),
             Self::OwnedTextInput => {
                 static TEXT: std::sync::OnceLock<String> = std::sync::OnceLock::new();

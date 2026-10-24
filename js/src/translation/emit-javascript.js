@@ -1,3 +1,6 @@
+import {RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE} from './record-property-order-javascript-runtime.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue} from './ordered-record-emission.js';
 import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_JAVASCRIPT_PRELUDE} from './unicode-case-javascript-runtime.js';
 import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
@@ -65,11 +68,12 @@ const KEYWORDS = new Set([
   'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
   'await', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'arguments',
   'eval', 'undefined', 'NaN', 'Infinity', 'globalThis', 'console', 'process', 'BigInt', 'String', 'Object', 'Error',
-  'RangeError', 'Math', 'Number', 'Array', 'JSON', 'Symbol', 'main', '__proto__', 'constructor', 'prototype', 'of',
+  'ml_record_property_order', 'Object', 'RangeError', 'Math', 'Number', 'Array', 'JSON', 'Symbol', 'main', '__proto__', 'constructor', 'prototype', 'of',
   'async', 'get', 'set',
 ]);
 
 const HELPERS = {
+  recordPropertyOrder:RECORD_PROPERTY_ORDER_JAVASCRIPT_PRELUDE,
   utf16Text:UTF16_TEXT_JAVASCRIPT_PRELUDE,
   unicodeCase:UNICODE_CASE_JAVASCRIPT_PRELUDE,
   bigIntegerConversion: BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE,
@@ -145,6 +149,7 @@ function ident(name) {
 }
 
 export function emitJavaScript(program, options = {}) {
+  program=prepareOrderedRecordValues(program);
   const targetIdentifier=readJavaScriptIdentifierModel(options.identifierModel,ident);
   if(options.identifierModel!==undefined&&options.scopedBindingModel!==undefined)throw unsupported('JavaScript identifier model composition','the original narrow scoped-binding model requires a separate composition proof');
   validateRustTypeNamespace(program);
@@ -196,7 +201,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text','unicodeCase'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion','utf16Text','unicodeCase','recordPropertyOrder'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -523,7 +528,7 @@ class JavaScriptEmitter {
         return renderPrimitiveMethodExpression('JavaScript', e.object.type.kind, e.op, this.expr(e.object),
           e.args.map((arg, index) => renderPrimitiveMethodArgument('JavaScript', e.object.type.kind, e.op, index, arg === null, arg === null ? '' : this.expr(arg))).join(', '));
       case 'record':
-        return renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'JavaScript')??renderRecordValue('JavaScript', e.entries.map(entry => JSON.stringify(entry.name)), e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
         return renderCallableCellOperation('JavaScript', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':

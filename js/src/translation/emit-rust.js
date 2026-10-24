@@ -1,3 +1,7 @@
+import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {acceptUtf16TextMethod,renderUtf16TextMethod} from './utf16-method-emission-rules.js';
 import {UNICODE_CASE_PRELUDE} from './unicode-case-runtime.js';
 import {acceptUnicodeCaseMappingOperation,renderUnicodeCaseStringMap,readUnicodeCaseEncodingStatement} from './unicode-case-emission-rules.js';
@@ -84,7 +88,7 @@ const KEYWORDS = new Set([
   // Names the emitted code relies on.
   'ml', 'main', 'std', 'core', 'alloc', 'String', 'Vec', 'Box', 'Option', 'Some', 'None', 'Ok', 'Err', 'Result',
   'bool', 'str', 'char', 'u8', 'u16', 'u32', 'u64', 'u128', 'usize', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize',
-  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems', 'ml_number',
+  'f32', 'f64', 'Big', 'Clone', 'Debug', 'PartialEq', 'Eq', 'ToString', 'ml_main', 'ml_check_theorems', 'ml_number', 'ml_record_property_order',
 ]);
 
 const PRELUDE = `/// Unbounded integers for the portable core's naturals and integers.
@@ -676,6 +680,7 @@ export function readRustArrayPrelude(standard = false) {
 }
 
 export function emitRust(program, options = {}) {
+  program=prepareOrderedRecordValues(program);
   validateRustTypeNamespace(program);
   checkRustConstFunctionProof(program);
   checkRustOwnedLocalStateProof(program);
@@ -716,6 +721,7 @@ export function readRustExternalTargets(program) {
  * for a program with declarations or other effects.
  */
 export function emitRustConstants(program) {
+  program=prepareOrderedRecordValues(program);
   const effects = program.main?.effects ?? [];
   const effect = effects[0];
   const legalName = typeof effect?.name === 'string' && !effect.name.startsWith('ml_') && !KEYWORDS.has(effect.name) && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(effect.name);
@@ -744,6 +750,7 @@ export function emitRustConstants(program) {
     ...(emitter.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
     ...(emitter.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
     ...(emitter.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
+    ...(emitter.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -776,6 +783,7 @@ class RustEmitter {
     this.usesBigIntegerConversion = false;
     this.usesUtf16Text=false;
     this.usesUnicodeCase=false;
+    this.usesRecordPropertyOrder=false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if(acceptLinkedJavaScriptStringConstruction(node?.k??'',node?.op??'')&&readJavaScriptStringConstructionForm(node.op)==='characters')return true;
@@ -821,6 +829,7 @@ class RustEmitter {
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE, ''] : []),
     ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE, ''] : []),
       ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE, ''] : []),
+      ...(this.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -838,6 +847,7 @@ class RustEmitter {
       ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
       ...(this.usesUtf16Text ? [UTF16_TEXT_PRELUDE] : []),
       ...(this.usesUnicodeCase ? [UNICODE_CASE_PRELUDE] : []),
+      ...(this.usesRecordPropertyOrder ? [RECORD_PROPERTY_ORDER_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -927,8 +937,10 @@ class RustEmitter {
         return renderRustCompoundType('option', type.absence, [this.type(type.element)]);
       case 'tuple':
         return renderRustCompoundType('tuple', '', type.elements.map((element) => this.type(element)));
-      case 'record':
-        return renderRustCompoundType('record', '', type.fields.map((field) => this.type(field.type)));
+      case 'record': {
+        const payload=renderRustCompoundType('record', '', type.fields.map((field) => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Rust',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderRustCompoundType('function', this.type(type.ret), type.params.map((param) => this.type(param)));
       case 'set':
@@ -1281,7 +1293,7 @@ class RustEmitter {
       this.temporaries = readRecordFieldWriteSuffix(Math.max(initial, this.temporaries), receiver, args);
       const suffix = String(this.temporaries);
       this.state.encode('write-record-field', readRecordFieldWriteStatement());
-      return renderRecordFieldWrite('Rust', readRecordFieldWriteOperator(e.op), receiver, '', String(index), args, suffix);
+      return renderRecordFieldWrite('Rust', readRecordFieldWriteOperator(e.op), receiver, '', (e.object.type.ordered?'0.':'')+String(index), args, suffix);
     }
     if (e.k === 'ctor' && e.frozen && this.program.sourceLanguage === 'JavaScript') throw unsupported('explicit data object freeze', 'this target needs a JavaScript property descriptor model to retain explicit constructor freezing', e.span);
     if (e.k === 'method' && e.object.type.reference && readReferenceMethodResult(e.object.type.kind, e.op)) {
@@ -1323,7 +1335,7 @@ class RustEmitter {
       case 'method':
         return this.method(e);
       case 'record':
-        return renderRecordValue('Rust', [], e.entries.map(entry => this.expr(entry.value)));
+        return emitOrderedRecordValue(this,e,'Rust')??renderRecordValue('Rust', [], e.entries.map(entry => this.expr(entry.value)));
       case 'cellAllocate':
         return renderCallableCellOperation('Rust', e.k, '', this.expr(e.value), '', '', '');
       case 'cellRead':
@@ -1342,7 +1354,7 @@ class RustEmitter {
         return renderSurfaceReferenceOperation('Rust', e.k, this.receiver(e.reference), value);
       }
       case 'recordField':
-        return renderRecordField('Rust', this.expr(e.object), '', String(e.index));
+        return renderRecordField('Rust', (e.object.type.ordered?renderOrderedRecordPayload('Rust',this.expr(e.object)):this.expr(e.object)), '', String(e.index));
       case 'tuple':
         if (Object.hasOwn(e, 'productModel') && !acceptProgramTupleProductModel(e.productModel, e.frozen === true)) throw unsupported('immutable tuple product model', 'the declared immutable value product requires its retained frozen facet', e.span);
         return renderTupleValue('Rust', e.items.map((item) => this.expr(item)), e.frozen === true);
@@ -1389,7 +1401,7 @@ class RustEmitter {
         return renderOptionalCoalescing('Rust', e.left.type.absence, e.left.type.absence === 'both' ? this.expr(e.left) : '', e.left.type.absence === 'both' ? '' : this.receiver(e.left), this.expr(e.right));
       case 'optionalField': {
         if (e.object.type.absence === 'both') this.usesOptional = true;
-        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_record', `ml_record.${e.index}`, '');
+        return renderOptionalProjection('Rust', e.object.type.absence, e.object.type.absence === 'both' ? this.expr(e.object) : '', e.object.type.absence === 'both' ? '' : this.receiver(e.object), 'ml_record', `${e.object.type.element.ordered?'ml_record.0':'ml_record'}.${e.index}`, '');
       }
       case 'optionalProject': {
         const element = e.object.type.element;

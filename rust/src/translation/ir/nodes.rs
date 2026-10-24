@@ -192,6 +192,9 @@ pub enum Node {
     },
     Record {
         entries: Vec<RecordEntry>,
+        /// Actual own-field order, independent of the canonical field layout.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        order: Option<Box<Expr>>,
     },
     RecordField {
         object: Box<Expr>,

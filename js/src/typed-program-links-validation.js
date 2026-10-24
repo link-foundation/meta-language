@@ -110,7 +110,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         || Object.keys(value).some(field => !acceptUnionTypeField(field))) throw new TypeError('a linked union type has a malformed ordered alternative layout');
       for (const alternative of value.alternatives) type(alternative);
     }
-    else if (value.kind === 'record') value.fields.forEach((field) => type(field.type));
+    else if (value.kind === 'record') {
+      if(value.ordered!==undefined&&typeof value.ordered!=='boolean')throw new TypeError('a linked record ordered facet must be a boolean');
+      value.fields.forEach((field) => type(field.type));
+    }
     else if (value.kind === 'map') { type(value.key); type(value.value); }
     else if (value.kind === 'function') { value.params.forEach(type); type(value.ret); }
     else throw new TypeError(`the linked program contains unsupported type ${value.kind}`);

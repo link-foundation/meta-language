@@ -124,6 +124,7 @@ impl Checker {
             ],
             open: false,
             reference: false,
+            ordered: false,
         };
         let read = |field: &str, index: usize, ty: Type| {
             Expr::new(
@@ -204,6 +205,7 @@ impl Checker {
                         value: key,
                     },
                 ],
+                order: None,
             },
             captured_type,
         );

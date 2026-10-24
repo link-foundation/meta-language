@@ -6888,6 +6888,35 @@ codecs and all four target emitters.
 
 The order rule follows
 [OrdinaryOwnPropertyKeys](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinaryownpropertykeys).
+
+The ordered record value ABI adds an optional Boolean `ordered` facet to the
+record type, defaulting to false for existing structural products. An ordered
+record carries its actual order expression as a separate operand. Its type
+identity includes the facet; an implicit coercion cannot erase it. Rust and
+formal targets store the canonical field payload together with the order
+vector. JavaScript constructs ordinary own enumerable data properties in that
+order. Field projections, optional projections and existing-field writes use
+the payload while retaining the order. Existing structural products keep their
+previous representation.
+
+Before target effect analysis, ordered constructors capture every actual field
+value once and call the complete source-defined order constructor through
+ordinary checked declarations. The source closure and its actual parsed syntax
+are shared Links data. A private module contains all source declarations and
+retains their signatures, recursion and source error operations. Constructor
+errors therefore remain visible to the ordinary formal effect pass; a target
+prelude cannot hide an error or silently supply a replacement order. This first
+source profile uses JavaScript Number and exception semantics. Equivalent
+additional source profiles require explicit implementations.
+
+Both typed codecs retain the order operand and type facet. A finite schema
+successor preserves the complete earlier schema and native type source. The
+historical five-facet source guard and active six-facet guard have separate,
+explicit schema versions; unknown versions and unrecorded whole-source edits
+refuse. Their original receipt inputs and assertions remain available. These
+are source drafts with deferred controls, not observations. Automatic source
+profile propagation, ordered spreads, Object.keys/values/entries, descriptors,
+Symbols and all preceding complete-language requirements remain obligations.
 Deferred controls compare every valid case against actual ordinary JavaScript
 objects, plus native results/errors and complete definition graph/codec/emission
 parity. They cover overwrites, spreads, numeric endpoints and noncanonical

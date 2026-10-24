@@ -74,6 +74,10 @@ impl<'p> RustEmitter<'p> {
                 }
                 Prelude::StringNumber => include_str!("../runtime/string-number.rs").to_owned(),
                 Prelude::Utf16Text => include_str!("../runtime/utf16-text.rs").to_owned(),
+                Prelude::UnicodeCase => include_str!("../runtime/unicode-case.rs").to_owned(),
+                Prelude::RecordPropertyOrder => {
+                    include_str!("../runtime/record-property-order.rs").to_owned()
+                }
                 Prelude::SourceException => {
                     include_str!("../runtime/source-exception.rs").to_owned()
                 }
@@ -199,12 +203,23 @@ impl<'p> RustEmitter<'p> {
                     .collect::<Result<Vec<_>>>()?;
                 render_rust_compound_type("tuple", "", &children)
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                render_rust_compound_type("record", "", &children)
+                let payload = render_rust_compound_type("record", "", &children);
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Rust",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Set { element, .. } => render_rust_compound_type("set", "", &[self.ty(element)?]),
             Type::Map { key, value, .. } => {

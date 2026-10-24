@@ -112,6 +112,7 @@ impl Checker {
             }],
             open: false,
             reference: false,
+            ordered: false,
         };
         let receiver = Expr::new(
             Node::RecordField {
@@ -185,6 +186,7 @@ impl Checker {
         let record = Expr::new(
             Node::Record {
                 entries: vec![RecordEntry { name: field, value }],
+                order: None,
             },
             ty,
         );

@@ -48,7 +48,7 @@ impl RocqEmitter<'_> {
             }
         }
         match &e.node {
-            Node::Record { entries } => self.record_value(entries),
+            Node::Record { entries, order } => self.record_value(entries, order.as_deref(), matches!(&e.ty, Type::Record { ordered: true, .. })),
             Node::RecordField { object, index, .. } => self.record_field(object, *index),
             Node::ReferenceAllocate { .. } | Node::ReferenceRead { .. } | Node::CellAllocate { .. } | Node::CellRead { .. } | Node::CellWrite { .. } => Err(unsupported(
                 "mutable structural value",

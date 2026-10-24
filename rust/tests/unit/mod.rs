@@ -164,6 +164,7 @@ mod native_recovery_records;
 mod native_text_grammars;
 mod natural_language_grammar;
 mod network_projection;
+mod ordered_record_values;
 mod parity_corpora;
 mod parity_manifest;
 mod parse_scaling;

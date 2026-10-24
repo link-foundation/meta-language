@@ -1,3 +1,7 @@
+import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
+import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
+import {emitOrderedRecordValue} from './ordered-record-emission.js';
+import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
 import {UNICODE_CASE_LEAN_PRELUDE} from './unicode-case-formal-runtime.js';
 import {requireFormalUnitStrings,prepareFormalUnitStrings,readFormalUnitStringExpression,formalUnitLiteral,formalScalarUnits,formalUnitDisplay,formalUnitLength,formalUnitTruth} from './formal-unit-strings.js';
 import {readFormalStringUnitType,renderFormalStringUnitComparison} from './formal-string-unit-rules.js';
@@ -45,7 +49,7 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'MLStringNumber',
-  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase',
+  'MLBigIntegerConversion','MLUtf16Text','MLUnicodeCase','MLRecordPropertyOrder',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -198,7 +202,7 @@ function ident(name) {
 }
 
 export function emitLean(source) {
-  const program = threadOutput(source, 'Lean');
+  const program = threadOutput(prepareOrderedRecordValues(source), 'Lean');
   const state = new EmitState(program, 'Lean', ident, KEYWORDS, {
     ctorStyle: 'data',
     generated: (name) => [`${name}.eq_1`],
@@ -261,6 +265,7 @@ class LeanEmitter {
       ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_LEAN_PRELUDE,'']:[]),
       ...(this.helpers.has('utf16Text')?[UTF16_TEXT_LEAN_PRELUDE,'']:[]),
       ...(this.helpers.has('unicodeCase')?[UNICODE_CASE_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('recordPropertyOrder')?[RECORD_PROPERTY_ORDER_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -305,8 +310,10 @@ class LeanEmitter {
         return type.absence === 'both' ? `(Option (Option ${this.type(type.element)}))` : `(Option ${this.type(type.element)})`;
       case 'tuple':
         return type.elements.length ? `(${type.elements.map((element) => this.type(element)).join(' × ')})` : 'Unit';
-      case 'record':
-        return renderRecordType('Lean', type.fields.map(field => this.type(field.type)));
+      case 'record': {
+        const payload=renderRecordType('Lean', type.fields.map(field => this.type(field.type)));
+        return type.ordered?renderOrderedRecordType('Lean',payload,this.type({kind:'array',element:{kind:'float'}})):payload;
+      }
       case 'function':
         return renderCallableFunctionType('Lean', type.params.map(param => this.type(param)), this.type(type.ret));
       case 'set':
@@ -475,9 +482,9 @@ class LeanEmitter {
       case 'lambda':
         return renderCallableLambda('Lean', e.params.map(param => param.name), e.params.map(param => this.type(param.type)), '', this.expr(e.body, depth), []);
       case 'record':
-        return renderRecordValue('Lean', [], e.entries.map(entry => this.expr(entry.value, depth)));
+        return emitOrderedRecordValue(this,e,'Lean',depth)??renderRecordValue('Lean', [], e.entries.map(entry => this.expr(entry.value, depth)));
       case 'recordField':
-        return renderRecordProductField('Lean', this.expr(e.object, depth), e.index, e.object.type.fields.length);
+        return renderRecordProductField('Lean', (e.object.type.ordered?renderOrderedRecordPayload('Lean',this.expr(e.object, depth)):this.expr(e.object, depth)), e.index, e.object.type.fields.length);
       case 'tupleIndex': {
         const count = e.object.type.kind === 'record' ? e.object.type.fields.length : e.object.type.elements.length;
         return count === 1 ? this.expr(e.object, depth) : `(${this.expr(e.object, depth)})${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
@@ -520,7 +527,8 @@ class LeanEmitter {
         return renderOptionalCoalescing('Lean', e.left.type.absence, this.expr(e.left, depth), '', this.expr(e.right, depth));
       case 'optionalField': {
         const count = e.object.type.element.fields.length;
-        const field = count === 1 ? 'ml_record' : `ml_record${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
+        const payload=e.object.type.element.ordered?renderOrderedRecordPayload('Lean','ml_record'):'ml_record';
+        const field = count === 1 ? payload : `${payload}${'.2'.repeat(e.index)}${e.index < count - 1 ? '.1' : ''}`;
         return renderOptionalProjection('Lean', e.object.type.absence, this.expr(e.object, depth), '', 'ml_record', field, '');
       }
       case 'optionalProject': {

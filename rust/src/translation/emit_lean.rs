@@ -47,6 +47,7 @@ const KEYWORDS: &[&str] = &[
     "MLBigIntegerConversion",
     "MLUtf16Text",
     "MLUnicodeCase",
+    "MLRecordPropertyOrder",
     "abbrev",
     "at",
     "attribute",
@@ -193,6 +194,8 @@ fn generated(name: &str) -> Vec<String> {
 /// # Errors
 /// On constructs the target cannot express faithfully.
 pub fn emit_lean(source: &Program) -> Result<Emitted> {
+    let prepared = super::ordered_record_preparation::prepare(source)?;
+    let source = prepared.as_ref();
     let program = &*thread_output_for_target(source, "Lean")?;
     let utf16_strings = super::formal_unit_strings::requires(program);
     let state = EmitState::new(
@@ -294,6 +297,10 @@ impl LeanEmitter<'_> {
         }
         if self.helpers.contains("unicodeCase") {
             lines.push(include_str!("runtime/unicode-case.lean").to_owned());
+            lines.push(String::new());
+        }
+        if self.helpers.contains("recordPropertyOrder") {
+            lines.push(include_str!("runtime/record-property-order.lean").to_owned());
             lines.push(String::new());
         }
         for block in blocks {
@@ -587,7 +594,12 @@ impl LeanEmitter<'_> {
             }
         }
         Ok(match &e.node {
-            Node::Record { entries } => self.record_value(entries, depth)?,
+            Node::Record { entries, order } => self.record_value(
+                entries,
+                order.as_deref(),
+                matches!(&e.ty, Type::Record { ordered: true, .. }),
+                depth,
+            )?,
             Node::RecordField { object, index, .. } => self.record_field(object, *index, depth)?,
             Node::ReferenceAllocate { .. }
             | Node::ReferenceRead { .. }

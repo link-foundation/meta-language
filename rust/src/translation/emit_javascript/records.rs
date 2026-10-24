@@ -5,7 +5,18 @@ use crate::translation::lexer::json_string;
 use crate::translation::record_emission_rules as rules;
 
 impl JavaScriptEmitter<'_> {
-    pub(super) fn record_value(&mut self, entries: &[RecordEntry]) -> Result<String> {
+    pub(super) fn record_value(
+        &mut self,
+        entries: &[RecordEntry],
+        order: Option<&Expr>,
+        ordered: bool,
+    ) -> Result<String> {
+        if ordered != order.is_some() {
+            return Err(crate::translation::diagnostics::type_error(
+                "an ordered record needs its actual own-field order and matching value type",
+                None,
+            ));
+        }
         let labels = entries
             .iter()
             .map(|entry| json_string(&entry.name))
@@ -14,7 +25,18 @@ impl JavaScriptEmitter<'_> {
             .iter()
             .map(|entry| self.expr(&entry.value))
             .collect::<Result<Vec<_>>>()?;
-        Ok(rules::render_record_value("JavaScript", &labels, &values))
+        let Some(order) = order else {
+            return Ok(rules::render_record_value("JavaScript", &labels, &values));
+        };
+        let order = self.expr(order)?;
+        Ok(
+            crate::translation::ordered_record_layout_rules::render_ordered_record_value(
+                "JavaScript",
+                &labels,
+                &values,
+                &order,
+            ),
+        )
     }
 
     pub(super) fn record_field(&mut self, object: &Expr, field: &str) -> Result<String> {

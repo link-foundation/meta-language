@@ -154,6 +154,12 @@ fn expression(value: &Value, program: &Program) -> Result<Value> {
                     .map(|item| expression(item, program))
                     .collect::<Result<_>>()?,
             ),
+            "optional-expression" => {
+                if child.is_null() {
+                    continue;
+                }
+                expression(child, program)?
+            }
             "nullable-expressions" => Value::Array(
                 child
                     .as_array()

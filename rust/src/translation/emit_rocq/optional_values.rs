@@ -109,7 +109,11 @@ impl RocqEmitter<'_> {
                         "ml_record",
                         crate::translation::record_emission_rules::render_record_product_field(
                             "Rocq",
-                            "ml_record",
+                            &if matches!(element(&object.ty), Type::Record { ordered: true, .. }) {
+                                crate::translation::ordered_record_layout_rules::render_ordered_record_payload("Rocq","ml_record")
+                            } else {
+                                "ml_record".to_owned()
+                            },
                             number(*index),
                             number(fields.len()),
                         ),

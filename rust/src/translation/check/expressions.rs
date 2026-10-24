@@ -554,6 +554,8 @@ impl Checker {
                 entries,
                 record_projection,
                 prototype_definition,
+                property_order,
+                ty,
                 ..
             } => {
                 if let Some(definition) = prototype_definition {
@@ -565,7 +567,11 @@ impl Checker {
                 }
                 self.record_literal(
                     entries,
-                    record_projection.as_ref(),
+                    (
+                        record_projection.as_ref(),
+                        property_order.as_deref(),
+                        ty.as_ref(),
+                    ),
                     env,
                     path,
                     expected,

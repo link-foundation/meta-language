@@ -79,12 +79,25 @@ impl LeanEmitter<'_> {
                     format!("({})", parts.join(" × "))
                 }
             }
-            Type::Record { fields, .. } => {
+            Type::Record {
+                fields, ordered, ..
+            } => {
                 let children = fields
                     .iter()
                     .map(|field| self.ty(&field.ty))
                     .collect::<Result<Vec<_>>>()?;
-                crate::translation::record_emission_rules::render_record_type("Lean", &children)
+                let payload = crate::translation::record_emission_rules::render_record_type(
+                    "Lean", &children,
+                );
+                if *ordered {
+                    crate::translation::ordered_record_layout_rules::render_ordered_record_type(
+                        "Lean",
+                        &payload,
+                        &self.ty(&crate::translation::types::array(Type::Float))?,
+                    )
+                } else {
+                    payload
+                }
             }
             Type::Union { .. } => {
                 return Err(type_error(

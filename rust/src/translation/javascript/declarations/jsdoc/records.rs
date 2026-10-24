@@ -58,5 +58,6 @@ pub(super) fn read_record_type(
         fields,
         open: false,
         reference: false,
+        ordered: false,
     }))
 }

@@ -85,6 +85,7 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     const child = value[source];
     if (mode === 'copy') { if (child !== undefined) result[target] = child; }
     else if (mode === 'expression') result[target] = project(readLinkedProgramNumberOperand(value, source, child));
+    else if (mode === 'optional-expression') { if(child!==undefined&&child!==null)result[target]=project(child); }
     else if (mode === 'expressions') result[target] = child.map(project);
     else if (mode === 'nullable-expressions') result[target] = child.map(value => value === null ? null : project(value));
     else if (mode === 'name-path') result[target] = [child];
