@@ -7,6 +7,8 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
+import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation} from './big-integer-conversion-rules.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
@@ -954,6 +956,14 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op==='convertJavaScriptBigInteger'||acceptLinkedJavaScriptBigIntegerResult('math',node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return node.op==='convertJavaScriptBigInteger'||readJavaScriptBigIntegerResultOperation(node.op)==='boolean'?INT:{kind:'array',element:INT};
+        }
+        if(acceptLinkedJavaScriptSourceException('math',node.op)||readJavaScriptExceptionConstructorClass(node.op)){
+          for(const item of node.args)this.expr(item.value,env);
+          return this.fresh();
+        }
         if(readJavaScriptNumberConversionResult(node.op)){
           for(const item of node.args)this.expr(item.value,env);
           return readJavaScriptNumberConversionResult(node.op)==='bool'?BOOL:FLOAT;

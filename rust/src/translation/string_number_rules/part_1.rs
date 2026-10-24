@@ -1,23 +1,27 @@
 // Generated from complete js/src/translation/string-number-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result;
-use super::MlSource1TemporaryConvertStringNumberRationalJoin5;
-use super::MlSource1TemporaryConvertStringNumberRationalJoin6;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop7Result;
-use super::MlSource1TemporaryConvertStringNumberRationalLoop8Result;
+use super::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result;
+use super::MlSource1TemporaryConvertStringNumberRationalJoin9;
+use super::MlSource1TemporaryConvertStringNumberRationalJoin10;
 use super::MlSource1TemporaryConvertStringNumberRationalLoop11Result;
 use super::MlSource1TemporaryConvertStringNumberRationalLoop12Result;
-use super::MlSource1TemporaryReadStringNumberBinaryPowerLoop3Result;
-use super::source_ml_source1_temporary_accept_string_number_infinity_loop13;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop7;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop8;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop9;
-use super::source_ml_source1_temporary_convert_string_number_rational_loop10;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop15Result;
+use super::MlSource1TemporaryConvertStringNumberRationalLoop16Result;
+use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
+use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
+use super::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Result;
+use super::source_ml_source1_temporary_accept_string_number_infinity_loop17;
 use super::source_ml_source1_temporary_convert_string_number_rational_loop11;
 use super::source_ml_source1_temporary_convert_string_number_rational_loop12;
-use super::source_ml_source1_temporary_read_string_number_binary_power_loop3;
-use super::source_ml_source1_temporary_read_string_number_binary_power_loop4;
-use super::source_ml_source1_temporary_read_string_number_decimal_power_loop1;
-use super::source_ml_source1_temporary_read_string_number_exact_mantissa_loop2;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop13;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop14;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop15;
+use super::source_ml_source1_temporary_convert_string_number_rational_loop16;
+use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1;
+use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2;
+use super::source_ml_source1_temporary_read_string_number_binary_power_loop7;
+use super::source_ml_source1_temporary_read_string_number_binary_power_loop8;
+use super::source_ml_source1_temporary_read_string_number_decimal_power_loop5;
+use super::source_ml_source1_temporary_read_string_number_exact_mantissa_loop6;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -504,6 +508,41 @@ pub fn read_java_script_numeric_digit_unit(unit: f64) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_utf8_string_units(bytes: &[f64]) -> Vec<f64> {
+    {
+        let index = 0f64;
+        {
+            let source_ml_source2_s1 = self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1(bytes, index);
+            match source_ml_source2_s1 {
+                self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Done => {
+                    {
+                        let units = Vec::<f64>::new();
+                        {
+                            let index_2 = 0f64;
+                            {
+                                let source_ml_source2_s2 = self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2(bytes, units, index_2);
+                                match source_ml_source2_s2 {
+                                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Done(units_2) => {
+                                        units_2
+                                    }
+                                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_source1_temporary_result2) => {
+                                        source_ml_source1_temporary_result2
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Return(source_ml_source1_temporary_result4) => {
+                    source_ml_source1_temporary_result4
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_string_number_digit(unit: f64) -> f64 {
     self::read_java_script_numeric_digit_unit(unit)
 }
@@ -516,7 +555,7 @@ pub fn read_string_number_decimal_power(exponent: f64) -> self::ml::Big {
         {
             let base = self::ml::Big::from_i128(10);
             {
-                self::source_ml_source1_temporary_read_string_number_decimal_power_loop1(exponent, value, base)
+                self::source_ml_source1_temporary_read_string_number_decimal_power_loop5(exponent, value, base)
             }
         }
     }
@@ -530,7 +569,7 @@ pub fn read_string_number_exact_mantissa(value: self::ml::Big) -> f64 {
         {
             let scale = 1f64;
             {
-                self::source_ml_source1_temporary_read_string_number_exact_mantissa_loop2(value.clone(), result, scale)
+                self::source_ml_source1_temporary_read_string_number_exact_mantissa_loop6(value.clone(), result, scale)
             }
         }
     }
@@ -542,11 +581,11 @@ pub fn read_string_number_binary_power(exponent: f64) -> f64 {
     {
         let result = 1f64;
         {
-            let source_ml_source2_s1 = self::source_ml_source1_temporary_read_string_number_binary_power_loop3(exponent, result);
-            match source_ml_source2_s1 {
-                self::MlSource1TemporaryReadStringNumberBinaryPowerLoop3Result::MlSource1TemporaryReadStringNumberBinaryPowerLoop3Done(exponent_2, result_2) => {
+            let source_ml_source2_s3 = self::source_ml_source1_temporary_read_string_number_binary_power_loop7(exponent, result);
+            match source_ml_source2_s3 {
+                self::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Result::MlSource1TemporaryReadStringNumberBinaryPowerLoop7Done(exponent_2, result_2) => {
                     {
-                        self::source_ml_source1_temporary_read_string_number_binary_power_loop4(exponent_2, result_2)
+                        self::source_ml_source1_temporary_read_string_number_binary_power_loop8(exponent_2, result_2)
                     }
                 }
             }
@@ -565,17 +604,17 @@ pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: sel
             {
                 let exponent = 0f64;
                 {
-                    let source_ml_source2_s4 = if numerator >= denominator {
+                    let source_ml_source2_s6 = if numerator >= denominator {
                         {
                             let scale = denominator.clone();
                             {
-                                let source_ml_source2_s5 = self::source_ml_source1_temporary_convert_string_number_rational_loop11(numerator.clone(), exponent, scale);
-                                match source_ml_source2_s5 {
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop11Result::MlSource1TemporaryConvertStringNumberRationalLoop11Done(exponent_2) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Next(exponent_2)
+                                let source_ml_source2_s7 = self::source_ml_source1_temporary_convert_string_number_rational_loop15(numerator.clone(), exponent, scale);
+                                match source_ml_source2_s7 {
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Done(exponent_2) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_2)
                                     }
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop11Result::MlSource1TemporaryConvertStringNumberRationalLoop11Return(source_ml_source1_temporary_result11) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Return(source_ml_source1_temporary_result11)
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop15Result::MlSource1TemporaryConvertStringNumberRationalLoop15Return(source_ml_source1_temporary_result15) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result15)
                                     }
                                 }
                             }
@@ -584,20 +623,20 @@ pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: sel
                         {
                             let scale_2 = numerator.clone();
                             {
-                                let source_ml_source2_s6 = self::source_ml_source1_temporary_convert_string_number_rational_loop12(denominator.clone(), exponent, scale_2);
-                                match source_ml_source2_s6 {
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop12Result::MlSource1TemporaryConvertStringNumberRationalLoop12Done(exponent_3) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Next(exponent_3)
+                                let source_ml_source2_s8 = self::source_ml_source1_temporary_convert_string_number_rational_loop16(denominator.clone(), exponent, scale_2);
+                                match source_ml_source2_s8 {
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Done(exponent_3) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_3)
                                     }
-                                    self::MlSource1TemporaryConvertStringNumberRationalLoop12Result::MlSource1TemporaryConvertStringNumberRationalLoop12Return(source_ml_source1_temporary_result12) => {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Return(source_ml_source1_temporary_result12)
+                                    self::MlSource1TemporaryConvertStringNumberRationalLoop16Result::MlSource1TemporaryConvertStringNumberRationalLoop16Return(source_ml_source1_temporary_result16) => {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result16)
                                     }
                                 }
                             }
                         }
                     };
-                    match source_ml_source2_s4 {
-                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Next(exponent_4) => {
+                    match source_ml_source2_s6 {
+                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Next(exponent_4) => {
                             {
                                 let shift = if exponent_4 >= -1022f64 {
                                     52f64 - exponent_4
@@ -605,25 +644,25 @@ pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: sel
                                     1074f64
                                 };
                                 {
-                                    let source_ml_source2_s7 = if shift >= 0f64 {
+                                    let source_ml_source2_s9 = if shift >= 0f64 {
                                         {
                                             let index = 0f64;
                                             {
-                                                let numerator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop9(numerator.clone(), shift, index);
-                                                self::MlSource1TemporaryConvertStringNumberRationalJoin6::MlSource1TemporaryConvertStringNumberRationalJoin6Next(numerator_2, denominator.clone())
+                                                let numerator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop13(numerator.clone(), shift, index);
+                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_2, denominator.clone())
                                             }
                                         }
                                     } else {
                                         {
                                             let index_2 = 0f64;
                                             {
-                                                let denominator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop10(denominator.clone(), shift, index_2);
-                                                self::MlSource1TemporaryConvertStringNumberRationalJoin6::MlSource1TemporaryConvertStringNumberRationalJoin6Next(numerator.clone(), denominator_2)
+                                                let denominator_2 = self::source_ml_source1_temporary_convert_string_number_rational_loop14(denominator.clone(), shift, index_2);
+                                                self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator.clone(), denominator_2)
                                             }
                                         }
                                     };
-                                    match source_ml_source2_s7 {
-                                        self::MlSource1TemporaryConvertStringNumberRationalJoin6::MlSource1TemporaryConvertStringNumberRationalJoin6Next(numerator_3, denominator_3) => {
+                                    match source_ml_source2_s9 {
+                                        self::MlSource1TemporaryConvertStringNumberRationalJoin10::MlSource1TemporaryConvertStringNumberRationalJoin10Next(numerator_3, denominator_3) => {
                                             {
                                                 let quotient = self::ml::Big::from_i128(0);
                                                 {
@@ -633,13 +672,13 @@ pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: sel
                                                         {
                                                             let weight = self::ml::Big::from_i128(1);
                                                             {
-                                                                let source_ml_source2_s8 = self::source_ml_source1_temporary_convert_string_number_rational_loop7(remainder.clone(), scale_3, weight);
-                                                                match source_ml_source2_s8 {
-                                                                    self::MlSource1TemporaryConvertStringNumberRationalLoop7Result::MlSource1TemporaryConvertStringNumberRationalLoop7Done(scale_4, weight_2) => {
+                                                                let source_ml_source2_s10 = self::source_ml_source1_temporary_convert_string_number_rational_loop11(remainder.clone(), scale_3, weight);
+                                                                match source_ml_source2_s10 {
+                                                                    self::MlSource1TemporaryConvertStringNumberRationalLoop11Result::MlSource1TemporaryConvertStringNumberRationalLoop11Done(scale_4, weight_2) => {
                                                                         {
-                                                                            let source_ml_source2_s9 = self::source_ml_source1_temporary_convert_string_number_rational_loop8(quotient, remainder.clone(), scale_4.clone(), weight_2.clone());
-                                                                            match source_ml_source2_s9 {
-                                                                                self::MlSource1TemporaryConvertStringNumberRationalLoop8Result::MlSource1TemporaryConvertStringNumberRationalLoop8Done(quotient_2, remainder_2) => {
+                                                                            let source_ml_source2_s11 = self::source_ml_source1_temporary_convert_string_number_rational_loop12(quotient, remainder.clone(), scale_4.clone(), weight_2.clone());
+                                                                            match source_ml_source2_s11 {
+                                                                                self::MlSource1TemporaryConvertStringNumberRationalLoop12Result::MlSource1TemporaryConvertStringNumberRationalLoop12Done(quotient_2, remainder_2) => {
                                                                                     {
                                                                                         let twice = remainder_2.mul(&self::ml::Big::from_i128(2));
                                                                                         {
@@ -668,8 +707,8 @@ pub fn convert_string_number_rational(numerator: self::ml::Big, denominator: sel
                                 }
                             }
                         }
-                        self::MlSource1TemporaryConvertStringNumberRationalJoin5::MlSource1TemporaryConvertStringNumberRationalJoin5Return(source_ml_source1_temporary_result10) => {
-                            source_ml_source1_temporary_result10
+                        self::MlSource1TemporaryConvertStringNumberRationalJoin9::MlSource1TemporaryConvertStringNumberRationalJoin9Return(source_ml_source1_temporary_result14) => {
+                            source_ml_source1_temporary_result14
                         }
                     }
                 }
@@ -690,13 +729,13 @@ if ml_library_inequality_1 {
             {
                 let index = 0f64;
                 {
-                    let source_ml_source2_s10 = self::source_ml_source1_temporary_accept_string_number_infinity_loop13(units, start, &(expected), index);
-                    match source_ml_source2_s10 {
-                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result::MlSource1TemporaryAcceptStringNumberInfinityLoop13Done => {
+                    let source_ml_source2_s12 = self::source_ml_source1_temporary_accept_string_number_infinity_loop17(units, start, &(expected), index);
+                    match source_ml_source2_s12 {
+                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Done => {
                             true
                         }
-                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result::MlSource1TemporaryAcceptStringNumberInfinityLoop13Return(source_ml_source1_temporary_result13) => {
-                            source_ml_source1_temporary_result13
+                        self::MlSource1TemporaryAcceptStringNumberInfinityLoop17Result::MlSource1TemporaryAcceptStringNumberInfinityLoop17Return(source_ml_source1_temporary_result17) => {
+                            source_ml_source1_temporary_result17
                         }
                     }
                 }

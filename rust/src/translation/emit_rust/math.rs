@@ -92,6 +92,20 @@ impl RustEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
+            self.preludes.insert(Prelude::Big);self.preludes.insert(Prelude::BigIntegerConversion);
+            let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
+            let value=self.expr(&args[0])?;
+            return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("Rust",&form,&value,self.utf16_strings));
+        }
+        if crate::translation::source_exception_rules::accept_linked_java_script_source_exception(
+            "math", op,
+        ) {
+            self.preludes.insert(Prelude::SourceException);
+            let message = self.expr(&args[0])?;
+            let present = self.expr(&args[1])?;
+            return Ok(crate::translation::source_exception_rules::render_java_script_source_exception_expression("Rust",op,&message,&present,self.utf16_strings));
+        }
         if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
             "math", op,
         ) {

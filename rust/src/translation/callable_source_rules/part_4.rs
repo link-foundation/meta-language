@@ -2,6 +2,7 @@
 use super::MlSource1TemporaryCallableCellObservationsLoop57Result;
 use super::MlSource1TemporaryCallableRenamedNodeLoop63Result;
 use super::MlSource1TemporaryCallableRenamingBindingLoop61Result;
+use super::MlSource1TemporaryPlanCallableMutableCellsLoop54Result;
 use super::accept_callable_type_whitespace;
 use super::callable_element;
 use super::callable_field;
@@ -19,7 +20,58 @@ use super::source_ml_source1_temporary_callable_renamed_node_loop62;
 use super::source_ml_source1_temporary_callable_renamed_node_loop63;
 use super::source_ml_source1_temporary_callable_renamed_node_loop64;
 use super::source_ml_source1_temporary_callable_renaming_binding_loop61;
+use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop54;
+use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop55;
 use super::source_ml_source1_temporary_plan_callable_source_renaming_loop60;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_callable_mutable_cells(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+) -> Vec<f64> {
+    {
+        let events =
+            self::callable_cell_observations(forms, texts, starts, counts, labels, targets, node);
+        {
+            let captures = Vec::<f64>::new();
+            {
+                let assigned = Vec::<String>::new();
+                {
+                    let at = 0f64;
+                    {
+                        let source_ml_source2_s75 =
+                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop54(
+                                texts,
+                                &(events),
+                                captures,
+                                assigned,
+                                at,
+                            );
+                        match source_ml_source2_s75 {
+                            self::MlSource1TemporaryPlanCallableMutableCellsLoop54Result::MlSource1TemporaryPlanCallableMutableCellsLoop54Done(captures_2, assigned_2, at_2) => {
+                                {
+                                    let cells = Vec::<f64>::new();
+                                    {
+                                        let at_3 = 0f64;
+                                        {
+                                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop55(texts, &(captures_2), &(assigned_2), at_3, cells)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -867,9 +919,4 @@ pub fn source_ml_source1_temporary_callable_type_parameter_segments_loop4(
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryCallableTypeParametersLoop5Result {
     MlSource1TemporaryCallableTypeParametersLoop5Done(f64, Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryCallableTypeParametersJoin6 {
-    MlSource1TemporaryCallableTypeParametersJoin6Next(f64, Vec<f64>),
 }

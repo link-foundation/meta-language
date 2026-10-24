@@ -250,7 +250,7 @@ class Lowering {
       case 'return':
         return ctx.ret(this.renamed(statement.expr, scope));
       case 'throw':
-        return { k: 'abort', message: statement.message, span: statement.span };
+        return statement.exception?this.renamed(statement.exception,scope):{ k: 'abort', message: statement.message, span: statement.span };
       case 'break':
         return ctx.brk();
       case 'continue':

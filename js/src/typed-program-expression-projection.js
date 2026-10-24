@@ -12,6 +12,8 @@ import { acceptLinkedReferenceMethodOperation } from './translation/reference-me
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
 import { acceptLinkedBigIntegerBitwiseOperation } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException} from './translation/source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult} from './translation/big-integer-conversion-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
@@ -38,6 +40,8 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     && !acceptLinkedRecordFieldWrite(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedBigIntegerBitwiseOperation(value.k, value.op)
     && !acceptLinkedJavaScriptNumberConversion(value.k,value.op)
+    && !acceptLinkedJavaScriptSourceException(value.k,value.op)
+    && !acceptLinkedJavaScriptBigIntegerResult(value.k,value.op)
     && !acceptLinkedRustPrimitiveBitwiseOperation(value.k, value.op)
     && !acceptLinkedArrayStateMethod(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
     && !acceptLinkedRustCheckedShift(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');

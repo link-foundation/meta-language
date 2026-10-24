@@ -5,11 +5,10 @@ use super::MlSource1TemporaryPlanCallableClosureScopeLoop48Result;
 use super::MlSource1TemporaryPlanCallableClosureScopeLoop49Result;
 use super::MlSource1TemporaryPlanCallableClosureScopeLoop50Result;
 use super::MlSource1TemporaryPlanCallableClosureScopeLoop51Result;
-use super::MlSource1TemporaryPlanCallableMutableCellsLoop54Result;
 use super::MlSource1TemporaryPlanCallableStatementCapturesLoop45Result;
+use super::MlSource1TemporaryReadCallableCaptureConflictsLoop29Result;
 use super::MlSource1TemporaryReadCallableClosureParameterErrorLoop41Result;
 use super::MlSource1TemporaryReadCallableClosureParameterErrorLoop42Result;
-use super::callable_cell_observations;
 use super::callable_field;
 use super::callable_tag;
 use super::callable_truthy;
@@ -27,17 +26,59 @@ use super::source_ml_source1_temporary_plan_callable_closure_scope_loop49;
 use super::source_ml_source1_temporary_plan_callable_closure_scope_loop50;
 use super::source_ml_source1_temporary_plan_callable_closure_scope_loop51;
 use super::source_ml_source1_temporary_plan_callable_function_type_loop36;
-use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop54;
-use super::source_ml_source1_temporary_plan_callable_mutable_cells_loop55;
 use super::source_ml_source1_temporary_plan_callable_parameter_ownership_loop39;
 use super::source_ml_source1_temporary_plan_callable_parameter_types_loop35;
 use super::source_ml_source1_temporary_plan_callable_statement_captures_loop45;
 use super::source_ml_source1_temporary_plan_callable_surface_parameters_loop52;
 use super::source_ml_source1_temporary_plan_callable_type_constraints_loop37;
+use super::source_ml_source1_temporary_read_callable_capture_conflicts_loop29;
+use super::source_ml_source1_temporary_read_callable_capture_conflicts_loop30;
 use super::source_ml_source1_temporary_read_callable_closure_parameter_error_loop41;
 use super::source_ml_source1_temporary_read_callable_closure_parameter_error_loop42;
 use super::source_ml_source1_temporary_read_callable_function_children_loop40;
 use super::source_ml_source1_temporary_render_callable_parameters_loop53;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_callable_capture_conflicts(
+    forms: &[String],
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    node: f64,
+) -> Vec<f64> {
+    {
+        let observations =
+            self::callable_outer_assignments(forms, texts, starts, counts, labels, targets, node);
+        {
+            let assigned = Vec::<String>::new();
+            {
+                let closures = Vec::<f64>::new();
+                {
+                    let at = 0f64;
+                    {
+                        let source_ml_source2_s48 = self::source_ml_source1_temporary_read_callable_capture_conflicts_loop29(texts, &(observations), assigned, closures, at);
+                        match source_ml_source2_s48 {
+                            self::MlSource1TemporaryReadCallableCaptureConflictsLoop29Result::MlSource1TemporaryReadCallableCaptureConflictsLoop29Done(assigned_2, closures_2, at_2) => {
+                                {
+                                    let result = Vec::<f64>::new();
+                                    {
+                                        let at_3 = 0f64;
+                                        {
+                                            self::source_ml_source1_temporary_read_callable_capture_conflicts_loop30(texts, starts, counts, labels, targets, &(assigned_2), &(closures_2), at_3, result)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -875,53 +916,4 @@ pub fn render_callable_function_type(format: &str, parameters: &[String], ret: &
             .as_str()
         )
     )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_callable_mutable_cells(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-) -> Vec<f64> {
-    {
-        let events =
-            self::callable_cell_observations(forms, texts, starts, counts, labels, targets, node);
-        {
-            let captures = Vec::<f64>::new();
-            {
-                let assigned = Vec::<String>::new();
-                {
-                    let at = 0f64;
-                    {
-                        let source_ml_source2_s75 =
-                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop54(
-                                texts,
-                                &(events),
-                                captures,
-                                assigned,
-                                at,
-                            );
-                        match source_ml_source2_s75 {
-                            self::MlSource1TemporaryPlanCallableMutableCellsLoop54Result::MlSource1TemporaryPlanCallableMutableCellsLoop54Done(captures_2, assigned_2, at_2) => {
-                                {
-                                    let cells = Vec::<f64>::new();
-                                    {
-                                        let at_3 = 0f64;
-                                        {
-                                            self::source_ml_source1_temporary_plan_callable_mutable_cells_loop55(texts, &(captures_2), &(assigned_2), at_3, cells)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

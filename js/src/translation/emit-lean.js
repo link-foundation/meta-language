@@ -3,6 +3,8 @@ import {readStringOrderRefusal} from './string-order-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {STRING_NUMBER_LEAN_PRELUDE} from './string-number-formal-runtime.js';
+import {BIG_INTEGER_CONVERSION_LEAN_PRELUDE} from './big-integer-conversion-formal-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -36,6 +38,7 @@ import { renderAbsentNumberExpression } from './primitive-value-rules.js';
 
 const KEYWORDS = new Set([
   'MLStringNumber',
+  'MLBigIntegerConversion',
   'abbrev', 'at', 'attribute', 'axiom', 'by', 'calc', 'class', 'def', 'deriving', 'do', 'else', 'end', 'example',
   'export', 'extends', 'for', 'from', 'fun', 'have', 'if', 'import', 'in', 'inductive', 'instance', 'let', 'local',
   'match', 'mut', 'mutual', 'namespace', 'noncomputable', 'open', 'partial', 'private', 'protected', 'return',
@@ -245,6 +248,7 @@ class LeanEmitter {
       '',
       ...['jsNumber', 'jsConsole', 'floatRem', 'floatSame', 'math', 'arrayAt', 'arrayAtFloat', 'stringIncludes'].filter((name) => this.helpers.has(name)).flatMap((name) => [HELPERS[name], '']),
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_LEAN_PRELUDE,'']:[]),
+      ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_LEAN_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(main ? [main, ''] : []),
     ].join('\n');
@@ -643,6 +647,10 @@ class LeanEmitter {
   }
 
   math(e, depth) {
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.helpers.add('bigIntegerConversion');
+      return renderJavaScriptBigIntegerResultExpression('Lean',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0],depth),false);
+    }
     if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
       if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');
       const text=renderJavaScriptNumberScalarConversion('Lean',e.op,e.args[0].type.kind,this.expr(e.args[0],depth),false);

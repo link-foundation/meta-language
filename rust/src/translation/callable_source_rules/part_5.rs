@@ -1,5 +1,4 @@
 // Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryCallableTypeParametersJoin6;
 use super::MlSource1TemporaryCallableTypeParametersLoop5Result;
 use super::callable_assigned_expression_references;
 use super::callable_element;
@@ -15,6 +14,11 @@ use super::ml_array;
 use super::read_callable_free_references;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryCallableTypeParametersJoin6 {
+    MlSource1TemporaryCallableTypeParametersJoin6Next(f64, Vec<f64>),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

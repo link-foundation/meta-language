@@ -779,6 +779,10 @@ pub fn emit_rust_constants(program: &Program) -> Result<Option<Emitted>> {
             Prelude::NumberBitwise => include_str!("runtime/number-bitwise.rs").to_owned(),
             Prelude::BigIntegerBitwise => include_str!("runtime/big-integer-bitwise.rs").to_owned(),
             Prelude::StringNumber => include_str!("runtime/string-number.rs").to_owned(),
+            Prelude::SourceException => include_str!("runtime/source-exception.rs").to_owned(),
+            Prelude::BigIntegerConversion => {
+                include_str!("runtime/big-integer-conversion.rs").to_owned()
+            }
         })
         .collect();
     let mut output = emitter.state.finish(
@@ -822,6 +826,8 @@ enum Prelude {
     NumberBitwise,
     BigIntegerBitwise,
     StringNumber,
+    SourceException,
+    BigIntegerConversion,
 }
 
 /// Inspectable records captured during normal complete block emission.

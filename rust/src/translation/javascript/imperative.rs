@@ -383,7 +383,14 @@ impl Lowering {
                 let value = renamed(expr, scope)?;
                 return (ctx.ret)(self, value);
             }
-            Stmt::Throw { message, span } => {
+            Stmt::Throw {
+                message,
+                exception,
+                span,
+            } => {
+                if let Some(exception) = exception {
+                    return renamed(exception, scope);
+                }
                 return Ok(node(
                     SNode::Abort {
                         message: message.clone(),

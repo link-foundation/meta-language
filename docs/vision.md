@@ -5799,7 +5799,7 @@ fixtures, unit transport controls, independent original-Node producers, native
 controls and codec/emission controls are authored but unexecuted. They are not
 evidence. Numeric controls retain their original source and add actual source
 `String` observation wrappers rather than relying on Rust Display spellings.
-Object and Symbol conversion, iterator spreads, source error classes, complete
+Object and Symbol conversion, iterator spreads, complete
 isolated-surrogate source/IR transport, all remaining language constructs and
 deferred ledger/source/naming/dependency/parity registration remain obligations.
 The existing formatter failed internally on this generated library; its author
@@ -5826,6 +5826,39 @@ remain required alongside the previously named gaps.
 
 ### Exact BigInt conversion definitions and error transport draft
 
+Source builtin lowering uses the same complete conversion definitions for
+primitive strings, Numbers, Booleans, BigInts and optional absence. Inputs and
+ignored extra arguments evaluate once in source order before conversion.
+String parsing returns an explicit success column; its empty failure cannot
+be confused with the valid integer zero. Complete generated JavaScript, Rust,
+Lean and Rocq runtimes retain actual entry identities. Their UTF-8 decoder is
+one shared definition, with an explicit invalid-unit sentinel before conversion.
+Source error messages retain their version-qualified runtime profile separately
+from the language conversion algorithm.
+
+Ordinary source Error, TypeError, RangeError, SyntaxError, ReferenceError,
+URIError and EvalError throws retain a computed primitive message, its exact
+UTF-16 units, class and independent own-property presence. Standard constructor
+calls with and without `new` share their source owner check. All arguments
+evaluate before message conversion, including ignored arguments; undefined
+message absence remains distinct from an explicitly empty message. Existing
+literal generic Error nodes retain their historical representation. Checked
+exception operations hold normalized message and presence separately from raw
+source constructor operations, so Links rechecking never converts them twice.
+The existing serialized `math` container is a compatibility spelling for a
+typed intrinsic operation; its operation identity selects the full shared
+definition, rather than limiting it to JavaScript Math methods.
+
+Native exception transport carries the universal class/message-unit/presence
+tuple, including across separately embedded generated modules. Implicit BigInt
+ToNumber failures use the same TypeError transport. Future controls declare
+all three error fields and original-source argument order. Formal targets
+currently thread the dynamic message but still need the complete exception
+payload, and native uncaught process/stack behavior remains required. Arbitrary
+thrown values, error objects/cause, catch/finally, AggregateError and complete
+source isolated-surrogate transport remain obligations. These are code drafts;
+no behavior, test, oracle, compilation or validation gate has run in this phase.
+
 The shared BigInt conversion definition parses the complete StringIntegerLiteral
 grammar directly into unbounded integers, including unsigned radix forms,
 signed decimal forms, white space and empty input. It never passes through
@@ -5851,7 +5884,6 @@ Node version ranges and are separate from the ECMAScript conversion algorithms.
 Future independent built-in BigInt controls cover values, errors, both runtime
 APIs and complete definition graph codecs/emissions. They have not executed.
 
-These library and definition drafts do not establish source `BigInt(...)`
-lowering. Dynamic exception operands/classes, constructor argument effects,
-optional primitive dispatch, source builtin integration, all previously named
-translation gaps and deferred source/ledger/naming metadata remain required.
+The source integration above is a draft and supplies no execution evidence.
+All previously named translation gaps and deferred source/ledger/naming metadata
+remain required.

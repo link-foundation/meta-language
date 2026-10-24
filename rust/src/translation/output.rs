@@ -492,6 +492,10 @@ impl Threader<'_> {
             return self.make(out, e);
         }
         if let Node::Math { op, args } = &e.node {
+            if super::source_exception_rules::accept_linked_java_script_source_exception("math", op)
+            {
+                return self.fail(out, args[0].clone(), &e.ty);
+            }
             let message = super::string_number_rules::read_java_script_number_conversion_failure(
                 op,
                 args[0].ty.kind(),

@@ -12,6 +12,7 @@ export function readCallableStatementRole(kind) {
   if (kind === 'assign') return 'assign';
   if (kind === 'assignReference') return 'reference';
   if (kind === 'return' || kind === 'expr' || kind === 'print') return 'read';
+  if (kind === 'throw') return 'exception';
   if (kind === 'block') return 'block';
   if (kind === 'if') return 'branch';
   if (kind === 'switch') return 'switch';
@@ -375,6 +376,7 @@ function callableStatementUses(forms, texts, starts, counts, labels, targets, st
     return callableBound(bound, callableText(texts, name)) ? reads : reads.concat([0, name, 1, name]);
   }
   if (role === 'read') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'expr'), bound);
+  if (role === 'exception') return callableExpressionEvents(forms, texts, starts, counts, labels, targets, callableField(starts, counts, labels, targets, statement, 'exception'), bound);
   if (role === 'reference') {
     return callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'object'),bound)
       .concat(callableExpressionEvents(forms,texts,starts,counts,labels,targets,callableField(starts,counts,labels,targets,statement,'index'),bound),

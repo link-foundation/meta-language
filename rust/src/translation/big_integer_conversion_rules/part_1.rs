@@ -1,10 +1,17 @@
 // Generated from complete js/src/translation/big-integer-conversion-rules.js. Do not edit by hand.
-use super::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4;
-use super::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5;
-use super::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop1Result;
-use super::source_ml_temporary_convert_java_script_number_big_integer_loop7;
-use super::source_ml_temporary_convert_java_script_string_big_integer_units_loop1;
-use super::source_ml_temporary_convert_java_script_string_big_integer_units_loop6;
+use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8;
+use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9;
+use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result;
+use super::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result;
+use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result;
+use super::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result;
+use super::source_ml_source1_temporary_convert_java_script_number_big_integer_loop11;
+use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop5;
+use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop6;
+use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop7;
+use super::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop10;
+use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1;
+use super::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2;
 
 /// Unbounded integers for the portable core's naturals and integers.
 pub mod ml {
@@ -570,24 +577,59 @@ pub fn read_java_script_numeric_digit_unit(unit: f64) -> f64 {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_utf8_string_units(bytes: &[f64]) -> Vec<f64> {
+    {
+        let index = 0f64;
+        {
+            let source_ml_source2_s1 =
+                self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop1(
+                    bytes, index,
+                );
+            match source_ml_source2_s1 {
+                self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Done => {
+                    {
+                        let units = Vec::<f64>::new();
+                        {
+                            let index_2 = 0f64;
+                            {
+                                let source_ml_source2_s2 = self::source_ml_source1_temporary_read_java_script_utf8_string_units_loop2(bytes, units, index_2);
+                                match source_ml_source2_s2 {
+                                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Done(units_2) => {
+                                        units_2
+                                    }
+                                    self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop2Return(source_ml_source1_temporary_result2) => {
+                                        source_ml_source1_temporary_result2
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                self::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Result::MlSource1TemporaryReadJavaScriptUtf8StringUnitsLoop1Return(source_ml_source1_temporary_result4) => {
+                    source_ml_source1_temporary_result4
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn convert_java_script_string_big_integer_units(units: &[f64]) -> Vec<self::ml::Big> {
     {
         let index = 0f64;
         {
-            let source_ml_source1_s1 =
-                self::source_ml_temporary_convert_java_script_string_big_integer_units_loop1(
-                    units, index,
-                );
-            match source_ml_source1_s1 {
-                self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop1Result::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop1Done => {
+            let source_ml_source2_s3 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop5(units, index);
+            match source_ml_source2_s3 {
+                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Done => {
                     {
                         let start = 0f64;
                         {
                             let end = units.len() as f64;
                             {
-                                let start_2 = self::source_ml_temporary_convert_java_script_string_big_integer_units_loop2(units, start, end);
+                                let start_2 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop6(units, start, end);
                                 {
-                                    let end_2 = self::source_ml_temporary_convert_java_script_string_big_integer_units_loop3(units, start_2, end);
+                                    let end_2 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop7(units, start_2, end);
                                     if start_2 == end_2 {
                                         vec![self::ml::Big::from_i128(0)]
                                     } else {
@@ -598,22 +640,22 @@ pub fn convert_java_script_string_big_integer_units(units: &[f64]) -> Vec<self::
                                                 {
                                                     let sign = (self::ml_array::optional_at(units, self::ml_array::number_index(start_2))).unwrap_or_else(|| -1f64);
                                                     {
-                                                        let source_ml_source1_s2 = if (sign == 43f64) || (sign == 45f64) {
+                                                        let source_ml_source2_s4 = if (sign == 43f64) || (sign == 45f64) {
                                                             {
                                                                 let negative_2 = sign == 45f64;
                                                                 {
                                                                     let signed_2 = true;
                                                                     {
                                                                         let start_3 = start_2 + 1f64;
-                                                                        self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4Next(start_3, negative_2, signed_2)
+                                                                        self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_3, negative_2, signed_2)
                                                                     }
                                                                 }
                                                             }
                                                         } else {
-                                                            self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4Next(start_2, negative, signed)
+                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_2, negative, signed)
                                                         };
-                                                        match source_ml_source1_s2 {
-                                                            self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin4Next(start_4, negative_3, signed_3) => {
+                                                        match source_ml_source2_s4 {
+                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin8Next(start_4, negative_3, signed_3) => {
                                                                 if start_4 == end_2 {
                                                                     Vec::<self::ml::Big>::new()
                                                                 } else {
@@ -622,7 +664,7 @@ pub fn convert_java_script_string_big_integer_units(units: &[f64]) -> Vec<self::
                                                                         {
                                                                             let base = self::ml::Big::from_i128(10);
                                                                             {
-                                                                                let source_ml_source1_s3 = if (!signed_3 && (((self::ml_array::optional_at(units, self::ml_array::number_index(start_4))).unwrap_or_else(|| -1f64)) == 48f64)) && ((end_2 - start_4) >= 2f64) {
+                                                                                let source_ml_source2_s5 = if (!signed_3 && (((self::ml_array::optional_at(units, self::ml_array::number_index(start_4))).unwrap_or_else(|| -1f64)) == 48f64)) && ((end_2 - start_4) >= 2f64) {
                                                                                     {
                                                                                         let marker = (self::ml_array::optional_at(units, self::ml_array::number_index(start_4 + 1f64))).unwrap_or_else(|| -1f64);
                                                                                         {
@@ -650,21 +692,21 @@ if ml_library_inequality_1 {
                                                                                                             };
                                                                                                         {
                                                                                                             let start_5 = start_4 + 2f64;
-                                                                                                            self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5Next(start_5, radix_2, base_2)
+                                                                                                            self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_5, radix_2, base_2)
                                                                                                         }
                                                                                                     }
                                                                                                 }
                                                                                             } else {
-                                                                                                self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5Next(start_4, radix, base.clone())
+                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_4, radix, base.clone())
                                                                                             }
 }
                                                                                         }
                                                                                     }
                                                                                 } else {
-                                                                                    self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5Next(start_4, radix, base.clone())
+                                                                                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_4, radix, base.clone())
                                                                                 };
-                                                                                match source_ml_source1_s3 {
-                                                                                    self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5::MlTemporaryConvertJavaScriptStringBigIntegerUnitsJoin5Next(start_6, radix_3, base_3) => {
+                                                                                match source_ml_source2_s5 {
+                                                                                    self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsJoin9Next(start_6, radix_3, base_3) => {
                                                                                         if start_6 == end_2 {
                                                                                             Vec::<self::ml::Big>::new()
                                                                                         } else {
@@ -675,17 +717,17 @@ if ml_library_inequality_1 {
                                                                                                     {
                                                                                                         let index_2 = start_6;
                                                                                                         {
-                                                                                                            let source_ml_source1_s4 = self::source_ml_temporary_convert_java_script_string_big_integer_units_loop6(units, end_2, radix_3, base_3.clone(), digits, value, index_2);
-                                                                                                            match source_ml_source1_s4 {
-                                                                                                                self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Result::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Done(value_2) => {
+                                                                                                            let source_ml_source2_s6 = self::source_ml_source1_temporary_convert_java_script_string_big_integer_units_loop10(units, end_2, radix_3, base_3.clone(), digits, value, index_2);
+                                                                                                            match source_ml_source2_s6 {
+                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Done(value_2) => {
                                                                                                                     vec![if negative_3 {
                                                                                                                         value_2.neg()
                                                                                                                     } else {
                                                                                                                         value_2.clone()
                                                                                                                     }]
                                                                                                                 }
-                                                                                                                self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Result::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Return(source_ml_temporary_result6) => {
-                                                                                                                    source_ml_temporary_result6
+                                                                                                                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop10Return(source_ml_source1_temporary_result10) => {
+                                                                                                                    source_ml_source1_temporary_result10
                                                                                                                 }
                                                                                                             }
                                                                                                         }
@@ -711,12 +753,20 @@ if ml_library_inequality_1 {
                         }
                     }
                 }
-                self::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop1Result::MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop1Return(source_ml_temporary_result6_2) => {
-                    source_ml_temporary_result6_2
+                self::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Result::MlSource1TemporaryConvertJavaScriptStringBigIntegerUnitsLoop5Return(source_ml_source1_temporary_result10_2) => {
+                    source_ml_source1_temporary_result10_2
                 }
             }
         }
     }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn convert_java_script_utf8_big_integer(bytes: &[f64]) -> Vec<self::ml::Big> {
+    self::convert_java_script_string_big_integer_units(
+        &(self::read_java_script_utf8_string_units(bytes)),
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -732,7 +782,7 @@ pub fn convert_java_script_number_big_integer(value: f64) -> Vec<self::ml::Big> 
                     {
                         let weight = self::ml::Big::from_i128(1);
                         {
-                            let integer_2 = self::source_ml_temporary_convert_java_script_number_big_integer_loop7(value_2, integer, weight);
+                            let integer_2 = self::source_ml_source1_temporary_convert_java_script_number_big_integer_loop11(value_2, integer, weight);
                             vec![if negative {
                                 integer_2.neg()
                             } else {
@@ -832,58 +882,31 @@ pub fn read_java_script_big_integer_conversion_message_pieces(form: &str) -> Vec
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_convert_java_script_string_big_integer_units_loop2(
-    units: &[f64],
-    mut start: f64,
-    mut end: f64,
-) -> f64 {
-    loop {
-        if (start < end)
-            && self::accept_java_script_whitespace_unit(
-                (self::ml_array::optional_at(units, self::ml_array::number_index(start)))
-                    .unwrap_or_else(|| -1f64),
-            )
-        {
-            {
-                let start_2 = start + 1f64;
-                {
-                    start = start_2;
-                    continue;
-                }
-            }
-        }
-        return { start };
+pub fn read_java_script_big_integer_builtin_operation(name: &str) -> String {
+    if name == "BigInt" {
+        String::from("convertJavaScriptBigInteger")
+    } else {
+        String::new()
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_temporary_convert_java_script_string_big_integer_units_loop3(
-    units: &[f64],
-    mut start: f64,
-    mut end: f64,
-) -> f64 {
-    loop {
-        if (end > start)
-            && self::accept_java_script_whitespace_unit(
-                (self::ml_array::optional_at(units, self::ml_array::number_index(end - 1f64)))
-                    .unwrap_or_else(|| -1f64),
-            )
-        {
-            {
-                let end_2 = end - 1f64;
-                {
-                    end = end_2;
-                    continue;
-                }
-            }
-        }
-        return { end };
+pub fn read_java_script_big_integer_result_operation(operation: &str) -> String {
+    if operation == "parseJavaScriptStringBigInteger" {
+        String::from("string")
+    } else if operation == "convertJavaScriptBooleanBigIntegerValue" {
+        String::from("boolean")
+    } else if operation == "convertJavaScriptNumberBigIntegerResult" {
+        String::from("number")
+    } else {
+        String::new()
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Result {
-    MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Done(self::ml::Big),
-    MlTemporaryConvertJavaScriptStringBigIntegerUnitsLoop6Return(Vec<self::ml::Big>),
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_java_script_big_integer_result(kind: &str, operation: &str) -> bool {
+    (kind == "math")
+        && (!(self::read_java_script_big_integer_result_operation(operation)).is_empty())
 }

@@ -73,6 +73,12 @@ impl<'p> RustEmitter<'p> {
                     include_str!("../runtime/big-integer-bitwise.rs").to_owned()
                 }
                 Prelude::StringNumber => include_str!("../runtime/string-number.rs").to_owned(),
+                Prelude::SourceException => {
+                    include_str!("../runtime/source-exception.rs").to_owned()
+                }
+                Prelude::BigIntegerConversion => {
+                    include_str!("../runtime/big-integer-conversion.rs").to_owned()
+                }
             })
             .collect();
         for prelude in &preludes {

@@ -54,10 +54,13 @@ impl JavaScriptParser {
     pub(super) fn math(&mut self, token: &Token, name: &str) -> Result<Option<SExpr>> {
         let called = self.cursor.is("(");
         let standard_owner = self.has_standard_builtin_owner(token);
-        let numeric_builtin =
+        let mut numeric_builtin =
             crate::translation::string_number_rules::read_java_script_number_builtin_operation(
                 name,
             );
+        if numeric_builtin.is_empty() {
+            numeric_builtin=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_builtin_operation(name);
+        }
         if called && standard_owner && !numeric_builtin.is_empty() {
             let args = self.spread_arguments(name)?;
             return Ok(Some(node(
@@ -103,7 +106,7 @@ impl JavaScriptParser {
     }
 
     /// Arguments that may spread arrays, `(a, ...xs)`, as array items.
-    fn spread_arguments(&mut self, context: &str) -> Result<Vec<SArrayItem>> {
+    pub(super) fn spread_arguments(&mut self, context: &str) -> Result<Vec<SArrayItem>> {
         self.cursor.expect("(", Some(context))?;
         let mut args = Vec::new();
         while !self.cursor.is(")") {

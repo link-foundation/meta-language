@@ -236,10 +236,13 @@ pub(super) fn assert_nominal_translation_product(
         );
     }
     let mut main = r#"
-fn ml_record_result(result:std::thread::Result<String>)->(&'static str,String){
- match result{Ok(value)=>("value",value),Err(error)=>{
+fn ml_record_result(result:std::thread::Result<String>)->(&'static str,String,Option<String>,Option<Vec<u16>>,Option<bool>){
+ match result{Ok(value)=>("value",value,None,None,None),Err(error)=>{
+  if let Some((class_name,message_units,present))=error.downcast_ref::<(String,Vec<u16>,bool)>(){return ("abort",String::from_utf16_lossy(message_units),Some(class_name.clone()),Some(message_units.clone()),Some(*present));}
+  if let Some((class_name,message_units))=error.downcast_ref::<(String,Vec<u16>)>(){return ("abort",String::from_utf16_lossy(message_units),Some(class_name.clone()),Some(message_units.clone()),None);}
   let message=error.downcast_ref::<&str>().map(|value|(*value).to_owned()).or_else(||error.downcast_ref::<String>().cloned()).expect("the original panic retains its actual text");
-  ("abort",message)
+  let units=message.encode_utf16().collect();
+  ("abort",message,Some("Error".to_owned()),Some(units),Some(true))
  }}
 }
 fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
@@ -288,12 +291,15 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
         } else {
             ("value", row["value"].as_str().unwrap())
         };
-        assert_eq!(
-            row["observed"],
-            json!({"kind":kind,"value":value}),
-            "{}",
-            row["name"]
-        );
+        let mut expected_observation = json!({"kind":kind,"value":value});
+        if let Some(class) = row.get("errorClass") {
+            expected_observation["errorClass"] = class.clone();
+            expected_observation["messageUnits"] = row["messageUnits"].clone();
+            if let Some(present) = row.get("messagePresent") {
+                expected_observation["messagePresent"] = present.clone();
+            }
+        }
+        assert_eq!(row["observed"], expected_observation, "{}", row["name"]);
         let mut calls = Vec::new();
         if source_language == Language::Rust {
             calls.push((
@@ -306,15 +312,33 @@ fn main(){std::panic::set_hook(Box::new(|_|{}));let mut failures=Vec::new();
             ));
         } else {
             assert_eq!(
-                row["originalObserved"],
-                json!({"kind":kind,"value":value}),
+                row["originalObserved"], expected_observation,
                 "{}",
                 row["name"]
             );
         }
         calls.push(("translated", format!("{native}()")));
         for (owner, call) in calls {
-            main.push_str(&format!("{{let observed=ml_record_result(std::panic::catch_unwind(||({call}).to_string()));if observed!=({kind:?},{value:?}.to_owned()){{failures.push(format!(\"{owner} {module}: {{:?}}\",observed));}}}}\n"));
+            let class_check = if let Some(class) = row.get("errorClass").and_then(Value::as_str) {
+                let units = row["messageUnits"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|unit| u16::try_from(unit.as_u64().unwrap()).unwrap())
+                    .collect::<Vec<_>>();
+                let presence_check = row
+                    .get("messagePresent")
+                    .and_then(Value::as_bool)
+                    .map_or_else(String::new, |present| {
+                        format!("||observed.4!=Some({present})")
+                    });
+                format!(
+                    "if observed.2.as_deref()!=Some({class:?})||observed.3.as_deref()!=Some(&{units:?}[..]){presence_check}{{failures.push(format!(\"{owner} {module} class/units: {{:?}}\",observed));}}"
+                )
+            } else {
+                String::new()
+            };
+            main.push_str(&format!("{{let observed=ml_record_result(std::panic::catch_unwind(||({call}).to_string()));if (observed.0,observed.1.clone())!=({kind:?},{value:?}.to_owned()){{failures.push(format!(\"{owner} {module}: {{:?}}\",observed));}}{class_check}}}\n"));
         }
     }
     main.push_str("if !failures.is_empty(){eprintln!(\"{}\",failures.join(\"\n\"));}assert!(failures.is_empty());");

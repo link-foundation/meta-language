@@ -152,3 +152,11 @@ retaining unbounded precision and source error classes/UTF-16 messages. Share
 digit/whitespace rules and automatically derive runtime parameter loans and
 complete Rust/Lean/Rocq/Links bodies. Author independent future API and codec
 controls; source builtin lowering and dynamic exceptions remain required.
+
+Draft primitive source BigInt lowering with complete generated JavaScript,
+Rust, Lean and Rocq runtimes, shared UTF-8 transport and explicit success columns.
+Draft computed standard error throws preserving error classes, UTF-16 messages,
+own-message presence and argument order, including calls without new. Native
+implicit BigInt numeric errors use the same class-bearing transport. Future
+controls are declarations only; formal payload and uncaught process behavior
+remain required.

@@ -15,6 +15,7 @@ import { acceptCallableCreationEffectTraversal, readCallableOutputTargetRefusal 
 import { readCallableOutputAnalysis } from './callable-emission.js';
 import { unsupported } from './diagnostics.js';
 import {readJavaScriptNumberConversionFailure} from './string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException} from './source-exception-rules.js';
 import { BOOL, INT, NAT, OUTPUT, STRING, data, fixedBounds, typeKey } from './types.js';
 import { readProgramExpressionEntryOperandField } from '../typed-program-link-rules.js';
 
@@ -34,7 +35,7 @@ function integerLiteral(node) {
 export function aborts(node) {
   switch (node.k) {
     case 'math':
-      return Boolean(readJavaScriptNumberConversionFailure(node.op,node.args[0]?.type.kind??''));
+      return acceptLinkedJavaScriptSourceException(node.k,node.op)||Boolean(readJavaScriptNumberConversionFailure(node.op,node.args[0]?.type.kind??''));
     case 'abort':
       return true;
     case 'cast': {
@@ -363,6 +364,7 @@ class Threader {
   complete(out, e) {
     if (!aborts(e)) return this.make(out, e);
     if(e.k==='math'){
+      if(acceptLinkedJavaScriptSourceException(e.k,e.op))return this.fail(out,e.args[0],e.type);
       const body=this.fail(out,literal(STRING,readJavaScriptNumberConversionFailure(e.op,e.args[0].type.kind)),e.type);
       return{k:'let',name:this.fresh('numeric_argument'),value:e.args[0],body,type:body.type};
     }

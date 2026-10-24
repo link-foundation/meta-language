@@ -18,6 +18,8 @@ import { renderCollectionSizeExpression, renderCollectionReadExpression } from '
 import { typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
 import {STRING_NUMBER_ROCQ_PRELUDE} from './string-number-formal-runtime.js';
+import {BIG_INTEGER_CONVERSION_ROCQ_PRELUDE} from './big-integer-conversion-formal-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
 import { readCollectionConstructionBinding, renderCollectionConstruction, renderCollectionConstructionType } from './collection-construction-rules.js';
 import { renderOptionalAbsentValue, renderOptionalCoalescing, renderOptionalConsoleText, renderOptionalFlattening, renderOptionalMatch, renderOptionalNumericPresent, renderOptionalPresentValue, renderOptionalPrimitiveTruth, renderOptionalProjection, renderOptionalStrictEquality, renderOptionalTypeQueryPresent, renderOptionalUnwrapping, requireOptionalNumericPredicate } from './optional-value-rules.js';
 import { renderCollectionIteration, renderOptionalArrayRead } from './array-value-rules.js';
@@ -35,6 +37,7 @@ import { EmitState, mutualGroups, orderDeclarations, unthreaded } from './emit-c
 
 const KEYWORDS = new Set([
   'MLStringNumber',
+  'MLBigIntegerConversion',
   'as', 'at', 'cofix', 'else', 'end', 'exists', 'exists2', 'fix', 'for', 'forall', 'fun', 'if', 'IF', 'in', 'let',
   'match', 'mod', 'Prop', 'return', 'Set', 'SProp', 'then', 'Type', 'using', 'where', 'with', 'struct', 'measure',
   'wf', 'Definition', 'Fixpoint', 'Function', 'Theorem', 'Lemma', 'Proof', 'Qed', 'Defined', 'Module', 'End',
@@ -339,6 +342,7 @@ class RocqEmitter {
       '',
       ...helperText.flatMap((helper) => [helper, '']),
       ...(this.helpers.has('stringNumber')?[STRING_NUMBER_ROCQ_PRELUDE,'']:[]),
+      ...(this.helpers.has('bigIntegerConversion')?[BIG_INTEGER_CONVERSION_ROCQ_PRELUDE,'']:[]),
       ...blocks.flatMap((block) => [block, '']),
       ...(mainText ? [mainText, '', 'Eval vm_compute in main.', ''] : []),
     ].join('\n');
@@ -895,6 +899,10 @@ class RocqEmitter {
   }
 
   math(e) {
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.floats();this.helpers.add('bigIntegerConversion');
+      return renderJavaScriptBigIntegerResultExpression('Rocq',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
+    }
     if(acceptLinkedJavaScriptNumberConversion(e.k,e.op)){
       this.floats();
       if(['string','int','nat'].includes(e.args[0].type.kind))this.helpers.add('stringNumber');

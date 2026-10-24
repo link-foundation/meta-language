@@ -47,6 +47,7 @@ use self::mutual::Mutual;
 
 const KEYWORDS: &[&str] = &[
     "MLStringNumber",
+    "MLBigIntegerConversion",
     "as",
     "at",
     "cofix",
@@ -240,10 +241,11 @@ enum Helper {
     Decide,
     Emit,
     StringNumber,
+    BigIntegerConversion,
 }
 
 impl Helper {
-    const ALL: [Self; 19] = [
+    const ALL: [Self; 20] = [
         Self::Digits,
         Self::ZToString,
         Self::BoolToString,
@@ -263,6 +265,7 @@ impl Helper {
         Self::Decide,
         Self::Emit,
         Self::StringNumber,
+        Self::BigIntegerConversion,
     ];
 
     fn render_definition(self) -> String {
@@ -299,6 +302,7 @@ impl Helper {
             Self::Decide => DECIDE,
             Self::Emit => EMIT,
             Self::StringNumber => include_str!("runtime/string-number.v"),
+            Self::BigIntegerConversion => include_str!("runtime/big-integer-conversion.v"),
         }
     }
 }

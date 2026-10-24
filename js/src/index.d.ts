@@ -2614,3 +2614,6 @@ export function convertJavaScriptStringBigIntegerUnits(units: number[]): bigint;
 export function convertJavaScriptNumberBigInteger(value: number): bigint;
 
 export function convertJavaScriptBooleanBigInteger(value: boolean): bigint;
+
+/** Complete source exception constructor, class, message and presence definitions. */
+export function createSourceExceptionProgramLinks(): TypedProgramLinks;

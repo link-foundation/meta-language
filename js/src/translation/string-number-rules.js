@@ -3,6 +3,7 @@
 // there is no host decimal parser, Number(string) or intermediate rounding.
 import { acceptJavaScriptWhitespaceUnit } from './javascript-whitespace-rules.js';
 import {readJavaScriptNumericDigitUnit} from './numeric-digit-rules.js';
+import {readJavaScriptUtf8StringUnits} from './utf8-string-unit-rules.js';
 
 /** @param {number} unit @returns {number} */
 export function readStringNumberDigit(unit) {
@@ -169,30 +170,7 @@ export function convertJavaScriptBigIntegerNumber(value) {
 /** UTF-8 transport for targets whose string value is a byte sequence.
  * @param {number[]} bytes @returns {number} */
 export function convertJavaScriptUtf8StringNumberUnits(bytes) {
-  for(let index=0;index<bytes.length;index+=1){
-    const unit=bytes[index]?? -1;
-    if(!Number.isSafeInteger(unit)||unit<0||unit>255)return NaN;
-  }
-  const units=[];
-  let index=0;
-  while(index<bytes.length){
-    let scalar=bytes[index]?? -1;
-    index+=1;
-    let remaining=0,minimum=0;
-    if(scalar>=194&&scalar<=223){scalar-=192;remaining=1;minimum=128;}
-    else if(scalar>=224&&scalar<=239){scalar-=224;remaining=2;minimum=2048;}
-    else if(scalar>=240&&scalar<=244){scalar-=240;remaining=3;minimum=65536;}
-    else if(scalar>=128)return NaN;
-    while(remaining>0){
-      const next=bytes[index]?? -1;
-      if(next<128||next>191)return NaN;
-      scalar=scalar*64+next-128;index+=1;remaining-=1;
-    }
-    if(scalar<minimum||scalar>1114111||scalar>=55296&&scalar<=57343)return NaN;
-    if(scalar<=65535)units.push(scalar);
-    else {units.push(55296+Math.floor((scalar-65536)/1024));units.push(56320+(scalar-65536)%1024);}
-  }
-  return convertJavaScriptStringNumberUnits(units);
+  return convertJavaScriptStringNumberUnits(readJavaScriptUtf8StringUnits(bytes));
 }
 /** @param {string} name @returns {string} */
 export function readJavaScriptNumberBuiltinOperation(name) {
@@ -264,7 +242,7 @@ export function renderJavaScriptNumberScalarConversion(format,operation,form,val
   if(form==='bool')return '(if '+value+' { 1.0f64 } else { 0.0f64 })';
   if(form==='unit')return '{ let _ = '+value+'; f64::NAN }';
   if(form==='int'||form==='nat')return operation==='coerceJavaScriptNumber'
-    ? '{ let _ = '+value+'; panic!("Cannot convert a BigInt value to a number") }'
+    ? '{ let _ = '+value+'; crate::ml_source_exception::SourceException::from_text("TypeError", "Cannot convert a BigInt value to a number").raise() }'
     : 'crate::ml_string_number::convert_java_script_big_integer_number('+value+')';
   const units=utf16?'('+value+').0.iter().copied()':'('+value+').encode_utf16()';
   return 'crate::ml_string_number::convert_java_script_string_number_units(&'+units+'.map(f64::from).collect::<Vec<f64>>())';

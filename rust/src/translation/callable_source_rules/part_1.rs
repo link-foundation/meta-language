@@ -7,7 +7,6 @@ use super::MlSource1TemporaryPlanCallableTypeSyntaxJoin9;
 use super::MlSource1TemporaryPlanCallableTypeSyntaxLoop10Result;
 use super::source_ml_source1_temporary_callable_bound_loop14;
 use super::source_ml_source1_temporary_callable_field_loop13;
-use super::source_ml_source1_temporary_callable_parameter_names_loop15;
 use super::source_ml_source1_temporary_callable_type_parameter_segments_loop4;
 use super::source_ml_source1_temporary_callable_type_parameters_loop5;
 use super::source_ml_source1_temporary_callable_type_trim_end_loop3;
@@ -317,34 +316,87 @@ pub mod ml_array {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Number fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_text_fact() -> String {
-    panic!("{}", "missing required text fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required text fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (String::from("missing required Boolean fact column value"))
+            .encode_utf16()
+            .collect(),
+        message_present: true,
+    })
+    .raise()
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Number fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_number_fact)
     }
@@ -353,13 +405,16 @@ pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_text_fact(values: &[String], index: f64) -> String {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required text fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_text_fact)
     }
@@ -368,13 +423,16 @@ pub fn read_required_text_fact(values: &[String], index: f64) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid required Boolean fact column position"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -450,6 +508,8 @@ pub fn read_callable_statement_role(kind: &str) -> String {
         String::from("reference")
     } else if ((kind == "return") || (kind == "expr")) || (kind == "print") {
         String::from("read")
+    } else if kind == "throw" {
+        String::from("exception")
     } else if kind == "block" {
         String::from("block")
     } else if kind == "if" {
@@ -853,31 +913,4 @@ pub fn callable_tag(
         texts,
         self::callable_field(starts, counts, labels, targets, node, field),
     )
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn callable_parameter_names(
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    parameters: f64,
-) -> Vec<String> {
-    {
-        let names = Vec::<String>::new();
-        if parameters < 0f64 {
-            names
-        } else {
-            {
-                let at = 0f64;
-                {
-                    self::source_ml_source1_temporary_callable_parameter_names_loop15(
-                        texts, starts, counts, labels, targets, parameters, names, at,
-                    )
-                }
-            }
-        }
-    }
 }

@@ -1,11 +1,8 @@
 // Generated from complete js/src/translation/callable-source-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryCallableStatementUsesLoop27Result;
-use super::MlSource1TemporaryReadCallableCaptureConflictsLoop29Result;
 use super::callable_bound;
 use super::callable_element;
 use super::callable_field;
-use super::callable_outer_assignments;
-use super::callable_parameter_names;
 use super::callable_tag;
 use super::callable_text;
 use super::callable_truthy;
@@ -16,16 +13,42 @@ use super::read_required_text_fact;
 use super::source_ml_source1_temporary_callable_assigned_expression_references_loop21;
 use super::source_ml_source1_temporary_callable_assigned_expression_references_loop22;
 use super::source_ml_source1_temporary_callable_nested_events_loop25;
+use super::source_ml_source1_temporary_callable_parameter_names_loop15;
 use super::source_ml_source1_temporary_callable_read_events_loop20;
 use super::source_ml_source1_temporary_callable_statement_uses_loop26;
 use super::source_ml_source1_temporary_callable_statement_uses_loop27;
 use super::source_ml_source1_temporary_callable_statement_uses_loop28;
-use super::source_ml_source1_temporary_read_callable_capture_conflicts_loop29;
-use super::source_ml_source1_temporary_read_callable_capture_conflicts_loop30;
 use super::source_ml_source1_temporary_read_callable_free_references_loop16;
 use super::source_ml_source1_temporary_read_callable_free_references_loop17;
 use super::source_ml_source1_temporary_read_callable_free_references_loop19;
 use super::source_ml_source1_temporary_read_callable_statement_uses_loop23;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn callable_parameter_names(
+    texts: &[String],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[String],
+    targets: &[f64],
+    parameters: f64,
+) -> Vec<String> {
+    {
+        let names = Vec::<String>::new();
+        if parameters < 0f64 {
+            names
+        } else {
+            {
+                let at = 0f64;
+                {
+                    self::source_ml_source1_temporary_callable_parameter_names_loop15(
+                        texts, starts, counts, labels, targets, parameters, names, at,
+                    )
+                }
+            }
+        }
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -580,6 +603,24 @@ pub fn callable_statement_uses(
                         self::callable_field(starts, counts, labels, targets, statement, "expr"),
                         bound,
                     )
+                } else if role == "exception" {
+                    self::callable_expression_events(
+                        forms,
+                        texts,
+                        starts,
+                        counts,
+                        labels,
+                        targets,
+                        self::callable_field(
+                            starts,
+                            counts,
+                            labels,
+                            targets,
+                            statement,
+                            "exception",
+                        ),
+                        bound,
+                    )
                 } else if role == "reference" {
                     {
                         let source_ml_source2_concat_value34 = self::callable_expression_events(
@@ -801,30 +842,31 @@ pub fn callable_statement_uses(
                                 {
                                     let source_ml_source2_s42 = self::source_ml_source1_temporary_callable_statement_uses_loop27(texts, &(initial), inner, at_2);
                                     match source_ml_source2_s42 {
-                                                                    self::MlSource1TemporaryCallableStatementUsesLoop27Result::MlSource1TemporaryCallableStatementUsesLoop27Done(inner_2, at_3) => {
-                                                                        {
-                                                                            let events_4 = self::callable_nested_events(&(initial));
+                                                                        self::MlSource1TemporaryCallableStatementUsesLoop27Result::MlSource1TemporaryCallableStatementUsesLoop27Done(inner_2, at_3) => {
                                                                             {
-                                                                                let events_5 = {
-                                                                                    let source_ml_source2_concat_value43 = events_4;
-                                                                                    {
-                                                                                        let source_ml_source2_concat_value44 = self::callable_expression_events(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "cond"), &(inner_2));
-                                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value43), source_ml_source2_concat_value44)
-                                                                                    }
-                                                                                };
+                                                                                let events_4 = self::callable_nested_events(&(initial));
                                                                                 {
-                                                                                    let update = self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "update"), &(inner_2));
-                                                                                    {
-                                                                                        let at_4 = 0f64;
+                                                                                    let events_5 = {
+                                                                                        let source_ml_source2_concat_value43 = events_4;
                                                                                         {
-                                                                                            let inner_3 = self::source_ml_source1_temporary_callable_statement_uses_loop28(texts, inner_2, at_4, &(update));
+                                                                                            let source_ml_source2_concat_value44 = self::callable_expression_events(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "cond"), &(inner_2));
+                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value43), source_ml_source2_concat_value44)
+                                                                                        }
+                                                                                    };
+                                                                                    {
+                                                                                        let update = self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "update"), &(inner_2));
+                                                                                        {
+                                                                                            let at_4 = 0f64;
                                                                                             {
-                                                                                                let source_ml_source2_concat_value45 = events_5;
+                                                                                                let inner_3 = self::source_ml_source1_temporary_callable_statement_uses_loop28(texts, inner_2, at_4, &(update));
                                                                                                 {
-                                                                                                    let source_ml_source2_concat_value46 = self::callable_nested_events(&(update));
+                                                                                                    let source_ml_source2_concat_value45 = events_5;
                                                                                                     {
-                                                                                                        let source_ml_source2_concat_value47 = self::callable_nested_events(&(self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "body"), &(inner_3))));
-                                                                                                        self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value45), source_ml_source2_concat_value46), source_ml_source2_concat_value47)
+                                                                                                        let source_ml_source2_concat_value46 = self::callable_nested_events(&(update));
+                                                                                                        {
+                                                                                                            let source_ml_source2_concat_value47 = self::callable_nested_events(&(self::read_callable_statement_uses(forms, texts, starts, counts, labels, targets, self::callable_field(starts, counts, labels, targets, statement, "body"), &(inner_3))));
+                                                                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value45), source_ml_source2_concat_value46), source_ml_source2_concat_value47)
+                                                                                                        }
                                                                                                     }
                                                                                                 }
                                                                                             }
@@ -834,55 +876,12 @@ pub fn callable_statement_uses(
                                                                             }
                                                                         }
                                                                     }
-                                                                }
                                 }
                             }
                         }
                     }
                 } else {
                     Vec::<f64>::new()
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_callable_capture_conflicts(
-    forms: &[String],
-    texts: &[String],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[String],
-    targets: &[f64],
-    node: f64,
-) -> Vec<f64> {
-    {
-        let observations =
-            self::callable_outer_assignments(forms, texts, starts, counts, labels, targets, node);
-        {
-            let assigned = Vec::<String>::new();
-            {
-                let closures = Vec::<f64>::new();
-                {
-                    let at = 0f64;
-                    {
-                        let source_ml_source2_s48 = self::source_ml_source1_temporary_read_callable_capture_conflicts_loop29(texts, &(observations), assigned, closures, at);
-                        match source_ml_source2_s48 {
-                            self::MlSource1TemporaryReadCallableCaptureConflictsLoop29Result::MlSource1TemporaryReadCallableCaptureConflictsLoop29Done(assigned_2, closures_2, at_2) => {
-                                {
-                                    let result = Vec::<f64>::new();
-                                    {
-                                        let at_3 = 0f64;
-                                        {
-                                            self::source_ml_source1_temporary_read_callable_capture_conflicts_loop30(texts, starts, counts, labels, targets, &(assigned_2), &(closures_2), at_3, result)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

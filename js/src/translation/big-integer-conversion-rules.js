@@ -3,6 +3,7 @@
 // language's syntax/range/type exception and retain its actual source message.
 import {acceptJavaScriptWhitespaceUnit} from './javascript-whitespace-rules.js';
 import {readJavaScriptNumericDigitUnit} from './numeric-digit-rules.js';
+import {readJavaScriptUtf8StringUnits} from './utf8-string-unit-rules.js';
 
 /** Complete StringIntegerLiteral, without a Number intermediate or size cap.
  * @param {number[]} units @returns {bigint[]} */
@@ -34,6 +35,10 @@ export function convertJavaScriptStringBigIntegerUnits(units) {
     value=value*base+(digits[digit]??0n);
   }
   return [negative?-value:value];
+}
+/** @param {number[]} bytes @returns {bigint[]} */
+export function convertJavaScriptUtf8BigInteger(bytes) {
+  return convertJavaScriptStringBigIntegerUnits(readJavaScriptUtf8StringUnits(bytes));
 }
 
 /** Every finite integral binary64 value becomes its exact integer.
@@ -83,4 +88,41 @@ export function renderJavaScriptBigIntegerConversionMessage(form,value) {
 export function readJavaScriptBigIntegerConversionMessagePieces(form) {
   if(form==='number')return ['The number ',' cannot be converted to a BigInt because it is not an integer'];
   return form==='string'||form==='undefined'||form==='null'?['Cannot convert ',' to a BigInt']:[];
+}
+
+/** @param {string} name @returns {string} */
+export function readJavaScriptBigIntegerBuiltinOperation(name) {
+  return name==='BigInt'?'convertJavaScriptBigInteger':'';
+}
+/** @param {string} operation @returns {string} */
+export function readJavaScriptBigIntegerResultOperation(operation) {
+  if(operation==='parseJavaScriptStringBigInteger')return 'string';
+  if(operation==='convertJavaScriptBooleanBigIntegerValue')return 'boolean';
+  return operation==='convertJavaScriptNumberBigIntegerResult'?'number':'';
+}
+/** @param {string} kind @param {string} operation @returns {boolean} */
+export function acceptLinkedJavaScriptBigIntegerResult(kind,operation) {
+  return kind==='math'&&readJavaScriptBigIntegerResultOperation(operation)!=='';
+}
+/** @param {string} target @param {string} form @param {string} value @param {boolean} utf16 @returns {string} */
+export function renderJavaScriptBigIntegerResultExpression(target,form,value,utf16) {
+  if(form==='boolean'){
+    if(target==='JavaScript')return 'ml_big_integer_conversion.convertBoolean('+value+')';
+    if(target==='Rust')return 'crate::ml_big_integer_conversion::convert_java_script_boolean_big_integer('+value+')';
+    if(target==='Lean'||target==='Rocq')return '(MLBigIntegerConversion.convertBoolean '+value+')';
+    return '';
+  }
+  if(form!=='string'&&form!=='number')return '';
+  if(target==='JavaScript')return form==='number'?'ml_big_integer_conversion.convertNumber('+value+')'
+    :'((ml_text)=>ml_big_integer_conversion.convertUnits(Array.from({length:ml_text.length}, (_,index)=>ml_text.charCodeAt(index))))('+value+')';
+  if(target==='Rust'){
+    if(form==='number')return 'crate::ml_big_integer_conversion::convert_java_script_number_big_integer('+value+')';
+    const units=utf16?'('+value+').0.iter().copied()':'('+value+').encode_utf16()';
+    return 'crate::ml_big_integer_conversion::convert_java_script_string_big_integer_units(&'+units+'.map(f64::from).collect::<Vec<f64>>())';
+  }
+  if(target==='Lean')return form==='number'?'(MLBigIntegerConversion.convertNumber '+value+')'
+    :'(MLBigIntegerConversion.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] '+value+'))';
+  if(target==='Rocq')return form==='number'?'(MLBigIntegerConversion.convertNumber '+value+')'
+    :'(MLBigIntegerConversion.convertUtf8 ((fix ml_integer_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_integer_bytes rest) end) '+value+'))';
+  return '';
 }

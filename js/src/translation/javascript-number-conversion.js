@@ -73,6 +73,7 @@ export function emitRustJavaScriptNumberConversion(emitter,expression) {
     if(form==='string'||((form==='int'||form==='nat')&&expression.op==='convertJavaScriptNumber')){
       emitter.usesBig=true;emitter.usesStringNumber=true;
     }
+    if((form==='int'||form==='nat')&&expression.op==='coerceJavaScriptNumber')emitter.usesSourceException=true;
     const text=renderJavaScriptNumberScalarConversion('Rust',expression.op,form,value,emitter.utf16Strings);
     if(!text)throw unsupported('numeric conversion operand','a checked scalar conversion needs its complete shared operation',expression.span);
     return text;

@@ -855,3 +855,16 @@ transport the generated integer value and exact UTF-16 source errors, with no
 handwritten replacement conversion. API, definition and independent future
 controls are drafted; source builtin lowering and dynamic exceptions remain
 active implementation work. No code behavior or tests ran.
+
+The next source batch lowers primitive BigInt constructors through their exact
+shared result columns and generated complete runtimes in all four targets.
+One decoder transports UTF-8 input for both numeric definitions. Source exception
+constructors normalize arguments once and retain message own-property presence
+independently of empty text. Native transport retains class and UTF-16 units;
+implicit BigInt ToNumber errors use the same typed payload. The existing math
+wire container also holds these checked intrinsic operations, with distinct raw
+constructor identities so complete codec rechecking preserves normalization.
+Future independent controls cover class, units, property presence, argument
+evaluation and original source. Full formal exception payloads, uncaught native
+process behavior, arbitrary thrown objects and source isolated-surrogate
+transport remain required. No source behavior or tests have run.

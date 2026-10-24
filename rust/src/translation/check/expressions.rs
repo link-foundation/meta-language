@@ -631,6 +631,10 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if !crate::translation::source_exception_rules::read_java_script_exception_constructor_class(op).is_empty(){return self.javascript_source_exception(op,args,span,env,path,expected);}
+                if crate::translation::source_exception_rules::accept_linked_java_script_source_exception("math", op) {
+                    return self.javascript_source_exception_value(op,args,span,env,path,expected);
+                }
                 if !crate::translation::rust_shift_rules::read_rust_shift_checked_operation(op)
                     .is_empty()
                 {

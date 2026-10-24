@@ -21,6 +21,10 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "convertJavaScriptBigInteger" {
+            return self.javascript_big_integer_builtin(args, span, env, path);
+        }
+        if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op){return self.javascript_big_integer_result(op,args,span,env,path);}
         if !crate::translation::string_number_rules::read_java_script_number_conversion_result(op)
             .is_empty()
         {

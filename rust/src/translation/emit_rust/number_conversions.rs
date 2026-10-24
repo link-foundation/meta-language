@@ -46,6 +46,9 @@ impl RustEmitter<'_> {
             self.preludes.insert(Prelude::Big);
             self.preludes.insert(Prelude::StringNumber);
         }
+        if (form == "int" || form == "nat") && operation == "coerceJavaScriptNumber" {
+            self.preludes.insert(Prelude::SourceException);
+        }
         let text = rules::render_java_script_number_scalar_conversion(
             "Rust",
             operation,

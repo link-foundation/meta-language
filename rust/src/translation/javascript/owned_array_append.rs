@@ -337,7 +337,12 @@ fn source_names(
             Stmt::Return { expr, .. } | Stmt::Expr { expr, .. } | Stmt::Print { expr, .. } => {
                 expression(expr, locals, record);
             }
-            Stmt::Break { .. } | Stmt::Continue { .. } | Stmt::Throw { .. } | Stmt::Empty => {}
+            Stmt::Throw { exception, .. } => {
+                if let Some(value) = exception {
+                    expression(value, locals, record);
+                }
+            }
+            Stmt::Break { .. } | Stmt::Continue { .. } | Stmt::Empty => {}
         }
     }
 }
@@ -545,10 +550,13 @@ impl Occurrences {
                         }
                     }
                 }
-                Stmt::Return { .. }
-                | Stmt::Throw { .. }
-                | Stmt::Break { .. }
-                | Stmt::Continue { .. } => break,
+                Stmt::Throw { exception, .. } => {
+                    if let Some(value) = exception {
+                        self.read(value, scope, loops, readers);
+                    }
+                    break;
+                }
+                Stmt::Return { .. } | Stmt::Break { .. } | Stmt::Continue { .. } => break,
                 Stmt::Block { body, inline, span } => {
                     let mut binding = None;
                     if let [first, next] = body.as_slice()

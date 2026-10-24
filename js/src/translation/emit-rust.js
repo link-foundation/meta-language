@@ -26,6 +26,10 @@ import {readJavaScriptNumberBitwiseOperationCode,readJavaScriptNumberBitwiseArit
 import {NUMBER_BITWISE_PRELUDE} from './number-bitwise-runtime.js';
 import { BIG_INTEGER_BITWISE_PRELUDE } from './big-integer-bitwise-runtime.js';
 import {STRING_NUMBER_PRELUDE} from './string-number-runtime.js';
+import {SOURCE_EXCEPTION_PRELUDE} from './source-exception-runtime.js';
+import {BIG_INTEGER_CONVERSION_PRELUDE} from './big-integer-conversion-runtime.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
+import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,requireJavaScriptNumberConversionUnits} from './string-number-rules.js';
 import {emitRustJavaScriptNumberConversion} from './javascript-number-conversion.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
@@ -729,6 +733,8 @@ export function emitRustConstants(program) {
     ...(emitter.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
     ...(emitter.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
     ...(emitter.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
+    ...(emitter.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
+    ...(emitter.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
   ];
   return withParts({ language: 'Rust', text: [...preludes, definition].join('\n\n'), entry: null }, preludes, [definition]);
 }
@@ -757,11 +763,14 @@ class RustEmitter {
     this.usesNumberBitwise = false;
     this.usesBigIntegerBitwise = false;
     this.usesStringNumber = false;
+    this.usesSourceException = false;
+    this.usesBigIntegerConversion = false;
     this.usesOptional = false;
     const needsUnits = (node) => {
       if (!node || typeof node !== 'object') return false;
       if (requireStringOrderUnits(node.k ?? '', node.op ?? '')) return true;
       if(requireJavaScriptNumberConversionUnits(node.k??'',node.op??'',node.args?.[0]?.type?.kind??''))return true;
+      if(acceptLinkedJavaScriptBigIntegerResult(node.k??'',node.op??'')&&readJavaScriptBigIntegerResultOperation(node.op)==='string')return true;
       if (requirePrimitiveMethodUtf16(node.k ?? '', node.k === 'method' ? node.object.type.kind : '')) return true;
       return Object.entries(node).some(([key, value]) => key !== 'type' && key !== 'span' && (Array.isArray(value) ? value.some(needsUnits) : needsUnits(value)));
     };
@@ -796,6 +805,8 @@ class RustEmitter {
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE, ''] : []),
       ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE, ''] : []),
       ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE, ''] : []),
+      ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE, ''] : []),
+      ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE, ''] : []),
       ...body.flatMap((block) => [block, '']),
       ...[main, runner, entry].filter(Boolean).flatMap((block) => [block, '']),
     ].join('\n');
@@ -809,6 +820,8 @@ class RustEmitter {
       ...(this.usesNumberBitwise ? [NUMBER_BITWISE_PRELUDE] : []),
       ...(this.usesBigIntegerBitwise ? [BIG_INTEGER_BITWISE_PRELUDE] : []),
       ...(this.usesStringNumber ? [STRING_NUMBER_PRELUDE] : []),
+      ...(this.usesSourceException ? [SOURCE_EXCEPTION_PRELUDE] : []),
+      ...(this.usesBigIntegerConversion ? [BIG_INTEGER_CONVERSION_PRELUDE] : []),
     ];
     return withParts({
       language: 'Rust',
@@ -1481,6 +1494,14 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+      this.usesBig=true;this.usesBigIntegerConversion=true;
+      return renderJavaScriptBigIntegerResultExpression('Rust',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),this.utf16Strings);
+    }
+    if(acceptLinkedJavaScriptSourceException(e.k,e.op)){
+      this.usesSourceException=true;
+      return renderJavaScriptSourceExceptionExpression('Rust',e.op,this.expr(e.args[0]),this.expr(e.args[1]),this.utf16Strings);
+    }
     if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return emitRustJavaScriptNumberConversion(this,e);
     if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('Rust',e,argument=>this.expr(argument));
     if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('Rust', e, argument => this.expr(argument));

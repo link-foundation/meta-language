@@ -18,6 +18,7 @@ pub(super) fn program_requires_method_units(program: &crate::translation::ir::Pr
                     .and_then(serde_json::Value::as_str)
                     .unwrap_or("");
                 rules::require_primitive_method_utf16(expression, receiver)
+                    || (crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(expression,fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))&&crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""))=="string")
                     || crate::translation::string_number_rules::require_java_script_number_conversion_units(
                         expression,
                         fields.get("op").and_then(serde_json::Value::as_str).unwrap_or(""),

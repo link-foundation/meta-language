@@ -75,7 +75,6 @@ const COMPOUND: [(&str, BinaryOp); 7] = [
     ("&&=", BinaryOp::And),
     ("||=", BinaryOp::Or),
 ];
-const ERRORS: [&str; 3] = ["Error", "RangeError", "TypeError"];
 const GLOBALS: [&str; 24] = [
     "Math",
     "Number",
@@ -349,6 +348,7 @@ enum Stmt {
     },
     Throw {
         message: String,
+        exception: Option<SExpr>,
         span: Span,
     },
     /// A braced block; `inline` for the bindings of a destructuring `const`.

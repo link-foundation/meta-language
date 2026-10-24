@@ -182,6 +182,12 @@ fn validate_type_record(
             && !crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
                 kind, value["op"].as_str().unwrap_or_default(),
             )
+            && !crate::translation::source_exception_rules::accept_linked_java_script_source_exception(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
+            && !crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result(
+                kind, value["op"].as_str().unwrap_or_default(),
+            )
         {
             return Err(error(
                 "the linked program contains an unrecognized expression operation",

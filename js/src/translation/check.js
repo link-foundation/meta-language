@@ -10,6 +10,10 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
+import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
+import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
+import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
+import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult} from './javascript-big-integer-conversion.js';
 import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumberOperand,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import {checkJavaScriptNumberBuiltin,materializeJavaScriptNumberConversion,checkJavaScriptMathematicalArguments} from './javascript-number-conversion.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
@@ -1199,6 +1203,10 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op==='convertJavaScriptBigInteger')return checkJavaScriptBigIntegerBuiltin(this,node,env,path);
+    if(acceptLinkedJavaScriptBigIntegerResult('math',node.op))return checkJavaScriptBigIntegerResult(this,node,env,path);
+    if(readJavaScriptExceptionConstructorClass(node.op))return checkJavaScriptSourceException(this,node,env,path,expected);
+    if(acceptLinkedJavaScriptSourceException('math',node.op))return checkJavaScriptSourceExceptionValue(this,node,env,path,expected);
     if(readJavaScriptNumberConversionResult(node.op))return checkJavaScriptNumberBuiltin(this,node,env,path);
     if (readRustShiftCheckedOperation(node.op)) return checkRustShift(this,node,env,path,expected);
     if (readRustPrimitiveBitwiseArity(node.op)) return checkRustPrimitiveBitwise(this, node, env, path, expected);

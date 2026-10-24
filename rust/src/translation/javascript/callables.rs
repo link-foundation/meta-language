@@ -64,7 +64,17 @@ fn statement_value(statement: &Stmt) -> Value {
         Stmt::Print { expr, style, span } => {
             json!({"s":"print","expr":expr,"style":style,"span":span})
         }
-        Stmt::Throw { message, span } => json!({"s":"throw","message":message,"span":span}),
+        Stmt::Throw {
+            message,
+            exception,
+            span,
+        } => {
+            if let Some(exception) = exception {
+                json!({"s":"throw","message":message,"exception":exception,"span":span})
+            } else {
+                json!({"s":"throw","message":message,"span":span})
+            }
+        }
         Stmt::Break { span } => json!({"s":"break","span":span}),
         Stmt::Continue { span } => json!({"s":"continue","span":span}),
         Stmt::Empty => json!({"s":"empty"}),

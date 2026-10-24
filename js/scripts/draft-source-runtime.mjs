@@ -6,6 +6,8 @@ import {readPortableSourceParameterStyles} from './portable-source-library-style
 import {writeProjectData} from './project-data.mjs';
 import {emitLean} from '../src/translation/emit-lean.js';
 import {emitRocq} from '../src/translation/emit-rocq.js';
+import {emitJavaScript} from '../src/translation/emit-javascript.js';
+import {tokenize} from '../src/translation/lexer.js';
 
 export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,entries,...sourceOptions}) {
   if(!/^[a-z][a-z0-9-]*$/u.test(runtimeStem)||!/^[A-Z][A-Z_0-9]*$/u.test(constantPrefix)||!/^ML[A-Za-z0-9]+$/u.test(formalNamespace))throw new TypeError('source runtime names need portable target identities');
@@ -28,6 +30,32 @@ export function draftSourceRuntime({runtimeStem,constantPrefix,formalNamespace,e
     boundary:'Complete source construction only; no represented invocation, fixture, target execution, test or native compilation.',
   });
   const formal={};
+  const javascript=emitJavaScript(program);
+  let javascriptBody=javascript.text;
+  const javascriptTokens=tokenize(javascriptBody,'JavaScript').tokens;
+  const exportTokens=[];
+  let braceDepth=0;
+  for(const [index,token] of javascriptTokens.entries()){
+    if(braceDepth===0&&token.kind==='identifier'&&token.value==='export'&&['function','const','let','class','async'].includes(javascriptTokens[index+1]?.value))exportTokens.push(token);
+    if(token.kind==='punct'&&token.value==='{')braceDepth+=1;
+    if(token.kind==='punct'&&token.value==='}')braceDepth-=1;
+  }
+  for(const token of exportTokens.reverse())javascriptBody=javascriptBody.slice(0,token.start)+javascriptBody.slice(token.end);
+  const javascriptEntries=entries.map(([alias,source])=>{
+    const target=javascript.mappings.find(mapping=>mapping.kind==='function'&&mapping.source===source)?.target;
+    if(!target)throw new TypeError('the complete JavaScript runtime needs its actual entry '+source);
+    return alias+': '+target;
+  });
+  const javascriptRuntime='const ml_'+runtimeStem.replaceAll('-','_')+' = (() => {\n'+javascriptBody+'\nreturn { '+javascriptEntries.join(', ')+' };\n})();\n';
+  writeFileSync(new URL('rust/src/translation/runtime/'+runtimeStem+'.js',root),javascriptRuntime);
+  writeFileSync(new URL('js/src/translation/'+runtimeStem+'-javascript-runtime.js',root),
+    '// Generated from complete checked source definitions. Do not edit.\nexport const '+constantPrefix+'_JAVASCRIPT_PRELUDE = '+JSON.stringify(javascriptRuntime)+';\n');
+  writeProjectData(new URL('parity/self-translation/'+runtimeStem+'-javascript-runtime.lino',root),{
+    schemaVersion:1,model:'complete checked source JavaScript runtime emission 1',
+    emitted:{language:javascript.language,text:javascript.text,mappings:javascript.mappings,assumptions:javascript.assumptions,encodings:javascript.encodings,theorems:javascript.theorems,entry:javascript.entry,preludes:javascript.preludes,definitions:javascript.definitions},
+    exportTokens:exportTokens.map(({kind,value,start,end,raw})=>({kind,value,start,end,raw})),entries:javascriptEntries,runtime:javascriptRuntime,
+    boundary:'Source construction only; no represented calls, fixture behavior, oracle, test or observations.',
+  });
   for(const [language,emit,extension] of [['Lean',emitLean,'lean'],['Rocq',emitRocq,'v']]){
     const output=emit(program);
     const aliases=entries.map(([alias,source])=>{

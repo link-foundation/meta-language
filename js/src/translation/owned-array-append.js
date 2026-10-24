@@ -196,6 +196,7 @@ export function readOwnedArrayAppendProofs(statements, parameters = [], readers 
             receiver?.path?.length ?? 0, sameOwner, value?.k === 'copySlice' ? 0 : value?.args?.length ?? -1)) escape(allocation, loops);
         }
       } else if (statement.s === 'return' || statement.s === 'throw' || statement.s === 'break' || statement.s === 'continue') {
+        if(statement.s==='throw'&&statement.exception)read(statement.exception,scope,loops);
         // No owner reaches another construction after this control transfer.
         break;
       } else if (statement.s === 'block') {

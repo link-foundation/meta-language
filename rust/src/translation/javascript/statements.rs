@@ -5,7 +5,7 @@ use super::imperative::lower_top_level;
 use super::loops::reserved;
 use super::lowering::statement_span;
 use super::{
-    AssertionKind, CaseTest, Clause, ERRORS, HashSet, JavaScriptParser, Result, SComparison, SData,
+    AssertionKind, CaseTest, Clause, HashSet, JavaScriptParser, Result, SComparison, SData,
     SEffect, SExpr, SNode, SProp, SPropNode, ShowStyle, Span, Stmt, Switch, Token, TokenKind,
     TranslationError, accept_java_script_line_terminator, assertion_kind, has_ctor, node,
     number_literal, prop_of, span, type_error, unsupported,
@@ -319,7 +319,12 @@ impl JavaScriptParser {
                 Some(span(&start, &start)),
             ));
         }
-        if self.cursor.eat("new").is_none() {
+        let constructed = self.cursor.eat("new").is_some();
+        if !constructed
+            && !(self.cursor.peek().kind == TokenKind::Identifier
+                && !crate::translation::source_exception_rules::read_java_script_exception_constructor_operation(&self.cursor.peek().value).is_empty()
+                && self.cursor.is_at("(", 1))
+        {
             return Err(unsupported(
                 "throw of a non-error value",
                 "throw new Error('…'), which aborts the program",
@@ -328,10 +333,14 @@ impl JavaScriptParser {
         }
         let kind = self.cursor.identifier(Some("throw"))?;
         self.lexical.read(&kind, false, kind.span());
-        if !ERRORS.contains(&kind.value.as_str()) {
+        let operation =
+            crate::translation::source_exception_rules::read_java_script_exception_constructor_operation(
+                &kind.value,
+            );
+        if operation.is_empty() {
             return Err(unsupported(
                 &format!("throw new {}", kind.value),
-                "throw an Error, RangeError or TypeError",
+                "the error constructor needs its actual exception definition",
                 Some(span(&kind, &kind)),
             ));
         }
@@ -342,25 +351,42 @@ impl JavaScriptParser {
                 Some(kind.span()),
             ));
         }
-        self.cursor.expect("(", Some("throw"))?;
-        let message = if self.cursor.is(")") {
-            String::new()
-        } else {
-            let token = self.cursor.advance();
-            if token.kind != TokenKind::String {
-                return Err(unsupported(
-                    "computed error message",
-                    "the message of an abort is a string literal",
-                    Some(span(&token, &token)),
-                ));
-            }
-            token.value
-        };
-        self.cursor.expect(")", Some("throw"))?;
+        let args = self.spread_arguments("throw")?;
         self.cursor.eat(";");
+        let place = self.to_here(&start);
+        let legacy = kind.value == "Error"
+            && args.len() == 1
+            && !args[0].spread
+            && matches!(args[0].value.node, SNode::Str { .. });
+        let message = if legacy {
+            args.first()
+                .and_then(|argument| {
+                    if let SNode::Str { value } = &argument.value.node {
+                        Some(value.clone())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_default()
+        } else {
+            String::new()
+        };
+        let exception = if legacy {
+            None
+        } else {
+            Some(node(
+                SNode::Math {
+                    op: operation,
+                    name: kind.value.clone(),
+                    args,
+                },
+                place,
+            ))
+        };
         Ok(Stmt::Throw {
             message,
-            span: self.to_here(&start),
+            exception,
+            span: place,
         })
     }
 

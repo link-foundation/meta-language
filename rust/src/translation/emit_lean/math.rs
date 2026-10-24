@@ -8,6 +8,12 @@ impl LeanEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::big_integer_conversion_rules::accept_linked_java_script_big_integer_result("math",op) {
+            self.helpers.insert("bigIntegerConversion");
+            let form=crate::translation::big_integer_conversion_rules::read_java_script_big_integer_result_operation(op);
+            let value=self.expr(&args[0],depth)?;
+            return Ok(crate::translation::big_integer_conversion_rules::render_java_script_big_integer_result_expression("Lean",&form,&value,false));
+        }
         if crate::translation::string_number_rules::accept_linked_java_script_number_conversion(
             "math", op,
         ) {

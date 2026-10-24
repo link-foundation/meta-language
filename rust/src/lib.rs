@@ -479,3 +479,5 @@ pub use translation::big_integer_conversion::{
     convert_javascript_string_big_integer, convert_javascript_string_big_integer_units,
 };
 pub use translation::big_integer_conversion_program::create_big_integer_conversion_program_links;
+
+pub use translation::source_exception_program::create_source_exception_program_links;

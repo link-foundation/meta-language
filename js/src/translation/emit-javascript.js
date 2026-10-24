@@ -6,6 +6,9 @@ import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMe
 import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion,renderJavaScriptNumberScalarConversion} from './string-number-rules.js';
+import {acceptLinkedJavaScriptSourceException,renderJavaScriptSourceExceptionExpression} from './source-exception-rules.js';
+import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerResultOperation,renderJavaScriptBigIntegerResultExpression} from './big-integer-conversion-rules.js';
+import {BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE} from './big-integer-conversion-javascript-runtime.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
 import { acceptLinkedRustCheckedShift } from './rust-shift-rules.js';
@@ -49,6 +52,7 @@ import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from '.
 import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 
 const KEYWORDS = new Set([
+  'TypeError','SyntaxError','ReferenceError','URIError','EvalError',
   'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum',
   'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null',
   'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
@@ -59,6 +63,7 @@ const KEYWORDS = new Set([
 ]);
 
 const HELPERS = {
+  bigIntegerConversion: BIG_INTEGER_CONVERSION_JAVASCRIPT_PRELUDE,
   ownedTextInput: renderRustOwnedLocalTextInput(),
   natSub: `function ml_natSub(a, b) {
   return a > b ? a - b : 0n;
@@ -182,7 +187,7 @@ class JavaScriptEmitter {
     }
     const main = this.program.main ? this.main(this.program.main) : null;
     if (this.theoremChecks.length) this.helpers.add('domains').add('forall');
-    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains'];
+    const helperOrder = ['ownedTextInput', 'natSub', 'fixed', 'divide', 'toNatChecked', 'abort', 'assert', 'equal', 'showNumber', 'showOptional', 'at', 'forall', 'domains','bigIntegerConversion'];
     const entry = [
       this.theoremChecks.length ? this.theoremRunner() : null,
       main,
@@ -615,6 +620,11 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
+          this.helpers.add('bigIntegerConversion');
+          return renderJavaScriptBigIntegerResultExpression('JavaScript',readJavaScriptBigIntegerResultOperation(e.op),this.expr(e.args[0]),false);
+        }
+        if(acceptLinkedJavaScriptSourceException(e.k,e.op))return renderJavaScriptSourceExceptionExpression('JavaScript',e.op,this.expr(e.args[0]),this.expr(e.args[1]),false);
         if(acceptLinkedJavaScriptNumberConversion(e.k,e.op))return renderJavaScriptNumberScalarConversion('JavaScript',e.op,'float',this.expr(e.args[0]),false);
         if (acceptLinkedRustCheckedShift(e.k,e.op)) return emitRustCheckedShift('JavaScript',e,argument=>this.expr(argument));
         if (readRustPrimitiveBitwiseArity(e.op)) return emitRustPrimitiveBitwise('JavaScript', e, argument => this.expr(argument));

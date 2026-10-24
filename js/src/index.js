@@ -97,3 +97,5 @@ export {convertJavaScriptStringNumber} from './string-number.js';
 
 export {createBigIntegerConversionProgramLinks} from './big-integer-conversion-program.js';
 export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger} from './big-integer-conversion.js';
+
+export {createSourceExceptionProgramLinks} from './source-exception-program.js';

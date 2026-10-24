@@ -19,6 +19,8 @@ import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import {readJavaScriptNumberBuiltinOperation,readJavaScriptPrimitiveUnaryOperation} from './string-number-rules.js';
+import {readJavaScriptExceptionConstructorOperation} from './source-exception-rules.js';
+import {readJavaScriptBigIntegerBuiltinOperation} from './big-integer-conversion-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -63,7 +65,6 @@ const MULTIPLICATIVE = { '*': 'mul', '/': 'div', '%': 'rem' };
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '**=', '<<=', '>>=', '>>>=', '&=', '|=', '^=', '&&=', '||=', '??=']);
 // `x op= e` is `x = x op e`; `+=` adds numbers or concatenates strings like `+`.
 const COMPOUND = { '+=': 'plus', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem', '&&=': 'and', '||=': 'or' };
-const ERRORS = new Set(['Error', 'RangeError', 'TypeError']);
 const GLOBALS = new Set([
   'Math', 'Number', 'BigInt', 'parseInt', 'parseFloat', 'JSON', 'Array', 'Object', 'Symbol', 'Date', 'Promise', 'Reflect',
   'Proxy', 'Map', 'Set', 'WeakMap', 'WeakSet', 'globalThis', 'process', 'require', 'console', 'setTimeout', 'isNaN', 'isFinite',
@@ -1393,22 +1394,19 @@ class JavaScriptParser {
     if (findJavaScriptLineTerminator(this.source, start.end, c.peek().start) < c.peek().start) {
       throw new TranslationError('syntax', 'line terminator after throw', span(start, start));
     }
-    if (!c.eat('new')) throw unsupported('throw of a non-error value', 'throw new Error(\'…\'), which aborts the program', span(start, c.peek()));
+    const constructed=c.eat('new');
+    if (!constructed&&!(c.peek().kind==='identifier'&&readJavaScriptExceptionConstructorOperation(c.peek().value)&&c.is('(',1))) throw unsupported('throw of a non-error value', 'throw new Error(\'…\'), which aborts the program', span(start, c.peek()));
     const kind = c.identifier('throw');
     this.lexicalRead(kind);
-    if (!ERRORS.has(kind.value)) throw unsupported(`throw new ${kind.value}`, 'throw an Error, RangeError or TypeError', span(kind, kind));
+    const operation=readJavaScriptExceptionConstructorOperation(kind.value);
+    if (!operation) throw unsupported(`throw new ${kind.value}`, 'the error constructor needs its actual exception definition', span(kind, kind));
     if (!this.acceptStandardBuiltinOwner(kind.value)) throw unsupported('shadowed standard error owner',
       'the actual lexical/module/context error constructor must be the standard unshadowed intrinsic', kind);
-    c.expect('(', 'throw');
-    let message = '';
-    if (!c.is(')')) {
-      const token = c.next();
-      if (token.kind !== 'string') throw unsupported('computed error message', 'the message of an abort is a string literal', span(token, token));
-      message = token.value;
-    }
-    c.expect(')', 'throw');
+    const args=this.spreadArguments('throw');
     c.eat(';');
-    return { s: 'throw', message, span: span(start, c.peek()) };
+    const where=span(start,c.peek());
+    if(kind.value==='Error'&&args.length===1&&!args[0].spread&&args[0].value.k==='str')return{s:'throw',message:args[0].value.value,span:where};
+    return{s:'throw',message:'',exception:{k:'math',op:operation,name:kind.value,args,span:where},span:where};
   }
 
   ifStatement() {
@@ -1661,7 +1659,7 @@ class JavaScriptParser {
           return statement.expr;
         case 'throw':
           unreachable(index);
-          return { k: 'abort', message: statement.message, span: statement.span };
+          return statement.exception??{ k: 'abort', message: statement.message, span: statement.span };
         case 'block':
           if (!this.terminates(statement.body)) throw unsupported('block without a result', 'the block must end in return or throw', statement.span);
           unreachable(index);
@@ -2482,7 +2480,7 @@ class JavaScriptParser {
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    const numericBuiltin=standardOwner?readJavaScriptNumberBuiltinOperation(name):'';
+    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)):'';
     if(numericBuiltin&&c.is('('))return{k:'math',op:numericBuiltin,name,args:this.spreadArguments(name),span:span(token,c.peek())};
     if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);
@@ -2633,7 +2631,7 @@ function global(token) {
 function guardedParameter(statement, params) {
   if (statement.s !== 'if' || statement.else) return null;
   const then = statement.then.filter((inner) => inner.s !== 'empty');
-  if (then.length !== 1 || then[0].s !== 'throw') return null;
+  if (then.length !== 1 || then[0].s !== 'throw' || then[0].exception) return null;
   const { cond } = statement;
   if (cond.k !== 'binary') return null;
   const isZero = (node) => node.k === 'num' && node.value === '0';

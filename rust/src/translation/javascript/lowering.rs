@@ -117,8 +117,15 @@ pub(super) fn lower_at(
             unreachable(list, index)?;
             Ok(expr.clone())
         }
-        Stmt::Throw { message, span } => {
+        Stmt::Throw {
+            message,
+            exception,
+            span,
+        } => {
             unreachable(list, index)?;
+            if let Some(exception) = exception {
+                return Ok(exception.clone());
+            }
             Ok(node(
                 SNode::Abort {
                     message: message.clone(),
@@ -928,7 +935,13 @@ pub(super) fn guarded_parameter(statement: &Stmt, params: &[SParam]) -> Option<u
         .iter()
         .filter(|inner| !matches!(inner, Stmt::Empty))
         .collect();
-    if !matches!(then.as_slice(), [Stmt::Throw { .. }]) {
+    if !matches!(
+        then.as_slice(),
+        [Stmt::Throw {
+            exception: None,
+            ..
+        }]
+    ) {
         return None;
     }
     let SNode::Binary {
