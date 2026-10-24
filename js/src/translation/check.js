@@ -10,8 +10,8 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 // `Int` division for JavaScript's truncating BigInt division).
 
 import { typeError, unsupported } from './diagnostics.js';
-import {readJavaScriptNumberConversionResult} from './string-number-rules.js';
-import {checkJavaScriptNumberBuiltin} from './javascript-number-conversion.js';
+import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumberOperand,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
+import {checkJavaScriptNumberBuiltin,materializeJavaScriptNumberConversion,checkJavaScriptMathematicalArguments} from './javascript-number-conversion.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
 import { readSourceIdentifierSupply, collectSourceIdentifierTexts } from './source-identifiers.js';
 import { renderSourceGeneratedIdentifier } from './source-identifier-rules.js';
@@ -1206,7 +1206,7 @@ class Checker {
     const bitwiseArity=numberArity || readBigIntegerBitwiseArity(node.op);
     if(bitwiseArity){
       if(node.args.length!==bitwiseArity||node.args.some(item=>item.spread))throw typeError('a Number bitwise operation requires its exact unspread operands',node.span);
-      const args=node.args.map(({value})=>this.expr(value,env,path,undefined));
+      const args=node.args.map(({value})=>this.numberValue(this.expr(value,env,path,undefined),value.span??node.span));
       const domain=readPrimitiveBitwiseDomain(args.map(argument=>argument.type.kind));
       const operation=domain==='BigInt'?readBigIntegerBitwiseOperation(node.op):'';
       if(operation) return{k:'math',op:operation,args:args.map(argument=>coerce(argument,INT,this.language,node.span)),type:INT};
@@ -1239,6 +1239,8 @@ class Checker {
       }
       return body;
     }
+    const mathematical=readJavaScriptMathematicalConversionForm(this.language,node.op);
+    if(mathematical)return checkJavaScriptMathematicalArguments(this,node,env,path,mathematical);
     if (!variadic && node.args.length !== 1) {
       throw unsupported(`${node.name} with ${node.args.length} arguments`, `${node.name} takes one Number`, node.span);
     }
@@ -1296,6 +1298,8 @@ class Checker {
           const operation = readOptionalComparisonOperation(this.language, left.type.kind, right.type.kind, op, sameType(a, b), primitiveKey(a));
           if (operation === 'object-error') throw unsupported('nullable object equality', 'equality of these values requires shared reference identities', node.span);
           if (operation === 'strict') return { k: 'strictEqual', left, right, negate: op === 'ne', type: BOOL };
+          if([left,right].some(value=>value.type.kind==='option'&&value.type.element.kind==='string'))throw unsupported('nullable arithmetic operand',
+            'nullable string ordering needs its lexical present-value branch before numeric conversion',node.span);
           left = this.numberValue(left, node.span); right = this.numberValue(right, node.span);
           [left, right] = unify(left, right, this.language, node.span);
           return { k: 'binary', op, left, right, type: BOOL, domain: left.type };
@@ -1381,6 +1385,8 @@ class Checker {
   }
 
   numberValue(value, span) {
+    const primitive=readJavaScriptPrimitiveNumberOperand(this.language,value.type.kind,value.type.element?.kind??'');
+    if(primitive)return materializeJavaScriptNumberConversion(this,value,primitive);
     const operation = readOptionalNumberOperation(this.language, value.type.kind, value.type.element?.kind ?? '');
     if (operation === 'identity') return value;
     if (operation === 'unsupported') throw unsupported('nullable arithmetic operand', 'this operand needs its source numeric coercion and error behavior represented', span);

@@ -67,6 +67,21 @@ impl Checker {
         {
             return self.number_predicate(op, name, args, span, env, path);
         }
+        let mathematical =
+            crate::translation::string_number_rules::read_java_script_mathematical_conversion_form(
+                self.language.as_str(),
+                op,
+            );
+        if !mathematical.is_empty() {
+            return self.javascript_mathematical_arguments(
+                op,
+                args,
+                span,
+                env,
+                path,
+                &mathematical,
+            );
+        }
         if !variadic && args.len() != 1 {
             return Err(unsupported(
                 &format!("{name} with {} arguments", args.len()),

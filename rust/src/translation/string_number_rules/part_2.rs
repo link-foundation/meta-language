@@ -10,13 +10,14 @@ use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result;
 use super::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result;
 use super::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result;
 use super::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Result;
-use super::accept_java_script_whitespace_unit;
 use super::accept_string_number_infinity;
 use super::convert_string_number_rational;
 use super::ml;
 use super::ml_array;
 use super::read_string_number_decimal_power;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop14;
+use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop15;
+use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop16;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop19;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop21;
 use super::source_ml_source1_temporary_convert_java_script_string_number_units_loop22;
@@ -451,6 +452,60 @@ pub fn require_java_script_number_conversion_units(kind: &str, operation: &str, 
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_primitive_number_operand(language: &str, kind: &str, element: &str) -> String {
+    if language == "JavaScript" {
+ if (
+ ((kind == "bool") || (kind == "string")) || (kind == "unit") 
+) || (
+ (kind == "option") && (element == "string") 
+) {
+                String::from("coerceJavaScriptNumber")
+            } else {
+                String::new()
+            }
+} else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_numeric_inference_kind(kind: &str) -> String {
+    if ((kind == "bool") || (kind == "string")) || (kind == "unit") {
+        String::from("float")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_unary_operation(symbol: &str) -> String {
+    if symbol == "+" {
+        String::from("coerceJavaScriptNumber")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_mathematical_conversion_form(language: &str, operation: &str) -> String {
+    if language == "JavaScript" {
+ if (operation == "max") || (operation == "min") {
+            String::from("variadic")
+        } else if ((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt") {
+                String::from("unary")
+            } else {
+                String::new()
+            }
+} else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn render_java_script_number_scalar_conversion(format: &str, operation: &str, form: &str, value: &str, utf16: bool) -> String {
     if (!(self::accept_linked_java_script_number_conversion("math", operation)) || ((self::read_java_script_number_conversion_form(form)) == "unsupported")) || (form == "option") {
         String::new()
@@ -857,44 +912,6 @@ if ml_library_inequality_1 {
 }
         } else {
             self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result::MlSource1TemporaryAcceptStringNumberInfinityLoop13Done
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop15(units: &[f64], mut start: f64, mut end: f64) -> f64 {
-    loop {
-        if (start < end) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(start))).unwrap_or_else(|| -1f64)) {
-            {
-                let start_2 = start + 1f64;
-                {
-                    start = start_2;
-                    continue;
-                }
-            }
-        }
-return {
-            start
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop16(units: &[f64], mut start: f64, mut end: f64) -> f64 {
-    loop {
-        if (end > start) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(end - 1f64))).unwrap_or_else(|| -1f64)) {
-            {
-                let end_2 = end - 1f64;
-                {
-                    end = end_2;
-                    continue;
-                }
-            }
-        }
-return {
-            end
         };
     }
 }

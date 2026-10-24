@@ -784,6 +784,54 @@ pub fn require_java_script_number_conversion_units(kind: String, operation: Stri
     (self::accept_linked_java_script_number_conversion(kind.clone(), operation.clone()) && (argument == "string"))
 }
 
+pub fn read_java_script_primitive_number_operand(language: String, kind: String, element: String) -> String {
+    if (language != "JavaScript") {
+        String::from("")
+    } else {
+        if (((kind == "bool") || (kind == "string")) || (kind == "unit")) {
+            String::from("coerceJavaScriptNumber")
+        } else {
+            if ((kind == "option") && (element == "string")) {
+                String::from("coerceJavaScriptNumber")
+            } else {
+                String::from("")
+            }
+        }
+    }
+}
+
+pub fn read_java_script_primitive_numeric_inference_kind(kind: String) -> String {
+    if (((kind == "bool") || (kind == "string")) || (kind == "unit")) {
+        String::from("float")
+    } else {
+        String::from("")
+    }
+}
+
+pub fn read_java_script_primitive_unary_operation(symbol: String) -> String {
+    if (symbol == "+") {
+        String::from("coerceJavaScriptNumber")
+    } else {
+        String::from("")
+    }
+}
+
+pub fn read_java_script_mathematical_conversion_form(language: String, operation: String) -> String {
+    if (language != "JavaScript") {
+        String::from("")
+    } else {
+        if ((operation == "max") || (operation == "min")) {
+            String::from("variadic")
+        } else {
+            if (((((((operation == "abs") || (operation == "floor")) || (operation == "ceil")) || (operation == "trunc")) || (operation == "round")) || (operation == "sign")) || (operation == "sqrt")) {
+                String::from("unary")
+            } else {
+                String::from("")
+            }
+        }
+    }
+}
+
 pub fn render_java_script_number_scalar_conversion(format: String, operation: String, form: String, value: String, utf16: bool) -> String {
     if ((!(self::accept_linked_java_script_number_conversion(String::from("math"), operation.clone())) || ((self::read_java_script_number_conversion_form(form.clone())) == "unsupported")) || (form == "option")) {
         String::from("")

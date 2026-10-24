@@ -836,3 +836,11 @@ after an internal formatter failure; formatter and metadata debt remains. Whole
 source surrogate transport, objects, Symbols, spreads, error classes and every
 other unmet requirement remain required. No tests begin before the complete
 requirements implementation draft exists.
+
+Primitive coercion reuses that numeric definition for unary plus, negation,
+arithmetic, bitwise operations and unspread supported Math calls. Shared admission
+and inference keep BigInt identity for ToNumeric and errors for ToNumber; argument
+capture keeps later source evaluation before conversion. Nullable string lexical
+branches retain their separate obligations. Original obsolete Math refusal inputs
+and diagnostics remain recorded beside corrected, sourced expectations and new
+future controls. No fixture behavior or test was executed.

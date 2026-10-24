@@ -35,7 +35,10 @@ impl Checker {
         }
         let checked = args
             .iter()
-            .map(|arg| self.expr(&arg.value, env, path, None, false))
+            .map(|arg| {
+                let value = self.expr(&arg.value, env, path, None, false)?;
+                self.number_value(value, arg.value.span.or(span))
+            })
             .collect::<Result<Vec<_>>>()?;
         let kinds = checked
             .iter()

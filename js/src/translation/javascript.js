@@ -18,7 +18,7 @@ import { readScalarAssignmentOperation } from './scalar-assignment-rules.js';
 import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
-import {readJavaScriptNumberBuiltinOperation} from './string-number-rules.js';
+import {readJavaScriptNumberBuiltinOperation,readJavaScriptPrimitiveUnaryOperation} from './string-number-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
 import { inferJavaScriptTypes } from './javascript-infer.js';
 import { readJavaScriptTagOwnerPosition, readJavaScriptTagReceiverForm, readJavaScriptTagBindingStep, acceptJavaScriptTagHeaderFact, readJavaScriptTagDeclaredOwner } from './javascript-tag-context-rules.js';
@@ -2139,7 +2139,10 @@ class JavaScriptParser {
       const arg = this.unary();
       return { k: 'unary', op: 'neg', arg, span: joined(token, arg, token) };
     }
-    if (c.is('+')) throw unsupported('unary +', 'unary plus throws a TypeError on BigInt values', span(token, token));
+    if(c.eat('+')){
+      const arg=this.unary();
+      return{k:'math',op:readJavaScriptPrimitiveUnaryOperation('+'),name:'+',args:[{value:arg,spread:false}],span:joined(token,arg,token)};
+    }
     if(c.eat('~')){
       const arg=this.unary();
       return{k:'math',op:readJavaScriptNumberBitwiseOperation('~'),name:'~',args:[{value:arg,spread:false}],span:joined(token,arg,token)};

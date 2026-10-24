@@ -291,7 +291,7 @@ impl Checker {
     }
 
     pub(super) fn optional_comparison(
-        &self,
+        &mut self,
         op: BinaryOp,
         left: Expr,
         right: Expr,
@@ -331,6 +331,15 @@ impl Checker {
                 BOOL,
             ))),
             "number" => {
+                if [&left.ty, &right.ty].into_iter().any(
+                    |ty| matches!(ty, Type::Option { element, .. } if element.kind() == "string"),
+                ) {
+                    return Err(unsupported(
+                        "nullable arithmetic operand",
+                        "nullable string ordering needs its lexical present-value branch before numeric conversion",
+                        span,
+                    ));
+                }
                 let left = self.number_value(left, span)?;
                 let right = self.number_value(right, span)?;
                 let (left, right) = self.unify(left, right, span)?;
@@ -352,11 +361,20 @@ impl Checker {
         }
     }
 
-    pub(super) fn number_value(&self, value: Expr, span: Option<Span>) -> Result<Expr> {
+    pub(super) fn number_value(&mut self, value: Expr, span: Option<Span>) -> Result<Expr> {
         let element = match &value.ty {
             Type::Option { element, .. } => element.kind(),
             _ => "",
         };
+        let primitive =
+            crate::translation::string_number_rules::read_java_script_primitive_number_operand(
+                self.language.as_str(),
+                value.ty.kind(),
+                element,
+            );
+        if !primitive.is_empty() {
+            return Ok(self.materialize_number_conversion(value, &primitive));
+        }
         match read_optional_number_operation(self.language.as_str(), value.ty.kind(), element)
             .as_str()
         {

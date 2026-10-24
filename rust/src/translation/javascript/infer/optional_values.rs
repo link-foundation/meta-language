@@ -452,13 +452,22 @@ impl Inference {
     }
 
     pub(super) fn numeric_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, true)
+    }
+
+    pub(super) fn numeric_addition_value(&self, term: &Term) -> Term {
+        self.numeric_value_with_strings(term, false)
+    }
+
+    fn numeric_value_with_strings(&self, term: &Term, strings: bool) -> Term {
         let resolved = self.resolve(term);
+        if (strings || kind(&resolved) != "string") && crate::translation::string_number_rules::read_java_script_primitive_numeric_inference_kind(kind(&resolved)) == "float" { return Term::Known(FLOAT); }
         match values::read_optional_numeric_term(kind(&resolved)).as_str() {
             "element" => {
                 let Term::Option { element, .. } = resolved else {
                     unreachable!("the generated numeric plan requires Option");
                 };
-                self.numeric_value(&element)
+                self.numeric_value_with_strings(&element, strings)
             }
             "float" => Term::Known(FLOAT),
             _ => term.clone(),

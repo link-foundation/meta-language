@@ -5804,3 +5804,22 @@ isolated-surrogate source/IR transport, all remaining language constructs and
 deferred ledger/source/naming/dependency/parity registration remain obligations.
 The existing formatter failed internally on this generated library; its author
 preserves complete output and records the formatting debt without changing gates.
+
+The same primitive definitions also serve unary plus, numeric negation,
+arithmetic and Number bitwise operands. ToNumeric keeps BigInt identity; unary
+plus uses ToNumber and therefore retains its BigInt error. Inference converts
+primitive Boolean, String and Undefined operand domains to Number without
+changing the operands' declared source types. Addition still distinguishes a
+present string and concatenation; nullable string addition/ordering needs its
+own dynamic lexical branch and must not silently select numeric conversion.
+Unspread supported Math calls convert primitive operands, apply missing-argument
+behavior and evaluate ignored extra arguments. Captured arguments precede any
+conversion that can throw, including later argument errors and NaN followed by
+BigInt in max/min. Original Math.floor(BigInt) and extra-argument refusal inputs
+remain with cited corrected assertions and future independent behavior controls.
+Unannotated Math parameters retain constraints from actual primitive call sites;
+coercion does not prematurely bind them to Number. Unknown spread operands keep
+their array shape constraint without forcing the element domain.
+These additions are source drafts, not execution evidence. Iterator spreads,
+dynamic type-changing cells, mixed Number/BigInt errors and broader comparisons
+remain required alongside the previously named gaps.

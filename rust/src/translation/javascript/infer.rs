@@ -499,8 +499,8 @@ impl Inference {
         if !force && (matches!(a, Term::Var(_)) || matches!(b, Term::Var(_))) {
             return Ok(false);
         }
-        let left = self.numeric_value(&constraint.left);
-        let right = self.numeric_value(&constraint.right);
+        let left = self.numeric_addition_value(&constraint.left);
+        let right = self.numeric_addition_value(&constraint.right);
         if self.resolve(&left) == Term::Known(STRING) || self.resolve(&right) == Term::Known(STRING)
         {
             return Err(type_error(
@@ -800,7 +800,16 @@ impl Inference {
                         | Term::Function { .. }
                         | Term::Cell(_) => false,
                     };
-                    if unknown && crate::translation::number_predicate_rules::read_number_predicate_argument_form("JavaScript", op, "", "").is_empty() {
+                    let mathematical = crate::translation::string_number_rules::read_java_script_mathematical_conversion_form("JavaScript", op);
+                    if unknown && !mathematical.is_empty() && item.spread {
+                        let element = self.fresh(false);
+                        self.unify(
+                            &ty,
+                            &Term::Array(Box::new(element)),
+                            item.value.span.or(expr.span),
+                        )?;
+                    }
+                    if unknown && mathematical.is_empty() && crate::translation::number_predicate_rules::read_number_predicate_argument_form("JavaScript", op, "", "").is_empty() {
                         let want = if item.spread {
                             Term::Array(Box::new(Term::Known(FLOAT)))
                         } else {

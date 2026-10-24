@@ -224,6 +224,27 @@ export function readJavaScriptNumberConversionFailure(operation,kind) {
 export function requireJavaScriptNumberConversionUnits(kind,operation,argument) {
   return acceptLinkedJavaScriptNumberConversion(kind,operation)&&argument==='string';
 }
+/** Keep BigInt identity for ToNumeric; ToNumber has a different BigInt rule.
+ * @param {string} language @param {string} kind @param {string} element @returns {string} */
+export function readJavaScriptPrimitiveNumberOperand(language,kind,element) {
+  if(language!=='JavaScript')return '';
+  if(kind==='bool'||kind==='string'||kind==='unit')return 'coerceJavaScriptNumber';
+  return kind==='option'&&element==='string'?'coerceJavaScriptNumber':'';
+}
+/** @param {string} kind @returns {string} */
+export function readJavaScriptPrimitiveNumericInferenceKind(kind) {
+  return kind==='bool'||kind==='string'||kind==='unit'?'float':'';
+}
+/** @param {string} symbol @returns {string} */
+export function readJavaScriptPrimitiveUnaryOperation(symbol) {
+  return symbol==='+'?'coerceJavaScriptNumber':'';
+}
+/** @param {string} language @param {string} operation @returns {string} */
+export function readJavaScriptMathematicalConversionForm(language,operation) {
+  if(language!=='JavaScript')return '';
+  if(operation==='max'||operation==='min')return 'variadic';
+  return operation==='abs'||operation==='floor'||operation==='ceil'||operation==='trunc'||operation==='round'||operation==='sign'||operation==='sqrt'?'unary':'';
+}
 /** Only scalar emission; actual Option structure is handled by its owner.
  * @param {string} format @param {string} operation @param {string} form
  * @param {string} value @param {boolean} utf16 @returns {string} */

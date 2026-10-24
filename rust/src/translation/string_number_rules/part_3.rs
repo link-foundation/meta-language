@@ -1,8 +1,47 @@
 // Generated from complete js/src/translation/string-number-rules.js. Do not edit by hand.
+use super::accept_java_script_whitespace_unit;
 use super::ml;
 use super::ml_array;
 use super::ml_math;
 use super::read_string_number_digit;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop15(units: &[f64], mut start: f64, mut end: f64) -> f64 {
+    loop {
+        if (start < end) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(start))).unwrap_or_else(|| -1f64)) {
+            {
+                let start_2 = start + 1f64;
+                {
+                    start = start_2;
+                    continue;
+                }
+            }
+        }
+return {
+            start
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop16(units: &[f64], mut start: f64, mut end: f64) -> f64 {
+    loop {
+        if (end > start) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(end - 1f64))).unwrap_or_else(|| -1f64)) {
+            {
+                let end_2 = end - 1f64;
+                {
+                    end = end_2;
+                    continue;
+                }
+            }
+        }
+return {
+            end
+        };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

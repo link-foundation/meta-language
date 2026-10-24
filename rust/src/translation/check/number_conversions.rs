@@ -14,7 +14,99 @@ fn accepts(ty: &Type) -> bool {
 }
 
 impl Checker {
-    fn materialize_number_conversion(&mut self, value: Expr, operation: &str) -> Expr {
+    pub(super) fn javascript_mathematical_arguments(
+        &mut self,
+        operation: &str,
+        arguments: &[SArrayItem],
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+        form: &str,
+    ) -> Result<Expr> {
+        let values = arguments
+            .iter()
+            .map(|item| self.expr(&item.value, env, path, None, false))
+            .collect::<Result<Vec<_>>>()?;
+        let capture =
+            values.len() > 1 && (form == "unary" || values.iter().any(|value| value.ty != FLOAT));
+        let names = if capture {
+            values
+                .iter()
+                .map(|_| self.fresh_name("ml_mathematical_argument"))
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        let bound = values
+            .iter()
+            .enumerate()
+            .map(|(index, value)| {
+                if capture {
+                    Expr::var(names[index].clone(), value.ty.clone())
+                } else {
+                    value.clone()
+                }
+            })
+            .collect::<Vec<_>>();
+        let selected = if form == "unary" {
+            &bound[..bound.len().min(1)]
+        } else {
+            &bound[..]
+        };
+        let mut args = Vec::new();
+        for value in selected {
+            if !accepts(&value.ty) {
+                return Err(unsupported(
+                    "mathematical numeric conversion operand",
+                    "the actual object primitive conversion, union or symbol must have its own represented behavior",
+                    span,
+                ));
+            }
+            args.push(if value.ty == FLOAT {
+                value.clone()
+            } else {
+                self.materialize_number_conversion(value.clone(), "coerceJavaScriptNumber")
+            });
+        }
+        let mut body = if form == "unary" && args.is_empty() {
+            Expr::lit(FLOAT, LitValue::Text("NaN".to_owned()))
+        } else {
+            Expr::new(
+                Node::Math {
+                    op: operation.to_owned(),
+                    args,
+                },
+                FLOAT,
+            )
+        };
+        if capture {
+            for (index, value) in values.into_iter().enumerate().rev() {
+                body = Expr::new(
+                    Node::Let {
+                        name: names[index].clone(),
+                        value: Box::new(value),
+                        body: Box::new(body),
+                    },
+                    FLOAT,
+                );
+            }
+        } else if form == "unary" {
+            for value in values.into_iter().skip(1).rev() {
+                let name = self.fresh_name("ml_mathematical_argument_unused");
+                body = Expr::new(
+                    Node::Let {
+                        name,
+                        value: Box::new(value),
+                        body: Box::new(body),
+                    },
+                    FLOAT,
+                );
+            }
+        }
+        Ok(body)
+    }
+
+    pub(super) fn materialize_number_conversion(&mut self, value: Expr, operation: &str) -> Expr {
         let Type::Option {
             element,
             absence: policy,

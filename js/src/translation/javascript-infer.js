@@ -7,7 +7,7 @@
 // type error: the function would need a declared type for each use.
 
 import { typeError } from './diagnostics.js';
-import {readJavaScriptNumberConversionResult} from './string-number-rules.js';
+import {readJavaScriptNumberConversionResult,readJavaScriptPrimitiveNumericInferenceKind,readJavaScriptMathematicalConversionForm} from './string-number-rules.js';
 import { readJavaScriptRecordMethodInferenceStep, readJavaScriptConcatenationFallbackKind as readJavaScriptPropertyCallFallbackKind, readJavaScriptSourcePropertyOperationKind, readJavaScriptConcatenationArgumentRole } from './javascript-property-call-rules.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
@@ -570,8 +570,8 @@ class Inference {
       return true;
     }
     if (!force && (a.kind === 'var' || b.kind === 'var')) return false;
-    const x = this.numericValue(left);
-    const y = this.numericValue(right);
+    const x = this.numericValue(left,false);
+    const y = this.numericValue(right,false);
     const first = this.resolve(x);
     const second = this.resolve(y);
     if (first.kind === 'string' || second.kind === 'string') throw typeError('nullable string addition needs a string or number result determined by the values', where);
@@ -580,10 +580,11 @@ class Inference {
     return true;
   }
 
-  numericValue(term) {
+  numericValue(term,strings=true) {
     const type = this.resolve(term);
+    if((strings||type.kind!=='string')&&readJavaScriptPrimitiveNumericInferenceKind(type.kind)==='float')return FLOAT;
     const operation = readOptionalNumericTerm(type.kind);
-    return operation === 'element' ? this.numericValue(type.element) : operation === 'float' ? FLOAT : term;
+    return operation === 'element' ? this.numericValue(type.element,strings) : operation === 'float' ? FLOAT : term;
   }
 
   arithmeticStep({ left, right, result, where }, force) {
@@ -966,7 +967,9 @@ class Inference {
         for (const item of node.args) {
           const type = this.resolve(this.expr(item.value, env));
           const unknown = item.spread ? type.kind === 'var' || (type.kind === 'array' && this.resolve(type.element).kind === 'var') : type.kind === 'var';
-          if (unknown && !readNumberPredicateArgumentForm('JavaScript', node.op, '', '')) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
+          const mathematical=readJavaScriptMathematicalConversionForm('JavaScript',node.op);
+          if(unknown&&mathematical&&item.spread)this.unify(type,{kind:'array',element:this.fresh()},item.value.span??node.span);
+          if (unknown && !mathematical && !readNumberPredicateArgumentForm('JavaScript', node.op, '', '')) this.unify(type, item.spread ? { kind: 'array', element: FLOAT } : FLOAT, item.value.span ?? node.span);
         }
         return ['isInteger', 'isSafeInteger', 'isFinite', 'isNaN'].includes(node.op) ? BOOL : FLOAT;
       case 'tupleIndex':

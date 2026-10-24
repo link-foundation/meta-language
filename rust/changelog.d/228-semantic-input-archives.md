@@ -141,3 +141,8 @@ conversion and UTF-16/UTF-8 transport. Automatically emit native Rust, Lean, Roc
 and editable Links definitions; retain optional absence, argument order and
 implicit BigInt errors. Author public APIs and future source/native/codec/unit
 controls without executing them; retain explicit formatting and coverage debt.
+
+Draft shared primitive coercion across unary, arithmetic, bitwise and supported
+unspread Math calls, including argument capture, missing values and runtime
+BigInt errors. Preserve obsolete refusal inputs with sourced corrected
+expectations and additional future independent controls, without running tests.

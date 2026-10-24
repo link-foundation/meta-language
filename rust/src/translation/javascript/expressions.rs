@@ -382,12 +382,13 @@ impl JavaScriptParser {
             }
         }
         let here = Some(span(&token, &token));
-        if self.cursor.is("+") {
-            return Err(unsupported(
-                "unary +",
-                "unary plus throws a TypeError on BigInt values",
-                here,
-            ));
+        if self.cursor.eat("+").is_some() {
+            let arg = self.unary()?;
+            let place = Span::new(token.start, arg.span.map_or(token.end, |arg| arg.end));
+            return Ok(node(SNode::Math {
+                op: crate::translation::string_number_rules::read_java_script_primitive_unary_operation("+"),
+                name: "+".to_owned(), args: vec![super::SArrayItem::new(arg, false)],
+            }, place));
         }
         if self.cursor.eat("~").is_some() {
             let arg = self.unary()?;
