@@ -260,10 +260,15 @@ impl RustParser {
             return Ok(pattern);
         }
         if self.cursor.eat("_").is_some() {
-            self.origins.wildcard_pattern();
+            let span = if self.record_pattern_depth == 0 {
+                self.origins.wildcard_pattern();
+                None
+            } else {
+                Some(token.span())
+            };
             return Ok(SPattern {
                 node: SPatternNode::Wild,
-                span: None,
+                span,
             });
         }
         if self.cursor.is("ref") || self.cursor.is("mut") {
@@ -356,13 +361,11 @@ impl RustParser {
             return Ok(inner);
         }
         if self.cursor.is("{") {
-            return Err(unsupported(
-                "struct pattern",
-                "named fields are outside the Rust frontend",
-                span(&token, self.cursor.peek()),
-            ));
+            return self.record_pattern(&segments, path, aliases, &token);
         }
-        let resolved = self.resolve(&segments, path);
+        let resolved = self
+            .record_value_path(&segments, path, self.cursor.is("("))
+            .unwrap_or_else(|| self.resolve(&segments, path));
         if self.cursor.eat("(").is_some() {
             let mut args = Vec::new();
             while !self.cursor.is(")") {

@@ -426,11 +426,10 @@ impl RustParser {
                 }
                 self.cursor.expect(")", Some("variant"))?;
             } else if self.cursor.is("{") {
-                return Err(unsupported(
-                    "struct variant",
-                    "use a tuple variant; named fields are outside the Rust frontend",
-                    span(&variant, self.cursor.peek()),
-                ));
+                let (named_fields, named_origins) =
+                    self.named_variant_fields(path, &name, &variant)?;
+                fields.extend(named_fields);
+                source_fields.extend(named_origins);
             } else if self.cursor.is("=") {
                 return Err(unsupported(
                     "explicit discriminant",

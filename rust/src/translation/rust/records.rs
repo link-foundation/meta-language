@@ -8,6 +8,9 @@ use crate::translation::rust_record_rules::{
     read_rust_record_field_position,
 };
 
+mod patterns;
+mod variants;
+
 #[derive(Clone)]
 pub(super) struct NamedRecord {
     constructor: String,
@@ -16,9 +19,55 @@ pub(super) struct NamedRecord {
 }
 
 impl RustParser {
+    fn record_source_type(&self, ty: &Type, path: &[String]) -> Type {
+        match ty {
+            Type::Named { path: names, span } => {
+                let owner = self.origins.lookup(&self.resolve(names, path), path);
+                if let Some(owner) =
+                    owner.filter(|owner| matches!(owner.declaration, SourceDeclaration::Data))
+                {
+                    let mut rooted = vec!["crate".to_owned()];
+                    rooted.extend(owner.full_name.split('.').map(str::to_owned));
+                    Type::Named {
+                        path: rooted,
+                        span: *span,
+                    }
+                } else {
+                    ty.clone()
+                }
+            }
+            Type::Array { element, reference } => Type::Array {
+                element: Box::new(self.record_source_type(element, path)),
+                reference: *reference,
+            },
+            Type::Tuple { elements } => Type::Tuple {
+                elements: elements
+                    .iter()
+                    .map(|element| self.record_source_type(element, path))
+                    .collect(),
+            },
+            _ => ty.clone(),
+        }
+    }
+
     fn record_owner(&self, segments: &[String], path: &[String]) -> Option<NamedRecord> {
         let found = self.origins.lookup(&self.resolve(segments, path), path)?;
         self.named_records.get(&found.full_name).cloned()
+    }
+
+    fn record_brace_owner(&self, segments: &[String], path: &[String]) -> Option<NamedRecord> {
+        if let Some(record) = self.record_owner(segments, path) {
+            return Some(record);
+        }
+        let found = self.origins.lookup(&self.resolve(segments, path), path)?;
+        let SourceDeclaration::Constructor { fields, .. } = found.declaration else {
+            return None;
+        };
+        Some(NamedRecord {
+            constructor: found.full_name,
+            names: (0..fields.len()).map(|index| index.to_string()).collect(),
+            syntax: if fields.is_empty() { "unit" } else { "tuple" },
+        })
     }
 
     fn record_binding_names(&self, count: usize) -> Vec<String> {
@@ -152,7 +201,7 @@ impl RustParser {
         path: &[String],
         start: &Token,
     ) -> Result<SExpr> {
-        let record = self.record_owner(segments, path);
+        let record = self.record_brace_owner(segments, path);
         self.cursor.expect("{", Some("record construction"))?;
         let mut names = Vec::new();
         let mut values = Vec::new();
@@ -272,11 +321,31 @@ impl RustParser {
                 range,
             )
         };
-        for (binding, value) in bindings.into_iter().zip(values).rev() {
+        let field_origins = self
+            .origins
+            .lookup(&constructor_path, &[])
+            .and_then(|entry| {
+                if let SourceDeclaration::Constructor { fields, .. } = entry.declaration {
+                    Some(fields)
+                } else {
+                    None
+                }
+            });
+        let binding_types = (0..values.len())
+            .map(|index| {
+                let position = positions.iter().position(|position| *position == index)?;
+                let origin = field_origins.as_ref()?.get(position)?;
+                origin
+                    .ty
+                    .as_ref()
+                    .map(|ty| self.record_source_type(ty, &origin.path).into())
+            })
+            .collect::<Vec<_>>();
+        for ((binding, value), ty) in bindings.into_iter().zip(values).zip(binding_types).rev() {
             body = SExpr::new(
                 SNode::Let {
                     name: binding,
-                    ty: None,
+                    ty,
                     value: Box::new(value),
                     body: Box::new(body),
                 },

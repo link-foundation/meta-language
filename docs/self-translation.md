@@ -599,3 +599,15 @@ none ran. Record patterns, generic/trait/layout/destructor behavior, updates and
 remaining ownership profiles still need implementation. Static source review
 also adds empty mains required by earlier primitive/shift control programs,
 retaining all existing inputs and assertions.
+
+The next record source draft adds named enum variants and constructor patterns
+with source field puns, rest, nested fields and actual tuple positions. The
+shared ordering/absence plan remains JavaScript-first and generates both native
+source and complete typed Links definitions. New source wildcard spans retain
+their own indirection evidence across field reordering. Construction locals now
+carry actual field types, with nominal names qualified at their declaration;
+this preserves contextual fixed-width literals and tuple fields. Thirty-eight
+future value/abort cases and twelve exact refusals retain all earlier controls.
+None ran. Irrefutable let patterns, further ownership/reference/alias forms,
+functional update, generic/trait/layout behavior and other project requirements
+still need their source drafts.

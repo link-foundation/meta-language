@@ -44,3 +44,6 @@ Draft owned nominal Rust records through existing datatype and match concepts,
 retaining named/tuple/unit construction, source field order, qualified owners,
 aliases and nested projection; publish the complete shared rule definitions as
 typed Links and author original-Rust/codec/parity controls for later CI.
+Draft named enum variants and record patterns with rest, stable reference
+wildcard identities and contextual field types, reusing shared constructor
+plans and retaining all prior future controls.

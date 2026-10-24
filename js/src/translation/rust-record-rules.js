@@ -22,6 +22,17 @@ export function planRustRecordFields(declared, supplied) {
 }
 /** @param {string[]} declared @param {string} field @returns {number} */
 export function readRustRecordFieldPosition(declared, field) { return declared.indexOf(field); }
+/** @param {string[]} declared @param {string[]} supplied @param {boolean} rest @returns {number[]} */
+export function planRustRecordPatternFields(declared, supplied, rest) {
+  const checked = planRustRecordFields(declared, supplied);
+  const code = checked[0] ?? 0;
+  if (code < 0 && !(code === -4 && rest)) return checked;
+  const result = [0];
+  for (let index = 0; index < declared.length; index += 1) {
+    result.push(supplied.indexOf(declared[index] ?? ''));
+  }
+  return result;
+}
 /** @param {string[]} reserved @param {number} count @returns {string[]} */
 export function readRustRecordBindingNames(reserved, count) {
   const names = [];

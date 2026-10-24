@@ -29,7 +29,7 @@ impl SourceOrigins {
         source_span: Option<Span>,
     ) -> Result<()> {
         let mut origin = origin.clone();
-        let references = if matches!(pattern.node, SPatternNode::Wild) {
+        let references = if matches!(pattern.node, SPatternNode::Wild) && pattern.span.is_none() {
             self.wildcard_references.pop_front().unwrap_or_default()
         } else {
             pattern

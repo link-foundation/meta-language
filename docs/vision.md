@@ -2707,11 +2707,28 @@ typed Links definitions in both packages. Future controls compare sixteen valid
 or abort cases, eight exact refusals, complete graphs, text/binary reload and
 all four emissions, then compile original and emitted Rust once in CI. None ran.
 Generic owners, traits, destructors, layout/FFI, mutable fields, functional
-update, complete namespace composition and record patterns remain obligations;
+update, complete namespace composition and irrefutable let patterns remain obligations;
 this draft does not establish full Rust data-model support. Existing closed
 source profiles retain their guards. Static review also added the required
 empty main to previously authored primitive-bitwise and shift control inputs,
 preserving their functions, boundary values and every assertion.
+
+The following record draft adds named enum variants and named constructor
+patterns, including shorthand fields, reordered/nested patterns, numeric tuple
+fields and explicit rest. They reuse the same ordered constructor algebra and
+shared field plan. Existing unit/tuple enum constructors also retain brace
+construction and brace patterns through their actual positional definitions.
+Source wildcards inside the new named patterns keep their own spans, so field
+reordering cannot transfer a reference count to another wildcard; preceding
+patterns retain their original representation. Explicit source-field types on
+construction bindings preserve contextual fixed-width literals. Named children
+are qualified through their actual declaring module, including nested tuple
+and array annotations. The shared pattern plan generates Rust automatically and
+ships in the same complete typed Links program. Thirty-eight future value/abort
+cases and twelve exact refusals now cover these paths, preserving every earlier
+input and assertion. None ran. Irrefutable let patterns, remaining reference and
+alias-pattern forms, functional update and the other recorded Rust obligations
+still require their implementation drafts.
 
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a

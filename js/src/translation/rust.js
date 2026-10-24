@@ -6,7 +6,7 @@ import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens
 import {acceptRustRuntimeShellModel} from './rust-runtime-shell-rules.js';
 import { acceptRustPrimitiveBitwisePrecedence, readRustPrimitiveBitwiseOperation } from './rust-primitive-bitwise-rules.js';
 import { readRustShiftSourceOperation } from './rust-shift-rules.js';
-import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath } from './rust-records.js';
+import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern } from './rust-records.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
 import {readRustPureUnitFunction,readRustPureUnitMain,finishRustPureUnitSource,readRustPureUnitItemContext} from './rust-pure-unit-calls.js';
@@ -152,6 +152,8 @@ class RustParser {
     this.reservedNames = new Set(tokens.filter(token => token.kind === 'identifier').map(token => token.value));
     this.namedRecords = new Map();
     this.hasRecordDeclarations = tokens.some(token => token.kind === 'identifier' && token.value === 'struct');
+    this.hasRecordConstructions = this.hasRecordDeclarations || tokens.some(token => token.kind === 'identifier' && token.value === 'enum');
+    this.recordPatternDepth = 0;
     this.productBindingCount = 0;
     this.lifetimeBindings = new Set();
     this.lifetimeHeader = false;
@@ -401,7 +403,8 @@ class RustParser {
         }
         c.expect(')', 'variant');
       } else if (c.is('{')) {
-        throw unsupported('struct variant', 'use a tuple variant; named fields are outside the Rust frontend', span(variant, c.peek()));
+        const named=readRustNamedVariantFields(this,path,name,variant);
+        fields.push(...named.fields);sourceFields.push(...named.origins);
       } else if (c.is('=')) {
         throw unsupported('explicit discriminant', 'discriminant values are outside the portable core', span(variant, c.peek()));
       }
@@ -1347,7 +1350,7 @@ class RustParser {
         return this.origins.mark({ k: 'array', items: [], element, span: span(token, c.peek()) }, { type: array(element), path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true });
       }
       if (c.is('::') && c.is('<', 1)) throw unsupported('turbofish', 'generic functions are outside the portable core', span(token, c.peek()));
-      if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordDeclarations) && !options.noStruct) {
+      if (c.is('{') && (/^[A-Z]/u.test(segments.at(-1)) || this.hasRecordConstructions) && !options.noStruct) {
         return readRustRecordConstruction(this,segments,path,token);
       }
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
@@ -1486,7 +1489,7 @@ class RustParser {
     const c = this.cursor;
     const token = c.peek();
     if (c.eat('&')) return this.origins.referencePattern(this.pattern(path, aliases));
-    if (c.eat('_')) return { k: 'wild' };
+    if (c.eat('_')) return this.recordPatternDepth?{k:'wild',span:{start:token.start,end:token.end}}:{k:'wild'};
     if (c.is('ref') || c.is('mut')) throw unsupported(`${token.value} binding`, 'bindings are by value in the portable core', span(token, token));
     if (c.is('-') && c.isKind('number', 1)) {
       c.next();
@@ -1513,8 +1516,8 @@ class RustParser {
       aliases.push({ name: segments[0], value: patternValue(inner, span(token, c.peek())) });
       return inner;
     }
-    if (c.is('{')) throw unsupported('struct pattern', 'named fields are outside the Rust frontend', span(token, c.peek()));
-    const resolved = this.resolve(segments, path);
+    if (c.is('{')) return readRustRecordPattern(this,segments,path,aliases,token);
+    const resolved = readRustRecordValuePath(this,segments,path,c.is('('))??this.resolve(segments, path);
     if (c.eat('(')) {
       const args = [];
       while (!c.is(')')) {

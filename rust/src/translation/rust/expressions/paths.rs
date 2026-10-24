@@ -135,7 +135,7 @@ impl RustParser {
             .last()
             .and_then(|segment| segment.chars().next())
             .is_some_and(|first| first.is_ascii_uppercase());
-        if c.is("{") && (last_is_upper || self.has_record_declarations) && !options.no_struct {
+        if c.is("{") && (last_is_upper || self.has_record_constructions) && !options.no_struct {
             return self.record_construction(&segments, path, token);
         }
         let record_path = self.record_value_path(&segments, path, c.is("("));

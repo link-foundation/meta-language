@@ -511,6 +511,8 @@ struct RustParser {
     reserved_binding_names: HashSet<String>,
     named_records: HashMap<String, records::NamedRecord>,
     has_record_declarations: bool,
+    has_record_constructions: bool,
+    record_pattern_depth: usize,
     next_product_binding: usize,
     lifetime_bindings: HashSet<String>,
     lifetime_header: bool,
@@ -532,6 +534,10 @@ impl RustParser {
         let has_record_declarations = tokens
             .iter()
             .any(|token| token.kind == TokenKind::Identifier && token.value == "struct");
+        let has_record_constructions = has_record_declarations
+            || tokens
+                .iter()
+                .any(|token| token.kind == TokenKind::Identifier && token.value == "enum");
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
@@ -585,6 +591,8 @@ impl RustParser {
             reserved_binding_names,
             named_records: HashMap::new(),
             has_record_declarations,
+            has_record_constructions,
+            record_pattern_depth: 0,
             next_product_binding: 0,
             lifetime_bindings: HashSet::new(),
             lifetime_header: false,

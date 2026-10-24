@@ -274,12 +274,43 @@ pub fn read_rust_record_field_position(declared: &[String], field: &str) -> f64 
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn plan_rust_record_pattern_fields(
+    declared: &[String],
+    supplied: &[String],
+    rest: bool,
+) -> Vec<f64> {
+    {
+        let checked = self::plan_rust_record_fields(declared, supplied);
+        {
+            let code = (self::ml_array::optional_at(&checked, self::ml_array::number_index(0f64)))
+                .unwrap_or_else(|| 0f64);
+            if (code < 0f64) && !((code == -4f64) && rest) {
+                checked
+            } else {
+                {
+                    let result = vec![0f64];
+                    {
+                        let index = 0f64;
+                        {
+                            self::ml_plan_rust_record_pattern_fields_loop4(
+                                declared, supplied, result, index,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_rust_record_binding_names(reserved: &[String], count: f64) -> Vec<String> {
     {
         let names = Vec::<String>::new();
         {
             let suffix = 0f64;
-            { self::ml_read_rust_record_binding_names_loop4(reserved, count, names, suffix) }
+            { self::ml_read_rust_record_binding_names_loop5(reserved, count, names, suffix) }
         }
     }
 }
@@ -472,7 +503,48 @@ pub fn ml_plan_rust_record_fields_loop1(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn ml_read_rust_record_binding_names_loop4(
+pub fn ml_plan_rust_record_pattern_fields_loop4(
+    declared: &[String],
+    supplied: &[String],
+    mut result: Vec<f64>,
+    mut index: f64,
+) -> Vec<f64> {
+    loop {
+        if index < (declared.len() as f64) {
+            {
+                let result_2 = {
+                    let (ml_append_right, ml_append_left) = (
+                        vec![self::ml_array::index_of(
+                            supplied,
+                            &(self::ml_array::optional_at(
+                                declared,
+                                self::ml_array::number_index(index),
+                            ))
+                            .unwrap_or_else(|| String::new()),
+                            0f64,
+                            false,
+                            |a, b| a == b,
+                        )],
+                        result,
+                    );
+                    self::ml_array::append(ml_append_left, ml_append_right)
+                };
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        (result, index) = (result_2, index_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn ml_read_rust_record_binding_names_loop5(
     reserved: &[String],
     mut count: f64,
     mut names: Vec<String>,
