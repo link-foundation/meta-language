@@ -1,5 +1,5 @@
 import {checkJavaScriptOptionalChain} from './javascript-optional-chains.js';
-import {checkJavaScriptNullishField,checkJavaScriptNullishAccess} from './javascript-nullish-fields.js';
+import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScriptNullishIndex} from './javascript-nullish-fields.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
@@ -801,6 +801,8 @@ class Checker {
         return this.math(node, env, path, expected);
       case 'index': {
         const object = this.referenceValue(this.expr(node.object, env, path, undefined));
+        const nullable=this.checkedProjection?null:checkJavaScriptNullishIndex(this,node,object,env,path,expected);
+        if(nullable)return nullable;
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
           const index = readTuplePosition(Number(node.index.value) * (node.index.negative ? -1 : 1));
           if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);

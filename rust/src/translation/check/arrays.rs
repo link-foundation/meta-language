@@ -365,6 +365,18 @@ impl Checker {
             == Some(true);
         let array = self.expr(object, env, path, None, false)?;
         let array = Self::reference_value(array);
+        if !self.checked_projection
+            && let Some(value) = self.javascript_nullish_access(
+                (&array, object),
+                super::javascript_nullish_fields::JavaScriptPropertyAccess::Index(node),
+                env,
+                path,
+                expected,
+                span,
+            )?
+        {
+            return Ok(value);
+        }
         if let Type::Tuple { elements } = &array.ty
             && let super::SNode::Num {
                 value, negative, ..

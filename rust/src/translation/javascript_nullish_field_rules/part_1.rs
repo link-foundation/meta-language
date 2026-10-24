@@ -130,10 +130,115 @@ pub fn read_java_script_nullish_field_form(kind: &str, element: &str) -> String 
 #[must_use]
 pub fn read_java_script_nullish_field_message(absence: &str, field: &str) -> String {
     format!(
-        "Cannot read properties of {} (reading '{}')",
-        absence.to_owned(),
-        field.to_owned()
+        "{}{}{}",
+        self::read_java_script_nullish_property_message_prefix(absence, true),
+        field.to_owned(),
+        self::read_java_script_nullish_property_message_suffix(true)
     )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nullish_property_message_prefix(absence: &str, named: bool) -> String {
+    format!(
+        "Cannot read properties of {}{}",
+        absence.to_owned(),
+        if named {
+            String::from(" (reading '")
+        } else {
+            String::new()
+        }
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nullish_property_message_suffix(named: bool) -> String {
+    if named {
+        String::from("')")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nullish_key_description(
+    kind: &str,
+    owns_to_string: bool,
+    owns_constructor: bool,
+) -> String {
+    if ((((((kind == "string") || (kind == "float")) || (kind == "int")) || (kind == "nat"))
+        || (kind == "bool"))
+        || (kind == "unit"))
+        || (kind == "option")
+    {
+        String::from("text")
+    } else if (kind == "array") || (kind == "tuple") {
+        String::from("omitted")
+    } else if kind == "record" {
+        if owns_to_string {
+            String::from("omitted")
+        } else if owns_constructor {
+            String::from("unsupported")
+        } else {
+            String::from("object")
+        }
+    } else if kind == "map" {
+        String::from("map")
+    } else if kind == "set" {
+        String::from("set")
+    } else {
+        String::from("unsupported")
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nullish_index_key_field() -> String {
+    String::from("key")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_nullish_key_description_origin(form: &str, kind: &str) -> bool {
+    if form == "text" {
+        true
+    } else if form == "object" {
+        kind == "record"
+    } else if form == "map" {
+        kind == "map"
+    } else if form == "set" {
+        kind == "set"
+    } else {
+        (form == "omitted") && (((kind == "record") || (kind == "array")) || (kind == "tuple"))
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_nullish_key_description_text(form: &str) -> String {
+    if form == "object" {
+        String::from("#<Object>")
+    } else if form == "map" {
+        String::from("#<Map>")
+    } else if form == "set" {
+        String::from("#<Set>")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_property_description_shift() -> String {
+    String::from("6400")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_big_integer_property_description_overflow() -> String {
+    String::from("<a very large BigInt>")
 }
 
 /// Execute the checked shared source algorithm.

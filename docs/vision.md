@@ -6733,3 +6733,37 @@ chains, callback and collection methods, Unit results, distinct slice handles,
 slot snapshots and shallow shared elements. All are unexecuted. Arbitrary this,
 accessors/proxies, inherited or unknown properties, dynamic protocols, full
 abrupt/unreachable inference and every prior requirement remain obligations.
+
+
+### Computed property evaluation and diagnostic source profile
+
+Ordinary JavaScript computed reads retain the evaluated receiver and raw key in
+source order. A nullish receiver fails only after the key expression completes;
+it never calls user key coercion. The actual present receiver goes through the
+ordinary index checker. Numeric nullable Array reads therefore retain bounds,
+BigInt indices, shared handles and key side effects before reading a slot.
+Optional chains skip the complete computed suffix; parentheses end that skip.
+Original source flags and literal product indices remain explicit, without
+inventing a bounds witness or replacing actual source owners.
+
+Shared definitions distinguish named and unnamed V8 diagnostics. Primitive
+keys keep their exact source value and null/undefined policy. Actual literal
+record/array/Map/Set provenance controls the side-effect-free object description;
+a structural parameter type does not prove a prototype or constructor. An own
+toString key is not called on a nullish base. Unknown constructor/function/symbol
+protocols require their actual representation before admission.
+
+The diagnostic profile is pinned to Node 22.15–22.x and Node 24.x on x64/arm64.
+Its BigInt description uses magnitude, at most 100 source-engine 64-bit words,
+and the V8 abbreviation beyond that limit. This uses the source architecture,
+not Rust pointer width. Other engines and architectures are uncovered; deferred
+controls explicitly report those profiles. The pinned definitions are
+[Node 22.15 BigInt](https://raw.githubusercontent.com/nodejs/node/v22.15.0/deps/v8/src/objects/bigint.cc),
+[Node 24 BigInt](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/objects/bigint.cc),
+[V8 side-effect-free descriptions](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/objects/objects.cc)
+and [property-load errors](https://raw.githubusercontent.com/nodejs/node/v24.0.0/deps/v8/src/execution/messages.cc).
+The evaluation order follows
+[EvaluatePropertyAccessWithExpressionKey](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-evaluatepropertyaccesswithexpressionkey)
+and [GetValue](https://tc39.es/ecma262/2025/multipage/ecmascript-data-types-and-values.html#sec-getvalue).
+This is an unexecuted source draft; arbitrary coercions/prototypes, dynamic
+properties, full abrupt/unreachable inference and all prior obligations remain.

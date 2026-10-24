@@ -416,6 +416,10 @@ class Inference {
       for (const constraint of [...this.indices]) {
         const object = this.resolve(constraint.object);
         if (object.kind === 'var') continue;
+        if(object.kind==='option'){
+          if(this.resolve(object.element).kind!=='unit')this.indices.push({...constraint,object:object.element});
+          this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
+        }
         if (object.kind === 'array') {
           const value = constraint.node.provenInBounds ? object.element : { kind: 'option', element: object.element, absence: 'undefined' };
           this.unify(constraint.result, value, constraint.where);

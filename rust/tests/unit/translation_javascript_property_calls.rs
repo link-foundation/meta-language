@@ -103,3 +103,12 @@ fn nullable_methods_keep_property_errors_argument_order_and_slice_identity() {
         meta_language::create_java_script_nullish_field_program_links,
     );
 }
+
+#[test]
+fn computed_reads_keep_key_order_nullish_diagnostics_and_live_array_handles() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/computed-reads.mjs",
+        "computed property reads",
+        meta_language::create_java_script_nullish_field_program_links,
+    );
+}

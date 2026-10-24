@@ -367,6 +367,20 @@ impl Inference {
         for constraint in std::mem::take(&mut self.indices) {
             match self.resolve(&constraint.object) {
                 Term::Var(_) => waiting.push(constraint),
+                Term::Option { element, .. } => {
+                    if !matches!(self.resolve(&element), Term::Known(Type::Unit)) {
+                        self.indices.push(super::IndexOf {
+                            object: *element,
+                            index: constraint.index,
+                            literal: constraint.literal,
+                            optional: constraint.optional,
+                            proven_in_bounds: constraint.proven_in_bounds,
+                            result: constraint.result,
+                            place: constraint.place,
+                        });
+                    }
+                    progress = true;
+                }
                 Term::Tuple(elements) => {
                     if constraint.literal {
                         let element = super::super::products::product_index_position(
@@ -403,6 +417,7 @@ impl Inference {
                 }
             }
         }
+        waiting.extend(std::mem::take(&mut self.indices));
         self.indices = waiting;
         Ok(progress)
     }

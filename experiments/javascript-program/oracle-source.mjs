@@ -12,6 +12,7 @@ export function produceJavaScriptProgramOracle(fixtureUrl,createDefinition){
 const[major,minor]=process.versions.node.split('.').map(Number);
 if(!(major===22&&minor>=15||major===24))throw new RangeError('uncovered Node '+process.versions.node);
 const fixture=readProjectData(fixtureUrl);
+if(fixture.oracleArchitectures&&!fixture.oracleArchitectures.includes(process.arch))throw new RangeError('uncovered source architecture '+process.arch);
 const refusals=fixture.sourceSyntaxOracle?fixture.refusals.map(row=>{
  if(row.kind!=='syntax')throw new TypeError('every declared module-syntax oracle row needs its actual syntax assertion');
  return{...row,originalSyntax:readJavaScriptModuleSyntaxError(row.source)};
