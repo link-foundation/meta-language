@@ -22,10 +22,13 @@ use super::js_number::js_number_literal;
 use super::{Language, Span};
 
 mod cooked_strings;
+mod identifiers;
 mod number_rules;
 mod raw_strings;
 mod source_whitespace;
 mod unicode_escapes;
+pub(crate) use identifiers::accept_rust_source_identifier_name;
+pub use identifiers::{SOURCE_IDENTIFIER_UNICODE_VERSION, normalize_unicode_text};
 
 /// Source text addressed by UTF-16 code units, as JavaScript strings are.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -295,7 +298,11 @@ fn unicode_test(unit: Option<u16>, regex: &Regex) -> bool {
         .is_some_and(|ch| !LEAN_SYMBOLS.contains(ch) && regex.is_match(ch.encode_utf8(&mut [0; 4])))
 }
 
-fn is_identifier_start(unit: Option<u16>, language: Language) -> bool {
+fn is_identifier_start_at(source: &Source, index: usize, language: Language) -> bool {
+    if matches!(language, Language::JavaScript | Language::Rust) {
+        return identifiers::accepts(source, index, language, true);
+    }
+    let unit = source.at(index);
     let Some(value) = unit else { return false };
     if u8::try_from(value).is_ok_and(|byte| byte.is_ascii_alphabetic() || byte == b'_') {
         return true;
@@ -306,7 +313,11 @@ fn is_identifier_start(unit: Option<u16>, language: Language) -> bool {
     matches!(language, Language::Lean | Language::Rocq) && unicode_test(unit, letter_regex())
 }
 
-fn is_identifier_part(unit: Option<u16>, language: Language) -> bool {
+fn is_identifier_part_at(source: &Source, index: usize, language: Language) -> bool {
+    if matches!(language, Language::JavaScript | Language::Rust) {
+        return identifiers::accepts(source, index, language, false);
+    }
+    let unit = source.at(index);
     let Some(value) = unit else { return false };
     if u8::try_from(value).is_ok_and(|byte| byte.is_ascii_alphanumeric() || byte == b'_') {
         return true;
@@ -472,14 +483,15 @@ fn tokenize_region(
         }
         if language == Language::Rust
             && source.starts_with("r#", index)
-            && is_identifier_start(source.at(index + 2), language)
+            && is_identifier_start_at(source, index + 2, language)
         {
-            let mut end = index + 3;
-            while end < source.len() && is_identifier_part(source.at(end), language) {
-                end += 1;
+            let mut end = index + 2 + identifiers::width(source, index + 2);
+            while end < source.len() && is_identifier_part_at(source, end, language) {
+                end += identifiers::width(source, end);
             }
-            let name = source.slice(index + 2, end);
-            let message = super::rust_record_rules::read_rust_raw_identifier_error(&name);
+            let name = identifiers::normalize_rust(source.slice(index + 2, end), span(start, end))?;
+            let message =
+                super::unicode_scalar_rules::read_rust_source_raw_identifier_error(&name, true);
             if !message.is_empty() {
                 return Err(TranslationError::syntax(message, Some(span(start, end))));
             }
@@ -586,17 +598,17 @@ fn tokenize_region(
             index = stop;
             continue;
         }
-        if is_identifier_start(Some(unit), language) {
-            let mut stop = index + 1;
+        if is_identifier_start_at(source, index, language) {
+            let mut stop = index + identifiers::width(source, index);
             loop {
-                while stop < source.len() && is_identifier_part(source.at(stop), language) {
-                    stop += 1;
+                while stop < source.len() && is_identifier_part_at(source, stop, language) {
+                    stop += identifiers::width(source, stop);
                 }
                 // Lean and Rocq qualified names (`Tree.node`, `Nat.add`) are single tokens.
                 let qualified = matches!(language, Language::Lean | Language::Rocq)
                     && source.is_char(stop, '.')
                     && stop + 1 < source.len()
-                    && is_identifier_start(source.at(stop + 1), language);
+                    && is_identifier_start_at(source, stop + 1, language);
                 if !qualified {
                     break;
                 }
@@ -608,7 +620,7 @@ fn tokenize_region(
             {
                 tokens.push(Token::new(
                     TokenKind::Macro,
-                    source.slice(index, stop),
+                    identifiers::normalize_rust(source.slice(index, stop), span(start, stop))?,
                     source.slice(index, stop + 1),
                     start,
                     stop + 1,
@@ -617,9 +629,14 @@ fn tokenize_region(
                 continue;
             }
             let value = source.slice(index, stop);
+            let normalized = if language == Language::Rust {
+                identifiers::normalize_rust(value.clone(), span(start, stop))?
+            } else {
+                value.clone()
+            };
             tokens.push(Token::new(
                 TokenKind::Identifier,
-                value.clone(),
+                normalized,
                 value,
                 start,
                 stop,

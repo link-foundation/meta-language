@@ -4,7 +4,7 @@ use super::{
 };
 use super::{SExpr, Span, Token, Type, span};
 use crate::translation::ir::{Decl, Item, Program};
-use crate::translation::source_header_emission_rules::accept_rust_source_header_lifetime_character;
+use crate::translation::lexer::accept_rust_source_identifier_name;
 use crate::translation::type_namespace_rules::{
     accept_rust_type_namespace_anchor, accept_rust_type_namespace_body_constructor,
     accept_rust_type_namespace_body_method, accept_rust_type_namespace_discovery_type,
@@ -12,12 +12,9 @@ use crate::translation::type_namespace_rules::{
 };
 use std::collections::HashMap;
 
-/// Use the same shared ASCII character table as the actual paired Rust lexer.
+/// Use the same scalar property definition as the actual paired Rust lexer.
 pub fn accept_namespace_segment(value: &str) -> bool {
-    !value.is_empty()
-        && value.bytes().enumerate().all(|(index, character)| {
-            accept_rust_source_header_lifetime_character(f64::from(character), index == 0)
-        })
+    accept_rust_source_identifier_name(value)
 }
 
 pub fn require_anchor(source: &[String], path: &[String]) -> Result<()> {

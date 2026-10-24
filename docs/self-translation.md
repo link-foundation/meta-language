@@ -734,3 +734,15 @@ seven value cases and one exact refusal, retaining all preceding controls.
 Independent values require actual method execution, including occupied fresh
 names, forward blocks and unit/tuple owners. None ran. Enum homographs and
 remaining type/value namespace composition still need implementation.
+
+The Unicode scalar draft generates native source and complete typed Links from
+one JavaScript definition with reference-array semantics. Host adapters retain
+UTF-16 source intervals, transport official pinned Links tables and map shared
+errors; actual XID/ID membership and NFC decisions use generated functions.
+The importer converts official Unicode 17 property/normalization declarations
+automatically and preserves their license, source URLs and hashes. Future Rust
+and JavaScript programs, lexical controls, canonical normalization cases and
+full official corpus runners remain unexecuted. Older Unicode/edition profiles,
+escaped JavaScript identifiers, Unicode lifetimes and the inherited broader
+translation requirements still need source work. Metadata and CI integration
+remain deferred until the complete requirements draft exists.

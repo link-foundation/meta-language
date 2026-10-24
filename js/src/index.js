@@ -71,6 +71,8 @@ export { createJavaScriptPropertyCallProgramLinks } from './javascript-property-
 export { createLinkAllocationProgramLinks } from './link-allocation-program.js';
 export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-allocation-rules.js';
 export { createRustInherentProgramLinks } from './rust-inherent-program.js';
+export { createUnicodeScalarProgramLinks } from './unicode-scalar-program.js';
+export { SOURCE_IDENTIFIER_UNICODE_VERSION, normalizeUnicodeText } from './translation/unicode-identifiers.js';
 export { encodeFormalFunctionDefinition, encodeFormalFunctionDeclarationValue } from './formal-function-links.js';
 export { encodeSharedNumericFunctionDefinition } from './shared-numeric-function-links.js';
 export * from './semantics.js';

@@ -2811,6 +2811,39 @@ emitted Rust execution. None ran. Unicode XID/NFC, older edition profiles,
 raw lifetime/generic/trait forms, zero-field provenance and complete generated
 source reimport still need their implementation drafts.
 
+The Unicode identifier draft extends the portable JavaScript and Rust lexers
+to complete scalar property ranges from pinned Unicode 17 declarations. Rust
+uses `XID_Start`/`XID_Continue` and canonical NFC; JavaScript uses
+`ID_Start`/`ID_Continue`, its additional dollar/underscore/joiner rules, and
+keeps canonically equivalent spellings distinct. Raw Rust names, macro names
+and type namespace catalogs use the same actual identifier decisions. Original
+spellings and UTF-16 source intervals remain intact, including astral scalars.
+One JavaScript scalar/decomposition/order/composition definition automatically
+generates Rust and complete editable typed Links; native glue only transports
+source units, shared data and errors. The public `normalizeUnicodeText` /
+`normalize_unicode_text` entry points expose the same bounded Unicode NFC.
+Canonical decomposition is recursive and bounded; stable combining ordering,
+composition blocking, full composition exclusions and algorithmic Hangul remain
+explicit. Compatibility mappings are not canonical equivalences.
+
+An automatic importer converts official UnicodeData, DerivedCoreProperties and
+DerivedNormalizationProps into shared Links tables, retaining source URLs,
+byte counts, hashes and the Unicode license. Raw downloaded inputs remain in
+temporary storage. This follows the
+[Rust identifier contract](https://doc.rust-lang.org/reference/identifiers.html),
+[ECMAScript identifier contract](https://tc39.es/ecma262/2025/multipage/ecmascript-language-lexical-grammar.html#sec-names-and-keywords)
+and [Unicode 17 normalization specification](https://www.unicode.org/reports/tr15/tr15-57.html).
+Rust's [1.94 release](https://doc.rust-lang.org/releases.html#version-1940-2026-03-05)
+adopts Unicode 17; the new original-compiler fixtures use characters shared
+with Unicode 16 across their declared Rust 1.90–1.99 range. Twelve Rust values,
+eight JavaScript values, ten exact token/cursor sequences, thirteen NFC cases
+and eleven scalar-name cases have future paired graph/codec/four-emission and
+independent original-language controls. Separate JavaScript and native runners
+cover every column of the authenticated temporary official normalization
+corpus. None ran. Older configurable Unicode/edition profiles, escaped
+JavaScript identifiers, Unicode lifetimes, fully faithful emitted-source
+reimport and the inherited broader language requirements still require drafts.
+
 The struct-constructor namespace draft preserves the distinction between a
 source struct's value constructor and an associated item sharing its spelling.
 Before collecting that function, its synthetic constructor moves to a fresh

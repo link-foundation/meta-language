@@ -140,6 +140,8 @@ pub(crate) mod type_namespace_rules;
 pub(crate) mod type_syntax_rules;
 pub(crate) mod typed_program_link_rules;
 pub mod types;
+pub(crate) mod unicode_scalar_program;
+pub(crate) mod unicode_scalar_rules;
 
 /// A source range in UTF-16 code units, as JavaScript string offsets count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

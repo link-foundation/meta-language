@@ -143,6 +143,7 @@ pub(super) fn assert_nominal_translation_product(
                     TokenKind::Identifier => "identifier",
                     TokenKind::Macro => "macro",
                     TokenKind::String => "string",
+                    TokenKind::Punct => "punct",
                     _ => panic!("unexpected declared token {token:?}"),
                 };
                 assert_eq!(

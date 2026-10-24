@@ -97,3 +97,8 @@ author shared lexical, graph, codec and original-Rust controls for later CI.
 Draft distinct struct constructor/associated-item namespaces with generated
 fresh-name rules and independent future values that detect accidental
 constructor selection instead of method execution.
+Draft shared Unicode 17 scalar identifiers and Rust NFC, retaining original
+spelling and UTF-16 spans in both lexers, Unicode type namespaces and distinct
+JavaScript names. Automatically convert official Unicode declarations to
+licensed Links tables and generate native source plus editable typed definitions;
+add future original-language, normalization, codec and full corpus controls.

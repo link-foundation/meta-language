@@ -12,7 +12,10 @@ import { decodeRustRawString } from './rust-raw-string-rules.js';
 import { decodeRustCharacterLiteral } from './rust-character-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
-import { readRustRawIdentifierError, acceptRustSourceKeywordToken } from './rust-record-rules.js';
+import { acceptRustSourceKeywordToken } from './rust-record-rules.js';
+import { readRustSourceRawIdentifierError } from './unicode-scalar-rules.js';
+import { acceptSourceIdentifierAt, normalizeRustSourceIdentifier, readSourceIdentifierWidth } from './unicode-identifiers.js';
+export { SOURCE_IDENTIFIER_UNICODE_VERSION } from './unicode-identifiers.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -92,10 +95,10 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       index = tokens.at(-1).end;
       continue;
     }
-    if (language === 'Rust' && source.startsWith('r#', index) && isIdentifierStart(source[index + 2] ?? '', language)) {
-      let end=index+3;
-      while(end<source.length&&isIdentifierPart(source[end],language))end+=1;
-      const name=source.slice(index+2,end),message=readRustRawIdentifierError(name);
+    if (language === 'Rust' && source.startsWith('r#', index) && isIdentifierStartAt(source, index + 2, language)) {
+      let end=index+2+readSourceIdentifierWidth(source,index+2);
+      while(end<source.length&&isIdentifierPartAt(source,end,language))end+=readSourceIdentifierWidth(source,end);
+      const name=normalizeRustSourceIdentifier(source.slice(index+2,end),{start,end}),message=readRustSourceRawIdentifierError(name,true);
       if(message)throw new TranslationError('syntax',message,{start,end});
       const macro=source[end]==='!'&&source[end+1]!=='=';
       if(macro)end+=1;
@@ -165,7 +168,7 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
         const [end, suffixStart, floating] = readRustNumberBounds(encoding.units, index);
         const raw = source.slice(index, end);
         const digits = source.slice(index, suffixStart);
-        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPart(source[end] ?? '', 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
+        if (!acceptRustSourceNumberDigitBoundary(floating, digits.endsWith('_'), source.slice(suffixStart, end), isIdentifierPartAt(source, end, 'Rust'), end < source.length ? source.charCodeAt(end) : -1)) throw new TranslationError('syntax', `malformed number ${raw}`, { start, end });
         if (floating && !Number.isFinite(Number(digits.replaceAll('_', '')))) throw new TranslationError('syntax', `floating-point literal out of range ${raw}`, { start, end });
         tokens.push({ kind: 'number', ...(floating && { floating: true }), value: floating ? String(Number(digits.replaceAll('_', ''))) : digits.replaceAll('_', ''), suffix: source.slice(suffixStart, end), raw, start, end });
         index = end;
@@ -186,22 +189,22 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       index += raw.length;
       continue;
     }
-    if (isIdentifierStart(char, language)) {
-      let stop = index + char.length;
+    if (isIdentifierStartAt(source, index, language)) {
+      let stop = index + (language === 'Rust' || language === 'JavaScript' ? readSourceIdentifierWidth(source, index) : char.length);
       for (;;) {
-        while (stop < source.length && isIdentifierPart(source[stop], language)) stop += 1;
+        while (stop < source.length && isIdentifierPartAt(source, stop, language)) stop += language === 'Rust' || language === 'JavaScript' ? readSourceIdentifierWidth(source, stop) : 1;
         // Lean and Rocq qualified names (`Tree.node`, `Nat.add`) are single tokens.
         const qualified = (language === 'Lean' || language === 'Rocq')
-          && source[stop] === '.' && stop + 1 < source.length && isIdentifierStart(source[stop + 1], language);
+          && source[stop] === '.' && stop + 1 < source.length && isIdentifierStartAt(source, stop + 1, language);
         if (!qualified) break;
         stop += 2;
       }
       if (language === 'Rust' && source[stop] === '!' && source[stop + 1] !== '=') {
-        tokens.push({ kind: 'macro', value: source.slice(index, stop), start, end: stop + 1, raw: source.slice(index, stop + 1) });
+        tokens.push({ kind: 'macro', value: normalizeRustSourceIdentifier(source.slice(index, stop), { start, end: stop }), start, end: stop + 1, raw: source.slice(index, stop + 1) });
         index = stop + 1;
         continue;
       }
-      tokens.push({ kind: 'identifier', value: source.slice(index, stop), start, end: stop, raw: source.slice(index, stop) });
+      tokens.push({ kind: 'identifier', value: language === 'Rust' ? normalizeRustSourceIdentifier(source.slice(index, stop), { start, end: stop }) : source.slice(index, stop), start, end: stop, raw: source.slice(index, stop) });
       index = stop;
       continue;
     }
@@ -425,13 +428,17 @@ export function matchingBrace(source, open, encoding = { units: null }) {
   throw new TranslationError('syntax', 'unbalanced braces', { start: open, end: source.length });
 }
 
-function isIdentifierStart(char, language) {
+function isIdentifierStartAt(source, index, language) {
+  if (language === 'Rust' || language === 'JavaScript') return acceptSourceIdentifierAt(source, index, language, true);
+  const char = source[index] ?? '';
   if (/[A-Za-z_]/u.test(char)) return true;
   if (language === 'JavaScript' && char === '$') return true;
   return (language === 'Lean' || language === 'Rocq') && /[\p{L}]/u.test(char) && !'∀→∧≤≥≠λ×'.includes(char);
 }
 
-function isIdentifierPart(char, language) {
+function isIdentifierPartAt(source, index, language) {
+  if (language === 'Rust' || language === 'JavaScript') return acceptSourceIdentifierAt(source, index, language, false);
+  const char = source[index] ?? '';
   if (/[A-Za-z0-9_]/u.test(char)) return true;
   if (language === 'JavaScript' && char === '$') return true;
   if (language === 'Rocq' && char === "'") return true;

@@ -362,5 +362,6 @@ mod translation_owned_array_append;
 mod translation_owned_array_moves;
 mod translation_primitive_methods;
 mod translation_record_values;
+mod translation_unicode_identifiers;
 mod typed_program_number_projection;
 mod typed_program_record_projection;
