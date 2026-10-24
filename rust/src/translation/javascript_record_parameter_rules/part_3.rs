@@ -365,6 +365,16 @@ pub fn continues_java_script_directive_expression(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_record_parameter_binding_statement(written: bool) -> self::ml_string::Text {
+    if written {
+        self::ml_string::Text::from_units(vec![108, 101, 116])
+    } else {
+        self::ml_string::Text::from_units(vec![99, 111, 110, 115, 116])
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
     MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),

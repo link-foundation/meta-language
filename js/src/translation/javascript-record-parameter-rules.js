@@ -205,3 +205,8 @@ function continuesJavaScriptDirectiveExpression(kind, value) {
   if (value === '&&' || value === '||' || value === '??') return true;
   return value === '?' || value === ',';
 }
+
+/** Actual local assignment facts choose the ordinary local binding mechanism.
+ * The historical read-only profile predicate retains its original contract.
+ * @param {boolean} written @returns {string} */
+export function readJavaScriptRecordParameterBindingStatement(written){return written?'let':'const';}

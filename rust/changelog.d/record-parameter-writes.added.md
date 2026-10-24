@@ -1,0 +1,1 @@
+Draft named record-parameter writes through ordinary mutable local/captured-cell lowering, preserving caller properties and original refusal inputs/assertions beside active value controls. Shared source generates native rules; controls remain unexecuted.

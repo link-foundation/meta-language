@@ -780,3 +780,52 @@ fn actual_shadowed_builtin_owners_and_non_simple_strict_directives_cannot_be_sil
         );
     }
 }
+
+#[test]
+fn record_parameter_writes_reuse_actual_local_cells_and_preserve_original_inputs() {
+    versions();
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-parameter-write-oracle.mjs",
+        "JavaScript record parameter writes",
+        meta_language::create_javascript_record_parameter_program_links,
+    );
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/record-parameter-writes.lino"
+    ))
+    .unwrap();
+    let directory = TemporaryDirectory::new("record_parameter_write_corrections");
+    for (index, row) in fixture["correctedAssertions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .enumerate()
+    {
+        assert_eq!(
+            row["previousAssertion"],
+            "checkProgram(parseJavaScript(source)) throws /record parameter|mutable|capture|var declaration/"
+        );
+        let source = format!(
+            "{}\nconsole.log({});",
+            row["source"].as_str().unwrap(),
+            row["call"].as_str().unwrap()
+        );
+        let expected = format!("{}\n", row["value"].as_str().unwrap());
+        observe_javascript(&source, &expected);
+        let program = check_program(&parse_javascript(&source).unwrap()).unwrap();
+        observe_javascript(&emit_javascript(&program).unwrap().text, &expected);
+        let packet = meta_language::encode_typed_program_links(&program).unwrap();
+        for network in archives(&packet.network) {
+            let restored = decode_typed_program_links(&network, packet.root).unwrap();
+            observe_javascript(&emit_javascript(&restored).unwrap().text, &expected);
+        }
+        let emitted =
+            emit_rust_with_array_consumption(&program, RustEmissionOptions::default(), false, true)
+                .unwrap();
+        let binary = compile(
+            &emitted.text,
+            &directory,
+            &format!("original_parameter_write_{index}"),
+        );
+        observe_native(&binary, &expected);
+    }
+}

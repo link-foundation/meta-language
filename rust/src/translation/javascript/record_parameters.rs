@@ -417,30 +417,17 @@ impl JavaScriptParser {
         }
         let before = self.lexical.read_count();
         let statements = self.block_statements()?;
-        let bound_writes = self
+        let written = self
             .lexical
             .assigned_names_since(before)
-            .any(|name| names.contains(name));
-        // The ordinary source parser owns its earlier var-declaration refusal.
-        if !rules::accept_java_script_record_parameter_profile(
-            &Text::from_text("ordinary named function declaration"),
-            false,
-            0.0,
-            bound_writes,
-            false,
-        ) {
-            return Err(unsupported(
-                "record parameter body",
-                "parameter writes, captured writes and var redeclarations need the separate mutable initialization interpretation",
-                syntax.bindings.first().map(|binding| binding.span),
-            ));
-        }
+            .filter(|name| names.contains(*name))
+            .cloned()
+            .collect::<HashSet<_>>();
         let mut prefix = syntax
             .bindings
             .iter()
-            .map(|binding| Stmt::Const {
-                name: binding.name.clone(),
-                value: SExpr::new(
+            .map(|binding| {
+                let value = SExpr::new(
                     SNode::Field {
                         object: Box::new(SExpr::new(
                             SNode::Name {
@@ -451,8 +438,25 @@ impl JavaScriptParser {
                         field: binding.property.clone(),
                     },
                     Some(binding.span),
-                ),
-                span: binding.binding_span,
+                );
+                if rules::read_java_script_record_parameter_binding_statement(
+                    written.contains(&binding.name),
+                )
+                .to_string()
+                    == "let"
+                {
+                    Stmt::Let {
+                        name: binding.name.clone(),
+                        value,
+                        span: binding.binding_span,
+                    }
+                } else {
+                    Stmt::Const {
+                        name: binding.name.clone(),
+                        value,
+                        span: binding.binding_span,
+                    }
+                }
             })
             .collect::<Vec<_>>();
         prefix.extend(statements);

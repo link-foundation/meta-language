@@ -312,18 +312,19 @@ test('all actual arguments evaluate before ordered callee field reads and each a
   // accessor/proxy records to the Rust represented-data invocation premise.
 });
 
-test('hygiene and actual source scopes retain unrelated names and refuse writes rather than changing parameter mutability', () => {
+test('hygiene and actual source scopes retain mutable bindings and historical refusal inputs', () => {
   const source = 'function selected({left:record_parameter_value0,right:b}){return record_parameter_value0+b;}\nconsole.log(selected({left:2,right:3}));';
   const code = emitJavaScript(checkProgram(parseJavaScript(source))).text;
   assert.equal(observe(code, 'selected({left:2,right:3})', { console: { log() {} } }), '5');
-  for (const source of ['function f({a}){a=2;return a;}',
-    'function f({a}){var a=2;return a;}',
-    'function f({a}){const change=()=>{a=2;return a;};return change();}',
-    'function f({a},other){other=2;return a+other;}']) {
-    // The unchanged parser rejects var before post-body profile admission.
-    // Retain that input and its actual existing diagnostic owner.
-    assert.throws(() => checkProgram(parseJavaScript(source)), /record parameter|mutable|capture|var declaration/u, source);
+  const corrections=readProjectData(new URL('../../parity/fixtures/record-parameter-writes.lino',import.meta.url));
+  for(const row of corrections.correctedAssertions){
+    assert.equal(row.previousAssertion,'checkProgram(parseJavaScript(source)) throws /record parameter|mutable|capture|var declaration/');
+    assert.equal(observe(row.source,row.call),row.value);
+    const program=checkProgram(parseJavaScript(row.source)),packet=encodeTypedProgramLinks(program);
+    assert.equal(observe(emitJavaScript(program).text,row.call),row.value);
+    for(const network of archives(packet.network))assert.equal(observe(emitJavaScript(decodeTypedProgramLinks(network,packet.root)).text,row.call),row.value);
   }
+  assert.throws(()=>checkProgram(parseJavaScript('function f({a}){var a=2;return a;}')),/var declaration/u);
   for (const source of ['function f({a}){const a=2;return a;}', 'function f({a}){let a=2;return a;}']) {
     assert.throws(() => parseJavaScript(source), /record parameter|redeclar|already|duplicate/u, source);
   }

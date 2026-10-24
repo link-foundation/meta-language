@@ -960,3 +960,12 @@ effect, while reusing actual represented-kind and optional-presence decisions.
 Both source hosts preserve the first captured value and the standard owner
 guards. Complete rules and future source/native/codec controls are drafted
 without execution; proxy/exotic and dynamic union behavior remains required.
+
+Written record-parameter bindings now initialize through the ordinary local
+mutable-binding path. Actual lexical write facts select let/const prefixes
+before the original body, preserving ordinary parameter writes, captures and
+caller-property independence. The historical read-only predicate remains
+unchanged. Three former refusal sources/assertions remain beside stronger
+original/graph/native controls. Full source rules generate native code and
+editable graphs; no controls executed. Parameter/var/accessor generality and
+formal mutable-cell execution retain their full remaining scope.

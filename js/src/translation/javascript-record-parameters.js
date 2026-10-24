@@ -3,7 +3,7 @@
 import { unsupported } from './diagnostics.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
 import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParameters,
-  acceptJavaScriptRecordParameterProfile, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
+  acceptJavaScriptRecordParameterProfile, readJavaScriptRecordParameterBindingStatement, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
@@ -115,15 +115,11 @@ export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody)
   }
   const before = parser.lexicalReads.length;
   const statements = readBody();
-  // Conservatively reject a same-spelled nested-shadow write too. Accepting
-  // additional mutable owners requires its own lexical initialization proof.
-  const boundWrites = parser.lexicalReads.slice(before).some(read => read.assignment && names.has(read.name));
-  // The ordinary statement reader already refuses every var declaration.
-  if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', false, 0, boundWrites, false)) {
-    throw unsupported('record parameter body',
-      'parameter writes, captured writes and var redeclarations need the separate mutable initialization interpretation', syntax.bindings[0]?.span);
-  }
-  const prefix = syntax.bindings.map(binding => ({ s: 'const', name: binding.name,
+  // Actual writes initialize an ordinary mutable local before the body. A
+  // same-spelled nested shadow can conservatively allocate an unused local
+  // cell; the ordinary lexical lowerer still owns the actual assignment.
+  const written=new Set(parser.lexicalReads.slice(before).filter(read=>read.assignment&&names.has(read.name)).map(read=>read.name));
+  const prefix = syntax.bindings.map(binding => ({ s: readJavaScriptRecordParameterBindingStatement(written.has(binding.name)), name: binding.name,
     value: { k: 'field', object: { k: 'name', path: [binding.parameter], span: binding.parameterSpan },
       field: binding.property, span: binding.span }, span: binding.bindingSpan }));
   return [...prefix, ...statements];

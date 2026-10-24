@@ -6231,3 +6231,24 @@ independently of length. Both source hosts and generated owner rules preserve
 lexical/module shadow guards. Future source/native/codec/emission controls
 remain unexecuted. Proxy/exotic and unrepresented dynamic union domains retain
 their complete operational obligations.
+
+### Written record parameter bindings draft
+
+Actual writes to named record-parameter bindings now select the existing
+ordinary mutable-local initialization, while unwritten bindings retain their
+ordinary immutable-local projection. Parameters bind before the original body;
+assignments update their local cells and preserve captured/per-invocation
+identity without writing the caller's property. Mixed ordinary parameters
+retain the same ordinary function lowering. The historical read-only profile
+predicate retains its original contract; the current body initialization uses
+its own actual lexical assignment facts. This follows
+[mutable formal parameter bindings](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+
+Both actual hosts and source-generated native rules are drafted. Three former
+write-refusal inputs and their exact previous assertion remain recorded beside
+active original-source, source-free graph and native value controls. Var
+redeclarations and lexical/directive/owner guards retain their own existing
+boundaries. Future controls include alias names, captured writes, per-call
+cells and nested shadows; none executed. General parameter patterns/defaults,
+var environments, getters/proxies, complete formal mutable-cell execution and
+all earlier requirements remain required.
