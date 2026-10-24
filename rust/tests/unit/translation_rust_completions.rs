@@ -24,6 +24,118 @@ fn fixture() -> Value {
     .expect("shared closed-completion fixtures are inspectable Links data")
 }
 
+#[test]
+fn ordinary_function_prints_and_format_arguments_preserve_full_original_traces() {
+    use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+    use meta_language::{
+        BinaryLinksOptions, create_rust_formatting_program_links, decode_link_network_binary,
+        encode_link_network_binary, encode_typed_program_links,
+    };
+    assert_eq!(
+        std::env::var("CI").as_deref(),
+        Ok("true"),
+        "native source compilers run only in CI"
+    );
+    let version = run(Command::new("rustc").arg("--version"));
+    assert!(version.ok, "{}", version.stderr);
+    let active = version.stdout.split_whitespace().nth(1).unwrap();
+    let parts = active
+        .split('.')
+        .take(2)
+        .map(|value| value.parse::<u32>().unwrap())
+        .collect::<Vec<_>>();
+    assert!(
+        parts[0] == 1 && (90..100).contains(&parts[1]),
+        "uncovered Rust {active}"
+    );
+    let producer = run(Command::new("node")
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .args([
+            "--max-old-space-size=352",
+            "--max-semi-space-size=1",
+            "../experiments/rust-records/function-output-oracle.mjs",
+        ]));
+    assert!(producer.ok, "{}", producer.stderr);
+    let expected = meta_language::read_structured_data_lino(&producer.stdout).unwrap();
+    assert_eq!(expected["observedLines"], expected["lines"]);
+    let source = expected["source"].as_str().unwrap();
+    for row in expected["cases"].as_array().unwrap() {
+        assert!(source.contains(row["source"].as_str().unwrap()));
+    }
+    let surface = parse_rust(source).unwrap();
+    assert_eq!(serde_json::to_value(&surface).unwrap(), expected["surface"]);
+    let program = check_program(&surface).unwrap();
+    let packet = encode_typed_program_links(&program).unwrap();
+    assert_eq!(packet.root.as_u64(), expected["root"].as_u64().unwrap());
+    assert_eq!(
+        packet.network.to_lino(),
+        expected["links"].as_str().unwrap()
+    );
+    let definition = create_rust_formatting_program_links().unwrap();
+    assert_eq!(
+        definition.root.as_u64(),
+        expected["definitionRoot"].as_u64().unwrap()
+    );
+    assert_eq!(
+        definition.network.to_lino(),
+        expected["definitionLinks"].as_str().unwrap()
+    );
+    for (actual, key) in [(&packet, "emissions"), (&definition, "definitionEmissions")] {
+        let binary =
+            encode_link_network_binary(&actual.network, BinaryLinksOptions::default()).unwrap();
+        for network in [
+            LinkNetwork::from_lino(&actual.network.to_lino()).unwrap(),
+            decode_link_network_binary(&binary, BinaryLinksOptions::default()).unwrap(),
+        ] {
+            for target in ["JavaScript", "Rust", "Lean", "Rocq"] {
+                let output = emit_typed_program_links(&network, actual.root, target).unwrap();
+                assert_eq!(
+                    serde_json::json!({"code":output.code,"language":output.language,"mappings":output.mappings,"assumptions":output.assumptions,"encodings":output.encodings,"theorems":output.theorems}),
+                    expected[key][target]
+                );
+            }
+        }
+    }
+    for row in expected["refusals"].as_array().unwrap() {
+        let error = parse_rust(row["source"].as_str().unwrap())
+            .and_then(|surface| check_program(&surface))
+            .expect_err("actual formatting obligation");
+        assert_eq!(error.kind.as_str(), row["kind"].as_str().unwrap());
+        assert_eq!(error.reason, row["reason"].as_str().unwrap());
+    }
+    let expected_text = expected["lines"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|value| value.as_str().unwrap())
+        .collect::<Vec<_>>()
+        .join("\n")
+        + "\n";
+    let directory = TemporaryDirectory::new("rust_function_output");
+    for (name, text) in [
+        ("original", source),
+        (
+            "translated",
+            expected["emissions"]["Rust"]["code"].as_str().unwrap(),
+        ),
+    ] {
+        let file = directory.0.join(format!("{name}.rs"));
+        let binary = directory
+            .0
+            .join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+        fs::write(&file, text).unwrap();
+        let compiler = run(Command::new("rustc")
+            .args(["--edition", "2024", "--crate-type", "bin"])
+            .arg(&file)
+            .arg("-o")
+            .arg(&binary));
+        assert!(compiler.ok, "{name}: {}", compiler.stderr);
+        let actual = run(&mut Command::new(&binary));
+        assert!(actual.ok, "{name}: {}", actual.stderr);
+        assert_eq!(actual.stdout, expected_text, "{name}");
+    }
+}
+
 fn field(network: &LinkNetwork, parent: LinkId, label: &str) -> Option<LinkId> {
     network.links().find_map(|link| match link.references() {
         [owner, name, child]

@@ -7,7 +7,7 @@ mod literal_matches;
 
 use super::{
     Alias, Options, Result, RustParser, SArrayItem, SExpr, SNode, SPattern, SPatternNode, SRow,
-    SourceOrigin, Span, Token, TokenKind, Type, accept_rust_source_array_element, describe, format,
+    SourceOrigin, Span, Token, TokenKind, Type, accept_rust_source_array_element, describe,
     is_if_or_match, pattern_value, rust_macro_message, span, unsupported,
 };
 
@@ -68,8 +68,10 @@ impl RustParser {
                 Ok(result)
             }
             "format" => {
-                let mut formatted = format(args, token)?;
+                let mut formatted = self.format(args, token, path)?;
+                let origin = self.origins.origin(&formatted, path);
                 formatted.span = range;
+                self.origins.mark(&formatted, origin);
                 Ok(formatted)
             }
             "panic" | "unreachable" | "unimplemented" | "todo" => {

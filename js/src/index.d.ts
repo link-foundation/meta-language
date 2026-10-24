@@ -2639,3 +2639,5 @@ export function mapUnicodeCaseUtf16Text(text: readonly number[], upper: boolean)
 export function createUnicodeCaseProgramLinks(): TypedProgramLinks;
 
 export function createRustUnitValueProgramLinks(): TypedProgramLinks;
+
+export function createRustFormattingProgramLinks(): TypedProgramLinks;

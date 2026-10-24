@@ -7,7 +7,7 @@ use super::{
     Binding, FLOAT, ItemsEnd, Language, Options, RESERVED_ITEMS, Result, RustParser, SComparison,
     SCtor, SData, SEffect, SExpr, SField, SItem, SMain, SModule, SNode, SProgram, SProp, SPropNode,
     ShowStyle, SourceDeclaration, SourceOrigin, Token, TokenKind, TranslationError, Type, absolute,
-    format, is_if_or_match, prop_of, span, unsupported,
+    is_if_or_match, prop_of, span, unsupported,
 };
 
 mod attributes;
@@ -575,6 +575,45 @@ impl RustParser {
                 lets.extend(self.let_statement(path)?);
                 continue;
             }
+            if token.kind == TokenKind::Macro
+                && crate::translation::rust_unit_value_rules::read_rust_function_macro_disposition(
+                    &token.value,
+                ) == "print"
+            {
+                let SEffect::Print {
+                    expr,
+                    style,
+                    span: place,
+                } = self.main_macro_with_path(path)?
+                else {
+                    unreachable!("source print macro disposition")
+                };
+                let unit = SExpr::new(SNode::Unit, place);
+                let origin = self.origins.origin(&unit, path);
+                let printed = SExpr::new(
+                    SNode::Print {
+                        expr: Box::new(expr),
+                        style,
+                        body: Box::new(unit),
+                    },
+                    place,
+                );
+                self.origins.mark(&printed, origin);
+                if self.cursor.eat(";").is_some() {
+                    lets.push(Binding {
+                        name: self.fresh_product_binding(),
+                        ty: None,
+                        value: printed,
+                        span: place,
+                    });
+                    continue;
+                }
+                if !self.cursor.is("}") {
+                    return Err(Self::fail("expected ; or }", self.cursor.peek()));
+                }
+                tail = Some(printed);
+                break;
+            }
             if function_body
                 && self.cursor.is("return")
                 && (self.cursor.is_at(";", 1)
@@ -777,12 +816,15 @@ impl RustParser {
     }
 
     pub(super) fn main_macro(&mut self) -> Result<SEffect> {
+        self.main_macro_with_path(&[])
+    }
+    fn main_macro_with_path(&mut self, path: &[String]) -> Result<SEffect> {
         let token = self.cursor.advance();
-        let mut args = self.macro_arguments(&token, &[])?;
+        let mut args = self.macro_arguments(&token, path)?;
         match token.value.as_str() {
             "println" => {
                 for value in args.iter().skip(1) {
-                    self.refuse_shared_value_observation(value, None, &[], value.span)?;
+                    self.refuse_shared_value_observation(value, None, path, value.span)?;
                 }
                 let expr = if args.is_empty() {
                     SExpr::new(
@@ -792,7 +834,7 @@ impl RustParser {
                         None,
                     )
                 } else {
-                    format(args, &token)?
+                    self.format(args, &token, path)?
                 };
                 Ok(SEffect::Print {
                     expr,

@@ -116,3 +116,5 @@ export {mapUnicodeCaseUtf16Text} from './translation/unicode-case-rules.js';
 export {createUnicodeCaseProgramLinks} from './unicode-case-program.js';
 
 export {createRustUnitValueProgramLinks} from './rust-unit-value-program.js';
+
+export {createRustFormattingProgramLinks} from './rust-formatting-program.js';

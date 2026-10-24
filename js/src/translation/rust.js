@@ -1,4 +1,6 @@
-import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary} from './rust-unit-value-rules.js';
+import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
+import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
+import {readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition} from './rust-unit-value-rules.js';
 import {acceptRustSharedArrayHandleSourceInterpretation as acceptRustSharedArrayHandleSourceModel} from './rust-shared-array-handle-rules.js';
 import {requireRustSharedArrayHandleSourceText,verifyRustSharedArrayHandleTokens,createRustSharedArrayHandleState,readRustSharedArrayHandleType,
   isRustSharedArrayHandleOrigin,refuseRustSharedArrayBareVector,noteRustSharedArrayHandleName,
@@ -749,6 +751,13 @@ class RustParser {
         lets.push(...this.letStatement(path));
         continue;
       }
+      if(token.kind==='macro'&&readRustFunctionMacroDisposition(token.value)==='print'){
+        const effect=this.mainMacro(path),unit={k:'unit',span:effect.span};
+        const printed=this.origins.mark({k:'print',expr:effect.expr,style:effect.style,body:unit,span:effect.span},this.origins.origin(unit,path));
+        if(c.eat(';')){lets.push({name:this.freshProductBinding(),value:printed,span:effect.span});continue;}
+        if(!c.is('}'))throw this.fail('expected ; or }');
+        tail=printed;break;
+      }
       if(functionBody&&c.is('return')&&(c.is(';',1)||c.is('}',1)||this.isTerminalReturn())){
         c.next();
         tail=c.is(';')||c.is('}')?{k:'unit',span:span(token,token)}:this.expr(path);
@@ -931,14 +940,14 @@ class RustParser {
     return { effects, span: this.emptyOptionSourceModel?{start:start.start,end:c.tokens[c.index-1].end}:span(start, c.peek()) };
   }
 
-  mainMacro() {
+  mainMacro(path=[]) {
     const c = this.cursor;
     const token = c.next();
-    const args = this.macroArguments(token, []);
+    const args = this.macroArguments(token, path);
     switch (token.value) {
       case 'println':
         if (!args.length) return { k: 'print', expr: { k: 'str', value: '' }, style: 'rust', span: span(token, c.peek()) };
-        return { k: 'print', expr: this.format(args, token), style: 'rust', span: span(token, c.peek()) };
+        return { k: 'print', expr: this.format(args, token,path), style: 'rust', span: span(token, c.peek()) };
       case 'assert':
         if (args.length !== 1) throw unsupported('assert! message', 'custom assertion messages are not kept', span(token, c.peek()));
         return { k: 'assert', prop: propOf(args[0]), span: span(token, c.peek()) };
@@ -971,57 +980,45 @@ class RustParser {
    * variable in scope, `{{`/`}}` are braces; every value is rendered with
    * Display, which for integers is its decimal text.
    */
-  format(args, token) {
-    const [template, ...values] = args;
-    if (template?.k !== 'str') throw unsupported(`${token.value}!`, 'the format string must be a literal', span(token, token));
-    const pieces = [];
-    let text = '';
-    let next = 0;
-    const source = template.value;
-    for (let index = 0; index < source.length; index += 1) {
-      const char = source[index];
-      if (char === '{' && source[index + 1] === '{') {
-        text += '{';
-        index += 1;
-        continue;
-      }
-      if (char === '}' && source[index + 1] === '}') {
-        text += '}';
-        index += 1;
-        continue;
-      }
-      if (char === '}') throw new TranslationError('syntax', 'unmatched } in format string', template.span);
-      if (char !== '{') {
-        text += char;
-        continue;
-      }
-      const end = source.indexOf('}', index);
-      if (end < 0) throw new TranslationError('syntax', 'unclosed { in format string', template.span);
-      const spec = source.slice(index + 1, end);
-      if (spec.includes(':')) throw unsupported(`format spec {${spec}}`, 'only plain {} Display formatting is portable', template.span);
-      let value;
-      if (spec === '') {
-        value = values[next];
-        next += 1;
-        if (!value) throw new TranslationError('syntax', 'format string has more {} than arguments', template.span);
-      } else if (/^\d+$/u.test(spec)) {
-        value = values[Number(spec)];
-        if (!value) throw new TranslationError('syntax', `format argument ${spec} is missing`, template.span);
-        next = Math.max(next, Number(spec) + 1);
-      } else if (/^[A-Za-z_][A-Za-z0-9_]*$/u.test(spec)) {
-        value = { k: 'name', path: [spec], span: template.span };
-      } else {
-        throw unsupported(`format argument {${spec}}`, 'outside the portable core', template.span);
-      }
-      if (text) pieces.push({ k: 'str', value: text, span: template.span });
-      text = '';
-      refuseRustSharedArrayHandleObservation(this,value,this.modulePath,value.span);
-      pieces.push({ k: 'show', arg: value, style: 'rust', span: value.span });
-      index = end;
+  format(args, token, path=this.modulePath) {
+    const [template,...values]=args;
+    if(template?.k!=='str')throw unsupported(`${token.value}!`,'the format string must be a literal',span(token,token));
+    const units=Array.from({length:template.value.length},(_,index)=>template.value.charCodeAt(index));
+    const plan=planRustFormattingValue(units,values.length);
+    if(plan[0]!==0){
+      const spec=template.value.slice(plan[1],plan[2]);
+      if(plan[0]===-1)throw new TranslationError('syntax','unmatched } in format string',template.span);
+      if(plan[0]===-2)throw new TranslationError('syntax','unclosed { in format string',template.span);
+      if(plan[0]===-3)throw unsupported(`format spec {${spec}}`,'only plain {} Display formatting is portable',template.span);
+      if(plan[0]===-5)throw new TranslationError('syntax','format string has more {} than arguments',template.span);
+      if(plan[0]===-6)throw new TranslationError('syntax',`format argument ${spec} is missing`,template.span);
+      if(plan[0]===-7)throw new TranslationError('syntax','format string has fewer {} than arguments',template.span);
+      throw unsupported('Rust formatting facts','the format requires actual literal units and operand positions',template.span);
     }
-    if (next < values.length) throw new TranslationError('syntax', 'format string has fewer {} than arguments', template.span);
-    if (text || !pieces.length) pieces.push({ k: 'str', value: text, span: template.span });
-    return pieces.reduce((left, right) => ({ k: 'binary', op: 'concat', left, right, span: template.span }));
+    const captures=planRustFormattingOperandCapture(values.length).map(index=>{
+      const value=values[index],name=this.freshProductBinding();
+      refuseRustSharedArrayHandleObservation(this,value,path,value.span);
+      const reference=this.origins.mark({k:'name',path:[name],span:value.span},this.origins.origin(value,path));
+      return {name,value,reference,span:value.span};
+    });
+    const pieces=[];
+    for(let at=1;at<plan.length;at+=3){
+      const code=plan[at],first=plan[at+1],last=plan[at+2];
+      if(code===0){pieces.push({k:'str',value:template.value.slice(first,last),span:template.span});continue;}
+      let value;
+      if(code===1)value=captures[first].reference;
+      else if(code===2){
+        const sourceName=template.value.slice(first,last);
+        if(sourceName==='_'||!acceptRustSourceIdentifierName(sourceName))throw unsupported(`format argument {${sourceName}}`,'outside the portable core',template.span);
+        const name=normalizeRustSourceIdentifier(sourceName,template.span);
+        value={k:'name',path:[name],span:template.span};
+        refuseRustSharedArrayHandleObservation(this,value,path,value.span);
+      }else throw new TypeError('unknown Rust formatting term instruction');
+      pieces.push({k:'show',arg:value,style:'rust',span:value.span});
+    }
+    let body=pieces.reduce((left,right)=>({k:'binary',op:'concat',left,right,span:template.span}));
+    for(let at=captures.length-1;at>=0;at-=1){const binding=captures[at];body={k:'let',name:binding.name,value:binding.value,body,span:binding.span};}
+    return this.origins.mark(body,this.origins.typeOrigin(STRING,path));
   }
 
   /** Expressions, by Rust precedence. */
@@ -1494,8 +1491,10 @@ class RustParser {
         const element = args.length ? this.origins.origin(args[0], path).type : null;
         return noteRustSharedArrayLiteral(this,this.origins.mark({ k: 'array', items: args.map(value => ({ value, spread: false })), span: range }, { type: element ? array(element) : null, path: [...path], wrappers: [], fields: null, textSourceModel: null, arraySourceModel: 'owned vector', proven: true }),path);
       }
-      case 'format':
-        return { ...this.format(args, token), span: range };
+      case 'format': {
+        const formatted=this.format(args,token,path);
+        return this.origins.mark({...formatted,span:range},this.origins.origin(formatted,path));
+      }
       case 'panic':
       case 'unreachable':
       case 'unimplemented':

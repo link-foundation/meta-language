@@ -1004,3 +1004,14 @@ No nested/earlier return is converted to an initializer value or closed proof.
 The exact former refusal row remains historical beside current same-input
 value controls. Complete decisions generate native code and public editable
 graphs; all behavior and metadata reconciliation remain deferred.
+
+Ordinary Rust println now transports Print terms through the existing output
+algebra, preserving lexical context and Unit statement/tail values. Formatting
+grammar, occurrence selection and ordered raw operand captures are complete
+shared source plans, emitted automatically to native code and editable Links.
+Both source adapters bind every explicit argument once before reusing its value,
+keep independent implicit/explicit cursors and reuse actual source name grammar.
+The former native handwritten grammar is replaced by source-plan transport.
+Future complete original/native traces, source AST parity, both archives and
+four emissions remain unexecuted; all general formatting/macro/borrow and
+preceding requirements remain.

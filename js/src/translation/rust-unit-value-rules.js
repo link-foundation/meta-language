@@ -9,6 +9,9 @@ export function readRustUnitStatementDisposition(kind,collecting,proven,type,ind
  return collecting&&kind==='app'?'bind':'refuse';
 }
 
+/** @param {string} name @returns {string} */
+export function readRustFunctionMacroDisposition(name){return name==='println'?'print':'';}
+
 /** The host has identified an actual return keyword at start. Only punctuation
  * appears in values; literal text cannot supply a delimiter. A terminal return
  * has no continuation before the owning function block closes.

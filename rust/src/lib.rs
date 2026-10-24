@@ -498,3 +498,5 @@ pub use translation::unicode_case_program::create_unicode_case_program_links;
 pub use translation::unicode_case_rules::map_unicode_case_utf16_text;
 
 pub use translation::rust_unit_value_program::create_rust_unit_value_program_links;
+
+pub use translation::rust_formatting_program::create_rust_formatting_program_links;

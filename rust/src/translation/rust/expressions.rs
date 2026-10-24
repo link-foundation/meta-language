@@ -9,7 +9,7 @@ use super::cast_syntax_rules::{accept_rust_cast_following_token, read_rust_cast_
 use super::{
     Alias, BOOL, BinaryOp, FLOAT, Flavor, Options, Result, RustParser, SArrayItem, SExpr, SNode,
     SPattern, SPatternNode, SRow, STRING, SourceOrigin, Span, Token, TokenKind, TranslationError,
-    Type, UnaryOp, additive_op, binary, comparison_op, describe, format, is_if_or_match, joined,
+    Type, UnaryOp, additive_op, binary, comparison_op, describe, is_if_or_match, joined,
     method_call, multiplicative_op, operator, pattern_value, rust_fixed_type, rust_macro_message,
     span, type_error, unsupported,
 };

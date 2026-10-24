@@ -6361,3 +6361,42 @@ conditionals, structures, tuples, strings, forward calls and long expressions.
 The full current source decisions are available as editable typed Links in
 both packages. None of these controls executed. General completions, lexical
 continuations, drop/borrow effects and every preceding requirement remain.
+
+
+### Ordinary Rust function output and Display source plans draft
+
+Ordinary functions and nested blocks now lower println statements and Unit
+tails through the existing Print/binding algebra. The original formatting
+reader receives the actual module path and lexical source context. Calls keep
+output order through the existing four-target output translation, including
+printing before a terminal return. The original module-wrapped terminal-return
+fixture can therefore retain its complete println main declaration.
+
+Plain Display formatting now uses a complete shared source plan over literal
+UTF16 units, actual positional operands and captured source identifiers. Escaped
+braces, independent implicit/explicit positions, trailing placeholder whitespace,
+missing/unused operands and unsupported specs remain explicit decisions.
+Captured names reuse ordinary Rust identifier admission and normalization,
+including Unicode and raw-keyword bindings; a bare underscore refuses. Every
+raw explicit operand is evaluated once in source order before any repeated or
+reordered formatting occurrence reads its hygienic binding. The actual standard
+format construction owns its String result. These rules follow
+[Rust formatting](https://doc.rust-lang.org/std/fmt/) and
+[println](https://doc.rust-lang.org/std/macro.println.html).
+
+Complete source decisions generate native code and editable typed definitions.
+The native parser transports actual text/value/name terms instead of maintaining
+a second formatting grammar. Unused-argument detection merges used positions
+without changing the occurrence plan, avoiding a repeated membership scan per
+argument. The original handwritten grammar remains available at its preceding
+Git revision; no historical input, assertion or fixture is overwritten to claim
+new behavior. Source/ledger/history reconciliation remains deferred.
+
+Fifteen source trace declarations retain each entire original input inside a
+composed module, with invocation facades and trace markers. Future controls
+compare original Rust, translated JavaScript and native Rust complete traces,
+actual source ASTs, both program/definition codecs and all four emissions.
+Native compilers run only in CI and enforce explicit version ranges. No such
+control executed during the complete draft. Full format specs, explicit named
+argument assignments, custom Display/borrow effects, complete macro namespaces
+and every earlier source/architecture requirement remain required.

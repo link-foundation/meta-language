@@ -216,6 +216,16 @@ pub fn read_rust_unit_statement_disposition(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_rust_function_macro_disposition(name: &str) -> String {
+    if name == "println" {
+        String::from("print")
+    } else {
+        String::new()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn find_rust_terminal_return_boundary(values: &[String], start: f64) -> f64 {
     if (!(self::ml_math::is_safe_integer(start)) || (start < 0f64))
         || (start >= (values.len() as f64))
