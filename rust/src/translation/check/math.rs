@@ -21,6 +21,9 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op == "convertJavaScriptBooleanValue" {
+            return self.javascript_boolean_builtin(args, span, env, path);
+        }
         if op == "convertJavaScriptPrimitiveText" {
             return self.javascript_primitive_text_builtin(args, span, env, path);
         }

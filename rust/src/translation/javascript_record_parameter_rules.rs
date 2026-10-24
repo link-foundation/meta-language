@@ -25,3 +25,6 @@ pub use part_3::*;
 #[path = "javascript_record_parameter_rules/part_4.rs"]
 mod part_4;
 pub use part_4::*;
+#[path = "javascript_record_parameter_rules/part_5.rs"]
+mod part_5;
+pub use part_5::*;

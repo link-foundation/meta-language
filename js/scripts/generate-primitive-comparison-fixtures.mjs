@@ -59,6 +59,15 @@ for(const [value,expected] of [['-0','false'],['0','true'],['NaN','false'],['nul
 }
 cases.push({name:'Object.is captures every argument before selection',entry:'sameValueCapture',source:'export function compute(){let value=0;return Object.is(value,value,value=1)&&value===1;}',value:'true',abort:null});
 cases.push({name:'Object.is evaluates ignored throwing argument',entry:'sameValueExtraError',source:'function sameValueFailure(){throw new TypeError("ignored argument evaluated");}\nexport function compute(){return Object.is(0,0,sameValueFailure());}',value:null,abort:'ignored argument evaluated',errorClass:'TypeError',messagePresent:true,messageUnits:Array.from('ignored argument evaluated',character=>character.charCodeAt(0))});
+for(const [argumentsText,value] of [
+ ['',false],['undefined',false],['null',false],['false',false],['true',true],['0',false],['-0',false],
+ ['NaN',false],['Infinity',true],['-Infinity',true],['0n',false],['-1n',true],['""',false],['"0"',true],
+ ['"false"',true],['"\\ud800"',true],['[]',true],['{}',true],['{valueOf:()=>0}',true],['undefined,7n',false],
+])cases.push({name:'Boolean('+argumentsText+')',entry:'sourceBooleanConversion'+cases.length,source:'export function compute(){return Boolean('+argumentsText+');}',value:String(value),abort:null});
+cases.push({name:'Boolean captures first before ignored assignments',entry:'booleanArgumentCapture',source:'export function compute(){let value=0;return Boolean(value,value=1)===false&&value===1;}',value:'true',abort:null});
+cases.push({name:'Boolean converts void call to false',entry:'booleanVoidValue',source:'function booleanUndefinedValue(){return;}\nexport function compute(){return Boolean(booleanUndefinedValue());}',value:'false',abort:null});
+cases.push({name:'Boolean preserves ignored argument exceptions',entry:'booleanExtraError',source:'function booleanArgumentError(){throw new Error("Boolean extra");}\nexport function compute(){return Boolean(false,booleanArgumentError());}',value:null,abort:'Boolean extra',errorClass:'Error',messagePresent:true,messageUnits:Array.from('Boolean extra',character=>character.charCodeAt(0))});
+cases.push({name:'actual BigInt owner reaches exact conversion',entry:'bigIntegerOwnerConversion',source:'export function compute(){return BigInt("9007199254740993")===9007199254740993n;}',value:'true',abort:null});
 writeProjectData(new URL('../../parity/fixtures/primitive-comparisons.lino',import.meta.url),{
  schemaVersion:1,model:'JavaScript primitive equality and relational comparison 1',sourceLanguage:'JavaScript',cases,refusals:[],
  source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),

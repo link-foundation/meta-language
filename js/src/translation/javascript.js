@@ -1,3 +1,4 @@
+import {readJavaScriptBooleanBuiltinOperation} from './optional-value-rules.js';
 // JavaScript frontend for the portable core. It reads the subset of modern
 // JavaScript the core can represent faithfully: Number and BigInt arithmetic,
 // strings and booleans; top-level functions and object-literal namespaces of methods
@@ -2503,7 +2504,7 @@ class JavaScriptParser {
       const value = CONSTANTS[name];
       return { k: 'num', value: value.replace(/^-/u, ''), ...(value.startsWith('-') && { negative: true }), type: FLOAT, span: where };
     }
-    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)||readJavaScriptStringConstructionOperation(name)):'';
+    const numericBuiltin=standardOwner?(readJavaScriptNumberBuiltinOperation(name)||readJavaScriptBigIntegerBuiltinOperation(name)||readJavaScriptStringConstructionOperation(name)||readJavaScriptBooleanBuiltinOperation(name)):'';
     if(numericBuiltin&&c.is('('))return{k:'math',op:numericBuiltin,name,args:this.spreadArguments(name),span:span(token,c.peek())};
     if (Object.hasOwn(MATH, name) && c.is('(') && standardOwner) {
       const args = this.spreadArguments(name);

@@ -936,3 +936,11 @@ sequential numeric conversion and undefined defaults; NaN normalization, swapped
 substring endpoints and relative/count substr bounds select the exact existing
 UTF-16 slice operation. Complete public source graphs and both runtime adapters
 are drafted, with original/native/codec/emission controls left unexecuted.
+
+Source inspection found the complete builtin-owner classifier omitted BigInt;
+it now admits actual unshadowed BigInt and Boolean while retaining all lexical/
+module/context shadows. Boolean conversion uses existing shared truth nodes
+over represented values, with ordered raw argument capture, missing false and
+ignored extra effects. Complete optional-value source rules generate native
+code and public editable graphs. All future original/native/graph controls
+remain unexecuted; host exotic values and iterator/wrapper behavior retain scope.

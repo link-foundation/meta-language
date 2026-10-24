@@ -561,3 +561,11 @@ test('actual complete project helper declarations retain their original owners a
     // These are actual original header/CST controls, not whole-body success.
   }
 });
+
+// Prepared owner controls; no execution during the whole requirements draft.
+test('BigInt and Boolean owners require actual unshadowed standard bindings',()=>{
+ for(const name of ['BigInt','Boolean']){
+  assert.equal(acceptJavaScriptStandardBuiltinOwner(name,false),true);
+  assert.equal(acceptJavaScriptStandardBuiltinOwner(name,true),false);
+ }
+});

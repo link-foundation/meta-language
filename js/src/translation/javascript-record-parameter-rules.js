@@ -141,7 +141,7 @@ export function acceptJavaScriptRecordParameterProfile(context, asynchronous, do
  * @param {string} name @param {boolean} shadowed @returns {boolean} */
 export function acceptJavaScriptStandardBuiltinOwner(name, shadowed) {
   return (name === 'Map' || name === 'Set' || name === 'console'
-    || name === 'Math' || name === 'Number' || name === 'Array'
+    || name === 'Math' || name === 'Number' || name === 'BigInt' || name === 'Boolean' || name === 'Array'
     || name === 'Object' || name === 'String' || name === 'Error'
     || name === 'RangeError' || name === 'TypeError' || name === 'NaN'
     || name === 'Infinity' || name === 'undefined' || name === 'isFinite'

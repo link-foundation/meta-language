@@ -6179,3 +6179,23 @@ are declared without execution, with explicit Node ranges. TypeScript
 declarations include these factories and the preceding comparison/binding
 factories. Object conversions, generic receivers, method lookup/accessors and
 all earlier requirements remain.
+
+### Boolean conversion and builtin owner draft
+
+The shared source owner rule now includes actual unshadowed BigInt and Boolean
+bindings. BigInt reaches the already represented exact primitive conversion
+path; local, module, imported and unknown-context shadows still retain their
+actual owners. Boolean captures every argument once, ignores extra values
+after their effects, supplies false when missing and uses the existing
+shared truth operation for every represented primitive/optional/object value.
+ToBoolean does not invoke object primitive conversion. The rules follow
+[ToBoolean](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-toboolean)
+and [Boolean conversion](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-boolean-constructor-boolean-value).
+
+Both runtime adapters, actual shared source rules and public complete optional
+value graphs are drafted. Future source/owner/native/codec/emission controls
+include falsy primitives, nullable tags, UTF-16 strings, truthy objects and
+ignored argument effects. None executed. Host exotic values, arbitrary
+iterators, wrappers/new Boolean, full source constructs and every earlier
+requirement remain. Native inference observation transport moved to its
+existing child module to retain the root size limit.

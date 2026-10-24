@@ -1,7 +1,5 @@
 // Generated from complete js/src/translation/javascript-record-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
 use super::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result;
-use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
 use super::source_ml_source1_temporary_read_source_identifier_prefix_loop2;
 use super::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1;
 
@@ -635,6 +633,35 @@ pub mod ml_string {
     }
 }
 
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_source_private_identifier(name: &self::ml_string::Text) -> bool {
@@ -662,9 +689,31 @@ pub fn read_source_identifier_prefix_ordinal(name: &self::ml_string::Text) -> f6
                             if (index_2 < 0f64) || (index_2 >= (text.length())) {
                                 f64::NAN
                             } else {
-                                ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
+                                (({
+                                    let source_ml_source2_string_range_operand6 = text.clone();
+                                    {
+                                        let source_ml_source2_string_range_operand7 = index_2;
+                                        {
+                                            let source_ml_source2_string_range_operand8 =
+                                                index_2 + 1f64;
+                                            {
+                                                let source_ml_source2_string_range_position9 =
+                                                    source_ml_source2_string_range_operand7;
+                                                {
+                                                    let source_ml_source2_string_range_position10 =
+                                                        source_ml_source2_string_range_operand8;
+                                                    source_ml_source2_string_range_operand6.slice(
+                                                        source_ml_source2_string_range_position9,
+                                                        source_ml_source2_string_range_position10,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                                .code_point_at(0f64))
+                                .clone()
+                                .unwrap_or_else(|| f64::NAN)
                             }
                         }
                     },
@@ -681,9 +730,22 @@ pub fn read_source_identifier_prefix_ordinal(name: &self::ml_string::Text) -> f6
                                 if (index_2 < 0f64) || (index_2 >= (text.length())) {
                                     f64::NAN
                                 } else {
-                                    ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                        .clone()
-                                        .unwrap_or_else(|| f64::NAN)
+                                    (({
+                            let source_ml_source2_string_range_operand16 = text.clone();
+                            {
+                                let source_ml_source2_string_range_operand17 = index_2;
+                                {
+                                    let source_ml_source2_string_range_operand18 = index_2 + 1f64;
+                                    {
+                                        let source_ml_source2_string_range_position19 = source_ml_source2_string_range_operand17;
+                                        {
+                                            let source_ml_source2_string_range_position20 = source_ml_source2_string_range_operand18;
+                                            source_ml_source2_string_range_operand16.slice(source_ml_source2_string_range_position19, source_ml_source2_string_range_position20)
+                                        }
+                                    }
+                                }
+                            }
+                        }).code_point_at(0f64)).clone().unwrap_or_else(|| f64::NAN)
                                 }
                             }
                         },
@@ -694,8 +756,8 @@ pub fn read_source_identifier_prefix_ordinal(name: &self::ml_string::Text) -> f6
                     -1f64
                 } else {
                     {
-                        let source_ml_source2_s1 = self::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(name, index, ordinal);
-                        match source_ml_source2_s1 {
+                        let source_ml_source2_s21 = self::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(name, index, ordinal);
+                        match source_ml_source2_s21 {
                             self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index_2, ordinal_2) => {
                                 if ((std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 { {
                                     let index_3 = if position.is_nan() {
@@ -706,7 +768,22 @@ pub fn read_source_identifier_prefix_ordinal(name: &self::ml_string::Text) -> f6
                                     if (index_3 < 0f64) || (index_3 >= (text.length())) {
                                         f64::NAN
                                     } else {
-                                        ((text.slice(index_3, (index_3 + 1f64))).code_point_at(0f64)).clone().unwrap_or_else(|| f64::NAN)
+                                        (({
+                                            let source_ml_source2_string_range_operand27 = text.clone();
+                                            {
+                                                let source_ml_source2_string_range_operand28 = index_3;
+                                                {
+                                                    let source_ml_source2_string_range_operand29 = index_3 + 1f64;
+                                                    {
+                                                        let source_ml_source2_string_range_position30 = source_ml_source2_string_range_operand28;
+                                                        {
+                                                            let source_ml_source2_string_range_position31 = source_ml_source2_string_range_operand29;
+                                                            source_ml_source2_string_range_operand27.slice(source_ml_source2_string_range_position30, source_ml_source2_string_range_position31)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }).code_point_at(0f64)).clone().unwrap_or_else(|| f64::NAN)
                                     }
                                 } }))(name.clone(), index_2)) == 95f64 {
                                     ordinal_2
@@ -787,7 +864,23 @@ pub fn render_source_generated_identifier(
 
         (prefix.concat(
             &if role.starts_with(&self::ml_string::Text::from_units(vec![109, 108, 95])) {
-                role.slice(3f64, f64::INFINITY)
+                {
+                    let source_ml_source2_string_range_operand32 = role.clone();
+                    {
+                        let source_ml_source2_string_range_operand33 = 3f64;
+                        {
+                            let source_ml_source2_string_range_position34 =
+                                source_ml_source2_string_range_operand33;
+                            {
+                                let source_ml_source2_string_range_position35 = f64::INFINITY;
+                                source_ml_source2_string_range_operand32.slice(
+                                    source_ml_source2_string_range_position34,
+                                    source_ml_source2_string_range_position35,
+                                )
+                            }
+                        }
+                    }
+                }
             } else {
                 role.clone()
             },
@@ -795,110 +888,5 @@ pub fn render_source_generated_identifier(
         .concat(&self::ml_string::Text::from_text(
             &self::ml_number::js_number(ordinal),
         ))
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_source_cell_parameter(
-    prefix: &self::ml_string::Text,
-    name: &self::ml_string::Text,
-    reference: bool,
-) -> self::ml_string::Text {
-    if reference {
-        (prefix.concat(&self::ml_string::Text::from_units(vec![
-            99, 101, 108, 108, 95,
-        ])))
-        .concat(name)
-    } else {
-        name.clone()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_java_script_source_binding_name(
-    kind: &self::ml_string::Text,
-    name: &self::ml_string::Text,
-    duplicate: bool,
-    reserved: &[self::ml_string::Text],
-) -> bool {
-    if (((*kind)
-        != (self::ml_string::Text::from_units(vec![
-            105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
-        ])))
-        || ((*name) == (self::ml_string::Text::from_units(vec![]))))
-        || duplicate
-    {
-        false
-    } else {
-        {
-            let index = 0f64;
-            {
-                let source_ml_source2_s2 =
-                    self::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
-                        name, reserved, index,
-                    );
-                match source_ml_source2_s2 {
-                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done => {
-                        true
-                    }
-                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(source_ml_source1_temporary_result3) => {
-                        source_ml_source1_temporary_result3
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_number_fact() -> f64 {
-    panic!("{}", "missing required Number fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_text_fact() -> self::ml_string::Text {
-    panic!("{}", "missing required text fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn refuse_required_boolean_fact() -> bool {
-    panic!("{}", "missing required Boolean fact column value")
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Number fact column position"
-        );
-
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_number_fact)
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_required_text_fact(
-    values: &[self::ml_string::Text],
-    index: f64,
-) -> self::ml_string::Text {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required text fact column position"
-        );
-
-        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
-            .unwrap_or_else(self::refuse_required_text_fact)
     }
 }

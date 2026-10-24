@@ -1,38 +1,183 @@
 // Generated from complete js/src/translation/javascript-record-parameter-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result;
-use super::MlSource1TemporaryFindJavaScriptRecordParameterPatternLoop12Result;
-use super::MlSource1TemporaryFindJavaScriptRecordParameterStrictDirectiveLoop19Result;
+use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
 use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result;
-use super::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop15Result;
 use super::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result;
 use super::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result;
-use super::accept_java_script_source_binding_name;
+use super::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Result;
 use super::ml_array;
-use super::ml_math;
+use super::ml_source_exception;
 use super::ml_string;
-use super::read_required_number_fact;
-use super::read_required_text_fact;
-use super::refuse_required_boolean_fact;
 use super::source_ml_source1_temporary_accept_java_script_array_binding_name_loop4;
-use super::source_ml_source1_temporary_accept_java_script_record_parameter_binding_loop13;
-use super::source_ml_source1_temporary_accept_java_script_record_parameter_bound_name_loop14;
-use super::source_ml_source1_temporary_find_java_script_record_parameter_pattern_loop12;
-use super::source_ml_source1_temporary_find_java_script_record_parameter_strict_directive_loop19;
+use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
 use super::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8;
-use super::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop15;
 use super::source_ml_source1_temporary_read_array_binding_fact_field_loop5;
 use super::source_ml_source1_temporary_read_array_binding_initializer_end_loop6;
+use super::source_ml_source1_temporary_read_java_script_binding_default_term_loop12;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_source_cell_parameter(
+    prefix: &self::ml_string::Text,
+    name: &self::ml_string::Text,
+    reference: bool,
+) -> self::ml_string::Text {
+    if reference {
+        (prefix.concat(&self::ml_string::Text::from_units(vec![
+            99, 101, 108, 108, 95,
+        ])))
+        .concat(name)
+    } else {
+        name.clone()
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_source_binding_name(
+    kind: &self::ml_string::Text,
+    name: &self::ml_string::Text,
+    duplicate: bool,
+    reserved: &[self::ml_string::Text],
+) -> bool {
+    if (((*kind)
+        != (self::ml_string::Text::from_units(vec![
+            105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
+        ])))
+        || ((*name) == (self::ml_string::Text::from_units(vec![]))))
+        || duplicate
+    {
+        false
+    } else {
+        {
+            let index = 0f64;
+            {
+                let source_ml_source2_s36 =
+                    self::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
+                        name, reserved, index,
+                    );
+                match source_ml_source2_s36 {
+                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done => {
+                        true
+                    }
+                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(source_ml_source1_temporary_result3) => {
+                        source_ml_source1_temporary_result3
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_number_fact() -> f64 {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 78,
+            117, 109, 98, 101, 114, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 118,
+            97, 108, 117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_text_fact() -> self::ml_string::Text {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 116,
+            101, 120, 116, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 118, 97, 108,
+            117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn refuse_required_boolean_fact() -> bool {
+    (self::ml_source_exception::SourceException {
+        class_name: String::from("RangeError"),
+        message_units: (self::ml_string::Text::from_units(vec![
+            109, 105, 115, 115, 105, 110, 103, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32, 66,
+            111, 111, 108, 101, 97, 110, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32,
+            118, 97, 108, 117, 101,
+        ]))
+        .0,
+        message_present: true,
+    })
+    .raise()
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_number_fact(values: &[f64], index: f64) -> f64 {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                78, 117, 109, 98, 101, 114, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110,
+                32, 112, 111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_number_fact)
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_required_text_fact(
+    values: &[self::ml_string::Text],
+    index: f64,
+) -> self::ml_string::Text {
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                116, 101, 120, 116, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109, 110, 32, 112,
+                111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
+        (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
+            .unwrap_or_else(self::refuse_required_text_fact)
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_required_boolean_fact(values: &[bool], index: f64) -> bool {
-    {
-        assert!(
-            !(((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64))),
-            "{}",
-            "invalid required Boolean fact column position"
-        );
-
+    if ((index < 0f64) || ((index % 1f64) != 0f64)) || (index >= (values.len() as f64)) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                105, 110, 118, 97, 108, 105, 100, 32, 114, 101, 113, 117, 105, 114, 101, 100, 32,
+                66, 111, 111, 108, 101, 97, 110, 32, 102, 97, 99, 116, 32, 99, 111, 108, 117, 109,
+                110, 32, 112, 111, 115, 105, 116, 105, 111, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
         (self::ml_array::optional_at(values, self::ml_array::number_index(index)))
             .unwrap_or_else(self::refuse_required_boolean_fact)
     }
@@ -91,26 +236,47 @@ pub fn accept_java_script_array_binding_name(
     duplicate: bool,
     reserved: &[self::ml_string::Text],
 ) -> bool {
-    if ((((*kind)
+    if (((*kind)
         != (self::ml_string::Text::from_units(vec![
             105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
         ])))
         || ((*name) == (self::ml_string::Text::from_units(vec![]))))
-        || duplicate)
-        || (((name.length()) >= 3f64)
-            && ((name.slice(0f64, 3f64))
-                == (self::ml_string::Text::from_units(vec![109, 108, 95]))))
+        || duplicate
+    {
+        false
+    } else if ((name.length()) >= 3f64)
+        && (({
+            let source_ml_source2_string_range_operand42 = name.clone();
+            {
+                let source_ml_source2_string_range_operand43 = 0f64;
+                {
+                    let source_ml_source2_string_range_operand44 = 3f64;
+                    {
+                        let source_ml_source2_string_range_position45 =
+                            source_ml_source2_string_range_operand43;
+                        {
+                            let source_ml_source2_string_range_position46 =
+                                source_ml_source2_string_range_operand44;
+                            source_ml_source2_string_range_operand42.slice(
+                                source_ml_source2_string_range_position45,
+                                source_ml_source2_string_range_position46,
+                            )
+                        }
+                    }
+                }
+            }
+        }) == (self::ml_string::Text::from_units(vec![109, 108, 95])))
     {
         false
     } else {
         {
             let index = 0f64;
             {
-                let source_ml_source2_s3 =
+                let source_ml_source2_s47 =
                     self::source_ml_source1_temporary_accept_java_script_array_binding_name_loop4(
                         name, reserved, index,
                     );
-                match source_ml_source2_s3 {
+                match source_ml_source2_s47 {
                         self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Done => {
                             true
                         }
@@ -360,11 +526,11 @@ pub fn read_array_binding_fact_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let source_ml_source2_s4 =
+                    let source_ml_source2_s48 =
                         self::source_ml_source1_temporary_read_array_binding_fact_field_loop5(
                             labels, targets, field, at, end,
                         );
-                    match source_ml_source2_s4 {
+                    match source_ml_source2_s48 {
                         self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Done => {
                             -1f64
                         }
@@ -390,11 +556,11 @@ pub fn read_array_binding_initializer_end(
         {
             let closes = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_source2_s5 =
+                let source_ml_source2_s49 =
                     self::source_ml_source1_temporary_read_array_binding_initializer_end_loop6(
                         kinds, values, start, index, closes,
                     );
-                match source_ml_source2_s5 {
+                match source_ml_source2_s49 {
                     self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done => {
                         -1f64
                     }
@@ -428,8 +594,8 @@ pub fn plan_java_script_array_binding_names(
             {
                 let positions = Vec::<f64>::new();
                 {
-                    let source_ml_source2_s6 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(kinds, values, index, positions);
-                    match source_ml_source2_s6 {
+                    let source_ml_source2_s50 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(kinds, values, index, positions);
+                    match source_ml_source2_s50 {
                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Done => {
                                 vec![-1f64]
                             }
@@ -445,149 +611,221 @@ pub fn plan_java_script_array_binding_names(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn find_java_script_record_parameter_pattern(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-) -> f64 {
-    if ((((kinds.len() as f64) != (values.len() as f64)) || !(self::ml_math::is_integer(start)))
-        || (start < 0f64))
-        || (start >= (kinds.len() as f64))
-    {
-        -1f64
-    } else {
-        {
-            let depth = 0f64;
-            {
-                let binding = true;
-                {
-                    let at = start;
-                    {
-                        let source_ml_source2_s7 = self::source_ml_source1_temporary_find_java_script_record_parameter_pattern_loop12(kinds, values, depth, binding, at);
-                        match source_ml_source2_s7 {
-                            self::MlSource1TemporaryFindJavaScriptRecordParameterPatternLoop12Result::MlSource1TemporaryFindJavaScriptRecordParameterPatternLoop12Done => {
-                                -1f64
-                            }
-                            self::MlSource1TemporaryFindJavaScriptRecordParameterPatternLoop12Result::MlSource1TemporaryFindJavaScriptRecordParameterPatternLoop12Return(source_ml_source1_temporary_result12) => {
-                                source_ml_source1_temporary_result12
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_java_script_record_parameter_binding(
+pub fn read_java_script_binding_default_form(
+    language: &self::ml_string::Text,
     kind: &self::ml_string::Text,
-    name: &self::ml_string::Text,
-    names: &[self::ml_string::Text],
-    reserved: &[self::ml_string::Text],
-) -> bool {
+    absence: &self::ml_string::Text,
+) -> self::ml_string::Text {
     {
-        let duplicate = false;
+        let ml_library_inequality_1 = (*language)
+            != (self::ml_string::Text::from_units(vec![
+                74, 97, 118, 97, 83, 99, 114, 105, 112, 116,
+            ]));
+        if ml_library_inequality_1 {
+            self::ml_string::Text::from_units(vec![
+                114, 101, 102, 117, 115, 101, 45, 108, 97, 110, 103, 117, 97, 103, 101,
+            ])
+        } else if ((*kind) == (self::ml_string::Text::from_units(vec![118, 97, 114])))
+            || ((*kind)
+                == (self::ml_string::Text::from_units(vec![108, 105, 116, 101, 114, 97, 108])))
         {
-            let index = 0f64;
-            {
-                let duplicate_2 = self::source_ml_source1_temporary_accept_java_script_record_parameter_binding_loop13(name, names, duplicate, index);
-                self::accept_java_script_array_binding_name(kind, name, duplicate_2, reserved)
-            }
+            self::ml_string::Text::from_units(vec![100, 101, 102, 101, 114])
+        } else if ((*kind)
+            == (self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110])))
+            && ((*absence) != (self::ml_string::Text::from_units(vec![110, 117, 108, 108])))
+        {
+            self::ml_string::Text::from_units(vec![115, 101, 108, 101, 99, 116])
+        } else {
+            self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
         }
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn plan_java_script_record_parameters(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-    reserved: &[self::ml_string::Text],
-) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, false)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_java_script_source_record_parameters(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-    reserved: &[self::ml_string::Text],
-) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, true)
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_java_script_record_parameter_bound_name(
-    kind: &self::ml_string::Text,
-    name: &self::ml_string::Text,
-    names: &[self::ml_string::Text],
-    reserved: &[self::ml_string::Text],
-    ordinary: bool,
-) -> bool {
-    if ordinary {
+pub fn read_java_script_binding_default_result_absence(
+    left: &self::ml_string::Text,
+    right_kind: &self::ml_string::Text,
+    right: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    {
+        let null_value = (((*left)
+            == (self::ml_string::Text::from_units(vec![110, 117, 108, 108])))
+            || ((*left) == (self::ml_string::Text::from_units(vec![98, 111, 116, 104]))))
+            || (((*right_kind)
+                == (self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110])))
+                && (((*right) == (self::ml_string::Text::from_units(vec![110, 117, 108, 108])))
+                    || ((*right) == (self::ml_string::Text::from_units(vec![98, 111, 116, 104])))));
         {
-            let duplicate = false;
-            {
-                let index = 0f64;
-                {
-                    let duplicate_2 = self::source_ml_source1_temporary_accept_java_script_record_parameter_bound_name_loop14(name, names, duplicate, index);
-                    self::accept_java_script_source_binding_name(kind, name, duplicate_2, reserved)
+            let undefined_value = ((*right_kind)
+                == (self::ml_string::Text::from_units(vec![117, 110, 105, 116])))
+                || (((*right_kind)
+                    == (self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110])))
+                    && (((*right)
+                        == (self::ml_string::Text::from_units(vec![
+                            117, 110, 100, 101, 102, 105, 110, 101, 100,
+                        ])))
+                        || ((*right)
+                            == (self::ml_string::Text::from_units(vec![98, 111, 116, 104])))));
+            if null_value {
+                if undefined_value {
+                    self::ml_string::Text::from_units(vec![98, 111, 116, 104])
+                } else {
+                    self::ml_string::Text::from_units(vec![110, 117, 108, 108])
                 }
+            } else if undefined_value {
+                self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100])
+            } else {
+                self::ml_string::Text::from_units(vec![])
             }
         }
-    } else {
-        self::accept_java_script_record_parameter_binding(kind, name, names, reserved)
     }
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn plan_java_script_record_parameter_bindings(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-    reserved: &[self::ml_string::Text],
-    ordinary: bool,
-) -> Vec<f64> {
-    if ((((kinds.len() as f64) != (values.len() as f64)) || !(self::ml_math::is_integer(start)))
-        || (start < 0f64))
-        || (start >= (kinds.len() as f64))
+pub fn read_java_script_binding_default_absence_code(absence: &self::ml_string::Text) -> f64 {
+    if (*absence) == (self::ml_string::Text::from_units(vec![110, 117, 108, 108])) {
+        1f64
+    } else if (*absence)
+        == (self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100]))
     {
-        vec![-1f64, start]
+        2f64
+    } else if (*absence) == (self::ml_string::Text::from_units(vec![98, 111, 116, 104])) {
+        3f64
     } else {
+        0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_binding_default_absence_name(code: f64) -> self::ml_string::Text {
+    if code == 1f64 {
+        self::ml_string::Text::from_units(vec![110, 117, 108, 108])
+    } else if code == 2f64 {
+        self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100])
+    } else if code == 3f64 {
+        self::ml_string::Text::from_units(vec![98, 111, 116, 104])
+    } else {
+        self::ml_string::Text::from_units(vec![])
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_binding_default_inference(
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    value: f64,
+    fallback: f64,
+) -> Vec<f64> {
+    {
+        let kind = self::read_array_binding_fact_field(
+            starts,
+            counts,
+            labels,
+            targets,
+            value,
+            &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
+        );
+        if kind < 0f64 {
+            vec![-1f64]
+        } else if (self::read_required_text_fact(texts, kind))
+            == (self::ml_string::Text::from_units(vec![118, 97, 114]))
         {
-            let at = start;
+            Vec::<f64>::new()
+        } else {
             {
-                let slot = 0f64;
+                let left = self::read_java_script_binding_default_term(
+                    texts, starts, counts, labels, targets, value,
+                );
                 {
-                    let names = Vec::<self::ml_string::Text>::new();
+                    let right = self::read_java_script_binding_default_term(
+                        texts, starts, counts, labels, targets, fallback,
+                    );
                     {
-                        let instructions = Vec::<f64>::new();
+                        let element = self::read_required_number_fact(&(left), 0f64);
                         {
-                            let source_ml_source2_s8 = self::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop15(kinds, values, reserved, ordinary, at, slot, names, instructions);
-                            match source_ml_source2_s8 {
-                                self::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop15Result::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop15Done(at_2, slot_2, instructions_2) => {
-                                    if (at_2 >= (kinds.len() as f64)) || !(((self::read_required_text_fact(kinds, at_2)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, at_2)) == (self::ml_string::Text::from_units(vec![41])))) {
-                                        vec![-1f64, at_2]
-                                    } else {
-                                        {
-                                            let source_ml_source2_concat_value9 = vec![(at_2 + 1f64), slot_2];
+                            let other = self::read_required_number_fact(&(right), 0f64);
+                            if (element < 0f64) || (other < 0f64) {
+                                vec![-1f64]
+                            } else {
+                                {
+                                    let code = self::read_required_number_fact(&(left), 1f64);
+                                    {
+                                        let right_code =
+                                            self::read_required_number_fact(&(right), 1f64);
+                                        if code == 0f64 {
+                                            vec![0f64, value]
+                                        } else if code == 1f64 {
+                                            vec![1f64, element]
+                                        } else {
                                             {
-                                                let source_ml_source2_concat_value10 = instructions_2;
-                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value9), source_ml_source2_concat_value10)
+                                                let first_kind =
+                                                    self::read_array_binding_fact_field(
+                                                        starts,
+                                                        counts,
+                                                        labels,
+                                                        targets,
+                                                        element,
+                                                        &(self::ml_string::Text::from_units(vec![
+                                                            107, 105, 110, 100,
+                                                        ])),
+                                                    );
+                                                {
+                                                    let other_kind =
+                                                        self::read_array_binding_fact_field(
+                                                            starts,
+                                                            counts,
+                                                            labels,
+                                                            targets,
+                                                            other,
+                                                            &(self::ml_string::Text::from_units(
+                                                                vec![107, 105, 110, 100],
+                                                            )),
+                                                        );
+                                                    if (first_kind < 0f64) || (other_kind < 0f64) {
+                                                        vec![-1f64]
+                                                    } else {
+                                                        {
+                                                            let first_unit = (self::read_required_text_fact(texts, first_kind)) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116]));
+                                                            {
+                                                                let second_unit = (self::read_required_text_fact(texts, other_kind)) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116]));
+                                                                {
+                                                                    let output = self::read_java_script_binding_default_absence_code(&(self::read_java_script_binding_default_result_absence(&(self::read_java_script_binding_default_absence_name(code)), &(if right_code == 0f64 {
+                                                                                self::read_required_text_fact(texts, other_kind)
+                                                                            } else {
+                                                                                self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110])
+                                                                            }), &(self::read_java_script_binding_default_absence_name(right_code)))));
+                                                                    {
+                                                                        let base = if first_unit {
+                                                                            other
+                                                                        } else {
+                                                                            element
+                                                                        };
+                                                                        if first_unit || second_unit
+                                                                        {
+                                                                            vec![output, base]
+                                                                        } else {
+                                                                            vec![
+                                                                                output, base,
+                                                                                element, other,
+                                                                            ]
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
-                                self::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop15Result::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop15Return(source_ml_source1_temporary_result15) => {
-                                    source_ml_source1_temporary_result15
-                                }
                             }
                         }
                     }
@@ -599,323 +837,71 @@ pub fn plan_java_script_record_parameter_bindings(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn accept_java_script_record_parameter_profile(
-    context: &self::ml_string::Text,
-    asynchronous: bool,
-    documentation_parameters: f64,
-    bound_writes: bool,
-    variable_redeclarations: bool,
-) -> bool {
-    (((((*context)
-        == (self::ml_string::Text::from_units(vec![
-            111, 114, 100, 105, 110, 97, 114, 121, 32, 110, 97, 109, 101, 100, 32, 102, 117, 110,
-            99, 116, 105, 111, 110, 32, 100, 101, 99, 108, 97, 114, 97, 116, 105, 111, 110,
-        ])))
-        && !asynchronous)
-        && (documentation_parameters == 0f64))
-        && !bound_writes)
-        && !variable_redeclarations
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn accept_java_script_standard_builtin_owner(
-    name: &self::ml_string::Text,
-    shadowed: bool,
-) -> bool {
-    (((((((((((((((((*name)
-        == (self::ml_string::Text::from_units(vec![77, 97, 112])))
-        || ((*name) == (self::ml_string::Text::from_units(vec![83, 101, 116]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![
-                99, 111, 110, 115, 111, 108, 101,
-            ]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![77, 97, 116, 104]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![78, 117, 109, 98, 101, 114]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![65, 114, 114, 97, 121]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![79, 98, 106, 101, 99, 116]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![83, 116, 114, 105, 110, 103]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![69, 114, 114, 111, 114]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![
-                82, 97, 110, 103, 101, 69, 114, 114, 111, 114,
-            ]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![
-                84, 121, 112, 101, 69, 114, 114, 111, 114,
-            ]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![78, 97, 78]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![73, 110, 102, 105, 110, 105, 116, 121]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![
-                117, 110, 100, 101, 102, 105, 110, 101, 100,
-            ]))))
-        || ((*name)
-            == (self::ml_string::Text::from_units(vec![105, 115, 70, 105, 110, 105, 116, 101]))))
-        || ((*name) == (self::ml_string::Text::from_units(vec![105, 115, 78, 97, 78]))))
-        && !shadowed
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn find_java_script_record_parameter_strict_directive(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    raws: &[self::ml_string::Text],
-    line_breaks: &[bool],
-    start: f64,
-) -> f64 {
-    if ((((((kinds.len() as f64) != (values.len() as f64))
-        || ((kinds.len() as f64) != (raws.len() as f64)))
-        || ((kinds.len() as f64) != (line_breaks.len() as f64)))
-        || !(self::ml_math::is_integer(start)))
-        || (start < 0f64))
-        || (start >= (kinds.len() as f64))
+pub fn read_java_script_binding_default_term(
+    texts: &[self::ml_string::Text],
+    starts: &[f64],
+    counts: &[f64],
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    value: f64,
+) -> Vec<f64> {
     {
-        -2f64
-    } else {
+        let node = value;
         {
-            let at = start;
+            let absence = self::ml_string::Text::from_units(vec![]);
             {
-                let source_ml_source2_s11 = self::source_ml_source1_temporary_find_java_script_record_parameter_strict_directive_loop19(kinds, values, raws, line_breaks, at);
-                match source_ml_source2_s11 {
-                    self::MlSource1TemporaryFindJavaScriptRecordParameterStrictDirectiveLoop19Result::MlSource1TemporaryFindJavaScriptRecordParameterStrictDirectiveLoop19Done => {
-                        -2f64
-                    }
-                    self::MlSource1TemporaryFindJavaScriptRecordParameterStrictDirectiveLoop19Result::MlSource1TemporaryFindJavaScriptRecordParameterStrictDirectiveLoop19Return(source_ml_source1_temporary_result19) => {
-                        source_ml_source1_temporary_result19
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn continues_java_script_directive_expression(
-    kind: &self::ml_string::Text,
-    value: &self::ml_string::Text,
-) -> bool {
-    if ((*kind) == (self::ml_string::Text::from_units(vec![116, 101, 109, 112, 108, 97, 116, 101])))
-        || ((*kind)
-            == (self::ml_string::Text::from_units(vec![
-                105, 110, 116, 101, 114, 112, 111, 108, 97, 116, 105, 111, 110,
-            ])))
-    {
-        true
-    } else if (*kind)
-        == (self::ml_string::Text::from_units(vec![
-            105, 100, 101, 110, 116, 105, 102, 105, 101, 114,
-        ]))
-    {
-        ((*value) == (self::ml_string::Text::from_units(vec![105, 110])))
-            || ((*value)
-                == (self::ml_string::Text::from_units(vec![
-                    105, 110, 115, 116, 97, 110, 99, 101, 111, 102,
-                ])))
-    } else {
-        let ml_library_inequality_1 =
-            (*kind) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]));
-        if ml_library_inequality_1 {
-            false
-        } else if (((((((((((*value) == (self::ml_string::Text::from_units(vec![40])))
-            || ((*value) == (self::ml_string::Text::from_units(vec![91]))))
-            || ((*value) == (self::ml_string::Text::from_units(vec![46]))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![63, 46])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![43]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![45])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![42])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![47]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![37])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![42, 42])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![60, 60]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![62, 62])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![62, 62, 62])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![60]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![62])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![60, 61])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![62, 61]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![61, 61])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![33, 61])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![61, 61, 61]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![33, 61, 61])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![38])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![94]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![124])))))
-            || ((((*value) == (self::ml_string::Text::from_units(vec![38, 38])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![124, 124]))))
-                || ((*value) == (self::ml_string::Text::from_units(vec![63, 63]))))
-        {
-            true
-        } else {
-            ((*value) == (self::ml_string::Text::from_units(vec![63])))
-                || ((*value) == (self::ml_string::Text::from_units(vec![44])))
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
-    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),
-    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(
-    name: &self::ml_string::Text,
-    mut index: f64,
-    mut ordinal: f64,
-) -> self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
-    loop {
-        return if index < (name.length()) {
-            {
-                let unit =
-                    (std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 {
-                        {
-                            let index_2 = if position.is_nan() {
-                                0f64
-                            } else {
-                                position.trunc()
-                            };
-                            if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                f64::NAN
-                            } else {
-                                ((text.slice(index_2, (index_2 + 1f64))).code_point_at(0f64))
-                                    .clone()
-                                    .unwrap_or_else(|| f64::NAN)
-                            }
-                        }
-                    }))(name.clone(), index);
-                if (unit < 48f64) || (unit > 57f64) {
-                    self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-                } else {
-                    {
-                        let ordinal_2 = ((ordinal * 10f64) + unit) - 48f64;
-                        if (self::ml_math::is_safe_integer(ordinal_2)) {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    (index, ordinal) = (index_2, ordinal_2);
-                                    continue;
-                                }
-                            }
-                        }
-                        {
-                            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(-1f64)
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_source_identifier_prefix_loop2(
-    ordinals: &[f64],
-    mut next: f64,
-    mut previous: f64,
-    mut index: f64,
-) -> f64 {
-    loop {
-        return if index < (ordinals.len() as f64) {
-            {
-                let ordinal =
-                    (self::ml_array::optional_at(ordinals, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
+                let kind = self::read_array_binding_fact_field(
+                    starts,
+                    counts,
+                    labels,
+                    targets,
+                    node,
+                    &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
+                );
                 {
-                    assert!(
-                        !((!(self::ml_math::is_safe_integer(ordinal)) || (ordinal < 1f64))
-                            || (ordinal < previous)),
-                        "{}",
-                        "source identifier ordinals need a sorted positive integer column"
-                    );
-
-                    {
-                        let previous_2 = ordinal;
-                        if ordinal == next {
-                            {
-                                let next_2 = next + 1f64;
-                                {
-                                    let index_2 = index + 1f64;
-                                    {
-                                        (next, previous, index) = (next_2, previous_2, index_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            {
-                                let index_3 = index + 1f64;
-                                {
-                                    (previous, index) = (previous_2, index_3);
-                                    continue;
-                                }
+                    let source_ml_source2_s51 = self::source_ml_source1_temporary_read_java_script_binding_default_term_loop12(texts, starts, counts, labels, targets, node, absence, kind);
+                    match source_ml_source2_s51 {
+                        self::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Result::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Done(node_2, absence_2, kind_2) => {
+                            if kind_2 < 0f64 {
+                                vec![-1f64, 0f64]
+                            } else {
+                                vec![node_2, self::read_java_script_binding_default_absence_code(&(absence_2))]
                             }
                         }
                     }
                 }
             }
-        } else {
-            next
-        };
+        }
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
-    MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done,
-    MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(bool),
 }
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
-    name: &self::ml_string::Text,
-    reserved: &[self::ml_string::Text],
-    mut index: f64,
-) -> self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
-    loop {
-        return if index < (reserved.len() as f64) {
-            {
-                let word =
-                    self::ml_array::optional_at(reserved, self::ml_array::number_index(index));
-                if match (word.clone(), None::<()>) {
-                    (Some(_ml_left), Some(_ml_right)) => false,
-                    (None, None) => true,
-                    _ => false,
-                } {
-                    panic!(
-                        "{}",
-                        "source binding reserved names need a complete text column"
-                    )
-                } else if match (word.clone(), name.clone()) {
-                    (Some(ml_left), ml_right) => ml_left == ml_right,
-                    _ => false,
-                } {
-                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(false)
-                } else {
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
-                }
-            }
+pub fn read_java_script_binding_default_lift_form(
+    kind: &self::ml_string::Text,
+    element: &self::ml_string::Text,
+    absence: &self::ml_string::Text,
+    drop_undefined: bool,
+) -> self::ml_string::Text {
+    if (*kind) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116])) {
+        self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100])
+    } else {
+        let ml_library_inequality_2 =
+            (*kind) != (self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110]));
+        if ml_library_inequality_2 {
+            self::ml_string::Text::from_units(vec![112, 114, 101, 115, 101, 110, 116])
         } else {
-            self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done
-        };
+            let ml_library_inequality_1 =
+                (*element) != (self::ml_string::Text::from_units(vec![117, 110, 105, 116]));
+            if ml_library_inequality_1 {
+                self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110, 97, 108])
+            } else if drop_undefined {
+                self::ml_string::Text::from_units(vec![110, 117, 108, 108])
+            } else if (*absence) == (self::ml_string::Text::from_units(vec![98, 111, 116, 104])) {
+                self::ml_string::Text::from_units(vec![97, 98, 115, 101, 110, 99, 101, 115])
+            } else {
+                absence.clone()
+            }
+        }
     }
 }

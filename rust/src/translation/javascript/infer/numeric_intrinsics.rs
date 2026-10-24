@@ -4,6 +4,24 @@ use crate::translation::big_integer_conversion_rules as rules;
 use crate::translation::surface::SArrayItem;
 
 impl Inference {
+    pub(super) fn primitive_observation_term(
+        &mut self,
+        operation: &str,
+        args: &[SArrayItem],
+        env: &Env,
+    ) -> Result<Term> {
+        for argument in args {
+            self.expr(&argument.value, env)?;
+        }
+        Ok(Term::Known(
+            if operation == "convertJavaScriptPrimitiveText" {
+                STRING
+            } else {
+                BOOL
+            },
+        ))
+    }
+
     pub(super) fn loose_comparison_term(
         &mut self,
         args: &[SArrayItem],

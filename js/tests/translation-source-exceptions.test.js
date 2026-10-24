@@ -12,6 +12,7 @@ import {createJavaScriptStringUnitProgramLinks} from '../src/javascript-string-u
 import {createStringConstructionProgramLinks} from '../src/string-construction-program.js';
 import {createJavaScriptComparisonProgramLinks} from '../src/javascript-comparison-program.js';
 import {createArrayBindingProgramLinks} from '../src/array-binding-program.js';
+import {createOptionalValueProgramLinks} from '../src/optional-value-program.js';
 import {encodeTypedProgramLinks,emitTypedProgramLinks} from '../src/typed-program-links.js';
 import {LinkNetwork} from '../src/network.js';
 import {encodeLinkNetworkBinary,decodeLinkNetworkBinary} from '../src/link-network-binary.js';
@@ -58,5 +59,13 @@ test('formal exception transport retains every component through nested calls wi
   for(const declaration of threaded.declarations.values())if(declaration.k==='fn')visit(declaration.body);
   const packet=encodeTypedProgramLinks(original),emitted=emitTypedProgramLinks(packet.network,packet.root,target);
   assert.match(emitted.code,/ml_source_exception_observation/);
+ }
+});
+
+test('complete optional-value and Boolean definition graph retains every target and codec',()=>{
+ const packet=createOptionalValueProgramLinks();
+ for(const target of ['JavaScript','Rust','Lean','Rocq']){
+  const expected=emitTypedProgramLinks(packet.network,packet.root,target);
+  for(const network of [LinkNetwork.fromLino(packet.network.toLino()),decodeLinkNetworkBinary(encodeLinkNetworkBinary(packet.network))])assert.deepEqual(emitTypedProgramLinks(network,packet.root,target),expected);
  }
 });

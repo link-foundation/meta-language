@@ -2630,3 +2630,6 @@ export function createJavaScriptComparisonProgramLinks(): TypedProgramLinks;
 export function createArrayBindingProgramLinks(): TypedProgramLinks;
 /** Complete source-derived String range checked-operator plans. */
 export function createJavaScriptStringRangeProgramLinks(): TypedProgramLinks;
+
+/** Complete shared optional-value and Boolean owner definitions. */
+export function createOptionalValueProgramLinks(): TypedProgramLinks;
