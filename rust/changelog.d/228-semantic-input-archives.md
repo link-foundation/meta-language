@@ -146,3 +146,9 @@ Draft shared primitive coercion across unary, arithmetic, bitwise and supported
 unspread Math calls, including argument capture, missing values and runtime
 BigInt errors. Preserve obsolete refusal inputs with sourced corrected
 expectations and additional future independent controls, without running tests.
+
+Draft exact BigInt primitive conversion definitions and public runtime adapters,
+retaining unbounded precision and source error classes/UTF-16 messages. Share
+digit/whitespace rules and automatically derive runtime parameter loans and
+complete Rust/Lean/Rocq/Links bodies. Author independent future API and codec
+controls; source builtin lowering and dynamic exceptions remain required.

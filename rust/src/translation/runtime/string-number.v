@@ -83,8 +83,11 @@ Ltac ml_close := first [reflexivity | lia | nia | congruence].
 Definition acceptJavaScriptWhitespaceUnit (unit_ : float) : bool :=
   (orb (orb (orb (orb (orb (orb (orb (orb (orb (orb (andb (PrimFloat.leb 9%float unit_) (PrimFloat.leb unit_ 13%float)) (PrimFloat.eqb unit_ 32%float)) (PrimFloat.eqb unit_ 160%float)) (PrimFloat.eqb unit_ 5760%float)) (andb (PrimFloat.leb 8192%float unit_) (PrimFloat.leb unit_ 8202%float))) (PrimFloat.eqb unit_ 8232%float)) (PrimFloat.eqb unit_ 8233%float)) (PrimFloat.eqb unit_ 8239%float)) (PrimFloat.eqb unit_ 8287%float)) (PrimFloat.eqb unit_ 12288%float)) (PrimFloat.eqb unit_ 65279%float)).
 
-Definition readStringNumberDigit (unit_ : float) : float :=
+Definition readJavaScriptNumericDigitUnit (unit_ : float) : float :=
   (if (andb (PrimFloat.leb 48%float unit_) (PrimFloat.leb unit_ 57%float)) then (PrimFloat.sub unit_ 48%float) else (if (andb (PrimFloat.leb 65%float unit_) (PrimFloat.leb unit_ 70%float)) then (PrimFloat.sub unit_ 55%float) else (if (andb (PrimFloat.leb 97%float unit_) (PrimFloat.leb unit_ 102%float)) then (PrimFloat.sub unit_ 87%float) else (PrimFloat.opp 1%float)))).
+
+Definition readStringNumberDigit (unit_ : float) : float :=
+  (readJavaScriptNumericDigitUnit unit_).
 
 Definition readJavaScriptNumberBuiltinOperation (name : string) : string :=
   (if (String.eqb name "Number"%string) then "convertJavaScriptNumber"%string else (if (String.eqb name "isFinite"%string) then "testCoercedJavaScriptNumberFinite"%string else (if (String.eqb name "isNaN"%string) then "testCoercedJavaScriptNumberNaN"%string else ""%string))).

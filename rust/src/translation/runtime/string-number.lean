@@ -45,8 +45,11 @@ def ml_is_safe_integer (x : Float) : Bool := ml_is_integer x && decide (x.abs �
 def acceptJavaScriptWhitespaceUnit (unit : Float) : Bool :=
   ((((((((((((decide (unit ≥ (9 : Float))) && (decide (unit ≤ (13 : Float)))) || (unit == (32 : Float))) || (unit == (160 : Float))) || (unit == (5760 : Float))) || ((decide (unit ≥ (8192 : Float))) && (decide (unit ≤ (8202 : Float))))) || (unit == (8232 : Float))) || (unit == (8233 : Float))) || (unit == (8239 : Float))) || (unit == (8287 : Float))) || (unit == (12288 : Float))) || (unit == (65279 : Float)))
 
-def readStringNumberDigit (unit : Float) : Float :=
+def readJavaScriptNumericDigitUnit (unit : Float) : Float :=
   (if ((decide (unit ≥ (48 : Float))) && (decide (unit ≤ (57 : Float)))) then (unit - (48 : Float)) else (if ((decide (unit ≥ (65 : Float))) && (decide (unit ≤ (70 : Float)))) then (unit - (55 : Float)) else (if ((decide (unit ≥ (97 : Float))) && (decide (unit ≤ (102 : Float)))) then (unit - (87 : Float)) else (-1 : Float))))
+
+def readStringNumberDigit (unit : Float) : Float :=
+  (readJavaScriptNumericDigitUnit unit)
 
 def readJavaScriptNumberBuiltinOperation (name : String) : String :=
   (if (name == "Number") then "convertJavaScriptNumber" else (if (name == "isFinite") then "testCoercedJavaScriptNumberFinite" else (if (name == "isNaN") then "testCoercedJavaScriptNumberNaN" else "")))

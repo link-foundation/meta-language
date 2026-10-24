@@ -94,3 +94,6 @@ export { readSourceTextUnits, readSourceTextByteLength, readSourceTextByte, slic
 
 export {createStringNumberProgramLinks} from './string-number-program.js';
 export {convertJavaScriptStringNumber} from './string-number.js';
+
+export {createBigIntegerConversionProgramLinks} from './big-integer-conversion-program.js';
+export {convertJavaScriptStringBigInteger,convertJavaScriptStringBigIntegerUnits,convertJavaScriptNumberBigInteger,convertJavaScriptBooleanBigInteger} from './big-integer-conversion.js';

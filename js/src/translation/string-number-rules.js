@@ -2,12 +2,11 @@
 // Integer division chooses the final binary64 mantissa with ties to even;
 // there is no host decimal parser, Number(string) or intermediate rounding.
 import { acceptJavaScriptWhitespaceUnit } from './javascript-whitespace-rules.js';
+import {readJavaScriptNumericDigitUnit} from './numeric-digit-rules.js';
 
 /** @param {number} unit @returns {number} */
 export function readStringNumberDigit(unit) {
-  if(unit>=48&&unit<=57)return unit-48;
-  if(unit>=65&&unit<=70)return unit-55;
-  return unit>=97&&unit<=102?unit-87:-1;
+  return readJavaScriptNumericDigitUnit(unit);
 }
 /** @param {number} exponent @returns {bigint} */
 function readStringNumberDecimalPower(exponent) {

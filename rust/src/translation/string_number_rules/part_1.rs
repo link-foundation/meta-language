@@ -490,7 +490,7 @@ pub fn accept_java_script_whitespace_unit(unit: f64) -> bool {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn read_string_number_digit(unit: f64) -> f64 {
+pub fn read_java_script_numeric_digit_unit(unit: f64) -> f64 {
     if (48f64..=57f64).contains(&unit) {
         unit - 48f64
     } else if (65f64..=70f64).contains(&unit) {
@@ -500,6 +500,12 @@ pub fn read_string_number_digit(unit: f64) -> f64 {
             } else {
                 -1f64
             }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_string_number_digit(unit: f64) -> f64 {
+    self::read_java_script_numeric_digit_unit(unit)
 }
 
 /// Execute the checked shared source algorithm.

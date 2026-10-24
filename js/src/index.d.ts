@@ -2606,3 +2606,11 @@ export class LanguageProfileViolation extends Error {
 export function createStringNumberProgramLinks(): TypedProgramLinks;
 /** ECMAScript StringNumericLiteral conversion, preserving binary64 signed zero. */
 export function convertJavaScriptStringNumber(text: string): number;
+
+/** Complete source-derived exact BigInt conversion definitions. */
+export function createBigIntegerConversionProgramLinks(): TypedProgramLinks;
+export function convertJavaScriptStringBigInteger(text: string): bigint;
+export function convertJavaScriptStringBigIntegerUnits(units: number[]): bigint;
+export function convertJavaScriptNumberBigInteger(value: number): bigint;
+
+export function convertJavaScriptBooleanBigInteger(value: boolean): bigint;

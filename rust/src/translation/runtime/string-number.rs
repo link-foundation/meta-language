@@ -153,11 +153,15 @@ pub mod ml_array {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_java_script_whitespace_unit(unit: f64) -> bool {
     ((((((((((((unit >= (9f64)) && (unit <= (13f64))) || (unit == (32f64))) || (unit == (160f64))) || (unit == (5760f64))) || ((unit >= (8192f64)) && (unit <= (8202f64)))) || (unit == (8232f64))) || (unit == (8233f64))) || (unit == (8239f64))) || (unit == (8287f64))) || (unit == (12288f64))) || (unit == (65279f64)))
 }
 
-pub fn read_string_number_digit(unit: f64) -> f64 {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_numeric_digit_unit(unit: f64) -> f64 {
     if ((unit >= (48f64)) && (unit <= (57f64))) {
         (unit - 48f64)
     } else {
@@ -173,6 +177,14 @@ pub fn read_string_number_digit(unit: f64) -> f64 {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_string_number_digit(unit: f64) -> f64 {
+    self::read_java_script_numeric_digit_unit(unit)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_string_number_decimal_power(exponent: f64) -> crate::ml::Big {
     {
         let value = crate::ml::Big::from_i128(1);
@@ -186,6 +198,8 @@ pub fn read_string_number_decimal_power(exponent: f64) -> crate::ml::Big {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_string_number_exact_mantissa(value: crate::ml::Big) -> f64 {
     {
         let result = 0f64;
@@ -199,6 +213,8 @@ pub fn read_string_number_exact_mantissa(value: crate::ml::Big) -> f64 {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_string_number_binary_power(exponent: f64) -> f64 {
     {
         let result = 1f64;
@@ -216,6 +232,8 @@ pub fn read_string_number_binary_power(exponent: f64) -> f64 {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn convert_string_number_rational(numerator: crate::ml::Big, denominator: crate::ml::Big) -> f64 {
     if ((numerator < (crate::ml::Big::from_i128(0))) || (denominator <= (crate::ml::Big::from_i128(0)))) {
         f64::NAN
@@ -340,7 +358,9 @@ pub fn convert_string_number_rational(numerator: crate::ml::Big, denominator: cr
     }
 }
 
-pub fn accept_string_number_infinity(units: Vec<f64>, start: f64, end: f64) -> bool {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_string_number_infinity(units: &[f64], start: f64, end: f64) -> bool {
     if (((end - start)) != (8f64)) {
         false
     } else {
@@ -349,7 +369,7 @@ pub fn accept_string_number_infinity(units: Vec<f64>, start: f64, end: f64) -> b
             {
                 let index = 0f64;
                 {
-                    let source_ml_source2_s10 = self::source_ml_source1_temporary_accept_string_number_infinity_loop13(units, start, expected, index);
+                    let source_ml_source2_s10 = self::source_ml_source1_temporary_accept_string_number_infinity_loop13(units, start, &(expected), index);
                     match source_ml_source2_s10.clone() {
                         self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result::MlSource1TemporaryAcceptStringNumberInfinityLoop13Done => {
                             true
@@ -364,11 +384,13 @@ pub fn accept_string_number_infinity(units: Vec<f64>, start: f64, end: f64) -> b
     }
 }
 
-pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn convert_java_script_string_number_units(units: &[f64]) -> f64 {
     {
         let index = 0f64;
         {
-            let source_ml_source2_s11 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop14(units.clone(), index);
+            let source_ml_source2_s11 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop14(units, index);
             match source_ml_source2_s11.clone() {
                 self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Done => {
                     {
@@ -376,9 +398,9 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                         {
                             let end = (units.len() as f64);
                             {
-                                let start_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop15(units.clone(), start, end);
+                                let start_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop15(units, start, end);
                                 {
-                                    let end_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop16(units.clone(), start_2, end);
+                                    let end_2 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop16(units, start_2, end);
                                     if (start_2 == end_2) {
                                         0f64
                                     } else {
@@ -387,7 +409,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                             {
                                                 let signed = false;
                                                 {
-                                                    let sign = (self::ml_array::optional_at(&units, self::ml_array::number_index(start_2))).clone().unwrap_or_else(|| (-1f64));
+                                                    let sign = (self::ml_array::optional_at(units, self::ml_array::number_index(start_2))).clone().unwrap_or_else(|| (-1f64));
                                                     {
                                                         let source_ml_source2_s12 = if ((sign == (43f64)) || (sign == (45f64))) {
                                                             {
@@ -408,7 +430,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                 if (start_4 == end_2) {
                                                                     f64::NAN
                                                                 } else {
-                                                                    if self::accept_string_number_infinity(units.clone(), start_4, end_2) {
+                                                                    if self::accept_string_number_infinity(units, start_4, end_2) {
                                                                         if negative_3 {
                                                                             f64::NEG_INFINITY
                                                                         } else {
@@ -418,9 +440,9 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                         {
                                                                             let integer_digits = vec![crate::ml::Big::from_i128(0), crate::ml::Big::from_i128(1), crate::ml::Big::from_i128(2), crate::ml::Big::from_i128(3), crate::ml::Big::from_i128(4), crate::ml::Big::from_i128(5), crate::ml::Big::from_i128(6), crate::ml::Big::from_i128(7), crate::ml::Big::from_i128(8), crate::ml::Big::from_i128(9), crate::ml::Big::from_i128(10), crate::ml::Big::from_i128(11), crate::ml::Big::from_i128(12), crate::ml::Big::from_i128(13), crate::ml::Big::from_i128(14), crate::ml::Big::from_i128(15)];
                                                                             {
-                                                                                let source_ml_source2_s14 = if ((!signed_3 && (((self::ml_array::optional_at(&units, self::ml_array::number_index(start_4))).clone().unwrap_or_else(|| (-1f64))) == (48f64))) && (((end_2 - start_4)) >= (2f64))) {
+                                                                                let source_ml_source2_s14 = if ((!signed_3 && (((self::ml_array::optional_at(units, self::ml_array::number_index(start_4))).clone().unwrap_or_else(|| (-1f64))) == (48f64))) && (((end_2 - start_4)) >= (2f64))) {
                                                                                     {
-                                                                                        let marker = (self::ml_array::optional_at(&units, self::ml_array::number_index((start_4 + 1f64)))).clone().unwrap_or_else(|| (-1f64));
+                                                                                        let marker = (self::ml_array::optional_at(units, self::ml_array::number_index((start_4 + 1f64)))).clone().unwrap_or_else(|| (-1f64));
                                                                                         {
                                                                                             let radix = if ((marker == (120f64)) || (marker == (88f64))) {
                                                                                                 16f64
@@ -460,7 +482,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                                                                         {
                                                                                                                             let index_2 = start_5;
                                                                                                                             {
-                                                                                                                                let source_ml_source2_s15 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop25(units.clone(), end_2, integer_digits.clone(), radix, value.clone(), overflow, limit.clone(), base.clone(), index_2);
+                                                                                                                                let source_ml_source2_s15 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop25(units, end_2, integer_digits.clone(), radix, value.clone(), overflow, limit.clone(), base.clone(), index_2);
                                                                                                                                 match source_ml_source2_s15.clone() {
                                                                                                                                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Done(value_2, overflow_2) => {
                                                                                                                                         self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin18::MlSource1TemporaryConvertJavaScriptStringNumberUnitsJoin18Return(if overflow_2 {
@@ -502,7 +524,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                                                         {
                                                                                                             let dot = false;
                                                                                                             {
-                                                                                                                let source_ml_source2_s16 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop19(units.clone(), end_2, at, fraction, digits, significant, dot);
+                                                                                                                let source_ml_source2_s16 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop19(units, end_2, at, fraction, digits, significant, dot);
                                                                                                                 match source_ml_source2_s16.clone() {
                                                                                                                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Done(at_2, fraction_2, digits_2, significant_2) => {
                                                                                                                         if (digits_2 == (0f64)) {
@@ -515,13 +537,13 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                                                                                     {
                                                                                                                                         let exponent_limit = ((units.len() as f64) + 10000f64);
                                                                                                                                         {
-                                                                                                                                            let source_ml_source2_s19 = if ((at_2 < end_2) && ((((self::ml_array::optional_at(&units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (101f64)) || (((self::ml_array::optional_at(&units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (69f64)))) {
+                                                                                                                                            let source_ml_source2_s19 = if ((at_2 < end_2) && ((((self::ml_array::optional_at(units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (101f64)) || (((self::ml_array::optional_at(units, self::ml_array::number_index(at_2))).clone().unwrap_or_else(|| (-1f64))) == (69f64)))) {
                                                                                                                                                 {
                                                                                                                                                     let at_3 = (at_2 + 1f64);
                                                                                                                                                     {
                                                                                                                                                         let exponent_negative = false;
                                                                                                                                                         {
-                                                                                                                                                            let exponent_sign = (self::ml_array::optional_at(&units, self::ml_array::number_index(at_3))).clone().unwrap_or_else(|| (-1f64));
+                                                                                                                                                            let exponent_sign = (self::ml_array::optional_at(units, self::ml_array::number_index(at_3))).clone().unwrap_or_else(|| (-1f64));
                                                                                                                                                             {
                                                                                                                                                                 let source_ml_source2_s20 = if ((exponent_sign == (43f64)) || (exponent_sign == (45f64))) {
                                                                                                                                                                     {
@@ -539,7 +561,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                                                                                                                         {
                                                                                                                                                                             let first = at_5;
                                                                                                                                                                             {
-                                                                                                                                                                                let source_ml_source2_s21 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop24(units.clone(), end_2, at_5, exponent, exponent_limit);
+                                                                                                                                                                                let source_ml_source2_s21 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop24(units, end_2, at_5, exponent, exponent_limit);
                                                                                                                                                                                 match source_ml_source2_s21.clone() {
                                                                                                                                                                                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Done(at_6, exponent_2) => {
                                                                                                                                                                                         if (at_6 == first) {
@@ -600,7 +622,7 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
                                                                                                                                                                             {
                                                                                                                                                                                 let mantissa_end = decimal_end;
                                                                                                                                                                                 {
-                                                                                                                                                                                    let source_ml_source2_s22 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop21(units.clone(), start_6, exponent_5, mantissa_end);
+                                                                                                                                                                                    let source_ml_source2_s22 = self::source_ml_source1_temporary_convert_java_script_string_number_units_loop21(units, start_6, exponent_5, mantissa_end);
                                                                                                                                                                                     match source_ml_source2_s22.clone() {
                                                                                                                                                                                         self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Done(exponent_6, mantissa_end_2) => {
                                                                                                                                                                                             {
@@ -691,6 +713,8 @@ pub fn convert_java_script_string_number_units(units: Vec<f64>) -> f64 {
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn convert_java_script_big_integer_number(value: crate::ml::Big) -> f64 {
     if (value < (crate::ml::Big::from_i128(0))) {
         (-(self::convert_string_number_rational(value.neg(), crate::ml::Big::from_i128(1))))
@@ -699,11 +723,13 @@ pub fn convert_java_script_big_integer_number(value: crate::ml::Big) -> f64 {
     }
 }
 
-pub fn convert_java_script_utf8_string_number_units(bytes: Vec<f64>) -> f64 {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn convert_java_script_utf8_string_number_units(bytes: &[f64]) -> f64 {
     {
         let index = 0f64;
         {
-            let source_ml_source2_s23 = self::source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop26(bytes.clone(), index);
+            let source_ml_source2_s23 = self::source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop26(bytes, index);
             match source_ml_source2_s23.clone() {
                 self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Done => {
                     {
@@ -714,7 +740,7 @@ pub fn convert_java_script_utf8_string_number_units(bytes: Vec<f64>) -> f64 {
                                 let source_ml_source2_s24 = self::source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop27(bytes, units, index_2);
                                 match source_ml_source2_s24.clone() {
                                     self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Done(units_2) => {
-                                        self::convert_java_script_string_number_units(units_2)
+                                        self::convert_java_script_string_number_units(&(units_2))
                                     }
                                     self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Return(source_ml_source1_temporary_result27) => {
                                         source_ml_source1_temporary_result27
@@ -732,7 +758,9 @@ pub fn convert_java_script_utf8_string_number_units(bytes: Vec<f64>) -> f64 {
     }
 }
 
-pub fn read_java_script_number_builtin_operation(name: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_number_builtin_operation(name: &str) -> String {
     if (name == "Number") {
         String::from("convertJavaScriptNumber")
     } else {
@@ -748,7 +776,9 @@ pub fn read_java_script_number_builtin_operation(name: String) -> String {
     }
 }
 
-pub fn read_java_script_number_conversion_result(operation: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_number_conversion_result(operation: &str) -> String {
     if ((operation == "convertJavaScriptNumber") || (operation == "coerceJavaScriptNumber")) {
         String::from("float")
     } else {
@@ -760,19 +790,25 @@ pub fn read_java_script_number_conversion_result(operation: String) -> String {
     }
 }
 
-pub fn read_java_script_number_conversion_form(kind: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_number_conversion_form(kind: &str) -> String {
     if (((((((kind == "float") || (kind == "bool")) || (kind == "string")) || (kind == "unit")) || (kind == "int")) || (kind == "nat")) || (kind == "option")) {
-        kind.clone()
+        kind.to_owned()
     } else {
         String::from("unsupported")
     }
 }
 
-pub fn accept_linked_java_script_number_conversion(kind: String, operation: String) -> bool {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_linked_java_script_number_conversion(kind: &str, operation: &str) -> bool {
     ((kind == "math") && ((operation == "convertJavaScriptNumber") || (operation == "coerceJavaScriptNumber")))
 }
 
-pub fn read_java_script_number_conversion_failure(operation: String, kind: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_number_conversion_failure(operation: &str, kind: &str) -> String {
     if ((operation == "coerceJavaScriptNumber") && ((kind == "int") || (kind == "nat"))) {
         String::from("Cannot convert a BigInt value to a number")
     } else {
@@ -780,11 +816,15 @@ pub fn read_java_script_number_conversion_failure(operation: String, kind: Strin
     }
 }
 
-pub fn require_java_script_number_conversion_units(kind: String, operation: String, argument: String) -> bool {
-    (self::accept_linked_java_script_number_conversion(kind.clone(), operation.clone()) && (argument == "string"))
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn require_java_script_number_conversion_units(kind: &str, operation: &str, argument: &str) -> bool {
+    (self::accept_linked_java_script_number_conversion(kind, operation) && (argument == "string"))
 }
 
-pub fn read_java_script_primitive_number_operand(language: String, kind: String, element: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_number_operand(language: &str, kind: &str, element: &str) -> String {
     if (language != "JavaScript") {
         String::from("")
     } else {
@@ -800,7 +840,9 @@ pub fn read_java_script_primitive_number_operand(language: String, kind: String,
     }
 }
 
-pub fn read_java_script_primitive_numeric_inference_kind(kind: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_numeric_inference_kind(kind: &str) -> String {
     if (((kind == "bool") || (kind == "string")) || (kind == "unit")) {
         String::from("float")
     } else {
@@ -808,7 +850,9 @@ pub fn read_java_script_primitive_numeric_inference_kind(kind: String) -> String
     }
 }
 
-pub fn read_java_script_primitive_unary_operation(symbol: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_primitive_unary_operation(symbol: &str) -> String {
     if (symbol == "+") {
         String::from("coerceJavaScriptNumber")
     } else {
@@ -816,7 +860,9 @@ pub fn read_java_script_primitive_unary_operation(symbol: String) -> String {
     }
 }
 
-pub fn read_java_script_mathematical_conversion_form(language: String, operation: String) -> String {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_mathematical_conversion_form(language: &str, operation: &str) -> String {
     if (language != "JavaScript") {
         String::from("")
     } else {
@@ -832,53 +878,55 @@ pub fn read_java_script_mathematical_conversion_form(language: String, operation
     }
 }
 
-pub fn render_java_script_number_scalar_conversion(format: String, operation: String, form: String, value: String, utf16: bool) -> String {
-    if ((!(self::accept_linked_java_script_number_conversion(String::from("math"), operation.clone())) || ((self::read_java_script_number_conversion_form(form.clone())) == "unsupported")) || (form == "option")) {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_java_script_number_scalar_conversion(format: &str, operation: &str, form: &str, value: &str, utf16: bool) -> String {
+    if ((!(self::accept_linked_java_script_number_conversion("math", operation)) || ((self::read_java_script_number_conversion_form(form)) == "unsupported")) || (form == "option")) {
         String::from("")
     } else {
         if (format == "JavaScript") {
             if (operation == "convertJavaScriptNumber") {
-                format!("{}{}", (format!("{}{}", (String::from("Number(")), value)), (String::from(")")))
+                format!("{}{}", (format!("{}{}", (String::from("Number(")), value.to_owned())), (String::from(")")))
             } else {
-                format!("{}{}", (format!("{}{}", (String::from("(+(")), value)), (String::from("))")))
+                format!("{}{}", (format!("{}{}", (String::from("(+(")), value.to_owned())), (String::from("))")))
             }
         } else {
             if ((format == "Lean") || (format == "Rocq")) {
-                if !(self::read_java_script_number_conversion_failure(operation.clone(), form.clone())).is_empty() {
+                if !(self::read_java_script_number_conversion_failure(operation, form)).is_empty() {
                     String::from("")
                 } else {
                     if (form == "float") {
-                        value.clone()
+                        value.to_owned()
                     } else {
                         if (form == "unit") {
                             if (format == "Lean") {
-                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value)), (String::from("; ((0 : Float) / 0))")))
+                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value.to_owned())), (String::from("; ((0 : Float) / 0))")))
                             } else {
-                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value)), (String::from(" in PrimFloat.nan)")))
+                                format!("{}{}", (format!("{}{}", (String::from("(let _ := ")), value.to_owned())), (String::from(" in PrimFloat.nan)")))
                             }
                         } else {
                             if (form == "bool") {
                                 if (format == "Lean") {
-                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value)), (String::from(" then (1 : Float) else (0 : Float))")))
+                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" then (1 : Float) else (0 : Float))")))
                                 } else {
-                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value)), (String::from(" then 1%float else 0%float)")))
+                                    format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" then 1%float else 0%float)")))
                                 }
                             } else {
                                 if ((form == "int") || (form == "nat")) {
                                     format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertInteger ")), (if (form == "nat") {
                                         if (format == "Lean") {
-                                            format!("{}{}", (format!("{}{}", (String::from("(Int.ofNat ")), value)), (String::from(")")))
+                                            format!("{}{}", (format!("{}{}", (String::from("(Int.ofNat ")), value.to_owned())), (String::from(")")))
                                         } else {
-                                            format!("{}{}", (format!("{}{}", (String::from("(Z.of_N ")), value)), (String::from(")")))
+                                            format!("{}{}", (format!("{}{}", (String::from("(Z.of_N ")), value.to_owned())), (String::from(")")))
                                         }
                                     } else {
-                                        value.clone()
+                                        value.to_owned()
                                     }))), (String::from(")")))
                                 } else {
                                     if (format == "Lean") {
-                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] ")), value)), (String::from("))")))
+                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUnits (String.foldl (fun (units : Array Float) c => if c.toNat < 65536 then units.push (Float.ofNat c.toNat) else (units.push (Float.ofNat (55296 + (c.toNat - 65536) / 1024))).push (Float.ofNat (56320 + (c.toNat - 65536) % 1024))) #[] ")), value.to_owned())), (String::from("))")))
                                     } else {
-                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUtf8 ((fix ml_numeric_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_numeric_bytes rest) end) ")), value)), (String::from("))")))
+                                        format!("{}{}", (format!("{}{}", (String::from("(MLStringNumber.convertUtf8 ((fix ml_numeric_bytes (text : string) : list float := match text with EmptyString => nil | String c rest => cons (PrimFloat.of_uint63 (Uint63.of_Z (Z.of_nat (Ascii.nat_of_ascii c)))) (ml_numeric_bytes rest) end) ")), value.to_owned())), (String::from("))")))
                                     }
                                 }
                             }
@@ -890,26 +938,26 @@ pub fn render_java_script_number_scalar_conversion(format: String, operation: St
                     String::from("")
                 } else {
                     if (form == "float") {
-                        value.clone()
+                        value.to_owned()
                     } else {
                         if (form == "bool") {
-                            format!("{}{}", (format!("{}{}", (String::from("(if ")), value)), (String::from(" { 1.0f64 } else { 0.0f64 })")))
+                            format!("{}{}", (format!("{}{}", (String::from("(if ")), value.to_owned())), (String::from(" { 1.0f64 } else { 0.0f64 })")))
                         } else {
                             if (form == "unit") {
-                                format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value)), (String::from("; f64::NAN }")))
+                                format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value.to_owned())), (String::from("; f64::NAN }")))
                             } else {
                                 if ((form == "int") || (form == "nat")) {
                                     if (operation == "coerceJavaScriptNumber") {
-                                        format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value)), (String::from("; panic!(\"Cannot convert a BigInt value to a number\") }")))
+                                        format!("{}{}", (format!("{}{}", (String::from("{ let _ = ")), value.to_owned())), (String::from("; panic!(\"Cannot convert a BigInt value to a number\") }")))
                                     } else {
-                                        format!("{}{}", (format!("{}{}", (String::from("crate::ml_string_number::convert_java_script_big_integer_number(")), value)), (String::from(")")))
+                                        format!("{}{}", (format!("{}{}", (String::from("crate::ml_string_number::convert_java_script_big_integer_number(")), value.to_owned())), (String::from(")")))
                                     }
                                 } else {
                                     {
                                         let units = if utf16 {
-                                            format!("{}{}", (format!("{}{}", (String::from("(")), value)), (String::from(").0.iter().copied()")))
+                                            format!("{}{}", (format!("{}{}", (String::from("(")), value.to_owned())), (String::from(").0.iter().copied()")))
                                         } else {
-                                            format!("{}{}", (format!("{}{}", (String::from("(")), value)), (String::from(").encode_utf16()")))
+                                            format!("{}{}", (format!("{}{}", (String::from("(")), value.to_owned())), (String::from(").encode_utf16()")))
                                         };
                                         format!("{}{}", (format!("{}{}", (String::from("crate::ml_string_number::convert_java_script_string_number_units(&")), units)), (String::from(".map(f64::from).collect::<Vec<f64>>())")))
                                     }
@@ -923,10 +971,14 @@ pub fn render_java_script_number_scalar_conversion(format: String, operation: St
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_number_conversion_statement() -> String {
     String::from("ECMAScript Number and ToNumber preserve full UTF-16 StringNumericLiteral syntax, exact binary64 ties-to-even rounding, signed zero, Infinity, NaN, primitive absence and argument evaluation order; explicit BigInt conversion rounds once and implicit BigInt conversion throws")
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_read_string_number_decimal_power_loop1(mut exponent: f64, mut value: crate::ml::Big, mut base: crate::ml::Big) -> crate::ml::Big {
     loop {
         return if (exponent > (0f64)) {
@@ -963,6 +1015,8 @@ pub fn source_ml_source1_temporary_read_string_number_decimal_power_loop1(mut ex
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_read_string_number_exact_mantissa_loop2(mut value: crate::ml::Big, mut result: f64, mut scale: f64) -> f64 {
     loop {
         return if (value > (crate::ml::Big::from_i128(0))) {
@@ -992,6 +1046,8 @@ pub fn source_ml_source1_temporary_read_string_number_exact_mantissa_loop2(mut v
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_read_string_number_binary_power_loop4(mut exponent: f64, mut result: f64) -> f64 {
     loop {
         return if (exponent < (0f64)) {
@@ -1016,6 +1072,8 @@ pub enum MlSource1TemporaryReadStringNumberBinaryPowerLoop3Result {
     MlSource1TemporaryReadStringNumberBinaryPowerLoop3Done(f64, f64),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_read_string_number_binary_power_loop3(mut exponent: f64, mut result: f64) -> self::MlSource1TemporaryReadStringNumberBinaryPowerLoop3Result {
     loop {
         return if (exponent > (0f64)) {
@@ -1040,6 +1098,8 @@ pub enum MlSource1TemporaryConvertStringNumberRationalLoop8Result {
     MlSource1TemporaryConvertStringNumberRationalLoop8Done(crate::ml::Big, crate::ml::Big),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop8(mut quotient: crate::ml::Big, mut remainder: crate::ml::Big, mut scale: crate::ml::Big, mut weight: crate::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop8Result {
     loop {
         return if (weight > (crate::ml::Big::from_i128(1))) {
@@ -1077,6 +1137,8 @@ pub enum MlSource1TemporaryConvertStringNumberRationalLoop7Result {
     MlSource1TemporaryConvertStringNumberRationalLoop7Done(crate::ml::Big, crate::ml::Big),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop7(mut remainder: crate::ml::Big, mut scale: crate::ml::Big, mut weight: crate::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop7Result {
     loop {
         return if (scale <= remainder) {
@@ -1101,6 +1163,8 @@ pub enum MlSource1TemporaryConvertStringNumberRationalJoin6 {
     MlSource1TemporaryConvertStringNumberRationalJoin6Next(crate::ml::Big, crate::ml::Big),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop9(mut numerator: crate::ml::Big, mut shift: f64, mut index: f64) -> crate::ml::Big {
     loop {
         return if (index < shift) {
@@ -1120,6 +1184,8 @@ pub fn source_ml_source1_temporary_convert_string_number_rational_loop9(mut nume
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop10(mut denominator: crate::ml::Big, mut shift: f64, mut index: f64) -> crate::ml::Big {
     loop {
         return if (index < ((-shift))) {
@@ -1151,6 +1217,8 @@ pub enum MlSource1TemporaryConvertStringNumberRationalLoop11Result {
     MlSource1TemporaryConvertStringNumberRationalLoop11Return(f64),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop11(mut numerator: crate::ml::Big, mut exponent: f64, mut scale: crate::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop11Result {
     loop {
         return if (numerator >= (scale.mul(&crate::ml::Big::from_i128(2)))) {
@@ -1180,6 +1248,8 @@ pub enum MlSource1TemporaryConvertStringNumberRationalLoop12Result {
     MlSource1TemporaryConvertStringNumberRationalLoop12Return(f64),
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn source_ml_source1_temporary_convert_string_number_rational_loop12(mut denominator: crate::ml::Big, mut exponent: f64, mut scale: crate::ml::Big) -> self::MlSource1TemporaryConvertStringNumberRationalLoop12Result {
     loop {
         return if (scale < denominator) {
@@ -1209,10 +1279,12 @@ pub enum MlSource1TemporaryAcceptStringNumberInfinityLoop13Result {
     MlSource1TemporaryAcceptStringNumberInfinityLoop13Return(bool),
 }
 
-pub fn source_ml_source1_temporary_accept_string_number_infinity_loop13(mut units: Vec<f64>, mut start: f64, mut expected: Vec<f64>, mut index: f64) -> self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_accept_string_number_infinity_loop13(units: &[f64], mut start: f64, expected: &[f64], mut index: f64) -> self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result {
     loop {
         return if (index < ((expected.len() as f64))) {
-            if (((self::ml_array::optional_at(&units, self::ml_array::number_index((start + index)))).clone().unwrap_or_else(|| (-1f64))) != ((self::ml_array::optional_at(&expected, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-2f64)))) {
+            if (((self::ml_array::optional_at(units, self::ml_array::number_index((start + index)))).clone().unwrap_or_else(|| (-1f64))) != ((self::ml_array::optional_at(expected, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-2f64)))) {
                 self::MlSource1TemporaryAcceptStringNumberInfinityLoop13Result::MlSource1TemporaryAcceptStringNumberInfinityLoop13Return(false)
             } else {
                 {
@@ -1229,9 +1301,11 @@ pub fn source_ml_source1_temporary_accept_string_number_infinity_loop13(mut unit
     }
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop15(mut units: Vec<f64>, mut start: f64, mut end: f64) -> f64 {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop15(units: &[f64], mut start: f64, mut end: f64) -> f64 {
     loop {
-        return if ((start < end) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(&units, self::ml_array::number_index(start))).clone().unwrap_or_else(|| (-1f64)))) {
+        return if ((start < end) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index(start))).clone().unwrap_or_else(|| (-1f64)))) {
             {
                 let start_2 = (start + 1f64);
                 {
@@ -1245,9 +1319,11 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop1
     }
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop16(mut units: Vec<f64>, mut start: f64, mut end: f64) -> f64 {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop16(units: &[f64], mut start: f64, mut end: f64) -> f64 {
     loop {
-        return if ((end > start) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(&units, self::ml_array::number_index((end - 1f64)))).clone().unwrap_or_else(|| (-1f64)))) {
+        return if ((end > start) && self::accept_java_script_whitespace_unit((self::ml_array::optional_at(units, self::ml_array::number_index((end - 1f64)))).clone().unwrap_or_else(|| (-1f64)))) {
             {
                 let end_2 = (end - 1f64);
                 {
@@ -1261,11 +1337,13 @@ pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop1
     }
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop22(mut units: Vec<f64>, mut integer_digits: Vec<crate::ml::Big>, mut mantissa_end: f64, mut mantissa: crate::ml::Big, mut index: f64) -> crate::ml::Big {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop22(units: &[f64], mut integer_digits: Vec<crate::ml::Big>, mut mantissa_end: f64, mut mantissa: crate::ml::Big, mut index: f64) -> crate::ml::Big {
     loop {
         return if (index < mantissa_end) {
             {
-                let unit = (self::ml_array::optional_at(&units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
                 if (unit != (46f64)) {
                     {
                         let mantissa_2 = (mantissa.mul(&crate::ml::Big::from_i128(10))).add(&(self::ml_array::optional_at(&integer_digits, self::ml_array::number_index((unit - 48f64)))).clone().unwrap_or_else(|| crate::ml::Big::from_i128(0)));
@@ -1298,11 +1376,13 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Done(f64, f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop21(mut units: Vec<f64>, mut start: f64, mut exponent: f64, mut mantissa_end: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop21(units: &[f64], mut start: f64, mut exponent: f64, mut mantissa_end: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop21Result {
     loop {
         return if (mantissa_end > start) {
             {
-                let unit = (self::ml_array::optional_at(&units, self::ml_array::number_index((mantissa_end - 1f64)))).clone().unwrap_or_else(|| (-1f64));
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index((mantissa_end - 1f64)))).clone().unwrap_or_else(|| (-1f64));
                 if (unit == (46f64)) {
                     {
                         let mantissa_end_2 = (mantissa_end - 1f64);
@@ -1345,11 +1425,13 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Done(f64, f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop24(mut units: Vec<f64>, mut end: f64, mut at: f64, mut exponent: f64, mut exponent_limit: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop24(units: &[f64], mut end: f64, mut at: f64, mut exponent: f64, mut exponent_limit: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result {
     loop {
         return if (at < end) {
             {
-                let digit = ((self::ml_array::optional_at(&units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64)) - 48f64);
+                let digit = ((self::ml_array::optional_at(units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64)) - 48f64);
                 if ((digit < (0f64)) || (digit > (9f64))) {
                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop24Done(at, exponent)
                 } else {
@@ -1388,11 +1470,13 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Done(f64, f64, f64, f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop19(mut units: Vec<f64>, mut end: f64, mut at: f64, mut fraction: f64, mut digits: f64, mut significant: f64, mut dot: bool) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop19(units: &[f64], mut end: f64, mut at: f64, mut fraction: f64, mut digits: f64, mut significant: f64, mut dot: bool) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop19Result {
     loop {
         return if (at < end) {
             {
-                let unit = (self::ml_array::optional_at(&units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64));
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(at))).clone().unwrap_or_else(|| (-1f64));
                 if ((unit >= (48f64)) && (unit <= (57f64))) {
                     {
                         let digits_2 = (digits + 1f64);
@@ -1459,11 +1543,13 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Return(f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop25(mut units: Vec<f64>, mut end: f64, mut integer_digits: Vec<crate::ml::Big>, mut radix: f64, mut value: crate::ml::Big, mut overflow: bool, mut limit: crate::ml::Big, mut base: crate::ml::Big, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop25(units: &[f64], mut end: f64, mut integer_digits: Vec<crate::ml::Big>, mut radix: f64, mut value: crate::ml::Big, mut overflow: bool, mut limit: crate::ml::Big, mut base: crate::ml::Big, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result {
     loop {
         return if (index < end) {
             {
-                let digit = self::read_string_number_digit((self::ml_array::optional_at(&units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64)));
+                let digit = self::read_string_number_digit((self::ml_array::optional_at(units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64)));
                 if ((digit < (0f64)) || (digit >= radix)) {
                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop25Return(f64::NAN)
                 } else {
@@ -1509,11 +1595,13 @@ pub enum MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Result {
     MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Return(f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop14(mut units: Vec<f64>, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_string_number_units_loop14(units: &[f64], mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Result {
     loop {
         return if (index < ((units.len() as f64))) {
             {
-                let unit = (self::ml_array::optional_at(&units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                let unit = (self::ml_array::optional_at(units, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
                 if ((!(self::ml_math::is_safe_integer(unit)) || (unit < (0f64))) || (unit > (65535f64))) {
                     self::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Result::MlSource1TemporaryConvertJavaScriptStringNumberUnitsLoop14Return(f64::NAN)
                 } else {
@@ -1544,11 +1632,13 @@ pub enum MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Result {
     MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Return(f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop29(mut bytes: Vec<f64>, mut index: f64, mut scalar: f64, mut remaining: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop29(bytes: &[f64], mut index: f64, mut scalar: f64, mut remaining: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Result {
     loop {
         return if (remaining > (0f64)) {
             {
-                let next = (self::ml_array::optional_at(&bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                let next = (self::ml_array::optional_at(bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
                 if ((next < (128f64)) || (next > (191f64))) {
                     self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Return(f64::NAN)
                 } else {
@@ -1579,11 +1669,13 @@ pub enum MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsJoin28 {
     MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsJoin28Return(f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop27(mut bytes: Vec<f64>, mut units: Vec<f64>, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop27(bytes: &[f64], mut units: Vec<f64>, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop27Result {
     loop {
         return if (index < ((bytes.len() as f64))) {
             {
-                let scalar = (self::ml_array::optional_at(&bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                let scalar = (self::ml_array::optional_at(bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
                 {
                     let index_2 = (index + 1f64);
                     {
@@ -1638,7 +1730,7 @@ pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_
                                 match source_ml_source2_s25.clone() {
                                     self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsJoin28::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsJoin28Next(scalar_5, remaining_5, minimum_5) => {
                                         {
-                                            let source_ml_source2_s26 = self::source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop29(bytes.clone(), index_2, scalar_5, remaining_5);
+                                            let source_ml_source2_s26 = self::source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop29(bytes, index_2, scalar_5, remaining_5);
                                             match source_ml_source2_s26.clone() {
                                                 self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop29Done(index_3, scalar_6) => {
                                                     if (((scalar_6 < minimum_5) || (scalar_6 > (1114111f64))) || ((scalar_6 >= (55296f64)) && (scalar_6 <= (57343f64)))) {
@@ -1693,11 +1785,13 @@ pub enum MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result {
     MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Return(f64),
 }
 
-pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop26(mut bytes: Vec<f64>, mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result {
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_convert_java_script_utf8_string_number_units_loop26(bytes: &[f64], mut index: f64) -> self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result {
     loop {
         return if (index < ((bytes.len() as f64))) {
             {
-                let unit = (self::ml_array::optional_at(&bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
+                let unit = (self::ml_array::optional_at(bytes, self::ml_array::number_index(index))).clone().unwrap_or_else(|| (-1f64));
                 if ((!(self::ml_math::is_safe_integer(unit)) || (unit < (0f64))) || (unit > (255f64))) {
                     self::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Result::MlSource1TemporaryConvertJavaScriptUtf8StringNumberUnitsLoop26Return(f64::NAN)
                 } else {

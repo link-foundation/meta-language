@@ -844,3 +844,14 @@ capture keeps later source evaluation before conversion. Nullable string lexical
 branches retain their separate obligations. Original obsolete Math refusal inputs
 and diagnostics remain recorded beside corrected, sourced expectations and new
 future controls. No fixture behavior or test was executed.
+
+The reusable source-runtime author now derives borrowed array interfaces from
+actual emitted declarations/calls before embedding complete Rust runtime bodies.
+It also emits namespaced Lean/Rocq bodies and actual entry aliases. Both exact
+numeric and BigInt conversion definitions use it. BigInt algorithms parse UTF-16
+directly and decompose integral binary64 values exactly; shared digit and white
+space definitions are captured once as dependencies. Native public adapters
+transport the generated integer value and exact UTF-16 source errors, with no
+handwritten replacement conversion. API, definition and independent future
+controls are drafted; source builtin lowering and dynamic exceptions remain
+active implementation work. No code behavior or tests ran.

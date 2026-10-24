@@ -5823,3 +5823,35 @@ their array shape constraint without forcing the element domain.
 These additions are source drafts, not execution evidence. Iterator spreads,
 dynamic type-changing cells, mixed Number/BigInt errors and broader comparisons
 remain required alongside the previously named gaps.
+
+### Exact BigInt conversion definitions and error transport draft
+
+The shared BigInt conversion definition parses the complete StringIntegerLiteral
+grammar directly into unbounded integers, including unsigned radix forms,
+signed decimal forms, white space and empty input. It never passes through
+Number and has no semantic input-length cap. Integral binary64 input converts
+by exact binary decomposition; nonintegral and nonfinite input retains its
+RangeError obligation. Boolean conversion and syntax/type/range error identities
+belong to the same editable definition. Numeric digit and whitespace concepts
+are actual shared source dependencies of both numeric conversion libraries.
+
+One source-runtime author now emits complete native libraries, Rust runtime
+bodies, formal runtimes and typed Links. Runtime parameter loans derive from the
+actual emitted function declarations and calls, retaining their source actions.
+This fixes the numeric runtime's owning-vector/borrowed-call mismatch through
+automatic interface adaptation. Formal namespace aliases derive from actual
+binding mappings. Complete bodies, declarations and transport are retained.
+
+JavaScript APIs expose exact string, UTF-16, Number and Boolean conversion. Rust
+adapts actual UTF-16/Number/Boolean values to the generated integer type and
+returns structured source errors. Error constructor identity and every UTF-16
+message unit survive isolated surrogates; Display alone performs the UTF-8
+replacement needed for console output. V8 message expectations have explicit
+Node version ranges and are separate from the ECMAScript conversion algorithms.
+Future independent built-in BigInt controls cover values, errors, both runtime
+APIs and complete definition graph codecs/emissions. They have not executed.
+
+These library and definition drafts do not establish source `BigInt(...)`
+lowering. Dynamic exception operands/classes, constructor argument effects,
+optional primitive dispatch, source builtin integration, all previously named
+translation gaps and deferred source/ledger/naming metadata remain required.
