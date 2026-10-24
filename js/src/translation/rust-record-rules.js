@@ -58,19 +58,34 @@ export function acceptRustRecordSourceName(name) {
     'u8','i8','u16','i16','u32','i32','u64','i64','u128','i128','std','core','alloc'].includes(name);
 }
 
+/** @param {string} name @returns {boolean} */
+export function acceptRustKeywordName(name) {
+  return ['_','as','async','await','break','const','continue','crate','dyn','else','enum','extern','false','fn','for','if','impl','in','let','loop','match','mod','move','mut','pub','ref','return','self','Self','static','struct','super','trait','true','type','unsafe','use','where','while','abstract','become','box','do','final','gen','macro','override','priv','try','typeof','unsized','virtual','yield'].includes(name);
+}
+/** @param {string} name @returns {boolean} */
+export function acceptRustRawIdentifierName(name) {
+  if (name.length === 0 || ['_','crate','self','Self','super'].includes(name)) return false;
+  for (let index = 0; index < name.length; index += 1) {
+    const code = name.charCodeAt(index);
+    if (!(code === 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122
+        || index > 0 && code >= 48 && code <= 57)) return false;
+  }
+  return true;
+}
+/** @param {string} name @param {string} raw @returns {boolean} */
+export function acceptRustSourceKeywordToken(name, raw) {
+  return !raw.startsWith('r#') || !acceptRustKeywordName(name);
+}
+/** @param {string} name @returns {string} */
+export function readRustRawIdentifierError(name) {
+  return acceptRustRawIdentifierName(name) ? '' : 'invalid Rust raw identifier r#' + name;
+}
+/** @param {string} name @returns {string} */
+export function renderRustConstructorFieldName(name) { return acceptRustKeywordName(name) ? 'r#' + name : name; }
 /** @param {string} language @param {string[]} names @returns {boolean} */
 export function acceptRustNamedConstructorFields(language, names) {
   if (language !== 'Rust' || names.length === 0) return false;
-  for (const name of names) {
-    if (name === '_' || name.length === 0) return false;
-    for (let index = 0; index < name.length; index += 1) {
-      const code = name.charCodeAt(index);
-      if (!(code === 95 || code >= 65 && code <= 90 || code >= 97 && code <= 122
-          || index > 0 && code >= 48 && code <= 57)) return false;
-    }
-  }
-  const keywords = ['as','async','await','break','const','continue','crate','dyn','else','enum','extern','false','fn','for','if','impl','in','let','loop','match','mod','move','mut','pub','ref','return','self','Self','static','struct','super','trait','true','type','unsafe','use','where','while','abstract','become','box','do','final','gen','macro','override','priv','try','typeof','unsized','virtual','yield'];
-  for (const name of names) if (keywords.includes(name)) return false;
+  for (const name of names) if (!acceptRustRawIdentifierName(name)) return false;
   return true;
 }
 /** @param {string} language @param {string} head @param {string[]} names @param {string[]} values @returns {string} */
@@ -78,7 +93,7 @@ export function renderRustConstructorFields(language, head, names, values) {
   if (values.length === 0) return head;
   if (!acceptRustNamedConstructorFields(language, names)) return head + '(' + values.join(', ') + ')';
   const fields = [];
-  for (let index = 0; index < values.length; index += 1) fields.push((names[index] ?? '') + ': ' + (values[index] ?? ''));
+  for (let index = 0; index < values.length; index += 1) fields.push(renderRustConstructorFieldName(names[index] ?? '') + ': ' + (values[index] ?? ''));
   return head + ' { ' + fields.join(', ') + ' }';
 }
 /** @param {boolean} named @returns {string} */

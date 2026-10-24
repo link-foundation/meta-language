@@ -57,3 +57,6 @@ value, codec and original-Rust controls and its documented assertion correction.
 Draft named Rust constructor fields consistently across definitions, calls,
 patterns and enumeration, with shared generated renderers, mixed-layout metadata
 and independent future graph, codec and original-Rust controls.
+Draft ASCII Rust raw identifiers with preserved spelling/offsets, normalized
+names, keyword distinction, reserved-name errors and escaped constructor fields;
+author shared lexical, graph, codec and original-Rust controls for later CI.

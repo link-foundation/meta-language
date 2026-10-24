@@ -1550,7 +1550,7 @@ class RustParser {
       c.expect(')', 'pattern');
       return { k: 'ctor', path: resolved, args, span: span(token, c.peek()) };
     }
-    if (segments.length === 1 && resolved.length === 1) return { k: 'bindOrCtor', name: segments[0], span: span(token, token) };
+    if (segments.length === 1 && resolved.length === 1) return { k: token.raw.startsWith('r#')?'bind':'bindOrCtor', name: segments[0], span: span(token, token) };
     return { k: 'ctor', path: resolved, args: [], span: span(token, token) };
   }
 }

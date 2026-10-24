@@ -393,8 +393,14 @@ impl RustParser {
         }
         if segments.len() == 1 && resolved.len() == 1 {
             return Ok(SPattern {
-                node: SPatternNode::BindOrCtor {
-                    name: segments[0].clone(),
+                node: if token.raw.starts_with("r#") {
+                    SPatternNode::Bind {
+                        name: segments[0].clone(),
+                    }
+                } else {
+                    SPatternNode::BindOrCtor {
+                        name: segments[0].clone(),
+                    }
                 },
                 span: span(&token, &token),
             });

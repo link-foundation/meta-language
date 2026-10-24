@@ -2792,6 +2792,25 @@ Raw and Unicode identifiers, zero-field source-form provenance and unrestricted
 reimport of emitted helpers/clone operations remain implementation obligations;
 this improvement does not establish complete source round-trip fidelity.
 
+The ASCII raw-identifier draft gives both lexers a distinct `r#` source path.
+Tokens keep their full spelling and UTF-16 offsets while exposing the actual
+unescaped identifier name. Cursor keyword decisions retain that distinction:
+raw `match` and `true` are names, while raw non-keywords remain usable where
+an ordinary identifier is expected. Raw macros retain their macro token kind;
+raw strings remain strings. Raw unqualified pattern names are explicit binders
+unless actual source resolution identifies a constructor. Shared reserved-name,
+keyword and field rendering rules generate native source and complete typed
+Links definitions. Constructor fields whose names require escaping emit `r#`
+consistently in declarations, applications, patterns and enumeration. This
+follows the [Rust identifier rules](https://doc.rust-lang.org/reference/identifiers.html)
+and [edition-qualified keyword rules](https://doc.rust-lang.org/reference/keywords.html).
+Fourteen future value/abort cases, four complete token/cursor cases, five exact
+lexical refusals and five complete-program refusals cover those paths in both
+runtimes. They also retain full graphs, both codecs, four emissions and original/
+emitted Rust execution. None ran. Unicode XID/NFC, older edition profiles,
+raw lifetime/generic/trait forms, zero-field provenance and complete generated
+source reimport still need their implementation drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

@@ -22,7 +22,7 @@ const cases=fixture.cases.map((row,index)=>{
 const header=rust.text.split('\n').find(line=>line.startsWith('#![allow('));
 if(!header)throw new TypeError('complete library attributes are required');
 const definition=createDefinition();
-process.stdout.write(structuredDataToLino({source:fixture.source,refusals:fixture.refusals,cases,...(fixture.layout?{layout:fixture.layout}:{}),root:packet.root.asU64(),links:packet.network.toLino(),definitionRoot:definition.root.asU64(),definitionLinks:definition.network.toLino(),
+process.stdout.write(structuredDataToLino({source:fixture.source,refusals:fixture.refusals,cases,...(fixture.layout?{layout:fixture.layout}:{}),...(fixture.lexicalCases?{lexicalCases:fixture.lexicalCases,lexicalErrors:fixture.lexicalErrors}:{}),root:packet.root.asU64(),links:packet.network.toLino(),definitionRoot:definition.root.asU64(),definitionLinks:definition.network.toLino(),
  emissions:Object.fromEntries(['JavaScript','Rust','Lean','Rocq'].map(target=>[target,emitTypedProgramLinks(packet.network,packet.root,target)])),
  nativeLibrary:[header,...rust.preludes,...rust.definitions].join('\n\n')}));
 

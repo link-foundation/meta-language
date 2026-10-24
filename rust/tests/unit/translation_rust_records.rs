@@ -1,5 +1,7 @@
 //! Future complete paired graph/codec/original-Rust controls. CI compilation only.
 use super::issue_195_translation_pairs::{TemporaryDirectory, run};
+use meta_language::translation::Language;
+use meta_language::translation::lexer::{TokenCursor, TokenKind, tokenize};
 use meta_language::translation::rust::parse_rust_with_source_signature_model;
 use meta_language::translation::{check::check_program, emit_rust::emit_rust, rust::parse_rust};
 use meta_language::{
@@ -34,6 +36,15 @@ fn named_fields_preserve_declarations_calls_patterns_and_mixed_encoding() {
     );
 }
 
+#[test]
+fn raw_identifiers_preserve_names_tokens_cursor_meaning_and_original_values() {
+    assert_nominal_translation_product(
+        "../experiments/rust-records/raw-identifiers.mjs",
+        "Rust raw identifiers",
+        create_rust_record_program_links,
+    );
+}
+
 pub(super) fn assert_nominal_translation_product(
     producer_path: &str,
     product_label: &str,
@@ -59,6 +70,43 @@ pub(super) fn assert_nominal_translation_product(
         ]));
     assert!(producer.ok, "{}", producer.stderr);
     let expected = read_structured_data_lino(&producer.stdout).unwrap();
+    if let Some(rows) = expected["lexicalCases"].as_array() {
+        for row in rows {
+            let tokens = tokenize(row["source"].as_str().unwrap(), Language::Rust)
+                .unwrap()
+                .tokens;
+            let declared = row["tokens"].as_array().unwrap();
+            assert_eq!(tokens.len(), declared.len() + 1);
+            let mut cursor = TokenCursor::new(tokens, Language::Rust);
+            for expected in declared {
+                let token = cursor.peek();
+                let kind = match token.kind {
+                    TokenKind::Identifier => "identifier",
+                    TokenKind::Macro => "macro",
+                    TokenKind::String => "string",
+                    _ => panic!("unexpected declared token {token:?}"),
+                };
+                assert_eq!(
+                    json!({"raw":token.raw,"kind":kind,"value":token.value,"start":token.start,"end":token.end}),
+                    json!({"raw":expected["raw"],"kind":expected["kind"],"value":expected["value"],"start":expected["start"],"end":expected["end"]})
+                );
+                assert_eq!(
+                    cursor.is(expected["value"].as_str().unwrap()),
+                    expected["matchesValue"].as_bool().unwrap()
+                );
+                cursor.advance();
+            }
+            assert_eq!(cursor.peek().kind, TokenKind::Eof);
+        }
+    }
+    if let Some(rows) = expected["lexicalErrors"].as_array() {
+        for row in rows {
+            let error = tokenize(row["source"].as_str().unwrap(), Language::Rust).unwrap_err();
+            assert_eq!(error.kind.as_str(), row["kind"].as_str().unwrap());
+            assert_eq!(error.reason, row["reason"].as_str().unwrap());
+            assert_eq!(serde_json::to_value(error.span).unwrap(), row["span"]);
+        }
+    }
     let program =
         check_program(&parse_rust(expected["source"].as_str().unwrap()).unwrap()).unwrap();
     let packet = encode_typed_program_links(&program).unwrap();

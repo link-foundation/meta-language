@@ -647,3 +647,13 @@ fixture reuses every paired graph, codec, four-target and original/native value
 control, adding literal syntax and encoding assertions. None ran. Raw/Unicode
 identifiers, zero-field syntax provenance and full emitted-source reimport still
 need their implementations; no complete round-trip claim follows from this draft.
+
+The raw identifier draft normalizes ASCII `r#` names while retaining complete
+source spelling and coordinates. Both lexer cursors distinguish them from
+keywords, and raw patterns preserve their actual binder/constructor meaning.
+Reserved-name errors, keyword selection and escaped constructor field rendering
+come from the same automatically translated shared definition. Fourteen future
+values/aborts, four token/cursor cases, five exact lexical errors and five
+program refusals reuse the paired definition/graph/codec/four-target and native
+product controls. No control ran. Unicode/NFC, other edition profiles, further
+source forms and complete generated-source reimport remain to draft.

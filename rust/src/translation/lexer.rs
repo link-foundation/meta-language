@@ -471,6 +471,37 @@ fn tokenize_region(
             continue;
         }
         if language == Language::Rust
+            && source.starts_with("r#", index)
+            && is_identifier_start(source.at(index + 2), language)
+        {
+            let mut end = index + 3;
+            while end < source.len() && is_identifier_part(source.at(end), language) {
+                end += 1;
+            }
+            let name = source.slice(index + 2, end);
+            let message = super::rust_record_rules::read_rust_raw_identifier_error(&name);
+            if !message.is_empty() {
+                return Err(TranslationError::syntax(message, Some(span(start, end))));
+            }
+            let macro_token = source.is_char(end, '!') && !source.is_char(end + 1, '=');
+            if macro_token {
+                end += 1;
+            }
+            tokens.push(Token::new(
+                if macro_token {
+                    TokenKind::Macro
+                } else {
+                    TokenKind::Identifier
+                },
+                name,
+                source.slice(index, end),
+                start,
+                end,
+            ));
+            index = end;
+            continue;
+        }
+        if language == Language::Rust
             && ch == Some('r')
             && let Some(token) = raw_string_token(source, index, units)?
         {

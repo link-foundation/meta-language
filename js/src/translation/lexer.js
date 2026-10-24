@@ -12,6 +12,7 @@ import { decodeRustRawString } from './rust-raw-string-rules.js';
 import { decodeRustCharacterLiteral } from './rust-character-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
+import { readRustRawIdentifierError, acceptRustSourceKeywordToken } from './rust-record-rules.js';
 
 const OPERATORS = {
   JavaScript: [
@@ -90,6 +91,16 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
+    }
+    if (language === 'Rust' && source.startsWith('r#', index) && isIdentifierStart(source[index + 2] ?? '', language)) {
+      let end=index+3;
+      while(end<source.length&&isIdentifierPart(source[end],language))end+=1;
+      const name=source.slice(index+2,end),message=readRustRawIdentifierError(name);
+      if(message)throw new TranslationError('syntax',message,{start,end});
+      const macro=source[end]==='!'&&source[end+1]!=='=';
+      if(macro)end+=1;
+      tokens.push({kind:macro?'macro':'identifier',value:name,raw:source.slice(index,end),start,end});
+      index=end;continue;
     }
     if (language === 'Rust' && char === 'r') {
       encoding.units ??= Array.from({ length: source.length }, (_, offset) => source.charCodeAt(offset));
@@ -448,7 +459,8 @@ export class TokenCursor {
 
   is(value, offset = 0) {
     const token = this.peek(offset);
-    return (token.kind === 'punct' || token.kind === 'identifier') && token.value === value;
+    return (token.kind === 'punct' || token.kind === 'identifier') && token.value === value
+      && (this.language!=='Rust'||acceptRustSourceKeywordToken(token.value,token.raw));
   }
 
   isKind(kind, offset = 0) {

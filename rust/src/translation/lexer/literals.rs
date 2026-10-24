@@ -674,7 +674,13 @@ impl TokenCursor {
     #[must_use]
     pub fn is_at(&self, value: &str, offset: usize) -> bool {
         let token = self.peek_at(offset);
-        matches!(token.kind, TokenKind::Punct | TokenKind::Identifier) && token.value == value
+        matches!(token.kind, TokenKind::Punct | TokenKind::Identifier)
+            && token.value == value
+            && (self.language != Language::Rust
+                || super::rust_record_rules::accept_rust_source_keyword_token(
+                    &token.value,
+                    &token.raw,
+                ))
     }
 
     #[must_use]
