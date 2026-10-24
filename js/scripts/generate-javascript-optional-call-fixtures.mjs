@@ -27,6 +27,7 @@ const inputs=[
  ['nullable callback parameter inference','function invoke(callback,value){return callback?.(value)??7;}export function compute(){return invoke(undefined,3)*10+invoke(value=>value+1,3);}','74'],
  ['Unit result keeps callback effects and undefined absence','function report(values){values.push(7);return;}export function compute(){const values=[];const callback=true?report:null;const result=callback?.(values);return result===undefined&&values.length===1;}','true'],
  ['source capture name remains independent','export function compute(){const ml_optional_call_receiver1=7;const callback=true?(value=>value+1):undefined;return (callback?.(2)??0)+ml_optional_call_receiver1;}','10'],
+ ['original receiver-independent property input','export function compute(){const value={method(value){return value;}};return value.method?.(1);}','1'],
 ];
 const cases=inputs.map(([name,source,value],index)=>({name,source,entry:'optionalCallCase'+index,value,abort:null}));
 const helper='/** @returns {number} */ function failOptionalArgument(){throw new SyntaxError("optional argument");}';
@@ -40,8 +41,8 @@ for(const[name,source,errorClass,abort]of[
 const source=cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(').replaceAll('failOptionalArgument','failOptionalArgument'+row.entry).replaceAll('function create(','function create'+row.entry+'(').replaceAll('create(true)','create'+row.entry+'(true)').replaceAll('create(values)','create'+row.entry+'(values)').replaceAll('create()','create'+row.entry+'()')).join('\n');
 writeProjectData(new URL('../../parity/fixtures/javascript-optional-calls.lino',import.meta.url),{
  schemaVersion:1,model:'lexical optional callable evaluation and absence source values 1',sourceLanguage:'JavaScript',cases,source,
- refusals:[{name:'property reference retains its this obligation',source:'export function compute(){const value={method(value){return value;}};return value.method?.(1);}',kind:'unsupported',reason:'optional method call: the property reference needs its complete original receiver and chain extent'}],
- assertionCorrection:{basis:'ECMAScript 2025 optional-chain evaluation keeps a continuous suffix inside the original nullish receiver branch. The two earlier chain refusals retain their exact inputs and full preceding writer/fixture/test source in javascript-optional-chains.lino; those exact inputs now have positive value, graph, native and codec controls.',range:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0'},
+ refusals:[],
+ assertionCorrection:{basis:'ECMAScript 2025 optional-chain evaluation keeps the complete suffix inside its nullish branch. The original property input has a fully checked body that does not observe this, so the existing receiver-independent Function protocol preserves it. Its exact input is now a positive value/graph/native/codec control; complete preceding writer/fixture/test/hosts remain in javascript-optional-property-calls.lino. The two earlier chain inputs and full predecessor history remain in javascript-optional-chains.lino. Actual dynamic this/callable objects remain obligations.',range:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0'},
  originalRefusals:[
   {name:'property reference retains its this obligation',source:'export function compute(){const value={method(value){return value;}};return value.method?.(1);}',kind:'unsupported',reason:'optional method call: the property reference needs its complete original receiver and chain extent'},
   {name:'continuous field chain needs skipped-call discrimination',source:'export function compute(){const callback=value=>({value});return callback?.(1).value;}',kind:'unsupported',reason:'optional call chain: the chain needs its distinct skipped and returned value continuations'},
@@ -49,5 +50,5 @@ writeProjectData(new URL('../../parity/fixtures/javascript-optional-calls.lino',
  ],
  versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},
  sourceBasis:'https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-optional-chains',
- boundary:'Future original values/errors and all UTF16 exception fields, native products, full editable source decisions, both codecs and four emissions. No observations. Lexical/value/factory callees use the represented fixed callable signature. General property this references, uninterrupted optional chains, dynamic non-callables/callable objects, spread/missing/extra argument protocols, dead-code/TDZ inference and every preceding requirement remain.',
+ boundary:'Future original values/errors and all UTF16 exception fields, native products, full editable source decisions, both codecs and four emissions. No observations. Lexical/value/factory and own-property callees use the represented receiver-independent fixed Function signature; actual property loads and complete chain scopes are retained. General dynamic this/callable objects, noncallable diagnostics, spread/missing/extra argument protocols, dead-code/TDZ inference and every preceding requirement remain.',
 });

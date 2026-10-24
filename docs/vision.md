@@ -6797,3 +6797,28 @@ preceding full source definitions and cover actual Node/native values, source
 ASTs, graphs, codecs and all four emissions. They are unexecuted. Dynamic
 String-key unions/coercion, unknown/prototype properties, accessors/proxies,
 this, descriptors and every earlier requirement remain required.
+
+
+### Represented optional property callable draft
+
+Optional property calls evaluate the actual owner/key and property load before
+testing the loaded callable for absence. The existing complete Function domain
+has explicit arguments and captures, with no hidden this parameter. Its checked
+receiver-independent values use the same application path as ordinary record
+methods. Property and index source heads now enter that path. This does not
+admit a JavaScript this expression or claim arbitrary external callable objects
+have receiver-independent behavior. Those require an explicit receiver protocol.
+
+The loaded function is captured before argument effects; a later field or
+receiver assignment does not replace it. Absent arguments stay lazy. Nullish
+property bases still throw before argument evaluation. Continuous suffixes and
+parentheses keep their existing scopes. The original refused input's complete
+method body does not observe this; it is retained exactly as a positive control,
+with preceding fixture, writer, test and host definitions preserved as Links
+history. Earlier chain-refusal inputs and history also remain. The correction
+is qualified to ECMAScript 2025 and the existing Node 22.15+/24 ranges, under
+[optional-chain evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-optional-chains)
+and [call evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-evaluatecall).
+Future Node/native/graph/codec/emission controls are unexecuted. Dynamic this,
+foreign callable/proxy/accessor protocols, missing record properties, general
+noncallable diagnostics and every preceding obligation remain required.

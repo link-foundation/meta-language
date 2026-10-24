@@ -1,10 +1,12 @@
-// Complete source selections for lexical optional callable application.
+// Source selections for represented receiver-independent callable application.
 /** @returns {string} */
 export function readJavaScriptOptionalCallOperation(){return 'invokeJavaScriptOptionalCallable';}
-/** A property reference must keep its original this binding and chain extent.
+/** Property loads keep their actual owner/key effects before capture. Only a
+ * completely checked receiver-independent Function value can use this core
+ * application protocol; dynamic this/callable objects need their own domain.
  * @param {string} kind @param {number} pathLength @returns {boolean} */
 export function acceptJavaScriptOptionalCallHead(kind,pathLength){
- return kind==='name'&&pathLength>=1||kind==='functionValue'||kind==='lambda'||kind==='app'||kind==='let'||kind==='if'||kind==='math'||kind==='none'||kind==='unit';
+ return kind==='name'&&pathLength>=1||kind==='functionValue'||kind==='lambda'||kind==='app'||kind==='let'||kind==='if'||kind==='math'||kind==='none'||kind==='unit'||kind==='field'||kind==='index';
 }
 /** @param {string} kind @param {string} element @returns {string} */
 export function readJavaScriptOptionalCallForm(kind,element){

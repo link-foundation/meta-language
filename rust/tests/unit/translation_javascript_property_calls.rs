@@ -121,3 +121,12 @@ fn literal_brackets_and_string_indices_keep_owners_utf16_units_and_source_order(
         meta_language::create_java_script_literal_property_program_links,
     );
 }
+
+#[test]
+fn receiver_independent_optional_property_calls_keep_loaded_callees_and_lazy_arguments() {
+    assert_nominal_translation_product(
+        "../experiments/javascript-program/optional-property-calls.mjs",
+        "receiver independent optional property calls",
+        meta_language::create_java_script_optional_call_program_links,
+    );
+}
