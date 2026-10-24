@@ -5,6 +5,7 @@
 
 import { unsupported } from './diagnostics.js';
 import { typeKey } from './types.js';
+import { renderSourceTargetIdentifier } from './source-identifier-rules.js';
 
 /** Assumption texts are fixed so that contracts compare across runtimes. */
 export const ASSUMPTIONS = {
@@ -51,6 +52,7 @@ export class EmitState {
       return this.taken.get(key);
     };
     const claim = (space, name) => {
+      name = renderSourceTargetIdentifier(name);
       const used = namespace(space);
       let candidate = name;
       for (let index = 2; used.has(candidate) || this.isGenerated(candidate, used); index += 1) candidate = `${name}_${index}`;

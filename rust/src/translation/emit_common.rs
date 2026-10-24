@@ -225,6 +225,7 @@ impl<'p> EmitState<'p> {
     }
 
     fn claim(&mut self, space: &str, name: &str) -> String {
+        let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         if !self.taken.contains_key(space) {
             // Root declarations may not redeclare the target's prelude (`root_reserved`).
             let mut used: HashSet<String> = self.reserved.iter().cloned().collect();

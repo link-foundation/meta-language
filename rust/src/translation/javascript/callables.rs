@@ -383,7 +383,12 @@ impl JavaScriptParser {
                     &captures,
                 )?
             } else {
-                super::lower(&statements, place, &mut self.generated_count)?
+                super::lower(
+                    &statements,
+                    place,
+                    &mut self.generated_count,
+                    &self.generated_prefix,
+                )?
             };
             let assigned_captures =
                 rules::require_callable_assigned_capture_field(number(assigned.len()))

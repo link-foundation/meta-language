@@ -13,6 +13,7 @@
 import { TranslationError, typeError, unsupported } from './diagnostics.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import { acceptJavaScriptSourceKeywordToken } from './javascript-identifier-rules.js';
+import { readSourceParserIdentifierSupply } from './source-identifiers.js';
 import { readJavaScriptFixedIntegerCast } from './javascript-fixed-integer-casts.js';
 import {readJavaScriptNumberBitwiseOperation,readJavaScriptNumberBitwiseAssignment,acceptJavaScriptNumberBitwisePrecedence} from './number-bitwise-rules.js';
 import { findDocumentationParameterRange, findDefaultParameterReference, readArrayMethodForm, acceptArrayMethodArguments, readStringTestOperation, readStringMapOperation, readJavaScriptTemporalBindingRead, readJavaScriptLexicalDeclarationStep, readJavaScriptFieldSubstitutionPlan, acceptJavaScriptMutableArrayBinding, acceptJavaScriptMutableArrayBindingOwner } from './frontend-rules.js';
@@ -157,6 +158,7 @@ class JavaScriptParser {
     // Functions and data types that loops and joins of statements lower to, and their count.
     this.generated = [];
     this.generatedCount = 0;
+    this.generatedPrefix = readSourceParserIdentifierSupply(source, tokens);
     this.indexedReferenceWrites = 0;
     this.ownedArrayReaders = new Map();
     this.ownedArrayReaderNamespace = 0;
@@ -296,7 +298,7 @@ class JavaScriptParser {
       const effect = this.mainStatement();
       const entries = Array.isArray(effect) ? effect : [effect];
       if (exported) for (const entry of entries) {
-        if (entry.k === 'let' && !entry.name.startsWith('ml_')) this.exportedNames.add(entry.name);
+        if (entry.k === 'let' && !entry.name.startsWith(this.generatedPrefix)) this.exportedNames.add(entry.name);
       }
       effects.push(...entries);
     }
@@ -1026,7 +1028,7 @@ class JavaScriptParser {
       c.expect('=', 'array binding');
       const value = readArrayBindingInitializer(this, bindings, () => this.expr());
       const where = span(start, c.peek());
-      const name = `ml_binding${++this.generatedCount}`;
+      const name = `${this.generatedPrefix}temporary_binding${++this.generatedCount}`;
       const object = { k: 'name', path: [name], span: where };
       for (const binding of bindings) this.declareLocal(binding.name);
       return { s: 'block', inline: true, body: [{ s: 'const', name, value, span: where }, ...bindArrayElements(bindings, object, 'const', where)], span: where };
@@ -1064,7 +1066,7 @@ class JavaScriptParser {
     c.expect('=', 'destructuring');
     const value = this.expr();
     const where = span(start, c.peek());
-    const name = `ml_binding${++this.generatedCount}`;
+    const name = `${this.generatedPrefix}temporary_binding${++this.generatedCount}`;
     const object = { k: 'name', path: [name], span: where };
     const statements = pairs.map((pair) => ({
       s: 'const',
@@ -1106,7 +1108,7 @@ class JavaScriptParser {
           }
         }
         const where = span(start, c.peek());
-        const name = `ml_binding${++this.generatedCount}`;
+        const name = `${this.generatedPrefix}temporary_binding${++this.generatedCount}`;
         const object = { k: 'name', path: [name], span: where };
         const declarations = bindArrayElements(bindings, object, 'let', where).map(statement => ({
           ...statement, value: { ...statement.value, provenInBounds: true },
@@ -1328,8 +1330,8 @@ class JavaScriptParser {
     const iterable = { k: 'forOfIterable', object: value, span: value.span };
     c.expect(')', 'for');
     this.generatedCount += 1;
-    const values = `ml_values${this.generatedCount}`;
-    const index = `ml_index${this.generatedCount}`;
+    const values = `${this.generatedPrefix}temporary_values${this.generatedCount}`;
+    const index = `${this.generatedPrefix}temporary_index${this.generatedCount}`;
     const outer = this.scope;
     this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
     let body;
@@ -1345,7 +1347,7 @@ class JavaScriptParser {
     const where = span(start, c.peek());
     const read = (local) => ({ k: 'name', path: [local], span: where });
     const element = { k: 'index', object: read(values), index: read(index), provenInBounds: true, span: where };
-    const declarations = bindings ? [{ s: 'const', name: `ml_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`ml_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
+    const declarations = bindings ? [{ s: 'const', name: `${this.generatedPrefix}temporary_element${this.generatedCount}`, value: element, span: where }, ...bindArrayElements(bindings, read(`${this.generatedPrefix}temporary_element${this.generatedCount}`), binding, where)] : [{ s: binding, name: name.value, value: element, span: where }];
     const sourceBlock = {
       s: 'block',
       body: [
@@ -1527,7 +1529,7 @@ class JavaScriptParser {
    * or assign; main binds each of them for the statements after it.
    */
   lowerTopLevel(statements, effects) {
-    const variables = effects.filter((effect) => effect.k === 'let' && !effect.name.startsWith('ml_')).map((effect) => effect.name);
+    const variables = effects.filter((effect) => effect.k === 'let' && !effect.name.startsWith(this.generatedPrefix)).map((effect) => effect.name);
     const where = { start: statements[0].span.start, end: statements.at(-1).span.end };
     return lowerTopLevel(this, statements, variables, where);
   }
@@ -1554,7 +1556,7 @@ class JavaScriptParser {
     const expr = this.expr();
     c.eat(';');
     this.generatedCount += 1;
-    return { k: 'let', name: `ml_main_ignored${this.generatedCount}`, value: expr, span: span(token, c.peek()) };
+    return { k: 'let', name: `${this.generatedPrefix}temporary_main_ignored${this.generatedCount}`, value: expr, span: span(token, c.peek()) };
   }
 
   consoleStatement() {
@@ -1723,7 +1725,7 @@ class JavaScriptParser {
       for (let step = 0; ; step += 1) {
         const instruction = readJavaScriptValueSwitchInstruction(false, step, clauses.length);
         if (instruction === 'capture') {
-          name = `ml_switch${++this.generatedCount}`;
+          name = `${this.generatedPrefix}temporary_switch${++this.generatedCount}`;
           read = { k: 'name', path: [name], span: where };
         } else if (instruction === 'fallback') {
           body = fallback ? this.lower(fallback.body, fallback.span) : rest ? rest() : { k: 'unit', span: where };
@@ -2517,7 +2519,6 @@ class JavaScriptParser {
   }
 }
 
-/** Local names with the translator's `ml_` prefix could meet the names it makes up. */
 const FORMAT_STYLES = { s: 'js-console', d: 'js-format-number', i: 'js-format-integer' };
 
 /**
@@ -2576,11 +2577,9 @@ function consoleFormat([first, ...values]) {
   return pieces.reduce((left, right) => ({ k: 'binary', op: 'concat', left, right, span: first.span }));
 }
 
+/** Source binding roles retain the ECMAScript early errors. */
 function reserved(token) {
   requireJavaScriptIdentifierRole(token, true);
-  if (/^ml_/u.test(token.value)) {
-    throw unsupported('reserved identifier', `${token.value} uses the translator's reserved ml_ prefix`, span(token, token));
-  }
 }
 
 /** A top-level declaration may not shadow a global the translation reads as the built-in. */

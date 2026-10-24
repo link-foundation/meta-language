@@ -486,6 +486,7 @@ struct Checker {
     /// Functions whose parameter and result types are resolved.
     signatures: HashSet<String>,
     fresh: usize,
+    generated_prefix: String,
     modules: HashMap<String, Scope>,
     /// The other items of the module, in scope after the program's own.
     externals: Vec<External>,
@@ -502,12 +503,20 @@ impl Checker {
             decls: HashMap::new(),
             signatures: HashSet::new(),
             fresh: 0,
+            generated_prefix: "ml_".to_owned(),
             modules,
             externals,
         }
     }
 
     fn program(mut self, surface: &SProgram) -> Result<Program> {
+        self.generated_prefix = {
+            let facts = serde_json::to_value(surface)
+                .expect("a typed surface program has serializable source facts");
+            super::source_identifiers::read_source_identifier_supply(
+                super::source_identifiers::collect_source_identifier_texts(&facts),
+            )
+        };
         self.reference_semantics =
             super::surface_raw_metadata_rules::select_surface_reference_semantics(
                 surface

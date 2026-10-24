@@ -245,8 +245,15 @@ pub(super) fn expose_natural_cases(entry: &mut FnDecl) {
         if !param.ty.is_natural() {
             continue;
         }
+        let prefix = {
+            let facts = serde_json::to_value(&*entry)
+                .expect("a typed function serializes its source names");
+            super::super::source_identifiers::read_source_identifier_supply(
+                super::super::source_identifiers::collect_source_identifier_texts(&facts),
+            )
+        };
         let mut fresh = 0;
-        let Some(body) = split_natural(&entry.body, &param.name, &mut fresh) else {
+        let Some(body) = split_natural(&entry.body, &param.name, &mut fresh, &prefix) else {
             continue;
         };
         if decreases_on(&body, &entry.full_name, index, &param.name, &HashSet::new()) {
@@ -318,7 +325,12 @@ pub(super) fn binds(cases: &[Case], name: &str) -> bool {
 }
 
 /// Splits zero tests on `name` into natural case splits; `None` when nothing changed.
-pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Option<Expr> {
+pub(super) fn split_natural(
+    expr: &Expr,
+    name: &str,
+    fresh: &mut usize,
+    prefix: &str,
+) -> Option<Expr> {
     if let Node::If {
         cond,
         then,
@@ -332,7 +344,9 @@ pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Optio
             (otherwise, then)
         };
         *fresh += 1;
-        let pred = format!("ml_p{fresh}");
+        let pred = super::super::source_identifiers::render_source_generated_identifier(
+            prefix, "p", *fresh,
+        );
         let ty = match &cond.node {
             Node::Binary {
                 domain: Some(domain),
@@ -341,9 +355,9 @@ pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Optio
             _ => NAT,
         };
         let succ_body = predecessor_of(positive, name, &pred, &ty);
-        let succ_body = split_or_same(&succ_body, &pred, fresh);
-        let succ_body = split_or_same(&succ_body, name, fresh);
-        let zero = split_or_same(zero, name, fresh);
+        let succ_body = split_or_same(&succ_body, &pred, fresh, prefix);
+        let succ_body = split_or_same(&succ_body, name, fresh, prefix);
+        let zero = split_or_same(zero, name, fresh, prefix);
         return Some(Expr {
             node: Node::Match {
                 scrutinee: Box::new(Expr::var(name, ty).with_span(cond.span)),
@@ -369,7 +383,7 @@ pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Optio
     }
     let mut changed = false;
     let copy = expr.map_children(&mut |child| {
-        split_natural(child, name, fresh).map_or_else(
+        split_natural(child, name, fresh, prefix).map_or_else(
             || child.clone(),
             |next| {
                 changed = true;
@@ -380,8 +394,8 @@ pub(super) fn split_natural(expr: &Expr, name: &str, fresh: &mut usize) -> Optio
     changed.then_some(copy)
 }
 
-pub(super) fn split_or_same(expr: &Expr, name: &str, fresh: &mut usize) -> Expr {
-    split_natural(expr, name, fresh).unwrap_or_else(|| expr.clone())
+pub(super) fn split_or_same(expr: &Expr, name: &str, fresh: &mut usize, prefix: &str) -> Expr {
+    split_natural(expr, name, fresh, prefix).unwrap_or_else(|| expr.clone())
 }
 
 /// Rewrites uses of `name - k` and `name == k` (k ≥ 1) in terms of

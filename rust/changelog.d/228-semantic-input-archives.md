@@ -110,3 +110,8 @@ Draft JavaScript identifier escapes with exact scalar, keyword, binding, propert
 and numeric-boundary decisions, preserving source positions. Generate shared
 Rust/Links definitions; extend Unicode lifetime recognition and author complete
 future original-module syntax, value, lexical and codec controls.
+
+Draft capture-free JavaScript source naming across parser lowering, mutable
+parameter cells, checker binders, natural recursion and target local/global
+allocation. Generate the shared naming definition as Rust/Links and author
+future original-Node/native/codec controls while retaining the old source inputs.

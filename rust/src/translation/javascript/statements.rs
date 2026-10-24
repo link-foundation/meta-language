@@ -272,7 +272,10 @@ impl JavaScriptParser {
         let value = self.expr()?;
         let whole = self.to_here(start);
         self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
+        let name = format!(
+            "{}temporary_binding{}",
+            self.generated_prefix, self.generated_count
+        );
         let object = node(
             SNode::Name {
                 path: vec![name.clone()],
@@ -607,7 +610,9 @@ impl JavaScriptParser {
         let variables: Vec<String> = effects
             .iter()
             .filter_map(|effect| match effect {
-                SEffect::Let { name, .. } if !name.starts_with("ml_") => Some(name.clone()),
+                SEffect::Let { name, .. } if !name.starts_with(&self.generated_prefix) => {
+                    Some(name.clone())
+                }
                 _ => None,
             })
             .collect();
@@ -705,7 +710,10 @@ impl JavaScriptParser {
         self.cursor.eat(";");
         self.generated_count += 1;
         Ok(vec![SEffect::Let {
-            name: format!("ml_main_ignored{}", self.generated_count),
+            name: format!(
+                "{}temporary_main_ignored{}",
+                self.generated_prefix, self.generated_count
+            ),
             ty: None,
             value,
             constant: false,

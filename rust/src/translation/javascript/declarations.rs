@@ -722,7 +722,12 @@ impl JavaScriptParser {
         let body = if imperative(tail) {
             lower_imperative(self, &name, &params, tail, place)?
         } else {
-            lower(tail, place, &mut self.generated_count)?
+            lower(
+                tail,
+                place,
+                &mut self.generated_count,
+                &self.generated_prefix,
+            )?
         };
         let declaration = SFn {
             semantic_ret: None,

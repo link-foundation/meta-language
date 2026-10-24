@@ -128,7 +128,7 @@ impl Lowering {
             let body = (ctx.fall)(self, scope)?;
             rows.push(ctor_row(&data, &done, &variables, body, place));
             if returns {
-                let value = format!("ml_result{}", self.count);
+                let value = format!("{}temporary_result{}", self.prefix, self.count);
                 let returned = format!("{name}_return");
                 ctors.push(SCtor {
                     name: returned.clone(),

@@ -151,7 +151,8 @@ fn mutable_bindings_javascript_could_not_run_as_translated_are_rejected() {
         ),
     ];
     for (source, message) in cases {
-        if source == "function f(n) { let x; x = n; return x; }"
+        if source == "function f(n) { let ml_x = n; return ml_x; }"
+            || source == "function f(n) { let x; x = n; return x; }"
             || source == "function f(n) { while (n > 0n) { if (n === 3n) return n; n--; } }"
         {
             let calls = if source.contains("while") {

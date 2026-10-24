@@ -72,6 +72,7 @@ export { createLinkAllocationProgramLinks } from './link-allocation-program.js';
 export { acceptLinkAllocationCapacity, acceptLinkAllocationWord } from './link-allocation-rules.js';
 export { createRustInherentProgramLinks } from './rust-inherent-program.js';
 export { createUnicodeScalarProgramLinks } from './unicode-scalar-program.js';
+export { createSourceIdentifierProgramLinks } from './source-identifier-program.js';
 export { createReferenceArrayProjectionProgramLinks } from './reference-array-projection-program.js';
 export { createJavaScriptIdentifierProgramLinks } from './javascript-identifier-program.js';
 export { SOURCE_IDENTIFIER_UNICODE_VERSION, normalizeUnicodeText } from './translation/unicode-identifiers.js';

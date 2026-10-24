@@ -13,7 +13,8 @@
 
 import { TranslationError, unsupported } from './diagnostics.js';
 import { mutableClosureCells } from './javascript-cells.js';
-import { readCallableCellLowering, renderCallableCellParameterName } from './callable-source-rules.js';
+import { readCallableCellLowering } from './callable-source-rules.js';
+import { renderSourceCellParameter } from './source-identifier-rules.js';
 import { renameCallableSourceExpression } from './callable-source.js';
 import { requireJavaScriptBranchContinuation } from './frontend-rules.js';
 import { acceptJavaScriptValueSwitch, readJavaScriptValueSwitchInstruction,
@@ -165,11 +166,11 @@ export function lowerImperative(parser, name, params, statements, where, externa
   const captured = new Set([...externalCells, ...externalBindings]);
   const scope = [...captured].filter((name) => !params.some((param) => param.name === name))
     .map((name) => ({ source: name, ir: name, ...(externalCells.has(name) && { reference: true }) }));
-  for (const param of params) scope.push({ source: param.name, ir: renderCallableCellParameterName(param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
+  for (const param of params) scope.push({ source: param.name, ir: renderSourceCellParameter(parser.generatedPrefix, param.name, cells.has(param.name)), ...(cells.has(param.name) && { reference: true }) });
   let body = lowering.seq(flat(statements), 0, ctx, scope);
   for (const param of [...params].reverse()) {
     const allocation = readCallableCellLowering('declare', cells.has(param.name));
-    if (allocation) body = { k: 'let', name: renderCallableCellParameterName(param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
+    if (allocation) body = { k: 'let', name: renderSourceCellParameter(parser.generatedPrefix, param.name, true), value: { k: allocation, value: named(param.name, where), span: where }, body, span: where };
   }
   return body;
 }
@@ -269,7 +270,7 @@ class Lowering {
 
   /** A declaration in scope; one that shadows a variable in scope gets a new name. */
   declare(scope, source) {
-    const ir = lookup(scope, source) ? `ml_${source}_${++this.renames}` : source;
+    const ir = lookup(scope, source) ? `${this.parser.generatedPrefix}shadow_${source}_${++this.renames}` : source;
     return [...scope, { source, ir, ...(this.cells.has(source) && { reference: true }) }];
   }
 
@@ -531,7 +532,7 @@ class Lowering {
     const inner = { ...ctx, fall: () => next.make(current()) };
     const rows = [next.row];
     if (exits.ret) {
-      const result = `ml_result${this.parser.generatedCount}`;
+      const result = `${this.parser.generatedPrefix}temporary_result${this.parser.generatedCount}`;
       const returned = alternative('return', [result], ctx.ret(named(result, where)));
       inner.ret = (value) => returned.make([value]);
       rows.push(returned.row);
@@ -552,7 +553,7 @@ class Lowering {
 
   generatedName(kind) {
     this.parser.generatedCount += 1;
-    return `ml_${this.fn}_${kind}${this.parser.generatedCount}`;
+    return `${this.parser.generatedPrefix}temporary_${this.fn}_${kind}${this.parser.generatedCount}`;
   }
 
   /**
@@ -601,7 +602,7 @@ class Lowering {
         span: where,
       });
       if (returns) {
-        const value = `ml_result${this.parser.generatedCount}`;
+        const value = `${this.parser.generatedPrefix}temporary_result${this.parser.generatedCount}`;
         const returned = { name: `${name}_return`, fields: [{ name: value, type: null }] };
         ctors.push(returned);
         give = (result) => ({ k: 'ctorObject', tag: returned.name, fields: { [value]: result }, span: where });

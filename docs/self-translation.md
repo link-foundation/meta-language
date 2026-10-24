@@ -766,3 +766,15 @@ lifetime/character selection extends the shared Unicode program. Future paired
 controls include independent Node module syntax rejection and every original
 value, exact lexical assertion, graph, codec and emission; none ran. Source
 header Unicode profiles, source symbol hygiene and inherited requirements remain.
+
+The source identifier definition now generates native/Links namespace selection,
+generated binder/cell spelling and target escaping. Host adapters census actual
+source/surface/typed names and transport UTF-16 values, sorted ordinal columns
+and existing target naming maps. No native replacement naming policy is added.
+Parser temporaries, shadows and mutable parameter cells use separate families;
+checker and natural-recursion binders avoid every actual declaration name.
+Fifteen future original-Node/native/graph/codec/four-emission source controls,
+two retained refusal inputs with corrected positive expectations, and namespace
+boundary controls are drafted without execution. Generated snapshots and
+historical assertions still need reconciliation alongside closed source profiles
+and the inherited requirements. No tests, gates or Rust compilation ran.

@@ -464,6 +464,7 @@ struct JavaScriptParser {
     /// Functions and data types that loops and joins of statements lower to, and their count.
     generated: Vec<SItem>,
     generated_count: usize,
+    generated_prefix: String,
     indexed_reference_writes: usize,
     /// The other items of the module an item may call and read.
     externals: Vec<External>,
@@ -486,6 +487,10 @@ struct JavaScriptParser {
 impl JavaScriptParser {
     fn new(source: &str, tokens: Vec<Token>, comments: &[Comment]) -> Self {
         let reference_semantics = reference_analysis::requires_reference_semantics(&tokens, &[]);
+        let generated_prefix =
+            crate::translation::source_identifiers::read_source_parser_identifier_supply(
+                source, &tokens,
+            );
         Self {
             source: Source::new(source),
             cursor: TokenCursor::new(tokens, Language::JavaScript),
@@ -516,6 +521,7 @@ impl JavaScriptParser {
             scalar_loop_model: String::new(),
             generated: Vec::new(),
             generated_count: 0,
+            generated_prefix,
             indexed_reference_writes: 0,
             externals: Vec::new(),
             module_directory: None,

@@ -142,7 +142,7 @@ impl JavaScriptParser {
             if exported {
                 for entry in &entries {
                     if let SEffect::Let { name, .. } = entry
-                        && !name.starts_with("ml_")
+                        && !name.starts_with(&self.generated_prefix)
                     {
                         self.exported_names.insert(name.clone());
                     }

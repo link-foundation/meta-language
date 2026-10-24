@@ -41,7 +41,8 @@ impl Checker {
                 )?;
             }
             let owned_loop = matches!(item, SItem::Fn(function) if function.source_loop.is_some());
-            if name.starts_with("ml_") && !generated && !owned_loop {
+            if self.language != "JavaScript" && name.starts_with("ml_") && !generated && !owned_loop
+            {
                 return Err(unsupported(
                     "reserved identifier",
                     &format!("{name} uses the translator's reserved ml_ prefix"),
@@ -737,7 +738,11 @@ impl Checker {
 
     pub(super) fn fresh_name(&mut self, prefix: &str) -> String {
         self.fresh += 1;
-        format!("{prefix}{}", self.fresh)
+        crate::translation::source_identifiers::render_source_generated_identifier(
+            &self.generated_prefix,
+            prefix,
+            self.fresh,
+        )
     }
 
     pub(super) fn unify(

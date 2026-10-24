@@ -2869,9 +2869,32 @@ preceding input and execute independent Node module syntax observations for
 every newly declared syntax refusal, as well as program/definition graphs,
 both codecs and four emissions. None ran. Script/sloppy/generator roles and a
 Unicode variant of the separately selected ASCII source-header profile still
-need their source drafts. The valid `ml_` local names in an earlier projection
-fixture remain blocked by the existing source reservation; completing that
-case requires capture-free symbol allocation throughout source lowering.
+need their source drafts.
+
+The source identifier draft admits ordinary JavaScript `ml_` bindings instead
+of reserving a prefix absent from ECMAScript's reserved words. A complete shared
+JavaScript definition generates native source and editable typed Links for
+canonical namespace ordinals, first-unused namespace selection, generated
+binders, cell parameters and escaped target spellings. Actual source tokens,
+comment/type spellings and complete surface/typed declaration names supply the
+census. Parser temporaries, lexical shadows and mutable parameter cells use
+separate generated families. Checker temporaries and natural recursion splits
+also select a namespace disjoint from the actual input. Target local and global
+allocators escape private spellings after target normalization, then retain
+ordinary uniqueness allocation and reference mappings. Top-level source effects
+are distinguished using the selected generated namespace, rather than dropping
+all valid source names beginning with `ml_`.
+
+Fifteen future source values retain the original projection hygiene input and
+cover namespace gaps, large/noncanonical ordinals, escaped identifiers, target
+snake-case collisions, nested shadowing, captured mutable bindings, cell
+parameters, loop binders and global declaration collisions. Two retained old
+refusal inputs gain positive independent Node/emitted/native controls according
+to the identifier specification. Complete paired definition/program graphs,
+both codecs and four target emissions remain required. None ran. Historical
+refusal assertions elsewhere, generated-name snapshots, selected closed pattern
+and scalar-loop profiles, other frontend symbol supplies and full emitted-source
+reimport still need reconciliation; this draft does not declare them complete.
 
 The struct-constructor namespace draft preserves the distinction between a
 source struct's value constructor and an associated item sharing its spelling.

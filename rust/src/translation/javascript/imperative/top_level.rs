@@ -21,6 +21,7 @@ pub(in crate::translation::javascript) fn lower_top_level(
 ) -> Result<Vec<SEffect>> {
     let mut lowering = Lowering {
         function: "main".to_owned(),
+        prefix: parser.generated_prefix.clone(),
         renames: 0,
         generated: std::mem::take(&mut parser.generated),
         count: parser.generated_count,

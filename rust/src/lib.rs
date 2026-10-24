@@ -115,6 +115,7 @@ pub use translation::rust_inherent_program::create_rust_inherent_program_links;
 pub use translation::rust_primitive_bitwise_program::create_rust_primitive_bitwise_program_links;
 pub use translation::rust_record_program::create_rust_record_program_links;
 pub use translation::rust_shift_program::create_rust_shift_program_links;
+pub use translation::source_identifier_program::create_source_identifier_program_links;
 pub use translation::unicode_scalar_program::create_unicode_scalar_program_links;
 pub mod verification;
 

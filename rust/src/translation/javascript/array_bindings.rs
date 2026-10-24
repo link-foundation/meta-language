@@ -304,7 +304,10 @@ impl JavaScriptParser {
         }
         let whole = self.to_here(start);
         self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
+        let name = format!(
+            "{}temporary_binding{}",
+            self.generated_prefix, self.generated_count
+        );
         let object = node(
             SNode::Name {
                 path: vec![name.clone()],
@@ -357,7 +360,10 @@ impl JavaScriptParser {
         let value = self.array_binding_initializer(&bindings)?;
         let whole = self.to_here(start);
         self.generated_count += 1;
-        let name = format!("ml_binding{}", self.generated_count);
+        let name = format!(
+            "{}temporary_binding{}",
+            self.generated_prefix, self.generated_count
+        );
         let object = node(
             SNode::Name {
                 path: vec![name.clone()],

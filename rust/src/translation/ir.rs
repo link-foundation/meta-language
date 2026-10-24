@@ -874,11 +874,18 @@ impl<'a> Scope<'a> {
     }
 
     pub fn fresh(&mut self, name: &str) -> String {
+        let name = crate::translation::source_identifiers::render_source_target_identifier(name);
         // A suffixed name is legal on its own: `end_2` needs none of the quoting of Lean's `«end»`.
-        let mut candidate = (self.ident)(name);
+        let mut candidate = crate::translation::source_identifiers::render_source_target_identifier(
+            &(self.ident)(&name),
+        );
         let mut index = 2;
         while self.used.contains(&candidate) {
-            candidate = (self.ident)(&format!("{name}_{index}"));
+            candidate =
+                crate::translation::source_identifiers::render_source_target_identifier(&(self
+                    .ident)(
+                    &format!("{name}_{index}"),
+                ));
             index += 1;
         }
         self.used.insert(candidate.clone());

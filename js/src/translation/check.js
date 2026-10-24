@@ -11,6 +11,8 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 
 import { typeError, unsupported } from './diagnostics.js';
 import { captureArraySourceOperands, wrapArraySourceOperands } from './array-source-operands.js';
+import { readSourceIdentifierSupply, collectSourceIdentifierTexts } from './source-identifiers.js';
+import { renderSourceGeneratedIdentifier } from './source-identifier-rules.js';
 import { planTuplePatternFields } from './rust-record-rules.js';
 import { checkJavaScriptSourcePropertyCall } from './javascript-property-calls.js';
 import {readJavaScriptNumberBitwiseArity} from './number-bitwise-rules.js';
@@ -181,10 +183,12 @@ class Checker {
     this.items = new Map();
     this.externals = new Map(externals.map((external) => [external.name, externalEntry(external)]));
     this.fresh = 0;
+    this.generatedPrefix = 'ml_';
     this.modules = new Map([['', { path: [], names: new Map(), modules: new Map() }]]);
   }
 
   program(surface) {
+    this.generatedPrefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(surface));
     this.declare(surface.items, []);
     const items = this.checkItems(surface.items, []);
     const main = surface.main ? this.checkMain(surface.main) : null;
@@ -221,7 +225,7 @@ class Checker {
         throw typeError(`duplicate declaration ${fullName}`, item.span);
       }
       if (item.sourceLoop !== undefined) checkRustScalarLoopProof(item, this.language, fullName);
-      if (/^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
+      if (this.language !== 'JavaScript' && /^ml_/u.test(item.name) && !item.generated && item.sourceLoop === undefined) {
         throw unsupported('reserved identifier', `${item.name} uses the translator's reserved ml_ prefix`, item.span);
       }
       if (item.k === 'module') {
@@ -1574,7 +1578,7 @@ class Checker {
 
   freshName(prefix) {
     this.fresh += 1;
-    return `${prefix}${this.fresh}`;
+    return renderSourceGeneratedIdentifier(this.generatedPrefix, prefix, this.fresh);
   }
 
   compileRows(columns, rows, span) {
@@ -2114,10 +2118,11 @@ function exposeNaturalCases(entry) {
   for (let index = 0; index < entry.params.length; index += 1) {
     const param = entry.params[index];
     if (!isNatural(param.type)) continue;
+    const prefix = readSourceIdentifierSupply(collectSourceIdentifierTexts(entry));
     let fresh = 0;
     const freshName = () => {
       fresh += 1;
-      return `ml_p${fresh}`;
+      return renderSourceGeneratedIdentifier(prefix, 'p', fresh);
     };
     const body = splitNatural(entry.body, param.name, freshName);
     if (body !== entry.body && decreasesOn(body, entry.fullName, index, param.name, new Set())) {

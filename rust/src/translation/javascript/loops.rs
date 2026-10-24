@@ -361,8 +361,14 @@ impl JavaScriptParser {
         );
         self.cursor.expect(")", Some("for"))?;
         self.generated_count += 1;
-        let values = format!("ml_values{}", self.generated_count);
-        let index = format!("ml_index{}", self.generated_count);
+        let values = format!(
+            "{}temporary_values{}",
+            self.generated_prefix, self.generated_count
+        );
+        let index = format!(
+            "{}temporary_index{}",
+            self.generated_prefix, self.generated_count
+        );
         let outer = self.scope.clone();
         if let Some(bindings) = &bindings {
             for binding in bindings {
@@ -426,7 +432,10 @@ impl JavaScriptParser {
             place,
         );
         let mut declarations = if let Some(bindings) = bindings {
-            let element_name = format!("ml_element{}", self.generated_count);
+            let element_name = format!(
+                "{}temporary_element{}",
+                self.generated_prefix, self.generated_count
+            );
             let mut declarations = vec![Stmt::Const {
                 name: element_name.clone(),
                 value: element,
@@ -533,15 +542,7 @@ impl JavaScriptParser {
     }
 }
 
-/// Local names with the translator's `ml_` prefix could meet the names it makes up.
+/// Source binding roles retain the ECMAScript early errors.
 pub(super) fn reserved(token: &Token) -> Result<()> {
-    crate::translation::lexer::require_java_script_identifier_role(token, true)?;
-    if token.value.starts_with("ml_") {
-        return Err(unsupported(
-            "reserved identifier",
-            &format!("{} uses the translator's reserved ml_ prefix", token.value),
-            Some(span(token, token)),
-        ));
-    }
-    Ok(())
+    crate::translation::lexer::require_java_script_identifier_role(token, true)
 }

@@ -36,6 +36,7 @@ pub(super) fn lower(
     statements: &[Stmt],
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     let list: Vec<&Stmt> = statements
         .iter()
@@ -47,7 +48,7 @@ pub(super) fn lower(
         })
         .filter(|statement| !matches!(statement, Stmt::Empty))
         .collect();
-    lower_at(&list, 0, place, generated_count)
+    lower_at(&list, 0, place, generated_count, generated_prefix)
 }
 
 pub(super) const fn statement_span(statement: &Stmt) -> Option<Span> {
@@ -87,13 +88,14 @@ pub(super) fn lower_at(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     // A function that finishes without returning returns undefined, the unit value.
     let Some(statement) = list.get(index) else {
         return Ok(node(SNode::Unit, place));
     };
     if let Some(guards) = tag_guard_sequence(list[index..].iter().copied()) {
-        return lower(&[guards], place, generated_count);
+        return lower(&[guards], place, generated_count, generated_prefix);
     }
     match statement {
         Stmt::Const { name, value, span } => Ok(node(
@@ -101,7 +103,13 @@ pub(super) fn lower_at(
                 name: name.clone(),
                 ty: None,
                 value: Box::new(value.clone()),
-                body: Box::new(lower_at(list, index + 1, place, generated_count)?),
+                body: Box::new(lower_at(
+                    list,
+                    index + 1,
+                    place,
+                    generated_count,
+                    generated_prefix,
+                )?),
             },
             *span,
         )),
@@ -127,7 +135,7 @@ pub(super) fn lower_at(
                 ));
             }
             unreachable(list, index)?;
-            lower(body, *span, generated_count)
+            lower(body, *span, generated_count, generated_prefix)
         }
         Stmt::If {
             cond,
@@ -142,22 +150,22 @@ pub(super) fn lower_at(
                     Some(*span),
                 ));
             }
-            let then = lower(then, *span, generated_count)?;
+            let then = lower(then, *span, generated_count, generated_prefix)?;
             if let Some(test) = tag_condition(cond) {
                 if otherwise.is_some() {
                     unreachable(list, index)?;
                 }
                 let other = match otherwise {
-                    Some(branch) => lower(branch, *span, generated_count)?,
-                    None => lower_at(list, index + 1, place, generated_count)?,
+                    Some(branch) => lower(branch, *span, generated_count, generated_prefix)?,
+                    None => lower_at(list, index + 1, place, generated_count, generated_prefix)?,
                 };
                 return lower_tag_if(test, then, other, *span);
             }
             let other = if let Some(branch) = otherwise {
                 unreachable(list, index)?;
-                lower(branch, *span, generated_count)?
+                lower(branch, *span, generated_count, generated_prefix)?
             } else {
-                lower_at(list, index + 1, place, generated_count)?
+                lower_at(list, index + 1, place, generated_count, generated_prefix)?
             };
             Ok(node(
                 SNode::If {
@@ -168,7 +176,14 @@ pub(super) fn lower_at(
                 *span,
             ))
         }
-        Stmt::Switch(switch) => lower_switch(switch, list, index, place, generated_count),
+        Stmt::Switch(switch) => lower_switch(
+            switch,
+            list,
+            index,
+            place,
+            generated_count,
+            generated_prefix,
+        ),
         Stmt::Expr { span, .. } => Err(unsupported(
             "expression statement",
             "statements with effects are outside the portable core in function bodies",
@@ -257,6 +272,7 @@ pub(super) fn lower_switch(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     for clause in &node.clauses {
         if !terminates(&clause.body) {
@@ -276,7 +292,7 @@ pub(super) fn lower_switch(
                 .any(|test| matches!(test, CaseTest::Value { .. }))
         }),
     ) {
-        return lower_value_switch(node, list, index, place, generated_count);
+        return lower_value_switch(node, list, index, place, generated_count, generated_prefix);
     }
     let tag_switch = node.tag.as_ref().map(|(subject, data)| TagSwitch {
         subject,
@@ -289,7 +305,7 @@ pub(super) fn lower_switch(
     let mut has_default = false;
     for clause in &node.clauses {
         for test in &clause.tests {
-            let body = lower(&clause.body, clause.span, generated_count)?;
+            let body = lower(&clause.body, clause.span, generated_count, generated_prefix)?;
             match (test, &tag_switch) {
                 (CaseTest::Default { span }, tag_switch) => {
                     has_default = true;
@@ -351,7 +367,7 @@ pub(super) fn lower_switch(
     } else if !at_end && !has_default {
         rows.push(SRow {
             patterns: vec![wild(node.span)],
-            body: lower_at(list, index + 1, place, generated_count)?,
+            body: lower_at(list, index + 1, place, generated_count, generated_prefix)?,
             span: Some(node.span),
         });
     } else if has_default {
@@ -424,6 +440,7 @@ fn lower_value_switch(
     index: usize,
     place: Span,
     generated_count: &mut usize,
+    generated_prefix: &str,
 ) -> Result<SExpr> {
     let fallback = switch.clauses.iter().find(|clause| {
         clause
@@ -452,7 +469,7 @@ fn lower_value_switch(
         match instruction.as_str() {
             "capture" => {
                 *generated_count += 1;
-                name = format!("ml_switch{generated_count}");
+                name = format!("{generated_prefix}temporary_switch{generated_count}");
                 read = Some(node(
                     SNode::Name {
                         path: vec![name.clone()],
@@ -462,9 +479,9 @@ fn lower_value_switch(
             }
             "fallback" => {
                 body = Some(if let Some(clause) = fallback {
-                    lower(&clause.body, clause.span, generated_count)?
+                    lower(&clause.body, clause.span, generated_count, generated_prefix)?
                 } else if index + 1 < list.len() {
-                    lower_at(list, index + 1, place, generated_count)?
+                    lower_at(list, index + 1, place, generated_count, generated_prefix)?
                 } else {
                     node(SNode::Unit, switch.span)
                 });
@@ -508,7 +525,14 @@ fn lower_value_switch(
                                 span,
                             ));
                     }
-                    "body" => branch = Some(lower(&clause.body, clause.span, generated_count)?),
+                    "body" => {
+                        branch = Some(lower(
+                            &clause.body,
+                            clause.span,
+                            generated_count,
+                            generated_prefix,
+                        )?)
+                    }
                     _ => {
                         body = Some(node(
                             SNode::If {
