@@ -39,6 +39,14 @@ impl Checker {
         span: Option<Span>,
     ) -> Result<Expr> {
         let object = self.expr(object, env, path, None, false)?;
+        if crate::translation::array_state_method_rules::accept_linked_array_state_method(
+            "method",
+            operation,
+            object.ty.kind(),
+            object.ty.is_reference(),
+        ) {
+            return self.check_array_state_method(object, operation, args, env, path, span);
+        }
         if !crate::translation::record_write_rules::read_record_field_write_operator(operation)
             .is_empty()
         {

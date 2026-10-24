@@ -18,6 +18,7 @@ import { readFixedIntegerCastFlavor } from './fixed-integer-cast-rules.js';
 import { acceptSemanticBranchContextReordering } from './semantic-input-rules.js';
 import { checkReferenceMethod } from './reference-methods.js';
 import { checkRecordFieldWrite, checkSourceRecordFieldWrite } from './record-writes.js';
+import { checkArrayStateMethod } from './array-state-methods.js';
 import { readCollectionAccessArgumentCount } from './collection-access-rules.js';
 import {acceptReferenceIdentityComparison} from './reference-identity-rules.js';
 import {readRustSharedArrayHandleComparisonProjection} from './rust-shared-array-handle-rules.js';
@@ -1045,6 +1046,8 @@ class Checker {
     const receiver = this.expr(node.object, env, path, undefined);
     const recordWrite = checkRecordFieldWrite(this, node, receiver, env, path);
     if (recordWrite) return recordWrite;
+    const arrayStateMethod = checkArrayStateMethod(this, node, receiver, env, path);
+    if (arrayStateMethod) return arrayStateMethod;
     const referenceMethod = checkReferenceMethod(this, node, receiver, env, path);
     if (referenceMethod) return flattenOption(referenceMethod);
     const object = this.referenceValue(receiver);

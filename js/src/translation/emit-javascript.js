@@ -7,6 +7,8 @@ import {readJavaScriptNumberBitwiseSymbol,readJavaScriptNumberBitwiseArity} from
 import { readBigIntegerBitwiseArity, renderBigIntegerBitwiseExpression } from './big-integer-bitwise-rules.js';
 import { readRustPrimitiveBitwiseArity } from './rust-primitive-bitwise-rules.js';
 import { emitRustPrimitiveBitwise } from './rust-primitive-bitwise.js';
+import { acceptLinkedArrayStateMethod, renderArrayStateMethodExpression,
+  readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
 import { renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
 // JavaScript emitter. Every portable integer is a BigInt, so naturals and
@@ -474,6 +476,11 @@ class JavaScriptEmitter {
       case 'lambda':
         return renderCallableLambda('JavaScript', e.params.map(param => param.name), [], '', this.expr(e.body), []);
       case 'method':
+        if (acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+          const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+          this.state.encode(readArrayStateMethodIdentity(e.op), readArrayStateMethodStatement());
+          return renderArrayStateMethodExpression('JavaScript', e.op, receiver, args, [], [], '');
+        }
         if (acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
           const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
           this.state.encode('write-record-field', readRecordFieldWriteStatement());

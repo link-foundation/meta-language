@@ -131,6 +131,32 @@ pub(super) struct Includes {
 
 impl Inference {
     fn infer_shared_collection_method(&mut self, method: &Method, receiver: &Term) -> Result<bool> {
+        if let Term::Array(element) = receiver
+            && !crate::translation::array_state_method_rules::read_array_state_method_result(
+                &method.operation,
+            )
+            .is_empty()
+        {
+            for (index, argument) in method.args.iter().enumerate() {
+                let role=crate::translation::array_state_method_rules::read_array_state_method_argument_role(&method.operation,
+                    serde_json::Number::from(index).as_f64().expect("an actual argument position is a Number"));
+                if role == "element" {
+                    self.unify(argument, element, method.place)?;
+                } else if !role.is_empty() {
+                    match self.resolve(argument) {
+                        Term::Var(_) => self.unify(argument, &Term::Known(FLOAT), method.place)?,
+                        Term::Option { element, .. }
+                            if matches!(self.resolve(&element), Term::Var(_)) =>
+                        {
+                            self.unify(&element, &Term::Known(FLOAT), method.place)?
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            self.unify(&method.result, receiver, method.place)?;
+            return Ok(true);
+        }
         use crate::translation::{
             collection_access_rules as access, reference_method_rules as references,
         };

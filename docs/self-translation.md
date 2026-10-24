@@ -561,3 +561,14 @@ original Rust, translated JavaScript and emitted Rust, plus both codecs and
 complete four-target parity. Precedence, contextual literals and eager Boolean
 failure have independent controls. None ran. Shift overflow, overloaded traits
 and compound Rust local state retain their implementation obligations.
+
+The dense array range draft adds shared `splice`, `fill` and `copyWithin`
+checking, result ownership and target construction. JavaScript generates native
+rules and complete typed Links definitions. Bound actual operands precede
+storage borrows; their type annotations preserve nullable generic owners.
+Missing/undefined/null/NaN boundaries, overlap direction, element identities and
+the fresh removed-array identity remain explicit. New linked operation rows
+are additive. Future twenty-four-case controls and two refusals compare actual
+builtins, both codecs, complete paired source translation and one native CI
+product. They have not run. Sparse/described arrays, additional coercion domains,
+missing element widening and live callback mutation remain to draft.

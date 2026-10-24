@@ -2646,6 +2646,26 @@ complete declared input product. Shifts with their overflow modes, trait
 overloads, compound Rust state and the remaining full Rust grammar/library/
 ownership semantics remain separate implementation obligations.
 
+The dense shared-array range draft supplies `splice`, `fill` and `copyWithin`
+through one automatically translated JavaScript rule library. Actual receiver
+and argument expressions evaluate once in order before storage borrowing.
+Typed local bindings retain optional generic owners. Bounds follow Number
+integer conversion and clamping before native narrowing; omitted, undefined,
+null and NaN retain their distinct meanings. Boolean and optional primitive
+indices use their declared conversion profile. Copy ranges follow the specified
+target/start/end order and overlap direction. Fill retains element references,
+and splice creates a fresh shared removed array while mutating existing aliases.
+Complete source definitions and their recursive typed programs ship in both
+packages. Additive linked operation rows keep every predecessor definition;
+source reference selection and mutation-sensitive callbacks include the new
+operations. This profile follows the [ECMAScript range operations](https://tc39.es/ecma262/2025/multipage/indexed-collections.html#sec-array.prototype.splice).
+Twenty-four source controls and two conversion refusal controls are authored,
+including both codecs, actual builtin observations, paired full emission and a
+native CI product. None has run. Sparse slots, array subclasses and descriptors,
+object or string index coercions, missing fill values outside the represented
+element type, live callback mutation and the remaining state model still need
+their implementation drafts.
+
 Collection construction consumes the checked iterable value through the shared
 reference-read operation. It preserves input evaluation order and creates a
 separate collection identity. Item parsing retains supplied outer module owners

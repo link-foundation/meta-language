@@ -9,6 +9,7 @@
 import { typeError } from './diagnostics.js';
 import { readJavaScriptNumberBitwiseArity } from './number-bitwise-rules.js';
 import { readBigIntegerBitwiseArity } from './big-integer-bitwise-rules.js';
+import { readArrayStateMethodResult, readArrayStateMethodArgumentRole } from './array-state-method-rules.js';
 import { readReferenceMethodResult } from './reference-method-rules.js';
 import { readCollectionAccessResult } from './collection-access-rules.js';
 import { inferCollectionConstruction } from './collection-construction.js';
@@ -1140,6 +1141,16 @@ class Inference {
       return true;
     }
     if (receiver.kind === 'array') {
+      if (readArrayStateMethodResult(op)) {
+        args.forEach((argument,index) => {
+          const role=readArrayStateMethodArgumentRole(op,index), actual=this.resolve(argument);
+          if(role==='element')this.unify(argument,receiver.element,where);
+          else if(role&&actual.kind==='var')this.unify(argument,FLOAT,where);
+          else if(role&&actual.kind==='option'&&this.resolve(actual.element).kind==='var')this.unify(actual.element,FLOAT,where);
+        });
+        this.unify(result,receiver,where);
+        return true;
+      }
       const referenceResult = readReferenceMethodResult('array', op);
       if (referenceResult === 'length') {
         for (const arg of args) {

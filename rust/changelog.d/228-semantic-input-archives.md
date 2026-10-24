@@ -34,3 +34,6 @@ and future complete boundary/native execution controls.
 Draft independent Rust Boolean and fixed integer bit operations, exact source
 precedence, contextual literal types and shared four-target constructors, with
 future controls against original Rust and eager Boolean failures.
+Draft shared dense-array splice, fill and overlapping range copy with precise
+optional boundaries, aliases, fresh removed arrays and future builtin/native
+parity controls.

@@ -30,6 +30,7 @@ use super::types::Type;
 use super::{Language, Span};
 
 mod array_moves;
+mod array_state_methods;
 mod arrays;
 mod callables;
 mod declarations;

@@ -200,6 +200,7 @@ mod structured_data_links;
 mod structured_data_records;
 mod substitution;
 mod translation;
+mod translation_array_state_methods;
 mod translation_arrays;
 mod translation_ascii_text_predicates;
 mod translation_big_integer_bitwise;

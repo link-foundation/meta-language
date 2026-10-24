@@ -6,6 +6,8 @@ import { readReferenceMethodResult, readReferenceMethodIdentity, readReferenceMe
 import { acceptSnapshotCallbackParameters } from './reference-method-rules.js';
 import { acceptReadOnlyReferenceCallback } from './reference-callbacks.js';
 import { readArrayCallbackResultForm } from './array-callback-rules.js';
+import { acceptLinkedArrayStateMethod, readArrayStateMethodArgumentProfile, readArrayStateMethodSuffix,
+  renderArrayStateMethodExpression, readArrayStateMethodIdentity, readArrayStateMethodStatement } from './array-state-method-rules.js';
 import {checkRustRuntimeShell,emitRustRuntimeShell,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import { renderStringLengthExpression, renderStringMapExpression, renderStringTestExpression } from './frontend-rules.js';
 import {requireStringOrderUnits,renderStringOrderExpression} from './string-order-rules.js';
@@ -1212,6 +1214,15 @@ class RustEmitter {
   }
 
   expr(e) {
+    if (e.k === 'method' && acceptLinkedArrayStateMethod(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
+      this.temporaries += 1;
+      const receiver = this.expr(e.object), args = e.args.map(argument => this.expr(argument));
+      const profiles = e.args.map(argument => readArrayStateMethodArgumentProfile(argument.type.kind, argument.type.element?.kind ?? '', argument.type.absence ?? ''));
+      const types = e.args.map(argument => this.type(argument.type));
+      this.temporaries = readArrayStateMethodSuffix(this.temporaries, receiver, args);
+      this.state.encode(readArrayStateMethodIdentity(e.op), readArrayStateMethodStatement());
+      return renderArrayStateMethodExpression('Rust', e.op, receiver, args, profiles, types, String(this.temporaries));
+    }
     if (e.k === 'method' && acceptLinkedRecordFieldWrite(e.k, e.op, e.object.type.kind, e.object.type.reference === true)) {
       this.temporaries += 1;
       const initial = this.temporaries, receiver = this.expr(e.object);

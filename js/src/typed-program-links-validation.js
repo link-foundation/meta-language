@@ -4,6 +4,7 @@ import { acceptLinkedReferenceMethodOperation } from './translation/reference-me
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import { acceptLinkedRustPrimitiveBitwiseOperation, readRustPrimitiveBitwiseArity, acceptRustPrimitiveBitwiseType } from './translation/rust-primitive-bitwise-rules.js';
+import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptOptionalAbsence } from './translation/structured-type-rules.js';
 import { readCallableLinkedApplicationError } from './translation/callable-source-rules.js';
 import {checkRustRuntimeShell} from './translation/rust-runtime-shell.js';
@@ -153,7 +154,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
       && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)
       && !acceptLinkedBigIntegerBitwiseOperation(node.k, node.op)
-      && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)) throw new TypeError('a linked expression operation is unsupported');
+      && !acceptLinkedRustPrimitiveBitwiseOperation(node.k, node.op)
+      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object?.type?.kind ?? '', node.object?.type?.reference === true)) throw new TypeError('a linked expression operation is unsupported');
     if (node.k === 'ctor' && Object.hasOwn(node, 'frozen') && typeof node.frozen !== 'boolean') throw new TypeError('a linked constructor immutability flag must be a boolean');
     if (node.type && node.k) type(node.type);
     if (node.k === 'none') {
@@ -319,7 +321,8 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
     }
     if (node.k === 'method' && !['string', 'array'].includes(node.object.type?.kind)
       && !acceptLinkedReferenceMethodOperation(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
-      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)) throw new TypeError('a linked method has an unsupported receiver type');
+      && !acceptLinkedRecordFieldWrite(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)
+      && !acceptLinkedArrayStateMethod(node.k, node.op, node.object.type?.kind ?? '', node.object.type?.reference === true)) throw new TypeError('a linked method has an unsupported receiver type');
     if (node.k === 'optionalPredicate') {
       if (node.arg.type?.kind !== 'option') throw new TypeError('a linked optional predicate requires an optional value');
       same(node.type, { kind: 'bool' }, 'optional predicate result type');

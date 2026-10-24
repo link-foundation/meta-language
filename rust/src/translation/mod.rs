@@ -16,6 +16,8 @@ pub(crate) mod array_binding_rules;
 pub(crate) mod array_callback_rules;
 pub(crate) mod array_classification_rules;
 pub(crate) mod array_from_rules;
+pub(crate) mod array_state_method_program;
+pub(crate) mod array_state_method_rules;
 pub(crate) mod array_value_rules;
 pub(crate) mod ascii_text_predicate_rules;
 pub(crate) mod big_integer_bitwise_program;

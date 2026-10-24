@@ -310,7 +310,9 @@ pub fn read_reference_method_refusal(kind: &str, operation: &str) -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_reference_callback_effect(expression: &str, operation: &str) -> f64 {
-    if (((expression == "method") && operation.starts_with("writeRecordField"))
+    if ((((expression == "method")
+        && (((operation == "splice") || (operation == "fill")) || (operation == "copyWithin")))
+        || ((expression == "method") && operation.starts_with("writeRecordField")))
         || ((expression == "cellWrite") || (expression == "referenceWrite")))
         || ((((expression == "method") && (operation != "has")) && (operation != "get"))
             && (((!(self::read_reference_method_result("array", operation)).is_empty())

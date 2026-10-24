@@ -179,6 +179,27 @@ impl JavaScriptEmitter<'_> {
                 indent(&self.statements(e)?.join("\n"), 1)
             )),
             Node::Method { object, op, args } => {
+                if crate::translation::array_state_method_rules::accept_linked_array_state_method(
+                    "method",
+                    op,
+                    object.ty.kind(),
+                    object.ty.is_reference(),
+                ) {
+                    let receiver = self.expr(object)?;
+                    let mut arguments = Vec::new();
+                    for argument in args {
+                        let value = argument.as_ref().ok_or_else(|| {
+                            unsupported(
+                                "shared array range argument",
+                                "each actual source argument needs its expression",
+                                e.span,
+                            )
+                        })?;
+                        arguments.push(self.expr(value)?);
+                    }
+                    self.state.encode(&crate::translation::array_state_method_rules::read_array_state_method_identity(op),&crate::translation::array_state_method_rules::read_array_state_method_statement());
+                    return Ok(crate::translation::array_state_method_rules::render_array_state_method_expression("JavaScript",op,&receiver,&arguments,&[],&[],""));
+                }
                 if crate::translation::record_write_rules::accept_linked_record_field_write(
                     "method",
                     op,
