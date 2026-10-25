@@ -17,7 +17,7 @@ add('retained former default refusal now reads its original present value','retu
 add('retained former rest refusal now copies its actual own field','return [{value:3}].map(({...rest})=>rest.value).join("|");','3');
 const patternReason=code=>'record parameter binding: a nonempty flat required object pattern needs distinct lexical names; defaults, arrays, nested/rest/computed patterns are separate obligations (reason '+code+')';
 const refusals=[
- {name:'nested record pattern remains outside the flat profile',source:'export function compute(){return [{value:3}].map(({value:{nested}})=>nested).join("|");}',kind:'unsupported',reason:patternReason(5)},
+ {name:'retained nested primitive receiver needs its complete property protocol',source:'export function compute(){return [{value:3}].map(({value:{nested}})=>nested).join("|");}',kind:'unsupported',reason:'field access: field nested is only portable inside a constructor match'},
  {name:'record rest cannot precede another actual property',source:'export function compute(){return [{value:3}].map(({...rest,value})=>value).join("|");}',kind:'unsupported',reason:patternReason(6)},
  {name:'a non-simple parameter list cannot acquire a strict directive',source:'export function compute(){return [{value:3}].map(({value})=>{"use strict";return value;}).join("|");}',kind:'unsupported',reason:'record parameter strict directive: a non-simple formal parameter list cannot have a Use Strict Directive in its function body'},
 ];

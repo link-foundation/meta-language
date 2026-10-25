@@ -3999,6 +3999,41 @@ both codecs, four emissions and explicit runtime ranges remain deferred.
 Whole-parameter defaults, mixed recursive patterns, async/generator environments
 and complete property protocols remain implementation obligations.
 
+The recursive object-pattern source now represents every selected parent with
+an explicit owner edge. One automatically translated plan supplies original
+property/binding token positions, complete nested initializer intervals and
+each rest copy's actual exclusions. A parent is selected once before its
+descendants; its default runs before those descendant bindings. Initializer
+scope partitions at the first actual descendant binding, retaining earlier
+names and the existing self/later/write restrictions. Lexical name discovery
+uses the same complete tree. Both runtime adapters consume this plan for
+declarations and the existing synchronous formal contexts, keeping required
+fields on their original projection path. No new checked constructor or
+fabricated source token is introduced. Flat formal routes and all earlier
+exported flat planners retain their original contracts.
+
+Thirty-one future full source products and eight refusals cover nested aliases,
+mutable bindings, defaults, separate inner/outer rest order, original captures,
+named/constant/namespace/callback contexts and thirty-two levels of nesting.
+The shared depth limit is explicit source data and exhaustion refuses. Complete
+paired definitions, text/binary codecs, four emissions and native products
+remain unexecuted. The exact formerly refused lexical nested-record source is
+retained as a positive value control. A second unchanged historical callback
+uses a Number as its nested receiver: it still requires a complete primitive
+property protocol, so the future negative control now expects the existing
+field-access diagnostic after syntax admission. Its original source/value and
+all preceding assertions at `a8114383` remain independently retained; this
+diagnostic prediction comes from the unchanged property checker, not executed
+evidence. These meanings follow the same linked keyed-binding initialization
+specification above. Empty pattern coercibility, mixed arrays/iterators,
+computed/String keys, full primitive/prototype protocols, whole-parameter
+defaults and complete parameter environments remain implementation obligations.
+
+The latest full-draft continuation is preserved verbatim in
+[`full-requirements-drafting-until-finished-2026-10-25.txt`](../parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt).
+It reinforces the existing critical full-scope rows and changes no requirement,
+fixture, runtime, assertion or later verification obligation.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

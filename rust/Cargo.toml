@@ -151,6 +151,7 @@ include = [
     "src/data/record-order-surface-library.lino",
     "src/data/record-value-order-template.lino",
     "src/data/record-write-program.lino",
+    "src/data/recursive-object-binding-program.lino",
     "src/data/reference-identity-program.lino",
     "src/data/reference-method-program.lino",
     "src/data/resource-description-address-program.lino",

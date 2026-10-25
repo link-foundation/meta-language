@@ -53,6 +53,8 @@ mod owned_array_append;
 mod product_source_rules;
 mod products;
 mod record_parameters;
+mod recursive_object_bindings;
+mod recursive_object_formals;
 mod reference_analysis;
 mod scalar_assignments;
 mod scalar_loops;

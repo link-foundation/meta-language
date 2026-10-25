@@ -20,8 +20,22 @@ pub(super) struct RecordParameters {
     source_names: Vec<String>,
     bindings: Vec<RecordBinding>,
     array_entries: Option<Vec<super::array_formal_parameters::ArrayFormalEntry>>,
+    object_entries: Option<Vec<super::recursive_object_bindings::RecursiveObjectEntry>>,
 }
 impl RecordParameters {
+    pub(super) fn from_recursive_object_formals(
+        parameters: Vec<SParam>,
+        source_names: Vec<String>,
+        entries: Vec<super::recursive_object_bindings::RecursiveObjectEntry>,
+    ) -> Self {
+        Self {
+            parameters,
+            source_names,
+            bindings: Vec::new(),
+            array_entries: None,
+            object_entries: Some(entries),
+        }
+    }
     pub(super) fn from_array_formals(
         parameters: Vec<SParam>,
         source_names: Vec<String>,
@@ -32,6 +46,7 @@ impl RecordParameters {
             source_names,
             bindings: Vec::new(),
             array_entries: Some(entries),
+            object_entries: None,
         }
     }
 }
@@ -78,7 +93,7 @@ pub(super) const fn token_kind(token: &Token) -> &'static str {
     }
 }
 
-const fn parameter(name: String, place: Span) -> SParam {
+pub(super) const fn parameter(name: String, place: Span) -> SParam {
     SParam {
         name,
         optional: false,
@@ -344,6 +359,9 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
+        if let Some(syntax) = self.read_recursive_object_formals(&interval, start, context)? {
+            return Ok(Some(syntax));
+        }
         let values = rules::plan_java_script_source_record_parameters_with_rest(
             &kinds,
             &values,
@@ -414,6 +432,7 @@ impl JavaScriptParser {
             source_names: Vec::new(),
             bindings: Vec::new(),
             array_entries: None,
+            object_entries: None,
         };
         while plan.at < values.len() {
             let form = plan.position()?;
@@ -572,7 +591,32 @@ impl JavaScriptParser {
             .filter(|name| names.contains(*name))
             .map(str::to_owned)
             .collect::<HashSet<_>>();
-        let mut prefix = if let Some(entries) = &syntax.array_entries {
+        let mut prefix = if let Some(entries) = &syntax.object_entries {
+            entries
+                .iter()
+                .map(|entry| {
+                    let mutable = !entry.temporary
+                        && rules::read_java_script_record_parameter_binding_statement(
+                            written.contains(&entry.name),
+                        )
+                        .to_string()
+                            == "let";
+                    if mutable {
+                        Stmt::Let {
+                            name: entry.name.clone(),
+                            value: entry.value.clone(),
+                            span: entry.span,
+                        }
+                    } else {
+                        Stmt::Const {
+                            name: entry.name.clone(),
+                            value: entry.value.clone(),
+                            span: entry.span,
+                        }
+                    }
+                })
+                .collect()
+        } else if let Some(entries) = &syntax.array_entries {
             super::array_formal_parameters::binding_statements(entries, &written)
         } else {
             syntax

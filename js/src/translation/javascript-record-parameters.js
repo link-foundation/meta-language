@@ -11,6 +11,7 @@ import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParamete
 import {readJavaScriptRecordConstantContext,acceptJavaScriptRecordCallableParameterProfile} from './record-callable-parameter-rules.js';
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {constructJavaScriptObjectRestSource} from './object-rest.js';
+import {readJavaScriptRecursiveObjectFormals} from './recursive-object-formals.js';
 
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary named function declaration');
@@ -42,6 +43,8 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
   if(!profile&&callable)throw unsupported('record callable source profile','ordinary non-simple callables require synchronous bodies without parameter documentation tags',interval[selected]);
   if (!profile) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
+  const recursive=readJavaScriptRecursiveObjectFormals(parser,interval,start,context);
+  if(recursive)return recursive;
   const plan = planJavaScriptSourceRecordParametersWithRest(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
   // Reason eight identifies the actual rejected BoundName, never a property.
   if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
@@ -108,6 +111,7 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
 }
 
 export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody) {
+  if(syntax.patternEntries)return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.patternEntries.map(entry=>({s:entry.temporary?'const':readJavaScriptRecordParameterBindingStatement(written.has(entry.name)),name:entry.name,value:entry.value,span:entry.span})));
   return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.bindings.map(binding=>{
     const object={k:'name',path:[binding.parameter],span:binding.parameterSpan};
     const value=binding.excluded!==null?constructJavaScriptObjectRestSource(object,binding.excluded,binding.span):binding.fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:object,spread:false},{value:{k:'str',value:binding.property,span:binding.propertySpan},spread:false},{value:binding.fallback,spread:false}],span:binding.span}:{k:'field',object,field:binding.property,span:binding.span};

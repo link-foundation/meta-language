@@ -104,6 +104,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             "../data/record-closure-parameter-program.lino"
         )),
         "record-write-program.lino" => Some(include_str!("../data/record-write-program.lino")),
+        "recursive-object-binding-program.lino" => Some(include_str!(
+            "../data/recursive-object-binding-program.lino"
+        )),
         "reference-array-projection-program.lino" => Some(include_str!(
             "../data/reference-array-projection-program.lino"
         )),

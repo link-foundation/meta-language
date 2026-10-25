@@ -129,6 +129,7 @@ mod record_value_order_specialization;
 pub(crate) mod record_value_rules;
 pub(crate) mod record_write_program;
 pub(crate) mod record_write_rules;
+pub(crate) mod recursive_object_binding_rules;
 pub(crate) mod reference_array_projection_program;
 pub(crate) mod reference_array_projection_rules;
 pub(crate) mod reference_identity_rules;
