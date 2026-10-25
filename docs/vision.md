@@ -1366,10 +1366,19 @@ expressions then enter the existing undefined-only default checker and inference
 constraints. The source wrapper disappears into ordinary typed IR before both
 codecs and four emissions; no forged index or new Core node is introduced.
 Present represented fields, including undefined/null payload distinctions and
-local binding writes, use their existing field/type protocol. Absent-field
-typing, inherited/getter/proxy domains, whole-parameter defaults and the remaining
-initialization environments remain obligations. Twenty-five future values,
-four refusals and the exact former closure default-refusal input have deferred
+local binding writes, use their existing field/type protocol. An additional
+shared field-domain decision admits undefined for a missing normal name on an
+ordinary closed record. Both inference solvers retain actual owner/field terms
+until that decision resolves; open missing shapes keep waiting. Both checkers
+capture the actual receiver before a missing field selects its lazy initializer.
+An absent own field with a standard or compatibility Object prototype spelling
+retains an explicit inherited-property obligation. Its actual own-field shadow
+continues through the normal field protocol. This follows
+[Object prototype properties](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-properties-of-the-object-prototype-object)
+and [compatibility properties](https://tc39.es/ecma262/2025/multipage/additional-ecmascript-features-for-web-browsers.html#sec-additional-properties-of-the-object.prototype-object).
+Arbitrary prototype/getter/proxy domains, whole-parameter defaults and the remaining
+initialization environments remain obligations. Thirty-four future values,
+nine refusals and the exact former closure default-refusal input have deferred
 original/emitted/native controls and full predecessor assertion sources. Nothing
 in this draft establishes execution evidence or complete language support.
 

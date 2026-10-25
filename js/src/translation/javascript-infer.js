@@ -12,7 +12,7 @@ import {readJavaScriptStringUnitCallResultForm} from './javascript-property-call
 // nothing constrains is a Number. Two uses that need different types are a
 // type error: the function would need a declared type for each use.
 
-import { typeError } from './diagnostics.js';
+import { typeError,unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
 import {acceptLinkedJavaScriptBigIntegerResult,readJavaScriptBigIntegerIntrinsicOperandKinds,readJavaScriptBigIntegerIntrinsicResultKind} from './big-integer-conversion-rules.js';
 import {readJavaScriptNumericOperationFailure} from './source-exception-rules.js';
@@ -105,6 +105,7 @@ class Inference {
     this.includes = [];
     this.coalesces = [];
     this.arrayBindingDefaults = [];
+    this.recordFormalFields=[];
     this.recordSpreads = [];
     this.enumerations=[];
     this.collections = new Map();
@@ -382,6 +383,16 @@ class Inference {
           progress = true;
         }
       }
+      for(const constraint of [...this.recordFormalFields]){
+        const owner=this.resolve(constraint.object),present=owner.fields?.find(field=>field.name===constraint.field);
+        const form=readJavaScriptRecordFormalDefaultFieldForm(owner.kind,owner.open===true,present!==undefined,constraint.field);
+        if(form==='wait')continue;
+        if(form==='prototype')throw unsupported('record formal inherited property','an absent own field cannot replace the actual prototype property '+constraint.field,constraint.where);
+        if(form==='absent')this.unify(constraint.result,{kind:'option',element:UNIT,absence:'undefined'},constraint.where);
+        else if(form==='present')this.unify(constraint.result,present.type,constraint.where);
+        else this.fields.push(constraint);
+        this.recordFormalFields.splice(this.recordFormalFields.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.fields]) {
         if (this.fieldStep(constraint)) {
           this.fields.splice(this.fields.indexOf(constraint), 1);
@@ -613,6 +624,7 @@ class Inference {
       }
     }
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
+    if(this.recordFormalFields.length)throw typeError('record formal default needs a known represented field domain',this.recordFormalFields[0].where);
     if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
     if(this.enumerations.length)throw typeError('object value enumeration needs its actual complete value domain',this.enumerations[0].where);
   }
@@ -1018,7 +1030,8 @@ class Inference {
         return BOOL;
       case 'math':
         if(node.op===readJavaScriptRecordFormalDefaultOperation()){
-          const operands=readJavaScriptRecordFormalDefaultOperands(node),value=this.expr(operands.value,env),fallback=this.expr(operands.fallback,env),result=this.fresh();
+          const operands=readJavaScriptRecordFormalDefaultOperands(node),object=this.expr(operands.value.object,env),value=this.fresh(),fallback=this.expr(operands.fallback,env),result=this.fresh();
+          this.recordFormalFields.push({object,field:operands.value.field,result:value,where:node.span});
           this.arrayBindingDefaults.push({value,fallback,result,where:node.span});return result;
         }
         if(node.op===readJavaScriptArrayFormalIterableOperation()){
@@ -1472,5 +1485,5 @@ function describe(type) {
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInferenceForm} from './array-formal-parameter-rules.js';
 
-import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
+import {readJavaScriptRecordFormalDefaultOperation,readJavaScriptRecordFormalDefaultFieldForm} from './javascript-record-parameter-rules.js';
 import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';

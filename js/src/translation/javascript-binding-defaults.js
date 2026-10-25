@@ -21,19 +21,22 @@ function lift(checker,value,type,dropUndefined,span){
 }
 export function checkJavaScriptBindingDefault(checker,node,env,path){
  const left=checker.expr(node.value,env,path,undefined);
+ return checkJavaScriptBindingDefaultValue(checker,left,node.fallback,node.span,env,path);
+}
+export function checkJavaScriptBindingDefaultValue(checker,left,fallback,span,env,path){
  const form=readJavaScriptBindingDefaultForm(checker.language,left.type.kind,left.type.absence??'');
- if(form==='refuse-language'||form==='defer')throw unsupported('array binding default','the actual JavaScript value domain must be known',node.span);
+ if(form==='refuse-language'||form==='defer')throw unsupported('array binding default','the actual JavaScript value domain must be known',span);
  const element=left.type.kind==='option'?left.type.element:left.type;
- const right=checker.expr(node.fallback,env,path,element.kind==='unit'?undefined:element);
+ const right=checker.expr(fallback,env,path,element.kind==='unit'?undefined:element);
  if(form==='identity')return left;
  const other=right.type.kind==='option'?right.type.element:right.type;
- if(element.kind!=='unit'&&other.kind!=='unit'&&!sameType(element,other))throw typeError('array binding default and present element need compatible represented types',node.span);
+ if(element.kind!=='unit'&&other.kind!=='unit'&&!sameType(element,other))throw typeError('array binding default and present element need compatible represented types',span);
  const base=element.kind==='unit'?other:element;
  const absence=readJavaScriptBindingDefaultResultAbsence(left.type.absence,right.type.kind,right.type.absence??'');
  const type=absence?option(base,absence):base;
  const name=checker.freshName('ml_binding_default_operand'),bound={k:'var',name,type:left.type};
- const fallback=lift(checker,right,type,false,node.span);
- const body=left.type.element.kind==='unit'&&left.type.absence==='undefined'?fallback:
-  {k:'if',cond:equalAbsence(bound,'undefined'),then:fallback,else:lift(checker,bound,type,true,node.span),type};
+ const selected=lift(checker,right,type,false,span);
+ const body=left.type.element.kind==='unit'&&left.type.absence==='undefined'?selected:
+  {k:'if',cond:equalAbsence(bound,'undefined'),then:selected,else:lift(checker,bound,type,true,span),type};
  return{k:'let',name,value:left,body,type};
 }

@@ -8,7 +8,7 @@ import {parseJavaScript} from '../src/translation/javascript.js';
 import {checkProgram} from '../src/translation/check.js';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from '../src/translation/array-binding-policy.js';
-import {planJavaScriptSourceRecordParameters,planJavaScriptSourceRecordParametersWithDefaults,readJavaScriptRecordFormalDefaultBindingPositions} from '../src/translation/javascript-record-parameter-rules.js';
+import {planJavaScriptSourceRecordParameters,planJavaScriptSourceRecordParametersWithDefaults,readJavaScriptRecordFormalDefaultBindingPositions,readJavaScriptRecordFormalDefaultFieldForm} from '../src/translation/javascript-record-parameter-rules.js';
 import {partitionJavaScriptFormalInitializerBindingPositions,findJavaScriptPatternDefaultExpressionEnd} from '../src/translation/array-formal-parameter-rules.js';
 import {readJavaScriptRecordFormalDefaultOperands} from '../src/translation/record-formal-defaults.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/record-formal-defaults.lino',import.meta.url));
@@ -37,4 +37,14 @@ for(const row of fixture.correctedInputs)test('retained former closure default r
  const run=source=>runInNewContext(source.replace(/^export /gmu,'')+'\ncompute();',{}, {timeout:1000});
  assert.equal(String(run(row.source)),row.expected);
  assert.equal(String(run(emitJavaScript(checkProgram(parseJavaScript(row.source))).text)),row.expected);
+});
+test('only closed ordinary missing names receive the undefined default domain',()=>{
+ assert.equal(readJavaScriptRecordFormalDefaultFieldForm('record',false,false,'value'),'absent');
+ assert.equal(readJavaScriptRecordFormalDefaultFieldForm('record',true,false,'value'),'wait');
+ assert.equal(readJavaScriptRecordFormalDefaultFieldForm('var',false,false,'value'),'wait');
+ assert.equal(readJavaScriptRecordFormalDefaultFieldForm('string',false,false,'length'),'field');
+ for(const name of ['constructor','toString','toLocaleString','hasOwnProperty','isPrototypeOf','propertyIsEnumerable','valueOf','__proto__','__defineGetter__','__defineSetter__','__lookupGetter__','__lookupSetter__']){
+  assert.equal(readJavaScriptRecordFormalDefaultFieldForm('record',false,false,name),'prototype');
+  assert.equal(readJavaScriptRecordFormalDefaultFieldForm('record',false,true,name),'present');
+ }
 });

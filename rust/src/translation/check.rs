@@ -60,6 +60,7 @@ mod number_conversions;
 mod numeric_failures;
 mod optional_values;
 mod primitive_methods;
+mod record_formal_defaults;
 pub(super) mod record_order_operations;
 mod record_writes;
 mod records;

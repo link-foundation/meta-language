@@ -168,6 +168,19 @@ export function readJavaScriptRecordFormalDefaultOperation(){return 'readJavaScr
  * @param {string} language @param {number} count @param {boolean} spread
  * @param {string} key @returns {boolean} */
 export function acceptJavaScriptRecordFormalDefaultSource(language,count,spread,key){return language==='JavaScript'&&count===3&&!spread&&key==='str';}
+/** The represented ordinary closed record has fixed own fields and the
+ * standard Object prototype. Its inherited properties need their own value
+ * protocol; they cannot be replaced with undefined. Open shapes must resolve.
+ * @param {string} kind @param {boolean} open @param {boolean} present
+ * @param {string} name @returns {string} */
+export function readJavaScriptRecordFormalDefaultFieldForm(kind,open,present,name){
+ if(kind==='var'||kind==='literal')return 'wait';
+ if(kind!=='record')return 'field';
+ if(present)return 'present';
+ if(open)return 'wait';
+ if(name==='__proto__'||name==='constructor'||name==='hasOwnProperty'||name==='isPrototypeOf'||name==='propertyIsEnumerable'||name==='toLocaleString'||name==='toString'||name==='valueOf'||name==='__defineGetter__'||name==='__defineSetter__'||name==='__lookupGetter__'||name==='__lookupSetter__')return 'prototype';
+ return 'absent';
+}
 
 /** Builtin spelling alone cannot replace an actual local/module/context owner.
  * @param {string} name @param {boolean} shadowed @returns {boolean} */

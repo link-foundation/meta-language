@@ -27,6 +27,7 @@ mod optional_chains;
 mod optional_values;
 mod patterns;
 mod products;
+mod record_formal_defaults;
 mod records;
 mod solver;
 mod term_facts;
@@ -244,6 +245,7 @@ struct Inference {
     plus: Vec<Plus>,
     coalesces: Vec<Coalescing>,
     array_binding_defaults: Vec<array_bindings::DefaultBinding>,
+    record_formal_fields: Vec<record_formal_defaults::FieldRead>,
     joins: Vec<Join>,
     results: Vec<FunctionResult>,
     calls: Vec<CallArguments>,
@@ -296,6 +298,7 @@ impl Inference {
             plus: Vec::new(),
             coalesces: Vec::new(),
             array_binding_defaults: Vec::new(),
+            record_formal_fields: Vec::new(),
             joins: Vec::new(),
             results: Vec::new(),
             calls: Vec::new(),

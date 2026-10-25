@@ -162,9 +162,7 @@ impl Inference {
             )),
             SNode::Math { op, args, .. } => {
                 if op==&crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(){
-                    let (value,fallback)=crate::translation::record_formal_defaults::operands(args,expr.span,"JavaScript")?;
-                    let value=self.expr(&value,env)?;let fallback=self.expr(fallback,env)?;
-                    return Ok(self.binding_default_term(value,fallback,expr.span));
+                    return self.record_formal_default_term(args,env,expr.span);
                 }
                 if op==&crate::translation::array_formal_parameter_rules::read_java_script_array_formal_iterable_operation().to_string(){
                     if args.len()!=1||args[0].spread{return Err(type_error("an array formal iterator needs one actual operand",expr.span));}

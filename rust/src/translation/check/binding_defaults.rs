@@ -113,6 +113,16 @@ impl Checker {
         path: &[String],
     ) -> Result<Expr> {
         let left = self.expr(value, env, path, None, false)?;
+        self.javascript_binding_default_value(left, fallback, span, env, path)
+    }
+    pub(super) fn javascript_binding_default_value(
+        &mut self,
+        left: Expr,
+        fallback: &SExpr,
+        span: Option<Span>,
+        env: &Env,
+        path: &[String],
+    ) -> Result<Expr> {
         let form = rules::read_java_script_binding_default_form(
             &Text::from_text(self.language.as_str()),
             &Text::from_text(left.ty.kind()),

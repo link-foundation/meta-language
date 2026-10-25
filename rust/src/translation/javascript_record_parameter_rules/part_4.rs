@@ -188,6 +188,82 @@ pub fn accept_java_script_record_formal_default_source(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_record_formal_default_field_form(
+    kind: &self::ml_string::Text,
+    open: bool,
+    present: bool,
+    name: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*kind) == (self::ml_string::Text::from_units(vec![118, 97, 114])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![108, 105, 116, 101, 114, 97, 108])))
+    {
+        self::ml_string::Text::from_units(vec![119, 97, 105, 116])
+    } else {
+        let ml_library_inequality_1 =
+            (*kind) != (self::ml_string::Text::from_units(vec![114, 101, 99, 111, 114, 100]));
+        if ml_library_inequality_1 {
+            self::ml_string::Text::from_units(vec![102, 105, 101, 108, 100])
+        } else if present {
+            self::ml_string::Text::from_units(vec![112, 114, 101, 115, 101, 110, 116])
+        } else if open {
+            self::ml_string::Text::from_units(vec![119, 97, 105, 116])
+        } else if ((((((((((((*name)
+            == (self::ml_string::Text::from_units(vec![
+                95, 95, 112, 114, 111, 116, 111, 95, 95,
+            ])))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    99, 111, 110, 115, 116, 114, 117, 99, 116, 111, 114,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    104, 97, 115, 79, 119, 110, 80, 114, 111, 112, 101, 114, 116, 121,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    105, 115, 80, 114, 111, 116, 111, 116, 121, 112, 101, 79, 102,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    112, 114, 111, 112, 101, 114, 116, 121, 73, 115, 69, 110, 117, 109, 101, 114,
+                    97, 98, 108, 101,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    116, 111, 76, 111, 99, 97, 108, 101, 83, 116, 114, 105, 110, 103,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    116, 111, 83, 116, 114, 105, 110, 103,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![118, 97, 108, 117, 101, 79, 102]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    95, 95, 100, 101, 102, 105, 110, 101, 71, 101, 116, 116, 101, 114, 95, 95,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    95, 95, 100, 101, 102, 105, 110, 101, 83, 101, 116, 116, 101, 114, 95, 95,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    95, 95, 108, 111, 111, 107, 117, 112, 71, 101, 116, 116, 101, 114, 95, 95,
+                ]))))
+            || ((*name)
+                == (self::ml_string::Text::from_units(vec![
+                    95, 95, 108, 111, 111, 107, 117, 112, 83, 101, 116, 116, 101, 114, 95, 95,
+                ])))
+        {
+            self::ml_string::Text::from_units(vec![112, 114, 111, 116, 111, 116, 121, 112, 101])
+        } else {
+            self::ml_string::Text::from_units(vec![97, 98, 115, 101, 110, 116])
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn accept_java_script_standard_builtin_owner(
     name: &self::ml_string::Text,
     shadowed: bool,
