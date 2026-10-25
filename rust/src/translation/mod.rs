@@ -106,6 +106,7 @@ pub(crate) mod object_rest_rules;
 pub(crate) mod optional_callable_rules;
 pub(crate) mod absence_only_rules;
 pub(crate) mod excess_argument_rules;
+pub(crate) mod let_else_completion_rules;
 pub(crate) mod optional_inference_rules;
 pub(crate) mod optional_value_rules;
 pub(crate) mod ordered_record_layout_rules;

@@ -73,6 +73,162 @@ fn tree_span(tree: &CompletionTree) -> Option<Span> {
 }
 
 impl RustParser {
+    fn has_let_else_completion(&self) -> bool {
+        let mut count = 64usize;
+        loop {
+            let tokens = self
+                .cursor
+                .tokens
+                .iter()
+                .skip(self.cursor.index)
+                .take(count)
+                .collect::<Vec<_>>();
+            let kinds = tokens
+                .iter()
+                .map(|token| {
+                    match token.kind {
+                        super::TokenKind::Punct => "punct",
+                        super::TokenKind::Eof => "eof",
+                        _ => "atom",
+                    }
+                    .to_owned()
+                })
+                .collect::<Vec<_>>();
+            let values = tokens
+                .iter()
+                .map(|token| token.value.clone())
+                .collect::<Vec<_>>();
+            let keywords = tokens
+                .iter()
+                .enumerate()
+                .map(|(offset, _)| self.cursor.is_at("else", offset))
+                .collect::<Vec<_>>();
+            let returns = tokens
+                .iter()
+                .enumerate()
+                .map(|(offset, _)| self.cursor.is_at("return", offset))
+                .collect::<Vec<_>>();
+            let selected = crate::translation::let_else_completion_rules::find_rust_returning_let_else_completion(&kinds,&values,&keywords,&returns);
+            if selected != -2.0 {
+                return selected >= 0.0;
+            }
+            if tokens.len() < count {
+                return false;
+            }
+            count = count.saturating_mul(2);
+        }
+    }
+    fn ordinary_let_else_completion(
+        &mut self,
+        path: &[String],
+        open: &Token,
+    ) -> Result<CompletionTree> {
+        let start = self.cursor.advance();
+        let mut aliases = Vec::new();
+        if self.cursor.is("mut") {
+            return Err(unsupported(
+                "mutable binding",
+                "mutation is outside the portable core",
+                span(&start, self.cursor.peek()),
+            ));
+        }
+        let pattern = self.pattern(path, &mut aliases)?;
+        if !aliases.is_empty() {
+            return Err(unsupported(
+                "Rust nominal binding alias",
+                "whole-value aliases require their complete move and borrow interpretation",
+                pattern.span,
+            ));
+        }
+        self.validate_product_binding_names(
+            &super::ProductBindingPattern::Nominal(pattern.clone()),
+            &mut std::collections::HashSet::new(),
+        )?;
+        let ty = if self.cursor.eat(":").is_some() {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+        let source_type = ty.as_ref().map(|_| self.origins.current_type.clone());
+        self.cursor.expect("=", Some("let"))?;
+        let first = self.cursor.index;
+        let value = self.expr(path, Options::default())?;
+        let tokens = &self.cursor.tokens[first..self.cursor.index];
+        let kinds = tokens
+            .iter()
+            .map(|token| {
+                if token.kind == super::TokenKind::Punct {
+                    "punct".to_owned()
+                } else {
+                    "atom".to_owned()
+                }
+            })
+            .collect::<Vec<_>>();
+        let spellings = tokens
+            .iter()
+            .map(|token| token.value.clone())
+            .collect::<Vec<_>>();
+        let reason = crate::translation::rust_record_rules::read_rust_let_else_initializer_error(
+            &kinds, &spellings,
+        );
+        if !reason.is_empty() {
+            return Err(unsupported(
+                "Rust let-else initializer",
+                &reason,
+                span(&start, self.cursor.peek()),
+            ));
+        }
+        self.cursor.expect("else", Some("let-else"))?;
+        let second = self.ordinary_completion_block(path)?;
+        if !rules::accept_rust_ordinary_completed_alternative(&second.kind) {
+            return Err(unsupported(
+                "Rust let-else fallback",
+                "the fallback needs a represented diverging completion",
+                span(&start, self.cursor.peek()),
+            ));
+        }
+        self.cursor.expect(";", Some("let"))?;
+        let place = span(&start, self.cursor.peek());
+        let capture = self.fresh_product_binding();
+        self.origins
+            .bind(&capture, &value, path, source_type.as_ref())?;
+        let scrutinee = SExpr::new(
+            SNode::Name {
+                path: vec![capture.clone()],
+            },
+            place,
+        );
+        let scope = self
+            .origins
+            .cases(std::slice::from_ref(&pattern), &scrutinee, path)?;
+        let previous = self.origins.enter(Some(scope));
+        let first = self.ordinary_completion_sequence(path, open);
+        self.origins.scope = previous;
+        let first = first?;
+        let kind = rules::read_rust_ordinary_completion_alternative_kind(&first.kind, &second.kind);
+        let conditional = CompletionTree {
+            kind: kind.clone(),
+            node: CompletionNode::Conditional {
+                condition: None,
+                stages: Some(ConditionalStages::single_pattern(pattern, scrutinee, place)),
+                first: Box::new(first),
+                second: Box::new(second),
+                span: place,
+            },
+        };
+        Ok(CompletionTree {
+            kind,
+            node: CompletionNode::Binding(
+                Binding {
+                    name: capture,
+                    ty,
+                    value,
+                    span: place,
+                },
+                Box::new(conditional),
+            ),
+        })
+    }
     pub(super) fn ordinary_completion_context(&self) -> bool {
         let profiles = [
             self.completion_model.clone(),
@@ -179,6 +335,9 @@ impl RustParser {
                 continue;
             }
             if self.cursor.is("let") {
+                if self.has_let_else_completion() {
+                    break self.ordinary_let_else_completion(path, open)?;
+                }
                 bindings.extend(self.let_statement(path)?);
                 continue;
             }

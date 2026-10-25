@@ -4262,6 +4262,25 @@ present values. Both runtimes use the unchanged source-generated optional-slot
 rule. General missing-argument inference and full function environments remain
 required; these source drafts establish no observed behavior.
 
+Rust let-else fallbacks containing actual return keywords compose with the
+existing ordinary completion tree and conditional pattern packets. A shared
+source scanner distinguishes real keywords from raw identifiers and opaque text;
+bounded prefix growth stops at the actual statement or fallback boundary. Existing
+abort-only and ordinary let bindings retain their preceding route. The initializer
+is captured once with its written type and origin. The fallback parses outside
+the new pattern bindings; the successful continuation parses inside their scope
+through the end of the enclosing sequence. Existing name uniqueness, annotation,
+pattern, ownership and initializer restrictions still apply. Every fallback must
+have represented completed return/abort alternatives, following
+[Rust let statements](https://doc.rust-lang.org/reference/statements.html#let-statements).
+No new core control constructor is added: existing function carriers and packet
+lowering retain the chosen completion and lazy continuation. Native scanner rules
+and complete editable Links definitions are generated from JavaScript. Deferred
+controls cover constructor, tuple and record patterns, shadows, borrowed payloads,
+annotations, multiple bindings, initializer failures, early returns and Unit.
+Arbitrary divergence, loops, complete move/borrow/temporary/drop effects and full
+statement environments remain obligations. No behavioral observations are claimed.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

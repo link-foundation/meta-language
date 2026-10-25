@@ -1,4 +1,7 @@
 import {hasRustConditionalChain,readRustConditionalChainStages,lowerRustConditionalChainStages} from './rust-conditional-chains.js';
+import {findRustReturningLetElseCompletion} from './let-else-completion-rules.js';
+import {readRustLetElseInitializerError} from './rust-record-rules.js';
+import {rustNominalBindingNames} from './rust-records.js';
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
@@ -21,7 +24,7 @@ function sequence(parser,path,open){
  let result;
  for(;;){
   if(c.eat(';'))continue;
-  if(c.is('let')){bindings.push(...parser.letStatement(path));continue;}
+  if(c.is('let')){if(hasLetElseCompletion(parser)){result=letElseCompletion(parser,path,open);break;}bindings.push(...parser.letStatement(path));continue;}
   const token=c.peek();
   if(c.is('}')){result=leaf(parser,'value',{k:'unit',span:range(open,token)},path);break;}
   if(c.is('return')){
@@ -75,6 +78,33 @@ function conditional(parser,path){
  const hasElse=Boolean(c.eat('else'));
  const otherwise=hasElse?(c.is('if')?conditional(parser,path):block(parser,path)):leaf(parser,'value',{k:'unit',span:range(token,token)},path);
  return {node:'conditional',cond,stages,then,otherwise,kind:readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind),span:range(token,c.peek())};
+}
+function hasLetElseCompletion(parser){
+ const c=parser.cursor;let count=64;
+ for(;;){const tokens=c.tokens.slice(c.index,c.index+count),selected=findRustReturningLetElseCompletion(tokens.map(token=>token.kind),tokens.map(token=>token.value),tokens.map((_,offset)=>c.is('else',offset)),tokens.map((_,offset)=>c.is('return',offset)));
+  if(selected!==-2)return selected>=0;if(tokens.length<count)return false;count*=2;
+ }
+}
+function letElseCompletion(parser,path,open){
+ const c=parser.cursor,start=c.next(),aliases=[];
+ if(c.is('mut'))throw unsupported('mutable binding','mutation is outside the portable core',range(start,c.peek()));
+ const pattern=parser.pattern(path,aliases);
+ if(aliases.length)throw unsupported('Rust nominal binding alias','whole-value aliases require their complete move and borrow interpretation',pattern.span);
+ const names=new Set();for(const item of rustNominalBindingNames(parser,pattern)){if(names.has(item.name))throw unsupported('duplicate tuple binding','each name occurs only once in a destructuring pattern',item.span);names.add(item.name);}
+ const type=c.eat(':')?parser.type():undefined,sourceType=type?parser.origins.type:null;
+ c.expect('=','let');const first=c.index,value=parser.expr(path),tokens=c.tokens.slice(first,c.index);
+ const reason=readRustLetElseInitializerError(tokens.map(token=>token.kind==='punct'?'punct':'atom'),tokens.map(token=>token.value));
+ if(reason)throw unsupported('Rust let-else initializer',reason,range(start,c.peek()));
+ c.expect('else','let-else');const otherwise=block(parser,path);
+ if(!acceptRustOrdinaryCompletedAlternative(otherwise.kind))throw unsupported('Rust let-else fallback','the fallback needs a represented diverging completion',range(start,c.peek()));
+ c.expect(';','let');
+ const span=range(start,c.peek()),capture=parser.freshProductBinding(),scrutinee={k:'name',path:[capture],span};
+ parser.origins.bind(capture,value,path,sourceType);
+ const previous=parser.origins.enter(parser.origins.cases([pattern],scrutinee,path));let then;
+ try{then=sequence(parser,path,open);}finally{parser.origins.scope=previous;}
+ const kind=readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind),stages={forms:[1],stages:[{patterns:[pattern],scrutinee,aliases:[],span}]};
+ const body={node:'conditional',stages,then,otherwise,kind,span};
+ return {node:'binding',binding:{name:capture,...(type===undefined&&parser.typeNamespaceModel?{}:{type}),value,span},body,kind};
 }
 function data(context){
  if(context.data)return context.data;

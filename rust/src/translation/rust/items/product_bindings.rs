@@ -199,7 +199,7 @@ impl RustParser {
         })
     }
 
-    pub(super) fn validate_product_binding_names(
+    pub(in crate::translation::rust) fn validate_product_binding_names(
         &self,
         pattern: &ProductBindingPattern,
         names: &mut std::collections::HashSet<String>,

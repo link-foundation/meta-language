@@ -16,6 +16,24 @@ pub(in crate::translation::rust) struct ConditionalStages {
     stages: Vec<Stage>,
     forms: Vec<f64>,
 }
+impl ConditionalStages {
+    pub(in crate::translation::rust) fn single_pattern(
+        pattern: SPattern,
+        scrutinee: SExpr,
+        span: Option<Span>,
+    ) -> Self {
+        Self {
+            forms: vec![1.0],
+            stages: vec![Stage {
+                patterns: vec![pattern],
+                scrutinee: Some(scrutinee),
+                condition: None,
+                aliases: Vec::new(),
+                span,
+            }],
+        }
+    }
+}
 pub(super) struct GuardArm {
     pub(super) patterns: Vec<SPattern>,
     pub(super) body: SExpr,
