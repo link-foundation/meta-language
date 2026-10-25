@@ -171,6 +171,13 @@ impl RocqEmitter<'_> {
                 ))
             }
             Node::Length { array } => {
+                let (bits, signed) = match &e.ty {
+                    super::Type::Fixed { bits, signed } => (*bits, *signed),
+                    _ => (0, false),
+                };
+                if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result("length",e.ty.kind(),f64::from(bits),signed,array.ty.kind()) {
+                    return Ok(crate::translation::rust_array_length_rules::render_rust_exact_array_length("Rocq", &self.expr(array)?));
+                }
                 if array.ty == super::Type::String {
                     self.floats();
                     return Ok(

@@ -274,13 +274,34 @@ fn cast_to(arg: Expr, to: &Type, flavor: Flavor, span: Option<Span>) -> Result<E
 }
 
 fn cast_to_in_language(
-    arg: Expr,
+    mut arg: Expr,
     to: &Type,
     flavor: Flavor,
     span: Option<Span>,
     language: &str,
 ) -> Result<Expr> {
     if arg.ty.same(to) {
+        return Ok(arg);
+    }
+    let (bits, signed) = match to {
+        Type::Fixed { bits, signed } => (*bits, *signed),
+        _ => (0, false),
+    };
+    let operand = match &arg.node {
+        Node::Length { array } => array.ty.kind(),
+        _ => "",
+    };
+    if flavor == Flavor::Exact
+        && arg.ty == Type::Int
+        && crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result(
+            arg.node.kind(),
+            to.kind(),
+            f64::from(bits),
+            signed,
+            operand,
+        )
+    {
+        arg.ty = to.clone();
         return Ok(arg);
     }
     let from = arg.ty.clone();

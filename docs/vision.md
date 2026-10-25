@@ -3922,6 +3922,18 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Ordinary Rust vector/slice lengths also have an exact source path in the
+existing 64-bit usize model. The same Length primitive has an explicit unsigned
+64-bit codomain; this is not a general permission to narrow arbitrary integers.
+Projection reconstructs an exact length conversion before rechecking, and the
+four renderers preserve the integer representation. The receiver is read once.
+Existing explicit `as f64`, empty queries and nonordinary source profiles keep
+their preceding routes. Twenty-one future values and complete predecessor
+sources cover locals, comparisons, readonly parameters, Copy captures, both
+codecs, all emissions and original/native products. None executed. Other target
+widths report an uncovered profile; full usize arithmetic, String UTF-8 byte
+counts and complete collection ownership remain obligations.
+
 The ordinary Rust pointer draft reads safe `fn` signatures over direct immutable
 Copy domains, including implicit Unit results and optional parameter labels.
 Free function values retain their complete qualified declaration owners and are

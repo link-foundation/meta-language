@@ -26,6 +26,7 @@ import {checkJavaScriptExcessCallableArguments,checkJavaScriptExcessNamedArgumen
 import {convertJavaScriptAbsenceOnlyValue} from './absence-conversions.js';
 import {checkNamedCallableDefaultReference} from './named-default-callables.js';
 import {widenJavaScriptOptionalPolicy} from './optional-policies.js';
+import {acceptRustExactArrayLengthResult} from './rust-array-length-rules.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -2209,6 +2210,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
 function castTo(arg, to, flavor, span, language = '') {
   if (sameType(arg.type, to)) return arg;
   const from = arg.type;
+  if(flavor==='exact'&&from.kind==='int'&&acceptRustExactArrayLengthResult(arg.k,to.kind,to.bits??0,to.signed===true,arg.array?.type.kind??''))return {...arg,type:to};
   if (from.kind === 'nat' && to.kind === 'int') return { k: 'cast', arg, from, to, flavor: 'exact', type: to };
   if (from.kind === 'int' && to.kind === 'nat') {
     if (flavor !== 'checked' && flavor !== 'clamp') throw typeError('int to nat conversion needs checked or clamp semantics', span);

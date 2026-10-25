@@ -1,4 +1,5 @@
 import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
+import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
@@ -856,6 +857,7 @@ class RocqEmitter {
         return `(ml_list_at ${this.expr(e.array)} ${index} ${this.inhabitant(e.type)})`;
       }
       case 'length': {
+        if(acceptRustExactArrayLengthResult(e.k,e.type.kind,e.type.bits??0,e.type.signed===true,e.array.type.kind))return renderRustExactArrayLength('Rocq',this.expr(e.array));
         if (e.array.type.kind === 'string') {
           this.floats();
           return renderStringLengthExpression('Rocq', this.expr(e.array));

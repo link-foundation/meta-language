@@ -18,6 +18,19 @@ use serde_json::{Map, Value, json};
 mod number_projection;
 
 fn expression(value: &Value, program: &Program) -> Result<Value> {
+    if crate::translation::rust_array_length_rules::accept_rust_exact_array_length_result(
+        value["k"].as_str().unwrap_or_default(),
+        value["type"]["kind"].as_str().unwrap_or_default(),
+        value["type"]["bits"].as_f64().unwrap_or_default(),
+        value["type"]["signed"] == true,
+        value["array"]["type"]["kind"].as_str().unwrap_or_default(),
+    ) {
+        let mut result = json!({"k":"cast","arg":{"k":"length","object":expression(&value["array"],program)?,"integer":true},"to":value["type"],"flavor":"exact"});
+        if let Some(span) = value.get("span") {
+            result["span"] = span.clone();
+        }
+        return Ok(result);
+    }
     if value["k"] == "binary"
         && crate::translation::rust_shared_array_handle_rules::read_rust_shared_array_handle_comparison_projection(
             program.source_language.as_str(), value["op"].as_str().unwrap_or_default(),

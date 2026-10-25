@@ -27,6 +27,7 @@ import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import {readRustCopyClosure,readRustCopyClosureCall} from './rust-copy-closures.js';
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
+import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
@@ -1314,6 +1315,10 @@ class RustParser {
       if (!origin.arraySourceModel) throw unsupported(`method ${method.value}`, 'outside the portable core', range);
       expect(0);
       if (!origin.proven || origin.type?.kind !== 'array' || !origin.arraySourceModel) throw unsupported('Rust array read', 'read-only length needs a proven vector or immutable slice source', range);
+      if(acceptRustExactArrayLength(method.value,this.cursor.is('as')&&this.cursor.is('f64',1),this.ordinaryCompletionContext())){
+        const type=rustFixedType('usize'),value={k:'cast',arg:{k:'length',object:receiver,integer:true,span:range},to:type,flavor:'exact',span:range};
+        return this.origins.mark(value,this.origins.typeOrigin(type,path));
+      }
       const length = { k: 'length', object: receiver, integer: false, span: range };
       let node = length;
       if (method.value === 'len') {

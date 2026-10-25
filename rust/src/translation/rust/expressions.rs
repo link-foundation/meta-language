@@ -656,6 +656,32 @@ impl RustParser {
                 range,
             ));
         }
+        if crate::translation::rust_array_length_rules::accept_rust_exact_array_length(
+            &method.value,
+            self.cursor.is("as") && self.cursor.is_at("f64", 1),
+            self.ordinary_completion_context(),
+        ) {
+            let ty = rust_fixed_type("usize").expect("the existing exact 64-bit source width");
+            let length = SExpr::new(
+                SNode::Length {
+                    object: Box::new(receiver),
+                    integer: true,
+                },
+                range,
+            );
+            let result = SExpr::new(
+                SNode::Cast {
+                    arg: Box::new(length),
+                    to: ty.clone(),
+                    from: None,
+                    flavor: Flavor::Exact,
+                },
+                range,
+            );
+            self.origins
+                .mark(&result, SourceOrigin::with_type(ty, path, Vec::new()));
+            return Ok(result);
+        }
         let length = SExpr::new(
             SNode::Length {
                 object: Box::new(receiver),

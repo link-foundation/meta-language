@@ -20,6 +20,7 @@ import {readJavaScriptRecordOrderKernelArity,acceptLinkedOrderedRecordOrderRead}
 import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-primitive-bitwise-rules.js';
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
+import {acceptRustExactArrayLengthResult} from './translation/rust-array-length-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -32,6 +33,8 @@ export function projectLinkedProgramDeclarationPath(name, declarations, rooted =
 }
 
 export function projectLinkedProgramExpression(value, declarations = new Map(), {rootedNamespace = false, referenceSemantics = false, sourceLanguage = ''} = {}) {
+  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
+  if(acceptRustExactArrayLengthResult(value?.k??'',value?.type?.kind??'',value?.type?.bits??0,value?.type?.signed===true,value?.array?.type?.kind??''))return {k:'cast',arg:{k:'length',object:project(value.array),integer:true},to:value.type,flavor:'exact',...(value.span!==undefined?{span:value.span}:{})};
   const plans = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjections;
   if (['tuple', 'tupleIndex'].includes(value?.k)
     && Object.keys(value).some(field => !acceptProgramExpressionField(value.k, field))) throw new TypeError('a linked tuple expression has an unrecognized projection field');
@@ -68,7 +71,6 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
   }
   if (!readProgramExpressionProjection(key ?? '') || !plans[key].construct) throw new TypeError(`the linked expression ${value?.k} has no surface projection`);
   const plan = plans[key];
-  const project = child => projectLinkedProgramExpression(child, declarations, {rootedNamespace, referenceSemantics, sourceLanguage});
   // This domain already states identity semantics in checked IR. Reconstruct
   // its explicit operation, never ordinary Rust value-equality syntax.
   const identity = value.k === 'binary' ? readRustSharedArrayHandleComparisonProjection(sourceLanguage,
