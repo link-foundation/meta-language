@@ -1269,6 +1269,15 @@ alias, spelling match, digest equality or catalog entry alone merges concepts.
 The catalog, command transport and deferred controls are code drafts, not
 execution evidence or full formal coverage of every concept.
 
+Source catalog authoring streams every original Links statement through the
+existing canonical metadata decoder, retaining its actual unique root and an
+identity/reference census without allocating a second complete graph. It checks
+all original bytes and paired asset equality, refuses duplicates or dangling
+references and retains finite byte/node/reference bounds. The later catalog
+validation gate keeps its complete-network reader, and runtime loading still
+authenticates and statically rechecks the complete selected program. Neither a
+cached root nor metadata declarations supply behavioral evidence.
+
 Ordinary required flat record parameters now have distinct authored context
 definitions for constant arrow/function expressions and namespace object
 methods, alongside the separate named declaration and nested closure profiles.

@@ -1,8 +1,8 @@
 // Inventory existing authored Links source graphs, not their execution. Each
-// file is parsed once as data, never decoded, evaluated, emitted or compared.
+// statement is read as data, never decoded as a program, evaluated or emitted.
 import {readFileSync,readdirSync,lstatSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {LinkNetwork} from '../src/network.js';
+import {readAuthoredSourceDefinitionRoot} from './source-definition-catalog-roots.mjs';
 import {writeProjectData,checkProjectData} from './project-data.mjs';
 import {formatProductRuleSource} from './product-rule-style-corrections.mjs';
 const mode=process.argv.slice(2).join(' '),check=mode==='--check';
@@ -18,10 +18,9 @@ for(const asset of readdirSync(directory).filter(name=>/^[a-z][a-z0-9-]*-program
  if(!lstatSync(nativeFile).isFile()||lstatSync(nativeFile).isSymbolicLink())throw new TypeError('a native source program must be a regular paired package asset: '+asset);
  const native=readFileSync(nativeFile);
  if(bytes.length>16*1024*1024||!bytes.equals(native))throw new TypeError('a source program exceeds the author bound or its package twin differs: '+asset);
- const network=LinkNetwork.fromLino(bytes.toString('utf8'));
- const roots=network.links().filter(link=>link.metadata().language==='meta-language typed program'&&link.metadata().term==='typed program'&&link.metadata().definition==='1');
- if(roots.length!==1)throw new TypeError('a source program needs one actual existing schema root: '+asset);
- entries.push({identifier:'meta-language/source-program/'+asset.slice(0,-5),asset,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),root:String(roots[0].id().asU64())});
+ let selected;
+ try{selected=readAuthoredSourceDefinitionRoot(bytes.toString('utf8'),{complete:check});}catch(error){error.message=asset+': '+error.message;throw error;}
+ entries.push({identifier:'meta-language/source-program/'+asset.slice(0,-5),asset,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),root:selected});
  if(globalThis.gc)globalThis.gc();
 }
 const catalog={schemaVersion:1,model:'complete qualified typed source programs 1',entries};
