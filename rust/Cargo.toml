@@ -179,6 +179,7 @@ include = [
     "src/data/unsigned-link-identity-program.lino",
     "src/data/utf16-method-emission-program.lino",
     "src/data/utf16-text-program.lino",
+    "src/data/whole-parameter-default-program.lino",
     "src/translation/runtime/big-integer-conversion.js",
     "src/translation/runtime/big-integer-conversion.lean",
     "src/translation/runtime/big-integer-conversion.v",

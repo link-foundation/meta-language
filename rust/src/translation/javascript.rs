@@ -61,6 +61,7 @@ mod scalar_loops;
 mod statements;
 mod surface_rules;
 mod tag_context;
+mod whole_parameter_defaults;
 use self::flow::{imperative, statement_uses};
 use self::imperative::lower_imperative;
 use self::lowering::{assertion_kind, guarded_parameter, lower, prop_of};

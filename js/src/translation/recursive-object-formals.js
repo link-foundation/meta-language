@@ -1,10 +1,12 @@
 // Context admission stays with the existing named/closure/callable readers.
 import {unsupported} from './diagnostics.js';
+import {readJavaScriptWholeParameterDefaults} from './whole-parameter-defaults.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './array-binding-policy.js';
 import {requireJavaScriptIdentifierRole} from './javascript-identifier-roles.js';
 import {constructJavaScriptRecursiveObjectEntries} from './recursive-object-bindings.js';
 import {planJavaScriptRecursiveBindingFormals,containsJavaScriptRecursiveBindingFormals,readJavaScriptRecursiveObjectFormalBindingPositions,readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 export function readJavaScriptRecursiveObjectFormals(parser,tokens,start,context){
+ const whole=readJavaScriptWholeParameterDefaults(parser,tokens,start,context);if(whole)return whole;
  const plan=planJavaScriptRecursiveBindingFormals(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,readJavaScriptObjectBindingDepthLimit());
  if(plan[0]===-9)throw unsupported('object binding depth','the actual recursive pattern exceeds its shared source depth budget',tokens[plan[1]]);
  if(!containsJavaScriptRecursiveBindingFormals(plan))return null;

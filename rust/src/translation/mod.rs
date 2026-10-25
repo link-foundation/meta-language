@@ -210,6 +210,7 @@ pub(crate) mod unicode_scalar_rules;
 pub(crate) mod utf16_method_emission_rules;
 pub(crate) mod utf16_text_program;
 pub mod utf16_text_rules;
+pub(crate) mod whole_parameter_default_rules;
 
 /// A source range in UTF-16 code units, as JavaScript string offsets count.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

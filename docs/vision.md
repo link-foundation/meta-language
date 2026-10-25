@@ -4147,6 +4147,33 @@ complete source definition, text/binary cycles, four emissions, original values
 and native products remain deferred; this is no claim of verification or full
 JavaScript function coverage.
 
+The whole-formal default draft retains original ordinary and pattern slots,
+complete recursive trees and actual initializer intervals in a separate shared
+plan. Earlier exported planners and their refusal meanings stay unchanged.
+Named declarations, constant arrows/function expressions and namespace methods
+reuse existing logical parameter defaults and recursive binding entries. Whole
+defaults may read earlier ordinary and pattern bindings through the same scope
+partition and ordered entries; self/later names remain unavailable.
+
+Defaulted logical arguments carry an absent marker at calls. Their actual
+initializers execute in the callee's ordered entry sequence, interleaved with
+field/element defaults and iteration. Earlier ordinary and pattern bindings are
+available at their proper point. Failure therefore occurs in its original order,
+and a later default cannot move before an earlier pattern's binding effects.
+A retained source predicate still describes when call-site initialization would
+commute; the body-entry implementation does not rely on that restriction.
+Independent future controls retain both earlier binding failure and later
+default failure after a successful pattern. Dynamic callable defaults and empty
+whole patterns retain separate explicit obligations.
+
+Future whole-default products retain object/array/nested/rest boundaries,
+ordinary and pattern dependencies, represented callable contexts and lazy
+failures. The exact former whole-record input gains positive controls; complete
+predecessor assertions at `93180d37` remain hashed Links history. Both codecs,
+four emissions and native products are deferred. Nullish destructibility and
+its complete source diagnostics, full parameter environments and every earlier
+source-language requirement remain unfinished.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

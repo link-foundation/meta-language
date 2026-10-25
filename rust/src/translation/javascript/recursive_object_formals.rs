@@ -10,6 +10,9 @@ impl JavaScriptParser {
         start: usize,
         context: &str,
     ) -> Result<Option<RecordParameters>> {
+        if let Some(syntax) = self.read_whole_parameter_defaults(tokens, start, context)? {
+            return Ok(Some(syntax));
+        }
         let (kinds, values) = columns(tokens);
         let plan = rules::plan_java_script_recursive_binding_formals(
             &kinds,
