@@ -2119,6 +2119,7 @@ export function runDynamicLanguageCommand(args: string[], host: {
   readBytes(path: string): Uint8Array;
 }): DynamicLanguageCommandOutput;
 export function createDynamicLanguageCommandProgramLinks(): TypedProgramLinks;
+export function createRustByteStringProgramLinks(): TypedProgramLinks;
 
 export interface SyntaxProjectionLimits extends MetaLanguageArchiveLimits { depthLimit?: number }
 export interface AbstractSyntaxOptions extends SyntaxProjectionLimits {

@@ -1387,6 +1387,7 @@ class RustParser {
       c.next();
       return { k: 'num', value: token.value, type, span: span(token, token) };
     }
+    if(token.kind==='byteString')throw unsupported('Rust byte string literal','the actual static byte-array reference and its ownership must be represented',span(token,token));
     if (token.kind === 'char' || token.kind === 'byteChar' || c.is('\'')) throw unsupported('character literal', 'characters are outside the portable core', span(token, token));
     if (c.is('(')) {
       c.next();

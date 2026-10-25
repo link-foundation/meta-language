@@ -80,6 +80,7 @@ mod resource_description_graphs;
 mod resource_description_ntriples;
 mod resource_description_ntriples_rules;
 mod resource_description_rules;
+mod rust_byte_string_program;
 pub mod rust_codec;
 mod self_translation;
 mod semantic_translation;
@@ -394,6 +395,7 @@ pub use resource_description_ntriples::{
     ResourceDescriptionNTriplesOutput, emit_resource_description_ntriples,
     import_resource_description_ntriples, read_resource_description_ntriples_source,
 };
+pub use rust_byte_string_program::create_rust_byte_string_program_links;
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,

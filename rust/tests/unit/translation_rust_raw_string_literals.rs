@@ -335,12 +335,36 @@ fn malformed_raw_tokens_and_isolated_cr_refuse_without_widening_other_prefixes()
         assert_eq!(error.span, Some(Span::new(start, start + 1)));
         assert!(create_typed_program_links(&source, "Rust").is_err());
     }
+    // Rust Reference lex.token.str-byte-raw. The full original assertions and
+    // every input remain in rust-byte-string-assertion-history.lino.
+    let byte_profile = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/rust-byte-string-literals.lino"
+    ))
+    .unwrap();
     for entry in data["unchangedPrefixes"].as_array().unwrap() {
         let source = entry.as_str().unwrap();
-        assert_eq!(
-            tokenize(source, Language::Rust).unwrap().tokens[0].kind,
-            TokenKind::Identifier
-        );
+        let expectation = byte_profile["legacyRawPrefixExpectations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["source"] == source)
+            .expect("every original source needs its declared version profile");
+        let expected = match expectation["kind"].as_str().unwrap() {
+            "identifier" => TokenKind::Identifier,
+            "byteString" => TokenKind::ByteString,
+            other => panic!(
+                "uncovered Rust lexical profile {other}; {}",
+                byte_profile["versions"]["Rust"]
+            ),
+        };
+        let result = tokenize(source, Language::Rust).unwrap();
+        let token = &result.tokens[0];
+        assert_eq!(token.kind, expected);
+        if expected == TokenKind::ByteString {
+            assert_eq!(token.raw, source);
+            assert_eq!(token.value, "76616c7565");
+            assert!(token.suffix.is_empty());
+        }
         assert!(create_typed_program_links(&source_for(source), "Rust").is_err());
     }
     for source in ["r\"value\"suffix", "r#\"value\"##"] {

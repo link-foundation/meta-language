@@ -323,6 +323,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "method",
     ),
     (
+        "createRustByteStringProgramLinks",
+        "create_rust_byte_string_program_links",
+        "function",
+    ),
+    (
         "createTypedProgramLinks",
         "create_typed_program_links",
         "function",

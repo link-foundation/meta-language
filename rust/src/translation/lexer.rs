@@ -21,7 +21,9 @@ use super::javascript_line_terminator_rules::accept_java_script_line_terminator;
 use super::js_number::js_number_literal;
 use super::{Language, Span};
 
+mod byte_strings;
 mod cooked_strings;
+use byte_strings::read as rust_byte_string_token;
 mod identifiers;
 mod number_rules;
 mod raw_strings;
@@ -126,6 +128,7 @@ pub enum TokenKind {
     String,
     Character,
     ByteCharacter,
+    ByteString,
     Interpolation,
     Template,
     Eof,
@@ -482,6 +485,15 @@ fn tokenize_region(
         closed = false;
         if language == Language::JavaScript && ch == Some('`') {
             let token = template_token(source, index, units)?;
+            index = token.end;
+            tokens.push(token);
+            continue;
+        }
+        if language == Language::Rust
+            && ch == Some('b')
+            && (source.is_char(index + 1, '"') || source.is_char(index + 1, 'r'))
+            && let Some(token) = rust_byte_string_token(source, index, units)?
+        {
             index = token.end;
             tokens.push(token);
             continue;

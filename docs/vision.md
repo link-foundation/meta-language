@@ -454,6 +454,19 @@ the existing String paths with their original source intervals. Closed models
 that select fixed decoded runtime strings retain those values and actual
 operation owners; the explicitly raw-excluding generated namespace model keeps
 its refusal.
+Cooked and raw Rust byte strings have a separate lexical representation. Shared
+source rules retain all eight-bit escapes, ASCII content, literal raw delimiters,
+CRLF normalization, continuations and original source spans. Identifier suffixes
+remain part of their actual lexical token; they do not acquire typed expression
+meaning. The byte payload has a canonical hexadecimal transport rather than a
+host text encoding. Unicode byte escapes, non-ASCII source, isolated carriage
+returns and malformed delimiters refuse. The complete dependency closure is
+editable typed Links and generates native decisions automatically. Earlier raw
+text decoder controls retain every input and their `notRaw` expectations; the
+full lexer now recognizes actual raw byte strings under the explicit byte-string
+profile. Complete earlier assertion sources and the Rust Reference basis for this
+correction remain available. Static byte-array references, their lifetime and
+ownership semantics still need typed translation support.
 The bounded Unicode scalar source text byte model exposes actual UTF-16 units, exact
 UTF-8 length, individual bytes and scalar-boundary slices in both packages.
 Shared numeric rules generate the native byte decisions; thin host adapters
@@ -5592,6 +5605,16 @@ crates.io releases. Clean-consumer evidence covers both published packages,
 relative-meta-logic and formal-ai. Candidate builds, or a publication workflow
 that has not run, do not prove that users can install the delivered
 capabilities.
+
+The native package allowlist is extended automatically from literal `include_str!`
+and `include_bytes!` operands in its actual Rust source tokens. Included text,
+byte programs and formal target preludes retain exact rooted paths. The author
+retains original explicit patterns and appends only uncovered assets, with source
+owners and hashes as Links data. Comments, source strings and byte-string contents
+cannot invent dependencies. Computed macro operands, symlinked source paths and
+outside-crate assets require a separately represented packaging interpretation.
+Source closure construction neither compiles Rust nor proves package size or
+clean-consumer behavior; those remain CI obligations.
 
 Release publication verifies the release tag, checked-out commit, package
 versions and lockfiles before either registry write. A registry preflight fails

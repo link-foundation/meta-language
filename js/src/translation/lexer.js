@@ -10,6 +10,7 @@ import { acceptRustCookedStringEscapePrefix, readRustAsciiEscapeValue } from './
 import { decodeRustUnicodeEscape } from './rust-unicode-escape-rules.js';
 import { decodeRustRawString } from './rust-raw-string-rules.js';
 import { decodeRustCharacterLiteral } from './rust-character-rules.js';
+import {decodeRustByteStringLiteral,readRustByteStringLiteralError,renderRustByteStringValue} from './rust-byte-string-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { acceptRustSourceWhitespace, acceptRustSourceByteOrderMark, acceptRustSourceNumberDigitBoundary } from './rust-source-whitespace-rules.js';
 import { acceptRustSourceKeywordToken } from './rust-record-rules.js';
@@ -98,6 +99,20 @@ function tokenizeRegion(source, language, startIndex, braced, encoding) {
       tokens.push(templateToken(source, index, encoding));
       index = tokens.at(-1).end;
       continue;
+    }
+    if(language==='Rust'&&char==='b'&&(source[index+1]==='"'||source[index+1]==='r')){
+      encoding.units??=Array.from({length:source.length},(_,offset)=>source.charCodeAt(offset));
+      const literal=decodeRustByteStringLiteral(encoding.units,index);
+      if(literal[0]<0)throw new TranslationError('syntax',readRustByteStringLiteralError(literal[0]),{start:literal[1],end:literal[2]});
+      if(literal[0]===1){
+        const literalEnd=literal[1];let end=literalEnd;
+        if(isIdentifierStartAt(source,end,language)&&!(source[end]==='_'&&!isIdentifierPartAt(source,end+1,language))){
+          end+=readSourceIdentifierWidth(source,end);
+          while(end<source.length&&isIdentifierPartAt(source,end,language))end+=readSourceIdentifierWidth(source,end);
+        }
+        tokens.push({kind:'byteString',value:renderRustByteStringValue(literal.slice(2)),suffix:source.slice(literalEnd,end),start,end,raw:source.slice(start,end)});
+        index=end;continue;
+      }
     }
     if (language === 'Rust' && source.startsWith('r#', index) && isIdentifierStartAt(source, index + 2, language)) {
       let end=index+2+readSourceIdentifierWidth(source,index+2);

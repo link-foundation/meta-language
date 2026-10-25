@@ -774,6 +774,13 @@ impl RustParser {
             ));
         }
         let c = &self.cursor;
+        if token.kind == TokenKind::ByteString {
+            return Err(unsupported(
+                "Rust byte string literal",
+                "the actual static byte-array reference and its ownership must be represented",
+                span(&token, &token),
+            ));
+        }
         if matches!(token.kind, TokenKind::Character | TokenKind::ByteCharacter) || c.is("'") {
             return Err(unsupported(
                 "character literal",
