@@ -112,6 +112,7 @@ include = [
     "src/data/guarded-private-array-write-program.lino",
     "src/data/empty-module-collections.lino",
     "src/data/numeric-module-bindings.lino",
+    "src/data/dynamic-language-command-program.lino",
 ]
 
 [lib]

@@ -1405,6 +1405,18 @@ and concept verifier. Formal definitions for the remaining concepts, language
 specific semantic abstractions, link-cli workload integration and reconstruction
 measurements remain implementation obligations. These drafts have no execution
 evidence.
+The dynamic `language` CLI delegates preparation, extension, parsing, inventory
+and native grammar export to these same library operations in both packages.
+Source grammars carry explicit source identity, language and edition; configuration
+and formal premises enter as Links data. Parsing writes a complete archive with
+CST as the default. Explicit AST selection keeps its original CST. Text and binary
+reloads resolve recursive grammar references from the archive, and replacements
+retain the pinned contexts of earlier documents. Shared source definitions own
+option admission and projection selection; generated native adapters only transport
+files, arguments and graph values. Rejections retain their diagnostics and a
+nonzero exit code, including when a recovered concrete archive is available.
+This command draft and its deferred controls do not establish catalog completeness,
+reconstruction performance, link-cli integration or execution evidence.
 The current binary graph primitive writes a versioned meta-language archive of
 actual link identities, references, supported metadata, exact term-map keys,
 selected syntax and the next allocation identity. Shared framing rules are

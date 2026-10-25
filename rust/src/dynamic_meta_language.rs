@@ -85,6 +85,15 @@ pub struct DynamicParseResult {
     /// Reloaded AST nodes with actual concrete relationship provenance.
     pub abstract_tree: Option<crate::ReadAbstractSyntaxLinks>,
 }
+impl DynamicParseResult {
+    /// Read the exact public CST and diagnostics using the archive serializer.
+    ///
+    /// # Errors
+    /// Refuses trees beyond the explicitly selected serialization depth.
+    pub fn outcome_data(&self, depth_limit: usize) -> Result<Value, String> {
+        public_tree::outcome(&self.outcome, depth_limit)
+    }
+}
 
 /// Derived parsers read a private immutable linked snapshot. Exported graphs
 /// remain editable through a new session or persistent extension.

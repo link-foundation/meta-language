@@ -11,9 +11,11 @@ import { fileURLToPath } from 'node:url';
 import { runGrammarCommand } from './grammar-interchange.js';
 import { SelfTranslationError, selfTranslate, selfTranslationLanguage } from './self-translation.js';
 import { runMetaLanguageArchiveCommand } from './meta-language-archive-cli.js';
+import { runDynamicLanguageCommand } from './dynamic-language-cli.js';
 
 const USAGE = 'usage: meta-language grammar <command> [options]; run meta-language grammar help\n'
   + '       meta-language archive <command> [options]; run meta-language archive help\n'
+  + '       meta-language language <command> [options]; run meta-language language help\n'
   + '       meta-language translate --to <language> [--from <language>] [--items] <file>\n';
 const TRANSLATE_USAGE = 'usage: meta-language translate --to <language> [--from <language>] [--items] [--semantic] <file>\n'
   + 'Translates a module between JavaScript, TypeScript and Rust; --from defaults to the file\'s extension\n'
@@ -52,6 +54,7 @@ export function runCommandLine(args, { readFile = (file) => readFileSync(file, '
   if (group === 'grammar') return runGrammarCommand(rest, { readFile });
   if (group === 'translate') return runTranslateCommand(rest, { readFile });
   if (group === 'archive') return runMetaLanguageArchiveCommand(rest, { readFile, readBytes });
+  if (group === 'language') return runDynamicLanguageCommand(rest, { readFile, readBytes });
   if (group === '--help' || group === '-h' || group === 'help') return { exitCode: 0, stdout: USAGE, stderr: '' };
   return { exitCode: 2, stdout: '', stderr: group === undefined ? USAGE : `error: unknown command ${group}\n${USAGE}` };
 }

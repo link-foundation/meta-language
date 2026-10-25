@@ -13,6 +13,9 @@ mod discovered_concept_links;
 mod discovered_concept_rules;
 pub mod document_formatting;
 mod docx_parser;
+mod dynamic_language_cli;
+mod dynamic_language_command_program;
+mod dynamic_language_command_rules;
 mod dynamic_meta_language;
 mod dynamic_meta_language_rules;
 mod embedded_region_parser;
@@ -180,6 +183,8 @@ pub use document_formatting::{
     parse_pdf_document, pdf_profile_is_recognized, render_docx_document, render_docx_package,
     render_pdf_document,
 };
+pub use dynamic_language_cli::{DynamicLanguageCommandOutput, run_dynamic_language_command};
+pub use dynamic_language_command_program::create_dynamic_language_command_program_links;
 pub use dynamic_meta_language::{
     DynamicMetaLanguage, DynamicMetaLanguageOptions, DynamicParseOptions, DynamicParseResult,
     create_dynamic_meta_language,

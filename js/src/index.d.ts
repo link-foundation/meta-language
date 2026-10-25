@@ -2113,6 +2113,12 @@ export class DynamicMetaLanguage {
   extend(additions: GlobalConceptSource[], options?: DynamicMetaLanguageOptions & { replace?: boolean }): DynamicMetaLanguage;
 }
 export function createDynamicMetaLanguage(sources: GlobalConceptSource[], options?: DynamicMetaLanguageOptions): DynamicMetaLanguage;
+export interface DynamicLanguageCommandOutput { exitCode: number; stdout: string | Uint8Array; stderr: string }
+export function runDynamicLanguageCommand(args: string[], host: {
+  readFile(path: string): string;
+  readBytes(path: string): Uint8Array;
+}): DynamicLanguageCommandOutput;
+export function createDynamicLanguageCommandProgramLinks(): TypedProgramLinks;
 
 export interface SyntaxProjectionLimits extends MetaLanguageArchiveLimits { depthLimit?: number }
 export interface AbstractSyntaxOptions extends SyntaxProjectionLimits {

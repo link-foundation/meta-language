@@ -302,6 +302,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     (
+        "createDynamicLanguageCommandProgramLinks",
+        "create_dynamic_language_command_program_links",
+        "function",
+    ),
+    (
         "createGlobalConceptSpace",
         "create_global_concept_space",
         "function",
@@ -684,6 +689,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("renderSyntaxTree", "SyntaxTree::render", "method"),
     ("restoreSourceNames", "restore_source_names", "function"),
     ("runApiStyleFixture", "run_api_style_fixture", "function"),
+    (
+        "runDynamicLanguageCommand",
+        "run_dynamic_language_command",
+        "function",
+    ),
     ("runGrammarCommand", "run_grammar_command", "function"),
     ("scriptLanguage", "script_language", "function"),
     ("selfTranslate", "self_translate", "function"),

@@ -32,6 +32,8 @@ export { createMetaLanguageArchive, readMetaLanguageArchive, metaLanguageArchive
   readMetaLanguageArchiveText, metaLanguageArchiveToBinary, readMetaLanguageArchiveBinary,
   extendMetaLanguageArchive } from './meta-language-archive.js';
 export { DynamicMetaLanguage, createDynamicMetaLanguage } from './dynamic-meta-language.js';
+export { runDynamicLanguageCommand } from './dynamic-language-cli.js';
+export { createDynamicLanguageCommandProgramLinks } from './dynamic-language-command-program.js';
 export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
 export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
   mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';

@@ -29,6 +29,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Prepare, extend and parse dynamic language archives; run language help.
+    #[command(disable_help_flag = true)]
+    Language {
+        /// Dynamic language operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Pack, select and extend complete graph archives; run archive help.
     #[command(disable_help_flag = true)]
     Archive {
@@ -241,6 +248,18 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::Language { args } => {
+            let output = meta_language::run_dynamic_language_command(
+                &args,
+                |path| fs::read_to_string(path).map_err(|error| error.to_string()),
+                |path| fs::read(path).map_err(|error| error.to_string()),
+            );
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
         Command::Archive { args } => {
             let output = archive_cli::run(&args);
             std::io::stdout()
