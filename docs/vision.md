@@ -1329,6 +1329,28 @@ missing tuple positions, heterogeneous tuple rest and complete async/generator
 semantics remain implementation obligations. Twenty future values and seven
 refusals cover complete source/definition graphs, both codecs, four emissions
 and native products; none has executed.
+The own-entry read draft extends the same actual argument capture and own-field
+order used by keys/values. Closed ordered records and represented indexed or
+primitive receivers select their original keys and homogeneous payloads only
+after every argument has evaluated. An ordinary source function pairs exact
+ordered keys with opaque wrapped payloads, explicitly checks their lengths and
+retains nullish payloads independently of absent slots. The complete original
+source generates native code and its editable definition. A specialization
+changes only the declared opaque payload type; ordinary checking validates
+both the original ordering entry and the new pair entry and constructors.
+Adapters project those declared entries into the existing positional tuple
+value domain before emission. Both runtime checkers and linked archive
+validation check exact key/value/result types, and both preparation passes
+lower pairing through the same complete source. This adds fixed-position entry
+reads and local parameter writes, not pair mutation or reference comparison;
+existing tuple obligations remain. Heterogeneous dynamic values and the full
+own-property descriptor/getter/proxy/Symbol protocol remain separate requirements.
+Future controls cover insertion/numeric order, spreads, extra-argument effects,
+nullish coercions/payloads, UTF16 String properties and exact errors, along with
+codecs, four emissions and original/native products. None has executed. See
+[Object.entries](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.entries)
+and [EnumerableOwnProperties](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-enumerableownproperties).
+
 The runtime JavaScript frontend also collects actual parsed declarations and
 BoundNames, with original source spans, independently of predeclaration
 lookahead. Its shared early-error definition rejects same-frame lexical

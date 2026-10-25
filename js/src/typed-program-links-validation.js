@@ -2,7 +2,7 @@ import { acceptOptionalLiteralAbsence } from './translation/optional-value-rules
 import {acceptLinkedNumberBitwiseOperation,readJavaScriptNumberBitwiseArity} from './translation/number-bitwise-rules.js';
 import { acceptLinkedReferenceMethodOperation } from './translation/reference-method-rules.js';
 import { acceptLinkedRecordFieldWrite } from './translation/record-write-rules.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead} from './translation/javascript-enumeration-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation} from './translation/javascript-enumeration-rules.js';
 import {readRecordOrderRoleType} from './translation/record-order-operations.js';
 import { acceptLinkedBigIntegerBitwiseOperation, readBigIntegerBitwiseArity } from './translation/big-integer-bitwise-rules.js';
 import {acceptLinkedJavaScriptNumberConversion} from './translation/string-number-rules.js';
@@ -324,6 +324,10 @@ export function validateLinkedTypedProgram(program, references = new WeakMap(), 
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[0].type.kind!=='array'||node.args[0].type.reference===true)throw new TypeError('record value ordering needs its actual owned value array');
         same(node.args[1].type,{kind:'array',element:{kind:'float'}},'record value ordering positions');
         same(node.type,node.args[0].type,'record value ordering result');
+      }else if(node.op===readJavaScriptObjectEntryPairingOperation()){
+        if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==2||node.args[1].type.kind!=='array'||node.args[1].type.reference===true)throw new TypeError('own entry pairing needs its actual owned value array');
+        same(node.args[0].type,{kind:'array',element:{kind:'string'}},'own entry pairing keys');
+        same(node.type,{kind:'array',element:{kind:'tuple',elements:[{kind:'string'},node.args[1].type.element]}},'own entry pairing result');
       }else if(readJavaScriptRecordOrderKernelArity(node.op??'')){
         const count=readJavaScriptRecordOrderKernelArity(node.op);
         if(program.sourceLanguage!=='JavaScript'||!Array.isArray(node.args)||node.args.length!==count)throw new TypeError('an ordinary record order operation needs every owned source operand');

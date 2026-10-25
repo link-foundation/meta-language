@@ -12,6 +12,7 @@ impl Inference {
         args: &[SArrayItem],
         env: &Env,
         place: Option<Span>,
+        entries: bool,
     ) -> Result<Term> {
         let values = args
             .iter()
@@ -23,7 +24,11 @@ impl Inference {
             element: element.clone(),
             place,
         });
-        Ok(Term::Array(Box::new(element)))
+        Ok(Term::Array(Box::new(if entries {
+            Term::Tuple(vec![Term::Known(Type::String), element])
+        } else {
+            element
+        })))
     }
     pub(super) fn solve_enumerations(&mut self) -> Result<bool> {
         let mut waiting = Vec::new();

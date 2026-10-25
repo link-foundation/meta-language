@@ -177,6 +177,53 @@ impl Checker {
             )),
         }
     }
+    fn enumerate_object_entries(
+        &mut self,
+        object: Expr,
+        result: &Type,
+        span: Option<Span>,
+    ) -> Result<Expr> {
+        let element = if let Type::Option { element, .. } = &object.ty {
+            element.kind()
+        } else {
+            ""
+        };
+        let receiver=crate::translation::javascript_enumeration_rules::read_java_script_own_enumeration_receiver_form(object.ty.kind(),element);
+        if receiver == "absent" {
+            return Ok(failure(result));
+        }
+        if let Type::Option { element, .. } = &object.ty
+            && receiver == "guarded"
+        {
+            let ty = element.as_ref().clone();
+            let condition = Self::javascript_optional_presence(object.clone(), &ty, span)?;
+            let present = Expr::new(
+                Node::UnwrapOption {
+                    arg: Box::new(object),
+                },
+                ty,
+            );
+            let then = self.enumerate_object_entries(present, result, span)?;
+            return Ok(Expr::new(
+                Node::If {
+                    cond: Box::new(condition),
+                    then: Box::new(then),
+                    otherwise: Box::new(failure(result)),
+                },
+                result.clone(),
+            ));
+        }
+        let Type::Array { element, .. } = result else {
+            unreachable!("entry result is an actual array")
+        };
+        let Type::Tuple { elements } = element.as_ref() else {
+            unreachable!("entry element is an actual pair")
+        };
+        let values =
+            self.enumerate_object_values(object.clone(), &array(elements[1].clone()), span)?;
+        let keys = self.enumerate_object_keys(object, span)?;
+        Ok(Expr::new(Node::Math{op:crate::translation::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation(),args:vec![keys,values]},result.clone()))
+    }
     fn enumerate_object_keys(&mut self, object: Expr, span: Option<Span>) -> Result<Expr> {
         let result = array(Type::String);
         let element = if let Type::Option { element, .. } = &object.ty {
@@ -299,7 +346,7 @@ impl Checker {
                 span,
             ));
         }
-        if form != "keys" && form != "values" {
+        if form != "keys" && !crate::translation::javascript_enumeration_rules::accept_java_script_enumeration_value_domain(&form) {
             return Err(unsupported(
                 &format!("Object.{form}"),
                 "the actual value/entry element and mutable pair domains require their complete enumeration operations",
@@ -345,8 +392,24 @@ impl Checker {
             } else {
                 None
             };
-            let result = array(value_element(&object.ty, fallback, span)?);
-            self.enumerate_object_values(object, &result, span)?
+            let fallback = if form == "entries" {
+                match fallback {
+                    Some(Type::Tuple { elements }) => elements.get(1),
+                    _ => None,
+                }
+            } else {
+                fallback
+            };
+            let element = value_element(&object.ty, fallback, span)?;
+            if form == "entries" {
+                let result = array(Type::Tuple {
+                    elements: vec![Type::String, element],
+                });
+                self.enumerate_object_entries(object, &result, span)?
+            } else {
+                let result = array(element);
+                self.enumerate_object_values(object, &result, span)?
+            }
         };
         let result = body.ty.clone();
         let record = Expr::new(

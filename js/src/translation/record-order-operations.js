@@ -1,8 +1,8 @@
 // Typed host boundary for source-defined order operations and owned projection.
-import {FLOAT,BOOL,STRING,array} from './types.js';
+import {FLOAT,BOOL,STRING,array,tuple} from './types.js';
 import {coerce} from './check.js';
 import {typeError} from './diagnostics.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead} from './javascript-enumeration-rules.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,acceptLinkedOrderedRecordOrderRead,readJavaScriptObjectEntryPairingOperation} from './javascript-enumeration-rules.js';
 export function readRecordOrderRoleType(role){
  if(role==='number')return FLOAT;
  if(role==='text')return STRING;
@@ -16,6 +16,12 @@ export function checkRecordOrderOperation(checker,node,env,path,expected){
  const arity=readJavaScriptRecordOrderKernelArity(node.op??'');
  if(!arity)return null;
  if(checker.language!=='JavaScript'||node.args.length!==arity||node.args.some(argument=>argument.spread))throw typeError('an ordinary record order operation needs every owned source operand',node.span);
+ if(node.op===readJavaScriptObjectEntryPairingOperation()){
+  const keyType=array(STRING),keys=coerce(checker.referenceValue(checker.expr(node.args[0].value,env,path,keyType)),keyType,checker.language,node.span);
+  const values=checker.referenceValue(checker.expr(node.args[1].value,env,path,undefined));
+  if(values.type.kind!=='array'||values.type.reference===true)throw typeError('own entry pairing needs its actual owned value array',node.span);
+  return {k:'math',op:node.op,args:[keys,values],type:array(tuple([STRING,values.type.element])),...(node.span?{span:node.span}:{})};
+ }
  if(node.op==='reorderJavaScriptRecordPropertyValues'){
   const values=checker.referenceValue(checker.expr(node.args[0].value,env,path,expected?.kind==='array'?expected:undefined));
   if(values.type.kind!=='array'||values.type.reference===true)throw typeError('record value ordering needs its actual owned value array',node.span);

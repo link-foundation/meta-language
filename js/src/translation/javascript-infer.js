@@ -1,5 +1,5 @@
 import {readJavaScriptOptionalChainOperation,readJavaScriptOptionalChainInferenceForm} from './javascript-optional-chain-rules.js';
-import {readJavaScriptEnumerationForm} from './javascript-enumeration-rules.js';
+import {readJavaScriptEnumerationForm,acceptJavaScriptEnumerationValueDomain} from './javascript-enumeration-rules.js';
 import {readJavaScriptNullishFieldForm} from './javascript-nullish-field-rules.js';
 import {readJavaScriptLiteralPropertyIndex,readJavaScriptLiteralPropertyForm} from './javascript-literal-property-rules.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
@@ -1016,9 +1016,9 @@ class Inference {
           this.arrayFormalIterables.push({object,result,where:node.span});return result;
         }
         if(readJavaScriptEnumerationForm(node.op)==='keys'){for(const argument of node.args)this.expr(argument.value,env);return {kind:'array',element:STRING};}
-        if(readJavaScriptEnumerationForm(node.op)==='values'){
+        if(acceptJavaScriptEnumerationValueDomain(readJavaScriptEnumerationForm(node.op))){
           const values=node.args.map(argument=>this.expr(argument.value,env)),element=this.fresh();
-          this.enumerations.push({object:values[0]??UNIT,element,where:node.span});return {kind:'array',element};
+          this.enumerations.push({object:values[0]??UNIT,element,where:node.span});return {kind:'array',element:readJavaScriptEnumerationForm(node.op)==='entries'?{kind:'tuple',elements:[STRING,element]}:element};
         }
         if(node.op===readJavaScriptOptionalChainOperation())return this.optionalChain(node,env);
         if(node.op===readJavaScriptOptionalCallOperation())return this.optionalCall(node,env);

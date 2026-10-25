@@ -162,8 +162,21 @@ pub fn read_java_script_enumeration_form(operation: &str) -> String {
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn accept_java_script_enumeration_value_domain(form: &str) -> bool {
+    (form == "values") || (form == "entries")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_object_entry_pairing_operation() -> String {
+    String::from("pairJavaScriptObjectEntryValues")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_record_order_kernel_arity(operation: &str) -> f64 {
-    if (operation == "reorderJavaScriptRecordPropertyValues")
+    if ((operation == (self::read_java_script_object_entry_pairing_operation()))
+        || (operation == "reorderJavaScriptRecordPropertyValues"))
         || (((((operation == "createJavaScriptRecordPropertyOrder")
             || (operation == "mergeJavaScriptRecordPropertyOrder"))
             || (operation == "readJavaScriptRecordPropertyKeys"))
@@ -189,6 +202,12 @@ pub fn read_java_script_record_order_kernel_parameter(operation: &str, index: f6
         let count = self::read_java_script_record_order_kernel_arity(operation);
         if (!(self::ml_math::is_integer(index)) || (index < 0f64)) || (index >= count) {
             String::new()
+        } else if operation == (self::read_java_script_object_entry_pairing_operation()) {
+            if index == 0f64 {
+                String::from("key texts")
+            } else {
+                String::from("values")
+            }
         } else if operation == "reorderJavaScriptRecordPropertyValues" {
             if index == 0f64 {
                 String::from("values")
@@ -218,7 +237,9 @@ pub fn read_java_script_record_order_kernel_result(operation: &str) -> String {
             ml_value != 0f64 && !ml_value.is_nan()
         };
         if ml_product_condition_1 {
-            if operation == "reorderJavaScriptRecordPropertyValues" {
+            if operation == (self::read_java_script_object_entry_pairing_operation()) {
+                String::from("entries")
+            } else if operation == "reorderJavaScriptRecordPropertyValues" {
                 String::from("values")
             } else if operation == "readJavaScriptRecordPropertyKeys" {
                 String::from("name rows")

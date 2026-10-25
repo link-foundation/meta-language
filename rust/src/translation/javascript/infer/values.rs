@@ -166,7 +166,7 @@ impl Inference {
                     let object=self.expr(&args[0].value,env)?;let result=self.fresh(false);
                     self.array_formal_iterables.push(IterableOf{object,mapper:None,result:result.clone(),place:expr.span});return Ok(result);
                 }
-                if crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)=="values"{return self.enumeration_values_term(args,env,expr.span);}
+                if crate::translation::javascript_enumeration_rules::accept_java_script_enumeration_value_domain(&crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)){return self.enumeration_values_term(args,env,expr.span,crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)=="entries");}
                 if crate::translation::javascript_enumeration_rules::read_java_script_enumeration_form(op)=="keys" {for argument in args {self.expr(&argument.value,env)?;}return Ok(Term::Array(Box::new(Term::Known(STRING))));}
                 if op==&crate::translation::javascript_optional_chain_rules::read_java_script_optional_chain_operation(){return self.optional_chain_term(args,env,expr.span);}
                 if op==&crate::translation::javascript_optional_call_rules::read_java_script_optional_call_operation(){return self.optional_call_term(args,env,expr.span);}

@@ -73,9 +73,10 @@ impl Lowerer {
             ),
             _ => value.clone(),
         };
-        if value["k"] == "math" && value["op"] == "reorderJavaScriptRecordPropertyValues" {
+        if value["k"] == "math" && (value["op"] == "reorderJavaScriptRecordPropertyValues"||value["op"]==super::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation()) {
+            let pairing=value["op"]==super::javascript_enumeration_rules::read_java_script_object_entry_pairing_operation();
             let element: Type =
-                serde_json::from_value(result["args"][0]["type"]["element"].clone())
+                serde_json::from_value(result["args"][usize::from(pairing)]["type"]["element"].clone())
                     .map_err(transport)?;
             let key = element.key();
             let index = if let Some(index) = self
@@ -95,7 +96,8 @@ impl Lowerer {
                 self.specializations.push((key, specialization));
                 self.specializations.len() - 1
             };
-            return super::record_value_order_specialization::lower(
+            let lower=if pairing{super::record_value_order_specialization::lower_entries}else{super::record_value_order_specialization::lower};
+            return lower(
                 value,
                 result["args"].as_array().ok_or_else(|| {
                     type_error(

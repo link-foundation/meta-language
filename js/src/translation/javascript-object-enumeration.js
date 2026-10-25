@@ -1,10 +1,10 @@
 // Source operands are captured before ToObject; ordinary kernel calls own keys.
-import {BOOL,FLOAT,STRING,UNIT,array,sameType} from './types.js';
+import {BOOL,FLOAT,STRING,UNIT,array,tuple,sameType} from './types.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {constructJavaScriptOptionalPresence} from './javascript-optional-chains.js';
 import {readJavaScriptSourceExceptionOperation} from './source-exception-rules.js';
 import {readJavaScriptObjectCoercionError} from './javascript-own-property-rules.js';
-import {readJavaScriptEnumerationForm,readJavaScriptOwnEnumerationReceiverForm} from './javascript-enumeration-rules.js';
+import {readJavaScriptEnumerationForm,readJavaScriptOwnEnumerationReceiverForm,readJavaScriptObjectEntryPairingOperation} from './javascript-enumeration-rules.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 const literal=(type,value)=>({k:'lit',value,type}),variable=(name,type)=>({k:'var',name,type});
 function valueElement(type,fallback,span){
@@ -32,6 +32,11 @@ function enumerate(checker,object,form,result,span){
   const type=object.type.element;
   return {k:'if',cond:constructJavaScriptOptionalPresence(object,type,span),then:enumerate(checker,{k:'unwrapOption',arg:object,type},form,result,span),else:enumerate(checker,{k:'unit',type:UNIT},form,result,span),type:result};
  }
+ if(form==='entries'){
+  const values=enumerate(checker,object,'values',array(result.element.elements[1]),span);
+  const keys=enumerate(checker,object,'keys',array(STRING),span);
+  return {k:'math',op:readJavaScriptObjectEntryPairingOperation(),args:[keys,values],type:result};
+ }
  if(form!=='keys'&&form!=='values')throw unsupported('Object.'+form,'the actual mutable pair domain requires its complete enumeration operations',span);
  if(receiver==='record'){
   if(object.type.open||object.type.ordered!==true)throw unsupported('Object.keys record','every actual own field and its value order must be retained',span);
@@ -58,8 +63,10 @@ export function checkJavaScriptObjectEnumeration(checker,node,env,path,expected)
  if(checker.language!=='JavaScript'||node.args.some(argument=>argument.spread))throw unsupported('Object.'+form+' arguments','every actual iterator argument effect must be represented',node.span);
  const values=node.args.map(argument=>checker.expr(argument.value,env,path,undefined));
  if(!values.length)values.push({k:'unit',type:UNIT});
- const fallback=expected?.kind==='array'?expected.element:undefined;
- const result=form==='keys'?array(STRING):form==='values'?array(valueElement(values[0].type,fallback,node.span)):expected;
+ const contextual=expected?.kind==='array'?expected.element:undefined;
+ const fallback=form==='entries'&&contextual?.kind==='tuple'?contextual.elements[1]:contextual;
+ const element=form==='keys'?STRING:valueElement(values[0].type,fallback,node.span);
+ const result=array(form==='entries'?tuple([STRING,element]):element);
  if(!result)throw unsupported('Object.'+form+' result','the complete value element domain is required',node.span);
  const name=checker.freshName('ml_enumeration_operands'),width=String(values.length-1).length;
  const field=index=>'argument'+String(index).padStart(width,'0');

@@ -7,8 +7,8 @@ import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
 import {collectSourceIdentifierTexts,readSourceIdentifierSupply} from './source-identifiers.js';
 import {typeError,unsupported} from './diagnostics.js';
 import {FLOAT,array,sameType,typeKey} from './types.js';
-import {specializeRecordValueOrder,lowerRecordValueOrder} from './record-value-order-specialization.js';
-import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult} from './javascript-enumeration-rules.js';
+import {specializeRecordValueOrder,lowerRecordValueOrder,lowerObjectEntryValues} from './record-value-order-specialization.js';
+import {readJavaScriptRecordOrderKernelArity,readJavaScriptRecordOrderKernelParameter,readJavaScriptRecordOrderKernelResult,readJavaScriptObjectEntryPairingOperation} from './javascript-enumeration-rules.js';
 import {readRecordOrderRoleType} from './record-order-operations.js';
 const excluded=new Set(['type','from','to','domain','span']);
 function containsOrderedRecord(value,seen=new Set()){
@@ -43,11 +43,11 @@ export function prepareOrderedRecordValues(program){
   if(!value||typeof value!=='object')return value;
   if(Array.isArray(value))return value.map(lower);
   let result=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,excluded.has(key)||key.startsWith('source')?child:lower(child)]));
-  if(value.k==='math'&&value.op==='reorderJavaScriptRecordPropertyValues'){
-   const element=value.args[0].type.element,key=typeKey(element);
+  if(value.k==='math'&&(value.op==='reorderJavaScriptRecordPropertyValues'||value.op===readJavaScriptObjectEntryPairingOperation())){
+   const pairing=value.op===readJavaScriptObjectEntryPairingOperation(),element=value.args[pairing?1:0].type.element,key=typeKey(element);
    let specialization=specializations.get(key);
    if(!specialization){specialization=specializeRecordValueOrder(element,prefix+'recordValues'+String(specializations.size+1));specializations.set(key,specialization);}
-   result=lowerRecordValueOrder(value,result.args,specialization,fresh);
+   result=pairing?lowerObjectEntryValues(value,result.args,specialization,fresh):lowerRecordValueOrder(value,result.args,specialization,fresh);
   }else if(value.k==='math'&&readJavaScriptRecordOrderKernelArity(value.op??'')){
    const name=namespace+'.'+value.op;
    if(!library.declarations.has(name))throw typeError('an ordinary record order operation has no complete source definition');

@@ -382,3 +382,5 @@ mod typed_program_number_projection;
 mod typed_program_record_projection;
 
 mod translation_javascript_lexical_declarations;
+
+mod translation_javascript_object_entries;

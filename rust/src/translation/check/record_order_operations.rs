@@ -79,6 +79,34 @@ impl Checker {
                 span,
             ));
         }
+        if operation == rules::read_java_script_object_entry_pairing_operation() {
+            let keys_type = array(Type::String);
+            let keys = self.expr(&args[0].value, env, path, Some(&keys_type), false)?;
+            let keys = self.coerce(Self::reference_value(keys), &keys_type, span)?;
+            let values = self.expr(&args[1].value, env, path, None, false)?;
+            let values = Self::reference_value(values);
+            let Type::Array {
+                element,
+                reference: false,
+            } = &values.ty
+            else {
+                return Err(type_error(
+                    "own entry pairing needs its actual owned value array",
+                    span,
+                ));
+            };
+            let ty = array(Type::Tuple {
+                elements: vec![Type::String, element.as_ref().clone()],
+            });
+            return Ok(Expr::new(
+                Node::Math {
+                    op: operation.to_owned(),
+                    args: vec![keys, values],
+                },
+                ty,
+            )
+            .with_span(span));
+        }
         let mut values = Vec::new();
         for (index, argument) in args.iter().enumerate() {
             let index = serde_json::Number::from(index)
