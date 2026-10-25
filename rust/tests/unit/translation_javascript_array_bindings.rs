@@ -281,7 +281,7 @@ fn const_declaration_lists_keep_mixed_binding_order_and_complete_source_free_rep
     }
 }
 
-fn require_declaration_list_equivalent(source: &str, expected: &Value) {
+pub(super) fn require_declaration_list_equivalent(source: &str, expected: &Value) {
     let surface =
         parse_javascript(source).unwrap_or_else(|error| panic!("{source}: {}", error.message()));
     let program = check_program(&surface).unwrap();

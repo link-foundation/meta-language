@@ -166,6 +166,7 @@ include = [
     "src/data/rust-shift-program.lino",
     "src/data/rust-unit-value-program.lino",
     "src/data/scalar-assignment-program.lino",
+    "src/data/sequential-parameter-default-program.lino",
     "src/data/source-definition-catalog-controls.lino",
     "src/data/source-definition-catalog-program.lino",
     "src/data/source-definition-catalog.lino",

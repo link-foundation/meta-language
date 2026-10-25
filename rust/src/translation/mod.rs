@@ -166,6 +166,7 @@ pub(crate) mod scoped_binding_emission;
 pub(crate) mod scoped_binding_emission_rules;
 pub(crate) mod self_translation_layout_rules;
 pub(crate) mod semantic_input_rules;
+pub(crate) mod sequential_parameter_default_rules;
 pub(crate) mod source_const_functions;
 pub(crate) mod source_diagnostic_attributes;
 pub(crate) mod source_empty_options;

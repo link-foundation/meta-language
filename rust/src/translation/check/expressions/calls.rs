@@ -8,6 +8,7 @@ use crate::translation::frontend_rules::accept_argument_count;
 use crate::translation::parameter_default_rules::{
     read_parameter_default_value_step, require_parameter_default_argument_bindings,
 };
+mod sequential_defaults;
 
 struct CheckedCallArgument<'a> {
     parameter: &'a Param,
@@ -166,6 +167,20 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if self.language == crate::translation::Language::JavaScript
+            && sequential_defaults::requires_sequential_defaults(params)
+        {
+            return self.sequential_parameter_call(
+                full_name,
+                params,
+                ret,
+                module_path,
+                args,
+                env,
+                path,
+                span,
+            );
+        }
         let absent = SExpr::new(
             SNode::None {
                 absence: "undefined".to_owned(),

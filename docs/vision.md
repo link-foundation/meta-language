@@ -4121,6 +4121,32 @@ terminal return. This composes two existing representations rather than adding
 a target-specific control engine. Full effects, temporary/drop order and the
 remaining ownership and loop obligations still require implementation.
 
+Ordinary JavaScript parameter initialization now has a shared source plan for
+earlier-parameter references and defaults before required parameters. The
+original trailing closed-default route remains separate. A conservative census
+of actual default source names selects the stronger route; inner lexical
+shadowing remains with the existing checker. Original ordinary binder positions
+and initializer intervals drive the same scope partition used by patterns.
+Earlier names are available, while self/later references and initializer writes
+retain explicit restrictions. Type inference uses that progressive environment.
+
+Both runtime adapters capture every supplied argument before any initializer,
+then bind parameter values in source order in the callee's environment. Caller
+names cannot capture those defaults. Existing undefined-only binding-default
+operations retain null, false, zero and empty text. Guards remain after parameter
+initialization. The original required-argument admission is retained: missing
+required arguments, defaulted dynamic function-value invocation, full parameter
+environments and guard refinements still need their complete source meanings.
+This follows
+[ECMAScript function declaration instantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+
+Future controls retain every former default refusal input and whole predecessor
+assertion source at `b9da646f`, with explicit Node22/24 and Rust1.90–1.99 ranges.
+Independent traces check supplied-argument order before initialization. The
+complete source definition, text/binary cycles, four emissions, original values
+and native products remain deferred; this is no claim of verification or full
+JavaScript function coverage.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

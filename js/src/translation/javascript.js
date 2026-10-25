@@ -50,6 +50,9 @@ import {readJavaScriptArrayFormalParameters,readJavaScriptOrdinaryPatternParamet
 import {readJavaScriptRecordConstantContext} from './record-callable-parameter-rules.js';
 import { acceptJavaScriptStandardBuiltinOwner } from './javascript-record-parameter-rules.js';
 import {acceptRustScalarLoopModel} from './rust-scalar-loops.js';
+import {planOrdinaryParameterBindingPositions} from './sequential-parameter-default-rules.js';
+import {findJavaScriptPatternDefaultExpressionEnd} from './array-formal-parameter-rules.js';
+import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {isJavaScriptScalarLoop, readJavaScriptScalarLoop, finishJavaScriptScalarLoops} from './javascript-scalar-loops.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 import { lowerOwnedArrayAppends, readOwnedArrayReaderParameters } from './owned-array-append.js';
@@ -631,35 +634,27 @@ class JavaScriptParser {
   parameters(name) {
     const c = this.cursor;
     const tokens = [];
-    const names = [];
-    let depth = 0;
-    let binding = true;
-    for (let at = c.index; at < c.tokens.length; at += 1) {
-      const token = c.tokens[at];
-      if (!depth && token.value === ')') break;
-      if (!depth && binding && token.kind === 'identifier') { names.push(token.value); binding = false; }
-      if (token.kind === 'punct' && ['(', '[', '{'].includes(token.value)) depth += 1;
-      else if (token.kind === 'punct' && [')', ']', '}'].includes(token.value)) depth -= 1;
-      else if (!depth && token.value === ',') binding = true;
-    }
+    const start=c.index,source=c.tokens.slice(start,this.matching(start-1)+1),kinds=source.map(token=>token.kind),values=source.map(token=>token.value),census=planOrdinaryParameterBindingPositions(kinds,values,0),positions=census.slice(1),names=positions.map(at=>source[at].value);
     while (!c.is(')')) {
       const token = c.peek();
       if (c.is('...')) throw unsupported('rest parameter', 'functions take a fixed number of arguments', span(token, token));
       if (c.is('{') || c.is('[')) throw unsupported('destructured parameter', 'name each parameter', span(token, token));
       const param = c.identifier('parameter');
-      // A default is filled in where a call leaves the argument out; it reads no parameter.
+      // Closed defaults retain their route; dependent defaults use actual earlier bindings.
       if (c.eat('=')) {
-        const remaining = c.tokens.slice(c.index);
+        const remaining = source.slice(c.index-start);
         const reference = findDefaultParameterReference(remaining.map((token) => token.kind), remaining.map((token) => token.value), tokens.map((token) => token.value));
         if (reference >= 0) {
-          const token = c.peek(reference);
-          throw unsupported(`default reading parameter ${token.value}`, 'a call fills in a default where it leaves the argument out, so a default reads no parameter', span(token, token));
+          const first=c.index-start,last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,')');
+          if(last<0)throw unsupported('ordinary parameter default transport','the actual initializer needs its complete source interval',param);
+          const value=readJavaScriptFormalInitializer(this,{tokens:source,start,first,last,binding:source.indexOf(param),positions,context:'ordinary named function declaration',profile:'ordinary parameter default'});
+          c.index=start+last;tokens.push({...param,defaultValue:value});
+        }else{
+          const outer = this.scope;
+          this.scope = { ...outer, tdz: new Set([...outer.tdz, ...names]) };
+          try { tokens.push({ ...param, defaultValue: this.withLexicalScope([], () => this.expr(), 2) }); } finally { this.scope = outer; }
         }
-        const outer = this.scope;
-        this.scope = { ...outer, tdz: new Set([...outer.tdz, ...names]) };
-        try { tokens.push({ ...param, defaultValue: this.withLexicalScope([], () => this.expr(), 2) }); } finally { this.scope = outer; }
       }
-      else if (tokens.at(-1)?.defaultValue) throw unsupported(`parameter ${param.value} after a default`, 'a call fills in trailing defaults only; give it a default too', span(param, param));
       else tokens.push(param);
       if (!c.eat(',')) break;
     }

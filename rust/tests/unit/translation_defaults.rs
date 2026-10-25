@@ -34,19 +34,23 @@ fn omitted_arguments_receive_defaults_in_every_target() {
 }
 
 #[test]
-fn defaults_refuse_parameter_references_and_required_parameters_after_defaults() {
-    for (source, expected) in [
+fn defaults_admit_parameter_references_and_required_parameters_after_defaults() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    // Complete predecessor assertions and unchanged inputs remain in the shared Links fixture.
+    for (source, invocation) in [
         (
             "function f(a = 1, b) { return b; }",
-            "parameter b after a default",
+            "console.log(f(undefined,7));",
         ),
-        (
-            "function f(a, b = a) { return b; }",
-            "default reading parameter a",
-        ),
+        ("function f(a, b = a) { return b; }", "console.log(f(1));"),
     ] {
-        let error = parse_javascript(source).unwrap_err();
-        assert!(error.message().contains(expected), "{error}");
+        parse_javascript(source).expect("the actual ordinary parameter source is now admitted");
+        let source = format!("{source}{invocation}");
+        for target in ["Rust", "Lean", "Rocq"] {
+            let translated = translate_program(&source, "JavaScript", target)
+                .expect("actual dependent default source translation");
+            assert_eq!(translated.diagnostic(), None, "{source}: {target}");
+        }
     }
 }
 
@@ -109,23 +113,23 @@ fn omitted_arguments_fill_trailing_defaults_and_all_emitters_accept_them() {
 }
 
 #[test]
-fn defaults_reject_parameter_dependencies_and_nondefault_trailing_parameters() {
-    for (source, reason) in [
-        (
-            "function f(a, b = a) { return b; }",
-            "default reading parameter a",
-        ),
+fn defaults_admit_parameter_dependencies_and_nondefault_trailing_parameters() {
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    // Complete predecessor assertions and unchanged inputs remain in the shared Links fixture.
+    for (source, invocation) in [
         (
             "function f(a = 1, b) { return b; }",
-            "parameter b after a default",
+            "console.log(f(undefined,7));",
         ),
+        ("function f(a, b = a) { return b; }", "console.log(f(1));"),
     ] {
-        assert!(
-            parse_javascript(source)
-                .unwrap_err()
-                .message()
-                .contains(reason)
-        );
+        parse_javascript(source).expect("the actual ordinary parameter source is now admitted");
+        let source = format!("{source}{invocation}");
+        for target in ["Rust", "Lean", "Rocq"] {
+            let translated = translate_program(&source, "JavaScript", target)
+                .expect("actual dependent default source translation");
+            assert_eq!(translated.diagnostic(), None, "{source}: {target}");
+        }
     }
 }
 

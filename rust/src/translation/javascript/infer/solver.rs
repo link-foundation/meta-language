@@ -59,11 +59,13 @@ impl Inference {
         for (path, function) in functions {
             let signature = self.signatures[&path.join(".")].clone();
             self.context = path[..path.len() - 1].to_vec();
+            let mut initialization = Env::new();
             for (param, term) in function.params.iter().zip(&signature.params) {
                 if let Some(default_value) = &param.default_value {
-                    let value = self.expr_expected(default_value, &Env::new(), Some(term))?;
+                    let value = self.expr_expected(default_value, &initialization, Some(term))?;
                     self.unify(&value, term, param.span)?;
                 }
+                initialization.insert(param.name.clone(), term.clone());
             }
         }
         for (path, function) in functions {

@@ -469,6 +469,28 @@ impl JavaScriptParser {
     pub(super) fn parameters(&mut self, name: &str) -> Result<Vec<(Token, Option<SExpr>)>> {
         let mut tokens: Vec<(Token, Option<SExpr>)> = Vec::new();
         let binding_names = self.parameter_binding_names();
+        let start = self.cursor.index;
+        let close = self.matching(start.saturating_sub(1));
+        let source = self.cursor.tokens[start..=close].to_vec();
+        let ordinary_kinds = source
+            .iter()
+            .map(|token| super::record_parameters::token_kind(token).to_owned())
+            .collect::<Vec<_>>();
+        let ordinary_values = source
+            .iter()
+            .map(|token| token.value.clone())
+            .collect::<Vec<_>>();
+        let census=crate::translation::sequential_parameter_default_rules::plan_ordinary_parameter_binding_positions(&ordinary_kinds,&ordinary_values,0.0);
+        let positions = census.get(1..).unwrap_or_default();
+        let bound_names = positions
+            .iter()
+            .map(|at| {
+                source[crate::translation::frontend_rules::ml_array::number_index(*at)
+                    .expect("actual ordinary binder")]
+                .value
+                .clone()
+            })
+            .collect::<Vec<_>>();
         while !self.cursor.is(")") {
             let token = self.peek();
             if self.cursor.is("...") {
@@ -487,7 +509,7 @@ impl JavaScriptParser {
             }
             let param = self.cursor.identifier(Some("parameter"))?;
             let default_value = if self.cursor.eat("=").is_some() {
-                let remaining = &self.cursor.tokens[self.cursor.index..];
+                let remaining = &self.cursor.tokens[self.cursor.index..start + source.len()];
                 let kinds = remaining
                     .iter()
                     .map(|token| {
@@ -506,29 +528,63 @@ impl JavaScriptParser {
                     .collect();
                 let reference = find_default_parameter_reference(kinds, values, parameters);
                 if reference >= 0.0 {
-                    // The generated rule returns an index into the token input.
-                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-                    let token = &remaining[reference as usize];
-                    return Err(unsupported(
-                        &format!("default reading parameter {}", token.value),
-                        "a call fills in a default where it leaves the argument out, so a default reads no parameter",
-                        Some(token.span()),
-                    ));
+                    use crate::translation::array_formal_parameter_rules::{
+                        self as rules, ml_string::Text,
+                    };
+                    use crate::translation::frontend_rules::ml_array::number_index;
+                    let first = self.cursor.index - start;
+                    let kinds = ordinary_kinds
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let values = ordinary_values
+                        .iter()
+                        .map(|text| Text::from_text(text))
+                        .collect::<Vec<_>>();
+                    let first_number = serde_json::Number::from(first)
+                        .as_f64()
+                        .expect("actual initializer token");
+                    let last =
+                        number_index(rules::find_java_script_pattern_default_expression_end(
+                            &kinds,
+                            &values,
+                            first_number,
+                            &Text::from_text(")"),
+                        ))
+                        .ok_or_else(|| {
+                            unsupported(
+                                "ordinary parameter default transport",
+                                "the actual initializer needs its complete source interval",
+                                Some(param.span()),
+                            )
+                        })?;
+                    let binding = source
+                        .iter()
+                        .position(|token| token.start == param.start && token.end == param.end)
+                        .expect("actual ordinary binding token");
+                    let binding = serde_json::Number::from(binding)
+                        .as_f64()
+                        .expect("actual binding position");
+                    let value = self.read_formal_initializer(
+                        &source,
+                        super::formal_initializers::FormalInitializer {
+                            interval_positions: (first, last, start),
+                            binding_positions: positions,
+                            binding,
+                            bound_names: &bound_names,
+                            context: "ordinary named function declaration",
+                            profile: "ordinary parameter default",
+                        },
+                    )?;
+                    self.cursor.index = start + last;
+                    Some(value)
+                } else {
+                    let outer_tdz = self.scope.tdz.clone();
+                    self.scope.tdz.extend(binding_names.iter().cloned());
+                    let value = self.with_lexical_scope(&[], 2, Self::expr);
+                    self.scope.tdz = outer_tdz;
+                    Some(value?)
                 }
-                let outer_tdz = self.scope.tdz.clone();
-                self.scope.tdz.extend(binding_names.iter().cloned());
-                let value = self.with_lexical_scope(&[], 2, Self::expr);
-                self.scope.tdz = outer_tdz;
-                Some(value?)
-            } else if tokens
-                .last()
-                .is_some_and(|(_, default_value)| default_value.is_some())
-            {
-                return Err(unsupported(
-                    &format!("parameter {} after a default", param.value),
-                    "a call fills in trailing defaults only; give it a default too",
-                    Some(param.span()),
-                ));
             } else {
                 None
             };

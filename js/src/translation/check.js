@@ -17,6 +17,7 @@ import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import {acceptConditionalChainOperation} from './conditional-chain-rules.js';
 import {checkConditionalChainValue} from './conditional-chain-values.js';
+import {requiresSequentialParameterDefaults,checkSequentialParameterCall} from './sequential-parameter-defaults.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -1564,6 +1565,7 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    if(this.language==='JavaScript'&&requiresSequentialParameterDefaults(entry.params))return checkSequentialParameterCall(this,entry,args,env,path,span);
     const provided = args.length;
     // A call that leaves out trailing parameters with defaults passes the defaults.
     if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default || param.optional)), args.length)) {

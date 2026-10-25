@@ -322,8 +322,10 @@ class Inference {
     for (const { path, fn } of functions) {
       const signature = this.signatures.get(path.join('.'));
       this.context = path.slice(0, -1);
+      const initialization=new Map();
       fn.params.forEach((param, index) => {
-        if (param.default) this.unify(this.expr(param.default, new Map()), signature.params[index], param.span);
+        if (param.default) this.unify(this.expr(param.default, initialization), signature.params[index], param.span);
+        initialization.set(param.name,signature.params[index]);
       });
     }
     for (const { path, fn } of functions) {
