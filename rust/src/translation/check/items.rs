@@ -793,13 +793,11 @@ impl Checker {
         if then.ty.same(&otherwise.ty) {
             return Ok((then, otherwise));
         }
-        if matches!(then.node, Node::Abort { .. }) {
-            let ty = otherwise.ty.clone();
-            return Ok((Expr { ty, ..then }, otherwise));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&then, &otherwise.ty) {
+            return Ok((abrupt, otherwise));
         }
-        if matches!(otherwise.node, Node::Abort { .. }) {
-            let ty = then.ty.clone();
-            return Ok((then, Expr { ty, ..otherwise }));
+        if let Some(abrupt) = super::abrupt_results::coerce_abrupt_result(&otherwise, &then.ty) {
+            return Ok((then, abrupt));
         }
         if let Some(expected) = expected {
             let then = coerce(then, expected, self.language, span, None)?;

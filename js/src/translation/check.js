@@ -38,6 +38,7 @@ import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentErro
 
 import { typeError, unsupported } from './diagnostics.js';
 import {acceptLinkedJavaScriptSourceException,readJavaScriptExceptionConstructorClass} from './source-exception-rules.js';
+import {coerceAbruptResult} from './abrupt-results.js';
 import {checkJavaScriptSourceException,checkJavaScriptSourceExceptionValue} from './source-exceptions.js';
 import {acceptLinkedJavaScriptBigIntegerResult} from './big-integer-conversion-rules.js';
 import {checkJavaScriptBigIntegerBuiltin,checkJavaScriptBigIntegerResult,materializeJavaScriptBigIntegerDivision,checkJavaScriptExponentiation} from './javascript-big-integer-conversion.js';
@@ -2181,8 +2182,8 @@ function unify(left, right, language, span) {
 
 function unifyBranches(then, otherwise, expected, language, span) {
   if (sameType(then.type, otherwise.type)) return [then, otherwise];
-  if (then.k === 'abort') return [{ ...then, type: otherwise.type }, otherwise];
-  if (otherwise.k === 'abort') return [then, { ...otherwise, type: then.type }];
+  const first=coerceAbruptResult(then,otherwise.type);if(first)return [first,otherwise];
+  const second=coerceAbruptResult(otherwise,then.type);if(second)return [then,second];
   if (expected) return [coerce(then, expected, language, span), coerce(otherwise, expected, language, span)];
   return unify(then, otherwise, language, span);
 }
@@ -2191,7 +2192,7 @@ function unifyBranches(then, otherwise, expected, language, span) {
 export function coerce(value, type, language, span, flavor = undefined) {
   if (value.type.kind === 'literal') throw typeError('untyped literal', span);
   if (sameType(value.type, type)) return value;
-  if (value.k === 'abort') return { ...value, type };
+  const abrupt=coerceAbruptResult(value,type);if(abrupt)return abrupt;
   const optional = readOptionalCoercionOperation(language, type.kind, value.type.kind, value.k,
     type.kind === 'option' && acceptOptionalAbsence(type.absence, value.absence),
     type.kind === 'option' && acceptOptionalAbsence(type.absence, 'undefined'),

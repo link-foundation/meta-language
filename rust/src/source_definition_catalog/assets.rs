@@ -2,6 +2,7 @@
 
 pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
     match asset {
+        "abrupt-result-program.lino" => Some(include_str!("../data/abrupt-result-program.lino")),
         "absence-conversion-program.lino" => {
             Some(include_str!("../data/absence-conversion-program.lino"))
         }
@@ -177,6 +178,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "rust-primitive-bitwise-program.lino" => {
             Some(include_str!("../data/rust-primitive-bitwise-program.lino"))
+        }
+        "rust-project-source-program.lino" => {
+            Some(include_str!("../data/rust-project-source-program.lino"))
         }
         "rust-record-program.lino" => Some(include_str!("../data/rust-record-program.lino")),
         "rust-shared-array-handle-program.lino" => Some(include_str!(

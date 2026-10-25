@@ -290,6 +290,7 @@ class RustParser {
         if (c.is(';')) throw unsupported('out-of-line module', 'the program must be a single file', span(start, c.peek()));
         c.expect('{', 'mod');
         const module = { k: 'module', name, items: [], span: span(start, c.peek()) };
+        this.innerAttributes();
         this.origins.declaration(name, path, { k: 'module' });
         items.push(module);
         this.items(root, module.items, [...path, name], () => c.is('}'));

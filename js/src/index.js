@@ -62,6 +62,8 @@ export * from './query-plan.js';
 export * from './regions.js';
 export * from './self-translation.js';
 export { draftProjectTranslation, projectTranslationDraftToLinks } from './project-translation.js';
+export { composeRustSourceProject, parseRustSourceProject, createRustSourceProjectProgramLinks, readRustSourceProjectConcreteGraphs } from './rust-source-project.js';
+export {runRustSourceProjectCommand} from './rust-source-project-cli.js';
 export { eraseTypeScript } from './typescript-erasure.js';
 /** Project supported TypeScript annotations into the shared frontend's JSDoc form. */
 export function projectTypeScriptTyping(source) {

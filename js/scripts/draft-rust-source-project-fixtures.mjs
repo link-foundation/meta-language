@@ -1,0 +1,48 @@
+// Original multi-file inputs and independent expectations, never executed here.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[];
+function add(name,main,files={},value='7',options={}){cases.push({name,entry:'src/main.rs',inputs:[{path:'src/main.rs',source:main},...Object.entries(files).map(([path,source])=>({path,source}))],value,options});}
+const show=expression=>'fn main(){println!("{}",'+expression+');}',read='pub fn read()->i64{7}';
+add('ordinary module file','mod values;'+show('values::read()'),{'src/values.rs':read});
+add('mod.rs module file','mod values;'+show('values::read()'),{'src/values/mod.rs':read});
+add('ordinary module owns its subdirectory','mod values;'+show('values::read()'),{'src/values.rs':'mod nested;pub fn read()->i64{nested::read()}','src/values/nested.rs':read});
+add('mod.rs shares its module directory','mod values;'+show('values::read()'),{'src/values/mod.rs':'mod nested;pub fn read()->i64{nested::read()}','src/values/nested/mod.rs':read});
+add('inline module owns a subdirectory','mod outer{pub mod values;}'+show('outer::values::read()'),{'src/outer/values.rs':read});
+add('external inline and external nesting','mod outer;'+show('outer::read()'),{'src/outer.rs':'mod inline{pub mod values;}pub fn read()->i64{inline::values::read()}','src/outer/inline/values.rs':read});
+add('raw module names retain physical identity','mod r#move;'+show('r#move::read()'),{'src/move.rs':read});
+add('Unicode module names retain their qualified owner','mod 𐐀;'+show('𐐀::read()'),{'src/𐐀.rs':read});
+add('UTF16 and UTF8 source ranges are distinct','// 😀\r\nmod values; /* 𐐀 */'+show('values::read()'),{'src/values.rs':'/* 😀 */'+read});
+add('trailing line comment never consumes a synthetic closing brace','mod values;'+show('values::read()'),{'src/values.rs':read+'// no trailing newline'});
+add('module inner attributes remain attached to that module','mod values;'+show('values::read()'),{'src/values.rs':'#![allow(dead_code)]\n'+read});
+add('actual constant value keeps its module owner','mod values;'+show('values::VALUE'),{'src/values.rs':'pub const VALUE:i64=7;'});
+add('pointer constants remain callable values','mod values;'+show('values::READ(6)'),{'src/values.rs':'pub const READ:fn(i64)->i64=|value|value+1;'});
+add('qualified sibling imports retain their provider','mod values;mod consumer;'+show('consumer::read()'),{'src/values.rs':'pub const VALUE:i64=7;','src/consumer.rs':'use crate::values::VALUE;pub fn read()->i64{VALUE}'});
+add('a child may explicitly refer to its parent source constant','const OFFSET:i64=1;mod values;'+show('values::read()'),{'src/values.rs':'pub fn read()->i64{6+super::OFFSET}'});
+add('all supplied unused concrete sources remain archived','mod values;'+show('values::read()'),{'src/values.rs':read,'src/unreferenced.rs':'pub fn extra()->i64{99}'});
+add('a library records only its actual frontend entry normalization','mod values;pub fn result()->i64{values::read()}',{'src/values.rs':read},'7',{library:true});
+add('multiple siblings retain original ordering','mod first;mod second;'+show('first::read()+second::read()'),{'src/first.rs':'pub fn read()->i64{3}','src/second.rs':'pub fn read()->i64{4}'});
+add('a body raw identifier cannot invent a module','fn main(){let r#mod=7i64;println!("{}",r#mod);}');
+add('nested record types retain their source namespace','mod values;'+show('values::read()'),{'src/values.rs':'struct Pair{left:i64,right:i64}pub fn read()->i64{let value=Pair{left:3,right:4};value.left+value.right}'});
+const refusals=[];
+function refuse(name,inputs,message,options={}){refusals.push({name,entry:'src/main.rs',inputs,options,message});}
+const files=(main,other={})=>[{path:'src/main.rs',source:main},...Object.entries(other).map(([path,source])=>({path,source}))];
+refuse('missing original module',files('mod absent;fn main(){}'),'missing Rust project module file');
+refuse('two physical module candidates',files('mod values;fn main(){}',{'src/values.rs':'','src/values/mod.rs':''}),'ambiguous Rust project module files');
+refuse('duplicate original paths',[...files('fn main(){}'),...files('fn main(){}')],'duplicate Rust project source path');
+refuse('paths cannot traverse the source inventory',[{path:'../main.rs',source:'fn main(){}'}],'invalid Rust project source path');
+for(const attribute of ['#[cfg(any())]','#[cfg_attr(any(),path="elsewhere.rs")]','#[path="elsewhere.rs"]','#[macro_use]'])refuse('uninterpreted module attribute '+attribute,files(attribute+'mod values;fn main(){}',{'src/values.rs':''}),'module attributes need an explicit configuration interpretation');
+refuse('uninterpreted inner configuration',files('#![cfg(any())]fn main(){}'),'module attributes need an explicit configuration interpretation');
+refuse('a physical mod.rs source cannot recursively load itself',files('mod r#mod;fn main(){}',{'src/mod.rs':'mod r#mod;'}),'cyclic Rust project module file');
+refuse('inline module nesting uses the explicit depth bound',files('mod first{mod second{mod third{}}}fn main(){}'),'module expansion limit exceeded',{depthLimit:2});
+refuse('all sibling expansions count',files('mod first;mod second;fn main(){}',{'src/first.rs':'','src/second.rs':''}),'module expansion limit exceeded',{expansionLimit:1});
+refuse('composed source allocation is bounded',files('fn main(){}'),'composed source unit limit exceeded',{outputUnitLimit:1});
+refuse('input bytes are bounded',files('fn main(){}'),'input byte limit exceeded',{byteLimit:1});
+refuse('tokens are bounded',files('fn main(){}'),'token limit exceeded',{tokenLimit:1});
+refuse('original file inventory is bounded',files('fn main(){}',{'src/other.rs':''}),'bounded nonempty source inventory',{fileLimit:1});
+refuse('lexical groups retain actual closing kinds',files('fn main(){]'),'unbalanced Rust project source group');
+const planning=[{name:'macro token trees never invent loaded source modules',inputs:files('macro_rules! words { () => { mod phantom; } } fn main(){}'),entry:'src/main.rs',modules:0}];
+const revision='cd3e4be5',history=['js/src/translation/check.js','js/src/translation/rust.js','js/src/index.js','js/src/cli.js','rust/src/translation/check.rs','rust/src/translation/check/items.rs','rust/src/translation/mod.rs','rust/src/translation/rust/items.rs','rust/src/lib.rs','rust/src/main.rs'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/rust-source-project.lino',import.meta.url),{schemaVersion:1,model:'complete Rust source module composition 1',cases,refusals,planning,history,versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024; target_pointer_width=64'},references:['https://doc.rust-lang.org/reference/items/modules.html'],assertions:['actualModuleOwnersAndPhysicalLayouts','allOriginalFilesAndCompleteConcreteGraphsRetained','sourceUnicodeCoordinatesAndSyntheticBoundariesExplicit','missingAmbiguousRecursiveConfiguredAndResourceCasesExplicit','ordinaryOwnershipTypesAndCallableValuesUseExistingFrontend','bothCodecsRestoreOriginalFilesWithoutSourceBuffers','completeSharedDefinitionsAndNativeProducts','allOriginalSourceFilesCompileIndependentlyInCI'],boundary:'Future controls only. No composition, source parse, product execution, oracle, test, compilation or observation ran. This supplies ordinary source composition and concrete archives; complete Rust privacy, configuration, path/include/macro semantics, native grammar independence, Cargo/dependency ABI and every preceding requirement remain mandatory.'});

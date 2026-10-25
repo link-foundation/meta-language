@@ -3922,6 +3922,44 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Supplied Rust source projects now have a composition draft shared by both
+packages. The complete lexical module plan skips unrelated bodies and macro
+token trees, preserves actual inline parents and resolves the ordinary `.rs`
+and `mod.rs` layouts. Missing or ambiguous files, recursive file expansion,
+uninterpreted configuration/path attributes and exceeded budgets refuse. The
+original headers and bodies remain exact; replacing a module semicolon with
+explicit braces records every synthetic boundary and both UTF16 and UTF8 source
+coordinates. Module inner attributes retain their actual source attachment.
+This follows the [Rust module contract](https://doc.rust-lang.org/reference/items/modules.html).
+
+The ordinary frontend checks the composed source. Library mode explicitly
+records an empty frontend entry only when the source has no main. The checked
+program archive also retains each complete original CST as a source-qualified
+graph, with explicit members, registered points and original byte digests. Both
+codecs reload those concrete graphs without original files or a parser call;
+the source hash checks reconstructed tokens rather than a saved input shortcut.
+Copied graph coordinates and equal labels establish no concept equivalence.
+The installed `source-project` command uses the shared argument definition and
+defaults to complete semantic and concrete Links output; target source and
+binary graph output are explicit selections. The tracked-source drafting tool
+reuses the existing complete Git inventory without clones, installs or compilers.
+
+Known source raises and aborts can take the actual result domain of their
+continuation. Shared result-role definitions preserve constructor arguments,
+terminal lets, prints and both branches of a wholly nonreturning conditional.
+Returning Unit values, unknown calls and only partially throwing conditionals
+cannot supply this proof. The rule follows the
+[ECMAScript throw completion](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-throw-statement).
+
+Twenty future multi-file products, seventeen refusal inputs, a macro-planning
+control and twelve ordinary source exception controls retain complete preceding
+hosts at cd3e4be5. Original multi-file Rust compiler oracles, native products,
+CLI selections, both codecs and all four emissions are deferred controls.
+No control has executed. Complete Rust privacy, configuration, include/macro
+semantics, Cargo and dependency interfaces, original-file diagnostic projection,
+native grammar independence, all source constructs and every preceding global
+concept, knowledge and discovery requirement remain mandatory.
+
 Ordinary flat Rust module publication now derives interfaces from the complete
 checked source owners, including private dependencies. Public constants export
 their actual values; callable constants retain constant signatures. Public

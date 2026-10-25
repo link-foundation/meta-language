@@ -382,6 +382,9 @@ pub use project_data::{
     read_project_file_bytes, resolve_project_data_path, resolve_project_data_path_with_format,
 };
 pub use project_translation::{draft_project_translation, project_translation_draft_to_links};
+mod rust_project_source_rules;
+mod rust_source_project;
+mod rust_source_project_cli;
 pub use query::{
     LinkQuery, QueryCapture, QueryCaptures, QueryIndex, QueryMatch, QueryParseError,
     QueryPredicate, QueryPredicateArgument, QueryPredicateHost, RejectPredicateHost,
@@ -411,6 +414,14 @@ pub use rust_byte_string_program::create_rust_byte_string_program_links;
 pub use rust_codec::{
     FromLinks, LinksCodecError, LinksDecoder, LinksEncoder, LinksObject, RustFieldShape,
     RustTypeKind, RustTypeShape, ToLinks,
+};
+pub use rust_source_project::{
+    RustSourceProjectConcreteGraph, compose_rust_source_project,
+    create_rust_source_project_program_links, parse_rust_source_project,
+    read_rust_source_project_concrete_graphs,
+};
+pub use rust_source_project_cli::{
+    RustSourceProjectCommandOutput, run_rust_source_project_command,
 };
 pub use self_translation::{
     CheckedDeclarationEmission, DeclarationTranslationContext, ErasedTypeScript, Erasure,

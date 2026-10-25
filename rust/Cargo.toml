@@ -114,6 +114,7 @@ include = [
     "src/data/numeric-module-bindings.lino",
     "src/data/dynamic-language-command-program.lino",
     # BEGIN generated literal source asset closure
+    "src/data/abrupt-result-program.lino",
     "src/data/absence-conversion-program.lino",
     "src/data/absence-only-program.lino",
     "src/data/array-binding-program.lino",
@@ -177,6 +178,7 @@ include = [
     "src/data/rust-inherent-program.lino",
     "src/data/rust-module-value-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",
+    "src/data/rust-project-source-program.lino",
     "src/data/rust-record-program.lino",
     "src/data/rust-shared-array-handle-program.lino",
     "src/data/rust-shift-program.lino",

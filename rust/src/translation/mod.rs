@@ -12,6 +12,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod aborts;
+pub(crate) mod abrupt_result_rules;
 pub(crate) mod absence_conversion_rules;
 pub(crate) mod absence_only_rules;
 pub(crate) mod array_binding_rules;

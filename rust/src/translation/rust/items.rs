@@ -133,6 +133,7 @@ impl RustParser {
                 }
                 c.expect("{", Some("mod"))?;
                 let module_span = span(&start, c.peek());
+                self.inner_attributes()?;
                 self.origins
                     .declaration(&name, path, SourceDeclaration::Module)?;
                 let mut inner = path.to_vec();

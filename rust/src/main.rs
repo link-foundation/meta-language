@@ -29,6 +29,13 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
+    /// Compose an original Rust source inventory into checked Links or source.
+    #[command(disable_help_flag = true)]
+    SourceProject {
+        /// Shared source-project operation and arguments.
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     /// Discover and export complete typed source definitions; run definition help.
     #[command(disable_help_flag = true)]
     Definition {
@@ -255,6 +262,16 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Command::SourceProject { args } => {
+            let output = meta_language::run_rust_source_project_command(&args, |path| {
+                fs::read_to_string(path).map_err(|error| error.to_string())
+            });
+            std::io::stdout()
+                .write_all(&output.stdout)
+                .unwrap_or_else(|error| fail(error.to_string()));
+            eprint!("{}", output.stderr);
+            std::process::exit(output.exit_code);
+        }
         Command::Definition { args } => {
             let output = meta_language::run_source_definition_command(&args);
             std::io::stdout()

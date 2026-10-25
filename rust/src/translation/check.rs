@@ -26,6 +26,7 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
 
+mod abrupt_results;
 mod absence_conversions;
 mod absent_record_properties;
 mod array_bindings;
@@ -183,11 +184,8 @@ pub fn coerce(
     if value.ty.same(ty) {
         return Ok(value);
     }
-    if matches!(value.node, Node::Abort { .. }) {
-        return Ok(Expr {
-            ty: ty.clone(),
-            ..value
-        });
+    if let Some(abrupt) = abrupt_results::coerce_abrupt_result(&value, ty) {
+        return Ok(abrupt);
     }
     let absence = match &value.node {
         Node::None { absence } => absence.as_str(),

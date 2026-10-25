@@ -444,3 +444,7 @@ mod translation_rust_pointer_results;
 mod translation_rust_source_constants;
 
 mod translation_rust_module_values;
+
+mod translation_abrupt_results;
+
+mod rust_source_project;
