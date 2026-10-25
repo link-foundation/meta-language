@@ -138,6 +138,7 @@ impl RustParser {
             start.start,
             self.cursor.tokens[self.cursor.index - 1].end,
         ));
+        let capture_count = captures.len();
         let node = SExpr::new(
             SNode::Lambda {
                 params,
@@ -150,6 +151,7 @@ impl RustParser {
         );
         let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
         origin.copy_closure_identity = span;
+        origin.copy_closure_capture_count = Some(capture_count);
         self.origins.mark(&node, origin);
         Ok(node)
     }
@@ -165,11 +167,21 @@ impl RustParser {
         if !rules::accept_rust_copy_closure_invocation(origin.ty.as_ref().map_or("", Type::kind)) {
             return Ok(None);
         }
-        let Some(Type::Function { ret, .. }) = origin.ty else {
+        let Some(Type::Function { params, ret }) = origin.ty else {
             unreachable!("actual callable source type");
         };
-        for arg in args {
-            self.origins.direct(arg, path, arg.span.or(span))?;
+        for (index, arg) in args.iter().enumerate() {
+            if let Some(parameter @ Type::Function { .. }) = params.get(index) {
+                let mut expected = SourceOrigin::with_type(parameter.clone(), path, Vec::new());
+                expected.copy_evidence = Some(());
+                self.origins.argument(
+                    &self.origins.origin(arg, path),
+                    &expected,
+                    arg.span.or(span),
+                )?;
+            } else {
+                self.origins.direct(arg, path, arg.span.or(span))?;
+            }
         }
         let node = SExpr::new(
             SNode::App {
@@ -178,8 +190,12 @@ impl RustParser {
             },
             span,
         );
-        self.origins
-            .mark(&node, SourceOrigin::with_type(*ret, path, Vec::new()));
+        let pointer = matches!(*ret, Type::Function { .. });
+        let mut result = SourceOrigin::with_type(*ret, path, Vec::new());
+        if pointer {
+            result.copy_evidence = Some(());
+        }
+        self.origins.mark(&node, result);
         Ok(Some(node))
     }
 }

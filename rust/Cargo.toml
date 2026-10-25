@@ -169,6 +169,7 @@ include = [
     "src/data/rust-byte-string-program.lino",
     "src/data/rust-copy-closure-program.lino",
     "src/data/rust-formatting-program.lino",
+    "src/data/rust-function-pointer-program.lino",
     "src/data/rust-inherent-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",
     "src/data/rust-record-program.lino",

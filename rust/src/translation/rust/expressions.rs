@@ -69,6 +69,8 @@ impl RustParser {
         {
             self.cursor.advance();
             let right = self.primitive_bitwise(path, Options::default(), 0)?;
+            self.refuse_callable_observation(&left, path, joined(left.span, right.span, &token))?;
+            self.refuse_callable_observation(&right, path, joined(left.span, right.span, &token))?;
             self.refuse_shared_value_observation(
                 &left,
                 Some(&right),
@@ -186,6 +188,7 @@ impl RustParser {
         let mut value = self.unary(path, options)?;
         while self.cursor.is("as") {
             let token = self.cursor.advance();
+            self.refuse_callable_observation(&value, path, span(&token, self.cursor.peek()))?;
             let parenthesized_type = self.cursor.is("(");
             let to = self.parse_type()?;
             if !self.origins.collecting && !self.origins.current_type.wrappers.is_empty() {

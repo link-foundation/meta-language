@@ -16,10 +16,11 @@ export function readRustCopyClosure(parser,path){
  const {captures,assignedCaptures}=readCallableStatementCaptures([{s:'return',expr:body}],parameters.map(param=>param.name),outer.keys());
  const captureError=readRustCopyClosureCaptureError(parser.origins.collecting,captures.map(name=>parser.origins.immutableProduct(outer.get(name))),assignedCaptures.length);if(captureError)throw unsupported('Rust Copy closure',captureError,start);
  const span={start:start.start,end:c.peek(-1).end},node={k:'lambda',params:parameters,ret,captures,body,span};
- return parser.origins.mark(node,{...parser.origins.typeOrigin({kind:'function',params:parameters.map(param=>param.type),ret},path),copyClosureSpan:span});
+ return parser.origins.mark(node,{...parser.origins.typeOrigin({kind:'function',params:parameters.map(param=>param.type),ret},path),copyClosureSpan:span,copyClosureCaptureCount:captures.length});
 }
 export function readRustCopyClosureCall(parser,fn,args,path,span){
  const origin=parser.origins.origin(fn,path);if(!acceptRustCopyClosureInvocation(origin.type?.kind??''))return null;
- for(const arg of args)parser.origins.direct(arg,path,arg.span??span);
- return parser.origins.mark({k:'app',fn,args,span},parser.origins.typeOrigin(origin.type.ret,path));
+ args.forEach((arg,index)=>{const parameter=origin.type.params[index];if(parameter?.kind==='function')parser.origins.argument(parser.origins.origin(arg,path),{...parser.origins.typeOrigin(parameter,path),copyEvidence:true},arg.span??span);else parser.origins.direct(arg,path,arg.span??span);});
+ const result=parser.origins.typeOrigin(origin.type.ret,path);if(origin.type.ret.kind==='function')result.copyEvidence=true;
+ return parser.origins.mark({k:'app',fn,args,span},result);
 }

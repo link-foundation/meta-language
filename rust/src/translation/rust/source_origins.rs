@@ -39,6 +39,7 @@ pub(super) struct SourceOrigin {
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
     pub(super) copy_closure_identity: Option<Span>,
+    pub(super) copy_closure_capture_count: Option<usize>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
@@ -66,6 +67,7 @@ impl SourceOrigin {
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
             copy_closure_identity: None,
+            copy_closure_capture_count: None,
         }
     }
 
@@ -103,6 +105,7 @@ impl SourceOrigin {
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
             copy_closure_identity: None,
+            copy_closure_capture_count: None,
         }
     }
 
@@ -876,6 +879,18 @@ impl SourceOrigins {
         }
         if actual.diverging {
             return Ok(());
+        }
+        let pointer_error = crate::translation::rust_function_pointer_rules::read_rust_function_pointer_coercion_error(
+            matches!(expected.ty, Some(Type::Function { .. })) && expected.copy_evidence.is_some(),
+            actual.ty.as_ref().map_or("", Type::kind), actual.copy_closure_identity.is_some(),
+            actual.copy_closure_capture_count.map_or(-1.0, |count| serde_json::Number::from(count).as_f64().expect("actual capture count")), actual.proven,
+        );
+        if !pointer_error.is_empty() {
+            return Err(unsupported(
+                "Rust function pointer coercion",
+                pointer_error,
+                span,
+            ));
         }
         if self.shared_array_handles && (matches!(actual.ty, Some(Type::Array {..})) || matches!(expected.ty, Some(Type::Array {..})))
             && !crate::translation::rust_shared_array_handle_rules::accept_rust_shared_array_handle_transfer(

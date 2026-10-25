@@ -3922,6 +3922,22 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+The ordinary Rust pointer draft reads safe `fn` signatures over direct immutable
+Copy domains, including implicit Unit results and optional parameter labels.
+Free function values retain their complete qualified declaration owners and are
+distinct from zero-argument calls. The existing callable representation carries
+parameters, results, returned pointers, local aliases and invocations. Actual
+noncapturing closure evidence licenses coercion at typed bindings and both
+named and computed callback arguments; a matching signature alone cannot do so.
+Pointer values remain Copy source captures. Physical identity/address casts and
+Display behavior refuse until their real source representation is available.
+The [Rust pointer reference](https://doc.rust-lang.org/reference/types/function-pointer.html)
+defines the bare signatures and function-item/noncapturing-closure coercions.
+Twenty-five future values, nine refusals, full predecessor sources, native
+products, both codecs and four emissions remain unexecuted. Unsafe/extern/
+variadic conventions, lifetime and owned domains, complete source inference,
+generated runtime wrappers and observable pointer representation remain required.
+
 The ordinary Rust source draft maps explicitly typed closures onto existing
 Lambda and Apply nodes. Parameters, results and actual free captures require
 proven direct immutable Copy source meanings. The same source capture walker

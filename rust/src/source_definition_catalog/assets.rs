@@ -159,6 +159,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "rust-formatting-program.lino" => {
             Some(include_str!("../data/rust-formatting-program.lino"))
         }
+        "rust-function-pointer-program.lino" => {
+            Some(include_str!("../data/rust-function-pointer-program.lino"))
+        }
         "rust-inherent-program.lino" => Some(include_str!("../data/rust-inherent-program.lino")),
         "rust-primitive-bitwise-program.lino" => {
             Some(include_str!("../data/rust-primitive-bitwise-program.lino"))

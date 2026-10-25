@@ -428,3 +428,5 @@ mod translation_javascript_binding_initialization;
 mod translation_javascript_missing_arguments;
 
 mod translation_rust_copy_closures;
+
+mod translation_rust_function_pointers;

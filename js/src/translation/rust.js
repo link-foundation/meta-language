@@ -26,6 +26,7 @@ import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import {readRustCopyClosure,readRustCopyClosureCall} from './rust-copy-closures.js';
+import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
@@ -478,6 +479,7 @@ class RustParser {
   typeValue() {
     const c = this.cursor;
     const token = c.peek();
+    if(c.is('fn'))return readRustFunctionPointerType(this);
     const inherentSelf=readRustInherentSelfType(this);
     if(inherentSelf)return inherentSelf;
     if (c.eat('&')) {
@@ -1029,6 +1031,7 @@ class RustParser {
     }
     const captures=planRustFormattingOperandCapture(values.length).map(index=>{
       const value=values[index],name=this.freshProductBinding();
+      refuseRustCallableObservation(this,value,path,value.span);
       refuseRustSharedArrayHandleObservation(this,value,path,value.span);
       const reference=this.origins.mark({k:'name',path:[name],span:value.span},this.origins.origin(value,path));
       return {name,value,reference,span:value.span};
@@ -1043,7 +1046,8 @@ class RustParser {
         const sourceName=template.value.slice(first,last);
         if(sourceName==='_'||!acceptRustSourceIdentifierName(sourceName))throw unsupported(`format argument {${sourceName}}`,'outside the portable core',template.span);
         const name=normalizeRustSourceIdentifier(sourceName,template.span);
-        value={k:'name',path:[name],span:template.span};
+        value=readRustFunctionReference(this,[name],path,template.span)??{k:'name',path:[name],span:template.span};
+        refuseRustCallableObservation(this,value,path,value.span);
         refuseRustSharedArrayHandleObservation(this,value,path,value.span);
       }else throw new TypeError('unknown Rust formatting term instruction');
       pieces.push({k:'show',arg:value,style:'rust',span:value.span});
@@ -1091,6 +1095,7 @@ class RustParser {
       c.next();
       const right = this.primitiveBitwise(path, {}, 0);
       refuseRustSharedArrayHandleValueComparison(this,left,right,path,joined(left,right,token));
+      refuseRustCallableObservation(this,left,path,joined(left,right,token));refuseRustCallableObservation(this,right,path,joined(left,right,token));
       const after = c.peek();
       if (after.kind === 'punct' && COMPARISON[after.value]) throw this.fail('comparison operators cannot be chained', after);
       return { k: 'binary', op: COMPARISON[token.value], left, right, span: joined(left, right, token) };
@@ -1152,6 +1157,7 @@ class RustParser {
     let value = this.unary(path, options);
     while (this.cursor.is('as')) {
       const token = this.cursor.next();
+      refuseRustCallableObservation(this,value,path,span(token,this.cursor.peek()));
       const parenthesizedType = this.cursor.is('(');
       const to = this.type();
       if (!this.origins.collecting && this.origins.type.wrappers.length) throw unsupported('source cast', 'numeric casts require a direct source and target value type', span(token, this.cursor.peek()));
@@ -1464,7 +1470,7 @@ class RustParser {
       const sharedConstruction=readRustSharedArrayHandleConstructor(this,segments,token,path);
       if(sharedConstruction)return sharedConstruction;
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
-      if (!c.is('(')) return noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??this.resolve(segments, path), span: span(token, token) },path);
+      if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??this.resolve(segments, path), span: span(token, token) },path);
       c.next();
       const args = [];
       while (!c.is(')')) {

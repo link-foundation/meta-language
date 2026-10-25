@@ -10,6 +10,7 @@ import { acceptRustImmutableProductType, acceptRustProductOrigin } from './rust-
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFreshArrayResultTail } from './rust-array-rules.js';
 import {ownedLocalPair} from './rust-owned-local-state.js';
 import {readRustCopyClosureJoinError} from './rust-copy-closure-rules.js';
+import {readRustFunctionPointerCoercionError} from './rust-function-pointer-rules.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -247,6 +248,7 @@ export class RustSourceOrigins {
   argument(actualOrigin, expectedOrigin, span) {
     if (this.collecting) return;
     if (actualOrigin.diverging) return;
+    const pointerError=readRustFunctionPointerCoercionError(expectedOrigin.type?.kind==='function'&&expectedOrigin.copyEvidence===true,actualOrigin.type?.kind??'',Boolean(actualOrigin.copyClosureSpan),actualOrigin.copyClosureCaptureCount??-1,actualOrigin.proven);if(pointerError)throw unsupported('Rust function pointer coercion',pointerError,span);
     if(this.sharedArrayHandleSourceModel&&(actualOrigin.type?.kind==='array'||expectedOrigin.type?.kind==='array')&&!acceptRustSharedArrayHandleTransfer(actualOrigin.arraySourceModel,expectedOrigin.arraySourceModel,actualOrigin.wrappers.length,expectedOrigin.wrappers.length))throw unsupported('Rust shared array handle source','call and return ownership must preserve actual shared handles without borrowed payload coercion',span);
     if (!actualOrigin.proven && !actualOrigin.uncertain && !actualOrigin.wrappers.length && !expectedOrigin.wrappers.length) return;
     if (!actualOrigin.proven || !expectedOrigin.proven) throw unsupported('source indirection', 'the source ownership of this value cannot be proved', span);

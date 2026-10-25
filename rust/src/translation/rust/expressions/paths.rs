@@ -140,6 +140,11 @@ impl RustParser {
         }
         let record_path = self.record_value_path(&segments, path, c.is("("));
         if !c.is("(") {
+            if let Some(reference) =
+                self.read_function_reference(&segments, path, span(token, token))?
+            {
+                return Ok(reference);
+            }
             let node = SExpr::new(
                 SNode::Name {
                     path: record_path.unwrap_or_else(|| self.resolve(&segments, path)),

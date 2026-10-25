@@ -16,6 +16,9 @@ impl RustParser {
     /// is immutable.
     pub(in super::super) fn parse_type_value(&mut self) -> Result<Type> {
         let token = self.peek();
+        if self.cursor.is("fn") {
+            return self.read_function_pointer_type();
+        }
         if let Some(inherent) = self.inherent_self_type() {
             return Ok(inherent);
         }
