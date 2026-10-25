@@ -27,6 +27,13 @@ const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 // rewrites an earlier live source, capture, timestamp or ledger mapping.
 export const ASSERTION_POLICY_INSTRUCTION_SOURCES = Object.freeze([
   {
+    id: 'complete-draft-before-ci-feedback-2026-10-25',
+    key: 'completeDraftBeforeCiFeedbackRequest',
+    title: 'Complete every implementation draft before addressing CI feedback',
+    role: 'Latest direct user messages authorize draft commits and pushes for later feedback while explicitly postponing all CI feedback investigation and repairs until the entire inherited implementation scope is drafted; retain the code-test prohibition and all later verification obligations.',
+    ledgerCoverage: ['I195-WORKFLOW-COMPLETE-DRAFT-BEFORE-CI-FEEDBACK'],
+  },
+  {
     id: 'continue-complete-requirements-draft-2026-10-25',
     key: 'continueCompleteRequirementsDraftRequest',
     title: 'Continue drafting until every inherited requirement has its complete code draft',

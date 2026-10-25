@@ -3426,6 +3426,13 @@ oracle. Missing implementations remain visible. Source
 presence, stubs, carried originals and a source inventory cannot establish that
 the complete behavior has been drafted. Existing CI observations retain their
 original commits and cannot validate the new draft.
+The [latest direct instruction](../parity/sources/complete-draft-before-ci-feedback-2026-10-25.txt)
+permits commits and coherent batch pushes to collect later feedback, but defers
+addressing any CI feedback until this entire implementation draft is complete.
+Do not inspect failure logs or repair feedback during this drafting phase.
+Existing check gates remain in place for subsequent verification. This phase
+supersedes the earlier requirement to repair preceding CI errors before a new
+batch push; terminal run status may still be read to coordinate one push.
 Independent semantic translation is now an explicit source-level option:
 `semanticTranslation` in JavaScript and `semantic_translation` in Rust, exposed
 as `translate --semantic` in both CLI drafts. Actual emitted declarations and
