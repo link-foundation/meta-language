@@ -11,7 +11,6 @@ use super::ml_array;
 use super::ml_math;
 use super::ml_source_exception;
 use super::ml_string;
-use super::plan_java_script_record_parameter_bindings;
 use super::read_array_binding_fact_field;
 use super::read_java_script_binding_default_absence_code;
 use super::read_required_number_fact;
@@ -912,15 +911,4 @@ pub fn accept_java_script_record_parameter_binding(
             }
         }
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn plan_java_script_record_parameters(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    start: f64,
-    reserved: &[self::ml_string::Text],
-) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, false, false)
 }

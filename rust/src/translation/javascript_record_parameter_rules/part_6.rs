@@ -9,7 +9,42 @@ use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop16;
-use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19(
+    names: &[self::ml_string::Text],
+    value: &self::ml_string::Text,
+    mut duplicate: bool,
+    mut previous: f64,
+) -> bool {
+    loop {
+        if previous < (names.len() as f64) {
+            if (self::read_required_text_fact(names, previous)) == (*value) {
+                {
+                    let duplicate_2 = true;
+                    {
+                        let previous_2 = previous + 1f64;
+                        {
+                            (duplicate, previous) = (duplicate_2, previous_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let previous_3 = previous + 1f64;
+                    {
+                        previous = previous_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { duplicate };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]

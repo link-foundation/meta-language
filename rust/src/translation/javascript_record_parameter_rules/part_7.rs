@@ -322,6 +322,7 @@ pub fn source_ml_source1_temporary_plan_java_script_record_parameter_bindings_lo
     reserved: &[self::ml_string::Text],
     mut ordinary: bool,
     mut defaults: bool,
+    mut rest: bool,
     mut at: f64,
     mut slot: f64,
     mut names: Vec<self::ml_string::Text>,
@@ -356,7 +357,9 @@ pub fn source_ml_source1_temporary_plan_java_script_record_parameter_bindings_lo
                         {
                             let open = at;
                             {
-                                let profile = if defaults {
+                                let profile = if rest {
+                                    3f64
+                                } else if defaults {
                                     2f64
                                 } else if ordinary {
                                     1f64

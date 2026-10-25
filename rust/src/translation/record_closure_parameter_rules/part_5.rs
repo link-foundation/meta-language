@@ -1,7 +1,5 @@
 // Generated from complete js/src/translation/record-closure-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result;
-use super::accept_java_script_source_binding_name;
-use super::find_java_script_formal_default_expression_end;
+use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
 use super::ml_array;
 use super::ml_string;
 use super::plan_java_script_array_binding_names;
@@ -9,6 +7,72 @@ use super::read_array_binding_fact_field;
 use super::read_array_binding_initializer_end;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
+    name: &self::ml_string::Text,
+    reserved: &[self::ml_string::Text],
+    mut index: f64,
+) -> self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
+    loop {
+        return if index < (reserved.len() as f64) {
+            {
+                let word =
+                    self::ml_array::optional_at(reserved, self::ml_array::number_index(index));
+                if {
+                    let source_ml_source2_comparison_operand103 = word.clone();
+                    {
+                        let source_ml_source2_comparison_operand104 = None::<()>;
+                        match (
+                            source_ml_source2_comparison_operand103,
+                            source_ml_source2_comparison_operand104,
+                        ) {
+                            (Some(_ml_left), Some(_ml_right)) => false,
+                            (None, None) => true,
+                            _ => false,
+                        }
+                    }
+                } {
+                    panic!(
+                        "{}",
+                        "source binding reserved names need a complete text column"
+                    )
+                } else if {
+                    let source_ml_source2_comparison_operand105 = word.clone();
+                    {
+                        let source_ml_source2_comparison_operand106 = name.clone();
+                        match (
+                            source_ml_source2_comparison_operand105,
+                            source_ml_source2_comparison_operand106,
+                        ) {
+                            (Some(ml_left), ml_right) => ml_left == ml_right,
+                            _ => false,
+                        }
+                    }
+                } {
+                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(false)
+                } else {
+                    {
+                        let index_2 = index + 1f64;
+                        {
+                            index = index_2;
+                            continue;
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result {
+    MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Done,
+    MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Return(bool),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -697,213 +761,4 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
 pub enum MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18 {
     MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(f64, f64, f64),
     MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(Vec<f64>),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-// The checked primitive-column interface retains every ordered source argument.
-#[expect(
-    clippy::too_many_arguments,
-    reason = "checked source arguments and captured continuation state retain their original order"
-)]
-pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop16(
-    kinds: &[self::ml_string::Text],
-    values: &[self::ml_string::Text],
-    reserved: &[self::ml_string::Text],
-    mut defaults: bool,
-    mut index: f64,
-    mut names: Vec<self::ml_string::Text>,
-    mut position: f64,
-    mut bindings: Vec<f64>,
-) -> self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result {
-    loop {
-        return if (index < (kinds.len() as f64))
-            && !(((self::read_required_text_fact(kinds, index))
-                == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-                && ((self::read_required_text_fact(values, index))
-                    == (self::ml_string::Text::from_units(vec![93]))))
-        {
-            if ((self::read_required_text_fact(kinds, index))
-                == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-                && ((self::read_required_text_fact(values, index))
-                    == (self::ml_string::Text::from_units(vec![44])))
-            {
-                {
-                    let position_2 = position + 1f64;
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (index, position) = (index_2, position_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let rest = ((self::read_required_text_fact(kinds, index))
-                        == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
-                        && ((self::read_required_text_fact(values, index))
-                            == (self::ml_string::Text::from_units(vec![46, 46, 46])));
-                    {
-                        let index_4 = if rest { { index + 1f64 } } else { index };
-                        if index_4 >= (kinds.len() as f64) {
-                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-1f64, index_4])
-                        } else {
-                            {
-                                let token = index_4;
-                                {
-                                    let name = self::read_required_text_fact(values, index_4);
-                                    {
-                                        let token_kind =
-                                            self::read_required_text_fact(kinds, index_4);
-                                        if (token_kind
-                                            == (self::ml_string::Text::from_units(vec![
-                                                112, 117, 110, 99, 116,
-                                            ])))
-                                            && ((name
-                                                == (self::ml_string::Text::from_units(vec![91])))
-                                                || (name
-                                                    == (self::ml_string::Text::from_units(vec![
-                                                        123,
-                                                    ]))))
-                                        {
-                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-2f64, index_4])
-                                        } else {
-                                            {
-                                                let duplicate = false;
-                                                {
-                                                    let previous = 0f64;
-                                                    {
-                                                        let duplicate_2 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop17(&(names), &(name), duplicate, previous);
-                                                        if (self::accept_java_script_source_binding_name(&(token_kind), &(name), duplicate_2, reserved)) {
-                                                            {
-                                                                let names_2 = {
-                                                                    let source_ml_source2_concat_value129 = names;
-                                                                    {
-                                                                        let source_ml_source2_concat_value130 = vec![name.clone()];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value129), source_ml_source2_concat_value130)
-                                                                    }
-                                                                };
-                                                                {
-                                                                    let index_5 = index_4 + 1f64;
-                                                                    {
-                                                                        let position_3 = position + 1f64;
-                                                                        {
-                                                                            let default_start = -1f64;
-                                                                            {
-                                                                                let default_end = -1f64;
-                                                                                if index_5 >= (kinds.len() as f64) {
-                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-1f64, index_5])
-                                                                                } else {
-                                                                                    {
-                                                                                        let source_ml_source2_s131 = if ((self::read_required_text_fact(kinds, index_5)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_5)) == (self::ml_string::Text::from_units(vec![61]))) {
-                                                                                            if defaults {if rest {
-                                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(vec![-5f64, index_5])
-                                                                                                } else {
-                                                                                                    {
-                                                                                                        let default_start_2 = index_5 + 1f64;
-                                                                                                        {
-                                                                                                            let default_end_2 = self::find_java_script_formal_default_expression_end(kinds, values, default_start_2);
-                                                                                                            if default_end_2 < 0f64 {
-                                                                                                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(vec![-1f64, default_start_2])
-                                                                                                            } else {
-                                                                                                                {
-                                                                                                                    let index_6 = default_end_2;
-                                                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(index_6, default_start_2, default_end_2)
-                                                                                                                }
-                                                                                                            }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }} else {
-                                                                                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(vec![-3f64, index_5])
-                                                                                            }
-                                                                                        } else {
-                                                                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(index_5, default_start, default_end)
-                                                                                        };
-                                                                                        match source_ml_source2_s131 {
-                                                                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(index_7, default_start_3, default_end_3) => {
-                                                                                                {
-                                                                                                    let bindings_2 = {
-                                                                                                        let source_ml_source2_concat_value132 = bindings;
-                                                                                                        {
-                                                                                                            let source_ml_source2_concat_value133 = if defaults {
-                                                                                                                vec![if rest {
-                                                                                                                    1f64
-                                                                                                                } else {
-                                                                                                                    0f64
-                                                                                                                }, (position_3 - 1f64), token, default_start_3, default_end_3]
-                                                                                                            } else {
-                                                                                                                vec![if rest {
-                                                                                                                    1f64
-                                                                                                                } else {
-                                                                                                                    0f64
-                                                                                                                }, (position_3 - 1f64), token]
-                                                                                                            };
-                                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value132), source_ml_source2_concat_value133)
-                                                                                                        }
-                                                                                                    };
-                                                                                                    {
-                                                                                                        let next_kind = self::read_required_text_fact(kinds, index_7);
-                                                                                                        {
-                                                                                                            let next = self::read_required_text_fact(values, index_7);
-                                                                                                            if (next_kind == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && (next == (self::ml_string::Text::from_units(vec![61]))) {
-                                                                                                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-3f64, index_7])
-                                                                                                            } else if rest && !((next_kind == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && (next == (self::ml_string::Text::from_units(vec![93])))) {
-                                                                                                                    self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-5f64, index_7])
-                                                                                                                } else {
-                                                                                                                    if (next_kind == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && (next == (self::ml_string::Text::from_units(vec![44]))) {
-                                                                                                                        {
-                                                                                                                            let index_8 = index_7 + 1f64;
-                                                                                                                            {
-                                                                                                                                (index, names, position, bindings) = (index_8, names_2, position_3, bindings_2);
-                                                                                                                                continue;
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                    }
-{
-                                                                                                                        if ((next_kind == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && (next == (self::ml_string::Text::from_units(vec![93])))) {
-                                                                                                                            {
-                                                                                                                                (index, names, position, bindings) = (index_7, names_2, position_3, bindings_2);
-                                                                                                                                continue;
-                                                                                                                            }
-                                                                                                                        }
-{
-                                                                                                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-1f64, index_7])
-                                                                                                                        }
-                                                                                                                    }
-                                                                                                                }
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            }
-                                                                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(source_ml_source1_temporary_result18) => {
-                                                                                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(source_ml_source1_temporary_result18)
-                                                                                            }
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        } else {
-                                                            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-4f64, index_4])
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Done(index, names, bindings)
-        };
-    }
 }

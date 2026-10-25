@@ -163,25 +163,12 @@ impl JavaScriptParser {
             let local = &bindings[index];
             let place = Span::new(property.start, local.end);
             if plan[at + 2] == -2.0 {
-                let keys = excluded
+                let names = excluded
                     .iter()
-                    .map(|token| {
-                        SArrayItem::new(
-                            SExpr::new(
-                                SNode::Str {
-                                    value: token.value.clone(),
-                                },
-                                Some(token.span()),
-                            ),
-                            false,
-                        )
-                    })
-                    .collect();
-                let read = SExpr::new(SNode::Math {
-                    op: crate::translation::object_rest_rules::read_java_script_object_rest_operation().to_string(),
-                    name: String::new(),
-                    args: vec![SArrayItem::new(object.clone(), false), SArrayItem::new(SExpr::new(SNode::Array { items: keys, element: None }, Some(place)), false)],
-                }, Some(place));
+                    .map(|token| (token.value.clone(), token.span()))
+                    .collect::<Vec<_>>();
+                let read =
+                    crate::translation::object_rest::source_read(object.clone(), &names, place);
                 statements.push(if statement == "let" {
                     Stmt::Let {
                         name: local.value.clone(),

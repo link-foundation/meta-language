@@ -46,6 +46,7 @@ struct RecordBinding {
     binding_span: Span,
     property_span: Span,
     fallback: Option<SExpr>,
+    excluded: Option<Vec<(String, Span)>>,
 }
 
 pub(super) fn reserved_names() -> &'static [Text] {
@@ -343,7 +344,7 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
-        let values = rules::plan_java_script_source_record_parameters_with_defaults(
+        let values = rules::plan_java_script_source_record_parameters_with_rest(
             &kinds,
             &values,
             0.0,
@@ -466,6 +467,7 @@ impl JavaScriptParser {
             syntax
                 .parameters
                 .push(parameter(name.clone(), parameter_span));
+            let mut excluded = Vec::new();
             for _ in 0..pairs {
                 let property = plan.token(&interval)?;
                 let binding = values[plan.at];
@@ -505,8 +507,12 @@ impl JavaScriptParser {
                     binding_span: local.span(),
                     property_span: property.span(),
                     fallback,
+                    excluded: (first == -2.0).then(|| excluded.clone()),
                 });
                 syntax.source_names.push(local.value);
+                if first != -2.0 {
+                    excluded.push((property.value.clone(), property.span()));
+                }
             }
         }
         if syntax.parameters.len() != count {
@@ -573,34 +579,22 @@ impl JavaScriptParser {
                 .bindings
                 .iter()
                 .map(|binding| {
-                    let value = SExpr::new(
-                        SNode::Field {
-                            object: Box::new(SExpr::new(
-                                SNode::Name {
-                                    path: vec![binding.parameter.clone()],
-                                },
-                                Some(binding.parameter_span),
-                            )),
-                            field: binding.property.clone(),
+                    let object = SExpr::new(
+                        SNode::Name {
+                            path: vec![binding.parameter.clone()],
                         },
-                        Some(binding.span),
+                        Some(binding.parameter_span),
                     );
-                    let value = if let Some(fallback) = &binding.fallback {
+                    let value = if let Some(excluded) = &binding.excluded {
+                        crate::translation::object_rest::source_read(object, excluded, binding.span)
+                    } else if let Some(fallback) = &binding.fallback {
                         SExpr::new(
                             SNode::Math {
                                 op: rules::read_java_script_record_formal_default_operation()
                                     .to_string(),
                                 name: String::new(),
                                 args: vec![
-                                    crate::translation::surface::SArrayItem::new(
-                                        SExpr::new(
-                                            SNode::Name {
-                                                path: vec![binding.parameter.clone()],
-                                            },
-                                            Some(binding.parameter_span),
-                                        ),
-                                        false,
-                                    ),
+                                    crate::translation::surface::SArrayItem::new(object, false),
                                     crate::translation::surface::SArrayItem::new(
                                         SExpr::new(
                                             SNode::Str {
@@ -619,7 +613,13 @@ impl JavaScriptParser {
                             Some(binding.span),
                         )
                     } else {
-                        value
+                        SExpr::new(
+                            SNode::Field {
+                                object: Box::new(object),
+                                field: binding.property.clone(),
+                            },
+                            Some(binding.span),
+                        )
                     };
                     if rules::read_java_script_record_parameter_binding_statement(
                         written.contains(&binding.name),

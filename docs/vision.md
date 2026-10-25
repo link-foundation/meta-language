@@ -3943,7 +3943,7 @@ with their hashes at `51140898`. The
 and [keyed binding initialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-keyedbindinginitialization)
 define the correction. Thirty-three future values and eight refusals declare
 original Node, translated JavaScript/native Rust, both codecs and all four
-emissions under explicit language/runtime ranges. None executed. Formal rest, nested,
+emissions under explicit language/runtime ranges. None executed. Nested,
 computed and string-key patterns, inherited/getter/proxy protocols and full
 initialization environments remain obligations.
 
@@ -3976,9 +3976,28 @@ former rest-refusal input. The entire preceding fixture, writer and assertions
 at `62160f11` remain in hashed Links history. Five syntax/domain refusals retain
 the incomplete boundaries; both codecs, all four emissions and explicit runtime
 ranges remain required. None executed. Full Symbol/getter/proxy/inherited and
-primitive ToObject behavior, recursive/computed/string-key patterns and formal
-rest remain separate code obligations. These source drafts establish neither
+primitive ToObject behavior and recursive/computed/string-key patterns remain
+separate code obligations. These source drafts establish neither
 language completeness nor runtime parity.
+
+Object rest in the existing synchronous formal contexts now reuses that exact
+closed own-field copy operation. Named declarations, constant arrows/function
+expressions, namespace methods and callback closures retain distinct source
+contexts. The formal planner preserves each actual argument slot, ordered
+property exclusions and bound name. Defaults precede the copy; the rest binder
+is unavailable to earlier initializers and remains an ordinary mutable source
+parameter binding afterward. The shared source form constructs the same copy
+node for lexical and formal adapters. Every preceding required-only and
+default-only exported planner keeps its original rest refusals.
+
+Twenty additional future source products and six refusals cover these contexts,
+multi-pattern slots, actual order, empty copies, captures, local rebinding,
+fresh identity and shared children. The exact formerly refused callback source
+is retained as a positive value case; the entire preceding fixture and assertion
+sources at `2c5f652e` remain as hashed Links history. Complete source definitions,
+both codecs, four emissions and explicit runtime ranges remain deferred.
+Whole-parameter defaults, mixed recursive patterns, async/generator environments
+and complete property protocols remain implementation obligations.
 
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:

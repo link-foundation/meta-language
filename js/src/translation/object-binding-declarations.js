@@ -4,7 +4,7 @@ import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './array-binding-policy.js';
 import {requireJavaScriptIdentifierRole} from './javascript-identifier-roles.js';
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {planJavaScriptObjectPatternBindings,readJavaScriptObjectBindingStatement,readJavaScriptRecordFormalDefaultOperation,acceptJavaScriptObjectBindingName,readJavaScriptObjectPatternBindingPositions} from './javascript-record-parameter-rules.js';
-import {readJavaScriptObjectRestOperation} from './object-rest-rules.js';
+import {constructJavaScriptObjectRestSource} from './object-rest.js';
 export function readJavaScriptObjectBindingNames(parser,start){
  const close=parser.matching(start),tokens=parser.cursor.tokens.slice(start,close+1),plan=planJavaScriptObjectPatternBindings(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,[],3);
  return plan[0]<0?[]:readJavaScriptObjectPatternBindingPositions(plan).map(position=>tokens[position]);
@@ -26,7 +26,7 @@ export function readJavaScriptObjectBindingDeclaration(parser,startToken,mode){
  for(const row of rows){
   const property=tokens[row.property],binding=tokens[row.binding],span={start:property.start,end:binding.end};
   if(row.first===-2){
-   const read={k:'math',op:readJavaScriptObjectRestOperation(),name:'',args:[{value:object,spread:false},{value:{k:'array',items:excluded.map(token=>({value:{k:'str',value:token.value,span:{start:token.start,end:token.end}},spread:false})),span},spread:false}],span};
+   const read=constructJavaScriptObjectRestSource(object,excluded,span);
    statements.push({s:readJavaScriptObjectBindingStatement(mode),name:binding.value,value:read,span:where});continue;
   }
   excluded.push(property);

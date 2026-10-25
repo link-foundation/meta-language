@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/javascript-record-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result;
+use super::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result;
 use super::accept_java_script_source_binding_name;
 use super::find_java_script_formal_default_expression_end;
 use super::ml_array;
@@ -9,6 +9,40 @@ use super::read_array_binding_fact_field;
 use super::read_array_binding_initializer_end;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_array_binding_fact_field_loop5(
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    field: &self::ml_string::Text,
+    mut at: f64,
+    mut end: f64,
+) -> self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result {
+    loop {
+        return if at < end {
+            if (self::read_required_text_fact(labels, at)) == (*field) {
+                self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Return(self::read_required_number_fact(targets, at))
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result {
+    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done,
+    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Return(f64),
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MlSource1TemporaryReadArrayBindingInitializerEndJoin7 {
@@ -839,41 +873,5 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
         } else {
             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Done(index, names, bindings)
         };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19(
-    names: &[self::ml_string::Text],
-    value: &self::ml_string::Text,
-    mut duplicate: bool,
-    mut previous: f64,
-) -> bool {
-    loop {
-        if previous < (names.len() as f64) {
-            if (self::read_required_text_fact(names, previous)) == (*value) {
-                {
-                    let duplicate_2 = true;
-                    {
-                        let previous_2 = previous + 1f64;
-                        {
-                            (duplicate, previous) = (duplicate_2, previous_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let previous_3 = previous + 1f64;
-                    {
-                        previous = previous_3;
-                        continue;
-                    }
-                }
-            }
-        }
-        return { duplicate };
     }
 }

@@ -20,13 +20,28 @@ use super::source_ml_source1_temporary_read_java_script_record_formal_default_bi
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn plan_java_script_record_parameters(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, false, false, false,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_java_script_source_record_parameters(
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     start: f64,
     reserved: &[self::ml_string::Text],
 ) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, true, false)
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, false, false,
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -37,7 +52,22 @@ pub fn plan_java_script_source_record_parameters_with_defaults(
     start: f64,
     reserved: &[self::ml_string::Text],
 ) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, true, true)
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, true, false,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_source_record_parameters_with_rest(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, true, true,
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -137,6 +167,7 @@ pub fn plan_java_script_record_parameter_bindings(
     reserved: &[self::ml_string::Text],
     ordinary: bool,
     defaults: bool,
+    rest: bool,
 ) -> Vec<f64> {
     if ((((kinds.len() as f64) != (values.len() as f64)) || !(self::ml_math::is_integer(start)))
         || (start < 0f64))
@@ -153,7 +184,7 @@ pub fn plan_java_script_record_parameter_bindings(
                     {
                         let instructions = Vec::<f64>::new();
                         {
-                            let source_ml_source2_s90 = self::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop32(kinds, values, reserved, ordinary, defaults, at, slot, names, instructions);
+                            let source_ml_source2_s90 = self::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop32(kinds, values, reserved, ordinary, defaults, rest, at, slot, names, instructions);
                             match source_ml_source2_s90 {
                                 self::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop32Result::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop32Done(at_2, slot_2, instructions_2) => {
                                     if (at_2 >= (kinds.len() as f64)) || !(((self::read_required_text_fact(kinds, at_2)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, at_2)) == (self::ml_string::Text::from_units(vec![41])))) {
@@ -842,70 +873,4 @@ pub fn source_ml_source1_temporary_read_source_identifier_prefix_loop2(
 pub enum MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
     MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done,
     MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
-    name: &self::ml_string::Text,
-    reserved: &[self::ml_string::Text],
-    mut index: f64,
-) -> self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
-    loop {
-        return if index < (reserved.len() as f64) {
-            {
-                let word =
-                    self::ml_array::optional_at(reserved, self::ml_array::number_index(index));
-                if {
-                    let source_ml_source2_comparison_operand103 = word.clone();
-                    {
-                        let source_ml_source2_comparison_operand104 = None::<()>;
-                        match (
-                            source_ml_source2_comparison_operand103,
-                            source_ml_source2_comparison_operand104,
-                        ) {
-                            (Some(_ml_left), Some(_ml_right)) => false,
-                            (None, None) => true,
-                            _ => false,
-                        }
-                    }
-                } {
-                    panic!(
-                        "{}",
-                        "source binding reserved names need a complete text column"
-                    )
-                } else if {
-                    let source_ml_source2_comparison_operand105 = word.clone();
-                    {
-                        let source_ml_source2_comparison_operand106 = name.clone();
-                        match (
-                            source_ml_source2_comparison_operand105,
-                            source_ml_source2_comparison_operand106,
-                        ) {
-                            (Some(ml_left), ml_right) => ml_left == ml_right,
-                            _ => false,
-                        }
-                    }
-                } {
-                    self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(false)
-                } else {
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            index = index_2;
-                            continue;
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result {
-    MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Done,
-    MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Return(bool),
 }

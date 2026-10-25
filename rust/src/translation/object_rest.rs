@@ -46,3 +46,39 @@ pub(super) fn positions(names: &[String], excluded: &[String]) -> Vec<usize> {
         })
         .collect()
 }
+pub(super) fn source_read(object: SExpr, excluded: &[(String, Span)], span: Span) -> SExpr {
+    let items = excluded
+        .iter()
+        .map(|(name, origin)| {
+            SArrayItem::new(
+                SExpr::new(
+                    SNode::Str {
+                        value: name.clone(),
+                    },
+                    Some(*origin),
+                ),
+                false,
+            )
+        })
+        .collect();
+    SExpr::new(
+        SNode::Math {
+            op: super::object_rest_rules::read_java_script_object_rest_operation().to_string(),
+            name: String::new(),
+            args: vec![
+                SArrayItem::new(object, false),
+                SArrayItem::new(
+                    SExpr::new(
+                        SNode::Array {
+                            items,
+                            element: None,
+                        },
+                        Some(span),
+                    ),
+                    false,
+                ),
+            ],
+        },
+        Some(span),
+    )
+}

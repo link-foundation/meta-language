@@ -45,21 +45,25 @@ export function acceptJavaScriptRecordParameterBinding(kind, name, names, reserv
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
-  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, false,false);
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, false,false,false);
 }
 
 /** Source admission uses ordinary BoundNames and the actual hygienic supply.
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptSourceRecordParameters(kinds, values, start, reserved) {
-  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, true,false);
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, true,false,false);
 }
 /** Separate default profile: each actual record binding owns property/name and
  * initializer start/end columns; -1,-1 means no initializer. Earlier exported
  * required-only plans retain their original two-column contract.
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
-export function planJavaScriptSourceRecordParametersWithDefaults(kinds,values,start,reserved){return planJavaScriptRecordParameterBindings(kinds,values,start,reserved,true,true);}
+export function planJavaScriptSourceRecordParametersWithDefaults(kinds,values,start,reserved){return planJavaScriptRecordParameterBindings(kinds,values,start,reserved,true,true,false);}
+/** Add final object rest while retaining all preceding exported contracts.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @returns {number[]} */
+export function planJavaScriptSourceRecordParametersWithRest(kinds,values,start,reserved){return planJavaScriptRecordParameterBindings(kinds,values,start,reserved,true,true,true);}
 
 /** @param {string} kind @param {string} name @param {string[]} names
  * @param {string[]} reserved @param {boolean} ordinary @returns {boolean} */
@@ -114,8 +118,9 @@ export function planJavaScriptObjectPatternBindings(kinds,values,start,reserved,
  return [at+1,pairs.length/(profile>=2?4:2)].concat(pairs);
 }
 /** @param {string[]} kinds @param {string[]} values @param {number} start
- * @param {string[]} reserved @param {boolean} ordinary @param {boolean} defaults @returns {number[]} */
-function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary,defaults) {
+ * @param {string[]} reserved @param {boolean} ordinary @param {boolean} defaults
+ * @param {boolean} rest @returns {number[]} */
+function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary,defaults,rest) {
   if (kinds.length !== values.length || !Number.isInteger(start) || start < 0 || start >= kinds.length) return [-1, start];
   let at = start;
   let slot = 0;
@@ -127,7 +132,7 @@ function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, o
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '...') return [-6, at];
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '[') return [-3, at];
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '{') {
-      const open=at,profile=defaults?2:ordinary?1:0;
+      const open=at,profile=rest?3:defaults?2:ordinary?1:0;
       const pattern=planJavaScriptObjectPatternBindings(kinds,values,at,reserved,names,profile);
       if(readRequiredNumberFact(pattern,0)<0)return pattern;
       at=readRequiredNumberFact(pattern,0);const count=readRequiredNumberFact(pattern,1),width=defaults?4:2;

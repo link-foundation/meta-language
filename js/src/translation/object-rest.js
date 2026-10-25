@@ -2,7 +2,10 @@
 import {typeError,unsupported} from './diagnostics.js';
 import {FLOAT,array} from './types.js';
 import {constructRecordPropertyNameRows} from './ordered-record-emission.js';
-import {readJavaScriptObjectRestOwnerForm,selectJavaScriptObjectRestFields} from './object-rest-rules.js';
+import {readJavaScriptObjectRestOperation,readJavaScriptObjectRestOwnerForm,selectJavaScriptObjectRestFields} from './object-rest-rules.js';
+export function constructJavaScriptObjectRestSource(object,excluded,span){
+ return {k:'math',op:readJavaScriptObjectRestOperation(),name:'',args:[{value:object,spread:false},{value:{k:'array',items:excluded.map(token=>({value:{k:'str',value:token.value,span:{start:token.start,end:token.end}},spread:false})),span},spread:false}],span};
+}
 export function readJavaScriptObjectRestOperands(node,language='JavaScript'){
  const args=node.args;
  if(language!=='JavaScript'||args.length!==2||args.some(argument=>argument.spread)||args[1].value.k!=='array'||args[1].value.items.some(item=>item.spread||item.value.k!=='str'))throw typeError('object rest needs its actual receiver and exact original excluded property names',node.span);

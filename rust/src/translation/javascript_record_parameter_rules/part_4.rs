@@ -20,13 +20,28 @@ use super::source_ml_source1_temporary_read_java_script_record_formal_default_bi
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn plan_java_script_record_parameters(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, false, false, false,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_java_script_source_record_parameters(
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     start: f64,
     reserved: &[self::ml_string::Text],
 ) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, true, false)
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, false, false,
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -37,7 +52,22 @@ pub fn plan_java_script_source_record_parameters_with_defaults(
     start: f64,
     reserved: &[self::ml_string::Text],
 ) -> Vec<f64> {
-    self::plan_java_script_record_parameter_bindings(kinds, values, start, reserved, true, true)
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, true, false,
+    )
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_source_record_parameters_with_rest(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_record_parameter_bindings(
+        kinds, values, start, reserved, true, true, true,
+    )
 }
 
 /// Execute the checked shared source algorithm.
@@ -137,6 +167,7 @@ pub fn plan_java_script_record_parameter_bindings(
     reserved: &[self::ml_string::Text],
     ordinary: bool,
     defaults: bool,
+    rest: bool,
 ) -> Vec<f64> {
     if ((((kinds.len() as f64) != (values.len() as f64)) || !(self::ml_math::is_integer(start)))
         || (start < 0f64))
@@ -153,7 +184,7 @@ pub fn plan_java_script_record_parameter_bindings(
                     {
                         let instructions = Vec::<f64>::new();
                         {
-                            let source_ml_source2_s90 = self::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop32(kinds, values, reserved, ordinary, defaults, at, slot, names, instructions);
+                            let source_ml_source2_s90 = self::source_ml_source1_temporary_plan_java_script_record_parameter_bindings_loop32(kinds, values, reserved, ordinary, defaults, rest, at, slot, names, instructions);
                             match source_ml_source2_s90 {
                                 self::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop32Result::MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop32Done(at_2, slot_2, instructions_2) => {
                                     if (at_2 >= (kinds.len() as f64)) || !(((self::read_required_text_fact(kinds, at_2)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, at_2)) == (self::ml_string::Text::from_units(vec![41])))) {
@@ -878,38 +909,4 @@ pub fn source_ml_source1_temporary_accept_java_script_array_binding_name_loop4(
 pub enum MlSource1TemporaryReadArrayBindingFactFieldLoop5Result {
     MlSource1TemporaryReadArrayBindingFactFieldLoop5Done,
     MlSource1TemporaryReadArrayBindingFactFieldLoop5Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_array_binding_fact_field_loop5(
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    field: &self::ml_string::Text,
-    mut at: f64,
-    mut end: f64,
-) -> self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result {
-    loop {
-        return if at < end {
-            if (self::read_required_text_fact(labels, at)) == (*field) {
-                self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Return(self::read_required_number_fact(targets, at))
-            } else {
-                {
-                    let at_2 = at + 1f64;
-                    {
-                        at = at_2;
-                        continue;
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Done
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result {
-    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done,
-    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Return(f64),
 }
