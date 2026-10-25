@@ -37,6 +37,7 @@ export { createDynamicLanguageCommandProgramLinks } from './dynamic-language-com
 export { createRustByteStringProgramLinks } from './rust-byte-string-program.js';
 export { readIntrinsicModuleInitializerBinding } from './translation/intrinsic-initializers.js';
 export { acceptIntrinsicModuleInitializerScope } from './translation/intrinsic-initializer-rules.js';
+export { createJavaScriptRecordClosureParameterProgramLinks } from './record-closure-parameter-program.js';
 export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
 export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
   mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';

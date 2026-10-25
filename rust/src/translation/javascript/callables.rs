@@ -241,24 +241,42 @@ impl JavaScriptParser {
             }
             _ => {}
         }
+        let mut records = None;
         let tokens = if self.cursor.eat("(").is_some() {
-            self.parameters("closure")?
+            records = self.read_record_closure_parameters(method, expression)?;
+            if records.is_some() {
+                Vec::new()
+            } else {
+                self.parameters("closure")?
+            }
         } else {
             vec![(self.cursor.identifier(Some("closure parameter"))?, None)]
         };
         if !expression {
             self.cursor.expect("=>", Some("closure"))?;
         }
-        let names: Vec<_> = tokens
-            .iter()
-            .map(|(token, _)| token.value.clone())
-            .collect();
+        let names: Vec<_> = if let Some(records) = &records {
+            records
+                .parameters
+                .iter()
+                .map(|parameter| parameter.name.clone())
+                .collect()
+        } else {
+            tokens
+                .iter()
+                .map(|(token, _)| token.value.clone())
+                .collect()
+        };
         let error = rules::read_callable_closure_parameter_error(
             &names,
-            &(tokens
-                .iter()
-                .map(|(_, value)| value.is_some())
-                .collect::<Vec<_>>()),
+            &(if records.is_some() {
+                vec![false; names.len()]
+            } else {
+                tokens
+                    .iter()
+                    .map(|(_, value)| value.is_some())
+                    .collect::<Vec<_>>()
+            }),
         );
         match error.as_str() {
             "duplicate closure parameter" => return Err(type_error(error, Some(start.span()))),
@@ -271,10 +289,20 @@ impl JavaScriptParser {
             }
             _ => {}
         }
-        let token_values: Vec<_> = tokens
-            .iter()
-            .map(|(token, _)| json!({"value":token.value,"start":token.start,"end":token.end}))
-            .collect();
+        // Actual logical binder-name facts, not manufactured source tokens.
+        // Their real SParam origins remain on params; no fake token span exists.
+        let token_values: Vec<_> = if let Some(records) = &records {
+            records
+                .parameters
+                .iter()
+                .map(|parameter| json!({"value":parameter.name}))
+                .collect()
+        } else {
+            tokens
+                .iter()
+                .map(|(token, _)| json!({"value":token.value,"start":token.start,"end":token.end}))
+                .collect()
+        };
         let scope_value = json!({"outer":{"locals":self.scope.locals,"tdz":self.scope.tdz,"mutable":self.scope.mutable},"tokens":token_values});
         let facts = create_surface_reference_facts(&scope_value);
         let tokens_node = field(&facts, facts.root, "tokens");
@@ -304,42 +332,46 @@ impl JavaScriptParser {
             .into_iter()
             .collect(),
         };
-        let parameter_plan = rules::plan_callable_surface_parameters(
-            &facts.starts,
-            &facts.counts,
-            &facts.labels,
-            &facts.targets,
-            tokens_node,
-        );
-        let params = parameter_plan
-            .as_chunks::<3>()
-            .0
-            .iter()
-            .map(|entry| SParam {
-                optional: false,
-                name: facts
-                    .value(entry[0])
-                    .and_then(Value::as_str)
-                    .expect("a parameter retains its token spelling")
-                    .to_owned(),
-                span: Some(Span::new(
-                    facts
-                        .value(entry[1])
-                        .and_then(Value::as_u64)
-                        .and_then(|value| usize::try_from(value).ok())
-                        .expect("a token start is a host offset"),
-                    facts
-                        .value(entry[2])
-                        .and_then(Value::as_u64)
-                        .and_then(|value| usize::try_from(value).ok())
-                        .expect("a token end is a host offset"),
-                )),
-                ty: None,
-                default_value: None,
-                guard: None,
-                rocq_type: None,
-            })
-            .collect::<Vec<_>>();
+        let params = if let Some(records) = &records {
+            records.parameters.clone()
+        } else {
+            let parameter_plan = rules::plan_callable_surface_parameters(
+                &facts.starts,
+                &facts.counts,
+                &facts.labels,
+                &facts.targets,
+                tokens_node,
+            );
+            parameter_plan
+                .as_chunks::<3>()
+                .0
+                .iter()
+                .map(|entry| SParam {
+                    optional: false,
+                    name: facts
+                        .value(entry[0])
+                        .and_then(Value::as_str)
+                        .expect("a parameter retains its token spelling")
+                        .to_owned(),
+                    span: Some(Span::new(
+                        facts
+                            .value(entry[1])
+                            .and_then(Value::as_u64)
+                            .and_then(|value| usize::try_from(value).ok())
+                            .expect("a token start is a host offset"),
+                        facts
+                            .value(entry[2])
+                            .and_then(Value::as_u64)
+                            .and_then(|value| usize::try_from(value).ok())
+                            .expect("a token end is a host offset"),
+                    )),
+                    ty: None,
+                    default_value: None,
+                    guard: None,
+                    rocq_type: None,
+                })
+                .collect::<Vec<_>>()
+        };
         for parameter in &params {
             self.lexical.parameter(&parameter.name);
         }
@@ -348,13 +380,20 @@ impl JavaScriptParser {
         let outer_top = std::mem::replace(&mut self.top_level, false);
         let outer_async = std::mem::replace(&mut self.in_async, false);
         let result = (|| {
-            let statements = if self.cursor.is("{") {
-                self.block_statements()?
+            let read_body = |parser: &mut Self| {
+                if parser.cursor.is("{") {
+                    parser.block_statements()
+                } else {
+                    Ok(vec![Stmt::Return {
+                        expr: parser.expr()?,
+                        span: start.span(),
+                    }])
+                }
+            };
+            let statements = if let Some(records) = &records {
+                self.read_record_parameter_body_with(records, read_body)?
             } else {
-                vec![Stmt::Return {
-                    expr: self.expr()?,
-                    span: start.span(),
-                }]
+                read_body(self)?
             };
             let place = Span::new(start.start, self.cursor.peek().start);
             let value = statements_value(&statements);

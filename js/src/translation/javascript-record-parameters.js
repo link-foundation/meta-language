@@ -7,8 +7,15 @@ import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParamet
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParameterProfile,planJavaScriptRecordClosureParameterBindings} from './record-closure-parameter-rules.js';
 
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary named function declaration');
+}
+export function readJavaScriptRecordClosureParameters(parser,method,expression){
+  return readJavaScriptRecordParameterSyntax(parser,null,false,readJavaScriptRecordClosureContext(method,expression));
+}
+function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context){
   const c = parser.cursor;
   const start = c.index, opening = c.tokens[start - 1];
   // Only the actual formal interval supplies decision facts. Matching ignores
@@ -20,10 +27,14 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   const kinds = interval.map(token => token.kind), values = interval.map(token => token.value);
   const selected = findJavaScriptRecordParameterPattern(kinds, values, 0);
   if (selected < 0) return null;
-  if (!acceptJavaScriptRecordParameterProfile('ordinary named function declaration', asynchronous,
-    doc?.params.size ?? 0, false, false)) throw unsupported('record parameter source profile',
+  const profile=context==='ordinary named function declaration'
+    ?acceptJavaScriptRecordParameterProfile(context,asynchronous,doc?.params.size??0,false,false)
+    :acceptJavaScriptRecordClosureParameterProfile(context,asynchronous,doc?.params.size??0);
+  if (!profile) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
-  const plan = planJavaScriptSourceRecordParameters(kinds, values, 0, JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  const plan = context==='ordinary named function declaration'
+    ?planJavaScriptSourceRecordParameters(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)
+    :planJavaScriptRecordClosureParameterBindings(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
   // Reason eight identifies the actual rejected BoundName, never a property.
   if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
   if (plan[0] < 0) throw unsupported('record parameter binding',

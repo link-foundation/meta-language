@@ -2123,6 +2123,7 @@ export function createRustByteStringProgramLinks(): TypedProgramLinks;
 /** Actual binding name and required owner (0=intrinsics,1=Map,2=Set,3=Object). */
 export function readIntrinsicModuleInitializerBinding(source: string): [string, number] | null;
 export function acceptIntrinsicModuleInitializerScope(forms: string[], owners: number[], bindings: string[]): boolean;
+export function createJavaScriptRecordClosureParameterProgramLinks(): TypedProgramLinks;
 
 export interface SyntaxProjectionLimits extends MetaLanguageArchiveLimits { depthLimit?: number }
 export interface AbstractSyntaxOptions extends SyntaxProjectionLimits {

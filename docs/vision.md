@@ -596,6 +596,20 @@ existing checks. These parser-local records add no fields to checked programs or
 saved Links. Native hooks transport the same facts to the generated rule; native
 compilation and executable parity remain CI checks.
 
+Ordinary arrow/function-expression callbacks also admit flat required object
+parameters through an explicit closure context. They reuse the complete original
+required-pattern rules, actual bound names and body entry bindings. Ordinary
+method closures retain the existing receiver-independent restriction. Generated
+logical arguments are existing semantic parameter records with actual pattern
+origins; scope facts do not fabricate source identifier tokens or spans. Alias
+bindings, positional arguments, outer shadows, captured values and local writes
+retain the normal callable/cell behavior. Strict directives still check the
+actual body. Named declarations keep their separate profile; defaults, nested,
+rest and computed patterns, async/generator closures and complete receiver
+semantics remain requirements. Shared context/pattern definitions and their
+dependencies serialize as editable typed Links and generate native decisions.
+The new deferred source/product controls establish no execution evidence.
+
 The independently selected `closed empty primitive Rust option 1` source model
 admits flat zero-argument standard `Option<f64>` functions whose complete body
 is an explicitly typed empty constructor, together with an empty main. The

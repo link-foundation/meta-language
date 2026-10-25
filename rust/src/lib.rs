@@ -456,6 +456,7 @@ pub use transform::{
     SourceTextPredicateHost, TextReplacement,
 };
 pub use translation::intrinsic_initializer_rules::accept_intrinsic_module_initializer_scope;
+pub use translation::record_closure_parameter_program::create_java_script_record_closure_parameter_program_links;
 pub use translation::source_text_bytes::{
     read_source_text_byte, read_source_text_byte_length, read_source_text_units,
     slice_source_text_bytes,

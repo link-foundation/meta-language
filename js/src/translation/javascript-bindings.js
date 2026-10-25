@@ -11,6 +11,7 @@ import { planJavaScriptArrayBindingNames, readJavaScriptArrayBindingValueForm, r
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
 import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
+import {readJavaScriptRecordClosureParameters,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
 
 export function readClosure(parser, method = false) {
@@ -20,24 +21,28 @@ export function readClosure(parser, method = false) {
   const prefixError = readCallableClosurePrefixError(expression, c.peek().kind, c.peek().value);
   if (prefixError === 'named function expression') throw unsupported(prefixError, 'the function name needs a recursive local binding', c.peek());
   if (prefixError === 'generator function') throw unsupported(prefixError, 'generators require a suspended execution state', c.peek());
-  const tokens = c.eat('(') ? parser.parameters('closure') : [c.identifier('closure parameter')];
+  let records=null;
+  const tokens=c.eat('(')?((records=readJavaScriptRecordClosureParameters(parser,method,expression))?[]:parser.parameters('closure')):[c.identifier('closure parameter')];
   if (!expression) c.expect('=>', 'closure');
-  const names = tokens.map((token) => token.value);
-  const parameterError = readCallableClosureParameterError(names, tokens.map(token => Boolean(token.defaultValue)));
+  const names = records?records.parameters.map(parameter=>parameter.name):tokens.map((token) => token.value);
+  const parameterError = readCallableClosureParameterError(names, records?names.map(()=>false):tokens.map(token => Boolean(token.defaultValue)));
   if (parameterError === 'duplicate closure parameter') throw typeError(parameterError, start);
   if (parameterError === 'closure parameter default') throw unsupported(parameterError, 'a function value needs a callable default-argument signature', start);
   for (const name of names) parser.lexicalParameter(name);
-  const params = constructCallableSurfaceParameters(tokens);
+  const params = records?records.parameters:constructCallableSurfaceParameters(tokens);
   const outer = parser.scope;
   const outerJumps = parser.jumps;
   const outerTop = parser.topLevel;
   const outerAsync = parser.inAsync;
-  parser.scope = readCallableClosureScope(outer, tokens);
+  // Scope facts name actual logical binders. They are not source tokens and
+  // assert no identifier spelling or token interval for a generated argument.
+  parser.scope = readCallableClosureScope(outer, records?params.map(parameter=>({value:parameter.name})):tokens);
   parser.jumps = { loops: 0, switches: 0 };
   parser.topLevel = false;
   parser.inAsync = false;
   try {
-    const statements = c.is('{') ? parser.blockStatements() : [{ s: 'return', expr: parser.expr(), span: start }];
+    const readBody=()=>c.is('{')?parser.blockStatements():[{s:'return',expr:parser.expr(),span:start}];
+    const statements=records?readNamedJavaScriptRecordParameterBody(parser,records,readBody):readBody();
     const where = { start: start.start, end: c.peek().start };
     const { assignedCaptures, captures } = readCallableStatementCaptures(statements, names, outer.locals);
     if (assignedCaptures.length && !parser.referenceSemantics) throw unsupported('mutable closure capture', 'captured assignments require a shared cell across calls', where);

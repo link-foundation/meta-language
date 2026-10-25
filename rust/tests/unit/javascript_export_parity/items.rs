@@ -158,6 +158,7 @@ use meta_language::create_discovered_concept_links as _;
 use meta_language::create_dynamic_language_command_program_links as _;
 use meta_language::create_global_concept_space as _;
 use meta_language::create_global_concept_space_parser as _;
+use meta_language::create_java_script_record_closure_parameter_program_links as _;
 use meta_language::create_rust_byte_string_program_links as _;
 use meta_language::create_typed_program_links as _;
 use meta_language::current_concept_id as _;

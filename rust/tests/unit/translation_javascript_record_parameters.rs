@@ -829,3 +829,13 @@ fn record_parameter_writes_reuse_actual_local_cells_and_preserve_original_inputs
         observe_native(&binary, &expected);
     }
 }
+
+#[test]
+fn actual_record_closure_parameters_preserve_bindings_captures_and_local_writes() {
+    versions();
+    super::translation_rust_records::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-closure-parameters.mjs",
+        "JavaScript record closure parameter contexts",
+        meta_language::create_java_script_record_closure_parameter_program_links,
+    );
+}

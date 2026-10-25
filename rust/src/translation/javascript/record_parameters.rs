@@ -7,6 +7,9 @@ use super::{
 };
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::javascript_record_parameter_rules::{self as rules, ml_string::Text};
+use crate::translation::record_closure_parameter_rules::{
+    self as closure_rules, ml_string::Text as ClosureText,
+};
 
 #[derive(Clone)]
 pub(super) struct RecordParameters {
@@ -195,6 +198,25 @@ impl JavaScriptParser {
         doc: Option<&JsDoc>,
         asynchronous: bool,
     ) -> Result<Option<RecordParameters>> {
+        self.read_record_parameter_syntax(doc, asynchronous, "ordinary named function declaration")
+    }
+
+    pub(super) fn read_record_closure_parameters(
+        &mut self,
+        method: bool,
+        expression: bool,
+    ) -> Result<Option<RecordParameters>> {
+        let context =
+            closure_rules::read_java_script_record_closure_context(method, expression).to_string();
+        self.read_record_parameter_syntax(None, false, &context)
+    }
+
+    fn read_record_parameter_syntax(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+        context: &str,
+    ) -> Result<Option<RecordParameters>> {
         let start = self.cursor.index;
         let Some(opening) = start
             .checked_sub(1)
@@ -237,25 +259,43 @@ impl JavaScriptParser {
         let documentation_parameters = serde_json::Number::from(documentation_parameters)
             .as_f64()
             .expect("a source parameter count is a Number");
-        if !rules::accept_java_script_record_parameter_profile(
-            &Text::from_text("ordinary named function declaration"),
-            asynchronous,
-            documentation_parameters,
-            false,
-            false,
-        ) {
+        let admitted = if context == "ordinary named function declaration" {
+            rules::accept_java_script_record_parameter_profile(
+                &Text::from_text(context),
+                asynchronous,
+                documentation_parameters,
+                false,
+                false,
+            )
+        } else {
+            closure_rules::accept_java_script_record_closure_parameter_profile(
+                &ClosureText::from_text(context),
+                asynchronous,
+                documentation_parameters,
+            )
+        };
+        if !admitted {
             return Err(unsupported(
                 "record parameter source profile",
                 "the initial named declaration profile requires synchronous functions without parameter documentation tags",
                 Some(selected.span()),
             ));
         }
-        let values = rules::plan_java_script_source_record_parameters(
-            &kinds,
-            &values,
-            0.0,
-            reserved_names(),
-        );
+        let values = if context == "ordinary named function declaration" {
+            rules::plan_java_script_source_record_parameters(&kinds, &values, 0.0, reserved_names())
+        } else {
+            let project = |rows: &[Text]| {
+                rows.iter()
+                    .map(|row| ClosureText::from_units(row.0.clone()))
+                    .collect::<Vec<_>>()
+            };
+            closure_rules::plan_java_script_record_closure_parameter_bindings(
+                &project(&kinds),
+                &project(&values),
+                0.0,
+                &project(reserved_names()),
+            )
+        };
         if values.first().is_some_and(|value| *value < 0.0) {
             let token = values
                 .get(1)
@@ -392,6 +432,17 @@ impl JavaScriptParser {
         &mut self,
         syntax: &RecordParameters,
     ) -> Result<Vec<Stmt>> {
+        self.read_record_parameter_body_with(syntax, Self::block_statements)
+    }
+
+    pub(super) fn read_record_parameter_body_with<F>(
+        &mut self,
+        syntax: &RecordParameters,
+        read_body: F,
+    ) -> Result<Vec<Stmt>>
+    where
+        F: FnOnce(&mut Self) -> Result<Vec<Stmt>>,
+    {
         let names = syntax.source_names.iter().cloned().collect::<HashSet<_>>();
         if self.cursor.is_kind(TokenKind::Punct) && self.cursor.is("{") {
             self.check_record_parameter_directives()?;
@@ -416,7 +467,7 @@ impl JavaScriptParser {
                 .tag_binding(name, super::tag_context::TagReceiverFact::Declared(None));
         }
         let before = self.lexical.read_count();
-        let statements = self.block_statements()?;
+        let statements = read_body(self)?;
         let written = self
             .lexical
             .assigned_names_since(before)

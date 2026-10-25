@@ -117,6 +117,8 @@ pub mod product_emission_rules;
 pub(crate) mod program_number_projection_rules;
 mod program_string_representation_rules;
 pub mod proof;
+pub(crate) mod record_closure_parameter_program;
+pub(crate) mod record_closure_parameter_rules;
 pub(crate) mod record_emission_rules;
 pub(crate) mod record_type_syntax_rules;
 mod record_value_order_specialization;
