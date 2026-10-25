@@ -4281,6 +4281,23 @@ annotations, multiple bindings, initializer failures, early returns and Unit.
 Arbitrary divergence, loops, complete move/borrow/temporary/drop effects and full
 statement environments remain obligations. No behavioral observations are claimed.
 
+Stored JavaScript absence-only values can convert to an optional target only
+when it represents every source nullish possibility. A shared source definition
+selects undefined-only conversion or an explicit null-versus-undefined branch.
+Both transports capture the actual operand once and use existing Let, If,
+StrictEqual and None constructors, without constructing a present payload. A
+present JavaScript Unit denotes undefined; null-only targets therefore require
+stronger variant evidence when that present constructor is possible. Other
+languages keep their distinct Unit/optional meanings. Missing ordinary record
+fields use fresh contextual inference variables for their uninhabited present
+domain, following the existing absent-literal inference rule. This permits
+compatible call and array contexts without unifying a real present value with
+Unit. Concrete absence constructors remain explicit in checking and emission.
+Full predecessor sources remain preserved. Future stored-null/missing/undefined,
+optional scalar/record/array, policy rejection and effect controls are unexecuted.
+General union refinements, complete environments and all earlier requirements
+remain unfinished.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

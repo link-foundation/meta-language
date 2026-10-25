@@ -23,6 +23,7 @@ import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js';
 import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
 import {checkJavaScriptExcessCallableArguments,checkJavaScriptExcessNamedArguments} from './excess-arguments.js';
+import {convertJavaScriptAbsenceOnlyValue} from './absence-conversions.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -2186,6 +2187,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
     return optional === 'unit' ? absent : { k: 'let', name: 'ml_discarded_unit', value, body: absent, type };
   }
   if (optional === 'some') return { k: 'some', value, type };
+  const absenceOnly=convertJavaScriptAbsenceOnlyValue(value,type,language);if(absenceOnly)return absenceOnly;
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {
     return castTo(value, INT, 'exact', span);
   }

@@ -169,9 +169,10 @@ impl Inference {
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text("record"),open,fields.iter().any(|item|item.0==field),
             &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text(field)).to_string();
         if form == "absent" {
+            let element = self.fresh(false);
             self.unify(
                 result,
-                &super::optional_values::optional(Term::Known(super::Type::Unit), "undefined"),
+                &super::optional_values::optional(element, "undefined"),
                 place,
             )?;
             return Ok(true);

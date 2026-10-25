@@ -1,0 +1,1 @@
+Draft tag-preserving conversion of stored JavaScript absence-only values to compatible optional domains, with one evaluation and no fabricated payload. Missing closed-record fields retain contextual inference variables for calls and arrays. Native source rules are generated from JavaScript; verification remains deferred.

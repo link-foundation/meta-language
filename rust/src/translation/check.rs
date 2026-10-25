@@ -26,9 +26,9 @@ use super::surface::{
 use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed, fixed_bounds};
 use super::{Language, Span};
 
-mod array_bindings;
+mod absence_conversions;
 mod absent_record_properties;
-mod excess_arguments;
+mod array_bindings;
 mod array_callbacks;
 mod array_from;
 mod array_relative_element_template;
@@ -43,6 +43,7 @@ mod collection_access;
 mod collections;
 mod comparisons;
 mod conditional_chains;
+mod excess_arguments;
 mod expectation;
 mod exponentiation;
 mod expressions;
@@ -247,6 +248,9 @@ pub fn coerce(
             ));
         }
         _ => {}
+    }
+    if let Some(converted) = absence_conversions::convert_absence_only_value(&value, ty, language) {
+        return Ok(converted);
     }
     if language == Language::JavaScript && value.ty == Type::Nat && *ty == Type::Int {
         return cast_to(value, &INT, Flavor::Exact, span);

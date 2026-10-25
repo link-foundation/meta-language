@@ -114,6 +114,7 @@ include = [
     "src/data/numeric-module-bindings.lino",
     "src/data/dynamic-language-command-program.lino",
     # BEGIN generated literal source asset closure
+    "src/data/absence-conversion-program.lino",
     "src/data/absence-only-program.lino",
     "src/data/array-binding-program.lino",
     "src/data/array-classification-program.lino",
