@@ -155,7 +155,13 @@ impl RustParser {
             return Ok(node);
         }
         self.cursor.advance();
-        let mut args = self.call_arguments(path)?;
+        let callee = SExpr::new(
+            SNode::Name {
+                path: segments.clone(),
+            },
+            span(token, token),
+        );
+        let mut args = self.contextual_call_arguments(path, &callee)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
         if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {

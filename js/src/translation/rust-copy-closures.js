@@ -3,9 +3,26 @@ import {unsupported} from './diagnostics.js';
 import {readCallableStatementCaptures} from './callable-source.js';
 import {readRustOrdinaryFunctionCompletion} from './rust-ordinary-completions.js';
 import {readRustCopyClosureHeaderError,readRustCopyClosureCaptureError,acceptRustCopyClosureInvocation} from './rust-copy-closure-rules.js';
-import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError} from './rust-contextual-closure-rules.js';
+import {acceptRustContextualCopyClosure,readRustContextualCopyClosureHeaderError,findRustContextualClosureParenthesisCount} from './rust-contextual-closure-rules.js';
 export function readRustExpectedCopyClosure(parser,path,expected){
- return acceptRustContextualCopyClosure(expected?.type?.kind??'',parser.origins.immutableProduct(expected),parser.cursor.peek().value)?readRustCopyClosure(parser,path,expected):parser.expr(path);
+ const c=parser.cursor,kind=expected?.type?.kind??'',copy=parser.origins.immutableProduct(expected),role=['|','||','move'].find(value=>c.is(value))??'';
+ if(acceptRustContextualCopyClosure(kind,copy,role))return readRustCopyClosure(parser,path,expected);
+ if(kind==='function'&&copy&&c.is('(')){
+  let count=64;
+  for(;;){const tokens=c.tokens.slice(c.index,c.index+count),syntax=tokens.map((_,index)=>['(','|','||','move'].find(value=>c.is(value,index))??''),depth=findRustContextualClosureParenthesisCount(syntax);
+   if(depth>0){for(let index=0;index<depth;index+=1)c.next();const node=readRustCopyClosure(parser,path,expected);for(let index=0;index<depth;index+=1)c.expect(')','contextual closure');return node;}
+   if(depth!==-2||tokens.length<count)break;count*=2;
+  }
+ }
+ return parser.expr(path);
+}
+export function readRustContextualCallArguments(parser,callee,path){
+ let parameters=null;
+ if(callee.k==='name'&&!(callee.path.length===1&&parser.origins.scope.has(callee.path[0]))){const entry=parser.origins.lookup(parser.resolve(callee.path,path),path);if(entry?.k==='fn')parameters=entry.parameters;}
+ if(parameters===null){const origin=parser.origins.origin(callee,path);parameters=origin.type?.kind==='function'?origin.type.params.map(type=>({...parser.origins.typeOrigin(type,path),...(type.kind==='function'?{copyEvidence:true}:{})})):[];}
+ const args=[],c=parser.cursor;
+ while(!c.is(')')){args.push(readRustExpectedCopyClosure(parser,path,parameters[args.length]));if(!c.eat(','))break;}
+ return args;
 }
 export function readRustCopyClosure(parser,path,expected=null){
  const c=parser.cursor,start=c.peek(),parameters=[],origins=[];c.eat('move');

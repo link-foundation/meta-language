@@ -1,3 +1,4 @@
+import {readRustDeclarationBodyBoundary} from './rust-declaration-headers.js';
 import {planRustFormattingValue,planRustFormattingOperandCapture} from './rust-formatting-rules.js';
 import {acceptRustSourceIdentifierName,normalizeRustSourceIdentifier} from './unicode-identifiers.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,findRustTerminalReturnBoundary,readRustFunctionMacroDisposition,acceptRustOrdinaryCompletionProfiles,readRustFunctionCompletionPresence} from './rust-unit-value-rules.js';
@@ -25,7 +26,7 @@ import { createRustFloatPredicateExpression, createRustFloatOperationExpression,
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
-import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure} from './rust-copy-closures.js';
+import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure,readRustContextualCallArguments} from './rust-copy-closures.js';
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
 import {readRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -113,6 +114,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
     tokens=tokenize(source,'Rust').tokens;
   }
   const declarations = new RustParser(tokens, null, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
+  declarations.headerDiscovery=declarations.ordinaryCompletionContext();
   declarations.file();
   declarations.origins.resolveTypes((segments, path) => declarations.resolve(segments, path));
   const syntax = new RustParser(tokens, declarations.origins.catalog, arrayResultModel, completionModel, sourceSignatureModel, scalarLoopModel,primitiveOwnerModel,emptyOptionSourceModel,typeNamespaceModel,pureUnitCallModel,localValueStateModel,constFunctionModel,source,sharedArrayHandleSourceModel);
@@ -137,6 +139,7 @@ export function parseRustTokenStream(tokens, { arrayResultModel = '', completion
 class RustParser {
   constructor(tokens, catalog = null, arrayResultModel = '', completionModel = '', sourceSignatureModel = '', scalarLoopModel = '',primitiveOwnerModel='',emptyOptionSourceModel='',typeNamespaceModel='',pureUnitCallModel='',localValueStateModel='',constFunctionModel='',source=null,sharedArrayHandleSourceModel='') {
     this.cursor = new TokenCursor([...tokens], 'Rust');
+    this.headerDiscovery=false;
     // `use` aliases, per module path.
     this.aliases = new Map();
     this.modulePath = [];
@@ -678,6 +681,8 @@ class RustParser {
       if (!acceptRustSourceLifetimeResult(this.lifetimeBindings.size > 0, sourceResult.wrappers.includes('reference'))) throw unsupported('function lifetime result', 'reference results with lifetime binders require an explicit return-lifetime instantiation and outlives proof', span(start, c.peek()));
       this.origins.declaration(name, path, { k: 'fn', lifetimeBindings: [...this.lifetimeBindings], parameters: sourceParams, result: sourceResult });
       if (c.is('where')) throw unsupported('where clause', 'trait bounds are outside the portable core', span(start, c.peek()));
+      // This private declaration inventory is discarded; no body semantics are inferred here.
+      if(this.headerDiscovery){const close=readRustDeclarationBodyBoundary(this);return {k:'fn',name,params,ret,body:{k:'unit',span:{start:close.start,end:close.end}},span:{start:start.start,end:close.end}};}
       const constHeaderEnd=constKeyword?c.peek().start:null;
       this.lifetimeHeader = false;
       const previous = this.origins.enter(new Map(params.map((param, index) => [param.name, sourceParams[index]])));
@@ -951,6 +956,7 @@ class RustParser {
     c.expect('(', 'fn main');
     c.expect(')', 'fn main');
     if (c.is('->')) throw unsupported('main with a result', 'main must return ()', span(start, c.peek()));
+    if(this.headerDiscovery){const close=readRustDeclarationBodyBoundary(this);return {effects:[],span:{start:start.start,end:close.end}};}
     this.modulePath = [];
     const previous = this.origins.enter(new Map());
     c.expect('{', 'fn main');
@@ -1210,7 +1216,7 @@ class RustParser {
     for (;;) {
       const token = c.peek();
       if(c.is('(')&&this.origins.origin(value,path).type?.kind==='function'){
-        c.next();const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}const close=c.expect(')','closure call');value=readRustCopyClosureCall(this,value,args,path,{start:value.span?.start??token.start,end:close.end});continue;
+        c.next();const args=readRustContextualCallArguments(this,value,path);const close=c.expect(')','closure call');value=readRustCopyClosureCall(this,value,args,path,{start:value.span?.start??token.start,end:close.end});continue;
       }
       if (c.is('.')) {
         c.next();
@@ -1479,11 +1485,7 @@ class RustParser {
       const recordValuePath=readRustRecordValuePath(this,segments,path,c.is('('));
       if (!c.is('(')) return readRustFunctionReference(this,segments,path,span(token,token))??noteRustSharedArrayHandleName(this,{ k: 'name', path: recordValuePath??this.resolve(segments, path), span: span(token, token) },path);
       c.next();
-      const args = [];
-      while (!c.is(')')) {
-        args.push(this.expr(path));
-        if (!c.eat(',')) break;
-      }
+      const args = readRustContextualCallArguments(this,{k:'name',path:segments,span:span(token,token)},path);
       c.expect(')', 'call');
       const range = span(token, c.peek());
       if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;}

@@ -737,6 +737,15 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        if self.header_discovery {
+            let close = self.declaration_body_boundary()?;
+            return Ok(SMain {
+                effects: Vec::new(),
+                span: Some(super::Span::new(start.start, close.end)),
+                sequential_async: false,
+                source_runtime_worker: None,
+            });
+        }
         self.module_path = Vec::new();
         let previous = self.origins.enter(Some(std::collections::HashMap::new()));
         self.cursor.expect("{", Some("fn main"))?;

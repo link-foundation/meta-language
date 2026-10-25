@@ -12,3 +12,10 @@ export function readRustContextualCopyClosureHeaderError(ordinary,names,copies,k
  if(!known)return 'the closure result requires its actual explicit type';
  return resultCopy?'':'the closure result requires a direct immutable Copy source type';
 }
+/** Actual syntax roles only; caller preserves raw-identifier distinctions.
+ * -2 asks for a larger token window, -1 leaves ordinary parsing in charge.
+ * @param {string[]} syntax @returns {number} */
+export function findRustContextualClosureParenthesisCount(syntax){
+ for(let index=0;index<syntax.length;index+=1){const token=readRequiredTextFact(syntax,index);if(token==='(')continue;return index>0&&(token==='|'||token==='||'||token==='move')?index:-1;}
+ return -2;
+}

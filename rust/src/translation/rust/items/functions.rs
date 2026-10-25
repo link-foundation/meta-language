@@ -230,6 +230,28 @@ impl RustParser {
                 span(&start, self.cursor.peek()),
             ));
         }
+        // Private inventory only; these bodies are never emitted or returned publicly.
+        if self.header_discovery {
+            let close = self.declaration_body_boundary()?;
+            return Ok(SFn {
+                source_diagnostic_attributes: None,
+                semantic_ret: None,
+                name,
+                params,
+                ret: Some(ret),
+                body: super::super::SExpr::new(super::super::SNode::Unit, Some(close.span())),
+                span: Some(super::super::Span::new(start.start, close.end)),
+                generated: false,
+                source_signature: None,
+                source_primitive_owners: None,
+                source_empty_option: None,
+                source_type_namespace: None,
+                source_loop: None,
+                source_pure_unit: None,
+                source_local_state: None,
+                source_const_function: None,
+            });
+        }
         let const_header_end = self.cursor.peek().start;
         let source_signature = self.capture_source_signature(
             &source_params,

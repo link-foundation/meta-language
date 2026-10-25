@@ -32,6 +32,7 @@ mod completion_rules;
 pub(crate) mod const_function_rules;
 pub(crate) mod const_functions;
 mod copy_closures;
+mod declaration_headers;
 mod diagnostic_attributes;
 pub(crate) mod empty_option_rules;
 mod empty_options;
@@ -387,6 +388,7 @@ fn parse_rust_with_selected_profiles(
         true,
         original_source.clone(),
     );
+    declarations.header_discovery = declarations.ordinary_completion_context();
     declarations.file()?;
     let mut origins = std::mem::replace(
         &mut declarations.origins,
@@ -461,6 +463,7 @@ struct Binding {
 }
 
 struct RustParser {
+    header_discovery: bool,
     shared_array_handle_source_model: String,
     shared_array_state: shared_array_handles::SharedArrayState,
     const_function_model: String,
@@ -538,6 +541,7 @@ impl RustParser {
         origins.owned_local_values = !profiles.local_value_state.is_empty();
         origins.shared_array_handles = !profiles.shared_array_handle_source.is_empty();
         Self {
+            header_discovery: false,
             shared_array_handle_source_model: profiles.shared_array_handle_source.to_owned(),
             shared_array_state: shared_array_handles::SharedArrayState::default(),
             const_function_model: profiles.const_function.to_owned(),

@@ -283,6 +283,28 @@ pub fn read_rust_contextual_copy_closure_header_error(
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn find_rust_contextual_closure_parenthesis_count(syntax: &[String]) -> f64 {
+    {
+        let index = 0f64;
+        {
+            let source_ml_source1_s2 =
+                self::source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
+                    syntax, index,
+                );
+            match source_ml_source1_s2 {
+                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done => {
+                    -2f64
+                }
+                self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(source_ml_temporary_result3) => {
+                    source_ml_temporary_result3
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result {
     MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done,
@@ -336,8 +358,8 @@ pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop1(
                 {
                     let before = 0f64;
                     {
-                        let source_ml_source1_s2 = self::source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop2(names, index, before);
-                        match source_ml_source1_s2 {
+                        let source_ml_source1_s3 = self::source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop2(names, index, before);
+                        match source_ml_source1_s3 {
                             self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop2Done => {
                                 {
                                     let index_2 = index + 1f64;
@@ -358,6 +380,45 @@ pub fn source_ml_temporary_read_rust_contextual_copy_closure_header_error_loop1(
             }
         } else {
             self::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result::MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result {
+    MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done,
+    MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_find_rust_contextual_closure_parenthesis_count_loop3(
+    syntax: &[String],
+    mut index: f64,
+) -> self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result {
+    loop {
+        return if index < (syntax.len() as f64) {
+            {
+                let token = self::read_required_text_fact(syntax, index);
+                if token == "(" {
+                    {
+                        let index_2 = index + 1f64;
+                        {
+                            index = index_2;
+                            continue;
+                        }
+                    }
+                }
+                {
+                    self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Return(if (index > 0f64) && (((token == "|") || (token == "||")) || (token == "move")) {
+                        index
+                    } else {
+                        -1f64
+                    })
+                }
+            }
+        } else {
+            self::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Result::MlTemporaryFindRustContextualClosureParenthesisCountLoop3Done
         };
     }
 }

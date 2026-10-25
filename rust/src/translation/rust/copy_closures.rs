@@ -1,24 +1,104 @@
 //! Original types, scopes and expressions into the existing callable nodes.
-use super::{Result, RustParser, SExpr, SNode, SParam, SourceOrigin, Span, Type, unsupported};
+use super::{
+    Result, RustParser, SExpr, SNode, SParam, SourceDeclaration, SourceOrigin, Span, Type,
+    unsupported,
+};
 use crate::translation::rust_contextual_closure_rules as contextual;
 use crate::translation::rust_copy_closure_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
 impl RustParser {
+    pub(super) fn contextual_call_arguments(
+        &mut self,
+        path: &[String],
+        callee: &SExpr,
+    ) -> Result<Vec<SExpr>> {
+        let mut parameters = None;
+        if let SNode::Name { path: names } = &callee.node
+            && !(names.len() == 1 && self.origins.scope.contains_key(&names[0]))
+            && let Some(entry) = self.origins.lookup(&self.resolve(names, path), path)
+            && let SourceDeclaration::Function {
+                parameters: actual, ..
+            } = entry.declaration
+        {
+            parameters = Some(actual);
+        }
+        let parameters = parameters.unwrap_or_else(|| match self.origins.origin(callee, path).ty {
+            Some(Type::Function { params, .. }) => params
+                .into_iter()
+                .map(|ty| {
+                    let function = matches!(ty, Type::Function { .. });
+                    let mut origin = SourceOrigin::with_type(ty, path, Vec::new());
+                    if function {
+                        origin.copy_evidence = Some(());
+                    }
+                    origin
+                })
+                .collect(),
+            _ => Vec::new(),
+        });
+        let mut args = Vec::new();
+        while !self.cursor.is(")") {
+            args.push(self.read_expected_copy_closure(path, parameters.get(args.len()))?);
+            if self.cursor.eat(",").is_none() {
+                break;
+            }
+        }
+        Ok(args)
+    }
+
     pub(super) fn read_expected_copy_closure(
         &mut self,
         path: &[String],
         expected: Option<&SourceOrigin>,
     ) -> Result<SExpr> {
+        let role = ["|", "||", "move"]
+            .into_iter()
+            .find(|value| self.cursor.is(value))
+            .unwrap_or("");
         if contextual::accept_rust_contextual_copy_closure(
             expected
                 .and_then(|origin| origin.ty.as_ref())
                 .map_or("", Type::kind),
             expected.is_some_and(SourceOrigin::direct_copy_value),
-            &self.cursor.peek().value,
+            role,
         ) {
             self.read_copy_closure_with_expected(path, expected)
         } else {
+            if expected.is_some_and(|origin| {
+                origin.direct_copy_value() && matches!(origin.ty, Some(Type::Function { .. }))
+            }) && self.cursor.is("(")
+            {
+                let mut count = 64usize;
+                loop {
+                    let length = count.min(self.cursor.tokens.len() - self.cursor.index);
+                    let syntax = (0..length)
+                        .map(|index| {
+                            ["(", "|", "||", "move"]
+                                .into_iter()
+                                .find(|value| self.cursor.is_at(value, index))
+                                .unwrap_or("")
+                                .to_owned()
+                        })
+                        .collect::<Vec<_>>();
+                    let depth = contextual::find_rust_contextual_closure_parenthesis_count(&syntax);
+                    if depth > 0.0 {
+                        let depth =
+                            crate::translation::frontend_rules::ml_array::number_index(depth)
+                                .expect("actual source parenthesis count");
+                        self.cursor.index += depth;
+                        let node = self.read_copy_closure_with_expected(path, expected)?;
+                        for _ in 0..depth {
+                            self.cursor.expect(")", Some("contextual closure"))?;
+                        }
+                        return Ok(node);
+                    }
+                    if depth != -2.0 || length < count {
+                        break;
+                    }
+                    count = count.checked_mul(2).expect("actual source token window");
+                }
+            }
             self.expr(path, super::Options::default())
         }
     }

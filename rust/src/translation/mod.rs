@@ -156,6 +156,7 @@ pub(crate) mod rust_character_rules;
 mod rust_const_branch_rules;
 pub(crate) mod rust_contextual_closure_rules;
 pub(crate) mod rust_copy_closure_rules;
+pub(crate) mod rust_declaration_header_rules;
 pub(crate) mod rust_diagnostic_attribute_rules;
 pub(crate) mod rust_formatting_program;
 pub(crate) mod rust_formatting_rules;

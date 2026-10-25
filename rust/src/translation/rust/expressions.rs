@@ -343,7 +343,7 @@ impl RustParser {
                 )
             {
                 self.cursor.advance();
-                let args = self.call_arguments(path)?;
+                let args = self.contextual_call_arguments(path, &value)?;
                 let close = self.cursor.expect(")", Some("closure call"))?;
                 let span = Some(super::Span::new(
                     value.span.map_or(token.start, |span| span.start),

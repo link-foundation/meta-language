@@ -3922,6 +3922,25 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+The ordinary Rust source draft collects complete actual declaration headers
+before inferring callback bodies. A shared balanced lexical-group algorithm
+keeps strings, raw strings and comments atomic and grows source windows on
+demand. This private inventory supplies signatures only; its temporary tree is
+discarded. Every final original body still passes through the complete existing
+syntax, type and source-ownership passes before a program can be returned.
+Actual named, computed, local and qualified callable signatures now supply
+closure argument annotations. Local shadows retain their independent source
+owners, and raw `move` identifiers are not treated as capture keywords.
+Contextual parenthesized closures retain their original delimiters and real
+signature constraints. Module item visibility follows the
+[Rust scope reference](https://doc.rust-lang.org/reference/names/scopes.html).
+Thirty-three future values, capture refusals, nine lexical-group and eight
+parenthesis controls, complete predecessors, both codecs, four emissions and
+original/native products remain unexecuted. Generic trait callbacks, contextual
+return propagation, arbitrary contextual expressions, out-of-line modules and
+complete ownership remain obligations. Header discovery supplies no replacement
+body semantics and establishes no complete Rust grammar or translator claim.
+
 Ordinary Rust Copy closure annotations may additionally come from an actual
 direct function pointer initializer type. Written annotations retain their own
 checked constraints; missing parameters retain their original positions and
