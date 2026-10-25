@@ -153,6 +153,17 @@ impl RustParser {
         let mut args = self.call_arguments(path)?;
         self.cursor.expect(")", Some("call"))?;
         let range = span(token, self.cursor.peek());
+        if segments.len() == 1 && self.origins.scope.contains_key(&segments[0]) {
+            let function = SExpr::new(
+                SNode::Name {
+                    path: segments.clone(),
+                },
+                span(token, token),
+            );
+            if let Some(call) = self.read_copy_closure_call(&function, &args, path, range)? {
+                return Ok(call);
+            }
+        }
         if let Some(record_path) = record_path {
             self.origins.call(&record_path, &args, path, range)?;
             let function = SExpr::new(SNode::Name { path: record_path }, span(token, token));

@@ -145,6 +145,10 @@ impl RustParser {
         } else {
             self.block(path)?
         };
+        self.origins.checked_join(&[
+            self.origins.origin(&then, path),
+            self.origins.origin(&otherwise, path),
+        ])?;
         Ok(SExpr::new(
             SNode::If {
                 cond: Box::new(cond),
@@ -258,7 +262,7 @@ impl RustParser {
             .iter()
             .map(|row| self.origins.origin(&row.body, path))
             .collect::<Vec<_>>();
-        let origin = self.origins.join(&origins);
+        let origin = self.origins.checked_join(&origins)?;
         let result = SExpr::new(
             SNode::Match {
                 scrutinees: vec![scrutinee],

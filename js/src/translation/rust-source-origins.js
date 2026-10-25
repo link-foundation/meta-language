@@ -9,6 +9,7 @@ import { acceptRustImmutableIndirectionLayer, acceptRustSourceIndirectionArgumen
 import { acceptRustImmutableProductType, acceptRustProductOrigin } from './rust-product-rules.js';
 import { acceptRustSourceArrayOwner, acceptRustSourceArrayCoercion, acceptRustFreshArrayResultTail } from './rust-array-rules.js';
 import {ownedLocalPair} from './rust-owned-local-state.js';
+import {readRustCopyClosureJoinError} from './rust-copy-closure-rules.js';
 
 const unknown = (uncertain = false) => ({ floatSourceModel: null, wrappers: [], type: null, path: [], fields: null, textSourceModel: null, copyEvidence: false, proven: false, diverging: false, uncertain });
 const value = (copyEvidence = false, type = null) => ({ ...unknown(), proven: true, copyEvidence, type, textSourceModel: type?.kind === 'string' ? 'owned string' : null });
@@ -190,6 +191,7 @@ export class RustSourceOrigins {
     const returning = origins.filter(origin => !origin.diverging);
     if (!returning.length) return { ...value(), diverging: true };
     const first = returning[0];
+    for(const origin of returning){const error=readRustCopyClosureJoinError(Boolean(first.copyClosureSpan),Boolean(origin.copyClosureSpan),first.copyClosureSpan?.start===origin.copyClosureSpan?.start&&first.copyClosureSpan?.end===origin.copyClosureSpan?.end);if(error)throw unsupported('Rust closure source join',error);}
     if (returning.every(origin => this.same(origin, first))) return { ...clone(first), freshArrayValue: returning.every(origin => origin.freshArrayValue) };
     if (returning.some(origin => origin.arraySourceModel)) return { ...unknown(true), arraySourceModel: 'unproved array' };
     if (returning.every(origin => origin.proven && JSON.stringify(origin.wrappers) === JSON.stringify(first.wrappers))) {

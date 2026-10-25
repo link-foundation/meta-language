@@ -167,6 +167,7 @@ include = [
     "src/data/reference-method-program.lino",
     "src/data/resource-description-address-program.lino",
     "src/data/rust-byte-string-program.lino",
+    "src/data/rust-copy-closure-program.lino",
     "src/data/rust-formatting-program.lino",
     "src/data/rust-inherent-program.lino",
     "src/data/rust-primitive-bitwise-program.lino",

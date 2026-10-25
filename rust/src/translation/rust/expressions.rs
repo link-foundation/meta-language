@@ -333,6 +333,24 @@ impl RustParser {
         let mut value = self.primary(path, options)?;
         loop {
             let token = self.peek();
+            if self.cursor.is("(")
+                && matches!(
+                    self.origins.origin(&value, path).ty,
+                    Some(Type::Function { .. })
+                )
+            {
+                self.cursor.advance();
+                let args = self.call_arguments(path)?;
+                let close = self.cursor.expect(")", Some("closure call"))?;
+                let span = Some(super::Span::new(
+                    value.span.map_or(token.start, |span| span.start),
+                    close.end,
+                ));
+                value = self
+                    .read_copy_closure_call(&value, &args, path, span)?
+                    .expect("actual callable source type");
+                continue;
+            }
             if self.cursor.is(".") {
                 self.cursor.advance();
                 if self.cursor.is_kind(TokenKind::Number) {
@@ -836,11 +854,7 @@ impl RustParser {
             return self.match_expr(path);
         }
         if c.is("|") || c.is("||") || c.is("move") {
-            return Err(unsupported(
-                "closure",
-                "higher-order values are outside the portable core",
-                span(&token, &token),
-            ));
+            return self.read_copy_closure(path);
         }
         if c.is("true") || c.is("false") {
             self.cursor.advance();

@@ -28,6 +28,7 @@ mod array_rules;
 mod binding_patterns;
 use binding_patterns::ProductBindingPattern;
 mod cast_syntax_rules;
+mod copy_closures;
 mod completion_rules;
 pub(crate) mod const_function_rules;
 pub(crate) mod const_functions;

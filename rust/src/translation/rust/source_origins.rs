@@ -38,6 +38,7 @@ pub(super) struct SourceOrigin {
     pub(super) array_source_model: Option<&'static str>,
     /// Constructor or actual call source evidence; cleared on local binding.
     pub(super) fresh_array_value: Option<Span>,
+    pub(super) copy_closure_identity: Option<Span>,
     /// Spelled source lifetimes, in reference-layer order; None is elision.
     pub(super) source_lifetimes: Vec<Option<String>>,
     pub(super) source_owner: Option<super::super::source_signatures::SourceOwner>,
@@ -64,6 +65,7 @@ impl SourceOrigin {
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            copy_closure_identity: None,
         }
     }
 
@@ -100,6 +102,7 @@ impl SourceOrigin {
             primitive_owner_position: None,
             namespace_spelling: Vec::new(),
             fresh_array_value: None,
+            copy_closure_identity: None,
         }
     }
 
@@ -443,6 +446,7 @@ impl SourceOrigins {
             || left.uncertain != right.uncertain
             || left.wrappers != right.wrappers
             || left.copy_evidence != right.copy_evidence
+            || left.copy_closure_identity != right.copy_closure_identity
             || left.float_source_model != right.float_source_model
             || left.text_source_model != right.text_source_model
             || left.array_source_model != right.array_source_model
@@ -711,6 +715,27 @@ impl SourceOrigins {
         } else {
             SourceOrigin::unknown()
         }
+    }
+
+    pub(super) fn checked_join(&self, origins: &[SourceOrigin]) -> Result<SourceOrigin> {
+        let returning = origins
+            .iter()
+            .filter(|origin| !origin.diverging)
+            .collect::<Vec<_>>();
+        if let Some(first) = returning.first() {
+            for origin in &returning {
+                let error =
+                    crate::translation::rust_copy_closure_rules::read_rust_copy_closure_join_error(
+                        first.copy_closure_identity.is_some(),
+                        origin.copy_closure_identity.is_some(),
+                        first.copy_closure_identity == origin.copy_closure_identity,
+                    );
+                if !error.is_empty() {
+                    return Err(unsupported("Rust closure source join", error, None));
+                }
+            }
+        }
+        Ok(self.join(origins))
     }
 
     pub(super) fn mark(&mut self, node: &SExpr, mut origin: SourceOrigin) {

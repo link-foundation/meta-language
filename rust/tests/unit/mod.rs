@@ -426,3 +426,5 @@ mod translation_javascript_named_default_callables;
 mod translation_javascript_binding_initialization;
 
 mod translation_javascript_missing_arguments;
+
+mod translation_rust_copy_closures;

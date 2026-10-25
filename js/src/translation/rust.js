@@ -25,6 +25,7 @@ import { createRustFloatPredicateExpression, createRustFloatOperationExpression,
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
+import {readRustCopyClosure,readRustCopyClosureCall} from './rust-copy-closures.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
@@ -1200,6 +1201,9 @@ class RustParser {
     let value = this.primary(path, options);
     for (;;) {
       const token = c.peek();
+      if(c.is('(')&&this.origins.origin(value,path).type?.kind==='function'){
+        c.next();const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}const close=c.expect(')','closure call');value=readRustCopyClosureCall(this,value,args,path,{start:value.span?.start??token.start,end:close.end});continue;
+      }
       if (c.is('.')) {
         c.next();
         if (c.isKind('number')) {
@@ -1413,7 +1417,7 @@ class RustParser {
     }
     if (c.is('if')) return this.ifExpr(path);
     if (c.is('match')) return this.match(path);
-    if (c.is('|') || c.is('||') || c.is('move')) throw unsupported('closure', 'higher-order values are outside the portable core', span(token, token));
+    if (c.is('|') || c.is('||') || c.is('move')) return readRustCopyClosure(this,path);
     if (c.is('true') || c.is('false')) {
       c.next();
       return { k: 'bool', value: token.value === 'true', span: span(token, token) };
@@ -1469,6 +1473,7 @@ class RustParser {
       }
       c.expect(')', 'call');
       const range = span(token, c.peek());
+      if(segments.length===1&&this.origins.scope.has(segments[0])){const closureCall=readRustCopyClosureCall(this,{k:'name',path:segments,span:span(token,token)},args,path,range);if(closureCall)return closureCall;}
       if(recordValuePath){
         this.origins.call(recordValuePath,args,path,range);
         return args.length?{k:'app',fn:{k:'name',path:recordValuePath,span:span(token,token)},args,span:range}:{k:'name',path:recordValuePath,span:range};
@@ -1552,6 +1557,7 @@ class RustParser {
     const then = this.block(path);
     if (!c.eat('else')) throw unsupported('if without else', 'the value of an if must be defined on both branches', span(token, c.peek()));
     const otherwise = c.is('if') ? this.ifExpr(path) : this.block(path);
+    this.origins.join([this.origins.origin(then,path),this.origins.origin(otherwise,path)]);
     return { k: 'if', cond, then, else: otherwise, span: span(token, c.peek()) };
   }
 

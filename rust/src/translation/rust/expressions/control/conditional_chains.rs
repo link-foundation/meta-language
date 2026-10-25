@@ -274,7 +274,7 @@ impl RustParser {
         let range = span(start, self.cursor.peek());
         let origin = self
             .origins
-            .join(&[origin, self.origins.origin(&otherwise, path)]);
+            .checked_join(&[origin, self.origins.origin(&otherwise, path)])?;
         let result = self.lower_conditional_chain_stages(syntax, body, otherwise, range)?;
         self.origins.mark(&result, origin);
         Ok(result)
@@ -399,12 +399,12 @@ impl RustParser {
             span,
         );
         result.block = true;
-        let origin = self.origins.join(
+        let origin = self.origins.checked_join(
             &arms
                 .iter()
                 .map(|arm| arm.origin.clone())
                 .collect::<Vec<_>>(),
-        );
+        )?;
         self.origins.mark(&result, origin);
         Ok(result)
     }

@@ -3922,6 +3922,23 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+The ordinary Rust source draft maps explicitly typed closures onto existing
+Lambda and Apply nodes. Parameters, results and actual free captures require
+proven direct immutable Copy source meanings. The same source capture walker
+retains lexical shadows and actual outer variable owners. Optional `move` copies
+only these admitted values. Local aliases, zero-argument applications and
+parenthesized invocations retain real calls; ordinary completion construction is
+reused inside the actual closure body. Distinct anonymous source identities
+cannot merge merely because their callable signatures agree. Equal-owner joins
+remain possible; other coercions require their own checked source proof.
+The [Rust closure reference](https://doc.rust-lang.org/reference/expressions/closure-expr.html)
+defines the explicit block result syntax, anonymous types and capture choices.
+Twenty-four future values, eight source refusals, full predecessor history,
+both codecs and four emissions remain unexecuted. Contextual type inference,
+pattern parameters, owned/mutable/reference captures and results, escaping
+lifetimes, trait coercions, generated Rc wrappers, async and complete ownership
+and drop behavior remain obligations.
+
 Omitted JavaScript inputs to inferred callable parameters enter inference as
 actual undefined terms with fresh present domains. A shared source plan selects
 only original variable owners without written initializers. Declared domains

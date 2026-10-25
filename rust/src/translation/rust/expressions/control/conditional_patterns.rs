@@ -76,7 +76,7 @@ impl RustParser {
         };
         let result_origin = self
             .origins
-            .join(&[origin, self.origins.origin(&otherwise, path)]);
+            .checked_join(&[origin, self.origins.origin(&otherwise, path)])?;
         let mut rows = alternatives
             .into_iter()
             .map(|pattern| SRow {

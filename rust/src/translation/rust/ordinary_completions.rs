@@ -296,7 +296,7 @@ impl RustParser {
             data: None,
         };
         let expression = self.lower_ordinary_completion(tree, true, &mut context)?;
-        let origin = self.origins.join(&context.outputs);
+        let origin = self.origins.checked_join(&context.outputs)?;
         self.origins.mark(&expression, origin);
         Ok(expression)
     }
