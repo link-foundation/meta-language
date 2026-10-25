@@ -4247,6 +4247,21 @@ Missing required inputs, spread and rest parameters, arguments objects, arbitrar
 receiver protocols and every earlier requirement remain unfinished. No product
 or behavioral control has executed during this draft.
 
+Named JavaScript calls now reuse the computed-call omission definition: an
+actual resolved optional domain admitting undefined permits the missing value,
+alongside existing written defaults and documented optional parameters. The
+ordinary and sequential default routes share this admission, retaining original
+initializer order and declared parameter metadata. Inference preserves the real
+known result and constraints on every supplied prefix term before body solving
+determines missing-slot admission. It does not invent a fresh unrelated result
+for a known incomplete call. Unsupported missing nonoptional values retain their
+checking obligation rather than gaining a fabricated present argument. Future
+controls cover inferred optional Number/String/Boolean and record/array domains,
+mixed ordinary defaults, forward declarations, lazy fallback effects and falsy
+present values. Both runtimes use the unchanged source-generated optional-slot
+rule. General missing-argument inference and full function environments remain
+required; these source drafts establish no observed behavior.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

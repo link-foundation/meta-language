@@ -18,7 +18,7 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import {acceptConditionalChainOperation} from './conditional-chain-rules.js';
 import {checkConditionalChainValue} from './conditional-chain-values.js';
 import {requiresSequentialParameterDefaults,checkSequentialParameterCall} from './sequential-parameter-defaults.js';
-import {completeOptionalCallableArguments,constructOptionalCallbackBridge} from './optional-callables.js';
+import {completeOptionalCallableArguments,constructOptionalCallbackBridge,mayOmitTypedCallableParameter} from './optional-callables.js';
 import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js';
 import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
@@ -1587,7 +1587,7 @@ class Checker {
     if(this.language==='JavaScript'&&requiresSequentialParameterDefaults(entry.params))return checkSequentialParameterCall(this,entry,args,env,path,span);
     const provided = args.length;
     // A call that leaves out trailing parameters with defaults passes the defaults.
-    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => Boolean(param.default || param.optional)), args.length)) {
+    if (args.length < entry.params.length && acceptArgumentCount(entry.params.map((param) => mayOmitTypedCallableParameter(this.language,param)), args.length)) {
       args = [...args, ...entry.params.slice(args.length).map((param) => ({ ...(param.default ?? { k: 'none', absence: 'undefined' }), closedDefault: true }))];
     }
     if (args.length !== entry.params.length) {

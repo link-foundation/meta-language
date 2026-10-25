@@ -1,5 +1,5 @@
 //! Actual typed arguments and explicit present wrappers from shared source plans.
-use super::{Checker, Expr, Language, Node, Result, SExpr, SNode, Span, Type};
+use super::{Checker, Expr, Language, Node, Param, Result, SExpr, SNode, Span, Type};
 use crate::translation::ir::LambdaParam;
 use crate::translation::optional_callable_rules as rules;
 fn argument_plan(language: Language, parameters: &[Type], provided: usize) -> Vec<f64> {
@@ -22,6 +22,11 @@ fn argument_plan(language: Language, parameters: &[Type], provided: usize) -> Ve
             .as_f64()
             .expect("actual argument count"),
     )
+}
+pub(super) fn may_omit_parameter(language: Language, parameter: &Param) -> bool {
+    parameter.default_value.is_some()
+        || parameter.optional
+        || !argument_plan(language, std::slice::from_ref(&parameter.ty), 0).is_empty()
 }
 pub(super) fn argument_count(language: Language, parameters: &[Type], provided: usize) -> usize {
     if !super::excess_arguments::plan(language.as_str(), parameters.len(), provided).is_empty() {

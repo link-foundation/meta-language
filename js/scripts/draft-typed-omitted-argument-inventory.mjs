@@ -1,0 +1,5 @@
+import {draftTranslationProfileInventory} from './draft-translation-profile-inventory.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftTranslationProfileInventory({id:'javascript-named-typed-omitted-arguments',fixture:'typed-omitted-arguments',programAsset:'optional-callable-program',nativeTest:'translation_javascript_typed_omitted_arguments',
+ javascript:['js/src/translation/optional-callable-rules.js','js/src/translation/optional-callables.js','js/src/translation/check.js','js/src/translation/javascript-infer.js','js/src/translation/sequential-parameter-defaults.js','js/tests/translation-typed-omitted-arguments.test.js'],
+ rust:['rust/src/translation/optional_callable_rules.rs','rust/src/translation/check/optional_callables.rs','rust/src/translation/check/expressions/calls.rs','rust/src/translation/check/expressions/calls/sequential_defaults.rs','rust/src/translation/javascript/infer/products.rs','rust/tests/unit/translation_javascript_typed_omitted_arguments.rs']});

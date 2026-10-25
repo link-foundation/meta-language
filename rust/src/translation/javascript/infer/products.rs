@@ -352,9 +352,10 @@ impl Inference {
         } else {
             args.len() as f64
         };
-        let Some(signature) = signature
-            .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
-        else {
+        let Some(signature) = signature.filter(|signature| {
+            accept_argument_count(signature.defaults.clone(), argument_count)
+                || arg_terms.len() <= signature.params.len()
+        }) else {
             return Ok(self.fresh(false));
         };
         self.calls.push(super::CallArguments {

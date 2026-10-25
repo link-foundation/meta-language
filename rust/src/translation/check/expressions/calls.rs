@@ -206,7 +206,12 @@ impl Checker {
             && accept_argument_count(
                 params
                     .iter()
-                    .map(|param| param.default_value.is_some() || param.optional)
+                    .map(|param| {
+                        crate::translation::check::optional_callables::may_omit_parameter(
+                            self.language,
+                            param,
+                        )
+                    })
                     .collect(),
                 argument_count,
             )

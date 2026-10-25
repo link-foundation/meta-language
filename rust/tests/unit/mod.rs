@@ -412,3 +412,5 @@ mod translation_javascript_optional_callables;
 mod translation_javascript_absent_record_properties;
 
 mod translation_javascript_excess_arguments;
+
+mod translation_javascript_typed_omitted_arguments;

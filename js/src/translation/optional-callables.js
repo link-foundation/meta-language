@@ -3,6 +3,9 @@ import {planOptionalCallableArguments,planOptionalCallableParameterBridge} from 
 import {sameType} from './types.js';
 import {coerce} from './check.js';
 import {planJavaScriptExcessArguments} from './excess-argument-rules.js';
+export function mayOmitTypedCallableParameter(language,parameter){
+ return Boolean(parameter.default||parameter.optional)||planOptionalCallableArguments(language,[parameter.type?.kind??''],[parameter.type?.absence??''],0).length>0;
+}
 export function completeOptionalCallableArguments(language,parameters,args,span){
  const plan=planOptionalCallableArguments(language,parameters.map(param=>param.kind),parameters.map(param=>param.absence??''),args.length);
  return !plan.length||args.length===parameters.length?args:plan.slice(1).map(slot=>slot>=0?args[slot]:{k:'none',absence:'undefined',span});

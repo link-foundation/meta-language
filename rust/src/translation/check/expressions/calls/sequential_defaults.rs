@@ -63,7 +63,12 @@ impl Checker {
         if !accept_argument_count(
             params
                 .iter()
-                .map(|param| param.default_value.is_some() || param.optional)
+                .map(|param| {
+                    crate::translation::check::optional_callables::may_omit_parameter(
+                        self.language,
+                        param,
+                    )
+                })
                 .collect(),
             count,
         ) {
@@ -112,10 +117,13 @@ impl Checker {
                 continue;
             }
             let input = inputs.remove(&slot);
-            let fallback = param
-                .default_value
-                .as_ref()
-                .or(param.optional.then_some(&absent));
+            let fallback = param.default_value.as_ref().or(
+                crate::translation::check::optional_callables::may_omit_parameter(
+                    self.language,
+                    param,
+                )
+                .then_some(&absent),
+            );
             let mut value = match (input, fallback) {
                 (Some(input), Some(fallback)) => self.javascript_binding_default_value(
                     input,

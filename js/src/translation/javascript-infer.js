@@ -1189,7 +1189,9 @@ class Inference {
     let argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
     const excess=signature?planJavaScriptExcessArguments('JavaScript',signature.params.length,args.length):[];
     if(excess.length)argTypes=excess.slice(1,excess[0]+1).map(index=>argTypes[index]);
-    if (!signature || !acceptArgumentCount(signature.defaults, argTypes.length)) return this.fresh();
+    // Resolve omission after body constraints; supplied prefix terms and the
+    // actual declaration result remain valid even before that resolution.
+    if (!signature || !acceptArgumentCount(signature.defaults, argTypes.length)&&argTypes.length>signature.params.length) return this.fresh();
     this.calls.push({ signature, args: argTypes, where });
     argTypes.forEach((type, index) => {
       const param = signature.params[index];
