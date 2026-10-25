@@ -2726,3 +2726,4 @@ export function sourceDefinitionEntry(identifier:string): SourceDefinitionEntry|
 export function createSourceDefinitionProgramLinks(identifier:string,options?:SourceDefinitionCatalogLimits): {network:LinkNetwork;root:LinkId};
 export function createSourceDefinitionFormalFunctionLinks(identifier:string,declaration:string|LinkId,options?:SourceDefinitionCatalogLimits): ReturnType<typeof encodeFormalFunctionDefinition>;
 export function runSourceDefinitionCommand(args:string[]): {exitCode:number;stdout:string|Uint8Array;stderr:string};
+export function createJavaScriptRecordCallableParameterProgramLinks(): TypedProgramLinks;

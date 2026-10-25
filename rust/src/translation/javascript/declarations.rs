@@ -30,6 +30,7 @@ enum Body {
     Block,
     Arrow,
     RecordParameters(Box<super::record_parameters::RecordParameters>),
+    RecordArrowParameters(Box<super::record_parameters::RecordParameters>),
 }
 
 impl JavaScriptParser {
@@ -270,9 +271,12 @@ impl JavaScriptParser {
     ) -> Result<SFn> {
         let doc = self.jsdoc_for(doc_token)?;
         self.cursor.expect("(", Some(&name_token.value))?;
-        if named_record_parameters
-            && let Some(records) = self.read_named_record_parameters(doc.as_ref(), is_async)?
-        {
+        let records = if named_record_parameters {
+            self.read_named_record_parameters(doc.as_ref(), is_async)?
+        } else {
+            self.read_record_namespace_parameters(doc.as_ref(), is_async)?
+        };
+        if let Some(records) = records {
             return self.function_body(
                 doc_token,
                 name_token,
@@ -323,16 +327,33 @@ impl JavaScriptParser {
                 self.cursor.advance();
             }
             self.cursor.expect("(", Some(&name_token.value))?;
-            let tokens = self.parameters(&name_token.value)?;
-            self.function_body(start, &name_token, doc, &tokens, &Body::Block, is_async)?
-        } else {
-            let tokens = if self.cursor.eat("(").is_some() {
+            let records = self.read_record_constant_parameters(doc.as_ref(), is_async, true)?;
+            let tokens = if records.is_some() {
+                Vec::new()
+            } else {
                 self.parameters(&name_token.value)?
+            };
+            let body = records.map_or(Body::Block, |records| {
+                Body::RecordParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
+        } else {
+            let mut records = None;
+            let tokens = if self.cursor.eat("(").is_some() {
+                records = self.read_record_constant_parameters(doc.as_ref(), is_async, false)?;
+                if records.is_some() {
+                    Vec::new()
+                } else {
+                    self.parameters(&name_token.value)?
+                }
             } else {
                 vec![(self.cursor.identifier(Some("parameter"))?, None)]
             };
             self.cursor.expect("=>", Some(&name_token.value))?;
-            self.function_body(start, &name_token, doc, &tokens, &Body::Arrow, is_async)?
+            let body = records.map_or(Body::Arrow, |records| {
+                Body::RecordArrowParameters(Box::new(records))
+            });
+            self.function_body(start, &name_token, doc, &tokens, &body, is_async)?
         };
         self.cursor.eat(";");
         Ok(function)
@@ -512,7 +533,9 @@ impl JavaScriptParser {
         }
         // A type JSDoc does not declare is inferred once the whole program is read.
         let records = match body {
-            Body::RecordParameters(records) => Some(records.as_ref()),
+            Body::RecordParameters(records) | Body::RecordArrowParameters(records) => {
+                Some(records.as_ref())
+            }
             _ => None,
         };
         let mut params = records.map_or_else(Vec::new, |records| records.parameters.clone());
@@ -650,6 +673,20 @@ impl JavaScriptParser {
                     })
                 }
                 Body::RecordParameters(records) => parser.read_named_record_parameter_body(records),
+                Body::RecordArrowParameters(records) => {
+                    parser.read_record_parameter_body_with(records, |parser| {
+                        if parser.cursor.is("{") {
+                            parser.block_statements()
+                        } else {
+                            let token = parser.peek();
+                            let expr = parser.expr()?;
+                            Ok(vec![Stmt::Return {
+                                expr,
+                                span: parser.to_here(&token),
+                            }])
+                        }
+                    })
+                }
                 _ => parser.block_statements(),
             }
         });

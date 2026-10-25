@@ -1,5 +1,5 @@
-// Named-declaration transport only. Existing common parameters()/closures are
-// unchanged. The shared plans own syntax/BoundNames/profile admission.
+// Actual named/closure/callable contexts retain their separate admission rules.
+// Shared plans own syntax, BoundNames and entry binding decisions.
 import { unsupported } from './diagnostics.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
 import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParameters,
@@ -8,6 +8,7 @@ import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
 import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParameterProfile,planJavaScriptRecordClosureParameterBindings} from './record-closure-parameter-rules.js';
+import {readJavaScriptRecordConstantContext,acceptJavaScriptRecordCallableParameterProfile,planJavaScriptRecordCallableParameterBindings} from './record-callable-parameter-rules.js';
 
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary named function declaration');
@@ -15,7 +16,13 @@ export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
 export function readJavaScriptRecordClosureParameters(parser,method,expression){
   return readJavaScriptRecordParameterSyntax(parser,null,false,readJavaScriptRecordClosureContext(method,expression));
 }
-function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context){
+export function readJavaScriptRecordConstantParameters(parser,doc,asynchronous,expression){
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,readJavaScriptRecordConstantContext(expression),true);
+}
+export function readJavaScriptRecordNamespaceParameters(parser,doc,asynchronous){
+  return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary namespace object method',true);
+}
+function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,callable=false){
   const c = parser.cursor;
   const start = c.index, opening = c.tokens[start - 1];
   // Only the actual formal interval supplies decision facts. Matching ignores
@@ -27,12 +34,13 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context){
   const kinds = interval.map(token => token.kind), values = interval.map(token => token.value);
   const selected = findJavaScriptRecordParameterPattern(kinds, values, 0);
   if (selected < 0) return null;
-  const profile=context==='ordinary named function declaration'
+  const profile=callable?acceptJavaScriptRecordCallableParameterProfile(context,asynchronous,doc?.params.size??0):context==='ordinary named function declaration'
     ?acceptJavaScriptRecordParameterProfile(context,asynchronous,doc?.params.size??0,false,false)
     :acceptJavaScriptRecordClosureParameterProfile(context,asynchronous,doc?.params.size??0);
+  if(!profile&&callable)throw unsupported('record callable source profile','ordinary non-simple callables require synchronous bodies without parameter documentation tags',interval[selected]);
   if (!profile) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
-  const plan = context==='ordinary named function declaration'
+  const plan = callable?planJavaScriptRecordCallableParameterBindings(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings):context==='ordinary named function declaration'
     ?planJavaScriptSourceRecordParameters(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)
     :planJavaScriptRecordClosureParameterBindings(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
   // Reason eight identifies the actual rejected BoundName, never a property.

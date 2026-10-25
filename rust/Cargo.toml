@@ -140,6 +140,7 @@ include = [
     "src/data/module-binding-program.lino",
     "src/data/number-bitwise-program.lino",
     "src/data/optional-value-program.lino",
+    "src/data/record-callable-parameter-program.lino",
     "src/data/record-closure-parameter-program.lino",
     "src/data/record-order-surface-library.lino",
     "src/data/record-value-order-template.lino",

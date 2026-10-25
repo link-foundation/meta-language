@@ -7,6 +7,9 @@ use super::{
 };
 use crate::translation::frontend_rules::ml_array::number_index;
 use crate::translation::javascript_record_parameter_rules::{self as rules, ml_string::Text};
+use crate::translation::record_callable_parameter_rules::{
+    self as callable_rules, ml_string::Text as CallableText,
+};
 use crate::translation::record_closure_parameter_rules::{
     self as closure_rules, ml_string::Text as ClosureText,
 };
@@ -198,7 +201,12 @@ impl JavaScriptParser {
         doc: Option<&JsDoc>,
         asynchronous: bool,
     ) -> Result<Option<RecordParameters>> {
-        self.read_record_parameter_syntax(doc, asynchronous, "ordinary named function declaration")
+        self.read_record_parameter_syntax(
+            doc,
+            asynchronous,
+            "ordinary named function declaration",
+            false,
+        )
     }
 
     pub(super) fn read_record_closure_parameters(
@@ -208,7 +216,30 @@ impl JavaScriptParser {
     ) -> Result<Option<RecordParameters>> {
         let context =
             closure_rules::read_java_script_record_closure_context(method, expression).to_string();
-        self.read_record_parameter_syntax(None, false, &context)
+        self.read_record_parameter_syntax(None, false, &context, false)
+    }
+
+    pub(super) fn read_record_constant_parameters(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+        expression: bool,
+    ) -> Result<Option<RecordParameters>> {
+        let context =
+            callable_rules::read_java_script_record_constant_context(expression).to_string();
+        self.read_record_parameter_syntax(doc, asynchronous, &context, true)
+    }
+    pub(super) fn read_record_namespace_parameters(
+        &mut self,
+        doc: Option<&JsDoc>,
+        asynchronous: bool,
+    ) -> Result<Option<RecordParameters>> {
+        self.read_record_parameter_syntax(
+            doc,
+            asynchronous,
+            "ordinary namespace object method",
+            true,
+        )
     }
 
     fn read_record_parameter_syntax(
@@ -216,6 +247,7 @@ impl JavaScriptParser {
         doc: Option<&JsDoc>,
         asynchronous: bool,
         context: &str,
+        callable: bool,
     ) -> Result<Option<RecordParameters>> {
         let start = self.cursor.index;
         let Some(opening) = start
@@ -259,7 +291,13 @@ impl JavaScriptParser {
         let documentation_parameters = serde_json::Number::from(documentation_parameters)
             .as_f64()
             .expect("a source parameter count is a Number");
-        let admitted = if context == "ordinary named function declaration" {
+        let admitted = if callable {
+            callable_rules::accept_java_script_record_callable_parameter_profile(
+                &CallableText::from_text(context),
+                asynchronous,
+                documentation_parameters,
+            )
+        } else if context == "ordinary named function declaration" {
             rules::accept_java_script_record_parameter_profile(
                 &Text::from_text(context),
                 asynchronous,
@@ -274,6 +312,13 @@ impl JavaScriptParser {
                 documentation_parameters,
             )
         };
+        if !admitted && callable {
+            return Err(unsupported(
+                "record callable source profile",
+                "ordinary non-simple callables require synchronous bodies without parameter documentation tags",
+                Some(selected.span()),
+            ));
+        }
         if !admitted {
             return Err(unsupported(
                 "record parameter source profile",
@@ -281,7 +326,19 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
-        let values = if context == "ordinary named function declaration" {
+        let values = if callable {
+            let project = |rows: &[Text]| {
+                rows.iter()
+                    .map(|row| CallableText::from_units(row.0.clone()))
+                    .collect::<Vec<_>>()
+            };
+            callable_rules::plan_java_script_record_callable_parameter_bindings(
+                &project(&kinds),
+                &project(&values),
+                0.0,
+                &project(reserved_names()),
+            )
+        } else if context == "ordinary named function declaration" {
             rules::plan_java_script_source_record_parameters(&kinds, &values, 0.0, reserved_names())
         } else {
             let project = |rows: &[Text]| {

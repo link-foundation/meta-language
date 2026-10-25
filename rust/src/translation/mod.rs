@@ -253,5 +253,7 @@ pub(crate) mod javascript_comparison_program;
 pub(crate) mod javascript_string_range_program;
 pub(crate) mod javascript_string_range_rules;
 pub(crate) mod optional_value_program;
+pub mod record_callable_parameter_program;
+pub mod record_callable_parameter_rules;
 pub(crate) mod rust_unit_value_program;
 pub(crate) mod rust_unit_value_rules;

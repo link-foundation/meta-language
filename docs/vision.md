@@ -1249,6 +1249,26 @@ these same operations and complete text/binary archives. No source-language
 alias, spelling match, digest equality or catalog entry alone merges concepts.
 The catalog, command transport and deferred controls are code drafts, not
 execution evidence or full formal coverage of every concept.
+
+Ordinary required flat record parameters now have distinct authored context
+definitions for constant arrow/function expressions and namespace object
+methods, alongside the separate named declaration and nested closure profiles.
+The actual parser supplies each role; it never labels an expression or method
+as a named declaration to bypass an admission guard. Complete original pattern
+decisions and body-entry binding operations generate their native definitions.
+Expression arrows retain their actual expression bodies; ordinary block
+directive, duplicate BoundName and lexical redeclaration rules still apply.
+Aliases, ordered logical arguments and local binding writes use the existing
+typed function representation, with no fabricated identifier tokens or extra
+provenance facets. Async/generator and parameter-documentation interpretations,
+defaults, nested/rest/computed patterns, receivers and general object effects
+remain separate obligations. The three former const/namespace refusal inputs
+are preserved with their complete predecessor assertion sources and corrected
+syntax/value controls, following the [ECMAScript formal parameter grammar](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-function-definitions),
+[arrow definitions](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-arrow-function-definitions)
+and [ordinary methods](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-method-definitions).
+Their original named-only operation assertions and every unrelated refusal
+remain intact. These are code and future-control drafts without executions.
 The opt-in `closed binary floating point function` model gives closed Rust and
 JavaScript functions a declared common abstract value interpretation. It guards
 flat function declarations with binary64 and Boolean parameters and results,

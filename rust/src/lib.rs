@@ -541,4 +541,5 @@ pub use translation::unicode_case_rules::map_unicode_case_utf16_text;
 
 pub use translation::rust_unit_value_program::create_rust_unit_value_program_links;
 
+pub use translation::record_callable_parameter_program::create_java_script_record_callable_parameter_program_links;
 pub use translation::rust_formatting_program::create_rust_formatting_program_links;

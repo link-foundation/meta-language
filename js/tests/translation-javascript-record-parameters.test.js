@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import {readProjectData} from '../scripts/project-data.mjs';
 import { tokenize } from '../src/translation/lexer.js';
 import { parseJavaScript } from '../src/translation/javascript.js';
 import { checkProgram } from '../src/translation/check.js';
@@ -381,9 +382,17 @@ test('existing typed field laws preserve present null values String or Array len
   // that its receiver has record type, getters or arbitrary JS object coercion.
 });
 
-test('anonymous const arrow namespace async and documentation profiles do not leak into the named-only adapter', () => {
-  for (const source of ['const f=({a})=>a;', 'const f=function({a}){return a;};',
-    'const Namespace={f({a}){return a;}};', 'async function f({a}){return a;}',
+test('ordinary callable parameter contexts retain original syntax and concrete-call coverage separately from the named profile',()=>{
+ const legacy=readProjectData(new URL('../../parity/fixtures/record-callable-parameters.lino',import.meta.url)).legacy;
+ for(const row of legacy){
+  assert.doesNotThrow(()=>parseJavaScript(row.source),row.source);
+  const source=row.source+'console.log('+row.call+');';
+  assert.doesNotThrow(()=>checkProgram(parseJavaScript(source)),row.source);
+  assert.equal(observe(source,row.call,{console:{log(){}}}),JSON.stringify(Number(row.value)));
+ }
+});
+test('async and documentation profiles retain their separate named-adapter refusal boundaries', () => {
+  for (const source of ['async function f({a}){return a;}',
     '/** @param {{a:number}} options */function f({a}){return a;}']) {
     assert.throws(() => parseJavaScript(source), /destructured parameter|record parameter/u, source);
   }

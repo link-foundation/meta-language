@@ -639,9 +639,6 @@ fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_bounda
         "function f({a},other){other=2;return a+other;}",
         "function f({a}){const a=2;return a;}",
         "function f({a}){let a=2;return a;}",
-        "const f=({a})=>a;",
-        "const f=function({a}){return a;};",
-        "const Namespace={f({a}){return a;}};",
         "async function f({a}){return a;}",
         "/** @param {{a:number}} options */function f({a}){return a;}",
         "function ordinary(value=/{a,b}/){return 1;}",
@@ -686,6 +683,28 @@ fn actual_parameter_sources_keep_every_unsupported_profile_scope_and_call_bounda
                 "{source}"
             );
         }
+    }
+}
+
+#[test]
+fn ordinary_callable_record_contexts_retain_all_three_original_inputs_with_corrected_coverage() {
+    versions();
+    let fixture = read_structured_data_lino(include_str!(
+        "../../../parity/fixtures/record-callable-parameters.lino"
+    ))
+    .unwrap();
+    for row in fixture["legacy"].as_array().unwrap() {
+        let source = row["source"].as_str().unwrap();
+        parse_javascript(source).unwrap();
+        let source = format!("{source}console.log({});", row["call"].as_str().unwrap());
+        let surface = parse_javascript(&source).unwrap();
+        check_program(&surface).unwrap();
+        let bridge = javascript_bridge("source", &source);
+        assert!(bridge.get("error").is_none(), "{}", bridge);
+        assert_eq!(
+            bridge["lines"],
+            serde_json::json!([row["value"].as_str().unwrap()])
+        );
     }
 }
 
@@ -837,5 +856,15 @@ fn actual_record_closure_parameters_preserve_bindings_captures_and_local_writes(
         "../experiments/javascript-program/record-closure-parameters.mjs",
         "JavaScript record closure parameter contexts",
         meta_language::create_java_script_record_closure_parameter_program_links,
+    );
+}
+
+#[test]
+fn actual_record_callable_parameters_preserve_constant_and_namespace_contexts() {
+    versions();
+    super::issue_195_translation_pairs::assert_nominal_translation_product(
+        "../experiments/javascript-program/record-callable-parameters.mjs",
+        "JavaScript ordinary record callable parameter contexts",
+        meta_language::create_java_script_record_callable_parameter_program_links,
     );
 }
