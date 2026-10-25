@@ -1278,6 +1278,15 @@ validation gate keeps its complete-network reader, and runtime loading still
 authenticates and statically rechecks the complete selected program. Neither a
 cached root nor metadata declarations supply behavioral evidence.
 
+Source-library construction parses the actual assembled ECMAScript module
+before translating its body. The bounded Node/V8 compiler phase creates a
+module without linking, resolving imports or evaluating source statements.
+This prevents syntax rejected by the source language, including duplicate
+lexical declarations, from acquiring an invented translated interpretation.
+The construction record names the supported explicit Node range and parser
+phase; generated artifacts do not vary with the machine's version string.
+This is a source-generation parser phase, not product/fixture execution.
+
 Ordinary required flat record parameters now have distinct authored context
 definitions for constant arrow/function expressions and namespace object
 methods, alongside the separate named declaration and nested closure profiles.

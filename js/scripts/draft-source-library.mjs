@@ -13,6 +13,7 @@ import { formatProductRuleSource } from './product-rule-style-corrections.mjs';
 import { writeProjectData } from './project-data.mjs';
 import { encodeTypedProgramLinks } from '../src/typed-program-links.js';
 import { readSourceLibraryClosure, readSourceLibraryDeclarationOwnership } from './read-source-library-closure.mjs';
+import {parseAuthoredJavaScriptModule} from './source-module-syntax.mjs';
 
 const root = new URL('../../', import.meta.url);
 export function draftSourceLibrary({ sourcePath, moduleName, directory = 'translation', model, programAsset, sourceDependencies = false, sourceAliases = false, referenceSemantics = false, sourceFormatting = 'rustfmt', sourceLints = 'apply' }) {
@@ -21,6 +22,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   if(typeof sourceAliases!=='boolean'||sourceAliases&&!sourceDependencies)throw new TypeError('source alias composition requires explicit dependency capture');
   const sourceClosure = sourceDependencies ? readSourceLibraryClosure(sourcePath,{aliases:sourceAliases}) : null;
   const source = sourceClosure?.source ?? readFileSync(new URL(sourcePath, root), 'utf8');
+  const sourceSyntax=parseAuthoredJavaScriptModule(source,sourcePath);
   if (typeof referenceSemantics !== 'boolean') throw new TypeError('source reference semantics must be an explicit Boolean');
   const program = checkProgram(parseJavaScript(source, { referenceSemantics }));
   const sourceDeclarationOwners = sourceClosure ? readSourceLibraryDeclarationOwnership(sourceClosure,program) : null;
@@ -69,7 +71,7 @@ export function draftSourceLibrary({ sourcePath, moduleName, directory = 'transl
   writeFileSync(new URL(stem + '-decorators.lino', root), decorators.toLino());
   const sourceSha256 = createHash('sha256').update(source).digest('hex');
   writeProjectData(new URL(stem + '-native.lino', root), {
-    schemaVersion: 1, model, referenceSemantics, sourceFormatting, ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
+    schemaVersion: 1, model, referenceSemantics, sourceFormatting, sourceSyntax, ...(sourceLints === 'preserve' ? { sourceLints } : {}), sourceClosure: sourceClosure ?? { source, bytes: Buffer.byteLength(source), sourceSha256,
       inputs: [{ path: sourcePath, source, bytes: Buffer.byteLength(source), sourceSha256, removedImports: [] }] },
     declarations: [...program.declarations].map(([name, declaration]) => ({ name, kind: declaration.k })),
     ...(sourceDeclarationOwners ? {sourceDeclarationOwners} : {}),
