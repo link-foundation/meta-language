@@ -35,6 +35,8 @@ export { DynamicMetaLanguage, createDynamicMetaLanguage } from './dynamic-meta-l
 export { runDynamicLanguageCommand } from './dynamic-language-cli.js';
 export { createDynamicLanguageCommandProgramLinks } from './dynamic-language-command-program.js';
 export { createRustByteStringProgramLinks } from './rust-byte-string-program.js';
+export { readIntrinsicModuleInitializerBinding } from './translation/intrinsic-initializers.js';
+export { acceptIntrinsicModuleInitializerScope } from './translation/intrinsic-initializer-rules.js';
 export { ResourceDescriptionNTriplesError, importResourceDescriptionNTriples, emitResourceDescriptionNTriples, readResourceDescriptionNTriplesSource } from './resource-description-ntriples.js';
 export { importResourceDescriptionGraph, decodeResourceDescriptionGraph,
   mergeResourceDescriptionGraphs, verifyResourceDescriptionGraphWitnesses } from './resource-description-graphs.js';

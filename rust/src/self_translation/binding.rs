@@ -13,6 +13,7 @@ mod owned_recursive_emission;
 mod recursive_groups;
 
 pub use deferred_scope::read_inert_binding as read_inert_module_binding;
+pub use deferred_scope::read_intrinsic_binding as read_intrinsic_module_initializer_binding;
 pub use owned_recursive_emission::accept_declaration_owned_emission;
 
 use super::{Context, Group, GroupKind, Translated, translate_group};
@@ -44,6 +45,7 @@ pub(super) struct Scan {
     // Certified complete actual CST: 1=class definition, 2=const function value.
     deferred_binding: Option<u8>,
     inert_binding: Option<u8>,
+    intrinsic_binding: Option<u8>,
     mentions: Vec<String>,
     imports: Option<ImportScan>,
 }
@@ -80,6 +82,11 @@ fn scan_item(text: &str) -> Option<Scan> {
     };
     let inert = if word(index, "const") {
         deferred_scope::read_inert_binding(text)
+    } else {
+        None
+    };
+    let intrinsic = if inert.is_none() && word(index, "const") {
+        deferred_scope::read_intrinsic_binding(text)
     } else {
         None
     };
@@ -153,12 +160,22 @@ fn scan_item(text: &str) -> Option<Scan> {
     {
         declares = Some(name.clone());
     }
+    if declares.is_none()
+        && let Some((name, _)) = &intrinsic
+    {
+        declares = Some(name.clone());
+    }
     if let Some((_, name)) = &deferred
         && declares.as_ref() != Some(name)
     {
         return None;
     }
     if let Some((name, _)) = &inert
+        && declares.as_ref() != Some(name)
+    {
+        return None;
+    }
+    if let Some((name, _)) = &intrinsic
         && declares.as_ref() != Some(name)
     {
         return None;
@@ -171,6 +188,7 @@ fn scan_item(text: &str) -> Option<Scan> {
         empty_class_declaration,
         deferred_binding: deferred.map(|(kind, _)| kind),
         inert_binding: inert.map(|(_, owner)| owner),
+        intrinsic_binding: intrinsic.map(|(_, owner)| owner),
         mentions,
         imports,
     })

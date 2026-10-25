@@ -226,6 +226,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     ("TruthValue", "TruthValue", "type"),
     ("VerificationIssue", "VerificationIssue", "type"),
     ("VerificationReport", "VerificationReport", "type"),
+    (
+        "acceptIntrinsicModuleInitializerScope",
+        "accept_intrinsic_module_initializer_scope",
+        "function",
+    ),
     ("acceptsText", "accepts_text", "function"),
     ("accessModeIsMutable", "AccessMode::is_mutable", "method"),
     ("accessModeIsReadOnly", "AccessMode::is_read_only", "method"),
@@ -615,6 +620,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
     (
         "readGlobalConceptSpaceLinks",
         "read_global_concept_space_links",
+        "function",
+    ),
+    (
+        "readIntrinsicModuleInitializerBinding",
+        "read_intrinsic_module_initializer_binding",
         "function",
     ),
     (

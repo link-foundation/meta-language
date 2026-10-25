@@ -37,6 +37,7 @@ mod reference_context;
 pub mod representation;
 mod representation_rules;
 mod shared_array_handles;
+pub use binding::read_intrinsic_module_initializer_binding;
 pub use binding::{accept_declaration_owned_emission, read_inert_module_binding};
 use emission::emit_item;
 pub use emission::{

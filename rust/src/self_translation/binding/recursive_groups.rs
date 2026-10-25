@@ -144,6 +144,13 @@ impl Binder<'_, '_> {
                 {
                     "owned inert value binding"
                 }
+                GroupKind::Item { .. }
+                    if state.scans[index]
+                        .as_ref()
+                        .is_some_and(|scan| scan.intrinsic_binding.is_some()) =>
+                {
+                    "intrinsic value binding"
+                }
                 _ => "unknown module form",
             })
             .collect::<Vec<_>>();
@@ -177,6 +184,23 @@ impl Binder<'_, '_> {
         ) {
             return true;
         }
+        let intrinsic_owners = forms
+            .iter()
+            .enumerate()
+            .map(|(index, form)| {
+                let scan = state.scans[index].as_ref();
+                match *form {
+                    "owned inert value binding" => scan
+                        .and_then(|scan| scan.inert_binding)
+                        .map_or(-1.0, f64::from),
+                    "intrinsic value binding" => scan
+                        .and_then(|scan| scan.intrinsic_binding)
+                        .map_or(-1.0, f64::from),
+                    _ => -1.0,
+                }
+            })
+            .collect::<Vec<_>>();
+        if crate::translation::intrinsic_initializer_rules::accept_intrinsic_module_initializer_scope(&owned_forms,&intrinsic_owners,&state.module_binding_names) {return true;}
         let mut externals = Vec::new();
         for (index, scan) in state.scans.iter().enumerate() {
             if scan.as_ref().is_none_or(|scan| scan.imports.is_none()) {

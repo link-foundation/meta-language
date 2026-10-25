@@ -40,6 +40,8 @@ import {readInertModuleBindingDeclaration} from './translation/inert-module-bind
 import {readNumericModuleBindingDeclaration,acceptNumericModuleBindingDeclarationSignature} from './translation/numeric-module-bindings.js';
 import {readEmptyStandardCollectionBindingDeclaration} from './translation/empty-module-collections.js';
 import {acceptInertModuleBindingScope} from './translation/inert-module-binding-rules.js';
+import {readIntrinsicModuleInitializerDeclaration} from './translation/intrinsic-initializers.js';
+import {acceptIntrinsicModuleInitializerScope} from './translation/intrinsic-initializer-rules.js';
 import { readDeclarationDependencyComponents, acceptRecursiveDeclarationGroup,
   acceptRecursiveDeclarationPublication, acceptDeclarationModuleScope,
   acceptDeclarationSignatureBinding, acceptDeclarationDeferredModuleScope } from './translation/declaration-dependency-rules.js';
@@ -483,10 +485,13 @@ function readDeclarationModuleScope(groups, scans, from, to, decorators, context
     : scans[index]?.deferredBinding?.kind === 1 ? 'deferred named class declaration'
     : scans[index]?.deferredBinding?.kind === 2 ? 'deferred function value binding'
     : literalGroups.has(group) ? 'primitive literal binding'
-    : scans[index]?.inertBinding ? 'owned inert value binding' : 'unknown module form');
+    : scans[index]?.inertBinding ? 'owned inert value binding'
+    : scans[index]?.intrinsicBinding ? 'intrinsic value binding' : 'unknown module form');
   if (acceptDeclarationModuleScope(forms, false) || acceptDeclarationDeferredModuleScope(forms)) return true;
   const requiredOwners = forms.map((form, index) => form === 'owned inert value binding' ? scans[index].inertBinding.owner : -1);
   if (acceptInertModuleBindingScope(forms, requiredOwners, context.moduleBindingNames)) return true;
+  const intrinsicOwners=forms.map((form,index)=>form==='owned inert value binding'?scans[index].inertBinding.owner:form==='intrinsic value binding'?scans[index].intrinsicBinding.owner:-1);
+  if(acceptIntrinsicModuleInitializerScope(forms,intrinsicOwners,context.moduleBindingNames))return true;
   if (typeof context.moduleSource !== 'string') return false;
   try {
     const source = from === 'TypeScript' ? projectTypeScriptTyping(context.moduleSource).code : context.moduleSource;
@@ -609,6 +614,7 @@ function scanItem(text) {
   const inertBinding = word(index, 'const') ? readInertModuleBindingDeclaration(text)
     ?? (emptyCollectionCandidate ? readEmptyStandardCollectionBindingDeclaration(text) : null)
     ?? (numericBindingCandidate ? readNumericModuleBindingDeclaration(text) : null) : null;
+  const intrinsicBinding=!inertBinding&&word(index,'const')?readIntrinsicModuleInitializerDeclaration(text):null;
   if (word(index, 'async') && word(index + 1, 'function')) {
     isAsync = true;
     index += 1;
@@ -652,9 +658,11 @@ function scanItem(text) {
   // The complete CST proves the actual binder even when the portable lexer
   // cannot yet represent its Unicode spelling. It supplies no signature.
   if (inertBinding && declares === null) declares = inertBinding.name;
+  if(intrinsicBinding&&declares===null)declares=intrinsicBinding.name;
   if (deferredBinding && deferredBinding.name !== declares) return null;
   if (inertBinding && inertBinding.name !== declares) return null;
-  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, inertBinding, mentions, imports };
+  if(intrinsicBinding&&intrinsicBinding.name!==declares)return null;
+  return { declares, exported, async: isAsync, ordinary, functionDeclaration, emptyClassDeclaration, deferredBinding, inertBinding, intrinsicBinding, mentions, imports };
 }
 
 /**

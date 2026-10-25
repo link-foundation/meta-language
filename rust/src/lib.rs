@@ -405,9 +405,10 @@ pub use self_translation::{
     SELF_TRANSLATION_LANGUAGES, SelfTranslation, SelfTranslationDiagnosticReport,
     SelfTranslationError, SelfTranslationItem, SelfTranslationOptions, SelfTranslationSignature,
     accept_declaration_owned_emission, check_and_emit_declaration_with_ownership,
-    erase_type_script, project_type_script_typing, read_inert_module_binding, self_translate,
-    self_translate_decorated, self_translate_with, self_translate_with_diagnostics,
-    self_translation_language, self_translation_signatures,
+    erase_type_script, project_type_script_typing, read_inert_module_binding,
+    read_intrinsic_module_initializer_binding, self_translate, self_translate_decorated,
+    self_translate_with, self_translate_with_diagnostics, self_translation_language,
+    self_translation_signatures,
 };
 pub use semantic_translation::{
     ReadTranslationProvenance, SEMANTIC_ENCODING, SEMANTIC_OBSERVATION, SemanticTranslation,
@@ -454,6 +455,7 @@ pub use transform::{
     QuasiquoteError, QuasiquoteTemplate, ReplacementReport, ReplacementRule,
     SourceTextPredicateHost, TextReplacement,
 };
+pub use translation::intrinsic_initializer_rules::accept_intrinsic_module_initializer_scope;
 pub use translation::source_text_bytes::{
     read_source_text_byte, read_source_text_byte_length, read_source_text_units,
     slice_source_text_bytes,

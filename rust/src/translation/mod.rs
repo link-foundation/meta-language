@@ -59,6 +59,7 @@ pub(crate) mod grammar_selection_mapping_rules;
 pub(crate) mod grammar_selection_rules;
 pub(crate) mod guarded_private_array_write_rules;
 pub(crate) mod inert_module_binding_rules;
+pub(crate) mod intrinsic_initializer_rules;
 pub mod ir;
 pub mod javascript;
 pub(crate) mod javascript_comparison_rules;

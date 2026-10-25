@@ -3344,6 +3344,20 @@ JavaScript decisions generate native rules and both checked Links archives.
 This admits independently checked neighboring functions; the original constant
 initializer remains concrete source provenance and is not claimed as translated
 or executed. Complete module initialization and class translation remain required.
+An additional intrinsic-initialization interpretation admits literal regular
+expressions and fresh containers of deferred function/method bodies. It checks
+the complete native CST and keeps a distinct source classification. Computed
+keys, spreads, property reads, eager calls, classes with eager initialization and
+unknown constructors still refuse. Selected root `Map`, `Set` and `Object.freeze`
+forms retain the same required-owner and shadowing checks. Literal regular
+expression creation uses the intrinsic constructor; this fact does not validate
+complete regular-expression behavior or remove its possible abrupt completion.
+The [ECMAScript creation operation](https://tc39.es/ecma262/2025/multipage/text-processing.html#sec-regexpcreate)
+is the basis for separating that allocation from a source callback. The preceding
+classifier and its refusal inputs retain their own interpretation. Initializers
+remain untranslated source unless independently checked and emitted, and receive
+no invented signature. The public binding/scope inspectors and source-generated
+native decisions establish no execution evidence or complete module translation.
 The proof bounds are 65,536 UTF-8 source bytes and 4,096 CST nodes; exceeding them
 keeps the ordinary complete-module path and never supplies a partial proof.
 Other wider module forms require the real complete-module check. Unknown

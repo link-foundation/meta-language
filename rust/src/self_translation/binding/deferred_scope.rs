@@ -84,6 +84,15 @@ pub(super) fn read_binding(source: &str) -> Option<(u8, String)> {
 
 /// Actual source/column transport to the independently generated inert-value rule.
 pub fn read_inert_binding(source: &str) -> Option<(String, u8)> {
+    read_value_binding(source, false)
+}
+
+/// Inspect actual name and required ambient-owner facts, without execution.
+pub fn read_intrinsic_binding(source: &str) -> Option<(String, u8)> {
+    read_value_binding(source, true)
+}
+
+fn read_value_binding(source: &str, intrinsic: bool) -> Option<(String, u8)> {
     if source.len() > 65_536 {
         return None;
     }
@@ -105,7 +114,12 @@ pub fn read_inert_binding(source: &str) -> Option<(String, u8)> {
         .iter()
         .map(|value| (*value).to_owned())
         .collect::<Vec<_>>();
-    let mut selected = crate::translation::inert_module_binding_rules::read_inert_module_binding(
+    let operation = if intrinsic {
+        crate::translation::intrinsic_initializer_rules::read_intrinsic_module_initializer
+    } else {
+        crate::translation::inert_module_binding_rules::read_inert_module_binding
+    };
+    let mut selected = operation(
         &terms,
         &fields,
         &facts.parents,
@@ -115,7 +129,7 @@ pub fn read_inert_binding(source: &str) -> Option<(String, u8)> {
         &facts.errors,
         source_number(source.len())?,
     );
-    if selected.is_empty() {
+    if selected.is_empty() && !intrinsic {
         selected = crate::translation::inert_module_binding_rules::read_empty_standard_collection_module_binding(
             &terms,
             &fields,
@@ -127,7 +141,7 @@ pub fn read_inert_binding(source: &str) -> Option<(String, u8)> {
             source_number(source.len())?,
         );
     }
-    if selected.is_empty() {
+    if selected.is_empty() && !intrinsic {
         selected = crate::translation::inert_module_binding_rules::read_numeric_module_binding(
             &terms,
             &fields,
