@@ -4,16 +4,60 @@ use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
 use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result;
 use super::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result;
 use super::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result;
-use super::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Result;
 use super::ml_array;
+use super::ml_math;
+use super::ml_number;
 use super::ml_source_exception;
 use super::ml_string;
+use super::read_java_script_binding_default_term;
 use super::source_ml_source1_temporary_accept_java_script_array_binding_name_loop4;
 use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
 use super::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8;
 use super::source_ml_source1_temporary_read_array_binding_fact_field_loop5;
 use super::source_ml_source1_temporary_read_array_binding_initializer_end_loop6;
-use super::source_ml_source1_temporary_read_java_script_binding_default_term_loop12;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn render_source_generated_identifier(
+    prefix: &self::ml_string::Text,
+    role: &self::ml_string::Text,
+    ordinal: f64,
+) -> self::ml_string::Text {
+    {
+        assert!(
+            !(!(self::ml_math::is_safe_integer(ordinal)) || (ordinal < 0f64)),
+            "{}",
+            "source identifier generation ordinal exceeds its exact range"
+        );
+
+        (prefix.concat(
+            &if role.starts_with(&self::ml_string::Text::from_units(vec![109, 108, 95])) {
+                {
+                    let source_ml_source2_string_range_operand56 = role.clone();
+                    {
+                        let source_ml_source2_string_range_operand57 = 3f64;
+                        {
+                            let source_ml_source2_string_range_position58 =
+                                source_ml_source2_string_range_operand57;
+                            {
+                                let source_ml_source2_string_range_position59 = f64::INFINITY;
+                                source_ml_source2_string_range_operand56.slice(
+                                    source_ml_source2_string_range_position58,
+                                    source_ml_source2_string_range_position59,
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                role.clone()
+            },
+        ))
+        .concat(&self::ml_string::Text::from_text(
+            &self::ml_number::js_number(ordinal),
+        ))
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -52,11 +96,11 @@ pub fn accept_java_script_source_binding_name(
         {
             let index = 0f64;
             {
-                let source_ml_source2_s36 =
+                let source_ml_source2_s60 =
                     self::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
                         name, reserved, index,
                     );
-                match source_ml_source2_s36 {
+                match source_ml_source2_s60 {
                     self::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done => {
                         true
                     }
@@ -246,20 +290,20 @@ pub fn accept_java_script_array_binding_name(
         false
     } else if ((name.length()) >= 3f64)
         && (({
-            let source_ml_source2_string_range_operand42 = name.clone();
+            let source_ml_source2_string_range_operand66 = name.clone();
             {
-                let source_ml_source2_string_range_operand43 = 0f64;
+                let source_ml_source2_string_range_operand67 = 0f64;
                 {
-                    let source_ml_source2_string_range_operand44 = 3f64;
+                    let source_ml_source2_string_range_operand68 = 3f64;
                     {
-                        let source_ml_source2_string_range_position45 =
-                            source_ml_source2_string_range_operand43;
+                        let source_ml_source2_string_range_position69 =
+                            source_ml_source2_string_range_operand67;
                         {
-                            let source_ml_source2_string_range_position46 =
-                                source_ml_source2_string_range_operand44;
-                            source_ml_source2_string_range_operand42.slice(
-                                source_ml_source2_string_range_position45,
-                                source_ml_source2_string_range_position46,
+                            let source_ml_source2_string_range_position70 =
+                                source_ml_source2_string_range_operand68;
+                            source_ml_source2_string_range_operand66.slice(
+                                source_ml_source2_string_range_position69,
+                                source_ml_source2_string_range_position70,
                             )
                         }
                     }
@@ -272,11 +316,11 @@ pub fn accept_java_script_array_binding_name(
         {
             let index = 0f64;
             {
-                let source_ml_source2_s47 =
+                let source_ml_source2_s71 =
                     self::source_ml_source1_temporary_accept_java_script_array_binding_name_loop4(
                         name, reserved, index,
                     );
-                match source_ml_source2_s47 {
+                match source_ml_source2_s71 {
                         self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Done => {
                             true
                         }
@@ -526,11 +570,11 @@ pub fn read_array_binding_fact_field(
             {
                 let end = at + self::read_required_number_fact(counts, node);
                 {
-                    let source_ml_source2_s48 =
+                    let source_ml_source2_s72 =
                         self::source_ml_source1_temporary_read_array_binding_fact_field_loop5(
                             labels, targets, field, at, end,
                         );
-                    match source_ml_source2_s48 {
+                    match source_ml_source2_s72 {
                         self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Done => {
                             -1f64
                         }
@@ -556,11 +600,11 @@ pub fn read_array_binding_initializer_end(
         {
             let closes = Vec::<self::ml_string::Text>::new();
             {
-                let source_ml_source2_s49 =
+                let source_ml_source2_s73 =
                     self::source_ml_source1_temporary_read_array_binding_initializer_end_loop6(
                         kinds, values, start, index, closes,
                     );
-                match source_ml_source2_s49 {
+                match source_ml_source2_s73 {
                     self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done => {
                         -1f64
                     }
@@ -594,8 +638,8 @@ pub fn plan_java_script_array_binding_names(
             {
                 let positions = Vec::<f64>::new();
                 {
-                    let source_ml_source2_s50 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(kinds, values, index, positions);
-                    match source_ml_source2_s50 {
+                    let source_ml_source2_s74 = self::source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(kinds, values, index, positions);
+                    match source_ml_source2_s74 {
                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Done => {
                                 vec![-1f64]
                             }
@@ -830,77 +874,6 @@ pub fn plan_java_script_binding_default_inference(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_binding_default_term(
-    texts: &[self::ml_string::Text],
-    starts: &[f64],
-    counts: &[f64],
-    labels: &[self::ml_string::Text],
-    targets: &[f64],
-    value: f64,
-) -> Vec<f64> {
-    {
-        let node = value;
-        {
-            let absence = self::ml_string::Text::from_units(vec![]);
-            {
-                let kind = self::read_array_binding_fact_field(
-                    starts,
-                    counts,
-                    labels,
-                    targets,
-                    node,
-                    &(self::ml_string::Text::from_units(vec![107, 105, 110, 100])),
-                );
-                {
-                    let source_ml_source2_s51 = self::source_ml_source1_temporary_read_java_script_binding_default_term_loop12(texts, starts, counts, labels, targets, node, absence, kind);
-                    match source_ml_source2_s51 {
-                        self::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Result::MlSource1TemporaryReadJavaScriptBindingDefaultTermLoop12Done(node_2, absence_2, kind_2) => {
-                            if kind_2 < 0f64 {
-                                vec![-1f64, 0f64]
-                            } else {
-                                vec![node_2, self::read_java_script_binding_default_absence_code(&(absence_2))]
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_binding_default_lift_form(
-    kind: &self::ml_string::Text,
-    element: &self::ml_string::Text,
-    absence: &self::ml_string::Text,
-    drop_undefined: bool,
-) -> self::ml_string::Text {
-    if (*kind) == (self::ml_string::Text::from_units(vec![117, 110, 105, 116])) {
-        self::ml_string::Text::from_units(vec![117, 110, 100, 101, 102, 105, 110, 101, 100])
-    } else {
-        let ml_library_inequality_2 =
-            (*kind) != (self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110]));
-        if ml_library_inequality_2 {
-            self::ml_string::Text::from_units(vec![112, 114, 101, 115, 101, 110, 116])
-        } else {
-            let ml_library_inequality_1 =
-                (*element) != (self::ml_string::Text::from_units(vec![117, 110, 105, 116]));
-            if ml_library_inequality_1 {
-                self::ml_string::Text::from_units(vec![111, 112, 116, 105, 111, 110, 97, 108])
-            } else if drop_undefined {
-                self::ml_string::Text::from_units(vec![110, 117, 108, 108])
-            } else if (*absence) == (self::ml_string::Text::from_units(vec![98, 111, 116, 104])) {
-                self::ml_string::Text::from_units(vec![97, 98, 115, 101, 110, 99, 101, 115])
-            } else {
-                absence.clone()
             }
         }
     }

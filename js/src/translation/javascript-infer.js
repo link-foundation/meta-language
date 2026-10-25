@@ -1017,6 +1017,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptRecordFormalDefaultOperation()){
+          const operands=readJavaScriptRecordFormalDefaultOperands(node),value=this.expr(operands.value,env),fallback=this.expr(operands.fallback,env),result=this.fresh();
+          this.arrayBindingDefaults.push({value,fallback,result,where:node.span});return result;
+        }
         if(node.op===readJavaScriptArrayFormalIterableOperation()){
           if(node.args.length!==1||node.args[0].spread)throw typeError('an array formal iterator needs one actual operand',node.span);
           const object=this.expr(node.args[0].value,env),result=this.fresh();
@@ -1467,3 +1471,6 @@ function describe(type) {
 
 import {readNumberPredicateArgumentForm} from './number-predicate-rules.js';
 import {readJavaScriptArrayFormalIterableOperation,readJavaScriptArrayFormalInferenceForm} from './array-formal-parameter-rules.js';
+
+import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
+import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';

@@ -1,5 +1,5 @@
 // Generated from complete js/src/translation/array-formal-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result;
+use super::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result;
 use super::ml_array;
 use super::ml_source_exception;
 use super::ml_string;
@@ -8,19 +8,20 @@ use super::read_required_text_fact;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_end_loop11(
+pub fn source_ml_source1_temporary_find_java_script_pattern_default_expression_end_loop11(
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     mut start: f64,
+    closing: &self::ml_string::Text,
     mut stack: Vec<self::ml_string::Text>,
     mut index: f64,
-) -> self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result {
+) -> self::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result {
     loop {
         return if index < (kinds.len() as f64) {
             {
                 let kind = self::read_required_text_fact(kinds, index);
                 if kind == (self::ml_string::Text::from_units(vec![101, 111, 102])) {
-                    self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Return(-1f64)
+                    self::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Return(-1f64)
                 } else {
                     if kind != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) {
                         {
@@ -36,9 +37,9 @@ pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_en
                             let value = self::read_required_text_fact(values, index);
                             if ((stack.len() as f64) == 0f64)
                                 && ((value == (self::ml_string::Text::from_units(vec![44])))
-                                    || (value == (self::ml_string::Text::from_units(vec![93]))))
+                                    || (value == (*closing)))
                             {
-                                self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Return(if (index).partial_cmp(&(start)) == Some(std::cmp::Ordering::Equal) {
+                                self::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Return(if (index).partial_cmp(&(start)) == Some(std::cmp::Ordering::Equal) {
                                     -1f64
                                 } else {
                                     index
@@ -96,7 +97,7 @@ pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_en
                                                 ((stack.len() as f64) - 1f64),
                                             )) != value)
                                         {
-                                            self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Return(-1f64)
+                                            self::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Return(-1f64)
                                         } else {
                                             {
                                                 let stack_3 =
@@ -126,7 +127,7 @@ pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_en
                 }
             }
         } else {
-            self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Done
+            self::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Done
         };
     }
 }
@@ -266,8 +267,8 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result {
-    MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Done(
+pub enum MlSource1TemporaryPartitionJavaScriptFormalInitializerBindingPositionsLoop14Result {
+    MlSource1TemporaryPartitionJavaScriptFormalInitializerBindingPositionsLoop14Done(
         Vec<f64>,
         Vec<f64>,
         bool,
@@ -276,14 +277,14 @@ pub enum MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop
 
 /// Execute the checked shared source algorithm.
 #[must_use]
-pub fn source_ml_source1_temporary_partition_java_script_array_formal_initializer_bindings_loop14(
-    mut binding: f64,
+pub fn source_ml_source1_temporary_partition_java_script_formal_initializer_binding_positions_loop14(
     positions: &[f64],
+    mut binding: f64,
     mut available: Vec<f64>,
     mut uninitialized: Vec<f64>,
     mut found: bool,
     mut index: f64,
-) -> self::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result {
+) -> self::MlSource1TemporaryPartitionJavaScriptFormalInitializerBindingPositionsLoop14Result {
     loop {
         if index < (positions.len() as f64) {
             {
@@ -348,7 +349,7 @@ pub fn source_ml_source1_temporary_partition_java_script_array_formal_initialize
             }
         }
         return {
-            self::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Done(available, uninitialized, found)
+            self::MlSource1TemporaryPartitionJavaScriptFormalInitializerBindingPositionsLoop14Result::MlSource1TemporaryPartitionJavaScriptFormalInitializerBindingPositionsLoop14Done(available, uninitialized, found)
         };
     }
 }

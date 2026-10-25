@@ -1355,6 +1355,24 @@ async/generator semantics remain implementation obligations. Future required
 and default values and exact refusals cover complete source/definition graphs,
 both codecs, four emissions and native products; none has executed.
 
+The record-formal default draft uses a distinct default-enabled syntax plan;
+the original required-only record operations keep their original token columns
+and refusals. Each actual binding retains its original property/name roles and
+complete initializer interval. Array and record adapters share the same ordered
+initializer scope transport and source-defined punctuation/BoundName decisions.
+Named functions, constants, namespace methods and nested closures retain their
+separate context admission. Original field access and original initializer
+expressions then enter the existing undefined-only default checker and inference
+constraints. The source wrapper disappears into ordinary typed IR before both
+codecs and four emissions; no forged index or new Core node is introduced.
+Present represented fields, including undefined/null payload distinctions and
+local binding writes, use their existing field/type protocol. Absent-field
+typing, inherited/getter/proxy domains, whole-parameter defaults and the remaining
+initialization environments remain obligations. Twenty-five future values,
+four refusals and the exact former closure default-refusal input have deferred
+original/emitted/native controls and full predecessor assertion sources. Nothing
+in this draft establishes execution evidence or complete language support.
+
 A guarded dynamic record-index draft uses actual positive `Object.hasOwn`
 conditions over local closed-record/String functional binders. An actual unary
 negation places the same fact in the other branch, including early-return

@@ -1285,6 +1285,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(node.op===readJavaScriptRecordFormalDefaultOperation())return checkJavaScriptBindingDefault(this,readJavaScriptRecordFormalDefaultOperands(node,this.language),env,path);
     if(node.op===readJavaScriptArrayFormalIterableOperation())return checkJavaScriptArrayFormalIterable(this,node,env,path);
     const enumeration=checkJavaScriptObjectEnumeration(this,node,env,path,expected);
     if(enumeration)return enumeration;
@@ -2461,3 +2462,6 @@ function decreasesOn(expr, fn, index, name, subterms) {
 import {createArrayRelativeElementTemplateExpression} from './array-relative-element-template.js';
 import {checkJavaScriptIterableValue,checkJavaScriptArrayFormalIterable} from './array-formal-iterables.js';
 import {readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
+
+import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
+import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';

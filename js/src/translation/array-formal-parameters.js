@@ -2,8 +2,8 @@
 import {unsupported} from './diagnostics.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './array-binding-policy.js';
 import {requireJavaScriptIdentifierRole} from './javascript-identifier-roles.js';
-import {findJavaScriptArrayFormalPattern,acceptJavaScriptArrayFormalContext,planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,readJavaScriptArrayFormalDefaultScopeBoundary,readJavaScriptArrayFormalIterableOperation,partitionJavaScriptArrayFormalInitializerBindings,findJavaScriptArrayFormalInitializerAssignment} from './array-formal-parameter-rules.js';
-import {findDefaultParameterReference} from './frontend-rules.js';
+import {findJavaScriptArrayFormalPattern,acceptJavaScriptArrayFormalContext,planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
+import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {readJavaScriptRecordParameterBindingStatement} from './javascript-record-parameter-rules.js';
 import {readJavaScriptPatternParameterBody,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
 
@@ -18,19 +18,8 @@ export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchron
  if(plan[0]<0)throw unsupported('array formal parameter syntax','flat names, elisions and final named rest use distinct actual BoundNames; defaults and nested/mixed object patterns need separate interpretations (reason '+(-plan[0])+')',tokens[plan[1]]??opening);
  const parameters=[],sourceNames=[],arrayEntries=[],used=parser.recordParameterNames;
  const actual=position=>{if(!Number.isSafeInteger(position)||position<0||position>=tokens.length)throw unsupported('array formal parameter transport','every selected token belongs to its actual formal interval',opening);return tokens[position];};
- const boundNames=readJavaScriptArrayFormalDefaultBindingPositions(plan).map(position=>actual(position).value);
- const readDefault=(first,last,binding)=>{
-  const initialization=partitionJavaScriptArrayFormalInitializerBindings(plan,binding),count=initialization[0];
-  const available=initialization.slice(1,1+count).map(position=>actual(position).value),uninitialized=initialization.slice(1+count).map(position=>actual(position).value);
-  const interval=tokens.slice(first,last),reference=findDefaultParameterReference(interval.map(token=>token.kind),interval.map(token=>token.value),uninitialized);
-  if(reference>=0)throw unsupported('array formal default reading parameter '+interval[reference].value,'the current default profile requires a closed parameter initialization environment',interval[reference]);
-  const saved=c.index,outer=parser.scope,before=parser.lexicalReads.length;c.index=start+first;
-  parser.scope={...outer,locals:new Set([...outer.locals,...boundNames]),mutable:new Set([...outer.mutable,...available]),tdz:new Set([...outer.tdz].filter(name=>!available.includes(name)).concat(uninitialized))};
-  try{const value=parser.withLexicalScope(boundNames,()=>parser.expr(),readJavaScriptArrayFormalDefaultScopeBoundary(context));if(c.index!==start+last)throw unsupported('array formal default transport','the actual expression must consume its complete planned initializer interval',actual(first));
-   const assignments=parser.lexicalReads.slice(before).filter(read=>read.assignment).map(read=>read.name),assigned=findJavaScriptArrayFormalInitializerAssignment(assignments,boundNames);
-   if(assigned>=0)throw unsupported('array formal default assigning parameter '+assignments[assigned],'writes during parameter initialization need their shared environment interpretation',actual(first));return value;}
-  finally{c.index=saved;parser.scope=outer;}
- };
+ const bindingPositions=readJavaScriptArrayFormalDefaultBindingPositions(plan);
+ const readDefault=(first,last,binding)=>readJavaScriptFormalInitializer(parser,{tokens,start,first,last,binding,positions:bindingPositions,context,profile:'array formal default'});
  const fresh=prefix=>{let name;do{if(!Number.isSafeInteger(parser.recordParameterOrdinal+1))throw unsupported('array formal parameter transport','the logical binder supply exceeds its exact ordinal range',opening);name=prefix+parser.recordParameterOrdinal++;}while(used.has(name));used.add(name);return name;};
  let cursor=2;
  while(cursor<plan.length){

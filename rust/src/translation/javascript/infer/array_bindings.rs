@@ -12,6 +12,21 @@ pub(super) struct DefaultBinding {
 }
 
 impl Inference {
+    pub(super) fn binding_default_term(
+        &mut self,
+        value: Term,
+        fallback: Term,
+        place: Option<Span>,
+    ) -> Term {
+        let result = self.fresh(false);
+        self.array_binding_defaults.push(DefaultBinding {
+            value,
+            fallback,
+            result: result.clone(),
+            place,
+        });
+        result
+    }
     pub(super) fn array_binding_expr(
         &mut self,
         node: &SExpr,

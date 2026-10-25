@@ -678,118 +678,152 @@ pub fn read_source_identifier_prefix_ordinal(name: &self::ml_string::Text) -> f6
             let index = 9f64;
             {
                 let ordinal = 0f64;
-                if ((((std::rc::Rc::new(
-                    move |text: self::ml_string::Text, position: f64| -> f64 {
-                        {
-                            let index_2 = if position.is_nan() {
-                                0f64
-                            } else {
-                                position.trunc()
-                            };
-                            if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                f64::NAN
-                            } else {
-                                (({
-                                    let source_ml_source2_string_range_operand6 = text.clone();
-                                    {
-                                        let source_ml_source2_string_range_operand7 = index_2;
+                if ((({
+                    let source_ml_source2_string_unit_operand10 = name.clone();
+                    {
+                        let source_ml_source2_string_unit_operand11 = index;
+                        (std::rc::Rc::new(
+                            move |text: self::ml_string::Text, position: f64| -> f64 {
+                                {
+                                    let index_2 = if position.is_nan() {
+                                        0f64
+                                    } else {
+                                        position.trunc()
+                                    };
+                                    if (index_2 < 0f64) || (index_2 >= (text.length())) {
+                                        f64::NAN
+                                    } else {
+                                        ({
+                                    let source_ml_source2_string_unit_operand17 = {
+                                        let source_ml_source2_string_range_operand12 = text.clone();
                                         {
-                                            let source_ml_source2_string_range_operand8 =
-                                                index_2 + 1f64;
+                                            let source_ml_source2_string_range_operand13 = index_2;
                                             {
-                                                let source_ml_source2_string_range_position9 =
-                                                    source_ml_source2_string_range_operand7;
+                                                let source_ml_source2_string_range_operand14 = index_2 + 1f64;
                                                 {
-                                                    let source_ml_source2_string_range_position10 =
-                                                        source_ml_source2_string_range_operand8;
-                                                    source_ml_source2_string_range_operand6.slice(
-                                                        source_ml_source2_string_range_position9,
-                                                        source_ml_source2_string_range_position10,
-                                                    )
+                                                    let source_ml_source2_string_range_position15 = source_ml_source2_string_range_operand13;
+                                                    {
+                                                        let source_ml_source2_string_range_position16 = source_ml_source2_string_range_operand14;
+                                                        source_ml_source2_string_range_operand12.slice(source_ml_source2_string_range_position15, source_ml_source2_string_range_position16)
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                })
-                                .code_point_at(0f64))
-                                .clone()
-                                .unwrap_or_else(|| f64::NAN)
-                            }
-                        }
-                    },
-                ))(name.clone(), index))
-                    < 49f64)
-                    || (((std::rc::Rc::new(
-                        move |text: self::ml_string::Text, position: f64| -> f64 {
-                            {
-                                let index_2 = if position.is_nan() {
-                                    0f64
-                                } else {
-                                    position.trunc()
-                                };
-                                if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                    f64::NAN
-                                } else {
-                                    (({
-                            let source_ml_source2_string_range_operand16 = text.clone();
-                            {
-                                let source_ml_source2_string_range_operand17 = index_2;
-                                {
-                                    let source_ml_source2_string_range_operand18 = index_2 + 1f64;
+                                    };
                                     {
-                                        let source_ml_source2_string_range_position19 = source_ml_source2_string_range_operand17;
+                                        let source_ml_source2_string_unit_operand18 = 0f64;
+                                        source_ml_source2_string_unit_operand17.code_point_at(source_ml_source2_string_unit_operand18)
+                                    }
+                                }).clone().unwrap_or_else(|| f64::NAN)
+                                    }
+                                }
+                            },
+                        ))(
+                            source_ml_source2_string_unit_operand10,
+                            source_ml_source2_string_unit_operand11,
+                        )
+                    }
+                }) < 49f64)
+                    || (({
+                        let source_ml_source2_string_unit_operand28 = name.clone();
+                        {
+                            let source_ml_source2_string_unit_operand29 = index;
+                            (std::rc::Rc::new(
+                                move |text: self::ml_string::Text, position: f64| -> f64 {
+                                    {
+                                        let index_2 = if position.is_nan() {
+                                            0f64
+                                        } else {
+                                            position.trunc()
+                                        };
+                                        if (index_2 < 0f64) || (index_2 >= (text.length())) {
+                                            f64::NAN
+                                        } else {
+                                            ({
+                                    let source_ml_source2_string_unit_operand35 = {
+                                        let source_ml_source2_string_range_operand30 = text.clone();
                                         {
-                                            let source_ml_source2_string_range_position20 = source_ml_source2_string_range_operand18;
-                                            source_ml_source2_string_range_operand16.slice(source_ml_source2_string_range_position19, source_ml_source2_string_range_position20)
+                                            let source_ml_source2_string_range_operand31 = index_2;
+                                            {
+                                                let source_ml_source2_string_range_operand32 = index_2 + 1f64;
+                                                {
+                                                    let source_ml_source2_string_range_position33 = source_ml_source2_string_range_operand31;
+                                                    {
+                                                        let source_ml_source2_string_range_position34 = source_ml_source2_string_range_operand32;
+                                                        source_ml_source2_string_range_operand30.slice(source_ml_source2_string_range_position33, source_ml_source2_string_range_position34)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    };
+                                    {
+                                        let source_ml_source2_string_unit_operand36 = 0f64;
+                                        source_ml_source2_string_unit_operand35.code_point_at(source_ml_source2_string_unit_operand36)
+                                    }
+                                }).clone().unwrap_or_else(|| f64::NAN)
                                         }
                                     }
-                                }
-                            }
-                        }).code_point_at(0f64)).clone().unwrap_or_else(|| f64::NAN)
-                                }
-                            }
-                        },
-                    ))(name.clone(), index))
-                        > 57f64))
+                                },
+                            ))(
+                                source_ml_source2_string_unit_operand28,
+                                source_ml_source2_string_unit_operand29,
+                            )
+                        }
+                    }) > 57f64))
                     || (index >= (name.length()))
                 {
                     -1f64
                 } else {
                     {
-                        let source_ml_source2_s21 = self::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(name, index, ordinal);
-                        match source_ml_source2_s21 {
+                        let source_ml_source2_s37 = self::source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(name, index, ordinal);
+                        match source_ml_source2_s37 {
                             self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index_2, ordinal_2) => {
-                                if ((std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 { {
-                                    let index_3 = if position.is_nan() {
-                                        0f64
-                                    } else {
-                                        position.trunc()
-                                    };
-                                    if (index_3 < 0f64) || (index_3 >= (text.length())) {
-                                        f64::NAN
-                                    } else {
-                                        (({
-                                            let source_ml_source2_string_range_operand27 = text.clone();
-                                            {
-                                                let source_ml_source2_string_range_operand28 = index_3;
-                                                {
-                                                    let source_ml_source2_string_range_operand29 = index_3 + 1f64;
-                                                    {
-                                                        let source_ml_source2_string_range_position30 = source_ml_source2_string_range_operand28;
+                                {
+let ml_product_condition_1 = {
+                                    let source_ml_source2_string_unit_operand47 = name.clone();
+                                    {
+                                        let source_ml_source2_string_unit_operand48 = index_2;
+                                        (std::rc::Rc::new(move |text: self::ml_string::Text, position: f64| -> f64 { {
+                                            let index_3 = if position.is_nan() {
+                                                0f64
+                                            } else {
+                                                position.trunc()
+                                            };
+                                            if (index_3 < 0f64) || (index_3 >= (text.length())) {
+                                                f64::NAN
+                                            } else {
+                                                ({
+                                                    let source_ml_source2_string_unit_operand54 = {
+                                                        let source_ml_source2_string_range_operand49 = text.clone();
                                                         {
-                                                            let source_ml_source2_string_range_position31 = source_ml_source2_string_range_operand29;
-                                                            source_ml_source2_string_range_operand27.slice(source_ml_source2_string_range_position30, source_ml_source2_string_range_position31)
+                                                            let source_ml_source2_string_range_operand50 = index_3;
+                                                            {
+                                                                let source_ml_source2_string_range_operand51 = index_3 + 1f64;
+                                                                {
+                                                                    let source_ml_source2_string_range_position52 = source_ml_source2_string_range_operand50;
+                                                                    {
+                                                                        let source_ml_source2_string_range_position53 = source_ml_source2_string_range_operand51;
+                                                                        source_ml_source2_string_range_operand49.slice(source_ml_source2_string_range_position52, source_ml_source2_string_range_position53)
+                                                                    }
+                                                                }
+                                                            }
                                                         }
+                                                    };
+                                                    {
+                                                        let source_ml_source2_string_unit_operand55 = 0f64;
+                                                        source_ml_source2_string_unit_operand54.code_point_at(source_ml_source2_string_unit_operand55)
                                                     }
-                                                }
+                                                }).clone().unwrap_or_else(|| f64::NAN)
                                             }
-                                        }).code_point_at(0f64)).clone().unwrap_or_else(|| f64::NAN)
+                                        } }))(source_ml_source2_string_unit_operand47, source_ml_source2_string_unit_operand48)
                                     }
-                                } }))(name.clone(), index_2)) == 95f64 {
+                                };
+if ml_product_condition_1 {
                                     ordinal_2
                                 } else {
                                     -1f64
                                 }
+}
                             }
                             self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(source_ml_source1_temporary_result1) => {
                                 source_ml_source1_temporary_result1
@@ -845,48 +879,5 @@ pub fn render_source_target_identifier(name: &self::ml_string::Text) -> self::ml
         (self::ml_string::Text::from_units(vec![115, 111, 117, 114, 99, 101, 95])).concat(name)
     } else {
         name.clone()
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn render_source_generated_identifier(
-    prefix: &self::ml_string::Text,
-    role: &self::ml_string::Text,
-    ordinal: f64,
-) -> self::ml_string::Text {
-    {
-        assert!(
-            !(!(self::ml_math::is_safe_integer(ordinal)) || (ordinal < 0f64)),
-            "{}",
-            "source identifier generation ordinal exceeds its exact range"
-        );
-
-        (prefix.concat(
-            &if role.starts_with(&self::ml_string::Text::from_units(vec![109, 108, 95])) {
-                {
-                    let source_ml_source2_string_range_operand32 = role.clone();
-                    {
-                        let source_ml_source2_string_range_operand33 = 3f64;
-                        {
-                            let source_ml_source2_string_range_position34 =
-                                source_ml_source2_string_range_operand33;
-                            {
-                                let source_ml_source2_string_range_position35 = f64::INFINITY;
-                                source_ml_source2_string_range_operand32.slice(
-                                    source_ml_source2_string_range_position34,
-                                    source_ml_source2_string_range_position35,
-                                )
-                            }
-                        }
-                    }
-                }
-            } else {
-                role.clone()
-            },
-        ))
-        .concat(&self::ml_string::Text::from_text(
-            &self::ml_number::js_number(ordinal),
-        ))
     }
 }

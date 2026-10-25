@@ -95,13 +95,20 @@ function planJavaScriptArrayFormalParameterBindings(kinds,values,start,reserved,
  * subsequently consume exactly this original interval.
  * @param {string[]} kinds @param {string[]} values @param {number} start @returns {number} */
 export function findJavaScriptFormalDefaultExpressionEnd(kinds,values,start){
+ return findJavaScriptPatternDefaultExpressionEnd(kinds,values,start,']');
+}
+/** Shared original-token boundary for an array or object pattern initializer.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string} closing @returns {number} */
+export function findJavaScriptPatternDefaultExpressionEnd(kinds,values,start,closing){
+ if(closing!==']'&&closing!=='}')return -1;
  if(kinds.length!==values.length||start<0||start%1!==0||start>=kinds.length)return -1;
  let stack=[];
  for(let index=start;index<kinds.length;index+=1){
   const kind=readRequiredTextFact(kinds,index);if(kind==='eof')return -1;
   if(kind!=='punct')continue;
   const value=readRequiredTextFact(values,index);
-  if(stack.length===0&&(value===','||value===']'))return index===start?-1:index;
+  if(stack.length===0&&(value===','||value===closing))return index===start?-1:index;
   if(value==='('||value==='['||value==='{')stack=stack.concat([value==='('?')':value==='['?']':'}']);
   else if(value===')'||value===']'||value==='}'){
    if(stack.length===0||readRequiredTextFact(stack,stack.length-1)!==value)return -1;
@@ -129,7 +136,11 @@ export function readJavaScriptArrayFormalDefaultBindingPositions(plan){
  * ...uninitialized] contains original token positions, never invented names.
  * @param {number[]} plan @param {number} binding @returns {number[]} */
 export function partitionJavaScriptArrayFormalInitializerBindings(plan,binding){
- const positions=readJavaScriptArrayFormalDefaultBindingPositions(plan);
+ return partitionJavaScriptFormalInitializerBindingPositions(readJavaScriptArrayFormalDefaultBindingPositions(plan),binding);
+}
+/** Shared ordered actual BoundName positions, supplied by their admitted plan.
+ * @param {number[]} positions @param {number} binding @returns {number[]} */
+export function partitionJavaScriptFormalInitializerBindingPositions(positions,binding){
  let available=[],uninitialized=[],found=false;
  for(let index=0;index<positions.length;index+=1){
   const position=readRequiredNumberFact(positions,index);

@@ -2,13 +2,14 @@
 // Shared plans own syntax, BoundNames and entry binding decisions.
 import { unsupported } from './diagnostics.js';
 import { JAVASCRIPT_ARRAY_BINDING_POLICY } from './array-binding-policy.js';
-import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParameters,
+import { findJavaScriptRecordParameterPattern, planJavaScriptSourceRecordParametersWithDefaults,readJavaScriptRecordFormalDefaultBindingPositions,readJavaScriptRecordFormalDefaultOperation,
   acceptJavaScriptRecordParameterProfile, readJavaScriptRecordParameterBindingStatement, findJavaScriptRecordParameterStrictDirective } from './javascript-record-parameter-rules.js';
 import { findJavaScriptLineTerminator } from './javascript-line-terminators.js';
 
 import { requireJavaScriptIdentifierRole } from './javascript-identifier-roles.js';
-import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParameterProfile,planJavaScriptRecordClosureParameterBindings} from './record-closure-parameter-rules.js';
-import {readJavaScriptRecordConstantContext,acceptJavaScriptRecordCallableParameterProfile,planJavaScriptRecordCallableParameterBindings} from './record-callable-parameter-rules.js';
+import {readJavaScriptRecordClosureContext,acceptJavaScriptRecordClosureParameterProfile} from './record-closure-parameter-rules.js';
+import {readJavaScriptRecordConstantContext,acceptJavaScriptRecordCallableParameterProfile} from './record-callable-parameter-rules.js';
+import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 
 export function readNamedJavaScriptRecordParameters(parser, doc, asynchronous) {
   return readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,'ordinary named function declaration');
@@ -40,9 +41,7 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
   if(!profile&&callable)throw unsupported('record callable source profile','ordinary non-simple callables require synchronous bodies without parameter documentation tags',interval[selected]);
   if (!profile) throw unsupported('record parameter source profile',
     'the initial named declaration profile requires synchronous functions without parameter documentation tags', interval[selected]);
-  const plan = callable?planJavaScriptRecordCallableParameterBindings(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings):context==='ordinary named function declaration'
-    ?planJavaScriptSourceRecordParameters(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings)
-    :planJavaScriptRecordClosureParameterBindings(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+  const plan = planJavaScriptSourceRecordParametersWithDefaults(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
   // Reason eight identifies the actual rejected BoundName, never a property.
   if (plan[0] === -8 && interval[plan[1]]) requireJavaScriptIdentifierRole(interval[plan[1]], true);
   if (plan[0] < 0) throw unsupported('record parameter binding',
@@ -60,6 +59,8 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
     }
     return interval[position];
   };
+  const positions=readJavaScriptRecordFormalDefaultBindingPositions(plan);
+  const readDefault=(first,last,binding)=>readJavaScriptFormalInitializer(parser,{tokens:interval,start,first,last,binding,positions,context,profile:'record formal default'});
   let cursor = 2;
   while (cursor < plan.length) {
     const form = plan[cursor++], slot = plan[cursor++];
@@ -88,11 +89,12 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
     const parameterSpan = { start: open.start, end: end.end };
     parameters.push({ name, type: null, span: parameterSpan });
     for (let index = 0; index < count; index += 1) {
-      const propertyPosition = plan[cursor++], localPosition = plan[cursor++];
+      const propertyPosition = plan[cursor++], localPosition = plan[cursor++],first=plan[cursor++],last=plan[cursor++];
       const property = actual(propertyPosition), local = actual(localPosition);
       requireJavaScriptIdentifierRole(local, true);
+      const fallback=first>=0?readDefault(first,last,localPosition):null;
       bindings.push({ parameter: name, property: property.value, name: local.value,
-        parameterSpan, span: { start: property.start, end: local.end },
+        fallback,propertySpan:{start:property.start,end:property.end},parameterSpan, span: { start: property.start, end: fallback?.span?.end??local.end },
         bindingSpan: { start: local.start, end: local.end } });
       sourceNames.push(local.value);sourcePlan.push(start + propertyPosition, start + localPosition);
     }
@@ -103,8 +105,11 @@ function readJavaScriptRecordParameterSyntax(parser,doc,asynchronous,context,cal
 }
 
 export function readNamedJavaScriptRecordParameterBody(parser, syntax, readBody) {
-  return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.bindings.map(binding=>({s:readJavaScriptRecordParameterBindingStatement(written.has(binding.name)),name:binding.name,
-    value:{k:'field',object:{k:'name',path:[binding.parameter],span:binding.parameterSpan},field:binding.property,span:binding.span},span:binding.bindingSpan})));
+  return readJavaScriptPatternParameterBody(parser,syntax,readBody,written=>syntax.bindings.map(binding=>{
+    const object={k:'name',path:[binding.parameter],span:binding.parameterSpan};
+    const value=binding.fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:object,spread:false},{value:{k:'str',value:binding.property,span:binding.propertySpan},spread:false},{value:binding.fallback,spread:false}],span:binding.span}:{k:'field',object,field:binding.property,span:binding.span};
+    return {s:readJavaScriptRecordParameterBindingStatement(written.has(binding.name)),name:binding.name,value,span:binding.bindingSpan};
+  }));
 }
 
 export function readJavaScriptPatternParameterBody(parser,syntax,readBody,constructPrefix){

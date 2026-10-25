@@ -2,7 +2,8 @@
 // Native algorithms must be generated from the complete recorded closure.
 import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { acceptJavaScriptArrayBindingName } from './array-binding-rules.js';
-import { readRequiredTextFact, readRequiredBooleanFact } from './fact-column-rules.js';
+import { readRequiredTextFact, readRequiredBooleanFact,readRequiredNumberFact } from './fact-column-rules.js';
+import {findJavaScriptPatternDefaultExpressionEnd} from './array-formal-parameter-rules.js';
 
 /** Detect only an actual object pattern at a formal parameter start. Ordinary
  * names/defaults remain on the old route unless a real pattern also occurs.
@@ -44,15 +45,21 @@ export function acceptJavaScriptRecordParameterBinding(kind, name, names, reserv
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptRecordParameters(kinds, values, start, reserved) {
-  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, false);
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, false,false);
 }
 
 /** Source admission uses ordinary BoundNames and the actual hygienic supply.
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptSourceRecordParameters(kinds, values, start, reserved) {
-  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, true);
+  return planJavaScriptRecordParameterBindings(kinds, values, start, reserved, true,false);
 }
+/** Separate default profile: each actual record binding owns property/name and
+ * initializer start/end columns; -1,-1 means no initializer. Earlier exported
+ * required-only plans retain their original two-column contract.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @returns {number[]} */
+export function planJavaScriptSourceRecordParametersWithDefaults(kinds,values,start,reserved){return planJavaScriptRecordParameterBindings(kinds,values,start,reserved,true,true);}
 
 /** @param {string} kind @param {string} name @param {string[]} names
  * @param {string[]} reserved @param {boolean} ordinary @returns {boolean} */
@@ -65,8 +72,8 @@ function acceptJavaScriptRecordParameterBoundName(kind, name, names, reserved, o
 }
 
 /** @param {string[]} kinds @param {string[]} values @param {number} start
- * @param {string[]} reserved @param {boolean} ordinary @returns {number[]} */
-function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary) {
+ * @param {string[]} reserved @param {boolean} ordinary @param {boolean} defaults @returns {number[]} */
+function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary,defaults) {
   if (kinds.length !== values.length || !Number.isInteger(start) || start < 0 || start >= kinds.length) return [-1, start];
   let at = start;
   let slot = 0;
@@ -99,15 +106,20 @@ function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, o
         const name = readRequiredTextFact(values, binding);
         if (!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds, binding), name, names, reserved, ordinary)) return [-8, binding];
         names.push(name);
-        pairs = pairs.concat([property, binding]);
         if (at >= kinds.length) return [-1, at];
-        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '=') return [-2, at];
+        let first=-1,last=-1;
+        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '=') {
+          if(!defaults)return [-2,at];first=at+1;
+          last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,'}');
+          if(last<0)return [-1,first];at=last;
+        }
+        pairs=pairs.concat(defaults?[property,binding,first,last]:[property,binding]);
         if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ',') { at += 1; continue; }
         if (!(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
       }
       if (pairs.length === 0) return [-4, open];
       if (at >= kinds.length || !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
-      instructions = instructions.concat([1, slot, open, at, pairs.length / 2]).concat(pairs);
+      instructions = instructions.concat([1, slot, open, at, pairs.length / (defaults?4:2)]).concat(pairs);
       at += 1;
     } else {
       const name = readRequiredTextFact(values, at);
@@ -136,6 +148,26 @@ export function acceptJavaScriptRecordParameterProfile(context, asynchronous, do
   return context === 'ordinary named function declaration' && !asynchronous
     && documentationParameters === 0 && !boundWrites && !variableRedeclarations;
 }
+
+/** Original local token positions from the complete default-enabled plan.
+ * @param {number[]} plan @returns {number[]} */
+export function readJavaScriptRecordFormalDefaultBindingPositions(plan){
+ if(plan.length<2||readRequiredNumberFact(plan,0)<0)throw new RangeError('a record initializer census needs an admitted complete plan');
+ let cursor=2,names=[];
+ while(cursor<plan.length){
+  const form=readRequiredNumberFact(plan,cursor);cursor+=2;
+  if(form===0){names=names.concat([readRequiredNumberFact(plan,cursor)]);cursor+=1;}
+  else if(form===1){const count=readRequiredNumberFact(plan,cursor+2);cursor+=3;for(let index=0;index<count;index+=1){names=names.concat([readRequiredNumberFact(plan,cursor+1)]);cursor+=4;}}
+  else throw new RangeError('a record initializer census needs actual formal instructions');
+ }
+ return names;
+}
+/** @returns {string} */
+export function readJavaScriptRecordFormalDefaultOperation(){return 'readJavaScriptRecordFormalDefault';}
+/** Actual source operands and known field projection, before ordinary defaults.
+ * @param {string} language @param {number} count @param {boolean} spread
+ * @param {string} key @returns {boolean} */
+export function acceptJavaScriptRecordFormalDefaultSource(language,count,spread,key){return language==='JavaScript'&&count===3&&!spread&&key==='str';}
 
 /** Builtin spelling alone cannot replace an actual local/module/context owner.
  * @param {string} name @param {boolean} shadowed @returns {boolean} */

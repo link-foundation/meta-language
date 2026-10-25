@@ -120,6 +120,7 @@ pub mod proof;
 pub(crate) mod record_closure_parameter_program;
 pub(crate) mod record_closure_parameter_rules;
 pub(crate) mod record_emission_rules;
+mod record_formal_defaults;
 pub(crate) mod record_type_syntax_rules;
 mod record_value_order_specialization;
 pub(crate) mod record_value_rules;

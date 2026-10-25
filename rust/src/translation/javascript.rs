@@ -38,6 +38,7 @@ mod declarations;
 mod expressions;
 mod fixed_integer_casts;
 mod flow;
+mod formal_initializers;
 mod guarded_private_array_writes;
 mod imperative;
 mod imports;

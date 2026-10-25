@@ -4,7 +4,30 @@ use super::find_java_script_formal_default_expression_end;
 use super::ml_array;
 use super::ml_math;
 use super::ml_string;
+use super::read_array_iterable_form;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_formal_iterable_operation() -> self::ml_string::Text {
+    self::ml_string::Text::from_units(vec![
+        114, 101, 97, 100, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 65, 114, 114, 97, 121, 70,
+        111, 114, 109, 97, 108, 73, 116, 101, 114, 97, 98, 108, 101,
+    ])
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_formal_iterable_form(
+    kind: &self::ml_string::Text,
+    reference: bool,
+) -> self::ml_string::Text {
+    if (*kind) == (self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101])) {
+        self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101])
+    } else {
+        self::read_array_iterable_form(kind, reference)
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -861,7 +884,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result {
-    MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Done,
-    MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Return(f64),
+pub enum MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Result {
+    MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Done,
+    MlSource1TemporaryFindJavaScriptPatternDefaultExpressionEndLoop11Return(f64),
 }

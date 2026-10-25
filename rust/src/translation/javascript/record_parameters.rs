@@ -44,6 +44,8 @@ struct RecordBinding {
     parameter_span: Span,
     span: Span,
     binding_span: Span,
+    property_span: Span,
+    fallback: Option<SExpr>,
 }
 
 fn reserved_names() -> &'static [Text] {
@@ -341,33 +343,12 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
-        let values = if callable {
-            let project = |rows: &[Text]| {
-                rows.iter()
-                    .map(|row| CallableText::from_units(row.0.clone()))
-                    .collect::<Vec<_>>()
-            };
-            callable_rules::plan_java_script_record_callable_parameter_bindings(
-                &project(&kinds),
-                &project(&values),
-                0.0,
-                &project(reserved_names()),
-            )
-        } else if context == "ordinary named function declaration" {
-            rules::plan_java_script_source_record_parameters(&kinds, &values, 0.0, reserved_names())
-        } else {
-            let project = |rows: &[Text]| {
-                rows.iter()
-                    .map(|row| ClosureText::from_units(row.0.clone()))
-                    .collect::<Vec<_>>()
-            };
-            closure_rules::plan_java_script_record_closure_parameter_bindings(
-                &project(&kinds),
-                &project(&values),
-                0.0,
-                &project(reserved_names()),
-            )
-        };
+        let values = rules::plan_java_script_source_record_parameters_with_defaults(
+            &kinds,
+            &values,
+            0.0,
+            reserved_names(),
+        );
         if values.first().is_some_and(|value| *value < 0.0) {
             let token = values
                 .get(1)
@@ -417,6 +398,16 @@ impl JavaScriptParser {
                 .collect();
             self.record_parameter_names = Some(names);
         }
+        let binding_positions =
+            rules::read_java_script_record_formal_default_binding_positions(&values);
+        let bound_names = binding_positions
+            .iter()
+            .map(|position| {
+                interval[number_index(*position).expect("actual admitted BoundName position")]
+                    .value
+                    .clone()
+            })
+            .collect::<Vec<_>>();
         let mut syntax = RecordParameters {
             parameters: Vec::new(),
             source_names: Vec::new(),
@@ -477,15 +468,50 @@ impl JavaScriptParser {
                 .push(parameter(name.clone(), parameter_span));
             for _ in 0..pairs {
                 let property = plan.token(&interval)?;
+                let binding = values[plan.at];
                 let local = plan.token(&interval)?;
+                let first = values[plan.at];
+                let last = values[plan.at + 1];
+                plan.at += 2;
                 crate::translation::lexer::require_java_script_identifier_role(&local, true)?;
+                let fallback = if let Some(first) = number_index(first) {
+                    let last = number_index(last).expect("actual source initializer end");
+                    let boundary=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_default_scope_boundary(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(context));
+                    Some(
+                        self.read_formal_initializer(
+                            &interval,
+                            super::formal_initializers::FormalInitializer {
+                                interval_positions: (first, last, start),
+                                binding_positions: &binding_positions,
+                                binding,
+                                bound_names: &bound_names,
+                                boundary: u8::try_from(
+                                    number_index(boundary)
+                                        .expect("actual source callable boundary"),
+                                )
+                                .expect("boundary is one or two"),
+                                profile: "record formal default",
+                            },
+                        )?,
+                    )
+                } else {
+                    None
+                };
                 syntax.bindings.push(RecordBinding {
                     parameter: name.clone(),
                     property: property.value.clone(),
                     name: local.value.clone(),
                     parameter_span,
-                    span: Span::new(property.start, local.end),
+                    span: Span::new(
+                        property.start,
+                        fallback
+                            .as_ref()
+                            .and_then(|value| value.span)
+                            .map_or(local.end, |place| place.end),
+                    ),
                     binding_span: local.span(),
+                    property_span: property.span(),
+                    fallback,
                 });
                 syntax.source_names.push(local.value);
             }
@@ -545,7 +571,7 @@ impl JavaScriptParser {
             .lexical
             .assigned_names_since(before)
             .filter(|name| names.contains(*name))
-            .cloned()
+            .map(str::to_owned)
             .collect::<HashSet<_>>();
         let mut prefix = if let Some(entries) = &syntax.array_entries {
             super::array_formal_parameters::binding_statements(entries, &written)
@@ -566,6 +592,42 @@ impl JavaScriptParser {
                         },
                         Some(binding.span),
                     );
+                    let value = if let Some(fallback) = &binding.fallback {
+                        SExpr::new(
+                            SNode::Math {
+                                op: rules::read_java_script_record_formal_default_operation()
+                                    .to_string(),
+                                name: String::new(),
+                                args: vec![
+                                    crate::translation::surface::SArrayItem::new(
+                                        SExpr::new(
+                                            SNode::Name {
+                                                path: vec![binding.parameter.clone()],
+                                            },
+                                            Some(binding.parameter_span),
+                                        ),
+                                        false,
+                                    ),
+                                    crate::translation::surface::SArrayItem::new(
+                                        SExpr::new(
+                                            SNode::Str {
+                                                value: binding.property.clone(),
+                                            },
+                                            Some(binding.property_span),
+                                        ),
+                                        false,
+                                    ),
+                                    crate::translation::surface::SArrayItem::new(
+                                        fallback.clone(),
+                                        false,
+                                    ),
+                                ],
+                            },
+                            Some(binding.span),
+                        )
+                    } else {
+                        value
+                    };
                     if rules::read_java_script_record_parameter_binding_statement(
                         written.contains(&binding.name),
                     )
