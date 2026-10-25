@@ -12,7 +12,42 @@ use super::read_required_number_fact;
 use super::record_type_fact_elements;
 use super::record_type_fact_field;
 use super::record_type_fact_kind;
-use super::source_ml_temporary_read_record_type_owner_presence_loop19;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_record_type_owner_presence_loop19(
+    seen: &[f64],
+    mut node: f64,
+    mut visited: bool,
+    mut index: f64,
+) -> bool {
+    loop {
+        if index < (seen.len() as f64) {
+            if (self::read_required_number_fact(seen, index)) == node {
+                {
+                    let visited_2 = true;
+                    {
+                        let index_2 = index + 1f64;
+                        {
+                            (visited, index) = (visited_2, index_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let index_3 = index + 1f64;
+                    {
+                        index = index_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { visited };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -861,40 +896,4 @@ pub fn source_ml_temporary_merge_java_script_record_property_order_loop33(
         }
         return { insertion };
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_merge_java_script_record_property_order_loop32(
-    chunks: &[Vec<f64>],
-    mut insertion: Vec<f64>,
-    mut chunk: f64,
-) -> Vec<f64> {
-    loop {
-        if chunk < (chunks.len() as f64) {
-            {
-                let values = self::read_java_script_record_order_name(chunks, chunk);
-                {
-                    let index = 0f64;
-                    {
-                        let insertion_2 = self::source_ml_temporary_merge_java_script_record_property_order_loop33(insertion, &(values), index);
-                        {
-                            let chunk_2 = chunk + 1f64;
-                            {
-                                (insertion, chunk) = (insertion_2, chunk_2);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return { insertion };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlTemporaryReadJavaScriptRecordOrderRebaseErrorLoop34Result {
-    MlTemporaryReadJavaScriptRecordOrderRebaseErrorLoop34Done,
-    MlTemporaryReadJavaScriptRecordOrderRebaseErrorLoop34Return(self::ml_string::Text),
 }

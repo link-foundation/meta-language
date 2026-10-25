@@ -315,6 +315,7 @@ impl Inference {
                 let literal = matches!(index.node, SNode::Num { .. })
                     || matches!(&index.node, SNode::Unary { op: UnaryOp::Neg, arg } if matches!(arg.node, SNode::Num { .. }));
                 self.indices.push(IndexOf {
+                    record_name_key: index.simple_name().is_some(),
                     object: object_type,
                     property: match &index.node {
                         SNode::Str { value } => Some(value.clone()),
@@ -341,6 +342,7 @@ impl Inference {
                 #[allow(clippy::cast_precision_loss)]
                 let position = *index as f64;
                 self.indices.push(IndexOf {
+                    record_name_key: false,
                     object: object_type,
                     property: None,
                     index: position,

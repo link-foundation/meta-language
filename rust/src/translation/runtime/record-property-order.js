@@ -1526,13 +1526,20 @@ function readJavaScriptRecordPropertyKeyTexts(names, order) {
   return result_2;
 }
 
+function readJavaScriptRecordPropertyIndex(names, key) {
+  const units = [];
+  const index = 0;
+  const units_2 = source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39(key, units, index);
+  return readRecordFieldPosition(names, units_2);
+}
+
 function createJavaScriptDensePropertyKeyTexts(length) {
   if (((!Number.isSafeInteger(length) || (length < 0)) || ((length === 0) && ((1 / length) < 0)))) {
     return ((ml_message,ml_present)=>{throw new TypeError(ml_present?ml_message:undefined);})("invalid dense own-field length",true);
   } else {
     const result = [];
     const index = 0;
-    const result_2 = source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39(length, result, index);
+    const result_2 = source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40(length, result, index);
     return result_2;
   }
 }
@@ -1540,7 +1547,7 @@ function createJavaScriptDensePropertyKeyTexts(length) {
 function createJavaScriptStringOwnPropertyValues(text) {
   const result = [];
   const index = 0;
-  const result_2 = source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40(text, result, index);
+  const result_2 = source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41(text, result, index);
   return result_2;
 }
 
@@ -2348,16 +2355,55 @@ function source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37(rows, r
   }
 }
 
-function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39(length, result, index) {
+function source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39(key, units, index) {
+  for (;;) {
+    if ((index < key.length)) {
+      const units_2 = (() => {
+        const source_ml_source1_concat_value50 = units;
+        const source_ml_source1_concat_value51 = [(() => {
+          const source_ml_source1_string_unit_operand41 = key;
+          const source_ml_source1_string_unit_operand42 = index;
+          return (((text, position) => (() => {
+            const index_2 = (Number.isNaN(position) ? 0 : Math.trunc(position));
+            if (((index_2 < 0) || (index_2 >= text.length))) {
+              return NaN;
+            } else {
+              return ((() => {
+                const source_ml_source1_string_unit_operand48 = (() => {
+                  const source_ml_source1_string_range_operand43 = text;
+                  const source_ml_source1_string_range_operand44 = index_2;
+                  const source_ml_source1_string_range_operand45 = (index_2 + 1);
+                  const source_ml_source1_string_range_position46 = (+(source_ml_source1_string_range_operand44));
+                  const source_ml_source1_string_range_position47 = (+(source_ml_source1_string_range_operand45));
+                  return (source_ml_source1_string_range_operand43).slice(source_ml_source1_string_range_position46, source_ml_source1_string_range_position47);
+                })();
+                const source_ml_source1_string_unit_operand49 = 0;
+                return (source_ml_source1_string_unit_operand48).codePointAt((+(source_ml_source1_string_unit_operand49)));
+              })() ?? NaN);
+            }
+          })()))(source_ml_source1_string_unit_operand41, (+(source_ml_source1_string_unit_operand42)));
+        })()];
+        return [...[...[], ...source_ml_source1_concat_value50], ...source_ml_source1_concat_value51];
+      })();
+      const index_2 = (index + 1);
+      [key, units, index] = [key, units_2, index_2];
+      continue;
+    } else {
+      return units;
+    }
+  }
+}
+
+function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40(length, result, index) {
   for (;;) {
     if ((index < length)) {
       const result_2 = (() => {
-        const source_ml_source1_concat_value42 = result;
-        const source_ml_source1_concat_value43 = [(() => {
-          const source_ml_source1_string_argument41 = index;
-          return String(source_ml_source1_string_argument41);
+        const source_ml_source1_concat_value53 = result;
+        const source_ml_source1_concat_value54 = [(() => {
+          const source_ml_source1_string_argument52 = index;
+          return String(source_ml_source1_string_argument52);
         })()];
-        return [...[...[], ...source_ml_source1_concat_value42], ...source_ml_source1_concat_value43];
+        return [...[...[], ...source_ml_source1_concat_value53], ...source_ml_source1_concat_value54];
       })();
       const index_2 = (index + 1);
       [length, result, index] = [length, result_2, index_2];
@@ -2368,29 +2414,29 @@ function source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39(length
   }
 }
 
-function source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40(text, result, index) {
+function source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41(text, result, index) {
   for (;;) {
     if ((index < text.length)) {
       const result_2 = (() => {
-        const source_ml_source1_concat_value51 = result;
-        const source_ml_source1_concat_value52 = [(() => {
-          const source_ml_source1_string_unit_operand44 = text;
-          const source_ml_source1_string_unit_operand45 = index;
+        const source_ml_source1_concat_value62 = result;
+        const source_ml_source1_concat_value63 = [(() => {
+          const source_ml_source1_string_unit_operand55 = text;
+          const source_ml_source1_string_unit_operand56 = index;
           return (((text_2, position) => (() => {
             const index_2 = (Number.isNaN(position) ? 0 : Math.trunc(position));
             if (((index_2 < 0) || (index_2 >= text_2.length))) {
               return "";
             } else {
-              const source_ml_source1_string_range_operand46 = text_2;
-              const source_ml_source1_string_range_operand47 = index_2;
-              const source_ml_source1_string_range_operand48 = (index_2 + 1);
-              const source_ml_source1_string_range_position49 = (+(source_ml_source1_string_range_operand47));
-              const source_ml_source1_string_range_position50 = (+(source_ml_source1_string_range_operand48));
-              return (source_ml_source1_string_range_operand46).slice(source_ml_source1_string_range_position49, source_ml_source1_string_range_position50);
+              const source_ml_source1_string_range_operand57 = text_2;
+              const source_ml_source1_string_range_operand58 = index_2;
+              const source_ml_source1_string_range_operand59 = (index_2 + 1);
+              const source_ml_source1_string_range_position60 = (+(source_ml_source1_string_range_operand58));
+              const source_ml_source1_string_range_position61 = (+(source_ml_source1_string_range_operand59));
+              return (source_ml_source1_string_range_operand57).slice(source_ml_source1_string_range_position60, source_ml_source1_string_range_position61);
             }
-          })()))(source_ml_source1_string_unit_operand44, (+(source_ml_source1_string_unit_operand45)));
+          })()))(source_ml_source1_string_unit_operand55, (+(source_ml_source1_string_unit_operand56)));
         })()];
-        return [...[...[], ...source_ml_source1_concat_value51], ...source_ml_source1_concat_value52];
+        return [...[...[], ...source_ml_source1_concat_value62], ...source_ml_source1_concat_value63];
       })();
       const index_2 = (index + 1);
       [text, result, index] = [text, result_2, index_2];

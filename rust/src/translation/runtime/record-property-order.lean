@@ -1253,39 +1253,62 @@ def readJavaScriptRecordPropertyKeyTexts (names : (Array (Array Float))) (order 
         (let result_2 := (source_ml_temporary_readJavaScriptRecordPropertyKeyTexts_loop37 rows result index);
           result_2))))
 
-partial def source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 (length : Float) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
-  (if (decide (index < length)) then (let result_2 := (let source_ml_source1_concat_value42 := result;
-    (let source_ml_source1_concat_value43 := (#[(let source_ml_source1_string_argument41 := index;
-      (String.foldl (fun (ml_units : Array Nat) ml_character => if ml_character.toNat < 65536 then ml_units.push ml_character.toNat else (ml_units.push (55296 + (ml_character.toNat - 65536) / 1024)).push (56320 + (ml_character.toNat - 65536) % 1024)) #[] (ml_js_number source_ml_source1_string_argument41)))] : (Array (Array Nat)));
-      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value42) ++ source_ml_source1_concat_value43)));
+partial def source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39 (key : (Array Nat)) (units : (Array Float)) (index : Float) : (Array Float) :=
+  (if (decide (index < (Float.ofNat (key).size))) then (let units_2 := (let source_ml_source1_concat_value50 := units;
+    (let source_ml_source1_concat_value51 := (#[(let source_ml_source1_string_unit_operand41 := key;
+      (let source_ml_source1_string_unit_operand42 := index;
+        ((fun (text : (Array Nat)) (position : Float) => (let index_2 := (if (Float.isNaN position) then (0 : Float) else (ml_trunc position));
+          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text).size)))) then (0.0 / 0.0 : Float) else (match (let source_ml_source1_string_unit_operand48 := (let source_ml_source1_string_range_operand43 := text;
+            (let source_ml_source1_string_range_operand44 := index_2;
+              (let source_ml_source1_string_range_operand45 := (index_2 + (1 : Float));
+                (let source_ml_source1_string_range_position46 := source_ml_source1_string_range_operand44;
+                  (let source_ml_source1_string_range_position47 := source_ml_source1_string_range_operand45;
+                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand43).map Float.ofNat) source_ml_source1_string_range_position46 source_ml_source1_string_range_position47)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))));
+            (let source_ml_source1_string_unit_operand49 := (0 : Float);
+              ((MLUtf16Text.codePoint ((source_ml_source1_string_unit_operand48).map Float.ofNat) source_ml_source1_string_unit_operand49))[0]?)) with | some ml_value => ml_value | _ => (0.0 / 0.0 : Float))))) source_ml_source1_string_unit_operand41 source_ml_source1_string_unit_operand42)))] : (Array Float));
+      (((#[] : (Array Float)) ++ source_ml_source1_concat_value50) ++ source_ml_source1_concat_value51)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result_2 index_2))) else result)
+      (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39 key units_2 index_2))) else units)
+
+def readJavaScriptRecordPropertyIndex (names : (Array (Array Float))) (key : (Array Nat)) : Float :=
+  (let units := (#[] : (Array Float));
+    (let index := (0 : Float);
+      (let units_2 := (source_ml_temporary_readJavaScriptRecordPropertyIndex_loop39 key units index);
+        (readRecordFieldPosition names units_2))))
+
+partial def source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40 (length : Float) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < length)) then (let result_2 := (let source_ml_source1_concat_value53 := result;
+    (let source_ml_source1_concat_value54 := (#[(let source_ml_source1_string_argument52 := index;
+      (String.foldl (fun (ml_units : Array Nat) ml_character => if ml_character.toNat < 65536 then ml_units.push ml_character.toNat else (ml_units.push (55296 + (ml_character.toNat - 65536) / 1024)).push (56320 + (ml_character.toNat - 65536) % 1024)) #[] (ml_js_number source_ml_source1_string_argument52)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value53) ++ source_ml_source1_concat_value54)));
+    (let index_2 := (index + (1 : Float));
+      (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40 length result_2 index_2))) else result)
 
 def createJavaScriptDensePropertyKeyTexts (length : Float) : (Array (Array Nat)) :=
   (if (((!(ml_is_safe_integer length)) || (decide (length < (0 : Float)))) || ((length == (0 : Float)) && (decide (((1 : Float) / length) < (0 : Float))))) then (ml_raiseJavaScriptTypeError (#[105, 110, 118, 97, 108, 105, 100, 32, 100, 101, 110, 115, 101, 32, 111, 119, 110, 45, 102, 105, 101, 108, 100, 32, 108, 101, 110, 103, 116, 104] : Array Nat)) else (let result := (#[] : (Array (Array Nat)));
     (let index := (0 : Float);
-      (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop39 length result index);
+      (let result_2 := (source_ml_temporary_createJavaScriptDensePropertyKeyTexts_loop40 length result index);
         result_2))))
 
-partial def source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 (text : (Array Nat)) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
-  (if (decide (index < (Float.ofNat (text).size))) then (let result_2 := (let source_ml_source1_concat_value51 := result;
-    (let source_ml_source1_concat_value52 := (#[(let source_ml_source1_string_unit_operand44 := text;
-      (let source_ml_source1_string_unit_operand45 := index;
+partial def source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41 (text : (Array Nat)) (result : (Array (Array Nat))) (index : Float) : (Array (Array Nat)) :=
+  (if (decide (index < (Float.ofNat (text).size))) then (let result_2 := (let source_ml_source1_concat_value62 := result;
+    (let source_ml_source1_concat_value63 := (#[(let source_ml_source1_string_unit_operand55 := text;
+      (let source_ml_source1_string_unit_operand56 := index;
         ((fun (text_2 : (Array Nat)) (position : Float) => (let index_2 := (if (Float.isNaN position) then (0 : Float) else (ml_trunc position));
-          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text_2).size)))) then (#[] : Array Nat) else (let source_ml_source1_string_range_operand46 := text_2;
-            (let source_ml_source1_string_range_operand47 := index_2;
-              (let source_ml_source1_string_range_operand48 := (index_2 + (1 : Float));
-                (let source_ml_source1_string_range_position49 := source_ml_source1_string_range_operand47;
-                  (let source_ml_source1_string_range_position50 := source_ml_source1_string_range_operand48;
-                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand46).map Float.ofNat) source_ml_source1_string_range_position49 source_ml_source1_string_range_position50)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))))))) source_ml_source1_string_unit_operand44 source_ml_source1_string_unit_operand45)))] : (Array (Array Nat)));
-      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value51) ++ source_ml_source1_concat_value52)));
+          (if ((decide (index_2 < (0 : Float))) || (decide (index_2 ≥ (Float.ofNat (text_2).size)))) then (#[] : Array Nat) else (let source_ml_source1_string_range_operand57 := text_2;
+            (let source_ml_source1_string_range_operand58 := index_2;
+              (let source_ml_source1_string_range_operand59 := (index_2 + (1 : Float));
+                (let source_ml_source1_string_range_position60 := source_ml_source1_string_range_operand58;
+                  (let source_ml_source1_string_range_position61 := source_ml_source1_string_range_operand59;
+                    (((MLUtf16Text.slice ((source_ml_source1_string_range_operand57).map Float.ofNat) source_ml_source1_string_range_position60 source_ml_source1_string_range_position61)).map (fun ml_unit => ml_unit.toUInt64.toNat)))))))))) source_ml_source1_string_unit_operand55 source_ml_source1_string_unit_operand56)))] : (Array (Array Nat)));
+      (((#[] : (Array (Array Nat))) ++ source_ml_source1_concat_value62) ++ source_ml_source1_concat_value63)));
     (let index_2 := (index + (1 : Float));
-      (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 text result_2 index_2))) else result)
+      (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41 text result_2 index_2))) else result)
 
 def createJavaScriptStringOwnPropertyValues (text : (Array Nat)) : (Array (Array Nat)) :=
   (let result := (#[] : (Array (Array Nat)));
     (let index := (0 : Float);
-      (let result_2 := (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop40 text result index);
+      (let result_2 := (source_ml_temporary_createJavaScriptStringOwnPropertyValues_loop41 text result index);
         result_2)))
 
 def main : IO Unit := do

@@ -402,6 +402,13 @@ impl Checker {
         {
             return Ok(value);
         }
+        if self.language == Language::JavaScript
+            && !self.checked_projection
+            && let Some(value) =
+                self.guarded_record_index(node, array.clone(), env, path, expected)?
+        {
+            return Ok(value);
+        }
         let literal = if self.language == Language::JavaScript && !self.checked_projection {
             super::javascript_indexed_properties::literal_index_source(node, array.ty.kind())
         } else {

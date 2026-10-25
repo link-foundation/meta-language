@@ -1343,6 +1343,23 @@ async/generator semantics remain implementation obligations. Future required
 and default values and exact refusals cover complete source/definition graphs,
 both codecs, four emissions and native products; none has executed.
 
+A guarded dynamic record-index draft uses actual positive `Object.hasOwn`
+conditions over local closed-record/String functional binders. An actual unary
+negation places the same fact in the other branch, including early-return
+continuations. Logical and/or supply a fact only to the actual right-operand
+branch selected by their short-circuit condition. Binding either operand again forgets the fact. Source cells,
+aliased/different keys and extra/effectful guard operands supply no stronger
+premise. The source-defined exact UTF16 key search selects canonical named
+projections; the adapters retain receiver-before-key evaluation and existing
+optional/nullish payload semantics. The checker facts do not become trusted
+source facets or replace runtime conditions. The resulting ordinary typed IR
+retains the guard and selected source operation through both codecs and four
+emissions. Unchecked dynamic reads retain their inherited-property obligation;
+heterogeneous value unions, mutable key cells, broader control-flow/alias proofs
+and exotic property protocols remain requirements. Twenty future source values,
+seven exact refusals and scope invalidation controls are drafted without execution.
+The own-membership distinction follows [Object.hasOwn](https://tc39.es/ecma262/2025/multipage/fundamental-objects.html#sec-object.hasown).
+
 The own-entry read draft extends the same actual argument capture and own-field
 order used by keys/values. Closed ordered records and represented indexed or
 primitive receivers select their original keys and homogeneous payloads only

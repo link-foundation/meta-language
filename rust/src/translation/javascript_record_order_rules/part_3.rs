@@ -6,11 +6,13 @@ use super::ml_math;
 use super::ml_source_exception;
 use super::ml_string;
 use super::read_java_script_record_order_key_error;
+use super::read_record_field_position;
 use super::read_required_number_fact;
 use super::read_required_record_name;
 use super::read_required_text_fact;
-use super::source_ml_temporary_create_java_script_dense_property_key_texts_loop39;
-use super::source_ml_temporary_create_java_script_string_own_property_values_loop40;
+use super::source_ml_temporary_create_java_script_dense_property_key_texts_loop40;
+use super::source_ml_temporary_create_java_script_string_own_property_values_loop41;
+use super::source_ml_temporary_read_java_script_record_property_index_loop39;
 use super::source_ml_temporary_read_java_script_record_property_key_texts_loop37;
 use super::source_ml_temporary_read_java_script_record_property_keys_loop36;
 
@@ -68,6 +70,27 @@ pub fn read_java_script_record_property_key_texts(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_record_property_index(
+    names: &[Vec<f64>],
+    key: &self::ml_string::Text,
+) -> f64 {
+    {
+        let units = Vec::<f64>::new();
+        {
+            let index = 0f64;
+            {
+                let units_2 =
+                    self::source_ml_temporary_read_java_script_record_property_index_loop39(
+                        key, units, index,
+                    );
+                self::read_record_field_position(names, &(units_2))
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn create_java_script_dense_property_key_texts(length: f64) -> Vec<self::ml_string::Text> {
     if (!(self::ml_math::is_safe_integer(length)) || (length < 0f64))
         || ((length == 0f64) && ((1f64 / length) < 0f64))
@@ -88,7 +111,7 @@ pub fn create_java_script_dense_property_key_texts(length: f64) -> Vec<self::ml_
             {
                 let index = 0f64;
                 {
-                    self::source_ml_temporary_create_java_script_dense_property_key_texts_loop39(
+                    self::source_ml_temporary_create_java_script_dense_property_key_texts_loop40(
                         length, result, index,
                     )
                 }
@@ -107,7 +130,7 @@ pub fn create_java_script_string_own_property_values(
         {
             let index = 0f64;
             {
-                self::source_ml_temporary_create_java_script_string_own_property_values_loop40(
+                self::source_ml_temporary_create_java_script_string_own_property_values_loop41(
                     text, result, index,
                 )
             }
@@ -870,40 +893,4 @@ pub fn source_ml_temporary_record_type_fact_elements_loop16(
 pub enum MlTemporaryReadRecordTypeOwnerPresenceLoop17Result {
     MlTemporaryReadRecordTypeOwnerPresenceLoop17Done,
     MlTemporaryReadRecordTypeOwnerPresenceLoop17Return(bool),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_temporary_read_record_type_owner_presence_loop19(
-    seen: &[f64],
-    mut node: f64,
-    mut visited: bool,
-    mut index: f64,
-) -> bool {
-    loop {
-        if index < (seen.len() as f64) {
-            if (self::read_required_number_fact(seen, index)) == node {
-                {
-                    let visited_2 = true;
-                    {
-                        let index_2 = index + 1f64;
-                        {
-                            (visited, index) = (visited_2, index_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let index_3 = index + 1f64;
-                    {
-                        index = index_3;
-                        continue;
-                    }
-                }
-            }
-        }
-        return { visited };
-    }
 }

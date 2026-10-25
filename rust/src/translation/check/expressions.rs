@@ -702,8 +702,19 @@ impl Checker {
     ) -> Result<Expr> {
         match op {
             BinaryOp::And | BinaryOp::Or => {
+                let (then_env, else_env) = self.own_property_branch_environments(left, env);
                 let left = self.expr(left, env, path, None, false)?;
-                let right = self.expr(right, env, path, None, false)?;
+                let right = self.expr(
+                    right,
+                    if op == BinaryOp::And {
+                        &then_env
+                    } else {
+                        &else_env
+                    },
+                    path,
+                    None,
+                    false,
+                )?;
                 self.logical_values(op, left, right, span)
             }
             BinaryOp::Concat => {

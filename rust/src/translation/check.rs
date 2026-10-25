@@ -362,6 +362,7 @@ struct Env {
     vars: HashMap<String, Type>,
     known: HashMap<String, Fact>,
     immutable_products: HashMap<String, bool>,
+    own_properties: Vec<(String, String)>,
 }
 
 impl Env {
@@ -373,6 +374,8 @@ impl Env {
     fn bind_local(&mut self, name: &str, ty: Type) {
         self.vars.insert(name.to_owned(), ty);
         self.immutable_products.remove(name);
+        self.own_properties
+            .retain(|(object, key)| object != name && key != name);
         self.known.retain(|variable, fact| {
             variable != name && !fact.binds.iter().any(|bind| bind == name)
         });
@@ -762,3 +765,5 @@ fn arithmetic_semantics(
         Some(ByZero::Total),
     )
 }
+
+mod guarded_record_indices;

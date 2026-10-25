@@ -436,6 +436,7 @@ impl Inference {
                         self.indices.push(super::IndexOf {
                             object: *element,
                             property: constraint.property,
+                            record_name_key: constraint.record_name_key,
                             index: constraint.index,
                             literal: constraint.literal,
                             optional: constraint.optional,
@@ -443,6 +444,28 @@ impl Inference {
                             result: constraint.result,
                             place: constraint.place,
                         });
+                    }
+                    progress = true;
+                }
+                Term::Record(record) if constraint.record_name_key => {
+                    if record.borrow().open {
+                        waiting.push(constraint);
+                        continue;
+                    }
+                    let fields = record
+                        .borrow()
+                        .fields
+                        .iter()
+                        .map(|(_, term)| term.clone())
+                        .collect::<Vec<_>>();
+                    let element = fields.first().cloned().unwrap_or_else(|| self.fresh(false));
+                    for field in fields {
+                        self.unify(&element, &field, constraint.place)?;
+                    }
+                    let value = super::optional_values::optional(element, "undefined");
+                    self.unify(&constraint.result, &value, constraint.place)?;
+                    if let Term::Var(variable) = constraint.result {
+                        self.bindings[variable] = Some(value);
                     }
                     progress = true;
                 }

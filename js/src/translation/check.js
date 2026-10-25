@@ -8,6 +8,7 @@ import {checkJavaScriptNullishField,checkJavaScriptNullishAccess,checkJavaScript
 import {checkJavaScriptNamedProperty,readJavaScriptLiteralIndexSource,checkJavaScriptStringIndex} from './javascript-indexed-properties.js';
 import {requireJavaScriptSliceReferenceCopy} from './javascript-nullish-field-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
+import {forgetJavaScriptOwnPropertyGuard,readJavaScriptOwnPropertyBranchEnvironments,checkJavaScriptGuardedRecordIndex} from './javascript-guarded-record-indices.js';
 import {checkJavaScriptOptionalCall} from './javascript-optional-calls.js';
 import {readJavaScriptOptionalCallOperation} from './javascript-optional-call-rules.js';
 import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-runtime-shell.js';
@@ -124,6 +125,7 @@ const PREDICATES = new Set(['isInteger', 'isSafeInteger', 'isFinite', 'isNaN']);
 
 /** Binds a local, forgetting constructor facts the new binding shadows. */
 export function bindLocal(env, name, type, immutableProduct = false) {
+  forgetJavaScriptOwnPropertyGuard(env,name);
   env.set(name, type);
   const products = env.get(PRODUCT_VALUES);
   if (immutableProduct || products?.has(name)) {
@@ -805,6 +807,7 @@ class Checker {
           if(literal)node=literal;
           if(object.type.kind==='string')return checkJavaScriptStringIndex(this,node,object,env,path);
         }
+        if(this.language==='JavaScript'&&!this.checkedProjection){const guarded=checkJavaScriptGuardedRecordIndex(this,node,object,env,path,expected);if(guarded)return guarded;}
         if (object.type.kind === 'tuple' && node.index.k === 'num') {
           const index = readTuplePosition(Number(node.index.value) * (node.index.negative ? -1 : 1));
           if (!acceptTupleIndex(index, object.type.elements.length)) throw typeError('tuple index out of range', node.span);
@@ -893,19 +896,20 @@ class Checker {
         return this.binary(node, env, path, expected, allowLiteral);
       case 'if': {
         const cond = this.booleanValue(this.expr(node.cond, env, path, undefined), node.span);
+        const branchesEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.cond,env):{then:env,else:env};
         if (acceptSemanticBranchContextReordering(expected != null, needsBranchResultContext(node.then), needsBranchResultContext(node.else))) {
-          let otherwise = this.expr(node.else, env, path, undefined, allowLiteral);
-          if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, env, path, this.defaultNumber());
-          const then = this.expr(node.then, env, path, otherwise.type, allowLiteral);
+          let otherwise = this.expr(node.else, branchesEnv.else, path, undefined, allowLiteral);
+          if (otherwise.type.kind === 'literal') otherwise = this.expr(node.else, branchesEnv.else, path, this.defaultNumber());
+          const then = this.expr(node.then, branchesEnv.then, path, otherwise.type, allowLiteral);
           const branches = unifyBranches(then, otherwise, expected, this.language, node.span);
           return { k: 'if', cond, then: branches[0], else: branches[1], type: branches[0].type };
         }
-        let then = this.expr(node.then, env, path, expected, allowLiteral);
-        let otherwise = this.expr(node.else, env, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
-        if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, env, path, otherwise.type);
+        let then = this.expr(node.then, branchesEnv.then, path, expected, allowLiteral);
+        let otherwise = this.expr(node.else, branchesEnv.else, path, expected ?? (then.type.kind === 'literal' ? undefined : then.type), allowLiteral);
+        if (then.type.kind === 'literal' && otherwise.type.kind !== 'literal') then = this.expr(node.then, branchesEnv.then, path, otherwise.type);
         if (then.type.kind === 'literal') {
-          then = this.expr(node.then, env, path, this.defaultNumber());
-          otherwise = this.expr(node.else, env, path, then.type);
+          then = this.expr(node.then, branchesEnv.then, path, this.defaultNumber());
+          otherwise = this.expr(node.else, branchesEnv.else, path, then.type);
         }
         [then, otherwise] = unifyBranches(then, otherwise, expected, this.language, node.span);
         return { k: 'if', cond, then, else: otherwise, type: then.type };
@@ -1369,7 +1373,8 @@ class Checker {
     const { op } = node;
     if (op === 'and' || op === 'or') {
       const left = this.expr(node.left, env, path, undefined);
-      const right = this.expr(node.right, env, path, undefined);
+      const branchesEnv=this.language==='JavaScript'?readJavaScriptOwnPropertyBranchEnvironments(node.left,env):{then:env,else:env};
+      const right = this.expr(node.right, op==='and'?branchesEnv.then:branchesEnv.else, path, undefined);
       const operation = readOptionalLogicalOperation(this.language, left.type.kind, right.type.kind,
         left.type.kind === 'option' && sameType(left.type.element, right.type), right.type.kind === 'option' && sameType(right.type.element, left.type), sameType(left.type, right.type), op);
       if (operation === 'boolean') return { k: 'binary', op, left, right, type: BOOL };

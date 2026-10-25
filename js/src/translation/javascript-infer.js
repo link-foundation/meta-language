@@ -434,6 +434,13 @@ class Inference {
           if(this.resolve(object.element).kind!=='unit')this.indices.push({...constraint,object:object.element});
           this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
         }
+        if(object.kind==='record'&&constraint.index.k==='name'&&constraint.index.path.length===1){
+          if(object.open)continue;
+          const element=object.fields[0]?.type??this.fresh();for(const field of object.fields)this.unify(element,field.type,constraint.where);
+          const value={kind:'option',element,absence:'undefined'};this.unify(constraint.result,value,constraint.where);
+          if(constraint.result.kind==='var')this.bindings[constraint.result.id]=value;
+          this.indices.splice(this.indices.indexOf(constraint),1);progress=true;continue;
+        }
         if(constraint.index.k==='str'){
           const key=constraint.index.value,index=readJavaScriptLiteralPropertyIndex(Array.from({length:key.length},(_,at)=>key.charCodeAt(at)));
           if(readJavaScriptLiteralPropertyForm(object.kind,index)==='field')this.fields.push({object:constraint.object,field:key,result:constraint.result,where:constraint.where});

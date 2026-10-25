@@ -79,6 +79,63 @@ pub mod ml_math {
     }
 }
 
+/// Reads of JavaScript arrays, which the portable core never mutates.
+pub mod ml_array {
+    /// The element at an index; a read outside the array, undefined in
+    /// JavaScript, aborts.
+    #[must_use]
+    pub fn at<T: Clone>(values: &[T], index: Option<usize>) -> T {
+        index
+            .and_then(|index| values.get(index))
+            .map_or_else(|| panic!("array index out of range"), Clone::clone)
+    }
+
+    /// The index a Number names: a non-negative integer, -0 included.
+    #[must_use]
+    pub fn number_index(index: f64) -> Option<usize> {
+        if index >= 0.0 && index.fract() == 0.0 && index < 9_007_199_254_740_992.0 {
+            Some(index as usize)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub fn append<T>(mut left: Vec<T>, right: Vec<T>) -> Vec<T> {
+        left.extend(right);
+        left
+    }
+}
+
+pub mod ml_source_exception {
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    pub struct SourceException {
+        pub class_name: String,
+        pub message_units: Vec<u16>,
+        pub message_present: bool,
+    }
+    impl SourceException {
+        #[must_use]
+        pub fn raise(self) -> ! {
+            std::panic::panic_any((self.class_name, self.message_units, self.message_present))
+        }
+        #[must_use]
+        pub fn from_text(class_name: &str, message: &str) -> Self {
+            Self {
+                class_name: class_name.to_owned(),
+                message_units: message.encode_utf16().collect(),
+                message_present: true,
+            }
+        }
+    }
+    impl std::fmt::Display for SourceException {
+        fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            out.write_str(&String::from_utf16_lossy(&self.message_units))
+        }
+    }
+    impl std::error::Error for SourceException {}
+}
+
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_own_property_builtin_operation(name: &str) -> String {
@@ -120,6 +177,68 @@ pub fn read_java_script_object_coercion_error() -> String {
 #[must_use]
 pub fn read_java_script_array_property_index_limit() -> String {
     String::from("4294967295")
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_own_property_guard_arm(kind: &str, operation: &str, negated: bool) -> f64 {
+    if (kind == "math") && (operation == "testJavaScriptOwnedProperty") {
+        if negated { -1f64 } else { 1f64 }
+    } else {
+        0f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_own_property_guard_bindings(
+    count: f64,
+    spread: bool,
+    local_object: bool,
+    local_key: bool,
+    object: &str,
+    key: &str,
+    open: bool,
+) -> bool {
+    ((((((count == 2f64) && !spread) && local_object) && local_key) && (object == "record"))
+        && (key == "string"))
+        && !open
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_java_script_guarded_record_index(
+    object: &str,
+    open: bool,
+    key: &str,
+    guarded: bool,
+) -> bool {
+    (((object == "record") && !open) && (key == "string")) && guarded
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_guarded_record_projection_positions(count: f64) -> Vec<f64> {
+    if (!(self::ml_math::is_safe_integer(count)) || (count < 0f64)) || (count > 100_000f64) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (String::from("invalid actual guarded record field count"))
+                .encode_utf16()
+                .collect(),
+            message_present: true,
+        })
+        .raise()
+    } else {
+        {
+            let result = Vec::<f64>::new();
+            {
+                let index = count - 1f64;
+                {
+                    self::source_ml_temporary_read_java_script_guarded_record_projection_positions_loop1(result, index)
+                }
+            }
+        }
+    }
 }
 
 /// Execute the checked shared source algorithm.
@@ -175,7 +294,8 @@ pub fn read_java_script_object_entry_pairing_operation() -> String {
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn read_java_script_record_order_kernel_arity(operation: &str) -> f64 {
-    if ((operation == (self::read_java_script_object_entry_pairing_operation()))
+    if (((operation == "readJavaScriptRecordPropertyIndex")
+        || (operation == (self::read_java_script_object_entry_pairing_operation())))
         || (operation == "reorderJavaScriptRecordPropertyValues"))
         || (((((operation == "createJavaScriptRecordPropertyOrder")
             || (operation == "mergeJavaScriptRecordPropertyOrder"))
@@ -202,6 +322,12 @@ pub fn read_java_script_record_order_kernel_parameter(operation: &str, index: f6
         let count = self::read_java_script_record_order_kernel_arity(operation);
         if (!(self::ml_math::is_integer(index)) || (index < 0f64)) || (index >= count) {
             String::new()
+        } else if operation == "readJavaScriptRecordPropertyIndex" {
+            if index == 0f64 {
+                String::from("name rows")
+            } else {
+                String::from("text")
+            }
         } else if operation == (self::read_java_script_object_entry_pairing_operation()) {
             if index == 0f64 {
                 String::from("key texts")
@@ -237,7 +363,9 @@ pub fn read_java_script_record_order_kernel_result(operation: &str) -> String {
             ml_value != 0f64 && !ml_value.is_nan()
         };
         if ml_product_condition_1 {
-            if operation == (self::read_java_script_object_entry_pairing_operation()) {
+            if operation == "readJavaScriptRecordPropertyIndex" {
+                String::from("number")
+            } else if operation == (self::read_java_script_object_entry_pairing_operation()) {
                 String::from("entries")
             } else if operation == "reorderJavaScriptRecordPropertyValues" {
                 String::from("values")
@@ -272,4 +400,39 @@ pub fn accept_linked_ordered_record_order_read(
         && (kind == "record"))
         && ordered)
         && !reference
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_temporary_read_java_script_guarded_record_projection_positions_loop1(
+    mut result: Vec<f64>,
+    mut index: f64,
+) -> Vec<f64> {
+    loop {
+        if index >= 0f64 {
+            {
+                let result_2 = {
+                    let source_ml_source1_concat_value1 = result;
+                    {
+                        let source_ml_source1_concat_value2 = vec![index];
+                        self::ml_array::append(
+                            self::ml_array::append(
+                                Vec::<f64>::new(),
+                                source_ml_source1_concat_value1,
+                            ),
+                            source_ml_source1_concat_value2,
+                        )
+                    }
+                };
+                {
+                    let index_2 = index - 1f64;
+                    {
+                        (result, index) = (result_2, index_2);
+                        continue;
+                    }
+                }
+            }
+        }
+        return { result };
+    }
 }

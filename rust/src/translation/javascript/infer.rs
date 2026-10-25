@@ -225,6 +225,7 @@ struct IndexOf {
     proven_in_bounds: bool,
     result: Term,
     place: Option<Span>,
+    record_name_key: bool,
 }
 
 struct IterableOf {

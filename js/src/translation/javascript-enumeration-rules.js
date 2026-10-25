@@ -23,6 +23,7 @@ export function acceptJavaScriptEnumerationValueDomain(form){return form==='valu
 export function readJavaScriptObjectEntryPairingOperation(){return 'pairJavaScriptObjectEntryValues';}
 /** @param {string} operation @returns {number} */
 export function readJavaScriptRecordOrderKernelArity(operation){
+ if(operation==='readJavaScriptRecordPropertyIndex')return 2;
  if(operation===readJavaScriptObjectEntryPairingOperation())return 2;
  if(operation==='reorderJavaScriptRecordPropertyValues')return 2;
  if(operation==='createJavaScriptRecordPropertyOrder'||operation==='mergeJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeys'||operation==='acceptJavaScriptRecordPropertyOrder'||operation==='readJavaScriptRecordPropertyKeyTexts')return 2;
@@ -33,6 +34,7 @@ export function readJavaScriptRecordOrderKernelArity(operation){
 export function readJavaScriptRecordOrderKernelParameter(operation,index){
  const count=readJavaScriptRecordOrderKernelArity(operation);
  if(!Number.isInteger(index)||index<0||index>=count)return '';
+ if(operation==='readJavaScriptRecordPropertyIndex')return index===0?'name rows':'text';
  if(operation===readJavaScriptObjectEntryPairingOperation())return index===0?'key texts':'values';
  if(operation==='reorderJavaScriptRecordPropertyValues')return index===0?'values':'positions';
  if(operation==='createJavaScriptDensePropertyKeyTexts')return 'number';
@@ -43,6 +45,7 @@ export function readJavaScriptRecordOrderKernelParameter(operation,index){
 /** @param {string} operation @returns {string} */
 export function readJavaScriptRecordOrderKernelResult(operation){
  if(!readJavaScriptRecordOrderKernelArity(operation))return '';
+ if(operation==='readJavaScriptRecordPropertyIndex')return 'number';
  if(operation===readJavaScriptObjectEntryPairingOperation())return 'entries';
  if(operation==='reorderJavaScriptRecordPropertyValues')return 'values';
  if(operation==='readJavaScriptRecordPropertyKeys')return 'name rows';

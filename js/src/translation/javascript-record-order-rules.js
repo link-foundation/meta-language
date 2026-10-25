@@ -136,6 +136,13 @@ export function readJavaScriptRecordPropertyKeyTexts(names,order){
  }
  return result;
 }
+/** The runtime key is an exact String, not a source-name alias or numeric
+ * coercion. The existing canonical field algorithm owns the actual search.
+ * @param {number[][]} names @param {string} key @returns {number} */
+export function readJavaScriptRecordPropertyIndex(names,key){
+ let units=[];for(let index=0;index<key.length;index+=1)units=units.concat([key.charCodeAt(index)]);
+ return readRecordFieldPosition(names,units);
+}
 /** Dense Array/tuple indices and String virtual enumerable properties.
  * @param {number} length @returns {string[]} */
 export function createJavaScriptDensePropertyKeyTexts(length){
