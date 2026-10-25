@@ -247,7 +247,7 @@ impl JavaScriptParser {
                                 interval_positions: (first, index(plan[at + 5]), syntax.start),
                                 binding_positions: positions,
                                 binding:
-                                    rules::read_java_script_recursive_object_initializer_binding(
+                                    crate::translation::binding_initialization_rules::read_java_script_pattern_initializer_anchor(
                                         plan,
                                         serde_json::Number::from(ordinal)
                                             .as_f64()

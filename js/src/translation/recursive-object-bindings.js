@@ -6,7 +6,8 @@ import {acceptJavaScriptObjectBindingName} from './javascript-record-parameter-r
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {constructJavaScriptObjectRestSource} from './object-rest.js';
 import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
-import {planJavaScriptRecursiveBindings,containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveArrayElementIndex,readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveObjectBindingPositions,readJavaScriptRecursiveObjectExcludedPositions,readJavaScriptRecursiveObjectInitializerBinding,readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
+import {readJavaScriptPatternInitializerAnchor} from './binding-initialization-rules.js';
+import {planJavaScriptRecursiveBindings,containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveArrayElementIndex,readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveObjectBindingPositions,readJavaScriptRecursiveObjectExcludedPositions,readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 export function readJavaScriptRecursiveObjectPlan(parser,start){
  const close=parser.matching(start),tokens=parser.cursor.tokens.slice(start,close+1);
  const plan=planJavaScriptRecursiveBindings(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,[],readJavaScriptObjectBindingDepthLimit());
@@ -35,7 +36,7 @@ export function constructJavaScriptRecursiveObjectEntries(parser,{tokens,plan,st
   let value;
   if(role===2)value=constructJavaScriptObjectRestSource(owner,readJavaScriptRecursiveObjectExcludedPositions(plan,plan[at+1]).map(actual),span);
   else{
-   const fallback=first>=0?readJavaScriptFormalInitializer(parser,{tokens,start,first,last,binding:readJavaScriptRecursiveObjectInitializerBinding(plan,index),positions,context,profile}):null;
+   const fallback=first>=0?readJavaScriptFormalInitializer(parser,{tokens,start,first,last,binding:readJavaScriptPatternInitializerAnchor(plan,index),positions,context,profile}):null;
    if(fallback?.span)span.end=fallback.span.end;
    if(role===3||role===4){const offset={k:'num',value:String(readJavaScriptRecursiveArrayElementIndex(plan,index)),span:{start:property.start,end:property.end}},indexed={k:'index',object:owner,index:offset,span};value=role===4?{k:'arrayBindingRest',object:owner,start:offset,span}:fallback?{k:'arrayBindingDefault',value:indexed,fallback,span}:indexed;}
    else value=fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:owner,spread:false},{value:{k:'str',value:property.value,span:{start:property.start,end:property.end}},spread:false},{value:fallback,spread:false}],span}:{k:'field',object:owner,field:property.value,span};

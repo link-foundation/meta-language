@@ -491,7 +491,7 @@ impl Inference {
                 }
                 let call_arguments = match &callable {
                     Term::Function { params, .. } => {
-                        self.complete_optional_callable_terms(params, &method.args)
+                        self.complete_optional_callable_terms(params, &method.args, method.place)
                     }
                     _ => method.args.clone(),
                 };

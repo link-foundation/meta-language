@@ -1,12 +1,13 @@
 //! Actual solver terms into shared optional argument and ownership decisions.
-use super::{Inference, Result, Term, TermFacts, endpoint};
+use super::{Inference, Result, Span, Term, TermFacts, endpoint};
 use crate::translation::callable_source_rules as rules;
 use crate::translation::optional_callable_rules as optional_rules;
 impl Inference {
     pub(in crate::translation::javascript::infer) fn complete_optional_callable_terms(
-        &self,
+        &mut self,
         parameters: &[Term],
         arguments: &[Term],
+        place: Option<Span>,
     ) -> Vec<Term> {
         let excess = crate::translation::excess_argument_rules::plan_java_script_excess_arguments(
             "JavaScript",
@@ -29,6 +30,13 @@ impl Inference {
                 })
                 .collect()
         };
+        let retained = self.complete_missing_callable_arguments(
+            parameters,
+            &retained,
+            &vec![false; parameters.len()],
+            place,
+            true,
+        );
         let arguments = retained.as_slice();
         let selected = parameters
             .iter()
@@ -114,7 +122,7 @@ impl Inference {
             }
             let arguments = match &function {
                 Term::Function { params, .. } => {
-                    self.complete_optional_callable_terms(params, &call.arguments)
+                    self.complete_optional_callable_terms(params, &call.arguments, call.place)
                 }
                 _ => call.arguments.clone(),
             };

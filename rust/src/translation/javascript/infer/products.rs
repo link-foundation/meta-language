@@ -358,6 +358,13 @@ impl Inference {
         }) else {
             return Ok(self.fresh(false));
         };
+        arg_terms = self.complete_missing_callable_arguments(
+            &signature.params,
+            &arg_terms,
+            &signature.defaults,
+            place,
+            false,
+        );
         self.calls.push(super::CallArguments {
             parameters: signature.params.clone(),
             arguments: arg_terms.clone(),
@@ -365,12 +372,7 @@ impl Inference {
             optional_params: signature.optional_params.clone(),
             place,
         });
-        for (index, ((term, param), arg)) in arg_terms
-            .iter()
-            .zip(&signature.params)
-            .zip(args)
-            .enumerate()
-        {
+        for (index, (term, param)) in arg_terms.iter().zip(&signature.params).enumerate() {
             let Some((value, _)) = self.parameter_default_argument_inference(
                 signature.defaults[index],
                 signature.optional_params[index],
@@ -378,7 +380,11 @@ impl Inference {
             ) else {
                 continue;
             };
-            self.unify(&value, param, arg.span.or(place))?;
+            self.unify(
+                &value,
+                param,
+                args.get(index).and_then(|arg| arg.span).or(place),
+            )?;
             if let Term::Var(variable) = param
                 && matches!(self.resolve(&value), Term::Option { .. })
             {

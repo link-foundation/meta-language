@@ -3922,6 +3922,31 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Omitted JavaScript inputs to inferred callable parameters enter inference as
+actual undefined terms with fresh present domains. A shared source plan selects
+only original variable owners without written initializers. Declared domains
+and existing default initialization retain their independent constraints. Named,
+computed and record-method transports reuse the original optional call-binding
+worklist, preserving original parameter owners and supplied-argument evaluation.
+Both runtimes generate their slot decisions from the same source definition.
+Twenty-six future values, three effect traces, declared-domain refusals and
+complete predecessor source history remain unexecuted. Unsupported coercions,
+general variance/unions, source reflection and full callable environments remain
+obligations; an inferred optional domain establishes no runtime result by itself.
+
+Nameless array binding defaults retain a real initialization boundary: their
+actual pattern opening when no descendant BoundName exists. This partitions the
+original ordered binding positions without inventing a source variable. Earlier
+parameters remain available and later parameters remain uninitialized. Existing
+binder partitions retain their exact checks. Whole-formal and nested recursive
+adapters use the same generated source rule in both runtimes, then reuse the
+existing lazy defaults, ordered body entries and represented iterable operations.
+Empty object destructibility, arbitrary iterator effects/closing and full
+parameter environments remain separate obligations. Twenty future values, four
+effect traces, a later-name refusal and complete predecessor sources remain
+unexecuted; source generation and both codec/emission controls establish no
+behavior or completion.
+
 Lexical object binding declarations now share the actual object-pattern planner
 with formal parameters. Flat IdentifierName properties retain aliases and exact
 initializer intervals. Required fields keep their original field projections,

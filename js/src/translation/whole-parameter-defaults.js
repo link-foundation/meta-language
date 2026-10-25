@@ -7,6 +7,7 @@ import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 import {planJavaScriptWholeParameterDefaults,containsJavaScriptWholeParameterDefault,readJavaScriptWholeParameterBindingPositions,acceptJavaScriptWholeParameterDefaultContext} from './whole-parameter-default-rules.js';
 import {containsJavaScriptScalarClosureDefault} from './scalar-closure-default-rules.js';
+import {readJavaScriptPatternInitializerAnchor} from './binding-initialization-rules.js';
 export function readJavaScriptWholeParameterDefaults(parser,tokens,start,context){
  const kinds=tokens.map(token=>token.kind),values=tokens.map(token=>token.value),plan=planJavaScriptWholeParameterDefaults(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,readJavaScriptObjectBindingDepthLimit());
  if(!containsJavaScriptWholeParameterDefault(plan)&&!containsJavaScriptScalarClosureDefault(plan,context))return null;
@@ -28,7 +29,7 @@ export function readJavaScriptWholeParameterDefaults(parser,tokens,start,context
   const length=plan[at++],tree=plan.slice(at,at+length);at+=length;
   const open=tokens[tree[8]],close=tokens[tree[9]],span={start:open.start,end:close.end},name=fresh(),parameter={name,type:null,span};
   let root={k:'name',path:[name],span};
-  if(form===3){const first=plan[at++],last=plan[at++],binding=positions.find(position=>position>tree[8]&&position<tree[9]);if(binding===undefined)throw unsupported('whole parameter default binding','an empty pattern needs its separate complete coercion and initialization environment',open);const fallback=readDefault(first,last,binding),selected=fresh('record_parameter_whole_value');parameter.optional=true;parameter.default={k:'none',absence:'undefined',span};patternEntries.push({temporary:true,name:selected,value:{k:'arrayBindingDefault',value:root,fallback,span},span});root={k:'name',path:[selected],span};}
+  if(form===3){const first=plan[at++],last=plan[at++],binding=readJavaScriptPatternInitializerAnchor(tree,0);const fallback=readDefault(first,last,binding),selected=fresh('record_parameter_whole_value');parameter.optional=true;parameter.default={k:'none',absence:'undefined',span};patternEntries.push({temporary:true,name:selected,value:{k:'arrayBindingDefault',value:root,fallback,span},span});root={k:'name',path:[selected],span};}
   parameters.push(parameter);
   patternEntries.push(...constructJavaScriptRecursiveObjectEntries(parser,{tokens,plan:tree,start},root,{positions,context,profile:'record formal default',fresh:()=>fresh('record_parameter_nested_value')}));
  }

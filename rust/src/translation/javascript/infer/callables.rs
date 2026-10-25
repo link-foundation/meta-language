@@ -3,6 +3,7 @@
 use super::term_facts::TermFacts;
 use super::{Env, HashSet, Inference, Result, SExpr, SNode, Span, Term, Type, type_error};
 use crate::translation::callable_source_rules as rules;
+mod missing_arguments;
 mod named_defaults;
 mod optional_arguments;
 
@@ -182,7 +183,7 @@ impl Inference {
             return Ok(result);
         }
         if let Term::Function { params, .. } = &resolved {
-            arguments = self.complete_optional_callable_terms(params, &arguments);
+            arguments = self.complete_optional_callable_terms(params, &arguments, place);
         }
         let (kind, count) = match &resolved {
             Term::Function { params, .. } => ("function", params.len()),

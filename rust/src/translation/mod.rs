@@ -110,6 +110,8 @@ pub(crate) mod let_else_completion_rules;
 pub(crate) mod absence_conversion_rules;
 pub(crate) mod scalar_closure_default_rules;
 pub(crate) mod named_default_callable_rules;
+pub(crate) mod binding_initialization_rules;
+pub(crate) mod missing_argument_rules;
 pub(crate) mod optional_policy_rules;
 pub(crate) mod optional_inference_rules;
 pub(crate) mod optional_value_rules;

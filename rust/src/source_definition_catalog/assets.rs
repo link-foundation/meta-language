@@ -22,6 +22,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "big-integer-conversion-program.lino" => {
             Some(include_str!("../data/big-integer-conversion-program.lino"))
         }
+        "binding-initialization-program.lino" => {
+            Some(include_str!("../data/binding-initialization-program.lino"))
+        }
         "callable-source-program.lino" => {
             Some(include_str!("../data/callable-source-program.lino"))
         }
@@ -99,6 +102,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         }
         "link-allocation-program.lino" => {
             Some(include_str!("../data/link-allocation-program.lino"))
+        }
+        "missing-argument-program.lino" => {
+            Some(include_str!("../data/missing-argument-program.lino"))
         }
         "module-binding-program.lino" => Some(include_str!("../data/module-binding-program.lino")),
         "named-default-callable-program.lino" => {

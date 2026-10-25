@@ -160,7 +160,7 @@ impl JavaScriptParser {
                 let first = index(plan[at]);
                 let last = index(plan[at + 1]);
                 at += 2;
-                let binding=positions.iter().copied().find(|position|*position>tree[8]&&*position<tree[9]).ok_or_else(||unsupported("whole parameter default binding","an empty pattern needs its separate complete coercion and initialization environment",Some(open.span())))?;
+                let binding = crate::translation::binding_initialization_rules::read_java_script_pattern_initializer_anchor(&tree, 0.0);
                 let fallback = self.whole_parameter_default(
                     tokens, start, first, last, binding, &positions, &names, context,
                 )?;

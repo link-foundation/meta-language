@@ -36,9 +36,25 @@ impl JavaScriptParser {
         .expect("boundary is zero, one or two");
         let subject =
             context_rules::read_java_script_pattern_initializer_subject(&text).to_string();
-        let initialization = rules::partition_java_script_formal_initializer_binding_positions(
-            binding_positions,
-            binding,
+        let anchor = tokens
+            .get(number_index(binding).ok_or_else(|| {
+                unsupported(
+                    profile,
+                    "an initializer needs its actual source boundary",
+                    tokens.first().map(Token::span),
+                )
+            })?)
+            .ok_or_else(|| {
+                unsupported(
+                    profile,
+                    "an initializer boundary belongs to its actual token interval",
+                    tokens.first().map(Token::span),
+                )
+            })?;
+        let initialization = crate::translation::binding_initialization_rules::partition_java_script_pattern_initializer_positions(
+            binding_positions, binding,
+            &crate::translation::binding_initialization_rules::ml_string::Text::from_text(super::record_parameters::token_kind(anchor)),
+            &crate::translation::binding_initialization_rules::ml_string::Text::from_text(&anchor.value),
         );
         let count = number_index(initialization[0])
             .expect("the source plan owns an actual available name count");
