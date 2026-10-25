@@ -81,6 +81,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "javascript-string-unit-program.lino" => {
             Some(include_str!("../data/javascript-string-unit-program.lino"))
         }
+        "lexical-declaration-program.lino" => {
+            Some(include_str!("../data/lexical-declaration-program.lino"))
+        }
         "link-allocation-program.lino" => {
             Some(include_str!("../data/link-allocation-program.lino"))
         }

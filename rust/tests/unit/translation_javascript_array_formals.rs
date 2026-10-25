@@ -1,5 +1,5 @@
 //! Deferred native original-source/full-definition/codec/four-product parity.
-use super::issue_195_translation_pairs::assert_nominal_translation_product;
+use super::translation_rust_records::assert_nominal_translation_product;
 use std::process::Command;
 #[test]
 fn array_formal_parameters_preserve_actual_bindings_iterables_and_fresh_rest_values() {

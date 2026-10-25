@@ -235,6 +235,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("const"))?;
         reserved(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 1);
         self.scope.tdz.insert(name.value.clone());
         if self.cursor.eat("=").is_none() {
             return Err(self.fail_here("expected = in const"));
@@ -279,6 +280,7 @@ impl JavaScriptParser {
                     Some(self.to_here(&key)),
                 ));
             }
+            self.lexical.declaration(&local.value, local.span(), 1);
             pairs.push((key.value.clone(), local.value.clone(), span(&key, &local)));
             if self.cursor.eat(",").is_none() {
                 break;

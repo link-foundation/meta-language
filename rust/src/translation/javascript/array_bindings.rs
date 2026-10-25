@@ -324,6 +324,7 @@ impl JavaScriptParser {
                     Some(binding.span),
                 ));
             }
+            self.lexical.declaration(&binding.name, binding.span, 1);
             self.declare_local(&binding.name, true);
             self.lexical
                 .binding(&binding.name, Some(self.cursor.peek().start));
@@ -374,6 +375,7 @@ impl JavaScriptParser {
             whole,
         );
         for binding in &bindings {
+            self.lexical.declaration(&binding.name, binding.span, 1);
             self.declare_local(&binding.name, false);
         }
         let mut body = vec![Stmt::Const {

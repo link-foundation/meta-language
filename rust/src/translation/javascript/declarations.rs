@@ -258,6 +258,7 @@ impl JavaScriptParser {
         }
         let name = self.cursor.identifier(Some("function"))?;
         global(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 0);
         self.function_rest(start, &name, is_async, true)
     }
 
@@ -309,6 +310,8 @@ impl JavaScriptParser {
         self.cursor.expect("const", Some("function"))?;
         let name_token = self.cursor.identifier(Some("function"))?;
         global(&name_token)?;
+        self.lexical
+            .declaration(&name_token.value, name_token.span(), 1);
         self.cursor.expect("=", Some("function"))?;
         self.scope.tdz.remove(&name_token.value);
         let is_async = self.cursor.is("async") && !self.cursor.is_at("=>", 1);
@@ -826,6 +829,7 @@ impl JavaScriptParser {
         self.cursor.expect("const", Some("namespace"))?;
         let name = self.cursor.identifier(Some("namespace"))?;
         global(&name)?;
+        self.lexical.declaration(&name.value, name.span(), 1);
         self.cursor.expect("=", Some("namespace"))?;
         self.scope.tdz.remove(&name.value);
         let module = self.namespace_body(name.value, start)?;

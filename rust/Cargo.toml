@@ -138,6 +138,7 @@ include = [
     "src/data/javascript-record-parameter-program.lino",
     "src/data/javascript-string-range-program.lino",
     "src/data/javascript-string-unit-program.lino",
+    "src/data/lexical-declaration-program.lino",
     "src/data/link-allocation-program.lino",
     "src/data/module-binding-program.lino",
     "src/data/number-bitwise-program.lino",

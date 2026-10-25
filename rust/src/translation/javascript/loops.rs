@@ -37,6 +37,7 @@ impl JavaScriptParser {
             }
             let name = self.cursor.identifier(Some("let"))?;
             reserved(&name)?;
+            self.lexical.declaration(&name.value, name.span(), 1);
             if !names.insert(name.value.clone()) {
                 return Err(TranslationError::syntax(
                     format!("duplicate lexical binding {}", name.value),
@@ -373,11 +374,13 @@ impl JavaScriptParser {
         let outer = self.scope.clone();
         if let Some(bindings) = &bindings {
             for binding in bindings {
+                self.lexical.declaration(&binding.name, binding.span, 1);
                 self.declare_local(&binding.name, mutable);
                 self.lexical
                     .binding(&binding.name, Some(self.cursor.peek().start));
             }
         } else if let Some(name) = &name {
+            self.lexical.declaration(&name.value, name.span(), 1);
             self.declare_local(&name.value, mutable);
             self.lexical
                 .binding(&name.value, Some(self.cursor.peek().start));

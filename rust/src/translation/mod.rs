@@ -259,3 +259,5 @@ pub mod record_callable_parameter_program;
 pub mod record_callable_parameter_rules;
 pub(crate) mod rust_unit_value_program;
 pub(crate) mod rust_unit_value_rules;
+
+pub(crate) mod lexical_declaration_rules;

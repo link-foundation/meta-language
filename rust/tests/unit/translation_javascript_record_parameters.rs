@@ -862,7 +862,7 @@ fn actual_record_closure_parameters_preserve_bindings_captures_and_local_writes(
 #[test]
 fn actual_record_callable_parameters_preserve_constant_and_namespace_contexts() {
     versions();
-    super::issue_195_translation_pairs::assert_nominal_translation_product(
+    super::translation_rust_records::assert_nominal_translation_product(
         "../experiments/javascript-program/record-callable-parameters.mjs",
         "JavaScript ordinary record callable parameter contexts",
         meta_language::create_java_script_record_callable_parameter_program_links,

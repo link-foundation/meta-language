@@ -1,3 +1,4 @@
+import {findJavaScriptLexicalDeclarationConflict} from './lexical-declaration-rules.js';
 import {readJavaScriptOptionalChainOperation} from './javascript-optional-chain-rules.js';
 import {readJavaScriptOptionalCallOperation,acceptJavaScriptOptionalCallHead,requireJavaScriptOptionalCallChain} from './javascript-optional-call-rules.js';
 import {readJavaScriptArrayClassificationBuiltinOperation} from './array-classification-rules.js';
@@ -164,6 +165,7 @@ class JavaScriptParser {
     this.scope = { locals: new Set(), tdz: new Set(), mutable: new Set() };
     // Parser-local origins survive early builtin normalization and body
     // lowering. They are validated before type inference, never emitted as IR.
+    this.lexicalDeclarations = [];
     this.lexicalScopes = [{ parent: -1, boundary: 0, bindings: new Map(), declarationCounts: new Map(), parameters: new Set() }];
     this.lexicalScope = 0;
     this.lexicalReads = [];
@@ -564,6 +566,7 @@ class JavaScriptParser {
     if (c.is('*')) throw unsupported('generator function', 'generators are outside the portable core', span(start, c.peek()));
     const name = c.identifier('function');
     global(name);
+    this.lexicalDeclaration(name.value, span(name,name), 0);
     return this.functionRest(start, name, isAsync, true);
   }
 
@@ -590,6 +593,7 @@ class JavaScriptParser {
     c.expect('const', 'function');
     const nameToken = c.identifier('function');
     global(nameToken);
+    this.lexicalDeclaration(nameToken.value, span(nameToken,nameToken));
     c.expect('=', 'function');
     this.scope.tdz.delete(nameToken.value);
     const isAsync = c.is('async') && !c.is('=>', 1);
@@ -795,6 +799,7 @@ class JavaScriptParser {
     c.expect('const', 'namespace');
     const name = c.identifier('namespace');
     global(name);
+    this.lexicalDeclaration(name.value, span(name,name));
     c.expect('=', 'namespace');
     this.scope.tdz.delete(name.value);
     const module = this.namespaceBody(name.value, start);
@@ -912,6 +917,10 @@ class JavaScriptParser {
     if (initializedAt >= 0 || !bindings.has(name)) bindings.set(name, initializedAt);
   }
 
+  lexicalDeclaration(name, where, kind = 1) {
+    this.lexicalDeclarations.push({scope:this.lexicalScope,name,kind,span:where});
+  }
+
   lexicalParameter(name) {
     this.lexicalScopes[this.lexicalScope].parameters.add(name);
     this.lexicalBinding(name);
@@ -931,6 +940,10 @@ class JavaScriptParser {
   }
 
   validateLexicalBindings() {
+    const parameterScopes=[],parameterNames=[];
+    for(let scope=0;scope<this.lexicalScopes.length;scope+=1)for(const name of this.lexicalScopes[scope].parameters){parameterScopes.push(scope);parameterNames.push(name);}
+    const conflict=findJavaScriptLexicalDeclarationConflict(this.lexicalScopes.map(scope=>scope.parent),this.lexicalScopes.map(scope=>scope.boundary),parameterScopes,parameterNames,this.lexicalDeclarations.map(row=>row.scope),this.lexicalDeclarations.map(row=>row.name),this.lexicalDeclarations.map(row=>row.kind));
+    if(conflict.length){const declaration=this.lexicalDeclarations[conflict[0]];throw new TranslationError('syntax',`duplicate lexical binding ${declaration.name}`,declaration.span);}
     const bounds = [], names = [], ends = [];
     for (const scope of this.lexicalScopes) {
       bounds.push(names.length, scope.bindings.size, scope.boundary);
@@ -1054,11 +1067,12 @@ class JavaScriptParser {
       const where = span(start, c.peek());
       const name = `${this.generatedPrefix}temporary_binding${++this.generatedCount}`;
       const object = { k: 'name', path: [name], span: where };
-      for (const binding of bindings) this.declareLocal(binding.name);
+      for (const binding of bindings) {this.lexicalDeclaration(binding.name,binding.span);this.declareLocal(binding.name);}
       return { s: 'block', inline: true, body: [{ s: 'const', name, value, span: where }, ...bindArrayElements(bindings, object, 'const', where)], span: where };
     }
     const name = c.identifier('const');
     reserved(name);
+    this.lexicalDeclaration(name.value,span(name,name));
     this.scope.tdz.add(name.value);
     if (!c.eat('=')) throw this.fail('expected = in const');
     const previous = this.readonlyConstantInitializer;
@@ -1082,6 +1096,7 @@ class JavaScriptParser {
       const local = c.eat(':') ? c.identifier('destructuring') : key;
       reserved(local);
       if (c.is('=')) throw unsupported('default value', 'every field has a value', span(key, c.peek()));
+      this.lexicalDeclaration(local.value,span(local,local));
       pairs.push({ field: key.value, name: local.value, span: span(key, local) });
       if (!c.eat(',')) break;
     }
@@ -1141,6 +1156,7 @@ class JavaScriptParser {
         for (const binding of bindings) {
           if (names.has(binding.name)) throw new TranslationError('syntax', `duplicate lexical binding ${binding.name}`, binding.span);
           names.add(binding.name);
+          this.lexicalDeclaration(binding.name,binding.span);
           this.declareLocal(binding.name, true);
           this.lexicalBinding(binding.name, c.peek().start);
         }
@@ -1149,6 +1165,7 @@ class JavaScriptParser {
       if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
       const name = c.identifier('let');
       reserved(name);
+      this.lexicalDeclaration(name.value,span(name,name));
       if (names.has(name.value)) throw new TranslationError('syntax', `duplicate lexical binding ${name.value}`, span(name, name));
       names.add(name.value);
       // The binding is in its temporal dead zone in its own initialiser.
@@ -1363,7 +1380,8 @@ class JavaScriptParser {
     this.scope = { locals: new Set(outer.locals), tdz: new Set(outer.tdz), mutable: new Set(outer.mutable) };
     let body;
     try {
-      for (const local of bindings ?? [{ name: name.value }]) {
+      for (const local of bindings ?? [{ name: name.value,span:span(name,name) }]) {
+        this.lexicalDeclaration(local.name,local.span);
         this.declareLocal(local.name, binding === 'let');
         this.lexicalBinding(local.name, c.peek().start);
       }

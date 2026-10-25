@@ -1329,6 +1329,22 @@ missing tuple positions, heterogeneous tuple rest and complete async/generator
 semantics remain implementation obligations. Twenty future values and seven
 refusals cover complete source/definition graphs, both codecs, four emissions
 and native products; none has executed.
+The runtime JavaScript frontend also collects actual parsed declarations and
+BoundNames, with original source spans, independently of predeclaration
+lookahead. Its shared early-error definition rejects same-frame lexical
+collisions, lexical/function collisions and lexical declarations that redeclare
+parameters in the immediate callable body. Nested blocks, sibling blocks and
+loop-head/body scopes remain separate. Native parsing projects the same actual
+scope and parameter facts into the source-generated decision. It runs before
+the existing temporal-read validation and type inference. It does not replace
+existing directive, mutable-pattern or temporal guards. Script/Module-dependent
+ordinary-function duplicates, var/import/class bindings, Annex B and scalar-loop
+shortcut admission retain their separate obligations. Future paired controls
+cover accepted shadowing, exact syntax refusals, decoded escaped names, complete
+definition codecs and four emissions; none has executed. The shared rule follows
+[block early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-block-static-semantics-early-errors)
+and [function early errors](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-function-definitions-static-semantics-early-errors).
+
 The opt-in `closed binary floating point function` model gives closed Rust and
 JavaScript functions a declared common abstract value interpretation. It guards
 flat function declarations with binary64 and Boolean parameters and results,
