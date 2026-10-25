@@ -1,7 +1,9 @@
 // Generated from complete js/src/translation/array-formal-parameter-rules.js. Do not edit by hand.
 use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
+use super::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result;
 use super::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Result;
 use super::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result;
+use super::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result;
 use super::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Result;
 use super::ml_array;
 use super::ml_math;
@@ -9,8 +11,10 @@ use super::ml_number;
 use super::ml_source_exception;
 use super::ml_string;
 use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
+use super::source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop15;
 use super::source_ml_source1_temporary_find_java_script_array_formal_pattern_loop4;
 use super::source_ml_source1_temporary_find_java_script_formal_default_expression_end_loop11;
+use super::source_ml_source1_temporary_partition_java_script_array_formal_initializer_bindings_loop14;
 use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop5;
 use super::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop12;
 
@@ -823,6 +827,72 @@ pub fn read_java_script_array_formal_default_binding_positions(plan: &[f64]) -> 
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn partition_java_script_array_formal_initializer_bindings(
+    plan: &[f64],
+    binding: f64,
+) -> Vec<f64> {
+    {
+        let positions = self::read_java_script_array_formal_default_binding_positions(plan);
+        {
+            let available = Vec::<f64>::new();
+            {
+                let uninitialized = Vec::<f64>::new();
+                {
+                    let found = false;
+                    {
+                        let index = 0f64;
+                        {
+                            let source_ml_source2_s66 = self::source_ml_source1_temporary_partition_java_script_array_formal_initializer_bindings_loop14(binding, &(positions), available, uninitialized, found, index);
+                            match source_ml_source2_s66 {
+                                self::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Done(available_2, uninitialized_2, found_2) => {
+                                    if found_2 {
+                                        {
+                                            let source_ml_source2_concat_value67 = vec![(available_2.len() as f64)];
+                                            {
+                                                let source_ml_source2_concat_value68 = available_2;
+                                                {
+                                                    let source_ml_source2_concat_value69 = uninitialized_2;
+                                                    self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value67), source_ml_source2_concat_value68), source_ml_source2_concat_value69)
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        (self::ml_source_exception::SourceException { class_name: String::from("RangeError"), message_units: (self::ml_string::Text::from_units(vec![97, 110, 32, 105, 110, 105, 116, 105, 97, 108, 105, 122, 101, 114, 32, 110, 101, 101, 100, 115, 32, 105, 116, 115, 32, 97, 99, 116, 117, 97, 108, 32, 97, 100, 109, 105, 116, 116, 101, 100, 32, 66, 111, 117, 110, 100, 78, 97, 109, 101, 32, 112, 111, 115, 105, 116, 105, 111, 110])).0, message_present: true }).raise()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn find_java_script_array_formal_initializer_assignment(
+    assignments: &[self::ml_string::Text],
+    parameters: &[self::ml_string::Text],
+) -> f64 {
+    {
+        let index = 0f64;
+        {
+            let source_ml_source2_s70 = self::source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop15(assignments, parameters, index);
+            match source_ml_source2_s70 {
+                self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Done => {
+                    -1f64
+                }
+                self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Return(source_ml_source1_temporary_result15) => {
+                    source_ml_source1_temporary_result15
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn read_java_script_array_formal_iterable_operation() -> self::ml_string::Text {
     self::ml_string::Text::from_units(vec![
         114, 101, 97, 100, 74, 97, 118, 97, 83, 99, 114, 105, 112, 116, 65, 114, 114, 97, 121, 70,
@@ -841,33 +911,4 @@ pub fn read_java_script_array_formal_iterable_form(
     } else {
         self::read_array_iterable_form(kind, reference)
     }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn read_java_script_array_formal_inference_form(
-    kind: &self::ml_string::Text,
-) -> self::ml_string::Text {
-    if ((*kind) == (self::ml_string::Text::from_units(vec![118, 97, 114])))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![108, 105, 116, 101, 114, 97, 108])))
-    {
-        self::ml_string::Text::from_units(vec![119, 97, 105, 116])
-    } else if ((*kind) == (self::ml_string::Text::from_units(vec![97, 114, 114, 97, 121])))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101])))
-    {
-        self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
-    } else if (((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![115, 101, 116]))))
-        || ((*kind) == (self::ml_string::Text::from_units(vec![109, 97, 112])))
-    {
-        self::ml_string::Text::from_units(vec![105, 116, 101, 114, 97, 116, 101])
-    } else {
-        self::ml_string::Text::from_units(vec![114, 101, 102, 117, 115, 101])
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
-    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),
-    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(f64),
 }

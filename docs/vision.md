@@ -1336,7 +1336,19 @@ The former whole-parser default refusal input and complete predecessor
 assertion sources remain hashed in the fixture, beside new syntax/value controls.
 This correction follows [IteratorBindingInitialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization)
 and [formal parameters](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-formal-parameters).
-Defaults that read parameters, whole-parameter defaults, record defaults with
+An additional shared plan partitions the original BoundName token positions at
+each initializer. Earlier names are initialized and visible; self and later
+names remain unavailable. Both parser adapters install that actual parameter
+environment while consuming the exact initializer interval, independently of
+body declarations. Existing ordered body-entry bindings retain the lazy
+undefined-only evaluation. Actual assignment observations refuse writes to
+parameter bindings during initialization until their shared mutable environment
+is represented. The earlier-parameter refusal input remains exact in a hashed
+predecessor archive and gains positive original/emitted/native controls, following
+[FunctionDeclarationInstantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation)
+and [IteratorBindingInitialization](https://tc39.es/ecma262/2025/multipage/syntax-directed-operations.html#sec-runtime-semantics-iteratorbindinginitialization).
+These controls remain unexecuted. Self/later reads, initialization writes,
+whole-parameter defaults, record defaults with
 missing-field typing, nested/mixed object patterns, arbitrary or live iterators,
 descriptors, missing tuple positions, heterogeneous tuple rest and complete
 async/generator semantics remain implementation obligations. Future required

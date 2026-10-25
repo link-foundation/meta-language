@@ -7,7 +7,7 @@ import {checkProgram} from '../src/translation/check.js';
 import {tokenize} from '../src/translation/lexer.js';
 import {findJavaScriptArrayFormalPattern,planJavaScriptArrayFormalParameters,acceptJavaScriptArrayFormalContext} from '../src/translation/array-formal-parameter-rules.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from '../src/translation/array-binding-policy.js';
-import {planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,findJavaScriptFormalDefaultExpressionEnd} from '../src/translation/array-formal-parameter-rules.js';
+import {planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,findJavaScriptFormalDefaultExpressionEnd,partitionJavaScriptArrayFormalInitializerBindings,findJavaScriptArrayFormalInitializerAssignment} from '../src/translation/array-formal-parameter-rules.js';
 import {runInNewContext} from 'node:vm';
 import {emitJavaScript} from '../src/translation/emit-javascript.js';
 const fixture=readProjectData(new URL('../../parity/fixtures/array-formal-parameters.lino',import.meta.url));
@@ -42,4 +42,24 @@ for(const row of fixture.correctedInputs)test('preserved former default refusal 
  assert.equal(run(row.source),row.expected);
  const emitted=emitJavaScript(checkProgram(parseJavaScript(row.source)));
  assert.equal(run(emitted.text.replace(/^export /gmu,'')),row.expected);
+});
+test('initializer environments preserve original name positions and their initialization order',()=>{
+ const tokens=tokenize('first,[second=first,third=second],last)','JavaScript').tokens;
+ const plan=planJavaScriptArrayFormalParametersWithDefaults(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
+ const positions=readJavaScriptArrayFormalDefaultBindingPositions(plan);
+ assert.deepEqual(positions.map(position=>tokens[position].value),['first','second','third','last']);
+ const selected=partitionJavaScriptArrayFormalInitializerBindings(plan,positions[2]);
+ assert.equal(selected[0],2);
+ assert.deepEqual(selected.slice(1,3).map(position=>tokens[position].value),['first','second']);
+ assert.deepEqual(selected.slice(3).map(position=>tokens[position].value),['third','last']);
+ assert.throws(()=>partitionJavaScriptArrayFormalInitializerBindings(plan,positions[2]+1),RangeError);
+ assert.equal(findJavaScriptArrayFormalInitializerAssignment(['unrelated','first'],['first','second']),1);
+ assert.equal(findJavaScriptArrayFormalInitializerAssignment(['unrelated'],['first','second']),-1);
+});
+for(const row of fixture.correctedParameterInputs)test('preserved earlier-parameter input gains independent original and emitted value controls',()=>{
+ parseJavaScript(row.source);
+ const source=row.source+row.invocation;
+ const run=source=>{let output='';runInNewContext(source,{console:{log:value=>{output+=String(value)+'\n';}}},{timeout:1000});return output;};
+ assert.equal(run(source),row.expected);
+ assert.equal(run(emitJavaScript(checkProgram(parseJavaScript(source))).text.replace(/^export /gmu,'')),row.expected);
 });

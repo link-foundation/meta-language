@@ -123,6 +123,33 @@ export function readJavaScriptArrayFormalDefaultBindingPositions(plan){
  }
  return names;
 }
+/** The original admitted plan supplies ordered BoundNames. An initializer can
+ * read earlier initialized parameters; its own and later names remain in the
+ * parameter environment's temporal dead zone. Result [availableCount,...earlier,
+ * ...uninitialized] contains original token positions, never invented names.
+ * @param {number[]} plan @param {number} binding @returns {number[]} */
+export function partitionJavaScriptArrayFormalInitializerBindings(plan,binding){
+ const positions=readJavaScriptArrayFormalDefaultBindingPositions(plan);
+ let available=[],uninitialized=[],found=false;
+ for(let index=0;index<positions.length;index+=1){
+  const position=readRequiredNumberFact(positions,index);
+  if(position===binding)found=true;
+  if(position<binding)available=available.concat([position]);
+  else uninitialized=uninitialized.concat([position]);
+ }
+ if(!found)throw new RangeError('an initializer needs its actual admitted BoundName position');
+ return [available.length].concat(available,uninitialized);
+}
+/** This source profile supports earlier reads, not writes to the parameter
+ * environment during initialization. The host supplies actual assignment
+ * observations, including nested source bodies, without guessing from tokens.
+ * @param {string[]} assignments @param {string[]} parameters @returns {number} */
+export function findJavaScriptArrayFormalInitializerAssignment(assignments,parameters){
+ for(let index=0;index<assignments.length;index+=1)
+  for(let parameter=0;parameter<parameters.length;parameter+=1)
+   if(readRequiredTextFact(assignments,index)===readRequiredTextFact(parameters,parameter))return index;
+ return -1;
+}
 /** Selected source wrapper, lowered to established core operations before
  * typed archive encoding. It does not redefine ordinary for-of iteration.
  * @returns {string} */

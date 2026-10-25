@@ -2,7 +2,7 @@
 import {unsupported} from './diagnostics.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './array-binding-policy.js';
 import {requireJavaScriptIdentifierRole} from './javascript-identifier-roles.js';
-import {findJavaScriptArrayFormalPattern,acceptJavaScriptArrayFormalContext,planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,readJavaScriptArrayFormalDefaultScopeBoundary,readJavaScriptArrayFormalIterableOperation} from './array-formal-parameter-rules.js';
+import {findJavaScriptArrayFormalPattern,acceptJavaScriptArrayFormalContext,planJavaScriptArrayFormalParametersWithDefaults,readJavaScriptArrayFormalDefaultBindingPositions,readJavaScriptArrayFormalDefaultScopeBoundary,readJavaScriptArrayFormalIterableOperation,partitionJavaScriptArrayFormalInitializerBindings,findJavaScriptArrayFormalInitializerAssignment} from './array-formal-parameter-rules.js';
 import {findDefaultParameterReference} from './frontend-rules.js';
 import {readJavaScriptRecordParameterBindingStatement} from './javascript-record-parameter-rules.js';
 import {readJavaScriptPatternParameterBody,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
@@ -19,12 +19,16 @@ export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchron
  const parameters=[],sourceNames=[],arrayEntries=[],used=parser.recordParameterNames;
  const actual=position=>{if(!Number.isSafeInteger(position)||position<0||position>=tokens.length)throw unsupported('array formal parameter transport','every selected token belongs to its actual formal interval',opening);return tokens[position];};
  const boundNames=readJavaScriptArrayFormalDefaultBindingPositions(plan).map(position=>actual(position).value);
- const readDefault=(first,last)=>{
-  const interval=tokens.slice(first,last),reference=findDefaultParameterReference(interval.map(token=>token.kind),interval.map(token=>token.value),boundNames);
+ const readDefault=(first,last,binding)=>{
+  const initialization=partitionJavaScriptArrayFormalInitializerBindings(plan,binding),count=initialization[0];
+  const available=initialization.slice(1,1+count).map(position=>actual(position).value),uninitialized=initialization.slice(1+count).map(position=>actual(position).value);
+  const interval=tokens.slice(first,last),reference=findDefaultParameterReference(interval.map(token=>token.kind),interval.map(token=>token.value),uninitialized);
   if(reference>=0)throw unsupported('array formal default reading parameter '+interval[reference].value,'the current default profile requires a closed parameter initialization environment',interval[reference]);
-  const saved=c.index,outer=parser.scope;c.index=start+first;
-  parser.scope={...outer,tdz:new Set([...outer.tdz,...boundNames])};
-  try{const value=parser.withLexicalScope(boundNames,()=>parser.expr(),readJavaScriptArrayFormalDefaultScopeBoundary(context));if(c.index!==start+last)throw unsupported('array formal default transport','the actual expression must consume its complete planned initializer interval',actual(first));return value;}
+  const saved=c.index,outer=parser.scope,before=parser.lexicalReads.length;c.index=start+first;
+  parser.scope={...outer,locals:new Set([...outer.locals,...boundNames]),mutable:new Set([...outer.mutable,...available]),tdz:new Set([...outer.tdz].filter(name=>!available.includes(name)).concat(uninitialized))};
+  try{const value=parser.withLexicalScope(boundNames,()=>parser.expr(),readJavaScriptArrayFormalDefaultScopeBoundary(context));if(c.index!==start+last)throw unsupported('array formal default transport','the actual expression must consume its complete planned initializer interval',actual(first));
+   const assignments=parser.lexicalReads.slice(before).filter(read=>read.assignment).map(read=>read.name),assigned=findJavaScriptArrayFormalInitializerAssignment(assignments,boundNames);
+   if(assigned>=0)throw unsupported('array formal default assigning parameter '+assignments[assigned],'writes during parameter initialization need their shared environment interpretation',actual(first));return value;}
   finally{c.index=saved;parser.scope=outer;}
  };
  const fresh=prefix=>{let name;do{if(!Number.isSafeInteger(parser.recordParameterOrdinal+1))throw unsupported('array formal parameter transport','the logical binder supply exceeds its exact ordinal range',opening);name=prefix+parser.recordParameterOrdinal++;}while(used.has(name));used.add(name);return name;};
@@ -37,10 +41,10 @@ export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchron
   const parameter=fresh('array_parameter_value'),snapshot=fresh('array_parameter_values');parameters.push({name:parameter,type:null,span:where});
   const read=name=>({k:'name',path:[name],span:where});
   arrayEntries.push({temporary:true,name:snapshot,value:{k:'math',op:readJavaScriptArrayFormalIterableOperation(),name:'',args:[{value:read(parameter),spread:false}],span:where},span:where});
-  for(let index=0;index<count;index+=1){const rest=plan[cursor++]===1,position=plan[cursor++],token=actual(plan[cursor++]),defaultStart=plan[cursor++],defaultEnd=plan[cursor++];requireJavaScriptIdentifierRole(token,true);sourceNames.push(token.value);
+  for(let index=0;index<count;index+=1){const rest=plan[cursor++]===1,position=plan[cursor++],binding=plan[cursor++],token=actual(binding),defaultStart=plan[cursor++],defaultEnd=plan[cursor++];requireJavaScriptIdentifierRole(token,true);sourceNames.push(token.value);
    const offset={k:'num',value:String(position),span:{start:token.start,end:token.end}};
    const indexed={k:'index',object:read(snapshot),index:offset,span:where};
-   const value=rest?{k:'arrayBindingRest',object:read(snapshot),start:offset,span:where}:defaultStart>=0?{k:'arrayBindingDefault',value:indexed,fallback:readDefault(defaultStart,defaultEnd),span:where}:indexed;
+   const value=rest?{k:'arrayBindingRest',object:read(snapshot),start:offset,span:where}:defaultStart>=0?{k:'arrayBindingDefault',value:indexed,fallback:readDefault(defaultStart,defaultEnd,binding),span:where}:indexed;
    arrayEntries.push({temporary:false,name:token.value,value,span:{start:token.start,end:token.end}});
   }
  }

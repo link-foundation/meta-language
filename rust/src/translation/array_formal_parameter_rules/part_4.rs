@@ -50,9 +50,9 @@ pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_en
                                 {
                                     {
                                         let stack_2 = {
-                                            let source_ml_source2_concat_value101 = stack;
+                                            let source_ml_source2_concat_value106 = stack;
                                             {
-                                                let source_ml_source2_concat_value102 =
+                                                let source_ml_source2_concat_value107 =
                                                     vec![if value
                                                         == (self::ml_string::Text::from_units(
                                                             vec![40],
@@ -70,9 +70,9 @@ pub fn source_ml_source1_temporary_find_java_script_formal_default_expression_en
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source2_concat_value101,
+                                                        source_ml_source2_concat_value106,
                                                     ),
-                                                    source_ml_source2_concat_value102,
+                                                    source_ml_source2_concat_value107,
                                                 )
                                             }
                                         };
@@ -149,16 +149,16 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
         if index < count {
             {
                 let names_2 = {
-                    let source_ml_source2_concat_value103 = names;
+                    let source_ml_source2_concat_value108 = names;
                     {
-                        let source_ml_source2_concat_value104 =
+                        let source_ml_source2_concat_value109 =
                             vec![self::read_required_number_fact(plan, (cursor + 2f64))];
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<f64>::new(),
-                                source_ml_source2_concat_value103,
+                                source_ml_source2_concat_value108,
                             ),
-                            source_ml_source2_concat_value104,
+                            source_ml_source2_concat_value109,
                         )
                     }
                 };
@@ -196,16 +196,16 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
                     if form == 0f64 {
                         {
                             let names_2 = {
-                                let source_ml_source2_concat_value105 = names;
+                                let source_ml_source2_concat_value110 = names;
                                 {
-                                    let source_ml_source2_concat_value106 =
+                                    let source_ml_source2_concat_value111 =
                                         vec![self::read_required_number_fact(plan, cursor_2)];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<f64>::new(),
-                                            source_ml_source2_concat_value105,
+                                            source_ml_source2_concat_value110,
                                         ),
-                                        source_ml_source2_concat_value106,
+                                        source_ml_source2_concat_value111,
                                     )
                                 }
                             };
@@ -228,8 +228,8 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
                                     {
                                         let index = 0f64;
                                         {
-                                            let source_ml_source2_s107 = self::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop13(plan, cursor_4, names, count, index);
-                                            match source_ml_source2_s107 {
+                                            let source_ml_source2_s112 = self::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop13(plan, cursor_4, names, count, index);
+                                            match source_ml_source2_s112 {
                                                 self::MlSource1TemporaryReadJavaScriptArrayFormalDefaultBindingPositionsLoop13Result::MlSource1TemporaryReadJavaScriptArrayFormalDefaultBindingPositionsLoop13Done(cursor_5, names_3) => {
                                                     {
                                                         (cursor, names) = (cursor_5, names_3);
@@ -261,6 +261,170 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
             }
         } else {
             names
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result {
+    MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Done(
+        Vec<f64>,
+        Vec<f64>,
+        bool,
+    ),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_partition_java_script_array_formal_initializer_bindings_loop14(
+    mut binding: f64,
+    positions: &[f64],
+    mut available: Vec<f64>,
+    mut uninitialized: Vec<f64>,
+    mut found: bool,
+    mut index: f64,
+) -> self::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result {
+    loop {
+        if index < (positions.len() as f64) {
+            {
+                let position = self::read_required_number_fact(positions, index);
+                {
+                    let found_3 =
+                        if (position).partial_cmp(&(binding)) == Some(std::cmp::Ordering::Equal) {
+                            { true }
+                        } else {
+                            found
+                        };
+                    if position < binding {
+                        {
+                            let available_2 = {
+                                let source_ml_source2_concat_value113 = available;
+                                {
+                                    let source_ml_source2_concat_value114 = vec![position];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<f64>::new(),
+                                            source_ml_source2_concat_value113,
+                                        ),
+                                        source_ml_source2_concat_value114,
+                                    )
+                                }
+                            };
+                            {
+                                let index_2 = index + 1f64;
+                                {
+                                    (available, found, index) = (available_2, found_3, index_2);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    {
+                        {
+                            let uninitialized_2 = {
+                                let source_ml_source2_concat_value115 = uninitialized;
+                                {
+                                    let source_ml_source2_concat_value116 = vec![position];
+                                    self::ml_array::append(
+                                        self::ml_array::append(
+                                            Vec::<f64>::new(),
+                                            source_ml_source2_concat_value115,
+                                        ),
+                                        source_ml_source2_concat_value116,
+                                    )
+                                }
+                            };
+                            {
+                                let index_3 = index + 1f64;
+                                {
+                                    (uninitialized, found, index) =
+                                        (uninitialized_2, found_3, index_3);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return {
+            self::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Result::MlSource1TemporaryPartitionJavaScriptArrayFormalInitializerBindingsLoop14Done(available, uninitialized, found)
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result {
+    MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Done,
+    MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Return(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result {
+    MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Done,
+    MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop16(
+    assignments: &[self::ml_string::Text],
+    parameters: &[self::ml_string::Text],
+    mut index: f64,
+    mut parameter: f64,
+) -> self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result {
+    loop {
+        return if parameter < (parameters.len() as f64) {
+            if (self::read_required_text_fact(assignments, index))
+                == (self::read_required_text_fact(parameters, parameter))
+            {
+                self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Return(index)
+            } else {
+                {
+                    let parameter_2 = parameter + 1f64;
+                    {
+                        parameter = parameter_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Done
+        };
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop15(
+    assignments: &[self::ml_string::Text],
+    parameters: &[self::ml_string::Text],
+    mut index: f64,
+) -> self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result {
+    loop {
+        return if index < (assignments.len() as f64) {
+            {
+                let parameter = 0f64;
+                {
+                    let source_ml_source2_s117 = self::source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop16(assignments, parameters, index, parameter);
+                    match source_ml_source2_s117 {
+                        self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Done => {
+                            {
+                                let index_2 = index + 1f64;
+                                {
+                                    index = index_2;
+                                    continue;
+                                }
+                            }
+                        }
+                        self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop16Return(source_ml_source1_temporary_result16) => {
+                            self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Return(source_ml_source1_temporary_result16)
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop15Done
         };
     }
 }

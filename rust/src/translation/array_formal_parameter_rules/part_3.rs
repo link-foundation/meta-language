@@ -1,11 +1,39 @@
 // Generated from complete js/src/translation/array-formal-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result;
 use super::accept_java_script_source_binding_name;
 use super::find_java_script_formal_default_expression_end;
 use super::ml_array;
 use super::ml_math;
 use super::ml_string;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_formal_inference_form(
+    kind: &self::ml_string::Text,
+) -> self::ml_string::Text {
+    if ((*kind) == (self::ml_string::Text::from_units(vec![118, 97, 114])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![108, 105, 116, 101, 114, 97, 108])))
+    {
+        self::ml_string::Text::from_units(vec![119, 97, 105, 116])
+    } else if ((*kind) == (self::ml_string::Text::from_units(vec![97, 114, 114, 97, 121])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![116, 117, 112, 108, 101])))
+    {
+        self::ml_string::Text::from_units(vec![105, 100, 101, 110, 116, 105, 116, 121])
+    } else if (((*kind) == (self::ml_string::Text::from_units(vec![115, 116, 114, 105, 110, 103])))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![115, 101, 116]))))
+        || ((*kind) == (self::ml_string::Text::from_units(vec![109, 97, 112])))
+    {
+        self::ml_string::Text::from_units(vec![105, 116, 101, 114, 97, 116, 101])
+    } else {
+        self::ml_string::Text::from_units(vec![114, 101, 102, 117, 115, 101])
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
+    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),
+    MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(f64),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -18,9 +46,9 @@ pub fn source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(
         return if index < (name.length()) {
             {
                 let unit = {
-                    let source_ml_source2_string_unit_operand66 = name.clone();
+                    let source_ml_source2_string_unit_operand71 = name.clone();
                     {
-                        let source_ml_source2_string_unit_operand67 = index;
+                        let source_ml_source2_string_unit_operand72 = index;
                         (std::rc::Rc::new(
                             move |text: self::ml_string::Text, position: f64| -> f64 {
                                 {
@@ -33,33 +61,33 @@ pub fn source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(
                                         f64::NAN
                                     } else {
                                         ({
-                                    let source_ml_source2_string_unit_operand73 = {
-                                        let source_ml_source2_string_range_operand68 = text.clone();
+                                    let source_ml_source2_string_unit_operand78 = {
+                                        let source_ml_source2_string_range_operand73 = text.clone();
                                         {
-                                            let source_ml_source2_string_range_operand69 = index_2;
+                                            let source_ml_source2_string_range_operand74 = index_2;
                                             {
-                                                let source_ml_source2_string_range_operand70 = index_2 + 1f64;
+                                                let source_ml_source2_string_range_operand75 = index_2 + 1f64;
                                                 {
-                                                    let source_ml_source2_string_range_position71 = source_ml_source2_string_range_operand69;
+                                                    let source_ml_source2_string_range_position76 = source_ml_source2_string_range_operand74;
                                                     {
-                                                        let source_ml_source2_string_range_position72 = source_ml_source2_string_range_operand70;
-                                                        source_ml_source2_string_range_operand68.slice(source_ml_source2_string_range_position71, source_ml_source2_string_range_position72)
+                                                        let source_ml_source2_string_range_position77 = source_ml_source2_string_range_operand75;
+                                                        source_ml_source2_string_range_operand73.slice(source_ml_source2_string_range_position76, source_ml_source2_string_range_position77)
                                                     }
                                                 }
                                             }
                                         }
                                     };
                                     {
-                                        let source_ml_source2_string_unit_operand74 = 0f64;
-                                        source_ml_source2_string_unit_operand73.code_point_at(source_ml_source2_string_unit_operand74)
+                                        let source_ml_source2_string_unit_operand79 = 0f64;
+                                        source_ml_source2_string_unit_operand78.code_point_at(source_ml_source2_string_unit_operand79)
                                     }
                                 }).clone().unwrap_or_else(|| f64::NAN)
                                     }
                                 }
                             },
                         ))(
-                            source_ml_source2_string_unit_operand66,
-                            source_ml_source2_string_unit_operand67,
+                            source_ml_source2_string_unit_operand71,
+                            source_ml_source2_string_unit_operand72,
                         )
                     }
                 };
@@ -162,12 +190,12 @@ pub fn source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
                 let word =
                     self::ml_array::optional_at(reserved, self::ml_array::number_index(index));
                 if {
-                    let source_ml_source2_comparison_operand75 = word.clone();
+                    let source_ml_source2_comparison_operand80 = word.clone();
                     {
-                        let source_ml_source2_comparison_operand76 = None::<()>;
+                        let source_ml_source2_comparison_operand81 = None::<()>;
                         match (
-                            source_ml_source2_comparison_operand75,
-                            source_ml_source2_comparison_operand76,
+                            source_ml_source2_comparison_operand80,
+                            source_ml_source2_comparison_operand81,
                         ) {
                             (Some(_ml_left), Some(_ml_right)) => false,
                             (None, None) => true,
@@ -180,12 +208,12 @@ pub fn source_ml_source1_temporary_accept_java_script_source_binding_name_loop3(
                         "source binding reserved names need a complete text column"
                     )
                 } else if {
-                    let source_ml_source2_comparison_operand77 = word.clone();
+                    let source_ml_source2_comparison_operand82 = word.clone();
                     {
-                        let source_ml_source2_comparison_operand78 = name.clone();
+                        let source_ml_source2_comparison_operand83 = name.clone();
                         match (
-                            source_ml_source2_comparison_operand77,
-                            source_ml_source2_comparison_operand78,
+                            source_ml_source2_comparison_operand82,
+                            source_ml_source2_comparison_operand83,
                         ) {
                             (Some(ml_left), ml_right) => ml_left == ml_right,
                             _ => false,
@@ -479,10 +507,10 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                         if (self::accept_java_script_source_binding_name(&(token_kind), &(name), duplicate_2, reserved)) {
                                                             {
                                                                 let names_2 = {
-                                                                    let source_ml_source2_concat_value79 = names;
+                                                                    let source_ml_source2_concat_value84 = names;
                                                                     {
-                                                                        let source_ml_source2_concat_value80 = vec![name.clone()];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value79), source_ml_source2_concat_value80)
+                                                                        let source_ml_source2_concat_value85 = vec![name.clone()];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value84), source_ml_source2_concat_value85)
                                                                     }
                                                                 };
                                                                 {
@@ -497,7 +525,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop7Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop7Return(vec![-1f64, index_5])
                                                                                 } else {
                                                                                     {
-                                                                                        let source_ml_source2_s81 = if ((self::read_required_text_fact(kinds, index_5)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_5)) == (self::ml_string::Text::from_units(vec![61]))) {
+                                                                                        let source_ml_source2_s86 = if ((self::read_required_text_fact(kinds, index_5)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_5)) == (self::ml_string::Text::from_units(vec![61]))) {
                                                                                             if defaults {if rest {
                                                                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9Return(vec![-5f64, index_5])
                                                                                                 } else {
@@ -521,13 +549,13 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                         } else {
                                                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9Next(index_5, default_start, default_end)
                                                                                         };
-                                                                                        match source_ml_source2_s81 {
+                                                                                        match source_ml_source2_s86 {
                                                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin9Next(index_7, default_start_3, default_end_3) => {
                                                                                                 {
                                                                                                     let bindings_2 = {
-                                                                                                        let source_ml_source2_concat_value82 = bindings;
+                                                                                                        let source_ml_source2_concat_value87 = bindings;
                                                                                                         {
-                                                                                                            let source_ml_source2_concat_value83 = if defaults {
+                                                                                                            let source_ml_source2_concat_value88 = if defaults {
                                                                                                                 vec![if rest {
                                                                                                                     1f64
                                                                                                                 } else {
@@ -540,7 +568,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                                                     0f64
                                                                                                                 }, (position_3 - 1f64), token]
                                                                                                             };
-                                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value82), source_ml_source2_concat_value83)
+                                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value87), source_ml_source2_concat_value88)
                                                                                                         }
                                                                                                     };
                                                                                                     {
@@ -673,7 +701,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                 {
                     let value = self::read_required_text_fact(values, index);
                     {
-                        let source_ml_source2_s92 = if (kind
+                        let source_ml_source2_s97 = if (kind
                             == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
                             && (value == (self::ml_string::Text::from_units(vec![91])))
                         {
@@ -686,24 +714,24 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                         {
                                             let bindings = Vec::<f64>::new();
                                             {
-                                                let source_ml_source2_s93 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop7(kinds, values, reserved, defaults, index_2, names, position, bindings);
-                                                match source_ml_source2_s93 {
+                                                let source_ml_source2_s98 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop7(kinds, values, reserved, defaults, index_2, names, position, bindings);
+                                                match source_ml_source2_s98 {
                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop7Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop7Done(index_3, names_2, bindings_2) => {
                                                         if index_3 >= (kinds.len() as f64) {
                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin6::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin6Return(vec![-1f64, index_3])
                                                         } else {
                                                             {
                                                                 let instructions_2 = {
-                                                                    let source_ml_source2_concat_value94 = instructions;
+                                                                    let source_ml_source2_concat_value99 = instructions;
                                                                     {
-                                                                        let source_ml_source2_concat_value95 = vec![2f64, slot, open, index_3, ((bindings_2.len() as f64) / if defaults {
+                                                                        let source_ml_source2_concat_value100 = vec![2f64, slot, open, index_3, ((bindings_2.len() as f64) / if defaults {
                                                                             5f64
                                                                         } else {
                                                                             3f64
                                                                         })];
                                                                         {
-                                                                            let source_ml_source2_concat_value96 = bindings_2;
-                                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value94), source_ml_source2_concat_value95), source_ml_source2_concat_value96)
+                                                                            let source_ml_source2_concat_value101 = bindings_2;
+                                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value99), source_ml_source2_concat_value100), source_ml_source2_concat_value101)
                                                                         }
                                                                     }
                                                                 };
@@ -743,27 +771,27 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                         )) {
                                             {
                                                 let names_3 = {
-                                                    let source_ml_source2_concat_value97 = names;
+                                                    let source_ml_source2_concat_value102 = names;
                                                     {
-                                                        let source_ml_source2_concat_value98 =
+                                                        let source_ml_source2_concat_value103 =
                                                             vec![value.clone()];
                                                         self::ml_array::append(
                                                             self::ml_array::append(
                                                                 Vec::<self::ml_string::Text>::new(),
-                                                                source_ml_source2_concat_value97,
+                                                                source_ml_source2_concat_value102,
                                                             ),
-                                                            source_ml_source2_concat_value98,
+                                                            source_ml_source2_concat_value103,
                                                         )
                                                     }
                                                 };
                                                 {
                                                     let instructions_3 = {
-                                                        let source_ml_source2_concat_value99 =
+                                                        let source_ml_source2_concat_value104 =
                                                             instructions;
                                                         {
-                                                            let source_ml_source2_concat_value100 =
+                                                            let source_ml_source2_concat_value105 =
                                                                 vec![0f64, slot, index];
-                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value99), source_ml_source2_concat_value100)
+                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value104), source_ml_source2_concat_value105)
                                                         }
                                                     };
                                                     {
@@ -779,7 +807,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                 }
                             }
                         };
-                        match source_ml_source2_s92 {
+                        match source_ml_source2_s97 {
                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin6::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin6Next(index_6, names_4, instructions_4) => {
                                 {
                                     let slot_2 = slot + 1f64;

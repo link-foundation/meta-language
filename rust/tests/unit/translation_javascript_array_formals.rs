@@ -25,6 +25,13 @@ fn array_formal_parameters_preserve_actual_bindings_iterables_and_fresh_rest_val
         .unwrap();
         meta_language::translation::check::check_program(&surface).unwrap();
     }
+    for row in fixture["correctedParameterInputs"].as_array().unwrap() {
+        let original = row["source"].as_str().unwrap();
+        meta_language::translation::javascript::parse_javascript(original).unwrap();
+        let source = format!("{original}{}", row["invocation"].as_str().unwrap());
+        let surface = meta_language::translation::javascript::parse_javascript(&source).unwrap();
+        meta_language::translation::check::check_program(&surface).unwrap();
+    }
     assert_nominal_translation_product(
         "../experiments/javascript-program/array-formal-parameters.mjs",
         "JavaScript ordinary array formal parameter contexts",
