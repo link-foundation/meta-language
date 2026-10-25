@@ -275,12 +275,7 @@ impl JavaScriptParser {
                             binding_positions: &binding_positions,
                             binding,
                             bound_names: &bound_names,
-                            boundary: u8::try_from(position(
-                                rules::read_java_script_array_formal_default_scope_boundary(
-                                    &Text::from_text(context),
-                                ),
-                            )?)
-                            .expect("actual source boundary is one or two"),
+                            context,
                             profile: "array formal default",
                         },
                     )?;

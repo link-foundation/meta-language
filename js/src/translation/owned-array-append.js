@@ -2,15 +2,16 @@
 // Every accepted reader refers to an inspected declaration, never its spelling.
 import {
   acceptOwnedArrayAppendShape, acceptOwnedArrayRemovalShape, readOwnedArrayRemovalSliceBounds, acceptOwnedArrayAppendUses, acceptOwnedArrayRead,
-  acceptOwnedArrayReaderResult, acceptOwnedArraySelfSliceRebinding,
+  acceptOwnedArraySelfSliceRebinding,
   acceptOwnedArrayIterationBorrowShape, acceptOwnedArrayBorrowedAppend,
 } from './owned-array-append-rules.js';
 import { FLOAT } from './types.js';
+import {acceptOwnedArrayReaderDomain} from './owned-array-reader-domain-rules.js';
 
 export function readOwnedArrayReaderParameters(declaration, readers, statements = null) {
-  if (!acceptOwnedArrayReaderResult(declaration.ret?.kind ?? '')) return new Set();
   const admitted = new Set();
   for (const [index, parameter] of declaration.params.entries()) {
+    if(!acceptOwnedArrayReaderDomain(declaration.ret?.kind??'',declaration.ret?.element?.kind??'',parameter.type?.kind??'',parameter.type?.element?.kind??''))continue;
     let safe = true;
     const visit = (value, context = '', operation = '', reader = false, captured = false, locals = new Set(declaration.params.map(param => param.name))) => {
       if (!value || typeof value !== 'object') return;

@@ -1,8 +1,5 @@
 // Generated from complete js/src/translation/record-closure-parameter-rules.js. Do not edit by hand.
-use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9;
-use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10;
-use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11;
-use super::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result;
+use super::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result;
 use super::accept_java_script_source_binding_name;
 use super::find_java_script_formal_default_expression_end;
 use super::ml_array;
@@ -12,6 +9,217 @@ use super::read_array_binding_fact_field;
 use super::read_array_binding_initializer_end;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_accept_java_script_array_binding_name_loop4(
+    name: &self::ml_string::Text,
+    reserved: &[self::ml_string::Text],
+    mut index: f64,
+) -> self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result {
+    loop {
+        return if index < (reserved.len() as f64) {
+            if (self::read_required_text_fact(reserved, index)) == (*name) {
+                self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Return(false)
+            } else {
+                {
+                    let index_2 = index + 1f64;
+                    {
+                        index = index_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Result::MlSource1TemporaryAcceptJavaScriptArrayBindingNameLoop4Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadArrayBindingFactFieldLoop5Result {
+    MlSource1TemporaryReadArrayBindingFactFieldLoop5Done,
+    MlSource1TemporaryReadArrayBindingFactFieldLoop5Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_array_binding_fact_field_loop5(
+    labels: &[self::ml_string::Text],
+    targets: &[f64],
+    field: &self::ml_string::Text,
+    mut at: f64,
+    mut end: f64,
+) -> self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result {
+    loop {
+        return if at < end {
+            if (self::read_required_text_fact(labels, at)) == (*field) {
+                self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Return(self::read_required_number_fact(targets, at))
+            } else {
+                {
+                    let at_2 = at + 1f64;
+                    {
+                        at = at_2;
+                        continue;
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadArrayBindingFactFieldLoop5Result::MlSource1TemporaryReadArrayBindingFactFieldLoop5Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result {
+    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done,
+    MlSource1TemporaryReadArrayBindingInitializerEndLoop6Return(f64),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryReadArrayBindingInitializerEndJoin7 {
+    MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(Vec<self::ml_string::Text>),
+    MlSource1TemporaryReadArrayBindingInitializerEndJoin7Return(f64),
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_read_array_binding_initializer_end_loop6(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    mut start: f64,
+    mut index: f64,
+    mut closes: Vec<self::ml_string::Text>,
+) -> self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result {
+    loop {
+        return if (index < (values.len() as f64)) && (index < (kinds.len() as f64)) {
+            {
+                let kind = self::read_required_text_fact(kinds, index);
+                {
+                    let value = self::read_required_text_fact(values, index);
+                    if kind == (self::ml_string::Text::from_units(vec![101, 111, 102])) {
+                        self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Return(-1f64)
+                    } else {
+                        {
+                            let source_ml_source2_s109 = if kind
+                                == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))
+                            {
+                                if ((closes.len() as f64) == 0f64)
+                                    && ((value == (self::ml_string::Text::from_units(vec![44])))
+                                        || (value == (self::ml_string::Text::from_units(vec![93]))))
+                                {
+                                    self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Return(if index > start {
+                                        index
+                                    } else {
+                                        -1f64
+                                    })
+                                } else if ((value == (self::ml_string::Text::from_units(vec![40])))
+                                    || (value == (self::ml_string::Text::from_units(vec![91]))))
+                                    || (value == (self::ml_string::Text::from_units(vec![123])))
+                                {
+                                    {
+                                        let closes_2 = {
+                                            let source_ml_source2_concat_value110 = closes;
+                                            {
+                                                let source_ml_source2_concat_value111 =
+                                                    vec![if value
+                                                        == (self::ml_string::Text::from_units(
+                                                            vec![40],
+                                                        )) {
+                                                        self::ml_string::Text::from_units(vec![41])
+                                                    } else if value
+                                                        == (self::ml_string::Text::from_units(
+                                                            vec![91],
+                                                        ))
+                                                    {
+                                                        self::ml_string::Text::from_units(vec![93])
+                                                    } else {
+                                                        self::ml_string::Text::from_units(vec![125])
+                                                    }];
+                                                self::ml_array::append(
+                                                    self::ml_array::append(
+                                                        Vec::<self::ml_string::Text>::new(),
+                                                        source_ml_source2_concat_value110,
+                                                    ),
+                                                    source_ml_source2_concat_value111,
+                                                )
+                                            }
+                                        };
+                                        self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(closes_2)
+                                    }
+                                } else if ((value == (self::ml_string::Text::from_units(vec![41])))
+                                    || (value == (self::ml_string::Text::from_units(vec![93]))))
+                                    || (value == (self::ml_string::Text::from_units(vec![125])))
+                                {
+                                    if ((closes.len() as f64) == 0f64)
+                                        || ((self::read_required_text_fact(
+                                            &(closes),
+                                            ((closes.len() as f64) - 1f64),
+                                        )) != value)
+                                    {
+                                        self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Return(-1f64)
+                                    } else {
+                                        {
+                                            let closes_3 = self::ml_array::slice(
+                                                &closes,
+                                                0f64,
+                                                ((closes.len() as f64) - 1f64),
+                                            );
+                                            self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(closes_3)
+                                        }
+                                    }
+                                } else {
+                                    self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(closes)
+                                }
+                            } else {
+                                self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(closes)
+                            };
+                            match source_ml_source2_s109 {
+                                self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Next(closes_4) => {
+                                    {
+                                        let index_2 = index + 1f64;
+                                        {
+                                            (index, closes) = (index_2, closes_4);
+                                            continue;
+                                        }
+                                    }
+                                }
+                                self::MlSource1TemporaryReadArrayBindingInitializerEndJoin7::MlSource1TemporaryReadArrayBindingInitializerEndJoin7Return(source_ml_source1_temporary_result7) => {
+                                    self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Return(source_ml_source1_temporary_result7)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            self::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Result::MlSource1TemporaryReadArrayBindingInitializerEndLoop6Done
+        };
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result {
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Done,
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11 {
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11Next(f64),
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10 {
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10Next(f64, Vec<f64>),
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10Return(Vec<f64>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9 {
+    MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9Next(f64, bool),
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -31,10 +239,10 @@ pub fn source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(
                         && (value == (self::ml_string::Text::from_units(vec![93])))
                     {
                         self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return({
-                            let source_ml_source2_concat_value109 = vec![index];
+                            let source_ml_source2_concat_value112 = vec![index];
                             {
-                                let source_ml_source2_concat_value110 = positions;
-                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value109), source_ml_source2_concat_value110)
+                                let source_ml_source2_concat_value113 = positions;
+                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value112), source_ml_source2_concat_value113)
                             }
                         })
                     } else {
@@ -54,7 +262,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(
                             {
                                 let rest = false;
                                 {
-                                    let source_ml_source2_s111 = if (kind
+                                    let source_ml_source2_s114 = if (kind
                                         == (self::ml_string::Text::from_units(vec![
                                             112, 117, 110, 99, 116,
                                         ])))
@@ -72,13 +280,13 @@ pub fn source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(
                                     } else {
                                         self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9Next(index, rest)
                                     };
-                                    match source_ml_source2_s111 {
+                                    match source_ml_source2_s114 {
                                         self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin9Next(index_4, rest_3) => {
                                             if (index_4 >= (values.len() as f64)) || (index_4 >= (kinds.len() as f64)) {
                                                 self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return(vec![-1f64])
                                             } else {
                                                 {
-                                                    let source_ml_source2_s116 = if ((self::read_required_text_fact(kinds, index_4)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_4)) == (self::ml_string::Text::from_units(vec![91]))) {
+                                                    let source_ml_source2_s119 = if ((self::read_required_text_fact(kinds, index_4)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_4)) == (self::ml_string::Text::from_units(vec![91]))) {
                                                         if rest_3 {
                                                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10Return(vec![-1f64])
                                                         } else {
@@ -89,10 +297,10 @@ pub fn source_ml_source1_temporary_plan_java_script_array_binding_names_loop8(
                                                                 } else {
                                                                     {
                                                                         let positions_2 = {
-                                                                            let source_ml_source2_concat_value117 = positions;
+                                                                            let source_ml_source2_concat_value120 = positions;
                                                                             {
-                                                                                let source_ml_source2_concat_value118 = self::ml_array::slice(&nested, 1f64, f64::INFINITY);
-                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value117), source_ml_source2_concat_value118)
+                                                                                let source_ml_source2_concat_value121 = self::ml_array::slice(&nested, 1f64, f64::INFINITY);
+                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value120), source_ml_source2_concat_value121)
                                                                             }
                                                                         };
                                                                         {
@@ -110,10 +318,10 @@ if ml_library_inequality_3 {
                                                         } else {
                                                             {
                                                                 let positions_3 = {
-                                                                    let source_ml_source2_concat_value119 = positions;
+                                                                    let source_ml_source2_concat_value122 = positions;
                                                                     {
-                                                                        let source_ml_source2_concat_value120 = vec![index_4];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value119), source_ml_source2_concat_value120)
+                                                                        let source_ml_source2_concat_value123 = vec![index_4];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value122), source_ml_source2_concat_value123)
                                                                     }
                                                                 };
                                                                 {
@@ -123,17 +331,17 @@ if ml_library_inequality_3 {
                                                             }
                                                         }
 };
-                                                    match source_ml_source2_s116 {
+                                                    match source_ml_source2_s119 {
                                                         self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin10Next(index_7, positions_4) => {
                                                             if (index_7 >= (values.len() as f64)) || (index_7 >= (kinds.len() as f64)) {
                                                                 self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return(vec![-1f64])
                                                             } else if rest_3 {
                                                                     self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return(if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![93]))) {
                                                                         {
-                                                                            let source_ml_source2_concat_value121 = vec![index_7];
+                                                                            let source_ml_source2_concat_value124 = vec![index_7];
                                                                             {
-                                                                                let source_ml_source2_concat_value122 = positions_4;
-                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value121), source_ml_source2_concat_value122)
+                                                                                let source_ml_source2_concat_value125 = positions_4;
+                                                                                self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value124), source_ml_source2_concat_value125)
                                                                             }
                                                                         }
                                                                     } else {
@@ -141,7 +349,7 @@ if ml_library_inequality_3 {
                                                                     })
                                                                 } else {
                                                                     {
-                                                                        let source_ml_source2_s123 = if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![61]))) {
+                                                                        let source_ml_source2_s126 = if ((self::read_required_text_fact(kinds, index_7)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_7)) == (self::ml_string::Text::from_units(vec![61]))) {
                                                                             {
                                                                                 let index_8 = self::read_array_binding_initializer_end(kinds, values, (index_7 + 1f64));
                                                                                 if index_8 < 0f64 {
@@ -153,7 +361,7 @@ if ml_library_inequality_3 {
                                                                         } else {
                                                                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11Next(index_7)
                                                                         };
-                                                                        match source_ml_source2_s123 {
+                                                                        match source_ml_source2_s126 {
                                                                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11::MlSource1TemporaryPlanJavaScriptArrayBindingNamesJoin11Next(index_9) => {
                                                                                 {
 let ml_library_inequality_2 = (self::read_required_text_fact(kinds, index_9)) != (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])) ;
@@ -164,10 +372,10 @@ if ml_library_inequality_2 {
                                                                                         let next = self::read_required_text_fact(values, index_9);
                                                                                         if next == (self::ml_string::Text::from_units(vec![93])) {
                                                                                             self::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Result::MlSource1TemporaryPlanJavaScriptArrayBindingNamesLoop8Return({
-                                                                                                let source_ml_source2_concat_value124 = vec![index_9];
+                                                                                                let source_ml_source2_concat_value127 = vec![index_9];
                                                                                                 {
-                                                                                                    let source_ml_source2_concat_value125 = positions_4;
-                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value124), source_ml_source2_concat_value125)
+                                                                                                    let source_ml_source2_concat_value128 = positions_4;
+                                                                                                    self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value127), source_ml_source2_concat_value128)
                                                                                                 }
                                                                                             })
                                                                                         } else {
@@ -571,10 +779,10 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                         if (self::accept_java_script_source_binding_name(&(token_kind), &(name), duplicate_2, reserved)) {
                                                             {
                                                                 let names_2 = {
-                                                                    let source_ml_source2_concat_value126 = names;
+                                                                    let source_ml_source2_concat_value129 = names;
                                                                     {
-                                                                        let source_ml_source2_concat_value127 = vec![name.clone()];
-                                                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value126), source_ml_source2_concat_value127)
+                                                                        let source_ml_source2_concat_value130 = vec![name.clone()];
+                                                                        self::ml_array::append(self::ml_array::append(Vec::<self::ml_string::Text>::new(), source_ml_source2_concat_value129), source_ml_source2_concat_value130)
                                                                     }
                                                                 };
                                                                 {
@@ -589,7 +797,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Return(vec![-1f64, index_5])
                                                                                 } else {
                                                                                     {
-                                                                                        let source_ml_source2_s128 = if ((self::read_required_text_fact(kinds, index_5)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_5)) == (self::ml_string::Text::from_units(vec![61]))) {
+                                                                                        let source_ml_source2_s131 = if ((self::read_required_text_fact(kinds, index_5)) == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116]))) && ((self::read_required_text_fact(values, index_5)) == (self::ml_string::Text::from_units(vec![61]))) {
                                                                                             if defaults {if rest {
                                                                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Return(vec![-5f64, index_5])
                                                                                                 } else {
@@ -613,13 +821,13 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                         } else {
                                                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(index_5, default_start, default_end)
                                                                                         };
-                                                                                        match source_ml_source2_s128 {
+                                                                                        match source_ml_source2_s131 {
                                                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin18Next(index_7, default_start_3, default_end_3) => {
                                                                                                 {
                                                                                                     let bindings_2 = {
-                                                                                                        let source_ml_source2_concat_value129 = bindings;
+                                                                                                        let source_ml_source2_concat_value132 = bindings;
                                                                                                         {
-                                                                                                            let source_ml_source2_concat_value130 = if defaults {
+                                                                                                            let source_ml_source2_concat_value133 = if defaults {
                                                                                                                 vec![if rest {
                                                                                                                     1f64
                                                                                                                 } else {
@@ -632,7 +840,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                                                                                                     0f64
                                                                                                                 }, (position_3 - 1f64), token]
                                                                                                             };
-                                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value129), source_ml_source2_concat_value130)
+                                                                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value132), source_ml_source2_concat_value133)
                                                                                                         }
                                                                                                     };
                                                                                                     {
@@ -697,41 +905,5 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
         } else {
             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Done(index, names, bindings)
         };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19(
-    names: &[self::ml_string::Text],
-    value: &self::ml_string::Text,
-    mut duplicate: bool,
-    mut previous: f64,
-) -> bool {
-    loop {
-        if previous < (names.len() as f64) {
-            if (self::read_required_text_fact(names, previous)) == (*value) {
-                {
-                    let duplicate_2 = true;
-                    {
-                        let previous_2 = previous + 1f64;
-                        {
-                            (duplicate, previous) = (duplicate_2, previous_2);
-                            continue;
-                        }
-                    }
-                }
-            }
-            {
-                {
-                    let previous_3 = previous + 1f64;
-                    {
-                        previous = previous_3;
-                        continue;
-                    }
-                }
-            }
-        }
-        return { duplicate };
     }
 }

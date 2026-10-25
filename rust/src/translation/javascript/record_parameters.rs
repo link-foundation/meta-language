@@ -48,7 +48,7 @@ struct RecordBinding {
     fallback: Option<SExpr>,
 }
 
-fn reserved_names() -> &'static [Text] {
+pub(super) fn reserved_names() -> &'static [Text] {
     static NAMES: OnceLock<Vec<Text>> = OnceLock::new();
     NAMES.get_or_init(|| {
         let policy =
@@ -476,24 +476,17 @@ impl JavaScriptParser {
                 crate::translation::lexer::require_java_script_identifier_role(&local, true)?;
                 let fallback = if let Some(first) = number_index(first) {
                     let last = number_index(last).expect("actual source initializer end");
-                    let boundary=crate::translation::array_formal_parameter_rules::read_java_script_array_formal_default_scope_boundary(&crate::translation::array_formal_parameter_rules::ml_string::Text::from_text(context));
-                    Some(
-                        self.read_formal_initializer(
-                            &interval,
-                            super::formal_initializers::FormalInitializer {
-                                interval_positions: (first, last, start),
-                                binding_positions: &binding_positions,
-                                binding,
-                                bound_names: &bound_names,
-                                boundary: u8::try_from(
-                                    number_index(boundary)
-                                        .expect("actual source callable boundary"),
-                                )
-                                .expect("boundary is one or two"),
-                                profile: "record formal default",
-                            },
-                        )?,
-                    )
+                    Some(self.read_formal_initializer(
+                        &interval,
+                        super::formal_initializers::FormalInitializer {
+                            interval_positions: (first, last, start),
+                            binding_positions: &binding_positions,
+                            binding,
+                            bound_names: &bound_names,
+                            context,
+                            profile: "record formal default",
+                        },
+                    )?)
                 } else {
                     None
                 };

@@ -4,6 +4,7 @@
 use super::callables::number;
 use super::{CaseTest, HashMap, HashSet, ROOT, SArrayItem, SExpr, SFn, SNode, SParam, Span, Stmt};
 use crate::translation::owned_array_append_rules as rules;
+use crate::translation::owned_array_reader_domain_rules as reader_rules;
 use serde_json::Value;
 
 pub(super) type Readers = HashMap<String, HashSet<usize>>;
@@ -353,17 +354,28 @@ pub(super) fn read_owned_array_reader_parameters(
     statements: &[Stmt],
 ) -> HashSet<usize> {
     let mut admitted = HashSet::new();
-    if !rules::accept_owned_array_reader_result(
-        declaration.ret.as_ref().map_or("", super::Type::kind),
-    ) {
-        return admitted;
-    }
     let locals: HashSet<String> = declaration
         .params
         .iter()
         .map(|parameter| parameter.name.clone())
         .collect();
     for (index, parameter) in declaration.params.iter().enumerate() {
+        let result_element = match declaration.ret.as_ref() {
+            Some(super::Type::Array { element, .. }) => element.kind(),
+            _ => "",
+        };
+        let parameter_element = match parameter.ty.as_ref() {
+            Some(super::Type::Array { element, .. }) => element.kind(),
+            _ => "",
+        };
+        if !reader_rules::accept_owned_array_reader_domain(
+            declaration.ret.as_ref().map_or("", super::Type::kind),
+            result_element,
+            parameter.ty.as_ref().map_or("", super::Type::kind),
+            parameter_element,
+        ) {
+            continue;
+        }
         let mut safe = true;
         source_names(
             statements,

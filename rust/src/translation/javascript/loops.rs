@@ -11,13 +11,6 @@ impl JavaScriptParser {
     /// `let a = 1n, b = a;` declares assignable locals; omission starts with undefined.
     pub(super) fn let_declarations(&mut self) -> Result<Vec<Stmt>> {
         let start = self.cursor.advance();
-        if self.cursor.is("{") {
-            return Err(unsupported(
-                "let destructuring",
-                "declare each binding with its own let",
-                Some(self.to_here(&start)),
-            ));
-        }
         let mut statements = Vec::new();
         let mut names = HashSet::new();
         loop {
@@ -29,11 +22,20 @@ impl JavaScriptParser {
                 continue;
             }
             if self.cursor.is("{") {
-                return Err(unsupported(
-                    "let destructuring",
-                    "declare each binding with its own let",
-                    Some(self.to_here(&start)),
-                ));
+                let syntax = self.object_binding_declaration(&start, "let")?;
+                for token in syntax.bindings {
+                    if !names.insert(token.value.clone()) {
+                        return Err(TranslationError::syntax(
+                            format!("duplicate lexical binding {}", token.value),
+                            Some(token.span()),
+                        ));
+                    }
+                }
+                statements.extend(syntax.statements);
+                if self.cursor.eat(",").is_none() {
+                    return Ok(statements);
+                }
+                continue;
             }
             let name = self.cursor.identifier(Some("let"))?;
             reserved(&name)?;

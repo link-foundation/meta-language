@@ -255,82 +255,11 @@ impl JavaScriptParser {
 
     /// `const { left, value: v } = t;` binds fields of a switch subject.
     pub(super) fn destructuring(&mut self, start: &Token) -> Result<Stmt> {
-        self.cursor.expect("{", Some("destructuring"))?;
-        let mut pairs = Vec::new();
-        while !self.cursor.is("}") {
-            if self.cursor.is("...") {
-                let token = self.peek();
-                return Err(unsupported(
-                    "rest property",
-                    "name every field",
-                    Some(span(&token, &token)),
-                ));
-            }
-            let key = self.cursor.identifier(Some("destructuring"))?;
-            let local = if self.cursor.eat(":").is_some() {
-                self.cursor.identifier(Some("destructuring"))?
-            } else {
-                key.clone()
-            };
-            reserved(&local)?;
-            if self.cursor.is("=") {
-                return Err(unsupported(
-                    "default value",
-                    "every field has a value",
-                    Some(self.to_here(&key)),
-                ));
-            }
-            self.lexical.declaration(&local.value, local.span(), 1);
-            pairs.push((key.value.clone(), local.value.clone(), span(&key, &local)));
-            if self.cursor.eat(",").is_none() {
-                break;
-            }
-        }
-        self.cursor.expect("}", Some("destructuring"))?;
-        if pairs.is_empty() {
-            return Err(unsupported(
-                "empty object binding",
-                "object destructibility needs a checked representation",
-                Some(self.to_here(start)),
-            ));
-        }
-        self.cursor.expect("=", Some("destructuring"))?;
-        let value = self.expr()?;
-        let whole = self.to_here(start);
-        self.generated_count += 1;
-        let name = format!(
-            "{}temporary_binding{}",
-            self.generated_prefix, self.generated_count
-        );
-        let object = node(
-            SNode::Name {
-                path: vec![name.clone()],
-            },
-            whole,
-        );
-        let mut statements = vec![Stmt::Const {
-            name,
-            value,
-            span: whole,
-        }];
-        statements.extend(pairs.iter().map(|(field, name, place)| Stmt::Const {
-            name: name.clone(),
-            value: node(
-                SNode::Field {
-                    object: Box::new(object.clone()),
-                    field: field.clone(),
-                },
-                *place,
-            ),
-            span: whole,
-        }));
-        for (_, name, _) in &pairs {
-            self.declare_local(name, false);
-        }
+        let syntax = self.object_binding_declaration(start, "const")?;
         Ok(Stmt::Block {
-            body: statements,
+            body: syntax.statements,
             inline: true,
-            span: whole,
+            span: syntax.span,
         })
     }
 

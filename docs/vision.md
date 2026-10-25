@@ -3922,6 +3922,41 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Lexical object binding declarations now share the actual object-pattern planner
+with formal parameters. Flat IdentifierName properties retain aliases and exact
+initializer intervals. Required fields keep their original field projections,
+including tagged-constructor substitution; defaulted fields reuse the existing
+lazy undefined-only field protocol. The actual right-hand side is evaluated
+once before ordered initializers. Both `const` and mutable `let` retain their
+actual bound names, lexical scope and temporal initialization order. Earlier
+initialized names are available without inventing a function boundary; self,
+later and initialization writes still need broader environment interpretation.
+The source name census uses the same plan, so names read inside an initializer
+cannot become invented declarations. Native syntax decisions and both complete
+editable Links libraries are generated from JavaScript.
+
+The obsolete refusal for the exact source
+`function selected(values){let {first}={first:1};return 0;}` is replaced by a
+same-input parse/value control; all preceding assertion sources are retained
+with their hashes at `51140898`. The
+[lexical declaration rules](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations)
+and [keyed binding initialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-keyedbindinginitialization)
+define the correction. Thirty-three future values and eight refusals declare
+original Node, translated JavaScript/native Rust, both codecs and all four
+emissions under explicit language/runtime ranges. None executed. Rest, nested,
+computed and string-key patterns, inherited/getter/proxy protocols and full
+initialization environments remain obligations.
+
+Readonly array-helper admission also retains its complete actual-body proof
+when the declared result is an array of a disjoint primitive domain. A numeric
+result cannot retain a String-array identity, for example. Integer refinements
+remain one domain; optional, compound, unknown and same-domain results gain no
+new admission. Every occurrence, alias, capture, rebinding and unknown-call
+check remains, followed by complete type checking. The source decision and its
+entire native implementation are generated together. Four future independent
+source products and direct body/refusal controls are drafted, without execution.
+Forward unavailable helper summaries remain an obligation.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

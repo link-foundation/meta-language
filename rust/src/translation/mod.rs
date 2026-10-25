@@ -107,6 +107,7 @@ mod ordered_record_preparation;
 mod ordered_record_values;
 pub mod output;
 pub(crate) mod owned_array_append_rules;
+pub(crate) mod owned_array_reader_domain_rules;
 pub(crate) mod owned_local_state;
 pub(crate) mod parameter_default_rules;
 pub(crate) mod partial_callable_rules;

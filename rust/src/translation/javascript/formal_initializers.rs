@@ -2,12 +2,15 @@
 use super::{JavaScriptParser, Result, SExpr, Token, unsupported};
 use crate::translation::array_formal_parameter_rules::{self as rules, ml_string::Text};
 use crate::translation::frontend_rules::ml_array::number_index;
+use crate::translation::javascript_record_parameter_rules::{
+    self as context_rules, ml_string::Text as ContextText,
+};
 pub(super) struct FormalInitializer<'a> {
     pub(super) interval_positions: (usize, usize, usize),
     pub(super) binding_positions: &'a [f64],
     pub(super) binding: f64,
     pub(super) bound_names: &'a [String],
-    pub(super) boundary: u8,
+    pub(super) context: &'a str,
     pub(super) profile: &'a str,
 }
 impl JavaScriptParser {
@@ -21,9 +24,17 @@ impl JavaScriptParser {
             binding_positions,
             binding,
             bound_names,
-            boundary,
+            context,
             profile,
         } = initializer;
+        let text = ContextText::from_text(context);
+        let boundary = u8::try_from(
+            number_index(context_rules::read_java_script_pattern_initializer_scope_boundary(&text))
+                .expect("actual source initializer boundary"),
+        )
+        .expect("boundary is zero, one or two");
+        let subject =
+            context_rules::read_java_script_pattern_initializer_subject(&text).to_string();
         let initialization = rules::partition_java_script_formal_initializer_binding_positions(
             binding_positions,
             binding,
@@ -65,8 +76,9 @@ impl JavaScriptParser {
         );
         if let Some(token) = number_index(reference).and_then(|index| interval.get(index)) {
             return Err(unsupported(
-                &format!("{profile} reading parameter {}", token.value),
-                "the current default profile requires a closed parameter initialization environment",
+                &format!("{profile} reading {subject} {}", token.value),
+                &context_rules::read_java_script_pattern_initializer_reference_reason(&text)
+                    .to_string(),
                 Some(token.span()),
             ));
         }
@@ -109,8 +121,9 @@ impl JavaScriptParser {
         );
         if let Some(name) = number_index(assigned).and_then(|position| assignments.get(position)) {
             return Err(unsupported(
-                &format!("{profile} assigning parameter {name}"),
-                "writes during parameter initialization need their shared environment interpretation",
+                &format!("{profile} assigning {subject} {name}"),
+                &context_rules::read_java_script_pattern_initializer_assignment_reason(&text)
+                    .to_string(),
                 tokens.get(first).map(Token::span),
             ));
         }

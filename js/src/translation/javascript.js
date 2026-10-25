@@ -869,9 +869,7 @@ class JavaScriptParser {
         for (const binding of arrayBindingNames(this, c.index)) collect(binding.value);
       }
       else if (c.is('{')) {
-        for (let offset = 1; !c.is('}', offset) && !c.isKind('eof', offset); offset += 1) {
-          if (c.peek(offset).kind === 'identifier' && (c.is(',', offset + 1) || c.is('}', offset + 1))) collect(c.peek(offset).value);
-        }
+        for(const binding of readJavaScriptObjectBindingNames(this,c.index))collect(binding.value);
       }
     }
     c.index = saved;
@@ -1087,41 +1085,14 @@ class JavaScriptParser {
 
   /** `const { left, value: v } = t;` binds fields of a switch subject. */
   destructuring(start) {
-    const c = this.cursor;
-    c.expect('{', 'destructuring');
-    const pairs = [];
-    while (!c.is('}')) {
-      if (c.is('...')) throw unsupported('rest property', 'name every field', span(c.peek(), c.peek()));
-      const key = c.identifier('destructuring');
-      const local = c.eat(':') ? c.identifier('destructuring') : key;
-      reserved(local);
-      if (c.is('=')) throw unsupported('default value', 'every field has a value', span(key, c.peek()));
-      this.lexicalDeclaration(local.value,span(local,local));
-      pairs.push({ field: key.value, name: local.value, span: span(key, local) });
-      if (!c.eat(',')) break;
-    }
-    c.expect('}', 'destructuring');
-    if (!pairs.length) throw unsupported('empty object binding', 'object destructibility needs a checked representation', span(start, c.peek()));
-    c.expect('=', 'destructuring');
-    const value = this.expr();
-    const where = span(start, c.peek());
-    const name = `${this.generatedPrefix}temporary_binding${++this.generatedCount}`;
-    const object = { k: 'name', path: [name], span: where };
-    const statements = pairs.map((pair) => ({
-      s: 'const',
-      name: pair.name,
-      value: { k: 'field', object, field: pair.field, span: pair.span },
-      span: span(start, c.peek()),
-    }));
-    for (const pair of pairs) this.declareLocal(pair.name);
-    return { s: 'block', body: [{ s: 'const', name, value, span: where }, ...statements], inline: true, span: where };
+    const syntax=readJavaScriptObjectBindingDeclaration(this,start,'const');
+    return {s:'block',body:syntax.statements,inline:true,span:syntax.span};
   }
 
   /** `let a = 1n, b = a;` declares assignable locals; each needs a value, since undefined is not portable. */
   letDeclarations() {
     const c = this.cursor;
     const start = c.next();
-    if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
     const statements = [];
     const names = new Set();
     do {
@@ -1162,7 +1133,11 @@ class JavaScriptParser {
         }
         continue;
       }
-      if (c.is('{')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, c.peek()));
+      if(c.is('{')){
+        const syntax=readJavaScriptObjectBindingDeclaration(this,start,'let');
+        for(const token of syntax.bindings){if(names.has(token.value))throw new TranslationError('syntax','duplicate lexical binding '+token.value,{start:token.start,end:token.end});names.add(token.value);}
+        statements.push(...syntax.statements);continue;
+      }
       const name = c.identifier('let');
       reserved(name);
       this.lexicalDeclaration(name.value,span(name,name));
@@ -2889,3 +2864,5 @@ function readCompleteDeclarationSpan(from, cursor) {
 function span(from, to) {
   return { start: from.start, end: Math.max(from.end, to && to.kind !== 'eof' ? to.start : from.end) };
 }
+
+import {readJavaScriptObjectBindingDeclaration,readJavaScriptObjectBindingNames} from './object-binding-declarations.js';

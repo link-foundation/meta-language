@@ -9,7 +9,42 @@ use super::ml_string;
 use super::read_required_number_fact;
 use super::read_required_text_fact;
 use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop16;
-use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19;
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop19(
+    names: &[self::ml_string::Text],
+    value: &self::ml_string::Text,
+    mut duplicate: bool,
+    mut previous: f64,
+) -> bool {
+    loop {
+        if previous < (names.len() as f64) {
+            if (self::read_required_text_fact(names, previous)) == (*value) {
+                {
+                    let duplicate_2 = true;
+                    {
+                        let previous_2 = previous + 1f64;
+                        {
+                            (duplicate, previous) = (duplicate_2, previous_2);
+                            continue;
+                        }
+                    }
+                }
+            }
+            {
+                {
+                    let previous_3 = previous + 1f64;
+                    {
+                        previous = previous_3;
+                        continue;
+                    }
+                }
+            }
+        }
+        return { duplicate };
+    }
+}
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -40,7 +75,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                 {
                     let value = self::read_required_text_fact(values, index);
                     {
-                        let source_ml_source2_s139 = if (kind
+                        let source_ml_source2_s142 = if (kind
                             == (self::ml_string::Text::from_units(vec![112, 117, 110, 99, 116])))
                             && (value == (self::ml_string::Text::from_units(vec![91])))
                         {
@@ -53,24 +88,24 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                         {
                                             let bindings = Vec::<f64>::new();
                                             {
-                                                let source_ml_source2_s140 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop16(kinds, values, reserved, defaults, index_2, names, position, bindings);
-                                                match source_ml_source2_s140 {
+                                                let source_ml_source2_s143 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop16(kinds, values, reserved, defaults, index_2, names, position, bindings);
+                                                match source_ml_source2_s143 {
                                                     self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop16Done(index_3, names_2, bindings_2) => {
                                                         if index_3 >= (kinds.len() as f64) {
                                                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin15::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin15Return(vec![-1f64, index_3])
                                                         } else {
                                                             {
                                                                 let instructions_2 = {
-                                                                    let source_ml_source2_concat_value141 = instructions;
+                                                                    let source_ml_source2_concat_value144 = instructions;
                                                                     {
-                                                                        let source_ml_source2_concat_value142 = vec![2f64, slot, open, index_3, ((bindings_2.len() as f64) / if defaults {
+                                                                        let source_ml_source2_concat_value145 = vec![2f64, slot, open, index_3, ((bindings_2.len() as f64) / if defaults {
                                                                             5f64
                                                                         } else {
                                                                             3f64
                                                                         })];
                                                                         {
-                                                                            let source_ml_source2_concat_value143 = bindings_2;
-                                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value141), source_ml_source2_concat_value142), source_ml_source2_concat_value143)
+                                                                            let source_ml_source2_concat_value146 = bindings_2;
+                                                                            self::ml_array::append(self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value144), source_ml_source2_concat_value145), source_ml_source2_concat_value146)
                                                                         }
                                                                     }
                                                                 };
@@ -110,27 +145,27 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                         )) {
                                             {
                                                 let names_3 = {
-                                                    let source_ml_source2_concat_value144 = names;
+                                                    let source_ml_source2_concat_value147 = names;
                                                     {
-                                                        let source_ml_source2_concat_value145 =
+                                                        let source_ml_source2_concat_value148 =
                                                             vec![value.clone()];
                                                         self::ml_array::append(
                                                             self::ml_array::append(
                                                                 Vec::<self::ml_string::Text>::new(),
-                                                                source_ml_source2_concat_value144,
+                                                                source_ml_source2_concat_value147,
                                                             ),
-                                                            source_ml_source2_concat_value145,
+                                                            source_ml_source2_concat_value148,
                                                         )
                                                     }
                                                 };
                                                 {
                                                     let instructions_3 = {
-                                                        let source_ml_source2_concat_value146 =
+                                                        let source_ml_source2_concat_value149 =
                                                             instructions;
                                                         {
-                                                            let source_ml_source2_concat_value147 =
+                                                            let source_ml_source2_concat_value150 =
                                                                 vec![0f64, slot, index];
-                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value146), source_ml_source2_concat_value147)
+                                                            self::ml_array::append(self::ml_array::append(Vec::<f64>::new(), source_ml_source2_concat_value149), source_ml_source2_concat_value150)
                                                         }
                                                     };
                                                     {
@@ -146,7 +181,7 @@ pub fn source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindi
                                 }
                             }
                         };
-                        match source_ml_source2_s139 {
+                        match source_ml_source2_s142 {
                             self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin15::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsJoin15Next(index_6, names_4, instructions_4) => {
                                 {
                                     let slot_2 = slot + 1f64;
@@ -250,9 +285,9 @@ pub fn source_ml_source1_temporary_find_java_script_pattern_default_expression_e
                                 {
                                     {
                                         let stack_2 = {
-                                            let source_ml_source2_concat_value148 = stack;
+                                            let source_ml_source2_concat_value151 = stack;
                                             {
-                                                let source_ml_source2_concat_value149 =
+                                                let source_ml_source2_concat_value152 =
                                                     vec![if value
                                                         == (self::ml_string::Text::from_units(
                                                             vec![40],
@@ -270,9 +305,9 @@ pub fn source_ml_source1_temporary_find_java_script_pattern_default_expression_e
                                                 self::ml_array::append(
                                                     self::ml_array::append(
                                                         Vec::<self::ml_string::Text>::new(),
-                                                        source_ml_source2_concat_value148,
+                                                        source_ml_source2_concat_value151,
                                                     ),
-                                                    source_ml_source2_concat_value149,
+                                                    source_ml_source2_concat_value152,
                                                 )
                                             }
                                         };
@@ -349,16 +384,16 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
         if index < count {
             {
                 let names_2 = {
-                    let source_ml_source2_concat_value150 = names;
+                    let source_ml_source2_concat_value153 = names;
                     {
-                        let source_ml_source2_concat_value151 =
+                        let source_ml_source2_concat_value154 =
                             vec![self::read_required_number_fact(plan, (cursor + 2f64))];
                         self::ml_array::append(
                             self::ml_array::append(
                                 Vec::<f64>::new(),
-                                source_ml_source2_concat_value150,
+                                source_ml_source2_concat_value153,
                             ),
-                            source_ml_source2_concat_value151,
+                            source_ml_source2_concat_value154,
                         )
                     }
                 };
@@ -396,16 +431,16 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
                     if form == 0f64 {
                         {
                             let names_2 = {
-                                let source_ml_source2_concat_value152 = names;
+                                let source_ml_source2_concat_value155 = names;
                                 {
-                                    let source_ml_source2_concat_value153 =
+                                    let source_ml_source2_concat_value156 =
                                         vec![self::read_required_number_fact(plan, cursor_2)];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<f64>::new(),
-                                            source_ml_source2_concat_value152,
+                                            source_ml_source2_concat_value155,
                                         ),
-                                        source_ml_source2_concat_value153,
+                                        source_ml_source2_concat_value156,
                                     )
                                 }
                             };
@@ -428,8 +463,8 @@ pub fn source_ml_source1_temporary_read_java_script_array_formal_default_binding
                                     {
                                         let index = 0f64;
                                         {
-                                            let source_ml_source2_s154 = self::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop22(plan, cursor_4, names, count, index);
-                                            match source_ml_source2_s154 {
+                                            let source_ml_source2_s157 = self::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop22(plan, cursor_4, names, count, index);
+                                            match source_ml_source2_s157 {
                                                 self::MlSource1TemporaryReadJavaScriptArrayFormalDefaultBindingPositionsLoop22Result::MlSource1TemporaryReadJavaScriptArrayFormalDefaultBindingPositionsLoop22Done(cursor_5, names_3) => {
                                                     {
                                                         (cursor, names) = (cursor_5, names_3);
@@ -498,15 +533,15 @@ pub fn source_ml_source1_temporary_partition_java_script_formal_initializer_bind
                     if position < binding {
                         {
                             let available_2 = {
-                                let source_ml_source2_concat_value155 = available;
+                                let source_ml_source2_concat_value158 = available;
                                 {
-                                    let source_ml_source2_concat_value156 = vec![position];
+                                    let source_ml_source2_concat_value159 = vec![position];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<f64>::new(),
-                                            source_ml_source2_concat_value155,
+                                            source_ml_source2_concat_value158,
                                         ),
-                                        source_ml_source2_concat_value156,
+                                        source_ml_source2_concat_value159,
                                     )
                                 }
                             };
@@ -522,15 +557,15 @@ pub fn source_ml_source1_temporary_partition_java_script_formal_initializer_bind
                     {
                         {
                             let uninitialized_2 = {
-                                let source_ml_source2_concat_value157 = uninitialized;
+                                let source_ml_source2_concat_value160 = uninitialized;
                                 {
-                                    let source_ml_source2_concat_value158 = vec![position];
+                                    let source_ml_source2_concat_value161 = vec![position];
                                     self::ml_array::append(
                                         self::ml_array::append(
                                             Vec::<f64>::new(),
-                                            source_ml_source2_concat_value157,
+                                            source_ml_source2_concat_value160,
                                         ),
-                                        source_ml_source2_concat_value158,
+                                        source_ml_source2_concat_value161,
                                     )
                                 }
                             };
@@ -606,8 +641,8 @@ pub fn source_ml_source1_temporary_find_java_script_array_formal_initializer_ass
             {
                 let parameter = 0f64;
                 {
-                    let source_ml_source2_s159 = self::source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop25(assignments, parameters, index, parameter);
-                    match source_ml_source2_s159 {
+                    let source_ml_source2_s162 = self::source_ml_source1_temporary_find_java_script_array_formal_initializer_assignment_loop25(assignments, parameters, index, parameter);
+                    match source_ml_source2_s162 {
                         self::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop25Result::MlSource1TemporaryFindJavaScriptArrayFormalInitializerAssignmentLoop25Done => {
                             {
                                 let index_2 = index + 1f64;
@@ -843,39 +878,19 @@ pub fn source_ml_source1_temporary_accept_java_script_record_parameter_bound_nam
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop29Result {
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop29Done(f64, f64, Vec<f64>),
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop29Return(Vec<f64>),
+pub enum MlSource1TemporaryPlanJavaScriptObjectPatternBindingsLoop29Result {
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsLoop29Done(f64, Vec<f64>),
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsLoop29Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin30 {
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin30Next(
-        f64,
-        Vec<self::ml_string::Text>,
-        Vec<f64>,
-    ),
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin30Return(Vec<f64>),
+pub enum MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin31 {
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin31Next(f64, f64, f64),
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin31Return(Vec<f64>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop31Result {
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop31Done(
-        f64,
-        Vec<self::ml_string::Text>,
-        Vec<f64>,
-    ),
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsLoop31Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin33 {
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin33Next(f64, f64, f64),
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin33Return(Vec<f64>),
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin32 {
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin32Next(f64, f64),
-    MlSource1TemporaryPlanJavaScriptRecordParameterBindingsJoin32Return(Vec<f64>),
+pub enum MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin30 {
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin30Next(f64, f64),
+    MlSource1TemporaryPlanJavaScriptObjectPatternBindingsJoin30Return(Vec<f64>),
 }

@@ -47,6 +47,7 @@ mod lexical_bindings;
 mod loops;
 mod lowering;
 mod math;
+mod object_binding_declarations;
 mod object_properties;
 mod owned_array_append;
 mod product_source_rules;

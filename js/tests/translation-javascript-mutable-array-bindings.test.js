@@ -141,8 +141,14 @@ test('mutable array binding temporal dead zones duplicates and unsupported recei
   for (const binding of [
     '[first]=values', '[first,second]=[1]', '[first]=[1,2]',
     '[first=2]=[1]', '[...first]=[1]', '[[first]]=[[1]]', '[,first]=[1,2]',
-    '[first]=[...values]', '{first}={first:1}',
+    '[first]=[...values]',
   ]) assert.throws(() => parseJavaScript(`function selected(values){let ${binding};return 0;}`), /let destructuring/u);
+});
+
+test('the retained former mutable object binding refusal has its original source and value',()=>{
+  const original='function selected(values){let {first}={first:1};return 0;}';
+  parseJavaScript(original);
+  equivalent(original+'console.log(selected(0));',{lines:['0'],error:null});
 });
 
 test('mutable literal binding owners reject actual redeclarations and preserve nested and loop shadows', () => {

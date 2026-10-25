@@ -460,7 +460,6 @@ fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
         "[[first]]=[[1]]",
         "[,first]=[1,2]",
         "[first]=[...values]",
-        "{first}={first:1}",
     ] {
         let source = format!("function selected(values){{let {binding};return 0;}}");
         let error = parse_javascript(&source).unwrap_err();
@@ -556,5 +555,15 @@ fn represented_defaults_keep_actual_absence_and_lazy_initializer_effects() {
         "../experiments/javascript-program/binding-default-oracle.mjs",
         "JavaScript represented binding defaults",
         meta_language::create_array_binding_program_links,
+    );
+}
+
+#[test]
+fn retained_former_mutable_object_input_keeps_its_original_value() {
+    let original = "function selected(values){let {first}={first:1};return 0;}";
+    parse_javascript(original).unwrap();
+    require_declaration_list_equivalent(
+        &format!("{original}console.log(selected(0));"),
+        &serde_json::json!({"lines":["0"],"error":null}),
     );
 }

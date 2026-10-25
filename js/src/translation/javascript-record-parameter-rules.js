@@ -3,7 +3,7 @@
 import { acceptJavaScriptSourceBindingName } from './source-identifier-rules.js';
 import { acceptJavaScriptArrayBindingName } from './array-binding-rules.js';
 import { readRequiredTextFact, readRequiredBooleanFact,readRequiredNumberFact } from './fact-column-rules.js';
-import {findJavaScriptPatternDefaultExpressionEnd} from './array-formal-parameter-rules.js';
+import {findJavaScriptPatternDefaultExpressionEnd,readJavaScriptArrayFormalDefaultScopeBoundary} from './array-formal-parameter-rules.js';
 
 /** Detect only an actual object pattern at a formal parameter start. Ordinary
  * names/defaults remain on the old route unless a real pattern also occurs.
@@ -71,6 +71,39 @@ function acceptJavaScriptRecordParameterBoundName(kind, name, names, reserved, o
   return acceptJavaScriptSourceBindingName(kind, name, duplicate, reserved);
 }
 
+/** Complete actual flat object-pattern syntax shared by formal and lexical
+ * binding contexts. Profile 0 preserves historical BoundNames, 1 admits
+ * ordinary required names, 2 adds exact original initializer intervals.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @param {string[]} previous @param {number} profile
+ * @returns {number[]} */
+export function planJavaScriptObjectPatternBindings(kinds,values,start,reserved,previous,profile){
+ if(kinds.length!==values.length||!Number.isInteger(start)||start<0||start>=kinds.length||profile<0||profile>2||!Number.isInteger(profile))return [-1,start];
+ if(readRequiredTextFact(kinds,start)!=='punct'||readRequiredTextFact(values,start)!=='{')return [-1,start];
+ let at=start+1;let names=previous.slice(),pairs=[];
+ while(at<kinds.length&&!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}')){
+  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='...')return [-6,at];
+  if(readRequiredTextFact(kinds,at)!=='identifier')return [-7,at];
+  const property=at;at+=1;if(at>=kinds.length)return [-1,at];let binding=property;
+  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)===':'){
+   at+=1;if(at>=kinds.length)return [-1,at];
+   if(readRequiredTextFact(kinds,at)==='punct'&&(readRequiredTextFact(values,at)==='{'||readRequiredTextFact(values,at)==='['))return [-5,at];
+   binding=at;at+=1;
+  }
+  const name=readRequiredTextFact(values,binding);
+  if(!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds,binding),name,names,reserved,profile>0))return [-8,binding];
+  names=names.concat([name]);if(at>=kinds.length)return [-1,at];let first=-1,last=-1;
+  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='='){
+   if(profile!==2)return [-2,at];first=at+1;last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,'}');if(last<0)return [-1,first];at=last;
+  }
+  pairs=pairs.concat(profile===2?[property,binding,first,last]:[property,binding]);
+  if(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)===','){at+=1;continue;}
+  if(!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}'))return [-1,at];
+ }
+ if(pairs.length===0)return [-4,start];
+ if(at>=kinds.length||!(readRequiredTextFact(kinds,at)==='punct'&&readRequiredTextFact(values,at)==='}'))return [-1,at];
+ return [at+1,pairs.length/(profile===2?4:2)].concat(pairs);
+}
 /** @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @param {boolean} ordinary @param {boolean} defaults @returns {number[]} */
 function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, ordinary,defaults) {
@@ -85,42 +118,12 @@ function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, o
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '...') return [-6, at];
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '[') return [-3, at];
     if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '{') {
-      const open = at;
-      at += 1;
-      /** @type {number[]} */
-      let pairs = [];
-      while (at < kinds.length && !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) {
-        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '...') return [-6, at];
-        if (readRequiredTextFact(kinds, at) !== 'identifier') return [-7, at];
-        const property = at;
-        at += 1;
-        if (at >= kinds.length) return [-1, at];
-        let binding = property;
-        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ':') {
-          at += 1;
-          if (at >= kinds.length) return [-1, at];
-          if (readRequiredTextFact(kinds, at) === 'punct' && (readRequiredTextFact(values, at) === '{' || readRequiredTextFact(values, at) === '[')) return [-5, at];
-          binding = at;
-          at += 1;
-        }
-        const name = readRequiredTextFact(values, binding);
-        if (!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds, binding), name, names, reserved, ordinary)) return [-8, binding];
-        names.push(name);
-        if (at >= kinds.length) return [-1, at];
-        let first=-1,last=-1;
-        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '=') {
-          if(!defaults)return [-2,at];first=at+1;
-          last=findJavaScriptPatternDefaultExpressionEnd(kinds,values,first,'}');
-          if(last<0)return [-1,first];at=last;
-        }
-        pairs=pairs.concat(defaults?[property,binding,first,last]:[property,binding]);
-        if (readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ',') { at += 1; continue; }
-        if (!(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
-      }
-      if (pairs.length === 0) return [-4, open];
-      if (at >= kinds.length || !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === '}')) return [-1, at];
-      instructions = instructions.concat([1, slot, open, at, pairs.length / (defaults?4:2)]).concat(pairs);
-      at += 1;
+      const open=at,profile=defaults?2:ordinary?1:0;
+      const pattern=planJavaScriptObjectPatternBindings(kinds,values,at,reserved,names,profile);
+      if(readRequiredNumberFact(pattern,0)<0)return pattern;
+      at=readRequiredNumberFact(pattern,0);const count=readRequiredNumberFact(pattern,1),width=defaults?4:2;
+      instructions=instructions.concat([1,slot,open,at-1,count],pattern.slice(2));
+      for(let index=0;index<count;index+=1)names.push(readRequiredTextFact(values,readRequiredNumberFact(pattern,2+index*width+1)));
     } else {
       const name = readRequiredTextFact(values, at);
       if (!acceptJavaScriptRecordParameterBoundName(readRequiredTextFact(kinds, at), name, names, reserved, ordinary)) return [-8, at];
@@ -136,6 +139,27 @@ function planJavaScriptRecordParameterBindings(kinds, values, start, reserved, o
   }
   if (at >= kinds.length || !(readRequiredTextFact(kinds, at) === 'punct' && readRequiredTextFact(values, at) === ')')) return [-1, at];
   return [at + 1, slot].concat(instructions);
+}
+
+/** @param {string} context @returns {number} */
+export function readJavaScriptPatternInitializerScopeBoundary(context){return context==='ordinary object binding declaration'?0:readJavaScriptArrayFormalDefaultScopeBoundary(context);}
+/** @param {string} context @returns {string} */
+export function readJavaScriptPatternInitializerSubject(context){return context==='ordinary object binding declaration'?'binding':'parameter';}
+/** @param {string} context @returns {string} */
+export function readJavaScriptPatternInitializerReferenceReason(context){return context==='ordinary object binding declaration'?'the current binding initializer profile requires initialized earlier lexical bindings':'the current default profile requires a closed parameter initialization environment';}
+/** @param {string} context @returns {string} */
+export function readJavaScriptPatternInitializerAssignmentReason(context){return context==='ordinary object binding declaration'?'writes during binding initialization need their shared environment interpretation':'writes during parameter initialization need their shared environment interpretation';}
+/** @param {string} mode @returns {string} */
+export function readJavaScriptObjectBindingStatement(mode){return mode==='let'?'let':mode==='const'?'const':'';}
+/** @param {string} kind @param {string} name @param {string[]} reserved @returns {boolean} */
+export function acceptJavaScriptObjectBindingName(kind,name,reserved){return acceptJavaScriptSourceBindingName(kind,name,false,reserved);}
+/** Local declarations and their TDZ census share the same admitted names.
+ * @param {number[]} plan @returns {number[]} */
+export function readJavaScriptObjectPatternBindingPositions(plan){
+ if(plan.length<2||readRequiredNumberFact(plan,0)<0)throw new RangeError('an object binding census needs its admitted default-enabled pattern plan');
+ const count=readRequiredNumberFact(plan,1);let positions=[];
+ for(let index=0;index<count;index+=1)positions=positions.concat([readRequiredNumberFact(plan,3+index*4)]);
+ return positions;
 }
 
 /** The first profile has no default-environment, mutable parameter or async

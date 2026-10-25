@@ -951,14 +951,8 @@ impl JavaScriptParser {
             if c.peek().kind == TokenKind::Identifier {
                 collect(c.peek().value.clone());
             } else if c.is("{") {
-                let mut offset = 1;
-                while !c.is_at("}", offset) && !c.is_kind_at(TokenKind::Eof, offset) {
-                    if c.peek_at(offset).kind == TokenKind::Identifier
-                        && (c.is_at(",", offset + 1) || c.is_at("}", offset + 1))
-                    {
-                        collect(c.peek_at(offset).value.clone());
-                    }
-                    offset += 1;
+                for token in self.object_binding_names(c.index) {
+                    collect(token.value);
                 }
             } else if c.is("[") {
                 for token in self.array_binding_names(c.index) {
