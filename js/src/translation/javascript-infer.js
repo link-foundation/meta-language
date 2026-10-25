@@ -31,6 +31,8 @@ import { readJavaScriptBindingDefaultConstraints } from './array-binding-inferen
 import { checkJavaScriptArrayBindingWrapper } from './array-binding-validation.js';
 import { readInferenceTermIdentity, readOptionalAdditionalAbsence, readOptionalCoalescingConstraints, readOptionalFieldInference, readOptionalJoinConstraints, readOptionalTypeConstraints } from './optional-inference.js';
 import { mergeOptionalAbsence } from './structured-type-rules.js';
+import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
+import {completeOptionalCallableTerms} from './optional-callables.js';
 import { readOptionalBigIntConstraint, readOptionalCallBinding, readOptionalJoinBinding, readOptionalNumericTerm, requireInferenceJoinAlias, requireOptionalResultBinding } from './optional-value-rules.js';
 import { readRecordFieldInsertionOrder, readRecordFieldPosition, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordFieldInferenceStep } from './record-value-rules.js';
 import { containsRecordTypeOwner } from './record-type-facts.js';
@@ -113,6 +115,7 @@ class Inference {
     this.iterables = [];
     this.arrayFormalIterables=[];
     this.recursiveBindingIterables=[];
+    this.computedCalls=[];
     this.indices = [];
     this.cells = new Map();
     this.arithmetic = [];
@@ -524,6 +527,14 @@ class Inference {
           progress = true;
         }
       }
+      for(const constraint of [...this.computedCalls]){
+        const fn=this.resolve(constraint.fn);if(fn.kind==='var')continue;
+        const args=fn.kind==='function'?completeOptionalCallableTerms(fn.params.map(param=>this.resolve(param)),constraint.args):constraint.args;
+        const candidate=constructCallableFunctionType(args.map(type=>({type})),constraint.result),selected=readCallableApplicationConstraints(fn,args,candidate);
+        for(const pair of selected.pairs)this.unify(...pair,constraint.where);
+        if(selected.ret)this.unify(constraint.result,selected.ret,constraint.where);
+        this.computedCalls.splice(this.computedCalls.indexOf(constraint),1);progress=true;
+      }
       for (const { signature, args, where } of this.calls) {
         args.forEach((arg, index) => {
           const param = signature.params[index];
@@ -608,6 +619,7 @@ class Inference {
         this.unify(...readOptionalCoalescingConstraints(coalesced.left, this.resolve(coalesced.left), coalesced.right, true), coalesced.where);
         progress = true;
       }
+      if(!progress&&this.computedCalls.length){const call=this.computedCalls.find(constraint=>this.resolve(constraint.fn).kind==='var');if(call){this.unify(call.fn,constructCallableFunctionType(call.args.map(type=>({type})),call.result),call.where);progress=true;}}
       if(!progress&&this.arrayFormalIterables.length){const iterable=this.arrayFormalIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
       if(!progress&&this.recursiveBindingIterables.length){const iterable=this.recursiveBindingIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
       if (!progress && this.iterables.length) {
@@ -864,8 +876,10 @@ class Inference {
         const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;
         if (requireCallableNamedInference(node.fn.k, node.fn.path?.length ?? 0, Boolean(local))) return this.call(node.fn.path, node.args, env, node.span);
         const fn = local ?? this.expr(node.fn, env);
-        const args = node.args.map((arg) => this.expr(arg, env));
+        let args = node.args.map((arg) => this.expr(arg, env));
         const resolved = this.resolve(fn);
+        if(resolved.kind==='var'){const result=this.fresh();this.computedCalls.push({fn,args,result,where:node.span});return result;}
+        if(resolved.kind==='function')args=completeOptionalCallableTerms(resolved.params.map(param=>this.resolve(param)),args);
         if (acceptCallableApplicationInferenceResult(resolved.kind, resolved.params?.length ?? 0, args.length)) {
           const constraints = readCallableApplicationConstraints(resolved, args, undefined);
           for (const [left, right] of constraints.pairs) this.unify(left, right, node.span);
@@ -921,7 +935,12 @@ class Inference {
         const plan = readCallableLambdaInference(node, want);
         const params = plan.params.map(({ type, declared }) => declared ? this.declared(type) : type ?? this.fresh());
         const scope = new Map(env);
-        node.params.forEach((param, index) => scope.set(param.name, params[index]));
+        node.params.forEach((param, index) => {
+          if(acceptBodyEntryOptionalParameter(param.optional===true,param.default?.k??'',param.default?.absence??'')){
+            const selected=this.resolve(params[index]);params[index]=selected.kind==='option'?{kind:'option',element:selected.element,absence:mergeOptionalAbsence(selected.absence,'undefined')}:{kind:'option',element:params[index],absence:'undefined'};
+          }
+          scope.set(param.name, params[index]);
+        });
         const ret = plan.declaredRet ? this.declared(plan.ret) : plan.ret ?? this.fresh();
         const body = this.expr(node.body, scope, ret);
         this.unify(body, ret, node.span);
@@ -1324,8 +1343,11 @@ class Inference {
     if(receiver.kind==='record'){
       const field=receiver.fields.find(field=>field.name===op);
       if(!field)return true;
-      const callable=this.resolve(field.type),step=readJavaScriptRecordMethodInferenceStep(callable.kind,callable.params?.length??0,args.length);
-      if(step==='apply'||step==='infer')this.unify(field.type,constructCallableFunctionType(args.map(type=>({type})),result),where);
+      const callable=this.resolve(field.type);
+      if(callable.kind==='var'){this.computedCalls.push({fn:field.type,args,result,where});return true;}
+      const callArguments=callable.kind==='function'?completeOptionalCallableTerms(callable.params.map(param=>this.resolve(param)),args):args;
+      const step=readJavaScriptRecordMethodInferenceStep(callable.kind,callable.params?.length??0,callArguments.length);
+      if(step==='apply'||step==='infer')this.unify(field.type,constructCallableFunctionType(callArguments.map(type=>({type})),result),where);
       return true;
     }
     if(op==='toString'){if(node&&args.length===0)this.propertyMethods.set(node,'text');this.unify(result,STRING,where);return true;}

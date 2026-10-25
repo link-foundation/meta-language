@@ -196,6 +196,9 @@ impl Inference {
                 progress = true;
             }
             if !progress {
+                progress |= self.settle_unknown_computed_callable()?;
+            }
+            if !progress {
                 let unknown = self
                     .array_formal_iterables
                     .iter()

@@ -31,7 +31,7 @@ pub fn read_java_script_whole_parameter_binding_positions(plan: &[f64]) -> Vec<f
 /// Execute the checked shared source algorithm.
 #[must_use]
 pub fn accept_java_script_whole_parameter_default_context(context: &self::ml_string::Text) -> bool {
-    ((((*context)
+    (((((((*context)
         == (self::ml_string::Text::from_units(vec![
             111, 114, 100, 105, 110, 97, 114, 121, 32, 110, 97, 109, 101, 100, 32, 102, 117, 110,
             99, 116, 105, 111, 110, 32, 100, 101, 99, 108, 97, 114, 97, 116, 105, 111, 110,
@@ -51,6 +51,22 @@ pub fn accept_java_script_whole_parameter_default_context(context: &self::ml_str
             == (self::ml_string::Text::from_units(vec![
                 111, 114, 100, 105, 110, 97, 114, 121, 32, 110, 97, 109, 101, 115, 112, 97, 99,
                 101, 32, 111, 98, 106, 101, 99, 116, 32, 109, 101, 116, 104, 111, 100,
+            ]))))
+        || ((*context)
+            == (self::ml_string::Text::from_units(vec![
+                111, 114, 100, 105, 110, 97, 114, 121, 32, 97, 114, 114, 111, 119, 32, 102, 117,
+                110, 99, 116, 105, 111, 110, 32, 99, 108, 111, 115, 117, 114, 101,
+            ]))))
+        || ((*context)
+            == (self::ml_string::Text::from_units(vec![
+                111, 114, 100, 105, 110, 97, 114, 121, 32, 102, 117, 110, 99, 116, 105, 111, 110,
+                32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110, 32, 99, 108, 111, 115, 117,
+                114, 101,
+            ]))))
+        || ((*context)
+            == (self::ml_string::Text::from_units(vec![
+                111, 114, 100, 105, 110, 97, 114, 121, 32, 111, 98, 106, 101, 99, 116, 32, 109,
+                101, 116, 104, 111, 100, 32, 99, 108, 111, 115, 117, 114, 101,
             ])))
 }
 

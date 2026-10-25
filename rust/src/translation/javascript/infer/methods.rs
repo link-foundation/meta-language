@@ -480,6 +480,21 @@ impl Inference {
                 .map(|(_, ty)| ty.clone());
             if let Some(field) = field {
                 let callable = self.resolve(&field);
+                if matches!(callable, Term::Var(_)) {
+                    self.computed_calls.push(super::ComputedCall {
+                        function: field,
+                        arguments: method.args.clone(),
+                        result: method.result.clone(),
+                        place: method.place,
+                    });
+                    return Ok(true);
+                }
+                let call_arguments = match &callable {
+                    Term::Function { params, .. } => {
+                        self.complete_optional_callable_terms(params, &method.args)
+                    }
+                    _ => method.args.clone(),
+                };
                 let (kind, parameters) = match &callable {
                     Term::Var(_) => ("var", 0),
                     Term::Function { params, .. } => ("function", params.len()),
@@ -494,13 +509,13 @@ impl Inference {
                 let step = property_rules::read_java_script_record_method_inference_step(
                     kind,
                     count(parameters),
-                    count(method.args.len()),
+                    count(call_arguments.len()),
                 );
                 if step == "apply" || step == "infer" {
                     self.unify(
                         &field,
                         &Term::Function {
-                            params: method.args.clone(),
+                            params: call_arguments,
                             ret: Box::new(method.result.clone()),
                         },
                         method.place,

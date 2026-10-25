@@ -365,6 +365,7 @@ impl Inference {
                 progress = true;
             }
         }
+        progress |= self.solve_computed_callable_arguments()?;
         for call in self.calls.clone() {
             for (index, (argument, parameter)) in
                 call.arguments.iter().zip(&call.parameters).enumerate()

@@ -133,6 +133,9 @@ impl Checker {
             Type::Function { params, ret } => (params.as_slice(), Some(ret.as_ref())),
             _ => (&[][..], None),
         };
+        let completed =
+            super::optional_callables::complete_arguments(self.language, params, args, span);
+        let args = completed.as_slice();
         let error = rules::read_callable_application_error(
             function.ty.kind(),
             number(params.len()),
@@ -204,7 +207,20 @@ impl Checker {
             kind,
             operation,
             number(count),
-            number(args.len()),
+            number(
+                selected
+                    .and_then(|field| match &field.ty {
+                        Type::Function { params, .. } => {
+                            Some(super::optional_callables::argument_count(
+                                self.language,
+                                params,
+                                args.len(),
+                            ))
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or(args.len()),
+            ),
         );
         if !error.is_empty() {
             return Err(type_error(error, span));

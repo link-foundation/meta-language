@@ -96,6 +96,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             Some(include_str!("../data/object-entry-pair-program.lino"))
         }
         "object-rest-program.lino" => Some(include_str!("../data/object-rest-program.lino")),
+        "optional-callable-program.lino" => {
+            Some(include_str!("../data/optional-callable-program.lino"))
+        }
         "optional-value-program.lino" => Some(include_str!("../data/optional-value-program.lino")),
         "owned-array-reader-domain-program.lino" => Some(include_str!(
             "../data/owned-array-reader-domain-program.lino"
@@ -174,6 +177,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             Some(include_str!("../data/utf16-method-emission-program.lino"))
         }
         "utf16-text-program.lino" => Some(include_str!("../data/utf16-text-program.lino")),
+        "whole-parameter-default-bab148f9-program.lino" => Some(include_str!(
+            "../data/whole-parameter-default-bab148f9-program.lino"
+        )),
         "whole-parameter-default-program.lino" => {
             Some(include_str!("../data/whole-parameter-default-program.lino"))
         }

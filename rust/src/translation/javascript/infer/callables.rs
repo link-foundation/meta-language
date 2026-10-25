@@ -3,6 +3,7 @@
 use super::term_facts::TermFacts;
 use super::{Env, HashSet, Inference, Result, SExpr, SNode, Span, Term, Type, type_error};
 use crate::translation::callable_source_rules as rules;
+mod optional_arguments;
 
 pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
     match value {
@@ -164,11 +165,24 @@ impl Inference {
             Some(local) => local,
             None => self.expr(head, env)?,
         };
-        let arguments = arguments
+        let mut arguments = arguments
             .iter()
             .map(|argument| self.expr(argument, env))
             .collect::<Result<Vec<_>>>()?;
         let resolved = self.resolve(&function);
+        if matches!(resolved, Term::Var(_)) {
+            let result = self.fresh(false);
+            self.computed_calls.push(super::ComputedCall {
+                function,
+                arguments,
+                result: result.clone(),
+                place,
+            });
+            return Ok(result);
+        }
+        if let Term::Function { params, .. } = &resolved {
+            arguments = self.complete_optional_callable_terms(params, &arguments);
+        }
         let (kind, count) = match &resolved {
             Term::Function { params, .. } => ("function", params.len()),
             Term::Known(ty) => (ty.kind(), 0),
@@ -243,6 +257,7 @@ impl Inference {
                         selection[1],
                         selection[2].to_bits() == 1.0_f64.to_bits(),
                     )?;
+                    let term = self.body_entry_parameter_term(parameter, term);
                     scope.insert(parameter.name.clone(), term.clone());
                     parameters.push(term);
                 }

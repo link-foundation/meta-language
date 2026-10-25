@@ -406,3 +406,5 @@ mod translation_rust_match_guards;
 mod translation_javascript_sequential_parameter_defaults;
 
 mod translation_javascript_whole_parameter_defaults;
+
+mod translation_javascript_optional_callables;

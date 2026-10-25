@@ -41,7 +41,7 @@ export function readJavaScriptWholeParameterBindingPositions(plan){
  return result;
 }
 /** @param {string} context @returns {boolean} */
-export function acceptJavaScriptWholeParameterDefaultContext(context){return context==='ordinary named function declaration'||context==='ordinary constant arrow function'||context==='ordinary constant function expression'||context==='ordinary namespace object method';}
+export function acceptJavaScriptWholeParameterDefaultContext(context){return context==='ordinary named function declaration'||context==='ordinary constant arrow function'||context==='ordinary constant function expression'||context==='ordinary namespace object method'||context==='ordinary arrow function closure'||context==='ordinary function expression closure'||context==='ordinary object method closure';}
 /** Retained call-site commutation predicate. The current frontend instead uses
  * ordered body entries; this predicate never licenses moving a later default.
  * @param {number[]} plan @returns {boolean} */

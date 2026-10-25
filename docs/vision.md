@@ -4163,8 +4163,8 @@ and a later default cannot move before an earlier pattern's binding effects.
 A retained source predicate still describes when call-site initialization would
 commute; the body-entry implementation does not rely on that restriction.
 Independent future controls retain both earlier binding failure and later
-default failure after a successful pattern. Dynamic callable defaults and empty
-whole patterns retain separate explicit obligations.
+default failure after a successful pattern. Empty whole patterns retain a
+separate explicit obligation.
 
 Future whole-default products retain object/array/nested/rest boundaries,
 ordinary and pattern dependencies, represented callable contexts and lazy
@@ -4173,6 +4173,32 @@ predecessor assertions at `93180d37` remain hashed Links history. Both codecs,
 four emissions and native products are deferred. Nullish destructibility and
 its complete source diagnostics, full parameter environments and every earlier
 source-language requirement remain unfinished.
+
+Optional callable arguments now have a shared source plan. A missing trailing
+argument is constructed as undefined only when its actual parameter type admits
+that absence. Required domains and null-only optional domains retain their arity
+errors. Both inference and checking use the same slots. Computed signatures wait
+for their actual function or record-field owner before selecting missing slots;
+an otherwise unresolved function retains the original inference fallback.
+
+Whole-default body entries also admit the existing synchronous closure and
+object-method contexts. Their raw optional parameter domain stays distinct from
+the type of a supplied iterable element. A callback bridge captures the actual
+callee once and explicitly wraps only matching present arguments before applying
+it. Existing typed function, optional and lambda operations express the complete
+bridge. Exact parameters, ordinal and accumulator roles stay unchanged; unsupported
+conversions remain errors. The default expression stays in the callee entry
+sequence, retaining original captures and failure order.
+
+The complete preceding whole-default definition graph from `bab148f9` remains a
+separate published source-program asset in both packages. Its expanded current
+context domain receives no equivalence claim. Future controls cover local,
+returned, higher-order and record-method invocations, optional map/filter/reduce
+callbacks and original evaluation traces. The former callback context input is
+retained with its original value obligation; missing/inherited property protocols
+remain a separate implementation scope. Extra arguments, missing required
+arguments, general function variance/polymorphism and full JavaScript function
+semantics remain obligations. No runtime observation or test has run in this phase.
 
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:

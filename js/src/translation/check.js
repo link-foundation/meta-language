@@ -18,6 +18,8 @@ import {checkRustEmptyOptionProof} from './rust-empty-options.js';
 import {acceptConditionalChainOperation} from './conditional-chain-rules.js';
 import {checkConditionalChainValue} from './conditional-chain-values.js';
 import {requiresSequentialParameterDefaults,checkSequentialParameterCall} from './sequential-parameter-defaults.js';
+import {completeOptionalCallableArguments,constructOptionalCallbackBridge} from './optional-callables.js';
+import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -750,6 +752,7 @@ class Checker {
           const type = declared ? this.resolveType(selected, path, param.span) : selected;
           if (!type) throw typeError(`cannot infer callback parameter ${param.name}`, param.span ?? node.span);
           bindLocal(inner, param.name, type);
+          if(acceptBodyEntryOptionalParameter(param.optional===true,param.default?.k??'',param.default?.absence??'')){const source={...param};delete source.optional;return {...source,type};}
           return { ...param, type };
         });
         installJavaScriptOwnKeyCallbackBindings(node,params,inner);
@@ -1162,9 +1165,10 @@ class Checker {
     const number = (index, fallback) => checked(index, FLOAT, literal(FLOAT, fallback));
     if (object.type.kind === 'record') {
       const field = object.type.fields.find((field) => field.name === node.op);
-      const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, args.length);
+      const callArgs=field?.type.kind==='function'?completeOptionalCallableArguments(this.language,field.type.params,args,node.span):args;
+      const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, callArgs.length);
       if (error) throw typeError(error, node.span);
-      return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: args.map((arg, index) => checked(index, field.type.params[index])), type: field.type.ret };
+      return { k: 'apply', fn: { k: 'recordField', object, field: node.op, index: object.type.fields.indexOf(field), type: field.type }, args: callArgs.map((arg, index) => coerce(this.expr(arg,env,path,field.type.params[index]),field.type.params[index],this.language,arg.span??node.span)), type: field.type.ret };
     }
     if (object.type.kind === 'set' || object.type.kind === 'map') {
       const key = object.type.kind === 'set' ? object.type.element : object.type.key;
@@ -1186,7 +1190,7 @@ class Checker {
     if (object.type.kind === 'array') {
       const element = object.type.element;
       const callback = (index, params, ret) => {
-        const value = this.expr(args[index], env, path, { kind: 'function', params, ret });
+        const value = constructOptionalCallbackBridge(this,this.expr(args[index], env, path, { kind: 'function', params, ret }),params,node.span);
         const kindError = readArrayCallbackSignatureError(node.op, value.type.kind, 0, params.length, true, true, '');
         if (kindError) throw typeError(kindError, node.span);
         const parametersMatch = value.type.params.length > params.length
@@ -1535,6 +1539,7 @@ class Checker {
   application(head, args, env, path, expected, span) {
     if (requireCallableComputedApplication(head.k, head.path?.length ?? 0, head.path?.length === 1 ? env.get(head.path[0])?.kind ?? '' : '')) {
       const fn = this.expr(head, env, path, undefined);
+      if(fn.type.kind==='function')args=completeOptionalCallableArguments(this.language,fn.type.params,args,span);
       const error = readCallableApplicationError(fn.type.kind, fn.type.params?.length ?? 0, args.length);
       if (error) throw typeError(error, span);
       return { k: 'apply', fn, args: args.map((arg, index) => coerce(this.expr(arg, env, path, fn.type.params[index]), fn.type.params[index], this.language, span)), type: fn.type.ret };

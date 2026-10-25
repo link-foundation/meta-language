@@ -237,6 +237,12 @@ struct IterableOf {
     result: Term,
     place: Option<Span>,
 }
+struct ComputedCall {
+    function: Term,
+    arguments: Vec<Term>,
+    result: Term,
+    place: Option<Span>,
+}
 
 struct Inference {
     /// Constructors of every data type, in declaration order.
@@ -264,6 +270,7 @@ struct Inference {
     iterables: Vec<IterableOf>,
     array_formal_iterables: Vec<IterableOf>,
     recursive_binding_iterables: Vec<IterableOf>,
+    computed_calls: Vec<ComputedCall>,
     collections: HashMap<*const SExpr, (Term, Option<Span>)>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
@@ -319,6 +326,7 @@ impl Inference {
             iterables: Vec::new(),
             array_formal_iterables: Vec::new(),
             recursive_binding_iterables: Vec::new(),
+            computed_calls: Vec::new(),
             collections: HashMap::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],

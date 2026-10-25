@@ -60,6 +60,7 @@ mod number_bitwise;
 mod number_conversions;
 mod numeric_failures;
 mod object_rest;
+mod optional_callables;
 mod optional_values;
 mod primitive_methods;
 mod record_formal_defaults;

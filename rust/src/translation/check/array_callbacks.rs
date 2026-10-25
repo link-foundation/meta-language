@@ -121,6 +121,7 @@ impl Checker {
             .and_then(Option::as_ref)
             .ok_or_else(|| type_error(signature_error(op, &UNIT, &params, ret), node.span))?;
         let callback = self.expr_with_callable_expectation(callback, env, path, &params, ret)?;
+        let callback = self.optional_callback_bridge(callback, &params, node.span)?;
         let error = signature_error(op, &callback.ty, &params, ret);
         if !error.is_empty() {
             return Err(type_error(error, node.span));
