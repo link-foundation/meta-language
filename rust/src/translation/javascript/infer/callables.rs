@@ -3,6 +3,7 @@
 use super::term_facts::TermFacts;
 use super::{Env, HashSet, Inference, Result, SExpr, SNode, Span, Term, Type, type_error};
 use crate::translation::callable_source_rules as rules;
+mod named_defaults;
 mod optional_arguments;
 
 pub(super) fn has_structural_inference(value: &serde_json::Value) -> bool {
@@ -230,10 +231,10 @@ impl Inference {
         expected: Option<&Term>,
     ) -> Result<Term> {
         match &node.node {
-            SNode::FunctionValue { path } => Ok(self.signature(path).map_or_else(
-                || self.fresh(false),
-                |signature| Self::callable_term(&signature.params, &signature.ret),
-            )),
+            SNode::FunctionValue { path } => match self.signature(path) {
+                Some(signature) => self.named_default_reference_term(&signature, node.span),
+                None => Ok(self.fresh(false)),
+            },
             SNode::Lambda { params, body, .. } => {
                 let expected = expected.map(|term| self.resolve(term));
                 let mut facts = TermFacts::new(&[expected]);

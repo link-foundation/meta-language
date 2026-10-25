@@ -24,6 +24,8 @@ import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js
 import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
 import {checkJavaScriptExcessCallableArguments,checkJavaScriptExcessNamedArguments} from './excess-arguments.js';
 import {convertJavaScriptAbsenceOnlyValue} from './absence-conversions.js';
+import {checkNamedCallableDefaultReference} from './named-default-callables.js';
+import {widenJavaScriptOptionalPolicy} from './optional-policies.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -626,14 +628,14 @@ class Checker {
         }
         const declaration = this.lookup(node.path, path, node.span);
         if (acceptCallableFunctionReference(node.k, expected?.kind ?? '', declaration?.k ?? '')) {
-          return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
+          return checkNamedCallableDefaultReference(this,declaration,node.span)??{ k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
         }
         return this.application(node, [], env, path, expected, node.span);
       }
       case 'functionValue': {
         const declaration = this.lookup(node.path, path, node.span);
         if (!acceptCallableFunctionReference(node.k, '', declaration?.k ?? '')) throw typeError(`unknown function ${node.path.join('.')}`, node.span);
-        return { k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
+        return checkNamedCallableDefaultReference(this,declaration,node.span)??{ k: 'functionRef', fn: declaration.fullName, type: constructCallableFunctionType(declaration.params, declaration.ret) };
       }
       case 'dotCtor':
       case 'app':
@@ -1584,6 +1586,12 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    // A projected core Call already contains initialized, guarded arguments.
+    // Retained source defaults are provenance, not another invocation stage.
+    if(this.checkedProjection){
+      const error=readCallableApplicationError('function',entry.params.length,args.length);if(error)throw typeError(error,span);
+      return {k:'call',fn:entry.fullName,args:args.map((arg,index)=>coerce(this.expr(arg,env,path,entry.params[index].type),entry.params[index].type,this.language,arg.span??span)),type:entry.ret};
+    }
     const excess=checkJavaScriptExcessNamedArguments(this,entry,args,env,path,span);if(excess)return excess;
     if(this.language==='JavaScript'&&requiresSequentialParameterDefaults(entry.params))return checkSequentialParameterCall(this,entry,args,env,path,span);
     const provided = args.length;
@@ -2188,6 +2196,7 @@ export function coerce(value, type, language, span, flavor = undefined) {
   }
   if (optional === 'some') return { k: 'some', value, type };
   const absenceOnly=convertJavaScriptAbsenceOnlyValue(value,type,language);if(absenceOnly)return absenceOnly;
+  const widened=widenJavaScriptOptionalPolicy(value,type,language,span);if(widened)return widened;
   if (language === 'JavaScript' && value.type.kind === 'nat' && type.kind === 'int') {
     return castTo(value, INT, 'exact', span);
   }

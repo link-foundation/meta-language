@@ -162,6 +162,8 @@ struct Signature {
     params: Vec<Term>,
     defaults: Vec<bool>,
     optional_params: Vec<bool>,
+    invocation_defaults: Vec<bool>,
+    guarded_inputs: Vec<bool>,
     ret: Term,
     declared_ret: Option<Term>,
 }

@@ -36,7 +36,7 @@ pub(super) fn requires_sequential_defaults(params: &[Param]) -> bool {
     )
 }
 impl Checker {
-    pub(super) fn sequential_parameter_call(
+    pub(in crate::translation::check) fn sequential_parameter_call(
         &mut self,
         full_name: String,
         params: &[Param],

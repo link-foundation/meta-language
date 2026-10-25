@@ -34,6 +34,7 @@ import { mergeOptionalAbsence } from './structured-type-rules.js';
 import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 import {completeOptionalCallableTerms} from './optional-callables.js';
 import {planJavaScriptExcessArguments} from './excess-argument-rules.js';
+import {namedCallableDefaultFlags,namedCallableReferenceTerms} from './named-default-callables.js';
 import { readOptionalBigIntConstraint, readOptionalCallBinding, readOptionalJoinBinding, readOptionalNumericTerm, requireInferenceJoinAlias, requireOptionalResultBinding } from './optional-value-rules.js';
 import { readRecordFieldInsertionOrder, readRecordFieldPosition, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordFieldInferenceStep } from './record-value-rules.js';
 import { containsRecordTypeOwner } from './record-type-facts.js';
@@ -319,6 +320,8 @@ class Inference {
         params: fn.params.map((param) => this.declared(param.type)),
         defaults: fn.params.map((param) => Boolean(param.default || param.optional)),
         optionalParams: fn.params.map((param) => Boolean(param.optional)),
+        invocationDefaults:namedCallableDefaultFlags(fn.params),
+        guardedInputs:fn.params.map(param=>Boolean(param.guard)),
         ret,
         declaredRet,
       });
@@ -873,7 +876,7 @@ class Inference {
       }
       case 'functionValue': {
         const signature = this.signature(node.path);
-        return signature ? constructCallableFunctionType(signature.params.map(type => ({ type })), signature.ret) : this.fresh();
+        return signature ? constructCallableFunctionType(namedCallableReferenceTerms(signature,type=>this.resolve(type)).map(type => ({ type })), signature.ret) : this.fresh();
       }
       case 'app': {
         const local = node.fn.k === 'name' && node.fn.path.length === 1 ? env.get(node.fn.path[0]) : null;

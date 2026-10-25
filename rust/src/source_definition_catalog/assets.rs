@@ -101,6 +101,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
             Some(include_str!("../data/link-allocation-program.lino"))
         }
         "module-binding-program.lino" => Some(include_str!("../data/module-binding-program.lino")),
+        "named-default-callable-program.lino" => {
+            Some(include_str!("../data/named-default-callable-program.lino"))
+        }
         "number-bitwise-program.lino" => Some(include_str!("../data/number-bitwise-program.lino")),
         "object-entry-pair-program.lino" => {
             Some(include_str!("../data/object-entry-pair-program.lino"))
@@ -108,6 +111,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "object-rest-program.lino" => Some(include_str!("../data/object-rest-program.lino")),
         "optional-callable-program.lino" => {
             Some(include_str!("../data/optional-callable-program.lino"))
+        }
+        "optional-policy-program.lino" => {
+            Some(include_str!("../data/optional-policy-program.lino"))
         }
         "optional-value-program.lino" => Some(include_str!("../data/optional-value-program.lino")),
         "owned-array-reader-domain-program.lino" => Some(include_str!(

@@ -167,6 +167,36 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if self.checked_projection {
+            let number = |value: usize| {
+                serde_json::Number::from(value)
+                    .as_f64()
+                    .expect("actual core arity")
+            };
+            let error = crate::translation::callable_source_rules::read_callable_application_error(
+                "function",
+                number(params.len()),
+                number(args.len()),
+            );
+            if !error.is_empty() {
+                return Err(type_error(error, span));
+            }
+            let checked = args
+                .iter()
+                .zip(params)
+                .map(|(arg, param)| {
+                    let value = self.expr(arg, env, path, Some(&param.ty), false)?;
+                    self.coerce(value, &param.ty, arg.span.or(span))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            return Ok(Expr::new(
+                Node::Call {
+                    func: full_name,
+                    args: checked,
+                },
+                ret,
+            ));
+        }
         if let Some(value) = self.excess_named_arguments(
             &full_name,
             params,

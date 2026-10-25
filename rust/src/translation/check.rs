@@ -59,11 +59,13 @@ mod javascript_own_properties;
 mod javascript_property_calls;
 mod matches;
 mod math;
+mod named_default_callables;
 mod number_bitwise;
 mod number_conversions;
 mod numeric_failures;
 mod object_rest;
 mod optional_callables;
+mod optional_policies;
 mod optional_values;
 mod primitive_methods;
 mod record_formal_defaults;
@@ -250,6 +252,9 @@ pub fn coerce(
         _ => {}
     }
     if let Some(converted) = absence_conversions::convert_absence_only_value(&value, ty, language) {
+        return Ok(converted);
+    }
+    if let Some(converted) = optional_policies::widen_optional_policy(&value, ty, language, span)? {
         return Ok(converted);
     }
     if language == Language::JavaScript && value.ty == Type::Nat && *ty == Type::Int {

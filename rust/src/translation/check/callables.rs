@@ -62,7 +62,7 @@ fn callable_type(parameters: &[impl serde::Serialize], ret: &Type) -> Type {
 
 impl Checker {
     pub(super) fn callable_reference(
-        &self,
+        &mut self,
         node: &SExpr,
         segments: &[String],
         path: &[String],
@@ -71,10 +71,29 @@ impl Checker {
         let entry = self.lookup(segments, path, node.span)?;
         let function = match entry {
             Some(Entry::Decl(name)) => match self.decls.get(&name) {
-                Some(Decl::Fn(function)) => Some((
-                    function.full_name.clone(),
-                    callable_type(&function.params, &function.ret),
-                )),
+                Some(Decl::Fn(function)) => {
+                    let plan = if self.checked_projection {
+                        Vec::new()
+                    } else {
+                        super::named_default_callables::reference_plan(
+                            self.language,
+                            &function.params,
+                        )
+                    };
+                    let initialization = (!plan.is_empty()).then(|| {
+                        (
+                            function.params.clone(),
+                            function.ret.clone(),
+                            function.module_path.clone(),
+                            plan,
+                        )
+                    });
+                    Some((
+                        function.full_name.clone(),
+                        callable_type(&function.params, &function.ret),
+                        initialization,
+                    ))
+                }
                 _ => None,
             },
             Some(Entry::External(name)) => {
@@ -83,7 +102,9 @@ impl Checker {
                         name: candidate,
                         params,
                         ret,
-                    } if *candidate == name => Some((name.clone(), callable_type(params, ret))),
+                    } if *candidate == name => {
+                        Some((name.clone(), callable_type(params, ret), None))
+                    }
                     _ => None,
                 })
             }
@@ -103,8 +124,20 @@ impl Checker {
             }
             return Ok(None);
         }
-        let (name, ty) =
+        let (name, ty, initialization) =
             function.expect("the generated reference rule selects an actual function declaration");
+        if let Some((params, ret, module_path, plan)) = initialization {
+            return self
+                .named_default_callable_reference(
+                    &name,
+                    &params,
+                    &ret,
+                    &module_path,
+                    &plan,
+                    node.span,
+                )
+                .map(Some);
+        }
         Ok(Some(Expr::new(Node::FunctionRef { func: name }, ty)))
     }
 

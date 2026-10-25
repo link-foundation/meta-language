@@ -19,6 +19,8 @@ impl Inference {
             let signature = Signature {
                 defaults: vec![false; params.len()],
                 optional_params: vec![false; params.len()],
+                invocation_defaults: vec![false; params.len()],
+                guarded_inputs: vec![false; params.len()],
                 params: params
                     .into_iter()
                     .map(|ty| self.declared(Some(ty)))
@@ -51,6 +53,11 @@ impl Inference {
                     params,
                     defaults,
                     optional_params: function.params.iter().map(|param| param.optional).collect(),
+                    invocation_defaults:function.params.iter().map(|param|{
+                        let (kind,absence)=param.default_value.as_ref().map_or(("",""),|value|match &value.node{super::SNode::None{absence}=>("none",absence.as_str()),_=>(value.node.kind(),"")});
+                        crate::translation::named_default_callable_rules::require_named_callable_default_initialization(param.default_value.is_some(),param.optional,kind,absence)
+                    }).collect(),
+                    guarded_inputs:function.params.iter().map(|param|param.guard.is_some()).collect(),
                     ret,
                     declared_ret,
                 },

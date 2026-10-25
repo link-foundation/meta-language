@@ -4314,6 +4314,36 @@ constructor or handwritten native semantic rule is introduced. Full parameter
 environments, arbitrary present-type unions, implicit this/arguments, async,
 generators and every earlier requirement remain obligations; controls are deferred.
 
+Named checked JavaScript functions with real defaults expose a separate callable
+initialization interface when passed as values. Shared source rules distinguish
+those initializers from defaults already implemented by ordered body entries.
+Only references needing initialization become typed lambdas; their bodies reuse
+the actual declaration's complete existing sequential default/guard checker.
+All supplied arguments precede defaults and guards. Guarded BigInt inputs keep
+their original integer domain before the guard converts them to naturals.
+References without real defaults retain their preceding form. Computed, returned,
+higher-order and record calls and existing explicit callback bridges use the
+actual optional interface. Source initialization expressions stay in their
+original module and earlier-parameter environment, with no evaluation when the
+reference itself is created. Native interface decisions are generated from
+JavaScript; adapters construct existing typed Lambda, Let and Call nodes.
+
+An optional absence policy may widen from null-only or undefined-only to both
+only when the complete present element types are identical. Existing presence
+operations distinguish absent receivers from zero, false and empty text without
+comparing function payloads. The actual operand evaluates once; its present
+payload or its original absence tag reaches the broader target unchanged. The
+separate absence-only conversion remains available when no present payload is
+inhabited. Other languages and policy narrowing retain their own requirements.
+
+Projected core calls already carry initialized, guarded arguments. Rechecking
+them validates their actual signature without repeating source initialization
+from retained default metadata. Source calls keep their preceding routes.
+Future original/native values, initializer/guard traces and text/binary emission
+controls retain complete predecessor sources. General function variance, arbitrary
+present-type unions, reflection/identity/this/arguments, asynchronous execution
+and full parameter environments remain obligations. These are unexecuted drafts.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 
