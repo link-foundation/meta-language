@@ -410,3 +410,5 @@ mod translation_javascript_whole_parameter_defaults;
 mod translation_javascript_optional_callables;
 
 mod translation_javascript_absent_record_properties;
+
+mod translation_javascript_excess_arguments;

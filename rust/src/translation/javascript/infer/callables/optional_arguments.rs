@@ -8,6 +8,28 @@ impl Inference {
         parameters: &[Term],
         arguments: &[Term],
     ) -> Vec<Term> {
+        let excess = crate::translation::excess_argument_rules::plan_java_script_excess_arguments(
+            "JavaScript",
+            serde_json::Number::from(parameters.len())
+                .as_f64()
+                .expect("actual parameters"),
+            serde_json::Number::from(arguments.len())
+                .as_f64()
+                .expect("actual arguments"),
+        );
+        let retained = if excess.is_empty() {
+            arguments.to_vec()
+        } else {
+            excess[1..1 + parameters.len()]
+                .iter()
+                .map(|index| {
+                    arguments[crate::translation::frontend_rules::ml_array::number_index(*index)
+                        .expect("actual supplied argument")]
+                    .clone()
+                })
+                .collect()
+        };
+        let arguments = retained.as_slice();
         let selected = parameters
             .iter()
             .map(|term| self.resolve(term))

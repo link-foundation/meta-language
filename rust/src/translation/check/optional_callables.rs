@@ -24,6 +24,9 @@ fn argument_plan(language: Language, parameters: &[Type], provided: usize) -> Ve
     )
 }
 pub(super) fn argument_count(language: Language, parameters: &[Type], provided: usize) -> usize {
+    if !super::excess_arguments::plan(language.as_str(), parameters.len(), provided).is_empty() {
+        return parameters.len();
+    }
     if argument_plan(language, parameters, provided).is_empty() {
         provided
     } else {

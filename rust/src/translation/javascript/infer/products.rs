@@ -321,7 +321,7 @@ impl Inference {
         place: Option<Span>,
     ) -> Result<Term> {
         let signature = self.signature(path);
-        let arg_terms = args
+        let mut arg_terms = args
             .iter()
             .enumerate()
             .map(|(index, arg)| {
@@ -335,7 +335,23 @@ impl Inference {
             })
             .collect::<Result<Vec<_>>>()?;
         #[allow(clippy::cast_precision_loss)]
-        let argument_count = args.len() as f64;
+        let argument_count = if let Some(signature) = &signature {
+            let plan = crate::translation::excess_argument_rules::plan_java_script_excess_arguments(
+                "JavaScript",
+                serde_json::Number::from(signature.params.len())
+                    .as_f64()
+                    .expect("actual parameters"),
+                serde_json::Number::from(args.len())
+                    .as_f64()
+                    .expect("actual arguments"),
+            );
+            if !plan.is_empty() {
+                arg_terms.truncate(signature.params.len());
+            }
+            arg_terms.len() as f64
+        } else {
+            args.len() as f64
+        };
         let Some(signature) = signature
             .filter(|signature| accept_argument_count(signature.defaults.clone(), argument_count))
         else {

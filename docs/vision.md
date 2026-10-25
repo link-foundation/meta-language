@@ -4226,6 +4226,27 @@ including callback factory capture. Arbitrary differing record-shape joins,
 open and inherited fields, full dynamic property protocols and every earlier
 requirement remain unfinished. These are source drafts without observations.
 
+Extra ordinary JavaScript arguments use a separate shared capture plan, bounded
+to 1024 supplied arguments. Every actual input remains represented and evaluated
+in order. Computed calls capture their actual callee before the first input;
+record methods capture the selected function and its original receiver evaluation.
+Only the consumed prefix reaches the existing fixed-arity core application.
+Static named calls similarly capture all inputs before the existing complete
+default/guard route. Explicit literal undefined retains its default-selection
+role. A discarded value can still print, mutate or abort before the body starts.
+Inference checks all supplied expressions but only consumed values constrain
+the callable's signature. This follows
+[argument list evaluation](https://tc39.es/ecma262/2025/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-argumentlistevaluation)
+and [function instantiation](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-functiondeclarationinstantiation).
+Both runtimes transport actual terms through Let and Apply/Call; the source rule
+generates native decisions and a separately qualified editable Links definition.
+Exact calls, other languages and projected core arity retain their prior route.
+Future controls retain callee/argument/default/body ordering, discarded failures,
+mutable callee bindings, zero-parameter calls and complete predecessor sources.
+Missing required inputs, spread and rest parameters, arguments objects, arbitrary
+receiver protocols and every earlier requirement remain unfinished. No product
+or behavioral control has executed during this draft.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

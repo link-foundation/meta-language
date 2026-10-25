@@ -22,6 +22,7 @@ import {completeOptionalCallableArguments,constructOptionalCallbackBridge} from 
 import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js';
 import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
+import {checkJavaScriptExcessCallableArguments,checkJavaScriptExcessNamedArguments} from './excess-arguments.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -1172,6 +1173,10 @@ class Checker {
     const number = (index, fallback) => checked(index, FLOAT, literal(FLOAT, fallback));
     if (object.type.kind === 'record') {
       const field = object.type.fields.find((field) => field.name === node.op);
+      if(field?.type.kind==='function'){
+        const fn={k:'recordField',object,field:node.op,index:object.type.fields.indexOf(field),type:field.type};
+        const excess=checkJavaScriptExcessCallableArguments(this,fn,args,env,path,node.span);if(excess)return excess;
+      }
       const callArgs=field?.type.kind==='function'?completeOptionalCallableArguments(this.language,field.type.params,args,node.span):args;
       const error = readRecordMethodError(field?.type.kind ?? '', node.op, field?.type.params?.length ?? 0, callArgs.length);
       if (error) throw typeError(error, node.span);
@@ -1546,6 +1551,7 @@ class Checker {
   application(head, args, env, path, expected, span) {
     if (requireCallableComputedApplication(head.k, head.path?.length ?? 0, head.path?.length === 1 ? env.get(head.path[0])?.kind ?? '' : '')) {
       const fn = this.expr(head, env, path, undefined);
+      const excess=checkJavaScriptExcessCallableArguments(this,fn,args,env,path,span);if(excess)return excess;
       if(fn.type.kind==='function')args=completeOptionalCallableArguments(this.language,fn.type.params,args,span);
       const error = readCallableApplicationError(fn.type.kind, fn.type.params?.length ?? 0, args.length);
       if (error) throw typeError(error, span);
@@ -1577,6 +1583,7 @@ class Checker {
     }
     if (entry.k !== 'fn') throw typeError(`${head.path.join('.')} is not a function`, span);
     if (!entry.params) throw typeError(`${entry.fullName} is used before its signature is known`, span);
+    const excess=checkJavaScriptExcessNamedArguments(this,entry,args,env,path,span);if(excess)return excess;
     if(this.language==='JavaScript'&&requiresSequentialParameterDefaults(entry.params))return checkSequentialParameterCall(this,entry,args,env,path,span);
     const provided = args.length;
     // A call that leaves out trailing parameters with defaults passes the defaults.

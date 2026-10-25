@@ -31,6 +31,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "dynamic-language-command-program.lino" => Some(include_str!(
             "../data/dynamic-language-command-program.lino"
         )),
+        "excess-argument-program.lino" => {
+            Some(include_str!("../data/excess-argument-program.lino"))
+        }
         "fixed-integer-cast-program.lino" => {
             Some(include_str!("../data/fixed-integer-cast-program.lino"))
         }

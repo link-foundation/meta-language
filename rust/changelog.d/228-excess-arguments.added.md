@@ -1,0 +1,1 @@
+Draft JavaScript extra-argument capture for named, computed and record method calls. All supplied arguments retain their effects before defaults and body entry, while native source arity remains strict. Shared source definitions generate native rules and editable Links assets; runtime verification is deferred.

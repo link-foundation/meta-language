@@ -2,11 +2,13 @@
 import {planOptionalCallableArguments,planOptionalCallableParameterBridge} from './optional-callable-rules.js';
 import {sameType} from './types.js';
 import {coerce} from './check.js';
+import {planJavaScriptExcessArguments} from './excess-argument-rules.js';
 export function completeOptionalCallableArguments(language,parameters,args,span){
  const plan=planOptionalCallableArguments(language,parameters.map(param=>param.kind),parameters.map(param=>param.absence??''),args.length);
  return !plan.length||args.length===parameters.length?args:plan.slice(1).map(slot=>slot>=0?args[slot]:{k:'none',absence:'undefined',span});
 }
 export function completeOptionalCallableTerms(parameters,args){
+ const excess=planJavaScriptExcessArguments('JavaScript',parameters.length,args.length);if(excess.length)args=excess.slice(1,excess[0]+1).map(index=>args[index]);
  const plan=planOptionalCallableArguments('JavaScript',parameters.map(param=>param.kind),parameters.map(param=>param.absence??''),args.length);
  return !plan.length||args.length===parameters.length?args:plan.slice(1).map((slot,index)=>slot>=0?args[slot]:parameters[index]);
 }

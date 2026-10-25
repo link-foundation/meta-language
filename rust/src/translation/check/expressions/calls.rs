@@ -167,6 +167,18 @@ impl Checker {
         path: &[String],
         span: Option<Span>,
     ) -> Result<Expr> {
+        if let Some(value) = self.excess_named_arguments(
+            &full_name,
+            params,
+            &ret,
+            module_path,
+            args,
+            env,
+            path,
+            span,
+        )? {
+            return Ok(value);
+        }
         if self.language == crate::translation::Language::JavaScript
             && sequential_defaults::requires_sequential_defaults(params)
         {

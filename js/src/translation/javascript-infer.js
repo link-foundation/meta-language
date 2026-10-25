@@ -33,6 +33,7 @@ import { readInferenceTermIdentity, readOptionalAdditionalAbsence, readOptionalC
 import { mergeOptionalAbsence } from './structured-type-rules.js';
 import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
 import {completeOptionalCallableTerms} from './optional-callables.js';
+import {planJavaScriptExcessArguments} from './excess-argument-rules.js';
 import { readOptionalBigIntConstraint, readOptionalCallBinding, readOptionalJoinBinding, readOptionalNumericTerm, requireInferenceJoinAlias, requireOptionalResultBinding } from './optional-value-rules.js';
 import { readRecordFieldInsertionOrder, readRecordFieldPosition, readRecordSpreadRole, readRecordTypeConstraintError, readRecordTypeConstraintStep, readRecordFieldInferenceStep } from './record-value-rules.js';
 import { containsRecordTypeOwner } from './record-type-facts.js';
@@ -1185,8 +1186,10 @@ class Inference {
 
   call(path, args, env, where) {
     const signature = this.signature(path);
-    const argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
-    if (!signature || !acceptArgumentCount(signature.defaults, args.length)) return this.fresh();
+    let argTypes = args.map((arg, index) => this.expr(arg, env, signature?.params[index]));
+    const excess=signature?planJavaScriptExcessArguments('JavaScript',signature.params.length,args.length):[];
+    if(excess.length)argTypes=excess.slice(1,excess[0]+1).map(index=>argTypes[index]);
+    if (!signature || !acceptArgumentCount(signature.defaults, argTypes.length)) return this.fresh();
     this.calls.push({ signature, args: argTypes, where });
     argTypes.forEach((type, index) => {
       const param = signature.params[index];

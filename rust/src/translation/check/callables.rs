@@ -129,6 +129,9 @@ impl Checker {
         span: Option<Span>,
         places: &[Option<Span>],
     ) -> Result<Expr> {
+        if let Some(value) = self.excess_callable_arguments(&function, args, env, path, span)? {
+            return Ok(value);
+        }
         let (params, ret) = match &function.ty {
             Type::Function { params, ret } => (params.as_slice(), Some(ret.as_ref())),
             _ => (&[][..], None),
