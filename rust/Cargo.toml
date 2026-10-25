@@ -124,6 +124,7 @@ include = [
     "src/data/fixed-integer-cast-program.lino",
     "src/data/formal-string-unit-program.lino",
     "src/data/grammar-inference-program.lino",
+    "src/data/grammar-inference-refinement-program.lino",
     "src/data/inert-module-binding-program.lino",
     "src/data/javascript-comparison-program.lino",
     "src/data/javascript-literal-property-program.lino",

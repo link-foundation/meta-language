@@ -27,8 +27,8 @@ for (const fixture of fixtures.cases) test(fixture.name + ': observations, indep
   const parsed = language.parse(original.source.id, fixture.positives[1].join(''));
   assert.equal(parsed.projection, 'concrete syntax');
   assert.ok(parsed.tree);
-  const text = tree => tree.type === 'node' ? tree.children.map(text).join('') : tree.text;
-  assert.equal(text(parsed.tree), fixture.positives[1].join(''));
+  const renderTree = tree => tree.type === 'node' ? tree.children.map(renderTree).join('') : tree.text;
+  assert.equal(renderTree(parsed.tree), fixture.positives[1].join(''));
   assert.ok(parsed.concrete);
   assert.ok(parsed.archive);
   const corrupted = { ...original, table: [...original.table] };

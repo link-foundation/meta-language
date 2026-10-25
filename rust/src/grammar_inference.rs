@@ -16,6 +16,10 @@ use crate::{
 };
 
 const ALGORITHM: &str = "labelled regular grammar discovery 1";
+mod refinement;
+pub use refinement::{
+    read_refined_regular_grammar_inference_links, refine_regular_grammar_inference,
+};
 
 /// Explicit deterministic learner and resource parameters, shared with JavaScript.
 #[derive(Clone, Debug, Serialize, Deserialize)]

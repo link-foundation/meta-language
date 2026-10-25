@@ -653,6 +653,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "method",
     ),
     (
+        "readRefinedRegularGrammarInferenceLinks",
+        "read_refined_regular_grammar_inference_links",
+        "function",
+    ),
+    (
         "readResourceDescriptionNTriplesSource",
         "read_resource_description_ntriples_source",
         "function",
@@ -685,6 +690,11 @@ const EXPORTS: &[(&str, &str, &str)] = &[
         "function",
     ),
     ("reconstructGrammar", "reconstruct_grammar", "function"),
+    (
+        "refineRegularGrammarInference",
+        "refine_regular_grammar_inference",
+        "function",
+    ),
     ("rejectPredicateHost", "RejectPredicateHost", "type"),
     ("renameGrammarRule", "rename_grammar_rule", "function"),
     (

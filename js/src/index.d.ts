@@ -1011,6 +1011,8 @@ export interface RegularGrammarInference extends TypedProgramLinks {
 }
 export function inferRegularGrammar(positives: readonly (readonly string[])[], negatives?: readonly (readonly string[])[], options?: RegularGrammarInferenceOptions): RegularGrammarInference;
 export function readRegularGrammarInferenceLinks(network: LinkNetwork, root: LinkId | number): RegularGrammarInference;
+export function refineRegularGrammarInference(network:LinkNetwork,root:LinkIdValue,positives?:readonly (readonly string[])[],negatives?:readonly (readonly string[])[],options?:{identifier?:string}):RegularGrammarInference;
+export function readRefinedRegularGrammarInferenceLinks(network:LinkNetwork,root:LinkIdValue):RegularGrammarInference;
 export function acceptInferredGrammarSymbols(model: RegularGrammarInference, symbols: readonly string[]): boolean;
 export function decodeTypedProgramLinks(
   network: LinkNetwork,

@@ -106,6 +106,25 @@ natural languages, together with the translation rules over their concepts.
 An unshared concept belongs to this same space; it retains its own identity and
 qualified language provenance until an equivalence proof permits reuse.
 
+The regular-grammar refinement draft retains each preceding complete model,
+decision table, grammar and concept source graph in a flat history directory.
+The complete original learner and the actual refinement-validation definition
+appear once as shared typed Links. The journal preserves added positive and
+negative observations in order, including duplicates and statistical multiplicity.
+Source-generated decisions check exact corpus prefixes, selected settings and
+distinct source identities. Reload revalidates every recorded learner decision
+and grammar against its actual supported algorithm, then checks continuity.
+Changed definitions, lost observations, unreferenced history and reused source
+identities refuse. Historical groups retain their original local identities;
+deterministic reruns establish no semantic equivalence certificate. Old and
+refined sources can inhabit one dynamic session, whose default remains CST.
+This version relearns deterministically from the retained corpus under the
+existing RPNI/EDSM/ALERGIA-style profile. It establishes neither modern discovery,
+unknown-language completeness, asymptotically incremental performance nor semantic
+equivalence. Eight journal steps and finite graph/learner budgets bound actual
+reconstruction; exhaustion refuses instead of dropping history. These checkpoints
+and their deferred text/binary/native controls remain unexecuted code drafts.
+
 The automated translation and import pipeline first copies every concept and
 its recursive links into this space without losing rules, aliases, occurrence
 order or provenance. Deduplication then constructs a checked one-to-one

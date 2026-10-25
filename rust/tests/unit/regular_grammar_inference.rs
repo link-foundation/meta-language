@@ -15,10 +15,10 @@ fn fixture() -> Value {
     ))
     .unwrap()
 }
-fn examples(value: &Value) -> Vec<Vec<String>> {
+pub(super) fn examples(value: &Value) -> Vec<Vec<String>> {
     serde_json::from_value(value.clone()).unwrap()
 }
-fn versions() {
+pub(super) fn versions() {
     let output = Command::new("rustc").arg("--version").output().unwrap();
     assert!(output.status.success());
     let text = String::from_utf8(output.stdout).unwrap();

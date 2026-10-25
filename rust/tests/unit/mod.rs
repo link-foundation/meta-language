@@ -355,6 +355,7 @@ mod grammar_recursive_selection;
 mod link_allocation;
 mod link_foundation;
 mod program_module_binding_roles;
+mod regular_grammar_inference_refinement;
 mod root_types;
 mod translation_array_relative_element;
 mod translation_big_integer_source;
