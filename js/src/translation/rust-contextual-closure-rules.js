@@ -19,3 +19,7 @@ export function findRustContextualClosureParenthesisCount(syntax){
  for(let index=0;index<syntax.length;index+=1){const token=readRequiredTextFact(syntax,index);if(token==='(')continue;return index>0&&(token==='|'||token==='||'||token==='move')?index:-1;}
  return -2;
 }
+/** A direct terminal pointer-result block retains one actual source expression.
+ * @param {string} kind @param {boolean} copy @param {boolean} block
+ * @param {string} first @returns {boolean} */
+export function acceptRustContextualCopyPointerResultBlock(kind,copy,block,first){return kind==='function'&&copy&&block&&(first==='|'||first==='||'||first==='move'||first==='('||first==='return');}

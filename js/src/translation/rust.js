@@ -26,7 +26,7 @@ import { createRustFloatPredicateExpression, createRustFloatOperationExpression,
 import { acceptRustCompletionModel } from './rust-completion-rules.js';
 import { readRustFunctionCompletion } from './rust-completions.js';
 import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
-import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure,readRustContextualCallArguments} from './rust-copy-closures.js';
+import {readRustCopyClosure,readRustCopyClosureCall,readRustExpectedCopyClosure,readRustContextualCallArguments,readRustCopyPointerResultBlock} from './rust-copy-closures.js';
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
 import {readRustStringByteLength} from './rust-string-byte-lengths.js';
@@ -695,7 +695,7 @@ class RustParser {
         else if(this.localValueStateModel)lowered=readRustOwnedLocalStateBody(this,path,name,params,ret,signature);
       } finally { this.scalarLoopActive = previousLoop; }
       const emptyOptionBody=this.emptyOptionSourceModel?readRustEmptyOptionBody(this,path):null;
-      const body = emptyOptionBody?.body ?? lowered?.body ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
+      const body = emptyOptionBody?.body ?? lowered?.body ?? readRustCopyPointerResultBlock(this,path,sourceResult) ?? (this.completionModel ? readRustFunctionCompletion(this, path) : this.ordinaryCompletionSelected()?readRustOrdinaryFunctionCompletion(this,path,ret,sourceResult):this.block(path,true));
       if (ret.kind === 'array'&&!isRustSharedArrayHandleOrigin(this,sourceResult)) {
         if (!acceptRustSourceArrayResult(this.origins.arrayResultModel, ret.element.kind, sourceResult.arraySourceModel === 'owned vector' && sourceResult.wrappers.length === 0, this.origins.freshArrayResult(body, path))) throw unsupported('fresh Rust array result', 'every returning tail must construct a new vector of direct scalar Copy values; vector names, calls, clones and borrowed results need separate consumption proofs', body.span);
         sourceResult.freshArrayValue = true;

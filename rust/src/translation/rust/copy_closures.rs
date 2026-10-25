@@ -8,6 +8,42 @@ use crate::translation::rust_copy_closure_rules as rules;
 use crate::translation::surface_reference_facts::create_surface_reference_facts;
 
 impl RustParser {
+    pub(super) fn copy_pointer_result_block(
+        &mut self,
+        path: &[String],
+        expected: Option<&SourceOrigin>,
+    ) -> Result<Option<SExpr>> {
+        let role = ["|", "||", "move", "(", "return"]
+            .into_iter()
+            .find(|value| self.cursor.is_at(value, 1))
+            .unwrap_or("");
+        if !self.ordinary_completion_context()
+            || !contextual::accept_rust_contextual_copy_pointer_result_block(
+                expected
+                    .and_then(|origin| origin.ty.as_ref())
+                    .map_or("", Type::kind),
+                expected.is_some_and(SourceOrigin::direct_copy_value),
+                self.cursor.is("{"),
+                role,
+            )
+        {
+            return Ok(None);
+        }
+        self.cursor.expect("{", Some("function pointer result"))?;
+        let returned = self.cursor.eat("return").is_some();
+        let value = self.read_expected_copy_closure(path, expected)?;
+        if returned {
+            while self.cursor.eat(";").is_some() {}
+        }
+        self.cursor.expect("}", Some("function pointer result"))?;
+        self.origins.argument(
+            &self.origins.origin(&value, path),
+            expected.expect("actual pointer result"),
+            value.span,
+        )?;
+        Ok(Some(value))
+    }
+
     pub(super) fn contextual_call_arguments(
         &mut self,
         path: &[String],
@@ -209,7 +245,9 @@ impl RustParser {
         }
         let read: Result<SExpr> = (|| {
             let body = if written || self.cursor.is("{") {
-                if let (Some(ret), Some(origin)) = (&ret, &result_origin)
+                if let Some(body) = self.copy_pointer_result_block(path, result_origin.as_ref())? {
+                    body
+                } else if let (Some(ret), Some(origin)) = (&ret, &result_origin)
                     && self.ordinary_completion_selected()
                 {
                     self.ordinary_function_completion(path, ret, origin)?

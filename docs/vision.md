@@ -3922,6 +3922,17 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Direct terminal Rust function-pointer result blocks now reuse the actual
+function or explicitly typed closure result as their missing annotation
+context. Tail expressions and terminal returns remain distinct from discarded
+values; trailing source work cannot be dropped. Parentheses, move keywords,
+written types, qualified function owners, nested factories and source capture
+coercions retain their preceding checks. Twenty-five future values, capture
+refusals, discarded-tail and unreachable-work controls, complete predecessors,
+both codecs, four emissions and native products remain unexecuted. Contexts
+through preceding bindings and arbitrary branches, full source constant
+meanings, generics, ownership and generated runtime reimport remain obligations.
+
 The ordinary Rust source draft collects complete actual declaration headers
 before inferring callback bodies. A shared balanced lexical-group algorithm
 keeps strings, raw strings and comments atomic and grows source windows on

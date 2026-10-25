@@ -305,6 +305,19 @@ pub fn find_rust_contextual_closure_parenthesis_count(syntax: &[String]) -> f64 
     }
 }
 
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn accept_rust_contextual_copy_pointer_result_block(
+    kind: &str,
+    copy: bool,
+    block: bool,
+    first: &str,
+) -> bool {
+    (((kind == "function") && copy) && block)
+        && (((((first == "|") || (first == "||")) || (first == "move")) || (first == "("))
+            || (first == "return"))
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Result {
     MlTemporaryReadRustContextualCopyClosureHeaderErrorLoop1Done,

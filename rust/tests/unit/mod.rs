@@ -438,3 +438,5 @@ mod translation_rust_string_byte_lengths;
 mod translation_rust_contextual_closures;
 
 mod translation_rust_contextual_calls;
+
+mod translation_rust_pointer_results;
