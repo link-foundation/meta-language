@@ -432,3 +432,5 @@ mod translation_rust_copy_closures;
 mod translation_rust_function_pointers;
 
 mod translation_rust_array_lengths;
+
+mod translation_rust_string_byte_lengths;

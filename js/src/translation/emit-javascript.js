@@ -56,6 +56,7 @@ import {checkRustOwnedLocalStateProof,RUST_OWNED_LOCAL_STATE_POLICY} from './rus
 import {validateRustTypeNamespace} from './rust-type-namespace.js';
 import {renderRustOwnedLocalTextInput} from './rust-owned-local-state-rules.js';
 import { EmitState, withParts } from './emit-common.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import { acceptJavaScriptExternalBinding, renderJavaScriptExternalCall } from './external-emission-rules.js';
 import {readJavaScriptIdentifierModel} from './javascript-identifier-model.js';
 import {acceptLinkedJavaScriptStringUnitConstruction,renderJavaScriptStringUnitConstruction} from './javascript-string-unit-rules.js';
@@ -67,7 +68,7 @@ const KEYWORDS = new Set([
   'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null',
   'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
   'await', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'arguments',
-  'eval', 'undefined', 'NaN', 'Infinity', 'globalThis', 'console', 'process', 'BigInt', 'String', 'Object', 'Error',
+  'eval', 'undefined', 'NaN', 'Infinity', 'globalThis', 'console', 'process', 'BigInt', 'String', 'Object', 'Error', 'encodeURIComponent',
   'ml_record_property_order', 'Object', 'RangeError', 'Math', 'Number', 'Array', 'JSON', 'Symbol', 'main', '__proto__', 'constructor', 'prototype', 'of',
   'async', 'get', 'set',
 ]);
@@ -642,6 +643,7 @@ class JavaScriptEmitter {
       case 'length':
         return e.type.kind === 'float' ? `${this.expr(e.array)}.length` : `BigInt(${this.expr(e.array)}.length)`;
       case 'math': {
+        const byteLength=emitRustStringByteLength(this,e,'JavaScript',value=>this.expr(value));if(byteLength!==null)return byteLength;
         if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('JavaScript',e.op,this.expr(e.args[0]));}
         if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('JavaScript',this.expr(e.args[0]));
         if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){

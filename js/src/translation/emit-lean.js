@@ -1,5 +1,6 @@
 import {RECORD_PROPERTY_ORDER_LEAN_PRELUDE} from './record-property-order-formal-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
@@ -673,6 +674,7 @@ class LeanEmitter {
   }
 
   math(e, depth) {
+    const byteLength=emitRustStringByteLength(this,e,'Lean',value=>this.expr(value,depth));if(byteLength!==null)return byteLength;
     if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Lean',e.op,this.expr(e.args[0],depth));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.helpers.add('bigIntegerConversion');

@@ -27,6 +27,7 @@ import {convertJavaScriptAbsenceOnlyValue} from './absence-conversions.js';
 import {checkNamedCallableDefaultReference} from './named-default-callables.js';
 import {widenJavaScriptOptionalPolicy} from './optional-policies.js';
 import {acceptRustExactArrayLengthResult} from './rust-array-length-rules.js';
+import {acceptRustStringByteLengthOperation,readRustStringByteLengthArgumentError} from './rust-string-byte-length-rules.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -1308,6 +1309,11 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(acceptRustStringByteLengthOperation('math',node.op)){
+      const value=node.args.length===1&&!node.args[0].spread?this.expr(node.args[0].value,env,path,STRING):null;
+      const error=readRustStringByteLengthArgumentError(this.language,false,node.args.length,node.args.some(arg=>arg.spread),value?.type.kind??'');if(error)throw typeError(error,node.span);
+      return {k:'math',op:node.op,args:[value],type:{kind:'fixed',bits:64,signed:false}};
+    }
     if(acceptConditionalChainOperation(node.op))return checkConditionalChainValue(this,node,env,path,expected);
     if(node.op===readJavaScriptRecursiveBindingIterableOperation())return checkJavaScriptRecursiveBindingIterable(this,node,env,path);
     if(node.op===readJavaScriptObjectRestOperation())return checkJavaScriptObjectRest(this,node,env,path);

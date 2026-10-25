@@ -58,6 +58,7 @@ pub(super) const KEYWORDS: &[&str] = &[
     "NaN",
     "Infinity",
     "globalThis",
+    "encodeURIComponent",
     "console",
     "process",
     "BigInt",

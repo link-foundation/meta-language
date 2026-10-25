@@ -3922,6 +3922,24 @@ be presented as a current audit.
 
 ## Acceptance and evidence
 
+Ordinary standard Rust scalar `str`/`String` byte lengths have a distinct
+checked operation with the existing unsigned 64-bit usize domain. They preserve
+UTF-8 byte counts rather than JavaScript UTF-16 units or grapheme counts. Actual
+source owners, readonly reference layers, source language and String
+representation remain checked. The complete scalar-count algorithm is shared
+Links source and automatically generated native code. Target bindings use their
+standard UTF-8 measures; this declares bindings, not a cross-language semantic
+equivalence certificate. JavaScript reserves its URI intrinsic against source
+name shadowing and measures each actual operand once. The
+[Rust string contract](https://doc.rust-lang.org/std/primitive.str.html#method.len)
+and [ECMAScript URI encoding](https://tc39.es/ecma262/2025/multipage/global-object.html#sec-encode-1)
+define the byte and scalar boundaries. Thirty-one future source values,
+twenty-one independent scalar counts, nine invalid-unit sequences and complete
+predecessor sources cover readonly/owned parameters, temporaries, captures,
+codecs, four emissions and native products. These controls remain unexecuted.
+The UTF-16 representation, other source widths, mutable ownership composition
+and complete source environments remain separate obligations.
+
 Ordinary Rust vector/slice lengths also have an exact source path in the
 existing 64-bit usize model. The same Length primitive has an explicit unsigned
 64-bit codomain; this is not a general permission to narrow arbitrary integers.
@@ -3931,8 +3949,8 @@ Existing explicit `as f64`, empty queries and nonordinary source profiles keep
 their preceding routes. Twenty-one future values and complete predecessor
 sources cover locals, comparisons, readonly parameters, Copy captures, both
 codecs, all emissions and original/native products. None executed. Other target
-widths report an uncovered profile; full usize arithmetic, String UTF-8 byte
-counts and complete collection ownership remain obligations.
+widths report an uncovered profile; full usize arithmetic and complete
+collection ownership remain obligations.
 
 The ordinary Rust pointer draft reads safe `fn` signatures over direct immutable
 Copy domains, including implicit Unit results and optional parameter labels.

@@ -8,6 +8,10 @@ impl LeanEmitter<'_> {
         let Node::Math { op, args } = &e.node else {
             unreachable!("not a Math expression")
         };
+        if crate::translation::rust_string_byte_length_rules::accept_rust_string_byte_length_operation("math",op) {
+            crate::translation::rust_string_byte_lengths::validate(e,self.program.source_language,self.utf16_strings)?;
+            return Ok(crate::translation::rust_string_byte_length_rules::render_rust_string_byte_length("Lean",&self.expr(&args[0],depth)?));
+        }
         if crate::translation::string_construction_rules::accept_linked_java_script_string_construction("math",op){
             self.helpers.insert("utf16Text");
             let value=self.expr(&args[0],depth)?;

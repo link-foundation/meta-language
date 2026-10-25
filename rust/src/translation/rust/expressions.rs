@@ -505,6 +505,17 @@ impl RustParser {
                     continue;
                 }
                 if ["len", "is_empty"].contains(&method_name) {
+                    if method_name == "len"
+                        && let Some(bytes) = self.read_string_byte_length(
+                            &value,
+                            args.len(),
+                            span(&token, self.cursor.peek()),
+                            path,
+                        )?
+                    {
+                        value = bytes;
+                        continue;
+                    }
                     value = self.array_read(
                         value,
                         &method,

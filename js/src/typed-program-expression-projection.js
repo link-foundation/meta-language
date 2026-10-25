@@ -21,6 +21,7 @@ import { acceptLinkedRustPrimitiveBitwiseOperation } from './translation/rust-pr
 import { acceptLinkedArrayStateMethod } from './translation/array-state-method-rules.js';
 import { acceptLinkedRustCheckedShift } from './translation/rust-shift-rules.js';
 import {acceptRustExactArrayLengthResult} from './translation/rust-array-length-rules.js';
+import {acceptRustStringByteLengthOperation} from './translation/rust-string-byte-length-rules.js';
 
 /** Restore identities from actual declarations after independent namespace validation. */
 export function projectLinkedProgramDeclarationPath(name, declarations, rooted = false) {
@@ -54,7 +55,8 @@ export function projectLinkedProgramExpression(value, declarations = new Map(), 
     && !acceptLinkedOrderedRecordOrderRead(value.k,value.op,value.object?.type?.kind??'',value.object?.type?.ordered===true,value.object?.type?.reference===true)
     && !acceptLinkedRustPrimitiveBitwiseOperation(value.k, value.op)
     && !acceptLinkedArrayStateMethod(value.k, value.op, value.object?.type?.kind ?? '', value.object?.type?.reference === true)
-    && !acceptLinkedRustCheckedShift(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
+    && !acceptLinkedRustCheckedShift(value.k,value.op)
+    && !acceptRustStringByteLengthOperation(value.k,value.op)) throw new TypeError('the linked program contains an unrecognized expression operation');
   let key = value?.k;
   const alternatives = TYPED_PROGRAM_LINKS_SCHEMA.expressionProjectionAlternatives;
   for (const alternative of alternatives && Object.hasOwn(alternatives, key) ? alternatives[key] : []) {

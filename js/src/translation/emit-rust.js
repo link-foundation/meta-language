@@ -1,5 +1,6 @@
 import {RECORD_PROPERTY_ORDER_PRELUDE} from './record-property-order-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
@@ -1530,6 +1531,7 @@ class RustEmitter {
 
   /** Math and Number functions: f64 methods where they agree with JavaScript, ml_math otherwise. */
   math(e) {
+    const byteLength=emitRustStringByteLength(this,e,'Rust',value=>this.receiver(value));if(byteLength!==null)return byteLength;
     if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.usesUtf16Text=true;return renderJavaScriptStringConstruction('Rust',e.op,this.expr(e.args[0]));}
     if(acceptLinkedJavaScriptStringUnitConstruction(e.k,e.op))return renderJavaScriptStringUnitConstruction('Rust',this.expr(e.args[0]));
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){

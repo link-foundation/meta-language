@@ -1,5 +1,6 @@
 import {RECORD_PROPERTY_ORDER_ROCQ_PRELUDE} from './record-property-order-formal-runtime.js';
 import {acceptRustExactArrayLengthResult,renderRustExactArrayLength} from './rust-array-length-rules.js';
+import {emitRustStringByteLength} from './rust-string-byte-lengths.js';
 import {prepareOrderedRecordValues} from './ordered-record-preparation.js';
 import {emitOrderedRecordValue,emitOrderedRecordOrderRead} from './ordered-record-emission.js';
 import {renderOrderedRecordType,renderOrderedRecordPayload} from './ordered-record-layout-rules.js';
@@ -925,6 +926,7 @@ class RocqEmitter {
   }
 
   math(e) {
+    const byteLength=emitRustStringByteLength(this,e,'Rocq',value=>this.expr(value));if(byteLength!==null)return byteLength;
     if(acceptLinkedJavaScriptStringConstruction(e.k,e.op)){this.helpers.add('utf16Text');return renderJavaScriptStringConstruction('Rocq',e.op,this.expr(e.args[0]));}
     if(acceptLinkedJavaScriptBigIntegerResult(e.k,e.op)){
       this.floats();this.helpers.add('bigIntegerConversion');

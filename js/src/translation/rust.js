@@ -28,6 +28,7 @@ import { readRustCompletionPanicMessage } from './rust-completion-panic.js';
 import {readRustCopyClosure,readRustCopyClosureCall} from './rust-copy-closures.js';
 import {readRustFunctionPointerType,readRustFunctionReference,refuseRustCallableObservation} from './rust-function-pointers.js';
 import {acceptRustExactArrayLength} from './rust-array-length-rules.js';
+import {readRustStringByteLength} from './rust-string-byte-lengths.js';
 import { acceptRustSourceSignatureModel } from './rust-source-signature-rules.js';
 import { readRustSourceTypeHead, readRustSourceTypeOwner, createRustSourceSignature, RUST_SOURCE_SIGNATURE_POLICY } from './rust-source-signatures.js';
 import { acceptRustTypeNamespaceModel, acceptRustTypeNamespaceDeclaration, acceptRustTypeNamespaceBodyConstructor, acceptRustTypeNamespaceBodyMethod, acceptRustTypeNamespaceMethodDiscovery, acceptRustTypeNamespaceDiscoveryType } from './rust-type-namespace-rules.js';
@@ -1311,6 +1312,7 @@ class RustParser {
       if (query) return query;
     }
     if (['len', 'is_empty'].includes(method.value)) {
+      if(method.value==='len'){const bytes=readRustStringByteLength(this,receiver,args,range,path);if(bytes)return bytes;}
       const origin = this.origins.origin(receiver, this.modulePath);
       if (!origin.arraySourceModel) throw unsupported(`method ${method.value}`, 'outside the portable core', range);
       expect(0);
