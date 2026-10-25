@@ -1,0 +1,38 @@
+// Future source declarations, never an execution or observation producer.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const definition='enum Value{Some(i64),None} ',cases=[];
+function add(name,body,value,prefix=definition,abort=null){cases.push({name,module:'conditional_chain_case_'+cases.length,source:prefix+'pub fn result()->i64{'+body+'}',value,abort});}
+add('pattern then successful Boolean','if let Value::Some(x)=Value::Some(3)&&x>0{x}else{0}','3');
+add('pattern then failed Boolean','if let Value::Some(x)=Value::Some(3)&&x>4{x}else{7}','7');
+add('failed pattern skips later Boolean','if let Value::Some(x)=Value::None&&fail(){x}else{7}','7',definition+'fn fail()->bool{panic!("later Boolean")}');
+add('successful pattern observes later Boolean failure','if let Value::Some(x)=Value::Some(3)&&fail(){x}else{7}',null,definition+'fn fail()->bool{panic!("later Boolean")}','later Boolean');
+add('Boolean prefix skips the source scrutinee','if false&&let Value::Some(x)=fail(){x}else{7}','7',definition+'fn fail()->Value{panic!("later source")}');
+add('Boolean prefix admits the source scrutinee','if true&&let Value::Some(x)=Value::Some(3){x}else{7}','3');
+add('two successful pattern operands','if let Value::Some(x)=Value::Some(3)&&let Value::Some(y)=Value::Some(x+1){x+y}else{0}','7');
+add('later unmatched pattern returns the original else','if let Value::Some(x)=Value::Some(3)&&let Value::Some(y)=Value::None{x+y}else{7}','7');
+add('outer shadow remains visible after a failed later condition','let x=7;if let Value::Some(x)=Value::Some(3)&&x>4{x}else{x}','7');
+add('outer shadow remains visible after a failed later pattern','let x=7;if let Value::Some(x)=Value::Some(3)&&let Value::Some(y)=Value::None{x+y}else{x}','7');
+add('a later pattern can shadow the preceding binder','if let Value::Some(x)=Value::Some(3)&&let Value::Some(x)=Value::Some(x+1){x}else{0}','4');
+add('parenthesized disjunction retains its own Boolean scope','if let Value::Some(x)=Value::Some(3)&&(x==3||x==4){x}else{0}','3');
+add('Boolean operands interleave with later patterns','if true&&let Value::Some(x)=Value::Some(3)&&x>0&&let Value::Some(y)=Value::Some(x+1)&&y==4{x+y}else{0}','7');
+add('an else if uses the original outer bindings','let x=7;if let Value::Some(x)=Value::Some(3)&&false{x}else if x==7{x}else{0}','7');
+add('matched branch keeps the else failure lazy','if let Value::Some(x)=Value::Some(3)&&x==3{x}else{panic!("else remains lazy")}','3');
+add('failed branch observes its actual else failure','if let Value::Some(x)=Value::Some(3)&&false{x}else{panic!("else selected")}',null,definition,'else selected');
+add('a selected failure occurs after all successful operands','if let Value::Some(x)=Value::Some(3)&&x==3{panic!("body selected")}else{0}',null,definition,'body selected');
+add('single pattern preserves its original outer shadow','let x=7;if let Value::Some(x)=Value::None{x}else{x}','7');
+add('the success packet preserves a Unit payload independently of absence','let value=if let Value::Some(x)=Value::Some(3)&&x>0{()}else{panic!("Unit is a success")};7','7');
+add('tuple patterns retain their actual operand bindings','if let (first,true)=(3,true)&&first>0{first}else{0}','3','');
+add('or patterns retain their actual shared binding scope','if let Value::First(x)|Value::Second(x)=Value::Second(3)&&x>0{x}else{0}','3','enum Value{First(i64),Second(i64),None} ');
+add('fully bound aliases are initialized before later operands','if let whole@Value::Some(x)=Value::Some(3)&&x>0{match whole{Value::Some(y)=>y,Value::None=>0}}else{0}','3');
+add('pattern chains join ordinary early returns with their continuation','return choose(Value::Some(3))+choose(Value::None);','10',definition+'fn choose(value:Value)->i64{if let Value::Some(x)=value&&x>0{return x;}7}');
+add('failed pattern return keeps an outer shadow for the continuation','return choose(Value::Some(3));','7',definition+'fn choose(value:Value)->i64{let x=7;if let Value::Some(x)=value&&x>4{return x;}x}');
+add('two pattern operands join a completed return','return choose(Value::Some(3))+choose(Value::None);','16',definition+'fn choose(value:Value)->i64{if let Value::Some(x)=value&&let Value::Some(y)=Value::Some(x+1){return x+y;}9}');
+add('ordinary Unit fallthrough does not become a missing value','if let Value::Some(x)=Value::Some(3)&&x>0{empty();}return 7;','7',definition+'fn empty(){}');
+add('a failed ordinary pattern keeps its guarded abort lazy','if let Value::Some(x)=Value::None&&x>0{panic!("unselected pattern abort");}return 7;','7');
+const original='enum Value{Some(i64),None} fn f(p:Value)->i64{if let Value::Some(x)=p&&x>0{x}else{0}} fn main(){}';
+cases.push({name:'exact former conditional chain refusal with both outcomes',module:'conditional_chain_original',source:original+'pub fn result()->i64{f(Value::Some(3))+f(Value::None)}',value:'3',abort:null});
+const revision='1afe9c54',history=['parity/fixtures/rust-pattern-conditions.lino','js/scripts/generate-rust-pattern-condition-fixtures.mjs','js/tests/translation-rust-records.test.js','rust/tests/unit/translation_rust_records.rs','js/src/translation/rust-pattern-conditions.js','rust/src/translation/rust/expressions/control/conditional_patterns.rs','js/src/translation/rust-ordinary-completions.js','rust/src/translation/rust/ordinary_completions.rs'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/rust-conditional-chains.lino',import.meta.url),{schemaVersion:1,model:'ordered Rust conditional continuation packets 1',cases,refusals:[{name:'unparenthesized disjunction does not acquire a let-chain interpretation',source:'enum Value{Some(i64),None} fn f(p:Value)->i64{if let Value::Some(x)=p||true{x}else{0}}fn main(){}',kind:'unsupported',reason:'Rust conditional pattern disjunction: a let condition requires parentheses around each Boolean disjunction'}],history,source:cases.map(row=>'pub mod '+row.module+'{\n'+row.source+'\n}').join('\n')+'\nfn main(){}\n',versions:{JavaScript:'Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024; let chains are edition gated'},references:['https://doc.rust-lang.org/edition-guide/rust-2024/let-chains.html','https://doc.rust-lang.org/reference/expressions/if-expr.html#chains-of-conditions'],assertions:['actualOperandOrderAndLeftToRightShortCircuit','earlierPatternBindingsInLaterOperands','failurePacketsContainNoMatchedBranchNames','originalOuterElseScopeAndRepeatedShadowing','lazySelectedAbortAndUnitPayloadPreservation','retainedExactFormerChainInputAndCompleteAssertionSources','completeSharedDefinitionsBothCodecsFourEmissionsNativeProducts'],boundary:'Unexecuted future controls. Existing represented source patterns and value expressions retain their admission and ownership checks. At most256 actual stages. Complete missing-else effect protocols, while let chains, outer attributes, all Rust move/borrow/temporary/drop protocols and complete own-project semantics remain required.'});

@@ -443,6 +443,7 @@ struct Options {
 }
 
 /// A `name @ pattern` binding, bound around the arm's body.
+#[derive(Clone)]
 struct Alias {
     name: String,
     value: SExpr,
@@ -814,7 +815,7 @@ fn pattern_value(pattern: &SPattern, range: Option<Span>) -> Result<SExpr> {
 }
 
 const fn is_if_or_match(expr: &SExpr) -> bool {
-    matches!(expr.node, SNode::If { .. } | SNode::Match { .. })
+    expr.block || matches!(expr.node, SNode::If { .. } | SNode::Match { .. })
 }
 
 fn operator(token: &Token, table: fn(&str) -> Option<BinaryOp>) -> Option<BinaryOp> {

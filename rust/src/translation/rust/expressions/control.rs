@@ -2,6 +2,7 @@
 
 mod completion_panic;
 mod completions;
+pub(in crate::translation::rust) mod conditional_chains;
 mod conditional_patterns;
 mod literal_matches;
 
@@ -117,6 +118,9 @@ impl RustParser {
 
     pub(in super::super) fn if_expr(&mut self, path: &[String]) -> Result<SExpr> {
         let token = self.cursor.advance();
+        if self.has_conditional_chain() {
+            return self.conditional_chain(path, &token);
+        }
         if self.cursor.is("let") {
             return self.conditional_pattern_value(path, &token);
         }
@@ -162,6 +166,7 @@ impl RustParser {
         )?;
         self.cursor.expect("{", Some("match"))?;
         let mut rows = Vec::new();
+        let mut guarded_arms = Vec::new();
         while !self.cursor.is("}") {
             let arm_start = self.peek();
             let mut aliases = Vec::new();
@@ -170,22 +175,26 @@ impl RustParser {
             while self.cursor.eat("|").is_some() {
                 alternatives.push(self.pattern(path, &mut aliases)?);
             }
-            if self.cursor.is("if") {
-                return Err(unsupported(
-                    "match guard",
-                    "guards are outside the portable pattern language",
-                    span(&arm_start, self.cursor.peek()),
-                ));
-            }
-            self.cursor.expect("=>", Some("match arm"))?;
             let scope = self.origins.cases(&alternatives, &scrutinee, path)?;
             let previous = self.origins.enter(Some(scope));
-            for alias in &aliases {
-                self.origins.bind(&alias.name, &alias.value, path, None)?;
-            }
-            let mut body = self.expr(path, Options::default())?;
-            let body_origin = self.origins.origin(&body, path);
+            let parsed = (|| {
+                for alias in &aliases {
+                    self.origins.bind(&alias.name, &alias.value, path, None)?;
+                }
+                let guard = if self.cursor.eat("if").is_some() {
+                    let guard = self.expr(path, Options::default())?;
+                    self.origins.direct(&guard, path, guard.span)?;
+                    Some(guard)
+                } else {
+                    None
+                };
+                self.cursor.expect("=>", Some("match arm"))?;
+                let body = self.expr(path, Options::default())?;
+                let origin = self.origins.origin(&body, path);
+                Ok::<_, crate::translation::diagnostics::TranslationError>((body, origin, guard))
+            })();
             self.origins.scope = previous;
+            let (mut body, body_origin, guard) = parsed?;
             if body.block || is_if_or_match(&body) {
                 self.cursor.eat(",");
             } else if !self.cursor.is("}") {
@@ -198,6 +207,14 @@ impl RustParser {
                     span(&arm_start, self.cursor.peek()),
                 ));
             }
+            guarded_arms.push(conditional_chains::GuardArm {
+                patterns: alternatives.clone(),
+                body: body.clone(),
+                aliases: aliases.clone(),
+                guard,
+                origin: body_origin.clone(),
+                span: span(&arm_start, self.cursor.peek()),
+            });
             for alias in aliases.into_iter().rev() {
                 let body_span = body.span;
                 body = SExpr::new(
@@ -228,6 +245,14 @@ impl RustParser {
                 "uninhabited types are outside the portable core",
                 span(&token, self.cursor.peek()),
             ));
+        }
+        if guarded_arms.iter().any(|arm| arm.guard.is_some()) {
+            return self.lower_guarded_match(
+                scrutinee,
+                guarded_arms,
+                path,
+                span(&token, self.cursor.peek()),
+            );
         }
         let origins = rows
             .iter()

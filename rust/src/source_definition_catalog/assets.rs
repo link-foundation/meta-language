@@ -24,6 +24,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "collection-access-program.lino" => {
             Some(include_str!("../data/collection-access-program.lino"))
         }
+        "conditional-chain-program.lino" => {
+            Some(include_str!("../data/conditional-chain-program.lino"))
+        }
         "dynamic-language-command-program.lino" => Some(include_str!(
             "../data/dynamic-language-command-program.lino"
         )),

@@ -1,3 +1,4 @@
+import {hasRustConditionalChain,readRustConditionalChainStages,lowerRustConditionalChainStages} from './rust-conditional-chains.js';
 // Actual token/term transport into shared ordinary completion constructions.
 import {unsupported} from './diagnostics.js';
 import {readRustOrdinaryStatementDisposition,readRustImplicitBlockStatementDisposition,readRustUnitStatementDisposition,readRustFunctionMacroDisposition,readRustOrdinaryCompletionConstruction,readRustOrdinaryCompletionAlternativeKind,readRustOrdinaryCompletionSequenceKind,acceptRustOrdinaryCompletedAlternative} from './rust-unit-value-rules.js';
@@ -65,11 +66,15 @@ function sequence(parser,path,open){
 }
 function conditional(parser,path){
  const c=parser.cursor,token=c.next();
- if(c.is('let'))throw unsupported('if let','write a match',range(token,c.peek()));
- const cond=parser.expr(path,{noStruct:true});parser.origins.direct(cond,path,cond.span);
- const then=block(parser,path),hasElse=Boolean(c.eat('else'));
+ let cond,stages,then;
+ if(hasRustConditionalChain(parser)){
+  const previous=parser.origins.enter();
+  try{stages=readRustConditionalChainStages(parser,path,token);then=block(parser,path);}
+  finally{parser.origins.scope=previous;}
+ }else{cond=parser.expr(path,{noStruct:true});parser.origins.direct(cond,path,cond.span);then=block(parser,path);}
+ const hasElse=Boolean(c.eat('else'));
  const otherwise=hasElse?(c.is('if')?conditional(parser,path):block(parser,path)):leaf(parser,'value',{k:'unit',span:range(token,token)},path);
- return {node:'conditional',cond,then,otherwise,kind:readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind),span:range(token,c.peek())};
+ return {node:'conditional',cond,stages,then,otherwise,kind:readRustOrdinaryCompletionAlternativeKind(then.kind,otherwise.kind),span:range(token,c.peek())};
 }
 function data(context){
  if(context.data)return context.data;
@@ -93,7 +98,7 @@ function lower(tree,terminal,context){
   return {k:'let',name:parser.freshProductBinding(),value:tree.expression,body:constructor(context,'StatementContinuation',[],tree.expression.span),span:tree.expression.span};
  }
  if(form==='binding')return {k:'let',...tree.binding,body:lower(tree.body,terminal,context),span:tree.binding.span};
- if(form==='conditional')return {k:'if',cond:tree.cond,then:lower(tree.then,terminal,context),else:lower(tree.otherwise,terminal,context),span:tree.span};
+ if(form==='conditional'){const then=lower(tree.then,terminal,context),otherwise=lower(tree.otherwise,terminal,context);return tree.stages?lowerRustConditionalChainStages(tree.stages,then,otherwise,tree.span):{k:'if',cond:tree.cond,then,else:otherwise,span:tree.span};}
  if(form==='join'){
   const first=lower(tree.first,false,context),binding=parser.freshProductBinding(),result=parser.freshProductBinding();
   const completed=terminal?name([result]):constructor(context,'FunctionResult',[name([result])],tree.span);

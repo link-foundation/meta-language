@@ -656,6 +656,11 @@ impl Checker {
                 span,
             ),
             SNode::Math { op, name, args } => {
+                if crate::translation::conditional_chain_rules::accept_conditional_chain_operation(
+                    op,
+                ) {
+                    return self.conditional_chain_value(op, args, span, env, path, expected);
+                }
                 if op == "reorderJavaScriptRecordPropertyValues" {
                     return self.record_value_order_operation(args, env, path, span, expected);
                 }

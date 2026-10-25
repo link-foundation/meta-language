@@ -398,3 +398,7 @@ mod translation_javascript_object_rest_formals;
 mod translation_javascript_recursive_object_bindings;
 
 mod translation_javascript_recursive_bindings;
+
+mod translation_rust_conditional_chains;
+
+mod translation_rust_match_guards;

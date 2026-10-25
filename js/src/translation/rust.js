@@ -13,6 +13,7 @@ import { readRustShiftSourceOperation } from './rust-shift-rules.js';
 import { readRustRecordItem, readRustRecordConstruction, readRustRecordProjection, readRustRecordValuePath, readRustNamedVariantFields, readRustRecordPattern, readRustNominalBindingPattern, rustNominalBindingNames, lowerRustNominalBinding, expandRustConstructorRest, readRustLetElsePattern } from './rust-records.js';
 import { planTuplePatternFields, readRustLetElseInitializerError } from './rust-record-rules.js';
 import { readRustConditionalPattern } from './rust-pattern-conditions.js';
+import {hasRustConditionalChain,readRustConditionalChain,lowerRustGuardedMatch} from './rust-conditional-chains.js';
 import { readRustInherentItem, readRustInherentReceiver, readRustInherentSelfType, resolveRustInherentPath, readRustInherentMethod, splitRustReferenceToken } from './rust-inherent.js';
 import {readRustRuntimeShellSource,refuseRustRuntimeShellComposition} from './rust-runtime-shell.js';
 import {acceptRustPureUnitCallModel} from './rust-pure-unit-call-rules.js';
@@ -809,7 +810,7 @@ class RustParser {
       }
       tail = expr;
       if (!c.is('}')) {
-        if (['if', 'match', 'block'].includes(expr.k)) throw unsupported('expression statement', 'a block value must be its last expression', expr.span);
+        if ((expr.block===true||['if', 'match', 'block'].includes(expr.k))) throw unsupported('expression statement', 'a block value must be its last expression', expr.span);
         throw this.fail('expected }');
       }
     }
@@ -1081,7 +1082,7 @@ class RustParser {
     const left = this.primitiveBitwise(path, options, 0);
     const token = c.peek();
     const shift = (token.value === '<' || token.value === '>') && c.is(token.value, 1) && c.peek(1).start === token.end;
-    const blockStatement = options.statement && ['if', 'match'].includes(left.k);
+    const blockStatement = options.statement && (left.block===true||['if', 'match'].includes(left.k));
     if (token.kind === 'punct' && (shift || ['|', '^', '&'].includes(token.value)) && !blockStatement) {
       throw unsupported(`operator ${shift ? token.value.repeat(2) : token.value}`, 'bitwise operators are outside the portable core', span(token, c.peek(shift ? 1 : 0)));
     }
@@ -1100,7 +1101,7 @@ class RustParser {
     if (level === 3) return this.shift(path, options);
     let left = this.primitiveBitwise(path, options, level + 1);
     while (this.cursor.peek().kind === 'punct' && acceptRustPrimitiveBitwisePrecedence(this.cursor.peek().value, level)) {
-      if (options.statement && ['if', 'match'].includes(left.k)) return left;
+      if (options.statement && (left.block===true||['if', 'match'].includes(left.k))) return left;
       const token = this.cursor.next(), right = this.primitiveBitwise(path, {}, level + 1);
       left = { k: 'math', op: readRustPrimitiveBitwiseOperation(token.value), name: 'Rust primitive bitwise operation',
         args: [{ value: left, spread: false }, { value: right, spread: false }], span: joined(left, right, token) };
@@ -1112,7 +1113,7 @@ class RustParser {
     const c = this.cursor;
     let left = this.additive(path, options);
     while ((c.is('<') || c.is('>')) && c.is(c.peek().value,1) && c.peek(1).start===c.peek().end) {
-      if (options.statement && ['if','match'].includes(left.k)) return left;
+      if (options.statement && (left.block===true||['if','match'].includes(left.k))) return left;
       const token=c.next();c.next();
       const right=this.additive(path,{});
       left={k:'math',op:readRustShiftSourceOperation(token.value.repeat(2)),name:'Rust primitive shift',
@@ -1126,7 +1127,7 @@ class RustParser {
     for (;;) {
       const token = this.cursor.peek();
       if (token.kind !== 'punct' || !ADDITIVE[token.value]) return left;
-      if (options.statement && ['if', 'match', 'block'].includes(left.k)) return left;
+      if (options.statement && (left.block===true||['if', 'match', 'block'].includes(left.k))) return left;
       this.cursor.next();
       const right = this.multiplicative(path, {});
       left = this.scalarLoopArithmetic({ k: 'binary', op: ADDITIVE[token.value], left, right, span: joined(left, right, token) }, path);
@@ -1138,7 +1139,7 @@ class RustParser {
     for (;;) {
       const token = this.cursor.peek();
       if (token.kind !== 'punct' || !MULTIPLICATIVE[token.value]) return left;
-      if (options.statement && ['if', 'match', 'block'].includes(left.k)) return left;
+      if (options.statement && (left.block===true||['if', 'match', 'block'].includes(left.k))) return left;
       this.cursor.next();
       const right = this.cast(path, {});
       left = this.scalarLoopArithmetic({ k: 'binary', op: MULTIPLICATIVE[token.value], left, right, span: joined(left, right, token) }, path);
@@ -1544,6 +1545,7 @@ class RustParser {
   ifExpr(path) {
     const c = this.cursor;
     const token = c.next();
+    if(hasRustConditionalChain(this))return readRustConditionalChain(this,path,token);
     if (c.is('let')) return readRustConditionalPattern(this,path,token);
     const cond = this.expr(path, { noStruct: true });
     this.origins.direct(cond, path, cond.span);
@@ -1558,32 +1560,35 @@ class RustParser {
     const token = c.next();
     const scrutinee = this.expr(path, { noStruct: true });
     c.expect('{', 'match');
-    const rows = [];
+    const rows = [],guardedArms=[];
     while (!c.is('}')) {
       const armStart = c.peek();
       const aliases = [];
       c.eat('|');
       const alternatives = [this.pattern(path, aliases)];
       while (c.eat('|')) alternatives.push(this.pattern(path, aliases));
-      if (c.is('if')) throw unsupported('match guard', 'guards are outside the portable pattern language', span(armStart, c.peek()));
-      c.expect('=>', 'match arm');
       const previous = this.origins.enter(this.origins.cases(alternatives, scrutinee, path));
-      for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
-      let body = this.expr(path);
-      const bodyOrigin = this.origins.origin(body, path);
-      this.origins.scope = previous;
+      let body,bodyOrigin,guard;
+      try{
+        for (const alias of aliases) this.origins.bind(alias.name, alias.value, path);
+        guard=c.eat('if')?this.expr(path):null;
+        if(guard)this.origins.direct(guard,path,guard.span);
+        c.expect('=>','match arm');body=this.expr(path);bodyOrigin=this.origins.origin(body,path);
+      }finally{this.origins.scope=previous;}
       if (body.block || body.k === 'if' || body.k === 'match') c.eat(',');
       else if (!c.is('}')) c.expect(',', 'match arm');
       if (alternatives.length > 1 && aliases.length) {
         throw unsupported('binding in an or-pattern', 'bind the value in each alternative separately', span(armStart, c.peek()));
       }
-      for (const alias of aliases.reverse()) body = { k: 'let', name: alias.name, value: alias.value, body, span: body.span };
+      guardedArms.push({patterns:alternatives,body,aliases:[...aliases],guard,origin:bodyOrigin,span:span(armStart,c.peek())});
+      for (const alias of [...aliases].reverse()) body = { k: 'let', name: alias.name, value: alias.value, body, span: body.span };
       this.origins.mark(body, bodyOrigin);
       // `A | B => e` is one row per alternative with the same body.
       for (const pattern of alternatives) rows.push({ patterns: [pattern], body, span: span(armStart, c.peek()) });
     }
     c.expect('}', 'match');
     if (!rows.length) throw unsupported('empty match', 'uninhabited types are outside the portable core', span(token, c.peek()));
+    if(guardedArms.some(arm=>arm.guard))return lowerRustGuardedMatch(this,scrutinee,guardedArms,path,span(token,c.peek()));
     const origins = rows.map(row => this.origins.origin(row.body, path));
     const result = { k: 'match', scrutinees: [scrutinee], rows, span: span(token, c.peek()) };
     return this.origins.mark(result, this.origins.join(origins));

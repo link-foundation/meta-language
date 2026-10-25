@@ -122,6 +122,7 @@ include = [
     "src/data/big-integer-conversion-program.lino",
     "src/data/callable-source-program.lino",
     "src/data/collection-access-program.lino",
+    "src/data/conditional-chain-program.lino",
     "src/data/fixed-integer-cast-program.lino",
     "src/data/formal-string-unit-program.lino",
     "src/data/grammar-inference-program.lino",

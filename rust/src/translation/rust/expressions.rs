@@ -1,7 +1,7 @@
 //! Expression precedence, immutable reads, primary values and qualified paths.
 
 mod ascii_text_predicates;
-mod control;
+pub(super) mod control;
 mod read_only_queries;
 
 use super::array_rules::{accept_rust_source_array_element, accept_rust_source_array_owner};

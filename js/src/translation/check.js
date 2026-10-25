@@ -15,6 +15,8 @@ import {captureRustRuntimeShell,checkRustRuntimeShellContainers} from './rust-ru
 import { acceptOptionalAnnotationTypes } from './optional-inference.js';
 import {checkRustPureUnitCalls} from './rust-pure-unit-calls.js';
 import {checkRustEmptyOptionProof} from './rust-empty-options.js';
+import {acceptConditionalChainOperation} from './conditional-chain-rules.js';
+import {checkConditionalChainValue} from './conditional-chain-values.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -1285,6 +1287,7 @@ class Checker {
    * argument makes `max` and `min` a fold over one array.
    */
   math(node, env, path, expected) {
+    if(acceptConditionalChainOperation(node.op))return checkConditionalChainValue(this,node,env,path,expected);
     if(node.op===readJavaScriptRecursiveBindingIterableOperation())return checkJavaScriptRecursiveBindingIterable(this,node,env,path);
     if(node.op===readJavaScriptObjectRestOperation())return checkJavaScriptObjectRest(this,node,env,path);
     if(node.op===readJavaScriptRecordFormalDefaultOperation())return checkJavaScriptRecordFormalDefault(this,node,env,path);

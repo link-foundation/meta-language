@@ -1,4 +1,5 @@
 //! Actual token/term transport into the shared ordinary completion constructions.
+use super::expressions::control::conditional_chains::ConditionalStages;
 use super::{
     Binding, Options, Result, RustParser, SCtor, SData, SExpr, SField, SItem, SNode, SourceOrigin,
     Span, Token, TokenKind, Type, is_if_or_match, span, unsupported,
@@ -16,7 +17,8 @@ enum CompletionNode {
     Abort(SExpr, SourceOrigin),
     Binding(Binding, Box<CompletionTree>),
     Conditional {
-        condition: SExpr,
+        condition: Option<SExpr>,
+        stages: Option<ConditionalStages>,
         first: Box<CompletionTree>,
         second: Box<CompletionTree>,
         span: Option<Span>,
@@ -343,22 +345,30 @@ impl RustParser {
     }
     fn ordinary_conditional_completion(&mut self, path: &[String]) -> Result<CompletionTree> {
         let token = self.cursor.advance();
-        if self.cursor.is("let") {
-            return Err(unsupported(
-                "if let",
-                "write a match",
-                span(&token, self.cursor.peek()),
-            ));
-        }
-        let condition = self.expr(
-            path,
-            Options {
-                statement: false,
-                no_struct: true,
-            },
-        )?;
-        self.origins.direct(&condition, path, condition.span)?;
-        let first = self.ordinary_completion_block(path)?;
+        let (condition, stages, first) = if self.has_conditional_chain() {
+            let previous = self.origins.enter(None);
+            let parsed = (|| {
+                let stages = self.conditional_chain_stages(path, &token)?;
+                let first = self.ordinary_completion_block(path)?;
+                Ok::<_, crate::translation::diagnostics::TranslationError>((
+                    None,
+                    Some(stages),
+                    first,
+                ))
+            })();
+            self.origins.scope = previous;
+            parsed?
+        } else {
+            let condition = self.expr(
+                path,
+                Options {
+                    statement: false,
+                    no_struct: true,
+                },
+            )?;
+            self.origins.direct(&condition, path, condition.span)?;
+            (Some(condition), None, self.ordinary_completion_block(path)?)
+        };
         let has_else = self.cursor.eat("else").is_some();
         let second = if has_else {
             if self.cursor.is("if") {
@@ -374,6 +384,7 @@ impl RustParser {
             kind,
             node: CompletionNode::Conditional {
                 condition,
+                stages,
                 first: Box::new(first),
                 second: Box::new(second),
                 span: span(&token, self.cursor.peek()),
@@ -498,15 +509,19 @@ impl RustParser {
             }
             CompletionNode::Conditional {
                 condition,
+                stages,
                 first,
                 second,
                 span,
             } if form == "conditional" => {
                 let first = self.lower_ordinary_completion(*first, terminal, context)?;
                 let second = self.lower_ordinary_completion(*second, terminal, context)?;
+                if let Some(stages) = stages {
+                    return self.lower_conditional_chain_stages(stages, first, second, span);
+                }
                 Ok(SExpr::new(
                     SNode::If {
-                        cond: Box::new(condition),
+                        cond: Box::new(condition.expect("an ordinary Boolean condition")),
                         then: Box::new(first),
                         otherwise: Box::new(second),
                     },

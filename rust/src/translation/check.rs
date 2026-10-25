@@ -40,6 +40,7 @@ mod callables;
 mod collection_access;
 mod collections;
 mod comparisons;
+mod conditional_chains;
 mod expectation;
 mod exponentiation;
 mod expressions;

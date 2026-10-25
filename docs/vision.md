@@ -4065,6 +4065,62 @@ The latest full-draft continuation is preserved verbatim in
 It reinforces the existing critical full-scope rows and changes no requirement,
 fixture, runtime, assertion or later verification obligation.
 
+Conditional Rust pattern chains now have a shared source plan over actual
+ordered operands. Pattern scopes extend into later conditions and the selected
+body. Each Boolean or pattern failure short-circuits all later operands.
+The outer `else` is parsed and checked in its original scope. A failed inner
+condition cannot capture an outer name shadowed by a matched pattern.
+
+The lowering uses existing products, optional values and lazy coalescing.
+Success carries a one-field product around its complete payload; failure carries
+only absence. This distinguishes even a successful Unit or nullish payload from
+failure. The final continuation selects the actual outer fallback lazily and
+projects the original result. There is no new checked constructor, target-only
+execution engine or replacement native algorithm. Shared selection/layer rules
+are automatically translated; both hosts transport actual patterns, scopes,
+types, operands and checked terms.
+
+These future controls are bounded to Rust `>=1.90.0 <1.100.0`, edition2024,
+and the existing Node22/24 oracle profiles. The source interpretation follows the
+[Rust Reference's condition order and binding scope](https://doc.rust-lang.org/reference/expressions/if-expr.html#chains-of-conditions)
+and [edition restriction](https://doc.rust-lang.org/edition-guide/rust-2024/let-chains.html).
+The exact former chain refusal and all preceding fixtures/assertions at
+`1afe9c54` remain in Links history and gain independent positive controls.
+The stage budget is explicit. Full drop/temporary/move/borrow protocols,
+missing-else effect statements, while chains and complete own-project source
+semantics remain obligations. No behavioral verification has run in this phase.
+
+The same packet lowering now drafts Boolean Rust match guards. The actual
+scrutinee is captured once. Each original alternative retains its own pattern
+bindings and guard; a false guard proceeds to the next actual alternative,
+including another `|` alternative in the same source arm. A selected body runs
+only after its guard succeeds. Every continuation to later arms is checked
+outside earlier arm scopes, preserving outer names and lazy failures.
+
+Unguarded source arms retain a separate ordinary match that must pass the
+existing exhaustiveness checker. Guarded arms never count toward that coverage;
+adding failure packets cannot admit a non-exhaustive source match. The complete
+old guarded input and predecessor assertions remain in Links history. Future
+controls include an or-pattern whose first binding fails its guard and whose
+second binding succeeds, scope shadows, constructor fields, actual abort order,
+Unit payloads and source block boundaries. This follows the
+[Rust guard ordering and alternative behavior](https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards)
+for the declared Boolean-guard version profile. Full guard borrowing/moves,
+drop/temporary behavior, interior mutable state, arm attributes and guard let
+chains still require their complete source meanings. All products, codec cycles,
+emissions and native controls remain unexecuted until the full draft is complete.
+
+Conditional pattern stages also feed the existing ordinary function-completion
+tree. The true completion is parsed with its actual pattern bindings; the
+alternative and following statements keep their outer scope. Existing shared
+completion rules retain early-return, abort and Unit-fallthrough distinctions.
+Lowering then uses the same packet traversal over either ordinary values or
+the existing generated completion carrier. Source-only controls cover completed
+pattern returns, two-stage bindings, outer shadows and a Unit branch before a
+terminal return. This composes two existing representations rather than adding
+a target-specific control engine. Full effects, temporary/drop order and the
+remaining ownership and loop obligations still require implementation.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 
