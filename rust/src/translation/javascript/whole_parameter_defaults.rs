@@ -72,7 +72,7 @@ impl JavaScriptParser {
             &reserved,
             rules::read_java_script_object_binding_depth_limit(),
         );
-        if !rules::contains_java_script_whole_parameter_default(&plan) {
+        if !rules::contains_java_script_whole_parameter_default(&plan) && !crate::translation::scalar_closure_default_rules::contains_java_script_scalar_closure_default(&plan,context) {
             return Ok(None);
         }
         if !rules::accept_java_script_whole_parameter_default_context(&Text::from_text(context)) {

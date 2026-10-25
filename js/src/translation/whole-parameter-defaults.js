@@ -6,9 +6,10 @@ import {constructJavaScriptRecursiveObjectEntries} from './recursive-object-bind
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 import {planJavaScriptWholeParameterDefaults,containsJavaScriptWholeParameterDefault,readJavaScriptWholeParameterBindingPositions,acceptJavaScriptWholeParameterDefaultContext} from './whole-parameter-default-rules.js';
+import {containsJavaScriptScalarClosureDefault} from './scalar-closure-default-rules.js';
 export function readJavaScriptWholeParameterDefaults(parser,tokens,start,context){
  const kinds=tokens.map(token=>token.kind),values=tokens.map(token=>token.value),plan=planJavaScriptWholeParameterDefaults(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,readJavaScriptObjectBindingDepthLimit());
- if(!containsJavaScriptWholeParameterDefault(plan))return null;
+ if(!containsJavaScriptWholeParameterDefault(plan)&&!containsJavaScriptScalarClosureDefault(plan,context))return null;
  if(!acceptJavaScriptWholeParameterDefaultContext(context))throw unsupported('whole parameter default context','the actual defaulted callable requires its complete function-value invocation environment',tokens[0]);
  const positions=readJavaScriptWholeParameterBindingPositions(plan),names=positions.map(at=>tokens[at].value),parameters=[],patternEntries=[],used=parser.recordParameterNames;
  if(plan[0]!==tokens.length||parser.recordParameterTokenOwner!==parser.cursor.tokens||!(used instanceof Set))throw unsupported('whole parameter default transport','the complete actual formal interval needs its parser-owned token and name supply',tokens[0]);

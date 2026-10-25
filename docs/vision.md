@@ -4298,6 +4298,22 @@ optional scalar/record/array, policy rejection and effect controls are unexecute
 General union refinements, complete environments and all earlier requirements
 remain unfinished.
 
+Ordinary defaults in synchronous arrow, function-expression and object-method
+closures reuse the complete existing whole-formal plan and ordered callee entry
+construction. A separate source-generated selector admits scalar-only default
+plans in those contexts; named and constant scalar routes and existing pattern
+routes retain their preceding consumers. Raw logical arguments use the existing
+optional absent marker. Actual defaults stay in the body sequence, preserving
+earlier parameter dependencies, outer captures, undefined-only selection and
+lazy failures. Existing callable completion and explicit callback bridges carry
+their real optional interfaces into calls, map/filter/reduce and Array.from.
+Strict directives and duplicate/self/later binding boundaries keep the existing
+checks. Future controls include independent array defaults, ordinal arguments,
+returned closures and actual callee/argument/initializer/body traces. No new core
+constructor or handwritten native semantic rule is introduced. Full parameter
+environments, arbitrary present-type unions, implicit this/arguments, async,
+generators and every earlier requirement remain obligations; controls are deferred.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

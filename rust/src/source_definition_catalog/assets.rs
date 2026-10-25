@@ -159,6 +159,9 @@ pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
         "scalar-assignment-program.lino" => {
             Some(include_str!("../data/scalar-assignment-program.lino"))
         }
+        "scalar-closure-default-program.lino" => {
+            Some(include_str!("../data/scalar-closure-default-program.lino"))
+        }
         "sequential-parameter-default-program.lino" => Some(include_str!(
             "../data/sequential-parameter-default-program.lino"
         )),

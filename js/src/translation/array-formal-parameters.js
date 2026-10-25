@@ -7,13 +7,15 @@ import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {readJavaScriptRecordParameterBindingStatement} from './javascript-record-parameter-rules.js';
 import {readJavaScriptPatternParameterBody,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
 import {readJavaScriptRecursiveObjectFormals} from './recursive-object-formals.js';
+import {readJavaScriptWholeParameterDefaults} from './whole-parameter-defaults.js';
+import {acceptJavaScriptScalarClosureDefaultContext} from './scalar-closure-default-rules.js';
 
 export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchronous){
  const c=parser.cursor,start=c.index,opening=c.tokens[start-1];
  if(opening?.kind!=='punct'||opening.value!=='(')return null;
  const close=parser.matching(start-1),closing=c.tokens[close];if(closing?.kind!=='punct'||closing.value!==')')return null;
  const tokens=c.tokens.slice(start,close+1),kinds=tokens.map(token=>token.kind),values=tokens.map(token=>token.value);
- const selected=findJavaScriptArrayFormalPattern(kinds,values,0);if(selected<0)return null;
+ const selected=findJavaScriptArrayFormalPattern(kinds,values,0);if(selected<0)return acceptJavaScriptScalarClosureDefaultContext(context)&&acceptJavaScriptArrayFormalContext(context,asynchronous,doc?.params.size??0)?readJavaScriptWholeParameterDefaults(parser,tokens,start,context):null;
  if(!acceptJavaScriptArrayFormalContext(context,asynchronous,doc?.params.size??0))throw unsupported('array formal parameter source profile','ordinary array patterns require synchronous callables without parameter documentation tags',tokens[selected]);
  const recursive=readJavaScriptRecursiveObjectFormals(parser,tokens,start,context);if(recursive)return recursive;
  const plan=planJavaScriptArrayFormalParametersWithDefaults(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);

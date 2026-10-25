@@ -105,15 +105,16 @@ impl JavaScriptParser {
             .map(|token| Text::from_text(&token.value))
             .collect::<Vec<_>>();
         let selected = rules::find_java_script_array_formal_pattern(&kinds, &values, 0.0);
+        let documentation = serde_json::Number::from(doc.map_or(0, |doc| doc.params.len()))
+            .as_f64()
+            .expect("source parameter counts have a Number representation");
         if selected < 0.0 {
+            if crate::translation::scalar_closure_default_rules::accept_java_script_scalar_closure_default_context(context)&&rules::accept_java_script_array_formal_context(&Text::from_text(context),asynchronous,documentation){return self.read_whole_parameter_defaults(&tokens,start,context);}
             return Ok(None);
         }
         let selected = number_index(selected)
             .and_then(|index| tokens.get(index))
             .unwrap_or(&opening);
-        let documentation = serde_json::Number::from(doc.map_or(0, |doc| doc.params.len()))
-            .as_f64()
-            .expect("source parameter counts have a Number representation");
         if !rules::accept_java_script_array_formal_context(
             &Text::from_text(context),
             asynchronous,

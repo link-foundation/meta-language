@@ -418,3 +418,5 @@ mod translation_javascript_typed_omitted_arguments;
 mod translation_rust_let_else_completions;
 
 mod translation_javascript_absence_conversions;
+
+mod translation_javascript_scalar_closure_defaults;
