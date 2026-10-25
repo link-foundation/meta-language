@@ -1,6 +1,6 @@
 // Actual array-pattern formal syntax, independent of named record admission.
 import {acceptJavaScriptSourceBindingName} from './source-identifier-rules.js';
-import {readRequiredTextFact} from './fact-column-rules.js';
+import {readRequiredTextFact,readRequiredNumberFact} from './fact-column-rules.js';
 import {readArrayIterableForm} from './array-value-rules.js';
 /** @param {string[]} kinds @param {string[]} values @param {number} start @returns {number} */
 export function findJavaScriptArrayFormalPattern(kinds,values,start){
@@ -22,6 +22,9 @@ export function findJavaScriptArrayFormalPattern(kinds,values,start){
 export function acceptJavaScriptArrayFormalContext(context,asynchronous,documentationParameters){
  return !asynchronous&&documentationParameters===0&&(context==='ordinary named function declaration'||context==='ordinary arrow function closure'||context==='ordinary function expression closure'||context==='ordinary object method closure'||context==='ordinary constant arrow function'||context==='ordinary constant function expression'||context==='ordinary namespace object method');
 }
+/** Actual nested closures retain closure captures; named/flattened callables
+ * retain their existing function boundary. @param {string} context @returns {number} */
+export function readJavaScriptArrayFormalDefaultScopeBoundary(context){return context==='ordinary arrow function closure'||context==='ordinary function expression closure'||context==='ordinary object method closure'?1:2;}
 /** [endExclusive,count,...instructions]; ordinary [0,slot,token]; array
  * [2,slot,open,close,bindingCount,...restFlag,elementIndex,bindingToken].
  * Reasons:1 malformed,2 nested/mixed object patterns,3 default,4 invalid or
@@ -29,6 +32,19 @@ export function acceptJavaScriptArrayFormalContext(context,asynchronous,document
  * @param {string[]} kinds @param {string[]} values @param {number} start
  * @param {string[]} reserved @returns {number[]} */
 export function planJavaScriptArrayFormalParameters(kinds,values,start,reserved){
+ return planJavaScriptArrayFormalParameterBindings(kinds,values,start,reserved,false);
+}
+/** Separate source profile retains two actual initializer interval columns on
+ * every array binding; -1,-1 denotes no initializer. The original operation
+ * above retains its exact required-only syntax and failure contract.
+ * @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @returns {number[]} */
+export function planJavaScriptArrayFormalParametersWithDefaults(kinds,values,start,reserved){
+ return planJavaScriptArrayFormalParameterBindings(kinds,values,start,reserved,true);
+}
+/** @param {string[]} kinds @param {string[]} values @param {number} start
+ * @param {string[]} reserved @param {boolean} defaults @returns {number[]} */
+function planJavaScriptArrayFormalParameterBindings(kinds,values,start,reserved,defaults){
  if(kinds.length!==values.length||start<0||start%1!==0||start>=kinds.length)return [-1,start];
  let index=start,slot=0;let names=[],instructions=[];
  while(index<kinds.length&&!(readRequiredTextFact(kinds,index)==='punct'&&readRequiredTextFact(values,index)===')')){
@@ -44,8 +60,13 @@ export function planJavaScriptArrayFormalParameters(kinds,values,start,reserved)
     if(tokenKind==='punct'&&(name==='['||name==='{'))return [-2,index];
     let duplicate=false;for(let previous=0;previous<names.length;previous+=1)if(readRequiredTextFact(names,previous)===name)duplicate=true;
     if(!acceptJavaScriptSourceBindingName(tokenKind,name,duplicate,reserved))return [-4,index];
-    names=names.concat([name]);bindings=bindings.concat([rest?1:0,position,token]);index+=1;position+=1;
+    names=names.concat([name]);index+=1;position+=1;let defaultStart=-1,defaultEnd=-1;
     if(index>=kinds.length)return [-1,index];
+    if(readRequiredTextFact(kinds,index)==='punct'&&readRequiredTextFact(values,index)==='='){
+     if(!defaults)return [-3,index];if(rest)return [-5,index];defaultStart=index+1;
+     defaultEnd=findJavaScriptFormalDefaultExpressionEnd(kinds,values,defaultStart);if(defaultEnd<0)return [-1,defaultStart];index=defaultEnd;
+    }
+    bindings=bindings.concat(defaults?[rest?1:0,position-1,token,defaultStart,defaultEnd]:[rest?1:0,position-1,token]);
     const nextKind=readRequiredTextFact(kinds,index),next=readRequiredTextFact(values,index);
     if(nextKind==='punct'&&next==='=')return [-3,index];
     if(rest&&!(nextKind==='punct'&&next===']'))return [-5,index];
@@ -53,7 +74,7 @@ export function planJavaScriptArrayFormalParameters(kinds,values,start,reserved)
     if(!(nextKind==='punct'&&next===']'))return [-1,index];
    }
    if(index>=kinds.length)return [-1,index];
-   instructions=instructions.concat([2,slot,open,index,bindings.length/3],bindings);index+=1;
+   instructions=instructions.concat([2,slot,open,index,bindings.length/(defaults?5:3)],bindings);index+=1;
   }else{
    if(kind==='punct'&&value==='{')return [-2,index];
    let duplicate=false;for(let previous=0;previous<names.length;previous+=1)if(readRequiredTextFact(names,previous)===value)duplicate=true;
@@ -67,6 +88,39 @@ export function planJavaScriptArrayFormalParameters(kinds,values,start,reserved)
   if(!(delimiterKind==='punct'&&delimiterValue===')'))return [-1,index];
  }
  return index<kinds.length?[index+1,slot].concat(instructions):[-1,index];
+}
+/** Complete opaque tokens retain their contents; punctuation nesting determines
+ * the AssignmentExpression boundary only. The ordinary expression parser must
+ * subsequently consume exactly this original interval.
+ * @param {string[]} kinds @param {string[]} values @param {number} start @returns {number} */
+export function findJavaScriptFormalDefaultExpressionEnd(kinds,values,start){
+ if(kinds.length!==values.length||start<0||start%1!==0||start>=kinds.length)return -1;
+ let stack=[];
+ for(let index=start;index<kinds.length;index+=1){
+  const kind=readRequiredTextFact(kinds,index);if(kind==='eof')return -1;
+  if(kind!=='punct')continue;
+  const value=readRequiredTextFact(values,index);
+  if(stack.length===0&&(value===','||value===']'))return index===start?-1:index;
+  if(value==='('||value==='['||value==='{')stack=stack.concat([value==='('?')':value==='['?']':'}']);
+  else if(value===')'||value===']'||value==='}'){
+   if(stack.length===0||readRequiredTextFact(stack,stack.length-1)!==value)return -1;
+   stack=stack.slice(0,-1);
+  }
+ }
+ return -1;
+}
+/** BoundName positions in the separate five-column default profile.
+ * @param {number[]} plan @returns {number[]} */
+export function readJavaScriptArrayFormalDefaultBindingPositions(plan){
+ if(plan.length<2||readRequiredNumberFact(plan,0)<0)throw new RangeError('an array default binding census needs a complete admitted plan');
+ let cursor=2,names=[];
+ while(cursor<plan.length){
+  const form=readRequiredNumberFact(plan,cursor);cursor+=2;
+  if(form===0){names=names.concat([readRequiredNumberFact(plan,cursor)]);cursor+=1;}
+  else if(form===2){const count=readRequiredNumberFact(plan,cursor+2);cursor+=3;for(let index=0;index<count;index+=1){names=names.concat([readRequiredNumberFact(plan,cursor+2)]);cursor+=5;}}
+  else throw new RangeError('an array default binding census needs actual formal instructions');
+ }
+ return names;
 }
 /** Selected source wrapper, lowered to established core operations before
  * typed archive encoding. It does not redefine ordinary for-of iteration.

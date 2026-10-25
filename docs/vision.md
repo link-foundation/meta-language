@@ -1324,11 +1324,25 @@ archive encoding. It introduces no Core constructor or source-facet exemption.
 Existing tuple ownership/caller proofs remain binding, with exact source-term
 identity through inference. The complete syntax/domain/inference and original
 iterable decisions are source-generated and available through the shared catalog.
-Defaults, nested/mixed object patterns, arbitrary or live iterators, descriptors,
-missing tuple positions, heterogeneous tuple rest and complete async/generator
-semantics remain implementation obligations. Twenty future values and seven
-refusals cover complete source/definition graphs, both codecs, four emissions
-and native products; none has executed.
+A separate default-enabled plan now retains complete initializer token intervals
+and every actual BoundName. The ordinary parser consumes exactly each original
+expression interval, with the actual callable/closure boundary and a guarded
+parameter initialization environment. Body-entry bindings reuse the existing
+indexed undefined-only default operation: null, false, zero and empty text do
+not select the initializer, while an absent/undefined position selects it lazily.
+No invented index or extra Core constructor substitutes for a source value.
+The original required-only plan retains its full syntax/refusal contract.
+The former whole-parser default refusal input and complete predecessor
+assertion sources remain hashed in the fixture, beside new syntax/value controls.
+This correction follows [IteratorBindingInitialization](https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-runtime-semantics-iteratorbindinginitialization)
+and [formal parameters](https://tc39.es/ecma262/2025/multipage/ecmascript-language-functions-and-classes.html#sec-formal-parameters).
+Defaults that read parameters, whole-parameter defaults, record defaults with
+missing-field typing, nested/mixed object patterns, arbitrary or live iterators,
+descriptors, missing tuple positions, heterogeneous tuple rest and complete
+async/generator semantics remain implementation obligations. Future required
+and default values and exact refusals cover complete source/definition graphs,
+both codecs, four emissions and native products; none has executed.
+
 The own-entry read draft extends the same actual argument capture and own-field
 order used by keys/values. Closed ordered records and represented indexed or
 primitive receivers select their original keys and homogeneous payloads only
@@ -7160,10 +7174,14 @@ relocation proof and currently refuse this extraction. The full original
 emission and generated files remain in the source receipt.
 
 Deferred controls retain ordinary source observations, dynamic orders and
-spreads, native graph parity, both codecs and all four emissions. A name longer
-than the existing Rocq recursion fuel explicitly remains in the input controls:
-the current fixed-fuel fallback is an unresolved semantic obligation, not an
-accepted truncation. No source/product controls have run. Full value/entry
+spreads, native graph parity, both codecs and all four emissions. A 100-unit
+name remains in the original controls. The current Rocq `ml_fix 64` helper
+doubles its unfolding bound at each level, yielding a finite bound of 2^64
+unfoldings, rather than 64 source iterations. Reading that definition does not
+establish the outcome or cost of these unexecuted controls. Its inhabitant
+fallback beyond the bound remains an unresolved general partial-function
+obligation, not an accepted source-domain restriction or truncation.
+No source/product controls have run. Full value/entry
 domains, mutable pair domains, descriptors/proxies/Symbols, dynamic fields,
 separate module interfaces, all source character domains and all earlier
 requirements remain mandatory.

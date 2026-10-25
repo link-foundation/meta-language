@@ -71,6 +71,60 @@ impl JavaScriptParser {
             }
         }
     }
+    fn read_array_formal_default(
+        &mut self,
+        tokens: &[Token],
+        first: usize,
+        last: usize,
+        offset: usize,
+        bound_names: &[String],
+        boundary: u8,
+    ) -> Result<SExpr> {
+        let interval = tokens.get(first..last).ok_or_else(|| {
+            unsupported(
+                "array formal default transport",
+                "the actual expression must consume its complete planned initializer interval",
+                tokens.get(first).map(Token::span),
+            )
+        })?;
+        let kinds = interval
+            .iter()
+            .map(|token| super::record_parameters::token_kind(token).to_owned())
+            .collect::<Vec<_>>();
+        let values = interval
+            .iter()
+            .map(|token| token.value.clone())
+            .collect::<Vec<_>>();
+        let reference = crate::translation::frontend_rules::find_default_parameter_reference(
+            kinds,
+            values,
+            bound_names.to_vec(),
+        );
+        if let Some(token) = number_index(reference).and_then(|index| interval.get(index)) {
+            return Err(unsupported(
+                &format!("array formal default reading parameter {}", token.value),
+                "the current default profile requires a closed parameter initialization environment",
+                Some(token.span()),
+            ));
+        }
+        let saved = self.cursor.index;
+        let outer = self.scope.clone();
+        self.cursor.index = offset + first;
+        self.scope.tdz.extend(bound_names.iter().cloned());
+        let parsed = self.with_lexical_scope(bound_names, boundary, Self::expr);
+        let consumed = self.cursor.index;
+        self.cursor.index = saved;
+        self.scope = outer;
+        let value = parsed?;
+        if consumed != offset + last {
+            return Err(unsupported(
+                "array formal default transport",
+                "the actual expression must consume its complete planned initializer interval",
+                tokens.get(first).map(Token::span),
+            ));
+        }
+        Ok(value)
+    }
     pub(super) fn read_array_formal_parameters(
         &mut self,
         context: &str,
@@ -134,7 +188,9 @@ impl JavaScriptParser {
             .iter()
             .map(|value| Text::from_text(value.as_str().expect("a reserved name is text")))
             .collect::<Vec<_>>();
-        let plan = rules::plan_java_script_array_formal_parameters(&kinds, &values, 0.0, &reserved);
+        let plan = rules::plan_java_script_array_formal_parameters_with_defaults(
+            &kinds, &values, 0.0, &reserved,
+        );
         if plan[0] < 0.0 {
             let selected = number_index(plan[1])
                 .and_then(|index| tokens.get(index))
@@ -166,6 +222,10 @@ impl JavaScriptParser {
                 )
             })
         };
+        let bound_names = rules::read_java_script_array_formal_default_binding_positions(&plan)
+            .iter()
+            .map(|value| actual(*value).map(|token| token.value.clone()))
+            .collect::<Result<Vec<_>>>()?;
         let mut parameters = Vec::new();
         let mut source_names = Vec::new();
         let mut entries = Vec::new();
@@ -221,7 +281,9 @@ impl JavaScriptParser {
                 let rest = position(plan[cursor])? == 1;
                 let offset = position(plan[cursor + 1])?;
                 let token = actual(plan[cursor + 2])?;
-                cursor += 3;
+                let default_start = plan[cursor + 3];
+                let default_end = plan[cursor + 4];
+                cursor += 5;
                 crate::translation::lexer::require_java_script_identifier_role(token, true)?;
                 source_names.push(token.value.clone());
                 let offset = SExpr::new(
@@ -253,6 +315,33 @@ impl JavaScriptParser {
                         },
                         Some(place),
                     )
+                };
+                let value = if default_start >= 0.0 {
+                    let first = position(default_start)?;
+                    let last = position(default_end)?;
+                    let fallback = self.read_array_formal_default(
+                        &tokens,
+                        first,
+                        last,
+                        start,
+                        &bound_names,
+                        u8::try_from(position(
+                            rules::read_java_script_array_formal_default_scope_boundary(
+                                &Text::from_text(context),
+                            ),
+                        )?)
+                        .expect("actual source boundary is one or two"),
+                    )?;
+                    SExpr::new(
+                        SNode::ArrayBindingDefault {
+                            value: Box::new(value),
+                            fallback: Box::new(fallback),
+                            extra: BTreeMap::new(),
+                        },
+                        Some(place),
+                    )
+                } else {
+                    value
                 };
                 entries.push(ArrayFormalEntry {
                     temporary: false,

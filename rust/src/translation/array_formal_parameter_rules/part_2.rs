@@ -1,6 +1,8 @@
 // Generated from complete js/src/translation/array-formal-parameter-rules.js. Do not edit by hand.
+use super::MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result;
 use super::MlSource1TemporaryFindJavaScriptArrayFormalPatternLoop4Result;
-use super::MlSource1TemporaryPlanJavaScriptArrayFormalParametersLoop5Result;
+use super::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result;
+use super::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Result;
 use super::ml_array;
 use super::ml_math;
 use super::ml_number;
@@ -8,7 +10,9 @@ use super::ml_source_exception;
 use super::ml_string;
 use super::source_ml_source1_temporary_accept_java_script_source_binding_name_loop3;
 use super::source_ml_source1_temporary_find_java_script_array_formal_pattern_loop4;
-use super::source_ml_source1_temporary_plan_java_script_array_formal_parameters_loop5;
+use super::source_ml_source1_temporary_find_java_script_formal_default_expression_end_loop11;
+use super::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop5;
+use super::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop12;
 
 /// Execute the checked shared source algorithm.
 #[must_use]
@@ -656,11 +660,62 @@ pub fn accept_java_script_array_formal_context(
 
 /// Execute the checked shared source algorithm.
 #[must_use]
+pub fn read_java_script_array_formal_default_scope_boundary(
+    context: &self::ml_string::Text,
+) -> f64 {
+    if (((*context)
+        == (self::ml_string::Text::from_units(vec![
+            111, 114, 100, 105, 110, 97, 114, 121, 32, 97, 114, 114, 111, 119, 32, 102, 117, 110,
+            99, 116, 105, 111, 110, 32, 99, 108, 111, 115, 117, 114, 101,
+        ])))
+        || ((*context)
+            == (self::ml_string::Text::from_units(vec![
+                111, 114, 100, 105, 110, 97, 114, 121, 32, 102, 117, 110, 99, 116, 105, 111, 110,
+                32, 101, 120, 112, 114, 101, 115, 115, 105, 111, 110, 32, 99, 108, 111, 115, 117,
+                114, 101,
+            ]))))
+        || ((*context)
+            == (self::ml_string::Text::from_units(vec![
+                111, 114, 100, 105, 110, 97, 114, 121, 32, 111, 98, 106, 101, 99, 116, 32, 109,
+                101, 116, 104, 111, 100, 32, 99, 108, 111, 115, 117, 114, 101,
+            ])))
+    {
+        1f64
+    } else {
+        2f64
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
 pub fn plan_java_script_array_formal_parameters(
     kinds: &[self::ml_string::Text],
     values: &[self::ml_string::Text],
     start: f64,
     reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_array_formal_parameter_bindings(kinds, values, start, reserved, false)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_array_formal_parameters_with_defaults(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+) -> Vec<f64> {
+    self::plan_java_script_array_formal_parameter_bindings(kinds, values, start, reserved, true)
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn plan_java_script_array_formal_parameter_bindings(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+    reserved: &[self::ml_string::Text],
+    defaults: bool,
 ) -> Vec<f64> {
     if ((((kinds.len() as f64) != (values.len() as f64)) || (start < 0f64))
         || ((start % 1f64) != 0f64))
@@ -677,9 +732,9 @@ pub fn plan_java_script_array_formal_parameters(
                     {
                         let instructions = Vec::<f64>::new();
                         {
-                            let source_ml_source2_s62 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameters_loop5(kinds, values, reserved, index, slot, names, instructions);
+                            let source_ml_source2_s62 = self::source_ml_source1_temporary_plan_java_script_array_formal_parameter_bindings_loop5(kinds, values, reserved, defaults, index, slot, names, instructions);
                             match source_ml_source2_s62 {
-                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParametersLoop5Result::MlSource1TemporaryPlanJavaScriptArrayFormalParametersLoop5Done(index_2, slot_2, instructions_2) => {
+                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Done(index_2, slot_2, instructions_2) => {
                                     if index_2 < (kinds.len() as f64) {
                                         {
                                             let source_ml_source2_concat_value63 = vec![(index_2 + 1f64), slot_2];
@@ -692,12 +747,74 @@ pub fn plan_java_script_array_formal_parameters(
                                         vec![-1f64, index_2]
                                     }
                                 }
-                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParametersLoop5Result::MlSource1TemporaryPlanJavaScriptArrayFormalParametersLoop5Return(source_ml_source1_temporary_result5) => {
+                                self::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Result::MlSource1TemporaryPlanJavaScriptArrayFormalParameterBindingsLoop5Return(source_ml_source1_temporary_result5) => {
                                     source_ml_source1_temporary_result5
                                 }
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn find_java_script_formal_default_expression_end(
+    kinds: &[self::ml_string::Text],
+    values: &[self::ml_string::Text],
+    start: f64,
+) -> f64 {
+    if ((((kinds.len() as f64) != (values.len() as f64)) || (start < 0f64))
+        || ((start % 1f64) != 0f64))
+        || (start >= (kinds.len() as f64))
+    {
+        -1f64
+    } else {
+        {
+            let stack = Vec::<self::ml_string::Text>::new();
+            {
+                let index = start;
+                {
+                    let source_ml_source2_s65 = self::source_ml_source1_temporary_find_java_script_formal_default_expression_end_loop11(kinds, values, start, stack, index);
+                    match source_ml_source2_s65 {
+                        self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Done => {
+                            -1f64
+                        }
+                        self::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Result::MlSource1TemporaryFindJavaScriptFormalDefaultExpressionEndLoop11Return(source_ml_source1_temporary_result11) => {
+                            source_ml_source1_temporary_result11
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute the checked shared source algorithm.
+#[must_use]
+pub fn read_java_script_array_formal_default_binding_positions(plan: &[f64]) -> Vec<f64> {
+    if ((plan.len() as f64) < 2f64) || ((self::read_required_number_fact(plan, 0f64)) < 0f64) {
+        (self::ml_source_exception::SourceException {
+            class_name: String::from("RangeError"),
+            message_units: (self::ml_string::Text::from_units(vec![
+                97, 110, 32, 97, 114, 114, 97, 121, 32, 100, 101, 102, 97, 117, 108, 116, 32, 98,
+                105, 110, 100, 105, 110, 103, 32, 99, 101, 110, 115, 117, 115, 32, 110, 101, 101,
+                100, 115, 32, 97, 32, 99, 111, 109, 112, 108, 101, 116, 101, 32, 97, 100, 109, 105,
+                116, 116, 101, 100, 32, 112, 108, 97, 110,
+            ]))
+            .0,
+            message_present: true,
+        })
+        .raise()
+    } else {
+        {
+            let cursor = 2f64;
+            {
+                let names = Vec::<f64>::new();
+                {
+                    self::source_ml_source1_temporary_read_java_script_array_formal_default_binding_positions_loop12(plan, cursor, names)
                 }
             }
         }
@@ -753,146 +870,4 @@ pub fn read_java_script_array_formal_inference_form(
 pub enum MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
     MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(f64, f64),
     MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(f64),
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_source_identifier_prefix_ordinal_loop1(
-    name: &self::ml_string::Text,
-    mut index: f64,
-    mut ordinal: f64,
-) -> self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result {
-    loop {
-        return if index < (name.length()) {
-            {
-                let unit = {
-                    let source_ml_source2_string_unit_operand65 = name.clone();
-                    {
-                        let source_ml_source2_string_unit_operand66 = index;
-                        (std::rc::Rc::new(
-                            move |text: self::ml_string::Text, position: f64| -> f64 {
-                                {
-                                    let index_2 = if position.is_nan() {
-                                        0f64
-                                    } else {
-                                        position.trunc()
-                                    };
-                                    if (index_2 < 0f64) || (index_2 >= (text.length())) {
-                                        f64::NAN
-                                    } else {
-                                        ({
-                                    let source_ml_source2_string_unit_operand72 = {
-                                        let source_ml_source2_string_range_operand67 = text.clone();
-                                        {
-                                            let source_ml_source2_string_range_operand68 = index_2;
-                                            {
-                                                let source_ml_source2_string_range_operand69 = index_2 + 1f64;
-                                                {
-                                                    let source_ml_source2_string_range_position70 = source_ml_source2_string_range_operand68;
-                                                    {
-                                                        let source_ml_source2_string_range_position71 = source_ml_source2_string_range_operand69;
-                                                        source_ml_source2_string_range_operand67.slice(source_ml_source2_string_range_position70, source_ml_source2_string_range_position71)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    };
-                                    {
-                                        let source_ml_source2_string_unit_operand73 = 0f64;
-                                        source_ml_source2_string_unit_operand72.code_point_at(source_ml_source2_string_unit_operand73)
-                                    }
-                                }).clone().unwrap_or_else(|| f64::NAN)
-                                    }
-                                }
-                            },
-                        ))(
-                            source_ml_source2_string_unit_operand65,
-                            source_ml_source2_string_unit_operand66,
-                        )
-                    }
-                };
-                if (unit < 48f64) || (unit > 57f64) {
-                    self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-                } else {
-                    {
-                        let ordinal_2 = ((ordinal * 10f64) + unit) - 48f64;
-                        if (self::ml_math::is_safe_integer(ordinal_2)) {
-                            {
-                                let index_2 = index + 1f64;
-                                {
-                                    (index, ordinal) = (index_2, ordinal_2);
-                                    continue;
-                                }
-                            }
-                        }
-                        {
-                            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Return(-1f64)
-                        }
-                    }
-                }
-            }
-        } else {
-            self::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Result::MlSource1TemporaryReadSourceIdentifierPrefixOrdinalLoop1Done(index, ordinal)
-        };
-    }
-}
-
-/// Execute the checked shared source algorithm.
-#[must_use]
-pub fn source_ml_source1_temporary_read_source_identifier_prefix_loop2(
-    ordinals: &[f64],
-    mut next: f64,
-    mut previous: f64,
-    mut index: f64,
-) -> f64 {
-    loop {
-        return if index < (ordinals.len() as f64) {
-            {
-                let ordinal =
-                    (self::ml_array::optional_at(ordinals, self::ml_array::number_index(index)))
-                        .unwrap_or_else(|| -1f64);
-                {
-                    assert!(
-                        !((!(self::ml_math::is_safe_integer(ordinal)) || (ordinal < 1f64))
-                            || (ordinal < previous)),
-                        "{}",
-                        "source identifier ordinals need a sorted positive integer column"
-                    );
-
-                    {
-                        let previous_2 = ordinal;
-                        if ordinal == next {
-                            {
-                                let next_2 = next + 1f64;
-                                {
-                                    let index_2 = index + 1f64;
-                                    {
-                                        (next, previous, index) = (next_2, previous_2, index_2);
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            {
-                                let index_3 = index + 1f64;
-                                {
-                                    (previous, index) = (previous_2, index_3);
-                                    continue;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            next
-        };
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Result {
-    MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Done,
-    MlSource1TemporaryAcceptJavaScriptSourceBindingNameLoop3Return(bool),
 }
