@@ -748,6 +748,8 @@ class Inference {
       return true;
     }
     if (type.kind === 'record') {
+      const form=readJavaScriptRecordFormalDefaultFieldForm('record',type.open===true,type.fields.some(item=>item.name===field),field);
+      if(form==='absent'){this.unify(result,{kind:'option',element:UNIT,absence:'undefined'},where);return true;}
       const [action, position] = readRecordFieldInferenceStep(recordNameUnits(type.fields), Array.from({ length: field.length }, (_, index) => field.charCodeAt(index)), type.open === true);
       let declared = action === 0 ? type.fields[position] : undefined;
       if (action === 1) {

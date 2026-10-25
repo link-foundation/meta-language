@@ -1,6 +1,7 @@
 // Mechanical term transport for the portable optional constraint plans.
 // Solving the returned pairs remains the responsibility of the common unifier.
 import { createSurfaceReferenceFacts } from './surface-reference-facts.js';
+import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
 import {
   planInferenceTermIdentity, planOptionalAnnotationConstraints, planOptionalAdditionalAbsence, planOptionalCoalescingConstraints, planOptionalFieldInference,
   planOptionalJoinConstraints, planOptionalTypeConstraints,
@@ -29,6 +30,7 @@ export function readOptionalTypeConstraints(left, right) {
 }
 
 export function readOptionalCoalescingConstraints(left, resolved, right, force = false) {
+  if(requireJavaScriptAbsenceOnlyValue('JavaScript',resolved.kind,resolved.element?.kind??''))return [right,right];
   const facts = optionalFacts({ left, resolved, right });
   const plan = planOptionalCoalescingConstraints(...optionalArrays(facts), optionalChild(facts, 'left'), optionalChild(facts, 'resolved'), optionalChild(facts, 'right'), force);
   if (!plan.length) return null;

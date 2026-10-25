@@ -115,6 +115,26 @@ impl Checker {
                     *optional = Some(true.into());
                 }
                 let left = self.expr(&source, env, path, None, false)?;
+                let element = match &left.ty {
+                    Type::Option { element, .. } => element.kind(),
+                    _ => "",
+                };
+                if !self.checked_projection && crate::translation::absence_only_rules::require_java_script_absence_only_value(
+                    self.language.as_str(),
+                    left.ty.kind(),
+                    element,
+                ) {
+                    let body = self.expr(right, env, path, expected, false)?;
+                    let ty = body.ty.clone();
+                    return Ok(Expr::new(
+                        Node::Let {
+                            name: self.fresh_name("ml_nullish_fallback_operand"),
+                            value: Box::new(left),
+                            body: Box::new(body),
+                        },
+                        ty,
+                    ));
+                }
                 if !require_optional_coalescing(left.ty.kind()) {
                     return Ok(left);
                 }

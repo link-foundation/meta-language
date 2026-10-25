@@ -104,6 +104,7 @@ mod number_predicate_rules;
 mod object_rest;
 pub(crate) mod object_rest_rules;
 pub(crate) mod optional_callable_rules;
+pub(crate) mod absence_only_rules;
 pub(crate) mod optional_inference_rules;
 pub(crate) mod optional_value_rules;
 pub(crate) mod ordered_record_layout_rules;

@@ -20,6 +20,8 @@ import {checkConditionalChainValue} from './conditional-chain-values.js';
 import {requiresSequentialParameterDefaults,checkSequentialParameterCall} from './sequential-parameter-defaults.js';
 import {completeOptionalCallableArguments,constructOptionalCallbackBridge} from './optional-callables.js';
 import {acceptBodyEntryOptionalParameter} from './optional-callable-rules.js';
+import {checkJavaScriptAbsentRecordProperty} from './absent-record-properties.js';
+import {requireJavaScriptAbsenceOnlyValue} from './absence-only-rules.js';
 // Resolves names, checks types, and fixes the exact operator semantics of a
 // surface program produced by one of the language frontends. The result is
 // the portable-core program the emitters consume: every expression carries
@@ -638,7 +640,7 @@ class Checker {
         const value = this.referenceValue(this.expr(node.object, env, path, undefined));
         const guarded=checkJavaScriptNullishField(this,node,value,env,path,expected);
         if(guarded)return guarded;
-        return checkJavaScriptNamedProperty(value,node.field,node.span);
+        return checkJavaScriptAbsentRecordProperty(this,value,node.field,node.span,expected)??checkJavaScriptNamedProperty(value,node.field,node.span);
       }
       case 'length': {
         const object = this.expr(node.object, env, path, undefined);
@@ -729,7 +731,8 @@ class Checker {
         else result = { k: 'collectionItems', object, op: selection.form === 2 ? 'values' : 'entries', type: array(selection.element) };
         if (!node.args[1]) return result;
         const callbackEnv=this.language==='JavaScript'&&!this.checkedProjection?createJavaScriptOwnKeyCallbackEnvironment(node.args[0],node.args[1],'map',env):env;
-        const callback = this.expr(node.args[1], callbackEnv, path, { kind: 'function', params: [result.type.element, FLOAT], ret: readArrayFromExpectedElement(expected).element });
+        const params=[result.type.element,FLOAT];
+        const callback = constructOptionalCallbackBridge(this,this.expr(node.args[1], callbackEnv, path, { kind: 'function', params, ret: readArrayFromExpectedElement(expected).element }),params,node.span);
         return { k: 'method', object: result, op: 'map', args: [callback], type: array(callback.type.ret) };
       }
       case 'forOfIterable': {
@@ -787,6 +790,10 @@ class Checker {
       }
       case 'coalesce': {
         const left = node.left.k === 'index' ? this.expr({ ...node.left, optional: true }, env, path, undefined) : this.expr(node.left, env, path, undefined);
+        if(!this.checkedProjection&&requireJavaScriptAbsenceOnlyValue(this.language,left.type.kind,left.type.element?.kind??'')){
+          const body=this.expr(node.right,env,path,expected);
+          return {k:'let',name:this.freshName('ml_nullish_fallback_operand'),value:left,body,type:body.type};
+        }
         if (!requireOptionalCoalescing(left.type.kind)) return left;
         const right = coerce(this.expr(node.right, env, path, left.type.element), left.type.element, this.language, node.span);
         return { k: 'coalesce', left, right, type: left.type.element };
@@ -813,7 +820,7 @@ class Checker {
         if(nullable)return nullable;
         if(this.language==='JavaScript'&&!this.checkedProjection){
           const literal=readJavaScriptLiteralIndexSource(node,object.type.kind);
-          if(literal?.k==='field')return checkJavaScriptNamedProperty(object,literal.field,node.span);
+          if(literal?.k==='field')return checkJavaScriptAbsentRecordProperty(this,object,literal.field,node.span,expected)??checkJavaScriptNamedProperty(object,literal.field,node.span);
           if(literal)node=literal;
           if(object.type.kind==='string')return checkJavaScriptStringIndex(this,node,object,env,path);
         }
@@ -1209,7 +1216,7 @@ class Checker {
       if (node.op === 'map') {
         count(1);
         const params = [element, FLOAT, object.type];
-        const fn = this.expr(args[0], env, path, { kind: 'function', params, ret: undefined });
+        const fn = constructOptionalCallbackBridge(this,this.expr(args[0], env, path, { kind: 'function', params, ret: undefined }),params,node.span);
         const selection = readArrayFromMapCallback(fn.type, params);
         const error = readArrayFromMapCallbackError(selection.status, selection.pairs.every(([left, right]) => sameType(left, right)));
         if (error) throw typeError(error, node.span);

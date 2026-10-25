@@ -1,0 +1,5 @@
+import {draftTranslationProfileInventory} from './draft-translation-profile-inventory.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+draftTranslationProfileInventory({id:'javascript-closed-record-absence-and-nullish-fallback',fixture:'absent-record-properties',programAsset:'absence-only-program',nativeTest:'translation_javascript_absent_record_properties',
+ javascript:['js/src/translation/absent-record-properties.js','js/src/translation/javascript-record-parameter-rules.js','js/src/translation/absence-only-rules.js','js/src/translation/check.js','js/src/translation/javascript-infer.js','js/src/translation/optional-inference.js','js/tests/translation-absent-record-properties.test.js'],
+ rust:['rust/src/translation/check/absent_record_properties.rs','rust/src/translation/check/records.rs','rust/src/translation/check/arrays.rs','rust/src/translation/check/optional_values.rs','rust/src/translation/javascript/infer/records.rs','rust/src/translation/javascript/infer/optional_values.rs','rust/src/translation/absence_only_rules.rs','rust/tests/unit/translation_javascript_absent_record_properties.rs']});

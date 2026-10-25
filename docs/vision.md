@@ -4200,6 +4200,32 @@ remain a separate implementation scope. Extra arguments, missing required
 arguments, general function variance/polymorphism and full JavaScript function
 semantics remain obligations. No runtime observation or test has run in this phase.
 
+Closed ordinary JavaScript record reads reuse the existing complete field
+selection definition from the record-parameter library. A missing non-inherited
+name becomes undefined; actual own fields keep their projection and own-key
+membership. The receiver still evaluates once before that result, including all
+of its initializer effects. Dot access, literal bracket access and the existing
+required binding field terms share this route. Checked core projections and
+other source languages retain their original field requirements. An absent
+standard inherited spelling is not assigned a fabricated undefined value.
+This represented closed ordinary-object profile follows
+[OrdinaryGet](https://tc39.es/ecma262/2025/multipage/ordinary-and-exotic-objects-behaviours.html#sec-ordinaryget)
+and [GetV](https://tc39.es/ecma262/2025/multipage/abstract-operations.html#sec-getv);
+prototype mutation, accessors and proxies require their complete separate models.
+
+JavaScript Unit denotes undefined. A value whose only represented possibilities
+are Unit, null or undefined selects the actual right operand of nullish
+coalescing, after retaining the left operand's effects. A separately qualified
+shared definition selects that case in both checkers and inference transports.
+The fallback retains its own complete type rather than being coerced to the
+absence-only placeholder. Existing present-value coalescing stays lazy. Native
+source is automatically translated. Future controls cover real receiver/fallback
+traces, own membership, required and defaulted bindings, both codecs and all four
+emissions. Map and Array.from use the same explicit optional callback bridge,
+including callback factory capture. Arbitrary differing record-shape joins,
+open and inherited fields, full dynamic property protocols and every earlier
+requirement remain unfinished. These are source drafts without observations.
+
 The atomic ledger and the required CI cover every obligation in this document,
 in separate rows for:
 

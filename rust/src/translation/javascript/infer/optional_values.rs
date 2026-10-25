@@ -193,6 +193,18 @@ impl Inference {
     }
 
     pub(super) fn coalescing_step(&mut self, constraint: &Coalescing, force: bool) -> Result<bool> {
+        let resolved = self.resolve(&constraint.left);
+        let element = match &resolved {
+            Term::Option { element, .. } => kind(element),
+            _ => "",
+        };
+        if crate::translation::absence_only_rules::require_java_script_absence_only_value(
+            "JavaScript",
+            kind(&resolved),
+            element,
+        ) {
+            return Ok(true);
+        }
         let facts = TermFacts::new(&[
             Some(constraint.left.clone()),
             Some(self.resolve(&constraint.left)),

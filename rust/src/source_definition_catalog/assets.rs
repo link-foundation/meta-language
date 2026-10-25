@@ -2,6 +2,7 @@
 
 pub(super) fn source_asset(asset: &str) -> Option<&'static str> {
     match asset {
+        "absence-only-program.lino" => Some(include_str!("../data/absence-only-program.lino")),
         "array-binding-program.lino" => Some(include_str!("../data/array-binding-program.lino")),
         "array-classification-program.lino" => {
             Some(include_str!("../data/array-classification-program.lino"))

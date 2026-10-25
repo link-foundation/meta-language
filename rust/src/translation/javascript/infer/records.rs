@@ -165,6 +165,17 @@ impl Inference {
             let owner = owner.borrow();
             (owner.fields.clone(), owner.open)
         };
+        let form=crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_field_form(
+            &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text("record"),open,fields.iter().any(|item|item.0==field),
+            &crate::translation::javascript_record_parameter_rules::ml_string::Text::from_text(field)).to_string();
+        if form == "absent" {
+            self.unify(
+                result,
+                &super::optional_values::optional(Term::Known(super::Type::Unit), "undefined"),
+                place,
+            )?;
+            return Ok(true);
+        }
         let name = field.encode_utf16().map(f64::from).collect::<Vec<_>>();
         let plan = rules::read_record_field_inference_step(&names(&fields), &name, open);
         let [action, selected] = plan.as_slice() else {

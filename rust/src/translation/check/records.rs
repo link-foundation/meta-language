@@ -399,6 +399,10 @@ impl Checker {
         {
             return Ok(field);
         }
+        if let Some(absent) = self.javascript_absent_record_property(&value, field, expected, span)
+        {
+            return Ok(absent);
+        }
         Self::checked_named_property(value, field, span)
     }
 

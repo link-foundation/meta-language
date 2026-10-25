@@ -419,6 +419,11 @@ impl Checker {
             ..
         }) = &literal
         {
+            if let Some(absent) =
+                self.javascript_absent_record_property(&array, field, expected, span)
+            {
+                return Ok(absent);
+            }
             return Self::checked_named_property(array, field, span);
         }
         let index = match &literal {

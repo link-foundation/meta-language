@@ -27,6 +27,7 @@ use super::types::{BOOL, FLOAT, INT, NAT, STRING, Type, UNIT, array, data, fixed
 use super::{Language, Span};
 
 mod array_bindings;
+mod absent_record_properties;
 mod array_callbacks;
 mod array_from;
 mod array_relative_element_template;
