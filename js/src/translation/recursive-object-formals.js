@@ -3,11 +3,11 @@ import {unsupported} from './diagnostics.js';
 import {JAVASCRIPT_ARRAY_BINDING_POLICY} from './array-binding-policy.js';
 import {requireJavaScriptIdentifierRole} from './javascript-identifier-roles.js';
 import {constructJavaScriptRecursiveObjectEntries} from './recursive-object-bindings.js';
-import {planJavaScriptRecursiveObjectFormals,containsJavaScriptRecursiveObjectFormals,readJavaScriptRecursiveObjectFormalBindingPositions,readJavaScriptObjectBindingDepthLimit} from './recursive-object-binding-rules.js';
+import {planJavaScriptRecursiveBindingFormals,containsJavaScriptRecursiveBindingFormals,readJavaScriptRecursiveObjectFormalBindingPositions,readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 export function readJavaScriptRecursiveObjectFormals(parser,tokens,start,context){
- const plan=planJavaScriptRecursiveObjectFormals(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,readJavaScriptObjectBindingDepthLimit());
+ const plan=planJavaScriptRecursiveBindingFormals(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,readJavaScriptObjectBindingDepthLimit());
  if(plan[0]===-9)throw unsupported('object binding depth','the actual recursive pattern exceeds its shared source depth budget',tokens[plan[1]]);
- if(!containsJavaScriptRecursiveObjectFormals(plan))return null;
+ if(!containsJavaScriptRecursiveBindingFormals(plan))return null;
  const positions=readJavaScriptRecursiveObjectFormalBindingPositions(plan),used=parser.recordParameterNames;
  if(plan[0]!==tokens.length||parser.recordParameterTokenOwner!==parser.cursor.tokens||!(used instanceof Set))throw unsupported('record parameter source transport','the plan needs the complete actual formal interval and its parser-owned token/name inventory',tokens[0]);
  const fresh=prefix=>{let name;do{if(!Number.isSafeInteger(parser.recordParameterOrdinal+1))throw unsupported('record parameter source transport','the parser-owned logical argument name ordinal exceeds its safe integer range',tokens[0]);name=prefix+parser.recordParameterOrdinal++;}while(used.has(name));used.add(name);return name;};

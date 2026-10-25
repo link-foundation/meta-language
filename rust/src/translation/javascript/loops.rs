@@ -14,14 +14,14 @@ impl JavaScriptParser {
         let mut statements = Vec::new();
         let mut names = HashSet::new();
         loop {
-            if self.cursor.is("[") {
+            if self.cursor.is("[") && !self.has_advanced_array_binding(self.cursor.index) {
                 statements.extend(self.mutable_array_declaration(&start, &mut names)?);
                 if self.cursor.eat(",").is_none() {
                     return Ok(statements);
                 }
                 continue;
             }
-            if self.cursor.is("{") {
+            if self.cursor.is("{") || self.cursor.is("[") {
                 let syntax = self.object_binding_declaration(&start, "let")?;
                 for token in syntax.bindings {
                     if !names.insert(token.value.clone()) {

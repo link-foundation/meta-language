@@ -3,7 +3,9 @@ import {unsupported} from './diagnostics.js';
 import {findDefaultParameterReference} from './frontend-rules.js';
 import {partitionJavaScriptFormalInitializerBindingPositions,findJavaScriptArrayFormalInitializerAssignment} from './array-formal-parameter-rules.js';
 import {readJavaScriptPatternInitializerScopeBoundary,readJavaScriptPatternInitializerSubject,readJavaScriptPatternInitializerReferenceReason,readJavaScriptPatternInitializerAssignmentReason} from './javascript-record-parameter-rules.js';
+import {readJavaScriptRecursiveBindingInitializerContext} from './recursive-binding-rules.js';
 export function readJavaScriptFormalInitializer(parser,{tokens,start,first,last,binding,positions,context,profile}){
+ context=readJavaScriptRecursiveBindingInitializerContext(context);
  const actual=position=>{if(!Number.isSafeInteger(position)||position<0||position>=tokens.length)throw unsupported(profile+' transport','every selected token belongs to its actual formal interval',tokens[0]);return tokens[position];};
  const names=positions.map(position=>actual(position).value);
  const initialization=partitionJavaScriptFormalInitializerBindingPositions(positions,binding),count=initialization[0];

@@ -30,6 +30,7 @@ mod patterns;
 mod products;
 mod record_formal_defaults;
 mod records;
+mod recursive_binding_iterables;
 mod solver;
 mod term_facts;
 mod term_types;
@@ -262,6 +263,7 @@ struct Inference {
     indices: Vec<IndexOf>,
     iterables: Vec<IterableOf>,
     array_formal_iterables: Vec<IterableOf>,
+    recursive_binding_iterables: Vec<IterableOf>,
     collections: HashMap<*const SExpr, (Term, Option<Span>)>,
     signatures: HashMap<String, Signature>,
     context: Vec<String>,
@@ -316,6 +318,7 @@ impl Inference {
             indices: Vec::new(),
             iterables: Vec::new(),
             array_formal_iterables: Vec::new(),
+            recursive_binding_iterables: Vec::new(),
             collections: HashMap::new(),
             signatures: HashMap::new(),
             context: vec![ROOT.to_owned()],

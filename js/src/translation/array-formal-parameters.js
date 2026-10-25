@@ -6,6 +6,7 @@ import {findJavaScriptArrayFormalPattern,acceptJavaScriptArrayFormalContext,plan
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {readJavaScriptRecordParameterBindingStatement} from './javascript-record-parameter-rules.js';
 import {readJavaScriptPatternParameterBody,readNamedJavaScriptRecordParameterBody} from './javascript-record-parameters.js';
+import {readJavaScriptRecursiveObjectFormals} from './recursive-object-formals.js';
 
 export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchronous){
  const c=parser.cursor,start=c.index,opening=c.tokens[start-1];
@@ -14,6 +15,7 @@ export function readJavaScriptArrayFormalParameters(parser,context,doc,asynchron
  const tokens=c.tokens.slice(start,close+1),kinds=tokens.map(token=>token.kind),values=tokens.map(token=>token.value);
  const selected=findJavaScriptArrayFormalPattern(kinds,values,0);if(selected<0)return null;
  if(!acceptJavaScriptArrayFormalContext(context,asynchronous,doc?.params.size??0))throw unsupported('array formal parameter source profile','ordinary array patterns require synchronous callables without parameter documentation tags',tokens[selected]);
+ const recursive=readJavaScriptRecursiveObjectFormals(parser,tokens,start,context);if(recursive)return recursive;
  const plan=planJavaScriptArrayFormalParametersWithDefaults(kinds,values,0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings);
  if(plan[0]<0)throw unsupported('array formal parameter syntax','flat names, elisions and final named rest use distinct actual BoundNames; defaults and nested/mixed object patterns need separate interpretations (reason '+(-plan[0])+')',tokens[plan[1]]??opening);
  const parameters=[],sourceNames=[],arrayEntries=[],used=parser.recordParameterNames;

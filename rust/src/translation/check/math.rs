@@ -21,6 +21,7 @@ impl Checker {
         env: &Env,
         path: &[String],
     ) -> Result<Expr> {
+        if op==crate::translation::recursive_binding_rules::read_java_script_recursive_binding_iterable_operation().to_string(){return self.recursive_binding_iterable(args,span,env,path);}
         if op
             == crate::translation::object_rest_rules::read_java_script_object_rest_operation()
                 .to_string()

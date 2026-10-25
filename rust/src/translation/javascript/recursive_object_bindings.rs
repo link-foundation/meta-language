@@ -3,7 +3,7 @@ use super::{
     JavaScriptParser, Result, SExpr, SNode, Span, Token, TokenKind, TranslationError, unsupported,
 };
 use crate::translation::frontend_rules::ml_array::number_index;
-use crate::translation::recursive_object_binding_rules::{self as rules, ml_string::Text};
+use crate::translation::recursive_binding_rules::{self as rules, ml_string::Text};
 use crate::translation::surface::SArrayItem;
 use std::collections::BTreeMap;
 use std::sync::OnceLock;
@@ -50,7 +50,7 @@ impl JavaScriptParser {
     pub(super) fn recursive_object_plan(&self, start: usize) -> RecursiveObjectSyntax {
         let tokens = self.cursor.tokens[start..=self.matching(start)].to_vec();
         let (kinds, values) = columns(&tokens);
-        let plan = rules::plan_java_script_recursive_object_bindings(
+        let plan = rules::plan_java_script_recursive_bindings(
             &kinds,
             &values,
             0.0,
@@ -170,6 +170,20 @@ impl JavaScriptParser {
             }
         }
     }
+    pub(super) fn has_advanced_array_binding(&self, start: usize) -> bool {
+        rules::contains_java_script_advanced_array_binding(&self.recursive_object_plan(start).plan)
+    }
+    fn recursive_binding_private_name(&mut self, formal: bool, span: Span) -> Result<String> {
+        if formal {
+            self.recursive_object_parameter_name("record_parameter_nested_value", span)
+        } else {
+            self.generated_count += 1;
+            Ok(format!(
+                "{}object_binding_value{}",
+                self.generated_prefix, self.generated_count
+            ))
+        }
+    }
     pub(super) fn recursive_object_entries(
         &mut self,
         syntax: &RecursiveObjectSyntax,
@@ -185,10 +199,25 @@ impl JavaScriptParser {
             .iter()
             .map(|at| tokens[index(*at)].value.clone())
             .collect::<Vec<_>>();
-        let mut owners = BTreeMap::from([(0usize, root)]);
+        let mut owners = BTreeMap::from([(0usize, root.clone())]);
         let mut entries = Vec::new();
+        if index(plan[2]) == 6 {
+            let span = Span::new(tokens[index(plan[8])].start, tokens[index(plan[9])].end);
+            let name = self.recursive_binding_private_name(formal, span)?;
+            entries.push(RecursiveObjectEntry {
+                temporary: true,
+                name: name.clone(),
+                value: iterable_source(root, span),
+                span,
+            });
+            owners.insert(0, SExpr::new(SNode::Name { path: vec![name] }, Some(span)));
+        }
         for ordinal in 1..index(plan[1]) {
             let at = 2 + ordinal * 8;
+            let role = index(plan[at]);
+            if role == 5 {
+                continue;
+            }
             let owner = owners
                 .get(&index(plan[at + 1]))
                 .expect("actual preceding owner")
@@ -199,7 +228,7 @@ impl JavaScriptParser {
                 property.start,
                 binding.map_or_else(|| tokens[index(plan[at + 7])].end, |token| token.end),
             );
-            let value = if index(plan[at]) == 2 {
+            let mut value = if role == 2 {
                 let excluded =
                     rules::read_java_script_recursive_object_excluded_positions(plan, plan[at + 1])
                         .iter()
@@ -233,11 +262,63 @@ impl JavaScriptParser {
                 } else {
                     None
                 };
-                if let Some(fallback) = fallback {
-                    if let Some(origin) = fallback.span {
-                        span.end = origin.end;
+                if let Some(origin) = fallback.as_ref().and_then(|value| value.span) {
+                    span.end = origin.end;
+                }
+                if role == 3 || role == 4 {
+                    let offset = rules::read_java_script_recursive_array_element_index(
+                        plan,
+                        serde_json::Number::from(ordinal)
+                            .as_f64()
+                            .expect("bounded ordinal"),
+                    );
+                    let offset = SExpr::new(
+                        SNode::Num {
+                            value: offset.to_string(),
+                            ty: None,
+                            negative: false,
+                            unit: false,
+                        },
+                        Some(property.span()),
+                    );
+                    if role == 4 {
+                        SExpr::new(
+                            SNode::ArrayBindingRest {
+                                object: Box::new(owner),
+                                start: serde_json::to_value(&offset)
+                                    .expect("actual offset transport"),
+                                extra: BTreeMap::new(),
+                            },
+                            Some(span),
+                        )
+                    } else {
+                        let selected = SExpr::new(
+                            SNode::Index {
+                                object: Box::new(owner),
+                                index: Box::new(offset),
+                                optional: None,
+                                proven_in_bounds: None,
+                            },
+                            Some(span),
+                        );
+                        if let Some(fallback) = fallback {
+                            SExpr::new(
+                                SNode::ArrayBindingDefault {
+                                    value: Box::new(selected),
+                                    fallback: Box::new(fallback),
+                                    extra: BTreeMap::new(),
+                                },
+                                Some(span),
+                            )
+                        } else {
+                            selected
+                        }
                     }
-                    SExpr::new(SNode::Math{op:crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(),name:String::new(),args:vec![SArrayItem::new(owner,false),SArrayItem::new(SExpr::new(SNode::Str{value:property.value.clone()},Some(property.span())),false),SArrayItem::new(fallback,false)]},Some(span))
+                } else if let Some(fallback) = fallback {
+                    SExpr::new(SNode::Math{
+                        op:crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(),name:String::new(),
+                        args:vec![SArrayItem::new(owner,false),SArrayItem::new(SExpr::new(SNode::Str{value:property.value.clone()},Some(property.span())),false),SArrayItem::new(fallback,false)],
+                    },Some(span))
                 } else {
                     SExpr::new(
                         SNode::Field {
@@ -261,15 +342,10 @@ impl JavaScriptParser {
                     tokens[index(plan[at + 6])].start,
                     tokens[index(plan[at + 7])].end,
                 );
-                let name = if formal {
-                    self.recursive_object_parameter_name("record_parameter_nested_value", span)?
-                } else {
-                    self.generated_count += 1;
-                    format!(
-                        "{}object_binding_value{}",
-                        self.generated_prefix, self.generated_count
-                    )
-                };
+                if tokens[index(plan[at + 6])].value == "[" {
+                    value = iterable_source(value, span);
+                }
+                let name = self.recursive_binding_private_name(formal, span)?;
                 owners.insert(
                     ordinal,
                     SExpr::new(
@@ -289,4 +365,14 @@ impl JavaScriptParser {
         }
         Ok(entries)
     }
+}
+fn iterable_source(value: SExpr, span: Span) -> SExpr {
+    SExpr::new(
+        SNode::Math {
+            op: rules::read_java_script_recursive_binding_iterable_operation().to_string(),
+            name: String::new(),
+            args: vec![SArrayItem::new(value, false)],
+        },
+        Some(span),
+    )
 }

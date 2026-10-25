@@ -6,12 +6,13 @@ import {acceptJavaScriptObjectBindingName} from './javascript-record-parameter-r
 import {readJavaScriptFormalInitializer} from './formal-initializers.js';
 import {constructJavaScriptObjectRestSource} from './object-rest.js';
 import {readJavaScriptRecordFormalDefaultOperation} from './javascript-record-parameter-rules.js';
-import {planJavaScriptRecursiveObjectBindings,readJavaScriptRecursiveObjectBindingPositions,readJavaScriptRecursiveObjectExcludedPositions,readJavaScriptRecursiveObjectInitializerBinding,readJavaScriptObjectBindingDepthLimit} from './recursive-object-binding-rules.js';
+import {planJavaScriptRecursiveBindings,containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveArrayElementIndex,readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveObjectBindingPositions,readJavaScriptRecursiveObjectExcludedPositions,readJavaScriptRecursiveObjectInitializerBinding,readJavaScriptObjectBindingDepthLimit} from './recursive-binding-rules.js';
 export function readJavaScriptRecursiveObjectPlan(parser,start){
  const close=parser.matching(start),tokens=parser.cursor.tokens.slice(start,close+1);
- const plan=planJavaScriptRecursiveObjectBindings(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,[],readJavaScriptObjectBindingDepthLimit());
+ const plan=planJavaScriptRecursiveBindings(tokens.map(token=>token.kind),tokens.map(token=>token.value),0,JAVASCRIPT_ARRAY_BINDING_POLICY.reservedBindings,[],readJavaScriptObjectBindingDepthLimit());
  return {tokens,plan,start};
 }
+export function hasJavaScriptAdvancedArrayBinding(parser,start){return containsJavaScriptAdvancedArrayBinding(readJavaScriptRecursiveObjectPlan(parser,start).plan);}
 export function requireJavaScriptRecursiveObjectPlan(parser,syntax,startToken){
  const {tokens,plan,start}=syntax;
  if(plan[0]===-4){parser.cursor.index=start+tokens.length;throw unsupported('empty object binding','object destructibility needs a checked representation',{start:startToken.start,end:parser.cursor.peek().end});}
@@ -24,8 +25,11 @@ export function requireJavaScriptRecursiveObjectPlan(parser,syntax,startToken){
 export function constructJavaScriptRecursiveObjectEntries(parser,{tokens,plan,start},root,{positions=readJavaScriptRecursiveObjectBindingPositions(plan),context,profile,fresh}){
  const actual=position=>{if(!Number.isSafeInteger(position)||position<0||position>=tokens.length)throw unsupported('recursive object binding transport','every selected token belongs to the actual complete pattern interval',tokens[0]);return tokens[position];};
  const owners=new Map([[0,root]]),entries=[];
+ const iterable=(value,span)=>({k:'math',op:readJavaScriptRecursiveBindingIterableOperation(),name:'',args:[{value,spread:false}],span});
+ if(plan[2]===6){const open=actual(plan[8]),close=actual(plan[9]),span={start:open.start,end:close.end},name=fresh();entries.push({temporary:true,name,value:iterable(root,span),span});owners.set(0,{k:'name',path:[name],span});}
  for(let index=1;index<plan[1];index+=1){
-  const at=2+index*8,role=plan[at],owner=owners.get(plan[at+1]),property=actual(plan[at+2]),binding=plan[at+3]>=0?actual(plan[at+3]):null,first=plan[at+4],last=plan[at+5],open=plan[at+6],close=plan[at+7];
+  const at=2+index*8,role=plan[at];if(role===5)continue;
+  const owner=owners.get(plan[at+1]),property=actual(plan[at+2]),binding=plan[at+3]>=0?actual(plan[at+3]):null,first=plan[at+4],last=plan[at+5],open=plan[at+6],close=plan[at+7];
   if(!owner)throw unsupported('recursive object binding transport','each child needs its actual preceding selected owner',property);
   const span={start:property.start,end:binding?.end??actual(close).end};
   let value;
@@ -33,10 +37,11 @@ export function constructJavaScriptRecursiveObjectEntries(parser,{tokens,plan,st
   else{
    const fallback=first>=0?readJavaScriptFormalInitializer(parser,{tokens,start,first,last,binding:readJavaScriptRecursiveObjectInitializerBinding(plan,index),positions,context,profile}):null;
    if(fallback?.span)span.end=fallback.span.end;
-   value=fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:owner,spread:false},{value:{k:'str',value:property.value,span:{start:property.start,end:property.end}},spread:false},{value:fallback,spread:false}],span}:{k:'field',object:owner,field:property.value,span};
+   if(role===3||role===4){const offset={k:'num',value:String(readJavaScriptRecursiveArrayElementIndex(plan,index)),span:{start:property.start,end:property.end}},indexed={k:'index',object:owner,index:offset,span};value=role===4?{k:'arrayBindingRest',object:owner,start:offset,span}:fallback?{k:'arrayBindingDefault',value:indexed,fallback,span}:indexed;}
+   else value=fallback?{k:'math',op:readJavaScriptRecordFormalDefaultOperation(),name:'',args:[{value:owner,spread:false},{value:{k:'str',value:property.value,span:{start:property.start,end:property.end}},spread:false},{value:fallback,spread:false}],span}:{k:'field',object:owner,field:property.value,span};
   }
   if(binding){requireJavaScriptIdentifierRole(binding,true);entries.push({temporary:false,name:binding.value,value,span:{start:binding.start,end:binding.end}});}
-  else{const name=fresh();entries.push({temporary:true,name,value,span:{start:actual(open).start,end:actual(close).end}});owners.set(index,{k:'name',path:[name],span:{start:actual(open).start,end:actual(close).end}});}
+  else{const name=fresh(),span={start:actual(open).start,end:actual(close).end};if(actual(open).value==='[')value=iterable(value,span);entries.push({temporary:true,name,value,span});owners.set(index,{k:'name',path:[name],span});}
  }
  return entries;
 }

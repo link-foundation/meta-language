@@ -2,7 +2,7 @@
 use super::record_parameters::RecordParameters;
 use super::recursive_object_bindings::{RecursiveObjectSyntax, columns, index, reserved_names};
 use super::{JavaScriptParser, Result, SExpr, SNode, Span, Token, unsupported};
-use crate::translation::recursive_object_binding_rules as rules;
+use crate::translation::recursive_binding_rules as rules;
 impl JavaScriptParser {
     pub(super) fn read_recursive_object_formals(
         &mut self,
@@ -11,7 +11,7 @@ impl JavaScriptParser {
         context: &str,
     ) -> Result<Option<RecordParameters>> {
         let (kinds, values) = columns(tokens);
-        let plan = rules::plan_java_script_recursive_object_formals(
+        let plan = rules::plan_java_script_recursive_binding_formals(
             &kinds,
             &values,
             0.0,
@@ -25,7 +25,7 @@ impl JavaScriptParser {
                 Some(tokens[index(plan[1])].span()),
             ));
         }
-        if !rules::contains_java_script_recursive_object_formals(&plan) {
+        if !rules::contains_java_script_recursive_binding_formals(&plan) {
             return Ok(None);
         }
         if index(plan[0]) != tokens.len() {

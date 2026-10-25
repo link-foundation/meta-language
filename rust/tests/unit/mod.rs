@@ -396,3 +396,5 @@ mod translation_javascript_object_rest;
 mod translation_javascript_object_rest_formals;
 
 mod translation_javascript_recursive_object_bindings;
+
+mod translation_javascript_recursive_bindings;

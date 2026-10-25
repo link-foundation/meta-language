@@ -1057,6 +1057,7 @@ class JavaScriptParser {
   constDeclarator(start, readonly) {
     const c = this.cursor;
     if (c.is('{')) return this.destructuring(start);
+    if(c.is('[')&&hasJavaScriptAdvancedArrayBinding(this,c.index))return this.destructuring(start);
     if (c.is('[')) {
       const bindings = readArrayBinding(this);
       if (!bindings.length) throw unsupported('empty array binding', 'the iterator and destructibility need a checked representation', span(start, c.peek()));
@@ -1096,7 +1097,7 @@ class JavaScriptParser {
     const statements = [];
     const names = new Set();
     do {
-      if (c.is('[')) {
+      if (c.is('[')&&!hasJavaScriptAdvancedArrayBinding(this,c.index)) {
         const pattern = c.peek();
         const bindings = readArrayBinding(this);
         if (!c.eat('=')) throw unsupported('let destructuring', 'declare each binding with its own let', span(start, pattern));
@@ -1133,7 +1134,7 @@ class JavaScriptParser {
         }
         continue;
       }
-      if(c.is('{')){
+      if(c.is('{')||c.is('[')){
         const syntax=readJavaScriptObjectBindingDeclaration(this,start,'let');
         for(const token of syntax.bindings){if(names.has(token.value))throw new TranslationError('syntax','duplicate lexical binding '+token.value,{start:token.start,end:token.end});names.add(token.value);}
         statements.push(...syntax.statements);continue;
@@ -2866,3 +2867,4 @@ function span(from, to) {
 }
 
 import {readJavaScriptObjectBindingDeclaration,readJavaScriptObjectBindingNames} from './object-binding-declarations.js';
+import {hasJavaScriptAdvancedArrayBinding} from './recursive-object-bindings.js';

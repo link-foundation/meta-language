@@ -15,6 +15,8 @@ import {readJavaScriptRecordClosureParameters} from './javascript-record-paramet
 import {readJavaScriptArrayFormalParameters,readJavaScriptOrdinaryPatternParameterBody} from './array-formal-parameters.js';
 import {readJavaScriptRecordClosureContext} from './record-closure-parameter-rules.js';
 import { acceptJavaScriptLiteralBinding } from './javascript-scoped-binding-emission-rules.js';
+import {readJavaScriptRecursiveObjectPlan} from './recursive-object-bindings.js';
+import {containsJavaScriptAdvancedArrayBinding,readJavaScriptRecursiveObjectBindingPositions} from './recursive-binding-rules.js';
 
 export function readClosure(parser, method = false) {
   const c = parser.cursor;
@@ -67,6 +69,8 @@ export function validateClosureCaptures(statements, references = false) {
 // Declaration discovery and parsing use the same actual token positions. A
 // malformed plan stays with the ordinary parser for its precise syntax error.
 export function arrayBindingNames(parser, start) {
+  const syntax=readJavaScriptRecursiveObjectPlan(parser,start);
+  if(containsJavaScriptAdvancedArrayBinding(syntax.plan))return readJavaScriptRecursiveObjectBindingPositions(syntax.plan).map(position=>syntax.tokens[position]);
   const tokens = parser.cursor.tokens;
   const plan = planJavaScriptArrayBindingNames(tokens.map(token => token.kind), tokens.map(token => token.value), start);
   return plan[0] < 0 ? [] : plan.slice(1).map(position => tokens[position]);

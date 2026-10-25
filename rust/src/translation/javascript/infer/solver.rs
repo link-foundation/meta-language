@@ -160,6 +160,7 @@ impl Inference {
             progress |= self.solve_includes(false)?;
             progress |= self.solve_optional()?;
             progress |= self.solve_array_formal_iterables()?;
+            progress |= self.solve_recursive_binding_iterables()?;
             progress |= self.solve_record_formal_fields()?;
             progress |= self.solve_object_rest_fields()?;
             progress |= self.solve_iterables()?;
@@ -196,6 +197,7 @@ impl Inference {
                 let unknown = self
                     .array_formal_iterables
                     .iter()
+                    .chain(self.recursive_binding_iterables.iter())
                     .chain(self.iterables.iter())
                     .find(|constraint| matches!(self.resolve(&constraint.object), Term::Var(_)));
                 if let Some(iterable) = unknown {
@@ -250,6 +252,12 @@ impl Inference {
         if let Some(constraint) = self.record_formal_fields.first() {
             return Err(super::type_error(
                 "record formal default needs a known represented field domain",
+                constraint.place,
+            ));
+        }
+        if let Some(constraint) = self.recursive_binding_iterables.first() {
+            return Err(super::type_error(
+                "a recursive binding needs a represented iterable",
                 constraint.place,
             ));
         }

@@ -112,6 +112,7 @@ class Inference {
     this.collections = new Map();
     this.iterables = [];
     this.arrayFormalIterables=[];
+    this.recursiveBindingIterables=[];
     this.indices = [];
     this.cells = new Map();
     this.arithmetic = [];
@@ -437,6 +438,15 @@ class Inference {
         }else throw typeError('an array formal parameter needs a represented iterable',constraint.where);
         this.arrayFormalIterables.splice(this.arrayFormalIterables.indexOf(constraint),1);progress=true;
       }
+      for(const constraint of [...this.recursiveBindingIterables]){
+        let object=this.resolve(constraint.object),form=readJavaScriptRecursiveBindingIterableForm(object.kind,object.element?this.resolve(object.element).kind:'');
+        if(form==='optional'){object=this.resolve(object.element);form=readJavaScriptRecursiveBindingIterableForm(object.kind,'');}
+        if(form==='wait')continue;
+        if(form==='identity')this.unify(constraint.result,object,constraint.where);
+        else if(form==='iterate'){const selection=readArrayFromIterableType(object);if(!selection)throw typeError('a recursive binding needs a represented iterable',constraint.where);this.unify(constraint.result,{kind:'array',element:selection.element},constraint.where);}
+        else throw typeError('a recursive binding needs a represented iterable',constraint.where);
+        this.recursiveBindingIterables.splice(this.recursiveBindingIterables.indexOf(constraint),1);progress=true;
+      }
       for (const constraint of [...this.iterables]) {
         const object = this.resolve(constraint.object);
         const element = readArrayFromIterableType(object)?.element;
@@ -597,6 +607,7 @@ class Inference {
         progress = true;
       }
       if(!progress&&this.arrayFormalIterables.length){const iterable=this.arrayFormalIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
+      if(!progress&&this.recursiveBindingIterables.length){const iterable=this.recursiveBindingIterables.find(constraint=>this.resolve(constraint.object).kind==='var');if(iterable){this.unify(iterable.object,{kind:'array',element:this.fresh()},iterable.where);progress=true;}}
       if (!progress && this.iterables.length) {
         const iterable = this.iterables.find((constraint) => this.resolve(constraint.object).kind === 'var');
         if (iterable) {
@@ -634,6 +645,7 @@ class Inference {
     if (this.recordSpreads.length) throw typeError('an object spread needs a known record shape; declare its fields with JSDoc', this.recordSpreads[0].where);
     if(this.recordFormalFields.length)throw typeError('record formal default needs a known represented field domain',this.recordFormalFields[0].where);
     if(this.objectRestFields.length)throw typeError('object rest needs a known complete own-field domain',this.objectRestFields[0].where);
+    if(this.recursiveBindingIterables.length)throw typeError('a recursive binding needs a represented iterable',this.recursiveBindingIterables[0].where);
     if (this.arrayBindingDefaults.length) throw typeError('array binding default needs a known array element type', this.arrayBindingDefaults[0].where);
     if(this.enumerations.length)throw typeError('object value enumeration needs its actual complete value domain',this.enumerations[0].where);
   }
@@ -1038,6 +1050,10 @@ class Inference {
         this.expr(node.arg, env);
         return BOOL;
       case 'math':
+        if(node.op===readJavaScriptRecursiveBindingIterableOperation()){
+          if(node.args.length!==1||node.args[0].spread)throw typeError('a recursive binding iterator needs one actual operand',node.span);
+          const object=this.expr(node.args[0].value,env),result=this.fresh();this.recursiveBindingIterables.push({object,result,where:node.span});return result;
+        }
         if(node.op===readJavaScriptObjectRestOperation()){
           const operands=readJavaScriptObjectRestOperands(node),object=this.expr(operands.object,env),result=this.fresh();
           this.objectRestFields.push({object,excluded:operands.excluded,result,where:node.span});return result;
@@ -1502,3 +1518,4 @@ import {readJavaScriptRecordFormalDefaultOperation,readJavaScriptRecordFormalDef
 import {readJavaScriptRecordFormalDefaultOperands} from './record-formal-defaults.js';
 import {readJavaScriptObjectRestOperation,readJavaScriptObjectRestOwnerForm} from './object-rest-rules.js';
 import {readJavaScriptObjectRestOperands,selectJavaScriptObjectRestActualFields} from './object-rest.js';
+import {readJavaScriptRecursiveBindingIterableOperation,readJavaScriptRecursiveBindingIterableForm} from './recursive-binding-rules.js';

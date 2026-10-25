@@ -27,7 +27,8 @@ impl JavaScriptParser {
             context,
             profile,
         } = initializer;
-        let text = ContextText::from_text(context);
+        let context = crate::translation::recursive_binding_rules::read_java_script_recursive_binding_initializer_context(&crate::translation::recursive_binding_rules::ml_string::Text::from_text(context)).to_string();
+        let text = ContextText::from_text(&context);
         let boundary = u8::try_from(
             number_index(context_rules::read_java_script_pattern_initializer_scope_boundary(&text))
                 .expect("actual source initializer boundary"),

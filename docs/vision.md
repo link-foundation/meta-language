@@ -4029,6 +4029,37 @@ specification above. Empty pattern coercibility, mixed arrays/iterators,
 computed/String keys, full primitive/prototype protocols, whole-parameter
 defaults and complete parameter environments remain implementation obligations.
 
+The mixed recursive binding draft extends the same eight-column owner plan with
+array roots, elements, rest and elisions. Array positions count only preceding
+rows owned by that immediate array; nested descendants never advance its index.
+Object-to-array, array-to-object and alternating recursion use one source
+algorithm. The complete preceding object-only definitions remain separately
+available, with their unchanged refusal contracts and source graph. Copying a
+definition is not a proof of equivalent meaning. The current generic definitions
+are automatically translated together and published as a distinct Links source
+program in both packages.
+
+Adapters retain original token intervals and logical formal slots. Selected
+iterables and nested parents are captured once. Existing index/default/rest,
+record projection and own-field copy operations implement the selected values;
+no new checked constructor is introduced. Existing simple flat array routes
+remain separate. Newly admitted mutable default/rest/elision/nested inputs and
+mixed formal inputs retain their exact source and independent future value
+controls; full preceding assertion and fixture sources at `1b0f00b2` are retained
+as hashed Links history. Future controls include thirty-two alternating levels,
+immediate-owner indexing, lexical initialization order, mutable bound cells,
+fresh rest arrays and all existing synchronous callable contexts.
+
+The supported iterator representation remains finite homogeneous arrays,
+positional tuples, strings and immutable collections. Tuple rest still requires
+an array representation. Nullable iterator guards are source drafts; exact error
+text depends on the original source callsite and Node/V8 version, and has no
+recorded observations. Empty object coercibility, missing nested receiver
+protocols, heterogeneous mutable unions, custom/live iterators and IteratorClose,
+whole-parameter defaults and complete initialization environments still require
+implementation. The future full source products, both codecs, four emissions
+and native parity checks remain unexecuted during the full-draft phase.
+
 The latest full-draft continuation is preserved verbatim in
 [`full-requirements-drafting-until-finished-2026-10-25.txt`](../parity/sources/full-requirements-drafting-until-finished-2026-10-25.txt).
 It reinforces the existing critical full-scope rows and changes no requirement,

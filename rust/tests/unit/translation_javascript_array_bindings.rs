@@ -455,10 +455,6 @@ fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
         "[first]=values",
         "[first,second]=[1]",
         "[first]=[1,2]",
-        "[first=2]=[1]",
-        "[...first]=[1]",
-        "[[first]]=[[1]]",
-        "[,first]=[1,2]",
         "[first]=[...values]",
     ] {
         let source = format!("function selected(values){{let {binding};return 0;}}");
@@ -467,6 +463,19 @@ fn mutable_array_bindings_keep_original_refusals_and_temporal_dead_zones() {
             error.message().contains("let destructuring"),
             "{source}: {error:?}"
         );
+    }
+    // The complete preceding assertion sources remain in recursive-bindings.lino.
+    super::translation_javascript_object_binding_declarations::require_supported_rust_version();
+    for binding in [
+        "[first=2]=[1]",
+        "[...first]=[1]",
+        "[[first]]=[[1]]",
+        "[,first]=[1,2]",
+    ] {
+        let source = format!(
+            "function selected(values){{let {binding};return 0;}}console.log(selected(0));"
+        );
+        require_declaration_list_equivalent(&source, &json!({"lines":["0"],"error":null}));
     }
     for source in [
         "function selected(){let [first,second]=[second,1];return first;}",

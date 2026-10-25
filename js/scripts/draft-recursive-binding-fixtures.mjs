@@ -1,0 +1,55 @@
+// Author future products and preserve complete predecessor assertions. Execute none.
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {writeProjectData} from './project-data.mjs';
+if(process.argv.slice(2).join(' ')!=='--draft')throw new TypeError('use --draft');
+const cases=[];
+function add(name,body,value,prefix='',abort=null,errorClass='RangeError'){
+ const ordinal=cases.length,entry='recursiveBindingCase'+ordinal;
+ const source=(prefix+'export function compute(){'+body+'}').replaceAll('OWNER','recursiveBindingOwner'+ordinal);
+ cases.push({name,source,entry,value,abort,...(abort===null?{}:{errorClass,messagePresent:true,messageUnits:Array.from({length:abort.length},(_,index)=>abort.charCodeAt(index))})});
+}
+add('object fields select nested arrays','const {values:[first,second]}={values:[3,4]};return (first??0)+(second??0);','7');
+add('array elements select nested objects','const [{value}]=[{value:3}];return value;','3');
+add('alternating owners retain actual keys and indices','const {items:[{config:{values:[value]}}]}={items:[{config:{values:[3]}}]};return value??0;','3');
+add('nested array owners advance independently','const [[first,second],[third,fourth]]=[[1,2],[3,4]];return (first??0)+(second??0)+(third??0)+(fourth??0);','10');
+add('an elision advances the immediate array owner only','const [[,first],,last]=[[1,2],[3,4],[5,6]];return String(first??0)+":"+String((last??[]).length);','2:2');
+add('missing nested array selects its default before iteration','const {values:[first]=[3]}={};return first??0;','3');
+add('own undefined nested array selects its default','const {values:[first]=[3]}={values:undefined};return first??0;','3');
+add('a missing array element selects its nested record default','const [{value}={value:3}]=[];return value;','3');
+add('a missing array element selects its nested array default','const [[value]=[3]]=[];return value??0;','3');
+add('nested leaf defaults see initialized outer names','const {first=3,values:[second=first+1]}={values:[]};return second;','4');
+add('later outer names see initialized nested array names','const {values:[first=3],last=first+1}={values:[]};return last;','4');
+add('mixed siblings keep initialization order','const [{first=3,values:[second=first+1]}={values:[]}]=[];return first+second;','7');
+add('rest belongs to its immediate array owner','const {values:[first,...rest]}={values:[3,4,5]};return String(first??0)+":"+rest.join("|");','3:4|5');
+add('nested named array rest creates a fresh suffix','const [[first,...rest]]=[[3,4,5]];rest.push(6);return String(first??0)+":"+rest.join("|");','3:4|5|6');
+add('an array rest target can be an object pattern','const [...{length}]=[3,4,5];return length;','3');
+add('an array rest target can be another array pattern','const [...[first,second]]=[3,4,5];return (first??0)+(second??0);','7');
+add('nested object rest excludes only its own fields','const [{left,...rest}]=[{left:3,right:4}];return left+rest.right;','7');
+add('outer object rest excludes the actual mixed parent','const {values:[first],...rest}={values:[3],other:4};return (first??0)+rest.other;','7');
+add('mutable nested bindings retain local cells','let [{value}]=[{value:3}];value+=1;return value;','4');
+add('bound scalar writes leave the source object intact','const source=[{value:3}];let [{value}]=source;value+=1;return String(value)+":"+String(source[0].value);','4:3');
+add('a defaulted local array binding retains mutation','let [value=3]=[];value+=1;return value;','4');
+add('named mixed formals retain logical argument order','return OWNER([3],{second:4},2);','10','function OWNER([first],{second},scale){return (first??0)*scale+second;}');
+add('named nested array formals','return OWNER([[3]]);','3','function OWNER([[value]]){return value??0;}');
+add('constant arrow mixed formals','return OWNER([{value:3}]);','3','const OWNER=([{value}])=>value;');
+add('constant function expression mixed formals','return OWNER({values:[3]});','3','const OWNER=function({values:[value]}){return value??0;};');
+add('namespace mixed formals','return OWNER.read([{value:3}]);','3','const OWNER={read([{value}]){return value;}};');
+add('mixed arrow callback formals','return [[{value:3}],[{value:4}]].map(([{value}])=>value).join("|");','3|4');
+add('mixed function callback formals','return [{values:[3]},{values:[4]}].map(function({values:[value]}){return value??0;}).join("|");','3|4');
+add('mixed callbacks retain outer captures','const offset=7;return [[{value:3}]].map(([{value}])=>value+offset).join("|");','10');
+add('earlier formal slots are visible to nested initializers','return OWNER(3,{});','4','function OWNER(first,{values:[second=first+1]=[]}){return second;}');
+add('string iterables retain Unicode code point elements','const {text:[first,...rest]}={text:"🙂z"};return (first??"")+":"+rest.join("");','🙂:z');
+add('empty array pattern still selects its iterable','const []=[3,4];return 1;','1');
+add('present nested values keep throwing defaults lazy','const {values:[first]=failMixedDefault()}={values:[7]};return first??0;','7','/** @returns {number[]} */function failMixedDefault(){throw new RangeError("mixed default");}');
+add('absent nested values preserve the actual fallback exception','const {values:[first]=failMixedMissing()}={};return first??0;',null,'/** @returns {number[]} */function failMixedMissing(){throw new RangeError("mixed default");}','mixed default');
+add('exact former lexical mixed object refusal','return f();','3','function f(){const {value:[nested]}={value:[3]};return nested;}');
+add('exact former recursive mixed object refusal','return f();','3','function f(){const {config:[value]}={config:[3]};return value;}');
+add('exact former nested formal refusal','return f([[3]]);','3','function f([[first]]){return first;}');
+add('exact former mixed logical formal refusal','return f([3],{second:4});','3','function f([first],{second}){return first??second;}');
+for(const binding of ['[first=2]=[1]','[...first]=[1]','[[first]]=[[1]]','[,first]=[1,2]'])add('exact former mutable array refusal '+binding,'return selected(0);','0','function selected(values){let '+binding+';return 0;}');
+let pattern='value',value='3';for(let index=0;index<32;index+=1){if(index%2===0){pattern='['+pattern+']';value='['+value+']';}else{pattern='{level:'+pattern+'}';value='{level:'+value+'}';}}
+add('thirty-two alternating object and array owners','const '+pattern+'='+value+';return value??0;','3');
+const revision='1b0f00b2';
+const history=['js/tests/translation-javascript-mutable-array-bindings.test.js','rust/tests/unit/translation_javascript_array_bindings.rs','parity/fixtures/object-binding-declarations.lino','parity/fixtures/recursive-object-bindings.lino','parity/fixtures/array-formal-parameters.lino','js/scripts/draft-object-binding-declaration-fixtures.mjs','js/scripts/draft-recursive-object-binding-fixtures.mjs','js/scripts/draft-array-formal-parameter-fixtures.mjs','js/src/translation/recursive-object-binding-rules.js','js/src/data/recursive-object-binding-program.lino'].map(path=>{const bytes=execFileSync('git',['show',revision+':'+path],{maxBuffer:4*1024*1024});return {path,revision,source:bytes.toString('utf8'),bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')};});
+writeProjectData(new URL('../../parity/fixtures/recursive-bindings.lino',import.meta.url),{schemaVersion:1,model:'actual mixed recursive binding ownership and iterable domains 1',sourceLanguage:'JavaScript',cases,refusals:[],history,versions:{JavaScript:'ECMAScript 2025; Node.js >=22.15.0 <23.0.0 or >=24.0.0 <25.0.0',Rust:'>=1.90.0 <1.100.0; edition 2024'},source:cases.map(row=>row.source.replace('function compute(','function '+row.entry+'(')).join('\n'),assertions:['sharedActualMixedTreeAndImmediateOwnerIndices','elisionsRestAndUndefinedOnlyDefaults','completeOriginalNestedBindingAndFormalInputs','namedConstantNamespaceAndCallbackContexts','orderedLexicalAndFormalInitialization','actualMutableCellsAndFreshRestCopies','independentHistoricalObjectOnlyDefinitions','completeDefinitionsBothCodecsFourEmissionsNativeProducts'],references:['https://tc39.es/ecma262/2025/multipage/ecmascript-language-statements-and-declarations.html#sec-destructuring-binding-patterns-runtime-semantics-bindinginitialization'],boundary:'Unexecuted future controls. Current normalized iterable domains are represented homogeneous arrays, positional tuples, strings and immutable collections; tuple rest still needs an array representation. Nullable iterator diagnostics remain a source draft without observations and depend on exact source callsite/version. Empty object coercibility, missing nested receiver protocols, heterogeneous mutable unions, custom/live iterators and IteratorClose, whole-parameter defaults and complete initialization environments remain obligations.'});

@@ -46,6 +46,17 @@ const fn kind(token: &Token) -> &'static str {
 
 impl JavaScriptParser {
     pub(super) fn array_binding_names(&self, start: usize) -> Vec<Token> {
+        let syntax = self.recursive_object_plan(start);
+        if crate::translation::recursive_binding_rules::contains_java_script_advanced_array_binding(
+            &syntax.plan,
+        ) {
+            return super::recursive_object_bindings::binding_positions(&syntax.plan)
+                .iter()
+                .map(|position| {
+                    syntax.tokens[super::recursive_object_bindings::index(*position)].clone()
+                })
+                .collect();
+        }
         let kinds: Vec<Text> = self
             .cursor
             .tokens

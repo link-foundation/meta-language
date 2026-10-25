@@ -125,6 +125,9 @@ impl JavaScriptParser {
                 Some(selected.span()),
             ));
         }
+        if let Some(syntax) = self.read_recursive_object_formals(&tokens, start, context)? {
+            return Ok(Some(syntax));
+        }
         let policy =
             crate::read_structured_data_lino(include_str!("../../data/array-bindings.lino"))
                 .expect("the actual array binding policy is structured Links");

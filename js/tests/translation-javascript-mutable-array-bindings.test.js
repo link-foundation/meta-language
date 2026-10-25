@@ -140,9 +140,14 @@ test('mutable array binding temporal dead zones duplicates and unsupported recei
   }
   for (const binding of [
     '[first]=values', '[first,second]=[1]', '[first]=[1,2]',
-    '[first=2]=[1]', '[...first]=[1]', '[[first]]=[[1]]', '[,first]=[1,2]',
     '[first]=[...values]',
   ]) assert.throws(() => parseJavaScript(`function selected(values){let ${binding};return 0;}`), /let destructuring/u);
+  // Full predecessor assertions and unchanged inputs are retained in recursive-bindings.lino.
+  for(const binding of ['[first=2]=[1]','[...first]=[1]','[[first]]=[[1]]','[,first]=[1,2]']){
+    const [major,minor]=process.versions.node.split('.').map(Number);assert.ok(major===22&&minor>=15||major===24,'uncovered binding assertion runtime '+process.versions.node);
+    const source=`function selected(values){let ${binding};return 0;}`;
+    parseJavaScript(source);equivalent(source+'console.log(selected(0));',{lines:['0'],error:null});
+  }
 });
 
 test('the retained former mutable object binding refusal has its original source and value',()=>{

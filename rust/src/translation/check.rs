@@ -66,6 +66,7 @@ pub(super) mod record_order_operations;
 mod record_writes;
 mod records;
 mod recursion;
+mod recursive_binding_iterables;
 mod reference_methods;
 mod rust_primitive_bitwise;
 mod rust_shifts;

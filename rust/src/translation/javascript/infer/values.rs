@@ -161,6 +161,7 @@ impl Inference {
                     .collect::<Result<Vec<_>>>()?,
             )),
             SNode::Math { op, args, .. } => {
+                if op==&crate::translation::recursive_binding_rules::read_java_script_recursive_binding_iterable_operation().to_string(){if args.len()!=1||args[0].spread{return Err(type_error("a recursive binding iterator needs one actual operand",expr.span));}let object=self.expr(&args[0].value,env)?;let result=self.fresh(false);self.recursive_binding_iterables.push(IterableOf{object,mapper:None,result:result.clone(),place:expr.span});return Ok(result);}
                 if op==&crate::translation::javascript_record_parameter_rules::read_java_script_record_formal_default_operation().to_string(){
                     return self.record_formal_default_term(args,env,expr.span);
                 }

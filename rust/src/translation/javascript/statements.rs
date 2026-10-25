@@ -213,6 +213,9 @@ impl JavaScriptParser {
         if self.cursor.is("{") {
             return self.destructuring(start);
         }
+        if self.cursor.is("[") && self.has_advanced_array_binding(self.cursor.index) {
+            return self.destructuring(start);
+        }
         if self.cursor.is("[") {
             return self.array_destructuring(start);
         }

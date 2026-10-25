@@ -23,6 +23,14 @@ impl JavaScriptParser {
         let start = self.cursor.index;
         let syntax = self.recursive_object_plan(start);
         self.require_recursive_object_plan(&syntax, start_token)?;
+        let array = syntax.tokens[0].value == "[";
+        if array && mode == "let" && self.top_level {
+            return Err(unsupported(
+                "let destructuring",
+                "mutable literal bindings require a function-owned lexical scope",
+                Some(Span::new(start_token.start, syntax.tokens[0].end)),
+            ));
+        }
         let statement =
             rules::read_java_script_object_binding_statement(&Text::from_text(mode)).to_string();
         if statement.is_empty() {
@@ -61,8 +69,16 @@ impl JavaScriptParser {
             &syntax,
             object,
             &positions,
-            "ordinary object binding declaration",
-            "object binding initializer",
+            if array {
+                "ordinary recursive array binding declaration"
+            } else {
+                "ordinary object binding declaration"
+            },
+            if array {
+                "array binding initializer"
+            } else {
+                "object binding initializer"
+            },
             false,
         )?;
         let mut statements = vec![Stmt::Const {
